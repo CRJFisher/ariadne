@@ -1,23 +1,23 @@
-# TypeScript Tree-sitter Implementation
+# RefScope
 
-A TypeScript port of bloop's code intelligence engine using tree-sitter for parsing and scope resolution.
+Find references and definitions in your codebase using tree-sitter. RefScope provides language-agnostic code intelligence by building a scope graph of your code's symbols, their definitions, and their references.
 
 ## Features
 
-- **AST Parsing**: Uses tree-sitter to parse TypeScript/TSX code into an Abstract Syntax Tree
-- **Scope Resolution**: Builds a scope graph for each file tracking definitions, references, imports, and lexical scopes
+- **AST Parsing**: Uses tree-sitter to parse source code into an Abstract Syntax Tree
+- **Scope Resolution**: Builds a scope graph tracking definitions, references, imports, and lexical scopes
 - **Cross-file Symbol Resolution**: Find definitions and references across multiple files
-- **Multi-language Support**: Extensible architecture for supporting multiple programming languages
-- **TypeScript-specific Features**: Full support for TypeScript including generics, type aliases, interfaces, and JSX/TSX
+- **Multi-language Support**: Extensible architecture supporting JavaScript, TypeScript, and more
+- **Fast and Accurate**: Leverages tree-sitter's incremental parsing capabilities
 
 ## Quick Start
 
 ```bash
-npm install
+npm install refscope
 ```
 
 ```typescript
-import { Project } from './src/index';
+import { Project } from 'refscope';
 
 // Create a project instance
 const project = new Project();
@@ -32,6 +32,16 @@ const definition = project.go_to_definition('src/main.ts', { row: 10, column: 15
 // Find all references to a symbol
 const references = project.find_references('src/utils.ts', { row: 5, column: 10 });
 ```
+
+## Supported Languages
+
+- ✅ JavaScript (including JSX)
+- ✅ TypeScript (including TSX)
+- 🚧 Python (coming soon)
+- 🚧 Rust (coming soon)
+- 🚧 Go (coming soon)
+- 🚧 Java (coming soon)
+- 🚧 C/C++ (coming soon)
 
 ## Documentation
 
@@ -54,7 +64,7 @@ const references = project.find_references('src/utils.ts', { row: 5, column: 10 
 
 ## Architecture Overview
 
-The system processes code through several stages:
+RefScope processes code through several stages:
 
 1. **Parsing** - Tree-sitter parses source code into an AST
 2. **Query Matching** - Tree-sitter queries identify important nodes (definitions, references, etc.)
@@ -69,8 +79,8 @@ Source Code → Tree-sitter AST → Query Matches → Scope Graph → Symbol Res
 
 - **[Project](src/index.ts)** - Main API entry point, manages multiple files
 - **[ScopeGraph](src/graph.ts)** - Core graph data structure with nodes and edges
-- **[Scope Resolution](src/scope-resolution.ts)** - Builds graphs from tree-sitter queries
-- **[Symbol Resolver](src/symbol-resolver.ts)** - Implements find definition/references
+- **[Scope Resolution](src/scope_resolution.ts)** - Builds graphs from tree-sitter queries
+- **[Symbol Resolver](src/symbol_resolver.ts)** - Implements find definition/references
 
 ## Testing
 
@@ -83,7 +93,7 @@ Tests cover:
 
 - Basic symbol resolution within files
 - Cross-file imports and exports
-- TypeScript-specific features (generics, type parameters, etc.)
+- Language-specific features (generics, type parameters, etc.)
 - Renamed imports (`import { foo as bar }`)
 - Edge cases and error handling
 
@@ -106,6 +116,10 @@ The codebase uses snake_case for consistency with the original Rust implementati
 - Class names (PascalCase)
 - Type/Interface names (PascalCase)
 
+## Origin
+
+RefScope is a TypeScript port of the code intelligence engine from [bloop](https://github.com/BloopAI/bloop), an open source code search engine. It extracts and reimplements the scope resolution and symbol tracking functionality as a standalone library.
+
 ## License
 
-[Same as bloop project]
+MIT

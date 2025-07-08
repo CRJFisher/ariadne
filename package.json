@@ -1,7 +1,7 @@
 {
-  "name": "ts-tree-sitter",
-  "version": "1.0.0",
-  "description": "",
+  "name": "refscope",
+  "version": "0.1.0",
+  "description": "Find references and definitions in your codebase using tree-sitter",
   "main": "index.js",
   "scripts": {
     "test": "jest",
