@@ -40,12 +40,18 @@ export function build_scope_graph(
         let source_name: string | undefined;
         let module_path: string | undefined;
         
-        // If this is a renamed import, capture has 'renamed' suffix
-        if (parts[2] === 'renamed' && node.parent && node.parent.type === 'import_specifier') {
-          // Get the source name from the first child of import_specifier
+        // Check if this is part of a renamed import
+        if (node.parent && node.parent.type === 'import_specifier') {
           const import_spec = node.parent;
+          // Check if this import specifier has an 'as' keyword (renamed import)
+          // Structure: import_specifier [name "as" alias]
           if (import_spec.childCount >= 3) {
-            source_name = import_spec.child(0)?.text;
+            // Check if the current node is the alias (last child)
+            const lastChild = import_spec.child(import_spec.childCount - 1);
+            if (lastChild && lastChild.id === node.id) {
+              // This is the alias, so get the source name (first child)
+              source_name = import_spec.child(0)?.text;
+            }
           }
         }
         

@@ -91,7 +91,6 @@ export function find_definition(
 
   const graph = file_graphs.get(file_path);
   if (!graph) {
-    console.warn(`No graph found for file: ${file_path}`);
     return null;
   }
 
