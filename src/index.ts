@@ -4,13 +4,30 @@ import { find_all_references, find_definition } from './symbol_resolver';
 import { LanguageConfig } from './types';
 import { typescript_config } from './languages/typescript';
 import { javascript_config } from './languages/javascript';
+import { Edit } from './edit';
+import { Tree } from 'tree-sitter';
 import path from 'path';
+
+// Re-export important types
+export { Point, ScopeGraph, Def, Ref } from './graph';
+export { Edit } from './edit';
+export { LanguageConfig } from './types';
 
 /**
  * Manages the code intelligence for an entire project.
  */
+/**
+ * Cached file data for incremental parsing
+ */
+interface FileCache {
+  tree: Tree;
+  source_code: string;
+  graph: ScopeGraph;
+}
+
 export class Project {
   private file_graphs: Map<string, ScopeGraph> = new Map();
+  private file_cache: Map<string, FileCache> = new Map();
   private languages: Map<string, LanguageConfig> = new Map();
 
   constructor() {
@@ -43,17 +60,44 @@ export class Project {
    * Adds a file to the project or updates it if it already exists.
    * @param file_path - The unique path identifying the file.
    * @param source_code - The source code of the file.
+   * @param edit - Optional edit information for incremental parsing
    */
-  add_or_update_file(file_path: string, source_code: string) {
+  add_or_update_file(file_path: string, source_code: string, edit?: Edit) {
     const config = this.get_language_config(file_path);
     if (!config) {
       console.warn(`No language configuration found for file: ${file_path}`);
       return;
     }
 
-    const tree = config.parser.parse(source_code);
+    const cached = this.file_cache.get(file_path);
+    let tree: Tree;
+
+    if (cached && edit) {
+      // Incremental parsing
+      cached.tree.edit({
+        startIndex: edit.start_byte,
+        oldEndIndex: edit.old_end_byte,
+        newEndIndex: edit.new_end_byte,
+        startPosition: edit.start_position,
+        oldEndPosition: edit.old_end_position,
+        newEndPosition: edit.new_end_position,
+      });
+      
+      tree = config.parser.parse(source_code, cached.tree);
+    } else {
+      // Full parsing
+      tree = config.parser.parse(source_code);
+    }
+
     const graph = build_scope_graph(tree, config);
+    
+    // Update caches
     this.file_graphs.set(file_path, graph);
+    this.file_cache.set(file_path, {
+      tree,
+      source_code,
+      graph,
+    });
   }
 
   /**
@@ -62,6 +106,87 @@ export class Project {
    */
   remove_file(file_path: string) {
     this.file_graphs.delete(file_path);
+    this.file_cache.delete(file_path);
+  }
+
+  /**
+   * Updates a file with a text change at a specific position.
+   * This is a convenience method that calculates the edit automatically.
+   * @param file_path - The path of the file to update
+   * @param start_position - The position where the change starts
+   * @param old_text - The text being replaced
+   * @param new_text - The new text
+   */
+  update_file_range(
+    file_path: string,
+    start_position: Point,
+    old_text: string,
+    new_text: string
+  ) {
+    const cached = this.file_cache.get(file_path);
+    if (!cached) {
+      console.warn(`No cached data for incremental update of ${file_path}`);
+      return;
+    }
+
+    // Calculate byte offset from position
+    let byte_offset = 0;
+    let current_row = 0;
+    let current_col = 0;
+    
+    for (let i = 0; i < cached.source_code.length; i++) {
+      if (current_row === start_position.row && current_col === start_position.column) {
+        byte_offset = i;
+        break;
+      }
+      
+      if (cached.source_code[i] === '\n') {
+        current_row++;
+        current_col = 0;
+      } else {
+        current_col++;
+      }
+    }
+
+    // Calculate end positions
+    const old_end_position = this.calculate_end_position(start_position, old_text);
+    const new_end_position = this.calculate_end_position(start_position, new_text);
+
+    const edit: Edit = {
+      start_byte: byte_offset,
+      old_end_byte: byte_offset + Buffer.from(old_text).length,
+      new_end_byte: byte_offset + Buffer.from(new_text).length,
+      start_position,
+      old_end_position,
+      new_end_position,
+    };
+
+    // Apply the edit
+    const new_source = 
+      cached.source_code.slice(0, byte_offset) +
+      new_text +
+      cached.source_code.slice(byte_offset + old_text.length);
+
+    this.add_or_update_file(file_path, new_source, edit);
+  }
+
+  /**
+   * Helper to calculate end position given start position and text
+   */
+  private calculate_end_position(start: Point, text: string): Point {
+    let row = start.row;
+    let column = start.column;
+    
+    for (const char of text) {
+      if (char === '\n') {
+        row++;
+        column = 0;
+      } else {
+        column++;
+      }
+    }
+    
+    return { row, column };
   }
 
   /**

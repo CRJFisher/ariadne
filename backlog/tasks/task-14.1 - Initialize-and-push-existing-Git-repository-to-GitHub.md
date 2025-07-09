@@ -1,9 +1,11 @@
 ---
 id: task-14.1
 title: Initialize and push existing Git repository to GitHub
-status: To Do
-assignee: []
+status: Done
+assignee:
+  - '@claude'
 created_date: '2025-07-08'
+updated_date: '2025-07-08'
 labels:
   - infrastructure
   - deployment
@@ -25,3 +27,7 @@ Set up the existing Git repository in ts-tree-sitter directory as a separate rep
 - [ ] Push current branch to GitHub
 - [ ] Set up branch tracking
 - [ ] Verify repository is accessible on GitHub
+
+## Implementation Notes
+
+Repository already published to GitHub at https://github.com/CRJFisher/refscope

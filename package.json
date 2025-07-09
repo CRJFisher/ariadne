@@ -6,7 +6,8 @@
   "scripts": {
     "test": "jest",
     "build": "tsc",
-    "mcp-backlog": "node ./dist/mcp-backlog-server.js"
+    "mcp-backlog": "node ./dist/mcp-backlog-server.js",
+    "benchmark": "npm run build && node dist/benchmark-incremental.js"
   },
   "keywords": [],
   "author": "",
