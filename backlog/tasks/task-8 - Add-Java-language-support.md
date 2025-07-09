@@ -24,5 +24,5 @@ Implement Java language support for the tree-sitter code intelligence system. Ja
 - [ ] Handle Java-specific features: generics
 - [ ] Handle Java-specific features: annotations
 - [ ] Handle Java-specific features: inner and anonymous classes
-- [ ] Add full test coverage
+- [ ] Add full test coverage. Include the test cases the relevant language bloop server code (mod.rs)
 - [ ] Update documentation

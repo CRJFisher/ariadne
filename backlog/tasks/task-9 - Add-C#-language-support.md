@@ -24,5 +24,5 @@ Implement C# language support for the tree-sitter code intelligence system. C# i
 - [ ] Handle C#-specific features: async/await
 - [ ] Handle C#-specific features: LINQ queries
 - [ ] Handle C#-specific features: partial classes and methods
-- [ ] Add full test coverage
+- [ ] Add full test coverage. Include the test cases the relevant language bloop server code (mod.rs)
 - [ ] Update documentation

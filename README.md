@@ -8,6 +8,7 @@ Find references and definitions in your codebase using tree-sitter. RefScope pro
 - **Scope Resolution**: Builds a scope graph tracking definitions, references, imports, and lexical scopes
 - **Cross-file Symbol Resolution**: Find definitions and references across multiple files
 - **Multi-language Support**: Extensible architecture supporting JavaScript, TypeScript, and more
+- **Incremental Parsing**: Efficiently handles file edits by reusing unchanged AST portions
 - **Fast and Accurate**: Leverages tree-sitter's incremental parsing capabilities
 
 ## Quick Start
@@ -31,6 +32,14 @@ const definition = project.go_to_definition('src/main.ts', { row: 10, column: 15
 
 // Find all references to a symbol
 const references = project.find_references('src/utils.ts', { row: 5, column: 10 });
+
+// Incremental update for better performance
+project.update_file_range(
+  'src/main.ts',
+  { row: 10, column: 0 },
+  'const',
+  'let'
+);
 ```
 
 ## Supported Languages
@@ -50,6 +59,7 @@ const references = project.find_references('src/utils.ts', { row: 5, column: 10 
 - [How the Scope Mechanism Works](docs/scope-mechanism.md) - Detailed explanation of the scope resolution system
 - [Graph Structure and Algorithms](docs/graph-structure.md) - The underlying graph data structure
 - [Symbol Resolution](docs/symbol-resolution.md) - How cross-file symbol resolution works
+- [Incremental Parsing](docs/incremental-parsing.markdown) - Performance optimization for real-time editing
 
 ### Implementation Guides
 

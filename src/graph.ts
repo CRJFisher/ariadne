@@ -197,12 +197,12 @@ export class ScopeGraph {
       if (node.kind === 'scope') {
         const scope_range = node.range;
         // Check if the scope contains the given range
-        if (
-          scope_range.start.row <= range.start.row &&
-          scope_range.start.column <= range.start.column &&
-          scope_range.end.row >= range.end.row &&
-          scope_range.end.column >= range.end.column
-        ) {
+        const start_before = scope_range.start.row < range.start.row || 
+          (scope_range.start.row === range.start.row && scope_range.start.column <= range.start.column);
+        const end_after = scope_range.end.row > range.end.row || 
+          (scope_range.end.row === range.end.row && scope_range.end.column >= range.end.column);
+        
+        if (start_before && end_after) {
           const scope_size = (scope_range.end.row - scope_range.start.row) * 1000 + (scope_range.end.column - scope_range.start.column);
           if (scope_size < best_scope_size) {
             best_scope_id = node.id;

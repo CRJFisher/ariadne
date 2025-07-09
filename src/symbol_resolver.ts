@@ -50,7 +50,8 @@ export function find_all_references(
     // Find the definition this reference points to
     const defs = graph.getDefsForRef(node.id);
     if (defs.length > 0) {
-      // Use the first definition found
+      // When starting from a reference, recursively find all references
+      // starting from the definition (which will include the definition itself)
       return find_all_references(file_path, defs[0].range.start, file_graphs);
     }
 

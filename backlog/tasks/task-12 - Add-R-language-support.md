@@ -24,5 +24,5 @@ Implement R language support for the tree-sitter code intelligence system. R is 
 - [ ] Handle R-specific features: S3 and S4 object systems
 - [ ] Handle R-specific features: function environments
 - [ ] Handle R-specific features: non-standard evaluation
-- [ ] Add full test coverage
+- [ ] Add full test coverage. Include the test cases the relevant language bloop server code (mod.rs)
 - [ ] Update documentation

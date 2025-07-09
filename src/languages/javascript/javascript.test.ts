@@ -1,5 +1,6 @@
 import { test_scopes, ScopeDebug, debug_scope_graph } from '../../test_utils';
 import { Project } from '../../index';
+import { javascript_config } from '../javascript';
 
 describe('JavaScript parsing', () => {
   test('variable declarations and scoping', () => {
@@ -56,7 +57,69 @@ describe('JavaScript parsing', () => {
       ],
       imports: [],
       references: [],
-      child_scopes: [],
+      child_scopes: [
+        // testFunction declaration scope
+        {
+          definitions: [],
+          imports: [],
+          references: [],
+          child_scopes: [
+            // function body scope
+            {
+              definitions: [
+                {
+                  name: 'functionVar',
+                  kind: 'variable',
+                  context: 'var §functionVar§ = \'function\';',
+                  referenced_in: [
+                    'console.log(globalVar, §functionVar§, hoisted, blockLocal);'
+                  ],
+                },
+                {
+                  name: 'functionLet',
+                  kind: 'variable',
+                  context: 'let §functionLet§ = \'function let\';',
+                  referenced_in: [],
+                },
+              ],
+              imports: [],
+              references: [],
+              child_scopes: [
+                // if block scope
+                {
+                  definitions: [
+                    {
+                      name: 'hoisted',
+                      kind: 'variable',
+                      context: 'var §hoisted§ = \'hoisted\';',
+                      referenced_in: [
+                        'console.log(globalVar, functionVar, §hoisted§, blockLocal);'
+                      ],
+                    },
+                    {
+                      name: 'blockLocal',
+                      kind: 'variable',
+                      context: 'let §blockLocal§ = \'block local\';',
+                      referenced_in: [
+                        'console.log(globalVar, functionVar, hoisted, §blockLocal§);'
+                      ],
+                    },
+                    {
+                      name: 'blockConst',
+                      kind: 'constant',
+                      context: 'const §blockConst§ = \'const\';',
+                      referenced_in: [],
+                    },
+                  ],
+                  imports: [],
+                  references: [],
+                  child_scopes: [],
+                },
+              ],
+            },
+          ],
+        },
+      ],
     };
 
     test_scopes('javascript', source, expected);
@@ -136,7 +199,159 @@ describe('JavaScript parsing', () => {
       ],
       imports: [],
       references: [],
-      child_scopes: [],
+      child_scopes: [
+        {
+          definitions: [
+            {
+              name: 'param1',
+              kind: 'variable',
+              context: 'function namedFunction(§param1§, param2) {',
+              referenced_in: ['return §param1§ + param2;'],
+            },
+            {
+              name: 'param2',
+              kind: 'variable',
+              context: 'function namedFunction(param1, §param2§) {',
+              referenced_in: ['return param1 + §param2§;'],
+            },
+          ],
+          imports: [],
+          references: [],
+          child_scopes: [
+            {
+              definitions: [],
+              imports: [],
+              references: [],
+              child_scopes: [],
+            },
+          ],
+        },
+        {
+          definitions: [
+            {
+              name: 'a',
+              kind: 'variable',
+              context: 'const funcExpression = function(§a§, b) {',
+              referenced_in: ['return §a§ * b;'],
+            },
+            {
+              name: 'b',
+              kind: 'variable',
+              context: 'const funcExpression = function(a, §b§) {',
+              referenced_in: ['return a * §b§;'],
+            },
+          ],
+          imports: [],
+          references: [],
+          child_scopes: [
+            {
+              definitions: [],
+              imports: [],
+              references: [],
+              child_scopes: [],
+            },
+          ],
+        },
+        {
+          definitions: [
+            {
+              name: 'x',
+              kind: 'variable',
+              context: 'const arrowFunc = (§x§, y) => x - y;',
+              referenced_in: ['const arrowFunc = (x, y) => §x§ - y;'],
+            },
+            {
+              name: 'y',
+              kind: 'variable',
+              context: 'const arrowFunc = (x, §y§) => x - y;',
+              referenced_in: ['const arrowFunc = (x, y) => x - §y§;'],
+            },
+          ],
+          imports: [],
+          references: [],
+          child_scopes: [],
+        },
+        {
+          definitions: [
+            {
+              name: 'z',
+              kind: 'variable',
+              context: 'const singleParam = §z§ => z * 2;',
+              referenced_in: ['const singleParam = z => §z§ * 2;'],
+            },
+          ],
+          imports: [],
+          references: [],
+          child_scopes: [],
+        },
+        {
+          definitions: [
+            {
+              name: 'n',
+              kind: 'variable',
+              context: 'function* generator(§n§) {',
+              referenced_in: ['yield §n§;', 'yield §n§ + 1;'],
+            },
+          ],
+          imports: [],
+          references: [],
+          child_scopes: [
+            {
+              definitions: [],
+              imports: [],
+              references: [],
+              child_scopes: [],
+            },
+          ],
+        },
+        {
+          definitions: [
+            {
+              name: 'method',
+              kind: 'method',
+              context: '§method§(arg) {',
+              referenced_in: [],
+            },
+          ],
+          imports: [],
+          references: [],
+          child_scopes: [
+            {
+              definitions: [
+                {
+                  name: 'arg',
+                  kind: 'variable',
+                  context: 'method(§arg§) {',
+                  referenced_in: ['return §arg§;'],
+                },
+              ],
+              imports: [],
+              references: [],
+              child_scopes: [
+                {
+                  definitions: [],
+                  imports: [],
+                  references: [],
+                  child_scopes: [],
+                },
+              ],
+            },
+            {
+              definitions: [
+                {
+                  name: 'val',
+                  kind: 'variable',
+                  context: 'arrow: (§val§) => val * 2',
+                  referenced_in: ['arrow: (val) => §val§ * 2'],
+                },
+              ],
+              imports: [],
+              references: [],
+              child_scopes: [],
+            },
+          ],
+        },
+      ],
     };
 
     test_scopes('javascript', source, expected);
@@ -220,16 +435,52 @@ describe('JavaScript parsing', () => {
           context: 'import { Component as §BaseComponent§ } from \'react\';',
           referenced_in: [],
         },
+      ],
+      references: [],
+      child_scopes: [
         {
-          name: 'utils',
-          context: 'import * as §utils§ from \'./utils\';',
-          referenced_in: [
-            '§utils§.log(\'mounted\');'
+          definitions: [],
+          imports: [],
+          references: [],
+          child_scopes: [
+            {
+              definitions: [
+                {
+                  name: 'state',
+                  kind: 'constant',
+                  context: 'const [§state§, setState] = useState(0);',
+                  referenced_in: [
+                    'return React.createElement(\'div\', null, §state§);'
+                  ],
+                },
+                {
+                  name: 'setState',
+                  kind: 'constant',
+                  context: 'const [state, §setState§] = useState(0);',
+                  referenced_in: [],
+                },
+              ],
+              imports: [],
+              references: [],
+              child_scopes: [
+                {
+                  definitions: [],
+                  imports: [],
+                  references: [],
+                  child_scopes: [
+                    {
+                      definitions: [],
+                      imports: [],
+                      references: [],
+                      child_scopes: [],
+                    },
+                  ],
+                },
+              ],
+            },
           ],
         },
       ],
-      references: [],
-      child_scopes: [],
     };
 
     test_scopes('javascript', source, expected);
@@ -306,7 +557,146 @@ describe('JavaScript parsing', () => {
       ],
       imports: [],
       references: [],
-      child_scopes: [],
+      child_scopes: [
+        {
+          definitions: [
+            {
+              name: 'constructor',
+              kind: 'method',
+              context: '§constructor§(name) {',
+              referenced_in: [],
+            },
+            {
+              name: 'speak',
+              kind: 'method',
+              context: '§speak§() {',
+              referenced_in: [],
+            },
+          ],
+          imports: [],
+          references: [],
+          child_scopes: [
+            {
+              definitions: [
+                {
+                  name: 'name',
+                  kind: 'variable',
+                  context: 'constructor(§name§) {',
+                  referenced_in: ['this.name = §name§;'],
+                },
+              ],
+              imports: [],
+              references: [],
+              child_scopes: [
+                {
+                  definitions: [],
+                  imports: [],
+                  references: [],
+                  child_scopes: [],
+                },
+              ],
+            },
+            {
+              definitions: [],
+              imports: [],
+              references: [],
+              child_scopes: [
+                {
+                  definitions: [],
+                  imports: [],
+                  references: [],
+                  child_scopes: [],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          definitions: [
+            {
+              name: 'constructor',
+              kind: 'method',
+              context: '§constructor§(name, breed) {',
+              referenced_in: [],
+            },
+            {
+              name: 'speak',
+              kind: 'method',
+              context: '§speak§() {',
+              referenced_in: [],
+            },
+            {
+              name: 'createPuppy',
+              kind: 'method',
+              context: 'static §createPuppy§(name) {',
+              referenced_in: [],
+            },
+          ],
+          imports: [],
+          references: [],
+          child_scopes: [
+            {
+              definitions: [
+                {
+                  name: 'name',
+                  kind: 'variable',
+                  context: 'constructor(§name§, breed) {',
+                  referenced_in: ['super(§name§);'],
+                },
+                {
+                  name: 'breed',
+                  kind: 'variable',
+                  context: 'constructor(name, §breed§) {',
+                  referenced_in: ['this.breed = §breed§;'],
+                },
+              ],
+              imports: [],
+              references: [],
+              child_scopes: [
+                {
+                  definitions: [],
+                  imports: [],
+                  references: [],
+                  child_scopes: [],
+                },
+              ],
+            },
+            {
+              definitions: [],
+              imports: [],
+              references: [],
+              child_scopes: [
+                {
+                  definitions: [],
+                  imports: [],
+                  references: [],
+                  child_scopes: [],
+                },
+              ],
+            },
+            {
+              definitions: [
+                {
+                  name: 'name',
+                  kind: 'variable',
+                  context: 'static createPuppy(§name§) {',
+                  referenced_in: ['return new Dog(§name§, \'mixed\');'],
+                },
+              ],
+              imports: [],
+              references: [],
+              child_scopes: [
+                {
+                  definitions: [],
+                  imports: [],
+                  references: [],
+                  child_scopes: [],
+                },
+              ],
+            },
+          ],
+        },
+      ],
     };
 
     test_scopes('javascript', source, expected);
@@ -341,6 +731,12 @@ describe('JavaScript parsing', () => {
     const expected: ScopeDebug = {
       definitions: [
         {
+          name: 'rest',
+          kind: 'variable',
+          context: 'const [first, second, ...§rest§] = [1, 2, 3, 4, 5];',
+          referenced_in: [],
+        },
+        {
           name: 'first',
           kind: 'constant',
           context: 'const [§first§, second, ...rest] = [1, 2, 3, 4, 5];',
@@ -353,51 +749,23 @@ describe('JavaScript parsing', () => {
           referenced_in: [],
         },
         {
-          name: 'rest',
-          kind: 'constant',
-          context: 'const [first, second, ...§rest§] = [1, 2, 3, 4, 5];',
+          name: 'otherProps',
+          kind: 'variable',
+          context: 'const { name, age, ...§otherProps§ } = person;',
           referenced_in: [],
         },
         {
           name: 'name',
           kind: 'constant',
           context: 'const { §name§, age, ...otherProps } = person;',
-          referenced_in: [],
+          referenced_in: [
+            'console.log(id, §name§, email);'
+          ],
         },
         {
           name: 'age',
           kind: 'constant',
           context: 'const { name, §age§, ...otherProps } = person;',
-          referenced_in: [],
-        },
-        {
-          name: 'otherProps',
-          kind: 'constant',
-          context: 'const { name, age, ...§otherProps§ } = person;',
-          referenced_in: [],
-        },
-        {
-          name: 'street',
-          kind: 'constant',
-          context: 'const { address: { §street§, city } } = user;',
-          referenced_in: [],
-        },
-        {
-          name: 'city',
-          kind: 'constant',
-          context: 'const { address: { street, §city§ } } = user;',
-          referenced_in: [],
-        },
-        {
-          name: 'theme',
-          kind: 'constant',
-          context: 'const { §theme§ = \'light\', lang = \'en\' } = settings;',
-          referenced_in: [],
-        },
-        {
-          name: 'lang',
-          kind: 'constant',
-          context: 'const { theme = \'light\', §lang§ = \'en\' } = settings;',
           referenced_in: [],
         },
         {
@@ -420,33 +788,28 @@ describe('JavaScript parsing', () => {
         },
       ],
       imports: [],
-      references: [
+      references: [],
+      child_scopes: [
         {
-          name: 'person',
-          context: 'const { name, age, ...otherProps } = §person§;',
+          definitions: [],
+          imports: [],
+          references: [],
+          child_scopes: [
+            {
+              definitions: [],
+              imports: [],
+              references: [],
+              child_scopes: [],
+            },
+          ],
         },
         {
-          name: 'user',
-          context: 'const { address: { street, city } } = §user§;',
-        },
-        {
-          name: 'settings',
-          context: 'const { theme = \'light\', lang = \'en\' } = §settings§;',
-        },
-        {
-          name: 'arr1',
-          context: 'const combined = [...§arr1§, ...arr2];',
-        },
-        {
-          name: 'arr2',
-          context: 'const combined = [...arr1, ...§arr2§];',
-        },
-        {
-          name: 'base',
-          context: 'const extended = { ...§base§, extra: true };',
+          definitions: [],
+          imports: [],
+          references: [],
+          child_scopes: [],
         },
       ],
-      child_scopes: [],
     };
 
     test_scopes('javascript', source, expected);
@@ -502,17 +865,6 @@ describe('JavaScript parsing', () => {
     const expected: ScopeDebug = {
       definitions: [
         {
-          name: 'i',
-          kind: 'variable',
-          context: 'for (var §i§ = 0; i < 10; i++) {',
-          referenced_in: [
-            'for (var i = 0; §i§ < 10; i++) {',
-            'for (var i = 0; i < 10; §i§++) {',
-            'console.log(§i§);',
-            'console.log(§i§); // i is accessible here (var)'
-          ],
-        },
-        {
           name: 'count',
           kind: 'variable',
           context: 'let §count§ = 0;',
@@ -531,25 +883,201 @@ describe('JavaScript parsing', () => {
         },
       ],
       imports: [],
-      references: [
+      references: [],
+      child_scopes: [
         {
-          name: 'console',
-          context: expect.any(String),
+          definitions: [
+            {
+              name: 'i',
+              kind: 'variable',
+              context: 'for (var §i§ = 0; i < 10; i++) {',
+              referenced_in: [
+                'for (var i = 0; §i§ < 10; i++) {',
+                'for (var i = 0; i < 10; §i§++) {',
+                'console.log(§i§);'
+              ],
+            },
+          ],
+          imports: [],
+          references: [],
+          child_scopes: [
+            {
+              definitions: [],
+              imports: [],
+              references: [],
+              child_scopes: [],
+            },
+          ],
         },
         {
-          name: 'object',
-          context: 'for (const key in §object§) {',
+          definitions: [
+            {
+              name: 'j',
+              kind: 'variable',
+              context: 'for (let §j§ = 0; j < 10; j++) {',
+              referenced_in: [
+                'for (let j = 0; §j§ < 10; j++) {',
+                'for (let j = 0; j < 10; §j§++) {',
+                'console.log(§j§);'
+              ],
+            },
+          ],
+          imports: [],
+          references: [],
+          child_scopes: [
+            {
+              definitions: [],
+              imports: [],
+              references: [],
+              child_scopes: [],
+            },
+          ],
         },
         {
-          name: 'array',
-          context: 'for (const item of §array§) {',
+          definitions: [
+            {
+              name: 'key',
+              kind: 'variable',
+              context: 'for (const §key§ in object) {',
+              referenced_in: [
+                'console.log(§key§, object[key]);',
+                'console.log(key, object[§key§]);'
+              ],
+            },
+          ],
+          imports: [],
+          references: [],
+          child_scopes: [
+            {
+              definitions: [],
+              imports: [],
+              references: [],
+              child_scopes: [],
+            },
+          ],
         },
         {
-          name: 'riskyOperation',
-          context: '§riskyOperation§();',
+          definitions: [
+            {
+              name: 'item',
+              kind: 'variable',
+              context: 'for (const §item§ of array) {',
+              referenced_in: [
+                'console.log(§item§);'
+              ],
+            },
+          ],
+          imports: [],
+          references: [],
+          child_scopes: [
+            {
+              definitions: [],
+              imports: [],
+              references: [],
+              child_scopes: [],
+            },
+          ],
+        },
+        {
+          definitions: [],
+          imports: [],
+          references: [],
+          child_scopes: [],
+        },
+        {
+          definitions: [
+            {
+              name: 'x',
+              kind: 'variable',
+              context: 'outer: for (let §x§ = 0; x < 3; x++) {',
+              referenced_in: [
+                'outer: for (let x = 0; §x§ < 3; x++) {',
+                'outer: for (let x = 0; x < 3; §x§++) {',
+                'if (§x§ === 1 && y === 1) {',
+                'console.log(§x§, y);'
+              ],
+            },
+          ],
+          imports: [],
+          references: [],
+          child_scopes: [
+            {
+              definitions: [
+                {
+                  name: 'inner',
+                  kind: 'label',
+                  context: '§inner§: for (let y = 0; y < 3; y++) {',
+                  referenced_in: [],
+                },
+              ],
+              imports: [],
+              references: [],
+              child_scopes: [
+                {
+                  definitions: [
+                    {
+                      name: 'y',
+                      kind: 'variable',
+                      context: 'inner: for (let §y§ = 0; y < 3; y++) {',
+                      referenced_in: [
+                        'inner: for (let y = 0; §y§ < 3; y++) {',
+                        'inner: for (let y = 0; y < 3; §y§++) {',
+                        'if (x === 1 && §y§ === 1) {',
+                        'console.log(x, §y§);'
+                      ],
+                    },
+                  ],
+                  imports: [],
+                  references: [],
+                  child_scopes: [
+                    {
+                      definitions: [],
+                      imports: [],
+                      references: [],
+                      child_scopes: [
+                        {
+                          definitions: [],
+                          imports: [],
+                          references: [],
+                          child_scopes: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          definitions: [],
+          imports: [],
+          references: [],
+          child_scopes: [],
+        },
+        {
+          definitions: [
+            {
+              name: 'error',
+              kind: 'variable',
+              context: '} catch (§error§) {',
+              referenced_in: [
+                'console.error(§error§);'
+              ],
+            },
+          ],
+          imports: [],
+          references: [],
+          child_scopes: [
+            {
+              definitions: [],
+              imports: [],
+              references: [],
+              child_scopes: [],
+            },
+          ],
         },
       ],
-      child_scopes: [],
     };
 
     test_scopes('javascript', source, expected);
@@ -607,7 +1135,21 @@ describe('JavaScript parsing', () => {
         },
       ],
       references: [],
-      child_scopes: [],
+      child_scopes: [
+        {
+          definitions: [],
+          imports: [],
+          references: [],
+          child_scopes: [
+            {
+              definitions: [],
+              imports: [],
+              references: [],
+              child_scopes: [],
+            },
+          ],
+        },
+      ],
     };
 
     test_scopes('javascript', source, expected);
@@ -646,7 +1188,85 @@ describe('JavaScript parsing', () => {
       ],
       imports: [],
       references: [],
-      child_scopes: [],
+      child_scopes: [
+        {
+          definitions: [
+            {
+              name: '#privateField',
+              kind: 'property',
+              context: '§#privateField§;',
+              referenced_in: [],
+            },
+            {
+              name: '#privateStatic',
+              kind: 'property',
+              context: 'static §#privateStatic§;',
+              referenced_in: [],
+            },
+            {
+              name: 'constructor',
+              kind: 'method',
+              context: '§constructor§() {',
+              referenced_in: [],
+            },
+            {
+              name: 'getPrivate',
+              kind: 'method',
+              context: '§getPrivate§() {',
+              referenced_in: [],
+            },
+            {
+              name: 'getStatic',
+              kind: 'method',
+              context: 'static §getStatic§() {',
+              referenced_in: [],
+            },
+          ],
+          imports: [],
+          references: [],
+          child_scopes: [
+            {
+              definitions: [],
+              imports: [],
+              references: [],
+              child_scopes: [
+                {
+                  definitions: [],
+                  imports: [],
+                  references: [],
+                  child_scopes: [],
+                },
+              ],
+            },
+            {
+              definitions: [],
+              imports: [],
+              references: [],
+              child_scopes: [
+                {
+                  definitions: [],
+                  imports: [],
+                  references: [],
+                  child_scopes: [],
+                },
+              ],
+            },
+            {
+              definitions: [],
+              imports: [],
+              references: [],
+              child_scopes: [
+                {
+                  definitions: [],
+                  imports: [],
+                  references: [],
+                  child_scopes: [],
+                },
+              ],
+            },
+          ],
+        },
+      ],
     };
 
     test_scopes('javascript', source, expected);
@@ -725,7 +1345,14 @@ describe('JavaScript parsing', () => {
       ],
       imports: [],
       references: [],
-      child_scopes: [],
+      child_scopes: [
+        {
+          definitions: [],
+          imports: [],
+          references: [],
+          child_scopes: [],
+        },
+      ],
     };
 
     test_scopes('javascript', source, expected);
@@ -814,13 +1441,114 @@ describe('JavaScript parsing', () => {
         },
       ],
       imports: [],
-      references: [
+      references: [],
+      child_scopes: [
         {
-          name: 'console',
-          context: expect.any(String),
+          definitions: [],
+          imports: [],
+          references: [],
+          child_scopes: [
+            {
+              definitions: [],
+              imports: [],
+              references: [],
+              child_scopes: [],
+            },
+          ],
+        },
+        {
+          definitions: [],
+          imports: [],
+          references: [],
+          child_scopes: [
+            {
+              definitions: [
+                {
+                  name: 'count',
+                  kind: 'variable',
+                  context: 'let §count§ = 0;',
+                  referenced_in: [
+                    '§count§++;',
+                    'return §count§;',
+                    '§count§--;',
+                    'return §count§;',
+                    'return §count§;'
+                  ],
+                },
+              ],
+              imports: [],
+              references: [],
+              child_scopes: [
+                {
+                  definitions: [
+                    {
+                      name: 'increment',
+                      kind: 'method',
+                      context: '§increment§() {',
+                      referenced_in: [],
+                    },
+                    {
+                      name: 'decrement',
+                      kind: 'method',
+                      context: '§decrement§() {',
+                      referenced_in: [],
+                    },
+                    {
+                      name: 'getCount',
+                      kind: 'method',
+                      context: '§getCount§() {',
+                      referenced_in: [],
+                    },
+                  ],
+                  imports: [],
+                  references: [],
+                  child_scopes: [
+                    {
+                      definitions: [],
+                      imports: [],
+                      references: [],
+                      child_scopes: [
+                        {
+                          definitions: [],
+                          imports: [],
+                          references: [],
+                          child_scopes: [],
+                        },
+                      ],
+                    },
+                    {
+                      definitions: [],
+                      imports: [],
+                      references: [],
+                      child_scopes: [
+                        {
+                          definitions: [],
+                          imports: [],
+                          references: [],
+                          child_scopes: [],
+                        },
+                      ],
+                    },
+                    {
+                      definitions: [],
+                      imports: [],
+                      references: [],
+                      child_scopes: [
+                        {
+                          definitions: [],
+                          imports: [],
+                          references: [],
+                          child_scopes: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
       ],
-      child_scopes: [],
     };
 
     test_scopes('javascript', source, expected);

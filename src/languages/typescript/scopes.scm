@@ -10,8 +10,8 @@
   (class_body)
   (arrow_function)
   (object)
-  ;; nameless functions create scopes, just like arrow functions
-  (function !name)
+  ;; anonymous function expressions create scopes, just like arrow functions
+  (function_expression)
   (function_declaration)
   (generator_function_declaration)
   (for_statement)

@@ -24,5 +24,5 @@ Implement C++ language support for the tree-sitter code intelligence system. C++
 - [ ] Handle C++-specific features: namespaces
 - [ ] Handle C++-specific features: operator overloading
 - [ ] Handle C++-specific features: references and rvalue references
-- [ ] Add full test coverage
+- [ ] Add full test coverage. Include the test cases the relevant language bloop server code (mod.rs)
 - [ ] Update documentation

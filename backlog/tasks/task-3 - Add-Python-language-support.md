@@ -25,7 +25,7 @@ Implement Python language support following the language configuration guide. Py
 - [ ] Handle Python-specific features: decorators
 - [ ] Handle Python-specific features: import system
 - [ ] Handle Python-specific features: global and nonlocal keywords
-- [ ] Add full test coverage
+- [ ] Add full test coverage. Include the test cases the relevant language bloop server code (mod.rs)
 - [ ] Update documentation
 
 ## Implementation Notes

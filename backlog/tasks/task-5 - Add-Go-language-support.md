@@ -24,5 +24,5 @@ Implement Go language support for the tree-sitter code intelligence system. Go i
 - [ ] Handle Go-specific features: package system
 - [ ] Handle Go-specific features: defer statements
 - [ ] Handle Go-specific features: multiple return values
-- [ ] Add full test coverage
+- [ ] Add full test coverage. Include the test cases the relevant language bloop server code (mod.rs)
 - [ ] Update documentation

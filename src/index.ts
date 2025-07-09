@@ -134,13 +134,13 @@ export class Project {
     let current_row = 0;
     let current_col = 0;
     
-    for (let i = 0; i < cached.source_code.length; i++) {
+    for (let i = 0; i <= cached.source_code.length; i++) {
       if (current_row === start_position.row && current_col === start_position.column) {
         byte_offset = i;
         break;
       }
       
-      if (cached.source_code[i] === '\n') {
+      if (i < cached.source_code.length && cached.source_code[i] === '\n') {
         current_row++;
         current_col = 0;
       } else {

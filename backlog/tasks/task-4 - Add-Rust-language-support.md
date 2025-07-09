@@ -24,5 +24,5 @@ Implement Rust language support for the tree-sitter code intelligence system. Ru
 - [ ] Handle Rust-specific features: traits and generics
 - [ ] Handle Rust-specific features: modules and crates
 - [ ] Handle Rust-specific features: macros
-- [ ] Add full test coverage
+- [ ] Add full test coverage. Include the test cases the relevant language bloop server code (mod.rs)
 - [ ] Update documentation

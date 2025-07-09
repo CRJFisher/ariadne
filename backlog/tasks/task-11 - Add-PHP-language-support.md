@@ -24,5 +24,5 @@ Implement PHP language support for the tree-sitter code intelligence system. PHP
 - [ ] Handle PHP-specific features: variable variables
 - [ ] Handle PHP-specific features: magic methods
 - [ ] Handle PHP-specific features: type declarations
-- [ ] Add full test coverage
+- [ ] Add full test coverage. Include the test cases the relevant language bloop server code (mod.rs)
 - [ ] Update documentation

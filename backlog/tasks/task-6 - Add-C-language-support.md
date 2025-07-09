@@ -23,5 +23,5 @@ Implement C language support for the tree-sitter code intelligence system. C is 
 - [ ] Handle C-specific features: function pointers
 - [ ] Handle C-specific features: struct and union types
 - [ ] Handle C-specific features: header files and includes
-- [ ] Add full test coverage
+- [ ] Add full test coverage. Include the test cases the relevant language bloop server code (mod.rs)
 - [ ] Update documentation

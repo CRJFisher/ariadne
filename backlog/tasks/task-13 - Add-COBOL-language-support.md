@@ -24,5 +24,5 @@ Implement COBOL language support for the tree-sitter code intelligence system. C
 - [ ] Handle COBOL-specific features: procedure division
 - [ ] Handle COBOL-specific features: COPY statements
 - [ ] Handle COBOL-specific features: level numbers and data structures
-- [ ] Add full test coverage
+- [ ] Add full test coverage. Include the test cases the relevant language bloop server code (mod.rs)
 - [ ] Update documentation

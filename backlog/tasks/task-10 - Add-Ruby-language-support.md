@@ -24,5 +24,5 @@ Implement Ruby language support for the tree-sitter code intelligence system. Ru
 - [ ] Handle Ruby-specific features: metaprogramming
 - [ ] Handle Ruby-specific features: symbols
 - [ ] Handle Ruby-specific features: class reopening
-- [ ] Add full test coverage
+- [ ] Add full test coverage. Include the test cases the relevant language bloop server code (mod.rs)
 - [ ] Update documentation
