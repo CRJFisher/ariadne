@@ -4,6 +4,7 @@ import { find_all_references, find_definition } from './symbol_resolver';
 import { LanguageConfig } from './types';
 import { typescript_config } from './languages/typescript';
 import { javascript_config } from './languages/javascript';
+import { python_config } from './languages/python';
 import { Edit } from './edit';
 import { Tree } from 'tree-sitter';
 import path from 'path';
@@ -34,6 +35,7 @@ export class Project {
     // Register available languages
     this.register_language(typescript_config);
     this.register_language(javascript_config);
+    this.register_language(python_config);
     // TODO: Add other languages as they are implemented
   }
 

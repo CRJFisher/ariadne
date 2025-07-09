@@ -46,7 +46,7 @@ project.update_file_range(
 
 - ✅ JavaScript (including JSX)
 - ✅ TypeScript (including TSX)
-- 🚧 Python (coming soon)
+- ✅ Python
 - 🚧 Rust (coming soon)
 - 🚧 Go (coming soon)
 - 🚧 Java (coming soon)
@@ -59,7 +59,7 @@ project.update_file_range(
 - [How the Scope Mechanism Works](docs/scope-mechanism.md) - Detailed explanation of the scope resolution system
 - [Graph Structure and Algorithms](docs/graph-structure.md) - The underlying graph data structure
 - [Symbol Resolution](docs/symbol-resolution.md) - How cross-file symbol resolution works
-- [Incremental Parsing](docs/incremental-parsing.markdown) - Performance optimization for real-time editing
+- [Incremental Parsing](docs/incremental-parsing.md) - Performance optimization for real-time editing
 
 ### Implementation Guides
 
