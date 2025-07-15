@@ -12,11 +12,31 @@ function initialize_parser(): Parser {
   return parser;
 }
 
+// Try multiple paths to find the scopes.scm file
+function get_scope_query(): string {
+  const possible_paths = [
+    path.join(__dirname, 'scopes.scm'),
+    path.join(__dirname, '..', '..', '..', 'src', 'languages', 'javascript', 'scopes.scm'),
+    path.join(process.cwd(), 'src', 'languages', 'javascript', 'scopes.scm'),
+    path.join(process.cwd(), 'dist', 'languages', 'javascript', 'scopes.scm'),
+  ];
+  
+  for (const p of possible_paths) {
+    try {
+      return fs.readFileSync(p, 'utf8');
+    } catch (e) {
+      // Continue to next path
+    }
+  }
+  
+  throw new Error(`Could not find scopes.scm for JavaScript. Tried paths: ${possible_paths.join(', ')}`);
+}
+
 export const javascript_config: LanguageConfig = {
   name: 'javascript',
   file_extensions: ['js', 'mjs', 'cjs', 'jsx'],
   parser: initialize_parser(),
-  scope_query: fs.readFileSync(path.join(__dirname, 'scopes.scm'), 'utf8'),
+  scope_query: get_scope_query(),
   namespaces: [
     [
       // functions

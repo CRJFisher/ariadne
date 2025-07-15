@@ -10,6 +10,10 @@ export function build_scope_graph(
   tree: Tree,
   config: LanguageConfig,
 ): ScopeGraph {
+  if (!tree || !tree.rootNode) {
+    throw new Error(`Failed to parse tree for language ${config.name}: tree or rootNode is undefined`);
+  }
+  
   const graph = new ScopeGraph(tree.rootNode, config.name);
   const query = new Query(config.parser.getLanguage(), config.scope_query);
   const matches = query.matches(tree.rootNode);

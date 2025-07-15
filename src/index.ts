@@ -91,6 +91,11 @@ export class Project {
       tree = config.parser.parse(source_code);
     }
 
+    if (!tree || !tree.rootNode) {
+      console.error(`Failed to parse ${file_path} with ${config.name} parser`);
+      return;
+    }
+
     const graph = build_scope_graph(tree, config);
     
     // Update caches

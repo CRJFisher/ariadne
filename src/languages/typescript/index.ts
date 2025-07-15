@@ -13,11 +13,31 @@ function initialize_parser(): Parser {
   return parser;
 }
 
+// Try multiple paths to find the scopes.scm file
+function get_scope_query(): string {
+  const possible_paths = [
+    path.join(__dirname, 'scopes.scm'),
+    path.join(__dirname, '..', '..', '..', 'src', 'languages', 'typescript', 'scopes.scm'),
+    path.join(process.cwd(), 'src', 'languages', 'typescript', 'scopes.scm'),
+    path.join(process.cwd(), 'dist', 'languages', 'typescript', 'scopes.scm'),
+  ];
+  
+  for (const p of possible_paths) {
+    try {
+      return fs.readFileSync(p, 'utf8');
+    } catch (e) {
+      // Continue to next path
+    }
+  }
+  
+  throw new Error(`Could not find scopes.scm for TypeScript. Tried paths: ${possible_paths.join(', ')}`);
+}
+
 export const typescript_config: LanguageConfig = {
   name: 'typescript',
   file_extensions: ['ts', 'tsx'],
   parser: initialize_parser(),
-  scope_query: fs.readFileSync(path.join(__dirname, 'scopes.scm'), 'utf8'),
+  scope_query: get_scope_query(),
   namespaces: [
     [
       // functions
