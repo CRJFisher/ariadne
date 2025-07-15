@@ -7,7 +7,6 @@ The root directory is the `bloop` and my app is in `apps/ts-tree-sitter`. The on
 ## Rules
 
 - Use snake_case for all typescript names other than class names.
-- When creating markdown files, use the '.markdown' extension.
 
 <!-- BACKLOG.MD GUIDELINES START -->
 # Instructions for the usage of Backlog.md CLI Tool

@@ -11,11 +11,13 @@ Find references and definitions in your codebase using tree-sitter. RefScope pro
 - **Incremental Parsing**: Efficiently handles file edits by reusing unchanged AST portions
 - **Fast and Accurate**: Leverages tree-sitter's incremental parsing capabilities
 
-## Quick Start
+## Installation
 
 ```bash
 npm install refscope
 ```
+
+## Quick Start
 
 ```typescript
 import { Project } from 'refscope';
@@ -40,6 +42,63 @@ project.update_file_range(
   'const',
   'let'
 );
+```
+
+## API Reference
+
+### `Project`
+
+The main class for managing code intelligence across multiple files.
+
+#### Methods
+
+##### `add_or_update_file(file_path: string, source_code: string, edit?: Edit): void`
+
+Adds a new file or updates an existing file in the project.
+
+- `file_path` - Unique identifier for the file
+- `source_code` - The complete source code of the file
+- `edit` - Optional edit information for incremental parsing
+
+##### `remove_file(file_path: string): void`
+
+Removes a file from the project.
+
+##### `go_to_definition(file_path: string, position: Point): Def | null`
+
+Finds the definition of a symbol at the given position.
+
+- Returns `Def` object with file path and position, or `null` if not found
+
+##### `find_references(file_path: string, position: Point): Ref[]`
+
+Finds all references to the symbol at the given position across all files.
+
+- Returns array of `Ref` objects, each containing file path and position
+
+##### `update_file_range(file_path: string, start_position: Point, old_text: string, new_text: string): void`
+
+Efficiently updates a portion of a file using incremental parsing.
+
+### Types
+
+```typescript
+interface Point {
+  row: number;    // 0-indexed line number
+  column: number; // 0-indexed column number
+}
+
+interface Def {
+  file: string;
+  start: Point;
+  end: Point;
+}
+
+interface Ref {
+  file: string;
+  start: Point;
+  end: Point;
+}
 ```
 
 ## Supported Languages

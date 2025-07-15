@@ -4,6 +4,9 @@
         "module": "commonjs",
         "rootDir": "./src",
         "outDir": "./dist",
+        "declaration": true,
+        "declarationMap": true,
+        "sourceMap": true,
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "strict": true,
@@ -11,5 +14,14 @@
     },
     "include": [
         "src/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "**/*.test.ts",
+        "src/test_utils.ts",
+        "src/benchmark-incremental.ts",
+        "src/debug-*.ts",
+        "src/test-*.ts"
     ]
 }
