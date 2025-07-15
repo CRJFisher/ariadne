@@ -39,6 +39,9 @@
     "url": "https://github.com/chuck/refscope/issues"
   },
   "homepage": "https://github.com/chuck/refscope#readme",
+  "engines": {
+    "node": ">=18.14.0"
+  },
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.10",
