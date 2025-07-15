@@ -10,6 +10,10 @@ function initialize_parser(): Parser {
   // the peer dependency conflict between tree-sitter and tree-sitter-typescript.
   // Use tsx language which includes TypeScript + JSX support
   parser.setLanguage(TypeScript.tsx as any);
+  
+  // Set a reasonable timeout (default is very low)
+  parser.setTimeoutMicros(5000000); // 5 seconds
+  
   return parser;
 }
 

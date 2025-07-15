@@ -88,13 +88,29 @@ export class Project {
       tree = config.parser.parse(source_code, cached.tree);
     } else {
       // Full parsing
-      tree = config.parser.parse(source_code);
+      // Set a longer timeout for CI environments
+      const oldTimeout = config.parser.getTimeoutMicros();
+      config.parser.setTimeoutMicros(10000000); // 10 seconds
+      
+      try {
+        tree = config.parser.parse(source_code);
+      } finally {
+        // Restore original timeout
+        config.parser.setTimeoutMicros(oldTimeout);
+      }
     }
 
-    if (!tree || !tree.rootNode) {
-      console.error(`Failed to parse ${file_path} with ${config.name} parser`);
-      console.error(`Tree exists: ${!!tree}, RootNode exists: ${tree ? !!tree.rootNode : 'N/A'}`);
-      console.error(`Parser language: ${config.parser.getLanguage() ? 'loaded' : 'not loaded'}`);
+    // Handle edge case where parse returns a tree without rootNode
+    if (!tree) {
+      console.error(`Parser returned null tree for ${file_path} with ${config.name} parser`);
+      return;
+    }
+    
+    if (!tree.rootNode) {
+      // This typically means parsing timed out
+      console.error(`Parse timeout for ${file_path} with ${config.name} parser`);
+      console.error(`Source code length: ${source_code.length}`);
+      console.error(`Try increasing parser timeout or check if language files are properly loaded`);
       return;
     }
 

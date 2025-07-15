@@ -6,9 +6,25 @@ import { LanguageConfig } from '../../types';
 
 function initialize_parser(): Parser {
   const parser = new Parser();
-  // We use `as any` here to bypass a type mismatch caused by
-  // the peer dependency conflict between tree-sitter and tree-sitter-python.
-  parser.setLanguage(Python as any);
+  try {
+    // We use `as any` here to bypass a type mismatch caused by
+    // the peer dependency conflict between tree-sitter and tree-sitter-python.
+    parser.setLanguage(Python as any);
+    
+    // Verify the language was set correctly
+    const lang = parser.getLanguage();
+    if (!lang) {
+      throw new Error('Language was not set correctly');
+    }
+    
+    // Set a reasonable timeout (default is very low)
+    parser.setTimeoutMicros(5000000); // 5 seconds
+  } catch (e) {
+    console.error('Failed to set Python language:', e);
+    console.error('Python module:', Python);
+    console.error('Platform:', process.platform, 'Arch:', process.arch);
+    throw e;
+  }
   return parser;
 }
 

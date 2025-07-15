@@ -9,6 +9,10 @@ function initialize_parser(): Parser {
   // We use `as any` here to bypass a type mismatch caused by
   // the peer dependency conflict between tree-sitter and tree-sitter-javascript.
   parser.setLanguage(JavaScript as any);
+  
+  // Set a reasonable timeout (default is very low)
+  parser.setTimeoutMicros(5000000); // 5 seconds
+  
   return parser;
 }
 
