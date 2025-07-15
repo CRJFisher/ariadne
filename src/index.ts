@@ -93,6 +93,8 @@ export class Project {
 
     if (!tree || !tree.rootNode) {
       console.error(`Failed to parse ${file_path} with ${config.name} parser`);
+      console.error(`Tree exists: ${!!tree}, RootNode exists: ${tree ? !!tree.rootNode : 'N/A'}`);
+      console.error(`Parser language: ${config.parser.getLanguage() ? 'loaded' : 'not loaded'}`);
       return;
     }
 
