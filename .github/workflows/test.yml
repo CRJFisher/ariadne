@@ -66,6 +66,12 @@ jobs:
         run: |
           npm run build
           node scripts/test-parsers-direct.js
+          
+      - name: Test Jest Simulation
+        run: node scripts/test-jest-simulation.js
+        
+      - name: Test with Minimal Jest Config
+        run: npx jest --config jest.config.minimal.js
         
       - name: Run tests
         run: npx jest --runInBand --verbose
