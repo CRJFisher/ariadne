@@ -28,64 +28,27 @@ function initialize_parser(): Parser {
   return parser;
 }
 
-// Try multiple paths to find the scopes.scm file
+// Simple, reliable asset loading
 function get_scope_query(): string {
-  const possible_paths = [
-    // When running from compiled dist/
-    path.join(__dirname, "scopes.scm"),
-    // When running from source during tests
-    path.join(
-      __dirname,
-      "..",
-      "..",
-      "..",
-      "src",
-      "languages",
-      "python",
-      "scopes.scm"
-    ),
-    // Direct source path (for Jest tests)
-    path.join(process.cwd(), "src", "languages", "python", "scopes.scm"),
-    // Alternative source path for different working directories
-    path.resolve(__dirname, "scopes.scm"),
-    path.resolve(__dirname, "../../../src/languages/python/scopes.scm"),
-    // Dist path
-    path.join(process.cwd(), "dist", "languages", "python", "scopes.scm"),
-  ];
+  // Try the standard location first (works in both dev and dist)
+  const scopePath = path.join(__dirname, "scopes.scm");
 
-  for (const p of possible_paths) {
-    try {
-      if (fs.existsSync(p)) {
-        console.log(`Python: Found scopes.scm at ${p}`);
-        return fs.readFileSync(p, "utf8");
-      }
-    } catch (e) {
-      // Continue to next path
-    }
-  }
-
-  // Final attempt: look for scopes.scm in the same directory as this file's source
-  const sourceDir = path.dirname(__filename.replace(/\.js$/, ".ts"));
-  const sourcePath = path.join(sourceDir, "scopes.scm");
   try {
-    if (fs.existsSync(sourcePath)) {
-      return fs.readFileSync(sourcePath, "utf8");
-    }
+    return fs.readFileSync(scopePath, "utf8");
   } catch (e) {
-    // Ignore
+    // Fallback for test environments - look in source directory
+    const sourcePath = path.join(
+      __dirname,
+      "../../../src/languages/python/scopes.scm"
+    );
+    try {
+      return fs.readFileSync(sourcePath, "utf8");
+    } catch (e2) {
+      throw new Error(
+        `Could not find scopes.scm for Python. Tried: ${scopePath}, ${sourcePath}`
+      );
+    }
   }
-
-  console.error('Python: scopes.scm not found in any of these paths:');
-  possible_paths.forEach(p => console.error(`  - ${p} (exists: ${fs.existsSync(p)})`));
-  console.error(`Python: __dirname = ${__dirname}`);
-  console.error(`Python: __filename = ${__filename}`);
-  console.error(`Python: process.cwd() = ${process.cwd()}`);
-  
-  throw new Error(
-    `Could not find scopes.scm for Python. Tried paths: ${possible_paths.join(
-      ", "
-    )}`
-  );
 }
 
 export const python_config: LanguageConfig = {

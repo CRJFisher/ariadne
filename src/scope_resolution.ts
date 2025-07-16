@@ -1,6 +1,6 @@
-import { Tree, Query } from 'tree-sitter';
-import { ScopeGraph, Def, Scope, Ref, Import } from './graph';
-import { LanguageConfig } from './types';
+import { Tree, Query } from "tree-sitter";
+import { ScopeGraph, Def, Scope, Ref, Import } from "./graph";
+import { LanguageConfig } from "./types";
 
 /**
  * The equivalent of `scope_res_generic`.
@@ -8,20 +8,27 @@ import { LanguageConfig } from './types';
  */
 export function build_scope_graph(
   tree: Tree,
-  config: LanguageConfig,
+  config: LanguageConfig
 ): ScopeGraph {
   if (!tree || !tree.rootNode) {
-    throw new Error(`Failed to parse tree for language ${config.name}: tree or rootNode is undefined`);
+    throw new Error(
+      `Failed to parse tree for language ${config.name}: tree or rootNode is undefined`
+    );
   }
-  
+
   const graph = new ScopeGraph(tree.rootNode, config.name);
+
   const query = new Query(config.parser.getLanguage(), config.scope_query);
   const matches = query.matches(tree.rootNode);
 
   // Collect all captures by type
   const scope_captures: Array<{ node: any }> = [];
   const def_captures: Array<{ node: any; scoping: string; kind: string }> = [];
-  const import_captures: Array<{ node: any; source_name?: string; module?: string }> = [];
+  const import_captures: Array<{
+    node: any;
+    source_name?: string;
+    module?: string;
+  }> = [];
   const ref_captures: Array<{ node: any; symbol_kind?: string }> = [];
 
   // First pass: categorize all captures
@@ -29,23 +36,23 @@ export function build_scope_graph(
     for (const capture of match.captures) {
       const capture_name = capture.name;
       const node = capture.node;
-      const parts = capture_name.split('.');
+      const parts = capture_name.split(".");
 
       const scoping = parts[0];
       const node_type = parts[1];
 
-      if (node_type === 'scope') {
+      if (node_type === "scope") {
         scope_captures.push({ node });
-      } else if (node_type === 'definition') {
-        const kind = parts[2] || 'none';  // Default to 'none' if no kind specified
+      } else if (node_type === "definition") {
+        const kind = parts[2] || "none"; // Default to 'none' if no kind specified
         def_captures.push({ node, scoping, kind });
-      } else if (node_type === 'import') {
+      } else if (node_type === "import") {
         // Check if this is a renamed import by looking at the parent node
         let source_name: string | undefined;
         let module_path: string | undefined;
-        
+
         // Check if this is part of a renamed import
-        if (node.parent && node.parent.type === 'import_specifier') {
+        if (node.parent && node.parent.type === "import_specifier") {
           const import_spec = node.parent;
           // Check if this import specifier has an 'as' keyword (renamed import)
           // Structure: import_specifier [name "as" alias]
@@ -58,39 +65,45 @@ export function build_scope_graph(
             }
           }
         }
-        
+
         // Try to find the module path from the import statement
         let current = node.parent;
-        while (current && current.type !== 'import_statement') {
+        while (current && current.type !== "import_statement") {
           current = current.parent;
         }
-        if (current && current.type === 'import_statement') {
+        if (current && current.type === "import_statement") {
           // Find the string node (module path)
           for (let i = 0; i < current.childCount; i++) {
             const child = current.child(i);
-            if (child && child.type === 'string') {
+            if (child && child.type === "string") {
               // Remove quotes from the string
               module_path = child.text.slice(1, -1);
               break;
             }
           }
         }
-        
+
         import_captures.push({ node, source_name, module: module_path });
-      } else if (node_type === 'reference') {
+      } else if (node_type === "reference") {
         const symbol_kind = parts[2];
         ref_captures.push({ node, symbol_kind });
       }
     }
   }
 
+  if (process.env.CI) {
+    console.log(
+      `ScopeGraph: Captures found - scopes: ${scope_captures.length}, defs: ${def_captures.length}, imports: ${import_captures.length}, refs: ${ref_captures.length}`
+    );
+  }
+
   // Second pass: process captures in order (scopes, then defs, then imports, then refs)
-  
+
   // 1. Process scopes first
   for (const { node } of scope_captures) {
     const new_scope: Scope = {
       id: graph.get_next_node_id(),
-      kind: 'scope',
+      kind: "scope",
       range: graph.node_to_simple_range(node),
     };
     graph.insert_local_scope(new_scope);
@@ -113,17 +126,17 @@ export function build_scope_graph(
       // Still create the definition with 'none' as the kind
       const new_def: Def = {
         id: graph.get_next_node_id(),
-        kind: 'definition',
+        kind: "definition",
         name: node.text,
-        symbol_kind: 'none',
+        symbol_kind: "none",
         range: graph.node_to_simple_range(node),
       };
 
-      if (scoping === 'local') {
+      if (scoping === "local") {
         graph.insert_local_def(new_def);
-      } else if (scoping === 'hoist') {
+      } else if (scoping === "hoist") {
         graph.insert_hoisted_def(new_def);
-      } else if (scoping === 'global') {
+      } else if (scoping === "global") {
         graph.insert_global_def(new_def);
       }
       continue;
@@ -131,17 +144,17 @@ export function build_scope_graph(
 
     const new_def: Def = {
       id: graph.get_next_node_id(),
-      kind: 'definition',
+      kind: "definition",
       name: node.text,
       symbol_kind: kind,
       range: graph.node_to_simple_range(node),
     };
 
-    if (scoping === 'local') {
+    if (scoping === "local") {
       graph.insert_local_def(new_def);
-    } else if (scoping === 'hoist') {
+    } else if (scoping === "hoist") {
       graph.insert_hoisted_def(new_def);
-    } else if (scoping === 'global') {
+    } else if (scoping === "global") {
       graph.insert_global_def(new_def);
     }
   }
@@ -150,7 +163,7 @@ export function build_scope_graph(
   for (const { node, source_name, module } of import_captures) {
     const new_import: Import = {
       id: graph.get_next_node_id(),
-      kind: 'import',
+      kind: "import",
       name: node.text,
       source_name: source_name,
       source_module: module,
@@ -163,7 +176,7 @@ export function build_scope_graph(
   for (const { node, symbol_kind } of ref_captures) {
     const new_ref: Ref = {
       id: graph.get_next_node_id(),
-      kind: 'reference',
+      kind: "reference",
       name: node.text,
       symbol_kind: symbol_kind,
       range: graph.node_to_simple_range(node),
