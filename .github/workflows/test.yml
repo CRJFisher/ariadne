@@ -23,8 +23,36 @@ jobs:
           node-version: ${{ matrix.node-version }}
           
       - name: Install dependencies
-        run: npm ci
-        
+        run: npm ci --verbose &> npm_ci_log.txt
+
+      - name: Inspect Build Environment
+        run: |
+          echo "--- Node.js Version ---"
+          node --version
+          echo "--- NPM Version ---"
+          npm --version
+          echo "--- Python Version ---"
+          python --version
+          echo "--- g++ Version ---"
+          g++ --version
+          echo "--- make Version ---"
+          make --version
+          echo "--- System Info ---"
+          uname -a
+
+      - name: Inspect Build Artifacts
+        run: |
+          echo "--- tree-sitter-python build output ---"
+          ls -laR ./node_modules/tree-sitter-python/
+          echo "--- tree-sitter-typescript build output ---"
+          ls -laR ./node_modules/tree-sitter-typescript/
+
+      - name: Upload verbose install log
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-ci-log-${{ matrix.node-version }}
+          path: npm_ci_log.txt
+
       - name: Run tests
         run: npx jest --runInBand --verbose
         

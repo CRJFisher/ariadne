@@ -5,12 +5,13 @@ status: In Progress
 assignee:
   - '@chuck'
 created_date: '2025-07-08'
-updated_date: '2025-07-15'
+updated_date: '2025-07-16'
 labels:
   - deployment
   - infrastructure
 dependencies:
   - task-14
+  - task-17
 ---
 
 ## Description
