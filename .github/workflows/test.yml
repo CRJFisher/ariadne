@@ -46,6 +46,9 @@ jobs:
           ls -laR ./node_modules/tree-sitter-python/
           echo "--- tree-sitter-typescript build output ---"
           ls -laR ./node_modules/tree-sitter-typescript/
+          
+      - name: Debug Parser Loading
+        run: node scripts/debug-parsers.js
 
       - name: Upload verbose install log
         uses: actions/upload-artifact@v4
