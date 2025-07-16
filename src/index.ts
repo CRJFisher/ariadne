@@ -111,6 +111,12 @@ export class Project {
       console.error(`Parse timeout for ${file_path} with ${config.name} parser`);
       console.error(`Source code length: ${source_code.length}`);
       console.error(`Try increasing parser timeout or check if language files are properly loaded`);
+      
+      // Try to parse a simple test to see if the parser works at all
+      const testCode = config.name === 'python' ? 'x = 1' : 'var x = 1';
+      const testTree = config.parser.parse(testCode);
+      console.error(`Test parse result: ${testTree ? 'tree exists' : 'no tree'}, rootNode: ${testTree?.rootNode ? 'exists' : 'missing'}`);
+      
       return;
     }
 

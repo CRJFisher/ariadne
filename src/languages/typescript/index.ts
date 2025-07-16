@@ -1,8 +1,8 @@
-import Parser from 'tree-sitter';
-import TypeScript from 'tree-sitter-typescript';
-import fs from 'fs';
-import path from 'path';
-import { LanguageConfig } from '../../types';
+import Parser from "tree-sitter";
+import TypeScript from "tree-sitter-typescript";
+import fs from "fs";
+import path from "path";
+import { LanguageConfig } from "../../types";
 
 function initialize_parser(): Parser {
   const parser = new Parser();
@@ -10,57 +10,90 @@ function initialize_parser(): Parser {
   // the peer dependency conflict between tree-sitter and tree-sitter-typescript.
   // Use tsx language which includes TypeScript + JSX support
   parser.setLanguage(TypeScript.tsx as any);
-  
+
   // Set a reasonable timeout (default is very low)
   parser.setTimeoutMicros(5000000); // 5 seconds
-  
+
   return parser;
 }
 
 // Try multiple paths to find the scopes.scm file
 function get_scope_query(): string {
   const possible_paths = [
-    path.join(__dirname, 'scopes.scm'),
-    path.join(__dirname, '..', '..', '..', 'src', 'languages', 'typescript', 'scopes.scm'),
-    path.join(process.cwd(), 'src', 'languages', 'typescript', 'scopes.scm'),
-    path.join(process.cwd(), 'dist', 'languages', 'typescript', 'scopes.scm'),
+    // When running from compiled dist/
+    path.join(__dirname, "scopes.scm"),
+    // When running from source during tests
+    path.join(
+      __dirname,
+      "..",
+      "..",
+      "..",
+      "src",
+      "languages",
+      "typescript",
+      "scopes.scm"
+    ),
+    // Direct source path (for Jest tests)
+    path.join(process.cwd(), "src", "languages", "typescript", "scopes.scm"),
+    // Alternative source path for different working directories
+    path.resolve(__dirname, "scopes.scm"),
+    path.resolve(__dirname, "../../../src/languages/typescript/scopes.scm"),
+    // Dist path
+    path.join(process.cwd(), "dist", "languages", "typescript", "scopes.scm"),
   ];
-  
+
   for (const p of possible_paths) {
     try {
-      return fs.readFileSync(p, 'utf8');
+      if (fs.existsSync(p)) {
+        return fs.readFileSync(p, "utf8");
+      }
     } catch (e) {
       // Continue to next path
     }
   }
-  
-  throw new Error(`Could not find scopes.scm for TypeScript. Tried paths: ${possible_paths.join(', ')}`);
+
+  // Final attempt: look for scopes.scm in the same directory as this file's source
+  const sourceDir = path.dirname(__filename.replace(/\.js$/, ".ts"));
+  const sourcePath = path.join(sourceDir, "scopes.scm");
+  try {
+    if (fs.existsSync(sourcePath)) {
+      return fs.readFileSync(sourcePath, "utf8");
+    }
+  } catch (e) {
+    // Ignore
+  }
+
+  throw new Error(
+    `Could not find scopes.scm for TypeScript. Tried paths: ${possible_paths.join(
+      ", "
+    )}`
+  );
 }
 
 export const typescript_config: LanguageConfig = {
-  name: 'typescript',
-  file_extensions: ['ts', 'tsx'],
+  name: "typescript",
+  file_extensions: ["ts", "tsx"],
   parser: initialize_parser(),
   scope_query: get_scope_query(),
   namespaces: [
     [
       // functions
-      'function',
-      'generator',
-      'method',
-      'class',
-      'interface',
-      'enum',
-      'alias',
+      "function",
+      "generator",
+      "method",
+      "class",
+      "interface",
+      "enum",
+      "alias",
     ],
     [
       // variables
-      'variable',
-      'constant',
-      'parameter',
-      'property',
-      'enumerator',
-      'label',
+      "variable",
+      "constant",
+      "parameter",
+      "property",
+      "enumerator",
+      "label",
     ],
   ],
-}; 
+};
