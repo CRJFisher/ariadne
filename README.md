@@ -17,6 +17,8 @@ Find references and definitions in your codebase using tree-sitter. RefScope pro
 npm install refscope
 ```
 
+RefScope includes prebuilt binaries for common platforms, so you don't need build tools installed. If prebuilt binaries aren't available for your platform, it will automatically build from source. See [prebuild documentation](docs/prebuild-binaries.md) for more details.
+
 ## Quick Start
 
 ```typescript
