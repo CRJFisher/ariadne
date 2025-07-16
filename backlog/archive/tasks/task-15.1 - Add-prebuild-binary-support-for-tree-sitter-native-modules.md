@@ -1,11 +1,11 @@
 ---
 id: task-15.1
 title: Add prebuild binary support for tree-sitter native modules
-status: In Progress
+status: Done
 assignee:
-  - "@chuck"
-created_date: "2025-07-16"
-updated_date: "2025-07-16"
+  - '@chuck'
+created_date: '2025-07-16'
+updated_date: '2025-07-16'
 labels: []
 dependencies: []
 parent_task_id: task-15
@@ -73,3 +73,5 @@ Configure the package to include prebuilt binaries for tree-sitter native module
 
 - Updated GitHub repository reference to CRJFisher/refscope in postinstall script and package.json
 - Added exception in .gitignore for scripts/postinstall.js (was being ignored by \*.js rule)
+
+Implemented prebuild binary support with postinstall script that downloads prebuilt binaries from GitHub releases. Created GitHub Actions workflow for building binaries across platforms (Linux, macOS, Windows). Fixed in commit 069d5743e8f04f3554702f5efc74f60570d83732.

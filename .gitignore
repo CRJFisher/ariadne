@@ -38,6 +38,3 @@ coverage/
 
 # Claude AI specific
 .claude/
-
-# Backlog archive (optional - remove this line if you want to track archived tasks)
-backlog/archive/
