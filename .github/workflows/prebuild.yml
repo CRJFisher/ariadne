@@ -49,6 +49,7 @@ jobs:
           npm_config_build_from_source: true
           
       - name: Package prebuilt binaries
+        shell: bash
         run: |
           mkdir -p prebuilds/${{ matrix.platform }}-${{ matrix.arch }}
           find node_modules -name "*.node" -path "*/build/Release/*" | while read -r file; do
