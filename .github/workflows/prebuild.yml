@@ -87,15 +87,41 @@ jobs:
           node-version: '18'
           registry-url: 'https://registry.npmjs.org'
           
+      - name: Set version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version || '0.2.0' }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/v}
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
           
       - name: Create Release
+        if: github.event_name != 'workflow_dispatch'
         uses: softprops/action-gh-release@v1
         with:
           files: artifacts/**/*.tar.gz
+          tag_name: ${{ github.ref }}
+          name: ${{ format('Release v{0}', env.VERSION) }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Upload artifacts to existing release
+        if: github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/**/*.tar.gz
+          tag_name: v${{ env.VERSION }}
+          name: ${{ format('Release v{0}', env.VERSION) }}
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
