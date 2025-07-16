@@ -10,7 +10,9 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "jest",
+    "test": "vitest run",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
     "build": "tsc && npm run copy-scm-files",
     "copy-scm-files": "cp src/languages/javascript/scopes.scm dist/languages/javascript/ && cp src/languages/typescript/scopes.scm dist/languages/typescript/ && cp src/languages/python/scopes.scm dist/languages/python/",
     "prepublishOnly": "npm run build && npm test",
@@ -44,11 +46,11 @@
     "node": ">=18.14.0"
   },
   "devDependencies": {
-    "@types/jest": "^30.0.0",
     "@types/node": "^24.0.14",
-    "jest": "^30.0.4",
-    "ts-jest": "^29.4.0",
-    "typescript": "^5.8.3"
+    "@vitest/ui": "^3.2.4",
+    "happy-dom": "^18.0.1",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
     "js-yaml": "^4.1.0",
