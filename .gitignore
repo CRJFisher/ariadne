@@ -11,7 +11,8 @@ build/
 *.d.ts
 *.js.map
 !jest.config.js
-!scripts/postinstall.js
+!scripts/*.js
+!scripts/*.sh
 
 # IDE and editor files
 .vscode/
