@@ -5,6 +5,7 @@ import { LanguageConfig } from './types';
 import { typescript_config } from './languages/typescript';
 import { javascript_config } from './languages/javascript';
 import { python_config } from './languages/python';
+import { rust_config } from './languages/rust';
 import { Edit } from './edit';
 import { Tree } from 'tree-sitter';
 import path from 'path';
@@ -36,6 +37,7 @@ export class Project {
     this.register_language(typescript_config);
     this.register_language(javascript_config);
     this.register_language(python_config);
+    this.register_language(rust_config);
     // TODO: Add other languages as they are implemented
   }
 

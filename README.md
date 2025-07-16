@@ -108,10 +108,15 @@ interface Ref {
 - ✅ JavaScript (including JSX)
 - ✅ TypeScript (including TSX)
 - ✅ Python
-- 🚧 Rust (coming soon)
+- ✅ Rust
 - 🚧 Go (coming soon)
 - 🚧 Java (coming soon)
-- 🚧 C/C++ (coming soon)
+- 🚧 C (coming soon)
+- 🚧 C++ (coming soon)
+- 🚧 C# (coming soon)
+- 🚧 Ruby (coming soon)
+- 🚧 PHP (coming soon)
+- 🚧 R (coming soon)
 
 ## Documentation
 
