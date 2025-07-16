@@ -14,7 +14,7 @@ dependencies: []
 
 ## Description
 
-Multiple test suites fail in CI environment (Ubuntu) while passing locally. The issue is most likely related to tree-sitter native module compilation producing non-functional binaries in the CI environment. This blocks reliable package publishing and testing.
+Multiple test suites fail in CI environment (Ubuntu) while passing locally. Initially thought to be related to tree-sitter native module compilation, investigation revealed that prebuilt binaries are being used and work correctly in isolation. The issue appears to be specific to the Jest test environment, where TypeScript and Python parsers timeout immediately despite working fine in standalone scripts. This blocks reliable package publishing and testing.
 
 ## Acceptance Criteria
 
@@ -51,7 +51,7 @@ Multiple test suites fail in CI environment (Ubuntu) while passing locally. The 
 - **src/languages/typescript/typescript.test.ts**: All TypeScript parsing tests fail
 - **Note**: JavaScript tests pass successfully
 
-## Key Findings
+## Key Findings (Original Understanding - Now Outdated)
 
 - Both local and CI build from source, but produce different results
 - Local (macOS/Clang) builds work correctly
@@ -62,3 +62,60 @@ Multiple test suites fail in CI environment (Ubuntu) while passing locally. The 
 - tree-sitter-javascript: 0.21.4 (works)
 - tree-sitter-python: 0.21.0 (fails in CI)
 - tree-sitter-typescript: 0.21.2 (fails in CI)
+
+## Recent Findings (2025-07-16) - CRITICAL UPDATE
+
+### Tree-sitter Uses Prebuilt Binaries!
+
+Our initial assumption was completely wrong. The CI is NOT building tree-sitter from source. Investigation revealed:
+
+1. **All tree-sitter modules include prebuilt binaries**:
+   - Located in `prebuilds/linux-x64/*.node` for Linux CI environment
+   - File sizes: tree-sitter (539KB), JavaScript (405KB), TypeScript (2.96MB), Python (539KB)
+   - Binaries exist for all major platforms (darwin-x64, darwin-arm64, linux-x64, win32-x64)
+   - Uses `node-gyp-build` which loads prebuilts instead of compiling
+
+2. **Binaries are functional**:
+   - Debug script (`scripts/debug-parsers.js`) shows all parsers work perfectly in isolation
+   - All parsers successfully parse test code when loaded directly
+   - `node-gyp-build` successfully resolves all bindings
+
+3. **The real issue**:
+   - Parsers work fine in standalone Node.js scripts
+   - Same parsers timeout immediately in Jest tests
+   - This indicates Jest environment interference, not binary issues
+
+### What This Changes
+
+**Previous understanding (incorrect)**:
+- ❌ CI compiles broken binaries from source
+- ❌ Ubuntu/GCC toolchain produces non-functional .node files
+- ❌ Need to fix compilation or use prebuild binaries
+
+**Current understanding (correct)**:
+- ✅ Prebuilt binaries are already being used
+- ✅ Binaries are functional and load correctly
+- ✅ Issue is specific to Jest test environment
+- ✅ Need to investigate Jest configuration or test setup
+
+### Debugging Progress
+
+1. Created `scripts/debug-parsers.js` - Shows all parsers work in isolation
+2. Created `scripts/find-native-modules.js` - Revealed prebuilt binaries
+3. Created `scripts/test-parsers-direct.js` - Tests without Jest
+4. Created `scripts/check-jest-env.js` - Examines Jest configuration
+
+### Next Investigation Areas
+
+1. **Jest environment issues**:
+   - Check if Jest's module loading interferes with native modules
+   - Investigate ts-jest transformation effects
+   - Test with different Jest configurations
+
+2. **Module initialization timing**:
+   - Language configs are initialized at import time
+   - May need lazy initialization
+
+3. **Resource constraints**:
+   - TypeScript parser is large (3MB)
+   - Check memory limits in CI environment

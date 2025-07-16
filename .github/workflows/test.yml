@@ -59,6 +59,14 @@ jobs:
           name: npm-ci-log-${{ matrix.node-version }}
           path: npm_ci_log.txt
 
+      - name: Check Jest Environment
+        run: node scripts/check-jest-env.js
+        
+      - name: Test Parsers Directly (No Jest)
+        run: |
+          npm run build
+          node scripts/test-parsers-direct.js
+        
       - name: Run tests
         run: npx jest --runInBand --verbose
         
