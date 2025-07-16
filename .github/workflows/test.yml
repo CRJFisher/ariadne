@@ -47,6 +47,9 @@ jobs:
           echo "--- tree-sitter-typescript build output ---"
           ls -laR ./node_modules/tree-sitter-typescript/
           
+      - name: Find Native Modules
+        run: node scripts/find-native-modules.js
+        
       - name: Debug Parser Loading
         run: node scripts/debug-parsers.js
 
