@@ -11,7 +11,7 @@ labels:
   - infrastructure
 dependencies:
   - task-14
-  - task-17
+  - task-18
 ---
 
 ## Description
