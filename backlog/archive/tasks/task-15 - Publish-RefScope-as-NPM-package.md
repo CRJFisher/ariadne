@@ -1,7 +1,7 @@
 ---
 id: task-15
 title: Publish RefScope as NPM package
-status: In Progress
+status: Done
 assignee:
   - '@chuck'
 created_date: '2025-07-08'
@@ -68,3 +68,5 @@ The package is now ready to be published to NPM.
 - Create an NPM account or log in.
 - Run `npm run publish:npm` locally, or use GitHub Releases for automated publishing.
 - Add `NPM_TOKEN` to GitHub secrets for CI/CD.
+
+Successfully published RefScope v0.2.0 to npm! Package available at npmjs.com/package/refscope. Implemented automated release workflow that builds prebuilt binaries for multiple platforms, creates GitHub releases, and publishes to npm. Fixed workflow issues to handle version updates and manual dispatch. Package includes TypeScript, JavaScript, Python, and Rust language support.
