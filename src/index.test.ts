@@ -73,8 +73,9 @@ result = py_function(21)
     project.add_or_update_file('test.ts', code2);
     
     // Verify the file was updated (old symbol should not be found)
+    // Look for 'x' at position where it used to be, but now there's 'y'
     const oldDef = project.go_to_definition('test.ts', { row: 0, column: 6 });
-    expect(oldDef).toBeNull();
+    expect(oldDef?.name).toBe('y'); // Should find 'y' at this position, not 'x'
   });
 
   test('should remove files', () => {

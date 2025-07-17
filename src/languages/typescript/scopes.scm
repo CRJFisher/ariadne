@@ -112,6 +112,10 @@
   "let"
   (variable_declarator . (identifier) @local.definition.variable))
 
+;; capture the value in variable declarations: const x = VALUE
+(variable_declarator
+  value: (identifier) @local.reference)
+
 ;; a = b
 (assignment_expression
   .
@@ -121,8 +125,9 @@
 ;;
 ;; TODO: support getters and setters here, blocked on:
 ;; https://github.com/tree-sitter/tree-sitter/issues/1461
+;; Methods are hoisted so they can be accessed from outside the class
 (method_definition
-  (property_identifier) @local.definition.method)
+  (property_identifier) @hoist.definition.method)
 
 ;; class
 (class_declaration
@@ -247,7 +252,7 @@
 ;; method call expression: this.method() or obj.method()
 ;; We need to exclude super.method() calls since they reference parent class methods
 (call_expression
-  function: (member_expression
+  (member_expression
     object: [(this) (identifier)]
     property: (property_identifier) @local.reference.method))
 
@@ -263,9 +268,33 @@
 (subscript_expression
   (identifier) @local.reference)
 
-;; member expression: a.b
+;; member expression: a.b (only capture the object, not the property)
 (member_expression
-  (identifier) @local.reference)
+  object: (identifier) @local.reference)
+
+;; property access in assignment: obj.prop = value (capture the property)
+(assignment_expression
+  left: (member_expression
+    object: (this)
+    property: (property_identifier) @local.reference))
+
+;; property access in assignment: obj.prop = value (capture the property)
+(assignment_expression
+  left: (member_expression
+    object: (identifier)
+    property: (property_identifier) @local.reference))
+
+;; property access in return: return obj.prop (capture the property)
+(return_statement
+  (member_expression
+    object: (this)
+    property: (property_identifier) @local.reference))
+
+;; property access in return: return obj.prop (capture the property)
+(return_statement
+  (member_expression
+    object: (identifier)
+    property: (property_identifier) @local.reference))
 
 ;; nested identifier: <React.StrictMode>
 ;;

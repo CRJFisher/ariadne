@@ -29,6 +29,7 @@ export interface Def extends BaseNode {
   kind: 'definition';
   name: string;
   symbol_kind: string; // e.g., 'function', 'class', 'variable'
+  file_path: string;  // The file containing this definition
 }
 
 export interface Ref extends BaseNode {

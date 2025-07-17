@@ -3,6 +3,7 @@ import TypeScript from "tree-sitter-typescript";
 import fs from "fs";
 import path from "path";
 import { LanguageConfig } from "../../types";
+import { extract_jsdoc_context } from "../shared_extractors";
 
 function initialize_parser(): Parser {
   const parser = new Parser();
@@ -70,6 +71,7 @@ function get_scope_query(): string {
   );
 }
 
+
 export const typescript_config: LanguageConfig = {
   name: "typescript",
   file_extensions: ["ts", "tsx"],
@@ -96,4 +98,5 @@ export const typescript_config: LanguageConfig = {
       "label",
     ],
   ],
+  extract_context: extract_jsdoc_context,
 };

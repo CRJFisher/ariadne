@@ -122,7 +122,7 @@ export class Project {
       return;
     }
 
-    const graph = build_scope_graph(tree, config);
+    const graph = build_scope_graph(tree, config, file_path);
     
     // Update caches
     this.file_graphs.set(file_path, graph);
@@ -233,6 +233,14 @@ export class Project {
   }
 
   /**
+   * Alias for find_references for backward compatibility.
+   * @deprecated Use find_references instead
+   */
+  find_all_references(file_path: string, position: Point): Ref[] {
+    return this.find_references(file_path, position);
+  }
+
+  /**
    * Finds the definition of a symbol at a given position in a file.
    * @param file_path - The path of the file containing the symbol.
    * @param position - The row and column of the symbol.
@@ -274,7 +282,7 @@ export class Project {
     const graph = this.file_graphs.get(file_path);
     if (!graph) return [];
     
-    return graph.getNodes('definition').filter(def => 
+    return graph.getNodes<Def>('definition').filter(def => 
       def.symbol_kind === 'function' || 
       def.symbol_kind === 'method' ||
       def.symbol_kind === 'generator'
@@ -301,7 +309,7 @@ export class Project {
     const result = new Map<string, Def[]>();
     
     for (const [file_path, graph] of this.file_graphs) {
-      const functions = graph.getNodes('definition').filter(def => {
+      const functions = graph.getNodes<Def>('definition').filter(def => {
         // Check symbol kind
         if (!symbol_kinds.includes(def.symbol_kind)) return false;
         
@@ -353,13 +361,46 @@ export class Project {
     }
     
     const graph = this.file_graphs.get(def.file_path);
-    if (!graph) return [];
+    const fileCache = this.file_cache.get(def.file_path);
+    if (!graph || !fileCache) return [];
     
     const calls: FunctionCall[] = [];
-    const functionRange = def.range;
+    
+    // Find the full function body range using AST traversal
+    let functionRange = def.range;
+    
+    // For functions/methods, we need to find the enclosing function/method node
+    // since the definition only captures the identifier
+    const defNode = fileCache.tree.rootNode.descendantForPosition(
+      { row: def.range.start.row, column: def.range.start.column },
+      { row: def.range.end.row, column: def.range.end.column }
+    );
+    
+    if (defNode) {
+      // Walk up the tree to find the function/method declaration node
+      let current = defNode.parent;
+      while (current) {
+        const nodeType = current.type;
+        if (nodeType === 'function_declaration' ||
+            nodeType === 'method_definition' ||
+            nodeType === 'generator_function_declaration' ||
+            nodeType === 'function_expression' ||
+            nodeType === 'arrow_function' ||
+            nodeType === 'function_definition' || // Python
+            nodeType === 'decorated_definition') { // Python with decorators
+          // Found the function node, use its range
+          functionRange = {
+            start: { row: current.startPosition.row, column: current.startPosition.column },
+            end: { row: current.endPosition.row, column: current.endPosition.column }
+          };
+          break;
+        }
+        current = current.parent;
+      }
+    }
     
     // Get all references in this file
-    const refs = graph.refs();
+    const refs = graph.getNodes<Ref>('reference');
     
     // Filter to only refs within this function's range
     const functionRefs = refs.filter(ref => 
@@ -369,15 +410,28 @@ export class Project {
     
     // For each reference, try to resolve it to a definition
     for (const ref of functionRefs) {
-      const resolved = this.go_to_definition(ref.file_path, ref.range.start);
+      // The issue is that refs don't have file_path - they're from the same file
+      const resolved = this.go_to_definition(def.file_path, ref.range.start);
       if (resolved && ['function', 'method', 'generator'].includes(resolved.symbol_kind)) {
-        // Check if this is a method call by looking for member access pattern
-        const is_method_call = ref.symbol_kind === 'method' || 
-                              ref.name.includes('.') ||
-                              (graph as any)._refs?.some((r: any) => 
-                                r.name === ref.name && 
-                                r.refs?.some((refNode: any) => refNode.kind === 'method')
-                              );
+        // Check if this is a method call by looking at symbol_kind
+        // method calls are marked as 'method', regular function calls have undefined symbol_kind
+        let is_method_call = ref.symbol_kind === 'method';
+        
+        // For Python, also check if the reference is part of an attribute access pattern
+        // This is a fallback when the scope query doesn't correctly mark method calls
+        if (!is_method_call && def.file_path.endsWith('.py')) {
+          // Check if the reference is preceded by a dot in the source code
+          const fileCache = this.file_cache.get(def.file_path);
+          if (fileCache) {
+            const lines = fileCache.source_code.split('\n');
+            const refLine = lines[ref.range.start.row];
+            const beforeRef = refLine.substring(0, ref.range.start.column);
+            // If there's a dot right before the reference, it's likely a method call
+            if (beforeRef.endsWith('.')) {
+              is_method_call = true;
+            }
+          }
+        }
         
         calls.push({
           caller_def: def,
@@ -435,5 +489,207 @@ export class Project {
     if (pos.row === range.end.row && pos.column > range.end.column) return false;
     
     return true;
+  }
+
+  /**
+   * Get the source code for a definition.
+   * 
+   * @param def - The definition to extract source for
+   * @param file_path - The path of the file containing the definition
+   * @returns The exact source code for the definition
+   */
+  get_source_code(def: Def, file_path: string): string {
+    const fileCache = this.file_cache.get(file_path);
+    if (!fileCache) {
+      return '';
+    }
+    
+    // For functions/methods, we need to find the enclosing function/method node
+    // since the definition only captures the identifier
+    if (['function', 'method', 'generator'].includes(def.symbol_kind)) {
+      const defNode = fileCache.tree.rootNode.descendantForPosition(
+        { row: def.range.start.row, column: def.range.start.column },
+        { row: def.range.end.row, column: def.range.end.column }
+      );
+      
+      if (defNode) {
+        // Walk up the tree to find the function/method declaration node
+        let current = defNode.parent;
+        while (current) {
+          const nodeType = current.type;
+          if (nodeType === 'function_declaration' ||
+              nodeType === 'method_definition' ||
+              nodeType === 'generator_function_declaration' ||
+              nodeType === 'function_expression' ||
+              nodeType === 'arrow_function' ||
+              nodeType === 'function_definition' || // Python
+              nodeType === 'decorated_definition') { // Python with decorators
+            // Found the function node, extract its source
+            const startPos = current.startPosition;
+            const endPos = current.endPosition;
+            
+            const lines = fileCache.source_code.split('\n');
+            if (startPos.row >= lines.length || endPos.row >= lines.length) {
+              return '';
+            }
+            
+            const extractedLines = lines.slice(startPos.row, endPos.row + 1);
+            
+            if (extractedLines.length > 0) {
+              extractedLines[0] = extractedLines[0].substring(startPos.column);
+              const lastIndex = extractedLines.length - 1;
+              if (lastIndex === 0) {
+                extractedLines[0] = extractedLines[0].substring(0, endPos.column - startPos.column);
+              } else {
+                extractedLines[lastIndex] = extractedLines[lastIndex].substring(0, endPos.column);
+              }
+            }
+            
+            return extractedLines.join('\n');
+          }
+          current = current.parent;
+        }
+      }
+    }
+    
+    // For other types (variables, classes, etc.), use the definition range
+    const lines = fileCache.source_code.split('\n');
+    const startLine = def.range.start.row;
+    const endLine = def.range.end.row;
+    
+    if (startLine >= lines.length || endLine >= lines.length) {
+      return '';
+    }
+    
+    const extractedLines = lines.slice(startLine, endLine + 1);
+    
+    if (extractedLines.length > 0) {
+      extractedLines[0] = extractedLines[0].substring(def.range.start.column);
+      const lastIndex = extractedLines.length - 1;
+      if (lastIndex === 0) {
+        extractedLines[0] = extractedLines[0].substring(0, def.range.end.column - def.range.start.column);
+      } else {
+        extractedLines[lastIndex] = extractedLines[lastIndex].substring(0, def.range.end.column);
+      }
+    }
+    
+    return extractedLines.join('\n');
+  }
+
+  /**
+   * Get the source code with context for a definition.
+   * Includes docstrings and decorators where applicable.
+   * 
+   * @param def - The definition to extract source for
+   * @param file_path - The path of the file containing the definition
+   * @param context_lines - Number of lines of context to include (default: 0)
+   * @returns Object containing source, docstring, and decorators
+   */
+  get_source_with_context(def: Def, file_path: string, context_lines: number = 0): {
+    source: string;
+    docstring?: string;
+    decorators?: string[];
+  } {
+    const fileCache = this.file_cache.get(file_path);
+    if (!fileCache) {
+      return { source: '' };
+    }
+    
+    const lines = fileCache.source_code.split('\n');
+    const startLine = def.range.start.row;
+    const endLine = def.range.end.row;
+    
+    // Get the basic source
+    const source = this.get_source_code(def, file_path);
+    
+    // Get language-specific context extraction
+    const config = this.get_language_config(file_path);
+    let docstring: string | undefined;
+    let decorators: string[] | undefined;
+    
+    if (config && config.extract_context && ['function', 'method', 'generator'].includes(def.symbol_kind)) {
+      // Find the AST node for this definition
+      const defNode = fileCache.tree.rootNode.descendantForPosition(
+        { row: def.range.start.row, column: def.range.start.column },
+        { row: def.range.end.row, column: def.range.end.column }
+      );
+      
+      if (defNode) {
+        // Find the function/method declaration node
+        let current = defNode.parent;
+        while (current) {
+          const nodeType = current.type;
+          if (nodeType === 'function_declaration' ||
+              nodeType === 'method_definition' ||
+              nodeType === 'generator_function_declaration' ||
+              nodeType === 'function_expression' ||
+              nodeType === 'arrow_function' ||
+              nodeType === 'function_definition' || // Python
+              nodeType === 'decorated_definition') { // Python with decorators
+            // Extract context using language-specific extractor
+            const context = config.extract_context(current, lines, current.startPosition.row);
+            docstring = context.docstring;
+            decorators = context.decorators;
+            break;
+          }
+          current = current.parent;
+        }
+      }
+    }
+    
+    // Add context lines if requested
+    let contextSource = source;
+    if (context_lines > 0) {
+      // Find the actual start/end lines of the source we extracted
+      let actualStartLine = startLine;
+      let actualEndLine = endLine;
+      
+      // For functions, we need to find the actual boundaries
+      if (['function', 'method', 'generator'].includes(def.symbol_kind) && fileCache) {
+        const defNode = fileCache.tree.rootNode.descendantForPosition(
+          { row: def.range.start.row, column: def.range.start.column },
+          { row: def.range.end.row, column: def.range.end.column }
+        );
+        
+        if (defNode) {
+          let current = defNode.parent;
+          while (current) {
+            const nodeType = current.type;
+            if (nodeType === 'function_declaration' ||
+                nodeType === 'method_definition' ||
+                nodeType === 'generator_function_declaration' ||
+                nodeType === 'function_expression' ||
+                nodeType === 'arrow_function' ||
+                nodeType === 'function_definition' ||
+                nodeType === 'decorated_definition') {
+              actualStartLine = current.startPosition.row;
+              actualEndLine = current.endPosition.row;
+              break;
+            }
+            current = current.parent;
+          }
+        }
+      }
+      
+      const contextStartLine = Math.max(0, actualStartLine - context_lines);
+      const contextEndLine = Math.min(lines.length - 1, actualEndLine + context_lines);
+      
+      const beforeLines = lines.slice(contextStartLine, actualStartLine);
+      const afterLines = lines.slice(actualEndLine + 1, contextEndLine + 1);
+      
+      if (beforeLines.length > 0 || afterLines.length > 0) {
+        contextSource = [
+          ...beforeLines,
+          ...source.split('\n'),
+          ...afterLines
+        ].join('\n');
+      }
+    }
+    
+    return {
+      source: contextSource,
+      docstring,
+      decorators: decorators && decorators.length > 0 ? decorators : undefined
+    };
   }
 }

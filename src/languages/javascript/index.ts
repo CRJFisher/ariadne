@@ -3,6 +3,7 @@ import JavaScript from "tree-sitter-javascript";
 import fs from "fs";
 import path from "path";
 import { LanguageConfig } from "../../types";
+import { extract_jsdoc_context } from "../shared_extractors";
 
 function initialize_parser(): Parser {
   const parser = new Parser();
@@ -92,4 +93,6 @@ export const javascript_config: LanguageConfig = {
       "label",
     ],
   ],
+  // JavaScript uses the same JSDoc extraction as TypeScript
+  extract_context: extract_jsdoc_context,
 };

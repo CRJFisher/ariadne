@@ -8,7 +8,8 @@ import { LanguageConfig } from "./types";
  */
 export function build_scope_graph(
   tree: Tree,
-  config: LanguageConfig
+  config: LanguageConfig,
+  file_path: string
 ): ScopeGraph {
   if (!tree || !tree.rootNode) {
     throw new Error(
@@ -130,6 +131,7 @@ export function build_scope_graph(
         name: node.text,
         symbol_kind: "none",
         range: graph.node_to_simple_range(node),
+        file_path: file_path,
       };
 
       if (scoping === "local") {
@@ -148,6 +150,7 @@ export function build_scope_graph(
       name: node.text,
       symbol_kind: kind,
       range: graph.node_to_simple_range(node),
+      file_path: file_path,
     };
 
     if (scoping === "local") {

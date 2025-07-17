@@ -166,6 +166,13 @@
 (set
   (identifier) @local.reference)
 
+;; method call: self.method() or obj.method()
+;; This must come before the general attribute pattern
+(call
+  (attribute
+    (identifier) ; object
+    (identifier) @local.reference.method)) ; method name
+
 ;; a.b
 ;; `a` is a ref
 ;; `b` is ignored
@@ -191,11 +198,6 @@
 ;; a()
 (call
   (identifier) @local.reference)
-
-;; method call: self.method() or obj.method()
-(call
-  function: (attribute
-    attribute: (identifier) @local.reference.method))
 
 ;; call arguments
 (argument_list
