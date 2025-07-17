@@ -263,4 +263,81 @@ export class Project {
     // Return a copy to prevent external modifications
     return new Map(this.file_graphs);
   }
+
+  /**
+   * Get all function and method definitions in a file.
+   * 
+   * @param file_path - Path to the file relative to project root
+   * @returns Array of function/method definitions in the file
+   */
+  get_functions_in_file(file_path: string): Def[] {
+    const graph = this.file_graphs.get(file_path);
+    if (!graph) return [];
+    
+    return graph.getNodes('definition').filter(def => 
+      def.symbol_kind === 'function' || 
+      def.symbol_kind === 'method' ||
+      def.symbol_kind === 'generator'
+    );
+  }
+
+  /**
+   * Get all functions across the project with optional filtering.
+   * 
+   * @param options - Filtering options
+   * @returns Map of file paths to arrays of function definitions
+   */
+  get_all_functions(options?: {
+    include_private?: boolean;
+    include_tests?: boolean;
+    symbol_kinds?: string[];
+  }): Map<string, Def[]> {
+    const {
+      include_private = true,
+      include_tests = true,
+      symbol_kinds = ['function', 'method', 'generator']
+    } = options || {};
+    
+    const result = new Map<string, Def[]>();
+    
+    for (const [file_path, graph] of this.file_graphs) {
+      const functions = graph.getNodes('definition').filter(def => {
+        // Check symbol kind
+        if (!symbol_kinds.includes(def.symbol_kind)) return false;
+        
+        // Filter private functions
+        if (!include_private && this.is_private_function(def)) return false;
+        
+        // Filter test functions
+        if (!include_tests && this.is_test_function(def)) return false;
+        
+        return true;
+      });
+      
+      if (functions.length > 0) {
+        result.set(file_path, functions);
+      }
+    }
+    
+    return result;
+  }
+
+  /**
+   * Check if a function is private (starts with underscore).
+   */
+  private is_private_function(def: Def): boolean {
+    return def.name.startsWith('_') && !def.name.startsWith('__');
+  }
+
+  /**
+   * Check if a function is a test function.
+   */
+  private is_test_function(def: Def): boolean {
+    const name = def.name.toLowerCase();
+    return name.startsWith('test') || 
+           name.startsWith('test_') || 
+           name.includes('_test') ||
+           name === 'setup' ||
+           name === 'teardown';
+  }
 }

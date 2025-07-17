@@ -562,3 +562,184 @@ function testFunction(): void {
     expect(allGraphs.has('file2.ts')).toBe(true);
   });
 });
+
+describe('Project - Function discovery APIs', () => {
+  let project: Project;
+
+  beforeEach(() => {
+    project = new Project();
+  });
+
+  test('get_functions_in_file returns all functions in a file', () => {
+    const code = `
+      function regularFunction() {}
+      
+      class MyClass {
+        myMethod() {}
+        static staticMethod() {}
+      }
+      
+      const arrowFunc = () => {};
+      
+      function* generatorFunc() {}
+    `;
+    
+    project.add_or_update_file('test.ts', code);
+    const functions = project.get_functions_in_file('test.ts');
+    
+    expect(functions.length).toBeGreaterThan(0);
+    
+    // Verify we find different types of functions
+    const funcNames = functions.map(f => f.name);
+    expect(funcNames).toContain('regularFunction');
+    expect(funcNames).toContain('myMethod');
+    expect(funcNames).toContain('staticMethod');
+    expect(funcNames).toContain('generatorFunc');
+    
+    // Verify symbol kinds
+    functions.forEach(def => {
+      expect(['function', 'method', 'generator']).toContain(def.symbol_kind);
+    });
+  });
+
+  test('get_functions_in_file returns empty array for non-existent file', () => {
+    const functions = project.get_functions_in_file('does-not-exist.ts');
+    expect(functions).toEqual([]);
+  });
+
+  test('get_all_functions returns all functions across project', () => {
+    project.add_or_update_file('file1.ts', `function func1() {}`);
+    project.add_or_update_file('file2.js', `function func2() {}`);
+    project.add_or_update_file('file3.py', `def func3(): pass`);
+    
+    const allFunctions = project.get_all_functions();
+    
+    expect(allFunctions).toBeInstanceOf(Map);
+    expect(allFunctions.size).toBe(3);
+    
+    // Verify each file has its function
+    expect(allFunctions.get('file1.ts')?.[0].name).toBe('func1');
+    expect(allFunctions.get('file2.js')?.[0].name).toBe('func2');
+    expect(allFunctions.get('file3.py')?.[0].name).toBe('func3');
+  });
+
+  test('get_all_functions filters private functions', () => {
+    const code = `
+      function publicFunc() {}
+      function _privateFunc() {}
+      function __doubleUnderscore() {}
+    `;
+    
+    project.add_or_update_file('test.ts', code);
+    
+    const withPrivate = project.get_all_functions({ include_private: true });
+    const withoutPrivate = project.get_all_functions({ include_private: false });
+    
+    const withPrivateNames = withPrivate.get('test.ts')?.map(f => f.name) || [];
+    const withoutPrivateNames = withoutPrivate.get('test.ts')?.map(f => f.name) || [];
+    
+    // With private should include all
+    expect(withPrivateNames).toContain('publicFunc');
+    expect(withPrivateNames).toContain('_privateFunc');
+    expect(withPrivateNames).toContain('__doubleUnderscore');
+    
+    // Without private should exclude single underscore
+    expect(withoutPrivateNames).toContain('publicFunc');
+    expect(withoutPrivateNames).not.toContain('_privateFunc');
+    expect(withoutPrivateNames).toContain('__doubleUnderscore'); // double underscore is not considered private
+  });
+
+  test('get_all_functions filters test functions', () => {
+    const code = `
+      function regularFunc() {}
+      function testSomething() {}
+      function test_another_thing() {}
+      function something_test() {}
+      function setup() {}
+      function teardown() {}
+    `;
+    
+    project.add_or_update_file('test.ts', code);
+    
+    const withTests = project.get_all_functions({ include_tests: true });
+    const withoutTests = project.get_all_functions({ include_tests: false });
+    
+    const withTestNames = withTests.get('test.ts')?.map(f => f.name) || [];
+    const withoutTestNames = withoutTests.get('test.ts')?.map(f => f.name) || [];
+    
+    // With tests should include all
+    expect(withTestNames.length).toBe(6);
+    
+    // Without tests should exclude test functions
+    expect(withoutTestNames).toContain('regularFunc');
+    expect(withoutTestNames).not.toContain('testSomething');
+    expect(withoutTestNames).not.toContain('test_another_thing');
+    expect(withoutTestNames).not.toContain('something_test');
+    expect(withoutTestNames).not.toContain('setup');
+    expect(withoutTestNames).not.toContain('teardown');
+  });
+
+  test('get_all_functions respects symbol_kinds filter', () => {
+    const code = `
+      function regularFunction() {}
+      
+      class MyClass {
+        myMethod() {}
+      }
+      
+      function* generatorFunc() {}
+    `;
+    
+    project.add_or_update_file('test.ts', code);
+    
+    const onlyFunctions = project.get_all_functions({ symbol_kinds: ['function'] });
+    const onlyMethods = project.get_all_functions({ symbol_kinds: ['method'] });
+    const onlyGenerators = project.get_all_functions({ symbol_kinds: ['generator'] });
+    
+    const functionNames = onlyFunctions.get('test.ts')?.map(f => f.name) || [];
+    const methodNames = onlyMethods.get('test.ts')?.map(f => f.name) || [];
+    const generatorNames = onlyGenerators.get('test.ts')?.map(f => f.name) || [];
+    
+    expect(functionNames).toContain('regularFunction');
+    expect(functionNames).not.toContain('myMethod');
+    
+    expect(methodNames).toContain('myMethod');
+    expect(methodNames).not.toContain('regularFunction');
+    
+    expect(generatorNames).toContain('generatorFunc');
+    expect(generatorNames).not.toContain('regularFunction');
+  });
+
+  test('get_all_functions combines multiple filters', () => {
+    const code = `
+      function publicFunc() {}
+      function _privateFunc() {}
+      function testPublic() {}
+      function _testPrivate() {}
+    `;
+    
+    project.add_or_update_file('test.ts', code);
+    
+    const filtered = project.get_all_functions({
+      include_private: false,
+      include_tests: false
+    });
+    
+    const names = filtered.get('test.ts')?.map(f => f.name) || [];
+    
+    // Should only include publicFunc
+    expect(names).toEqual(['publicFunc']);
+  });
+
+  test('get_all_functions returns empty map when no functions match', () => {
+    const code = `
+      const x = 1;
+      const y = 2;
+    `;
+    
+    project.add_or_update_file('test.ts', code);
+    
+    const functions = project.get_all_functions();
+    expect(functions.size).toBe(0);
+  });
+});
