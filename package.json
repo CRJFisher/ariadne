@@ -6,6 +6,7 @@
   "types": "dist/index.d.ts",
   "files": [
     "dist/**/*",
+    "scripts/postinstall.js",
     "README.md",
     "LICENSE"
   ],
