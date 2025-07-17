@@ -241,4 +241,26 @@ export class Project {
   go_to_definition(file_path: string, position: Point): Def | null {
     return find_definition(file_path, position, this.file_graphs);
   }
+
+  /**
+   * Get the scope graph for a specific file.
+   * Returns null if the file doesn't exist or hasn't been indexed.
+   * 
+   * @param file_path - Path to the file relative to project root
+   * @returns The ScopeGraph for the file or null if not found
+   */
+  get_scope_graph(file_path: string): ScopeGraph | null {
+    return this.file_graphs.get(file_path) || null;
+  }
+
+  /**
+   * Get all scope graphs for the entire project.
+   * Returns a map from file paths to their corresponding ScopeGraphs.
+   * 
+   * @returns Map of file paths to ScopeGraphs
+   */
+  get_all_scope_graphs(): Map<string, ScopeGraph> {
+    // Return a copy to prevent external modifications
+    return new Map(this.file_graphs);
+  }
 }
