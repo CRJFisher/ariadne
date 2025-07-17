@@ -1,4 +1,4 @@
-import { Point, ScopeGraph, Def, Ref } from './graph';
+import { Point, ScopeGraph, Def, Ref, FunctionCall } from './graph';
 import { build_scope_graph } from './scope_resolution';
 import { find_all_references, find_definition } from './symbol_resolver';
 import { LanguageConfig } from './types';
@@ -11,7 +11,7 @@ import { Tree } from 'tree-sitter';
 import path from 'path';
 
 // Re-export important types
-export { Point, ScopeGraph, Def, Ref } from './graph';
+export { Point, ScopeGraph, Def, Ref, FunctionCall } from './graph';
 export { Edit } from './edit';
 export { LanguageConfig } from './types';
 
@@ -339,5 +339,101 @@ export class Project {
            name.includes('_test') ||
            name === 'setup' ||
            name === 'teardown';
+  }
+
+  /**
+   * Get all function calls made by a specific function.
+   * 
+   * @param def - The function definition to analyze
+   * @returns Array of FunctionCall objects representing calls made by this function
+   */
+  get_function_calls(def: Def): FunctionCall[] {
+    if (!['function', 'method', 'generator'].includes(def.symbol_kind)) {
+      return [];
+    }
+    
+    const graph = this.file_graphs.get(def.file_path);
+    if (!graph) return [];
+    
+    const calls: FunctionCall[] = [];
+    const functionRange = def.range;
+    
+    // Get all references in this file
+    const refs = graph.refs();
+    
+    // Filter to only refs within this function's range
+    const functionRefs = refs.filter(ref => 
+      this.is_position_within_range(ref.range.start, functionRange) &&
+      this.is_position_within_range(ref.range.end, functionRange)
+    );
+    
+    // For each reference, try to resolve it to a definition
+    for (const ref of functionRefs) {
+      const resolved = this.go_to_definition(ref.file_path, ref.range.start);
+      if (resolved && ['function', 'method', 'generator'].includes(resolved.symbol_kind)) {
+        // Check if this is a method call by looking for member access pattern
+        const is_method_call = ref.symbol_kind === 'method' || 
+                              ref.name.includes('.') ||
+                              (graph as any)._refs?.some((r: any) => 
+                                r.name === ref.name && 
+                                r.refs?.some((refNode: any) => refNode.kind === 'method')
+                              );
+        
+        calls.push({
+          caller_def: def,
+          called_def: resolved,
+          call_location: ref.range.start,
+          is_method_call
+        });
+      }
+    }
+    
+    return calls;
+  }
+
+  /**
+   * Get all function call relationships in the project.
+   * 
+   * @returns Object containing all functions and their call relationships
+   */
+  extract_call_graph(): {
+    functions: Def[];
+    calls: FunctionCall[];
+  } {
+    const allFunctions: Def[] = [];
+    const allCalls: FunctionCall[] = [];
+    
+    // Get all functions in the project
+    const functionsByFile = this.get_all_functions();
+    
+    // Collect all functions and their calls
+    for (const functions of functionsByFile.values()) {
+      allFunctions.push(...functions);
+      
+      for (const func of functions) {
+        const calls = this.get_function_calls(func);
+        allCalls.push(...calls);
+      }
+    }
+    
+    return {
+      functions: allFunctions,
+      calls: allCalls
+    };
+  }
+
+  /**
+   * Check if a position is within a range.
+   */
+  private is_position_within_range(pos: Point, range: { start: Point; end: Point }): boolean {
+    // Check if position is after or at start
+    if (pos.row < range.start.row) return false;
+    if (pos.row === range.start.row && pos.column < range.start.column) return false;
+    
+    // Check if position is before or at end
+    if (pos.row > range.end.row) return false;
+    if (pos.row === range.end.row && pos.column > range.end.column) return false;
+    
+    return true;
   }
 }

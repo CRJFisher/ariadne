@@ -192,6 +192,11 @@
 (call
   (identifier) @local.reference)
 
+;; method call: self.method() or obj.method()
+(call
+  function: (attribute
+    attribute: (identifier) @local.reference.method))
+
 ;; call arguments
 (argument_list
   (identifier) @local.reference)

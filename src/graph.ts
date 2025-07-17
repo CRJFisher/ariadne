@@ -50,6 +50,16 @@ export interface Scope extends BaseNode {
 
 export type Node = Def | Ref | Import | Scope;
 
+/**
+ * Represents a function call relationship in the codebase.
+ */
+export interface FunctionCall {
+  caller_def: Def;           // The function making the call
+  called_def: Def;           // The function being called  
+  call_location: Point;      // Where in the caller the call happens
+  is_method_call: boolean;   // true for self.method() or this.method()
+}
+
 // Edge types to connect the nodes
 
 interface BaseEdge {

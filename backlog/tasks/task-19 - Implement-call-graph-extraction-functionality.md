@@ -1,9 +1,11 @@
 ---
 id: task-19
 title: Implement call graph extraction functionality
-status: To Do
-assignee: []
+status: Done
+assignee:
+  - '@chuck'
 created_date: '2025-07-17'
+updated_date: '2025-07-17'
 labels: []
 dependencies:
   - task-17
@@ -16,12 +18,12 @@ Create APIs to extract function call relationships and build complete call graph
 
 ## Acceptance Criteria
 
-- [ ] FunctionCall interface is defined with all required fields
-- [ ] Project.get_function_calls() method returns calls made by a specific function
-- [ ] Project.extract_call_graph() returns complete project call graph
-- [ ] Method calls are distinguished from function calls
-- [ ] Call locations are accurately tracked
-- [ ] Unit tests verify call graph accuracy
+- [x] FunctionCall interface is defined with all required fields
+- [x] Project.get_function_calls() method returns calls made by a specific function
+- [x] Project.extract_call_graph() returns complete project call graph
+- [x] Method calls are distinguished from function calls
+- [x] Call locations are accurately tracked
+- [x] Unit tests verify call graph accuracy
 
 ## Proposed API from Enhancement Proposal
 
@@ -50,3 +52,55 @@ class Project {
 - **Direct Call Graph Building**: Get complete call relationships without manual AST traversal
 - **Call Context**: Know exactly where each call happens for accurate source extraction
 - **Method vs Function Calls**: Distinguish between different call types for better visualization
+
+## Implementation Plan
+
+1. Define FunctionCall interface with required fields
+2. Implement get_function_calls() method in Project class
+3. Create helper methods to parse function calls from AST nodes
+4. Implement extract_call_graph() to build complete project call graph
+5. Add logic to distinguish method calls from function calls
+6. Write comprehensive unit tests for call graph extraction
+
+## Implementation Notes
+
+Implemented call graph extraction functionality with the following components:
+
+### Core Implementation
+
+1. **FunctionCall Interface** (graph.ts)
+   - Added interface with all required fields: caller_def, called_def, call_location, is_method_call
+   - Exported through public API
+
+2. **Call Extraction Methods** (index.ts)
+   - **get_function_calls(def)**: Extracts all calls made by a specific function
+   - **extract_call_graph()**: Builds complete project call graph
+   - **is_position_within_range()**: Helper to check if a position falls within a range
+
+3. **Method Call Detection**
+   - Updated scope queries for TypeScript, JavaScript, and Python to capture method calls
+   - Added patterns to detect this.method() and self.method() calls
+   - Excluded super.method() calls to avoid incorrect parent class references
+
+### Technical Decisions
+
+- Method calls are detected both through AST patterns and reference resolution
+- Call location tracking uses the exact position of the call expression
+- Super method calls are explicitly excluded as they reference parent implementations
+
+### Testing
+
+Created comprehensive test suite (call_graph.test.ts) covering:
+- Basic function call extraction
+- Method call detection
+- Cross-file call resolution  
+- Complete call graph extraction
+- Edge cases and error handling
+
+Modified files:
+- src/graph.ts: Added FunctionCall interface
+- src/index.ts: Added call graph extraction methods
+- src/call_graph.test.ts: New comprehensive test suite
+- src/languages/typescript/scopes.scm: Added method call pattern
+- src/languages/javascript/scopes.scm: Added method call pattern
+- src/languages/python/scopes.scm: Added method call pattern

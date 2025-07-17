@@ -243,6 +243,13 @@
 ;; call expression
 (call_expression
   (identifier) @local.reference)
+  
+;; method call expression: this.method() or obj.method()
+;; We need to exclude super.method() calls since they reference parent class methods
+(call_expression
+  function: (member_expression
+    object: [(this) (identifier)]
+    property: (property_identifier) @local.reference.method))
 
 ;; call arguments
 (arguments
