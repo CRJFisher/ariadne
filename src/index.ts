@@ -365,46 +365,74 @@ export class Project {
   }
 
   /**
-   * Get all function calls made by a specific function.
+   * Get all calls (function, method, and constructor) made from within a definition's body.
+   * Works with any definition type including functions, methods, classes, and blocks.
    * 
-   * @param def - The function definition to analyze
-   * @returns Array of FunctionCall objects representing calls made by this function
+   * @param def - The definition to analyze
+   * @returns Array of FunctionCall objects representing calls made within this definition
    */
-  get_function_calls(def: Def): FunctionCall[] {
-    if (!['function', 'method', 'generator'].includes(def.symbol_kind)) {
-      return [];
-    }
-    
+  get_calls_from_definition(def: Def): FunctionCall[] {
     const graph = this.file_graphs.get(def.file_path);
     const fileCache = this.file_cache.get(def.file_path);
     if (!graph || !fileCache) return [];
     
     const calls: FunctionCall[] = [];
     
-    // Find the full function body range using AST traversal
-    let functionRange = def.range;
+    // Find the full definition body range using AST traversal
+    let definitionRange = def.range;
     
-    // For functions/methods, we need to find the enclosing function/method node
-    // since the definition only captures the identifier
+    // Find the AST node for this definition
     const defNode = fileCache.tree.rootNode.descendantForPosition(
       { row: def.range.start.row, column: def.range.start.column },
       { row: def.range.end.row, column: def.range.end.column }
     );
     
     if (defNode) {
-      // Walk up the tree to find the function/method declaration node
+      // Walk up the tree to find the full definition node based on symbol_kind
       let current = defNode.parent;
       while (current) {
         const nodeType = current.type;
-        if (nodeType === 'function_declaration' ||
-            nodeType === 'method_definition' ||
-            nodeType === 'generator_function_declaration' ||
-            nodeType === 'function_expression' ||
-            nodeType === 'arrow_function' ||
-            nodeType === 'function_definition' || // Python
-            nodeType === 'decorated_definition') { // Python with decorators
-          // Found the function node, use its range
-          functionRange = {
+        let foundDefinitionNode = false;
+        
+        // Check for function/method nodes
+        if (['function', 'method', 'generator'].includes(def.symbol_kind)) {
+          if (nodeType === 'function_declaration' ||
+              nodeType === 'method_definition' ||
+              nodeType === 'generator_function_declaration' ||
+              nodeType === 'function_expression' ||
+              nodeType === 'arrow_function' ||
+              nodeType === 'function_definition' || // Python
+              nodeType === 'decorated_definition' || // Python with decorators
+              nodeType === 'function_item') { // Rust
+            foundDefinitionNode = true;
+          }
+        }
+        // Check for class nodes
+        else if (def.symbol_kind === 'class') {
+          if (nodeType === 'class_declaration' ||
+              nodeType === 'class_definition' || // Python
+              nodeType === 'struct_item' || // Rust
+              nodeType === 'impl_item') { // Rust
+            foundDefinitionNode = true;
+          }
+        }
+        // Check for variable/const nodes that might have initializers
+        else if (['variable', 'const', 'let', 'constant'].includes(def.symbol_kind)) {
+          if (nodeType === 'variable_declarator') {
+            // For variable declarator, use its range which includes the initializer
+            foundDefinitionNode = true;
+          } else if (nodeType === 'variable_declaration' ||
+                     nodeType === 'lexical_declaration' ||
+                     nodeType === 'assignment' || // Python
+                     nodeType === 'let_declaration' || // Rust
+                     nodeType === 'const_item') { // Rust
+            foundDefinitionNode = true;
+          }
+        }
+        
+        if (foundDefinitionNode) {
+          // Found the definition node, use its range
+          definitionRange = {
             start: { row: current.startPosition.row, column: current.startPosition.column },
             end: { row: current.endPosition.row, column: current.endPosition.column }
           };
@@ -417,47 +445,71 @@ export class Project {
     // Get all references in this file
     const refs = graph.getNodes<Ref>('reference');
     
-    // Filter to only refs within this function's range
-    const functionRefs = refs.filter(ref => 
-      this.is_position_within_range(ref.range.start, functionRange) &&
-      this.is_position_within_range(ref.range.end, functionRange)
+    // Filter to only refs within this definition's range
+    const definitionRefs = refs.filter(ref => 
+      this.is_position_within_range(ref.range.start, definitionRange) &&
+      this.is_position_within_range(ref.range.end, definitionRange)
     );
     
     // For each reference, try to resolve it to a definition
-    for (const ref of functionRefs) {
-      // The issue is that refs don't have file_path - they're from the same file
+    for (const ref of definitionRefs) {
       const resolved = this.go_to_definition(def.file_path, ref.range.start);
-      if (resolved && ['function', 'method', 'generator'].includes(resolved.symbol_kind)) {
-        // Check if this is a method call by looking at symbol_kind
-        // method calls are marked as 'method', regular function calls have undefined symbol_kind
-        let is_method_call = ref.symbol_kind === 'method';
-        
-        // For Python, also check if the reference is part of an attribute access pattern
-        // This is a fallback when the scope query doesn't correctly mark method calls
-        if (!is_method_call && def.file_path.endsWith('.py')) {
-          // Check if the reference is preceded by a dot in the source code
-          const fileCache = this.file_cache.get(def.file_path);
-          if (fileCache) {
-            const lines = fileCache.source_code.split('\n');
-            const refLine = lines[ref.range.start.row];
-            const beforeRef = refLine.substring(0, ref.range.start.column);
-            // If there's a dot right before the reference, it's likely a method call
-            if (beforeRef.endsWith('.')) {
-              is_method_call = true;
+      if (resolved) {
+        // Include all callable symbol kinds
+        const callableKinds = ['function', 'method', 'generator', 'class', 'constructor'];
+        if (callableKinds.includes(resolved.symbol_kind)) {
+          // Check if this is a method call
+          let is_method_call = ref.symbol_kind === 'method';
+          
+          // Additional check for method calls in different languages
+          if (!is_method_call) {
+            const fileCache = this.file_cache.get(def.file_path);
+            if (fileCache) {
+              const lines = fileCache.source_code.split('\n');
+              const refLine = lines[ref.range.start.row];
+              const beforeRef = refLine.substring(0, ref.range.start.column);
+              
+              // Check for method call patterns
+              if (def.file_path.endsWith('.py') && beforeRef.endsWith('.')) {
+                is_method_call = true;
+              } else if ((def.file_path.endsWith('.ts') || def.file_path.endsWith('.js')) && 
+                         (beforeRef.endsWith('.') || beforeRef.endsWith('?.'))) {
+                is_method_call = true;
+              } else if (def.file_path.endsWith('.rs') && 
+                         (beforeRef.endsWith('.') || beforeRef.endsWith('::'))) {
+                is_method_call = true;
+              }
             }
           }
+          
+          calls.push({
+            caller_def: def,
+            called_def: resolved,
+            call_location: ref.range.start,
+            is_method_call
+          });
         }
-        
-        calls.push({
-          caller_def: def,
-          called_def: resolved,
-          call_location: ref.range.start,
-          is_method_call
-        });
       }
     }
     
     return calls;
+  }
+
+  /**
+   * Get all function calls made by a specific function.
+   * 
+   * @param def - The function definition to analyze
+   * @returns Array of FunctionCall objects representing calls made by this function
+   */
+  get_function_calls(def: Def): FunctionCall[] {
+    if (!['function', 'method', 'generator'].includes(def.symbol_kind)) {
+      return [];
+    }
+    
+    // Use get_calls_from_definition and filter to only function/method/generator calls
+    return this.get_calls_from_definition(def).filter(call => 
+      ['function', 'method', 'generator'].includes(call.called_def.symbol_kind)
+    );
   }
 
   /**
@@ -538,7 +590,8 @@ export class Project {
               nodeType === 'function_expression' ||
               nodeType === 'arrow_function' ||
               nodeType === 'function_definition' || // Python
-              nodeType === 'decorated_definition') { // Python with decorators
+              nodeType === 'decorated_definition' || // Python with decorators
+              nodeType === 'function_item') { // Rust
             // Found the function node, extract its source
             const startPos = current.startPosition;
             const endPos = current.endPosition;
@@ -640,7 +693,8 @@ export class Project {
               nodeType === 'function_expression' ||
               nodeType === 'arrow_function' ||
               nodeType === 'function_definition' || // Python
-              nodeType === 'decorated_definition') { // Python with decorators
+              nodeType === 'decorated_definition' || // Python with decorators
+              nodeType === 'function_item') { // Rust
             // Extract context using language-specific extractor
             const context = config.extract_context(current, lines, current.startPosition.row);
             docstring = context.docstring;
@@ -676,7 +730,8 @@ export class Project {
                 nodeType === 'function_expression' ||
                 nodeType === 'arrow_function' ||
                 nodeType === 'function_definition' ||
-                nodeType === 'decorated_definition') {
+                nodeType === 'decorated_definition' ||
+                nodeType === 'function_item') { // Rust
               actualStartLine = current.startPosition.row;
               actualEndLine = current.endPosition.row;
               break;

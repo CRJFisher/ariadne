@@ -33,6 +33,7 @@ Implement the get_call_graph API that builds a complete call graph for the proje
 
 ### Testing
 
+- [ ] Language-specific tests should follow the [testing guide](docs/testing-guide.md)
 - [ ] Multi-file TypeScript project test cases
 - [ ] Multi-file JavaScript project test cases
 - [ ] Cross-file import/export resolution tests

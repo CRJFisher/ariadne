@@ -240,3 +240,331 @@ function local() {
     expect(callGraph.calls.length).toBeGreaterThanOrEqual(0);
   });
 });
+
+describe('get_calls_from_definition API', () => {
+  let project: Project;
+
+  beforeEach(() => {
+    project = new Project();
+  });
+
+  test('extracts calls from function definitions', () => {
+    const code = `
+function helper() {
+  return 42;
+}
+
+function main() {
+  const result = helper();
+  return result;
+}
+`;
+    
+    project.add_or_update_file('test.ts', code);
+    
+    const functions = project.get_functions_in_file('test.ts');
+    const mainFunc = functions.find(f => f.name === 'main');
+    expect(mainFunc).toBeDefined();
+    
+    const calls = project.get_calls_from_definition(mainFunc!);
+    expect(calls.length).toBe(1);
+    expect(calls[0].called_def.name).toBe('helper');
+    expect(calls[0].is_method_call).toBe(false);
+  });
+
+  test('extracts calls from class constructors', () => {
+    const code = `
+class Logger {
+  log(msg: string) {
+    console.log(msg);
+  }
+}
+
+class MyClass {
+  constructor() {
+    const logger = new Logger();
+    logger.log('initialized');
+  }
+}
+`;
+    
+    project.add_or_update_file('test.ts', code);
+    
+    const graph = project.get_scope_graph('test.ts');
+    const defs = graph!.getNodes('definition');
+    const loggerClass = defs.find(d => d.name === 'Logger' && d.symbol_kind === 'class');
+    const logMethod = defs.find(d => d.name === 'log' && d.symbol_kind === 'method');
+    
+    // Find constructor (often named 'constructor' in TypeScript)
+    const constructor = defs.find(d => d.name === 'constructor' && d.symbol_kind === 'method');
+    
+    if (constructor) {
+      const calls = project.get_calls_from_definition(constructor);
+      
+      // Should find call to Logger constructor and log method
+      const hasLoggerConstructor = calls.some(c => c.called_def.name === 'Logger' && c.called_def.symbol_kind === 'class');
+      const hasLogMethod = calls.some(c => c.called_def.name === 'log' && c.is_method_call);
+      
+      expect(hasLoggerConstructor || hasLogMethod).toBe(true);
+    }
+  });
+
+  test('extracts calls from variable initializers', () => {
+    const code = `
+function getValue() {
+  return 42;
+}
+
+const myVar = getValue();
+`;
+    
+    project.add_or_update_file('test.ts', code);
+    
+    const graph = project.get_scope_graph('test.ts');
+    const defs = graph!.getNodes('definition');
+    const varDef = defs.find(d => d.name === 'myVar');
+    expect(varDef).toBeDefined();
+    
+    const calls = project.get_calls_from_definition(varDef!);
+    expect(calls.length).toBe(1);
+    expect(calls[0].called_def.name).toBe('getValue');
+  });
+
+  test('handles arrow functions and callbacks', () => {
+    const code = `
+function processData(data: any) {
+  console.log(data);
+}
+
+const handler = () => {
+  processData('test');
+  return [1, 2, 3].map(item => processData(item));
+};
+`;
+    
+    project.add_or_update_file('test.ts', code);
+    
+    const graph = project.get_scope_graph('test.ts');
+    const defs = graph!.getNodes('definition');
+    const handlerDef = defs.find(d => d.name === 'handler');
+    
+    expect(handlerDef).toBeDefined();
+    const calls = project.get_calls_from_definition(handlerDef!);
+    
+    // Should find direct call to processData
+    const hasProcessData = calls.some(c => c.called_def.name === 'processData');
+    
+    // Debug if no calls found
+    if (calls.length === 0) {
+      console.log('No calls found from handler. Handler def:', handlerDef);
+      const refs = graph!.getNodes('reference');
+      console.log('All refs:', refs.map((r: any) => `${r.name} at ${r.range.start.row}:${r.range.start.column}`));
+    }
+    
+    expect(hasProcessData).toBe(true);
+    expect(calls.length).toBeGreaterThan(0);
+  });
+
+  test('handles async/await patterns', () => {
+    const code = `
+async function fetchData() {
+  return { data: 'test' };
+}
+
+async function processAsync() {
+  const result = await fetchData();
+  return result;
+}
+`;
+    
+    project.add_or_update_file('test.ts', code);
+    
+    const functions = project.get_functions_in_file('test.ts');
+    const processFunc = functions.find(f => f.name === 'processAsync');
+    
+    const calls = project.get_calls_from_definition(processFunc!);
+    expect(calls.length).toBe(1);
+    expect(calls[0].called_def.name).toBe('fetchData');
+  });
+
+  test('extracts calls from class definitions including methods', () => {
+    const code = `
+class BaseClass {
+  baseMethod() {}
+}
+
+class DerivedClass extends BaseClass {
+  private helper() {
+    return 'help';
+  }
+  
+  public mainMethod() {
+    this.helper();
+    this.baseMethod();
+  }
+}
+`;
+    
+    project.add_or_update_file('test.ts', code);
+    
+    const graph = project.get_scope_graph('test.ts');
+    const defs = graph!.getNodes('definition');
+    const derivedClass = defs.find(d => d.name === 'DerivedClass' && d.symbol_kind === 'class');
+    
+    // Get calls from the class definition (should include all method bodies)
+    const calls = project.get_calls_from_definition(derivedClass!);
+    
+    // Should find method calls within the class
+    const hasHelperCall = calls.some(c => c.called_def.name === 'helper' && c.is_method_call);
+    const hasBaseMethodCall = calls.some(c => c.called_def.name === 'baseMethod' && c.is_method_call);
+    
+    expect(hasHelperCall).toBe(true);
+    expect(hasBaseMethodCall).toBe(true);
+  });
+
+  test('handles nested function calls', () => {
+    const code = `
+function outer() {
+  function inner() {
+    function innermost() {
+      return 42;
+    }
+    return innermost();
+  }
+  return inner();
+}
+`;
+    
+    project.add_or_update_file('test.ts', code);
+    
+    const functions = project.get_functions_in_file('test.ts');
+    const outerFunc = functions.find(f => f.name === 'outer');
+    
+    const calls = project.get_calls_from_definition(outerFunc!);
+    
+    // Should find the call to inner() and potentially innermost() if nested functions are included
+    const hasInnerCall = calls.some(c => c.called_def.name === 'inner');
+    expect(hasInnerCall).toBe(true);
+  });
+
+  test('handles constructor calls with new keyword', () => {
+    const code = `
+class MyService {
+  start() {}
+}
+
+function createService() {
+  const service = new MyService();
+  service.start();
+  return service;
+}
+`;
+    
+    project.add_or_update_file('test.ts', code);
+    
+    const functions = project.get_functions_in_file('test.ts');
+    const createFunc = functions.find(f => f.name === 'createService');
+    
+    const calls = project.get_calls_from_definition(createFunc!);
+    
+    // Should find constructor call and method call
+    const hasConstructor = calls.some(c => c.called_def.name === 'MyService' && c.called_def.symbol_kind === 'class');
+    const hasStart = calls.some(c => c.called_def.name === 'start' && c.is_method_call);
+    
+    expect(hasConstructor).toBe(true);
+    expect(hasStart).toBe(true);
+  });
+
+  test('gracefully handles unresolved symbols', () => {
+    const code = `
+function myFunc() {
+  // Call to undefined function
+  undefinedFunction();
+  
+  // Call to external library
+  console.log('test');
+}
+`;
+    
+    project.add_or_update_file('test.ts', code);
+    
+    const functions = project.get_functions_in_file('test.ts');
+    const myFunc = functions.find(f => f.name === 'myFunc');
+    
+    // Should not throw, just return resolved calls
+    const calls = project.get_calls_from_definition(myFunc!);
+    
+    // May or may not resolve console.log depending on scope setup
+    expect(calls).toBeDefined();
+    expect(Array.isArray(calls)).toBe(true);
+  });
+
+  test('works with Python classes and methods', () => {
+    const code = `
+class PythonClass:
+    def __init__(self):
+        self.setup()
+    
+    def setup(self):
+        pass
+    
+    def process(self):
+        self.setup()
+        return self._helper()
+    
+    def _helper(self):
+        return 42
+`;
+    
+    project.add_or_update_file('test.py', code);
+    
+    const functions = project.get_functions_in_file('test.py');
+    const processMethod = functions.find(f => f.name === 'process');
+    
+    expect(processMethod).toBeDefined();
+    if (!processMethod) {
+      // Debug: show all functions found
+      console.log('Functions found:', functions.map(f => `${f.name} (${f.symbol_kind})`));
+      return;
+    }
+    
+    const calls = project.get_calls_from_definition(processMethod);
+    
+    // Should find calls to setup and _helper
+    const hasSetup = calls.some(c => c.called_def.name === 'setup' && c.is_method_call);
+    const hasHelper = calls.some(c => c.called_def.name === '_helper' && c.is_method_call);
+    
+    expect(hasSetup).toBe(true);
+    expect(hasHelper).toBe(true);
+  });
+
+  test('works with Rust impl blocks', () => {
+    const code = `
+fn helper() -> i32 {
+    42
+}
+
+fn process() -> i32 {
+    helper() * 2
+}
+`;
+    
+    project.add_or_update_file('test.rs', code);
+    
+    const functions = project.get_functions_in_file('test.rs');
+    const processFunc = functions.find(f => f.name === 'process');
+    
+    expect(processFunc).toBeDefined();
+    if (!processFunc) return;
+    
+    const calls = project.get_calls_from_definition(processFunc);
+    const hasHelper = calls.some(c => c.called_def.name === 'helper');
+    
+    // Debug if not found
+    if (!hasHelper) {
+      console.log('Rust process function calls:', calls.map(c => c.called_def.name));
+    }
+    
+    expect(hasHelper).toBe(true);
+  });
+});

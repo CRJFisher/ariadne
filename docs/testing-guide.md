@@ -24,6 +24,7 @@ This module provides the core testing infrastructure:
 ### 2. Language Feature Matrix (`docs/language-feature-matrix.md`)
 
 Documents which features are supported by each language, helping identify:
+
 - What needs to be tested
 - Feature gaps
 - Language-specific capabilities
@@ -31,6 +32,7 @@ Documents which features are supported by each language, helping identify:
 ### 3. Language-Specific Test Files
 
 Each language has its own test file that:
+
 - Uses `generateLanguageTests()` for common features
 - Implements language-specific tests with `runLanguageSpecificTests()`
 
@@ -41,23 +43,26 @@ Each language has its own test file that:
 Create `src/test/<language>-shared.test.ts`:
 
 ```typescript
-import { generateLanguageTests, runLanguageSpecificTests } from './shared-language-tests';
+import {
+  generateLanguageTests,
+  runLanguageSpecificTests,
+} from "./shared-language-tests";
 
 // Generate common tests
-generateLanguageTests('yourlang', () => 'ext');
+generateLanguageTests("yourlang", () => "ext");
 
 // Add language-specific tests
 const yourLangSpecificTests = [
   {
-    name: 'Special Feature',
+    name: "Special Feature",
     code: `// Your language code here`,
     test: (project, fileName) => {
       // Test implementation
-    }
-  }
+    },
+  },
 ];
 
-runLanguageSpecificTests('YourLang', yourLangSpecificTests, () => 'ext');
+runLanguageSpecificTests("YourLang", yourLangSpecificTests, () => "ext");
 ```
 
 ### Step 2: Update Shared Fixtures
@@ -90,21 +95,25 @@ Update `docs/language-feature-matrix.md` to include your language's capabilities
 ### Core Features (All Languages Must Support)
 
 1. **Variable/Constant Declarations**
+
    - Local variables
    - Constants
    - Global variables
 
 2. **Function Definitions**
+
    - Regular functions
    - Nested functions
    - Anonymous functions/lambdas
 
 3. **Class/Type Definitions**
+
    - Class declarations
    - Method definitions
    - Constructor/initialization
 
 4. **Import/Module System**
+
    - Import statements
    - Export declarations
    - Module references
@@ -128,7 +137,7 @@ Document and test features unique to your language:
 ### 1. Use Descriptive Test Names
 
 ```typescript
-test('should resolve method calls in nested classes', () => {
+test("should resolve method calls in nested classes", () => {
   // Good: Clearly describes what's being tested
 });
 ```
@@ -147,13 +156,13 @@ Each test should verify one specific behavior:
 
 ```typescript
 // Good: Tests one thing
-test('finds function parameters', () => {
+test("finds function parameters", () => {
   const code = `function f(a, b) {}`;
   // Test only parameter detection
 });
 
 // Bad: Tests too many things
-test('function features', () => {
+test("function features", () => {
   // Tests parameters, return types, body, etc.
 });
 ```

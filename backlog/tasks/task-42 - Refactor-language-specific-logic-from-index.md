@@ -10,7 +10,7 @@ dependencies: []
 
 ## Description
 
-The `get_function_calls` and `get_source_code` methods in `index.ts` currently contain language-specific logic. This approach is not scalable and makes it difficult to add or maintain language support.
+The `get_function_calls`, `get_calls_from_definition`, `get_source_code` and possibly other methods in the codebase currently contain language-specific logic. This approach is not scalable and makes it difficult to add or maintain language support.
 
 This task is to refactor this logic by moving the language-specific parts into the language configuration objects. New fields should be added to the language configuration to store the tree-sitter queries.
 
