@@ -2,6 +2,7 @@ import { Tree, Query } from "tree-sitter";
 import { ScopeGraph, Def, Scope, Ref, Import } from "./graph";
 import { LanguageConfig } from "./types";
 import { extract_function_metadata } from "./function_metadata";
+import { get_symbol_id } from "./symbol_naming";
 
 /**
  * The equivalent of `scope_res_generic`.
@@ -124,7 +125,7 @@ export function build_scope_graph(
       }
     }
 
-    // Create definition object
+    // Create definition object (temporarily without symbol_id)
     const new_def: Def = {
       id: graph.get_next_node_id(),
       kind: "definition",
@@ -132,6 +133,7 @@ export function build_scope_graph(
       symbol_kind: symbol_id ? kind : "none",
       range: graph.node_to_simple_range(node),
       file_path: file_path,
+      symbol_id: "", // Will be computed after metadata is added
     };
 
     // Add function metadata if this is a function definition
@@ -147,6 +149,9 @@ export function build_scope_graph(
         source_code
       );
     }
+
+    // Now compute the symbol ID with all information available
+    new_def.symbol_id = get_symbol_id(new_def);
 
     // Insert definition based on scoping
     if (scoping === "local") {

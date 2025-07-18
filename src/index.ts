@@ -14,6 +14,7 @@ import path from 'path';
 export { Point, ScopeGraph, Def, Ref, Import, FunctionCall } from './graph';
 export { Edit } from './edit';
 export { LanguageConfig } from './types';
+export { get_symbol_id, parse_symbol_id, normalize_module_path } from './symbol_naming';
 
 /**
  * Manages the code intelligence for an entire project.

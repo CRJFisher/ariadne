@@ -41,6 +41,7 @@ export interface Def extends BaseNode {
   name: string;
   symbol_kind: string; // e.g., 'function', 'class', 'variable'
   file_path: string;  // The file containing this definition
+  symbol_id: string;  // Unique identifier in format: module_path#name
   metadata?: FunctionMetadata; // Metadata for function definitions
   enclosing_range?: SimpleRange;  // Full body range including definition
   signature?: string;             // Full signature with parameters
