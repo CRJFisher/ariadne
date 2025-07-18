@@ -73,6 +73,16 @@ export interface FunctionCall {
   is_method_call: boolean;   // true for self.method() or this.method()
 }
 
+/**
+ * Represents an import with its resolved definition.
+ * Used to map import statements to the actual definitions they reference.
+ */
+export interface ImportInfo {
+  imported_function: Def;    // The actual function definition in the source file
+  import_statement: Import;  // The import node in the importing file
+  local_name: string;        // Name used in the importing file (may differ from source)
+}
+
 // Edge types to connect the nodes
 
 interface BaseEdge {

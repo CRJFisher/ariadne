@@ -1,4 +1,4 @@
-import { Point, ScopeGraph, Def, Ref, FunctionCall } from './graph';
+import { Point, ScopeGraph, Def, Ref, FunctionCall, ImportInfo, SimpleRange } from './graph';
 import { build_scope_graph } from './scope_resolution';
 import { find_all_references, find_definition } from './symbol_resolver';
 import { LanguageConfig } from './types';
@@ -691,5 +691,84 @@ export class Project {
       docstring,
       decorators: decorators && decorators.length > 0 ? decorators : undefined
     };
+  }
+
+  /**
+   * Get all imports in a file with their resolved definitions.
+   * This enables cross-file call graph construction by mapping imports to actual functions.
+   * 
+   * @param file_path - The file to analyze imports for
+   * @returns Array of ImportInfo objects containing import statements and their definitions
+   */
+  get_imports_with_definitions(file_path: string): ImportInfo[] {
+    const graph = this.file_graphs.get(file_path);
+    if (!graph) return [];
+    
+    const imports = graph.getAllImports();
+    const importInfos: ImportInfo[] = [];
+    
+    for (const imp of imports) {
+      // Use source_name if available (for renamed imports), otherwise use the import name
+      const export_name = imp.source_name || imp.name;
+      
+      // Find the exported definition in other files
+      // TODO: Implement proper module path resolution instead of searching all files
+      for (const [otherFile, otherGraph] of this.file_graphs) {
+        if (otherFile === file_path) continue;
+        
+        const exportedDef = otherGraph.findExportedDef(export_name);
+        if (exportedDef) {
+          importInfos.push({
+            imported_function: exportedDef,
+            import_statement: imp,
+            local_name: imp.name
+          });
+          break; // Found the definition, stop searching
+        }
+      }
+    }
+    
+    return importInfos;
+  }
+
+  /**
+   * Get all functions exported from a specific module.
+   * Note: Currently returns all root-level functions, as the scope mechanism
+   * doesn't distinguish between exported and non-exported definitions.
+   * In TypeScript/JavaScript, this includes both exported and non-exported functions.
+   * In Python, all root-level functions are considered "exported".
+   * 
+   * @param module_path - The path to the module file
+   * @returns Array of function definitions in the root scope
+   */
+  get_exported_functions(module_path: string): Def[] {
+    const graph = this.file_graphs.get(module_path);
+    if (!graph) return [];
+    
+    const exportedFunctions: Def[] = [];
+    const allDefs = graph.getNodes<Def>('definition');
+    
+    // Filter to only functions/generators that are exported
+    for (const def of allDefs) {
+      // Include functions and generators, but exclude methods
+      if (['function', 'generator'].includes(def.symbol_kind)) {
+        // Skip methods (they have symbol_kind 'method' or have class_name in metadata)
+        if (def.metadata?.class_name) {
+          continue;
+        }
+        
+        // Check if this definition is exported (findExportedDef returns it)
+        const exportedDef = graph.findExportedDef(def.name);
+        if (exportedDef && exportedDef.id === def.id) {
+          exportedFunctions.push(def);
+        }
+      } else if (def.symbol_kind === 'method') {
+        // Methods are tracked separately with symbol_kind 'method'
+        // Skip them for this API which only returns standalone functions
+        continue;
+      }
+    }
+    
+    return exportedFunctions;
   }
 }
