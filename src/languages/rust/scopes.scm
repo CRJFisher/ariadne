@@ -232,13 +232,28 @@
     (identifier) @local.reference)
   (#match? @_self_type "Self"))
 
+;; Type::method() - e.g., Rectangle::new()
+;;
+;; Both the type and method are references
+(call_expression
+  function: (scoped_identifier
+    path: (identifier) @local.reference
+    name: (identifier) @local.reference))
+
 ;; self.foo() 
 ;;
 ;; `foo` can be resolved
 (call_expression 
-  (field_expression
-    (self)
-    (field_identifier) @local.reference))
+  function: (field_expression
+    value: (self)
+    field: (field_identifier) @local.reference))
+
+;; obj.method() - e.g., rect.area()
+;;
+;; method is a reference (obj is already captured by field_expression)
+(call_expression
+  function: (field_expression
+    field: (field_identifier) @local.reference))
 
 ;; return a
 (return_expression (identifier) @local.reference)
@@ -345,9 +360,10 @@
 
 ;; a.b
 ;;
-;; `b` is ignored
+;; `a` is a ref to the object, `b` is a ref to the field
 (field_expression
-  (identifier) @local.reference)
+  value: (identifier) @local.reference
+  field: (field_identifier) @local.reference)
 
 ;; { stmt; foo }
 (block

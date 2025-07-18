@@ -749,6 +749,18 @@ describe('JavaScript parsing', () => {
           referenced_in: [],
         },
         {
+          name: 'street',
+          kind: 'constant',
+          context: 'const { address: { §street§, city } } = user;',
+          referenced_in: [],
+        },
+        {
+          name: 'city',
+          kind: 'constant',
+          context: 'const { address: { street, §city§ } } = user;',
+          referenced_in: [],
+        },
+        {
           name: 'otherProps',
           kind: 'variable',
           context: 'const { name, age, ...§otherProps§ } = person;',

@@ -100,3 +100,34 @@ Created a comprehensive shared testing infrastructure that allows for:
 - Created: `docs/testing-guide.md`
 - Created: `src/test/migration-example.md`
 - Modified: `backlog/tasks/task-27 - Refactor-testing-infrastructure-for-multi-language-support.md`
+
+### Post-Implementation Fixes (2025-07-18)
+
+After the initial implementation, the advanced feature tests revealed gaps in the scope query patterns. Fixed the following issues:
+
+**JavaScript (`src/languages/javascript/scopes.scm`):**
+
+1. **for...of loops**: Tree-sitter JavaScript uses `for_in_statement` for both `for...in` and `for...of` loops. Removed incorrect `for_of_statement` references.
+
+2. **Named function expressions**: Added pattern to capture names in function expressions like `function inner() {}` within other functions.
+
+3. **Complex destructuring**: Enhanced support for:
+   - Nested array patterns: `const [[x, y], {z}] = data`
+   - Object patterns in arrays: `const [{prop}] = data`
+   - Array patterns in objects: `const {arr: [first, second]} = data`
+   - Proper const/let/var distinction in all destructuring contexts
+   - Destructuring in for...in/for...of loops
+
+**Rust (`src/languages/rust/scopes.scm`):**
+
+1. **Method calls**: Added patterns for:
+   - Object method calls: `rect.area()`
+   - Type method calls: `Rectangle::new()`
+   - Prevented double-counting in method call expressions
+
+2. **Field access**: Fixed pattern to capture both the object and field in expressions like `rect.width`
+
+**Test Updates:**
+
+- Updated `src/languages/javascript/javascript.test.ts` to expect the now-correctly-found nested destructuring variables
+- All 181 tests now pass, including all advanced feature tests

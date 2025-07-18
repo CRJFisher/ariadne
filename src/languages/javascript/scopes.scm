@@ -47,6 +47,10 @@
 (function_declaration
   (identifier) @hoist.definition.function)
 
+;; named function expressions: const fn = function inner() {}
+(function_expression
+  name: (identifier) @local.definition.function)
+
 (generator_function_declaration
   (identifier) @hoist.definition.generator)
 
@@ -72,6 +76,78 @@
   (property_identifier)
   (identifier) @local.definition.variable)
 
+;; Nested destructuring patterns in const declarations
+(lexical_declaration
+  "const"
+  (variable_declarator
+    (object_pattern
+      (pair_pattern
+        value: (object_pattern
+          (shorthand_property_identifier_pattern) @local.definition.constant)))))
+
+(lexical_declaration
+  "const"
+  (variable_declarator
+    (object_pattern
+      (pair_pattern
+        key: (property_identifier)
+        value: (identifier) @local.definition.constant))))
+
+(lexical_declaration
+  "const"
+  (variable_declarator
+    (object_pattern
+      (pair_pattern
+        value: (array_pattern
+          (identifier) @local.definition.constant)))))
+
+;; Nested destructuring patterns in let declarations
+(lexical_declaration
+  "let"
+  (variable_declarator
+    (object_pattern
+      (pair_pattern
+        value: (object_pattern
+          (shorthand_property_identifier_pattern) @local.definition.variable)))))
+
+(lexical_declaration
+  "let"
+  (variable_declarator
+    (object_pattern
+      (pair_pattern
+        key: (property_identifier)
+        value: (identifier) @local.definition.variable))))
+
+(lexical_declaration
+  "let"
+  (variable_declarator
+    (object_pattern
+      (pair_pattern
+        value: (array_pattern
+          (identifier) @local.definition.variable)))))
+
+;; Nested destructuring patterns in var declarations
+(variable_declaration
+  (variable_declarator
+    (object_pattern
+      (pair_pattern
+        value: (object_pattern
+          (shorthand_property_identifier_pattern) @local.definition.variable)))))
+
+(variable_declaration
+  (variable_declarator
+    (object_pattern
+      (pair_pattern
+        key: (property_identifier)
+        value: (identifier) @local.definition.variable))))
+
+(variable_declaration
+  (variable_declarator
+    (object_pattern
+      (pair_pattern
+        value: (array_pattern
+          (identifier) @local.definition.variable)))))
+
 ;; var x = _
 ;; var [x, y] = _
 ;; var {x, y} = _
@@ -81,6 +157,20 @@
   (variable_declarator 
     name: (array_pattern
             (identifier) @local.definition.variable)))
+
+;; Nested array patterns in var declaration
+(variable_declaration
+  (variable_declarator 
+    name: (array_pattern
+            (array_pattern
+              (identifier) @local.definition.variable))))
+
+;; Object pattern inside array pattern in var declaration
+(variable_declaration
+  (variable_declarator 
+    name: (array_pattern
+            (object_pattern
+              (shorthand_property_identifier_pattern) @local.definition.variable))))
 (variable_declaration
   (variable_declarator 
     name: (object_pattern
@@ -195,6 +285,36 @@
   (#not-match? @_rest "require.*")
 )
 
+;; Nested array patterns in const/let
+(lexical_declaration
+  "const"
+  (variable_declarator 
+    name: (array_pattern
+            (array_pattern
+              (identifier) @local.definition.constant))))
+
+(lexical_declaration
+  "let"
+  (variable_declarator 
+    name: (array_pattern
+            (array_pattern
+              (identifier) @local.definition.variable))))
+
+;; Object pattern inside array pattern in const/let
+(lexical_declaration
+  "const"
+  (variable_declarator 
+    name: (array_pattern
+            (object_pattern
+              (shorthand_property_identifier_pattern) @local.definition.constant))))
+
+(lexical_declaration
+  "let"
+  (variable_declarator 
+    name: (array_pattern
+            (object_pattern
+              (shorthand_property_identifier_pattern) @local.definition.variable))))
+
 
 ;; a = b
 (assignment_expression
@@ -238,11 +358,36 @@
       [(import_specifier !alias (identifier) @local.import)
        (import_specifier alias: (identifier) @local.import)])))
 
-;; for (item in list)
+;; for (item in list) and for (item of list)
 ;;
 ;; `item` is a def
 (for_in_statement 
   left: (identifier) @local.definition.variable)
+
+;; for (const [index, value] in/of list)
+(for_in_statement
+  "const"
+  left: (array_pattern
+    (identifier) @local.definition.constant))
+
+;; for (const {key} in/of list)
+(for_in_statement
+  "const"
+  left: (object_pattern
+    (shorthand_property_identifier_pattern) @local.definition.constant))
+
+;; for (let [index, value] in/of list)
+(for_in_statement
+  "let"
+  left: (array_pattern
+    (identifier) @local.definition.variable))
+
+;; for (let {key} in/of list)
+(for_in_statement
+  "let"
+  left: (object_pattern
+    (shorthand_property_identifier_pattern) @local.definition.variable))
+
 
 ;; labels
 (labeled_statement
@@ -370,9 +515,9 @@
 (export_statement
   (identifier) @local.reference)
 
-;; for (item in list)
+;; for (item in list) and for (item of list)
 ;;
-;; `list` is a def
+;; `list` is a ref
 (for_in_statement 
   right: (identifier) @local.reference)
 
