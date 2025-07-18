@@ -1,10 +1,4 @@
-# Overview
-
-I have cloned a GitHub repository called `bloop` which contains a Rust implementation of an open source code intelligence engine. I am porting over some of its functionality to TypeScript, focussing on the use of `tree-sitter` to parse source code into an Abstract Syntax Tree (AST) and then find references and definitions across the codebase.
-
-The root directory is the `bloop` and my app is in `apps/ts-tree-sitter`. The only code to change should be in `apps/ts-tree-sitter` but we can use the rest of the codebase as a reference.
-
-## Rules
+# Rules
 
 - Use snake_case for all typescript names other than class names.
 

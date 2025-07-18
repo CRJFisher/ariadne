@@ -1,4 +1,4 @@
-import { Project } from './index';
+import { Project, get_definitions, Def } from './index';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -742,5 +742,273 @@ describe('Project - Function discovery APIs', () => {
     
     const functions = project.get_all_functions();
     expect(functions.size).toBe(0);
+  });
+});
+
+describe('get_definitions API', () => {
+  test('should return all function definitions in a TypeScript file', () => {
+    const code = `
+      function func1() {
+        return 1;
+      }
+      
+      async function func2(x: number): Promise<number> {
+        return x * 2;
+      }
+      
+      const func3 = () => {
+        return 3;
+      };
+      
+      export function func4() {
+        return 4;
+      }
+    `;
+    
+    const project = new Project();
+    project.add_or_update_file('test.ts', code);
+    const defs = project.get_definitions('test.ts');
+    
+    // get_definitions returns all definitions including variables
+    const functionNames = ['func1', 'func2', 'func3', 'func4'];
+    const functionDefs = defs.filter(d => functionNames.includes(d.name));
+    
+    expect(functionDefs.length).toBe(4);
+    expect(functionDefs.map(d => d.name).sort()).toEqual(['func1', 'func2', 'func3', 'func4']);
+    
+    // Check symbol kinds
+    expect(defs.find(d => d.name === 'func1')?.symbol_kind).toBe('function');
+    expect(defs.find(d => d.name === 'func2')?.symbol_kind).toBe('function');
+    expect(defs.find(d => d.name === 'func3')?.symbol_kind).toBe('constant'); // const variable
+    expect(defs.find(d => d.name === 'func4')?.symbol_kind).toBe('function');
+  });
+
+  test('should return all method definitions in a TypeScript class', () => {
+    const code = `
+      class MyClass {
+        constructor() {}
+        
+        method1() {
+          return 1;
+        }
+        
+        async method2(): Promise<void> {
+          console.log('test');
+        }
+        
+        private method3() {
+          return 3;
+        }
+        
+        static method4() {
+          return 4;
+        }
+      }
+    `;
+    
+    const project = new Project();
+    project.add_or_update_file('test.ts', code);
+    const defs = project.get_definitions('test.ts');
+    
+    const methods = defs.filter(d => d.symbol_kind === 'method');
+    expect(methods.length).toBeGreaterThanOrEqual(4);
+    
+    const methodNames = methods.map(d => d.name);
+    expect(methodNames).toContain('method1');
+    expect(methodNames).toContain('method2');
+    expect(methodNames).toContain('method3');
+    expect(methodNames).toContain('method4');
+  });
+
+  test('should return class definitions', () => {
+    const code = `
+      class MyClass {
+        prop: string;
+      }
+      
+      export class ExportedClass {
+        method() {}
+      }
+      
+      abstract class AbstractClass {
+        abstract method(): void;
+      }
+    `;
+    
+    const project = new Project();
+    project.add_or_update_file('test.ts', code);
+    const defs = project.get_definitions('test.ts');
+    
+    const classes = defs.filter(d => d.symbol_kind === 'class');
+    expect(classes.length).toBe(3);
+    expect(classes.map(d => d.name).sort()).toEqual(['AbstractClass', 'ExportedClass', 'MyClass']);
+  });
+
+  test('should work with JavaScript files', () => {
+    const code = `
+      function jsFunc() {
+        return 'js';
+      }
+      
+      class JsClass {
+        jsMethod() {
+          return 'method';
+        }
+      }
+      
+      const arrowFunc = () => 'arrow';
+    `;
+    
+    const project = new Project();
+    project.add_or_update_file('test.js', code);
+    const defs = project.get_definitions('test.js');
+    
+    expect(defs.find(d => d.name === 'jsFunc')).toBeDefined();
+    expect(defs.find(d => d.name === 'JsClass')).toBeDefined();
+    expect(defs.find(d => d.name === 'jsMethod')).toBeDefined();
+    expect(defs.find(d => d.name === 'arrowFunc')).toBeDefined();
+    
+    // Check symbol kinds
+    expect(defs.find(d => d.name === 'jsFunc')?.symbol_kind).toBe('function');
+    expect(defs.find(d => d.name === 'JsClass')?.symbol_kind).toBe('class');
+    expect(defs.find(d => d.name === 'jsMethod')?.symbol_kind).toBe('method');
+    expect(defs.find(d => d.name === 'arrowFunc')?.symbol_kind).toBe('constant');
+  });
+
+  test('should include enclosing ranges when available', () => {
+    const code = `
+      function funcWithBody() {
+        const x = 1;
+        const y = 2;
+        return x + y;
+      }
+    `;
+    
+    const project = new Project();
+    project.add_or_update_file('test.ts', code);
+    const defs = project.get_definitions('test.ts');
+    
+    const func = defs.find(d => d.name === 'funcWithBody');
+    expect(func).toBeDefined();
+    // Enclosing range should exist if properly extracted
+    if (func?.enclosing_range) {
+      expect(func.enclosing_range.start.row).toBeLessThan(func.enclosing_range.end.row);
+    }
+  });
+
+  test('should return empty array for non-existent file', () => {
+    const project = new Project();
+    const defs = project.get_definitions('non-existent.ts');
+    expect(defs).toEqual([]);
+  });
+
+  test('should handle generator functions', () => {
+    const code = `
+      function* generator1() {
+        yield 1;
+      }
+      
+      async function* asyncGenerator() {
+        yield 2;
+      }
+    `;
+    
+    const project = new Project();
+    project.add_or_update_file('test.ts', code);
+    const defs = project.get_definitions('test.ts');
+    
+    const generators = defs.filter(d => d.symbol_kind === 'generator');
+    expect(generators.length).toBeGreaterThanOrEqual(1);
+    expect(defs.find(d => d.name === 'generator1')).toBeDefined();
+  });
+
+  test('should handle TypeScript interfaces and types', () => {
+    const code = `
+      interface MyInterface {
+        prop: string;
+      }
+      
+      type MyType = {
+        value: number;
+      };
+      
+      function useTypes(x: MyInterface): MyType {
+        return { value: 1 };
+      }
+    `;
+    
+    const project = new Project();
+    project.add_or_update_file('test.ts', code);
+    const defs = project.get_definitions('test.ts');
+    
+    // Should at least get the function
+    expect(defs.find(d => d.name === 'useTypes')).toBeDefined();
+  });
+});
+
+describe('get_definitions standalone function', () => {
+  const tempFile = path.join(__dirname, 'temp-test-definitions.ts');
+  
+  afterEach(() => {
+    if (fs.existsSync(tempFile)) {
+      fs.unlinkSync(tempFile);
+    }
+  });
+  
+  test('should work as standalone function with file path', () => {
+    const code = `
+      export function standaloneFunc() {
+        return 'test';
+      }
+      
+      export class StandaloneClass {
+        method() {
+          return 'method';
+        }
+      }
+    `;
+    
+    fs.writeFileSync(tempFile, code);
+    const defs = get_definitions(tempFile);
+    
+    expect(defs.length).toBeGreaterThanOrEqual(2);
+    expect(defs.find(d => d.name === 'standaloneFunc')).toBeDefined();
+    expect(defs.find(d => d.name === 'StandaloneClass')).toBeDefined();
+    
+    // Check Def interface properties
+    const funcDef = defs.find(d => d.name === 'standaloneFunc');
+    expect(funcDef).toMatchObject({
+      name: 'standaloneFunc',
+      symbol_kind: 'function',
+      file_path: tempFile,
+      range: expect.objectContaining({
+        start: expect.objectContaining({ row: expect.any(Number), column: expect.any(Number) }),
+        end: expect.objectContaining({ row: expect.any(Number), column: expect.any(Number) })
+      })
+    });
+  });
+  
+  test('should return empty array for non-existent file', () => {
+    const defs = get_definitions('/non/existent/path.ts');
+    expect(defs).toEqual([]);
+  });
+  
+  test('should handle JavaScript files', () => {
+    const jsFile = path.join(__dirname, 'temp-test-definitions.js');
+    const code = `
+      function jsStandaloneFunc() {
+        return 'js';
+      }
+    `;
+    
+    fs.writeFileSync(jsFile, code);
+    try {
+      const defs = get_definitions(jsFile);
+      expect(defs.find(d => d.name === 'jsStandaloneFunc')).toBeDefined();
+    } finally {
+      if (fs.existsSync(jsFile)) {
+        fs.unlinkSync(jsFile);
+      }
+    }
   });
 });

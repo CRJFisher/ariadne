@@ -45,20 +45,6 @@ The implementation ensures compatibility with existing code while providing clea
 
 ## Reference Types
 
-### Definition Interface
-
-```typescript
-interface Definition {
-  name: string;
-  kind: "function" | "method" | "class" | "variable";
-  range: Range;
-  file: string;
-  enclosing_range?: Range; // Full body range including definition
-  signature?: string; // Full signature with parameters
-  docstring?: string; // Documentation comment if available
-}
-```
-
 ### Call Interface
 
 ```typescript

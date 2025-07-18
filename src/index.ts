@@ -11,7 +11,7 @@ import { Tree } from 'tree-sitter';
 import path from 'path';
 
 // Re-export important types
-export { Point, ScopeGraph, Def, Ref, Import, FunctionCall } from './graph';
+export { Point, ScopeGraph, Def, Ref, Import, FunctionCall, SimpleRange } from './graph';
 export { Edit } from './edit';
 export { LanguageConfig } from './types';
 export { get_symbol_id, parse_symbol_id, normalize_module_path } from './symbol_naming';
@@ -288,6 +288,20 @@ export class Project {
       def.symbol_kind === 'method' ||
       def.symbol_kind === 'generator'
     );
+  }
+
+  /**
+   * Get all definitions in a file.
+   * 
+   * @param file_path - Path to the file relative to project root
+   * @returns Array of all definitions in the file (functions, methods, classes, variables, etc.)
+   */
+  get_definitions(file_path: string): Def[] {
+    const graph = this.file_graphs.get(file_path);
+    if (!graph) return [];
+    
+    // Return all definitions, let the caller filter by symbol_kind if needed
+    return graph.getNodes<Def>('definition');
   }
 
   /**
@@ -772,4 +786,31 @@ export class Project {
     
     return exportedFunctions;
   }
+}
+
+/**
+ * Get all definitions in a file.
+ * 
+ * @param file_path - Path to the file to analyze
+ * @returns Array of all definitions in the file (functions, methods, classes, variables, etc.)
+ */
+export function get_definitions(file_path: string): Def[] {
+  // Create a temporary project instance to parse the file
+  const project = new Project();
+  
+  // Read the file content
+  const fs = require('fs');
+  let source_code: string;
+  try {
+    source_code = fs.readFileSync(file_path, 'utf8');
+  } catch (error) {
+    console.error(`Failed to read file: ${file_path}`);
+    return [];
+  }
+  
+  // Add the file to the project
+  project.add_or_update_file(file_path, source_code);
+  
+  // Get definitions from the project
+  return project.get_definitions(file_path);
 }
