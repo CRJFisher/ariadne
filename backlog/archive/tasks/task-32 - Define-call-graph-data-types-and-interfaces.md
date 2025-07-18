@@ -99,11 +99,6 @@ interface CallGraphEdge {
 }
 ```
 
-### Symbol Naming Convention
-
-- Format: `<module_path>#<name>`
-- Example: `src.utils.helpers#process_data`
-
 ## Decision Document
 
 See [Call Graph Types Decision](/Users/chuck/workspace/refscope/backlog/decisions/call-graph-types-decision.md) for the analysis and rationale behind the type design choices.
