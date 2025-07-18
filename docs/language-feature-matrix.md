@@ -2,7 +2,7 @@
 
 This document tracks which language features are supported by RefScope for each programming language.
 
-## Core Features (All Languages)
+## Core Library Functionality
 
 | Feature                   | TypeScript | JavaScript | Python | Rust | Notes                            |
 | ------------------------- | ---------- | ---------- | ------ | ---- | -------------------------------- |
@@ -15,8 +15,9 @@ This document tracks which language features are supported by RefScope for each 
 | **Local Scopes**          | ✅         | ✅         | ✅     | ✅    | Block and function scopes        |
 | **Reference Resolution**  | ✅         | ✅         | ✅     | ✅    | Finding symbol usage             |
 | **Go-to-Definition**      | ✅         | ✅         | ✅     | ✅    | Navigate to symbol definition    |
+| **Function Metadata**     | ✅         | ✅         | ✅     | ✅    | Async, test, private, params     |
 
-## Advanced Features
+## Advanced Language-Specific Feature Support
 
 | Feature                      | TypeScript | JavaScript | Python | Rust | Notes                       |
 | ---------------------------- | ---------- | ---------- | ------ | ---- | --------------------------- |
@@ -122,3 +123,35 @@ When adding a new language, ensure:
 2. Language-specific features are documented here
 3. Test cases follow the shared test patterns
 4. Feature gaps are clearly documented
+
+## Function Metadata
+
+RefScope extracts rich metadata for function definitions across all supported languages:
+
+### Metadata Fields
+
+| Field               | Description                                              | TypeScript | JavaScript | Python | Rust |
+| ------------------- | -------------------------------------------------------- | ---------- | ---------- | ------ | ---- |
+| `is_async`          | Function is declared with async keyword                  | ✅         | ✅         | ✅     | ✅   |
+| `is_test`           | Function is a test (by name or decorator/attribute)      | ✅         | ✅         | ✅     | ✅   |
+| `is_private`        | Function has private visibility                          | ✅         | ✅         | ✅     | ✅   |
+| `line_count`        | Number of lines in function body                         | ✅         | ✅         | ✅     | ✅   |
+| `parameter_names`   | List of parameter names (preserves order)                | ✅         | ✅         | ✅     | ✅   |
+| `has_decorator`     | Function has decorators (language-specific)              | ❌         | ❌         | ✅     | ❌   |
+| `class_name`        | For methods, the containing class/struct name            | ✅         | ✅         | ✅     | ✅   |
+| `complexity`        | Cyclomatic complexity (future enhancement)               | ❌         | ❌         | ❌     | ❌   |
+
+### Test Detection
+
+Functions are identified as tests using language-specific patterns:
+
+- **TypeScript/JavaScript**: Functions with names like `test*`, `*Test`, inside `describe()`, `it()`, `test()` blocks
+- **Python**: Functions named `test_*`, `setUp`, `tearDown`, or decorated with `@pytest.*`, `@unittest.*`
+- **Rust**: Functions with `#[test]` or `#[cfg(test)]` attributes
+
+### Private Detection
+
+- **TypeScript**: `private` keyword or `#` prefix for private fields/methods
+- **JavaScript**: `#` prefix for private fields/methods
+- **Python**: Names starting with `_` (single underscore)
+- **Rust**: Functions without `pub` visibility modifier

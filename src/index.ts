@@ -11,7 +11,7 @@ import { Tree } from 'tree-sitter';
 import path from 'path';
 
 // Re-export important types
-export { Point, ScopeGraph, Def, Ref, FunctionCall } from './graph';
+export { Point, ScopeGraph, Def, Ref, Import, FunctionCall } from './graph';
 export { Edit } from './edit';
 export { LanguageConfig } from './types';
 
@@ -122,7 +122,7 @@ export class Project {
       return;
     }
 
-    const graph = build_scope_graph(tree, config, file_path);
+    const graph = build_scope_graph(tree, config, file_path, source_code);
     
     // Update caches
     this.file_graphs.set(file_path, graph);

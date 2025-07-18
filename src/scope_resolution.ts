@@ -1,6 +1,7 @@
 import { Tree, Query } from "tree-sitter";
 import { ScopeGraph, Def, Scope, Ref, Import } from "./graph";
 import { LanguageConfig } from "./types";
+import { extract_function_metadata } from "./function_metadata";
 
 /**
  * The equivalent of `scope_res_generic`.
@@ -9,7 +10,8 @@ import { LanguageConfig } from "./types";
 export function build_scope_graph(
   tree: Tree,
   config: LanguageConfig,
-  file_path: string
+  file_path: string,
+  source_code?: string
 ): ScopeGraph {
   if (!tree || !tree.rootNode) {
     throw new Error(
@@ -122,37 +124,31 @@ export function build_scope_graph(
       }
     }
 
-    if (!symbol_id) {
-      // Some definitions like type parameters don't have a specific symbol kind
-      // Still create the definition with 'none' as the kind
-      const new_def: Def = {
-        id: graph.get_next_node_id(),
-        kind: "definition",
-        name: node.text,
-        symbol_kind: "none",
-        range: graph.node_to_simple_range(node),
-        file_path: file_path,
-      };
-
-      if (scoping === "local") {
-        graph.insert_local_def(new_def);
-      } else if (scoping === "hoist") {
-        graph.insert_hoisted_def(new_def);
-      } else if (scoping === "global") {
-        graph.insert_global_def(new_def);
-      }
-      continue;
-    }
-
+    // Create definition object
     const new_def: Def = {
       id: graph.get_next_node_id(),
       kind: "definition",
       name: node.text,
-      symbol_kind: kind,
+      symbol_kind: symbol_id ? kind : "none",
       range: graph.node_to_simple_range(node),
       file_path: file_path,
     };
 
+    // Add function metadata if this is a function definition
+    if (
+      source_code &&
+      (kind === "function" || kind === "method" || kind === "generator")
+    ) {
+      const parent_node = node.parent;
+      new_def.metadata = extract_function_metadata(
+        node,
+        parent_node,
+        config,
+        source_code
+      );
+    }
+
+    // Insert definition based on scoping
     if (scoping === "local") {
       graph.insert_local_def(new_def);
     } else if (scoping === "hoist") {

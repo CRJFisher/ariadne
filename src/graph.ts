@@ -25,11 +25,23 @@ interface BaseNode {
   range: SimpleRange;
 }
 
+export interface FunctionMetadata {
+  is_async?: boolean;
+  is_test?: boolean;         // Detected test function
+  is_private?: boolean;       // Starts with _ in Python
+  complexity?: number;        // Cyclomatic complexity
+  line_count: number;         // Size of function
+  parameter_names?: string[]; // For signature display
+  has_decorator?: boolean;    // Python decorators
+  class_name?: string;        // For methods, the containing class
+}
+
 export interface Def extends BaseNode {
   kind: 'definition';
   name: string;
   symbol_kind: string; // e.g., 'function', 'class', 'variable'
   file_path: string;  // The file containing this definition
+  metadata?: FunctionMetadata; // Metadata for function definitions
 }
 
 export interface Ref extends BaseNode {

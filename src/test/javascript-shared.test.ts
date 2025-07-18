@@ -163,6 +163,127 @@ module.exports = {
       const readFileImport = imports.find(d => d.name === 'readFile');
       expect(readFileImport).toBeDefined();
     }
+  },
+
+  // Function metadata tests
+  {
+    name: 'Async Function Metadata',
+    code: `async function fetchData(url) {
+  const response = await fetch(url);
+  return response.json();
+}`,
+    test: (project, fileName) => {
+      const graph = project.get_scope_graph(fileName);
+      const defs = graph!.getNodes('definition');
+      
+      const funcDef = defs.find(d => d.name === 'fetchData' && d.symbol_kind === 'function');
+      expect(funcDef).toBeDefined();
+      expect(funcDef!.metadata).toBeDefined();
+      expect(funcDef!.metadata!.is_async).toBe(true);
+      expect(funcDef!.metadata!.line_count).toBe(4);
+      expect(funcDef!.metadata!.parameter_names).toEqual(['url']);
+    }
+  },
+
+  {
+    name: 'Test Function Detection',
+    code: `describe('Calculator', () => {
+  it('should add numbers', () => {
+    expect(add(2, 3)).toBe(5);
+  });
+  
+  test('subtraction works', () => {
+    expect(subtract(5, 3)).toBe(2);
+  });
+});
+
+function testHelper() {
+  return 42;
+}`,
+    test: (project, fileName) => {
+      const graph = project.get_scope_graph(fileName);
+      const defs = graph!.getNodes('definition');
+      
+      // testHelper should be marked as test function due to name
+      const testHelper = defs.find(d => d.name === 'testHelper');
+      expect(testHelper).toBeDefined();
+      expect(testHelper!.metadata!.is_test).toBe(true);
+    }
+  },
+
+  {
+    name: 'Class Method Metadata',
+    code: `class UserService {
+  #privateField = 'secret';
+  
+  async getUser(id) {
+    const response = await fetch(\`/users/\${id}\`);
+    return response.json();
+  }
+  
+  #validateId(id) {
+    return id.length > 0;
+  }
+}`,
+    test: (project, fileName) => {
+      const graph = project.get_scope_graph(fileName);
+      const defs = graph!.getNodes('definition');
+      
+      const getUserMethod = defs.find(d => d.name === 'getUser');
+      expect(getUserMethod).toBeDefined();
+      expect(getUserMethod!.metadata).toBeDefined();
+      expect(getUserMethod!.metadata!.is_async).toBe(true);
+      expect(getUserMethod!.metadata!.class_name).toBe('UserService');
+      expect(getUserMethod!.metadata!.parameter_names).toEqual(['id']);
+      
+      const validateMethod = defs.find(d => d.name === '#validateId');
+      expect(validateMethod).toBeDefined();
+      expect(validateMethod!.metadata).toBeDefined();
+      expect(validateMethod!.metadata!.is_private).toBe(true);
+      expect(validateMethod!.metadata!.class_name).toBe('UserService');
+    }
+  },
+
+  {
+    name: 'Rest Parameters',
+    code: `function sum(...numbers) {
+  return numbers.reduce((a, b) => a + b, 0);
+}
+
+function greet(greeting, ...names) {
+  return \`\${greeting} \${names.join(', ')}\`;
+}`,
+    test: (project, fileName) => {
+      const graph = project.get_scope_graph(fileName);
+      const defs = graph!.getNodes('definition');
+      
+      const sumFunc = defs.find(d => d.name === 'sum');
+      expect(sumFunc).toBeDefined();
+      expect(sumFunc!.metadata!.parameter_names).toEqual(['...numbers']);
+      
+      const greetFunc = defs.find(d => d.name === 'greet');
+      expect(greetFunc).toBeDefined();
+      expect(greetFunc!.metadata!.parameter_names).toEqual(['greeting', '...names']);
+    }
+  },
+
+  {
+    name: 'Generator Function Metadata',
+    code: `function* numberGenerator(start, end) {
+  for (let i = start; i <= end; i++) {
+    yield i;
+  }
+}`,
+    test: (project, fileName) => {
+      const graph = project.get_scope_graph(fileName);
+      const defs = graph!.getNodes('definition');
+      
+      const genFunc = defs.find(d => d.name === 'numberGenerator' && d.symbol_kind === 'generator');
+      expect(genFunc).toBeDefined();
+      expect(genFunc!.metadata).toBeDefined();
+      expect(genFunc!.metadata!.line_count).toBe(5);
+      expect(genFunc!.metadata!.parameter_names).toEqual(['start', 'end']);
+    }
   }
 ];
 

@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from 'vitest';
-import { Project } from '../index';
+import { Project, Def, Ref, Import } from '../index';
 import { LanguageConfig } from '../types';
 
 /**
@@ -336,9 +336,9 @@ export function generateLanguageTests(
         
         // Debug output for failing tests
         if (fixture.name === 'Function Definition' || fixture.name === 'Variable Declaration') {
-          const allDefs = graph!.getNodes('definition');
-          const allImports = graph!.getNodes('import');
-          const allRefs = graph!.getNodes('reference');
+          const allDefs = graph!.getNodes<Def>('definition');
+          const allImports = graph!.getNodes<Import>('import');
+          const allRefs = graph!.getNodes<Ref>('reference');
           console.log(`\n${fixture.name} Test Debug for ${languageName}:`);
           console.log('Test code:', testCase.code);
           console.log('Definitions found:', allDefs.map(d => `${d.name} (${d.symbol_kind})`));
@@ -349,8 +349,8 @@ export function generateLanguageTests(
         
         // Test definitions
         if (expectations.definitions) {
-          const allDefs = graph!.getNodes('definition');
-          const allImports = graph!.getNodes('import');
+          const allDefs = graph!.getNodes<Def>('definition');
+          const allImports = graph!.getNodes<Import>('import');
           
           // Combine definitions and imports for testing
           const allNodes = [...allDefs, ...allImports];
@@ -358,7 +358,7 @@ export function generateLanguageTests(
           expectations.definitions.forEach(expectedDef => {
             const foundNodes = allNodes.filter(d => 
               d.name === expectedDef.name && 
-              (!expectedDef.kind || d.symbol_kind === expectedDef.kind)
+              (!expectedDef.kind || ('symbol_kind' in d && d.symbol_kind === expectedDef.kind))
             );
             
             if (expectedDef.count !== undefined) {
@@ -373,7 +373,7 @@ export function generateLanguageTests(
         if (expectations.references) {
           expectations.references.forEach(expectedRef => {
             // Find the definition first to get its position
-            const allDefs = graph!.getNodes('definition');
+            const allDefs = graph!.getNodes<Def>('definition');
             const def = allDefs.find(d => d.name === expectedRef.name);
             if (!def) {
               throw new Error(`Definition not found for ${expectedRef.name}`);

@@ -247,6 +247,141 @@ impl<T> Container for Stack<T> {
       const outerRefs = refs.filter(r => r.name === "'outer");
       expect(outerRefs.length).toBeGreaterThan(0);
     }
+  },
+
+  // Function metadata tests
+  {
+    name: 'Async Function Metadata',
+    code: `async fn fetch_data(url: &str) -> Result<String, Error> {
+    let response = client.get(url).send().await?;
+    let body = response.text().await?;
+    Ok(body)
+}`,
+    test: (project, fileName) => {
+      const graph = project.get_scope_graph(fileName);
+      const defs = graph!.getNodes('definition');
+      
+      const funcDef = defs.find(d => d.name === 'fetch_data' && d.symbol_kind === 'function');
+      expect(funcDef).toBeDefined();
+      expect(funcDef!.metadata).toBeDefined();
+      expect(funcDef!.metadata!.is_async).toBe(true);
+      expect(funcDef!.metadata!.line_count).toBe(5);
+      expect(funcDef!.metadata!.parameter_names).toEqual(['url']);
+    }
+  },
+
+  {
+    name: 'Test Function Detection',
+    code: `#[test]
+fn test_addition() {
+    assert_eq!(add(2, 3), 5);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn test_subtraction() {
+        assert_eq!(subtract(5, 3), 2);
+    }
+}`,
+    test: (project, fileName) => {
+      const graph = project.get_scope_graph(fileName);
+      const defs = graph!.getNodes('definition');
+      
+      // Functions with #[test] attribute should be marked as test
+      const testAddition = defs.find(d => d.name === 'test_addition');
+      expect(testAddition).toBeDefined();
+      expect(testAddition!.metadata!.is_test).toBe(true);
+      
+      const testSubtraction = defs.find(d => d.name === 'test_subtraction');
+      expect(testSubtraction).toBeDefined();
+      expect(testSubtraction!.metadata!.is_test).toBe(true);
+    }
+  },
+
+  {
+    name: 'Method Metadata in Impl Blocks',
+    code: `struct UserService {
+    api_url: String,
+}
+
+impl UserService {
+    pub async fn get_user(&self, id: u64) -> Result<User, Error> {
+        let url = format!("{}/users/{}", self.api_url, id);
+        self.fetch(url).await
+    }
+    
+    fn validate_id(&self, id: u64) -> bool {
+        id > 0
+    }
+}`,
+    test: (project, fileName) => {
+      const graph = project.get_scope_graph(fileName);
+      const defs = graph!.getNodes('definition');
+      
+      const getUserMethod = defs.find(d => d.name === 'get_user');
+      expect(getUserMethod).toBeDefined();
+      expect(getUserMethod!.metadata).toBeDefined();
+      expect(getUserMethod!.metadata!.is_async).toBe(true);
+      expect(getUserMethod!.metadata!.class_name).toBe('UserService');
+      expect(getUserMethod!.metadata!.parameter_names).toEqual(['&self', 'id']);
+      expect(getUserMethod!.metadata!.is_private).toBe(false);
+      
+      const validateMethod = defs.find(d => d.name === 'validate_id');
+      expect(validateMethod).toBeDefined();
+      expect(validateMethod!.metadata).toBeDefined();
+      expect(validateMethod!.metadata!.is_private).toBe(true); // No pub keyword
+      expect(validateMethod!.metadata!.class_name).toBe('UserService');
+    }
+  },
+
+  {
+    name: 'Parameter Patterns',
+    code: `fn process_data(
+    simple: i32,
+    mut mutable: String,
+    (x, y): (f64, f64),
+    Point { x: px, y: py }: Point,
+) -> i32 {
+    simple + px as i32 + py as i32
+}`,
+    test: (project, fileName) => {
+      const graph = project.get_scope_graph(fileName);
+      const defs = graph!.getNodes('definition');
+      
+      const processData = defs.find(d => d.name === 'process_data');
+      expect(processData).toBeDefined();
+      // Parameter extraction for complex patterns may vary
+      expect(processData!.metadata!.parameter_names!.length).toBeGreaterThan(0);
+      expect(processData!.metadata!.parameter_names).toContain('simple');
+      expect(processData!.metadata!.parameter_names).toContain('mut mutable');
+    }
+  },
+
+  {
+    name: 'Generic Function Metadata',
+    code: `fn compare<T: PartialOrd>(a: T, b: T) -> bool {
+    a < b
+}
+
+fn multiple_bounds<T: Clone + Debug, U: Display>(t: T, u: U) {
+    println!("{:?} {}", t, u);
+}`,
+    test: (project, fileName) => {
+      const graph = project.get_scope_graph(fileName);
+      const defs = graph!.getNodes('definition');
+      
+      const compare = defs.find(d => d.name === 'compare');
+      expect(compare).toBeDefined();
+      expect(compare!.metadata!.line_count).toBe(3);
+      expect(compare!.metadata!.parameter_names).toEqual(['a', 'b']);
+      
+      const multipleBounds = defs.find(d => d.name === 'multiple_bounds');
+      expect(multipleBounds).toBeDefined();
+      expect(multipleBounds!.metadata!.parameter_names).toEqual(['t', 'u']);
+    }
   }
 ];
 

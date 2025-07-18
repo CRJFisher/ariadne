@@ -129,6 +129,10 @@
 (method_definition
   (property_identifier) @hoist.definition.method)
 
+;; private method def
+(method_definition
+  (private_property_identifier) @hoist.definition.method)
+
 ;; class
 (class_declaration
   (type_identifier) @local.definition.class)
@@ -255,6 +259,12 @@
   (member_expression
     object: [(this) (identifier)]
     property: (property_identifier) @local.reference.method))
+
+;; private method call expression: this.#privateMethod() or obj.#privateMethod()
+(call_expression
+  (member_expression
+    object: [(this) (identifier)]
+    property: (private_property_identifier) @local.reference.method))
 
 ;; call arguments
 (arguments
