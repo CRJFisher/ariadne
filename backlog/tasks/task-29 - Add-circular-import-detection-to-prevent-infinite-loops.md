@@ -14,7 +14,7 @@ dependencies: []
 
 ## Description
 
-The current import resolution could potentially enter infinite loops when circular imports exist. This task adds detection and graceful handling of circular import chains to ensure the API remains stable even with complex dependency graphs.
+The current import resolution could potentially enter infinite loops when circular imports exist. This task adds detection and graceful handling of circular import chains to ensure the API remains stable even with complex dependency graphs. This might already be implemented, but so the first step is to review the codebase and see if it's already implemented.
 
 ## Acceptance Criteria
 
