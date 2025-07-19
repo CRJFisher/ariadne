@@ -13,6 +13,8 @@ build/
 !jest.config.js
 !scripts/*.js
 !scripts/*.sh
+!packages/refscope-types/**/*.d.ts
+!packages/refscope-types/**/*.js
 
 # IDE and editor files
 .vscode/
