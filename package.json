@@ -1,6 +1,6 @@
 {
   "name": "refscope",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "Find references and definitions in your codebase using tree-sitter",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
