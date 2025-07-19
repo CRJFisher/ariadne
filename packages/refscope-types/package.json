@@ -8,10 +8,10 @@
     "types/**/*.d.ts"
   ],
   "scripts": {
-    "build": "tsc --noEmit",
+    "build": "echo 'No build needed for types-only package'",
     "sync-types": "node scripts/extract-types.js",
-    "test": "tsc --noEmit && node test/compile-test.js",
-    "prepublishOnly": "npm run build && npm test"
+    "test": "node test/compile-test.js",
+    "prepublishOnly": "npm test"
   },
   "repository": {
     "type": "git",

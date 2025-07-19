@@ -29,6 +29,7 @@ npm install refscope-types
 ```
 
 This package contains zero runtime code and is ideal for:
+
 - Webview environments where bundle size is critical
 - Type-safe message passing between processes
 - Projects that only need type definitions for interoperability
@@ -38,32 +39,38 @@ See the [refscope-types documentation](packages/refscope-types/README.md) for mo
 ## Quick Start
 
 ```typescript
-import { Project } from 'refscope';
+import { Project } from "refscope";
 
 // Create a project instance
 const project = new Project();
 
 // Add files to the project
-project.add_or_update_file('src/main.ts', sourceCode);
-project.add_or_update_file('src/utils.ts', utilsCode);
+project.add_or_update_file("src/main.ts", sourceCode);
+project.add_or_update_file("src/utils.ts", utilsCode);
 
 // Find definition of a symbol
-const definition = project.go_to_definition('src/main.ts', { row: 10, column: 15 });
+const definition = project.go_to_definition("src/main.ts", {
+  row: 10,
+  column: 15,
+});
 
 // Find all references to a symbol
-const references = project.find_references('src/utils.ts', { row: 5, column: 10 });
+const references = project.find_references("src/utils.ts", {
+  row: 5,
+  column: 10,
+});
 
 // Incremental update for better performance
 project.update_file_range(
-  'src/main.ts',
+  "src/main.ts",
   { row: 10, column: 0 },
-  'const',
-  'let'
+  "const",
+  "let"
 );
 
 // Build a call graph
 const callGraph = project.get_call_graph();
-console.log('Entry points:', callGraph.top_level_nodes);
+console.log("Entry points:", callGraph.top_level_nodes);
 ```
 
 ## API Reference
@@ -106,7 +113,7 @@ Efficiently updates a portion of a file using incremental parsing.
 
 ```typescript
 interface Point {
-  row: number;    // 0-indexed line number
+  row: number; // 0-indexed line number
   column: number; // 0-indexed column number
 }
 
