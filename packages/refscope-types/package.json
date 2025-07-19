@@ -1,0 +1,41 @@
+{
+  "name": "refscope-types",
+  "version": "0.5.0",
+  "description": "TypeScript type definitions for refscope",
+  "types": "index.d.ts",
+  "files": [
+    "index.d.ts",
+    "types/**/*.d.ts"
+  ],
+  "scripts": {
+    "build": "tsc --noEmit",
+    "sync-types": "node scripts/extract-types.js",
+    "test": "tsc --noEmit && node test/compile-test.js",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CRJFisher/refscope.git",
+    "directory": "packages/refscope-types"
+  },
+  "keywords": [
+    "refscope",
+    "types",
+    "typescript",
+    "code-analysis",
+    "ast",
+    "call-graph"
+  ],
+  "author": "crjfisher <crjfisher@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/CRJFisher/refscope/issues"
+  },
+  "homepage": "https://github.com/CRJFisher/refscope#readme",
+  "peerDependencies": {
+    "typescript": ">=4.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

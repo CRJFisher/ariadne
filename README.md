@@ -20,6 +20,21 @@ npm install refscope
 
 RefScope includes prebuilt binaries for common platforms, so you don't need build tools installed. If prebuilt binaries aren't available for your platform, it will automatically build from source. See [prebuild documentation](docs/prebuild-binaries.md) for more details.
 
+### TypeScript Types Only
+
+If you only need TypeScript type definitions without the implementation (e.g., for webviews or lightweight environments), you can install the types-only package:
+
+```bash
+npm install refscope-types
+```
+
+This package contains zero runtime code and is ideal for:
+- Webview environments where bundle size is critical
+- Type-safe message passing between processes
+- Projects that only need type definitions for interoperability
+
+See the [refscope-types documentation](packages/refscope-types/README.md) for more details.
+
 ## Quick Start
 
 ```typescript

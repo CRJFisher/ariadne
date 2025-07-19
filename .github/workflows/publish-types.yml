@@ -1,0 +1,45 @@
+name: Publish refscope-types
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish-types:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      
+      - name: Update types package version
+        run: |
+          cd packages/refscope-types
+          npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version
+      
+      - name: Install dependencies
+        run: |
+          cd packages/refscope-types
+          npm install
+      
+      - name: Build and test types
+        run: |
+          cd packages/refscope-types
+          npm run build
+          npm test
+      
+      - name: Publish to npm
+        run: |
+          cd packages/refscope-types
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
