@@ -1,4 +1,4 @@
-import { Project, get_definitions, Def } from "../index";
+import { Project, get_definitions, Def } from "../src/index";
 import * as fs from "fs";
 import * as path from "path";
 

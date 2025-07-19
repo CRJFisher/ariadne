@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Project } from '../../index';
-import { Point } from '../../graph';
+import { Project } from '../../src/index';
 
 describe('Rust Language Support', () => {
   it('should handle const and static declarations', () => {

@@ -1,4 +1,4 @@
-import { Project } from "../index";
+import { Project } from "../src/index";
 import { beforeEach, describe, expect, test } from "vitest";
 
 describe("Import Resolution API", () => {

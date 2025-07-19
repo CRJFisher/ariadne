@@ -1,4 +1,5 @@
-import { Project } from '../../index';
+import { Project } from '../../src/index';
+import { describe, test, expect, beforeEach } from 'vitest';
 
 describe('Python language support', () => {
   let project: Project;

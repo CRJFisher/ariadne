@@ -1,5 +1,5 @@
-import { Project } from "../index";
-import { Point } from "../graph";
+import { Project } from "../src/index";
+import { beforeEach, describe, test, expect } from "vitest";
 
 describe("Incremental Parsing", () => {
   let project: Project;
@@ -134,7 +134,7 @@ describe("Incremental Parsing", () => {
 
   test("incremental update performance benefit", () => {
     // Create a large file (but stay under 32KB limit)
-    const lines = [];
+    const lines: string[] = [];
     for (let i = 0; i < 500; i++) {
       lines.push(`function func_${i}() { return ${i}; }`);
     }

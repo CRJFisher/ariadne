@@ -1,5 +1,6 @@
-import { test_scopes, ScopeDebug, debug_scope_graph } from '../../test_utils';
-import { Project } from '../../index';
+import { test_scopes, ScopeDebug, debug_scope_graph } from '../test_utils';
+import { Project } from '../../src/index';
+import { describe, test, expect } from 'vitest';
 
 describe('TypeScript parsing', () => {
   // tests the following constructs:

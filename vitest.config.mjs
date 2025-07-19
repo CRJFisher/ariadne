@@ -10,14 +10,14 @@ export default defineConfig({
         singleFork: true,
       },
     },
-    setupFiles: './src/test/setup.ts',
-    include: ['src/**/*.test.ts'],
+    setupFiles: './tests/setup.ts',
+    include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       exclude: [
         'node_modules/',
-        'src/test/',
+        'tests/',
         '**/*.test.ts',
         '**/*.spec.ts',
         'dist/',

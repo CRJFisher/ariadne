@@ -13,13 +13,14 @@
         "skipLibCheck": true
     },
     "include": [
-        "src/**/*"
+        "src/**/*",
+        "tests"
     ],
     "exclude": [
         "node_modules",
         "dist",
         "**/*.test.ts",
-        "src/test_utils.ts",
+        "tests/test_utils.ts",
         "src/benchmark-incremental.ts",
         "src/debug-*.ts",
         "src/test-*.ts"

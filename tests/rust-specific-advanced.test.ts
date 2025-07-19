@@ -1,15 +1,15 @@
-import { describe, test, expect, beforeEach } from 'vitest';
-import { Def, Project, Ref } from '../index';
-import { Import } from '../index';
+import { describe, test, expect, beforeEach } from "vitest";
+import { Def, Project, Ref } from "../src/index";
+import { Import } from "../src/index";
 
-describe('Rust - Advanced Language-Specific Features', () => {
+describe("Rust - Advanced Language-Specific Features", () => {
   let project: Project;
-  
+
   beforeEach(() => {
     project = new Project();
   });
-  
-  test('Closure parameters and captures', () => {
+
+  test("Closure parameters and captures", () => {
     const code = `fn main() {
     let x = 5;
     let closure = |y| x + y;
@@ -21,19 +21,19 @@ describe('Rust - Advanced Language-Specific Features', () => {
         sum
     };
 }`;
-    
-    const fileName = 'test.rs';
+
+    const fileName = "test.rs";
     project.add_or_update_file(fileName, code);
     const graph = project.get_scope_graph(fileName);
-    
-    const defs = graph!.getNodes<Def>('definition');
-    expect(defs.find(d => d.name === 'closure')).toBeDefined();
-    expect(defs.find(d => d.name === 'y')).toBeDefined();
-    expect(defs.find(d => d.name === 'accumulator')).toBeDefined();
-    expect(defs.find(d => d.name === 'n')).toBeDefined();
+
+    const defs = graph!.getNodes<Def>("definition");
+    expect(defs.find((d) => d.name === "closure")).toBeDefined();
+    expect(defs.find((d) => d.name === "y")).toBeDefined();
+    expect(defs.find((d) => d.name === "accumulator")).toBeDefined();
+    expect(defs.find((d) => d.name === "n")).toBeDefined();
   });
-  
-  test('if let and while let expressions', () => {
+
+  test("if let and while let expressions", () => {
     const code = `fn main() {
     let opt = Some(42);
     
@@ -46,17 +46,17 @@ describe('Rust - Advanced Language-Specific Features', () => {
         println!("Popped: {}", top);
     }
 }`;
-    
-    const fileName = 'test.rs';
+
+    const fileName = "test.rs";
     project.add_or_update_file(fileName, code);
     const graph = project.get_scope_graph(fileName);
-    
-    const defs = graph!.getNodes<Def>('definition');
-    expect(defs.find(d => d.name === 'value')).toBeDefined();
-    expect(defs.find(d => d.name === 'top')).toBeDefined();
+
+    const defs = graph!.getNodes<Def>("definition");
+    expect(defs.find((d) => d.name === "value")).toBeDefined();
+    expect(defs.find((d) => d.name === "top")).toBeDefined();
   });
-  
-  test('Reference and dereference operators', () => {
+
+  test("Reference and dereference operators", () => {
     const code = `fn main() {
     let x = 5;
     let ref_x = &x;
@@ -66,18 +66,18 @@ describe('Rust - Advanced Language-Specific Features', () => {
     let boxed = Box::new(42);
     let unboxed = *boxed;
 }`;
-    
-    const fileName = 'test.rs';
+
+    const fileName = "test.rs";
     project.add_or_update_file(fileName, code);
     const graph = project.get_scope_graph(fileName);
-    
-    const refs = graph!.getNodes<Ref>('reference');
+
+    const refs = graph!.getNodes<Ref>("reference");
     // Should find references to x through & and * operators
-    const xRefs = refs.filter(r => r.name === 'x');
+    const xRefs = refs.filter((r) => r.name === "x");
     expect(xRefs.length).toBeGreaterThan(0);
   });
-  
-  test('Question mark operator', () => {
+
+  test("Question mark operator", () => {
     const code = `fn might_fail() -> Result<i32, String> {
     let x = risky_operation()?;
     let y = another_operation()?;
@@ -89,18 +89,18 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("Result: {}", result);
     Ok(())
 }`;
-    
-    const fileName = 'test.rs';
+
+    const fileName = "test.rs";
     project.add_or_update_file(fileName, code);
     const graph = project.get_scope_graph(fileName);
-    
-    const defs = graph!.getNodes<Def>('definition');
-    expect(defs.find(d => d.name === 'x')).toBeDefined();
-    expect(defs.find(d => d.name === 'y')).toBeDefined();
-    expect(defs.find(d => d.name === 'result')).toBeDefined();
+
+    const defs = graph!.getNodes<Def>("definition");
+    expect(defs.find((d) => d.name === "x")).toBeDefined();
+    expect(defs.find((d) => d.name === "y")).toBeDefined();
+    expect(defs.find((d) => d.name === "result")).toBeDefined();
   });
-  
-  test('Struct expressions and field init shorthand', () => {
+
+  test("Struct expressions and field init shorthand", () => {
     const code = `struct Point {
     x: f32,
     y: f32,
@@ -114,25 +114,25 @@ fn main() {
     let p2 = Point { x, y };  // Field init shorthand
     let p3 = Point { x: 3.0, ..p1 };  // Struct update syntax
 }`;
-    
-    const fileName = 'test.rs';
+
+    const fileName = "test.rs";
     project.add_or_update_file(fileName, code);
     const graph = project.get_scope_graph(fileName);
-    
-    const defs = graph!.getNodes<Def>('definition');
-    expect(defs.find(d => d.name === 'p1')).toBeDefined();
-    expect(defs.find(d => d.name === 'p2')).toBeDefined();
-    expect(defs.find(d => d.name === 'p3')).toBeDefined();
-    
+
+    const defs = graph!.getNodes<Def>("definition");
+    expect(defs.find((d) => d.name === "p1")).toBeDefined();
+    expect(defs.find((d) => d.name === "p2")).toBeDefined();
+    expect(defs.find((d) => d.name === "p3")).toBeDefined();
+
     // Check references in struct expressions
-    const refs = graph!.getNodes<Ref>('reference');
-    const xRefs = refs.filter(r => r.name === 'x');
-    const yRefs = refs.filter(r => r.name === 'y');
+    const refs = graph!.getNodes<Ref>("reference");
+    const xRefs = refs.filter((r) => r.name === "x");
+    const yRefs = refs.filter((r) => r.name === "y");
     expect(xRefs.length).toBeGreaterThan(0);
     expect(yRefs.length).toBeGreaterThan(0);
   });
-  
-  test('Method calls and field access', () => {
+
+  test("Method calls and field access", () => {
     const code = `struct Rectangle {
     width: f64,
     height: f64,
@@ -153,19 +153,19 @@ fn main() {
     let area = rect.area();
     let w = rect.width;
 }`;
-    
-    const fileName = 'test.rs';
+
+    const fileName = "test.rs";
     project.add_or_update_file(fileName, code);
     const graph = project.get_scope_graph(fileName);
-    
-    const refs = graph!.getNodes<Ref>('reference');
+
+    const refs = graph!.getNodes<Ref>("reference");
     // Should find method calls and field access
-    expect(refs.find(r => r.name === 'Rectangle')).toBeDefined();
-    expect(refs.find(r => r.name === 'area')).toBeDefined();
-    expect(refs.find(r => r.name === 'width')).toBeDefined();
+    expect(refs.find((r) => r.name === "Rectangle")).toBeDefined();
+    expect(refs.find((r) => r.name === "area")).toBeDefined();
+    expect(refs.find((r) => r.name === "width")).toBeDefined();
   });
-  
-  test('Complex match patterns', () => {
+
+  test("Complex match patterns", () => {
     const code = `enum Message {
     Quit,
     Move { x: i32, y: i32 },
@@ -181,22 +181,22 @@ fn process(msg: Message) {
         Message::ChangeColor(r, g, b) => println!("RGB: {}, {}, {}", r, g, b),
     }
 }`;
-    
-    const fileName = 'test.rs';
+
+    const fileName = "test.rs";
     project.add_or_update_file(fileName, code);
     const graph = project.get_scope_graph(fileName);
-    
-    const defs = graph!.getNodes<Def>('definition');
+
+    const defs = graph!.getNodes<Def>("definition");
     // Pattern bindings in match arms
-    expect(defs.find(d => d.name === 'x')).toBeDefined();
-    expect(defs.find(d => d.name === 'y')).toBeDefined();
-    expect(defs.find(d => d.name === 'text')).toBeDefined();
-    expect(defs.find(d => d.name === 'r')).toBeDefined();
-    expect(defs.find(d => d.name === 'g')).toBeDefined();
-    expect(defs.find(d => d.name === 'b')).toBeDefined();
+    expect(defs.find((d) => d.name === "x")).toBeDefined();
+    expect(defs.find((d) => d.name === "y")).toBeDefined();
+    expect(defs.find((d) => d.name === "text")).toBeDefined();
+    expect(defs.find((d) => d.name === "r")).toBeDefined();
+    expect(defs.find((d) => d.name === "g")).toBeDefined();
+    expect(defs.find((d) => d.name === "b")).toBeDefined();
   });
-  
-  test('Use statements with complex paths', () => {
+
+  test("Use statements with complex paths", () => {
     const code = `use std::collections::{HashMap, HashSet};
 use std::io::{self, Read, Write as IoWrite};
 use super::module::{function, Type};
@@ -206,15 +206,15 @@ fn main() {
     let map: HashMap<String, i32> = HashMap::new();
     let set: HashSet<i32> = HashSet::new();
 }`;
-    
-    const fileName = 'test.rs';
+
+    const fileName = "test.rs";
     project.add_or_update_file(fileName, code);
     const graph = project.get_scope_graph(fileName);
-    
-    const imports = graph!.getNodes<Import>('import');
-    expect(imports.find(i => i.name === 'HashMap')).toBeDefined();
-    expect(imports.find(i => i.name === 'HashSet')).toBeDefined();
-    expect(imports.find(i => i.name === 'Read')).toBeDefined();
-    expect(imports.find(i => i.name === 'IoWrite')).toBeDefined();
+
+    const imports = graph!.getNodes<Import>("import");
+    expect(imports.find((i) => i.name === "HashMap")).toBeDefined();
+    expect(imports.find((i) => i.name === "HashSet")).toBeDefined();
+    expect(imports.find((i) => i.name === "Read")).toBeDefined();
+    expect(imports.find((i) => i.name === "IoWrite")).toBeDefined();
   });
 });

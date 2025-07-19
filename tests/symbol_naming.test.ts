@@ -8,8 +8,8 @@ import {
   get_symbol_container,
   get_unqualified_name,
   same_module,
-} from "../symbol_naming";
-import { Def } from "../graph";
+} from "../src/symbol_naming";
+import { Def } from "../src/graph";
 
 // Helper to create a test Def object
 function create_test_def(overrides: Partial<Def>): Def {

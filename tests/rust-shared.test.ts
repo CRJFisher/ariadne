@@ -1,18 +1,18 @@
-import { describe, test, expect, beforeEach } from 'vitest';
-import { Def, Project, Ref } from '../index';
-import { 
-  generateLanguageTests, 
+import { describe, test, expect, beforeEach } from "vitest";
+import { Def, Project, Ref } from "../src/src/index";
+import {
+  generateLanguageTests,
   runLanguageSpecificTests,
-  LanguageSpecificTest 
-} from './shared-language-tests';
+  LanguageSpecificTest,
+} from "./shared-language-tests";
 
 // Generate shared tests for Rust
-generateLanguageTests('rust', () => 'rs');
+generateLanguageTests("rust", () => "rs");
 
 // Rust-specific tests
 const rustSpecificTests: LanguageSpecificTest[] = [
   {
-    name: 'Lifetime parameters',
+    name: "Lifetime parameters",
     code: `fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
     if x.len() > y.len() {
         x
@@ -26,21 +26,21 @@ fn main() {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes<Def>('definition');
-      
+      const defs = graph!.getNodes<Def>("definition");
+
       // Should find function with lifetime parameter
-      const longestDef = defs.find(d => d.name === 'longest');
+      const longestDef = defs.find((d) => d.name === "longest");
       expect(longestDef).toBeDefined();
-      expect(longestDef!.symbol_kind).toBe('function');
-      
+      expect(longestDef!.symbol_kind).toBe("function");
+
       // Should find lifetime parameter
-      const lifetimeDef = defs.find(d => d.name === "'a");
+      const lifetimeDef = defs.find((d) => d.name === "'a");
       expect(lifetimeDef).toBeDefined();
-    }
+    },
   },
-  
+
   {
-    name: 'Pattern matching in match expressions',
+    name: "Pattern matching in match expressions",
     code: `enum Color {
     Red,
     Green,
@@ -58,21 +58,21 @@ fn print_color(color: Color) {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes<Def>('definition');
-      
+      const defs = graph!.getNodes<Def>("definition");
+
       // Should find enum and its variants
-      const colorEnum = defs.find(d => d.name === 'Color');
+      const colorEnum = defs.find((d) => d.name === "Color");
       expect(colorEnum).toBeDefined();
-      expect(colorEnum!.symbol_kind).toBe('enum');
-      
+      expect(colorEnum!.symbol_kind).toBe("enum");
+
       // Should find pattern bindings in match
-      const rDef = defs.find(d => d.name === 'r');
+      const rDef = defs.find((d) => d.name === "r");
       expect(rDef).toBeDefined();
-    }
+    },
   },
-  
+
   {
-    name: 'Trait definitions and implementations',
+    name: "Trait definitions and implementations",
     code: `trait Display {
     fn fmt(&self) -> String;
 }
@@ -89,26 +89,26 @@ impl Display for Point {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes<Def>('definition');
-      
+      const defs = graph!.getNodes<Def>("definition");
+
       // Should find trait definition (parsed as 'interface' in tree-sitter)
-      const displayTrait = defs.find(d => d.name === 'Display');
+      const displayTrait = defs.find((d) => d.name === "Display");
       expect(displayTrait).toBeDefined();
-      expect(displayTrait!.symbol_kind).toBe('interface');
-      
+      expect(displayTrait!.symbol_kind).toBe("interface");
+
       // Should find struct
-      const pointStruct = defs.find(d => d.name === 'Point');
+      const pointStruct = defs.find((d) => d.name === "Point");
       expect(pointStruct).toBeDefined();
-      expect(pointStruct!.symbol_kind).toBe('struct');
-      
+      expect(pointStruct!.symbol_kind).toBe("struct");
+
       // Should find trait method
-      const fmtMethod = defs.find(d => d.name === 'fmt');
+      const fmtMethod = defs.find((d) => d.name === "fmt");
       expect(fmtMethod).toBeDefined();
-    }
+    },
   },
-  
+
   {
-    name: 'Module system with pub visibility',
+    name: "Module system with pub visibility",
     code: `mod utils {
     pub fn public_function() {
         private_function();
@@ -126,24 +126,24 @@ fn main() {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes<Def>('definition');
-      
+      const defs = graph!.getNodes<Def>("definition");
+
       // Should find module
-      const utilsMod = defs.find(d => d.name === 'utils');
+      const utilsMod = defs.find((d) => d.name === "utils");
       expect(utilsMod).toBeDefined();
-      expect(utilsMod!.symbol_kind).toBe('module');
-      
+      expect(utilsMod!.symbol_kind).toBe("module");
+
       // Should find both functions
-      const publicFn = defs.find(d => d.name === 'public_function');
+      const publicFn = defs.find((d) => d.name === "public_function");
       expect(publicFn).toBeDefined();
-      
-      const privateFn = defs.find(d => d.name === 'private_function');
+
+      const privateFn = defs.find((d) => d.name === "private_function");
       expect(privateFn).toBeDefined();
-    }
+    },
   },
-  
+
   {
-    name: 'Ownership and borrowing',
+    name: "Ownership and borrowing",
     code: `fn take_ownership(s: String) {
     println!("{}", s);
 }
@@ -162,22 +162,22 @@ fn main() {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes<Def>('definition');
-      
+      const defs = graph!.getNodes<Def>("definition");
+
       // Should find all functions and variables
-      const takeOwnership = defs.find(d => d.name === 'take_ownership');
+      const takeOwnership = defs.find((d) => d.name === "take_ownership");
       expect(takeOwnership).toBeDefined();
-      
-      const s1Def = defs.find(d => d.name === 's1');
+
+      const s1Def = defs.find((d) => d.name === "s1");
       expect(s1Def).toBeDefined();
-      
-      const s2Def = defs.find(d => d.name === 's2');
+
+      const s2Def = defs.find((d) => d.name === "s2");
       expect(s2Def).toBeDefined();
-    }
+    },
   },
-  
+
   {
-    name: 'Associated types and constants',
+    name: "Associated types and constants",
     code: `trait Container {
     type Item;
     const MAX_SIZE: usize;
@@ -199,24 +199,24 @@ impl<T> Container for Stack<T> {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes<Def>('definition');
-      
+      const defs = graph!.getNodes<Def>("definition");
+
       // Should find trait with associated type
-      const containerTrait = defs.find(d => d.name === 'Container');
+      const containerTrait = defs.find((d) => d.name === "Container");
       expect(containerTrait).toBeDefined();
-      
+
       // Should find associated type
-      const itemType = defs.find(d => d.name === 'Item');
+      const itemType = defs.find((d) => d.name === "Item");
       expect(itemType).toBeDefined();
-      
+
       // Should find associated constant
-      const maxSize = defs.find(d => d.name === 'MAX_SIZE');
+      const maxSize = defs.find((d) => d.name === "MAX_SIZE");
       expect(maxSize).toBeDefined();
-    }
+    },
   },
-  
+
   {
-    name: 'Loop labels',
+    name: "Loop labels",
     code: `fn main() {
     'outer: loop {
         let mut x = 0;
@@ -233,25 +233,25 @@ impl<T> Container for Stack<T> {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes<Def>('definition');
-      
+      const defs = graph!.getNodes<Def>("definition");
+
       // Should find loop labels
-      const outerLabel = defs.find(d => d.name === "'outer");
+      const outerLabel = defs.find((d) => d.name === "'outer");
       expect(outerLabel).toBeDefined();
-      
-      const innerLabel = defs.find(d => d.name === "'inner");
+
+      const innerLabel = defs.find((d) => d.name === "'inner");
       expect(innerLabel).toBeDefined();
-      
+
       // Should find references to labels in break/continue
-      const refs = graph!.getNodes<Ref>('reference');
-      const outerRefs = refs.filter(r => r.name === "'outer");
+      const refs = graph!.getNodes<Ref>("reference");
+      const outerRefs = refs.filter((r) => r.name === "'outer");
       expect(outerRefs.length).toBeGreaterThan(0);
-    }
+    },
   },
 
   // Function metadata tests
   {
-    name: 'Async Function Metadata',
+    name: "Async Function Metadata",
     code: `async fn fetch_data(url: &str) -> Result<String, Error> {
     let response = client.get(url).send().await?;
     let body = response.text().await?;
@@ -259,19 +259,21 @@ impl<T> Container for Stack<T> {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes<Def>('definition');
-      
-      const funcDef = defs.find(d => d.name === 'fetch_data' && d.symbol_kind === 'function');
+      const defs = graph!.getNodes<Def>("definition");
+
+      const funcDef = defs.find(
+        (d) => d.name === "fetch_data" && d.symbol_kind === "function"
+      );
       expect(funcDef).toBeDefined();
       expect(funcDef!.metadata).toBeDefined();
       expect(funcDef!.metadata!.is_async).toBe(true);
       expect(funcDef!.metadata!.line_count).toBe(5);
-      expect(funcDef!.metadata!.parameter_names).toEqual(['url']);
-    }
+      expect(funcDef!.metadata!.parameter_names).toEqual(["url"]);
+    },
   },
 
   {
-    name: 'Test Function Detection',
+    name: "Test Function Detection",
     code: `#[test]
 fn test_addition() {
     assert_eq!(add(2, 3), 5);
@@ -288,21 +290,21 @@ mod tests {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes<Def>('definition');
-      
+      const defs = graph!.getNodes<Def>("definition");
+
       // Functions with #[test] attribute should be marked as test
-      const testAddition = defs.find(d => d.name === 'test_addition');
+      const testAddition = defs.find((d) => d.name === "test_addition");
       expect(testAddition).toBeDefined();
       expect(testAddition!.metadata!.is_test).toBe(true);
-      
-      const testSubtraction = defs.find(d => d.name === 'test_subtraction');
+
+      const testSubtraction = defs.find((d) => d.name === "test_subtraction");
       expect(testSubtraction).toBeDefined();
       expect(testSubtraction!.metadata!.is_test).toBe(true);
-    }
+    },
   },
 
   {
-    name: 'Method Metadata in Impl Blocks',
+    name: "Method Metadata in Impl Blocks",
     code: `struct UserService {
     api_url: String,
 }
@@ -319,26 +321,26 @@ impl UserService {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes<Def>('definition');
-      
-      const getUserMethod = defs.find(d => d.name === 'get_user');
+      const defs = graph!.getNodes<Def>("definition");
+
+      const getUserMethod = defs.find((d) => d.name === "get_user");
       expect(getUserMethod).toBeDefined();
       expect(getUserMethod!.metadata).toBeDefined();
       expect(getUserMethod!.metadata!.is_async).toBe(true);
-      expect(getUserMethod!.metadata!.class_name).toBe('UserService');
-      expect(getUserMethod!.metadata!.parameter_names).toEqual(['&self', 'id']);
+      expect(getUserMethod!.metadata!.class_name).toBe("UserService");
+      expect(getUserMethod!.metadata!.parameter_names).toEqual(["&self", "id"]);
       expect(getUserMethod!.metadata!.is_private).toBe(false);
-      
-      const validateMethod = defs.find(d => d.name === 'validate_id');
+
+      const validateMethod = defs.find((d) => d.name === "validate_id");
       expect(validateMethod).toBeDefined();
       expect(validateMethod!.metadata).toBeDefined();
       expect(validateMethod!.metadata!.is_private).toBe(true); // No pub keyword
-      expect(validateMethod!.metadata!.class_name).toBe('UserService');
-    }
+      expect(validateMethod!.metadata!.class_name).toBe("UserService");
+    },
   },
 
   {
-    name: 'Parameter Patterns',
+    name: "Parameter Patterns",
     code: `fn process_data(
     simple: i32,
     mut mutable: String,
@@ -349,19 +351,19 @@ impl UserService {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes<Def>('definition');
-      
-      const processData = defs.find(d => d.name === 'process_data');
+      const defs = graph!.getNodes<Def>("definition");
+
+      const processData = defs.find((d) => d.name === "process_data");
       expect(processData).toBeDefined();
       // Parameter extraction for complex patterns may vary
       expect(processData!.metadata!.parameter_names!.length).toBeGreaterThan(0);
-      expect(processData!.metadata!.parameter_names).toContain('simple');
-      expect(processData!.metadata!.parameter_names).toContain('mut mutable');
-    }
+      expect(processData!.metadata!.parameter_names).toContain("simple");
+      expect(processData!.metadata!.parameter_names).toContain("mut mutable");
+    },
   },
 
   {
-    name: 'Generic Function Metadata',
+    name: "Generic Function Metadata",
     code: `fn compare<T: PartialOrd>(a: T, b: T) -> bool {
     a < b
 }
@@ -371,18 +373,18 @@ fn multiple_bounds<T: Clone + Debug, U: Display>(t: T, u: U) {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes<Def>('definition');
-      
-      const compare = defs.find(d => d.name === 'compare');
+      const defs = graph!.getNodes<Def>("definition");
+
+      const compare = defs.find((d) => d.name === "compare");
       expect(compare).toBeDefined();
       expect(compare!.metadata!.line_count).toBe(3);
-      expect(compare!.metadata!.parameter_names).toEqual(['a', 'b']);
-      
-      const multipleBounds = defs.find(d => d.name === 'multiple_bounds');
+      expect(compare!.metadata!.parameter_names).toEqual(["a", "b"]);
+
+      const multipleBounds = defs.find((d) => d.name === "multiple_bounds");
       expect(multipleBounds).toBeDefined();
-      expect(multipleBounds!.metadata!.parameter_names).toEqual(['t', 'u']);
-    }
-  }
+      expect(multipleBounds!.metadata!.parameter_names).toEqual(["t", "u"]);
+    },
+  },
 ];
 
-runLanguageSpecificTests('Rust', rustSpecificTests, () => 'rs');
+runLanguageSpecificTests("Rust", rustSpecificTests, () => "rs");

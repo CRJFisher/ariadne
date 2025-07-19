@@ -1,4 +1,4 @@
-import { Project } from "../index";
+import { Project } from "../src/index";
 
 describe("Symbol ID Generation During Parsing", () => {
   let project: Project;

@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest";
-import { Project, get_call_graph, normalize_module_path } from "../index";
+import { Project, get_call_graph, normalize_module_path } from "../src/index";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";

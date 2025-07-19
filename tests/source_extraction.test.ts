@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from "vitest";
-import { Project } from "../index";
+import { Project } from "../src/index";
 
 describe("Source Code Extraction", () => {
   let project: Project;

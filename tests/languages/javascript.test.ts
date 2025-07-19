@@ -1,6 +1,5 @@
-import { test_scopes, ScopeDebug, debug_scope_graph } from '../../test_utils';
-import { Project } from '../../index';
-import { javascript_config } from '../javascript';
+import { test_scopes, ScopeDebug } from '../test_utils';
+import { describe, test } from 'vitest';
 
 describe('JavaScript parsing', () => {
   test('variable declarations and scoping', () => {
