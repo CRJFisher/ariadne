@@ -1,4 +1,4 @@
-import { Point, ScopeGraph, Def, Ref, FunctionCall, ImportInfo, SimpleRange } from './graph';
+import { Point, ScopeGraph, Def, Ref, FunctionCall, ImportInfo, SimpleRange, CallGraph, CallGraphOptions, CallGraphNode, CallGraphEdge, Call } from './graph';
 import { build_scope_graph } from './scope_resolution';
 import { find_all_references, find_definition } from './symbol_resolver';
 import { LanguageConfig } from './types';
@@ -11,7 +11,7 @@ import { Tree } from 'tree-sitter';
 import path from 'path';
 
 // Re-export important types
-export { Point, ScopeGraph, Def, Ref, Import, FunctionCall, SimpleRange } from './graph';
+export { Point, ScopeGraph, Def, Ref, Import, FunctionCall, SimpleRange, CallGraph, CallGraphOptions, CallGraphNode, CallGraphEdge, Call } from './graph';
 export { Edit } from './edit';
 export { LanguageConfig } from './types';
 export { get_symbol_id, parse_symbol_id, normalize_module_path } from './symbol_naming';
@@ -455,17 +455,33 @@ export class Project {
     for (const ref of definitionRefs) {
       const resolved = this.go_to_definition(def.file_path, ref.range.start);
       if (resolved) {
+        // If resolved to an import, try to resolve the import to its actual definition
+        let final_resolved = resolved;
+        if (resolved.symbol_kind === 'import') {
+          // Get all imports with their resolved definitions
+          const imports = this.get_imports_with_definitions(def.file_path);
+          const import_info = imports.find(imp => 
+            imp.import_statement.name === resolved.name &&
+            imp.import_statement.range.start.row === resolved.range.start.row &&
+            imp.import_statement.range.start.column === resolved.range.start.column
+          );
+          
+          if (import_info && import_info.imported_function) {
+            final_resolved = import_info.imported_function;
+          }
+        }
+        
         // Include all callable symbol kinds
-        const callableKinds = ['function', 'method', 'generator', 'class', 'constructor'];
-        if (callableKinds.includes(resolved.symbol_kind)) {
+        const callable_kinds = ['function', 'method', 'generator', 'class', 'constructor'];
+        if (callable_kinds.includes(final_resolved.symbol_kind)) {
           // Check if this is a method call
           let is_method_call = ref.symbol_kind === 'method';
           
           // Additional check for method calls in different languages
           if (!is_method_call) {
-            const fileCache = this.file_cache.get(def.file_path);
-            if (fileCache) {
-              const lines = fileCache.source_code.split('\n');
+            const file_cache = this.file_cache.get(def.file_path);
+            if (file_cache) {
+              const lines = file_cache.source_code.split('\n');
               const refLine = lines[ref.range.start.row];
               const beforeRef = refLine.substring(0, ref.range.start.column);
               
@@ -484,7 +500,7 @@ export class Project {
           
           calls.push({
             caller_def: def,
-            called_def: resolved,
+            called_def: final_resolved,
             call_location: ref.range.start,
             is_method_call
           });
@@ -541,6 +557,183 @@ export class Project {
       functions: allFunctions,
       calls: allCalls
     };
+  }
+
+  /**
+   * Build a complete call graph for the project.
+   * 
+   * This high-level API constructs a full call graph with nodes representing
+   * functions/methods and edges representing call relationships. It handles
+   * cross-file imports and provides various filtering options.
+   * 
+   * @param options - Options to control call graph generation
+   * @returns Complete call graph with nodes, edges, and top-level functions
+   */
+  get_call_graph(options?: CallGraphOptions): CallGraph {
+    const nodes = new Map<string, CallGraphNode>();
+    const edges: CallGraphEdge[] = [];
+    const called_symbols = new Set<string>();
+    
+    // Default options
+    const opts: CallGraphOptions = {
+      include_external: options?.include_external ?? false,
+      max_depth: options?.max_depth ?? undefined,
+      file_filter: options?.file_filter ?? undefined
+    };
+    
+    // Get all functions based on file filter
+    const functions_by_file = this.get_all_functions();
+    
+    // First pass: Create nodes for all functions
+    for (const [file_path, functions] of functions_by_file) {
+      // Apply file filter if specified
+      if (opts.file_filter && !opts.file_filter(file_path)) {
+        continue;
+      }
+      
+      for (const func of functions) {
+        const symbol = func.symbol_id
+        
+        // Initialize node with empty calls and called_by arrays
+        nodes.set(symbol, {
+          symbol,
+          definition: func,
+          calls: [],
+          called_by: []
+        });
+      }
+    }
+    
+    // Second pass: Build edges and populate calls
+    for (const [file_path, functions] of functions_by_file) {
+      // Apply file filter if specified
+      if (opts.file_filter && !opts.file_filter(file_path)) {
+        continue;
+      }
+      
+      for (const func of functions) {
+        const caller_symbol = func.symbol_id;
+        const caller_node = nodes.get(caller_symbol);
+        
+        if (!caller_node) continue;
+        
+        // Get all calls from this function
+        const function_calls = this.get_calls_from_definition(func);
+        
+        for (const call of function_calls) {
+          if (!call.called_def) continue;
+          
+          const callee_symbol = call.called_def.symbol_id;
+          
+          // Apply file filter if specified
+          if (opts.file_filter && !opts.file_filter(call.called_def.file_path)) {
+            continue;
+          }
+          
+          // Skip external calls if not included
+          if (!opts.include_external && !nodes.has(callee_symbol)) {
+            continue;
+          }
+          
+          // Create Call object
+          const call_obj: Call = {
+            symbol: callee_symbol,
+            range: {
+              start: call.call_location,
+              end: call.call_location
+            },
+            kind: call.is_method_call ? 'method' : 'function',
+            resolved_definition: call.called_def
+          };
+          
+          // Add to caller's calls
+          caller_node.calls.push(call_obj);
+          
+          // Create edge
+          edges.push({
+            from: caller_symbol,
+            to: callee_symbol,
+            location: {
+              start: call.call_location,
+              end: call.call_location
+            }
+          });
+          
+          // Track that this symbol is called
+          called_symbols.add(callee_symbol);
+          
+          // Update callee's called_by if it's in our nodes
+          const callee_node = nodes.get(callee_symbol);
+          if (callee_node && !callee_node.called_by.includes(caller_symbol)) {
+            callee_node.called_by.push(caller_symbol);
+          }
+        }
+      }
+    }
+    
+    // Apply max_depth if specified
+    let final_nodes = nodes;
+    if (opts.max_depth !== undefined) {
+      final_nodes = this.apply_max_depth_filter(nodes, edges, opts.max_depth);
+    }
+    
+    // Identify top-level nodes (not called by any other node in the graph)
+    const top_level_nodes: string[] = [];
+    for (const [symbol, node] of final_nodes) {
+      if (!called_symbols.has(symbol)) {
+        top_level_nodes.push(symbol);
+      }
+    }
+    
+    return {
+      nodes: final_nodes,
+      edges: edges.filter(edge => 
+        final_nodes.has(edge.from) && final_nodes.has(edge.to)
+      ),
+      top_level_nodes
+    };
+  }
+
+  /**
+   * Apply max depth filtering to the call graph.
+   * Returns a new set of nodes that are within max_depth from top-level nodes.
+   */
+  private apply_max_depth_filter(
+    nodes: Map<string, CallGraphNode>,
+    edges: CallGraphEdge[],
+    max_depth: number
+  ): Map<string, CallGraphNode> {
+    const filtered_nodes = new Map<string, CallGraphNode>();
+    const visited = new Set<string>();
+    
+    // Find top-level nodes
+    const called_symbols = new Set(edges.map(e => e.to));
+    const top_level_symbols = Array.from(nodes.keys()).filter(s => !called_symbols.has(s));
+    
+    // BFS from each top-level node
+    const queue: Array<{ symbol: string; depth: number }> = 
+      top_level_symbols.map(s => ({ symbol: s, depth: 0 }));
+    
+    while (queue.length > 0) {
+      const { symbol, depth } = queue.shift()!;
+      
+      if (visited.has(symbol) || depth > max_depth) continue;
+      visited.add(symbol);
+      
+      const node = nodes.get(symbol);
+      if (!node) continue;
+      
+      filtered_nodes.set(symbol, node);
+      
+      // Add called functions to queue
+      for (const call of node.calls) {
+        if (!visited.has(call.symbol)) {
+          queue.push({ symbol: call.symbol, depth: depth + 1 });
+        }
+      }
+    }
+    
+    return filtered_nodes;
   }
 
   /**
@@ -868,4 +1061,62 @@ export function get_definitions(file_path: string): Def[] {
   
   // Get definitions from the project
   return project.get_definitions(file_path);
+}
+
+/**
+ * Build a complete call graph for a project or set of files.
+ * 
+ * This is a convenience function that creates a temporary Project instance
+ * and builds the call graph. For better performance when analyzing multiple
+ * aspects of a codebase, create a Project instance and reuse it.
+ * 
+ * @param root_path - Root directory to analyze
+ * @param options - Options to control call graph generation
+ * @returns Complete call graph with nodes, edges, and top-level functions
+ */
+export function get_call_graph(root_path: string, options?: CallGraphOptions): CallGraph {
+  const project = new Project();
+  const fs = require('fs');
+  const path = require('path');
+  
+  // Helper function to recursively find all source files
+  function find_source_files(dir: string): string[] {
+    const files: string[] = [];
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      
+      if (entry.isDirectory()) {
+        // Skip common directories
+        if (['node_modules', '.git', '__pycache__', 'target', 'dist', 'build'].includes(entry.name)) {
+          continue;
+        }
+        files.push(...find_source_files(fullPath));
+      } else if (entry.isFile()) {
+        // Check if it's a supported source file
+        const ext = path.extname(entry.name);
+        if (['.js', '.jsx', '.ts', '.tsx', '.py', '.rs'].includes(ext)) {
+          files.push(fullPath);
+        }
+      }
+    }
+    
+    return files;
+  }
+  
+  // Find and add all source files
+  const sourceFiles = find_source_files(root_path);
+  
+  for (const filePath of sourceFiles) {
+    try {
+      const content = fs.readFileSync(filePath, 'utf8');
+      project.add_or_update_file(filePath, content);
+    } catch (error) {
+      console.error(`Failed to read file: ${filePath}`, error);
+    }
+  }
+  
+  // Build and return the call graph
+  return project.get_call_graph(options);
 }

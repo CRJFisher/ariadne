@@ -1,6 +1,6 @@
 # Rules
 
-- Use snake_case for all typescript names other than class names.
+- Use snake_case for all typescript names (variables, functions, files, etc.) other than class names which should be PascalCase.
 
 ## Language-specific code
 

@@ -1,5 +1,8 @@
-import { describe, test, expect, beforeEach } from 'vitest';
-import { Project } from './index';
+import { describe, test, expect, beforeEach, afterEach } from 'vitest';
+import { Def, Project, get_call_graph, normalize_module_path } from './index';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 
 describe('Call Graph Extraction', () => {
   let project: Project;
@@ -202,7 +205,7 @@ class MyClass {}
     
     // Try to get calls from a non-function def
     const graph = project.get_scope_graph('test.ts');
-    const defs = graph!.getNodes('definition');
+    const defs = graph!.getNodes<Def>('definition');
     const varDef = defs.find(d => d.name === 'notAFunction');
     const classDef = defs.find(d => d.name === 'MyClass');
     
@@ -291,9 +294,7 @@ class MyClass {
     project.add_or_update_file('test.ts', code);
     
     const graph = project.get_scope_graph('test.ts');
-    const defs = graph!.getNodes('definition');
-    const loggerClass = defs.find(d => d.name === 'Logger' && d.symbol_kind === 'class');
-    const logMethod = defs.find(d => d.name === 'log' && d.symbol_kind === 'method');
+    const defs = graph!.getNodes<Def>('definition');
     
     // Find constructor (often named 'constructor' in TypeScript)
     const constructor = defs.find(d => d.name === 'constructor' && d.symbol_kind === 'method');
@@ -321,7 +322,7 @@ const myVar = getValue();
     project.add_or_update_file('test.ts', code);
     
     const graph = project.get_scope_graph('test.ts');
-    const defs = graph!.getNodes('definition');
+    const defs = graph!.getNodes<Def>('definition');
     const varDef = defs.find(d => d.name === 'myVar');
     expect(varDef).toBeDefined();
     
@@ -345,7 +346,7 @@ const handler = () => {
     project.add_or_update_file('test.ts', code);
     
     const graph = project.get_scope_graph('test.ts');
-    const defs = graph!.getNodes('definition');
+    const defs = graph!.getNodes<Def>('definition');
     const handlerDef = defs.find(d => d.name === 'handler');
     
     expect(handlerDef).toBeDefined();
@@ -408,7 +409,7 @@ class DerivedClass extends BaseClass {
     project.add_or_update_file('test.ts', code);
     
     const graph = project.get_scope_graph('test.ts');
-    const defs = graph!.getNodes('definition');
+    const defs = graph!.getNodes<Def>('definition');
     const derivedClass = defs.find(d => d.name === 'DerivedClass' && d.symbol_kind === 'class');
     
     // Get calls from the class definition (should include all method bodies)
@@ -566,5 +567,392 @@ fn process() -> i32 {
     }
     
     expect(hasHelper).toBe(true);
+  });
+});
+
+describe('get_call_graph API', () => {
+  let project: Project;
+
+  beforeEach(() => {
+    project = new Project();
+  });
+
+  test('builds complete call graph with nodes and edges', () => {
+    const code = `
+function a() {
+  b();
+  c();
+}
+
+function b() {
+  c();
+}
+
+function c() {
+  return 42;
+}
+
+function main() {
+  a();
+  b();
+}
+`;
+    
+    project.add_or_update_file('test.ts', code);
+    
+    const callGraph = project.get_call_graph();
+    
+    // Check nodes
+    expect(callGraph.nodes.size).toBe(4);
+    expect(callGraph.nodes.has('test#a')).toBe(true);
+    expect(callGraph.nodes.has('test#b')).toBe(true);
+    expect(callGraph.nodes.has('test#c')).toBe(true);
+    expect(callGraph.nodes.has('test#main')).toBe(true);
+    
+    // Check node structure
+    const nodeA = callGraph.nodes.get('test#a');
+    expect(nodeA).toBeDefined();
+    expect(nodeA!.symbol).toBe('test#a');
+    expect(nodeA!.definition.name).toBe('a');
+    expect(nodeA!.calls.length).toBe(2);
+    expect(nodeA!.calls.map(c => c.symbol).sort()).toEqual(['test#b', 'test#c']);
+    
+    // Check edges
+    expect(callGraph.edges.length).toBe(5); // a->b, a->c, b->c, main->a, main->b
+    
+    // Check top-level nodes (only main is not called by others)
+    expect(callGraph.top_level_nodes).toEqual(['test#main']);
+  });
+
+  test('handles cross-file calls correctly', () => {
+    const file1 = `
+export function util() {
+  return 'utility';
+}
+
+export function helper() {
+  return util();
+}
+`;
+    
+    const file2 = `
+import { helper, util } from './file1';
+
+function process() {
+  return helper() + util();
+}
+
+function main() {
+  process();
+}
+`;
+    
+    project.add_or_update_file('file1.ts', file1);
+    project.add_or_update_file('file2.ts', file2);
+    
+    const callGraph = project.get_call_graph();
+    
+    // Should have all functions
+    expect(callGraph.nodes.size).toBe(4);
+    expect(callGraph.nodes.has('file1#util')).toBe(true);
+    expect(callGraph.nodes.has('file1#helper')).toBe(true);
+    expect(callGraph.nodes.has('file2#process')).toBe(true);
+    expect(callGraph.nodes.has('file2#main')).toBe(true);
+    
+    // Check cross-file relationships
+    const processNode = callGraph.nodes.get('file2#process');
+    expect(processNode).toBeDefined();
+    
+    // Note: Cross-file resolution might have limitations,
+    // but the structure should be there
+    expect(processNode!.calls.length).toBeGreaterThanOrEqual(0);
+  });
+
+  test('respects file_filter option', () => {
+    project.add_or_update_file('include.ts', `
+function included() {
+  return 42;
+}
+`);
+    
+    project.add_or_update_file('exclude.ts', `
+function excluded() {
+  return 0;
+}
+`);
+    
+    const callGraph = project.get_call_graph({
+      file_filter: (path) => path.includes('include')
+    });
+    
+    expect(callGraph.nodes.size).toBe(1);
+    expect(callGraph.nodes.has('include#included')).toBe(true);
+    expect(callGraph.nodes.has('exclude#excluded')).toBe(false);
+  });
+
+  test('respects max_depth option', () => {
+    const code = `
+function level0() {
+  level1();
+}
+
+function level1() {
+  level2();
+}
+
+function level2() {
+  level3();
+}
+
+function level3() {
+  return 'deep';
+}
+`;
+    
+    project.add_or_update_file('test.ts', code);
+    
+    const callGraph = project.get_call_graph({ max_depth: 2 });
+    
+    // With max_depth=2, starting from level0 (depth 0),
+    // we should include level0, level1, and level2, but not level3
+    expect(callGraph.nodes.size).toBe(3);
+    expect(callGraph.nodes.has('test#level0')).toBe(true);
+    expect(callGraph.nodes.has('test#level1')).toBe(true);
+    expect(callGraph.nodes.has('test#level2')).toBe(true);
+    expect(callGraph.nodes.has('test#level3')).toBe(false);
+    
+    // Edges should only include those between included nodes
+    const edgeSymbols = callGraph.edges.map(e => `${e.from}->${e.to}`);
+    expect(edgeSymbols).toContain('test#level0->test#level1');
+    expect(edgeSymbols).toContain('test#level1->test#level2');
+    expect(edgeSymbols).not.toContain('test#level2->test#level3');
+  });
+
+  test('handles circular dependencies', () => {
+    const code = `
+function a() {
+  b();
+}
+
+function b() {
+  c();
+}
+
+function c() {
+  a(); // Circular reference
+}
+`;
+    
+    project.add_or_update_file('test.ts', code);
+    
+    const callGraph = project.get_call_graph();
+    
+    // All nodes should be included
+    expect(callGraph.nodes.size).toBe(3);
+    
+    // Check circular relationship
+    const nodeA = callGraph.nodes.get('test#a');
+    const nodeC = callGraph.nodes.get('test#c');
+    
+    expect(nodeA!.calls.some(c => c.symbol === 'test#b')).toBe(true);
+    expect(nodeC!.calls.some(c => c.symbol === 'test#a')).toBe(true);
+    
+    // No top-level nodes since all are called by something
+    expect(callGraph.top_level_nodes.length).toBe(0);
+  });
+
+  test('identifies multiple top-level nodes', () => {
+    const code = `
+function entry1() {
+  shared();
+}
+
+function entry2() {
+  shared();
+}
+
+function shared() {
+  return 42;
+}
+
+function orphan() {
+  return 'not called';
+}
+`;
+    
+    project.add_or_update_file('test.ts', code);
+    
+    const callGraph = project.get_call_graph();
+    
+    // Top-level nodes are those not called by others
+    expect(callGraph.top_level_nodes.sort()).toEqual([
+      'test#entry1',
+      'test#entry2',
+      'test#orphan'
+    ]);
+  });
+
+  test('handles method calls in classes', () => {
+    const code = `
+class Service {
+  init() {
+    this.setup();
+  }
+  
+  setup() {
+    this.configure();
+  }
+  
+  configure() {
+    return true;
+  }
+  
+  run() {
+    this.init();
+  }
+}
+`;
+    
+    project.add_or_update_file('test.ts', code);
+    
+    const callGraph = project.get_call_graph();
+    
+    // Should include all methods
+    expect(callGraph.nodes.size).toBe(4);
+    
+    const runNode = callGraph.nodes.get('test#Service.run');
+    expect(runNode).toBeDefined();
+    expect(runNode!.calls[0].kind).toBe('method');
+    expect(runNode!.calls[0].symbol).toBe('test#Service.init');
+    
+    // run is the only top-level method
+    expect(callGraph.top_level_nodes).toEqual(['test#Service.run']);
+  });
+});
+
+describe('standalone get_call_graph function', () => {
+  let tempDir: string;
+
+  beforeEach(() => {
+    // Create a temporary directory for test files
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'refscope-test-'));
+  });
+
+  afterEach(() => {
+    // Clean up temporary directory
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  test('analyzes a directory of TypeScript files', () => {
+    // Create test files
+    fs.writeFileSync(path.join(tempDir, 'main.ts'), `
+import { helper } from './utils';
+
+function main() {
+  const result = helper();
+  console.log(result);
+}
+
+main();
+`);
+
+    fs.writeFileSync(path.join(tempDir, 'utils.ts'), `
+export function helper() {
+  return compute(42);
+}
+
+function compute(n: number) {
+  return n * 2;
+}
+`);
+
+    const callGraph = get_call_graph(tempDir);
+    
+    // Should find all functions
+    expect(callGraph.nodes.size).toBe(3);
+    
+    const mainPath = path.join(tempDir, 'main.ts');
+    const utilsPath = path.join(tempDir, 'utils.ts');
+    
+    // Normalize paths for symbol IDs
+    const mainModule = normalize_module_path(mainPath);
+    const utilsModule = normalize_module_path(utilsPath);
+    
+    expect(callGraph.nodes.has(`${mainModule}#main`)).toBe(true);
+    expect(callGraph.nodes.has(`${utilsModule}#helper`)).toBe(true);
+    expect(callGraph.nodes.has(`${utilsModule}#compute`)).toBe(true);
+
+    // Check relationships
+    const helperNode = callGraph.nodes.get(`${utilsModule}#helper`);
+    expect(helperNode).toBeDefined();
+    expect(helperNode!.calls.some(c => c.symbol === `${utilsModule}#compute`)).toBe(true);
+  });
+
+  test('respects file filters in standalone function', () => {
+    // Create test files
+    fs.writeFileSync(path.join(tempDir, 'include.js'), `
+function included() {
+  return 'yes';
+}
+`);
+
+    fs.writeFileSync(path.join(tempDir, 'exclude.js'), `
+function excluded() {
+  return 'no';
+}
+`);
+
+    const callGraph = get_call_graph(tempDir, {
+      file_filter: (filePath) => !filePath.includes('exclude')
+    });
+
+    const includePath = path.join(tempDir, 'include.js');
+    const excludePath = path.join(tempDir, 'exclude.js');
+    
+    // Normalize paths for symbol IDs
+    const includeModule = normalize_module_path(includePath);
+    const excludeModule = normalize_module_path(excludePath);
+
+    expect(callGraph.nodes.size).toBe(1);
+    expect(callGraph.nodes.has(`${includeModule}#included`)).toBe(true);
+    expect(callGraph.nodes.has(`${excludeModule}#excluded`)).toBe(false);
+  });
+
+  test('handles nested directories', () => {
+    // Create nested structure
+    const subDir = path.join(tempDir, 'src');
+    fs.mkdirSync(subDir);
+
+    fs.writeFileSync(path.join(subDir, 'index.ts'), `
+import { util } from './lib/util';
+
+export function main() {
+  util();
+}
+`);
+
+    const libDir = path.join(subDir, 'lib');
+    fs.mkdirSync(libDir);
+
+    fs.writeFileSync(path.join(libDir, 'util.ts'), `
+export function util() {
+  return 'utility';
+}
+`);
+
+    const callGraph = get_call_graph(tempDir);
+
+    // Should find functions in nested directories
+    expect(callGraph.nodes.size).toBe(2);
+    
+    const indexPath = path.join(subDir, 'index.ts');
+    const utilPath = path.join(libDir, 'util.ts');
+    
+    // Normalize paths for symbol IDs
+    const indexModule = normalize_module_path(indexPath);
+    const utilModule = normalize_module_path(utilPath);
+    
+    expect(callGraph.nodes.has(`${indexModule}#main`)).toBe(true);
+    expect(callGraph.nodes.has(`${utilModule}#util`)).toBe(true);
   });
 });

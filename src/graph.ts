@@ -428,7 +428,7 @@ export interface Call {
   symbol: string;                                    // Symbol being called
   range: SimpleRange;                                // Location of the call
   kind: "function" | "method" | "constructor";      // Type of call
-  resolved?: Def;                                    // The definition being called (if resolved)
+  resolved_definition?: Def;                         // The definition being called (if resolved)
 }
 
 /**
