@@ -24,7 +24,8 @@ jobs:
       - name: Update types package version
         run: |
           cd packages/refscope-types
-          npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version
+          # Force update version to match tag (handles both upgrades and downgrades)
+          npm pkg set version=${{ steps.version.outputs.VERSION }}
       
       - name: Install dependencies
         run: |
