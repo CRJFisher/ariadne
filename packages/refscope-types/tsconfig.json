@@ -11,7 +11,7 @@
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "node",
     "lib": ["ES2020"],
-    "types": []
+    "types": ["node"]
   },
   "include": [
     "index.d.ts",

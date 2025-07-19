@@ -16,14 +16,36 @@ if (!fs.existsSync(testsPath)) {
 }
 
 try {
-  // Run TypeScript compiler on test file
+  // Run TypeScript compiler on test file with project config
   console.log('Compiling type tests...');
-  execSync(`npx tsc --noEmit --strict ${testsPath}`, {
-    stdio: 'inherit',
-    cwd: path.join(__dirname, '..')
-  });
+  const projectRoot = path.join(__dirname, '..');
   
-  console.log('\n✅ All type tests passed!');
+  // Create a temporary tsconfig that includes the test file
+  const testTsConfig = {
+    extends: './tsconfig.json',
+    include: [
+      'index.d.ts',
+      'types/**/*.d.ts',
+      'test/type-tests.ts'
+    ]
+  };
+  
+  const testConfigPath = path.join(projectRoot, 'tsconfig.test.json');
+  fs.writeFileSync(testConfigPath, JSON.stringify(testTsConfig, null, 2));
+  
+  try {
+    execSync(`npx tsc --noEmit --project ${testConfigPath}`, {
+      stdio: 'inherit',
+      cwd: projectRoot
+    });
+    
+    console.log('\n✅ All type tests passed!');
+  } finally {
+    // Clean up temporary config
+    if (fs.existsSync(testConfigPath)) {
+      fs.unlinkSync(testConfigPath);
+    }
+  }
 } catch (error) {
   console.error('\n❌ Type compilation failed!');
   process.exit(1);
