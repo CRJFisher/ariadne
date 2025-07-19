@@ -225,7 +225,7 @@ The codebase uses snake_case for consistency with the original Rust implementati
 
 ## Origin
 
-RefScope is a TypeScript port of the code intelligence engine from [bloop](https://github.com/BloopAI/bloop), an open source code search engine. It extracts and reimplements the scope resolution and symbol tracking functionality as a standalone library.
+RefScope uses patterns from the code intelligence engine from [bloop](https://github.com/BloopAI/bloop). It extracts and reimplements the scope resolution and symbol tracking functionality as a standalone library.
 
 ## License
 
