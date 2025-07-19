@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from 'vitest';
-import { Project } from '../index';
+import { Def, Project, Ref } from '../index';
 import { 
   generateLanguageTests, 
   runLanguageSpecificTests,
@@ -26,7 +26,7 @@ fn main() {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       // Should find function with lifetime parameter
       const longestDef = defs.find(d => d.name === 'longest');
@@ -58,7 +58,7 @@ fn print_color(color: Color) {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       // Should find enum and its variants
       const colorEnum = defs.find(d => d.name === 'Color');
@@ -89,7 +89,7 @@ impl Display for Point {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       // Should find trait definition (parsed as 'interface' in tree-sitter)
       const displayTrait = defs.find(d => d.name === 'Display');
@@ -126,7 +126,7 @@ fn main() {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       // Should find module
       const utilsMod = defs.find(d => d.name === 'utils');
@@ -162,7 +162,7 @@ fn main() {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       // Should find all functions and variables
       const takeOwnership = defs.find(d => d.name === 'take_ownership');
@@ -199,7 +199,7 @@ impl<T> Container for Stack<T> {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       // Should find trait with associated type
       const containerTrait = defs.find(d => d.name === 'Container');
@@ -233,7 +233,7 @@ impl<T> Container for Stack<T> {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       // Should find loop labels
       const outerLabel = defs.find(d => d.name === "'outer");
@@ -243,7 +243,7 @@ impl<T> Container for Stack<T> {
       expect(innerLabel).toBeDefined();
       
       // Should find references to labels in break/continue
-      const refs = graph!.getNodes('reference');
+      const refs = graph!.getNodes<Ref>('reference');
       const outerRefs = refs.filter(r => r.name === "'outer");
       expect(outerRefs.length).toBeGreaterThan(0);
     }
@@ -259,7 +259,7 @@ impl<T> Container for Stack<T> {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       const funcDef = defs.find(d => d.name === 'fetch_data' && d.symbol_kind === 'function');
       expect(funcDef).toBeDefined();
@@ -288,7 +288,7 @@ mod tests {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       // Functions with #[test] attribute should be marked as test
       const testAddition = defs.find(d => d.name === 'test_addition');
@@ -319,7 +319,7 @@ impl UserService {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       const getUserMethod = defs.find(d => d.name === 'get_user');
       expect(getUserMethod).toBeDefined();
@@ -349,7 +349,7 @@ impl UserService {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       const processData = defs.find(d => d.name === 'process_data');
       expect(processData).toBeDefined();
@@ -371,7 +371,7 @@ fn multiple_bounds<T: Clone + Debug, U: Display>(t: T, u: U) {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       const compare = defs.find(d => d.name === 'compare');
       expect(compare).toBeDefined();

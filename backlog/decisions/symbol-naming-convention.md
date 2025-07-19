@@ -3,11 +3,12 @@
 **Date**: 2025-07-18  
 **Status**: Accepted  
 **Author**: Assistant  
-**Related Tasks**: task-40  
+**Related Tasks**: task-40
 
 ## Context
 
 RefScope needs a consistent way to uniquely identify symbols across the entire codebase. This is critical for:
+
 - Building accurate call graphs
 - Avoiding symbol name collisions
 - Cross-file symbol resolution
@@ -19,18 +20,19 @@ Adopt a hierarchical symbol naming scheme using the format: `<module_path>#<symb
 
 ### Format Specification
 
-```
+```txt
 <module_path>#<symbol_name>
 ```
 
 Where:
+
 - `<module_path>`: Normalized file path without extension
 - `#`: Separator character
 - `<symbol_name>`: The symbol's local name, potentially qualified for nested symbols
 
 ### Examples
 
-```
+```txt
 src/utils/helpers#process_data
 src/components/Button#render
 src/models/User#User.validate
@@ -55,11 +57,12 @@ tests/test_utils#test_process_data
 
 For symbols nested within other symbols (e.g., methods in classes):
 
-```
+```txt
 <module_path>#<container>.<symbol>
 ```
 
 Examples:
+
 - Class method: `src/models/User#User.validate`
 - Nested function: `src/utils/helpers#process_data.normalize`
 - Static method: `src/models/User#User.fromJSON`
@@ -67,25 +70,32 @@ Examples:
 ### 3. Special Cases
 
 #### Anonymous Functions
+
 Use position-based naming:
-```
+
+```txt
 src/utils/helpers#<anonymous_line_42_col_10>
 ```
 
 #### Lambdas/Arrow Functions
+
 If assigned to a variable, use the variable name:
-```
+
+```txt
 src/utils/helpers#processCallback
 ```
 
 If inline, use position:
-```
+
+```txt
 src/utils/helpers#<arrow_line_15_col_20>
 ```
 
 #### Constructors
+
 Use the class name:
-```
+
+```txt
 src/models/User#User
 ```
 
@@ -110,10 +120,10 @@ export function parse_symbol_id(symbol_id: string): {
   module_path: string;
   symbol_name: string;
 } {
-  const [module_path, ...name_parts] = symbol_id.split('#');
+  const [module_path, ...name_parts] = symbol_id.split("#");
   return {
     module_path,
-    symbol_name: name_parts.join('#') // Handle edge case of # in name
+    symbol_name: name_parts.join("#"), // Handle edge case of # in name
   };
 }
 ```
@@ -123,13 +133,13 @@ export function parse_symbol_id(symbol_id: string): {
 ```typescript
 export function normalize_module_path(file_path: string): string {
   // Remove extension
-  const without_ext = file_path.replace(/\.[^/.]+$/, '');
-  
+  const without_ext = file_path.replace(/\.[^/.]+$/, "");
+
   // Normalize slashes to forward slashes
-  const normalized = without_ext.replace(/\\/g, '/');
-  
+  const normalized = without_ext.replace(/\\/g, "/");
+
   // Remove leading slash if present
-  return normalized.replace(/^\//, '');
+  return normalized.replace(/^\//, "");
 }
 ```
 
@@ -141,12 +151,12 @@ export function get_qualified_name(def: Def): string {
   if (def.metadata?.class_name) {
     return `${def.metadata.class_name}.${def.name}`;
   }
-  
+
   // For anonymous functions, use position
-  if (def.name === '<anonymous>' || !def.name) {
+  if (def.name === "<anonymous>" || !def.name) {
     return `<anonymous_line_${def.range.start.row}_col_${def.range.start.column}>`;
   }
-  
+
   return def.name;
 }
 ```
@@ -154,16 +164,19 @@ export function get_qualified_name(def: Def): string {
 ## Language-Specific Considerations
 
 ### TypeScript/JavaScript
+
 - Handle default exports: `src/components/Button#default`
 - Handle named exports normally
 - Destructured imports maintain original names
 
 ### Python
+
 - Handle `__init__` methods as constructors
 - Private methods (`_method`) maintain underscore
 - Magic methods (`__str__`) maintain double underscore
 
 ### Rust
+
 - Handle module paths: `src/lib#module::function`
 - Trait implementations: `src/types#Type::trait::method`
 

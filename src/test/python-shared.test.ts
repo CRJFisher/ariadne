@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from 'vitest';
-import { Project } from '../index';
+import { Def, Project, Ref } from '../index';
 import { 
   generateLanguageTests, 
   runLanguageSpecificTests,
@@ -26,7 +26,7 @@ def greet(name):
 result = greet("World")`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       // Should find both functions
       const loggerDef = defs.find(d => d.name === 'logger');
@@ -37,7 +37,7 @@ result = greet("World")`,
       expect(greetDef).toBeDefined();
       
       // Should find decorator reference
-      const refs = graph!.getNodes('reference');
+      const refs = graph!.getNodes<Ref>('reference');
       const loggerRef = refs.find(r => r.name === 'logger');
       expect(loggerRef).toBeDefined();
     }
@@ -50,14 +50,14 @@ squares = [n * n for n in numbers if n % 2 == 0]
 print(squares)`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       // Should find the comprehension variable
       const nDef = defs.find(d => d.name === 'n');
       expect(nDef).toBeDefined();
       
       // The 'n' in comprehension should have its own scope
-      const refs = graph!.getNodes('reference');
+      const refs = graph!.getNodes<Ref>('reference');
       const nRefs = refs.filter(r => r.name === 'n');
       expect(nRefs.length).toBeGreaterThan(0);
     }
@@ -73,7 +73,7 @@ if match := re.search(r'\\d+', 'The answer is 42'):
 print(match)  # match is still in scope`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       // Should find the walrus assignment
       const matchDef = defs.find(d => d.name === 'match');
@@ -81,7 +81,7 @@ print(match)  # match is still in scope`,
       expect(matchDef!.symbol_kind).toBe('variable');
       
       // Should find references to match
-      const refs = graph!.getNodes('reference');
+      const refs = graph!.getNodes<Ref>('reference');
       const matchRefs = refs.filter(r => r.name === 'match');
       expect(matchRefs.length).toBeGreaterThan(0);
     }
@@ -107,7 +107,7 @@ def outer():
 result = outer()`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       // Should find global and nonlocal declarations
       const globalDefs = defs.filter(d => d.name === 'global_var');
@@ -126,7 +126,7 @@ result = outer()`,
     return response.json()`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       const funcDef = defs.find(d => d.name === 'fetch_data' && d.symbol_kind === 'function');
       expect(funcDef).toBeDefined();
@@ -153,7 +153,7 @@ class TestCalculator(unittest.TestCase):
         self.calc = Calculator()`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       // Functions starting with test_ should be marked as test
       const testAddition = defs.find(d => d.name === 'test_addition');
@@ -188,7 +188,7 @@ class MyClass:
         self._value = value`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       const privateFunc = defs.find(d => d.name === '_private_function');
       expect(privateFunc).toBeDefined();
@@ -217,7 +217,7 @@ def expensive_computation(n):
     return n ** 2`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       const database = defs.find(d => d.name === 'database');
       expect(database).toBeDefined();
@@ -236,7 +236,7 @@ def expensive_computation(n):
     return f"{greeting} {' '.join(titles)} {name}"`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       const greet = defs.find(d => d.name === 'greet');
       expect(greet).toBeDefined();

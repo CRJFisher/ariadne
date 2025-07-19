@@ -1,5 +1,5 @@
-import { describe, test, expect } from 'vitest';
-import { Project } from '../index';
+import { describe, test, expect, beforeEach } from 'vitest';
+import { Def, Project, Ref } from '../index';
 
 describe('JavaScript - Advanced Language-Specific Features', () => {
   let project: Project;
@@ -17,7 +17,7 @@ const component = <MyComponent prop={value} />;`;
     project.add_or_update_file(fileName, code);
     const graph = project.get_scope_graph(fileName);
     
-    const defs = graph!.getNodes('definition');
+    const defs = graph!.getNodes<Def>('definition');
     expect(defs.find(d => d.name === 'element')).toBeDefined();
     expect(defs.find(d => d.name === 'component')).toBeDefined();
   });
@@ -38,7 +38,7 @@ const component = <MyComponent prop={value} />;`;
     project.add_or_update_file(fileName, code);
     const graph = project.get_scope_graph(fileName);
     
-    const defs = graph!.getNodes('definition');
+    const defs = graph!.getNodes<Def>('definition');
     expect(defs.find(d => d.name === 'MyClass')).toBeDefined();
     expect(defs.find(d => d.name === '#privateField')).toBeDefined();
     expect(defs.find(d => d.name === '#privateMethod')).toBeDefined();
@@ -67,7 +67,7 @@ const result = fn(3);`;
     project.add_or_update_file(fileName, code);
     const graph = project.get_scope_graph(fileName);
     
-    const defs = graph!.getNodes('definition');
+    const defs = graph!.getNodes<Def>('definition');
     expect(defs.find(d => d.name === 'outer')).toBeDefined();
     expect(defs.find(d => d.name === 'middle')).toBeDefined();
     expect(defs.find(d => d.name === 'inner')).toBeDefined();
@@ -91,12 +91,12 @@ const result = fn(3);`;
     project.add_or_update_file(fileName, code);
     const graph = project.get_scope_graph(fileName);
     
-    const defs = graph!.getNodes('definition');
+    const defs = graph!.getNodes<Def>('definition');
     expect(defs.find(d => d.name === 'i')).toBeDefined();
     expect(defs.find(d => d.name === 'j')).toBeDefined();
     
     // Check label references
-    const refs = graph!.getNodes('reference');
+    const refs = graph!.getNodes<Ref>('reference');
     expect(refs.find(r => r.name === 'outer')).toBeDefined();
     expect(refs.find(r => r.name === 'inner')).toBeDefined();
   });
@@ -121,7 +121,7 @@ for (const [index, value] of arr.entries()) {
     project.add_or_update_file(fileName, code);
     const graph = project.get_scope_graph(fileName);
     
-    const defs = graph!.getNodes('definition');
+    const defs = graph!.getNodes<Def>('definition');
     // Should find loop variables
     const keyDefs = defs.filter(d => d.name === 'key');
     const valueDefs = defs.filter(d => d.name === 'value');
@@ -151,7 +151,7 @@ const [
     project.add_or_update_file(fileName, code);
     const graph = project.get_scope_graph(fileName);
     
-    const defs = graph!.getNodes('definition');
+    const defs = graph!.getNodes<Def>('definition');
     expect(defs.find(d => d.name === 'deepValue')).toBeDefined();
     expect(defs.find(d => d.name === 'first')).toBeDefined();
     expect(defs.find(d => d.name === 'third')).toBeDefined();

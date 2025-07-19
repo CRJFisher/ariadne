@@ -1,5 +1,6 @@
-import { describe, test, expect } from 'vitest';
-import { Project } from '../index';
+import { describe, test, expect, beforeEach } from 'vitest';
+import { Def, Project, Ref } from '../index';
+import { Import } from '../index';
 
 describe('Rust - Advanced Language-Specific Features', () => {
   let project: Project;
@@ -25,7 +26,7 @@ describe('Rust - Advanced Language-Specific Features', () => {
     project.add_or_update_file(fileName, code);
     const graph = project.get_scope_graph(fileName);
     
-    const defs = graph!.getNodes('definition');
+    const defs = graph!.getNodes<Def>('definition');
     expect(defs.find(d => d.name === 'closure')).toBeDefined();
     expect(defs.find(d => d.name === 'y')).toBeDefined();
     expect(defs.find(d => d.name === 'accumulator')).toBeDefined();
@@ -50,7 +51,7 @@ describe('Rust - Advanced Language-Specific Features', () => {
     project.add_or_update_file(fileName, code);
     const graph = project.get_scope_graph(fileName);
     
-    const defs = graph!.getNodes('definition');
+    const defs = graph!.getNodes<Def>('definition');
     expect(defs.find(d => d.name === 'value')).toBeDefined();
     expect(defs.find(d => d.name === 'top')).toBeDefined();
   });
@@ -70,7 +71,7 @@ describe('Rust - Advanced Language-Specific Features', () => {
     project.add_or_update_file(fileName, code);
     const graph = project.get_scope_graph(fileName);
     
-    const refs = graph!.getNodes('reference');
+    const refs = graph!.getNodes<Ref>('reference');
     // Should find references to x through & and * operators
     const xRefs = refs.filter(r => r.name === 'x');
     expect(xRefs.length).toBeGreaterThan(0);
@@ -93,7 +94,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     project.add_or_update_file(fileName, code);
     const graph = project.get_scope_graph(fileName);
     
-    const defs = graph!.getNodes('definition');
+    const defs = graph!.getNodes<Def>('definition');
     expect(defs.find(d => d.name === 'x')).toBeDefined();
     expect(defs.find(d => d.name === 'y')).toBeDefined();
     expect(defs.find(d => d.name === 'result')).toBeDefined();
@@ -118,13 +119,13 @@ fn main() {
     project.add_or_update_file(fileName, code);
     const graph = project.get_scope_graph(fileName);
     
-    const defs = graph!.getNodes('definition');
+    const defs = graph!.getNodes<Def>('definition');
     expect(defs.find(d => d.name === 'p1')).toBeDefined();
     expect(defs.find(d => d.name === 'p2')).toBeDefined();
     expect(defs.find(d => d.name === 'p3')).toBeDefined();
     
     // Check references in struct expressions
-    const refs = graph!.getNodes('reference');
+    const refs = graph!.getNodes<Ref>('reference');
     const xRefs = refs.filter(r => r.name === 'x');
     const yRefs = refs.filter(r => r.name === 'y');
     expect(xRefs.length).toBeGreaterThan(0);
@@ -157,7 +158,7 @@ fn main() {
     project.add_or_update_file(fileName, code);
     const graph = project.get_scope_graph(fileName);
     
-    const refs = graph!.getNodes('reference');
+    const refs = graph!.getNodes<Ref>('reference');
     // Should find method calls and field access
     expect(refs.find(r => r.name === 'Rectangle')).toBeDefined();
     expect(refs.find(r => r.name === 'area')).toBeDefined();
@@ -185,7 +186,7 @@ fn process(msg: Message) {
     project.add_or_update_file(fileName, code);
     const graph = project.get_scope_graph(fileName);
     
-    const defs = graph!.getNodes('definition');
+    const defs = graph!.getNodes<Def>('definition');
     // Pattern bindings in match arms
     expect(defs.find(d => d.name === 'x')).toBeDefined();
     expect(defs.find(d => d.name === 'y')).toBeDefined();
@@ -210,7 +211,7 @@ fn main() {
     project.add_or_update_file(fileName, code);
     const graph = project.get_scope_graph(fileName);
     
-    const imports = graph!.getNodes('import');
+    const imports = graph!.getNodes<Import>('import');
     expect(imports.find(i => i.name === 'HashMap')).toBeDefined();
     expect(imports.find(i => i.name === 'HashSet')).toBeDefined();
     expect(imports.find(i => i.name === 'Read')).toBeDefined();

@@ -2,65 +2,90 @@
 
 ## Overview
 
-This document outlines the proposed API additions to RefScope to support native call graph analysis. These additions would enable RefScope to provide call graph functionality as a core feature, benefiting both the Code Charter VSCode extension and the broader RefScope ecosystem.
+This document outlines the call graph API that was implemented in RefScope to support native call graph analysis. These additions enable RefScope to provide call graph functionality as a core feature, benefiting both the Code Charter VSCode extension and the broader RefScope ecosystem.
+
+## Status: IMPLEMENTED ✅
+
+The APIs described in this document have been implemented as of July 2025 through the following tasks:
+
+- task-32: Define call graph data types and interfaces
+- task-33: Implement get_definitions API
+- task-34: Implement get_calls_from_definition API
+- task-35: Implement get_call_graph high-level API
+- task-40: Implement consistent symbol naming convention
 
 ## Motivation
 
-Currently, Code Charter relies on a Docker-based SCIP parser and Golang call graph detector. To eliminate the Docker dependency and provide native TypeScript execution, we need RefScope to expose call graph analysis capabilities. Rather than implementing this in each consumer, adding it to RefScope provides:
+Currently, Code Charter relies on a Docker-based SCIP parser and Golang call graph detector. To eliminate the Docker dependency and provide native TypeScript execution, RefScope now exposes call graph analysis capabilities. This provides:
 
 - **Reusability**: Common functionality available to all RefScope users
 - **Performance**: Direct access to AST and symbol information already in memory
 - **Consistency**: Uniform call graph quality across all supported languages
 - **Maintenance**: Analysis logic stays close to parsing logic
 
-## Proposed API Additions
+## Implemented APIs
 
 ### 1. Low-Level Building Blocks
 
-#### `get_definitions(file_path: string): Definition[]`
+#### `get_definitions(file_path: string): Def[]`
 
 Returns all definitions (functions, methods, classes) in a file.
 
-**Use Cases:**
+**Implementation Notes:**
 
-- Building file outlines
-- Analyzing code structure
-- Custom filtering of definitions
-- Incremental call graph construction
+- Uses the existing `Def` type rather than creating a new `Definition` type
+- Available both as a Project method and standalone function
+- Leverages the existing scope graph infrastructure
 
-**Example Return Type:**
+**Actual Type Used:**
 
 ```typescript
-interface Definition {
+// From src/graph.ts
+interface Def {
   name: string;
-  kind: "function" | "method" | "class" | "variable";
-  range: Range;
-  file: string;
-  enclosing_range?: Range; // Full body range including definition
-  signature?: string; // Full signature with parameters
-  docstring?: string; // Documentation comment if available
+  symbol_kind:
+    | "function"
+    | "method"
+    | "class"
+    | "variable"
+    | "const"
+    | "let"
+    | "constant"
+    | "generator"
+    | "constructor";
+  range: SimpleRange;
+  file_path: string;
+  enclosing_range?: SimpleRange;
+  parent?: string;
+  metadata?: {
+    signature?: string;
+    docstring?: string;
+    class_name?: string;
+    is_async?: boolean;
+    decorators?: string[];
+  };
+  symbol_id: string; // Added by task-40
 }
 ```
 
-#### `get_calls_from_definition(def: Definition): Call[]`
+#### `get_calls_from_definition(def: Def): FunctionCall[]`
 
 Returns all function/method calls made within a definition's body.
 
-**Use Cases:**
+**Implementation Features:**
 
-- Analyzing function complexity
-- Building custom dependency graphs
-- Finding specific call patterns
-- Debugging call relationships
+- Resolves imports to actual definitions using `get_imports_with_definitions`
+- Handles method calls across different languages (Python, TypeScript, JavaScript, Rust)
+- Tracks whether calls are method calls vs function calls
 
-**Example Return Type:**
+**Actual Type Used:**
 
 ```typescript
-interface Call {
-  symbol: string; // Symbol being called
-  range: Range; // Location of the call
-  kind: "function" | "method" | "constructor";
-  resolved?: Definition; // The definition being called (if resolved)
+interface FunctionCall {
+  caller_def: Def; // The function making the call
+  called_def: Def; // The function being called
+  call_location: Point; // Where in the caller the call happens
+  is_method_call: boolean; // true for self.method() or this.method()
 }
 ```
 
@@ -70,17 +95,22 @@ interface Call {
 
 Builds a complete call graph for the project.
 
-**Options:**
+**Available as:**
+
+- Instance method: `project.get_call_graph(options)`
+- Standalone function: `get_call_graph(root_path, options)`
+
+**Implemented Options:**
 
 ```typescript
 interface CallGraphOptions {
-  include_external?: boolean; // Include calls to external libraries
-  max_depth?: number; // Limit recursion depth
+  include_external?: boolean; // Include calls to external libraries (default: false)
+  max_depth?: number; // Limit recursion depth from top-level nodes
   file_filter?: (path: string) => boolean; // Filter which files to analyze
 }
 ```
 
-**Return Type:**
+**Actual Return Types:**
 
 ```typescript
 interface CallGraph {
@@ -90,8 +120,8 @@ interface CallGraph {
 }
 
 interface CallGraphNode {
-  symbol: string;
-  definition: Definition;
+  symbol: string; // Symbol ID in format module#name
+  definition: Def;
   calls: Call[]; // Outgoing calls from this node
   called_by: string[]; // Incoming calls (symbol names)
 }
@@ -99,81 +129,157 @@ interface CallGraphNode {
 interface CallGraphEdge {
   from: string; // Caller symbol
   to: string; // Callee symbol
-  location: Range; // Where the call occurs
+  location: SimpleRange; // Where the call occurs
+}
+
+interface Call {
+  symbol: string; // Symbol being called
+  range: SimpleRange; // Location of the call
+  kind: "function" | "method" | "constructor"; // Type of call
+  resolved_definition?: Def; // The definition being called (if resolved)
 }
 ```
 
-## Data Type Recommendations
+## Symbol Naming Convention (task-40)
 
-### 1. Align with RefScope's Existing Types
+A consistent symbol naming scheme was implemented:
 
-Use RefScope's existing `Range`, `Position`, and file path conventions for consistency.
+- Format: `<module_path>#<symbol_name>`
+- Module path has extension removed and uses forward slashes
+- Examples:
+  - `src/utils/helpers#process_data`
+  - `models/user#User.validate` (for methods)
+  - `lib/math#<anonymous_line_42_col_10>` (for anonymous functions)
 
-### 2. Symbol Naming Convention
+Key functions:
 
-Recommend adopting a consistent symbol naming scheme:
+- `get_symbol_id(def: Def): string` - Generate symbol ID
+- `parse_symbol_id(symbol_id: string)` - Parse symbol ID into components
+- `normalize_module_path(file_path: string)` - Normalize file paths
 
-- Format: `<module_path>#<name>`
-- Example: `src.utils.helpers#process_data`
+## Implementation Features
 
-### 3. Hierarchical Information
+### Cross-File Import Resolution
 
-Include enough information to reconstruct the hierarchical structure:
+- Leverages the import resolution APIs from task-22
+- `get_calls_from_definition` automatically resolves imported functions
+- Handles circular dependencies between modules
 
-- Enclosing ranges for scope analysis
-- Parent/child relationships for nested definitions
-- Container symbols for methods in classes
+### Language Support
 
-## Implementation Notes
+All APIs work with:
 
-### Language-Specific Considerations
+- **TypeScript/JavaScript**: ES6 imports, CommonJS (limited), arrow functions
+- **Python**: imports, class methods, decorators
+- **Rust**: mod imports, impl blocks, trait methods
 
-Different languages may require different approaches:
+### Performance Features
 
-- **Python**: Handle decorators, class methods, nested functions
-- **JavaScript/TypeScript**: Handle arrow functions, callbacks, async patterns
-- **Rust**: Handle trait implementations, macro expansions
+- Efficient filtering with `file_filter` option
+- `max_depth` uses BFS from top-level nodes
+- Large project test shows <2s for 30+ files
 
-### Performance Considerations
+### Known Limitations
 
-- Cache call graphs at the file level
-- Support incremental updates when files change
-- Provide async APIs for large codebases
+- CommonJS require/exports have limited support
+- External library calls not fully tracked (would require node_modules parsing)
+- Module path resolution uses brute-force search (noted in task-22)
 
-### Error Handling
+## Usage Examples
 
-- Gracefully handle unresolved symbols
-- Provide partial results when some files fail to parse
-- Include diagnostic information for debugging
+### Basic Usage
+
+```typescript
+// Get all functions in a file
+const defs = get_definitions("src/utils.ts");
+
+// Get calls from a specific function
+const mainFunc = defs.find((d) => d.name === "main");
+const calls = project.get_calls_from_definition(mainFunc);
+
+// Build complete call graph
+const callGraph = project.get_call_graph({
+  file_filter: (path) => !path.includes("test"),
+  max_depth: 5,
+});
+```
+
+### Analyzing Cross-File Dependencies
+
+```typescript
+const callGraph = get_call_graph("./src", {
+  include_external: false,
+  file_filter: (path) => path.endsWith(".ts"),
+});
+
+// Find entry points
+console.log("Entry points:", callGraph.top_level_nodes);
+
+// Trace calls from main
+const mainNode = callGraph.nodes.get("src/index#main");
+for (const call of mainNode.calls) {
+  console.log(`main() calls ${call.symbol}`);
+}
+```
+
+## Testing
+
+Comprehensive test coverage includes:
+
+- Unit tests for all APIs (src/call_graph.test.ts)
+- Integration tests for multi-file scenarios (src/call_graph_integration.test.ts)
+- Cross-file import resolution tests
+- Circular dependency handling
+- Performance tests with large codebases
+
+## Future Enhancements
+
+### Planned: Polymorphic Call Resolution (task-43)
+
+Enable tracing through specific implementation classes rather than abstract base classes:
+
+```typescript
+const callGraph = project.get_call_graph({
+  implementation_mappings: {
+    "models#Storage.save": "models#PostgresStorage.save",
+    "interfaces#Logger.log": "utils#ConsoleLogger.log",
+  },
+});
+```
+
+### Potential Future Work
+
+1. Visualization helpers for graph rendering
+2. Streaming API for very large graphs
+3. Call graph diffing between versions
+4. Dead code detection using unreachable nodes
+5. Test coverage mapping
 
 ## Migration Path for Code Charter
 
-1. **Phase 1**: Implement basic APIs in RefScope
-   - `get_definitions()`
-   - `get_calls_from_definition()`
-2. **Phase 2**: Add high-level call graph API
-   - `get_call_graph()`
-3. **Phase 3**: Update Code Charter to use new APIs
-   - Replace Docker-based SCIP/Golang solution
-   - Adapt data structures to match RefScope format
-4. **Phase 4**: Remove legacy code
-   - Delete Docker dependencies
-   - Remove SCIP parsing code
-   - Clean up temporary adapters
+Code Charter can now:
 
-## Benefits Beyond Code Charter
+1. Replace Docker-based SCIP/Golang solution with native RefScope APIs
+2. Use `get_call_graph()` for complete project analysis
+3. Leverage symbol IDs for consistent node identification
+4. Apply filters for targeted analysis
 
-These APIs would enable:
+## Benefits Realized
 
-- IDE features: Call hierarchy, find callers/callees
-- Static analysis: Dead code detection, circular dependency analysis
-- Documentation: Auto-generated call graphs
-- Refactoring: Impact analysis for function changes
-- Testing: Identify which tests cover which functions
+These APIs now enable:
 
-## Open Questions
+- ✅ IDE features: Call hierarchy, find callers/callees
+- ✅ Static analysis: Identify top-level entry points
+- ✅ Documentation: Data for auto-generated call graphs
+- ✅ Refactoring: Impact analysis for function changes
+- ✅ Testing: Identify which functions call which others
 
-1. Should RefScope provide visualization helpers or just raw graph data?
-2. How should external/library calls be represented?
-3. Should the API support streaming for large graphs?
-4. What caching strategy should be used for call graphs?
+## Implementation Details
+
+For implementation details, see:
+
+- src/index.ts: Main API implementations
+- src/graph.ts: Type definitions
+- src/symbol_naming.ts: Symbol ID generation
+- src/call_graph.test.ts: API usage examples
+- src/call_graph_integration.test.ts: Multi-file scenarios

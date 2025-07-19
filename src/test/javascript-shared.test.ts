@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from 'vitest';
-import { Project } from '../index';
+import { Def, Import, Project, Ref } from '../index';
 import { 
   generateLanguageTests, 
   runLanguageSpecificTests,
@@ -18,7 +18,7 @@ var x = 5;
 console.log(x); // 5`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       // var declaration should be found
       const xDef = defs.find(d => d.name === 'x');
@@ -26,7 +26,7 @@ console.log(x); // 5`,
       expect(xDef!.symbol_kind).toBe('variable');
       
       // References should include both console.log calls
-      const refs = graph!.getNodes('reference');
+      const refs = graph!.getNodes<Ref>('reference');
       const xRefs = refs.filter(r => r.name === 'x');
       expect(xRefs.length).toBe(2);
     }
@@ -43,7 +43,7 @@ function greet() {
 greet(); // Also works`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       // Function should be defined
       const greetDef = defs.find(d => d.name === 'greet');
@@ -51,7 +51,7 @@ greet(); // Also works`,
       expect(greetDef!.symbol_kind).toBe('function');
       
       // Both calls should be references
-      const refs = graph!.getNodes('reference');
+      const refs = graph!.getNodes<Ref>('reference');
       const greetRefs = refs.filter(r => r.name === 'greet');
       expect(greetRefs.length).toBe(2);
     }
@@ -64,7 +64,7 @@ const { name, age } = person;
 console.log(name, age);`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       // Should find destructured variables
       const nameDef = defs.find(d => d.name === 'name');
@@ -84,7 +84,7 @@ const [first, second, ...rest] = numbers;
 console.log(first, second, rest);`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       // Should find all destructured variables
       expect(defs.find(d => d.name === 'first')).toBeDefined();
@@ -105,7 +105,7 @@ const gen = numberGenerator();
 const first = gen.next();`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       // Should find generator function
       const genFunc = defs.find(d => d.name === 'numberGenerator');
@@ -130,7 +130,7 @@ obj.greet();
 obj.greetArrow();`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       // Should find object and its methods
       const objDef = defs.find(d => d.name === 'obj');
@@ -153,8 +153,7 @@ module.exports = {
 };`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
-      const imports = graph!.getNodes('import');
+      const imports = graph!.getNodes<Import>('import');
       
       // CommonJS require creates import nodes, like ES6 imports
       const fsImport = imports.find(d => d.name === 'fs');
@@ -174,7 +173,7 @@ module.exports = {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       const funcDef = defs.find(d => d.name === 'fetchData' && d.symbol_kind === 'function');
       expect(funcDef).toBeDefined();
@@ -202,7 +201,7 @@ function testHelper() {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       // testHelper should be marked as test function due to name
       const testHelper = defs.find(d => d.name === 'testHelper');
@@ -227,7 +226,7 @@ function testHelper() {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       const getUserMethod = defs.find(d => d.name === 'getUser');
       expect(getUserMethod).toBeDefined();
@@ -255,7 +254,7 @@ function greet(greeting, ...names) {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def> ('definition');
       
       const sumFunc = defs.find(d => d.name === 'sum');
       expect(sumFunc).toBeDefined();
@@ -276,7 +275,7 @@ function greet(greeting, ...names) {
 }`,
     test: (project, fileName) => {
       const graph = project.get_scope_graph(fileName);
-      const defs = graph!.getNodes('definition');
+      const defs = graph!.getNodes<Def>('definition');
       
       const genFunc = defs.find(d => d.name === 'numberGenerator' && d.symbol_kind === 'generator');
       expect(genFunc).toBeDefined();

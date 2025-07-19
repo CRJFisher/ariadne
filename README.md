@@ -7,7 +7,8 @@ Find references and definitions in your codebase using tree-sitter. RefScope pro
 - **AST Parsing**: Uses tree-sitter to parse source code into an Abstract Syntax Tree
 - **Scope Resolution**: Builds a scope graph tracking definitions, references, imports, and lexical scopes
 - **Cross-file Symbol Resolution**: Find definitions and references across multiple files
-- **Multi-language Support**: Extensible architecture supporting JavaScript, TypeScript, and more
+- **Call Graph Analysis**: Build complete function call graphs with cross-file import resolution
+- **Multi-language Support**: Extensible architecture supporting JavaScript, TypeScript, Python, and Rust
 - **Incremental Parsing**: Efficiently handles file edits by reusing unchanged AST portions
 - **Fast and Accurate**: Leverages tree-sitter's incremental parsing capabilities
 
@@ -44,6 +45,10 @@ project.update_file_range(
   'const',
   'let'
 );
+
+// Build a call graph
+const callGraph = project.get_call_graph();
+console.log('Entry points:', callGraph.top_level_nodes);
 ```
 
 ## API Reference
@@ -126,6 +131,10 @@ interface Ref {
 - [Graph Structure and Algorithms](docs/graph-structure.md) - The underlying graph data structure
 - [Symbol Resolution](docs/symbol-resolution.md) - How cross-file symbol resolution works
 - [Incremental Parsing](docs/incremental-parsing.md) - Performance optimization for real-time editing
+
+### API Guides
+
+- [Call Graph API](docs/call-graph-api.md) - Build and analyze function call relationships across your codebase
 
 ### Implementation Guides
 
