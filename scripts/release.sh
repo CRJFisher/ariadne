@@ -149,9 +149,21 @@ fi
 print_info "Updating package.json version..."
 npm version "$NEW_VERSION" --no-git-tag-version
 
+# Update refscope-types package version if it exists
+if [ -f "packages/refscope-types/package.json" ]; then
+    print_info "Updating refscope-types package version..."
+    cd packages/refscope-types
+    npm version "$NEW_VERSION" --no-git-tag-version
+    cd ../..
+fi
+
 # Commit the version change
 print_info "Committing version bump..."
 git add package.json package-lock.json
+# Also add refscope-types package files if they were updated
+if [ -f "packages/refscope-types/package.json" ]; then
+    git add packages/refscope-types/package.json packages/refscope-types/package-lock.json
+fi
 git commit -m "chore: bump version to $NEW_VERSION"
 
 # Create and push the tag
