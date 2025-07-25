@@ -1,6 +1,6 @@
 # Rust Language Support
 
-This module provides Rust language support for the RefScope code intelligence system.
+This module provides Rust language support for the AST-Climber code intelligence system.
 
 ## Features
 

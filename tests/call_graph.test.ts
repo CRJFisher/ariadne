@@ -892,7 +892,7 @@ describe("standalone get_call_graph function", () => {
 
   beforeEach(() => {
     // Create a temporary directory for test files
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "refscope-test-"));
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "ast-climber-test-"));
   });
 
   afterEach(() => {

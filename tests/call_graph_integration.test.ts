@@ -9,7 +9,7 @@ describe("Call Graph Integration Tests", () => {
   let project: Project;
 
   beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "refscope-integration-"));
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "ast-climber-integration-"));
     project = new Project();
   });
 

@@ -1,5 +1,5 @@
 /**
- * Type compilation tests for refscope-types
+ * Type compilation tests for ast-climber-types
  * This file verifies that all exported types compile correctly
  */
 

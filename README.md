@@ -1,6 +1,6 @@
-# RefScope
+# AST-Climber
 
-Find references and definitions in your codebase using tree-sitter. RefScope provides language-agnostic code intelligence by building a scope graph of your code's symbols, their definitions, and their references.
+Find references and definitions in your codebase using tree-sitter. AST-Climber provides language-agnostic code intelligence by building a scope graph of your code's symbols, their definitions, and their references.
 
 ## Features
 
@@ -15,17 +15,17 @@ Find references and definitions in your codebase using tree-sitter. RefScope pro
 ## Installation
 
 ```bash
-npm install refscope
+npm install ast-climber
 ```
 
-RefScope includes prebuilt binaries for common platforms, so you don't need build tools installed. If prebuilt binaries aren't available for your platform, it will automatically build from source. See [prebuild documentation](docs/prebuild-binaries.md) for more details.
+AST-Climber includes prebuilt binaries for common platforms, so you don't need build tools installed. If prebuilt binaries aren't available for your platform, it will automatically build from source. See [prebuild documentation](docs/prebuild-binaries.md) for more details.
 
 ### TypeScript Types Only
 
 If you only need TypeScript type definitions without the implementation (e.g., for webviews or lightweight environments), you can install the types-only package:
 
 ```bash
-npm install refscope-types
+npm install ast-climber-types
 ```
 
 This package contains zero runtime code and is ideal for:
@@ -34,12 +34,12 @@ This package contains zero runtime code and is ideal for:
 - Type-safe message passing between processes
 - Projects that only need type definitions for interoperability
 
-See the [refscope-types documentation](packages/refscope-types/README.md) for more details.
+See the [ast-climber-types documentation](packages/ast-climber-types/README.md) for more details.
 
 ## Quick Start
 
 ```typescript
-import { Project } from "refscope";
+import { Project } from "ast-climber";
 
 // Create a project instance
 const project = new Project();
@@ -171,7 +171,7 @@ interface Ref {
 
 ## Architecture Overview
 
-RefScope processes code through several stages:
+AST-Climber processes code through several stages:
 
 1. **Parsing** - Tree-sitter parses source code into an AST
 2. **Query Matching** - Tree-sitter queries identify important nodes (definitions, references, etc.)
@@ -225,7 +225,7 @@ The codebase uses snake_case for consistency with the original Rust implementati
 
 ## Origin
 
-RefScope uses patterns from the code intelligence engine from [bloop](https://github.com/BloopAI/bloop). It extracts and reimplements the scope resolution and symbol tracking functionality as a standalone library.
+AST-Climber uses patterns from the code intelligence engine from [bloop](https://github.com/BloopAI/bloop). It extracts and reimplements the scope resolution and symbol tracking functionality as a standalone library.
 
 ## License
 

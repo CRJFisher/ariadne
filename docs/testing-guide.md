@@ -1,10 +1,10 @@
-# RefScope Testing Guide
+# AST-Climber Testing Guide
 
-This guide explains how to write and maintain tests for RefScope's multi-language support.
+This guide explains how to write and maintain tests for AST-Climber's multi-language support.
 
 ## Overview
 
-RefScope uses a shared testing infrastructure to ensure consistent test coverage across all supported languages. This approach:
+AST-Climber uses a shared testing infrastructure to ensure consistent test coverage across all supported languages. This approach:
 
 - Reduces code duplication
 - Ensures feature parity across languages

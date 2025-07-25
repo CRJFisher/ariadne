@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Update GitHub release description script for RefScope
+# Update GitHub release description script for AST-Climber
 # Usage: ./scripts/update-release-description.sh [options]
 #
 # Options:

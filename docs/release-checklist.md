@@ -1,4 +1,4 @@
-# RefScope Release Checklist
+# AST-Climber Release Checklist
 
 ## Before Publishing
 
@@ -58,8 +58,8 @@
 ## After Publishing
 
 1. **Verify Publication**
-   - [ ] Check package on npmjs.com: https://www.npmjs.com/package/refscope
-   - [ ] Test installation: `npm install refscope` in a new project
+   - [ ] Check package on npmjs.com: https://www.npmjs.com/package/ast-climber
+   - [ ] Test installation: `npm install ast-climber` in a new project
    - [ ] Verify types work correctly in TypeScript
 
 2. **Announcement**

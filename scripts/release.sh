@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Release script for RefScope
+# Release script for AST-Climber
 # Usage: ./scripts/release.sh [major|minor|patch]
 # Defaults to patch (bug fix) if no argument provided
 
@@ -149,10 +149,10 @@ fi
 print_info "Updating package.json version..."
 npm version "$NEW_VERSION" --no-git-tag-version
 
-# Update refscope-types package version if it exists
-if [ -f "packages/refscope-types/package.json" ]; then
-    print_info "Updating refscope-types package version..."
-    cd packages/refscope-types
+# Update ast-climber-types package version if it exists
+if [ -f "packages/ast-climber-types/package.json" ]; then
+    print_info "Updating ast-climber-types package version..."
+    cd packages/ast-climber-types
     npm version "$NEW_VERSION" --no-git-tag-version
     cd ../..
 fi
@@ -160,9 +160,9 @@ fi
 # Commit the version change
 print_info "Committing version bump..."
 git add package.json package-lock.json
-# Also add refscope-types package files if they were updated
-if [ -f "packages/refscope-types/package.json" ]; then
-    git add packages/refscope-types/package.json packages/refscope-types/package-lock.json
+# Also add ast-climber-types package files if they were updated
+if [ -f "packages/ast-climber-types/package.json" ]; then
+    git add packages/ast-climber-types/package.json packages/ast-climber-types/package-lock.json
 fi
 git commit -m "chore: bump version to $NEW_VERSION"
 

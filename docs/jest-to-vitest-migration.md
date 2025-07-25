@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the migration from Jest to Vitest for the RefScope project. The migration was necessary due to Jest's incompatibility with tree-sitter native modules on Linux (Jest issue #9206).
+This document describes the migration from Jest to Vitest for the AST-Climber project. The migration was necessary due to Jest's incompatibility with tree-sitter native modules on Linux (Jest issue #9206).
 
 ## Key Changes
 

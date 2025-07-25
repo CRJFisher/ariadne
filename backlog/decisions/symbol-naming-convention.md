@@ -7,7 +7,7 @@
 
 ## Context
 
-RefScope needs a consistent way to uniquely identify symbols across the entire codebase. This is critical for:
+AST-Climber needs a consistent way to uniquely identify symbols across the entire codebase. This is critical for:
 
 - Building accurate call graphs
 - Avoiding symbol name collisions

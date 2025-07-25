@@ -2,11 +2,11 @@
 
 ## Overview
 
-RefScope now supports incremental parsing, a critical performance optimization that allows the parser to reuse unchanged portions of the AST when processing file edits. This feature is essential for real-time editing scenarios in IDEs and editors.
+AST-Climber now supports incremental parsing, a critical performance optimization that allows the parser to reuse unchanged portions of the AST when processing file edits. This feature is essential for real-time editing scenarios in IDEs and editors.
 
 ## Problem Statement
 
-Previously, RefScope would re-parse the entire file from scratch on every update, regardless of the size or location of the change. This approach:
+Previously, AST-Climber would re-parse the entire file from scratch on every update, regardless of the size or location of the change. This approach:
 - Was inefficient for large files
 - Created noticeable lag in editor integrations
 - Wasted computational resources on unchanged code
@@ -183,4 +183,4 @@ npm test src/incremental.test.ts
 
 ## Conclusion
 
-Incremental parsing makes RefScope suitable for real-time code intelligence in editors. The implementation balances performance gains with code simplicity, providing a solid foundation for future optimizations.
+Incremental parsing makes AST-Climber suitable for real-time code intelligence in editors. The implementation balances performance gains with code simplicity, providing a solid foundation for future optimizations.

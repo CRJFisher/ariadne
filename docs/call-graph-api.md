@@ -1,6 +1,6 @@
 # Call Graph API
 
-RefScope provides a comprehensive call graph API for analyzing function call relationships across your codebase. This API enables you to build call hierarchies, trace dependencies, and understand code flow across multiple files and languages.
+AST-Climber provides a comprehensive call graph API for analyzing function call relationships across your codebase. This API enables you to build call hierarchies, trace dependencies, and understand code flow across multiple files and languages.
 
 ## Overview
 
@@ -18,7 +18,7 @@ The call graph API consists of three levels:
 Returns all definitions (functions, methods, classes, variables) in a file.
 
 ```typescript
-import { get_definitions } from 'refscope';
+import { get_definitions } from 'ast-climber';
 
 const definitions = get_definitions('src/utils.ts');
 const functions = definitions.filter(d => d.symbol_kind === 'function');
@@ -52,7 +52,7 @@ const callGraph = project.get_call_graph({
 });
 
 // Using standalone function
-import { get_call_graph } from 'refscope';
+import { get_call_graph } from 'ast-climber';
 const callGraph = get_call_graph('./src', options);
 ```
 
@@ -76,7 +76,7 @@ interface CallGraph {
 
 ### Symbol Naming
 
-RefScope uses a consistent symbol naming scheme for identifying functions across files:
+AST-Climber uses a consistent symbol naming scheme for identifying functions across files:
 
 - Format: `<module_path>#<symbol_name>`
 - Examples:
@@ -85,7 +85,7 @@ RefScope uses a consistent symbol naming scheme for identifying functions across
   - `lib/math#<anonymous_line_42_col_10>` - Anonymous function
 
 ```typescript
-import { get_symbol_id, parse_symbol_id } from 'refscope';
+import { get_symbol_id, parse_symbol_id } from 'ast-climber';
 
 // Generate symbol ID for a definition
 const symbolId = get_symbol_id(def); // "src/utils#processData"
@@ -285,6 +285,6 @@ function main() {
 
 ## See Also
 
-- [Symbol Resolution](./symbol-resolution.md) - How RefScope resolves symbols
+- [Symbol Resolution](./symbol-resolution.md) - How AST-Climber resolves symbols
 - [API Reference](./api-reference.md) - Complete API documentation
 - Examples in `src/call_graph.test.ts` and `src/call_graph_integration.test.ts`

@@ -1,6 +1,6 @@
-# Releasing RefScope
+# Releasing AST-Climber
 
-This document describes the process for releasing new versions of RefScope.
+This document describes the process for releasing new versions of AST-Climber.
 
 ## Release Script
 

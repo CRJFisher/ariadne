@@ -1,6 +1,6 @@
-# RefScope Language Feature Matrix
+# AST-Climber Language Feature Matrix
 
-This document tracks which language features are supported by RefScope for each programming language.
+This document tracks which language features are supported by AST-Climber for each programming language.
 
 ## Core Library Functionality
 
@@ -126,7 +126,7 @@ When adding a new language, ensure:
 
 ## Function Metadata
 
-RefScope extracts rich metadata for function definitions across all supported languages:
+AST-Climber extracts rich metadata for function definitions across all supported languages:
 
 ### Metadata Fields
 

@@ -7,7 +7,7 @@
 
 ## Context
 
-RefScope needs to implement a call graph API to support native call graph analysis. This requires defining TypeScript interfaces for Definition, Call, CallGraph, and related types. We need to decide whether to:
+AST-Climber needs to implement a call graph API to support native call graph analysis. This requires defining TypeScript interfaces for Definition, Call, CallGraph, and related types. We need to decide whether to:
 
 1. Expand existing types in `graph.ts`
 2. Create separate new types specifically for call graphs
@@ -156,5 +156,5 @@ export interface CallGraph {
 
 ## References
 
-- [RefScope Call Graph API Requirements](/Users/chuck/workspace/refscope/backlog/drafts/refscope-call-graph-api-requirements.md)
+- [AST-Climber Call Graph API Requirements](/Users/chuck/workspace/refscope/backlog/drafts/refscope-call-graph-api-requirements.md)
 - [Existing graph.ts implementation](/Users/chuck/workspace/refscope/src/graph.ts)
