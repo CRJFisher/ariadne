@@ -1,6 +1,6 @@
 {
   "name": "ast-climber",
-  "version": "0.5.7",
+  "version": "0.5.8",
   "description": "Find references and definitions in your codebase using tree-sitter",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
