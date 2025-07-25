@@ -1,6 +1,6 @@
 {
   "name": "ast-climber-types",
-  "version": "0.5.6",
+  "version": "0.5.7",
   "description": "TypeScript type definitions for ast-climber",
   "types": "index.d.ts",
   "files": [
