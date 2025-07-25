@@ -1,7 +1,7 @@
 {
-  "name": "ast-climber-types",
+  "name": "@ariadne/types",
   "version": "0.5.8",
-  "description": "TypeScript type definitions for ast-climber",
+  "description": "TypeScript type definitions for Ariadne",
   "types": "index.d.ts",
   "files": [
     "index.d.ts",
@@ -15,11 +15,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/CRJFisher/ast-climber.git",
-    "directory": "packages/ast-climber-types"
+    "url": "https://github.com/CRJFisher/ariadne.git",
+    "directory": "packages/ariadne-types"
   },
   "keywords": [
-    "ast-climber",
+    "ariadne",
     "types",
     "typescript",
     "code-analysis",
@@ -29,9 +29,9 @@
   "author": "crjfisher <crjfisher@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/CRJFisher/ast-climber/issues"
+    "url": "https://github.com/CRJFisher/ariadne/issues"
   },
-  "homepage": "https://github.com/CRJFisher/ast-climber#readme",
+  "homepage": "https://github.com/CRJFisher/ariadne#readme",
   "peerDependencies": {
     "typescript": ">=4.0.0"
   },

@@ -1,19 +1,19 @@
-# ast-climber-types
+# @ariadne/types
 
-TypeScript type definitions for [ast-climber](https://github.com/CRJFisher/ast-climber) - a code analysis library for building scope graphs and call graphs.
+TypeScript type definitions for [Ariadne](https://github.com/CRJFisher/ariadne) - a code analysis library for building scope graphs and call graphs.
 
 ## Overview
 
-This package provides only TypeScript type definitions from ast-climber with zero runtime code. It's designed for environments where bundle size is critical (like webviews) or when you only need type definitions without the implementation.
+This package provides only TypeScript type definitions from Ariadne with zero runtime code. It's designed for environments where bundle size is critical (like webviews) or when you only need type definitions without the implementation.
 
 ## Installation
 
 ```bash
-npm install ast-climber-types
+npm install @ariadne/types
 # or
-yarn add ast-climber-types
+yarn add @ariadne/types
 # or
-pnpm add ast-climber-types
+pnpm add @ariadne/types
 ```
 
 ## Usage
@@ -21,7 +21,7 @@ pnpm add ast-climber-types
 ### In a webview or lightweight environment
 
 ```typescript
-import type { CallGraph, Def, CallGraphNode, SimpleRange } from 'ast-climber-types';
+import type { CallGraph, Def, CallGraphNode, SimpleRange } from '@ariadne/types';
 
 // Use types for proper type safety without runtime dependency
 function processCallGraph(graph: CallGraph): void {
@@ -42,11 +42,11 @@ interface GraphMessage {
 You can use either the full ast-climber package or just the types:
 
 ```typescript
-// Option 1: Use full ast-climber (includes implementation)
-import { CallGraph, get_call_graph } from 'ast-climber';
+// Option 1: Use full Ariadne core (includes implementation)
+import { CallGraph, get_call_graph } from '@ariadne/core';
 
 // Option 2: Just types (if only needed for type annotations)
-import type { CallGraph, Def, Ref } from 'ast-climber-types';
+import type { CallGraph, Def, Ref } from '@ariadne/types';
 ```
 
 ## Available Types
@@ -84,8 +84,8 @@ import type { CallGraph, Def, Ref } from 'ast-climber-types';
 
 ## Version Compatibility
 
-This package version matches the ast-climber version it's generated from. For example, `ast-climber-types@0.5.0` contains types from `ast-climber@0.5.0`.
+This package version matches the Ariadne core version it's generated from. For example, `@ariadne/types@0.5.0` contains types from `@ariadne/core@0.5.0`.
 
 ## License
 
-MIT - Same as ast-climber
+MIT - Same as Ariadne

@@ -1,6 +1,6 @@
-# AST-Climber
+# Ariadne
 
-Find references and definitions in your codebase using tree-sitter. AST-Climber provides language-agnostic code intelligence by building a scope graph of your code's symbols, their definitions, and their references.
+Find references and definitions in your codebase using tree-sitter. Ariadne provides language-agnostic code intelligence by building a scope graph of your code's symbols, their definitions, and their references.
 
 ## Features
 
@@ -15,17 +15,17 @@ Find references and definitions in your codebase using tree-sitter. AST-Climber 
 ## Installation
 
 ```bash
-npm install ast-climber
+npm install @ariadne/core
 ```
 
-AST-Climber includes prebuilt binaries for common platforms, so you don't need build tools installed. If prebuilt binaries aren't available for your platform, it will automatically build from source. See [prebuild documentation](docs/prebuild-binaries.md) for more details.
+Ariadne includes prebuilt binaries for common platforms, so you don't need build tools installed. If prebuilt binaries aren't available for your platform, it will automatically build from source. See [prebuild documentation](docs/prebuild-binaries.md) for more details.
 
 ### TypeScript Types Only
 
 If you only need TypeScript type definitions without the implementation (e.g., for webviews or lightweight environments), you can install the types-only package:
 
 ```bash
-npm install ast-climber-types
+npm install @ariadne/types
 ```
 
 This package contains zero runtime code and is ideal for:
@@ -34,12 +34,12 @@ This package contains zero runtime code and is ideal for:
 - Type-safe message passing between processes
 - Projects that only need type definitions for interoperability
 
-See the [ast-climber-types documentation](packages/ast-climber-types/README.md) for more details.
+See the [@ariadne/types documentation](packages/ariadne-types/README.md) for more details.
 
 ## Quick Start
 
 ```typescript
-import { Project } from "ast-climber";
+import { Project } from "@ariadne/core";
 
 // Create a project instance
 const project = new Project();

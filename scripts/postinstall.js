@@ -7,7 +7,7 @@ const { execSync } = require('child_process');
 const { pipeline } = require('stream/promises');
 const tar = require('tar');
 
-const GITHUB_REPO = 'CRJFisher/ast-climber';
+const GITHUB_REPO = 'CRJFisher/ariadne';
 const PLATFORM = process.platform;
 const ARCH = process.arch;
 
@@ -41,7 +41,7 @@ async function getLatestRelease() {
       hostname: 'api.github.com',
       path: `/repos/${GITHUB_REPO}/releases/latest`,
       headers: {
-        'User-Agent': 'ast-climber-installer'
+        'User-Agent': 'ariadne-installer'
       }
     };
 

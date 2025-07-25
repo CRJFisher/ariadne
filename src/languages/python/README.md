@@ -1,6 +1,6 @@
 # Python Language Support
 
-This module provides Python language support for the ast-climber code intelligence engine using tree-sitter-python.
+This module provides Python language support for the Ariadne code intelligence engine using tree-sitter-python.
 
 ## Features
 

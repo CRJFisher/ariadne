@@ -1,10 +1,10 @@
 # Prebuilt Binaries
 
-AST-Climber includes support for prebuilt binaries to improve the installation experience. This means users don't need to have build tools (gcc, make, etc.) installed on their system to use AST-Climber.
+Ariadne includes support for prebuilt binaries to improve the installation experience. This means users don't need to have build tools (gcc, make, etc.) installed on their system to use Ariadne.
 
 ## How it Works
 
-1. When you run `npm install ast-climber`, the postinstall script automatically checks for prebuilt binaries for your platform
+1. When you run `npm install @ariadne/core`, the postinstall script automatically checks for prebuilt binaries for your platform
 2. If prebuilt binaries are available, they are downloaded and extracted
 3. If prebuilt binaries are not available, the installation falls back to building from source
 
@@ -18,10 +18,10 @@ Prebuilt binaries are provided for:
 
 ## Building from Source
 
-If you prefer to build from source or need to use AST-Climber on an unsupported platform, you can force building from source:
+If you prefer to build from source or need to use Ariadne on an unsupported platform, you can force building from source:
 
 ```bash
-npm install ast-climber --build-from-source
+npm install @ariadne/core --build-from-source
 ```
 
 ## Troubleshooting

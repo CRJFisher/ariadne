@@ -1,5 +1,5 @@
 {
-  "name": "ast-climber",
+  "name": "@ariadne/core",
   "version": "0.5.8",
   "description": "Find references and definitions in your codebase using tree-sitter",
   "main": "dist/index.js",
@@ -37,12 +37,12 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/CRJFisher/ast-climber.git"
+    "url": "git+https://github.com/CRJFisher/ariadne.git"
   },
   "bugs": {
-    "url": "https://github.com/CRJFisher/ast-climber/issues"
+    "url": "https://github.com/CRJFisher/ariadne/issues"
   },
-  "homepage": "https://github.com/CRJFisher/ast-climber#readme",
+  "homepage": "https://github.com/CRJFisher/ariadne#readme",
   "engines": {
     "node": ">=18.14.0"
   },

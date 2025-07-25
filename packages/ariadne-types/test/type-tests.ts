@@ -1,5 +1,5 @@
 /**
- * Type compilation tests for ast-climber-types
+ * Type compilation tests for @ariadne/types
  * This file verifies that all exported types compile correctly
  */
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Release script for AST-Climber
+# Release script for Ariadne
 # Usage: ./scripts/release.sh [major|minor|patch]
 # Defaults to patch (bug fix) if no argument provided
 
@@ -149,10 +149,10 @@ fi
 print_info "Updating package.json version..."
 npm version "$NEW_VERSION" --no-git-tag-version
 
-# Update ast-climber-types package version if it exists
-if [ -f "packages/ast-climber-types/package.json" ]; then
-    print_info "Updating ast-climber-types package version..."
-    cd packages/ast-climber-types
+# Update @ariadne/types package version if it exists
+if [ -f "packages/ariadne-types/package.json" ]; then
+    print_info "Updating @ariadne/types package version..."
+    cd packages/ariadne-types
     npm version "$NEW_VERSION" --no-git-tag-version
     cd ../..
 fi
@@ -160,9 +160,9 @@ fi
 # Commit the version change
 print_info "Committing version bump..."
 git add package.json package-lock.json
-# Also add ast-climber-types package files if they were updated
-if [ -f "packages/ast-climber-types/package.json" ]; then
-    git add packages/ast-climber-types/package.json packages/ast-climber-types/package-lock.json
+# Also add @ariadne/types package files if they were updated
+if [ -f "packages/ariadne-types/package.json" ]; then
+    git add packages/ariadne-types/package.json packages/ariadne-types/package-lock.json
 fi
 git commit -m "chore: bump version to $NEW_VERSION"
 
