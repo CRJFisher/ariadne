@@ -197,3 +197,54 @@ A task is **Done** only when **ALL** of the following are complete:
 - When users mention to create a task, they mean to create a task using Backlog.md CLI tool.
 
 <!-- BACKLOG.MD GUIDELINES END -->
+
+## Releasing New Code
+
+This project uses changesets for version management and automated releases. Here's the complete release process:
+
+### 1. After Making Code Changes
+
+When you've made changes that should be released, create a changeset:
+
+```bash
+npm run changeset
+```
+
+This will prompt you to:
+- Select which packages changed (`@ariadnejs/core`, `@ariadnejs/types`, or both)
+- Choose the version bump type:
+  - `patch`: Bug fixes, minor changes (0.5.10 → 0.5.11)
+  - `minor`: New features, backwards compatible (0.5.10 → 0.6.0)
+  - `major`: Breaking changes (0.5.10 → 1.0.0)
+- Write a summary of the changes
+
+### 2. Commit the Changeset
+
+The changeset tool creates a markdown file in `.changeset/`. Commit this file:
+
+```bash
+git add .changeset/
+git commit -m "chore: add changeset"
+```
+
+### 3. Create and Merge PR
+
+Create a PR with your changes AND the changeset file. Once merged to `main`, the GitHub Actions will:
+1. Detect the changeset
+2. Automatically create a "Version Packages" PR
+
+### 4. Release to npm
+
+When you merge the "Version Packages" PR:
+1. Package versions are bumped
+2. CHANGELOGs are updated
+3. Packages are published to npm as `@ariadnejs/core` and `@ariadnejs/types`
+4. Prebuilt binaries are created for all platforms
+5. A GitHub release is created with the binaries
+
+### Important Notes
+
+- **Always include a changeset** when making changes that should be released
+- Without a changeset, no version PR will be created
+- The packages are linked - they always release together with the same version
+- CI/CD fixes (like workflow changes) don't need changesets unless they affect the published packages
