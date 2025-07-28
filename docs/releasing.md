@@ -15,63 +15,61 @@ npm run changeset
 ```
 
 This will prompt you to:
+
 1. Select which packages changed
 2. Choose the bump type (major/minor/patch)
 3. Write a summary for the changelog
 
-### Releasing
+### Automatic Release Process
 
-1. **Create a Version PR** (Recommended):
-   ```bash
-   npm run version
-   ```
-   This consumes all changesets and updates versions/changelogs.
+The release process is fully automated through GitHub Actions:
 
-2. **Review and merge** the version PR
+1. **Create changesets** as you develop
+2. **Push to main** - A "Version Packages" PR is automatically created
+3. **Review and merge** the version PR
+4. **Automatic publishing**:
+   - Packages are published to npm
+   - Prebuilt binaries are created for all platforms
+   - A GitHub release is created with the binaries
 
-3. **Publish to npm**:
-   ```bash
-   npm run release
-   ```
-
-### Legacy Script (Deprecated)
-
-The `scripts/release.sh` script is kept for reference but is no longer the recommended approach. Use changesets instead for better monorepo support and changelog generation.
-
-## What the Script Does
-
-1. **Validates Environment**:
-   - Ensures you're in a git repository
-   - Checks for uncommitted changes
-   - Verifies you're on the main branch
-   - Confirms local is up-to-date with remote
-
-2. **Bumps Version**:
-   - Updates the version in package.json
-   - Follows semantic versioning rules
-
-3. **Creates Release**:
-   - Commits the version change
-   - Creates an annotated git tag (v1.2.3)
-   - Pushes both the commit and tag to GitHub
-
-4. **Triggers Automation**:
-   - The prebuild workflow automatically runs when a new tag is pushed
-   - Prebuilt binaries are created for all supported platforms
-   - A GitHub release is created with the binaries attached
-
-## Manual Steps After Release
-
-1. **Monitor Build**: Check GitHub Actions to ensure the prebuild workflow completes successfully
-
-2. **Publish to npm**: Once builds are complete, either:
-   - Run `npm publish` locally, or
-   - Trigger the publish-npm GitHub workflow
-
-3. **Verify Installation**: Test that users can install the new version without build tools
+No manual commands needed!
 
 ## Version Guidelines
 
-- **Patch** (1.0.0 -> 1.0.1): Bug fixes, documentation updates, internal changes
-- **Minor** (1.0.0 -> 1.1.0): New features, non-breaking API additions
-- **Major** (1.0.0 -> 2.0.0): Breaking changes, API removals, major refactors
+- **Patch** (1.0.0 → 1.0.1): Bug fixes, documentation updates, internal changes
+- **Minor** (1.0.0 → 1.1.0): New features, non-breaking API additions
+- **Major** (1.0.0 → 2.0.0): Breaking changes, API removals, major refactors
+
+## What Happens During Release
+
+1. **Version PR Creation**:
+   - Changesets are consumed
+   - Package versions are bumped
+   - CHANGELOG.md files are updated
+   - Dependencies are updated
+
+2. **After Merging Version PR**:
+   - Both packages are published to npm
+   - Git tag is created (e.g., `v1.2.3`)
+   - Prebuilt binaries are built for all platforms
+   - GitHub release is created with binaries attached
+
+## Troubleshooting
+
+- **No Version PR created**: Check if there are changesets in `.changeset/` directory
+- **Publish failed**: Ensure `NPM_TOKEN` secret is set in repository settings
+- **Binary builds failed**: Check the workflow logs for platform-specific issues
+
+## Manual Release (Emergency Only)
+
+If automation fails, you can manually release:
+
+```bash
+npm run version    # Consume changesets and bump versions
+git add .
+git commit -m "chore: version packages"
+git push origin main
+npm run release    # Publish to npm
+```
+
+But this should rarely be needed as the automation is robust.

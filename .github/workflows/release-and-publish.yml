@@ -1,0 +1,160 @@
+name: Release and Publish
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+      publishedPackages: ${{ steps.changesets.outputs.publishedPackages }}
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create Release Pull Request or Publish to npm
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: npm run release
+          title: "chore: version packages"
+          commit: "chore: version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  # Build prebuilt binaries when packages are published
+  prebuild:
+    needs: release
+    if: needs.release.outputs.published == 'true'
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+          - os: macos-latest
+            platform: darwin
+            arch: x64
+          - os: macos-latest
+            platform: darwin  
+            arch: arm64
+          - os: windows-latest
+            platform: win32
+            arch: x64
+
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Rebuild native modules for target
+        run: |
+          npm rebuild --build-from-source
+        env:
+          npm_config_arch: ${{ matrix.arch }}
+          npm_config_target_arch: ${{ matrix.arch }}
+          npm_config_disturl: https://nodejs.org/dist
+          npm_config_runtime: node
+          npm_config_cache: ~/.npm
+          npm_config_build_from_source: true
+          
+      - name: Package prebuilt binaries
+        shell: bash
+        run: |
+          mkdir -p prebuilds/${{ matrix.platform }}-${{ matrix.arch }}
+          find packages/core/node_modules -name "*.node" -path "*/build/Release/*" | while read -r file; do
+            module_name=$(echo "$file" | sed -E 's|packages/core/node_modules/([^/]+)/.*|\1|')
+            mkdir -p "prebuilds/${{ matrix.platform }}-${{ matrix.arch }}/$module_name"
+            cp "$file" "prebuilds/${{ matrix.platform }}-${{ matrix.arch }}/$module_name/"
+          done
+          tar -czf "prebuilds-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz" prebuilds/
+          
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: prebuilds-${{ matrix.platform }}-${{ matrix.arch }}
+          path: prebuilds-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
+
+  # Create GitHub release with binaries
+  github-release:
+    needs: [release, prebuild]
+    runs-on: ubuntu-latest
+    if: needs.release.outputs.published == 'true'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          
+      - name: Parse published packages
+        id: parse
+        run: |
+          echo '${{ needs.release.outputs.publishedPackages }}' > published.json
+          VERSION=$(node -e "
+            const packages = JSON.parse(require('fs').readFileSync('published.json', 'utf8'));
+            const core = packages.find(p => p.name === '@ariadne/core');
+            console.log(core ? core.version : packages[0].version);
+          ")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/**/*.tar.gz
+          tag_name: v${{ steps.parse.outputs.version }}
+          name: Release v${{ steps.parse.outputs.version }}
+          body: |
+            ## 📦 Package Updates
+            
+            See the [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+            
+            ## 🏗️ Prebuilt Binaries
+            
+            This release includes prebuilt binaries for:
+            - Linux x64
+            - macOS x64
+            - macOS ARM64 (Apple Silicon)
+            - Windows x64
+            
+            ## 📥 Installation
+            
+            ```bash
+            npm install @ariadne/core@${{ steps.parse.outputs.version }}
+            npm install @ariadne/types@${{ steps.parse.outputs.version }}
+            ```
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
