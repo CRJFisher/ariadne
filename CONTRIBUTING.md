@@ -119,26 +119,17 @@ ariadne/
 
 ## Releasing (Maintainers Only)
 
-1. Run the version command to consume changesets and bump versions:
+The release process is fully automated through GitHub Actions:
 
-   ```bash
-   npm run version
-   ```
+1. When changesets are pushed to `main`, a "Version Packages" PR is automatically created
+2. Review and merge the version PR
+3. Upon merge, the following happens automatically:
+   - Packages are published to npm
+   - A git tag is created (e.g., `v1.2.3`)
+   - The prebuild workflow is triggered to create binaries
+   - A GitHub release is created with the binaries
 
-2. Review and commit the version changes:
-
-   ```bash
-   git add .
-   git commit -m "chore: version packages"
-   ```
-
-3. Push to main:
-
-   ```bash
-   git push origin main
-   ```
-
-4. The GitHub Action will automatically create a release and publish to npm
+No manual steps required!
 
 ## Questions?
 

@@ -57,7 +57,12 @@ Our monorepo is configured with:
 
 ## GitHub Actions
 
-The repository includes a GitHub Action that:
-- Comments on PRs about missing changesets
-- Can create release PRs automatically
-- Publishes to npm when release PRs are merged
+The repository includes GitHub Actions that:
+- **PR Check**: Comments on PRs about missing changesets
+- **Release Process**: All-in-one workflow that:
+  - Creates "Version Packages" PRs when changesets are detected
+  - Publishes to npm when version PRs are merged
+  - Builds prebuilt binaries for all platforms
+  - Creates GitHub releases with the binaries
+
+The entire release process is automated in a single workflow to avoid GitHub Actions limitations.
