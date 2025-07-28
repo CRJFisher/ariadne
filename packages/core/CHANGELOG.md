@@ -1,5 +1,13 @@
 # @ariadnejs/core
 
+## 0.5.13
+
+### Patch Changes
+
+- 425941b: Prevent tree-sitter packages from being hoisted to fix prebuild workflow
+- Updated dependencies [425941b]
+  - @ariadnejs/types@0.5.13
+
 ## 0.5.12
 
 ### Patch Changes
