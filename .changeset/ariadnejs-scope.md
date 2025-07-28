@@ -1,9 +1,9 @@
 ---
-"@ariadnejs/core": major
-"@ariadnejs/types": major
+"@ariadnejs/core": patch
+"@ariadnejs/types": patch
 ---
 
-**BREAKING CHANGE:** Changed npm package scope from `@ariadne/*` to `@ariadnejs/*`
+Changed npm package scope from `@ariadne/*` to `@ariadnejs/*`
 
 Due to the `@ariadne` organization already being taken on npm, we've changed our package scope to `@ariadnejs`. Update your imports:
 
