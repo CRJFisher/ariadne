@@ -1,7 +1,7 @@
-import { Point, Edit } from '@ariadne/types';
+import { Point, Edit } from '@ariadnejs/types';
 
 // Re-export Edit for backward compatibility
-export { Edit } from '@ariadne/types';
+export { Edit } from '@ariadnejs/types';
 
 /**
  * Creates an Edit object from a text change

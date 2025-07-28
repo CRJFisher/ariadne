@@ -26,7 +26,7 @@ npm test
 npm publish --access public
 ```
 
-### 1.2 Publish @ariadne/types
+### 1.2 Publish @ariadnejs/types
 
 ```bash
 # Navigate to the types package
@@ -53,13 +53,13 @@ git checkout -b deprecate-refscope
 {
   "name": "refscope",
   "version": "0.5.7",
-  "description": "DEPRECATED: This package has been renamed to @ariadne/core. Please install @ariadne/core instead.",
+  "description": "DEPRECATED: This package has been renamed to @ariadnejs/core. Please install @ariadnejs/core instead.",
   "main": "index.js",
   "scripts": {
     "postinstall": "node deprecation-notice.js"
   },
   "dependencies": {
-    "@ariadne/core": "^0.5.6"
+    "@ariadnejs/core": "^0.5.6"
   }
 }
 ```
@@ -71,22 +71,22 @@ git checkout -b deprecate-refscope
 console.log('\n' + '='.repeat(70));
 console.log('DEPRECATION NOTICE');
 console.log('='.repeat(70));
-console.log('\nThe "refscope" package has been renamed to "@ariadne/core".');
+console.log('\nThe "refscope" package has been renamed to "@ariadnejs/core".');
 console.log('\nPlease update your dependencies:');
 console.log('  npm uninstall refscope');
-console.log('  npm install @ariadne/core');
+console.log('  npm install @ariadnejs/core');
 console.log('\nOr update your package.json:');
-console.log('  "refscope": "^0.5.6" → "@ariadne/core": "^0.5.6"');
+console.log('  "refscope": "^0.5.6" → "@ariadnejs/core": "^0.5.6"');
 console.log('\n' + '='.repeat(70) + '\n');
 ```
 
 4. Create a minimal `index.js` that re-exports ariadne:
 ```javascript
-// Re-export everything from @ariadne/core
-module.exports = require('@ariadne/core');
+// Re-export everything from @ariadnejs/core
+module.exports = require('@ariadnejs/core');
 
 // Show deprecation warning when imported
-console.warn('[DEPRECATION] "refscope" has been renamed to "@ariadne/core". Please update your imports.');
+console.warn('[DEPRECATION] "refscope" has been renamed to "@ariadnejs/core". Please update your imports.');
 ```
 
 ### 2.2 Publish the Deprecation Version
@@ -96,7 +96,7 @@ console.warn('[DEPRECATION] "refscope" has been renamed to "@ariadne/core". Plea
 npm publish
 
 # Mark the package as deprecated on npm
-npm deprecate refscope@"*" "This package has been renamed to @ariadne/core. Please install @ariadne/core instead."
+npm deprecate refscope@"*" "This package has been renamed to @ariadnejs/core. Please install @ariadnejs/core instead."
 ```
 
 ## Step 3: Update Documentation and Announcements
@@ -115,11 +115,11 @@ This project has been renamed from `refscope` to `ariadne`.
 
 ### For users:
 - Uninstall `refscope`: `npm uninstall refscope`
-- Install `@ariadne/core`: `npm install @ariadne/core`
-- Update imports: `from 'refscope'` → `from '@ariadne/core'`
+- Install `@ariadnejs/core`: `npm install @ariadnejs/core`
+- Update imports: `from 'refscope'` → `from '@ariadnejs/core'`
 
 ### For TypeScript users:
-- The types package is now `@ariadne/types`
+- The types package is now `@ariadnejs/types`
 - Update your imports accordingly
 
 All functionality remains the same, only the package name has changed.
@@ -131,7 +131,7 @@ All functionality remains the same, only the package name has changed.
 
 Keep an eye on:
 - https://www.npmjs.com/package/refscope (should decrease)
-- https://www.npmjs.com/package/@ariadne/core (should increase)
+- https://www.npmjs.com/package/@ariadnejs/core (should increase)
 
 ### 4.2 Respond to Issues
 
@@ -161,15 +161,15 @@ If critical issues arise:
 ## FAQ for Users
 
 ### Q: Will my existing code break?
-A: If you're using the deprecated refscope package, you'll see warnings but your code will continue to work initially. However, you should migrate to @ariadne/core as soon as possible.
+A: If you're using the deprecated refscope package, you'll see warnings but your code will continue to work initially. However, you should migrate to @ariadnejs/core as soon as possible.
 
 ### Q: Do I need to change my code?
 A: Only the import statements need to change:
-- `import { Project } from 'refscope'` → `import { Project } from '@ariadne/core'`
-- `require('refscope')` → `require('@ariadne/core')`
+- `import { Project } from 'refscope'` → `import { Project } from '@ariadnejs/core'`
+- `require('refscope')` → `require('@ariadnejs/core')`
 
 ### Q: What about TypeScript types?
-A: Install `@ariadne/types` instead of `refscope-types`.
+A: Install `@ariadnejs/types` instead of `refscope-types`.
 
 ### Q: Why the name change?
 A: The new name "ariadne" reflects the library's purpose - like Ariadne's thread in Greek mythology, it helps you navigate through the labyrinth of your codebase to find references and definitions.

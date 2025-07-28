@@ -58,8 +58,8 @@
 ## After Publishing
 
 1. **Verify Publication**
-   - [ ] Check package on npmjs.com: https://www.npmjs.com/package/@ariadne/core
-   - [ ] Test installation: `npm install @ariadne/core` in a new project
+   - [ ] Check package on npmjs.com: https://www.npmjs.com/package/@ariadnejs/core
+   - [ ] Test installation: `npm install @ariadnejs/core` in a new project
    - [ ] Verify types work correctly in TypeScript
 
 2. **Announcement**
