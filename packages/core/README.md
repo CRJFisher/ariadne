@@ -1,17 +1,17 @@
-# @ariadne/core
+# @ariadnejs/core
 
 Core functionality for Ariadne - Find references and definitions in your codebase using tree-sitter.
 
 ## Installation
 
 ```bash
-npm install @ariadne/core
+npm install @ariadnejs/core
 ```
 
 ## Usage
 
 ```typescript
-import { Project } from '@ariadne/core';
+import { Project } from '@ariadnejs/core';
 
 const project = new Project();
 await project.add_or_update_file('src/index.ts', sourceCode);

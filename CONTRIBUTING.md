@@ -66,7 +66,7 @@ git commit -m "feat: add new symbol resolution feature"
 
 # Create a changeset
 npm run changeset
-# Select @ariadne/core
+# Select @ariadnejs/core
 # Select "minor"
 # Write: "Added new symbol resolution feature for better cross-file support"
 

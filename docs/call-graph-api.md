@@ -18,7 +18,7 @@ The call graph API consists of three levels:
 Returns all definitions (functions, methods, classes, variables) in a file.
 
 ```typescript
-import { get_definitions } from '@ariadne/core';
+import { get_definitions } from '@ariadnejs/core';
 
 const definitions = get_definitions('src/utils.ts');
 const functions = definitions.filter(d => d.symbol_kind === 'function');
@@ -52,7 +52,7 @@ const callGraph = project.get_call_graph({
 });
 
 // Using standalone function
-import { get_call_graph } from '@ariadne/core';
+import { get_call_graph } from '@ariadnejs/core';
 const callGraph = get_call_graph('./src', options);
 ```
 
@@ -85,7 +85,7 @@ Ariadne uses a consistent symbol naming scheme for identifying functions across 
   - `lib/math#<anonymous_line_42_col_10>` - Anonymous function
 
 ```typescript
-import { get_symbol_id, parse_symbol_id } from '@ariadne/core';
+import { get_symbol_id, parse_symbol_id } from '@ariadnejs/core';
 
 // Generate symbol ID for a definition
 const symbolId = get_symbol_id(def); // "src/utils#processData"

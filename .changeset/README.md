@@ -44,7 +44,7 @@ npm run release
 ## Configuration
 
 Our monorepo is configured with:
-- **Linked packages**: `@ariadne/core` and `@ariadne/types` are linked, meaning they'll always be released together with the same version
+- **Linked packages**: `@ariadnejs/core` and `@ariadnejs/types` are linked, meaning they'll always be released together with the same version
 - **Access**: Public packages on npm
 - **Base branch**: `main`
 

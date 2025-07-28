@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Scoping } from '../src/index';
 
-describe('@ariadne/types', () => {
+describe('@ariadnejs/types', () => {
   it('should export Scoping enum', () => {
     expect(Scoping.Local).toBe(0);
     expect(Scoping.Hoisted).toBe(1);

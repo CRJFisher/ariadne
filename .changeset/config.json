@@ -3,7 +3,7 @@
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "fixed": [],
-  "linked": [["@ariadne/core", "@ariadne/types"]],
+  "linked": [["@ariadnejs/core", "@ariadnejs/types"]],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",

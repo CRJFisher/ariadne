@@ -15,7 +15,7 @@ Find references and definitions in your codebase using tree-sitter. Ariadne prov
 ## Installation
 
 ```bash
-npm install @ariadne/core
+npm install @ariadnejs/core
 ```
 
 Ariadne includes prebuilt binaries for common platforms, so you don't need build tools installed. If prebuilt binaries aren't available for your platform, it will automatically build from source. See [prebuild documentation](docs/prebuild-binaries.md) for more details.
@@ -25,7 +25,7 @@ Ariadne includes prebuilt binaries for common platforms, so you don't need build
 If you only need TypeScript type definitions without the implementation (e.g., for webviews or lightweight environments), you can install the types-only package:
 
 ```bash
-npm install @ariadne/types
+npm install @ariadnejs/types
 ```
 
 This package contains zero runtime code and is ideal for:
@@ -34,12 +34,12 @@ This package contains zero runtime code and is ideal for:
 - Type-safe message passing between processes
 - Projects that only need type definitions for interoperability
 
-See the [@ariadne/types documentation](packages/ariadne-types/README.md) for more details.
+See the [@ariadnejs/types documentation](packages/ariadne-types/README.md) for more details.
 
 ## Quick Start
 
 ```typescript
-import { Project } from "@ariadne/core";
+import { Project } from "@ariadnejs/core";
 
 // Create a project instance
 const project = new Project();
