@@ -74,15 +74,13 @@ jobs:
         with:
           node-version: '20'
           
-      - name: Install dependencies
-        run: npm ci
+      - name: Install dependencies in workspace root
+        run: npm ci --ignore-scripts
         
-      - name: Build TypeScript packages
-        run: npm run build
-        
-      - name: Rebuild native modules for target
+      - name: Install and rebuild in core package
         working-directory: packages/core
         run: |
+          npm ci
           npm rebuild --build-from-source
         env:
           npm_config_arch: ${{ matrix.arch }}
@@ -91,7 +89,7 @@ jobs:
           npm_config_runtime: node
           npm_config_cache: ~/.npm
           npm_config_build_from_source: true
-          CXXFLAGS: "-std=c++14"
+          CXXFLAGS: "-std=c++17"
           
       - name: Package prebuilt binaries
         shell: bash
