@@ -1,5 +1,11 @@
 # @ariadnejs/types
 
+## 0.5.11
+
+### Patch Changes
+
+- 5ad3e6c: Testing prebuild workflow after monorepo fixes
+
 ## 0.5.10
 
 ### Patch Changes
