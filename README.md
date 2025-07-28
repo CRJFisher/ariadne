@@ -171,7 +171,7 @@ interface Ref {
 
 ## Architecture Overview
 
-AST-Climber processes code through several stages:
+Ariadne processes code through several stages:
 
 1. **Parsing** - Tree-sitter parses source code into an AST
 2. **Query Matching** - Tree-sitter queries identify important nodes (definitions, references, etc.)
@@ -225,7 +225,7 @@ The codebase uses snake_case for consistency with the original Rust implementati
 
 ## Origin
 
-AST-Climber uses patterns from the code intelligence engine from [bloop](https://github.com/BloopAI/bloop). It extracts and reimplements the scope resolution and symbol tracking functionality as a standalone library.
+Ariadne uses patterns from the code intelligence engine from [bloop](https://github.com/BloopAI/bloop). It extracts and reimplements the scope resolution and symbol tracking functionality as a standalone library.
 
 ## License
 

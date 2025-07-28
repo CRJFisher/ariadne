@@ -1,24 +1,42 @@
-# Releasing AST-Climber
+# Releasing Ariadne
 
-This document describes the process for releasing new versions of AST-Climber.
+This document describes the process for releasing new versions of Ariadne.
 
-## Release Script
+## Release Process with Changesets
 
-Use the `scripts/release.sh` script to create a new release:
+Ariadne uses [Changesets](https://github.com/changesets/changesets) for version management and releasing.
+
+### Creating a Changeset
+
+When you make changes that should be released:
 
 ```bash
-# For bug fixes (patch version: 1.0.0 -> 1.0.1)
-./scripts/release.sh patch
-
-# For new features (minor version: 1.0.0 -> 1.1.0)  
-./scripts/release.sh minor
-
-# For breaking changes (major version: 1.0.0 -> 2.0.0)
-./scripts/release.sh major
-
-# Default is patch if no argument provided
-./scripts/release.sh
+npm run changeset
 ```
+
+This will prompt you to:
+1. Select which packages changed
+2. Choose the bump type (major/minor/patch)
+3. Write a summary for the changelog
+
+### Releasing
+
+1. **Create a Version PR** (Recommended):
+   ```bash
+   npm run version
+   ```
+   This consumes all changesets and updates versions/changelogs.
+
+2. **Review and merge** the version PR
+
+3. **Publish to npm**:
+   ```bash
+   npm run release
+   ```
+
+### Legacy Script (Deprecated)
+
+The `scripts/release.sh` script is kept for reference but is no longer the recommended approach. Use changesets instead for better monorepo support and changelog generation.
 
 ## What the Script Does
 

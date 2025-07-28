@@ -1,10 +1,10 @@
-# AST-Climber Testing Guide
+# Ariadne Testing Guide
 
-This guide explains how to write and maintain tests for AST-Climber's multi-language support.
+This guide explains how to write and maintain tests for Ariadne's multi-language support.
 
 ## Overview
 
-AST-Climber uses a shared testing infrastructure to ensure consistent test coverage across all supported languages. This approach:
+Ariadne uses a shared testing infrastructure to ensure consistent test coverage across all supported languages. This approach:
 
 - Reduces code duplication
 - Ensures feature parity across languages

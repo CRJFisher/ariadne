@@ -1,8 +1,8 @@
-# AST-Climber API Enhancement Proposal for Code Charter
+# Ariadne API Enhancement Proposal for Code Charter
 
 ## Overview
 
-This document outlines proposed API enhancements for the AST-Climber library specifically to support Code Charter's call graph visualization and code summarization features. Code Charter generates interactive visualizations of code structure by analyzing call relationships between functions and summarizing their purposes using LLMs.
+This document outlines proposed API enhancements for the Ariadne library specifically to support Code Charter's call graph visualization and code summarization features. Code Charter generates interactive visualizations of code structure by analyzing call relationships between functions and summarizing their purposes using LLMs.
 
 ## Code Charter's Specific Requirements
 
@@ -225,9 +225,9 @@ const viz_edges = call_graph.calls.map(c => ({
 
 1. **Accuracy**: No more regex-based function detection
 2. **Performance**: Leverage tree-sitter's incremental parsing
-3. **Completeness**: Handle all edge cases AST-Climber already handles
+3. **Completeness**: Handle all edge cases Ariadne already handles
 4. **Maintainability**: Less code to maintain in Code Charter
-5. **Language Support**: Easily add new languages as AST-Climber supports them
+5. **Language Support**: Easily add new languages as Ariadne supports them
 
 ## Conclusion
 

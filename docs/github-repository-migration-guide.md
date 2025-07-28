@@ -1,6 +1,6 @@
-# GitHub Repository Migration Guide: refscope → ast-climber
+# GitHub Repository Migration Guide: refscope → ariadne
 
-This guide walks you through migrating the GitHub repository from `refscope` to `ast-climber`.
+This guide walks you through migrating the GitHub repository from `refscope` to `ariadne`.
 
 ## Prerequisites
 
@@ -13,7 +13,7 @@ This guide walks you through migrating the GitHub repository from `refscope` to 
 1. Go to <https://github.com/CRJFisher/refscope>
 2. Click on **Settings** (gear icon)
 3. Under **General** settings, find the **Repository name** field
-4. Change `refscope` to `ast-climber`
+4. Change `refscope` to `ariadne`
 5. Click **Rename**
 
 GitHub will:
@@ -50,7 +50,7 @@ If you have branch protection rules:
 If using GitHub Pages:
 
 1. Go to **Settings** → **Pages**
-2. The URL will automatically update to `crjfisher.github.io/ast-climber`
+2. The URL will automatically update to `crjfisher.github.io/ariadne`
 
 ## Step 6: Update Release Descriptions
 
@@ -58,7 +58,7 @@ For existing releases that mention "refscope":
 
 1. Go to **Releases**
 2. For each release, click **Edit**
-3. Update any mentions of "refscope" to "ast-climber"
+3. Update any mentions of "refscope" to "ariadne"
 4. Save changes
 
 ## Step 7: Verify Redirects
@@ -80,7 +80,7 @@ For your local development environment:
 git remote -v
 
 # Update the remote URL
-git remote set-url origin https://github.com/CRJFisher/ast-climber.git
+git remote set-url origin https://github.com/CRJFisher/ariadne.git
 
 # Verify the change
 git remote -v
@@ -94,10 +94,10 @@ git fetch
 Send a message to any collaborators:
 
 ```
-The repository has been renamed from 'refscope' to 'ast-climber'.
+The repository has been renamed from 'refscope' to 'ariadne'.
 
 GitHub automatically handles redirects, but please update your local clone:
-git remote set-url origin https://github.com/CRJFisher/ast-climber.git
+git remote set-url origin https://github.com/CRJFisher/ariadne.git
 
 All issues, PRs, and history are preserved.
 ```

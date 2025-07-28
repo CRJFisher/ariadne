@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Update GitHub release description script for AST-Climber
+# Update GitHub release description script for Ariadne
 # Usage: ./scripts/update-release-description.sh [options]
 #
 # Options:

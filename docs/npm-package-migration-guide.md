@@ -1,4 +1,4 @@
-# NPM Package Migration Guide: refscope → ast-climber
+# NPM Package Migration Guide: refscope → ariadne
 
 This guide covers publishing the renamed packages to npm and handling the transition for existing users.
 
@@ -10,11 +10,11 @@ This guide covers publishing the renamed packages to npm and handling the transi
 
 ## Step 1: Publish the New Packages
 
-### 1.1 Publish ast-climber (main package)
+### 1.1 Publish ariadne (main package)
 
 ```bash
 # Ensure you're in the project root
-cd /path/to/ast-climber
+cd /path/to/ariadne
 
 # Login to npm if not already
 npm login
@@ -26,11 +26,11 @@ npm test
 npm publish --access public
 ```
 
-### 1.2 Publish ast-climber-types
+### 1.2 Publish @ariadne/types
 
 ```bash
 # Navigate to the types package
-cd packages/ast-climber-types
+cd packages/types
 
 # Run tests
 npm test
@@ -53,13 +53,13 @@ git checkout -b deprecate-refscope
 {
   "name": "refscope",
   "version": "0.5.7",
-  "description": "DEPRECATED: This package has been renamed to ast-climber. Please install ast-climber instead.",
+  "description": "DEPRECATED: This package has been renamed to @ariadne/core. Please install @ariadne/core instead.",
   "main": "index.js",
   "scripts": {
     "postinstall": "node deprecation-notice.js"
   },
   "dependencies": {
-    "ast-climber": "^0.5.6"
+    "@ariadne/core": "^0.5.6"
   }
 }
 ```
@@ -71,22 +71,22 @@ git checkout -b deprecate-refscope
 console.log('\n' + '='.repeat(70));
 console.log('DEPRECATION NOTICE');
 console.log('='.repeat(70));
-console.log('\nThe "refscope" package has been renamed to "ast-climber".');
+console.log('\nThe "refscope" package has been renamed to "@ariadne/core".');
 console.log('\nPlease update your dependencies:');
 console.log('  npm uninstall refscope');
-console.log('  npm install ast-climber');
+console.log('  npm install @ariadne/core');
 console.log('\nOr update your package.json:');
-console.log('  "refscope": "^0.5.6" → "ast-climber": "^0.5.6"');
+console.log('  "refscope": "^0.5.6" → "@ariadne/core": "^0.5.6"');
 console.log('\n' + '='.repeat(70) + '\n');
 ```
 
-4. Create a minimal `index.js` that re-exports ast-climber:
+4. Create a minimal `index.js` that re-exports ariadne:
 ```javascript
-// Re-export everything from ast-climber
-module.exports = require('ast-climber');
+// Re-export everything from @ariadne/core
+module.exports = require('@ariadne/core');
 
 // Show deprecation warning when imported
-console.warn('[DEPRECATION] "refscope" has been renamed to "ast-climber". Please update your imports.');
+console.warn('[DEPRECATION] "refscope" has been renamed to "@ariadne/core". Please update your imports.');
 ```
 
 ### 2.2 Publish the Deprecation Version
@@ -96,7 +96,7 @@ console.warn('[DEPRECATION] "refscope" has been renamed to "ast-climber". Please
 npm publish
 
 # Mark the package as deprecated on npm
-npm deprecate refscope@"*" "This package has been renamed to ast-climber. Please install ast-climber instead."
+npm deprecate refscope@"*" "This package has been renamed to @ariadne/core. Please install @ariadne/core instead."
 ```
 
 ## Step 3: Update Documentation and Announcements
@@ -109,17 +109,17 @@ The README will automatically update when you publish, but ensure the old packag
 
 Create a release for the migration:
 ```markdown
-## Migration to ast-climber
+## Migration to ariadne
 
-This project has been renamed from `refscope` to `ast-climber`. 
+This project has been renamed from `refscope` to `ariadne`. 
 
 ### For users:
 - Uninstall `refscope`: `npm uninstall refscope`
-- Install `ast-climber`: `npm install ast-climber`
-- Update imports: `from 'refscope'` → `from 'ast-climber'`
+- Install `@ariadne/core`: `npm install @ariadne/core`
+- Update imports: `from 'refscope'` → `from '@ariadne/core'`
 
 ### For TypeScript users:
-- The types package is now `ast-climber-types`
+- The types package is now `@ariadne/types`
 - Update your imports accordingly
 
 All functionality remains the same, only the package name has changed.
@@ -131,7 +131,7 @@ All functionality remains the same, only the package name has changed.
 
 Keep an eye on:
 - https://www.npmjs.com/package/refscope (should decrease)
-- https://www.npmjs.com/package/ast-climber (should increase)
+- https://www.npmjs.com/package/@ariadne/core (should increase)
 
 ### 4.2 Respond to Issues
 
@@ -161,15 +161,15 @@ If critical issues arise:
 ## FAQ for Users
 
 ### Q: Will my existing code break?
-A: If you're using the deprecated refscope package, you'll see warnings but your code will continue to work initially. However, you should migrate to ast-climber as soon as possible.
+A: If you're using the deprecated refscope package, you'll see warnings but your code will continue to work initially. However, you should migrate to @ariadne/core as soon as possible.
 
 ### Q: Do I need to change my code?
 A: Only the import statements need to change:
-- `import { Project } from 'refscope'` → `import { Project } from 'ast-climber'`
-- `require('refscope')` → `require('ast-climber')`
+- `import { Project } from 'refscope'` → `import { Project } from '@ariadne/core'`
+- `require('refscope')` → `require('@ariadne/core')`
 
 ### Q: What about TypeScript types?
-A: Install `ast-climber-types` instead of `refscope-types`.
+A: Install `@ariadne/types` instead of `refscope-types`.
 
 ### Q: Why the name change?
-A: The new name "ast-climber" better reflects what the library does - it climbs the abstract syntax tree (AST) to find references and definitions in your code.
+A: The new name "ariadne" reflects the library's purpose - like Ariadne's thread in Greek mythology, it helps you navigate through the labyrinth of your codebase to find references and definitions.

@@ -1,0 +1,36 @@
+{
+  "name": "@ariadne/types",
+  "version": "0.5.8",
+  "description": "TypeScript type definitions for Ariadne",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "types",
+    "typescript",
+    "definitions"
+  ],
+  "author": "Chuck",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CRJFisher/ariadne.git",
+    "directory": "packages/types"
+  },
+  "bugs": {
+    "url": "https://github.com/CRJFisher/ariadne/issues"
+  },
+  "homepage": "https://github.com/CRJFisher/ariadne#readme",
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}

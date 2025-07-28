@@ -1,6 +1,12 @@
 #!/bin/bash
 
-# Release script for Ariadne
+# DEPRECATED: This script is replaced by changesets
+# Use `npm run changeset` to create a changeset
+# Use `npm run version` to bump versions
+# Use `npm run release` to publish
+# See CONTRIBUTING.md for the new workflow
+#
+# Legacy release script for Ariadne
 # Usage: ./scripts/release.sh [major|minor|patch]
 # Defaults to patch (bug fix) if no argument provided
 
@@ -69,8 +75,8 @@ if [[ ! "$BUMP_TYPE" =~ ^(major|minor|patch)$ ]]; then
     exit 1
 fi
 
-# Get current version from package.json
-CURRENT_VERSION=$(node -p "require('./package.json').version")
+# Get current version from core package.json
+CURRENT_VERSION=$(node -p "require('./packages/core/package.json').version")
 
 # Check if any version tags exist
 if ! git tag -l 'v*' | grep -q .; then
@@ -145,25 +151,16 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     exit 0
 fi
 
-# Update package.json version
-print_info "Updating package.json version..."
-npm version "$NEW_VERSION" --no-git-tag-version
-
-# Update @ariadne/types package version if it exists
-if [ -f "packages/ariadne-types/package.json" ]; then
-    print_info "Updating @ariadne/types package version..."
-    cd packages/ariadne-types
-    npm version "$NEW_VERSION" --no-git-tag-version
-    cd ../..
-fi
+# Update all package versions
+print_info "Updating package versions..."
+npm version "$NEW_VERSION" --no-git-tag-version -w @ariadne/types
+npm version "$NEW_VERSION" --no-git-tag-version -w @ariadne/core
+# Also update root package.json
+sed -i.bak "s/\"version\": \"[^\"]*\"/\"version\": \"$NEW_VERSION\"/" package.json && rm package.json.bak
 
 # Commit the version change
 print_info "Committing version bump..."
-git add package.json package-lock.json
-# Also add @ariadne/types package files if they were updated
-if [ -f "packages/ariadne-types/package.json" ]; then
-    git add packages/ariadne-types/package.json packages/ariadne-types/package-lock.json
-fi
+git add package.json package-lock.json packages/*/package.json
 git commit -m "chore: bump version to $NEW_VERSION"
 
 # Create and push the tag
@@ -184,7 +181,7 @@ print_info "2. Check the GitHub Actions tab to monitor the progress"
 print_info "3. The workflow will:"
 print_info "   - Build prebuilt binaries for all platforms"
 print_info "   - Create a GitHub release with the binaries"
-print_info "   - Publish the package to npm"
+print_info "   - Publish both @ariadne/types and @ariadne/core packages to npm"
 print_info "4. Use the 'scripts/update-release-description.sh' script to update the release description"
 print_info ""
 print_info "Note: Make sure NPM_TOKEN secret is configured in your repository settings"

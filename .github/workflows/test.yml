@@ -32,5 +32,7 @@ jobs:
       - name: Run tests
         run: npm test
         
-      - name: Check package
-        run: npm pack --dry-run
+      - name: Check packages
+        run: |
+          npm pack --dry-run -w @ariadne/types
+          npm pack --dry-run -w @ariadne/core

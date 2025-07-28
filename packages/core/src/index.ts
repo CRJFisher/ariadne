@@ -1,4 +1,5 @@
-import { Point, ScopeGraph, Def, Ref, FunctionCall, ImportInfo, SimpleRange, CallGraph, CallGraphOptions, CallGraphNode, CallGraphEdge, Call } from './graph';
+import { Point, Def, Ref, FunctionCall, ImportInfo, SimpleRange, CallGraph, CallGraphOptions, CallGraphNode, CallGraphEdge, Call, IScopeGraph } from './graph';
+import { ScopeGraph } from './graph'; // Internal use only
 import { build_scope_graph } from './scope_resolution';
 import { find_all_references, find_definition } from './symbol_resolver';
 import { LanguageConfig } from './types';
@@ -11,9 +12,8 @@ import { Tree } from 'tree-sitter';
 import path from 'path';
 
 // Re-export important types
-export { Point, ScopeGraph, Def, Ref, Import, FunctionCall, SimpleRange, CallGraph, CallGraphOptions, CallGraphNode, CallGraphEdge, Call } from './graph';
+export { Point, Def, Ref, Import, FunctionCall, SimpleRange, CallGraph, CallGraphOptions, CallGraphNode, CallGraphEdge, Call, IScopeGraph } from './graph';
 export { Edit } from './edit';
-export { LanguageConfig } from './types';
 export { get_symbol_id, parse_symbol_id, normalize_module_path } from './symbol_naming';
 
 /**
@@ -25,7 +25,7 @@ export { get_symbol_id, parse_symbol_id, normalize_module_path } from './symbol_
 interface FileCache {
   tree: Tree;
   source_code: string;
-  graph: ScopeGraph;
+  graph: ScopeGraph; // Internal use - not exposed in public API
 }
 
 export class Project {
@@ -258,7 +258,7 @@ export class Project {
    * @param file_path - Path to the file relative to project root
    * @returns The ScopeGraph for the file or null if not found
    */
-  get_scope_graph(file_path: string): ScopeGraph | null {
+  get_scope_graph(file_path: string): IScopeGraph | null {
     return this.file_graphs.get(file_path) || null;
   }
 
@@ -268,7 +268,7 @@ export class Project {
    * 
    * @returns Map of file paths to ScopeGraphs
    */
-  get_all_scope_graphs(): Map<string, ScopeGraph> {
+  get_all_scope_graphs(): Map<string, IScopeGraph> {
     // Return a copy to prevent external modifications
     return new Map(this.file_graphs);
   }

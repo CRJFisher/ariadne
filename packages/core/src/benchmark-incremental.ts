@@ -2,7 +2,7 @@
 
 import { Project } from './index';
 
-console.log('AST-Climber Incremental Parsing Benchmark\n');
+console.log('Ariadne Incremental Parsing Benchmark\n');
 
 // Create a large TypeScript file for benchmarking
 function generateLargeFile(functionCount: number): string {

@@ -1,0 +1,60 @@
+{
+  "name": "@ariadne/core",
+  "version": "0.5.8",
+  "description": "Core functionality for Ariadne - Find references and definitions in your codebase using tree-sitter",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*",
+    "scripts/postinstall.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc && npm run copy-scm-files",
+    "copy-scm-files": "cp src/languages/javascript/scopes.scm dist/languages/javascript/ && cp src/languages/typescript/scopes.scm dist/languages/typescript/ && cp src/languages/python/scopes.scm dist/languages/python/ && cp src/languages/rust/scopes.scm dist/languages/rust/",
+    "test": "vitest run",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build && npm test",
+    "postinstall": "node scripts/postinstall.js"
+  },
+  "keywords": [
+    "tree-sitter",
+    "code-intelligence",
+    "references",
+    "definitions",
+    "lsp",
+    "language-server",
+    "typescript",
+    "javascript",
+    "python"
+  ],
+  "author": "Chuck",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CRJFisher/ariadne.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/CRJFisher/ariadne/issues"
+  },
+  "homepage": "https://github.com/CRJFisher/ariadne#readme",
+  "dependencies": {
+    "@ariadne/types": "file:../types",
+    "js-yaml": "^4.1.0",
+    "tar": "^6.2.1",
+    "tree-sitter": "0.21.1",
+    "tree-sitter-javascript": "0.21.4",
+    "tree-sitter-python": "0.21.0",
+    "tree-sitter-rust": "^0.21.0",
+    "tree-sitter-typescript": "0.21.2"
+  },
+  "devDependencies": {
+    "@vitest/ui": "^3.2.4",
+    "happy-dom": "^18.0.1",
+    "vitest": "^3.2.4"
+  }
+}

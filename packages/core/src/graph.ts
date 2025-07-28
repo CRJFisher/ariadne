@@ -1,124 +1,64 @@
 import { SyntaxNode, Range } from 'tree-sitter';
+import {
+  Point,
+  SimpleRange,
+  Scoping,
+  FunctionMetadata,
+  BaseNode,
+  Def,
+  Ref,
+  Import,
+  Scope,
+  Node,
+  FunctionCall,
+  ImportInfo,
+  BaseEdge,
+  DefToScope,
+  RefToDef,
+  ScopeToScope,
+  ImportToScope,
+  RefToImport,
+  Edge,
+  Call,
+  CallGraphOptions,
+  CallGraphNode,
+  CallGraphEdge,
+  CallGraph,
+  IScopeGraph
+} from '@ariadne/types';
 
-// Basic Types from the document
+// Re-export types for backward compatibility
+export {
+  Point,
+  SimpleRange,
+  Scoping,
+  FunctionMetadata,
+  Def,
+  Ref,
+  Import,
+  Scope,
+  Node,
+  FunctionCall,
+  ImportInfo,
+  DefToScope,
+  RefToDef,
+  ScopeToScope,
+  ImportToScope,
+  RefToImport,
+  Edge,
+  Call,
+  CallGraphOptions,
+  CallGraphNode,
+  CallGraphEdge,
+  CallGraph,
+  IScopeGraph
+} from '@ariadne/types';
 
-export interface Point {
-  row: number;
-  column: number;
-}
-
-export interface SimpleRange {
-  start: Point;
-  end: Point;
-}
-
-export enum Scoping {
-  Local,
-  Hoisted,
-  Global,
-}
-
-// Node types for the graph
-
-interface BaseNode {
-  id: number;
-  range: SimpleRange;
-}
-
-export interface FunctionMetadata {
-  is_async?: boolean;
-  is_test?: boolean;         // Detected test function
-  is_private?: boolean;       // Starts with _ in Python
-  complexity?: number;        // Cyclomatic complexity
-  line_count: number;         // Size of function
-  parameter_names?: string[]; // For signature display
-  has_decorator?: boolean;    // Python decorators
-  class_name?: string;        // For methods, the containing class
-}
-
-export interface Def extends BaseNode {
-  kind: 'definition';
-  name: string;
-  symbol_kind: string; // e.g., 'function', 'class', 'variable'
-  file_path: string;  // The file containing this definition
-  symbol_id: string;  // Unique identifier in format: module_path#name
-  metadata?: FunctionMetadata; // Metadata for function definitions
-  enclosing_range?: SimpleRange;  // Full body range including definition
-  signature?: string;             // Full signature with parameters
-  docstring?: string;             // Documentation comment if available
-}
-
-export interface Ref extends BaseNode {
-  kind: 'reference';
-  name: string;
-  symbol_kind?: string; // Optional namespace/symbol type
-}
-
-export interface Import extends BaseNode {
-  kind: 'import';
-  name: string;          // Local name (as used in this file)
-  source_name?: string;  // Original export name (if renamed)
-  source_module?: string; // Module path (e.g., './utils')
-}
-
-export interface Scope extends BaseNode {
-  kind: 'scope';
-}
-
-export type Node = Def | Ref | Import | Scope;
-
-/**
- * Represents a function call relationship in the codebase.
- */
-export interface FunctionCall {
-  caller_def: Def;           // The function making the call
-  called_def: Def;           // The function being called  
-  call_location: Point;      // Where in the caller the call happens
-  is_method_call: boolean;   // true for self.method() or this.method()
-}
-
-/**
- * Represents an import with its resolved definition.
- * Used to map import statements to the actual definitions they reference.
- */
-export interface ImportInfo {
-  imported_function: Def;    // The actual function definition in the source file
-  import_statement: Import;  // The import node in the importing file
-  local_name: string;        // Name used in the importing file (may differ from source)
-}
-
-// Edge types to connect the nodes
-
-interface BaseEdge {
-  source_id: number;
-  target_id: number;
-}
-
-export interface DefToScope extends BaseEdge {
-  kind: 'def_to_scope';
-}
-
-export interface RefToDef extends BaseEdge {
-  kind: 'ref_to_def';
-}
-
-export interface ScopeToScope extends BaseEdge {
-  kind: 'scope_to_scope';
-}
-
-export interface ImportToScope extends BaseEdge {
-  kind: 'import_to_scope';
-}
-
-export interface RefToImport extends BaseEdge {
-  kind: 'ref_to_import';
-}
-
-export type Edge = DefToScope | RefToDef | ScopeToScope | ImportToScope | RefToImport;
+// All types are imported from @ariadne/types above
 
 // The main graph structure
 
-export class ScopeGraph {
+export class ScopeGraph implements IScopeGraph {
   private nodes: Node[] = [];
   private edges: Edge[] = [];
   private next_node_id = 0;
@@ -416,57 +356,37 @@ export class ScopeGraph {
       console.log(`  ${edge.source_id} -> ${edge.target_id} (${edge.kind})`);
     }
   }
+
+  // Implement IScopeGraph interface methods
+  getCallsFromDef(def_id: number): Call[] {
+    // TODO: Implement this method
+    return [];
+  }
+
+  getSymbolId(def: Def): string {
+    return def.symbol_id;
+  }
+
+  getDefinitionBySymbol(symbol_id: string): Def | undefined {
+    return this.getNodes<Def>('definition').find(d => d.symbol_id === symbol_id);
+  }
+
+  getFunctionCalls(): FunctionCall[] {
+    // TODO: Implement this method
+    return [];
+  }
+
+  getImportInfo(): ImportInfo[] {
+    // TODO: Implement this method
+    return [];
+  }
+
+  getCallGraph(options?: CallGraphOptions): CallGraph {
+    // TODO: Implement this method
+    return {
+      nodes: new Map(),
+      edges: [],
+      top_level_nodes: []
+    };
+  }
 }
-
-// Call Graph Types
-
-/**
- * Represents a function or method call in the codebase.
- * Used by the call graph API to represent outgoing calls from a definition.
- */
-export interface Call {
-  symbol: string;                                    // Symbol being called
-  range: SimpleRange;                                // Location of the call
-  kind: "function" | "method" | "constructor";      // Type of call
-  resolved_definition?: Def;                         // The definition being called (if resolved)
-}
-
-/**
- * Options for configuring call graph generation.
- */
-export interface CallGraphOptions {
-  include_external?: boolean;                        // Include calls to external libraries
-  max_depth?: number;                                // Limit recursion depth
-  file_filter?: (path: string) => boolean;          // Filter which files to analyze
-}
-
-/**
- * Represents a node in the call graph.
- * Each node corresponds to a callable definition (function/method).
- */
-export interface CallGraphNode {
-  symbol: string;                                    // Unique symbol identifier
-  definition: Def;                                   // The underlying definition
-  calls: Call[];                                     // Outgoing calls from this node
-  called_by: string[];                               // Incoming calls (symbol names)
-}
-
-/**
- * Represents an edge in the call graph.
- * Each edge represents a call relationship between two nodes.
- */
-export interface CallGraphEdge {
-  from: string;                                      // Caller symbol
-  to: string;                                        // Callee symbol
-  location: SimpleRange;                             // Where the call occurs
-}
-
-/**
- * The complete call graph structure.
- * Contains all nodes and edges representing the call relationships in the codebase.
- */
-export interface CallGraph {
-  nodes: Map<string, CallGraphNode>;                 // All nodes indexed by symbol
-  edges: CallGraphEdge[];                            // All edges (call relationships)
-  top_level_nodes: string[];                         // Symbols not called by others
-} 

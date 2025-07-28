@@ -1,19 +1,7 @@
-import { Point } from './graph';
+import { Point, Edit } from '@ariadne/types';
 
-/**
- * Represents an edit to a document, compatible with tree-sitter's edit format
- */
-export interface Edit {
-  // Byte offsets
-  start_byte: number;
-  old_end_byte: number;
-  new_end_byte: number;
-  
-  // Character positions
-  start_position: Point;
-  old_end_position: Point;
-  new_end_position: Point;
-}
+// Re-export Edit for backward compatibility
+export { Edit } from '@ariadne/types';
 
 /**
  * Creates an Edit object from a text change

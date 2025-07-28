@@ -52,6 +52,7 @@ Successfully migrated the library name from refscope to ast-climber across the e
 - Shell scripts
 
 Key changes:
+
 - Renamed packages/refscope-types directory to packages/ast-climber-types
 - Updated all import statements and code references
 - Created comprehensive migration guides for GitHub repository and npm package
@@ -59,3 +60,7 @@ Key changes:
 - Build process works correctly
 
 The only remaining manual step is to rename the GitHub repository following the guide in docs/github-repository-migration-guide.md
+
+## Move from ast-climber to Ariadne
+
+- [ ] Move packages to @aridadne/core, @aridadne/types, @ariadne/mcp

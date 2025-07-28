@@ -1,21 +1,21 @@
-# AST-Climber Types Package
+# Ariadne Types Package
 
 ## Overview
 
-Create a separate `ast-climber-types` package that exports only type definitions from ast-climber, with zero runtime code. This addresses the need for ast-climber types in environments where bundle size is critical (like webviews) without requiring the full ast-climber package.
+Create a separate `@ariadne/types` package that exports only type definitions from @ariadne/core, with zero runtime code. This addresses the need for ariadne types in environments where bundle size is critical (like webviews) without requiring the full @ariadne/core package.
 
 ## Problem Statement
 
-The Code Charter VSCode extension's webview needs to use ast-climber's type definitions for proper type safety across the extension-webview boundary. However, installing the full ast-climber package in the webview would unnecessarily bloat the bundle size since only types are needed - no runtime functionality is required.
+The Code Charter VSCode extension's webview needs to use ariadne's type definitions for proper type safety across the extension-webview boundary. However, installing the full @ariadne/core package in the webview would unnecessarily bloat the bundle size since only types are needed - no runtime functionality is required.
 
 ## Proposed Solution
 
-Publish a `ast-climber-types` package that contains only TypeScript type definitions extracted from ast-climber.
+Publish a `@ariadne/types` package that contains only TypeScript type definitions extracted from @ariadne/core.
 
 ### Package Structure
 
 ```
-ast-climber-types/
+@ariadne/types/
 ├── package.json
 ├── index.d.ts
 ├── types/
@@ -30,15 +30,15 @@ ast-climber-types/
 
 ```json
 {
-  "name": "ast-climber-types",
+  "name": "@ariadne/types",
   "version": "1.0.0",
-  "description": "TypeScript type definitions for ast-climber",
+  "description": "TypeScript type definitions for @ariadne/core",
   "types": "index.d.ts",
   "files": ["index.d.ts", "types/**/*.d.ts"],
   "peerDependencies": {
     "typescript": ">=4.0.0"
   },
-  "keywords": ["ast-climber", "types", "typescript"],
+  "keywords": ["ariadne", "types", "typescript"],
   "license": "MIT"
 }
 ```
@@ -120,29 +120,29 @@ export interface DefMetadata {
 
 ## Implementation Steps
 
-1. **Extract type definitions** from ast-climber source code
-2. **Create new npm package** `ast-climber-types`
-3. **Set up build process** to keep types in sync with main ast-climber package
-4. **Publish to npm** with same versioning as ast-climber
-5. **Update ast-climber** to optionally depend on ast-climber-types for its own type exports
+1. **Extract type definitions** from @ariadne/core source code
+2. **Create new npm package** `@ariadne/types`
+3. **Set up build process** to keep types in sync with main @ariadne/core package
+4. **Publish to npm** with same versioning as @ariadne/core
+5. **Update @ariadne/core** to optionally depend on @ariadne/types for its own type exports
 
 ## Benefits
 
 1. **Zero runtime overhead** - Only TypeScript definitions, no JavaScript code
 2. **Small package size** - Just a few KB of type definitions
 3. **Perfect for webviews** - Can use types without bundle bloat
-4. **Version synchronization** - Can be kept in sync with refscope releases
-5. **Broader ecosystem support** - Other tools can use ast-climber types without the full package
+4. **Version synchronization** - Can be kept in sync with @ariadne/core releases
+5. **Broader ecosystem support** - Other tools can use ariadne types without the full @ariadne/core package
 
 ## Maintenance Strategy
 
-- **Automated sync**: Set up CI to extract and publish types when ast-climber releases
-- **Version matching**: Use same version numbers as ast-climber for clarity
-- **Breaking changes**: Only when ast-climber has breaking type changes
+- **Automated sync**: Set up CI to extract and publish types when @ariadne/core releases
+- **Version matching**: Use same version numbers as @ariadne/core for clarity
+- **Breaking changes**: Only when @ariadne/core has breaking type changes
 
 ## Alternative Approaches Considered
 
-1. **`@types/ast-climber`** - Not appropriate since ast-climber is already TypeScript
+1. **`@types/ariadne`** - Not appropriate since @ariadne/core is already TypeScript
 2. **Type exports from main package** - Still requires installing full package
 3. **Duplicating types in consumer** - Maintenance burden and sync issues
 
@@ -151,7 +151,7 @@ export interface DefMetadata {
 In webview code:
 
 ```typescript
-import type { CallGraph, Def, CallGraphNode } from "ast-climber-types";
+import type { CallGraph, Def, CallGraphNode } from "@ariadne/types";
 
 // Use types for proper type safety without runtime dependency
 function processCallGraph(graph: CallGraph): void {
@@ -162,16 +162,16 @@ function processCallGraph(graph: CallGraph): void {
 In extension code (can use either):
 
 ```typescript
-// Option 1: Use full ast-climber
-import { CallGraph, get_call_graph } from "ast-climber";
+// Option 1: Use full ariadne
+import { CallGraph, get_call_graph } from "@ariadne/core";
 
 // Option 2: Just types (if only needed for type annotations)
-import type { CallGraph } from "ast-climber-types";
+import type { CallGraph } from "@ariadne/types";
 ```
 
 ## Next Steps
 
-1. Create the ast-climber-types package structure
-2. Extract current type definitions from ast-climber
+1. Create the @ariadne/types package structure
+2. Extract current type definitions from @ariadne/core
 3. Set up npm package and publish
-4. Update Code Charter to use ast-climber-types in webview
+4. Update Code Charter to use @ariadne/types in webview

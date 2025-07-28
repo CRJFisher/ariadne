@@ -1,11 +1,11 @@
 import Parser from 'tree-sitter';
 import { SyntaxNode } from 'tree-sitter';
+import { ExtractedContext } from '@ariadne/types';
 
-export interface ExtractedContext {
-  docstring?: string;
-  decorators?: string[];
-}
+// Re-export clean types from @ariadne/types
+export { ExtractedContext } from '@ariadne/types';
 
+// Types that depend on tree-sitter stay in core
 export interface LanguageConfig {
   name: string;
   file_extensions: string[];
@@ -19,4 +19,4 @@ export interface LanguageConfig {
     source_lines: string[],
     start_line: number
   ) => ExtractedContext;
-} 
+}

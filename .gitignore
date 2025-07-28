@@ -10,11 +10,12 @@ build/
 *.js
 *.d.ts
 *.js.map
+*.tsbuildinfo
 !jest.config.js
 !scripts/*.js
 !scripts/*.sh
-!packages/ast-climber-types/**/*.d.ts
-!packages/ast-climber-types/**/*.js
+!packages/types/**/*.d.ts
+!packages/types/**/*.js
 
 # IDE and editor files
 .vscode/

@@ -1,6 +1,6 @@
-# AST-Climber Language Feature Matrix
+# Ariadne Language Feature Matrix
 
-This document tracks which language features are supported by AST-Climber for each programming language.
+This document tracks which language features are supported by Ariadne for each programming language.
 
 ## Core Library Functionality
 
@@ -126,7 +126,7 @@ When adding a new language, ensure:
 
 ## Function Metadata
 
-AST-Climber extracts rich metadata for function definitions across all supported languages:
+Ariadne extracts rich metadata for function definitions across all supported languages:
 
 ### Metadata Fields
 

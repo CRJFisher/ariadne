@@ -60,8 +60,8 @@ jobs:
         shell: bash
         run: |
           mkdir -p prebuilds/${{ matrix.platform }}-${{ matrix.arch }}
-          find node_modules -name "*.node" -path "*/build/Release/*" | while read -r file; do
-            module_name=$(echo "$file" | sed -E 's|node_modules/([^/]+)/.*|\1|')
+          find packages/core/node_modules -name "*.node" -path "*/build/Release/*" | while read -r file; do
+            module_name=$(echo "$file" | sed -E 's|packages/core/node_modules/([^/]+)/.*|\1|')
             mkdir -p "prebuilds/${{ matrix.platform }}-${{ matrix.arch }}/$module_name"
             cp "$file" "prebuilds/${{ matrix.platform }}-${{ matrix.arch }}/$module_name/"
           done
@@ -144,14 +144,18 @@ jobs:
             VERSION=${GITHUB_REF#refs/tags/v}
           fi
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          CURRENT_VERSION=$(node -p "require('./packages/core/package.json').version")
           if [ "$CURRENT_VERSION" != "$VERSION" ]; then
-            npm version $VERSION --no-git-tag-version
+            npm version $VERSION --no-git-tag-version -w @ariadne/types
+            npm version $VERSION --no-git-tag-version -w @ariadne/core
           else
-            echo "Version already set to $VERSION"
+            echo "Versions already set to $VERSION"
           fi
           
       - name: Publish to NPM
-        run: npm publish
+        run: |
+          # Publish types first, then core (due to dependency)
+          npm publish -w @ariadne/types
+          npm publish -w @ariadne/core
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
