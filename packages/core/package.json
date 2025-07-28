@@ -1,6 +1,6 @@
 {
   "name": "@ariadnejs/core",
-  "version": "0.5.13",
+  "version": "0.5.14",
   "description": "Core functionality for Ariadne - Find references and definitions in your codebase using tree-sitter",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -43,7 +43,7 @@
   },
   "homepage": "https://github.com/CRJFisher/ariadne#readme",
   "dependencies": {
-    "@ariadnejs/types": "0.5.13",
+    "@ariadnejs/types": "0.5.14",
     "js-yaml": "^4.1.0",
     "tar": "^6.2.1",
     "tree-sitter": "0.21.1",

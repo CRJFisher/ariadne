@@ -1,5 +1,13 @@
 # @ariadnejs/core
 
+## 0.5.14
+
+### Patch Changes
+
+- feb54fe: Fix prebuild workflow with C++17 and direct package installation
+- Updated dependencies [feb54fe]
+  - @ariadnejs/types@0.5.14
+
 ## 0.5.13
 
 ### Patch Changes
