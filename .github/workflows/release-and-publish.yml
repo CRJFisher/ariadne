@@ -126,7 +126,7 @@ jobs:
           echo '${{ needs.release.outputs.publishedPackages }}' > published.json
           VERSION=$(node -e "
             const packages = JSON.parse(require('fs').readFileSync('published.json', 'utf8'));
-            const core = packages.find(p => p.name === '@ariadne/core');
+            const core = packages.find(p => p.name === '@ariadnejs/core');
             console.log(core ? core.version : packages[0].version);
           ")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
@@ -153,8 +153,8 @@ jobs:
             ## 📥 Installation
             
             ```bash
-            npm install @ariadne/core@${{ steps.parse.outputs.version }}
-            npm install @ariadne/types@${{ steps.parse.outputs.version }}
+            npm install @ariadnejs/core@${{ steps.parse.outputs.version }}
+            npm install @ariadnejs/types@${{ steps.parse.outputs.version }}
             ```
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
