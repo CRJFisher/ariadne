@@ -1,9 +1,9 @@
 import Parser from 'tree-sitter';
 import { SyntaxNode } from 'tree-sitter';
-import { ExtractedContext } from '@ariadne/types';
+import { ExtractedContext } from '@ariadnejs/types';
 
-// Re-export clean types from @ariadne/types
-export { ExtractedContext } from '@ariadne/types';
+// Re-export clean types from @ariadnejs/types
+export { ExtractedContext } from '@ariadnejs/types';
 
 // Types that depend on tree-sitter stay in core
 export interface LanguageConfig {

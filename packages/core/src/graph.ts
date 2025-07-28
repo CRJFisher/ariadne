@@ -25,7 +25,7 @@ import {
   CallGraphEdge,
   CallGraph,
   IScopeGraph
-} from '@ariadne/types';
+} from '@ariadnejs/types';
 
 // Re-export types for backward compatibility
 export {
@@ -52,9 +52,9 @@ export {
   CallGraphEdge,
   CallGraph,
   IScopeGraph
-} from '@ariadne/types';
+} from '@ariadnejs/types';
 
-// All types are imported from @ariadne/types above
+// All types are imported from @ariadnejs/types above
 
 // The main graph structure
 

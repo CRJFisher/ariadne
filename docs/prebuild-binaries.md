@@ -4,7 +4,7 @@ Ariadne includes support for prebuilt binaries to improve the installation exper
 
 ## How it Works
 
-1. When you run `npm install @ariadne/core`, the postinstall script automatically checks for prebuilt binaries for your platform
+1. When you run `npm install @ariadnejs/core`, the postinstall script automatically checks for prebuilt binaries for your platform
 2. If prebuilt binaries are available, they are downloaded and extracted
 3. If prebuilt binaries are not available, the installation falls back to building from source
 
@@ -21,7 +21,7 @@ Prebuilt binaries are provided for:
 If you prefer to build from source or need to use Ariadne on an unsupported platform, you can force building from source:
 
 ```bash
-npm install @ariadne/core --build-from-source
+npm install @ariadnejs/core --build-from-source
 ```
 
 ## Troubleshooting
