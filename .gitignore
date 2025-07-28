@@ -14,6 +14,7 @@ build/
 !jest.config.js
 !scripts/*.js
 !scripts/*.sh
+!packages/*/scripts/*.js
 !packages/types/**/*.d.ts
 !packages/types/**/*.js
 
