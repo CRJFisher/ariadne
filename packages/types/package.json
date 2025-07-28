@@ -1,6 +1,6 @@
 {
   "name": "@ariadnejs/types",
-  "version": "0.5.12",
+  "version": "0.5.13",
   "description": "TypeScript type definitions for Ariadne",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
