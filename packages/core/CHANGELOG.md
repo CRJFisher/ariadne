@@ -1,5 +1,13 @@
 # @ariadnejs/core
 
+## 0.5.12
+
+### Patch Changes
+
+- 84d0f91: Fix prebuild workflow to use correct working directory for monorepo structure
+- Updated dependencies [84d0f91]
+  - @ariadnejs/types@0.5.12
+
 ## 0.5.11
 
 ### Patch Changes
