@@ -29,8 +29,7 @@ The release process is fully automated through GitHub Actions:
 3. **Review and merge** the version PR
 4. **Automatic publishing**:
    - Packages are published to npm
-   - Prebuilt binaries are created for all platforms
-   - A GitHub release is created with the binaries
+   - Git tag is created
 
 No manual commands needed!
 
@@ -51,14 +50,11 @@ No manual commands needed!
 2. **After Merging Version PR**:
    - Both packages are published to npm
    - Git tag is created (e.g., `v1.2.3`)
-   - Prebuilt binaries are built for all platforms
-   - GitHub release is created with binaries attached
 
 ## Troubleshooting
 
 - **No Version PR created**: Check if there are changesets in `.changeset/` directory
 - **Publish failed**: Ensure `NPM_TOKEN` secret is set in repository settings
-- **Binary builds failed**: Check the workflow logs for platform-specific issues
 
 ## Manual Release (Emergency Only)
 
