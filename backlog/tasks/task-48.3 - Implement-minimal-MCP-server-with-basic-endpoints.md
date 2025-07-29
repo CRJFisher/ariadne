@@ -1,5 +1,5 @@
 ---
-id: task-47.3
+id: task-48.3
 title: Implement minimal MCP server with basic endpoints
 status: Done
 assignee:
@@ -8,7 +8,7 @@ created_date: '2025-07-28'
 updated_date: '2025-07-28'
 labels: []
 dependencies: []
-parent_task_id: task-47
+parent_task_id: task-48
 ---
 
 ## Description

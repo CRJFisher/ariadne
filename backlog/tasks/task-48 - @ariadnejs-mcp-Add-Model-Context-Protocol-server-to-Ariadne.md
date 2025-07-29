@@ -1,5 +1,5 @@
 ---
-id: task-47
+id: task-48
 title: '@ariadnejs/mcp - Add Model Context Protocol server to Ariadne'
 status: To Do
 assignee: []

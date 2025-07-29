@@ -1,5 +1,5 @@
 ---
-id: task-47.4
+id: task-48.4
 title: Document MCP server setup instructions for users
 status: Done
 assignee:
@@ -8,7 +8,7 @@ created_date: '2025-07-28'
 updated_date: '2025-07-28'
 labels: []
 dependencies: []
-parent_task_id: task-47
+parent_task_id: task-48
 ---
 
 ## Description
