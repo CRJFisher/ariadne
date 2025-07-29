@@ -1,6 +1,6 @@
 {
   "name": "@ariadnejs/mcp",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Model Context Protocol server for Ariadne - Expose code intelligence capabilities to AI agents",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
