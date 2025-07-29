@@ -1,5 +1,17 @@
 # @ariadnejs/types
 
+## 0.5.15
+
+### Patch Changes
+
+- 6f659e4: Remove custom prebuild system in favor of tree-sitter's built-in prebuilds
+
+  - Removed custom GitHub Actions prebuild workflow
+  - Removed postinstall script and tar dependency
+  - Now relies entirely on tree-sitter's native prebuild support
+
+  This is an internal change with no user-facing impact. Installation behavior remains the same.
+
 ## 0.5.14
 
 ### Patch Changes
