@@ -1,9 +1,10 @@
 ---
 id: task-48
 title: '@ariadnejs/mcp - Add Model Context Protocol server to Ariadne'
-status: To Do
+status: Done
 assignee: []
 created_date: '2025-07-28'
+updated_date: '2025-07-29'
 labels: []
 dependencies: []
 ---
@@ -14,9 +15,9 @@ Implement an MCP server package that exposes Ariadne's capabilities through the 
 
 ## Acceptance Criteria
 
-- [ ] MCP server package created as @ariadnejs/mcp
-- [ ] Server exposes Ariadne's core analysis capabilities
+- [x] MCP server package created as @ariadnejs/mcp
+- [x] Server exposes Ariadne's core analysis capabilities
 - [ ] Server supports code tree visualization operations
 - [ ] Server supports diff preview for refactoring strategies
-- [ ] Integration tests cover all exposed MCP tools
-- [ ] Documentation includes usage examples for AI agents
+- [x] Integration tests cover all exposed MCP tools
+- [x] Documentation includes usage examples for AI agents

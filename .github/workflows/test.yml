@@ -36,3 +36,4 @@ jobs:
         run: |
           npm pack --dry-run -w @ariadnejs/types
           npm pack --dry-run -w @ariadnejs/core
+          npm pack --dry-run -w @ariadnejs/mcp

@@ -95,6 +95,14 @@ The server uses the current working directory by default. To specify a different
 - ✅ Rust
 - 🚧 More languages coming soon (Go, Java, C/C++, etc.)
 
+## Version Compatibility
+
+This package requires:
+- `@ariadnejs/core` >= 0.5.15
+- `@ariadnejs/types` >= 0.5.15
+
+The MCP package versions independently from core packages. Check the [releases page](https://github.com/CRJFisher/ariadne/releases) for compatibility information.
+
 ## Development
 
 ```bash
