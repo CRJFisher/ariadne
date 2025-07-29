@@ -1,0 +1,56 @@
+{
+  "name": "@ariadnejs/mcp",
+  "version": "0.5.12",
+  "description": "Model Context Protocol server for Ariadne - Expose code intelligence capabilities to AI agents",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "ariadne-mcp": "dist/server.js"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build && npm test",
+    "start": "node dist/server.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "code-intelligence",
+    "ariadne",
+    "tree-sitter",
+    "refactoring",
+    "code-analysis"
+  ],
+  "author": "Chuck",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CRJFisher/ariadne.git",
+    "directory": "packages/mcp"
+  },
+  "bugs": {
+    "url": "https://github.com/CRJFisher/ariadne/issues"
+  },
+  "homepage": "https://github.com/CRJFisher/ariadne#readme",
+  "dependencies": {
+    "@ariadnejs/core": "0.5.12",
+    "@ariadnejs/types": "0.5.12",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@vitest/ui": "^3.2.4",
+    "vitest": "^3.2.4"
+  }
+}

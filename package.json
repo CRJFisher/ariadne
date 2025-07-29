@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build -w @ariadnejs/types && npm run build -w @ariadnejs/core",
+    "build": "npm run build -w @ariadnejs/types && npm run build -w @ariadnejs/core && npm run build -w @ariadnejs/mcp",
     "test": "npm run test --workspaces",
     "clean": "npm run clean --workspaces && rm -rf node_modules",
     "changeset": "changeset",
