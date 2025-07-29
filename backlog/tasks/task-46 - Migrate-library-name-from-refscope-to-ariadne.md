@@ -1,6 +1,6 @@
 ---
 id: task-46
-title: Migrate library name from refscope to ast-climber
+title: Migrate library name from refscope to Ariadne
 status: In Progress
 assignee:
   - '@chuck'
@@ -16,9 +16,9 @@ Rename the library across all project components including npm package, GitHub r
 
 ## Acceptance Criteria
 
-- [x] npm package renamed to ast-climber
-- [ ] GitHub repository migrated to new name (manual step required - see guide)
-- [x] All code references updated from refscope to ast-climber
+- [x] npm package renamed to Ariadne
+- [x] GitHub repository migrated to new name (manual step required - see guide)
+- [x] All code references updated from refscope to Ariadne
 - [x] All documentation files updated with new name
 - [x] Outstanding tasks updated with new name references
 - [x] Package.json files updated
@@ -41,7 +41,7 @@ Rename the library across all project components including npm package, GitHub r
 
 ## Implementation Notes
 
-Successfully migrated the library name from refscope to ast-climber across the entire codebase. Updated 42 files containing refscope references including:
+Successfully migrated the library name from refscope to Ariadne across the entire codebase. Updated 42 files containing refscope references including:
 
 - Package.json files (main and types packages)
 - All TypeScript/JavaScript source files
@@ -53,14 +53,10 @@ Successfully migrated the library name from refscope to ast-climber across the e
 
 Key changes:
 
-- Renamed packages/refscope-types directory to packages/ast-climber-types
+- Renamed packages/refscope-types directory to packages/Ariadne-types
 - Updated all import statements and code references
 - Created comprehensive migration guides for GitHub repository and npm package
 - All tests pass successfully (269 tests)
 - Build process works correctly
 
 The only remaining manual step is to rename the GitHub repository following the guide in docs/github-repository-migration-guide.md
-
-## Move from ast-climber to Ariadne
-
-- [ ] Move packages to @aridadne/core, @aridadne/types, @ariadne/mcp
