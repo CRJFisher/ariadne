@@ -131,9 +131,9 @@ export async function startServer(options: AriadneMCPServerOptions = {}): Promis
                 {
                   type: "text",
                   text: JSON.stringify({
-                    file: definition.file,
-                    start: definition.start,
-                    end: definition.end
+                    file: path.relative(projectPath, definition.file_path),
+                    start: definition.range.start,
+                    end: definition.range.end
                   }, null, 2)
                 }
               ]
@@ -166,14 +166,15 @@ export async function startServer(options: AriadneMCPServerOptions = {}): Promis
                 text: JSON.stringify({
                   count: references.length,
                   references: references.map(ref => ({
-                    file: ref.file,
-                    start: ref.start,
-                    end: ref.end
+                    // TODO task-51: Ref type doesn't include file info yet, so references are assumed to be in the same file
+                    file: validatedArgs.file_path,
+                    start: ref.range.start,
+                    end: ref.range.end
                   }))
                 }, null, 2)
               }
             ]
-          ];
+          };
         }
 
         default:
