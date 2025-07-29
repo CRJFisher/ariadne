@@ -1,11 +1,11 @@
 ---
 id: task-46
 title: Migrate library name from refscope to Ariadne
-status: In Progress
+status: Done
 assignee:
   - '@chuck'
 created_date: '2025-07-25'
-updated_date: '2025-07-25'
+updated_date: '2025-07-29'
 labels: []
 dependencies: []
 ---

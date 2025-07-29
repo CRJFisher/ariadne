@@ -2,12 +2,12 @@
   "name": "ariadne",
   "version": "0.5.8",
   "private": true,
-  "description": "Monorepo for Ariadne - Find references and definitions in your codebase using tree-sitter",
+  "description": "Monorepo for Ariadne - Find call graphs in your codebase using tree-sitter",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build -w @ariadnejs/types && npm run build -w @ariadnejs/core",
+    "build": "npm run build -w @ariadnejs/types && npm run build -w @ariadnejs/core && npm run build -w @ariadnejs/mcp",
     "test": "npm run test --workspaces",
     "clean": "npm run clean --workspaces && rm -rf node_modules",
     "changeset": "changeset",
