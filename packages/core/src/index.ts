@@ -234,14 +234,6 @@ export class Project {
   }
 
   /**
-   * Alias for find_references for backward compatibility.
-   * @deprecated Use find_references instead
-   */
-  find_all_references(file_path: string, position: Point): Ref[] {
-    return this.find_references(file_path, position);
-  }
-
-  /**
    * Finds the definition of a symbol at a given position in a file.
    * @param file_path - The path of the file containing the symbol.
    * @param position - The row and column of the symbol.
