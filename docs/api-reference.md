@@ -41,6 +41,7 @@ add_or_update_file(file_path: string, content: string): void
 Adds a new file or updates an existing file in the project.
 
 **Parameters:**
+
 - `file_path` - The path identifier for the file
 - `content` - The source code content
 
@@ -60,6 +61,7 @@ remove_file(file_path: string): void
 Removes a file from the project.
 
 **Parameters:**
+
 - `file_path` - The path identifier for the file to remove
 
 **Example:**
@@ -77,10 +79,12 @@ go_to_definition(file_path: string, position: Point): Def | null
 Finds the definition of a symbol at the given position.
 
 **Parameters:**
+
 - `file_path` - The file containing the position
 - `position` - The cursor position (0-indexed)
 
 **Returns:**
+
 - `Def` object if found, `null` otherwise
 
 **Example:**
@@ -101,10 +105,12 @@ find_references(file_path: string, position: Point): Ref[]
 Finds all references to the symbol at the given position.
 
 **Parameters:**
+
 - `file_path` - The file containing the position
 - `position` - The cursor position (0-indexed)
 
 **Returns:**
+
 - Array of `Ref` objects
 
 **Example:**
@@ -127,6 +133,7 @@ new ScopeGraph(root_node: Parser.SyntaxNode, language_name: string)
 Creates a new scope graph with a root scope.
 
 **Parameters:**
+
 - `root_node` - The root AST node from tree-sitter
 - `language_name` - The name of the language
 
@@ -159,9 +166,11 @@ insert_local_scope(scope: Scope): number
 Inserts a new scope as a child of the current scope.
 
 **Parameters:**
+
 - `scope` - The scope to insert
 
 **Returns:**
+
 - The ID of the inserted scope
 
 **Example:**
@@ -184,9 +193,11 @@ insert_local_def(def: Def): number
 Inserts a definition in the current scope.
 
 **Parameters:**
+
 - `def` - The definition to insert
 
 **Returns:**
+
 - The ID of the inserted definition
 
 #### insert_hoisted_def
@@ -198,9 +209,11 @@ insert_hoisted_def(def: Def): number
 Inserts a definition hoisted to the nearest function/module scope.
 
 **Parameters:**
+
 - `def` - The definition to insert
 
 **Returns:**
+
 - The ID of the inserted definition
 
 #### insert_ref
@@ -212,9 +225,11 @@ insert_ref(ref: Ref): number
 Inserts a reference and attempts to resolve it.
 
 **Parameters:**
+
 - `ref` - The reference to insert
 
 **Returns:**
+
 - The ID of the inserted reference
 
 #### findNodeAtPosition
@@ -226,9 +241,11 @@ findNodeAtPosition(position: Point): Node | null
 Finds the node at the given source position.
 
 **Parameters:**
+
 - `position` - The source position
 
 **Returns:**
+
 - The node at the position, or null
 
 #### findExportedDef
@@ -240,9 +257,11 @@ findExportedDef(name: string): Def | null
 Finds an exported definition by name.
 
 **Parameters:**
+
 - `name` - The name to search for
 
 **Returns:**
+
 - The exported definition, or null
 
 #### getNodes
@@ -254,12 +273,15 @@ getNodes<T extends Node>(kind: NodeKind): T[]
 Gets all nodes of a specific kind.
 
 **Type Parameters:**
+
 - `T` - The node type
 
 **Parameters:**
+
 - `kind` - The node kind to filter by
 
 **Returns:**
+
 - Array of nodes of the specified kind
 
 **Example:**
@@ -391,10 +413,12 @@ function build_scope_graph(
 Builds a scope graph from a parsed tree.
 
 **Parameters:**
+
 - `tree` - The parsed tree from tree-sitter
 - `config` - The language configuration
 
 **Returns:**
+
 - A populated scope graph
 
 **Example:**
@@ -423,31 +447,23 @@ function find_definition(
 Finds the definition of a symbol across multiple files.
 
 **Parameters:**
+
 - `file_path` - The file containing the reference
 - `position` - The position of the reference
 - `file_graphs` - Map of file paths to scope graphs
 
 **Returns:**
+
 - The definition, or null
 
-### find_all_references
-
-```typescript
-function find_all_references(
-  file_path: string,
-  position: Point,
-  file_graphs: Map<string, ScopeGraph>
-): Ref[]
-```
-
-Finds all references to a symbol across multiple files.
-
 **Parameters:**
+
 - `file_path` - The file containing the symbol
 - `position` - The position of the symbol
 - `file_graphs` - Map of file paths to scope graphs
 
 **Returns:**
+
 - Array of references
 
 ## Language Configuration
