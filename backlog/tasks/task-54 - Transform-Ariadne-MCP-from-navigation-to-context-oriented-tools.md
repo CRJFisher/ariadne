@@ -42,37 +42,40 @@ Redesign Ariadne's MCP interface to provide rich code context instead of positio
 
 ## Phase 2: Core Implementation
 
-1. Implement get_symbol_context:
-   - Symbol resolution without position
-   - Definition extraction with full code
-   - Reference categorization (direct, imports, tests)
-   - Relationship analysis (calls, called_by, extends)
-   - Context snippet generation
-2. Implement get_code_structure:
-   - Module analysis and summarization
-   - Key abstraction extraction
-   - Pattern detection
-   - Entry point identification
-3. Create AriadneContextAdapter to translate requests to graph operations
-4. Implement caching layer for frequently requested context
-5. Add comprehensive error handling and disambiguation logic
+### Initial Context-Oriented Tools Proposal
 
-## Phase 3: Advanced Features
+The following tools represent initial ideas for context-oriented interfaces. These will be refined based on:
 
-1. Implement find_related_code:
-   - AST-based pattern matching
-   - Semantic similarity using embeddings
-   - Test-to-implementation mapping
-2. Implement analyze_code_impact:
-   - Dependency graph traversal
-   - Breaking change detection
-   - Suggested update generation
-3. Implement get_implementation_examples:
-   - Pattern library creation
-   - Best practice extraction
-   - Common variation detection
-4. Add context enrichment pipeline
-5. Optimize performance with parallel processing
+- Agent testing and feedback
+- Performance benchmarks
+- Real-world usage patterns
+- Integration requirements
+
+**Proposed Initial Tools:**
+
+1. `get_symbol_context` - Rich information about any symbol
+2. `get_code_structure` - Project organization and patterns
+3. `find_related_code` - Discover similar patterns
+4. `analyze_code_impact` - Understand change effects
+5. `get_implementation_examples` - Learn from existing code
+
+**Implementation priorities will be determined through:**
+
+- Simulation of agent workflows
+- Analysis of most common agent needs
+- Performance and feasibility assessments
+- Feedback from pilot testing
+
+## Phase 3: Advanced Features (Subject to Refinement)
+
+Based on initial tool implementation and testing, we may add:
+
+- Enhanced pattern matching capabilities
+- Semantic understanding features
+- Advanced relationship analysis
+- Context enrichment pipelines
+
+The exact feature set will evolve based on empirical data from Phase 2.
 
 ## Phase 4: Agent Integration
 
