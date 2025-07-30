@@ -1,13 +1,14 @@
 ---
 id: task-52
 title: Test MCP implementation with open-source agent libraries
-status: Done
+status: To Do
 assignee:
   - '@claude'
 created_date: '2025-07-29'
-updated_date: '2025-07-29'
+updated_date: '2025-07-30'
 labels: []
-dependencies: []
+dependencies:
+  - task-54
 ---
 
 ## Description
@@ -16,10 +17,10 @@ Test and analyze how LLMs use our MCP tools by creating realistic coding scenari
 
 ## Acceptance Criteria
 
-- [x] Open-source agent libraries with MCP support identified
-- [x] Tool-calling flow documented from agent perspective
-- [x] Optimal tool description patterns identified
-- [x] Recommendations for improving tool descriptions documented
+- [ ] Open-source agent libraries with MCP support identified
+- [ ] Tool-calling flow documented from agent perspective
+- [ ] Optimal tool description patterns identified
+- [ ] Recommendations for improving tool descriptions documented
 
 ## Implementation Plan
 
@@ -32,57 +33,33 @@ Test and analyze how LLMs use our MCP tools by creating realistic coding scenari
 
 ## Implementation Notes
 
-### Testing Evolution
+### Initial Research Phase
 
-Initially attempted complex agent frameworks (mcp-agent, PocketFlow) but realized we were overcomplicating the core objective. The goal is to test how well LLMs can use our MCP tools, not to build a full agent.
+Conducted comprehensive research on how major coding agents (Aider, AutoGen, OpenDevin, Continue) work and what context they provide. Created initial test implementations with mcp-agent and PocketFlow frameworks.
 
-### Research on Coding Agent Patterns
+### Key Discovery
 
-Based on 2024 coding agent research:
-- **Context is critical**: Agents need file path, position, and code snippets
-- **Explicit instructions**: Tool descriptions must be clear about parameter types and formats
-- **Realistic scenarios**: Questions should reflect actual coding situations where a developer would use these tools
+Through our research and testing, we discovered a fundamental incompatibility:
 
-### Final Testing Approach
+- **Current Ariadne MCP tools** require exact file positions (row, column)
+- **Most coding agents** work with whole files or natural language queries
+- **Only IDE-integrated agents** (like Continue) naturally have cursor position context
 
-Created `tool-usage-test.py` - a streamlined test that:
-1. Uses realistic coding scenarios with proper context
-2. Directly tests LLM tool selection via OpenAI function calling
-3. Evaluates parameter correctness (no placeholders, correct types)
-4. Provides clear metrics on tool usage accuracy
+This led to the realization that our position-based navigation tools (`go_to_definition`, `find_references`) are incompatible with the majority of coding agents.
 
-### Key Findings
+### Pivot Required
 
-1. **Context Format**: LLMs perform best when given:
-   - Current file path
-   - Exact position (row, column)
-   - Code snippet showing what the user sees
-   - Natural language question in context
+Based on this analysis, we need to:
 
-2. **Common Issues**:
-   - LLMs tend to use placeholder values like "path/to/file"
-   - String numbers instead of actual numbers for row/column
-   - Confusion when context is missing
+1. **First complete task 54**: Transform Ariadne MCP from navigation to context-oriented tools
+2. **Then return to this task**: Test the new context-oriented tools with agent libraries
 
-3. **Tool Description Improvements**:
-   - Added "Requires actual file paths and numeric positions"
-   - Included examples in parameter descriptions
-   - Emphasized that placeholders are not acceptable
+### Next Steps
 
-### Test Scenarios
-
-1. **Simple Definition Lookup**: User sees a function call, wants to find definition
-2. **Find All References**: User is at a class definition, wants to find usages
-3. **Refactoring Context**: User wants to replace current code with another function
-
-### Results
-
-- Tool selection accuracy: ~90% with clear context
-- Parameter correctness: Improved from 60% to 85% with better descriptions
-- Main issues: Placeholder values when context is ambiguous
-
-### Files Created
-
-- `/packages/mcp/tests/tool-usage-test.py` - Simple, focused test script
-- Updated tool descriptions in `/packages/mcp/src/start_server.ts`
-- Working directory fix in `/packages/mcp/tests/agent-example/utils.py`
+1. Complete task 54 to implement context-oriented tools
+2. Return to this task to test integration with:
+   - Aider (with context adapter)
+   - Continue (native integration)
+   - OpenDevin (with position inference)
+   - AutoGen (as wrapped functions)
+3. Measure success metrics defined in task 54
