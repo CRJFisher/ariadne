@@ -25,7 +25,7 @@ Implement the first context-oriented MCP tool that provides rich symbol informat
 - [x] Function call relationships implemented via call-graph API
 - [ ] Full definition code extraction (blocked by task-55: enclosing_range bug)
 - [x] Documentation extraction from comments/JSDoc
-- [ ] Class inheritance and interface implementation relationships
+- [ ] Class inheritance and interface implementation relationships (blocked by task-56)
 
 ## Implementation Plan
 
@@ -77,7 +77,7 @@ Implement the first context-oriented MCP tool that provides rich symbol informat
    - **Available**: Decorator/annotation extraction for all languages
    - **Implemented**: Now extracts documentation and annotations successfully
 
-3. **Class Inheritance Relationships** - **BLOCKED by core limitation**
+3. **Class Inheritance Relationships** - **BLOCKED by task-56**
    - Issue: No API to analyze extends/implements relationships  
    - Impact: `RelationshipInfo.extends/implements` always undefined
    - Current: Returns undefined for non-function symbols
