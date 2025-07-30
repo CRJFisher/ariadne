@@ -1,0 +1,196 @@
+- library: aider
+  description: A command-line chat tool for pair-programming with an LLM, enabling edits to local git repositories.
+  planning_phase_notes: |
+    Aider does not have an explicit, separate planning phase where it chooses from a list of abstract tools. Instead, the "tool" is the code editing format itself, which is pre-selected by the user or via configuration. The LLM's task is to "plan" the code changes and then output them in the required format.
+  tools:
+    - name: editblock
+      description: The default tool. The LLM must generate one or more blocks of code, each with a `SEARCH` section (the original code to be replaced) and a `REPLACE` section (the new code). This is used for targeted, surgical edits.
+    - name: udiff
+      description: The LLM must generate edits in a format similar to a unified diff (`diff -U0`), which shows the lines to be removed and added.
+    - name: wholefile
+      description: The LLM must output the entire, modified content of a file. This is used when changes are extensive or when creating a new file.
+    - name: File Creation
+      description: A capability mentioned in the prompt, allowing the LLM to create a new file by providing its path and content in the 'wholefile' format, without needing to ask for permission.
+  tool_selection_prompt:
+    reassembled_prompt: |
+      Act as an expert software developer.
+      Respect and use existing conventions, libraries, etc that are already present in the code base.
+      Take requests for changes to the supplied code.
+      If the request is ambiguous, ask questions.
+      Always reply to the user in {language}.
+
+      # This is the repository map, if provided by the user.
+      {repo_map}
+
+      Once you understand the request you MUST:
+      1. Decide if you need to propose *SEARCH/REPLACE* edits to any files that haven't been added to the chat. You can create new files without asking! But if you need to propose edits to existing files not already added to the chat, you *MUST* tell the user their full path names and ask them to *add the files to the chat*.
+      2. Think step-by-step and explain the needed changes in a few short sentences.
+      3. Describe each change with a *SEARCH/REPLACE block* per the examples below. All changes to files must use this *SEARCH/REPLACE block* format. ONLY EVER RETURN CODE IN A *SEARCH/REPLACE BLOCK*!
+
+      # Examples of the required format are included here in the actual prompt.
+
+      You are working on a codebase that is in a git repository.
+      The user has added the following files to the chat.
+
+      # The content of the files added to the chat is injected here.
+      {file_contents}
+  context_types:
+    - **Files in Chat:** The full content of files the user has explicitly added to the session.
+    - **Repository Map:** A high-level summary of the repository's file and directory structure, generated via the `/map` command.
+    - **Chat History:** The ongoing conversation between the user and the agent.
+    - **Git Diff:** Users can provide the output of `git diff` to give the agent context on recent, uncommitted changes.
+    - **Conventions File:** A user-defined file that outlines specific coding conventions to be followed.
+
+- library: autogen
+  description: A framework for simplifying the orchestration, automation, and optimization of complex LLM workflows.
+  planning_phase_notes: |
+    AutoGen's planning occurs when an agent, typically an `AssistantAgent`, receives a user request. Based on its system prompt and the available tools (registered Python functions), it decides whether to respond directly, execute a tool, or ask a clarifying question. The decision to use a tool is often part of a ReAct (Reason+Act) style of thinking.
+  tools:
+    - name: User-Defined Python Functions
+      description: Any Python function can be registered as a tool. The function's signature (name, arguments, types) and its docstring are parsed and provided to the LLM. The LLM then generates a JSON object with the function name and arguments to execute it.
+    - name: Code Executor
+      description: A built-in tool that allows the agent to generate and execute Python or shell scripts in a specified environment (e.g., a local Docker container) to perform tasks, install packages, or analyze data.
+  tool_selection_prompt:
+    reassembled_prompt: |
+      # This is the default system message for the AssistantAgent.
+      You are a helpful AI assistant.
+      Solve tasks using your coding and language skills.
+      In the following cases, suggest python code (in a python coding block) or shell script (in a sh coding block) for the user to execute.
+        1. When you need to collect info, use the code to output the info you need, for example, browse or search the web, download/read a file, print the content of a webpage or a file, get the current date/time, check the operating system.
+        2. When you need to perform some task on the user's behalf, use the code to perform the task and output the result. For example, send an email, create a file, etc.
+      After sufficient info is printed and the task is ready to be solved based on your language skill, you can solve the task by yourself.
+      When you find an answer, verify the answer carefully. Include verifiable evidence in your response if possible.
+
+      # For models that support function/tool calling, the following is appended in a structured format.
+      # The exact formatting depends on the model's API (e.g., OpenAI's JSON format).
+      You have access to the following tools:
+
+      {tool_definitions} # Placeholder for the list of function signatures and docstrings.
+      # Example of a single tool definition:
+      #
+      # function: get_stock_price(symbol: str) -> float:
+      #  """Gets the current stock price for a given symbol."""
+
+      You may call one or more of these functions to help you answer the user's question.
+      If you call a function, the result will be returned to you in the next turn.
+
+      # The user's request is then appended.
+      {user_request}
+  context_types:
+    - **System Message:** Defines the agent's persona, capabilities, and rules of engagement.
+    - **Chat History:** The full conversation history between all participating agents.
+    - **User Request:** The initial prompt or task provided by the user.
+    - **Available Tools:** A list of Python functions registered with the agent, including their names, parameters, and docstring descriptions, which are formatted for the LLM's function-calling API.
+
+- library: opendevin
+  description: An open-source project aiming to replicate Devin, an autonomous AI software engineer.
+  planning_phase_notes: |
+    OpenDevin uses a multi-step agentic loop (Think, Plan, Execute). A dedicated `PlannerAgent` first breaks down the user's request into a series of steps. Then, an execution agent (`CodeActAgent`) works through these steps. The prompt at each step is not a single static template but is dynamically constructed from the agent's internal state, its "monologue," and the current goal.
+  tools:
+    - name: bash(command)
+      description: Executes a shell command in the sandboxed environment. Used for file manipulation, running tests, installing dependencies, etc.
+    - name: read(path)
+      description: Reads the full content of a specified file.
+    - name: write(path, content)
+      description: Writes the given content to a specified file, overwriting it if it exists or creating it if it doesn't.
+    - name: browse(url)
+      description: Fetches the content of a URL. Used for reading documentation or external resources.
+    - name: recall()
+      description: Retrieves information from the agent's long-term memory or monologue.
+    - name: finish()
+      description: A special action to signal that the agent believes the task is complete.
+  tool_selection_prompt:
+    reassembled_prompt: |
+      You are an AI software engineer. Your goal is to solve the following task.
+
+      TASK:
+      {main_user_request}
+
+      You have previously created a plan to address this task.
+      PLAN:
+      {long_term_plan}
+
+      You are currently on the following step: "{current_plan_step}"
+
+      Here is the history of your work so far (your monologue):
+      {monologue_of_past_actions_and_observations}
+
+      You have the following tools available:
+      - bash(command): Executes a shell command.
+      - read(path): Reads the content of a file.
+      - write(path, content): Writes content to a file.
+      - browse(url): Browses a web page and returns its content.
+      - recall(): Retrieves information from your memory.
+      - finish(): Ends the task.
+
+      Based on the current state and your goal, decide on the next single action to take.
+      First, think about what you need to do next.
+      Then, express your action as a single tool call in the specified format (e.g., JSON).
+
+      THOUGHT:
+      {llm_generates_thought_here}
+
+      ACTION:
+      {llm_generates_action_here}
+  context_types:
+    - **Main User Request:** The high-level objective provided by the user.
+    - **Long-Term Plan:** The sequence of steps generated by the `PlannerAgent`.
+    - **Current Plan Step:** The specific step from the plan the agent is currently focused on.
+    - **Monologue / History:** A running log of the agent's previous thoughts, actions taken, and the observations (results) from those actions.
+    - **File System State:** The agent has access to a workspace and can read/write files, so the state of this workspace is implicit context.
+
+- library: continue
+  description: An open-source autopilot for software development; an IDE extension that combines an agent with context from your IDE.
+  planning_phase_notes: |
+    Planning in Continue is initiated by the user's chat input. If the input matches a pre-defined "Slash Command," a specific prompt template is used. Otherwise, a general-purpose chat prompt is used. The LLM's "plan" is to decide how to use the provided context to fulfill the request, which often involves suggesting code edits. Tool use is determined by the LLM's interpretation of the user's natural language instruction.
+  tools:
+    - name: /edit
+      description: Apply code changes to the highlighted code or the files specified with '@'.
+    - name: /chat
+      description: A general purpose chat interface for asking questions or getting code suggestions.
+    - name: /comment
+      description: Add comments to the selected code.
+    - name: /debug
+      description: Help find and fix bugs in the selected code, often using context from a terminal.
+    - name: /test
+      description: Generate a unit test for the selected code.
+    - name: /share
+      description: Create a shareable link of the current session.
+    - name: /help
+      description: Provides a list of available commands and how to use them.
+  tool_selection_prompt:
+    reassembled_prompt: |
+      # This is the base system message.
+      You are an expert software developer. You are helping a user who is working in their IDE.
+
+      # The user has provided the following context items.
+      # Context items are injected here, each with its own header.
+      # Example for a file:
+      # --- File: src/main.py ---
+      # {file_content_from_context_provider}
+      #
+      # Example for terminal output:
+      # --- Terminal: Get Git Status ---
+      # {output_of_git_status_command}
+      {context_items}
+
+      # If a Slash Command is used, its specific instructions are inserted here.
+      # For example, for a '/comment' command:
+      # "Add comments to the following code. Do not suggest any other code changes."
+      {slash_command_instructions}
+
+      Here is the user's request:
+      {user_chat_input}
+
+      Please follow the user's instructions and use the provided context to generate a helpful response.
+      If you are writing code, use the same indentation and style as the surrounding code.
+  context_types:
+    - **Active File:** The content of the file currently open in the user's editor.
+    - **Highlighted Code:** The specific section of code the user has selected.
+    - **Context Providers (`@`):** User-selected context, which can include:
+        - Specific files (`@file`)
+        - Folders (`@folder`)
+        - GitHub Issues (`@issue`)
+        - The output of terminal commands (`@terminal`)
+        - Web content (`@url`)
+    - **Chat History:** The previous turns of the conversation.

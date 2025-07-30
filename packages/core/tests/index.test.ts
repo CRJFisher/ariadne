@@ -217,7 +217,7 @@ describe("Project - Find All References", () => {
 
     project.add_or_update_file("test.ts", code);
 
-    const refs = project.find_all_references("test.ts", { row: 1, column: 12 });
+    const refs = project.find_references("test.ts", { row: 1, column: 12 });
     expect(refs.length).toBe(3); // 3 references (excluding the definition)
 
     // Verify reference locations
@@ -239,7 +239,7 @@ describe("Project - Find All References", () => {
 
     project.add_or_update_file("test.ts", code);
 
-    const refs = project.find_all_references("test.ts", { row: 1, column: 15 });
+    const refs = project.find_references("test.ts", { row: 1, column: 15 });
     expect(refs.length).toBe(3);
   });
 
@@ -260,7 +260,7 @@ describe("Project - Find All References", () => {
 
     project.add_or_update_file("test.ts", code);
 
-    const refs = project.find_all_references("test.ts", { row: 2, column: 16 });
+    const refs = project.find_references("test.ts", { row: 2, column: 16 });
     expect(refs.length).toBe(2); // Referenced in getValue and setValue
   });
 
@@ -268,7 +268,7 @@ describe("Project - Find All References", () => {
     const code = `const unusedVar = 42;`;
     project.add_or_update_file("test.ts", code);
 
-    const refs = project.find_all_references("test.ts", { row: 0, column: 6 });
+    const refs = project.find_references("test.ts", { row: 0, column: 6 });
     expect(refs).toEqual([]);
   });
 
@@ -294,7 +294,7 @@ describe("Project - Find All References", () => {
 
     project.add_or_update_file("test.ts", code);
 
-    const refs = project.find_all_references("test.ts", { row: 1, column: 12 });
+    const refs = project.find_references("test.ts", { row: 1, column: 12 });
     expect(refs.length).toBe(3); // Used in func1, func2, and MyClass.method
   });
 });
@@ -312,7 +312,7 @@ describe("Project - Edge Cases", () => {
     const def = project.go_to_definition("empty.ts", { row: 0, column: 0 });
     expect(def).toBeNull();
 
-    const refs = project.find_all_references("empty.ts", { row: 0, column: 0 });
+    const refs = project.find_references("empty.ts", { row: 0, column: 0 });
     expect(refs).toEqual([]);
   });
 
@@ -323,7 +323,7 @@ describe("Project - Edge Cases", () => {
     const def = project.go_to_definition("test.ts", { row: 100, column: 100 });
     expect(def).toBeNull();
 
-    const refs = project.find_all_references("test.ts", {
+    const refs = project.find_references("test.ts", {
       row: 100,
       column: 100,
     });
