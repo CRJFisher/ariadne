@@ -13,6 +13,8 @@
     "LICENSE"
   ],
   "scripts": {
+    "update-version": "node scripts/update-version.js",
+    "prebuild": "npm run update-version",
     "build": "tsc && chmod +x dist/server.js",
     "test": "vitest run",
     "test:ui": "vitest --ui",
