@@ -1,5 +1,11 @@
 # @ariadnejs/core
 
+## 0.5.16
+
+### Patch Changes
+
+- d244119: Remove deprecated find_all_references alias - use find_references instead
+
 ## 0.5.15
 
 ### Patch Changes
