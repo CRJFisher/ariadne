@@ -185,15 +185,15 @@ Configure multiple Ariadne instances for different projects:
 
 Once configured, the following tools are available:
 
-### `get_symbol_context` ⭐ Recommended
+### `get_symbol_context`
 
 Get comprehensive information about any symbol by name - no file position needed!
 
 **Parameters:**
 
-- `symbol`: Name of the function, class, or variable
-- `searchScope`: "file" | "project" | "dependencies" (default: "project")
-- `includeTests`: boolean (default: false)
+- `symbol` (required): Name of the function, class, or variable
+- `searchScope` (optional): "file" | "project" | "dependencies" (default: "project")
+- `includeTests` (optional): boolean (default: false)
 
 **Example prompts:**
 
@@ -210,48 +210,12 @@ Get comprehensive information about any symbol by name - no file position needed
 - Class inheritance and interfaces
 - Test coverage information
 
-### `get_call_graph`
+### Coming Soon
 
-Analyze function call relationships across your codebase.
-
-**Parameters:**
-
-- `include_tests`: boolean (default: false)
-
-**Example prompts:**
-
-```
-"Show me the call graph for the authentication module"
-"What functions are entry points in my application?"
-"Which functions call the database layer?"
-```
-
-**Returns:**
-- Complete function call graph
-- Entry points (uncalled functions)
-- Call hierarchy visualization
-
-### `get_references`
-
-Find all references to a symbol across the codebase.
-
-**Parameters:**
-
-- `symbol_name`: Name of the symbol
-- `include_tests`: boolean (default: true)
-
-**Example prompts:**
-
-```
-"Find all places where UserService is used"
-"Show me references to the validateEmail function"
-"Where is the Config interface imported?"
-```
-
-**Returns:**
-- All usage locations with context
-- Import statements
-- Test references
+Additional tools are in development:
+- `get_call_graph` - Analyze function call relationships
+- `get_references` - Find all references to a symbol
+- `preview_refactor` - Preview the impact of refactoring changes
 
 ## Verification
 
