@@ -16,11 +16,13 @@ This package provides an MCP (Model Context Protocol) server that exposes Ariadn
 ## Installation
 
 ### Global Installation (Recommended)
+
 ```bash
 npm install -g @ariadnejs/mcp
 ```
 
 ### Project-Specific Installation
+
 ```bash
 npm install --save-dev @ariadnejs/mcp
 ```
@@ -28,6 +30,7 @@ npm install --save-dev @ariadnejs/mcp
 ## Quick Start
 
 ### Step 1: Install the MCP Server
+
 ```bash
 npm install -g @ariadnejs/mcp
 ```
@@ -35,6 +38,7 @@ npm install -g @ariadnejs/mcp
 ### Step 2: Configure Your AI Assistant
 
 #### Claude Desktop
+
 Add to your `claude_desktop_config.json` (usually in `~/Library/Application Support/Claude/` on macOS):
 
 ```json
@@ -52,6 +56,7 @@ Add to your `claude_desktop_config.json` (usually in `~/Library/Application Supp
 ```
 
 #### Cursor
+
 Add to your `.cursor/mcp/config.json` in your project root:
 
 ```json
@@ -66,6 +71,7 @@ Add to your `.cursor/mcp/config.json` in your project root:
 ```
 
 #### Continue
+
 Add to your `~/.continue/config.json`:
 
 ```json
@@ -105,6 +111,7 @@ startServer({
 The MCP server provides powerful context-oriented tools that allow AI assistants to understand your codebase:
 
 #### `get_symbol_context`
+
 Get comprehensive information about any symbol by name - no file position needed!
 
 ```typescript
@@ -119,6 +126,7 @@ Get comprehensive information about any symbol by name - no file position needed
 ```
 
 Returns:
+
 - Full function/class implementation with documentation
 - Usage statistics (references, imports, tests)
 - Call relationships (calls/called by)
@@ -126,6 +134,7 @@ Returns:
 - File location and signature
 
 #### `get_call_graph`
+
 Analyze function call relationships across your entire codebase.
 
 ```typescript
@@ -138,12 +147,14 @@ Analyze function call relationships across your entire codebase.
 ```
 
 Returns:
+
 - Complete function call graph
 - Entry points (uncalled functions)
 - Call hierarchy visualization
 - Test vs. production code separation
 
 #### `get_references`
+
 Find all references to a symbol across the codebase.
 
 ```typescript
@@ -157,6 +168,7 @@ Find all references to a symbol across the codebase.
 ```
 
 Returns:
+
 - All usage locations with context
 - Import statements
 - Test references
@@ -165,6 +177,7 @@ Returns:
 ## Example Use Cases
 
 ### For AI Assistants
+
 Once configured, AI assistants can help you with:
 
 - **Code Navigation**: "Show me the implementation of the authenticate function"
@@ -175,6 +188,7 @@ Once configured, AI assistants can help you with:
 - **Test Coverage**: "Which functions in the auth module don't have tests?"
 
 ### For Developers
+
 The MCP server helps AI assistants provide better:
 
 - **Code Reviews**: Understanding the full context of changes
@@ -218,6 +232,7 @@ The MCP server helps AI assistants provide better:
 ## Version Compatibility
 
 This package requires:
+
 - `@ariadnejs/core` >= 0.5.15
 - `@ariadnejs/types` >= 0.5.15
 
@@ -228,16 +243,19 @@ The MCP package versions independently from core packages. Check the [releases p
 ### Common Issues
 
 **MCP server not connecting**
+
 - Check that `@ariadnejs/mcp` is installed globally: `npm list -g @ariadnejs/mcp`
 - Verify your AI assistant's config file syntax is correct
 - Restart your AI assistant after configuration changes
 
 **"Symbol not found" errors**
+
 - Ensure `PROJECT_PATH` points to your project root
 - Check that your project files are saved
 - Verify the language is supported (JS/TS/Python/Rust)
 
 **Performance issues**
+
 - Large codebases may take time for initial indexing
 - Exclude `node_modules` and build directories if possible
 - Consider using project-specific installation for better caching
