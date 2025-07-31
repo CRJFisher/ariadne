@@ -13,7 +13,7 @@ export type GetSymbolContextRequest = z.infer<typeof getSymbolContextSchema>;
 // Response interfaces
 export interface SymbolInfo {
   name: string;
-  kind: "function" | "class" | "variable" | "type" | "interface" | "enum" | "method" | "property" | "unknown";
+  kind: "function" | "class" | "struct" | "variable" | "type" | "interface" | "enum" | "method" | "property" | "unknown";
   signature?: string;
   visibility?: "public" | "private" | "protected";
 }
@@ -198,6 +198,7 @@ function extractSymbolInfo(def: any): SymbolInfo {
     "function": "function",
     "method": "method",
     "class": "class",
+    "struct": "struct",
     "interface": "interface",
     "type": "type",
     "enum": "enum",
@@ -415,31 +416,53 @@ function analyzeRelationships(project: Project, def: any): RelationshipInfo {
     dependents: []
   };
   
-  // Only analyze relationships for functions (call graph is function-focused)
-  if (def.symbol_kind !== 'function') {
-    return relationships;
+  // Analyze function call relationships
+  if (def.symbol_kind === 'function') {
+    try {
+      // Get the call graph for the entire project
+      const callGraph = project.get_call_graph();
+      
+      // Find the node for this function
+      const functionNode = callGraph.nodes.get(def.symbol_id);
+      if (functionNode) {
+        // Extract calls and called_by relationships
+        relationships.calls = functionNode.calls.map(call => call.symbol);
+        relationships.calledBy = functionNode.called_by; // already strings
+      }
+    } catch (error) {
+      // Call graph generation might fail for some codebases
+      console.warn(`Failed to generate call graph: ${error}`);
+    }
   }
   
-  try {
-    // Get the call graph for the entire project
-    const callGraph = project.get_call_graph();
-    
-    // Find the node for this function
-    const functionNode = callGraph.nodes.get(def.symbol_id);
-    if (functionNode) {
-      // Extract calls and called_by relationships
-      relationships.calls = functionNode.calls.map(call => call.symbol);
-      relationships.calledBy = functionNode.called_by; // already strings
+  // Analyze class inheritance relationships
+  if (def.symbol_kind === 'class' || def.symbol_kind === 'struct' || def.symbol_kind === 'interface') {
+    const classRelationships = project.get_class_relationships(def);
+    if (classRelationships) {
+      // Set parent class
+      if (classRelationships.parent_class) {
+        relationships.extends = classRelationships.parent_class;
+      }
+      
+      // Set implemented interfaces
+      if (classRelationships.implemented_interfaces.length > 0) {
+        relationships.implements = classRelationships.implemented_interfaces;
+      }
     }
-  } catch (error) {
-    // Call graph generation might fail for some codebases
-    console.warn(`Failed to generate call graph: ${error}`);
+    
+    // Find subclasses/implementations
+    if (def.symbol_kind === 'class' || def.symbol_kind === 'struct') {
+      const subclasses = project.find_subclasses(def);
+      relationships.dependents = subclasses.map(sub => sub.name);
+    } else if (def.symbol_kind === 'interface') {
+      const implementations = project.find_implementations(def);
+      relationships.dependents = implementations.map(impl => impl.name);
+    }
   }
   
   // TODO: Still missing:
-  // - Class inheritance (extends, implements)
   // - General symbol dependencies (imports, variable usage)
-  // - Non-function symbols (classes, variables, etc.)
+  // - Cross-file type dependencies
   
   return relationships;
 }

@@ -265,12 +265,108 @@ export function complexFunction(a: number, b: number): number {
       // Metrics should use metadata.line_count when available (15 lines for this function)
       expect(result.metrics?.linesOfCode).toBe(15);
       
-      // Definition currently only contains function signature due to enclosing_range bug (task-55)
+      // Verify full function body extraction (task-55 completed!)
       expect(result.definition?.implementation).toContain("complexFunction");
       expect(result.definition?.implementation).toContain("export function");
+      expect(result.definition?.implementation).toContain("if (a > 0)");
+      expect(result.definition?.implementation).toContain("return a + b");
+      expect(result.definition?.implementation).toContain("return -(a + b)");
       
       // TODO: Add complexity calculation once available in core
-      // TODO: Verify full function body extraction once task-55 is completed
+    });
+
+    it("should extract class inheritance relationships", async () => {
+      const code = `
+interface Animal {
+  speak(): void;
+}
+
+interface Mammal extends Animal {
+  furColor: string;
+}
+
+class Dog implements Mammal {
+  furColor = "brown";
+  
+  speak() {
+    console.log("Woof!");
+  }
+}
+
+class Poodle extends Dog {
+  breed = "poodle";
+}
+`;
+      
+      project.add_or_update_file("inheritance.ts", code);
+      
+      // Test parent class extraction
+      const poodleResult = await getSymbolContext(project, {
+        symbol: "Poodle",
+        searchScope: "project"
+      });
+      
+      expect(poodleResult).not.toHaveProperty("error");
+      if ("error" in poodleResult) return;
+      
+      expect(poodleResult.relationships.extends).toBe("Dog");
+      expect(poodleResult.relationships.dependents).toEqual([]); // No subclasses
+      
+      // Test interface implementation
+      const dogResult = await getSymbolContext(project, {
+        symbol: "Dog",
+        searchScope: "project"
+      });
+      
+      expect(dogResult).not.toHaveProperty("error");
+      if ("error" in dogResult) return;
+      
+      expect(dogResult.relationships.implements).toEqual(["Mammal"]);
+      expect(dogResult.relationships.dependents).toEqual(["Poodle"]); // Has one subclass
+      
+      // Test interface extension
+      const mammalResult = await getSymbolContext(project, {
+        symbol: "Mammal",
+        searchScope: "project"
+      });
+      
+      expect(mammalResult).not.toHaveProperty("error");
+      if ("error" in mammalResult) return;
+      
+      expect(mammalResult.relationships.extends).toBe("Animal");
+      expect(mammalResult.relationships.dependents).toEqual(["Dog"]); // One implementer
+    });
+
+    it("should extract Rust trait implementations", async () => {
+      const rustCode = `
+trait Display {
+    fn fmt(&self) -> String;
+}
+
+struct Point {
+    x: i32,
+    y: i32,
+}
+
+impl Display for Point {
+    fn fmt(&self) -> String {
+        format!("({}, {})", self.x, self.y)
+    }
+}
+`;
+      
+      project.add_or_update_file("display.rs", rustCode);
+      
+      const pointResult = await getSymbolContext(project, {
+        symbol: "Point",
+        searchScope: "project"
+      });
+      
+      expect(pointResult).not.toHaveProperty("error");
+      if ("error" in pointResult) return;
+      
+      expect(pointResult.symbol.kind).toBe("struct");
+      expect(pointResult.relationships.implements).toEqual(["Display"]);
     });
   });
   
