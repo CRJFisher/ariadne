@@ -226,12 +226,11 @@ function extractDefinitionInfo(def: any, project: Project): DefinitionInfo {
   const sourceLines = fileCache.source_code.split('\n');
   
   // Use enclosing_range if available (includes full function body), otherwise fall back to range
-  // NOTE: enclosing_range is currently undefined (see task-55), so this always falls back to signature only
   const range = def.enclosing_range || def.range;
   const startLine = range.start.row;
   const endLine = range.end.row;
   
-  // Extract the implementation (currently only signature line due to enclosing_range bug)
+  // Extract the implementation
   const implementation = sourceLines.slice(startLine, endLine + 1).join('\n');
   
   // Extract documentation and decorators using Ariadne's built-in API

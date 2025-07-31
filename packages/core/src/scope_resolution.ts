@@ -136,6 +136,31 @@ export function build_scope_graph(
       symbol_id: "", // Will be computed after metadata is added
     };
 
+    // For function-like definitions, set enclosing_range to the parent node
+    // which contains the full function body
+    if (
+      node.parent &&
+      (kind === "function" || kind === "method" || kind === "generator") &&
+      (node.type === "identifier" || node.type === "property_identifier" || node.type === "private_property_identifier")
+    ) {
+      const parent_node = node.parent;
+      // Check if parent is a function-like node
+      if (
+        // JavaScript/TypeScript
+        parent_node.type === "function_declaration" ||
+        parent_node.type === "function_expression" ||
+        parent_node.type === "arrow_function" ||
+        parent_node.type === "method_definition" ||
+        parent_node.type === "generator_function_declaration" ||
+        // Python
+        parent_node.type === "function_definition" ||
+        // Rust
+        parent_node.type === "function_item"
+      ) {
+        new_def.enclosing_range = graph.node_to_simple_range(parent_node);
+      }
+    }
+
     // Add function metadata if this is a function definition
     if (
       source_code &&
