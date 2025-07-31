@@ -2,41 +2,74 @@
 
 Find references and definitions in your codebase using tree-sitter. Ariadne provides language-agnostic code intelligence by building a scope graph of your code's symbols, their definitions, and their references.
 
+## Packages
+
+Ariadne is split into two main packages:
+
+### [@ariadnejs/core](packages/core)
+The core code intelligence engine providing AST parsing, scope resolution, and symbol tracking. Use this package to integrate code intelligence into your own applications.
+
+```bash
+npm install @ariadnejs/core
+```
+
+### [@ariadnejs/mcp](packages/mcp) 
+Model Context Protocol server that exposes Ariadne's capabilities to AI coding assistants like Claude, Cursor, and Continue. Use this package to give AI agents powerful code analysis abilities.
+
+```bash
+npm install -g @ariadnejs/mcp
+```
+
 ## Features
 
 - **AST Parsing**: Uses tree-sitter to parse source code into an Abstract Syntax Tree
 - **Scope Resolution**: Builds a scope graph tracking definitions, references, imports, and lexical scopes
 - **Cross-file Symbol Resolution**: Find definitions and references across multiple files
 - **Call Graph Analysis**: Build complete function call graphs with cross-file import resolution
+- **Class Inheritance Analysis**: Track class hierarchies, interface implementations, and trait relationships
 - **Multi-language Support**: Extensible architecture supporting JavaScript, TypeScript, Python, and Rust
 - **Incremental Parsing**: Efficiently handles file edits by reusing unchanged AST portions
 - **Fast and Accurate**: Leverages tree-sitter's incremental parsing capabilities
 
 ## Installation
 
+Choose the package that fits your needs:
+
+### For Library Integration
+If you're building developer tools or integrating code intelligence into your application:
+
 ```bash
 npm install @ariadnejs/core
 ```
 
-Ariadne includes prebuilt binaries for common platforms, so you don't need build tools installed. If prebuilt binaries aren't available for your platform, it will automatically build from source. See [prebuild documentation](docs/prebuild-binaries.md) for more details.
+The core package includes prebuilt binaries for common platforms, so you don't need build tools installed. If prebuilt binaries aren't available for your platform, it will automatically build from source. See [prebuild documentation](docs/prebuild-binaries.md) for more details.
+
+### For AI Assistant Integration
+If you want to give AI coding assistants like Claude, Cursor, or Continue access to code intelligence:
+
+```bash
+npm install -g @ariadnejs/mcp
+```
+
+Then configure your AI assistant to use the MCP server. See the [MCP Setup Guide](packages/mcp/SETUP.md) for detailed instructions.
 
 ### TypeScript Types Only
-
-If you only need TypeScript type definitions without the implementation (e.g., for webviews or lightweight environments), you can install the types-only package:
+If you only need TypeScript type definitions without the implementation (e.g., for webviews or lightweight environments):
 
 ```bash
 npm install @ariadnejs/types
 ```
 
 This package contains zero runtime code and is ideal for:
-
 - Webview environments where bundle size is critical
 - Type-safe message passing between processes
 - Projects that only need type definitions for interoperability
 
-See the [@ariadnejs/types documentation](packages/ariadne-types/README.md) for more details.
+See the [@ariadnejs/types documentation](packages/types/README.md) for more details.
 
 ## Quick Start
+
+### Using the Core Library
 
 ```typescript
 import { Project } from "@ariadnejs/core";
@@ -72,6 +105,32 @@ project.update_file_range(
 const callGraph = project.get_call_graph();
 console.log("Entry points:", callGraph.top_level_nodes);
 ```
+
+### Using the MCP Server with AI Assistants
+
+1. Install the MCP server globally:
+```bash
+npm install -g @ariadnejs/mcp
+```
+
+2. Configure your AI assistant (example for Claude Desktop):
+```json
+{
+  "mcpServers": {
+    "ariadne": {
+      "command": "npx",
+      "args": ["@ariadnejs/mcp"]
+    }
+  }
+}
+```
+
+3. Use natural language to analyze code:
+- "Find the definition of the `authenticate` function"
+- "Show me all places where `processPayment` is called"
+- "What functions does the `UserService` class call?"
+
+See the [MCP documentation](packages/mcp/README.md) for more details.
 
 ## API Reference
 

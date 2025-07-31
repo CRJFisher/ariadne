@@ -185,35 +185,73 @@ Configure multiple Ariadne instances for different projects:
 
 Once configured, the following tools are available:
 
-### `go_to_definition`
+### `get_symbol_context` ⭐ Recommended
 
-Find where a symbol is defined.
-
-**Parameters:**
-
-- `file_path`: Relative path to the file
-- `position`: `{ row: number, column: number }` (0-indexed)
-
-**Example:**
-
-```
-Find the definition of 'calculateTotal' at line 42, column 10 in src/utils.ts
-```
-
-### `find_references`
-
-Find all places where a symbol is used.
+Get comprehensive information about any symbol by name - no file position needed!
 
 **Parameters:**
 
-- `file_path`: Relative path to the file  
-- `position`: `{ row: number, column: number }` (0-indexed)
+- `symbol`: Name of the function, class, or variable
+- `searchScope`: "file" | "project" | "dependencies" (default: "project")
+- `includeTests`: boolean (default: false)
 
-**Example:**
+**Example prompts:**
 
 ```
-Find all references to the 'User' class defined at line 5, column 6 in models/user.ts
+"Show me the implementation of the authenticate function"
+"What does the UserService class look like?"
+"Find all usages of processPayment including tests"
 ```
+
+**Returns:**
+- Full implementation with documentation
+- Usage statistics and references
+- Call relationships (calls/called by)
+- Class inheritance and interfaces
+- Test coverage information
+
+### `get_call_graph`
+
+Analyze function call relationships across your codebase.
+
+**Parameters:**
+
+- `include_tests`: boolean (default: false)
+
+**Example prompts:**
+
+```
+"Show me the call graph for the authentication module"
+"What functions are entry points in my application?"
+"Which functions call the database layer?"
+```
+
+**Returns:**
+- Complete function call graph
+- Entry points (uncalled functions)
+- Call hierarchy visualization
+
+### `get_references`
+
+Find all references to a symbol across the codebase.
+
+**Parameters:**
+
+- `symbol_name`: Name of the symbol
+- `include_tests`: boolean (default: true)
+
+**Example prompts:**
+
+```
+"Find all places where UserService is used"
+"Show me references to the validateEmail function"
+"Where is the Config interface imported?"
+```
+
+**Returns:**
+- All usage locations with context
+- Import statements
+- Test references
 
 ## Verification
 
