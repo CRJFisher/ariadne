@@ -1,0 +1,830 @@
+# Agent Experience Simulations with MCP Tools
+# This file demonstrates how different coding agents would experience Ariadne MCP tools
+# alongside their native capabilities
+
+agents:
+  - name: aider
+    description: Command-line chat tool for pair-programming
+    user_request: "Add error handling to the processPayment function"
+    
+    system_prompt: |
+      Act as an expert software developer.
+      Respect and use existing conventions, libraries, etc that are already present in the code base.
+      Take requests for changes to the supplied code.
+      If the request is ambiguous, ask questions.
+      Always reply to the user in English.
+      
+      You have access to the following MCP tools through a connected server:
+      
+      ## MCP Tools Available:
+      
+      1. get_symbol_context(symbol: string, searchScope?: "file" | "project" | "dependencies", includeTests?: boolean)
+         - Get comprehensive information about any symbol (function, class, variable, etc.)
+         - Returns definition, usage, relationships, and metrics
+         - Example: get_symbol_context("processPayment", "project", true)
+      
+      2. find_related_code(code: string, relationshipType?: "similar" | "pattern" | "domain" | "all", limit?: number)
+         - Find code related to a given snippet or description
+         - Returns exact matches, similar logic, same patterns, and related tests
+         - Example: find_related_code("error handling", "pattern", 5)
+      
+      ## Workflow Integration:
+      
+      Before making code changes:
+      1. Use get_symbol_context to understand the current implementation
+      2. Use find_related_code to see how similar patterns are handled elsewhere
+      3. Then proceed with your SEARCH/REPLACE blocks
+      
+      # Repository map would be injected here
+      {repo_map}
+      
+      Once you understand the request you MUST:
+      1. First use MCP tools to gather context about the code you'll be modifying
+      2. Decide if you need to propose *SEARCH/REPLACE* edits to any files
+      3. Think step-by-step and explain the needed changes
+      4. Describe each change with a *SEARCH/REPLACE block*
+      
+      # File contents would be injected here
+      {file_contents}
+    
+    example_interaction: |
+      USER: Add error handling to the processPayment function
+      
+      ASSISTANT: I'll help you add error handling to the processPayment function. Let me first understand the current implementation and see how error handling is done elsewhere in your codebase.
+      
+      <use_mcp_tool>
+      get_symbol_context("processPayment", "project", true)
+      </use_mcp_tool>
+      
+      <mcp_tool_result>
+      {
+        "symbol": {
+          "name": "processPayment",
+          "kind": "function",
+          "signature": "async function processPayment(amount: number, customerId: string): Promise<PaymentResult>",
+          "visibility": "public"
+        },
+        "definition": {
+          "file": "src/services/payment.ts",
+          "line": 45,
+          "implementation": "async function processPayment(amount: number, customerId: string): Promise<PaymentResult> {\n  const customer = await getCustomer(customerId);\n  const charge = await stripe.charges.create({\n    amount: amount * 100,\n    currency: 'usd',\n    customer: customer.stripeId\n  });\n  return { success: true, chargeId: charge.id };\n}",
+          "documentation": "// Process payment for a customer"
+        },
+        "usage": {
+          "directReferences": [
+            {"file": "src/api/checkout.ts", "line": 23, "context": "const result = await processPayment(order.total, order.customerId);"},
+            {"file": "src/api/subscription.ts", "line": 67, "context": "const payment = await processPayment(plan.price, userId);"}
+          ],
+          "tests": [
+            {"file": "tests/payment.test.ts", "testName": "should process payment successfully", "line": 12}
+          ],
+          "totalCount": 3
+        },
+        "relationships": {
+          "calls": ["getCustomer", "stripe.charges.create"],
+          "calledBy": ["handleCheckout", "createSubscription"]
+        }
+      }
+      </mcp_tool_result>
+      
+      Now let me check how error handling is typically done in your payment-related code:
+      
+      <use_mcp_tool>
+      find_related_code("try catch payment error", "pattern", 3)
+      </use_mcp_tool>
+      
+      <mcp_tool_result>
+      {
+        "pattern": [
+          {
+            "file": "src/services/refund.ts",
+            "line": 23,
+            "code": "try {\n  const refund = await stripe.refunds.create({ charge: chargeId });\n  return { success: true, refundId: refund.id };\n} catch (error) {\n  logger.error('Refund failed:', error);\n  throw new PaymentError('Failed to process refund', error.message);\n}"
+          },
+          {
+            "file": "src/services/subscription.ts", 
+            "line": 89,
+            "code": "try {\n  const subscription = await stripe.subscriptions.create(params);\n  return subscription;\n} catch (error) {\n  logger.error('Subscription creation failed:', error);\n  throw new PaymentError('Failed to create subscription', error.message);\n}"
+          }
+        ]
+      }
+      </mcp_tool_result>
+      
+      Based on my analysis, I can see that:
+      1. The processPayment function currently has no error handling
+      2. Other payment-related functions use try-catch blocks and throw PaymentError
+      3. Errors are logged before being thrown
+      4. The function is called from checkout and subscription endpoints
+      
+      I'll add comprehensive error handling following your existing patterns:
+      
+      src/services/payment.ts
+      ```
+      <<<<<<< SEARCH
+      async function processPayment(amount: number, customerId: string): Promise<PaymentResult> {
+        const customer = await getCustomer(customerId);
+        const charge = await stripe.charges.create({
+          amount: amount * 100,
+          currency: 'usd',
+          customer: customer.stripeId
+        });
+        return { success: true, chargeId: charge.id };
+      }
+      =======
+      async function processPayment(amount: number, customerId: string): Promise<PaymentResult> {
+        try {
+          // Validate inputs
+          if (amount <= 0) {
+            throw new PaymentError('Invalid payment amount', 'Amount must be greater than 0');
+          }
+          if (!customerId) {
+            throw new PaymentError('Invalid customer', 'Customer ID is required');
+          }
+          
+          const customer = await getCustomer(customerId);
+          if (!customer || !customer.stripeId) {
+            throw new PaymentError('Customer not found', `No Stripe customer found for ID: ${customerId}`);
+          }
+          
+          const charge = await stripe.charges.create({
+            amount: amount * 100,
+            currency: 'usd',
+            customer: customer.stripeId
+          });
+          
+          return { success: true, chargeId: charge.id };
+        } catch (error) {
+          logger.error('Payment processing failed:', error);
+          
+          // Re-throw if already a PaymentError
+          if (error instanceof PaymentError) {
+            throw error;
+          }
+          
+          // Handle Stripe-specific errors
+          if (error.type === 'StripeCardError') {
+            throw new PaymentError('Card declined', error.message);
+          }
+          
+          // Generic error
+          throw new PaymentError('Payment processing failed', error.message);
+        }
+      }
+      >>>>>>> REPLACE
+      ```
+      
+      The error handling I've added:
+      1. Validates input parameters (amount > 0, customerId exists)
+      2. Checks if customer exists and has a Stripe ID
+      3. Catches all errors and logs them
+      4. Handles Stripe-specific card errors
+      5. Follows your existing PaymentError pattern
+      6. Re-throws PaymentError without wrapping to preserve the original error type
+
+  - name: continue
+    description: IDE extension that combines an agent with context from your IDE
+    user_request: "Explain the processPayment function and how it's used"
+    
+    system_prompt: |
+      You are an expert software developer. You are helping a user who is working in their IDE.
+      
+      ## Available MCP Tools:
+      
+      You have access to Model Context Protocol tools for enhanced code understanding:
+      
+      1. get_symbol_context - Get comprehensive information about any code symbol
+         Parameters:
+         - symbol: The name of the function, class, or variable
+         - searchScope: "file" | "project" | "dependencies" 
+         - includeTests: Include test references
+      
+      2. get_code_structure - Understand project organization and patterns
+         Parameters:
+         - path: Directory or file path to analyze
+         - depth: How deep to analyze (default: 3)
+         - includeTests: Include test structure
+      
+      3. analyze_code_impact - Understand the impact of potential changes
+         Parameters:
+         - file: File to analyze
+         - changes: Description of intended changes
+      
+      ## Context Integration:
+      
+      When answering questions about code:
+      1. Use MCP tools to gather comprehensive context
+      2. Reference actual code locations with file:line notation
+      3. Include related code patterns and usage examples
+      4. Consider test coverage and dependencies
+      
+      --- Active File: src/services/payment.ts ---
+      {active_file_content}
+      
+      --- Cursor Position: Line 47, inside processPayment function ---
+      
+      Here is the user's request:
+      {user_chat_input}
+
+    example_interaction: |
+      USER: Explain the processPayment function and how it's used
+      
+      ASSISTANT: I'll analyze the processPayment function to give you a comprehensive explanation. Let me gather some context first.
+      
+      <use_mcp_tool>
+      get_symbol_context("processPayment", "project", true)
+      </use_mcp_tool>
+      
+      <mcp_tool_result>
+      {
+        "symbol": {
+          "name": "processPayment",
+          "kind": "function", 
+          "signature": "async function processPayment(amount: number, customerId: string): Promise<PaymentResult>",
+          "visibility": "public"
+        },
+        "definition": {
+          "file": "src/services/payment.ts",
+          "line": 45,
+          "implementation": "async function processPayment(amount: number, customerId: string): Promise<PaymentResult> {\n  const customer = await getCustomer(customerId);\n  const charge = await stripe.charges.create({\n    amount: amount * 100,\n    currency: 'usd',\n    customer: customer.stripeId\n  });\n  return { success: true, chargeId: charge.id };\n}",
+          "documentation": "// Process payment for a customer"
+        },
+        "usage": {
+          "directReferences": [
+            {"file": "src/api/checkout.ts", "line": 23, "context": "const result = await processPayment(order.total, order.customerId);"},
+            {"file": "src/api/subscription.ts", "line": 67, "context": "const payment = await processPayment(plan.price, userId);"}
+          ],
+          "tests": [
+            {"file": "tests/payment.test.ts", "testName": "should process payment successfully", "line": 12},
+            {"file": "tests/payment.test.ts", "testName": "should handle invalid customer", "line": 28}
+          ],
+          "totalCount": 3
+        },
+        "relationships": {
+          "calls": ["getCustomer", "stripe.charges.create"],
+          "calledBy": ["handleCheckout", "createSubscription"],
+          "dependencies": ["@services/customer", "stripe"]
+        }
+      }
+      </mcp_tool_result>
+      
+      ## processPayment Function Overview
+      
+      The `processPayment` function is a core payment processing utility in your application located at `src/services/payment.ts:45`.
+      
+      ### Function Signature
+      ```typescript
+      async function processPayment(amount: number, customerId: string): Promise<PaymentResult>
+      ```
+      
+      ### How it Works
+      
+      1. **Customer Lookup**: First retrieves the customer record using `getCustomer(customerId)`
+      2. **Stripe Charge**: Creates a charge through Stripe's API with:
+         - Amount converted to cents (amount * 100)
+         - Currency hardcoded to 'usd'
+         - Customer's Stripe ID from the retrieved customer record
+      3. **Returns**: A `PaymentResult` object with success status and the charge ID
+      
+      ### Where It's Used
+      
+      The function is called in 2 main places:
+      
+      1. **Checkout Flow** (`src/api/checkout.ts:23`)
+         - Processes payment when completing an order
+         - Uses `order.total` and `order.customerId`
+      
+      2. **Subscription Creation** (`src/api/subscription.ts:67`)  
+         - Charges for subscription plans
+         - Uses `plan.price` and `userId`
+      
+      ### Test Coverage
+      
+      The function has test coverage in `tests/payment.test.ts`:
+      - ✅ Successful payment processing (line 12)
+      - ✅ Invalid customer handling (line 28)
+      
+      ### Important Considerations
+      
+      ⚠️ **No Error Handling**: The function currently doesn't handle potential failures from:
+      - Customer not found
+      - Stripe API errors (network, card declined, etc.)
+      - Invalid amount values
+      
+      💡 **Improvements to Consider**:
+      - Add try-catch error handling
+      - Validate amount is positive
+      - Make currency configurable
+      - Add idempotency keys for Stripe charges
+      
+      Would you like me to help implement any of these improvements?
+
+  - name: autogen
+    description: Framework for orchestrating complex LLM workflows
+    user_request: "Create a function to calculate payment fees based on the payment method"
+    
+    system_prompt: |
+      You are a helpful AI assistant.
+      Solve tasks using your coding and language skills.
+      In the following cases, suggest python code (in a python coding block) or shell script (in a sh coding block) for the user to execute.
+        1. When you need to collect info, use the code to output the info you need
+        2. When you need to perform some task on the user's behalf, use the code to perform the task
+      After sufficient info is printed and the task is ready to be solved based on your language skill, you can solve the task by yourself.
+      When you find an answer, verify the answer carefully. Include verifiable evidence in your response if possible.
+      
+      You have access to the following MCP tools through a server connection:
+      
+      function: get_symbol_context(symbol: str, search_scope: str = "project", include_tests: bool = False) -> dict:
+        """
+        Get comprehensive context about a code symbol (function, class, variable).
+        Returns definition, usage statistics, relationships, and code implementation.
+        
+        Args:
+            symbol: Name of the symbol to look up
+            search_scope: One of "file", "project", "dependencies" 
+            include_tests: Whether to include test references
+        
+        Returns:
+            Dictionary with symbol info, definition, usage, and relationships
+        """
+      
+      function: find_related_code(code: str, relationship_type: str = "all", limit: int = 10) -> dict:
+        """
+        Find code related to a given snippet or description.
+        
+        Args:
+            code: Code snippet or natural language description
+            relationship_type: One of "similar", "pattern", "domain", "all"
+            limit: Maximum number of results
+            
+        Returns:
+            Dictionary with exact matches, similar code, patterns, and related tests
+        """
+      
+      function: get_code_structure(path: str, depth: int = 3, include_tests: bool = False) -> dict:
+        """
+        Analyze code structure and organization of a path.
+        
+        Args:
+            path: File or directory path to analyze
+            depth: How deep to analyze directory structure
+            include_tests: Include test structure analysis
+            
+        Returns:
+            Dictionary with modules, abstractions, patterns, and dependencies
+        """
+      
+      You may call these MCP functions to help you understand the codebase before writing code.
+      When you need to understand existing code patterns or conventions, use these tools first.
+      
+      {user_request}
+    
+    example_interaction: |
+      USER: Create a function to calculate payment fees based on the payment method
+      
+      ASSISTANT: I'll help you create a function to calculate payment fees based on the payment method. Let me first understand the existing payment-related code structure and patterns in your codebase.
+      
+      Let me check what payment-related code already exists:
+      
+      ```python
+      # First, let's understand the current payment structure
+      result = get_code_structure("src/services/payment", depth=2, include_tests=True)
+      print("Payment service structure:", result)
+      ```
+      
+      Now let me look for existing payment method handling:
+      
+      ```python
+      # Search for existing payment method patterns
+      related = find_related_code("payment method", relationship_type="pattern", limit=5)
+      print("Existing payment method patterns:", related)
+      ```
+      
+      Let me also check if there's already a payment-related type or interface:
+      
+      ```python
+      # Look for PaymentMethod type/interface
+      payment_method_context = get_symbol_context("PaymentMethod", search_scope="project")
+      print("PaymentMethod definition:", payment_method_context)
+      ```
+      
+      Based on the analysis, I can see that your codebase uses TypeScript and has a PaymentMethod enum with values like 'credit_card', 'debit_card', 'paypal', and 'bank_transfer'. The payment services are in the src/services directory.
+      
+      Here's a function that calculates payment fees following your existing patterns:
+      
+      ```typescript
+      // src/services/payment-fees.ts
+      
+      import { PaymentMethod } from '../types/payment';
+      import { logger } from '../utils/logger';
+      
+      export interface FeeCalculation {
+        baseFee: number;
+        percentageFee: number;
+        totalFee: number;
+        netAmount: number;
+      }
+      
+      /**
+       * Calculate payment processing fees based on payment method
+       * @param amount - Transaction amount in dollars
+       * @param paymentMethod - The payment method being used
+       * @returns Fee calculation breakdown
+       */
+      export function calculatePaymentFees(
+        amount: number, 
+        paymentMethod: PaymentMethod
+      ): FeeCalculation {
+        // Validate input
+        if (amount <= 0) {
+          throw new Error('Amount must be greater than 0');
+        }
+        
+        let baseFee = 0;
+        let percentageFee = 0;
+        
+        // Fee structure based on payment method
+        switch (paymentMethod) {
+          case PaymentMethod.CREDIT_CARD:
+            baseFee = 0.30; // 30 cents base fee
+            percentageFee = 0.029; // 2.9% 
+            break;
+            
+          case PaymentMethod.DEBIT_CARD:
+            baseFee = 0.30; // 30 cents base fee
+            percentageFee = 0.022; // 2.2% (lower than credit)
+            break;
+            
+          case PaymentMethod.PAYPAL:
+            baseFee = 0.30; // 30 cents base fee
+            percentageFee = 0.0349; // 3.49%
+            break;
+            
+          case PaymentMethod.BANK_TRANSFER:
+            baseFee = 0; // No base fee
+            percentageFee = 0.008; // 0.8% (ACH is cheaper)
+            break;
+            
+          default:
+            logger.warn(`Unknown payment method: ${paymentMethod}`);
+            throw new Error(`Unsupported payment method: ${paymentMethod}`);
+        }
+        
+        // Calculate fees
+        const percentageAmount = amount * percentageFee;
+        const totalFee = baseFee + percentageAmount;
+        const netAmount = amount - totalFee;
+        
+        // Round to 2 decimal places
+        const result: FeeCalculation = {
+          baseFee: Math.round(baseFee * 100) / 100,
+          percentageFee: Math.round(percentageAmount * 100) / 100,
+          totalFee: Math.round(totalFee * 100) / 100,
+          netAmount: Math.round(netAmount * 100) / 100
+        };
+        
+        logger.info('Payment fee calculated', {
+          amount,
+          paymentMethod,
+          ...result
+        });
+        
+        return result;
+      }
+      
+      /**
+       * Get fee percentage for a payment method
+       * Useful for displaying fee information to users
+       */
+      export function getFeePercentage(paymentMethod: PaymentMethod): number {
+        switch (paymentMethod) {
+          case PaymentMethod.CREDIT_CARD:
+            return 2.9;
+          case PaymentMethod.DEBIT_CARD:
+            return 2.2;
+          case PaymentMethod.PAYPAL:
+            return 3.49;
+          case PaymentMethod.BANK_TRANSFER:
+            return 0.8;
+          default:
+            return 0;
+        }
+      }
+      ```
+      
+      I've also created a test file following your testing patterns:
+      
+      ```typescript
+      // tests/services/payment-fees.test.ts
+      
+      import { calculatePaymentFees, getFeePercentage } from '../../src/services/payment-fees';
+      import { PaymentMethod } from '../../src/types/payment';
+      
+      describe('Payment Fees Calculation', () => {
+        describe('calculatePaymentFees', () => {
+          it('should calculate credit card fees correctly', () => {
+            const result = calculatePaymentFees(100, PaymentMethod.CREDIT_CARD);
+            
+            expect(result.baseFee).toBe(0.30);
+            expect(result.percentageFee).toBe(2.90); // 2.9% of $100
+            expect(result.totalFee).toBe(3.20);
+            expect(result.netAmount).toBe(96.80);
+          });
+          
+          it('should calculate bank transfer fees correctly', () => {
+            const result = calculatePaymentFees(1000, PaymentMethod.BANK_TRANSFER);
+            
+            expect(result.baseFee).toBe(0);
+            expect(result.percentageFee).toBe(8.00); // 0.8% of $1000
+            expect(result.totalFee).toBe(8.00);
+            expect(result.netAmount).toBe(992.00);
+          });
+          
+          it('should throw error for invalid amount', () => {
+            expect(() => {
+              calculatePaymentFees(-10, PaymentMethod.CREDIT_CARD);
+            }).toThrow('Amount must be greater than 0');
+          });
+          
+          it('should throw error for unknown payment method', () => {
+            expect(() => {
+              calculatePaymentFees(100, 'bitcoin' as any);
+            }).toThrow('Unsupported payment method');
+          });
+        });
+        
+        describe('getFeePercentage', () => {
+          it('should return correct fee percentages', () => {
+            expect(getFeePercentage(PaymentMethod.CREDIT_CARD)).toBe(2.9);
+            expect(getFeePercentage(PaymentMethod.PAYPAL)).toBe(3.49);
+            expect(getFeePercentage(PaymentMethod.BANK_TRANSFER)).toBe(0.8);
+          });
+        });
+      });
+      ```
+      
+      The function follows your existing code patterns:
+      - Uses TypeScript with proper typing
+      - Includes comprehensive error handling
+      - Logs important operations
+      - Returns a detailed breakdown of fees
+      - Includes JSDoc documentation
+      - Has full test coverage
+      
+      You can integrate this with your existing processPayment function to automatically deduct fees during payment processing.
+
+  - name: opendevin
+    description: Autonomous AI software engineer
+    user_request: "Fix the failing payment tests"
+    
+    system_prompt: |
+      You are an AI software engineer. Your goal is to solve the following task.
+      
+      TASK:
+      {main_user_request}
+      
+      You have previously created a plan to address this task.
+      PLAN:
+      1. Identify which payment tests are failing
+      2. Analyze the root cause of failures
+      3. Fix the issues causing test failures
+      4. Verify all tests pass
+      
+      You are currently on the following step: "Analyze the root cause of failures"
+      
+      Here is the history of your work so far (your monologue):
+      THOUGHT: I need to first run the payment tests to see which ones are failing.
+      ACTION: bash("npm test -- tests/payment.test.ts")
+      OBSERVATION: 
+      ```
+      FAIL tests/payment.test.ts
+        ✓ should process payment successfully (45ms)
+        ✗ should handle invalid customer (23ms)
+        ✗ should retry on network errors (125ms)
+      
+      Errors:
+      1) should handle invalid customer
+         Expected PaymentError to be thrown
+         Received: TypeError: Cannot read property 'stripeId' of null
+      
+      2) should retry on network errors  
+         Expected retry logic, but payment failed immediately
+      ```
+      
+      You have the following tools available:
+      - bash(command): Executes a shell command.
+      - read(path): Reads the content of a file.
+      - write(path, content): Writes content to a file.
+      - browse(url): Browses a web page and returns its content.
+      - recall(): Retrieves information from your memory.
+      - finish(): Ends the task.
+      
+      Additionally, you have access to MCP tools for code analysis:
+      - get_symbol_context(symbol, scope, includeTests): Get comprehensive info about any code symbol
+      - find_related_code(code, relationshipType, limit): Find related code patterns
+      - analyze_code_impact(file, changes): Understand impact of changes
+      
+      Based on the current state and your goal, decide on the next single action to take.
+      First, think about what you need to do next.
+      Then, express your action as a single tool call.
+      
+      THOUGHT:
+      {llm_generates_thought_here}
+      
+      ACTION:
+      {llm_generates_action_here}
+      
+    example_interaction: |
+      THOUGHT: I can see two tests are failing. The first one expects a PaymentError but gets a TypeError when stripeId is null. Let me examine the processPayment function to understand how it handles invalid customers.
+      
+      ACTION: get_symbol_context("processPayment", "project", true)
+      
+      OBSERVATION:
+      {
+        "symbol": {
+          "name": "processPayment",
+          "kind": "function",
+          "signature": "async function processPayment(amount: number, customerId: string): Promise<PaymentResult>"
+        },
+        "definition": {
+          "file": "src/services/payment.ts",
+          "line": 45,
+          "implementation": "async function processPayment(amount: number, customerId: string): Promise<PaymentResult> {\n  const customer = await getCustomer(customerId);\n  const charge = await stripe.charges.create({\n    amount: amount * 100,\n    currency: 'usd',\n    customer: customer.stripeId\n  });\n  return { success: true, chargeId: charge.id };\n}"
+        },
+        "tests": [
+          {"file": "tests/payment.test.ts", "testName": "should handle invalid customer", "line": 28}
+        ]
+      }
+      
+      THOUGHT: I see the issue. The processPayment function doesn't check if customer is null before accessing customer.stripeId. Let me look at the failing test to understand what it expects.
+      
+      ACTION: read("tests/payment.test.ts")
+      
+      OBSERVATION:
+      ```typescript
+      import { processPayment, PaymentError } from '../src/services/payment';
+      
+      describe('Payment Tests', () => {
+        it('should handle invalid customer', async () => {
+          // Mock getCustomer to return null
+          jest.mock('../src/services/customer');
+          getCustomer.mockResolvedValue(null);
+          
+          await expect(processPayment(100, 'invalid-id'))
+            .rejects
+            .toThrow(PaymentError);
+        });
+        
+        it('should retry on network errors', async () => {
+          // Mock stripe to fail with network error
+          stripe.charges.create.mockRejectedValueOnce(new Error('Network error'))
+                                .mockResolvedValueOnce({ id: 'charge_123' });
+          
+          const result = await processPayment(100, 'cust_123');
+          expect(result.success).toBe(true);
+          expect(stripe.charges.create).toHaveBeenCalledTimes(2);
+        });
+      });
+      ```
+      
+      THOUGHT: Now I understand both issues:
+      1. The test expects PaymentError when customer is null, but the code throws TypeError
+      2. The second test expects retry logic that doesn't exist
+      
+      Let me check if there's an existing pattern for error handling and retries in the codebase.
+      
+      ACTION: find_related_code("PaymentError retry", "pattern", 5)
+      
+      OBSERVATION:
+      {
+        "pattern": [
+          {
+            "file": "src/services/subscription.ts",
+            "code": "export async function createSubscription(customerId: string, planId: string, retries = 3): Promise<Subscription> {\n  for (let attempt = 1; attempt <= retries; attempt++) {\n    try {\n      if (!customerId) {\n        throw new PaymentError('Invalid customer ID');\n      }\n      // ... rest of implementation\n    } catch (error) {\n      if (attempt === retries || error instanceof PaymentError) {\n        throw error;\n      }\n      logger.warn(`Attempt ${attempt} failed, retrying...`);\n      await sleep(1000 * attempt); // exponential backoff\n    }\n  }\n}"
+          }
+        ]
+      }
+      
+      THOUGHT: Perfect! I found the pattern. The codebase uses:
+      1. PaymentError for business logic errors (like invalid customer)
+      2. Retry logic with exponential backoff for transient errors
+      3. The pattern distinguishes between PaymentError (don't retry) and other errors (retry)
+      
+      Now I'll fix the processPayment function to match these patterns.
+      
+      ACTION: write("src/services/payment.ts", `import { PaymentError } from './errors';
+import { getCustomer } from './customer';
+import { stripe } from '../lib/stripe';
+import { logger } from '../utils/logger';
+import { sleep } from '../utils/sleep';
+
+export interface PaymentResult {
+  success: boolean;
+  chargeId: string;
+}
+
+export async function processPayment(
+  amount: number, 
+  customerId: string,
+  retries = 3
+): Promise<PaymentResult> {
+  // Input validation
+  if (!customerId) {
+    throw new PaymentError('Invalid customer ID');
+  }
+  if (amount <= 0) {
+    throw new PaymentError('Invalid payment amount');
+  }
+
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const customer = await getCustomer(customerId);
+      
+      if (!customer || !customer.stripeId) {
+        throw new PaymentError(\`Customer not found: \${customerId}\`);
+      }
+      
+      const charge = await stripe.charges.create({
+        amount: amount * 100,
+        currency: 'usd',
+        customer: customer.stripeId
+      });
+      
+      return { success: true, chargeId: charge.id };
+      
+    } catch (error) {
+      // Don't retry PaymentError - these are business logic failures
+      if (error instanceof PaymentError) {
+        throw error;
+      }
+      
+      // For other errors (network, Stripe API), retry with backoff
+      if (attempt === retries) {
+        logger.error('Payment failed after retries', { error, customerId, amount });
+        throw new PaymentError('Payment processing failed', error.message);
+      }
+      
+      logger.warn(\`Payment attempt \${attempt} failed, retrying...\`, { error });
+      await sleep(1000 * attempt); // exponential backoff
+    }
+  }
+  
+  // This should never be reached due to the throw in the loop
+  throw new PaymentError('Payment processing failed');
+}`)
+      
+      THOUGHT: I've updated the processPayment function with proper error handling and retry logic. Now let me run the tests again to see if they pass.
+      
+      ACTION: bash("npm test -- tests/payment.test.ts")
+      
+      OBSERVATION:
+      ```
+      PASS tests/payment.test.ts
+        ✓ should process payment successfully (45ms)
+        ✓ should handle invalid customer (12ms)
+        ✓ should retry on network errors (2156ms)
+      
+      All tests passed!
+      ```
+      
+      THOUGHT: Excellent! All payment tests are now passing. The fixes I implemented:
+      
+      1. Added null/undefined checks for customer with proper PaymentError
+      2. Implemented retry logic with exponential backoff for transient errors
+      3. Distinguished between business errors (PaymentError - no retry) and technical errors (retry)
+      4. Added input validation for customerId and amount
+      5. Added proper logging for debugging
+      
+      Let me run all tests to make sure I didn't break anything else.
+      
+      ACTION: bash("npm test")
+      
+      OBSERVATION:
+      ```
+      Test Suites: 15 passed, 15 total
+      Tests: 127 passed, 127 total
+      Time: 8.234s
+      ```
+      
+      THOUGHT: Perfect! All tests are passing. The payment tests are now fixed and the implementation follows the established patterns in the codebase.
+      
+      ACTION: finish()
+
+# Summary of how agents experience MCP tools:
+
+common_patterns:
+  - integration_approach: "MCP tools are presented as additional capabilities alongside native tools"
+  - context_flow: "Agent queries MCP for context → receives structured data → incorporates into response"
+  - tool_calling: "Each agent has its own syntax for invoking tools (XML tags, function calls, JSON)"
+  - primary_benefit: "MCP tools provide rich context that agents lack from their normal file/snippet view"
+
+key_differences:
+  - aider: "Focuses on SEARCH/REPLACE blocks, uses MCP for pre-edit context gathering"
+  - continue: "IDE-integrated, has cursor position, uses MCP to expand beyond visible code"
+  - autogen: "Function-based, treats MCP tools as Python functions returning dicts"
+  - opendevin: "Multi-step planning, uses MCP during analysis phases of its workflow"
+
+integration_challenges:
+  - tool_syntax: "Each agent has different ways of invoking external tools"
+  - response_format: "MCP responses need agent-specific formatting"
+  - workflow_integration: "MCP tools must fit naturally into each agent's workflow"
+  - context_limits: "Agents have token limits, MCP responses must be concise but complete"
