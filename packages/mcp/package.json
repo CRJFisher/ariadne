@@ -1,6 +1,6 @@
 {
   "name": "@ariadnejs/mcp",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Model Context Protocol server for Ariadne - Expose code intelligence capabilities to AI agents",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -45,7 +45,7 @@
   },
   "homepage": "https://github.com/CRJFisher/ariadne#readme",
   "dependencies": {
-    "@ariadnejs/core": "0.5.17",
+    "@ariadnejs/core": "0.5.18",
     "@ariadnejs/types": "0.5.15",
     "@modelcontextprotocol/sdk": "^1.0.0",
     "zod": "^3.22.0"
