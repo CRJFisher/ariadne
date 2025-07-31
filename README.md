@@ -7,13 +7,15 @@ Find references and definitions in your codebase using tree-sitter. Ariadne prov
 Ariadne is split into two main packages:
 
 ### [@ariadnejs/core](packages/core)
+
 The core code intelligence engine providing AST parsing, scope resolution, and symbol tracking. Use this package to integrate code intelligence into your own applications.
 
 ```bash
 npm install @ariadnejs/core
 ```
 
-### [@ariadnejs/mcp](packages/mcp) 
+### [@ariadnejs/mcp](packages/mcp)
+
 Model Context Protocol server that exposes Ariadne's capabilities to AI coding assistants like Claude, Cursor, and Continue. Use this package to give AI agents powerful code analysis abilities.
 
 ```bash
