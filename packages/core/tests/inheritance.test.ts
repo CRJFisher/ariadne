@@ -107,6 +107,72 @@ const myVariable = 42;`;
       expect(project.get_class_relationships(func!)).toBeNull();
       expect(project.get_class_relationships(variable!)).toBeNull();
     });
+
+    it("should extract interface extends relationships", () => {
+      const project = new Project();
+      const code = `
+interface Animal {
+  name: string;
+  speak(): void;
+}
+
+interface Mammal extends Animal {
+  furColor: string;
+}
+
+interface Canine extends Mammal {
+  bark(): void;
+}
+
+interface Pet {
+  owner: string;
+}
+
+interface Dog extends Canine, Pet {
+  breed: string;
+}`;
+      
+      project.add_or_update_file("test.ts", code);
+      const defs = project.get_definitions("test.ts");
+      
+      const animal = defs.find(d => d.name === "Animal" && d.symbol_kind === "interface");
+      const mammal = defs.find(d => d.name === "Mammal" && d.symbol_kind === "interface");
+      const canine = defs.find(d => d.name === "Canine" && d.symbol_kind === "interface");
+      const dog = defs.find(d => d.name === "Dog" && d.symbol_kind === "interface");
+      
+      expect(animal).toBeDefined();
+      expect(mammal).toBeDefined();
+      expect(canine).toBeDefined();
+      expect(dog).toBeDefined();
+      
+      // Test Mammal extends Animal
+      const mammalRelationships = project.get_class_relationships(mammal!);
+      expect(mammalRelationships).not.toBeNull();
+      expect(mammalRelationships!.parent_class).toBe("Animal");
+      expect(mammalRelationships!.parent_class_def?.symbol_id).toBe(animal!.symbol_id);
+      expect(mammalRelationships!.implemented_interfaces).toHaveLength(0);
+      
+      // Test Canine extends Mammal
+      const canineRelationships = project.get_class_relationships(canine!);
+      expect(canineRelationships).not.toBeNull();
+      expect(canineRelationships!.parent_class).toBe("Mammal");
+      
+      // Test inheritance chain
+      const chain = project.get_inheritance_chain(canine!);
+      expect(chain).toHaveLength(2);
+      expect(chain[0].name).toBe("Mammal");
+      expect(chain[1].name).toBe("Animal");
+      
+      // Test find_subclasses works with interfaces
+      const animalSubclasses = project.find_subclasses(animal!);
+      expect(animalSubclasses.map(d => d.name)).toContain("Mammal");
+      
+      // Test Dog extends multiple interfaces (should only pick up first as parent)
+      const dogRelationships = project.get_class_relationships(dog!);
+      expect(dogRelationships).not.toBeNull();
+      expect(dogRelationships!.parent_class).toBe("Canine");
+      // Note: TypeScript interface extends only supports single parent in our implementation
+    });
   });
 
   describe("JavaScript", () => {

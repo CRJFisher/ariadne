@@ -1095,17 +1095,19 @@ export class Project {
    * @returns Array of subclass definitions
    */
   find_subclasses(parent_class: Def): Def[] {
-    if (parent_class.symbol_kind !== "class" && parent_class.symbol_kind !== "struct") {
+    if (parent_class.symbol_kind !== "class" && 
+        parent_class.symbol_kind !== "struct" && 
+        parent_class.symbol_kind !== "interface") {
       return [];
     }
 
     const subclasses: Def[] = [];
 
-    // Check all class/struct definitions
+    // Check all class/struct/interface definitions
     for (const [, graph] of this.file_graphs) {
       const defs = graph.getAllDefs();
       for (const def of defs) {
-        if ((def.symbol_kind === "class" || def.symbol_kind === "struct") && 
+        if ((def.symbol_kind === "class" || def.symbol_kind === "struct" || def.symbol_kind === "interface") && 
             def.symbol_id !== parent_class.symbol_id) {
           const relationships = this.get_class_relationships(def);
           if (relationships?.parent_class === parent_class.name) {
@@ -1159,7 +1161,7 @@ export class Project {
     const visited = new Set<string>();
 
     let current = class_def;
-    while (current && (current.symbol_kind === "class" || current.symbol_kind === "struct")) {
+    while (current && (current.symbol_kind === "class" || current.symbol_kind === "struct" || current.symbol_kind === "interface")) {
       // Prevent infinite loops
       if (visited.has(current.symbol_id)) {
         break;

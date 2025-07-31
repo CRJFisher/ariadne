@@ -67,10 +67,10 @@ function extract_typescript_inheritance(
   node: SyntaxNode,
   relationships: ClassRelationship
 ): void {
-  // Find the class_declaration node if we're at an identifier
+  // Find the class_declaration or interface_declaration node if we're at an identifier
   let class_node = node;
   if (node.type === "identifier" || node.type === "type_identifier") {
-    if (node.parent && node.parent.type === "class_declaration") {
+    if (node.parent && (node.parent.type === "class_declaration" || node.parent.type === "interface_declaration")) {
       class_node = node.parent;
     } else {
       return;
@@ -78,17 +78,38 @@ function extract_typescript_inheritance(
   }
 
   
-  // Look for class_heritage child by iterating through children
+  // Look for class_heritage (for classes) or extends_type_clause (for interfaces)
   let heritage: SyntaxNode | null = null;
+  let isInterface = false;
+  
   for (let i = 0; i < class_node.childCount; i++) {
     const child = class_node.child(i);
-    if (child && child.type === "class_heritage") {
-      heritage = child;
-      break;
+    if (child) {
+      if (child.type === "class_heritage") {
+        heritage = child;
+        break;
+      } else if (child.type === "extends_type_clause") {
+        heritage = child;
+        isInterface = true;
+        break;
+      }
     }
   }
   
   if (!heritage) {
+    return;
+  }
+  
+  // Handle interface extends clause
+  if (isInterface) {
+    // For interfaces, extends_type_clause directly contains the parent type
+    for (let i = 0; i < heritage.childCount; i++) {
+      const child = heritage.child(i);
+      if (child && (child.type === "type_identifier" || child.type === "identifier")) {
+        relationships.parent_class = child.text;
+        return;
+      }
+    }
     return;
   }
 
