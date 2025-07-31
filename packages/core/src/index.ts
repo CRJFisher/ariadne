@@ -9,12 +9,14 @@ import { python_config } from './languages/python';
 import { rust_config } from './languages/rust';
 import { Edit } from './edit';
 import { Tree } from 'tree-sitter';
+import { ClassRelationship, extract_class_relationships } from './inheritance';
 import path from 'path';
 
 // Re-export important types
 export { Point, Def, Ref, Import, FunctionCall, SimpleRange, CallGraph, CallGraphOptions, CallGraphNode, CallGraphEdge, Call, IScopeGraph } from './graph';
 export { Edit } from './edit';
 export { get_symbol_id, parse_symbol_id, normalize_module_path } from './symbol_naming';
+export { ClassRelationship } from './inheritance';
 
 /**
  * Manages the code intelligence for an entire project.
@@ -32,6 +34,7 @@ export class Project {
   private file_graphs: Map<string, ScopeGraph> = new Map();
   private file_cache: Map<string, FileCache> = new Map();
   private languages: Map<string, LanguageConfig> = new Map();
+  private inheritance_map: Map<string, ClassRelationship> = new Map();
 
   constructor() {
     // Register available languages
@@ -671,7 +674,7 @@ export class Project {
     
     // Identify top-level nodes (not called by any other node in the graph)
     const top_level_nodes: string[] = [];
-    for (const [symbol, node] of final_nodes) {
+    for (const [symbol,] of final_nodes) {
       if (!called_symbols.has(symbol)) {
         top_level_nodes.push(symbol);
       }
@@ -1025,6 +1028,190 @@ export class Project {
     }
     
     return exportedFunctions;
+  }
+
+  /**
+   * Get inheritance information for a class definition.
+   * Returns parent class and implemented interfaces.
+   * 
+   * @param class_def - The class definition to analyze
+   * @returns Class relationship info or null if not a class
+   */
+  get_class_relationships(class_def: Def): ClassRelationship | null {
+    // Check if already cached
+    const cached = this.inheritance_map.get(class_def.symbol_id);
+    if (cached) {
+      return cached;
+    }
+
+    // Get the file cache to access the AST
+    const fileCache = this.file_cache.get(class_def.file_path);
+    if (!fileCache) {
+      return null;
+    }
+
+    // Get language config
+    const config = this.get_language_config(class_def.file_path);
+    if (!config) {
+      return null;
+    }
+
+    // Extract relationships from AST
+    const relationships = extract_class_relationships(
+      class_def,
+      fileCache.tree,
+      config.name
+    );
+
+    if (!relationships) {
+      return null;
+    }
+
+    // Resolve parent class definition
+    if (relationships.parent_class) {
+      const parentDef = this.find_class_by_name(relationships.parent_class);
+      if (parentDef) {
+        relationships.parent_class_def = parentDef;
+      }
+    }
+
+    // Resolve interface definitions
+    for (const interfaceName of relationships.implemented_interfaces) {
+      const interfaceDef = this.find_class_by_name(interfaceName);
+      if (interfaceDef) {
+        relationships.interface_defs.push(interfaceDef);
+      }
+    }
+
+    // Cache the result
+    this.inheritance_map.set(class_def.symbol_id, relationships);
+    return relationships;
+  }
+
+  /**
+   * Find all classes that extend a given class.
+   * 
+   * @param parent_class - The parent class definition
+   * @returns Array of subclass definitions
+   */
+  find_subclasses(parent_class: Def): Def[] {
+    if (parent_class.symbol_kind !== "class" && parent_class.symbol_kind !== "struct") {
+      return [];
+    }
+
+    const subclasses: Def[] = [];
+
+    // Check all class/struct definitions
+    for (const [, graph] of this.file_graphs) {
+      const defs = graph.getAllDefs();
+      for (const def of defs) {
+        if ((def.symbol_kind === "class" || def.symbol_kind === "struct") && 
+            def.symbol_id !== parent_class.symbol_id) {
+          const relationships = this.get_class_relationships(def);
+          if (relationships?.parent_class === parent_class.name) {
+            subclasses.push(def);
+          }
+        }
+      }
+    }
+
+    return subclasses;
+  }
+
+  /**
+   * Find all classes that implement a given interface.
+   * 
+   * @param interface_def - The interface definition
+   * @returns Array of implementing class definitions
+   */
+  find_implementations(interface_def: Def): Def[] {
+    if (interface_def.symbol_kind !== "interface" && interface_def.symbol_kind !== "class") {
+      return [];
+    }
+
+    const implementations: Def[] = [];
+
+    // Check all class/struct definitions
+    for (const [, graph] of this.file_graphs) {
+      const defs = graph.getAllDefs();
+      for (const def of defs) {
+        if (def.symbol_kind === "class" || def.symbol_kind === "struct") {
+          const relationships = this.get_class_relationships(def);
+          if (relationships?.implemented_interfaces.includes(interface_def.name)) {
+            implementations.push(def);
+          }
+        }
+      }
+    }
+
+    return implementations;
+  }
+
+  /**
+   * Get the complete inheritance chain for a class.
+   * Returns all ancestor classes in order from immediate parent to root.
+   * 
+   * @param class_def - The class definition
+   * @returns Array of ancestor class definitions
+   */
+  get_inheritance_chain(class_def: Def): Def[] {
+    const chain: Def[] = [];
+    const visited = new Set<string>();
+
+    let current = class_def;
+    while (current && (current.symbol_kind === "class" || current.symbol_kind === "struct")) {
+      // Prevent infinite loops
+      if (visited.has(current.symbol_id)) {
+        break;
+      }
+      visited.add(current.symbol_id);
+
+      const relationships = this.get_class_relationships(current);
+      if (relationships?.parent_class_def) {
+        chain.push(relationships.parent_class_def);
+        current = relationships.parent_class_def;
+      } else {
+        break;
+      }
+    }
+
+    return chain;
+  }
+
+  /**
+   * Check if one class is a subclass of another.
+   * 
+   * @param child - The potential child class
+   * @param parent - The potential parent class
+   * @returns True if child inherits from parent
+   */
+  is_subclass_of(child: Def, parent: Def): boolean {
+    if ((child.symbol_kind !== "class" && child.symbol_kind !== "struct") || 
+        (parent.symbol_kind !== "class" && parent.symbol_kind !== "struct")) {
+      return false;
+    }
+
+    const chain = this.get_inheritance_chain(child);
+    return chain.some(ancestor => ancestor.symbol_id === parent.symbol_id);
+  }
+
+  /**
+   * Helper method to find a class, struct, or interface by name.
+   * Searches across all files in the project.
+   */
+  private find_class_by_name(name: string): Def | null {
+    for (const [, graph] of this.file_graphs) {
+      const defs = graph.getAllDefs();
+      for (const def of defs) {
+        if ((def.symbol_kind === "class" || 
+             def.symbol_kind === "interface" ||
+             def.symbol_kind === "struct") &&
+            def.name === name) {
+          return def;
+        }
+      }
+    }
+    return null;
   }
 }
 
