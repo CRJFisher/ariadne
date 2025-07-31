@@ -106,9 +106,9 @@ startServer({
 });
 ```
 
-### Available Tools
+### Available Tool
 
-The MCP server provides powerful context-oriented tools that allow AI assistants to understand your codebase:
+The MCP server currently provides one powerful context-oriented tool:
 
 #### `get_symbol_context`
 
@@ -125,54 +125,22 @@ Get comprehensive information about any symbol by name - no file position needed
 }
 ```
 
-Returns:
+Parameters:
+- `symbol` (required): Name of the function, class, or variable to look up
+- `searchScope` (optional): "file" | "project" | "dependencies" (default: "project")
+- `includeTests` (optional): Whether to include test file references (default: false)
 
+Returns:
 - Full function/class implementation with documentation
 - Usage statistics (references, imports, tests)
 - Call relationships (calls/called by)
 - Class inheritance and interface implementations
 - File location and signature
 
-#### `get_call_graph`
-
-Analyze function call relationships across your entire codebase.
-
-```typescript
-{
-  "tool": "get_call_graph",
-  "arguments": {
-    "include_tests": false
-  }
-}
-```
-
-Returns:
-
-- Complete function call graph
-- Entry points (uncalled functions)
-- Call hierarchy visualization
-- Test vs. production code separation
-
-#### `get_references`
-
-Find all references to a symbol across the codebase.
-
-```typescript
-{
-  "tool": "get_references",
-  "arguments": {
-    "symbol_name": "UserService",
-    "include_tests": true
-  }
-}
-```
-
-Returns:
-
-- All usage locations with context
-- Import statements
-- Test references
-- Line numbers and file paths
+Coming soon:
+- `get_call_graph` - Analyze function call relationships
+- `get_references` - Find all references to a symbol
+- `preview_refactor` - Preview the impact of refactoring changes
 
 ## Example Use Cases
 
