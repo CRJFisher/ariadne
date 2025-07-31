@@ -16,8 +16,10 @@ export function extract_class_relationships(
   tree: Tree,
   language: string
 ): ClassRelationship | null {
-  // Only process class definitions
-  if (class_def.symbol_kind !== "class" && class_def.symbol_kind !== "interface") {
+  // Only process class/struct/interface definitions
+  if (class_def.symbol_kind !== "class" && 
+      class_def.symbol_kind !== "interface" && 
+      class_def.symbol_kind !== "struct") {
     return null;
   }
 
@@ -46,6 +48,9 @@ export function extract_class_relationships(
       break;
     case "python":
       extract_python_inheritance(class_node, relationships);
+      break;
+    case "rust":
+      extract_rust_trait_impl(class_def, tree, relationships);
       break;
     // Other languages can be added here
     default:
@@ -164,5 +169,48 @@ function extract_python_inheritance(
       }
     }
   }
+}
+
+/**
+ * Extract trait implementations for Rust
+ * In Rust, structs implement traits rather than inheriting from classes
+ */
+function extract_rust_trait_impl(
+  struct_def: Def,
+  tree: Tree,
+  relationships: ClassRelationship
+): void {
+  // In Rust, we need to find impl blocks for this struct
+  // Search the entire file for impl blocks
+  const struct_name = struct_def.name;
+  
+  function findImplBlocks(node: SyntaxNode): void {
+    if (node.type === "impl_item") {
+      // Check if this impl block is for our struct
+      // Pattern: impl Trait for Struct { ... }
+      if (node.childCount >= 4) {
+        const trait_node = node.child(1);
+        const for_keyword = node.child(2);
+        const type_node = node.child(3);
+        
+        if (for_keyword?.text === "for" && 
+            type_node?.text === struct_name &&
+            trait_node?.type === "type_identifier") {
+          // This is a trait implementation for our struct
+          relationships.implemented_interfaces.push(trait_node.text);
+        }
+      }
+    }
+    
+    // Recursively search children
+    for (let i = 0; i < node.childCount; i++) {
+      const child = node.child(i);
+      if (child) {
+        findImplBlocks(child);
+      }
+    }
+  }
+  
+  findImplBlocks(tree.rootNode);
 }
 

@@ -40,7 +40,7 @@ Implemented a comprehensive class inheritance analysis system for Ariadne core:
 
 - Created a separate inheritance map storing ClassRelationship objects instead of modifying the Def interface
 - Extract inheritance information on-demand from cached AST rather than during initial parsing
-- Support inheritance patterns across TypeScript, JavaScript, and Python
+- Support inheritance patterns across TypeScript, JavaScript, Python, and Rust
 
 **Features implemented:**
 
@@ -55,6 +55,7 @@ Implemented a comprehensive class inheritance analysis system for Ariadne core:
   - TypeScript: extends/implements clauses with type_identifier
   - JavaScript: direct extends pattern in class_heritage
   - Python: superclasses in argument_list
+  - Rust: trait implementations via impl blocks
 
 **Technical decisions:**
 
@@ -65,7 +66,7 @@ Implemented a comprehensive class inheritance analysis system for Ariadne core:
 **Files modified/added:**
 
 - `/packages/core/src/inheritance.ts` (new)
-- `/packages/core/src/index.ts` (modified - added inheritance APIs)
-- `/packages/core/tests/inheritance.test.ts` (new - 15 comprehensive tests)
+- `/packages/core/src/index.ts` (modified - added inheritance APIs and struct support)
+- `/packages/core/tests/inheritance.test.ts` (new - 17 comprehensive tests)
 
-All tests pass across TypeScript, JavaScript, and Python inheritance patterns.
+All tests pass across TypeScript, JavaScript, Python, and Rust inheritance patterns. Added support for Rust structs (symbol_kind: "struct") and trait implementations.

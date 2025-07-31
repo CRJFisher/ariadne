@@ -1095,17 +1095,18 @@ export class Project {
    * @returns Array of subclass definitions
    */
   find_subclasses(parent_class: Def): Def[] {
-    if (parent_class.symbol_kind !== "class") {
+    if (parent_class.symbol_kind !== "class" && parent_class.symbol_kind !== "struct") {
       return [];
     }
 
     const subclasses: Def[] = [];
 
-    // Check all class definitions
+    // Check all class/struct definitions
     for (const [, graph] of this.file_graphs) {
       const defs = graph.getAllDefs();
       for (const def of defs) {
-        if (def.symbol_kind === "class" && def.symbol_id !== parent_class.symbol_id) {
+        if ((def.symbol_kind === "class" || def.symbol_kind === "struct") && 
+            def.symbol_id !== parent_class.symbol_id) {
           const relationships = this.get_class_relationships(def);
           if (relationships?.parent_class === parent_class.name) {
             subclasses.push(def);
@@ -1130,11 +1131,11 @@ export class Project {
 
     const implementations: Def[] = [];
 
-    // Check all class definitions
+    // Check all class/struct definitions
     for (const [, graph] of this.file_graphs) {
       const defs = graph.getAllDefs();
       for (const def of defs) {
-        if (def.symbol_kind === "class") {
+        if (def.symbol_kind === "class" || def.symbol_kind === "struct") {
           const relationships = this.get_class_relationships(def);
           if (relationships?.implemented_interfaces.includes(interface_def.name)) {
             implementations.push(def);
@@ -1158,7 +1159,7 @@ export class Project {
     const visited = new Set<string>();
 
     let current = class_def;
-    while (current && current.symbol_kind === "class") {
+    while (current && (current.symbol_kind === "class" || current.symbol_kind === "struct")) {
       // Prevent infinite loops
       if (visited.has(current.symbol_id)) {
         break;
@@ -1185,7 +1186,8 @@ export class Project {
    * @returns True if child inherits from parent
    */
   is_subclass_of(child: Def, parent: Def): boolean {
-    if (child.symbol_kind !== "class" || parent.symbol_kind !== "class") {
+    if ((child.symbol_kind !== "class" && child.symbol_kind !== "struct") || 
+        (parent.symbol_kind !== "class" && parent.symbol_kind !== "struct")) {
       return false;
     }
 
@@ -1194,14 +1196,16 @@ export class Project {
   }
 
   /**
-   * Helper method to find a class or interface by name.
+   * Helper method to find a class, struct, or interface by name.
    * Searches across all files in the project.
    */
   private find_class_by_name(name: string): Def | null {
     for (const [, graph] of this.file_graphs) {
       const defs = graph.getAllDefs();
       for (const def of defs) {
-        if ((def.symbol_kind === "class" || def.symbol_kind === "interface") &&
+        if ((def.symbol_kind === "class" || 
+             def.symbol_kind === "interface" ||
+             def.symbol_kind === "struct") &&
             def.name === name) {
           return def;
         }

@@ -405,3 +405,88 @@ class Child extends Parent {}`;
     });
   });
 });
+
+describe("Rust trait implementation", () => {
+  test("should extract trait implementations", () => {
+    const code = `
+trait Animal {
+    fn speak(&self);
+}
+
+trait Mammal {
+    fn fur_color(&self) -> &str;
+}
+
+struct Dog {
+    name: String,
+}
+
+impl Animal for Dog {
+    fn speak(&self) {
+        println!("Woof!");
+    }
+}
+
+impl Mammal for Dog {
+    fn fur_color(&self) -> &str {
+        "brown"
+    }
+}
+`;
+    
+    const project = new Project();
+    project.add_or_update_file("test.rs", code);
+    
+    const defs = project.get_definitions("test.rs");
+    const dog = defs.find(d => d.name === "Dog" && d.symbol_kind === "struct");
+    
+    expect(dog).toBeDefined();
+    
+    const relationships = project.get_class_relationships(dog!);
+    expect(relationships).not.toBeNull();
+    expect(relationships!.implemented_interfaces).toContain("Animal");
+    expect(relationships!.implemented_interfaces).toContain("Mammal");
+    expect(relationships!.implemented_interfaces.length).toBe(2);
+  });
+
+  test("should find structs implementing a trait", () => {
+    const code = `
+trait Display {
+    fn fmt(&self) -> String;
+}
+
+struct Point {
+    x: i32,
+    y: i32,
+}
+
+struct Circle {
+    radius: f64,
+}
+
+impl Display for Point {
+    fn fmt(&self) -> String {
+        format!("({}, {})", self.x, self.y)
+    }
+}
+
+impl Display for Circle {
+    fn fmt(&self) -> String {
+        format!("Circle({})", self.radius)
+    }
+}
+`;
+    
+    const project = new Project();
+    project.add_or_update_file("test.rs", code);
+    
+    const defs = project.get_definitions("test.rs");
+    const display = defs.find(d => d.name === "Display");
+    
+    expect(display).toBeDefined();
+    
+    const implementers = project.find_implementations(display!);
+    expect(implementers.length).toBe(2);
+    expect(implementers.map(d => d.name).sort()).toEqual(["Circle", "Point"]);
+  });
+});
