@@ -4,12 +4,13 @@
  * in YAML format for LLM/agent validation
  */
 
-import { Project, get_call_graph } from "../src/index";
-import * as fs from "fs";
-import * as path from "path";
-import * as yaml from "js-yaml";
+import { Project, CallGraph } from "../src";
+import fs from "fs";
+import path from "path";
+import yaml from "js-yaml";
 
-interface AgentValidationOutput {
+// Output interface for YAML
+interface ValidationOutput {
   meta: {
     timestamp: string;
     ariadne_version: string;
@@ -38,6 +39,7 @@ interface AgentValidationOutput {
       target_name: string;
       target_file: string;
       call_line: number;
+      call_type?: string;
     }>;
     incoming_calls: Array<{
       source_id: string;
@@ -52,87 +54,105 @@ interface AgentValidationOutput {
     exported_function_count: number;
     import_count: number;
   }>;
+  validation_stats: {
+    nodes_with_calls_pct: number;
+    nodes_called_by_others_pct: number;
+    exported_nodes_pct: number;
+    edges_with_call_type_pct: number;
+    top_level_accuracy_pct: number;
+  };
 }
 
-async function validateAriadneCodebase(): Promise<AgentValidationOutput> {
+async function main() {
   console.log("🔍 Starting Ariadne self-analysis for agent validation...");
-  
-  // Get the root directory (3 levels up from agent-validation folder)
-  const rootDir = path.resolve(__dirname, "..", "..", "..");
-  const coreDir = path.join(rootDir, "packages", "core", "src");
-  const typesDir = path.join(rootDir, "packages", "types", "src");
-  
-  console.log(`📁 Analyzing directories:\n  - ${coreDir}\n  - ${typesDir}`);
-  
-  // Create project and add all TypeScript files
+
   const project = new Project();
-  let fileCount = 0;
   
-  // Helper to recursively add files
-  const addFilesFromDir = (dir: string, baseDir: string) => {
-    const files = fs.readdirSync(dir);
-    for (const file of files) {
-      const filePath = path.join(dir, file);
-      const stat = fs.statSync(filePath);
+  // Directories to analyze
+  const dirsToAnalyze = [
+    path.join(__dirname, "../../core/src"),
+    path.join(__dirname, "../../types/src")
+  ];
+  
+  console.log("📁 Analyzing directories:");
+  dirsToAnalyze.forEach(dir => console.log(`  - ${dir}`));
+  
+  try {
+    // Add all TypeScript/JavaScript files
+    let fileCount = 0;
+    for (const dir of dirsToAnalyze) {
+      if (!fs.existsSync(dir)) continue;
       
-      if (stat.isDirectory() && !file.startsWith(".") && file !== "node_modules") {
-        addFilesFromDir(filePath, baseDir);
-      } else if (file.endsWith(".ts") && !file.endsWith(".test.ts") && !file.endsWith(".d.ts")) {
-        try {
-          const content = fs.readFileSync(filePath, "utf-8");
-          const relativePath = path.relative(baseDir, filePath);
-          const sizeKB = content.length / 1024;
-          
-          if (sizeKB > 32) {
-            console.log(`  ⚠️  Skipping ${relativePath} (${sizeKB.toFixed(1)}KB > 32KB limit)`);
-            continue;
-          }
-          
-          console.log(`  Adding: ${relativePath} (${sizeKB.toFixed(1)}KB)`);
-          project.add_or_update_file(relativePath, content);
-          fileCount++;
-          console.log(`  ✓ Added: ${relativePath}`);
-        } catch (e) {
-          console.error(`  ❌ Failed to add ${filePath}: ${e}`);
+      const files = getAllFiles(dir, ['.ts', '.tsx', '.js', '.jsx']);
+      for (const file of files) {
+        const content = fs.readFileSync(file, 'utf-8');
+        const relativePath = path.relative(path.dirname(dir), file);
+        const fileSize = (content.length / 1024).toFixed(1);
+        
+        // Skip files that are too large for tree-sitter
+        if (content.length > 32 * 1024) {
+          console.log(`  ⚠️  Skipping: ${relativePath} (${fileSize}KB - exceeds 32KB limit)`);
+          continue;
         }
+        
+        console.log(`  Adding: ${relativePath} (${fileSize}KB)`);
+        project.add_or_update_file(relativePath, content);
+        console.log(`  ✓ Added: ${relativePath}`);
+        fileCount++;
       }
     }
-  };
-  
-  addFilesFromDir(coreDir, coreDir);
-  addFilesFromDir(typesDir, typesDir);
-  
-  console.log(`\n📊 Added ${fileCount} files to project`);
-  
-  // Extract call graph
-  console.log("\n🔗 Extracting call graph...");
-  const callGraph = project.get_call_graph({
-    include_external: false,
-    max_depth: 10
-  });
-  
-  // Read version from package.json
-  let version = "unknown";
-  try {
-    const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf-8"));
-    version = packageJson.version;
-  } catch (e) {
-    // Use fallback
-  }
-  
-  // Prepare output data
-  const output: AgentValidationOutput = {
-    meta: {
-      timestamp: new Date().toISOString(),
-      ariadne_version: version,
-      total_files: fileCount,
-      total_functions: callGraph.nodes.size,
-      total_calls: callGraph.edges.length
-    },
-    top_level_nodes: [],
-    sampled_nodes: [],
-    file_summary: []
-  };
+    
+    console.log(`\n📊 Added ${fileCount} files to project`);
+    
+    // Extract call graph
+    console.log("\n🔗 Extracting call graph...");
+    const callGraph = project.get_call_graph({
+      include_external: false
+    });
+    
+    // Calculate statistics
+    const stats = {
+      totalNodes: callGraph.nodes.size,
+      nodesWithCalls: Array.from(callGraph.nodes.values()).filter(n => 
+        callGraph.edges.some(e => e.from === n.symbol)
+      ).length,
+      nodesCalledByOthers: Array.from(callGraph.nodes.values()).filter(n =>
+        callGraph.edges.some(e => e.to === n.symbol)
+      ).length,
+      exportedNodes: Array.from(callGraph.nodes.values()).filter(n => n.is_exported).length,
+      edgesWithCallType: callGraph.edges.filter(e => e.call_type).length
+    };
+    
+    // Get all function definitions for counting
+    let totalFunctions = 0;
+    for (const [filePath, scopeGraph] of project.get_all_scope_graphs()) {
+      const funcs = project.get_functions_in_file(filePath);
+      totalFunctions += funcs.length;
+    }
+    
+    // Create output structure
+    const output: ValidationOutput = {
+      meta: {
+        timestamp: new Date().toISOString(),
+        ariadne_version: JSON.parse(fs.readFileSync(path.join(__dirname, "../package.json"), 'utf-8')).version,
+        total_files: project.get_all_scope_graphs().size,
+        total_functions: totalFunctions,
+        total_calls: callGraph.edges.length
+      },
+      top_level_nodes: [],
+      sampled_nodes: [],
+      file_summary: [],
+      validation_stats: {
+        nodes_with_calls_pct: (stats.nodesWithCalls / stats.totalNodes * 100),
+        nodes_called_by_others_pct: (stats.nodesCalledByOthers / stats.totalNodes * 100),
+        exported_nodes_pct: (stats.exportedNodes / stats.totalNodes * 100),
+        edges_with_call_type_pct: (stats.edgesWithCallType / callGraph.edges.length * 100),
+        top_level_accuracy_pct: callGraph.top_level_nodes.filter(id => {
+          const node = callGraph.nodes.get(id);
+          return node && !callGraph.edges.some(e => e.to === id);
+        }).length / callGraph.top_level_nodes.length * 100
+      }
+    };
   
   // Process top-level nodes
   console.log("\n🌳 Identifying top-level nodes...");
@@ -148,7 +168,7 @@ async function validateAriadneCodebase(): Promise<AgentValidationOutput> {
       name: node.definition.name,
       file: node.definition.file_path,
       line: node.definition.range?.start?.row ? node.definition.range.start.row + 1 : 0,
-      is_exported: node.definition.metadata?.is_exported || false,
+      is_exported: node.is_exported,
       calls_count: outgoingCalls.length,
       called_by_count: incomingCalls.length
     });
@@ -177,7 +197,8 @@ async function validateAriadneCodebase(): Promise<AgentValidationOutput> {
           target_id: e.to,
           target_name: target.definition.name,
           target_file: target.definition.file_path,
-          call_line: e.location?.start?.row ? e.location.start.row + 1 : 0
+          call_line: e.location?.start?.row ? e.location.start.row + 1 : 0,
+          call_type: e.call_type
         } : null;
       })
       .filter(Boolean) as any[];
@@ -204,7 +225,7 @@ async function validateAriadneCodebase(): Promise<AgentValidationOutput> {
       );
       sourceSnippet = sourceResult.source;
     } catch (e) {
-      sourceSnippet = "// Could not extract source";
+      sourceSnippet = "// Source not available";
     }
     
     output.sampled_nodes.push({
@@ -222,53 +243,43 @@ async function validateAriadneCodebase(): Promise<AgentValidationOutput> {
   
   console.log(`  Sampled ${output.sampled_nodes.length} nodes`);
   
-  // File summary
-  console.log("\n📄 Generating file summary...");
-  const fileMap = new Map<string, { functions: number; exported: number; imports: number }>();
-  
-  for (const [nodeId, node] of callGraph.nodes) {
-    const filePath = node.definition.file_path;
-    if (!fileMap.has(filePath)) {
-      fileMap.set(filePath, { functions: 0, exported: 0, imports: 0 });
-    }
-    const stats = fileMap.get(filePath)!;
-    stats.functions++;
-    if (node.definition.metadata?.is_exported) stats.exported++;
-  }
-  
-  // Count imports per file
-  for (const [filePath, _] of fileMap) {
-    try {
-      const graph = project.get_scope_graph(filePath);
-      if (graph) {
-        const imports = graph.getAllImports();
-        fileMap.get(filePath)!.imports = imports.length;
-      }
-    } catch (e) {
-      // Ignore errors
-    }
-  }
-  
-  for (const [file, stats] of fileMap) {
-    output.file_summary.push({
-      file,
-      function_count: stats.functions,
-      exported_function_count: stats.exported,
-      import_count: stats.imports
-    });
-  }
-  
-  output.file_summary.sort((a, b) => b.function_count - a.function_count);
-  
-  console.log("✅ Analysis complete!");
-  return output;
-}
-
-async function main() {
-  try {
-    const output = await validateAriadneCodebase();
+    // File summary
+    console.log("\n📄 Generating file summary...");
+    const fileMap = new Map<string, { functions: number; exported: number; imports: number }>();
     
-    // Write YAML output
+    // Count functions per file
+    for (const [filePath, scopeGraph] of project.get_all_scope_graphs()) {
+      const funcs = project.get_functions_in_file(filePath);
+      const exportedFuncs = funcs.filter(f => {
+        const node = callGraph.nodes.get(f.symbol_id);
+        return node?.is_exported || false;
+      });
+      
+      fileMap.set(filePath, {
+        functions: funcs.length,
+        exported: exportedFuncs.length,
+        imports: scopeGraph.getAllImports().length
+      });
+    }
+    
+    // Sort by function count
+    const sortedFiles = Array.from(fileMap.entries())
+      .sort((a, b) => b[1].functions - a[1].functions);
+    
+    for (const [file, counts] of sortedFiles) {
+      if (counts.functions > 0) {
+        output.file_summary.push({
+          file: file,
+          function_count: counts.functions,
+          exported_function_count: counts.exported,
+          import_count: counts.imports
+        });
+      }
+    }
+    
+    console.log("✅ Analysis complete!");
+    
+    // Write output
     const outputPath = path.join(__dirname, "ariadne-validation-output.yaml");
     const yamlStr = yaml.dump(output, {
       lineWidth: 120,
@@ -286,15 +297,41 @@ async function main() {
     console.log(`  - Total calls: ${output.meta.total_calls}`);
     console.log(`  - Top-level nodes: ${output.top_level_nodes.length}`);
     
+    console.log("\n📊 Validation Statistics:");
+    console.log(`  - Nodes with outgoing calls: ${stats.nodesWithCalls}/${stats.totalNodes} (${output.validation_stats.nodes_with_calls_pct.toFixed(1)}%)`);
+    console.log(`  - Nodes called by others: ${stats.nodesCalledByOthers}/${stats.totalNodes} (${output.validation_stats.nodes_called_by_others_pct.toFixed(1)}%)`);
+    console.log(`  - Exported nodes: ${stats.exportedNodes}/${stats.totalNodes} (${output.validation_stats.exported_nodes_pct.toFixed(1)}%)`);
+    console.log(`  - Edges with call_type: ${stats.edgesWithCallType}/${callGraph.edges.length} (${output.validation_stats.edges_with_call_type_pct.toFixed(1)}%)`);
+    console.log(`  - Top-level accuracy: ${output.validation_stats.top_level_accuracy_pct.toFixed(1)}%`);
+    
   } catch (error) {
     console.error("❌ Error during analysis:", error);
     process.exit(1);
   }
 }
 
-// Run if called directly
-if (require.main === module) {
-  main();
+// Helper function to get all files recursively
+function getAllFiles(dir: string, extensions: string[]): string[] {
+  const files: string[] = [];
+  
+  function traverse(currentPath: string) {
+    const entries = fs.readdirSync(currentPath);
+    
+    for (const entry of entries) {
+      const fullPath = path.join(currentPath, entry);
+      const stat = fs.statSync(fullPath);
+      
+      if (stat.isDirectory() && !entry.startsWith('.') && entry !== 'node_modules') {
+        traverse(fullPath);
+      } else if (stat.isFile() && extensions.some(ext => entry.endsWith(ext))) {
+        files.push(fullPath);
+      }
+    }
+  }
+  
+  traverse(dir);
+  return files;
 }
 
-export { validateAriadneCodebase, AgentValidationOutput };
+// Run the validation
+main().catch(console.error);
