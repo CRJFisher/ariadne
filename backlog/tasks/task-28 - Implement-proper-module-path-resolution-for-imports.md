@@ -8,7 +8,8 @@ updated_date: "2025-07-18"
 labels:
   - enhancement
   - import-resolution
-dependencies: []
+dependencies:
+  - task-31
 ---
 
 ## Description
