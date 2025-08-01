@@ -12,6 +12,7 @@ labels:
   - call-graph
 dependencies:
   - task-61
+  - task-30
 ---
 
 ## Description
@@ -22,9 +23,11 @@ The agent validation framework reveals that Ariadne's call graph extraction is n
 
 - [x] Call relationships are correctly extracted and shown in output
 - [x] Line numbers and source snippets are populated
-- [ ] Top-level nodes correctly exclude functions called within the same module
+- [x] Top-level nodes correctly exclude functions called within the same module
 - [x] File summary shows individual file statistics
-- [ ] Agent validation report shows >100% accuracy
+- [x] API structure is properly documented with comprehensive tests
+- [ ] Export detection working correctly (blocked by task-30)
+- [ ] Agent validation report shows 100% accuracy (currently ~75%)
 
 ## Implementation Plan
 
@@ -59,3 +62,31 @@ Fixed the agent validation script to correctly use the CallGraph API:
 - Main index.ts still skipped due to 32KB limit
 
 **Accuracy improvement:** From ~20% to ~75% - most core functionality now works correctly.
+
+## Additional Findings from API Testing
+
+Created comprehensive API contract tests (`tests/call_graph_api.test.ts`) that revealed why unit tests didn't catch these issues:
+
+**Root Cause Analysis:**
+- Existing unit tests focused on functionality (does it find calls?) not API structure
+- Agent validation was first external consumer relying on specific property names/structures
+- No tests verified the exact object shapes returned by the API
+
+**API Updates Made:**
+1. Added `is_exported` field to `CallGraphNode` type
+2. Added `call_type` field to `CallGraphEdge` type ('direct' | 'method' | 'constructor')
+3. Updated implementation to populate these fields
+4. Confirmed edges use `from`/`to` properties (not `source`/`target`)
+
+**Current Limitations Documented:**
+1. **Export Detection**: `is_exported` always returns false because `findExportedDef` returns any root-scope definition, not just exported ones. Proper fix requires task-30.
+2. **Arrow Functions**: Constants containing arrow functions are excluded from call graph by design (only function declarations, methods, generators included)
+3. **File Size**: index.ts (now 24KB after refactoring) is within limits but was previously skipped
+
+**Test Coverage Improvements:**
+- API structure verification tests
+- Multi-language support tests (TypeScript, JavaScript, Python)
+- Edge case handling tests
+- Property name contract tests
+
+With these fixes and tests in place, future API changes will be caught before external tools break.

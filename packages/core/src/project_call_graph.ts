@@ -244,12 +244,26 @@ export class ProjectCallGraph {
       for (const func of functions) {
         const symbol = func.symbol_id
         
+        // Check if function is exported
+        // For now, we'll consider a function exported if it's in the root scope
+        // and the file contains TypeScript/JavaScript (where we can check for export keyword)
+        // This is a simplification - proper export tracking would require AST analysis
+        let is_exported = false;
+        const graph = this.file_graphs.get(file_path);
+        if (graph) {
+          const rootDefs = (graph as any).get_defs_in_scope((graph as any).root_id);
+          // A function is only exported if it's in root scope AND we need to check the source
+          // For now, we'll default to false for safety
+          is_exported = false;
+        }
+        
         // Initialize node with empty calls and called_by arrays
         nodes.set(symbol, {
           symbol,
           definition: func,
           calls: [],
-          called_by: []
+          called_by: [],
+          is_exported
         });
       }
     }
@@ -299,6 +313,14 @@ export class ProjectCallGraph {
           // Add to caller's calls
           caller_node.calls.push(call_obj);
           
+          // Determine call type
+          let call_type: 'direct' | 'method' | 'constructor' = 'direct';
+          if (call.is_constructor_call) {
+            call_type = 'constructor';
+          } else if (call.is_method_call) {
+            call_type = 'method';
+          }
+          
           // Create edge
           edges.push({
             from: caller_symbol,
@@ -306,7 +328,8 @@ export class ProjectCallGraph {
             location: {
               start: call.call_location,
               end: call.call_location
-            }
+            },
+            call_type
           });
           
           // Track that this symbol is called

@@ -149,12 +149,14 @@ export interface CallGraphNode {
   definition: Def;
   calls: Call[];
   called_by: string[];
+  is_exported: boolean;
 }
 
 export interface CallGraphEdge {
   from: string;
   to: string;
   location: SimpleRange;
+  call_type: 'direct' | 'method' | 'constructor';
 }
 
 export interface CallGraph {
