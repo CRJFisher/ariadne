@@ -1,0 +1,280 @@
+meta:
+  timestamp: '2025-08-01T16:44:47.537Z'
+  ariadne_version: 0.5.17
+  total_files: 15
+  total_functions: 71
+  total_calls: 43
+top_level_nodes:
+  - id: benchmark-incremental#generateLargeFile
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: benchmark-incremental#benchmark
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: edit#create_edit
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: edit#calculate_end_position
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: graph#ScopeGraph.constructor
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: graph#ScopeGraph.insert_local_def
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: graph#ScopeGraph.insert_hoisted_def
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: graph#ScopeGraph.insert_global_def
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: graph#ScopeGraph.insert_local_scope
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: graph#ScopeGraph.insert_local_import
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: graph#ScopeGraph.insert_ref
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: graph#ScopeGraph.node_to_simple_range
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: graph#ScopeGraph.getEdges
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: graph#ScopeGraph.getDefsForRef
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: graph#ScopeGraph.getImportsForRef
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: graph#ScopeGraph.getRefsForDef
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: graph#ScopeGraph.findNodeAtPosition
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: graph#ScopeGraph.getAllDefs
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: graph#ScopeGraph.getAllImports
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: graph#ScopeGraph.findExportedDef
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: graph#ScopeGraph.debug_print
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: graph#ScopeGraph.getCallsFromDef
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: graph#ScopeGraph.getSymbolId
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: graph#ScopeGraph.getDefinitionBySymbol
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: graph#ScopeGraph.getFunctionCalls
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: graph#ScopeGraph.getImportInfo
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: graph#ScopeGraph.getCallGraph
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: inheritance#extract_class_relationships
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: languages/javascript/index#initialize_parser
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: languages/javascript/index#get_scope_query
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: languages/python/index#initialize_parser
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: languages/python/index#get_scope_query
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: languages/python/index#extract_python_context
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: languages/rust/index#initialize_parser
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: languages/rust/index#get_scope_query
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: languages/shared_extractors#extract_jsdoc_context
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: languages/typescript/index#initialize_parser
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: languages/typescript/index#get_scope_query
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: scope_resolution#build_scope_graph
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: symbol_naming#create_method_symbol_id
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: symbol_naming#get_symbol_container
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: symbol_naming#get_unqualified_name
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: symbol_naming#same_module
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: symbol_resolver#find_definition
+    line: 0
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+sampled_nodes:
+  - node:
+      id: benchmark-incremental#generateLargeFile
+      line: 0
+    outgoing_calls: []
+    incoming_calls: []
+    source_snippet: ''
+  - node:
+      id: benchmark-incremental#benchmark
+      line: 0
+    outgoing_calls: []
+    incoming_calls: []
+    source_snippet: ''
+  - node:
+      id: edit#create_edit
+      line: 0
+    outgoing_calls: []
+    incoming_calls: []
+    source_snippet: ''
+  - node:
+      id: graph#ScopeGraph.get_next_node_id
+      line: 0
+    outgoing_calls: []
+    incoming_calls: []
+    source_snippet: ''
+  - node:
+      id: graph#ScopeGraph.find_containing_scope
+      line: 0
+    outgoing_calls: []
+    incoming_calls: []
+    source_snippet: ''
+  - node:
+      id: graph#ScopeGraph.get_scope_stack
+      line: 0
+    outgoing_calls: []
+    incoming_calls: []
+    source_snippet: ''
+  - node:
+      id: graph#ScopeGraph.get_defs_in_scope
+      line: 0
+    outgoing_calls: []
+    incoming_calls: []
+    source_snippet: ''
+  - node:
+      id: graph#ScopeGraph.get_imports_in_scope
+      line: 0
+    outgoing_calls: []
+    incoming_calls: []
+    source_snippet: ''
+file_summary:
+  - function_count: 71
+    exported_function_count: 0
+    import_count: 0
