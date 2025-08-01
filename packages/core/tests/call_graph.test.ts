@@ -1033,3 +1033,126 @@ export function util() {
     expect(callGraph.nodes.has(`${utilModule}#util`)).toBe(true);
   });
 });
+
+describe("Module-level call detection", () => {
+  let project: Project;
+
+  beforeEach(() => {
+    project = new Project();
+  });
+
+  test("detects module-level function calls", () => {
+      const code = `
+function setup() {
+  console.log("Setting up");
+}
+
+function runApp() {
+  console.log("Running app");
+}
+
+// Module-level initialization
+setup();
+runApp();
+`;
+
+      project.add_or_update_file("app.ts", code);
+      const callGraph = project.get_call_graph();
+
+      // Functions should not be top-level since they're called from module
+      expect(callGraph.top_level_nodes).not.toContain("app#setup");
+      expect(callGraph.top_level_nodes).not.toContain("app#runApp");
+
+      // Should have module-level edges
+      const moduleEdges = callGraph.edges.filter(e => e.from.includes("#<module>"));
+      expect(moduleEdges.length).toBe(2);
+      expect(moduleEdges.some(e => e.to === "app#setup")).toBe(true);
+      expect(moduleEdges.some(e => e.to === "app#runApp")).toBe(true);
+    });
+
+    test("distinguishes module-level from function-level calls", () => {
+      const code = `
+function helper() {
+  return "help";
+}
+
+function main() {
+  helper(); // Function-level call
+}
+
+helper(); // Module-level call
+`;
+
+      project.add_or_update_file("mixed.ts", code);
+      const callGraph = project.get_call_graph();
+
+      // main should be top-level (not called)
+      expect(callGraph.top_level_nodes).toContain("mixed#main");
+      
+      // helper should not be top-level (called from module)
+      expect(callGraph.top_level_nodes).not.toContain("mixed#helper");
+
+      // Should have one module-level edge and one function-level edge
+      const moduleEdges = callGraph.edges.filter(e => e.from.includes("#<module>"));
+      const functionEdges = callGraph.edges.filter(e => e.from === "mixed#main");
+      
+      expect(moduleEdges.length).toBe(1);
+      expect(moduleEdges[0].to).toBe("mixed#helper");
+      
+      expect(functionEdges.length).toBe(1);
+      expect(functionEdges[0].to).toBe("mixed#helper");
+    });
+
+    test("handles executable script patterns", () => {
+      const code = `
+#!/usr/bin/env node
+
+function parseArgs(args: string[]) {
+  return { help: args.includes("--help") };
+}
+
+function main() {
+  const options = parseArgs(process.argv);
+  console.log(options);
+}
+
+// Entry point
+if (require.main === module) {
+  main();
+}
+`;
+
+      project.add_or_update_file("cli.ts", code);
+      const callGraph = project.get_call_graph();
+
+      // main should not be top-level (called from module)
+      expect(callGraph.top_level_nodes).not.toContain("cli#main");
+      
+      // parseArgs is only called from main, not from module
+      expect(callGraph.top_level_nodes).not.toContain("cli#parseArgs");
+      
+      const moduleEdges = callGraph.edges.filter(e => e.from.includes("#<module>"));
+      expect(moduleEdges.some(e => e.to === "cli#main")).toBe(true);
+      expect(moduleEdges.some(e => e.to === "cli#parseArgs")).toBe(false);
+    });
+
+    test("extract_call_graph includes module-level calls", () => {
+      const code = `
+function init() {
+  return "initialized";
+}
+
+init(); // Module-level call
+`;
+
+      project.add_or_update_file("init.ts", code);
+      const result = project.extract_call_graph();
+
+      // Should include the module-level call
+      const moduleCalls = result.calls.filter(c => 
+        c.caller_def.name === "<module>" && c.called_def.name === "init"
+      );
+      expect(moduleCalls.length).toBe(1);
+      expect(moduleCalls[0].call_location.row).toBe(5); // Line where init() is called
+    });
+});

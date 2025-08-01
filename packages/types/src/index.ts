@@ -94,6 +94,7 @@ export interface FunctionCall {
   called_def: Def;
   call_location: Point;
   is_method_call: boolean;
+  is_constructor_call?: boolean;
 }
 
 export interface ImportInfo {

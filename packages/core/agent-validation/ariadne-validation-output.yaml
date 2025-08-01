@@ -1,24 +1,10 @@
 meta:
-  timestamp: '2025-08-01T22:28:20.738Z'
+  timestamp: '2025-08-01T22:50:49.106Z'
   ariadne_version: 0.5.18
   total_files: 19
-  total_functions: 102
-  total_calls: 71
+  total_functions: 103
+  total_calls: 93
 top_level_nodes:
-  - id: src/benchmark-incremental#generateLargeFile
-    name: generateLargeFile
-    file: src/benchmark-incremental.ts
-    line: 8
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/benchmark-incremental#benchmark
-    name: benchmark
-    file: src/benchmark-incremental.ts
-    line: 47
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
   - id: src/call_graph_utils#apply_max_depth_filter
     name: apply_max_depth_filter
     file: src/call_graph_utils.ts
@@ -215,76 +201,6 @@ top_level_nodes:
     is_exported: false
     calls_count: 0
     called_by_count: 0
-  - id: src/languages/javascript/index#initialize_parser
-    name: initialize_parser
-    file: src/languages/javascript/index.ts
-    line: 8
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/languages/javascript/index#get_scope_query
-    name: get_scope_query
-    file: src/languages/javascript/index.ts
-    line: 21
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/languages/python/index#initialize_parser
-    name: initialize_parser
-    file: src/languages/python/index.ts
-    line: 8
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/languages/python/index#get_scope_query
-    name: get_scope_query
-    file: src/languages/python/index.ts
-    line: 33
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/languages/python/index#extract_python_context
-    name: extract_python_context
-    file: src/languages/python/index.ts
-    line: 58
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/languages/rust/index#initialize_parser
-    name: initialize_parser
-    file: src/languages/rust/index.ts
-    line: 8
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/languages/rust/index#get_scope_query
-    name: get_scope_query
-    file: src/languages/rust/index.ts
-    line: 19
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/languages/shared_extractors#extract_jsdoc_context
-    name: extract_jsdoc_context
-    file: src/languages/shared_extractors.ts
-    line: 7
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/languages/typescript/index#initialize_parser
-    name: initialize_parser
-    file: src/languages/typescript/index.ts
-    line: 8
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/languages/typescript/index#get_scope_query
-    name: get_scope_query
-    file: src/languages/typescript/index.ts
-    line: 22
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
   - id: src/project_call_graph#ProjectCallGraph.constructor
     name: constructor
     file: src/project_call_graph.ts
@@ -295,35 +211,35 @@ top_level_nodes:
   - id: src/project_call_graph#ProjectCallGraph.extract_call_graph
     name: extract_call_graph
     file: src/project_call_graph.ts
-    line: 186
+    line: 288
     is_exported: false
-    calls_count: 2
+    calls_count: 3
     called_by_count: 0
   - id: src/project_call_graph#ProjectCallGraph.get_call_graph
     name: get_call_graph
     file: src/project_call_graph.ts
-    line: 222
+    line: 329
     is_exported: false
-    calls_count: 3
+    calls_count: 4
     called_by_count: 0
   - id: src/project_call_graph#ProjectCallGraph.set_go_to_definition_delegate
     name: set_go_to_definition_delegate
     file: src/project_call_graph.ts
-    line: 459
+    line: 613
     is_exported: false
     calls_count: 1
     called_by_count: 0
   - id: src/project_call_graph#ProjectCallGraph.set_get_imports_with_definitions_delegate
     name: set_get_imports_with_definitions_delegate
     file: src/project_call_graph.ts
-    line: 463
+    line: 617
     is_exported: false
     calls_count: 1
     called_by_count: 0
   - id: src/project_call_graph#ProjectCallGraph.set_get_all_functions_delegate
     name: set_get_all_functions_delegate
     file: src/project_call_graph.ts
-    line: 467
+    line: 621
     is_exported: false
     calls_count: 1
     called_by_count: 0
@@ -413,6 +329,110 @@ top_level_nodes:
     called_by_count: 0
 sampled_nodes:
   - node:
+      id: src/call_graph_utils#apply_max_depth_filter
+      name: apply_max_depth_filter
+      file: src/call_graph_utils.ts
+      line: 16
+    outgoing_calls: []
+    incoming_calls: []
+    source_snippet: |2-
+       * @returns Filtered nodes and edges within max_depth from top-level nodes
+       */
+      export function apply_max_depth_filter(
+        nodes: Map<string, CallGraphNode>,
+        edges: CallGraphEdge[],
+        top_level_nodes: string[],
+        max_depth: number
+      ): { nodes: Map<string, CallGraphNode>; edges: CallGraphEdge[] } {
+        // BFS from top-level nodes to find nodes within max_depth
+        const visited = new Set<string>();
+        const queue: { node: string; depth: number }[] = [];
+        
+        // Start with top-level nodes
+        for (const node of top_level_nodes) {
+          queue.push({ node, depth: 0 });
+          visited.add(node);
+        }
+        
+        // BFS traversal
+        while (queue.length > 0) {
+          const { node, depth } = queue.shift()!;
+          
+          if (depth >= max_depth) continue;
+          
+          // Add all nodes called by this node
+          const caller_node = nodes.get(node);
+          if (caller_node) {
+            for (const call of caller_node.calls) {
+              if (!visited.has(call.symbol)) {
+                visited.add(call.symbol);
+                queue.push({ node: call.symbol, depth: depth + 1 });
+              }
+            }
+          }
+        }
+        
+        // Filter nodes and edges
+        const filtered_nodes = new Map<string, CallGraphNode>();
+        for (const [symbol, node] of nodes) {
+          if (visited.has(symbol)) {
+            filtered_nodes.set(symbol, node);
+          }
+        }
+        
+        const filtered_edges = edges.filter(
+          edge => visited.has(edge.from) && visited.has(edge.to)
+        );
+        
+        return {
+          nodes: filtered_nodes,
+          edges: filtered_edges
+        };
+      }
+
+      /**
+  - node:
+      id: src/call_graph_utils#is_position_within_range
+      name: is_position_within_range
+      file: src/call_graph_utils.ts
+      line: 71
+    outgoing_calls: []
+    incoming_calls: []
+    source_snippet: |2-
+       * Check if a position is within a range
+       */
+      export function is_position_within_range(position: SimpleRange, range: SimpleRange): boolean {
+        // Check if position start is after range start
+        const afterStart = position.start.row > range.start.row ||
+          (position.start.row === range.start.row && position.start.column >= range.start.column);
+        
+        // Check if position end is before range end  
+        const beforeEnd = position.end.row < range.end.row ||
+          (position.end.row === range.end.row && position.end.column <= range.end.column);
+        
+        return afterStart && beforeEnd;
+      }
+
+      /**
+  - node:
+      id: src/call_graph_utils#get_function_node_range
+      name: get_function_node_range
+      file: src/call_graph_utils.ts
+      line: 86
+    outgoing_calls: []
+    incoming_calls: []
+    source_snippet: |2-
+       * Extract function metadata from AST node
+       */
+      export function get_function_node_range(node: any): SimpleRange | null {
+        if (!node) return null;
+        
+        return {
+          start: { row: node.startPosition.row, column: node.startPosition.column },
+          end: { row: node.endPosition.row, column: node.endPosition.column }
+        };
+      }
+  - node:
       id: src/benchmark-incremental#generateLargeFile
       name: generateLargeFile
       file: src/benchmark-incremental.ts
@@ -481,69 +501,6 @@ sampled_nodes:
       }
 
       // Run benchmarks
-  - node:
-      id: src/call_graph_utils#apply_max_depth_filter
-      name: apply_max_depth_filter
-      file: src/call_graph_utils.ts
-      line: 16
-    outgoing_calls: []
-    incoming_calls: []
-    source_snippet: |2-
-       * @returns Filtered nodes and edges within max_depth from top-level nodes
-       */
-      export function apply_max_depth_filter(
-        nodes: Map<string, CallGraphNode>,
-        edges: CallGraphEdge[],
-        top_level_nodes: string[],
-        max_depth: number
-      ): { nodes: Map<string, CallGraphNode>; edges: CallGraphEdge[] } {
-        // BFS from top-level nodes to find nodes within max_depth
-        const visited = new Set<string>();
-        const queue: { node: string; depth: number }[] = [];
-        
-        // Start with top-level nodes
-        for (const node of top_level_nodes) {
-          queue.push({ node, depth: 0 });
-          visited.add(node);
-        }
-        
-        // BFS traversal
-        while (queue.length > 0) {
-          const { node, depth } = queue.shift()!;
-          
-          if (depth >= max_depth) continue;
-          
-          // Add all nodes called by this node
-          const caller_node = nodes.get(node);
-          if (caller_node) {
-            for (const call of caller_node.calls) {
-              if (!visited.has(call.symbol)) {
-                visited.add(call.symbol);
-                queue.push({ node: call.symbol, depth: depth + 1 });
-              }
-            }
-          }
-        }
-        
-        // Filter nodes and edges
-        const filtered_nodes = new Map<string, CallGraphNode>();
-        for (const [symbol, node] of nodes) {
-          if (visited.has(symbol)) {
-            filtered_nodes.set(symbol, node);
-          }
-        }
-        
-        const filtered_edges = edges.filter(
-          edge => visited.has(edge.from) && visited.has(edge.to)
-        );
-        
-        return {
-          nodes: filtered_nodes,
-          edges: filtered_edges
-        };
-      }
-
-      /**
   - node:
       id: src/function_metadata#extract_function_metadata
       name: extract_function_metadata
@@ -852,210 +809,13 @@ sampled_nodes:
       }
 
       /**
-  - node:
-      id: src/function_metadata#extract_python_function_metadata
-      name: extract_python_function_metadata
-      file: src/function_metadata.ts
-      line: 234
-    outgoing_calls:
-      - target_id: src/function_metadata#extract_python_parameter_names
-        target_name: extract_python_parameter_names
-        target_file: src/function_metadata.ts
-        call_line: 261
-        call_type: direct
-    incoming_calls:
-      - source_id: src/function_metadata#extract_function_metadata
-        source_name: extract_function_metadata
-        source_file: src/function_metadata.ts
-    source_snippet: |2-
-       * Extract metadata for Python functions
-       */
-      function extract_python_function_metadata(
-        node: SyntaxNode,
-        parent_node: SyntaxNode | null,
-        _source_code: string
-      ): FunctionMetadata {
-        // If node is an identifier and parent is a function, use parent as the function node
-        let function_node = node;
-        let actual_parent = parent_node;
-        
-        if (node.type === "identifier" && parent_node && parent_node.type === "function_definition") {
-          function_node = parent_node;
-          actual_parent = parent_node.parent;
-        }
-
-        const metadata: FunctionMetadata = {
-          line_count: function_node.endPosition.row - function_node.startPosition.row + 1,
-        };
-
-        // Check if async
-        const async_keyword = function_node.child(0);
-        if (async_keyword && async_keyword.type === "async") {
-          metadata.is_async = true;
-        }
-
-        // Extract parameter names
-        const params_node = function_node.childForFieldName("parameters");
-        if (params_node) {
-          metadata.parameter_names = extract_python_parameter_names(params_node);
-        }
-
-        // Get function name to check if private
-        const name_node = function_node.childForFieldName("name");
-        if (name_node && name_node.text.startsWith("_")) {
-          metadata.is_private = true;
-        }
-
-        // Check if it's a test function
-        if (name_node) {
-          const func_name = name_node.text;
-          if (func_name.startsWith("test_") || func_name === "setUp" || func_name === "tearDown") {
-            metadata.is_test = true;
-          }
-        }
-
-        // Check for decorators
-        if (actual_parent && actual_parent.type === "decorated_definition") {
-          metadata.has_decorator = true;
-          // Check for test decorators
-          const decorator_list = actual_parent.child(0);
-          if (decorator_list && decorator_list.type === "decorator") {
-            const decorator_text = decorator_list.text;
-            if (decorator_text.includes("@pytest") || decorator_text.includes("@unittest")) {
-              metadata.is_test = true;
-            }
-          }
-        }
-
-        // Check if it's a method within a class
-        let current = actual_parent;
-        while (current) {
-          if (current.type === "class_definition") {
-            const class_name_node = current.childForFieldName("name");
-            if (class_name_node) {
-              metadata.class_name = class_name_node.text;
-            }
-            break;
-          }
-          current = current.parent;
-        }
-
-        return metadata;
-      }
-
-      /**
-  - node:
-      id: src/function_metadata#extract_rust_function_metadata
-      name: extract_rust_function_metadata
-      file: src/function_metadata.ts
-      line: 310
-    outgoing_calls:
-      - target_id: src/function_metadata#extract_rust_parameter_names
-        target_name: extract_rust_parameter_names
-        target_file: src/function_metadata.ts
-        call_line: 347
-        call_type: direct
-    incoming_calls:
-      - source_id: src/function_metadata#extract_function_metadata
-        source_name: extract_function_metadata
-        source_file: src/function_metadata.ts
-    source_snippet: |2-
-       * Extract metadata for Rust functions
-       */
-      function extract_rust_function_metadata(
-        node: SyntaxNode,
-        parent_node: SyntaxNode | null,
-        _source_code: string
-      ): FunctionMetadata {
-        // If node is an identifier and parent is a function, use parent as the function node
-        let function_node = node;
-        let actual_parent = parent_node;
-        
-        if (node.type === "identifier" && parent_node && parent_node.type === "function_item") {
-          function_node = parent_node;
-          actual_parent = parent_node.parent;
-        }
-
-        const metadata: FunctionMetadata = {
-          line_count: function_node.endPosition.row - function_node.startPosition.row + 1,
-        };
-
-        // Check if async
-        // Look for function_modifiers node which contains async keyword
-        for (let i = 0; i < function_node.childCount; i++) {
-          const child = function_node.child(i);
-          if (child && child.type === "function_modifiers") {
-            for (let j = 0; j < child.childCount; j++) {
-              const modifier = child.child(j);
-              if (modifier && modifier.type === "async") {
-                metadata.is_async = true;
-                break;
-              }
-            }
-            break;
-          }
-        }
-
-        // Extract parameter names
-        const params_node = function_node.childForFieldName("parameters");
-        if (params_node) {
-          metadata.parameter_names = extract_rust_parameter_names(params_node);
-        }
-
-        // Check for #[test] attribute
-        // In Rust, attributes are siblings that appear before the function
-        if (actual_parent) {
-          const func_index = actual_parent.children.indexOf(function_node);
-          if (func_index > 0) {
-            const prev_sibling = actual_parent.child(func_index - 1);
-            if (prev_sibling && prev_sibling.type === "attribute_item") {
-              const attr_text = prev_sibling.text;
-              if (attr_text.includes("#[test]") || attr_text.includes("#[cfg(test)]")) {
-                metadata.is_test = true;
-              }
-            }
-          }
-        }
-
-        // Check if it's a method within an impl block
-        let current = actual_parent;
-        while (current) {
-          if (current.type === "impl_item") {
-            // Try to find the type being implemented
-            const type_node = current.childForFieldName("type");
-            if (type_node) {
-              metadata.class_name = type_node.text;
-            }
-            break;
-          }
-          current = current.parent;
-        }
-
-        // Check visibility for private functions (no pub keyword)
-        // Look for visibility_modifier node which contains pub keyword
-        let is_public = false;
-        for (let i = 0; i < function_node.childCount; i++) {
-          const child = function_node.child(i);
-          if (child && child.type === "visibility_modifier") {
-            if (child.text === "pub") {
-              is_public = true;
-            }
-            break;
-          }
-        }
-        metadata.is_private = !is_public;
-
-        return metadata;
-      }
-
-      /**
 file_summary:
   - file: src/graph.ts
     function_count: 30
     exported_function_count: 0
     import_count: 27
   - file: src/project_call_graph.ts
-    function_count: 13
+    function_count: 14
     exported_function_count: 0
     import_count: 13
   - file: src/function_metadata.ts
@@ -1119,8 +879,8 @@ file_summary:
     exported_function_count: 0
     import_count: 10
 validation_stats:
-  nodes_with_calls_pct: 39.21568627450981
-  nodes_called_by_others_pct: 43.13725490196079
+  nodes_with_calls_pct: 39.80582524271845
+  nodes_called_by_others_pct: 55.33980582524271
   exported_nodes_pct: 0
   edges_with_call_type_pct: 100
   top_level_accuracy_pct: 100

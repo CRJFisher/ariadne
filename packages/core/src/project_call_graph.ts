@@ -32,6 +32,108 @@ export class ProjectCallGraph {
   }
 
   /**
+   * Get all module-level calls (calls made outside any function/class definition).
+   * 
+   * @param file_path - The file to analyze
+   * @returns Array of FunctionCall objects representing module-level calls
+   */
+  get_module_level_calls(file_path: string): FunctionCall[] {
+    const graph = this.file_graphs.get(file_path);
+    const fileCache = this.file_cache.get(file_path);
+    if (!graph || !fileCache) return [];
+    
+    const calls: FunctionCall[] = [];
+    
+    // Get all references in the file
+    const refs = graph.getNodes<Ref>('reference');
+    
+    // Get all definitions to check ranges
+    const defs = graph.getNodes<Def>('definition');
+    
+    // Filter to only references that are NOT within any definition
+    const moduleLevelRefs = refs.filter(ref => {
+      // Check if this ref is inside any definition
+      for (const def of defs) {
+        // Use enclosing_range if available, otherwise use range
+        const defRange = (def as any).enclosing_range || def.range;
+        if (this.is_position_within_range(ref.range.start, defRange) &&
+            this.is_position_within_range(ref.range.end, defRange)) {
+          return false; // This ref is inside a definition
+        }
+      }
+      return true; // This ref is at module level
+    });
+    
+    // For each module-level reference, try to resolve it
+    for (const ref of moduleLevelRefs) {
+      const resolved = this.go_to_definition(file_path, ref.range.start);
+      if (resolved) {
+        // If resolved to an import, try to resolve the import to its actual definition
+        let final_resolved = resolved;
+        if (resolved.symbol_kind === 'import') {
+          // Get all imports with their resolved definitions
+          const imports = this.get_imports_with_definitions(file_path);
+          const import_info = imports.find(imp => 
+            imp.import_statement.name === resolved.name &&
+            imp.import_statement.range.start.row === resolved.range.start.row &&
+            imp.import_statement.range.start.column === resolved.range.start.column
+          );
+          
+          if (import_info && import_info.imported_function) {
+            final_resolved = import_info.imported_function;
+          }
+        }
+        
+        // Include all callable symbol kinds
+        const callable_kinds = ['function', 'method', 'generator', 'class', 'constructor'];
+        if (callable_kinds.includes(final_resolved.symbol_kind)) {
+          // Check if this is a method call
+          let is_method_call = ref.symbol_kind === 'method';
+          
+          // Additional check for method calls in different languages
+          if (!is_method_call) {
+            const lines = fileCache.source_code.split('\n');
+            const refLine = lines[ref.range.start.row];
+            const beforeRef = refLine.substring(0, ref.range.start.column);
+            
+            // Check for method call patterns
+            if (file_path.endsWith('.py') && beforeRef.endsWith('.')) {
+              is_method_call = true;
+            } else if ((file_path.endsWith('.ts') || file_path.endsWith('.js')) && 
+                       (beforeRef.endsWith('.') || beforeRef.endsWith('?.'))) {
+              is_method_call = true;
+            } else if (file_path.endsWith('.rs') && 
+                       (beforeRef.endsWith('.') || beforeRef.endsWith('::'))) {
+              is_method_call = true;
+            }
+          }
+          
+          // Create a pseudo-definition for the module
+          const moduleDef: Def = {
+            id: -1, // Special ID for module
+            kind: 'definition',
+            name: '<module>',
+            symbol_id: `${file_path}#<module>`,
+            symbol_kind: 'module' as any, // Module is a special case
+            range: { start: { row: 0, column: 0 }, end: { row: 0, column: 0 } },
+            file_path: file_path
+          };
+          
+          const call = {
+            caller_def: moduleDef,
+            called_def: final_resolved,
+            call_location: ref.range.start,
+            is_method_call
+          };
+          calls.push(call);
+        }
+      }
+    }
+    
+    return calls;
+  }
+
+  /**
    * Get all calls (function, method, and constructor) made from within a definition's body.
    * Works with any definition type including functions, methods, classes, and blocks.
    * 
@@ -194,13 +296,18 @@ export class ProjectCallGraph {
     const functionsByFile = this.get_all_functions();
     
     // Collect all functions and their calls
-    for (const functions of Array.from(functionsByFile.values())) {
+    for (const [file_path, functions] of Array.from(functionsByFile)) {
       allFunctions.push(...functions);
       
+      // Get calls from within functions
       for (const func of functions) {
         const calls = this.get_function_calls(func);
         allCalls.push(...calls);
       }
+      
+      // Get module-level calls
+      const moduleCalls = this.get_module_level_calls(file_path);
+      allCalls.push(...moduleCalls);
     }
     
     return {
@@ -342,6 +449,53 @@ export class ProjectCallGraph {
           }
         }
       }
+      
+      // Process module-level calls
+      const module_calls = this.get_module_level_calls(file_path);
+      for (const call of module_calls) {
+        if (!call.called_def) continue;
+        
+        const callee_symbol = call.called_def.symbol_id;
+        
+        // Apply file filter if specified
+        if (opts.file_filter && !opts.file_filter(call.called_def.file_path)) {
+          continue;
+        }
+        
+        // Skip external calls if not included
+        if (!opts.include_external && !nodes.has(callee_symbol)) {
+          continue;
+        }
+        
+        // Determine call type
+        let call_type: 'direct' | 'method' | 'constructor' = 'direct';
+        if (call.is_constructor_call) {
+          call_type = 'constructor';
+        } else if (call.is_method_call) {
+          call_type = 'method';
+        }
+        
+        // Create edge from module to called function
+        const edge = {
+          from: `${file_path}#<module>`,
+          to: callee_symbol,
+          location: {
+            start: call.call_location,
+            end: call.call_location
+          },
+          call_type
+        };
+        edges.push(edge);
+        
+        // Track that this symbol is called
+        called_symbols.add(callee_symbol);
+        
+        // Update callee's called_by if it's in our nodes
+        const callee_node = nodes.get(callee_symbol);
+        if (callee_node && !callee_node.called_by.includes(`${file_path}#<module>`)) {
+          callee_node.called_by.push(`${file_path}#<module>`);
+        }
+      }
     }
     
     // Apply max_depth if specified
@@ -361,7 +515,7 @@ export class ProjectCallGraph {
     return {
       nodes: final_nodes,
       edges: edges.filter(edge => 
-        final_nodes.has(edge.from) && final_nodes.has(edge.to)
+        (edge.from.includes("#<module>") || final_nodes.has(edge.from)) && final_nodes.has(edge.to)
       ),
       top_level_nodes
     };
