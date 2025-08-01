@@ -39,6 +39,7 @@ Implement a self-testing framework where Ariadne parses its own codebase, output
 Created a comprehensive dogfooding test suite for Ariadne that includes:
 
 **Features implemented:**
+
 - TypeScript test script at `packages/core/tests/dogfood_test.ts` that parses Ariadne's own codebase
 - YAML output format with structured data including metadata, top-level nodes, sampled nodes, and file summaries
 - Automatic handling of tree-sitter's 32KB file size limitation by skipping large files
@@ -46,19 +47,22 @@ Created a comprehensive dogfooding test suite for Ariadne that includes:
 - Error handling and progress logging during analysis
 
 **Files created/modified:**
+
 - `/packages/core/tests/dogfood_test.ts` - Main test script
 - `/docs/dogfood-validation-guide.md` - Comprehensive validation instructions for LLM agents
 - `/packages/core/package.json` - Added js-yaml dependencies
 
 **Technical decisions:**
+
 - Used YAML format for output as it's highly readable for both humans and LLMs
 - Implemented graceful handling of missing range information (line numbers)
 - Added file size checking to avoid tree-sitter parsing errors on large files (>32KB)
 - Structured output to include both overview data and detailed samples for validation
 
 **Known limitations:**
+
 - The current implementation skips `index.ts` (44KB) due to tree-sitter size limits
-- Line number information is not always available (shows as 0) 
+- Line number information is not always available (shows as 0)
 - File summary aggregation needs improvement to show individual file stats
 
 The test successfully runs on the Ariadne codebase, producing a YAML output file that can be validated by LLM agents following the provided guide.

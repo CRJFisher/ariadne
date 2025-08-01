@@ -5,6 +5,7 @@ This guide provides instructions for LLM agents to validate the accuracy of Aria
 ## Overview
 
 The agent validation test runs Ariadne on its own codebase and outputs a YAML file (`ariadne-validation-output.yaml`) containing:
+
 - Top-level function nodes
 - Sampled function details with call relationships
 - File summaries
@@ -15,10 +16,12 @@ Your task is to validate that the parsed data accurately represents the actual c
 
 1. Navigate to the Ariadne repository root
 2. Run the test script:
+
    ```bash
    cd packages/core/agent-validation
    npx tsx validate-ariadne.ts
    ```
+
 3. The output will be saved to `ariadne-validation-output.yaml` in the agent-validation directory
 
 ## Validation Steps
@@ -28,6 +31,7 @@ Your task is to validate that the parsed data accurately represents the actual c
 Top-level nodes are functions that are not called by any other function in the codebase (entry points).
 
 **Validation process:**
+
 1. Pick 3-5 random top-level nodes from the output
 2. For each node:
    - Use `grep -n "function_name" packages/` to search for calls to this function
@@ -35,6 +39,7 @@ Top-level nodes are functions that are not called by any other function in the c
    - Check that the function exists at the specified file and line number
 
 **Example validation:**
+
 ```bash
 # For a top-level node like "index.ts#Project"
 grep -r "new Project\|Project(" packages/core/src/ --include="*.ts" | grep -v test
@@ -45,6 +50,7 @@ grep -r "new Project\|Project(" packages/core/src/ --include="*.ts" | grep -v te
 The sampled_nodes section contains detailed call graph information.
 
 **Validation process:**
+
 1. Pick 2-3 sampled nodes
 2. For each node's outgoing_calls:
    - Navigate to the source file and line number
@@ -52,6 +58,7 @@ The sampled_nodes section contains detailed call graph information.
    - Check that the call locations (line numbers) are accurate
 
 **Example validation:**
+
 ```bash
 # Check if function A calls function B
 cat -n packages/core/src/file.ts | grep -A 10 "function A"
@@ -61,6 +68,7 @@ cat -n packages/core/src/file.ts | grep -A 10 "function A"
 ### 3. Verify File Summaries
 
 **Validation process:**
+
 1. Pick 2-3 files from the file_summary
 2. For each file:
    - Count functions: `grep -c "function\|=>\|class" file.ts`
@@ -70,11 +78,13 @@ cat -n packages/core/src/file.ts | grep -A 10 "function A"
 ### 4. Cross-Reference Import Relationships
 
 **Validation process:**
+
 1. For nodes with incoming_calls from different files:
    - Verify the source file imports the target file
    - Check that the import statement exists
 
 **Example:**
+
 ```bash
 # If file2.ts calls a function from file1.ts
 grep "import.*from.*file1" packages/core/src/file2.ts
@@ -145,6 +155,7 @@ grep "^import" file.ts
 ## Success Criteria
 
 The agent validation test is considered successful if:
+
 1. At least 90% of top-level nodes are correctly identified
 2. At least 85% of sampled call relationships are accurate
 3. File summaries are within 20% of actual counts

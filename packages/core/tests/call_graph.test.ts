@@ -1156,3 +1156,88 @@ init(); // Module-level call
       expect(moduleCalls[0].call_location.row).toBe(5); // Line where init() is called
     });
 });
+
+describe("Method call detection on local variables", () => {
+  let project: Project;
+
+  beforeEach(() => {
+    project = new Project();
+  });
+
+  test("detects method calls on local variable instances within same file", () => {
+    const code = `
+class ScopeGraph {
+  insert_local_def(def: any) {
+    console.log("local", def);
+  }
+  
+  insert_hoisted_def(def: any) {
+    console.log("hoisted", def);
+  }
+  
+  insert_global_def(def: any) {
+    console.log("global", def);
+  }
+}
+
+export function build_scope_graph() {
+  const graph = new ScopeGraph();
+  graph.insert_local_def("def1");
+  graph.insert_hoisted_def("def2");
+  graph.insert_global_def("def3");
+  return graph;
+}
+`;
+
+    project.add_or_update_file("builder.ts", code);
+    const callGraph = project.get_call_graph();
+
+    // build_scope_graph should call ScopeGraph methods
+    const buildNode = callGraph.nodes.get("builder#build_scope_graph");
+    expect(buildNode).toBeDefined();
+    
+    // Should have calls to the three insert methods
+    const methodCalls = buildNode!.calls.filter(c => c.kind === 'method');
+    expect(methodCalls.length).toBeGreaterThanOrEqual(3);
+    
+    // Check specific method calls
+    const methodNames = methodCalls.map(c => c.symbol);
+    expect(methodNames).toContain("builder#ScopeGraph.insert_local_def");
+    expect(methodNames).toContain("builder#ScopeGraph.insert_hoisted_def");
+    expect(methodNames).toContain("builder#ScopeGraph.insert_global_def");
+    
+    // These methods should not be top-level since they're called
+    expect(callGraph.top_level_nodes).not.toContain("builder#ScopeGraph.insert_local_def");
+    expect(callGraph.top_level_nodes).not.toContain("builder#ScopeGraph.insert_hoisted_def");
+    expect(callGraph.top_level_nodes).not.toContain("builder#ScopeGraph.insert_global_def");
+  });
+
+  test("cross-file method resolution is not yet supported", () => {
+    // This test documents the current limitation
+    const file1 = `
+export class ScopeGraph {
+  insert_global_def(def: any) {
+    console.log("global", def);
+  }
+}
+`;
+
+    const file2 = `
+import { ScopeGraph } from "./graph";
+
+export function build_scope_graph() {
+  const graph = new ScopeGraph();
+  graph.insert_global_def("def");
+}
+`;
+
+    project.add_or_update_file("graph.ts", file1);
+    project.add_or_update_file("builder.ts", file2);
+    const callGraph = project.get_call_graph();
+
+    // Currently, cross-file method resolution doesn't work
+    // The method appears as top-level because the call isn't detected
+    // This is tracked in task-64
+    expect(callGraph.top_level_nodes).toContain("graph#ScopeGraph.insert_global_def");
+  });
+});
