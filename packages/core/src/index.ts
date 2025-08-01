@@ -11,10 +11,13 @@ import { Edit } from './edit';
 import { Tree } from 'tree-sitter';
 import { ClassRelationship, extract_class_relationships } from './inheritance';
 import { ProjectCallGraph } from './project_call_graph';
+import { ProjectSource } from './project_source';
+import { ProjectInheritance } from './project_inheritance';
 import path from 'path';
 
 // Re-export important types
-export { Point, Def, Ref, Import, FunctionCall, SimpleRange, CallGraph, CallGraphOptions, CallGraphNode, CallGraphEdge, Call, IScopeGraph } from './graph';
+export { Point, Def, Ref, FunctionCall, SimpleRange, CallGraph, CallGraphOptions, CallGraphNode, CallGraphEdge, Call, IScopeGraph } from './graph';
+export type { Import } from '@ariadnejs/types';
 export { Edit } from './edit';
 export { get_symbol_id, parse_symbol_id, normalize_module_path } from './symbol_naming';
 export { ClassRelationship } from './inheritance';
@@ -37,6 +40,8 @@ export class Project {
   private languages: Map<string, LanguageConfig> = new Map();
   private inheritance_map: Map<string, ClassRelationship> = new Map();
   private call_graph: ProjectCallGraph;
+  private source: ProjectSource;
+  private inheritance!: ProjectInheritance; // Initialized after constructor
 
   constructor() {
     // Register available languages
@@ -46,8 +51,13 @@ export class Project {
     this.register_language(rust_config);
     // TODO: Add other languages as they are implemented
     
-    // Initialize call graph with dependencies
+    // Initialize helper classes with dependencies
     this.call_graph = new ProjectCallGraph(this.file_graphs, this.file_cache, this.languages);
+    this.source = new ProjectSource(this.file_cache, this.languages);
+    
+    // Initialize inheritance with empty map - will be updated when files are added
+    const fileGraphsWithContent = new Map<string, { graph: ScopeGraph; content: string; tree: Tree }>();
+    this.inheritance = new ProjectInheritance(fileGraphsWithContent, this.inheritance_map, this.languages);
     
     // Set up delegation methods
     this.call_graph.set_go_to_definition_delegate((file_path: string, position: Point) => 
@@ -151,6 +161,17 @@ export class Project {
       source_code,
       graph,
     });
+    
+    // Update inheritance file info map
+    const file_info_map = new Map<string, { graph: ScopeGraph; content: string; tree: Tree }>();
+    for (const [path, cache] of this.file_cache) {
+      file_info_map.set(path, {
+        graph: cache.graph,
+        content: cache.source_code,
+        tree: cache.tree
+      });
+    }
+    this.inheritance = new ProjectInheritance(file_info_map, this.inheritance_map, this.languages);
   }
 
   /**
@@ -160,6 +181,17 @@ export class Project {
   remove_file(file_path: string) {
     this.file_graphs.delete(file_path);
     this.file_cache.delete(file_path);
+    
+    // Update inheritance file info map
+    const file_info_map = new Map<string, { graph: ScopeGraph; content: string; tree: Tree }>();
+    for (const [path, cache] of this.file_cache) {
+      file_info_map.set(path, {
+        graph: cache.graph,
+        content: cache.source_code,
+        tree: cache.tree
+      });
+    }
+    this.inheritance = new ProjectInheritance(file_info_map, this.inheritance_map, this.languages);
   }
 
   /**
@@ -439,82 +471,7 @@ export class Project {
    * @returns The exact source code for the definition
    */
   get_source_code(def: Def, file_path: string): string {
-    const fileCache = this.file_cache.get(file_path);
-    if (!fileCache) {
-      return '';
-    }
-    
-    // For functions/methods, we need to find the enclosing function/method node
-    // since the definition only captures the identifier
-    if (['function', 'method', 'generator'].includes(def.symbol_kind)) {
-      const defNode = fileCache.tree.rootNode.descendantForPosition(
-        { row: def.range.start.row, column: def.range.start.column },
-        { row: def.range.end.row, column: def.range.end.column }
-      );
-      
-      if (defNode) {
-        // Walk up the tree to find the function/method declaration node
-        let current = defNode.parent;
-        while (current) {
-          const nodeType = current.type;
-          if (nodeType === 'function_declaration' ||
-              nodeType === 'method_definition' ||
-              nodeType === 'generator_function_declaration' ||
-              nodeType === 'function_expression' ||
-              nodeType === 'arrow_function' ||
-              nodeType === 'function_definition' || // Python
-              nodeType === 'decorated_definition' || // Python with decorators
-              nodeType === 'function_item') { // Rust
-            // Found the function node, extract its source
-            const startPos = current.startPosition;
-            const endPos = current.endPosition;
-            
-            const lines = fileCache.source_code.split('\n');
-            if (startPos.row >= lines.length || endPos.row >= lines.length) {
-              return '';
-            }
-            
-            const extractedLines = lines.slice(startPos.row, endPos.row + 1);
-            
-            if (extractedLines.length > 0) {
-              extractedLines[0] = extractedLines[0].substring(startPos.column);
-              const lastIndex = extractedLines.length - 1;
-              if (lastIndex === 0) {
-                extractedLines[0] = extractedLines[0].substring(0, endPos.column - startPos.column);
-              } else {
-                extractedLines[lastIndex] = extractedLines[lastIndex].substring(0, endPos.column);
-              }
-            }
-            
-            return extractedLines.join('\n');
-          }
-          current = current.parent;
-        }
-      }
-    }
-    
-    // For other types (variables, classes, etc.), use the definition range
-    const lines = fileCache.source_code.split('\n');
-    const startLine = def.range.start.row;
-    const endLine = def.range.end.row;
-    
-    if (startLine >= lines.length || endLine >= lines.length) {
-      return '';
-    }
-    
-    const extractedLines = lines.slice(startLine, endLine + 1);
-    
-    if (extractedLines.length > 0) {
-      extractedLines[0] = extractedLines[0].substring(def.range.start.column);
-      const lastIndex = extractedLines.length - 1;
-      if (lastIndex === 0) {
-        extractedLines[0] = extractedLines[0].substring(0, def.range.end.column - def.range.start.column);
-      } else {
-        extractedLines[lastIndex] = extractedLines[lastIndex].substring(0, def.range.end.column);
-      }
-    }
-    
-    return extractedLines.join('\n');
+    return this.source.get_source_code(def, file_path);
   }
 
   /**
@@ -531,109 +488,7 @@ export class Project {
     docstring?: string;
     decorators?: string[];
   } {
-    const fileCache = this.file_cache.get(file_path);
-    if (!fileCache) {
-      return { source: '' };
-    }
-    
-    const lines = fileCache.source_code.split('\n');
-    const startLine = def.range.start.row;
-    const endLine = def.range.end.row;
-    
-    // Get the basic source
-    const source = this.get_source_code(def, file_path);
-    
-    // Get language-specific context extraction
-    const config = this.get_language_config(file_path);
-    let docstring: string | undefined;
-    let decorators: string[] | undefined;
-    
-    if (config && config.extract_context && ['function', 'method', 'generator'].includes(def.symbol_kind)) {
-      // Find the AST node for this definition
-      const defNode = fileCache.tree.rootNode.descendantForPosition(
-        { row: def.range.start.row, column: def.range.start.column },
-        { row: def.range.end.row, column: def.range.end.column }
-      );
-      
-      if (defNode) {
-        // Find the function/method declaration node
-        let current = defNode.parent;
-        while (current) {
-          const nodeType = current.type;
-          if (nodeType === 'function_declaration' ||
-              nodeType === 'method_definition' ||
-              nodeType === 'generator_function_declaration' ||
-              nodeType === 'function_expression' ||
-              nodeType === 'arrow_function' ||
-              nodeType === 'function_definition' || // Python
-              nodeType === 'decorated_definition' || // Python with decorators
-              nodeType === 'function_item') { // Rust
-            // Extract context using language-specific extractor
-            const context = config.extract_context(current, lines, current.startPosition.row);
-            docstring = context.docstring;
-            decorators = context.decorators;
-            break;
-          }
-          current = current.parent;
-        }
-      }
-    }
-    
-    // Add context lines if requested
-    let contextSource = source;
-    if (context_lines > 0) {
-      // Find the actual start/end lines of the source we extracted
-      let actualStartLine = startLine;
-      let actualEndLine = endLine;
-      
-      // For functions, we need to find the actual boundaries
-      if (['function', 'method', 'generator'].includes(def.symbol_kind) && fileCache) {
-        const defNode = fileCache.tree.rootNode.descendantForPosition(
-          { row: def.range.start.row, column: def.range.start.column },
-          { row: def.range.end.row, column: def.range.end.column }
-        );
-        
-        if (defNode) {
-          let current = defNode.parent;
-          while (current) {
-            const nodeType = current.type;
-            if (nodeType === 'function_declaration' ||
-                nodeType === 'method_definition' ||
-                nodeType === 'generator_function_declaration' ||
-                nodeType === 'function_expression' ||
-                nodeType === 'arrow_function' ||
-                nodeType === 'function_definition' ||
-                nodeType === 'decorated_definition' ||
-                nodeType === 'function_item') { // Rust
-              actualStartLine = current.startPosition.row;
-              actualEndLine = current.endPosition.row;
-              break;
-            }
-            current = current.parent;
-          }
-        }
-      }
-      
-      const contextStartLine = Math.max(0, actualStartLine - context_lines);
-      const contextEndLine = Math.min(lines.length - 1, actualEndLine + context_lines);
-      
-      const beforeLines = lines.slice(contextStartLine, actualStartLine);
-      const afterLines = lines.slice(actualEndLine + 1, contextEndLine + 1);
-      
-      if (beforeLines.length > 0 || afterLines.length > 0) {
-        contextSource = [
-          ...beforeLines,
-          ...source.split('\n'),
-          ...afterLines
-        ].join('\n');
-      }
-    }
-    
-    return {
-      source: contextSource,
-      docstring,
-      decorators: decorators && decorators.length > 0 ? decorators : undefined
-    };
+    return this.source.get_source_with_context(def, file_path, context_lines);
   }
 
   /**
@@ -723,54 +578,7 @@ export class Project {
    * @returns Class relationship info or null if not a class
    */
   get_class_relationships(class_def: Def): ClassRelationship | null {
-    // Check if already cached
-    const cached = this.inheritance_map.get(class_def.symbol_id);
-    if (cached) {
-      return cached;
-    }
-
-    // Get the file cache to access the AST
-    const fileCache = this.file_cache.get(class_def.file_path);
-    if (!fileCache) {
-      return null;
-    }
-
-    // Get language config
-    const config = this.get_language_config(class_def.file_path);
-    if (!config) {
-      return null;
-    }
-
-    // Extract relationships from AST
-    const relationships = extract_class_relationships(
-      class_def,
-      fileCache.tree,
-      config.name
-    );
-
-    if (!relationships) {
-      return null;
-    }
-
-    // Resolve parent class definition
-    if (relationships.parent_class) {
-      const parentDef = this.find_class_by_name(relationships.parent_class);
-      if (parentDef) {
-        relationships.parent_class_def = parentDef;
-      }
-    }
-
-    // Resolve interface definitions
-    for (const interfaceName of relationships.implemented_interfaces) {
-      const interfaceDef = this.find_class_by_name(interfaceName);
-      if (interfaceDef) {
-        relationships.interface_defs.push(interfaceDef);
-      }
-    }
-
-    // Cache the result
-    this.inheritance_map.set(class_def.symbol_id, relationships);
-    return relationships;
+    return this.inheritance.get_class_relationships(class_def);
   }
 
   /**
@@ -780,29 +588,7 @@ export class Project {
    * @returns Array of subclass definitions
    */
   find_subclasses(parent_class: Def): Def[] {
-    if (parent_class.symbol_kind !== "class" && 
-        parent_class.symbol_kind !== "struct" && 
-        parent_class.symbol_kind !== "interface") {
-      return [];
-    }
-
-    const subclasses: Def[] = [];
-
-    // Check all class/struct/interface definitions
-    for (const [, graph] of this.file_graphs) {
-      const defs = graph.getAllDefs();
-      for (const def of defs) {
-        if ((def.symbol_kind === "class" || def.symbol_kind === "struct" || def.symbol_kind === "interface") && 
-            def.symbol_id !== parent_class.symbol_id) {
-          const relationships = this.get_class_relationships(def);
-          if (relationships?.parent_class === parent_class.name) {
-            subclasses.push(def);
-          }
-        }
-      }
-    }
-
-    return subclasses;
+    return this.inheritance.find_subclasses(parent_class);
   }
 
   /**
@@ -812,26 +598,7 @@ export class Project {
    * @returns Array of implementing class definitions
    */
   find_implementations(interface_def: Def): Def[] {
-    if (interface_def.symbol_kind !== "interface" && interface_def.symbol_kind !== "class") {
-      return [];
-    }
-
-    const implementations: Def[] = [];
-
-    // Check all class/struct definitions
-    for (const [, graph] of this.file_graphs) {
-      const defs = graph.getAllDefs();
-      for (const def of defs) {
-        if (def.symbol_kind === "class" || def.symbol_kind === "struct") {
-          const relationships = this.get_class_relationships(def);
-          if (relationships?.implemented_interfaces.includes(interface_def.name)) {
-            implementations.push(def);
-          }
-        }
-      }
-    }
-
-    return implementations;
+    return this.inheritance.find_implementations(interface_def);
   }
 
   /**
@@ -842,27 +609,7 @@ export class Project {
    * @returns Array of ancestor class definitions
    */
   get_inheritance_chain(class_def: Def): Def[] {
-    const chain: Def[] = [];
-    const visited = new Set<string>();
-
-    let current = class_def;
-    while (current && (current.symbol_kind === "class" || current.symbol_kind === "struct" || current.symbol_kind === "interface")) {
-      // Prevent infinite loops
-      if (visited.has(current.symbol_id)) {
-        break;
-      }
-      visited.add(current.symbol_id);
-
-      const relationships = this.get_class_relationships(current);
-      if (relationships?.parent_class_def) {
-        chain.push(relationships.parent_class_def);
-        current = relationships.parent_class_def;
-      } else {
-        break;
-      }
-    }
-
-    return chain;
+    return this.inheritance.get_inheritance_chain(class_def);
   }
 
   /**
@@ -873,32 +620,7 @@ export class Project {
    * @returns True if child inherits from parent
    */
   is_subclass_of(child: Def, parent: Def): boolean {
-    if ((child.symbol_kind !== "class" && child.symbol_kind !== "struct") || 
-        (parent.symbol_kind !== "class" && parent.symbol_kind !== "struct")) {
-      return false;
-    }
-
-    const chain = this.get_inheritance_chain(child);
-    return chain.some(ancestor => ancestor.symbol_id === parent.symbol_id);
-  }
-
-  /**
-   * Helper method to find a class, struct, or interface by name.
-   * Searches across all files in the project.
-   */
-  private find_class_by_name(name: string): Def | null {
-    for (const [, graph] of this.file_graphs) {
-      const defs = graph.getAllDefs();
-      for (const def of defs) {
-        if ((def.symbol_kind === "class" || 
-             def.symbol_kind === "interface" ||
-             def.symbol_kind === "struct") &&
-            def.name === name) {
-          return def;
-        }
-      }
-    }
-    return null;
+    return this.inheritance.is_subclass_of(child, parent);
   }
 }
 
