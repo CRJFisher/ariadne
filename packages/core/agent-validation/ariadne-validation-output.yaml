@@ -1,280 +1,798 @@
 meta:
-  timestamp: '2025-08-01T16:44:47.537Z'
-  ariadne_version: 0.5.17
-  total_files: 15
-  total_functions: 71
-  total_calls: 43
+  timestamp: '2025-08-01T21:06:12.773Z'
+  ariadne_version: 0.5.18
+  total_files: 19
+  total_functions: 101
+  total_calls: 65
 top_level_nodes:
   - id: benchmark-incremental#generateLargeFile
-    line: 0
+    name: generateLargeFile
+    file: benchmark-incremental.ts
+    line: 8
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: benchmark-incremental#benchmark
-    line: 0
+    name: benchmark
+    file: benchmark-incremental.ts
+    line: 47
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: call_graph_analyzer#CallGraphAnalyzer.constructor
+    name: constructor
+    file: call_graph_analyzer.ts
+    line: 15
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: call_graph_analyzer#CallGraphAnalyzer.get_calls_from_definition
+    name: get_calls_from_definition
+    file: call_graph_analyzer.ts
+    line: 26
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: call_graph_analyzer#CallGraphAnalyzer.get_call_graph
+    name: get_call_graph
+    file: call_graph_analyzer.ts
+    line: 120
+    is_exported: false
+    calls_count: 2
+    called_by_count: 0
+  - id: call_graph_utils#apply_max_depth_filter
+    name: apply_max_depth_filter
+    file: call_graph_utils.ts
+    line: 16
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: call_graph_utils#is_position_within_range
+    name: is_position_within_range
+    file: call_graph_utils.ts
+    line: 71
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: call_graph_utils#get_function_node_range
+    name: get_function_node_range
+    file: call_graph_utils.ts
+    line: 86
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: edit#create_edit
-    line: 0
+    name: create_edit
+    file: edit.ts
+    line: 13
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: edit#calculate_end_position
-    line: 0
+    name: calculate_end_position
+    file: edit.ts
+    line: 39
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: graph#ScopeGraph.constructor
-    line: 0
+    name: constructor
+    file: graph.ts
+    line: 67
     is_exported: false
-    calls_count: 0
+    calls_count: 1
     called_by_count: 0
   - id: graph#ScopeGraph.insert_local_def
-    line: 0
+    name: insert_local_def
+    file: graph.ts
+    line: 82
     is_exported: false
-    calls_count: 0
+    calls_count: 1
     called_by_count: 0
   - id: graph#ScopeGraph.insert_hoisted_def
-    line: 0
+    name: insert_hoisted_def
+    file: graph.ts
+    line: 88
     is_exported: false
-    calls_count: 0
+    calls_count: 1
     called_by_count: 0
   - id: graph#ScopeGraph.insert_global_def
-    line: 0
+    name: insert_global_def
+    file: graph.ts
+    line: 104
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: graph#ScopeGraph.insert_local_scope
-    line: 0
+    name: insert_local_scope
+    file: graph.ts
+    line: 109
     is_exported: false
-    calls_count: 0
+    calls_count: 1
     called_by_count: 0
   - id: graph#ScopeGraph.insert_local_import
-    line: 0
+    name: insert_local_import
+    file: graph.ts
+    line: 115
     is_exported: false
-    calls_count: 0
+    calls_count: 1
     called_by_count: 0
   - id: graph#ScopeGraph.insert_ref
-    line: 0
+    name: insert_ref
+    file: graph.ts
+    line: 121
     is_exported: false
-    calls_count: 0
+    calls_count: 4
     called_by_count: 0
   - id: graph#ScopeGraph.node_to_simple_range
-    line: 0
+    name: node_to_simple_range
+    file: graph.ts
+    line: 194
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: graph#ScopeGraph.getEdges
-    line: 0
+    name: getEdges
+    file: graph.ts
+    line: 244
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: graph#ScopeGraph.getDefsForRef
-    line: 0
+    name: getDefsForRef
+    file: graph.ts
+    line: 249
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: graph#ScopeGraph.getImportsForRef
-    line: 0
+    name: getImportsForRef
+    file: graph.ts
+    line: 260
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: graph#ScopeGraph.getRefsForDef
-    line: 0
+    name: getRefsForDef
+    file: graph.ts
+    line: 271
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: graph#ScopeGraph.findNodeAtPosition
-    line: 0
+    name: findNodeAtPosition
+    file: graph.ts
+    line: 282
     is_exported: false
-    calls_count: 0
+    calls_count: 1
     called_by_count: 0
   - id: graph#ScopeGraph.getAllDefs
-    line: 0
+    name: getAllDefs
+    file: graph.ts
+    line: 324
     is_exported: false
-    calls_count: 0
+    calls_count: 1
     called_by_count: 0
   - id: graph#ScopeGraph.getAllImports
-    line: 0
+    name: getAllImports
+    file: graph.ts
+    line: 329
     is_exported: false
-    calls_count: 0
+    calls_count: 1
     called_by_count: 0
   - id: graph#ScopeGraph.findExportedDef
-    line: 0
+    name: findExportedDef
+    file: graph.ts
+    line: 334
     is_exported: false
-    calls_count: 0
+    calls_count: 1
     called_by_count: 0
   - id: graph#ScopeGraph.debug_print
-    line: 0
+    name: debug_print
+    file: graph.ts
+    line: 348
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: graph#ScopeGraph.getCallsFromDef
-    line: 0
+    name: getCallsFromDef
+    file: graph.ts
+    line: 361
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: graph#ScopeGraph.getSymbolId
-    line: 0
+    name: getSymbolId
+    file: graph.ts
+    line: 366
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: graph#ScopeGraph.getDefinitionBySymbol
-    line: 0
+    name: getDefinitionBySymbol
+    file: graph.ts
+    line: 370
     is_exported: false
-    calls_count: 0
+    calls_count: 1
     called_by_count: 0
   - id: graph#ScopeGraph.getFunctionCalls
-    line: 0
+    name: getFunctionCalls
+    file: graph.ts
+    line: 374
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: graph#ScopeGraph.getImportInfo
-    line: 0
+    name: getImportInfo
+    file: graph.ts
+    line: 379
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: graph#ScopeGraph.getCallGraph
-    line: 0
+    name: getCallGraph
+    file: graph.ts
+    line: 384
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: inheritance#extract_class_relationships
-    line: 0
+    name: extract_class_relationships
+    file: inheritance.ts
+    line: 14
     is_exported: false
-    calls_count: 0
+    calls_count: 3
     called_by_count: 0
   - id: languages/javascript/index#initialize_parser
-    line: 0
+    name: initialize_parser
+    file: languages/javascript/index.ts
+    line: 8
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: languages/javascript/index#get_scope_query
-    line: 0
+    name: get_scope_query
+    file: languages/javascript/index.ts
+    line: 21
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: languages/python/index#initialize_parser
-    line: 0
+    name: initialize_parser
+    file: languages/python/index.ts
+    line: 8
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: languages/python/index#get_scope_query
-    line: 0
+    name: get_scope_query
+    file: languages/python/index.ts
+    line: 33
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: languages/python/index#extract_python_context
-    line: 0
+    name: extract_python_context
+    file: languages/python/index.ts
+    line: 58
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: languages/rust/index#initialize_parser
-    line: 0
+    name: initialize_parser
+    file: languages/rust/index.ts
+    line: 8
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: languages/rust/index#get_scope_query
-    line: 0
+    name: get_scope_query
+    file: languages/rust/index.ts
+    line: 19
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: languages/shared_extractors#extract_jsdoc_context
-    line: 0
+    name: extract_jsdoc_context
+    file: languages/shared_extractors.ts
+    line: 7
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: languages/typescript/index#initialize_parser
-    line: 0
+    name: initialize_parser
+    file: languages/typescript/index.ts
+    line: 8
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: languages/typescript/index#get_scope_query
-    line: 0
+    name: get_scope_query
+    file: languages/typescript/index.ts
+    line: 22
     is_exported: false
     calls_count: 0
+    called_by_count: 0
+  - id: project_call_graph#ProjectCallGraph.constructor
+    name: constructor
+    file: project_call_graph.ts
+    line: 24
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: project_call_graph#ProjectCallGraph.extract_call_graph
+    name: extract_call_graph
+    file: project_call_graph.ts
+    line: 186
+    is_exported: false
+    calls_count: 2
+    called_by_count: 0
+  - id: project_call_graph#ProjectCallGraph.get_call_graph
+    name: get_call_graph
+    file: project_call_graph.ts
+    line: 222
+    is_exported: false
+    calls_count: 3
+    called_by_count: 0
+  - id: project_call_graph#ProjectCallGraph.set_go_to_definition_delegate
+    name: set_go_to_definition_delegate
+    file: project_call_graph.ts
+    line: 436
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: project_call_graph#ProjectCallGraph.set_get_imports_with_definitions_delegate
+    name: set_get_imports_with_definitions_delegate
+    file: project_call_graph.ts
+    line: 440
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: project_call_graph#ProjectCallGraph.set_get_all_functions_delegate
+    name: set_get_all_functions_delegate
+    file: project_call_graph.ts
+    line: 444
+    is_exported: false
+    calls_count: 1
     called_by_count: 0
   - id: scope_resolution#build_scope_graph
-    line: 0
+    name: build_scope_graph
+    file: scope_resolution.ts
+    line: 11
+    is_exported: false
+    calls_count: 2
+    called_by_count: 0
+  - id: source_extractor#SourceExtractor.constructor
+    name: constructor
+    file: source_extractor.ts
+    line: 14
     is_exported: false
     calls_count: 0
     called_by_count: 0
+  - id: source_extractor#SourceExtractor.get_source_code
+    name: get_source_code
+    file: source_extractor.ts
+    line: 28
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: source_extractor#SourceExtractor.get_source_with_context
+    name: get_source_with_context
+    file: source_extractor.ts
+    line: 68
+    is_exported: false
+    calls_count: 3
+    called_by_count: 0
   - id: symbol_naming#create_method_symbol_id
-    line: 0
+    name: create_method_symbol_id
+    file: symbol_naming.ts
+    line: 104
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: symbol_naming#get_symbol_container
-    line: 0
+    name: get_symbol_container
+    file: symbol_naming.ts
+    line: 129
     is_exported: false
-    calls_count: 0
+    calls_count: 2
     called_by_count: 0
   - id: symbol_naming#get_unqualified_name
-    line: 0
+    name: get_unqualified_name
+    file: symbol_naming.ts
+    line: 146
     is_exported: false
-    calls_count: 0
+    calls_count: 1
     called_by_count: 0
   - id: symbol_naming#same_module
-    line: 0
+    name: same_module
+    file: symbol_naming.ts
+    line: 165
     is_exported: false
-    calls_count: 0
+    calls_count: 2
     called_by_count: 0
   - id: symbol_resolver#find_definition
-    line: 0
+    name: find_definition
+    file: symbol_resolver.ts
+    line: 86
     is_exported: false
     calls_count: 0
     called_by_count: 0
 sampled_nodes:
   - node:
       id: benchmark-incremental#generateLargeFile
-      line: 0
+      name: generateLargeFile
+      file: benchmark-incremental.ts
+      line: 8
     outgoing_calls: []
     incoming_calls: []
-    source_snippet: ''
+    source_snippet: |-
+
+      // Create a large TypeScript file for benchmarking
+      function generateLargeFile(functionCount: number): string {
+        const lines: string[] = [];
+        
+        // Add imports
+        lines.push(`import { Something } from './module';`);
+        lines.push('');
+        
+        // Add interfaces
+        for (let i = 0; i < 10; i++) {
+          lines.push(`interface Interface${i} {`);
+          lines.push(`  prop${i}: string;`);
+          lines.push(`  method${i}(): void;`);
+          lines.push(`}`);
+          lines.push('');
+        }
+        
+        // Add functions
+        for (let i = 0; i < functionCount; i++) {
+          lines.push(`function function_${i}(param${i}: number): number {`);
+          lines.push(`  const result = param${i} * 2;`);
+          lines.push(`  return result + ${i};`);
+          lines.push(`}`);
+          lines.push('');
+        }
+        
+        // Add a class
+        lines.push('class LargeClass {');
+        for (let i = 0; i < 20; i++) {
+          lines.push(`  method${i}() {`);
+          lines.push(`    return function_${i % functionCount}(${i});`);
+          lines.push(`  }`);
+          lines.push('');
+        }
+        lines.push('}');
+        
+        return lines.join('\n');
+      }
+
+      // Benchmark function
   - node:
       id: benchmark-incremental#benchmark
-      line: 0
+      name: benchmark
+      file: benchmark-incremental.ts
+      line: 47
     outgoing_calls: []
     incoming_calls: []
-    source_snippet: ''
+    source_snippet: |-
+
+      // Benchmark function
+      function benchmark(name: string, fn: () => void): number {
+        const start = process.hrtime.bigint();
+        fn();
+        const end = process.hrtime.bigint();
+        const duration = Number(end - start) / 1_000_000; // Convert to milliseconds
+        console.log(`${name}: ${duration.toFixed(2)}ms`);
+        return duration;
+      }
+
+      // Run benchmarks
   - node:
-      id: edit#create_edit
-      line: 0
+      id: call_graph_analyzer#CallGraphAnalyzer.constructor
+      name: constructor
+      file: call_graph_analyzer.ts
+      line: 15
     outgoing_calls: []
     incoming_calls: []
-    source_snippet: ''
+    source_snippet: |2-
+        private language_configs: Map<string, any>;
+
+      constructor(
+          file_graphs: Map<string, { graph: ScopeGraph; content: string }>,
+          language_configs: Map<string, any>
+        ) {
+          this.file_graphs = file_graphs;
+          this.language_configs = language_configs;
+        }
+
+        /**
+  - node:
+      id: call_graph_analyzer#CallGraphAnalyzer.extract_call_graph
+      name: extract_call_graph
+      file: call_graph_analyzer.ts
+      line: 84
+    outgoing_calls:
+      - target_id: call_graph_analyzer#CallGraphAnalyzer.get_function_calls
+        target_name: get_function_calls
+        target_file: call_graph_analyzer.ts
+        call_line: 105
+    incoming_calls:
+      - source_id: call_graph_analyzer#CallGraphAnalyzer.get_call_graph
+        source_name: get_call_graph
+        source_file: call_graph_analyzer.ts
+    source_snippet: |2-
+         * @returns Object containing all functions and their call relationships
+         */
+      extract_call_graph(): {
+          functions: Def[];
+          calls: FunctionCall[];
+        } {
+          const all_functions: Def[] = [];
+          const all_calls: FunctionCall[] = [];
+          
+          // Collect all functions from all files
+          for (const [_, file_info] of this.file_graphs) {
+            const defs = file_info.graph.getAllDefs();
+            const function_defs = defs.filter(d => 
+              d.symbol_kind === 'function' || 
+              d.symbol_kind === 'method' || 
+              d.symbol_kind === 'generator' ||
+              d.symbol_kind === 'constructor'
+            );
+            all_functions.push(...function_defs);
+          }
+          
+          // Extract calls for each function
+          for (const func of all_functions) {
+            const calls = this.get_function_calls(func);
+            all_calls.push(...calls);
+          }
+          
+          return {
+            functions: all_functions,
+            calls: all_calls
+          };
+        }
+
+        /**
+  - node:
+      id: call_graph_analyzer#CallGraphAnalyzer.apply_max_depth_filter
+      name: apply_max_depth_filter
+      file: call_graph_analyzer.ts
+      line: 220
+    outgoing_calls: []
+    incoming_calls:
+      - source_id: call_graph_analyzer#CallGraphAnalyzer.get_call_graph
+        source_name: get_call_graph
+        source_file: call_graph_analyzer.ts
+    source_snippet: |2-
+         * Apply max depth filtering to call graph
+         */
+      private apply_max_depth_filter(
+          nodes: Map<string, CallGraphNode>,
+          edges: CallGraphEdge[],
+          top_level_nodes: string[],
+          max_depth: number
+        ): { nodes: Map<string, CallGraphNode>; edges: CallGraphEdge[] } {
+          // BFS from top-level nodes to find nodes within max_depth
+          const visited = new Set<string>();
+          const queue: { node: string; depth: number }[] = [];
+          
+          // Start with top-level nodes
+          for (const node of top_level_nodes) {
+            queue.push({ node, depth: 0 });
+            visited.add(node);
+          }
+          
+          // BFS traversal
+          while (queue.length > 0) {
+            const { node, depth } = queue.shift()!;
+            
+            if (depth >= max_depth) continue;
+            
+            // Add all nodes called by this node
+            const caller_node = nodes.get(node);
+            if (caller_node) {
+              for (const call of caller_node.calls) {
+                if (!visited.has(call.symbol)) {
+                  visited.add(call.symbol);
+                  queue.push({ node: call.symbol, depth: depth + 1 });
+                }
+              }
+            }
+          }
+          
+          // Filter nodes and edges
+          const filtered_nodes = new Map<string, CallGraphNode>();
+          for (const [symbol, node] of nodes) {
+            if (visited.has(symbol)) {
+              filtered_nodes.set(symbol, node);
+            }
+          }
+          
+          const filtered_edges = edges.filter(
+            edge => visited.has(edge.from) && visited.has(edge.to)
+          );
+          
+          return {
+            nodes: filtered_nodes,
+            edges: filtered_edges
+          };
+        }
+
+        /**
   - node:
       id: graph#ScopeGraph.get_next_node_id
-      line: 0
+      name: get_next_node_id
+      file: graph.ts
+      line: 165
     outgoing_calls: []
-    incoming_calls: []
-    source_snippet: ''
+    incoming_calls:
+      - source_id: graph#ScopeGraph.constructor
+        source_name: constructor
+        source_file: graph.ts
+    source_snippet: |2-
+        }
+
+      get_next_node_id(): number {
+          return this.next_node_id++;
+        }
+
+        private find_containing_scope(range: SimpleRange): number {
   - node:
       id: graph#ScopeGraph.find_containing_scope
-      line: 0
+      name: find_containing_scope
+      file: graph.ts
+      line: 169
     outgoing_calls: []
-    incoming_calls: []
-    source_snippet: ''
+    incoming_calls:
+      - source_id: graph#ScopeGraph.insert_local_def
+        source_name: insert_local_def
+        source_file: graph.ts
+      - source_id: graph#ScopeGraph.insert_hoisted_def
+        source_name: insert_hoisted_def
+        source_file: graph.ts
+      - source_id: graph#ScopeGraph.insert_local_scope
+        source_name: insert_local_scope
+        source_file: graph.ts
+      - source_id: graph#ScopeGraph.insert_local_import
+        source_name: insert_local_import
+        source_file: graph.ts
+      - source_id: graph#ScopeGraph.insert_ref
+        source_name: insert_ref
+        source_file: graph.ts
+    source_snippet: |2-
+        }
+
+      private find_containing_scope(range: SimpleRange): number {
+          let best_scope_id = this.root_id;
+          let best_scope_size = Infinity;
+
+          for (const node of this.nodes) {
+            if (node.kind === 'scope') {
+              const scope_range = node.range;
+              // Check if the scope contains the given range
+              const start_before = scope_range.start.row < range.start.row || 
+                (scope_range.start.row === range.start.row && scope_range.start.column <= range.start.column);
+              const end_after = scope_range.end.row > range.end.row || 
+                (scope_range.end.row === range.end.row && scope_range.end.column >= range.end.column);
+              
+              if (start_before && end_after) {
+                const scope_size = (scope_range.end.row - scope_range.start.row) * 1000 + (scope_range.end.column - scope_range.start.column);
+                if (scope_size < best_scope_size) {
+                  best_scope_id = node.id;
+                  best_scope_size = scope_size;
+                }
+              }
+            }
+          }
+          return best_scope_id;
+        }
+
+        node_to_simple_range(node: SyntaxNode): SimpleRange {
   - node:
       id: graph#ScopeGraph.get_scope_stack
-      line: 0
+      name: get_scope_stack
+      file: graph.ts
+      line: 202
     outgoing_calls: []
-    incoming_calls: []
-    source_snippet: ''
-  - node:
-      id: graph#ScopeGraph.get_defs_in_scope
-      line: 0
-    outgoing_calls: []
-    incoming_calls: []
-    source_snippet: ''
-  - node:
-      id: graph#ScopeGraph.get_imports_in_scope
-      line: 0
-    outgoing_calls: []
-    incoming_calls: []
-    source_snippet: ''
+    incoming_calls:
+      - source_id: graph#ScopeGraph.insert_ref
+        source_name: insert_ref
+        source_file: graph.ts
+    source_snippet: |2-
+
+        // Helper method to get the scope stack from a starting scope to the root
+      private get_scope_stack(start_scope_id: number): number[] {
+          const stack: number[] = [];
+          let current_id = start_scope_id;
+          
+          while (current_id !== undefined) {
+            stack.push(current_id);
+            
+            // Find the parent scope
+            const parent_edge = this.edges.find(
+              e => e.kind === 'scope_to_scope' && e.source_id === current_id
+            );
+            
+            if (parent_edge) {
+              current_id = parent_edge.target_id;
+            } else {
+              break;
+            }
+          }
+          
+          return stack;
+        }
+
+        // Get all definitions in a specific scope
 file_summary:
-  - function_count: 71
+  - file: graph.ts
+    function_count: 30
     exported_function_count: 0
-    import_count: 0
+    import_count: 27
+  - file: project_call_graph.ts
+    function_count: 13
+    exported_function_count: 0
+    import_count: 13
+  - file: function_metadata.ts
+    function_count: 11
+    exported_function_count: 0
+    import_count: 3
+  - file: call_graph_analyzer.ts
+    function_count: 9
+    exported_function_count: 0
+    import_count: 15
+  - file: symbol_naming.ts
+    function_count: 9
+    exported_function_count: 0
+    import_count: 1
+  - file: inheritance.ts
+    function_count: 5
+    exported_function_count: 0
+    import_count: 3
+  - file: source_extractor.ts
+    function_count: 5
+    exported_function_count: 0
+    import_count: 6
+  - file: call_graph_utils.ts
+    function_count: 3
+    exported_function_count: 0
+    import_count: 5
+  - file: languages/python/index.ts
+    function_count: 3
+    exported_function_count: 0
+    import_count: 7
+  - file: benchmark-incremental.ts
+    function_count: 2
+    exported_function_count: 0
+    import_count: 1
+  - file: edit.ts
+    function_count: 2
+    exported_function_count: 0
+    import_count: 2
+  - file: languages/javascript/index.ts
+    function_count: 2
+    exported_function_count: 0
+    import_count: 6
+  - file: languages/rust/index.ts
+    function_count: 2
+    exported_function_count: 0
+    import_count: 4
+  - file: languages/typescript/index.ts
+    function_count: 2
+    exported_function_count: 0
+    import_count: 6
+  - file: languages/shared_extractors.ts
+    function_count: 1
+    exported_function_count: 0
+    import_count: 2
+  - file: scope_resolution.ts
+    function_count: 1
+    exported_function_count: 0
+    import_count: 10
+  - file: symbol_resolver.ts
+    function_count: 1
+    exported_function_count: 0
+    import_count: 5

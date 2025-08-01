@@ -10,6 +10,7 @@ import { rust_config } from './languages/rust';
 import { Edit } from './edit';
 import { Tree } from 'tree-sitter';
 import { ClassRelationship, extract_class_relationships } from './inheritance';
+import { ProjectCallGraph } from './project_call_graph';
 import path from 'path';
 
 // Re-export important types
@@ -35,6 +36,7 @@ export class Project {
   private file_cache: Map<string, FileCache> = new Map();
   private languages: Map<string, LanguageConfig> = new Map();
   private inheritance_map: Map<string, ClassRelationship> = new Map();
+  private call_graph: ProjectCallGraph;
 
   constructor() {
     // Register available languages
@@ -43,6 +45,20 @@ export class Project {
     this.register_language(python_config);
     this.register_language(rust_config);
     // TODO: Add other languages as they are implemented
+    
+    // Initialize call graph with dependencies
+    this.call_graph = new ProjectCallGraph(this.file_graphs, this.file_cache, this.languages);
+    
+    // Set up delegation methods
+    this.call_graph.set_go_to_definition_delegate((file_path: string, position: Point) => 
+      this.go_to_definition(file_path, position)
+    );
+    this.call_graph.set_get_imports_with_definitions_delegate((file_path: string) => 
+      this.get_imports_with_definitions(file_path)
+    );
+    this.call_graph.set_get_all_functions_delegate((options) => 
+      this.get_all_functions(options)
+    );
   }
 
   /**
@@ -367,143 +383,7 @@ export class Project {
    * @returns Array of FunctionCall objects representing calls made within this definition
    */
   get_calls_from_definition(def: Def): FunctionCall[] {
-    const graph = this.file_graphs.get(def.file_path);
-    const fileCache = this.file_cache.get(def.file_path);
-    if (!graph || !fileCache) return [];
-    
-    const calls: FunctionCall[] = [];
-    
-    // Find the full definition body range using AST traversal
-    let definitionRange = def.range;
-    
-    // Find the AST node for this definition
-    const defNode = fileCache.tree.rootNode.descendantForPosition(
-      { row: def.range.start.row, column: def.range.start.column },
-      { row: def.range.end.row, column: def.range.end.column }
-    );
-    
-    if (defNode) {
-      // Walk up the tree to find the full definition node based on symbol_kind
-      let current = defNode.parent;
-      while (current) {
-        const nodeType = current.type;
-        let foundDefinitionNode = false;
-        
-        // Check for function/method nodes
-        if (['function', 'method', 'generator'].includes(def.symbol_kind)) {
-          if (nodeType === 'function_declaration' ||
-              nodeType === 'method_definition' ||
-              nodeType === 'generator_function_declaration' ||
-              nodeType === 'function_expression' ||
-              nodeType === 'arrow_function' ||
-              nodeType === 'function_definition' || // Python
-              nodeType === 'decorated_definition' || // Python with decorators
-              nodeType === 'function_item') { // Rust
-            foundDefinitionNode = true;
-          }
-        }
-        // Check for class nodes
-        else if (def.symbol_kind === 'class') {
-          if (nodeType === 'class_declaration' ||
-              nodeType === 'class_definition' || // Python
-              nodeType === 'struct_item' || // Rust
-              nodeType === 'impl_item') { // Rust
-            foundDefinitionNode = true;
-          }
-        }
-        // Check for variable/const nodes that might have initializers
-        else if (['variable', 'const', 'let', 'constant'].includes(def.symbol_kind)) {
-          if (nodeType === 'variable_declarator') {
-            // For variable declarator, use its range which includes the initializer
-            foundDefinitionNode = true;
-          } else if (nodeType === 'variable_declaration' ||
-                     nodeType === 'lexical_declaration' ||
-                     nodeType === 'assignment' || // Python
-                     nodeType === 'let_declaration' || // Rust
-                     nodeType === 'const_item') { // Rust
-            foundDefinitionNode = true;
-          }
-        }
-        
-        if (foundDefinitionNode) {
-          // Found the definition node, use its range
-          definitionRange = {
-            start: { row: current.startPosition.row, column: current.startPosition.column },
-            end: { row: current.endPosition.row, column: current.endPosition.column }
-          };
-          break;
-        }
-        current = current.parent;
-      }
-    }
-    
-    // Get all references in this file
-    const refs = graph.getNodes<Ref>('reference');
-    
-    // Filter to only refs within this definition's range
-    const definitionRefs = refs.filter(ref => 
-      this.is_position_within_range(ref.range.start, definitionRange) &&
-      this.is_position_within_range(ref.range.end, definitionRange)
-    );
-    
-    // For each reference, try to resolve it to a definition
-    for (const ref of definitionRefs) {
-      const resolved = this.go_to_definition(def.file_path, ref.range.start);
-      if (resolved) {
-        // If resolved to an import, try to resolve the import to its actual definition
-        let final_resolved = resolved;
-        if (resolved.symbol_kind === 'import') {
-          // Get all imports with their resolved definitions
-          const imports = this.get_imports_with_definitions(def.file_path);
-          const import_info = imports.find(imp => 
-            imp.import_statement.name === resolved.name &&
-            imp.import_statement.range.start.row === resolved.range.start.row &&
-            imp.import_statement.range.start.column === resolved.range.start.column
-          );
-          
-          if (import_info && import_info.imported_function) {
-            final_resolved = import_info.imported_function;
-          }
-        }
-        
-        // Include all callable symbol kinds
-        const callable_kinds = ['function', 'method', 'generator', 'class', 'constructor'];
-        if (callable_kinds.includes(final_resolved.symbol_kind)) {
-          // Check if this is a method call
-          let is_method_call = ref.symbol_kind === 'method';
-          
-          // Additional check for method calls in different languages
-          if (!is_method_call) {
-            const file_cache = this.file_cache.get(def.file_path);
-            if (file_cache) {
-              const lines = file_cache.source_code.split('\n');
-              const refLine = lines[ref.range.start.row];
-              const beforeRef = refLine.substring(0, ref.range.start.column);
-              
-              // Check for method call patterns
-              if (def.file_path.endsWith('.py') && beforeRef.endsWith('.')) {
-                is_method_call = true;
-              } else if ((def.file_path.endsWith('.ts') || def.file_path.endsWith('.js')) && 
-                         (beforeRef.endsWith('.') || beforeRef.endsWith('?.'))) {
-                is_method_call = true;
-              } else if (def.file_path.endsWith('.rs') && 
-                         (beforeRef.endsWith('.') || beforeRef.endsWith('::'))) {
-                is_method_call = true;
-              }
-            }
-          }
-          
-          calls.push({
-            caller_def: def,
-            called_def: final_resolved,
-            call_location: ref.range.start,
-            is_method_call
-          });
-        }
-      }
-    }
-    
-    return calls;
+    return this.call_graph.get_calls_from_definition(def);
   }
 
   /**
@@ -532,26 +412,7 @@ export class Project {
     functions: Def[];
     calls: FunctionCall[];
   } {
-    const allFunctions: Def[] = [];
-    const allCalls: FunctionCall[] = [];
-    
-    // Get all functions in the project
-    const functionsByFile = this.get_all_functions();
-    
-    // Collect all functions and their calls
-    for (const functions of functionsByFile.values()) {
-      allFunctions.push(...functions);
-      
-      for (const func of functions) {
-        const calls = this.get_function_calls(func);
-        allCalls.push(...calls);
-      }
-    }
-    
-    return {
-      functions: allFunctions,
-      calls: allCalls
-    };
+    return this.call_graph.extract_call_graph();
   }
 
   /**
@@ -565,186 +426,10 @@ export class Project {
    * @returns Complete call graph with nodes, edges, and top-level functions
    */
   get_call_graph(options?: CallGraphOptions): CallGraph {
-    const nodes = new Map<string, CallGraphNode>();
-    const edges: CallGraphEdge[] = [];
-    const called_symbols = new Set<string>();
-    
-    // Default options
-    const opts: CallGraphOptions = {
-      include_external: options?.include_external ?? false,
-      max_depth: options?.max_depth ?? undefined,
-      file_filter: options?.file_filter ?? undefined
-    };
-    
-    // Get all functions based on file filter
-    const functions_by_file = this.get_all_functions();
-    
-    // First pass: Create nodes for all functions
-    for (const [file_path, functions] of functions_by_file) {
-      // Apply file filter if specified
-      if (opts.file_filter && !opts.file_filter(file_path)) {
-        continue;
-      }
-      
-      for (const func of functions) {
-        const symbol = func.symbol_id
-        
-        // Initialize node with empty calls and called_by arrays
-        nodes.set(symbol, {
-          symbol,
-          definition: func,
-          calls: [],
-          called_by: []
-        });
-      }
-    }
-    
-    // Second pass: Build edges and populate calls
-    for (const [file_path, functions] of functions_by_file) {
-      // Apply file filter if specified
-      if (opts.file_filter && !opts.file_filter(file_path)) {
-        continue;
-      }
-      
-      for (const func of functions) {
-        const caller_symbol = func.symbol_id;
-        const caller_node = nodes.get(caller_symbol);
-        
-        if (!caller_node) continue;
-        
-        // Get all calls from this function
-        const function_calls = this.get_calls_from_definition(func);
-        
-        for (const call of function_calls) {
-          if (!call.called_def) continue;
-          
-          const callee_symbol = call.called_def.symbol_id;
-          
-          // Apply file filter if specified
-          if (opts.file_filter && !opts.file_filter(call.called_def.file_path)) {
-            continue;
-          }
-          
-          // Skip external calls if not included
-          if (!opts.include_external && !nodes.has(callee_symbol)) {
-            continue;
-          }
-          
-          // Create Call object
-          const call_obj: Call = {
-            symbol: callee_symbol,
-            range: {
-              start: call.call_location,
-              end: call.call_location
-            },
-            kind: call.is_method_call ? 'method' : 'function',
-            resolved_definition: call.called_def
-          };
-          
-          // Add to caller's calls
-          caller_node.calls.push(call_obj);
-          
-          // Create edge
-          edges.push({
-            from: caller_symbol,
-            to: callee_symbol,
-            location: {
-              start: call.call_location,
-              end: call.call_location
-            }
-          });
-          
-          // Track that this symbol is called
-          called_symbols.add(callee_symbol);
-          
-          // Update callee's called_by if it's in our nodes
-          const callee_node = nodes.get(callee_symbol);
-          if (callee_node && !callee_node.called_by.includes(caller_symbol)) {
-            callee_node.called_by.push(caller_symbol);
-          }
-        }
-      }
-    }
-    
-    // Apply max_depth if specified
-    let final_nodes = nodes;
-    if (opts.max_depth !== undefined) {
-      final_nodes = this.apply_max_depth_filter(nodes, edges, opts.max_depth);
-    }
-    
-    // Identify top-level nodes (not called by any other node in the graph)
-    const top_level_nodes: string[] = [];
-    for (const [symbol,] of final_nodes) {
-      if (!called_symbols.has(symbol)) {
-        top_level_nodes.push(symbol);
-      }
-    }
-    
-    return {
-      nodes: final_nodes,
-      edges: edges.filter(edge => 
-        final_nodes.has(edge.from) && final_nodes.has(edge.to)
-      ),
-      top_level_nodes
-    };
+    return this.call_graph.get_call_graph(options);
   }
 
-  /**
-   * Apply max depth filtering to the call graph.
-   * Returns a new set of nodes that are within max_depth from top-level nodes.
-   */
-  private apply_max_depth_filter(
-    nodes: Map<string, CallGraphNode>,
-    edges: CallGraphEdge[],
-    max_depth: number
-  ): Map<string, CallGraphNode> {
-    const filtered_nodes = new Map<string, CallGraphNode>();
-    const visited = new Set<string>();
-    
-    // Find top-level nodes
-    const called_symbols = new Set(edges.map(e => e.to));
-    const top_level_symbols = Array.from(nodes.keys()).filter(s => !called_symbols.has(s));
-    
-    // BFS from each top-level node
-    const queue: Array<{ symbol: string; depth: number }> = 
-      top_level_symbols.map(s => ({ symbol: s, depth: 0 }));
-    
-    while (queue.length > 0) {
-      const { symbol, depth } = queue.shift()!;
-      
-      if (visited.has(symbol) || depth > max_depth) continue;
-      visited.add(symbol);
-      
-      const node = nodes.get(symbol);
-      if (!node) continue;
-      
-      filtered_nodes.set(symbol, node);
-      
-      // Add called functions to queue
-      for (const call of node.calls) {
-        if (!visited.has(call.symbol)) {
-          queue.push({ symbol: call.symbol, depth: depth + 1 });
-        }
-      }
-    }
-    
-    return filtered_nodes;
-  }
 
-  /**
-   * Check if a position is within a range.
-   */
-  private is_position_within_range(pos: Point, range: { start: Point; end: Point }): boolean {
-    // Check if position is after or at start
-    if (pos.row < range.start.row) return false;
-    if (pos.row === range.start.row && pos.column < range.start.column) return false;
-    
-    // Check if position is before or at end
-    if (pos.row > range.end.row) return false;
-    if (pos.row === range.end.row && pos.column > range.end.column) return false;
-    
-    return true;
-  }
 
   /**
    * Get the source code for a definition.

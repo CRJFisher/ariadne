@@ -140,15 +140,15 @@ async function validateAriadneCodebase(): Promise<AgentValidationOutput> {
     const node = callGraph.nodes.get(nodeId);
     if (!node) continue;
     
-    const outgoingCalls = callGraph.edges.filter(e => e.source === nodeId);
-    const incomingCalls = callGraph.edges.filter(e => e.target === nodeId);
+    const outgoingCalls = callGraph.edges.filter(e => e.from === nodeId);
+    const incomingCalls = callGraph.edges.filter(e => e.to === nodeId);
     
     output.top_level_nodes.push({
       id: nodeId,
-      name: node.name,
-      file: node.file_path,
-      line: node.range?.start?.row ? node.range.start.row + 1 : 0,
-      is_exported: node.is_exported || false,
+      name: node.definition.name,
+      file: node.definition.file_path,
+      line: node.definition.range?.start?.row ? node.definition.range.start.row + 1 : 0,
+      is_exported: node.definition.metadata?.is_exported || false,
       calls_count: outgoingCalls.length,
       called_by_count: incomingCalls.length
     });
@@ -170,26 +170,26 @@ async function validateAriadneCodebase(): Promise<AgentValidationOutput> {
     if (!node) continue;
     
     const outgoing = callGraph.edges
-      .filter(e => e.source === nodeId)
+      .filter(e => e.from === nodeId)
       .map(e => {
-        const target = callGraph.nodes.get(e.target);
+        const target = callGraph.nodes.get(e.to);
         return target ? {
-          target_id: e.target,
-          target_name: target.name,
-          target_file: target.file_path,
-          call_line: e.location?.row ? e.location.row + 1 : 0
+          target_id: e.to,
+          target_name: target.definition.name,
+          target_file: target.definition.file_path,
+          call_line: e.location?.start?.row ? e.location.start.row + 1 : 0
         } : null;
       })
       .filter(Boolean) as any[];
     
     const incoming = callGraph.edges
-      .filter(e => e.target === nodeId)
+      .filter(e => e.to === nodeId)
       .map(e => {
-        const source = callGraph.nodes.get(e.source);
+        const source = callGraph.nodes.get(e.from);
         return source ? {
-          source_id: e.source,
-          source_name: source.name,
-          source_file: source.file_path
+          source_id: e.from,
+          source_name: source.definition.name,
+          source_file: source.definition.file_path
         } : null;
       })
       .filter(Boolean) as any[];
@@ -197,11 +197,12 @@ async function validateAriadneCodebase(): Promise<AgentValidationOutput> {
     // Get source snippet
     let sourceSnippet = "";
     try {
-      const functions = project.get_functions_in_file(node.file_path);
-      const func = functions.find(f => f.name === node.name);
-      if (func) {
-        sourceSnippet = project.get_source_with_context(func, node.file_path, 2);
-      }
+      const sourceResult = project.get_source_with_context(
+        node.definition, 
+        node.definition.file_path, 
+        2
+      );
+      sourceSnippet = sourceResult.source;
     } catch (e) {
       sourceSnippet = "// Could not extract source";
     }
@@ -209,9 +210,9 @@ async function validateAriadneCodebase(): Promise<AgentValidationOutput> {
     output.sampled_nodes.push({
       node: {
         id: nodeId,
-        name: node.name,
-        file: node.file_path,
-        line: node.range?.start?.row ? node.range.start.row + 1 : 0
+        name: node.definition.name,
+        file: node.definition.file_path,
+        line: node.definition.range?.start?.row ? node.definition.range.start.row + 1 : 0
       },
       outgoing_calls: outgoing,
       incoming_calls: incoming,
@@ -226,19 +227,23 @@ async function validateAriadneCodebase(): Promise<AgentValidationOutput> {
   const fileMap = new Map<string, { functions: number; exported: number; imports: number }>();
   
   for (const [nodeId, node] of callGraph.nodes) {
-    if (!fileMap.has(node.file_path)) {
-      fileMap.set(node.file_path, { functions: 0, exported: 0, imports: 0 });
+    const filePath = node.definition.file_path;
+    if (!fileMap.has(filePath)) {
+      fileMap.set(filePath, { functions: 0, exported: 0, imports: 0 });
     }
-    const stats = fileMap.get(node.file_path)!;
+    const stats = fileMap.get(filePath)!;
     stats.functions++;
-    if (node.is_exported) stats.exported++;
+    if (node.definition.metadata?.is_exported) stats.exported++;
   }
   
   // Count imports per file
   for (const [filePath, _] of fileMap) {
     try {
-      const imports = project.get_scope_graph(filePath)?.getAllImports() || [];
-      fileMap.get(filePath)!.imports = imports.length;
+      const graph = project.get_scope_graph(filePath);
+      if (graph) {
+        const imports = graph.getAllImports();
+        fileMap.get(filePath)!.imports = imports.length;
+      }
     } catch (e) {
       // Ignore errors
     }
