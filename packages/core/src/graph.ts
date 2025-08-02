@@ -148,17 +148,17 @@ export class ScopeGraph implements IScopeGraph {
       }
     }
     
-    // Add the reference node and create edges to found definitions/imports
-    if (possible_defs.length > 0 || possible_imports.length > 0) {
-      this.nodes.push(ref);
-      
-      for (const def_id of possible_defs) {
-        this.edges.push({ kind: 'ref_to_def', source_id: ref.id, target_id: def_id });
-      }
-      
-      for (const import_id of possible_imports) {
-        this.edges.push({ kind: 'ref_to_import', source_id: ref.id, target_id: import_id });
-      }
+    // Always add the reference node, even if we can't resolve it yet
+    // This is important for method references that need type-based resolution
+    this.nodes.push(ref);
+    
+    // Create edges to found definitions/imports
+    for (const def_id of possible_defs) {
+      this.edges.push({ kind: 'ref_to_def', source_id: ref.id, target_id: def_id });
+    }
+    
+    for (const import_id of possible_imports) {
+      this.edges.push({ kind: 'ref_to_import', source_id: ref.id, target_id: import_id });
     }
   }
 

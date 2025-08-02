@@ -1,4 +1,4 @@
-import { Point, Def, Ref, FunctionCall, ImportInfo, CallGraph, CallGraphOptions, CallGraphNode, CallGraphEdge, Call } from './graph';
+import { Point, Def, Ref, FunctionCall, ImportInfo, CallGraph, CallGraphOptions, CallGraphNode, CallGraphEdge, Call, SimpleRange } from './graph';
 import { ScopeGraph } from './graph'; // Internal use only
 import { LanguageConfig } from './types';
 import { Tree } from 'tree-sitter';
@@ -148,7 +148,7 @@ export class ProjectCallGraph {
     const calls: FunctionCall[] = [];
     
     // Track variable types for method resolution
-    const variableTypes = new Map<string, { className: string; classDef?: Def }>();
+    const variableTypes = new Map<string, { className: string; classDef?: Def & { enclosing_range?: SimpleRange } }>();
     
     // Find the full definition body range using AST traversal
     let definitionRange = def.range;
@@ -270,9 +270,15 @@ export class ProjectCallGraph {
               
               if (varNameNode && varNameNode.type === 'identifier') {
                 const varName = varNameNode.text;
+                // Store class def with computed enclosing range
+                const classDefWithRange = {
+                  ...final_resolved,
+                  // For class definitions, compute enclosing_range based on AST if not already set
+                  enclosing_range: (final_resolved as any).enclosing_range || this.computeClassEnclosingRange(final_resolved, fileCache.tree)
+                };
                 variableTypes.set(varName, {
                   className: final_resolved.name,
-                  classDef: final_resolved
+                  classDef: classDefWithRange
                 });
               }
             }
@@ -310,13 +316,17 @@ export class ProjectCallGraph {
               // Use the file graph to get all definitions in the class file
               const classGraph = this.file_graphs.get(typeInfo.classDef.file_path);
               const classDefs = classGraph ? classGraph.getNodes<Def>('definition') : [];
+              
+              // For class definitions, we need to use enclosing_range if available
+              const classRange = (typeInfo.classDef as any).enclosing_range || typeInfo.classDef.range;
+              
               const classMethods = classDefs;
               const method = classMethods.find((m: Def) => 
                 m.name === methodName && 
                 m.symbol_kind === 'method' &&
                 // Ensure the method is within the class definition
-                this.is_position_within_range(m.range.start, typeInfo.classDef!.range) &&
-                this.is_position_within_range(m.range.end, typeInfo.classDef!.range)
+                this.is_position_within_range(m.range.start, classRange) &&
+                this.is_position_within_range(m.range.end, classRange)
               );
               
               if (method) {
@@ -467,14 +477,7 @@ export class ProjectCallGraph {
         // For now, we'll consider a function exported if it's in the root scope
         // and the file contains TypeScript/JavaScript (where we can check for export keyword)
         // This is a simplification - proper export tracking would require AST analysis
-        let is_exported = false;
-        const graph = this.file_graphs.get(file_path);
-        if (graph) {
-          const rootDefs = (graph as any).get_defs_in_scope((graph as any).root_id);
-          // A function is only exported if it's in root scope AND we need to check the source
-          // For now, we'll default to false for safety
-          is_exported = false;
-        }
+        const is_exported = false;
         
         // Initialize node with empty calls and called_by arrays
         nodes.set(symbol, {
@@ -690,18 +693,50 @@ export class ProjectCallGraph {
     return true;
   }
 
+  /**
+   * Compute the enclosing range for a class definition by finding its full AST node
+   */
+  private computeClassEnclosingRange(classDef: Def, tree: Tree): SimpleRange | undefined {
+    if (classDef.symbol_kind !== 'class') return undefined;
+    
+    // Find the AST node for this class definition
+    const classNode = tree.rootNode.descendantForPosition(
+      { row: classDef.range.start.row, column: classDef.range.start.column },
+      { row: classDef.range.end.row, column: classDef.range.end.column }
+    );
+    
+    if (classNode) {
+      // Walk up to find the class declaration node
+      let current = classNode.parent;
+      while (current) {
+        if (current.type === 'class_declaration' ||  // JS/TS
+            current.type === 'class_definition' ||   // Python
+            current.type === 'struct_item' ||         // Rust
+            current.type === 'impl_item') {           // Rust
+          return {
+            start: { row: current.startPosition.row, column: current.startPosition.column },
+            end: { row: current.endPosition.row, column: current.endPosition.column }
+          };
+        }
+        current = current.parent;
+      }
+    }
+    
+    return undefined;
+  }
+
   // Helper methods that need to be delegated from Project class
-  private go_to_definition(file_path: string, position: Point): Def | null {
+  private go_to_definition(_file_path: string, _position: Point): Def | null {
     // This will be handled by delegation from the Project class
     throw new Error('go_to_definition should be called through Project class delegation');
   }
 
-  private get_imports_with_definitions(file_path: string): ImportInfo[] {
+  private get_imports_with_definitions(_file_path: string): ImportInfo[] {
     // This will be handled by delegation from the Project class
     throw new Error('get_imports_with_definitions should be called through Project class delegation');
   }
 
-  private get_all_functions(options?: {
+  private get_all_functions(_options?: {
     include_private?: boolean;
     include_tests?: boolean;
     symbol_kinds?: string[];

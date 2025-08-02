@@ -1237,16 +1237,15 @@ export function build_scope_graph() {
     project.add_or_update_file("builder.ts", file2);
     const callGraph = project.get_call_graph();
 
-    // Currently, the method appears as top-level because:
-    // 1. Tree-sitter queries capture "graph" as a reference, not "insert_global_def"
-    // 2. Method properties in member expressions aren't tracked as references
-    // 3. This would require significant changes to the scope resolution system
-    expect(callGraph.top_level_nodes).toContain("graph#ScopeGraph.insert_global_def");
+    // With the fix: method references are now captured and resolved correctly
+    // The method should NOT be top-level since it's called from build_scope_graph
+    expect(callGraph.top_level_nodes).not.toContain("graph#ScopeGraph.insert_global_def");
     
-    // The build function has no detected calls due to the limitation
+    // The build function should now have the detected call
     const buildNode = callGraph.nodes.get("builder#build_scope_graph");
     expect(buildNode).toBeDefined();
-    expect(buildNode!.calls.length).toBe(0);
+    expect(buildNode!.calls.length).toBe(1);
+    expect(buildNode!.calls[0].symbol).toBe("graph#ScopeGraph.insert_global_def");
   });
 
 });
