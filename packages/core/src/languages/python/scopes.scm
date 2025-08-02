@@ -34,6 +34,12 @@
   .
   (identifier) @local.definition.variable)
 
+;; def method() inside a class
+(class_definition
+  (block
+    (function_definition
+      (identifier) @hoist.definition.method)))
+
 ;; def a()
 (function_definition
   (identifier) @hoist.definition.function)

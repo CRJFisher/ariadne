@@ -55,6 +55,29 @@ class FileTypeTracker {
 }
 
 /**
+ * Local type tracker that inherits from a parent tracker
+ */
+class LocalTypeTracker {
+  private localTypes = new Map<string, { className: string; classDef?: Def & { enclosing_range?: SimpleRange } }>();
+  
+  constructor(private parent: FileTypeTracker) {}
+  
+  setVariableType(varName: string, typeInfo: { className: string; classDef?: Def & { enclosing_range?: SimpleRange } }) {
+    this.localTypes.set(varName, typeInfo);
+  }
+  
+  getVariableType(varName: string) {
+    // First check local types, then parent
+    return this.localTypes.get(varName) || this.parent.getVariableType(varName);
+  }
+  
+  getImportedClass(localName: string) {
+    // Imported classes are always at file level
+    return this.parent.getImportedClass(localName);
+  }
+}
+
+/**
  * Cached file data for incremental parsing
  */
 interface FileCache {
@@ -131,6 +154,73 @@ export class ProjectCallGraph {
           classDef: classDefWithRange,
           sourceFile: importInfo.imported_function.file_path
         });
+      }
+    }
+  }
+  
+  /**
+   * Create a local type tracker that inherits from file-level tracker
+   */
+  private createLocalTypeTracker(fileTypeTracker: FileTypeTracker): LocalTypeTracker {
+    return new LocalTypeTracker(fileTypeTracker);
+  }
+  
+  /**
+   * Track implicit instance parameter for methods (self, this, etc.)
+   */
+  private trackImplicitInstanceParameter(methodDef: Def, localTypeTracker: LocalTypeTracker, fileCache: FileCache) {
+    console.log(`Tracking implicit parameter for method: ${methodDef.name} in ${methodDef.file_path}`);
+    
+    // Find the containing class
+    const allDefs = this.file_graphs.get(methodDef.file_path)?.getNodes<Def>('definition') || [];
+    console.log(`Found ${allDefs.length} definitions in file`);
+    
+    // Look for a class definition that contains this method
+    for (const def of allDefs) {
+      if (def.symbol_kind === 'class') {
+        const classDef = def;
+        const classRange = (classDef as any).enclosing_range || this.computeClassEnclosingRange(classDef, fileCache.tree);
+        
+        console.log(`Checking if method is in class ${classDef.name}, classRange:`, classRange);
+        
+        if (classRange && 
+            this.is_position_within_range(methodDef.range.start, classRange) &&
+            this.is_position_within_range(methodDef.range.end, classRange)) {
+          // This method is inside this class
+          console.log(`Method ${methodDef.name} is inside class ${classDef.name}`);
+          const classDefWithRange = {
+            ...classDef,
+            enclosing_range: classRange
+          };
+          
+          // Track the implicit parameter based on language
+          if (methodDef.file_path.endsWith('.py')) {
+            // Python: track 'self' or 'cls'
+            console.log(`Setting Python self type to ${classDef.name}`);
+            localTypeTracker.setVariableType('self', {
+              className: classDef.name,
+              classDef: classDefWithRange
+            });
+            localTypeTracker.setVariableType('cls', {
+              className: classDef.name,
+              classDef: classDefWithRange
+            });
+          } else if (methodDef.file_path.match(/\.(js|jsx|ts|tsx)$/)) {
+            // JavaScript/TypeScript: track 'this'
+            localTypeTracker.setVariableType('this', {
+              className: classDef.name,
+              classDef: classDefWithRange
+            });
+          } else if (methodDef.file_path.endsWith('.rs')) {
+            // Rust: track 'self' (various forms)
+            localTypeTracker.setVariableType('self', {
+              className: classDef.name,
+              classDef: classDefWithRange
+            });
+          }
+          
+          break; // Found the containing class
+        }
       }
     }
   }
@@ -245,6 +335,8 @@ export class ProjectCallGraph {
    * @returns Array of FunctionCall objects representing calls made within this definition
    */
   get_calls_from_definition(def: Def): FunctionCall[] {
+    console.log(`get_calls_from_definition called for: ${def.name}, kind: ${def.symbol_kind}`);
+    
     const graph = this.file_graphs.get(def.file_path);
     const fileCache = this.file_cache.get(def.file_path);
     if (!graph || !fileCache) return [];
@@ -256,6 +348,15 @@ export class ProjectCallGraph {
     
     // Initialize import information for this file
     this.initializeFileImports(def.file_path);
+    
+    // Create a local type tracker that inherits from file-level tracker
+    // This allows method-specific types (like self/this) without polluting file scope
+    const localTypeTracker = this.createLocalTypeTracker(fileTypeTracker);
+    
+    // If this is a method, track implicit instance parameter
+    if (def.symbol_kind === 'method') {
+      this.trackImplicitInstanceParameter(def, localTypeTracker, fileCache);
+    }
     
     // Find the full definition body range using AST traversal
     let definitionRange = def.range;
@@ -343,7 +444,7 @@ export class ProjectCallGraph {
         const constructorName = ref.name;
         
         // First check if this is an imported class
-        const importedClass = fileTypeTracker.getImportedClass(constructorName);
+        const importedClass = localTypeTracker.getImportedClass(constructorName);
         if (importedClass) {
           // This is an imported class - track the variable assignment
           let assignmentNode: any = astNode.parent;
@@ -362,7 +463,7 @@ export class ProjectCallGraph {
             
             if (varNameNode && varNameNode.type === 'identifier') {
               const varName = varNameNode.text;
-              fileTypeTracker.setVariableType(varName, {
+              localTypeTracker.setVariableType(varName, {
                 className: importedClass.className,
                 classDef: importedClass.classDef
               });
@@ -413,7 +514,7 @@ export class ProjectCallGraph {
                     // For class definitions, compute enclosing_range based on AST if not already set
                     enclosing_range: (final_resolved as any).enclosing_range || this.computeClassEnclosingRange(final_resolved, fileCache.tree)
                   };
-                  fileTypeTracker.setVariableType(varName, {
+                  localTypeTracker.setVariableType(varName, {
                     className: final_resolved.name,
                     classDef: classDefWithRange
                   });
@@ -438,11 +539,28 @@ export class ProjectCallGraph {
           { row: ref.range.end.row, column: ref.range.end.column }
         );
         
-        if (astNode && astNode.parent && astNode.parent.type === 'member_expression') {
-          const objectNode = astNode.parent.childForFieldName('object');
+        // Handle both JavaScript/TypeScript (member_expression) and Python (attribute)
+        const parentNode = astNode?.parent;
+        
+        // Debug logging
+        if (def.file_path.endsWith('.py') && ref.symbol_kind === 'method') {
+          console.log(`Python method ref: ${ref.name}, parent type: ${parentNode?.type}`);
+          if (parentNode) {
+            console.log(`Parent children:`, parentNode.children.map((c: any) => ({ type: c.type, text: c.text })));
+          }
+        }
+        
+        if (parentNode && (parentNode.type === 'member_expression' || parentNode.type === 'attribute')) {
+          const objectNode = parentNode.childForFieldName('object') || 
+                            (parentNode.type === 'attribute' ? parentNode.children[0] : null);
           if (objectNode && objectNode.type === 'identifier') {
             const objName = objectNode.text;
-            const typeInfo = fileTypeTracker.getVariableType(objName);
+            const typeInfo = localTypeTracker.getVariableType(objName);
+            
+            // Debug
+            if (def.file_path.endsWith('.py')) {
+              console.log(`Looking up type for: ${objName}, found:`, typeInfo);
+            }
             
             if (typeInfo && typeInfo.classDef) {
               // We have type information for this variable
