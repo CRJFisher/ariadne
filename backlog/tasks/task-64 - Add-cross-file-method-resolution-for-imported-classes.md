@@ -1,10 +1,10 @@
 ---
 id: task-64
 title: Add cross-file method resolution for imported classes
-status: To Do
-assignee: []
+status: In Progress
+assignee: ['@assistant']
 created_date: '2025-08-01'
-labels: []
+labels: ['enhancement', 'blocked']
 dependencies: []
 ---
 
@@ -95,3 +95,31 @@ const variableTypes = new Map<string, string>(); // variable name -> class name
 // 4. Find method "insert_global_def" in the ScopeGraph class
 // 5. Create the function call link
 ```
+
+## Implementation Notes
+
+After investigation, we discovered that the current tree-sitter scope queries have a fundamental limitation:
+
+1. **Method properties are not captured as references**: When parsing `obj.method()`, only `obj` is captured as a reference, not `method`
+2. **The scopes.scm patterns exist but don't work as expected**: The pattern `(call_expression (member_expression ... property: (property_identifier) @local.reference.method))` exists but the method properties aren't being captured
+3. **Scope resolution only tracks identifier references**: The system is designed to track references to identifiers, not property accesses
+
+### Attempted Solution
+
+We implemented:
+- Variable type tracking when `new ClassName()` is called
+- Logic to resolve method calls using type information
+- Tests demonstrating the issue
+
+However, the method references are never captured by the tree-sitter queries in the first place, so our resolution logic never runs.
+
+### Required Changes
+
+To properly fix this issue, we would need to:
+
+1. **Modify tree-sitter queries**: Ensure method properties in member expressions are captured as references
+2. **Update scope resolution**: Handle method references differently from regular identifier references
+3. **Enhance reference tracking**: Track the object and property separately for method calls
+4. **Update symbol resolution**: Use type information to resolve method references to their definitions
+
+This is a significant architectural change that affects the core scope resolution system.

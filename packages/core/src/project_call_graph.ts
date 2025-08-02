@@ -147,6 +147,9 @@ export class ProjectCallGraph {
     
     const calls: FunctionCall[] = [];
     
+    // Track variable types for method resolution
+    const variableTypes = new Map<string, { className: string; classDef?: Def }>();
+    
     // Find the full definition body range using AST traversal
     let definitionRange = def.range;
     
@@ -220,9 +223,110 @@ export class ProjectCallGraph {
       this.is_position_within_range(ref.range.end, definitionRange)
     );
     
-    // For each reference, try to resolve it to a definition
+    // First pass: identify constructor calls and track variable types
     for (const ref of definitionRefs) {
-      const resolved = this.go_to_definition(def.file_path, ref.range.start);
+      // Check if this reference is part of a new expression
+      const astNode = fileCache.tree.rootNode.descendantForPosition(
+        { row: ref.range.start.row, column: ref.range.start.column },
+        { row: ref.range.end.row, column: ref.range.end.column }
+      );
+      
+      if (astNode && astNode.parent && astNode.parent.type === 'new_expression') {
+        // This is a constructor call
+        const resolved = this.go_to_definition(def.file_path, ref.range.start);
+        if (resolved) {
+          let final_resolved = resolved;
+          
+          // Resolve imports
+          if (resolved.symbol_kind === 'import') {
+            const imports = this.get_imports_with_definitions(def.file_path);
+            const import_info = imports.find(imp => 
+              imp.import_statement.name === resolved.name &&
+              imp.import_statement.range.start.row === resolved.range.start.row &&
+              imp.import_statement.range.start.column === resolved.range.start.column
+            );
+            
+            if (import_info && import_info.imported_function) {
+              final_resolved = import_info.imported_function;
+            }
+          }
+          
+          // If it's a class, track the variable assignment
+          if (final_resolved.symbol_kind === 'class') {
+            // Look for the variable assignment pattern: const varName = new ClassName()
+            let assignmentNode: any = astNode.parent;
+            while (assignmentNode && assignmentNode.type !== 'variable_declarator' && 
+                   assignmentNode.type !== 'assignment_expression') {
+              assignmentNode = assignmentNode.parent;
+            }
+            
+            if (assignmentNode) {
+              let varNameNode: any = null;
+              if (assignmentNode.type === 'variable_declarator') {
+                varNameNode = assignmentNode.childForFieldName('name');
+              } else if (assignmentNode.type === 'assignment_expression') {
+                varNameNode = assignmentNode.childForFieldName('left');
+              }
+              
+              if (varNameNode && varNameNode.type === 'identifier') {
+                const varName = varNameNode.text;
+                variableTypes.set(varName, {
+                  className: final_resolved.name,
+                  classDef: final_resolved
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    // Second pass: resolve all references including method calls
+    for (const ref of definitionRefs) {
+      let resolved = this.go_to_definition(def.file_path, ref.range.start);
+      
+      // If we can't resolve a method reference directly, check if it's a method call on a typed variable
+      if (!resolved && ref.symbol_kind === 'method') {
+        // This might be a method call like obj.method()
+        // Find the object name by looking at the AST
+        const astNode = fileCache.tree.rootNode.descendantForPosition(
+          { row: ref.range.start.row, column: ref.range.start.column },
+          { row: ref.range.end.row, column: ref.range.end.column }
+        );
+        
+        if (astNode && astNode.parent && astNode.parent.type === 'member_expression') {
+          const objectNode = astNode.parent.childForFieldName('object');
+          if (objectNode && objectNode.type === 'identifier') {
+            const objName = objectNode.text;
+            const typeInfo = variableTypes.get(objName);
+            
+            if (typeInfo && typeInfo.classDef) {
+              // We have type information for this variable
+              // Now find the method in the class definition
+              const methodName = ref.name;
+              
+              // Get all methods in the class file
+              // We need to get the functions from the project, but we only have file-level access
+              // Use the file graph to get all definitions in the class file
+              const classGraph = this.file_graphs.get(typeInfo.classDef.file_path);
+              const classDefs = classGraph ? classGraph.getNodes<Def>('definition') : [];
+              const classMethods = classDefs;
+              const method = classMethods.find((m: Def) => 
+                m.name === methodName && 
+                m.symbol_kind === 'method' &&
+                // Ensure the method is within the class definition
+                this.is_position_within_range(m.range.start, typeInfo.classDef!.range) &&
+                this.is_position_within_range(m.range.end, typeInfo.classDef!.range)
+              );
+              
+              if (method) {
+                resolved = method;
+              }
+            }
+          }
+        }
+      }
+      
       if (resolved) {
         // If resolved to an import, try to resolve the import to its actual definition
         let final_resolved = resolved;
@@ -239,6 +343,13 @@ export class ProjectCallGraph {
             final_resolved = import_info.imported_function;
           }
         }
+        
+        // Check if this is a constructor call
+        const astNode = fileCache.tree.rootNode.descendantForPosition(
+          { row: ref.range.start.row, column: ref.range.start.column },
+          { row: ref.range.end.row, column: ref.range.end.column }
+        );
+        const is_constructor_call = !!(astNode && astNode.parent && astNode.parent.type === 'new_expression');
         
         // Include all callable symbol kinds
         const callable_kinds = ['function', 'method', 'generator', 'class', 'constructor'];
@@ -271,7 +382,8 @@ export class ProjectCallGraph {
             caller_def: def,
             called_def: final_resolved,
             call_location: ref.range.start,
-            is_method_call
+            is_method_call,
+            is_constructor_call
           });
         }
       }

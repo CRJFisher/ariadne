@@ -1212,8 +1212,10 @@ export function build_scope_graph() {
     expect(callGraph.top_level_nodes).not.toContain("builder#ScopeGraph.insert_global_def");
   });
 
-  test("cross-file method resolution is not yet supported", () => {
+  test("cross-file method resolution requires scope query improvements", () => {
     // This test documents the current limitation
+    // The tree-sitter scope queries don't capture method properties as references
+    // Only the object identifier is captured, not the method name
     const file1 = `
 export class ScopeGraph {
   insert_global_def(def: any) {
@@ -1227,7 +1229,7 @@ import { ScopeGraph } from "./graph";
 
 export function build_scope_graph() {
   const graph = new ScopeGraph();
-  graph.insert_global_def("def");
+  graph.insert_global_def("def");  // This method call is not captured properly
 }
 `;
 
@@ -1235,9 +1237,16 @@ export function build_scope_graph() {
     project.add_or_update_file("builder.ts", file2);
     const callGraph = project.get_call_graph();
 
-    // Currently, cross-file method resolution doesn't work
-    // The method appears as top-level because the call isn't detected
-    // This is tracked in task-64
+    // Currently, the method appears as top-level because:
+    // 1. Tree-sitter queries capture "graph" as a reference, not "insert_global_def"
+    // 2. Method properties in member expressions aren't tracked as references
+    // 3. This would require significant changes to the scope resolution system
     expect(callGraph.top_level_nodes).toContain("graph#ScopeGraph.insert_global_def");
+    
+    // The build function has no detected calls due to the limitation
+    const buildNode = callGraph.nodes.get("builder#build_scope_graph");
+    expect(buildNode).toBeDefined();
+    expect(buildNode!.calls.length).toBe(0);
   });
+
 });
