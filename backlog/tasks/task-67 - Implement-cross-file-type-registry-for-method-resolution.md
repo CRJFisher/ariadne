@@ -11,6 +11,9 @@ labels:
   - cross-file
 dependencies:
   - task-66
+blocked_by:
+  - task-28  # (partial) Module path resolution needed for Python/Rust
+  - task-30  # (critical for Python) Export detection for languages without export keyword
 ---
 
 ## Description
@@ -69,3 +72,56 @@ Create a project-wide type registry that maintains variable type information acr
 - **Rust**: Need to handle Rust's module system and visibility rules
 - **Variable reassignments**: Track type changes when variables are reassigned
 - **Export syntaxes**: Handle export default, export *, named exports, etc.
+
+## Blockers for Other Languages
+
+### Python Support Blockers
+
+**Critical Blocker - Task 30 (Export Detection):**
+- Python has no explicit export keywords like JavaScript/TypeScript
+- Everything at module level is implicitly exported unless:
+  - It starts with underscore `_` (convention for private)
+  - It's excluded from `__all__` list (if defined)
+- Current implementation relies on detecting "export" keyword which doesn't exist in Python
+- **Workaround**: Treat all top-level definitions as exported, filter by naming conventions
+
+**Partial Blocker - Task 28 (Module Path Resolution):**
+- Python uses `__init__.py` files to mark directories as packages
+- Relative imports use dots: `from ..utils import helper`
+- Module imports create namespace: `import utils` then `utils.helper()`
+- Current implementation doesn't handle these Python-specific patterns
+- **Impact**: Can't correctly resolve imports from packages or relative paths
+
+### Rust Support Blockers
+
+**Partial Blocker - Task 28 (Module Path Resolution):**
+- Rust module system is tightly coupled to file structure
+- `mod foo;` looks for `foo.rs` or `foo/mod.rs`
+- Module paths like `crate::module::function` need special handling
+- Use statements have various forms: `use super::`, `use self::`, `use crate::`
+- **Impact**: Can't resolve modules correctly without understanding Rust's file conventions
+
+**Minor Blocker - Export Detection:**
+- Rust uses `pub` keyword instead of `export`
+- Has visibility modifiers: `pub`, `pub(crate)`, `pub(super)`
+- **Workaround**: Adapt export detection to look for `pub` keyword instead of `export`
+
+### Implementation Strategies Without Resolving Blockers
+
+**Python Quick Implementation:**
+1. Treat all root-level definitions as potentially exported
+2. Use simple heuristics (exclude `_` prefixed items)
+3. Basic import resolution for same-directory imports only
+4. Skip package imports and relative imports for now
+
+**Rust Quick Implementation:**
+1. Adapt export detection regex to match `pub` keyword
+2. Support basic `use` statements for same-crate items
+3. Skip complex module paths and external crates
+4. Assume simple file structure (no nested modules)
+
+**Limitations of Quick Implementation:**
+- No support for Python packages or relative imports
+- No support for Rust's module hierarchy
+- May have false positives for exported items
+- Cross-file resolution only works for simple cases
