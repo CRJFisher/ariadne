@@ -3,11 +3,11 @@ id: task-43
 title: Add polymorphic call resolution to call graph API
 status: To Do
 assignee: []
-created_date: "2025-07-19"
-updated_date: "2025-07-19"
+created_date: '2025-07-19'
+updated_date: '2025-08-02'
 labels: []
 dependencies:
-  - task-35
+  - task-68
 ---
 
 ## Description
@@ -27,6 +27,10 @@ Enable the call graph to resolve method calls to specific implementation classes
 - [ ] Integration tests cover complex inheritance scenarios
 - [ ] Performance remains acceptable with resolution overhead
 
+
+## Implementation Notes
+
+This task focuses on resolving polymorphic calls to specific implementations, which builds on top of the basic cross-file type tracking implemented in tasks 65-68. See docs/technical/method-resolution-implementation.md for current method resolution architecture.
 ## Feasibility Analysis
 
 This feature is **highly feasible** with the current architecture. Here's why:

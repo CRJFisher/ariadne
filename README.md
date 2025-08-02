@@ -105,6 +105,13 @@ const references = project.find_references("src/main.ts", { row: 10, column: 15 
 - **[Architecture](docs/graph-structure.md)** - Graph algorithms and data structures
 - **[Language Support](docs/language-configuration.md)** - Adding new languages
 - **[Call Graph API](docs/call-graph-api.md)** - Analyzing function relationships
+- **[All Documentation](docs/README.md)** - Complete documentation index
+
+## Known Limitations
+
+- **Cross-file method resolution**: Method calls on imported class instances are not yet resolved ([details](docs/cross-file-method-resolution.md))
+- **Export detection**: The system doesn't distinguish between exported and non-exported definitions ([task-30](https://github.com/sourcecodegraph/ariadne/issues/30))
+- **Module path resolution**: Import paths are resolved through brute-force search ([task-28](https://github.com/sourcecodegraph/ariadne/issues/28))
 
 ## Contributing
 
