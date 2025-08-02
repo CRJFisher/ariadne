@@ -509,11 +509,39 @@
 ;; export { name as alias };
 (export_statement
   (export_clause
-    (export_specifier name: (identifier) @local.reference)))
+    (export_specifier name: (identifier) @local.reference.exported)))
 
 ;; export default ident;
 (export_statement
   (identifier) @local.reference)
+
+;; CommonJS exports: module.exports = { func1, func2 }
+(assignment_expression
+  left: (member_expression
+    object: (identifier) @_module
+    property: (property_identifier) @_exports)
+  right: (object
+    (shorthand_property_identifier) @local.reference.exported)
+  (#eq? @_module "module")
+  (#eq? @_exports "exports"))
+
+;; CommonJS exports: module.exports = { key: value }
+(assignment_expression
+  left: (member_expression
+    object: (identifier) @_module
+    property: (property_identifier) @_exports)
+  right: (object
+    (pair
+      key: (property_identifier) @local.reference.exported))
+  (#eq? @_module "module")
+  (#eq? @_exports "exports"))
+
+;; CommonJS exports: exports.name = ...
+(assignment_expression
+  left: (member_expression
+    object: (identifier) @_exports
+    property: (property_identifier) @local.reference.exported)
+  (#eq? @_exports "exports"))
 
 ;; for (item in list) and for (item of list)
 ;;

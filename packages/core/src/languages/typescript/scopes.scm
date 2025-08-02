@@ -198,6 +198,12 @@
   name:
   (type_identifier) @local.definition.alias)
 
+;; export type T
+(export_statement
+  (type_alias_declaration
+    name:
+    (type_identifier) @local.definition.alias.exported))
+
 ;; type parameters in generic
 ;; functions or interfaces
 (type_parameters
@@ -207,6 +213,11 @@
 ;; enum T
 (enum_declaration
   (identifier) @local.definition.enum)
+
+;; export enum T
+(export_statement
+  (enum_declaration
+    (identifier) @local.definition.enum.exported))
 
 ;; enumerators
 ;;
@@ -239,6 +250,11 @@
 ;; interface T
 (interface_declaration
   (type_identifier) @local.definition.interface)
+
+;; export interface T
+(export_statement
+  (interface_declaration
+    (type_identifier) @local.definition.interface.exported))
 
 ;; catch clauses
 (catch_clause

@@ -106,7 +106,7 @@
 (const_item
   (visibility_modifier) @_pub
   (identifier) @local.definition.const.exported
-  (#eq? @_pub "pub"))
+  (#match? @_pub "^pub"))
 
 ;; const x = ... (private)
 (const_item (identifier) @local.definition.const)
@@ -115,7 +115,7 @@
 (static_item
   (visibility_modifier) @_pub
   (identifier) @local.definition.const.exported
-  (#eq? @_pub "pub"))
+  (#match? @_pub "^pub"))
 
 ;; static x = ... (private)
 (static_item (identifier) @local.definition.const)
@@ -151,7 +151,7 @@
 (function_item
   (visibility_modifier) @_pub
   (identifier) @hoist.definition.function.exported
-  (#eq? @_pub "pub"))
+  (#match? @_pub "^pub"))
 
 ;; fn x(..) (private)
 (function_item (identifier) @hoist.definition.function)
@@ -173,7 +173,7 @@
 (struct_item
   (visibility_modifier) @_pub
   (type_identifier) @hoist.definition.struct.exported
-  (#eq? @_pub "pub"))
+  (#match? @_pub "^pub"))
 
 ;; struct (private)
 (struct_item (type_identifier) @hoist.definition.struct)
@@ -182,7 +182,7 @@
 (enum_item
   (visibility_modifier) @_pub
   (type_identifier) @hoist.definition.enum.exported
-  (#eq? @_pub "pub"))
+  (#match? @_pub "^pub"))
 
 ;; enum (private)
 (enum_item (type_identifier) @hoist.definition.enum)
@@ -191,7 +191,7 @@
 (union_item
   (visibility_modifier) @_pub
   (type_identifier) @hoist.definition.union.exported
-  (#eq? @_pub "pub"))
+  (#match? @_pub "^pub"))
 
 ;; union (private)
 (union_item (type_identifier) @hoist.definition.union)
@@ -200,7 +200,7 @@
 (type_item
   (visibility_modifier) @_pub
   . (type_identifier) @hoist.definition.typedef.exported
-  (#eq? @_pub "pub"))
+  (#match? @_pub "^pub"))
 
 ;; type (private)
 (type_item . (type_identifier) @hoist.definition.typedef)
@@ -209,7 +209,7 @@
 (trait_item
   (visibility_modifier) @_pub
   (type_identifier) @hoist.definition.interface.exported
-  (#eq? @_pub "pub"))
+  (#match? @_pub "^pub"))
 
 ;; trait (private)
 (trait_item (type_identifier) @hoist.definition.interface)
@@ -228,7 +228,7 @@
 (mod_item
   (visibility_modifier) @_pub
   (identifier) @local.definition.module.exported
-  (#eq? @_pub "pub"))
+  (#match? @_pub "^pub"))
 
 ;; mod x; (private)
 (mod_item (identifier) @local.definition.module)

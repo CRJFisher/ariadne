@@ -169,8 +169,14 @@ export function build_scope_graph(
             if (child && child.type === 'string') {
               // Extract the string content (remove quotes)
               let text = child.text;
-              if ((text.startsWith("'") && text.endsWith("'")) ||
-                  (text.startsWith('"') && text.endsWith('"'))) {
+              // Handle triple quotes
+              if ((text.startsWith('"""') && text.endsWith('"""')) ||
+                  (text.startsWith("'''") && text.endsWith("'''"))) {
+                text = text.substring(3, text.length - 3);
+              }
+              // Handle single/double quotes
+              else if ((text.startsWith("'") && text.endsWith("'")) ||
+                       (text.startsWith('"') && text.endsWith('"'))) {
                 text = text.substring(1, text.length - 1);
               }
               pythonAllList.add(text);
@@ -217,9 +223,9 @@ export function build_scope_graph(
     };
     
     // Check if this definition is exported
-    if (isExported !== undefined) {
+    if (isExported === true) {
       // Directly captured as exported in scope queries
-      new_def.is_exported = isExported;
+      new_def.is_exported = true;
     } else if (exportedNames.has(node.text)) {
       // Exported via export list (e.g., export { func1, func2 })
       new_def.is_exported = true;

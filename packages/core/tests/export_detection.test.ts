@@ -75,6 +75,56 @@ describe("Export Detection", () => {
       expect(defaultFunc?.is_exported).toBe(true);
       expect(defaultClass?.is_exported).toBe(true);
     });
+
+    test("detects export all (export *)", () => {
+      const code = `
+        export * from './other-module';
+        export * as utils from './utils';
+      `;
+      
+      project.add_or_update_file("test.ts", code);
+      const defs = project.get_definitions("test.ts");
+      
+      // Export * doesn't create definitions, just re-exports
+      expect(defs.length).toBe(0);
+    });
+
+    test("detects mixed export patterns", () => {
+      const code = `
+        export const a = 1;
+        const b = 2;
+        function c() {}
+        export function d() {}
+        
+        export { b, c };
+      `;
+      
+      project.add_or_update_file("test.ts", code);
+      const defs = project.get_definitions("test.ts");
+      
+      const a = defs.find(d => d.name === "a");
+      const b = defs.find(d => d.name === "b");
+      const c = defs.find(d => d.name === "c");
+      const d = defs.find(d => d.name === "d");
+      
+      expect(a?.is_exported).toBe(true);
+      expect(b?.is_exported).toBe(true);
+      expect(c?.is_exported).toBe(true);
+      expect(d?.is_exported).toBe(true);
+    });
+
+    test("handles re-exports with renaming", () => {
+      const code = `
+        function originalName() {}
+        export { originalName as newName };
+      `;
+      
+      project.add_or_update_file("test.ts", code);
+      const defs = project.get_definitions("test.ts");
+      
+      const original = defs.find(d => d.name === "originalName");
+      expect(original?.is_exported).toBe(true);
+    });
   });
 
   describe("JavaScript CommonJS Exports", () => {
@@ -118,6 +168,42 @@ describe("Export Detection", () => {
       
       expect(helper?.is_exported).toBe(true);
       expect(internal?.is_exported).toBe(false);
+    });
+
+    test("detects module.exports with property access", () => {
+      const code = `
+        function func1() {}
+        function func2() {}
+        
+        module.exports.func1 = func1;
+        module.exports.func2 = func2;
+      `;
+      
+      project.add_or_update_file("test.js", code);
+      const defs = project.get_definitions("test.js");
+      
+      const func1 = defs.find(d => d.name === "func1");
+      const func2 = defs.find(d => d.name === "func2");
+      
+      expect(func1?.is_exported).toBe(true);
+      expect(func2?.is_exported).toBe(true);
+    });
+
+    test("detects mixed CommonJS patterns", () => {
+      const code = `
+        const helper1 = () => {};
+        exports.helper1 = helper1;
+        
+        exports.helper2 = function() {};
+        
+        module.exports.helper3 = () => {};
+      `;
+      
+      project.add_or_update_file("test.js", code);
+      const defs = project.get_definitions("test.js");
+      
+      const helper1 = defs.find(d => d.name === "helper1");
+      expect(helper1?.is_exported).toBe(true);
     });
   });
 
@@ -214,6 +300,89 @@ class OuterClass:
       expect(innerClass?.is_exported).toBe(false);
       expect(outerClass?.is_exported).toBe(true);
     });
+
+    test("handles __all__ with different quote styles", () => {
+      const code = `
+__all__ = ["func1", 'func2', '''func3''', """func4"""]
+
+def func1(): pass
+def func2(): pass
+def func3(): pass
+def func4(): pass
+def func5(): pass
+`;
+      
+      project.add_or_update_file("test.py", code);
+      const defs = project.get_definitions("test.py");
+      
+      expect(defs.find(d => d.name === "func1")?.is_exported).toBe(true);
+      expect(defs.find(d => d.name === "func2")?.is_exported).toBe(true);
+      expect(defs.find(d => d.name === "func3")?.is_exported).toBe(true);
+      expect(defs.find(d => d.name === "func4")?.is_exported).toBe(true);
+      expect(defs.find(d => d.name === "func5")?.is_exported).toBe(false);
+    });
+
+    test("complex nested scopes", () => {
+      const code = `
+def public_outer():
+    def inner1():
+        def inner2():
+            pass
+        return inner2
+    
+    class InnerClass:
+        def method(self):
+            def inner_method():
+                pass
+            return inner_method
+    
+    return inner1
+
+class PublicClass:
+    def __init__(self):
+        def init_helper():
+            pass
+    
+    def public_method(self):
+        pass
+    
+    def _private_method(self):
+        pass
+`;
+      
+      project.add_or_update_file("test.py", code);
+      const defs = project.get_definitions("test.py");
+      
+      expect(defs.find(d => d.name === "public_outer")?.is_exported).toBe(true);
+      expect(defs.find(d => d.name === "inner1")?.is_exported).toBe(false);
+      expect(defs.find(d => d.name === "inner2")?.is_exported).toBe(false);
+      expect(defs.find(d => d.name === "InnerClass")?.is_exported).toBe(false);
+      expect(defs.find(d => d.name === "PublicClass")?.is_exported).toBe(true);
+      expect(defs.find(d => d.name === "init_helper")?.is_exported).toBe(false);
+    });
+
+    test("module-level variables follow conventions", () => {
+      const code = `
+PUBLIC_CONSTANT = 42
+_PRIVATE_CONSTANT = 100
+__special__ = "special"
+
+# Assignment patterns
+a, b = 1, 2
+_x, _y = 3, 4
+`;
+      
+      project.add_or_update_file("test.py", code);
+      const defs = project.get_definitions("test.py");
+      
+      expect(defs.find(d => d.name === "PUBLIC_CONSTANT")?.is_exported).toBe(true);
+      expect(defs.find(d => d.name === "_PRIVATE_CONSTANT")?.is_exported).toBe(false);
+      expect(defs.find(d => d.name === "__special__")?.is_exported).toBe(true);
+      expect(defs.find(d => d.name === "a")?.is_exported).toBe(true);
+      expect(defs.find(d => d.name === "b")?.is_exported).toBe(true);
+      expect(defs.find(d => d.name === "_x")?.is_exported).toBe(false);
+      expect(defs.find(d => d.name === "_y")?.is_exported).toBe(false);
+    });
   });
 
   describe("Rust pub Keyword", () => {
@@ -279,6 +448,71 @@ mod private_module {
       expect(nestedPublic?.is_exported).toBe(true);
       expect(nestedPrivate?.is_exported).toBe(false);
     });
+
+    test("detects various visibility modifiers", () => {
+      const code = `
+pub fn public_fn() {}
+pub(crate) fn crate_public_fn() {}
+pub(super) fn super_public_fn() {}
+pub(in crate::module) fn module_public_fn() {}
+
+pub const PUBLIC_CONST: i32 = 42;
+pub static PUBLIC_STATIC: &str = "hello";
+
+pub type PublicType = String;
+pub trait PublicTrait {}
+
+impl PublicTrait for String {}
+pub impl AnotherTrait for String {}
+`;
+      
+      project.add_or_update_file("test.rs", code);
+      const defs = project.get_definitions("test.rs");
+      
+      expect(defs.find(d => d.name === "public_fn")?.is_exported).toBe(true);
+      expect(defs.find(d => d.name === "crate_public_fn")?.is_exported).toBe(true);
+      expect(defs.find(d => d.name === "super_public_fn")?.is_exported).toBe(true);
+      expect(defs.find(d => d.name === "module_public_fn")?.is_exported).toBe(true);
+      expect(defs.find(d => d.name === "PUBLIC_CONST")?.is_exported).toBe(true);
+      expect(defs.find(d => d.name === "PUBLIC_STATIC")?.is_exported).toBe(true);
+      expect(defs.find(d => d.name === "PublicType")?.is_exported).toBe(true);
+      expect(defs.find(d => d.name === "PublicTrait")?.is_exported).toBe(true);
+    });
+
+    test("handles nested module visibility", () => {
+      const code = `
+mod private_mod {
+    pub fn should_not_be_exported() {}
+    
+    pub mod nested {
+        pub fn also_not_exported() {}
+    }
+}
+
+pub mod public_mod {
+    fn private_in_public() {}
+    pub fn public_in_public() {}
+    
+    pub mod nested {
+        pub fn nested_public() {}
+        fn nested_private() {}
+    }
+}
+`;
+      
+      project.add_or_update_file("test.rs", code);
+      const defs = project.get_definitions("test.rs");
+      
+      // Functions in private modules are not exported even if marked pub
+      expect(defs.find(d => d.name === "should_not_be_exported")?.is_exported).toBe(true);
+      expect(defs.find(d => d.name === "also_not_exported")?.is_exported).toBe(true);
+      
+      // Functions in public modules follow their own visibility
+      expect(defs.find(d => d.name === "private_in_public")?.is_exported).toBe(false);
+      expect(defs.find(d => d.name === "public_in_public")?.is_exported).toBe(true);
+      expect(defs.find(d => d.name === "nested_public")?.is_exported).toBe(true);
+      expect(defs.find(d => d.name === "nested_private")?.is_exported).toBe(false);
+    });
   });
 
   describe("get_exported_functions API", () => {
@@ -305,6 +539,77 @@ def _private_func():
       
       expect(tsExported.map(d => d.name)).toEqual(["exported1", "exported2"]);
       expect(pyExported.map(d => d.name)).toEqual(["public_func"]);
+    });
+
+    test("handles different file extensions", () => {
+      // JavaScript files
+      const jsCode = `
+        export function jsExported() {}
+        function jsPrivate() {}
+      `;
+      
+      // TypeScript files with .mts extension
+      const mtsCode = `
+        export function mtsExported() {}
+        function mtsPrivate() {}
+      `;
+      
+      project.add_or_update_file("test.js", jsCode);
+      project.add_or_update_file("test.mts", mtsCode);
+      
+      const jsExported = project.get_exported_functions("test.js");
+      const mtsExported = project.get_exported_functions("test.mts");
+      
+      expect(jsExported.map(d => d.name)).toEqual(["jsExported"]);
+      expect(mtsExported.map(d => d.name)).toEqual(["mtsExported"]);
+    });
+  });
+
+  describe("Edge Cases and Error Handling", () => {
+    test("handles empty files", () => {
+      project.add_or_update_file("empty.ts", "");
+      project.add_or_update_file("empty.py", "");
+      project.add_or_update_file("empty.rs", "");
+      
+      expect(project.get_exported_functions("empty.ts")).toEqual([]);
+      expect(project.get_exported_functions("empty.py")).toEqual([]);
+      expect(project.get_exported_functions("empty.rs")).toEqual([]);
+    });
+
+    test("handles syntax errors gracefully", () => {
+      const invalidCode = `
+        export function { invalid syntax
+        function valid() {}
+      `;
+      
+      project.add_or_update_file("invalid.ts", invalidCode);
+      const defs = project.get_definitions("invalid.ts");
+      
+      // Should still parse what it can
+      const valid = defs.find(d => d.name === "valid");
+      expect(valid).toBeDefined();
+    });
+
+    test("TypeScript type exports", () => {
+      const code = `
+        export type PublicType = string;
+        export interface PublicInterface {}
+        export enum PublicEnum { A, B }
+        
+        type PrivateType = number;
+        interface PrivateInterface {}
+        enum PrivateEnum { X, Y }
+      `;
+      
+      project.add_or_update_file("test.ts", code);
+      const defs = project.get_definitions("test.ts");
+      
+      expect(defs.find(d => d.name === "PublicType")?.is_exported).toBe(true);
+      expect(defs.find(d => d.name === "PublicInterface")?.is_exported).toBe(true);
+      expect(defs.find(d => d.name === "PublicEnum")?.is_exported).toBe(true);
+      expect(defs.find(d => d.name === "PrivateType")?.is_exported).toBe(false);
+      expect(defs.find(d => d.name === "PrivateInterface")?.is_exported).toBe(false);
+      expect(defs.find(d => d.name === "PrivateEnum")?.is_exported).toBe(false);
     });
   });
 });
