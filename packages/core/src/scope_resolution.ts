@@ -32,6 +32,7 @@ export function build_scope_graph(
     node: any;
     source_name?: string;
     module?: string;
+    is_type_import?: boolean;
   }> = [];
   const ref_captures: Array<{ node: any; symbol_kind?: string }> = [];
 
@@ -54,6 +55,7 @@ export function build_scope_graph(
         // Check if this is a renamed import by looking at the parent node
         let source_name: string | undefined;
         let module_path: string | undefined;
+        let is_type_import = false;
 
         // Check if this is part of a renamed import
         if (node.parent && node.parent.type === "import_specifier") {
@@ -68,26 +70,60 @@ export function build_scope_graph(
               source_name = import_spec.child(0)?.text;
             }
           }
-        }
-
-        // Try to find the module path from the import statement
-        let current = node.parent;
-        while (current && current.type !== "import_statement") {
-          current = current.parent;
-        }
-        if (current && current.type === "import_statement") {
-          // Find the string node (module path)
-          for (let i = 0; i < current.childCount; i++) {
-            const child = current.child(i);
-            if (child && child.type === "string") {
-              // Remove quotes from the string
-              module_path = child.text.slice(1, -1);
+          
+          // Check if this is a type import specifier
+          // In mixed imports like: import { type User, getName }
+          // Each import_specifier can have a 'type' keyword
+          for (let i = 0; i < import_spec.childCount; i++) {
+            const child = import_spec.child(i);
+            if (child && child.type === 'type') {
+              is_type_import = true;
               break;
             }
           }
         }
 
-        import_captures.push({ node, source_name, module: module_path });
+        // Try to find the module path from the import statement
+        let current = node.parent;
+        while (current && current.type !== "import_statement" && current.type !== "import_from_statement") {
+          current = current.parent;
+        }
+        if (current) {
+          if (current.type === "import_statement") {
+            // Check if this is a type-only import statement
+            // Structure: import "type" { ... } from "module"
+            // The 'type' keyword appears as child(1) if present
+            const firstChild = current.child(1);
+            if (firstChild && firstChild.type === 'type') {
+              is_type_import = true;
+            }
+            
+            // Find the string node (module path) - for JS/TS imports
+            for (let i = 0; i < current.childCount; i++) {
+              const child = current.child(i);
+              if (child && child.type === "string") {
+                // Remove quotes from the string
+                module_path = child.text.slice(1, -1);
+                break;
+              }
+            }
+          } else if (current.type === "import_from_statement") {
+            // For Python imports: from MODULE import NAME
+            // Find the dotted_name after "from"
+            let foundFrom = false;
+            for (let i = 0; i < current.childCount; i++) {
+              const child = current.child(i);
+              if (child && child.type === "from") {
+                foundFrom = true;
+              } else if (foundFrom && child && child.type === "dotted_name") {
+                module_path = child.text;
+                break;
+              }
+            }
+          }
+        }
+
+        import_captures.push({ node, source_name, module: module_path, is_type_import });
       } else if (node_type === "reference") {
         const symbol_kind = parts[2];
         ref_captures.push({ node, symbol_kind });
@@ -189,13 +225,14 @@ export function build_scope_graph(
   }
 
   // 3. Process imports
-  for (const { node, source_name, module } of import_captures) {
+  for (const { node, source_name, module, is_type_import } of import_captures) {
     const new_import: Import = {
       id: graph.get_next_node_id(),
       kind: "import",
       name: node.text,
       source_name: source_name,
       source_module: module,
+      is_type_import: is_type_import,
       range: graph.node_to_simple_range(node),
     };
     graph.insert_local_import(new_import);

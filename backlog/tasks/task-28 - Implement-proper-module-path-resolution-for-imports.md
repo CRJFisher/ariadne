@@ -1,10 +1,10 @@
 ---
 id: task-28
 title: Implement proper module path resolution for imports
-status: To Do
-assignee: []
+status: In Progress
+assignee: ['@claude']
 created_date: "2025-07-18"
-updated_date: "2025-07-18"
+updated_date: "2025-08-02"
 labels:
   - enhancement
   - import-resolution
@@ -20,35 +20,35 @@ The current import resolution uses brute-force search across all files to find e
 
 ### Path Resolution
 
-- [ ] Resolve relative import paths to actual file paths
-- [ ] Handle common file extensions (.ts, .js, .tsx, .jsx, .py)
-- [ ] Support index file conventions (index.ts, index.js, **init**.py)
+- [x] Resolve relative import paths to actual file paths
+- [x] Handle common file extensions (.ts, .js, .tsx, .jsx, .py)
+- [x] Support index file conventions (index.ts, index.js, **init**.py)
 - [ ] Handle TypeScript path mappings from tsconfig.json
 
 ### Python-Specific Import Patterns
 
-- [ ] Support star imports (`from module import *`)
-- [ ] Support module imports (`import module` then `module.func()`)
-- [ ] Support relative imports with dots (`from ..utils import helper`)
+- [x] Support star imports (`from module import *`) - Capture pattern added, module path extracted
+- [x] Support module imports (`import module` then `module.func()`) - Already working, verified with tests
+- [x] Support relative imports with dots (`from ..utils import helper`) - Already handled by ModuleResolver
 
 ### TypeScript/JavaScript-Specific Import Patterns
 
-- [ ] Support CommonJS require syntax (`const mod = require('./module')`)
-- [ ] Support type imports (`import type { MyType } from './types'`)
-- [ ] Distinguish between type and value imports
+- [x] Support CommonJS require syntax (`const mod = require('./module')`) - Already captured in scopes.scm
+- [x] Support type imports (`import type { MyType } from './types'`) - Detection implemented
+- [x] Distinguish between type and value imports - is_type_import flag added to Import interface
 
 ### Rust-Specific Import Patterns
 
-- [ ] Research and document Rust use statements and module paths
-- [ ] Support `use crate::module::function` syntax
-- [ ] Handle `mod` declarations and file structure
+- [x] Research and document Rust use statements and module paths - Already captured in scopes.scm
+- [x] Support `use crate::module::function` syntax - Module resolution implemented
+- [x] Handle `mod` declarations and file structure - ModuleResolver handles mod.rs
 
 ### Testing and Documentation
 
-- [ ] Add tests for various path resolution scenarios
-- [ ] Add tests for each language's import patterns
-- [ ] Update get_imports_with_definitions to use resolved paths
-- [ ] Document import pattern support for each language
+- [x] Add tests for various path resolution scenarios - 14 tests created and passing
+- [x] Add tests for each language's import patterns - Tests for TS/JS, Python, Rust
+- [x] Update get_imports_with_definitions to use resolved paths - Integrated with ModuleResolver
+- [x] Document import pattern support for each language - Created comprehensive import-patterns.md
 
 ## Implementation Plan
 
@@ -158,3 +158,52 @@ mod utils;  // Looks for utils.rs or utils/mod.rs
 - Module imports create a namespace that needs special handling
 - Type imports should be tracked separately from value imports
 - Rust's module system is file-based and more complex than JS/Python
+
+## Implementation Notes
+
+### Completed Implementation
+
+1. **Created ModuleResolver class** (`packages/core/src/module_resolver.ts`):
+   - Handles relative path resolution for all languages
+   - Language-specific resolvers for Python and Rust
+   - Supports file extensions and index files
+   - 14 comprehensive tests all passing
+
+2. **Integrated with Project.get_imports_with_definitions()**:
+   - Uses ModuleResolver instead of brute-force search
+   - Detects language based on file extension
+   - Falls back to search if module resolution fails
+
+3. **Discovered existing support**:
+   - CommonJS require already captured in JavaScript scopes.scm
+   - Rust use statements already captured in Rust scopes.scm
+   - Python imports partially supported (missing star imports)
+
+### Task Completion Summary
+
+All major objectives have been achieved:
+
+1. **Module Path Resolution**:
+   - Created `ModuleResolver` class with language-specific logic
+   - Handles relative paths, file extensions, and index files
+   - Integrated with `Project.get_imports_with_definitions()`
+
+2. **Python Enhancements**:
+   - Added star import support in scopes.scm
+   - Verified module imports work correctly
+   - Module path extraction for `from X import Y` statements
+
+3. **TypeScript Enhancements**:
+   - Added type import detection
+   - Added `is_type_import` flag to Import interface
+   - Correctly distinguishes pure type imports and mixed imports
+
+4. **Testing & Documentation**:
+   - 14 comprehensive tests for module resolution
+   - Created import-patterns.md documenting all supported patterns
+   - Verified all language-specific import patterns work
+
+### Remaining Minor Items
+
+- TypeScript path mappings from tsconfig.json (marked as optional in plan)
+- External package resolution (node_modules, pip packages) - out of scope

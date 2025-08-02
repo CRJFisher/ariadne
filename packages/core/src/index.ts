@@ -13,7 +13,8 @@ import { ClassRelationship, extract_class_relationships } from './inheritance';
 import { ProjectCallGraph } from './project_call_graph';
 import { ProjectSource } from './project_source';
 import { ProjectInheritance } from './project_inheritance';
-import path from 'path';
+import * as path from 'path';
+import { ModuleResolver } from './module_resolver';
 
 // Re-export important types
 export { Point, Def, Ref, FunctionCall, SimpleRange, CallGraph, CallGraphOptions, CallGraphNode, CallGraphEdge, Call, IScopeGraph } from './graph';
@@ -512,19 +513,52 @@ export class Project {
       // Use source_name if available (for renamed imports), otherwise use the import name
       const export_name = imp.source_name || imp.name;
       
-      // Find the exported definition in other files
-      // TODO: Implement proper module path resolution instead of searching all files
-      for (const [otherFile, otherGraph] of this.file_graphs) {
-        if (otherFile === file_path) continue;
+      // Try to resolve the import path if source_module is available
+      let targetFile: string | null = null;
+      
+      if (imp.source_module) {
+        // Detect language and use appropriate resolver
+        const ext = path.extname(file_path).toLowerCase();
         
-        const exportedDef = otherGraph.findExportedDef(export_name);
-        if (exportedDef) {
-          importInfos.push({
-            imported_function: exportedDef,
-            import_statement: imp,
-            local_name: imp.name
-          });
-          break; // Found the definition, stop searching
+        if (ext === '.py') {
+          targetFile = ModuleResolver.resolvePythonImport(file_path, imp.source_module);
+        } else if (ext === '.rs') {
+          targetFile = ModuleResolver.resolveRustModule(file_path, imp.source_module);
+        } else {
+          targetFile = ModuleResolver.resolveModulePath(file_path, imp.source_module);
+        }
+        
+        // If we resolved a specific file, only search that file
+        if (targetFile) {
+          const targetGraph = this.file_graphs.get(targetFile);
+          if (targetGraph) {
+            const exportedDef = targetGraph.findExportedDef(export_name);
+            if (exportedDef) {
+              importInfos.push({
+                imported_function: exportedDef,
+                import_statement: imp,
+                local_name: imp.name
+              });
+              continue;
+            }
+          }
+        }
+      }
+      
+      // Fallback to searching all files if module resolution failed
+      if (!targetFile) {
+        for (const [otherFile, otherGraph] of this.file_graphs) {
+          if (otherFile === file_path) continue;
+          
+          const exportedDef = otherGraph.findExportedDef(export_name);
+          if (exportedDef) {
+            importInfos.push({
+              imported_function: exportedDef,
+              import_statement: imp,
+              local_name: imp.name
+            });
+            break; // Found the definition, stop searching
+          }
         }
       }
     }

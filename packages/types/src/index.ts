@@ -81,6 +81,7 @@ export interface Import extends BaseNode {
   name: string;
   source_name?: string;
   source_module?: string;
+  is_type_import?: boolean;
 }
 
 export interface Scope extends BaseNode {

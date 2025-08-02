@@ -133,6 +133,13 @@
   (dotted_name 
     (identifier) @local.import))
 
+;; from module import *
+;;
+;; Star imports are special - they import all names from a module
+;; We capture them as imports but with special handling needed
+(import_from_statement
+  (wildcard_import) @local.import)
+
 ;; class A
 (class_definition
   (identifier) @local.definition.class)
