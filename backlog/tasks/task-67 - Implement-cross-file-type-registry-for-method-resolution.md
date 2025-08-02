@@ -1,9 +1,10 @@
 ---
 id: task-67
 title: Implement cross-file type registry for method resolution
-status: To Do
-assignee: []
+status: Done
+assignee: ['@claude']
 created_date: '2025-08-02'
+updated_date: '2025-08-02'
 labels:
   - enhancement
   - call-graph
