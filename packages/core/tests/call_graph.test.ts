@@ -1292,6 +1292,96 @@ function useDatabase() {
     expect(callGraph.top_level_nodes).not.toContain("database#Database.close");
   });
 
+  test("detects method calls on imported class instances", () => {
+    // First file with the class definition
+    const graphFile = `
+export class ScopeGraph {
+  insert_global_def(def: string) {
+    console.log("Inserting global:", def);
+  }
+  
+  insert_local_def(def: string) {
+    console.log("Inserting local:", def);
+  }
+}
+`;
+    project.add_or_update_file("graph.ts", graphFile);
+    
+    // Second file that imports and uses the class
+    const builderFile = `
+import { ScopeGraph } from "./graph";
+
+export function build_scope_graph() {
+  const graph = new ScopeGraph();
+  graph.insert_global_def("globalDef");
+  graph.insert_local_def("localDef");
+  return graph;
+}
+`;
+    project.add_or_update_file("builder.ts", builderFile);
+    
+    const callGraph = project.get_call_graph();
+    
+    // build_scope_graph should call ScopeGraph methods
+    const buildNode = callGraph.nodes.get("builder#build_scope_graph");
+    expect(buildNode).toBeDefined();
+    
+    // Should have calls to both insert methods
+    const methodCalls = buildNode!.calls.filter(c => c.kind === 'method');
+    expect(methodCalls.length).toBeGreaterThanOrEqual(2);
+    
+    const methodNames = methodCalls.map(c => c.symbol);
+    expect(methodNames).toContain("graph#ScopeGraph.insert_global_def");
+    expect(methodNames).toContain("graph#ScopeGraph.insert_local_def");
+    
+    // These methods should not be top-level since they're called
+    expect(callGraph.top_level_nodes).not.toContain("graph#ScopeGraph.insert_global_def");
+    expect(callGraph.top_level_nodes).not.toContain("graph#ScopeGraph.insert_local_def");
+  });
+
+  test("detects method calls on renamed imported class instances", () => {
+    // First file with the class definition
+    const databaseFile = `
+export class Database {
+  query(sql: string) {
+    console.log("Executing:", sql);
+    return [];
+  }
+  
+  execute(sql: string) {
+    console.log("Execute:", sql);
+  }
+}
+`;
+    project.add_or_update_file("database.ts", databaseFile);
+    
+    // Second file that imports with rename
+    const appFile = `
+import { Database as DB } from "./database";
+
+export function runQuery() {
+  const db = new DB();
+  db.query("SELECT * FROM users");
+  db.execute("UPDATE users SET active = true");
+}
+`;
+    project.add_or_update_file("app.ts", appFile);
+    
+    const callGraph = project.get_call_graph();
+    
+    // runQuery should call Database methods
+    const runQueryNode = callGraph.nodes.get("app#runQuery");
+    expect(runQueryNode).toBeDefined();
+    
+    // Should have calls to both methods
+    const methodCalls = runQueryNode!.calls.filter(c => c.kind === 'method');
+    expect(methodCalls.length).toBeGreaterThanOrEqual(2);
+    
+    const methodNames = methodCalls.map(c => c.symbol);
+    expect(methodNames).toContain("database#Database.query");
+    expect(methodNames).toContain("database#Database.execute");
+  });
+
   test.skip("cross-file method resolution for TypeScript - requires variable type tracking across function boundaries", () => {
     // This test documents the current limitation
     // The tree-sitter scope queries don't capture method properties as references

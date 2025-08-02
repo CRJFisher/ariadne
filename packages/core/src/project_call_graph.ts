@@ -8,6 +8,7 @@ import { Tree } from 'tree-sitter';
  */
 class FileTypeTracker {
   private variableTypes = new Map<string, { className: string; classDef?: Def & { enclosing_range?: SimpleRange } }>();
+  private importedClasses = new Map<string, { className: string; classDef: Def & { enclosing_range?: SimpleRange }; sourceFile: string }>();
   
   /**
    * Set the type of a variable
@@ -24,10 +25,25 @@ class FileTypeTracker {
   }
   
   /**
+   * Track an imported class
+   */
+  setImportedClass(localName: string, classInfo: { className: string; classDef: Def & { enclosing_range?: SimpleRange }; sourceFile: string }) {
+    this.importedClasses.set(localName, classInfo);
+  }
+  
+  /**
+   * Get imported class information
+   */
+  getImportedClass(localName: string) {
+    return this.importedClasses.get(localName);
+  }
+  
+  /**
    * Clear all type information for this file
    */
   clear() {
     this.variableTypes.clear();
+    this.importedClasses.clear();
   }
   
   /**
@@ -87,6 +103,35 @@ export class ProjectCallGraph {
     const tracker = this.file_type_trackers.get(file_path);
     if (tracker) {
       tracker.clear();
+    }
+  }
+  
+  /**
+   * Initialize import information for a file
+   */
+  private initializeFileImports(file_path: string) {
+    const tracker = this.getFileTypeTracker(file_path);
+    const imports = this.get_imports_with_definitions(file_path);
+    
+    // Track all imported classes
+    for (const importInfo of imports) {
+      if (importInfo.imported_function.symbol_kind === 'class') {
+        const classDef = importInfo.imported_function;
+        const fileCache = this.file_cache.get(classDef.file_path);
+        
+        // Compute enclosing range if needed
+        const classDefWithRange = {
+          ...classDef,
+          enclosing_range: (classDef as any).enclosing_range || 
+            (fileCache ? this.computeClassEnclosingRange(classDef, fileCache.tree) : undefined)
+        };
+        
+        tracker.setImportedClass(importInfo.local_name, {
+          className: importInfo.imported_function.name,
+          classDef: classDefWithRange,
+          sourceFile: importInfo.imported_function.file_path
+        });
+      }
     }
   }
 
@@ -209,6 +254,9 @@ export class ProjectCallGraph {
     // Get file-level type tracker for variable types
     const fileTypeTracker = this.getFileTypeTracker(def.file_path);
     
+    // Initialize import information for this file
+    this.initializeFileImports(def.file_path);
+    
     // Find the full definition body range using AST traversal
     let definitionRange = def.range;
     
@@ -292,53 +340,84 @@ export class ProjectCallGraph {
       
       if (astNode && astNode.parent && astNode.parent.type === 'new_expression') {
         // This is a constructor call
-        const resolved = this.go_to_definition(def.file_path, ref.range.start);
-        if (resolved) {
-          let final_resolved = resolved;
-          
-          // Resolve imports
-          if (resolved.symbol_kind === 'import') {
-            const imports = this.get_imports_with_definitions(def.file_path);
-            const import_info = imports.find(imp => 
-              imp.import_statement.name === resolved.name &&
-              imp.import_statement.range.start.row === resolved.range.start.row &&
-              imp.import_statement.range.start.column === resolved.range.start.column
-            );
-            
-            if (import_info && import_info.imported_function) {
-              final_resolved = import_info.imported_function;
-            }
+        const constructorName = ref.name;
+        
+        // First check if this is an imported class
+        const importedClass = fileTypeTracker.getImportedClass(constructorName);
+        if (importedClass) {
+          // This is an imported class - track the variable assignment
+          let assignmentNode: any = astNode.parent;
+          while (assignmentNode && assignmentNode.type !== 'variable_declarator' && 
+                 assignmentNode.type !== 'assignment_expression') {
+            assignmentNode = assignmentNode.parent;
           }
           
-          // If it's a class, track the variable assignment
-          if (final_resolved.symbol_kind === 'class') {
-            // Look for the variable assignment pattern: const varName = new ClassName()
-            let assignmentNode: any = astNode.parent;
-            while (assignmentNode && assignmentNode.type !== 'variable_declarator' && 
-                   assignmentNode.type !== 'assignment_expression') {
-              assignmentNode = assignmentNode.parent;
+          if (assignmentNode) {
+            let varNameNode: any = null;
+            if (assignmentNode.type === 'variable_declarator') {
+              varNameNode = assignmentNode.childForFieldName('name');
+            } else if (assignmentNode.type === 'assignment_expression') {
+              varNameNode = assignmentNode.childForFieldName('left');
             }
             
-            if (assignmentNode) {
-              let varNameNode: any = null;
-              if (assignmentNode.type === 'variable_declarator') {
-                varNameNode = assignmentNode.childForFieldName('name');
-              } else if (assignmentNode.type === 'assignment_expression') {
-                varNameNode = assignmentNode.childForFieldName('left');
+            if (varNameNode && varNameNode.type === 'identifier') {
+              const varName = varNameNode.text;
+              fileTypeTracker.setVariableType(varName, {
+                className: importedClass.className,
+                classDef: importedClass.classDef
+              });
+            }
+          }
+        } else {
+          // Fall back to the original resolution logic
+          const resolved = this.go_to_definition(def.file_path, ref.range.start);
+          if (resolved) {
+            let final_resolved = resolved;
+            
+            // Resolve imports
+            if (resolved.symbol_kind === 'import') {
+              const imports = this.get_imports_with_definitions(def.file_path);
+              const import_info = imports.find(imp => 
+                imp.import_statement.name === resolved.name &&
+                imp.import_statement.range.start.row === resolved.range.start.row &&
+                imp.import_statement.range.start.column === resolved.range.start.column
+              );
+              
+              if (import_info && import_info.imported_function) {
+                final_resolved = import_info.imported_function;
+              }
+            }
+            
+            // If it's a class, track the variable assignment
+            if (final_resolved.symbol_kind === 'class') {
+              // Look for the variable assignment pattern: const varName = new ClassName()
+              let assignmentNode: any = astNode.parent;
+              while (assignmentNode && assignmentNode.type !== 'variable_declarator' && 
+                     assignmentNode.type !== 'assignment_expression') {
+                assignmentNode = assignmentNode.parent;
               }
               
-              if (varNameNode && varNameNode.type === 'identifier') {
-                const varName = varNameNode.text;
-                // Store class def with computed enclosing range
-                const classDefWithRange = {
-                  ...final_resolved,
-                  // For class definitions, compute enclosing_range based on AST if not already set
-                  enclosing_range: (final_resolved as any).enclosing_range || this.computeClassEnclosingRange(final_resolved, fileCache.tree)
-                };
-                fileTypeTracker.setVariableType(varName, {
-                  className: final_resolved.name,
-                  classDef: classDefWithRange
-                });
+              if (assignmentNode) {
+                let varNameNode: any = null;
+                if (assignmentNode.type === 'variable_declarator') {
+                  varNameNode = assignmentNode.childForFieldName('name');
+                } else if (assignmentNode.type === 'assignment_expression') {
+                  varNameNode = assignmentNode.childForFieldName('left');
+                }
+                
+                if (varNameNode && varNameNode.type === 'identifier') {
+                  const varName = varNameNode.text;
+                  // Store class def with computed enclosing range
+                  const classDefWithRange = {
+                    ...final_resolved,
+                    // For class definitions, compute enclosing_range based on AST if not already set
+                    enclosing_range: (final_resolved as any).enclosing_range || this.computeClassEnclosingRange(final_resolved, fileCache.tree)
+                  };
+                  fileTypeTracker.setVariableType(varName, {
+                    className: final_resolved.name,
+                    classDef: classDefWithRange
+                  });
+                }
               }
             }
           }

@@ -46,13 +46,49 @@ function compute() {
 
 3. **Reference Storage**: All references, including unresolved method references, are now stored in the scope graph for potential future resolution.
 
+4. **Import-Aware Constructor Tracking** (NEW): The system now tracks types for imported class instances:
+
+```typescript
+// file: logger.ts
+export class Logger {
+  log(message: string) { /* ... */ }
+}
+
+// file: app.ts
+import { Logger } from "./logger";
+// or with rename:
+import { Logger as Log } from "./logger";
+
+function useLogger() {
+  const logger = new Logger();  // Type tracked across files
+  logger.log("Hello");          // ✅ Now resolved correctly
+}
+```
+
 ### What Doesn't Work ❌
 
-1. **Cross-File Method Resolution**: Method calls on imported class instances are not resolved to their definitions.
+1. **Type Tracking Through Function Returns**: Type information is not preserved when objects are returned from functions:
 
-2. **Variable Type Tracking Across Functions**: Type information is not preserved when a variable is created in one function and used in another.
+```typescript
+function createLogger() {
+  return new Logger();  // Return type not tracked
+}
 
-3. **Import-Aware Type Tracking**: The system doesn't connect import resolution with variable type tracking.
+function useLogger() {
+  const logger = createLogger();
+  logger.log("Hello");  // ❌ Not resolved
+}
+```
+
+2. **Parameter Type Tracking**: Type information for function parameters is not tracked:
+
+```typescript
+function processLogger(logger: Logger) {
+  logger.log("Processing");  // ❌ Not resolved
+}
+```
+
+3. **Language-Specific Type Tracking**: Some language-specific patterns like Python's `self` parameter are not yet handled.
 
 ## Technical Architecture
 
