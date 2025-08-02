@@ -102,6 +102,9 @@ export class Project {
       console.warn(`No language configuration found for file: ${file_path}`);
       return;
     }
+    
+    // Clear type tracking for this file since it's being updated
+    this.call_graph.clearFileTypeTracker(file_path);
 
     const cached = this.file_cache.get(file_path);
     let tree: Tree;

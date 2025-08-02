@@ -1212,6 +1212,86 @@ export function build_scope_graph() {
     expect(callGraph.top_level_nodes).not.toContain("builder#ScopeGraph.insert_global_def");
   });
 
+  test("detects method calls with type persistence across variable scopes in same file", () => {
+    // This test should pass with file-level type tracking
+    const code = `
+class Logger {
+  log(message: string) {
+    console.log(message);
+  }
+}
+
+let globalLogger: Logger;
+
+function initializeLogger() {
+  globalLogger = new Logger();
+}
+
+function useLogger() {
+  globalLogger.log("Test message");
+}
+`;
+    project.add_or_update_file("logger.ts", code);
+    const callGraph = project.get_call_graph();
+    
+    // useLogger should call Logger.log
+    const useLoggerNode = callGraph.nodes.get("logger#useLogger");
+    expect(useLoggerNode).toBeDefined();
+    
+    const methodCalls = useLoggerNode!.calls.filter(c => c.kind === 'method');
+    expect(methodCalls.length).toBeGreaterThanOrEqual(1);
+    
+    const methodNames = methodCalls.map(c => c.symbol);
+    expect(methodNames).toContain("logger#Logger.log");
+    
+    // Logger.log should not be top-level since it's called
+    expect(callGraph.top_level_nodes).not.toContain("logger#Logger.log");
+  });
+
+  test.skip("detects method calls with type persistence across functions in same file - needs return type tracking", () => {
+    // This test documents what we want to achieve with task 68 (type inference)
+    const code = `
+class Database {
+  query(sql: string) {
+    console.log("Executing:", sql);
+    return [];
+  }
+  
+  close() {
+    console.log("Closing database");
+  }
+}
+
+function createDatabase() {
+  return new Database();
+}
+
+function useDatabase() {
+  const db = createDatabase();
+  db.query("SELECT * FROM users");
+  db.close();
+}
+`;
+    project.add_or_update_file("database.ts", code);
+    const callGraph = project.get_call_graph();
+    
+    // useDatabase should call Database methods
+    const useDbNode = callGraph.nodes.get("database#useDatabase");
+    expect(useDbNode).toBeDefined();
+    
+    // Should have calls to both query and close
+    const methodCalls = useDbNode!.calls.filter(c => c.kind === 'method');
+    expect(methodCalls.length).toBeGreaterThanOrEqual(2);
+    
+    const methodNames = methodCalls.map(c => c.symbol);
+    expect(methodNames).toContain("database#Database.query");
+    expect(methodNames).toContain("database#Database.close");
+    
+    // These methods should not be top-level since they're called
+    expect(callGraph.top_level_nodes).not.toContain("database#Database.query");
+    expect(callGraph.top_level_nodes).not.toContain("database#Database.close");
+  });
+
   test.skip("cross-file method resolution for TypeScript - requires variable type tracking across function boundaries", () => {
     // This test documents the current limitation
     // The tree-sitter scope queries don't capture method properties as references

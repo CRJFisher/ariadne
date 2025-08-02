@@ -4,6 +4,41 @@ import { LanguageConfig } from './types';
 import { Tree } from 'tree-sitter';
 
 /**
+ * Tracks variable type information at the file level
+ */
+class FileTypeTracker {
+  private variableTypes = new Map<string, { className: string; classDef?: Def & { enclosing_range?: SimpleRange } }>();
+  
+  /**
+   * Set the type of a variable
+   */
+  setVariableType(varName: string, typeInfo: { className: string; classDef?: Def & { enclosing_range?: SimpleRange } }) {
+    this.variableTypes.set(varName, typeInfo);
+  }
+  
+  /**
+   * Get the type of a variable
+   */
+  getVariableType(varName: string) {
+    return this.variableTypes.get(varName);
+  }
+  
+  /**
+   * Clear all type information for this file
+   */
+  clear() {
+    this.variableTypes.clear();
+  }
+  
+  /**
+   * Get all variable types (for debugging/testing)
+   */
+  getAllTypes() {
+    return new Map(this.variableTypes);
+  }
+}
+
+/**
  * Cached file data for incremental parsing
  */
 interface FileCache {
@@ -20,6 +55,7 @@ export class ProjectCallGraph {
   private file_graphs: Map<string, ScopeGraph>;
   private file_cache: Map<string, FileCache>;
   private languages: Map<string, LanguageConfig>;
+  private file_type_trackers: Map<string, FileTypeTracker>;
 
   constructor(
     file_graphs: Map<string, ScopeGraph>,
@@ -29,6 +65,29 @@ export class ProjectCallGraph {
     this.file_graphs = file_graphs;
     this.file_cache = file_cache;
     this.languages = languages;
+    this.file_type_trackers = new Map();
+  }
+  
+  /**
+   * Get or create a FileTypeTracker for a given file
+   */
+  private getFileTypeTracker(file_path: string): FileTypeTracker {
+    let tracker = this.file_type_trackers.get(file_path);
+    if (!tracker) {
+      tracker = new FileTypeTracker();
+      this.file_type_trackers.set(file_path, tracker);
+    }
+    return tracker;
+  }
+  
+  /**
+   * Clear type tracker for a file (should be called when file is updated)
+   */
+  clearFileTypeTracker(file_path: string) {
+    const tracker = this.file_type_trackers.get(file_path);
+    if (tracker) {
+      tracker.clear();
+    }
   }
 
   /**
@@ -147,8 +206,8 @@ export class ProjectCallGraph {
     
     const calls: FunctionCall[] = [];
     
-    // Track variable types for method resolution
-    const variableTypes = new Map<string, { className: string; classDef?: Def & { enclosing_range?: SimpleRange } }>();
+    // Get file-level type tracker for variable types
+    const fileTypeTracker = this.getFileTypeTracker(def.file_path);
     
     // Find the full definition body range using AST traversal
     let definitionRange = def.range;
@@ -276,7 +335,7 @@ export class ProjectCallGraph {
                   // For class definitions, compute enclosing_range based on AST if not already set
                   enclosing_range: (final_resolved as any).enclosing_range || this.computeClassEnclosingRange(final_resolved, fileCache.tree)
                 };
-                variableTypes.set(varName, {
+                fileTypeTracker.setVariableType(varName, {
                   className: final_resolved.name,
                   classDef: classDefWithRange
                 });
@@ -304,7 +363,7 @@ export class ProjectCallGraph {
           const objectNode = astNode.parent.childForFieldName('object');
           if (objectNode && objectNode.type === 'identifier') {
             const objName = objectNode.text;
-            const typeInfo = variableTypes.get(objName);
+            const typeInfo = fileTypeTracker.getVariableType(objName);
             
             if (typeInfo && typeInfo.classDef) {
               // We have type information for this variable
