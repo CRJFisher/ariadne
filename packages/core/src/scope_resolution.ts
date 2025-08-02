@@ -27,14 +27,14 @@ export function build_scope_graph(
 
   // Collect all captures by type
   const scope_captures: Array<{ node: any }> = [];
-  const def_captures: Array<{ node: any; scoping: string; kind: string }> = [];
+  const def_captures: Array<{ node: any; scoping: string; kind: string; isExported?: boolean }> = [];
   const import_captures: Array<{
     node: any;
     source_name?: string;
     module?: string;
     is_type_import?: boolean;
   }> = [];
-  const ref_captures: Array<{ node: any; symbol_kind?: string }> = [];
+  const ref_captures: Array<{ node: any; symbol_kind?: string; isExported?: boolean }> = [];
 
   // First pass: categorize all captures
   for (const match of matches) {
@@ -50,7 +50,8 @@ export function build_scope_graph(
         scope_captures.push({ node });
       } else if (node_type === "definition") {
         const kind = parts[2] || "none"; // Default to 'none' if no kind specified
-        def_captures.push({ node, scoping, kind });
+        const isExported = parts[parts.length - 1] === "exported";
+        def_captures.push({ node, scoping, kind, isExported });
       } else if (node_type === "import") {
         // Check if this is a renamed import by looking at the parent node
         let source_name: string | undefined;
@@ -126,7 +127,8 @@ export function build_scope_graph(
         import_captures.push({ node, source_name, module: module_path, is_type_import });
       } else if (node_type === "reference") {
         const symbol_kind = parts[2];
-        ref_captures.push({ node, symbol_kind });
+        const isExported = parts[parts.length - 1] === "exported";
+        ref_captures.push({ node, symbol_kind, isExported });
       }
     }
   }
@@ -137,17 +139,46 @@ export function build_scope_graph(
     );
   }
 
-  // Track exported names for later marking definitions
+  // Collect exported names from export lists (for references in export clauses)
   const exportedNames = new Set<string>();
-  let pythonAllList: string[] | null = null;
+  for (const { node, isExported } of ref_captures) {
+    if (isExported) {
+      exportedNames.add(node.text);
+    }
+  }
   
-  // First, find all exported names
-  if (config.name === 'typescript' || config.name === 'javascript') {
-    // Look for export statements in the tree
-    findExportedNames(tree.rootNode, exportedNames);
-  } else if (config.name === 'python') {
-    // Look for __all__ definition
-    pythonAllList = findPythonAllExports(tree.rootNode);
+  // For Python, handle __all__ - find the definition and extract the list
+  let pythonAllList: Set<string> | null = null;
+  if (config.name === 'python') {
+    // Look for __all__ definition in the captures
+    const allDef = def_captures.find(d => d.node.text === '__all__');
+    if (allDef) {
+      // Find the assignment node containing this definition
+      let parent = allDef.node.parent;
+      while (parent && parent.type !== 'assignment') {
+        parent = parent.parent;
+      }
+      
+      if (parent && parent.type === 'assignment') {
+        const right = parent.child(2); // Skip the = operator
+        if (right && right.type === 'list') {
+          pythonAllList = new Set<string>();
+          // Extract string literals from the list
+          for (let i = 0; i < right.childCount; i++) {
+            const child = right.child(i);
+            if (child && child.type === 'string') {
+              // Extract the string content (remove quotes)
+              let text = child.text;
+              if ((text.startsWith("'") && text.endsWith("'")) ||
+                  (text.startsWith('"') && text.endsWith('"'))) {
+                text = text.substring(1, text.length - 1);
+              }
+              pythonAllList.add(text);
+            }
+          }
+        }
+      }
+    }
   }
 
   // Second pass: process captures in order (scopes, then defs, then imports, then refs)
@@ -163,7 +194,7 @@ export function build_scope_graph(
   }
 
   // 2. Process definitions
-  for (const { node, scoping, kind } of def_captures) {
+  for (const { node, scoping, kind, isExported } of def_captures) {
     // Check if symbol kind is valid
     let symbol_id: number[] | undefined;
     for (let i = 0; i < config.namespaces.length; i++) {
@@ -186,7 +217,22 @@ export function build_scope_graph(
     };
     
     // Check if this definition is exported
-    new_def.is_exported = isDefinitionExported(node, config.name, exportedNames, pythonAllList);
+    if (isExported !== undefined) {
+      // Directly captured as exported in scope queries
+      new_def.is_exported = isExported;
+    } else if (exportedNames.has(node.text)) {
+      // Exported via export list (e.g., export { func1, func2 })
+      new_def.is_exported = true;
+    } else if (config.name === 'python') {
+      // For Python, apply export conventions
+      new_def.is_exported = isPythonExported(node, new_def, pythonAllList);
+    } else if (config.name === 'rust') {
+      // For Rust, check for pub keyword
+      new_def.is_exported = isRustPublic(node);
+    } else {
+      // Default: not exported unless explicitly marked
+      new_def.is_exported = false;
+    }
 
     // For function-like definitions, set enclosing_range to the parent node
     // which contains the full function body
@@ -270,235 +316,76 @@ export function build_scope_graph(
 }
 
 /**
- * Find all exported names in TypeScript/JavaScript code
+ * Check if a Python definition is exported based on conventions
  */
-function findExportedNames(node: any, exportedNames: Set<string>) {
-  // Handle module.exports and exports assignments
-  if (node.type === 'assignment_expression') {
-    const left = node.childForFieldName('left');
-    const right = node.childForFieldName('right');
-    
-    if (left?.type === 'member_expression') {
-      const object = left.childForFieldName('object');
-      const property = left.childForFieldName('property');
-      
-      // module.exports = { func1, func2 }
-      if (object?.text === 'module' && property?.text === 'exports') {
-        if (right?.type === 'object') {
-          // Extract all properties from the object
-          for (let i = 0; i < right.childCount; i++) {
-            const child = right.child(i);
-            if (child?.type === 'pair') {
-              const key = child.childForFieldName('key');
-              if (key?.type === 'property_identifier') {
-                exportedNames.add(key.text);
-              }
-            } else if (child?.type === 'shorthand_property_identifier') {
-              exportedNames.add(child.text);
-            }
-          }
-        } else if (right?.type === 'identifier') {
-          // module.exports = functionName
-          exportedNames.add(right.text);
-        }
-      }
-      // exports.functionName = ...
-      else if (object?.text === 'exports' && property?.type === 'property_identifier') {
-        exportedNames.add(property.text);
-      }
-    }
-  }
+function isPythonExported(node: any, def: Def, pythonAllList: Set<string> | null): boolean {
+  const name = def.name;
   
-  if (node.type === 'export_statement') {
-    // Direct exports: export function name() {}
-    for (let i = 0; i < node.childCount; i++) {
-      const child = node.child(i);
-      if (!child) continue;
-      
-      if (child.type === 'function_declaration' || 
-          child.type === 'class_declaration' ||
-          child.type === 'interface_declaration' ||
-          child.type === 'type_alias_declaration' ||
-          child.type === 'enum_declaration') {
-        // Find the identifier
-        const nameNode = child.childForFieldName('name') || child.child(1);
-        if (nameNode && nameNode.type === 'identifier' || nameNode?.type === 'type_identifier') {
-          exportedNames.add(nameNode.text);
-        }
-      } else if (child.type === 'lexical_declaration' || child.type === 'variable_declaration') {
-        // export const/let/var name = ...
-        for (let j = 0; j < child.childCount; j++) {
-          const declarator = child.child(j);
-          if (declarator?.type === 'variable_declarator') {
-            const nameNode = declarator.childForFieldName('name') || declarator.child(0);
-            if (nameNode?.type === 'identifier') {
-              exportedNames.add(nameNode.text);
-            }
-          }
-        }
-      } else if (child.type === 'export_clause') {
-        // export { name1, name2 as alias }
-        for (let j = 0; j < child.childCount; j++) {
-          const specifier = child.child(j);
-          if (specifier?.type === 'export_specifier') {
-            // Get the local name (what's actually exported)
-            const nameNode = specifier.childForFieldName('name') || specifier.child(0);
-            if (nameNode?.type === 'identifier') {
-              exportedNames.add(nameNode.text);
-            }
-          }
-        }
-      }
-    }
-  }
+  // Check if the definition is at root level by looking at the scope depth
+  // A root-level definition should have no parent function/class definitions
+  let parent = node.parent;
+  let isNested = false;
   
-  // Recurse through children
-  for (let i = 0; i < node.childCount; i++) {
-    const child = node.child(i);
-    if (child) {
-      findExportedNames(child, exportedNames);
-    }
-  }
-}
-
-/**
- * Find Python __all__ exports
- */
-function findPythonAllExports(node: any): string[] | null {
-  // Check for expression_statement containing assignment
-  if (node.type === 'expression_statement' && node.childCount > 0) {
-    const assignment = node.child(0);
-    if (assignment?.type === 'assignment') {
-      return findPythonAllExports(assignment);
-    }
-  }
-  
-  if (node.type === 'assignment' && node.childCount >= 3) {
-    const left = node.child(0);
-    const right = node.child(2); // Skip the = operator
-    
-    if (left?.text === '__all__' && right?.type === 'list') {
-      const exports: string[] = [];
-      
-      // Extract string literals from the list
-      for (let i = 0; i < right.childCount; i++) {
-        const child = right.child(i);
-        if (child?.type === 'string') {
-          // Extract the string content (remove quotes)
-          let text = child.text;
-          // Handle single and double quotes
-          if ((text.startsWith("'") && text.endsWith("'")) ||
-              (text.startsWith('"') && text.endsWith('"'))) {
-            text = text.substring(1, text.length - 1);
-          }
-          exports.push(text);
-        }
-      }
-      
-      return exports;
-    }
-  }
-  
-  // Recurse through children
-  for (let i = 0; i < node.childCount; i++) {
-    const child = node.child(i);
-    if (child) {
-      const result = findPythonAllExports(child);
-      if (result) return result;
-    }
-  }
-  
-  return null;
-}
-
-/**
- * Check if a definition node is exported based on language rules
- */
-function isDefinitionExported(node: any, language: string, exportedNames: Set<string>, pythonAllList: string[] | null = null): boolean {
-  const name = node.text;
-  
-  if (language === 'typescript' || language === 'javascript') {
-    // Check if parent is export_statement
-    let parent = node.parent;
-    while (parent) {
-      if (parent.type === 'export_statement') {
-        return true;
-      }
-      // Stop at certain boundaries
-      if (parent.type === 'program' || 
-          parent.type === 'statement_block' ||
-          parent.type === 'class_body') {
-        break;
-      }
-      parent = parent.parent;
-    }
-    
-    // Check if name is in export list
-    return exportedNames.has(name);
-  } else if (language === 'python') {
-    // For Python, check if the definition itself (not the identifier) is at root level
-    let parent = node.parent;
-    let inRootScope = false;
-    
-    // The node is the identifier, so check if its parent is a root-level definition
-    if (parent && (parent.type === 'function_definition' || parent.type === 'class_definition')) {
-      // Check if this definition's parent is the module
-      const defParent = parent.parent;
-      if (defParent && defParent.type === 'module') {
-        inRootScope = true;
-      }
-    } else {
-      // For other definitions (like variables), check normal way
-      inRootScope = true;
-      while (parent && parent.type !== 'module') {
-        if (parent.type === 'function_definition' || 
-            parent.type === 'class_definition') {
-          inRootScope = false;
+  while (parent && parent.type !== 'module') {
+    if (parent.type === 'function_definition' || parent.type === 'class_definition') {
+      // Check if this is the definition node itself
+      if (parent === node.parent) {
+        // This is the immediate parent, check its parent
+        const grandparent = parent.parent;
+        if (grandparent && grandparent.type !== 'module') {
+          isNested = true;
           break;
         }
-        parent = parent.parent;
+      } else {
+        // This is a containing function/class
+        isNested = true;
+        break;
       }
     }
-    
-    
-    if (!inRootScope) {
-      return false; // Nested definitions are not exported
-    }
-    
-    // If __all__ is defined, only names in it are exported
-    if (pythonAllList !== null) {
-      return pythonAllList.includes(name);
-    }
-    
-    // Otherwise, follow Python conventions:
-    // Names starting with _ are private (except __special__)
-    if (name.startsWith('_') && !name.startsWith('__')) {
-      return false;
-    }
-    
-    return true;
-  } else if (language === 'rust') {
-    // Check for pub keyword
-    let parent = node.parent;
-    if (parent) {
-      // Look for 'pub' among siblings before this node
-      const parentChildren = [];
-      for (let i = 0; i < parent.childCount; i++) {
-        parentChildren.push(parent.child(i));
-      }
-      const nodeIndex = parentChildren.findIndex(child => child?.id === node.id);
-      
-      // Check previous siblings for 'pub'
-      for (let i = 0; i < nodeIndex; i++) {
-        const sibling = parentChildren[i];
-        if (sibling?.type === 'visibility_modifier' && sibling.text === 'pub') {
-          return true;
-        }
-      }
-    }
+    parent = parent.parent;
+  }
+  
+  if (isNested) {
     return false;
   }
   
-  // Default: treat root-level definitions as exported
+  // If __all__ is defined, only names in it are exported
+  if (pythonAllList !== null) {
+    return pythonAllList.has(name);
+  }
+  
+  // Otherwise, follow Python conventions:
+  // Names starting with _ are private (except __special__)
+  if (name.startsWith('_') && !name.startsWith('__')) {
+    return false;
+  }
+  
   return true;
 }
+
+/**
+ * Check if a Rust definition has pub keyword
+ */
+function isRustPublic(node: any): boolean {
+  // For Rust, the pub keyword should be captured in the scope query
+  // This is a fallback for cases not covered by scope queries
+  let parent = node.parent;
+  if (parent) {
+    // Look for visibility_modifier among previous siblings
+    const parentChildren = [];
+    for (let i = 0; i < parent.childCount; i++) {
+      parentChildren.push(parent.child(i));
+    }
+    const nodeIndex = parentChildren.findIndex(child => child?.id === node.id);
+    
+    // Check previous siblings for 'pub'
+    for (let i = 0; i < nodeIndex; i++) {
+      const sibling = parentChildren[i];
+      if (sibling?.type === 'visibility_modifier' && sibling.text === 'pub') {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+

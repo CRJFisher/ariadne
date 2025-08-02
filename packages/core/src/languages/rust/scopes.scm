@@ -102,10 +102,22 @@
 ;; (ref x: T)
 (ref_pattern (identifier) @local.definition.variable)
 
-;; const x = ...;
+;; pub const x = ...;
+(const_item
+  (visibility_modifier) @_pub
+  (identifier) @local.definition.const.exported
+  (#eq? @_pub "pub"))
+
+;; const x = ... (private)
 (const_item (identifier) @local.definition.const)
 
-;; static x = ...;
+;; pub static x = ...;
+(static_item
+  (visibility_modifier) @_pub
+  (identifier) @local.definition.const.exported
+  (#eq? @_pub "pub"))
+
+;; static x = ... (private)
 (static_item (identifier) @local.definition.const)
 
 ;; fn _(x: _)
@@ -135,7 +147,13 @@
   (parameter
     (identifier) @local.definition.variable))
 
-;;fn x(..)
+;; pub fn x(..)
+(function_item
+  (visibility_modifier) @_pub
+  (identifier) @hoist.definition.function.exported
+  (#eq? @_pub "pub"))
+
+;; fn x(..) (private)
 (function_item (identifier) @hoist.definition.function)
 
 ;; 'outer: loop { .. }
@@ -151,11 +169,49 @@
 (while_expression
   (label) @local.definition.label)
 
-;; type definitions
+;; pub struct
+(struct_item
+  (visibility_modifier) @_pub
+  (type_identifier) @hoist.definition.struct.exported
+  (#eq? @_pub "pub"))
+
+;; struct (private)
 (struct_item (type_identifier) @hoist.definition.struct)
+
+;; pub enum
+(enum_item
+  (visibility_modifier) @_pub
+  (type_identifier) @hoist.definition.enum.exported
+  (#eq? @_pub "pub"))
+
+;; enum (private)
 (enum_item (type_identifier) @hoist.definition.enum)
+
+;; pub union
+(union_item
+  (visibility_modifier) @_pub
+  (type_identifier) @hoist.definition.union.exported
+  (#eq? @_pub "pub"))
+
+;; union (private)
 (union_item (type_identifier) @hoist.definition.union)
+
+;; pub type
+(type_item
+  (visibility_modifier) @_pub
+  . (type_identifier) @hoist.definition.typedef.exported
+  (#eq? @_pub "pub"))
+
+;; type (private)
 (type_item . (type_identifier) @hoist.definition.typedef)
+
+;; pub trait
+(trait_item
+  (visibility_modifier) @_pub
+  (type_identifier) @hoist.definition.interface.exported
+  (#eq? @_pub "pub"))
+
+;; trait (private)
 (trait_item (type_identifier) @hoist.definition.interface)
 
 ;; struct and union fields
@@ -168,7 +224,13 @@
   (enum_variant 
     (identifier) @local.definition.enumerator))
 
-;; mod x;
+;; pub mod x;
+(mod_item
+  (visibility_modifier) @_pub
+  (identifier) @local.definition.module.exported
+  (#eq? @_pub "pub"))
+
+;; mod x; (private)
 (mod_item (identifier) @local.definition.module)
 
 ;; use statements

@@ -64,8 +64,18 @@
 (function_declaration
   (identifier) @hoist.definition.function)
 
+;; export function x()
+(export_statement
+  (function_declaration
+    (identifier) @hoist.definition.function.exported))
+
 (generator_function_declaration
   (identifier) @hoist.definition.generator)
+
+;; export function* x()
+(export_statement
+  (generator_function_declaration
+    (identifier) @hoist.definition.generator.exported))
 
 ;; function params
 (formal_parameters
@@ -107,10 +117,22 @@
   "const"
   (variable_declarator . (identifier) @local.definition.constant))
 
+;; export const x = _
+(export_statement
+  (lexical_declaration
+    "const"
+    (variable_declarator . (identifier) @local.definition.constant.exported)))
+
 ;; let x = _
 (lexical_declaration
   "let"
   (variable_declarator . (identifier) @local.definition.variable))
+
+;; export let x = _
+(export_statement
+  (lexical_declaration
+    "let"
+    (variable_declarator . (identifier) @local.definition.variable.exported)))
 
 ;; capture the value in variable declarations: const x = VALUE
 (variable_declarator
@@ -136,6 +158,11 @@
 ;; class
 (class_declaration
   (type_identifier) @local.definition.class)
+
+;; export class
+(export_statement
+  (class_declaration
+    (type_identifier) @local.definition.class.exported))
 
 ;; arrow func
 (arrow_function
@@ -356,7 +383,35 @@
 ;; export { name as alias };
 (export_statement
   (export_clause
-    (export_specifier name: (identifier) @local.reference)))
+    (export_specifier name: (identifier) @local.reference.exported)))
+
+;; CommonJS exports: module.exports = { func1, func2 }
+(assignment_expression
+  left: (member_expression
+    object: (identifier) @_module
+    property: (property_identifier) @_exports)
+  right: (object
+    (shorthand_property_identifier) @local.reference.exported)
+  (#eq? @_module "module")
+  (#eq? @_exports "exports"))
+
+;; CommonJS exports: module.exports = { key: value }
+(assignment_expression
+  left: (member_expression
+    object: (identifier) @_module
+    property: (property_identifier) @_exports)
+  right: (object
+    (pair
+      key: (property_identifier) @local.reference.exported))
+  (#eq? @_module "module")
+  (#eq? @_exports "exports"))
+
+;; CommonJS exports: exports.name = ...
+(assignment_expression
+  left: (member_expression
+    object: (identifier) @_exports
+    property: (property_identifier) @local.reference.exported)
+  (#eq? @_exports "exports"))
 
 ;; export default ident;
 (export_statement

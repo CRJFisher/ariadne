@@ -42,6 +42,7 @@ Successfully implemented module-level call detection. The solution involved:
 5. Integrated module-level calls into both extract_call_graph() and get_call_graph() methods
 
 Results:
+
 - Top-level nodes reduced from 58 to 46 (12 functions correctly identified as called from module)
 - Total calls increased from 71 to 93 (22 additional module-level calls detected)
 - Nodes called by others increased from 43.1% to 55.3%

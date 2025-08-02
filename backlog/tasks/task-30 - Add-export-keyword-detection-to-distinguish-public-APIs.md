@@ -1,7 +1,7 @@
 ---
 id: task-30
 title: Add export keyword detection to distinguish public APIs
-status: In Progress
+status: Done
 assignee:
   - '@claude'
 created_date: '2025-07-18'
@@ -41,53 +41,87 @@ The scope mechanism currently treats all root-level definitions as exported. Thi
 
 ## Implementation Notes
 
+### Approach Chosen: Hybrid Approach (Scope Queries + Code Logic)
+
+After initial attempts with pure AST-based detection and then pure scope query detection, I implemented a __hybrid approach__ that combines:
+
+1. __Scope Queries__ for explicit exports (e.g., `export function`, `export class`, `pub fn`)
+2. __Code Logic__ for complex cases (export lists, Python conventions, CommonJS patterns)
+
+This approach balances accuracy with maintainability, using tree-sitter queries where they work well and code logic for language-specific conventions.
+
 ### Completed Implementation
 
-1. **Added `is_exported` field to Def interface**:
+1. __Added `is_exported` field to Def interface__:
    - Optional boolean field to maintain backward compatibility
    - Defaults to undefined for existing code
 
-2. **TypeScript/JavaScript Export Detection**:
+2. __TypeScript/JavaScript Export Detection__:
    - Direct exports: `export function`, `export const`, `export class`
    - Export lists: `export { name1, name2 }`
    - Default exports: `export default`
    - CommonJS: `module.exports = {}` and `exports.name = value`
    - Implemented in `findExportedNames()` function
 
-3. **Python Export Conventions**:
+3. __Python Export Conventions__:
    - `__all__` list detection for explicit exports
    - Underscore prefix convention (`_private` vs `public`)
    - Special methods (`__init__`) treated as public
    - Root-level scope checking
    - Implemented in `findPythonAllExports()` and export checks
 
-4. **Rust pub Keyword Detection**:
+4. __Rust pub Keyword Detection__:
    - Checks for `pub` visibility modifier before definitions
    - Works with functions, structs, enums, and nested items
    - Sibling-based detection in AST
 
-5. **API Updates**:
+5. __API Updates__:
    - `get_exported_functions()` now uses `is_exported` flag
    - `findExportedDef()` respects `is_exported === false`
    - Maintains backward compatibility (undefined treated as exported for root-level)
 
-6. **Comprehensive Testing**:
+6. __Comprehensive Testing__:
    - Created `export_detection.test.ts` with 11 test cases
    - Covers all languages and export patterns
    - All tests passing
 
 ### Key Design Decisions
 
-1. **AST-based Detection**: Uses tree-sitter AST traversal rather than regex or string matching
-2. **Language-specific Logic**: Each language has its own export detection rules
-3. **Backward Compatible**: Existing code continues to work with undefined `is_exported`
-4. **Performance**: Export detection happens during initial parsing, no additional passes needed
+1. __Hybrid Detection__: Combines tree-sitter queries with code logic for flexibility
+2. __Language-specific Logic__: Each language has its own export detection rules
+3. __Backward Compatible__: Existing code continues to work with undefined `is_exported`
+4. __Performance__: Export detection happens during initial parsing, no additional passes needed
+5. __Integration Points__: 
+   - Modified scope query files to add `.exported` suffix for explicit exports
+   - Modified `build_scope_graph` to handle export lists and conventions
+   - Added helper functions for Python and Rust-specific logic
+
+### Why This Approach?
+
+- __Flexibility__: Scope queries handle simple cases, code handles complex conventions
+- __Accuracy__: Combines AST patterns with language-specific logic
+- __Maintainability__: Clear separation between declarative queries and imperative logic
+- __Extensibility__: Easy to add new export patterns to scope queries
+- __Compatibility__: Minimal changes to existing APIs and data structures
+
+### Implementation Details
+
+The implementation works as follows:
+
+1. __Scope Query Phase__: Tree-sitter queries capture definitions with `.exported` suffix for explicit exports
+2. __Reference Collection__: Export lists (e.g., `export { name }`) are captured as `.exported` references
+3. __Export Resolution__: During definition processing:
+   - Check if definition was captured with `.exported` suffix
+   - Check if name appears in export reference list
+   - Apply language-specific conventions (Python `__all__`, naming rules)
+   - Apply language-specific patterns (Rust `pub` keyword)
+4. __Final Marking__: Each definition gets `is_exported` set to true/false/undefined
 
 ## Technical Details
 
 ### Difficulty: Hard
 
-**Estimated Time:** 4-6 hours
+__Estimated Time:__ 4-6 hours
 
 ### Implementation Approaches
 
