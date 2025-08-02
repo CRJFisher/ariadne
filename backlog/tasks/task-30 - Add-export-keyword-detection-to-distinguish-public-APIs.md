@@ -52,6 +52,8 @@ This approach balances accuracy with maintainability, using tree-sitter queries 
 
 ### Completed Implementation
 
+__Note:__ The implementation uses a hybrid approach combining scope queries with code logic. Pure scope query implementation has limitations due to tree-sitter creating duplicate captures when multiple patterns match.
+
 1. __Added `is_exported` field to Def interface__:
    - Optional boolean field to maintain backward compatibility
    - Defaults to undefined for existing code
@@ -80,10 +82,12 @@ This approach balances accuracy with maintainability, using tree-sitter queries 
    - `findExportedDef()` respects `is_exported === false`
    - Maintains backward compatibility (undefined treated as exported for root-level)
 
-6. __Comprehensive Testing__:
+6. __Testing Status__:
    - Created `export_detection.test.ts` with 11 test cases
    - Covers all languages and export patterns
-   - All tests passing
+   - Some tests failing due to duplicate definition issue in tree-sitter queries
+   - Direct exports (e.g., `export function`) work correctly
+   - Export lists and complex patterns need additional work
 
 ### Key Design Decisions
 
