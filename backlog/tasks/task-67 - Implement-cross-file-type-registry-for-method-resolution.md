@@ -25,6 +25,14 @@ Create a project-wide type registry that maintains variable type information acr
 - [x] Memory usage remains reasonable for large projects
 - [x] Tests verify cross-file method resolution for all languages
 - [x] Call graph shows correct method relationships across files
+- [x] JavaScript/TypeScript: Cross-file method resolution works for ES6 imports
+- [x] JavaScript/TypeScript: Handles renamed imports (import { X as Y })
+- [ ] Python: Cross-file method resolution works for from/import statements
+- [ ] Python: Handles different import styles (from x import y, import x.y)
+- [ ] Rust: Cross-file method resolution works for use statements
+- [ ] Rust: Handles module paths and renamed imports
+- [x] Export detection identifies exported classes and functions
+- [ ] Export detection works for all supported export syntaxes
 
 ## Implementation Plan
 
@@ -49,3 +57,15 @@ Create a project-wide type registry that maintains variable type information acr
 - Updated cross-file-method-resolution.md documentation to reflect new capabilities
 - Memory usage is efficient as registry only stores exported types, not all definitions
 - Variable reassignments still need to be handled (only initial assignments tracked)
+
+### Completed Language Support
+
+- **JavaScript/TypeScript**: Full cross-file resolution working with ES6 imports and renamed imports
+- **Export detection**: Works for explicit export statements (export class/function)
+
+### Remaining Work
+
+- **Python**: Need to adapt export detection for Python module system (no explicit exports)
+- **Rust**: Need to handle Rust's module system and visibility rules
+- **Variable reassignments**: Track type changes when variables are reassigned
+- **Export syntaxes**: Handle export default, export *, named exports, etc.
