@@ -337,6 +337,10 @@ export class ScopeGraph implements IScopeGraph {
     for (const def_id of rootDefs) {
       const def = this.nodes.find(n => n.id === def_id) as Def;
       if (def && def.name === name) {
+        // Check is_exported flag if available, otherwise assume root-level is exported
+        if (def.is_exported === false) {
+          continue;
+        }
         return def;
       }
     }

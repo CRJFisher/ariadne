@@ -137,6 +137,19 @@ export function build_scope_graph(
     );
   }
 
+  // Track exported names for later marking definitions
+  const exportedNames = new Set<string>();
+  let pythonAllList: string[] | null = null;
+  
+  // First, find all exported names
+  if (config.name === 'typescript' || config.name === 'javascript') {
+    // Look for export statements in the tree
+    findExportedNames(tree.rootNode, exportedNames);
+  } else if (config.name === 'python') {
+    // Look for __all__ definition
+    pythonAllList = findPythonAllExports(tree.rootNode);
+  }
+
   // Second pass: process captures in order (scopes, then defs, then imports, then refs)
 
   // 1. Process scopes first
@@ -171,6 +184,9 @@ export function build_scope_graph(
       file_path: file_path,
       symbol_id: "", // Will be computed after metadata is added
     };
+    
+    // Check if this definition is exported
+    new_def.is_exported = isDefinitionExported(node, config.name, exportedNames, pythonAllList);
 
     // For function-like definitions, set enclosing_range to the parent node
     // which contains the full function body
@@ -251,4 +267,238 @@ export function build_scope_graph(
   }
 
   return graph;
+}
+
+/**
+ * Find all exported names in TypeScript/JavaScript code
+ */
+function findExportedNames(node: any, exportedNames: Set<string>) {
+  // Handle module.exports and exports assignments
+  if (node.type === 'assignment_expression') {
+    const left = node.childForFieldName('left');
+    const right = node.childForFieldName('right');
+    
+    if (left?.type === 'member_expression') {
+      const object = left.childForFieldName('object');
+      const property = left.childForFieldName('property');
+      
+      // module.exports = { func1, func2 }
+      if (object?.text === 'module' && property?.text === 'exports') {
+        if (right?.type === 'object') {
+          // Extract all properties from the object
+          for (let i = 0; i < right.childCount; i++) {
+            const child = right.child(i);
+            if (child?.type === 'pair') {
+              const key = child.childForFieldName('key');
+              if (key?.type === 'property_identifier') {
+                exportedNames.add(key.text);
+              }
+            } else if (child?.type === 'shorthand_property_identifier') {
+              exportedNames.add(child.text);
+            }
+          }
+        } else if (right?.type === 'identifier') {
+          // module.exports = functionName
+          exportedNames.add(right.text);
+        }
+      }
+      // exports.functionName = ...
+      else if (object?.text === 'exports' && property?.type === 'property_identifier') {
+        exportedNames.add(property.text);
+      }
+    }
+  }
+  
+  if (node.type === 'export_statement') {
+    // Direct exports: export function name() {}
+    for (let i = 0; i < node.childCount; i++) {
+      const child = node.child(i);
+      if (!child) continue;
+      
+      if (child.type === 'function_declaration' || 
+          child.type === 'class_declaration' ||
+          child.type === 'interface_declaration' ||
+          child.type === 'type_alias_declaration' ||
+          child.type === 'enum_declaration') {
+        // Find the identifier
+        const nameNode = child.childForFieldName('name') || child.child(1);
+        if (nameNode && nameNode.type === 'identifier' || nameNode?.type === 'type_identifier') {
+          exportedNames.add(nameNode.text);
+        }
+      } else if (child.type === 'lexical_declaration' || child.type === 'variable_declaration') {
+        // export const/let/var name = ...
+        for (let j = 0; j < child.childCount; j++) {
+          const declarator = child.child(j);
+          if (declarator?.type === 'variable_declarator') {
+            const nameNode = declarator.childForFieldName('name') || declarator.child(0);
+            if (nameNode?.type === 'identifier') {
+              exportedNames.add(nameNode.text);
+            }
+          }
+        }
+      } else if (child.type === 'export_clause') {
+        // export { name1, name2 as alias }
+        for (let j = 0; j < child.childCount; j++) {
+          const specifier = child.child(j);
+          if (specifier?.type === 'export_specifier') {
+            // Get the local name (what's actually exported)
+            const nameNode = specifier.childForFieldName('name') || specifier.child(0);
+            if (nameNode?.type === 'identifier') {
+              exportedNames.add(nameNode.text);
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  // Recurse through children
+  for (let i = 0; i < node.childCount; i++) {
+    const child = node.child(i);
+    if (child) {
+      findExportedNames(child, exportedNames);
+    }
+  }
+}
+
+/**
+ * Find Python __all__ exports
+ */
+function findPythonAllExports(node: any): string[] | null {
+  // Check for expression_statement containing assignment
+  if (node.type === 'expression_statement' && node.childCount > 0) {
+    const assignment = node.child(0);
+    if (assignment?.type === 'assignment') {
+      return findPythonAllExports(assignment);
+    }
+  }
+  
+  if (node.type === 'assignment' && node.childCount >= 3) {
+    const left = node.child(0);
+    const right = node.child(2); // Skip the = operator
+    
+    if (left?.text === '__all__' && right?.type === 'list') {
+      const exports: string[] = [];
+      
+      // Extract string literals from the list
+      for (let i = 0; i < right.childCount; i++) {
+        const child = right.child(i);
+        if (child?.type === 'string') {
+          // Extract the string content (remove quotes)
+          let text = child.text;
+          // Handle single and double quotes
+          if ((text.startsWith("'") && text.endsWith("'")) ||
+              (text.startsWith('"') && text.endsWith('"'))) {
+            text = text.substring(1, text.length - 1);
+          }
+          exports.push(text);
+        }
+      }
+      
+      return exports;
+    }
+  }
+  
+  // Recurse through children
+  for (let i = 0; i < node.childCount; i++) {
+    const child = node.child(i);
+    if (child) {
+      const result = findPythonAllExports(child);
+      if (result) return result;
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Check if a definition node is exported based on language rules
+ */
+function isDefinitionExported(node: any, language: string, exportedNames: Set<string>, pythonAllList: string[] | null = null): boolean {
+  const name = node.text;
+  
+  if (language === 'typescript' || language === 'javascript') {
+    // Check if parent is export_statement
+    let parent = node.parent;
+    while (parent) {
+      if (parent.type === 'export_statement') {
+        return true;
+      }
+      // Stop at certain boundaries
+      if (parent.type === 'program' || 
+          parent.type === 'statement_block' ||
+          parent.type === 'class_body') {
+        break;
+      }
+      parent = parent.parent;
+    }
+    
+    // Check if name is in export list
+    return exportedNames.has(name);
+  } else if (language === 'python') {
+    // For Python, check if the definition itself (not the identifier) is at root level
+    let parent = node.parent;
+    let inRootScope = false;
+    
+    // The node is the identifier, so check if its parent is a root-level definition
+    if (parent && (parent.type === 'function_definition' || parent.type === 'class_definition')) {
+      // Check if this definition's parent is the module
+      const defParent = parent.parent;
+      if (defParent && defParent.type === 'module') {
+        inRootScope = true;
+      }
+    } else {
+      // For other definitions (like variables), check normal way
+      inRootScope = true;
+      while (parent && parent.type !== 'module') {
+        if (parent.type === 'function_definition' || 
+            parent.type === 'class_definition') {
+          inRootScope = false;
+          break;
+        }
+        parent = parent.parent;
+      }
+    }
+    
+    
+    if (!inRootScope) {
+      return false; // Nested definitions are not exported
+    }
+    
+    // If __all__ is defined, only names in it are exported
+    if (pythonAllList !== null) {
+      return pythonAllList.includes(name);
+    }
+    
+    // Otherwise, follow Python conventions:
+    // Names starting with _ are private (except __special__)
+    if (name.startsWith('_') && !name.startsWith('__')) {
+      return false;
+    }
+    
+    return true;
+  } else if (language === 'rust') {
+    // Check for pub keyword
+    let parent = node.parent;
+    if (parent) {
+      // Look for 'pub' among siblings before this node
+      const parentChildren = [];
+      for (let i = 0; i < parent.childCount; i++) {
+        parentChildren.push(parent.child(i));
+      }
+      const nodeIndex = parentChildren.findIndex(child => child?.id === node.id);
+      
+      // Check previous siblings for 'pub'
+      for (let i = 0; i < nodeIndex; i++) {
+        const sibling = parentChildren[i];
+        if (sibling?.type === 'visibility_modifier' && sibling.text === 'pub') {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  
+  // Default: treat root-level definitions as exported
+  return true;
 }

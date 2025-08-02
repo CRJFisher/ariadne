@@ -68,6 +68,7 @@ export interface Def extends BaseNode {
   enclosing_range?: SimpleRange;
   signature?: string;
   docstring?: string;
+  is_exported?: boolean;
 }
 
 export interface Ref extends BaseNode {

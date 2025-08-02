@@ -1,10 +1,11 @@
 ---
 id: task-30
 title: Add export keyword detection to distinguish public APIs
-status: To Do
-assignee: []
-created_date: "2025-07-18"
-updated_date: "2025-07-18"
+status: In Progress
+assignee:
+  - '@claude'
+created_date: '2025-07-18'
+updated_date: '2025-08-02'
 labels:
   - enhancement
   - parser
@@ -18,13 +19,13 @@ The scope mechanism currently treats all root-level definitions as exported. Thi
 
 ## Acceptance Criteria
 
-- [ ] Detect export keywords in TypeScript/JavaScript (export, export default)
-- [ ] Handle module.exports and exports assignments
-- [ ] Support Python conventions (**all**, \_underscore prefix)
-- [ ] Detect Rust pub keyword for public items
-- [ ] Add is_exported field to Def interface
-- [ ] Update get_exported_functions to filter by export status
-- [ ] Maintain backward compatibility with existing code
+- [x] Detect export keywords in TypeScript/JavaScript (export, export default)
+- [x] Handle module.exports and exports assignments
+- [x] Support Python conventions (__all__, _underscore prefix)
+- [x] Detect Rust pub keyword for public items
+- [x] Add is_exported field to Def interface
+- [x] Update get_exported_functions to filter by export status
+- [x] Maintain backward compatibility with existing code
 
 ## Implementation Plan
 
@@ -37,6 +38,50 @@ The scope mechanism currently treats all root-level definitions as exported. Thi
 7. Update get_exported_functions to use is_exported
 8. Ensure backward compatibility
 9. Write comprehensive tests for each language
+
+## Implementation Notes
+
+### Completed Implementation
+
+1. **Added `is_exported` field to Def interface**:
+   - Optional boolean field to maintain backward compatibility
+   - Defaults to undefined for existing code
+
+2. **TypeScript/JavaScript Export Detection**:
+   - Direct exports: `export function`, `export const`, `export class`
+   - Export lists: `export { name1, name2 }`
+   - Default exports: `export default`
+   - CommonJS: `module.exports = {}` and `exports.name = value`
+   - Implemented in `findExportedNames()` function
+
+3. **Python Export Conventions**:
+   - `__all__` list detection for explicit exports
+   - Underscore prefix convention (`_private` vs `public`)
+   - Special methods (`__init__`) treated as public
+   - Root-level scope checking
+   - Implemented in `findPythonAllExports()` and export checks
+
+4. **Rust pub Keyword Detection**:
+   - Checks for `pub` visibility modifier before definitions
+   - Works with functions, structs, enums, and nested items
+   - Sibling-based detection in AST
+
+5. **API Updates**:
+   - `get_exported_functions()` now uses `is_exported` flag
+   - `findExportedDef()` respects `is_exported === false`
+   - Maintains backward compatibility (undefined treated as exported for root-level)
+
+6. **Comprehensive Testing**:
+   - Created `export_detection.test.ts` with 11 test cases
+   - Covers all languages and export patterns
+   - All tests passing
+
+### Key Design Decisions
+
+1. **AST-based Detection**: Uses tree-sitter AST traversal rather than regex or string matching
+2. **Language-specific Logic**: Each language has its own export detection rules
+3. **Backward Compatible**: Existing code continues to work with undefined `is_exported`
+4. **Performance**: Export detection happens during initial parsing, no additional passes needed
 
 ## Technical Details
 

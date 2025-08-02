@@ -568,13 +568,10 @@ export class Project {
 
   /**
    * Get all functions exported from a specific module.
-   * Note: Currently returns all root-level functions, as the scope mechanism
-   * doesn't distinguish between exported and non-exported definitions.
-   * In TypeScript/JavaScript, this includes both exported and non-exported functions.
-   * In Python, all root-level functions are considered "exported".
+   * Uses the is_exported flag to accurately identify public APIs.
    * 
    * @param module_path - The path to the module file
-   * @returns Array of function definitions in the root scope
+   * @returns Array of exported function definitions
    */
   get_exported_functions(module_path: string): Def[] {
     const graph = this.file_graphs.get(module_path);
@@ -592,15 +589,10 @@ export class Project {
           continue;
         }
         
-        // Check if this definition is exported (findExportedDef returns it)
-        const exportedDef = graph.findExportedDef(def.name);
-        if (exportedDef && exportedDef.id === def.id) {
+        // Check if this definition is exported
+        if (def.is_exported === true) {
           exportedFunctions.push(def);
         }
-      } else if (def.symbol_kind === 'method') {
-        // Methods are tracked separately with symbol_kind 'method'
-        // Skip them for this API which only returns standalone functions
-        continue;
       }
     }
     
