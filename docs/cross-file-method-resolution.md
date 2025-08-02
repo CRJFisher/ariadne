@@ -46,7 +46,7 @@ function compute() {
 
 3. **Reference Storage**: All references, including unresolved method references, are now stored in the scope graph for potential future resolution.
 
-4. **Import-Aware Constructor Tracking** (NEW): The system now tracks types for imported class instances:
+4. **Import-Aware Constructor Tracking** (COMPLETED - Task 66): The system now tracks types for imported class instances:
 
 ```typescript
 // file: logger.ts
@@ -63,6 +63,35 @@ function useLogger() {
   const logger = new Logger();  // Type tracked across files
   logger.log("Hello");          // ✅ Now resolved correctly
 }
+```
+
+5. **Cross-File Type Registry** (COMPLETED - Task 67): A project-wide registry now tracks exported types across files:
+
+```typescript
+// file: utils.ts
+export class StringUtils {
+  capitalize(str: string) { return str.charAt(0).toUpperCase() + str.slice(1); }
+}
+
+// file: processor.ts
+import { StringUtils } from "./utils";
+
+function process() {
+  const utils = new StringUtils();
+  utils.capitalize("hello");  // ✅ Resolved through project registry
+}
+```
+
+6. **Language-Specific Implicit Parameters** (COMPLETED - Task 70): Python `self` and JavaScript/TypeScript `this` are now tracked:
+
+```python
+# Python methods work correctly
+class MyClass:
+    def helper(self):
+        return 42
+    
+    def main(self):
+        result = self.helper()  # ✅ self.helper resolved correctly
 ```
 
 ### What Doesn't Work ❌
@@ -88,7 +117,7 @@ function processLogger(logger: Logger) {
 }
 ```
 
-3. **Language-Specific Type Tracking**: Some language-specific patterns like Python's `self` parameter are not yet handled.
+3. **Rust Self Parameters**: Rust's `self`, `&self`, and `&mut self` parameters are not yet tracked.
 
 ## Technical Architecture
 
@@ -143,7 +172,7 @@ function useLogger() {
 
 **Result**: The `log` method is correctly linked to its definition, and it doesn't appear as a top-level node.
 
-### Scenario 2: Cross-File Import (Doesn't Work ❌)
+### Scenario 2: Cross-File Import (Works ✅)
 
 ```typescript
 // logger.ts
@@ -158,11 +187,11 @@ import { Logger } from "./logger";
 
 function useLogger() {
   const logger = new Logger();
-  logger.log("Hello");  // ❌ Not resolved
+  logger.log("Hello");  // ✅ Now resolved correctly
 }
 ```
 
-**Result**: The `log` method appears as a top-level node because the system can't track that `logger` is an instance of the imported `Logger` class.
+**Result**: The `log` method is correctly linked to its definition in logger.ts through the project type registry.
 
 ### Scenario 3: Variable Passed Between Functions (Doesn't Work ❌)
 
@@ -259,10 +288,12 @@ Currently, there are no user-facing workarounds. The limitation is architectural
 The codebase includes comprehensive tests demonstrating both working and non-working scenarios:
 
 - `test("detects method calls on local variable instances within same file")` - Passes ✅
-- `test.skip("cross-file method resolution for TypeScript")` - Skipped ❌
-- `test.skip("cross-file method resolution for JavaScript")` - Skipped ❌
-- `test.skip("cross-file method resolution for Python")` - Skipped ❌
-- `test.skip("cross-file method resolution for Rust")` - Skipped ❌
+- `test("tracks Python self parameter in methods")` - Passes ✅
+- `test("tracks JavaScript/TypeScript this parameter in methods")` - Passes ✅
+- `test("cross-file method resolution within same function for TypeScript")` - Passes ✅
+- `test("cross-file method resolution within same function for JavaScript")` - Passes ✅
+- `test.skip("cross-file method resolution for Python")` - Skipped ❌ (requires Python import resolution)
+- `test.skip("cross-file method resolution for Rust")` - Skipped ❌ (requires Rust self parameter tracking)
 
 ## Future Development
 

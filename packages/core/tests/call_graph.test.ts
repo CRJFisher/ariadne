@@ -1497,7 +1497,7 @@ export function build_scope_graph() {
     expect(buildNode!.calls[0].symbol).toBe("graph#ScopeGraph.insert_global_def");
   });
 
-  test.skip("cross-file method resolution within same function for TypeScript - requires import-aware type tracking", () => {
+  test("cross-file method resolution within same function for TypeScript - with project type registry", () => {
     const project = new Project();
     
     const file1 = `
@@ -1822,7 +1822,7 @@ export function manipulateCounters() {
     expect(callSymbols.filter(s => s === "counter#Counter.getValue").length).toBe(2);
   });
 
-  test.skip("cross-file method resolution within same function for JavaScript - requires import-aware type tracking", () => {
+  test("cross-file method resolution within same function for JavaScript - with project type registry", () => {
     const project = new Project();
     
     const file1 = `

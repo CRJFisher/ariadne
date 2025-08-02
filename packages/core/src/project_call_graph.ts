@@ -2,6 +2,7 @@ import { Point, Def, Ref, FunctionCall, ImportInfo, CallGraph, CallGraphOptions,
 import { ScopeGraph } from './graph'; // Internal use only
 import { LanguageConfig } from './types';
 import { Tree } from 'tree-sitter';
+import { normalize_module_path } from './symbol_naming';
 
 /**
  * Tracks variable type information at the file level
@@ -9,6 +10,7 @@ import { Tree } from 'tree-sitter';
 class FileTypeTracker {
   private variableTypes = new Map<string, { className: string; classDef?: Def & { enclosing_range?: SimpleRange } }>();
   private importedClasses = new Map<string, { className: string; classDef: Def & { enclosing_range?: SimpleRange }; sourceFile: string }>();
+  private exportedDefinitions = new Set<string>(); // Track which definitions are exported
   
   /**
    * Set the type of a variable
@@ -39,11 +41,26 @@ class FileTypeTracker {
   }
   
   /**
+   * Mark a definition as exported
+   */
+  markAsExported(defName: string) {
+    this.exportedDefinitions.add(defName);
+  }
+  
+  /**
+   * Check if a definition is exported
+   */
+  isExported(defName: string): boolean {
+    return this.exportedDefinitions.has(defName);
+  }
+  
+  /**
    * Clear all type information for this file
    */
   clear() {
     this.variableTypes.clear();
     this.importedClasses.clear();
+    this.exportedDefinitions.clear();
   }
   
   /**
@@ -87,6 +104,76 @@ interface FileCache {
 }
 
 /**
+ * Registry for tracking type information across files in a project
+ */
+class ProjectTypeRegistry {
+  // Map of exported symbols to their type information
+  private exportedTypes = new Map<string, {
+    className: string;
+    classDef: Def & { enclosing_range?: SimpleRange };
+    sourceFile: string;
+  }>();
+  
+  // Map of file paths to their exported symbols
+  private fileExports = new Map<string, Set<string>>();
+  
+  /**
+   * Register an exported type from a file
+   */
+  registerExport(
+    file_path: string,
+    exportName: string,
+    className: string,
+    classDef: Def & { enclosing_range?: SimpleRange }
+  ) {
+    const symbol = `${normalize_module_path(file_path)}#${exportName}`;
+    
+    this.exportedTypes.set(symbol, {
+      className,
+      classDef,
+      sourceFile: file_path
+    });
+    
+    // Track which file exports this symbol
+    if (!this.fileExports.has(file_path)) {
+      this.fileExports.set(file_path, new Set());
+    }
+    this.fileExports.get(file_path)!.add(symbol);
+  }
+  
+  /**
+   * Get type information for an imported symbol
+   */
+  getImportedType(
+    importedFrom: string,
+    importName: string
+  ): { className: string; classDef: Def & { enclosing_range?: SimpleRange }; sourceFile: string } | undefined {
+    const symbol = `${normalize_module_path(importedFrom)}#${importName}`;
+    return this.exportedTypes.get(symbol);
+  }
+  
+  /**
+   * Clear type information for a specific file (when file is updated)
+   */
+  clearFileExports(file_path: string) {
+    const exports = this.fileExports.get(file_path);
+    if (exports) {
+      for (const symbol of exports) {
+        this.exportedTypes.delete(symbol);
+      }
+      this.fileExports.delete(file_path);
+    }
+  }
+  
+  /**
+   * Get all exported types (for debugging)
+   */
+  getAllExports() {
+    return new Map(this.exportedTypes);
+  }
+}
+
+/**
  * Handles call graph related operations for the Project class.
  * This class extracts call graph functionality to reduce the size of the Project class.
  */
@@ -95,6 +182,7 @@ export class ProjectCallGraph {
   private file_cache: Map<string, FileCache>;
   private languages: Map<string, LanguageConfig>;
   private file_type_trackers: Map<string, FileTypeTracker>;
+  private project_type_registry: ProjectTypeRegistry;
 
   constructor(
     file_graphs: Map<string, ScopeGraph>,
@@ -105,6 +193,7 @@ export class ProjectCallGraph {
     this.file_cache = file_cache;
     this.languages = languages;
     this.file_type_trackers = new Map();
+    this.project_type_registry = new ProjectTypeRegistry();
   }
   
   /**
@@ -127,6 +216,8 @@ export class ProjectCallGraph {
     if (tracker) {
       tracker.clear();
     }
+    // Also clear from project registry
+    this.project_type_registry.clearFileExports(file_path);
   }
   
   /**
@@ -136,9 +227,29 @@ export class ProjectCallGraph {
     const tracker = this.getFileTypeTracker(file_path);
     const imports = this.get_imports_with_definitions(file_path);
     
+    // First detect exports in the imported files
+    const processedFiles = new Set<string>();
+    for (const importInfo of imports) {
+      const sourceFile = importInfo.imported_function.file_path;
+      if (!processedFiles.has(sourceFile)) {
+        this.detectFileExports(sourceFile);
+        processedFiles.add(sourceFile);
+      }
+    }
+    
     // Track all imported classes
     for (const importInfo of imports) {
-      if (importInfo.imported_function.symbol_kind === 'class') {
+      // Check if we can get the type from project registry
+      const projectType = this.project_type_registry.getImportedType(
+        importInfo.imported_function.file_path,
+        importInfo.imported_function.name
+      );
+      
+      if (projectType) {
+        // Use type from project registry
+        tracker.setImportedClass(importInfo.local_name, projectType);
+      } else if (importInfo.imported_function.symbol_kind === 'class') {
+        // Fallback to direct import resolution
         const classDef = importInfo.imported_function;
         const fileCache = this.file_cache.get(classDef.file_path);
         
@@ -154,6 +265,71 @@ export class ProjectCallGraph {
           classDef: classDefWithRange,
           sourceFile: importInfo.imported_function.file_path
         });
+      }
+    }
+  }
+  
+  /**
+   * Detect and track exported definitions in a file
+   */
+  private detectFileExports(file_path: string) {
+    const tracker = this.getFileTypeTracker(file_path);
+    const graph = this.file_graphs.get(file_path);
+    if (!graph) return;
+    
+    // Get all references in the file
+    const refs = graph.getNodes<Ref>('reference');
+    const defs = graph.getNodes<Def>('definition');
+    
+    // For JavaScript/TypeScript, exports create references
+    // Look for references that appear directly after "export" keyword
+    const fileCache = this.file_cache.get(file_path);
+    if (!fileCache) return;
+    
+    const sourceLines = fileCache.source_code.split('\n');
+    
+    for (const ref of refs) {
+      const line = sourceLines[ref.range.start.row];
+      if (line) {
+        // Check if this reference is part of an export statement
+        const beforeRef = line.substring(0, ref.range.start.column);
+        if (beforeRef.match(/export\s*(default\s*)?$/)) {
+          // This is an exported reference
+          tracker.markAsExported(ref.name);
+          
+          // If it's a class or function, register with project registry
+          const def = defs.find(d => d.name === ref.name && (d.symbol_kind === 'class' || d.symbol_kind === 'function'));
+          if (def && def.symbol_kind === 'class') {
+            const defWithRange = {
+              ...def,
+              enclosing_range: (def as any).enclosing_range || 
+                (fileCache ? this.computeClassEnclosingRange(def, fileCache.tree) : undefined)
+            };
+            this.project_type_registry.registerExport(file_path, def.name, def.name, defWithRange);
+          }
+        }
+      }
+    }
+    
+    // Also check for export declarations (export function/class)
+    for (const def of defs) {
+      if (def.symbol_kind === 'class' || def.symbol_kind === 'function') {
+        const line = sourceLines[def.range.start.row];
+        if (line) {
+          const beforeDef = line.substring(0, def.range.start.column);
+          if (beforeDef.match(/export\s*(default\s*)?$/)) {
+            tracker.markAsExported(def.name);
+            
+            if (def.symbol_kind === 'class') {
+              const defWithRange = {
+                ...def,
+                enclosing_range: (def as any).enclosing_range || 
+                  (fileCache ? this.computeClassEnclosingRange(def, fileCache.tree) : undefined)
+              };
+              this.project_type_registry.registerExport(file_path, def.name, def.name, defWithRange);
+            }
+          }
+        }
       }
     }
   }
