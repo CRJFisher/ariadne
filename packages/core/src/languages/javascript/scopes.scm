@@ -43,6 +43,11 @@
 ;; - lexical
 ;; - variable
 
+;; exported function
+(export_statement
+  (function_declaration
+    (identifier) @hoist.definition.function.exported))
+
 ;; function x()
 (function_declaration
   (identifier) @hoist.definition.function)
@@ -330,6 +335,11 @@
 ;; private method def
 (method_definition
   (private_property_identifier) @hoist.definition.method)
+
+;; exported class
+(export_statement
+  (class_declaration
+    (identifier) @local.definition.class.exported))
 
 ;; class
 (class_declaration

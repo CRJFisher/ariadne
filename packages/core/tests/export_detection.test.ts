@@ -568,13 +568,10 @@ def _private_func():
       const jsExported = project.get_exported_functions("test.js");
       // const mtsExported = project.get_exported_functions("test.mts");
       
-      // TODO: .js files with ES6 exports need TypeScript parser or syntax detection
-      // See task-72: Support ES6 exports in .js files and new TypeScript extensions
-      // expect(jsExported.map(d => d.name)).toEqual(["jsExported"]);
+      // ES6 exports in .js files are now supported with the JavaScript parser
+      expect(jsExported.map(d => d.name)).toEqual(["jsExported"]);
+      // TODO: Add support for .mts file extension
       // expect(mtsExported.map(d => d.name)).toEqual(["mtsExported"]);
-      
-      // For now, .js files with ES6 exports return empty
-      expect(jsExported.map(d => d.name)).toEqual([]);
     });
   });
 

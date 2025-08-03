@@ -242,6 +242,7 @@ export class ProjectCallGraph {
     const tracker = this.getFileTypeTracker(file_path);
     const imports = this.get_imports_with_definitions(file_path);
     
+    
     // First detect exports in the imported files
     const processedFiles = new Set<string>();
     for (const importInfo of imports) {
@@ -254,6 +255,7 @@ export class ProjectCallGraph {
     
     // Track all imported classes
     for (const importInfo of imports) {
+      
       // Check if we can get the type from project registry
       const projectType = this.project_type_registry.getImportedType(
         importInfo.imported_function.file_path,
@@ -291,6 +293,7 @@ export class ProjectCallGraph {
     const tracker = this.getFileTypeTracker(file_path);
     const graph = this.file_graphs.get(file_path);
     if (!graph) return;
+    
     
     // Get all references in the file
     const refs = graph.getNodes<Ref>('reference');
@@ -420,6 +423,7 @@ export class ProjectCallGraph {
         if (beforeRef.match(/export\s*(default\s*)?$/)) {
           // This is an exported reference
           tracker.markAsExported(ref.name);
+          
           
           // If it's a class or function, register with project registry
           const def = defs.find(d => d.name === ref.name && (d.symbol_kind === 'class' || d.symbol_kind === 'function'));
@@ -635,8 +639,6 @@ export class ProjectCallGraph {
    * @returns Array of FunctionCall objects representing calls made within this definition
    */
   get_calls_from_definition(def: Def): FunctionCall[] {
-    console.log(`get_calls_from_definition called for: ${def.name}, kind: ${def.symbol_kind}, file: ${def.file_path}`);
-    
     const graph = this.file_graphs.get(def.file_path);
     const fileCache = this.file_cache.get(def.file_path);
     if (!graph || !fileCache) return [];
@@ -759,6 +761,7 @@ export class ProjectCallGraph {
         // This is a constructor call
         let constructorName = ref.name;
         
+        
         // For Rust Type::new() pattern, the constructor is the Type part
         if (def.file_path.endsWith('.rs') && ref.name === 'new' && astNode?.parent?.type === 'scoped_identifier') {
           const typeName = astNode.parent.childForFieldName('path')?.text || astNode.parent.children[0]?.text;
@@ -795,9 +798,6 @@ export class ProjectCallGraph {
             
             if (varNameNode && varNameNode.type === 'identifier') {
               const varName = varNameNode.text;
-              if (def.name === 'run_logging') {
-                console.log(`  Tracking variable ${varName} as type ${importedClass.className}`);
-              }
               localTypeTracker.setVariableType(varName, {
                 className: importedClass.className,
                 classDef: importedClass.classDef
@@ -873,9 +873,7 @@ export class ProjectCallGraph {
     for (const ref of definitionRefs) {
       let resolved = this.go_to_definition(def.file_path, ref.range.start);
       
-      if (def.name === 'run_logging' && ref.symbol_kind === 'method') {
-        console.log(`  Trying to resolve method ref ${ref.name} -> ${resolved?.name || 'null'}`);
-      }
+      
       
       // If we can't resolve a method reference directly, check if it's a method call on a typed variable
       if (!resolved && ref.symbol_kind === 'method') {
@@ -1192,6 +1190,11 @@ export class ProjectCallGraph {
         continue;
       }
       
+      if (file_path === 'main.rs') {
+        console.log(`Processing ${functions.length} functions from ${file_path}`);
+        functions.forEach(f => console.log(`  - ${f.name} (${f.symbol_kind})`));
+      }
+      
       for (const func of functions) {
         const caller_symbol = func.symbol_id;
         const caller_node = nodes.get(caller_symbol);
@@ -1200,6 +1203,13 @@ export class ProjectCallGraph {
         
         // Get all calls from this function
         const function_calls = this.get_calls_from_definition(func);
+        
+        if (func.name === 'run_logging') {
+          console.log(`extract_call_graph: Processing ${func.name}, found ${function_calls.length} calls`);
+          function_calls.forEach((fc, i) => {
+            console.log(`  Call ${i}: ${fc.called_def.symbol_id}`);
+          });
+        }
         
         for (const call of function_calls) {
           if (!call.called_def) continue;

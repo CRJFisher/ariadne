@@ -268,6 +268,10 @@ export function build_scope_graph(
   }
 
   // 2. Process definitions
+  if (process.env.DEBUG_RUST_DEFS) {
+    console.log(`Processing ${def_captures.length} definitions for ${config.name} file ${file_path}`);
+    def_captures.forEach(d => console.log(`  ${d.kind}: ${d.node.text} at ${d.node.startPosition.row}:${d.node.startPosition.column}`));
+  }
   for (const { node, scoping, kind, isExported } of def_captures) {
     // Check if symbol kind is valid
     let symbol_id: number[] | undefined;
@@ -350,6 +354,23 @@ export function build_scope_graph(
     // Now compute the symbol ID with all information available
     new_def.symbol_id = get_symbol_id(new_def);
 
+    // Check for duplicate definitions at the same location
+    // This can happen when multiple scope patterns match the same node
+    const existingDefs = graph.getNodes<Def>('definition');
+    const isDuplicate = existingDefs.some(def => 
+      def.name === new_def.name &&
+      def.range.start.row === new_def.range.start.row &&
+      def.range.start.column === new_def.range.start.column
+    );
+    
+    if (isDuplicate) {
+      // Skip this duplicate definition
+      if (process.env.DEBUG_RUST_DEFS || process.env.DEBUG_DEFS) {
+        console.log(`Skipping duplicate definition '${new_def.name}' (${kind}) at ${new_def.range.start.row}:${new_def.range.start.column}`);
+      }
+      continue;
+    }
+
     // Insert definition based on scoping
     if (scoping === "local") {
       graph.insert_local_def(new_def);
@@ -374,15 +395,33 @@ export function build_scope_graph(
     graph.insert_local_import(new_import);
   }
 
-  // 4. Process references
+  // 4. Process references (with deduplication for overlapping patterns)
+  const processedRefs = new Map<string, Ref>();
+  
   for (const { node, symbol_kind } of ref_captures) {
+    const range = graph.node_to_simple_range(node);
+    const refKey = `${node.text}:${range.start.row}:${range.start.column}`;
+    
+    // Check if we already have a reference at this location
+    const existing = processedRefs.get(refKey);
+    if (existing) {
+      // If the existing ref has a more specific symbol_kind (like 'method'), keep it
+      // Otherwise, update with the new one if it's more specific
+      if (!existing.symbol_kind && symbol_kind) {
+        existing.symbol_kind = symbol_kind;
+      }
+      continue; // Skip adding duplicate
+    }
+    
     const new_ref: Ref = {
       id: graph.get_next_node_id(),
       kind: "reference",
       name: node.text,
       symbol_kind: symbol_kind,
-      range: graph.node_to_simple_range(node),
+      range: range,
     };
+    
+    processedRefs.set(refKey, new_ref);
     graph.insert_ref(new_ref);
   }
 
