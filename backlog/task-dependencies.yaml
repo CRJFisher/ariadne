@@ -1,0 +1,163 @@
+# Task Dependencies and Work Order
+# Generated: 2025-08-03
+# Purpose: Track task relationships and identify next work items
+
+# CRITICAL PATH - These are blocking other work
+critical_issues:
+  - id: task-73
+    title: "Fix duplicate call tracking causing test failures"
+    status: "To Do"
+    priority: "CRITICAL"
+    blocking:
+      - task-75  # Test failures
+      - task-76  # Top-level nodes
+      - task-77  # Remaining test failures
+    description: "Methods are being processed multiple times, causing doubled call counts"
+    next_steps: "Investigate get_calls_from_definition being called multiple times"
+
+  - id: task-30
+    title: "Export detection" 
+    status: "Unknown (external)"
+    blocking:
+      - task-62  # Agent validation
+    description: "Export detection shows 0% - blocking accurate validation"
+
+# TEST FAILURES - Need to be fixed for stable codebase
+test_failures:
+  - id: task-75
+    title: "Fix failing call_graph.test.ts tests with incorrect call counts"
+    depends_on: [task-73]
+    related: [task-73, task-76]
+    
+  - id: task-76
+    title: "Fix methods incorrectly appearing in top-level nodes"
+    depends_on: [task-73]
+    related: [task-75]
+    
+  - id: task-77
+    title: "Investigate and fix remaining test suite failures"
+    depends_on: [task-73, task-75, task-76]
+
+# CROSS-FILE RESOLUTION - Core functionality
+cross_file_resolution:
+  completed:
+    - id: task-86
+      title: "Implement Rust cross-file method resolution"
+      completed: "2025-08-03"
+      
+    - id: task-65
+      title: "Implement file-level variable type tracking"
+      
+    - id: task-66
+      title: "Connect import resolution with constructor type tracking"
+      
+    - id: task-70
+      title: "Add language-specific parameter type tracking for Python self"
+
+  in_progress:
+    - id: task-64
+      title: "Add cross-file method resolution for imported classes"
+      status: "In Progress"
+      related: [task-65, task-66, task-70, task-86]
+
+  todo:
+    - id: task-79
+      title: "Add support for Rust crate:: module paths"
+      depends_on: [task-86]
+      
+    - id: task-81
+      title: "Handle variable reassignments in type registry"
+      related: [task-65]
+
+# VALIDATION & TESTING
+validation:
+  in_progress:
+    - id: task-62
+      title: "Fix agent validation call graph extraction issues"
+      status: "In Progress"
+      depends_on: [task-30]  # Export detection
+      related: [task-74]     # File size limit
+      
+  todo:
+    - id: task-74
+      title: "Fix file size limit preventing analysis of large files"
+      description: "32KB limit skips critical files like project_call_graph.ts"
+      priority: "High"
+      
+    - id: task-84
+      title: "Create generic validation script for external repositories"
+      depends_on: [task-62]
+
+# COMPREHENSIVE TESTING
+testing:
+  - id: task-80
+    title: "Add comprehensive import/export tests for all languages"
+    depends_on: [task-73]  # Fix duplicate tracking first
+    
+  - id: task-82
+    title: "Add edge case tests for cross-file resolution"
+    depends_on: [task-73]
+    related: [task-29]  # Circular import detection
+
+# API IMPROVEMENTS
+api_improvements:
+  - id: task-78
+    title: "Fix get_all_functions to properly handle methods vs functions"
+    related: [task-73]  # May be related to duplicate tracking
+    
+  - id: task-41
+    title: "Add error handling and diagnostics for call graph API"
+    depends_on: [task-73, task-75, task-76, task-77]  # Fix core issues first
+
+# EXPORT SUPPORT
+export_support:
+  - id: task-71
+    title: "Support CommonJS property assignment exports"
+    related: [task-30]
+    
+  - id: task-72
+    title: "Support ES6 exports in .js files and new TypeScript extensions"
+    related: [task-30]
+
+# DOCUMENTATION
+documentation:
+  - id: task-83
+    title: "Document supported import/export patterns"
+    depends_on: [task-71, task-72, task-80]
+    priority: "Low"
+
+# SUGGESTED WORK ORDER
+work_order:
+  immediate:
+    - task-73  # CRITICAL: Fix duplicate call tracking
+    
+  next:
+    - task-74  # Fix file size limit for better validation
+    - task-75  # Fix test failures (after task-73)
+    - task-76  # Fix top-level nodes (after task-73)
+    
+  then:
+    - task-77  # Investigate remaining failures
+    - task-78  # Fix get_all_functions API
+    - task-79  # Rust crate:: support
+    
+  later:
+    - task-80  # Comprehensive tests
+    - task-81  # Variable reassignments
+    - task-82  # Edge case tests
+    - task-84  # Generic validation script
+
+# TASK GROUPS
+groups:
+  language_support:
+    description: "Adding new language support"
+    tasks: [task-5, task-6, task-7, task-8, task-9, task-10, task-11, task-12, task-13]
+    
+  performance:
+    tasks: [task-25, task-60, task-74]
+    
+  type_system:
+    tasks: [task-68, task-69, task-65, task-66, task-70, task-81]
+    
+  mcp_server:
+    tasks: [task-49, task-50, task-52, task-54, task-57, task-58]

@@ -1,7 +1,7 @@
 ---
 id: task-62
 title: Fix agent validation call graph extraction issues
-status: Done
+status: In Progress
 assignee:
   - '@chuck'
 created_date: '2025-08-01'
@@ -13,6 +13,8 @@ labels:
 dependencies:
   - task-61
   - task-30
+  - task-68
+  - task-69
 ---
 
 ## Description
