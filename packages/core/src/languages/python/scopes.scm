@@ -40,6 +40,13 @@
     (function_definition
       (identifier) @hoist.definition.method)))
 
+;; @classmethod or @staticmethod decorated methods inside a class
+(class_definition
+  (block
+    (decorated_definition
+      (function_definition
+        (identifier) @hoist.definition.method))))
+
 ;; def a()
 (function_definition
   (identifier) @hoist.definition.function)

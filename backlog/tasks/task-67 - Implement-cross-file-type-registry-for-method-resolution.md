@@ -1,7 +1,7 @@
 ---
 id: task-67
 title: Implement cross-file type registry for method resolution
-status: Done
+status: In-Progress
 assignee: ['@claude']
 created_date: '2025-08-02'
 updated_date: '2025-08-02'

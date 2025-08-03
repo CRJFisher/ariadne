@@ -147,6 +147,12 @@
   (parameter
     (identifier) @local.definition.variable))
 
+;; Methods in impl blocks are captured as methods
+(impl_item
+  (declaration_list
+    (function_item
+      (identifier) @hoist.definition.method)))
+
 ;; pub fn x(..)
 (function_item
   (visibility_modifier) @_pub
@@ -154,7 +160,8 @@
   (#match? @_pub "^pub"))
 
 ;; fn x(..) (private)
-(function_item (identifier) @hoist.definition.function)
+(function_item 
+  (identifier) @hoist.definition.function)
 
 ;; 'outer: loop { .. }
 (loop_expression
@@ -304,18 +311,18 @@
 
 ;; self.foo() 
 ;;
-;; `foo` can be resolved
+;; `foo` can be resolved as a method call
 (call_expression 
   function: (field_expression
     value: (self)
-    field: (field_identifier) @local.reference))
+    field: (field_identifier) @local.reference.method))
 
 ;; obj.method() - e.g., rect.area()
 ;;
 ;; method is a reference (obj is already captured by field_expression)
 (call_expression
   function: (field_expression
-    field: (field_identifier) @local.reference))
+    field: (field_identifier) @local.reference.method))
 
 ;; return a
 (return_expression (identifier) @local.reference)

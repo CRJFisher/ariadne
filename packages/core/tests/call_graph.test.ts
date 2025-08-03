@@ -247,6 +247,97 @@ class MyClass:
     expect(calls[0].is_method_call).toBe(true);
   });
 
+  test("tracks Python cls parameter in classmethods", () => {
+    const code = `
+class Factory:
+    instances = []
+    
+    @classmethod
+    def create(cls):
+        instance = cls()
+        cls.register(instance)
+        return instance
+    
+    @classmethod
+    def register(cls, instance):
+        cls.instances.append(instance)
+    
+    @classmethod
+    def get_all(cls):
+        return cls.instances
+`;
+    project.add_or_update_file("test.py", code);
+    
+    // Get the call graph
+    const callGraph = project.get_call_graph();
+    
+    // Check if create calls register
+    const createNode = callGraph.nodes.get("test#Factory.create");
+    expect(createNode).toBeDefined();
+    
+    const methodCalls = createNode!.calls.filter(c => c.kind === 'method');
+    expect(methodCalls.length).toBeGreaterThanOrEqual(1);
+    
+    const calledMethods = methodCalls.map(c => c.symbol);
+    expect(calledMethods).toContain("test#Factory.register");
+  });
+
+  test("tracks Rust self parameter in methods", () => {
+    const code = `
+struct Calculator {
+    value: i32,
+}
+
+impl Calculator {
+    fn new(value: i32) -> Self {
+        Calculator { value }
+    }
+    
+    fn add(&mut self, x: i32) {
+        self.value += x;
+        self.log();
+    }
+    
+    fn multiply(&mut self, x: i32) {
+        self.value *= x;
+        self.log();
+    }
+    
+    fn log(&self) {
+        println!("Current value: {}", self.value);
+    }
+    
+    fn compute(&mut self) {
+        self.add(5);
+        self.multiply(2);
+    }
+}
+`;
+    project.add_or_update_file("test.rs", code);
+    
+    // Get the call graph
+    const callGraph = project.get_call_graph();
+    
+    // Check if compute calls add and multiply
+    const computeNode = callGraph.nodes.get("test#Calculator.compute");
+    expect(computeNode).toBeDefined();
+    
+    const methodCalls = computeNode!.calls.filter(c => c.kind === 'method');
+    expect(methodCalls.length).toBe(2);
+    
+    const calledMethods = methodCalls.map(c => c.symbol);
+    expect(calledMethods).toContain("test#Calculator.add");
+    expect(calledMethods).toContain("test#Calculator.multiply");
+    
+    // Check if add and multiply call log
+    const addNode = callGraph.nodes.get("test#Calculator.add");
+    expect(addNode).toBeDefined();
+    
+    const addCalls = addNode!.calls.filter(c => c.kind === 'method');
+    expect(addCalls.length).toBe(1);
+    expect(addCalls[0].symbol).toBe("test#Calculator.log");
+  });
+
   test("ignores non-function references", () => {
     const code = `
 const variable = 42;
