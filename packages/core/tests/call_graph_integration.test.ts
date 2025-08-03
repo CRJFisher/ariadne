@@ -83,15 +83,13 @@ function processNumbers(x: number, y: number) {
   return { sum, product };
 }
 
-function main() {
+export function main() {
   const result = processNumbers(10, 20);
   console.log(result);
   
   const fact = calculateFactorial(5);
   console.log(\`5! = \${fact}\`);
 }
-
-main();
 `
       );
 
@@ -333,11 +331,9 @@ ${Array.from(
   (_, i) => `import { Component${i} } from './components/component${i}';`
 ).join("\n")}
 
-function main() {
+export function main() {
   ${Array.from({ length: 10 }, (_, i) => `Component${i}();`).join("\n  ")}
 }
-
-main();
 `
       );
 
@@ -365,16 +361,14 @@ main();
       fs.writeFileSync(
         path.join(tempDir, "deep.ts"),
         `
-function level0() { level1(); }
+export function level0() { level1(); }
 function level1() { level2(); }
 function level2() { level3(); }
 function level3() { level4(); }
 function level4() { level5(); }
 function level5() { return 'bottom'; }
 
-function separate() { return 'separate'; }
-
-level0();
+export function separate() { return 'separate'; }
 `
       );
 

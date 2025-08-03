@@ -33,26 +33,31 @@ The import counting in file summaries is fundamentally broken. It counts occurre
 Successfully clarified import counting behavior and added namespace import support.
 
 ### Problem Analysis
+
 - Validation reported high import counts (e.g., 27 for graph.ts with only 2 import statements)
 - Initial assumption was that word occurrences were being counted
 
 ### Root Cause
+
 - The system correctly counts individual imported symbols, not import statements
 - Example: `import { A, B, C } from 'module'` counts as 3 imports (A, B, C)
 - This is the intended behavior for accurate reference resolution
 - Namespace imports (`import * as name`) were not being captured
 
 ### Solution
+
 1. Added support for namespace imports in TypeScript/JavaScript (scopes.scm)
 2. Added getImportStatementCount() method to graph.ts for counting statements vs symbols
 3. Clarified that getAllImports() returns individual symbols by design
 
 ### Files Modified
+
 - src/languages/typescript/scopes.scm: Added namespace import pattern
 - src/languages/javascript/scopes.scm: Added namespace import pattern  
 - src/graph.ts: Added getImportStatementCount() method
 
 ### Test Results
+
 - Individual symbol counting works correctly (12 symbols from 7 statements)
 - Import statement counting available via new method
 - Namespace imports now properly captured

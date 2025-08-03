@@ -27,6 +27,7 @@ Once the accuracy issues are fixed, the validation test should be added to the C
 ## Implementation Notes
 
 Success criteria from validation guide:
+
 - At least 90% of top-level nodes correctly identified (currently 25%)
 - At least 85% of sampled call relationships accurate (currently 67%)
 - File summaries within 20% of actual counts (currently >100% error)

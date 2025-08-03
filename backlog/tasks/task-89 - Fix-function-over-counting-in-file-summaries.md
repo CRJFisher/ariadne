@@ -31,23 +31,28 @@ Function counting is inaccurate, often reporting 2x the actual number of functio
 Successfully fixed function over-counting and export detection issues.
 
 ### Problem
+
 - Function counts were doubled (e.g., symbol_naming.ts showed 18 instead of 9)
 - All exported functions showed as not exported in call graph
 
 ### Root Cause
+
 1. Compiled JavaScript files in src directory were being processed alongside TypeScript files
 2. Export status was hardcoded to false in call graph node creation
 
 ### Solution
+
 1. Removed compiled JS files from src directory
 2. Fixed export detection by using definition export status (project_call_graph.ts:1171)
 3. Changed from `const is_exported = false` to `const is_exported = func.is_exported || this.isDefinitionExported(file_path, func.name)`
 
 ### Files Modified
+
 - src/project_call_graph.ts: Fixed export detection in get_call_graph()
 - Cleaned up src/*.js files (compiled output)
 
 ### Test Results
+
 - Function counts now correct (9 functions for symbol_naming.ts)
 - All exported functions correctly marked as exported
 - Export status properly propagates from definitions to call graph nodes

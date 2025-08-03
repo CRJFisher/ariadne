@@ -122,8 +122,8 @@ describe("enclosing_range", () => {
       
       project.add_or_update_file("test.py", code);
       const defs = project.get_definitions("test.py");
-      const add = defs.find(d => d.name === "add" && d.symbol_kind === "function");
-      const multiply = defs.find(d => d.name === "multiply" && d.symbol_kind === "function");
+      const add = defs.find(d => d.name === "add" && d.symbol_kind === "method");
+      const multiply = defs.find(d => d.name === "multiply" && d.symbol_kind === "method");
       
       expect(add).toBeDefined();
       expect(add!.enclosing_range).toBeDefined();
@@ -173,8 +173,8 @@ describe("enclosing_range", () => {
       
       project.add_or_update_file("test.rs", code);
       const defs = project.get_definitions("test.rs");
-      const add = defs.find(d => d.name === "add" && d.symbol_kind === "function");
-      const multiply = defs.find(d => d.name === "multiply" && d.symbol_kind === "function");
+      const add = defs.find(d => d.name === "add" && d.symbol_kind === "method");
+      const multiply = defs.find(d => d.name === "multiply" && d.symbol_kind === "method");
       
       expect(add).toBeDefined();
       expect(add!.enclosing_range).toBeDefined();
