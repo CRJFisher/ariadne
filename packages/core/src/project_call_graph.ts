@@ -286,6 +286,51 @@ export class ProjectCallGraph {
     const fileCache = this.file_cache.get(file_path);
     if (!fileCache) return;
     
+    // Handle Python files differently - all top-level definitions are implicitly exported
+    if (file_path.endsWith('.py')) {
+      for (const def of defs) {
+        // In Python, all top-level definitions are exported unless they start with underscore
+        // or are explicitly excluded by __all__
+        if (def.is_exported !== false && 
+            (def.symbol_kind === 'class' || def.symbol_kind === 'function') &&
+            !def.name.startsWith('_')) {
+          tracker.markAsExported(def.name);
+          
+          if (def.symbol_kind === 'class') {
+            const defWithRange = {
+              ...def,
+              enclosing_range: (def as any).enclosing_range || 
+                (fileCache ? this.computeClassEnclosingRange(def, fileCache.tree) : undefined)
+            };
+            this.project_type_registry.registerExport(file_path, def.name, def.name, defWithRange);
+          }
+        }
+      }
+      return;
+    }
+    
+    // Handle Rust files - check for pub keyword
+    if (file_path.endsWith('.rs')) {
+      for (const def of defs) {
+        // In Rust, items marked with 'pub' are exported
+        if (def.is_exported === true && 
+            (def.symbol_kind === 'struct' || def.symbol_kind === 'enum' || 
+             def.symbol_kind === 'function' || def.symbol_kind === 'trait')) {
+          tracker.markAsExported(def.name);
+          
+          if (def.symbol_kind === 'struct') {
+            const defWithRange = {
+              ...def,
+              enclosing_range: (def as any).enclosing_range || 
+                (fileCache ? this.computeClassEnclosingRange(def, fileCache.tree) : undefined)
+            };
+            this.project_type_registry.registerExport(file_path, def.name, def.name, defWithRange);
+          }
+        }
+      }
+      return;
+    }
+    
     const sourceLines = fileCache.source_code.split('\n');
     
     for (const ref of refs) {
@@ -615,7 +660,13 @@ export class ProjectCallGraph {
         { row: ref.range.end.row, column: ref.range.end.column }
       );
       
-      if (astNode && astNode.parent && astNode.parent.type === 'new_expression') {
+      // Check for constructor calls - new Expression in JS/TS or just ClassName() in Python
+      const isConstructorCall = astNode && astNode.parent && (
+        astNode.parent.type === 'new_expression' ||  // JS/TS: new ClassName()
+        (astNode.parent.type === 'call' && def.file_path.endsWith('.py'))  // Python: ClassName()
+      );
+      
+      if (isConstructorCall) {
         // This is a constructor call
         const constructorName = ref.name;
         
@@ -625,7 +676,8 @@ export class ProjectCallGraph {
           // This is an imported class - track the variable assignment
           let assignmentNode: any = astNode.parent;
           while (assignmentNode && assignmentNode.type !== 'variable_declarator' && 
-                 assignmentNode.type !== 'assignment_expression') {
+                 assignmentNode.type !== 'assignment_expression' &&
+                 assignmentNode.type !== 'assignment') {
             assignmentNode = assignmentNode.parent;
           }
           
@@ -635,6 +687,9 @@ export class ProjectCallGraph {
               varNameNode = assignmentNode.childForFieldName('name');
             } else if (assignmentNode.type === 'assignment_expression') {
               varNameNode = assignmentNode.childForFieldName('left');
+            } else if (assignmentNode.type === 'assignment') {
+              // Python assignment: varName = ClassName()
+              varNameNode = assignmentNode.children[0];
             }
             
             if (varNameNode && varNameNode.type === 'identifier') {
@@ -670,7 +725,8 @@ export class ProjectCallGraph {
               // Look for the variable assignment pattern: const varName = new ClassName()
               let assignmentNode: any = astNode.parent;
               while (assignmentNode && assignmentNode.type !== 'variable_declarator' && 
-                     assignmentNode.type !== 'assignment_expression') {
+                     assignmentNode.type !== 'assignment_expression' &&
+                     assignmentNode.type !== 'assignment') {
                 assignmentNode = assignmentNode.parent;
               }
               
@@ -680,6 +736,9 @@ export class ProjectCallGraph {
                   varNameNode = assignmentNode.childForFieldName('name');
                 } else if (assignmentNode.type === 'assignment_expression') {
                   varNameNode = assignmentNode.childForFieldName('left');
+                } else if (assignmentNode.type === 'assignment') {
+                  // Python assignment: varName = ClassName()
+                  varNameNode = assignmentNode.children[0];
                 }
                 
                 if (varNameNode && varNameNode.type === 'identifier') {
@@ -791,7 +850,10 @@ export class ProjectCallGraph {
           { row: ref.range.start.row, column: ref.range.start.column },
           { row: ref.range.end.row, column: ref.range.end.column }
         );
-        const is_constructor_call = !!(astNode && astNode.parent && astNode.parent.type === 'new_expression');
+        const is_constructor_call = !!(astNode && astNode.parent && (
+          astNode.parent.type === 'new_expression' ||  // JS/TS: new ClassName()
+          (astNode.parent.type === 'call' && def.file_path.endsWith('.py') && final_resolved.symbol_kind === 'class')  // Python: ClassName()
+        ));
         
         // Include all callable symbol kinds
         const callable_kinds = ['function', 'method', 'generator', 'class', 'constructor'];

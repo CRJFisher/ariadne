@@ -30,7 +30,7 @@ Create a project-wide type registry that maintains variable type information acr
 - [x] Call graph shows correct method relationships across files
 - [x] JavaScript/TypeScript: Cross-file method resolution works for ES6 imports
 - [x] JavaScript/TypeScript: Handles renamed imports (import { X as Y })
-- [ ] Python: Cross-file method resolution works for from/import statements
+- [x] Python: Cross-file method resolution works for from/import statements
 - [ ] Python: Handles different import styles (from x import y, import x.y)
 - [ ] Rust: Cross-file method resolution works for use statements
 - [ ] Rust: Handles module paths and renamed imports
@@ -68,10 +68,17 @@ Create a project-wide type registry that maintains variable type information acr
 
 ### Remaining Work
 
-- **Python**: Need to adapt export detection for Python module system (no explicit exports)
-- **Rust**: Need to handle Rust's module system and visibility rules
+- **Python**: Handle different import styles (import x.y, from x.y import z)
+- **Rust**: Handle Type::method() pattern and variable assignments from constructors
 - **Variable reassignments**: Track type changes when variables are reassigned
 - **Export syntaxes**: Handle export default, export *, named exports, etc.
+
+### Recent Progress
+
+- **Python Export Detection**: Implemented implicit export detection for Python (all top-level non-underscore items)
+- **Python Constructor Tracking**: Added support for tracking `varName = ClassName()` assignments in Python
+- **Rust Export Detection**: Added support for detecting `pub` items as exports in Rust
+- **Cross-file Tests**: Python cross-file method resolution test now passing
 
 ## Blockers for Other Languages
 

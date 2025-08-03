@@ -1712,7 +1712,7 @@ def handle_request(request):
     expect(callSymbols).toEqual(["processor#DataProcessor.process", "processor#DataProcessor.validate"]);
   });
 
-  test.skip("cross-file method resolution for Rust - requires variable type tracking across function boundaries", () => {
+  test("cross-file method resolution within same function for Rust", () => {
     const project = new Project();
     
     const file1 = `
@@ -1956,7 +1956,7 @@ export function processString(input) {
     expect(callSymbols).toEqual(["utils#StringUtils.capitalize", "utils#StringUtils.reverse"]);
   });
 
-  test.skip("cross-file method resolution within same function for Python - requires import-aware type tracking", () => {
+  test("cross-file method resolution within same function for Python - requires import-aware type tracking", () => {
     const project = new Project();
     
     const file1 = `
