@@ -86,11 +86,31 @@ export function build_scope_graph(
 
         // Try to find the module path from the import statement
         let current = node.parent;
-        while (current && current.type !== "import_statement" && current.type !== "import_from_statement") {
+        while (current && current.type !== "import_statement" && current.type !== "import_from_statement" && current.type !== "variable_declarator" && current.type !== "use_declaration") {
           current = current.parent;
         }
         if (current) {
-          if (current.type === "import_statement") {
+          if (current.type === "variable_declarator") {
+            // CommonJS require pattern: const name = require('module')
+            const valueNode = current.childForFieldName('value');
+            if (valueNode && valueNode.type === 'call_expression') {
+              const functionNode = valueNode.childForFieldName('function');
+              if (functionNode && functionNode.text === 'require') {
+                // Get the argument (module path)
+                const argsNode = valueNode.childForFieldName('arguments');
+                if (argsNode) {
+                  for (let i = 0; i < argsNode.childCount; i++) {
+                    const arg = argsNode.child(i);
+                    if (arg && arg.type === 'string') {
+                      // Remove quotes from the string
+                      module_path = arg.text.slice(1, -1);
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+          } else if (current.type === "import_statement") {
             // Check if this is a type-only import statement
             // Structure: import "type" { ... } from "module"
             // The 'type' keyword appears as child(1) if present
@@ -120,6 +140,54 @@ export function build_scope_graph(
                 module_path = child.text;
                 break;
               }
+            }
+          } else if (current.type === "use_declaration") {
+            // For Rust imports: use crate::module::Type
+            // The structure is use_declaration -> scoped_identifier or use_declaration -> use_as_clause -> scoped_identifier
+            let scopedIdent = null;
+            
+            // Debug logging
+            console.log(`Processing Rust use_declaration, children:`, current.childCount);
+            for (let i = 0; i < current.childCount; i++) {
+              const child = current.child(i);
+              console.log(`  Child ${i}: type=${child?.type}, text=${child?.text}`);
+            }
+            
+            // First check if there's a use_as_clause child
+            for (let i = 0; i < current.childCount; i++) {
+              const child = current.child(i);
+              if (child && child.type === "use_as_clause") {
+                // Look for scoped_identifier within use_as_clause
+                for (let j = 0; j < child.childCount; j++) {
+                  const grandchild = child.child(j);
+                  if (grandchild && grandchild.type === "scoped_identifier") {
+                    scopedIdent = grandchild;
+                    break;
+                  }
+                }
+                break;
+              } else if (child && child.type === "scoped_identifier") {
+                scopedIdent = child;
+                break;
+              }
+            }
+            
+            if (scopedIdent) {
+              // Extract the module path (everything before the last ::)
+              const fullPath = scopedIdent.text;
+              const lastDoubleColon = fullPath.lastIndexOf("::");
+              if (lastDoubleColon > 0) {
+                module_path = fullPath.substring(0, lastDoubleColon);
+              } else {
+                module_path = fullPath;
+              }
+              console.log(`  Extracted module_path: ${module_path} from fullPath: ${fullPath}`);
+            }
+          } else if (current.type === "use_as_clause") {
+            // This case is handled by the parent use_declaration
+            let parent = current.parent;
+            if (parent && parent.type === "use_declaration") {
+              // Already handled above
             }
           }
         }

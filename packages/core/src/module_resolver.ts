@@ -253,6 +253,11 @@ export class ModuleResolver {
       basePath = path.dirname(currentFile);
     }
     
+    // If no parts left after removing crate/super/self, we're done
+    if (parts.length === 0) {
+      return basePath.endsWith('.rs') ? basePath : null;
+    }
+    
     // Build the path from parts
     for (const part of parts) {
       // First try as a file

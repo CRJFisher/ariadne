@@ -55,6 +55,13 @@ class FileTypeTracker {
   }
   
   /**
+   * Get all exported definitions
+   */
+  getExportedDefinitions(): Set<string> {
+    return this.exportedDefinitions;
+  }
+  
+  /**
    * Clear all type information for this file
    */
   clear() {
@@ -221,6 +228,14 @@ export class ProjectCallGraph {
   }
   
   /**
+   * Check if a definition in a file is exported
+   */
+  isDefinitionExported(file_path: string, def_name: string): boolean {
+    const tracker = this.file_type_trackers.get(file_path);
+    return tracker ? tracker.isExported(def_name) : false;
+  }
+  
+  /**
    * Initialize import information for a file
    */
   private initializeFileImports(file_path: string) {
@@ -333,6 +348,70 @@ export class ProjectCallGraph {
     
     const sourceLines = fileCache.source_code.split('\n');
     
+    // For JavaScript files, also check for CommonJS exports
+    if (file_path.endsWith('.js')) {
+      // Check for module.exports = ClassName or module.exports = { ... }
+      const moduleExportsMatch = fileCache.source_code.match(/module\.exports\s*=\s*(\w+|\{[^}]+\})/);
+      if (moduleExportsMatch) {
+        const exportedValue = moduleExportsMatch[1];
+        
+        // Single export: module.exports = ClassName
+        if (!exportedValue.startsWith('{')) {
+          const exportedDef = defs.find(d => d.name === exportedValue);
+          if (exportedDef) {
+            tracker.markAsExported(exportedDef.name);
+            
+            if (exportedDef.symbol_kind === 'class') {
+              const defWithRange = {
+                ...exportedDef,
+                enclosing_range: (exportedDef as any).enclosing_range || 
+                  (fileCache ? this.computeClassEnclosingRange(exportedDef, fileCache.tree) : undefined)
+              };
+              this.project_type_registry.registerExport(file_path, exportedDef.name, exportedDef.name, defWithRange);
+            }
+          }
+        } else {
+          // Object export: module.exports = { func1, Class1 }
+          const exportedNames = exportedValue.match(/\w+/g) || [];
+          for (const name of exportedNames) {
+            const def = defs.find(d => d.name === name);
+            if (def) {
+              tracker.markAsExported(def.name);
+              
+              if (def.symbol_kind === 'class') {
+                const defWithRange = {
+                  ...def,
+                  enclosing_range: (def as any).enclosing_range || 
+                    (fileCache ? this.computeClassEnclosingRange(def, fileCache.tree) : undefined)
+                };
+                this.project_type_registry.registerExport(file_path, def.name, def.name, defWithRange);
+              }
+            }
+          }
+        }
+      }
+      
+      // Check for exports.name = value pattern
+      const exportsAssignments = fileCache.source_code.matchAll(/exports\.(\w+)\s*=\s*(\w+)/g);
+      for (const match of exportsAssignments) {
+        const [, exportName, valueName] = match;
+        const def = defs.find(d => d.name === valueName);
+        if (def) {
+          tracker.markAsExported(def.name);
+          
+          if (def.symbol_kind === 'class') {
+            const defWithRange = {
+              ...def,
+              enclosing_range: (def as any).enclosing_range || 
+                (fileCache ? this.computeClassEnclosingRange(def, fileCache.tree) : undefined)
+            };
+            this.project_type_registry.registerExport(file_path, def.name, exportName, defWithRange);
+          }
+        }
+      }
+    }
+    
+    // Check for ES6 export statements
     for (const ref of refs) {
       const line = sourceLines[ref.range.start.row];
       if (line) {
@@ -358,7 +437,7 @@ export class ProjectCallGraph {
     
     // Also check for export declarations (export function/class)
     for (const def of defs) {
-      if (def.symbol_kind === 'class' || def.symbol_kind === 'function') {
+      if (def.symbol_kind === 'class' || def.symbol_kind === 'function' || def.symbol_kind === 'method') {
         const line = sourceLines[def.range.start.row];
         if (line) {
           const beforeDef = line.substring(0, def.range.start.column);
@@ -556,7 +635,7 @@ export class ProjectCallGraph {
    * @returns Array of FunctionCall objects representing calls made within this definition
    */
   get_calls_from_definition(def: Def): FunctionCall[] {
-    console.log(`get_calls_from_definition called for: ${def.name}, kind: ${def.symbol_kind}`);
+    console.log(`get_calls_from_definition called for: ${def.name}, kind: ${def.symbol_kind}, file: ${def.file_path}`);
     
     const graph = this.file_graphs.get(def.file_path);
     const fileCache = this.file_cache.get(def.file_path);
@@ -652,6 +731,13 @@ export class ProjectCallGraph {
       this.is_position_within_range(ref.range.end, definitionRange)
     );
     
+    if (def.name === 'run_logging') {
+      console.log(`Found ${definitionRefs.length} refs in run_logging, definitionRange:`, definitionRange);
+      definitionRefs.forEach(r => {
+        console.log(`  Ref: ${r.name}, kind: ${r.symbol_kind}, row: ${r.range.start.row}`);
+      });
+    }
+    
     // First pass: identify constructor calls and track variable types
     for (const ref of definitionRefs) {
       // Check if this reference is part of a new expression
@@ -663,12 +749,23 @@ export class ProjectCallGraph {
       // Check for constructor calls - new Expression in JS/TS or just ClassName() in Python
       const isConstructorCall = astNode && astNode.parent && (
         astNode.parent.type === 'new_expression' ||  // JS/TS: new ClassName()
-        (astNode.parent.type === 'call' && def.file_path.endsWith('.py'))  // Python: ClassName()
+        (astNode.parent.type === 'call' && def.file_path.endsWith('.py')) ||  // Python: ClassName()
+        (astNode.parent.type === 'scoped_identifier' && 
+         astNode.parent.parent?.type === 'call_expression' &&
+         ref.name === 'new' && def.file_path.endsWith('.rs'))  // Rust: Type::new()
       );
       
       if (isConstructorCall) {
         // This is a constructor call
-        const constructorName = ref.name;
+        let constructorName = ref.name;
+        
+        // For Rust Type::new() pattern, the constructor is the Type part
+        if (def.file_path.endsWith('.rs') && ref.name === 'new' && astNode?.parent?.type === 'scoped_identifier') {
+          const typeName = astNode.parent.childForFieldName('path')?.text || astNode.parent.children[0]?.text;
+          if (typeName) {
+            constructorName = typeName;
+          }
+        }
         
         // First check if this is an imported class
         const importedClass = localTypeTracker.getImportedClass(constructorName);
@@ -677,7 +774,8 @@ export class ProjectCallGraph {
           let assignmentNode: any = astNode.parent;
           while (assignmentNode && assignmentNode.type !== 'variable_declarator' && 
                  assignmentNode.type !== 'assignment_expression' &&
-                 assignmentNode.type !== 'assignment') {
+                 assignmentNode.type !== 'assignment' &&
+                 assignmentNode.type !== 'let_declaration') {  // Rust
             assignmentNode = assignmentNode.parent;
           }
           
@@ -690,10 +788,16 @@ export class ProjectCallGraph {
             } else if (assignmentNode.type === 'assignment') {
               // Python assignment: varName = ClassName()
               varNameNode = assignmentNode.children[0];
+            } else if (assignmentNode.type === 'let_declaration') {
+              // Rust let declaration: let mut varName = Type::new()
+              varNameNode = assignmentNode.childForFieldName('pattern');
             }
             
             if (varNameNode && varNameNode.type === 'identifier') {
               const varName = varNameNode.text;
+              if (def.name === 'run_logging') {
+                console.log(`  Tracking variable ${varName} as type ${importedClass.className}`);
+              }
               localTypeTracker.setVariableType(varName, {
                 className: importedClass.className,
                 classDef: importedClass.classDef
@@ -720,13 +824,14 @@ export class ProjectCallGraph {
               }
             }
             
-            // If it's a class, track the variable assignment
-            if (final_resolved.symbol_kind === 'class') {
+            // If it's a class or struct (Rust), track the variable assignment
+            if (final_resolved.symbol_kind === 'class' || final_resolved.symbol_kind === 'struct') {
               // Look for the variable assignment pattern: const varName = new ClassName()
               let assignmentNode: any = astNode.parent;
               while (assignmentNode && assignmentNode.type !== 'variable_declarator' && 
                      assignmentNode.type !== 'assignment_expression' &&
-                     assignmentNode.type !== 'assignment') {
+                     assignmentNode.type !== 'assignment' &&
+                     assignmentNode.type !== 'let_declaration') {  // Rust
                 assignmentNode = assignmentNode.parent;
               }
               
@@ -739,6 +844,9 @@ export class ProjectCallGraph {
                 } else if (assignmentNode.type === 'assignment') {
                   // Python assignment: varName = ClassName()
                   varNameNode = assignmentNode.children[0];
+                } else if (assignmentNode.type === 'let_declaration') {
+                  // Rust let declaration: let mut varName = Type::new()
+                  varNameNode = assignmentNode.childForFieldName('pattern');
                 }
                 
                 if (varNameNode && varNameNode.type === 'identifier') {
@@ -765,6 +873,10 @@ export class ProjectCallGraph {
     for (const ref of definitionRefs) {
       let resolved = this.go_to_definition(def.file_path, ref.range.start);
       
+      if (def.name === 'run_logging' && ref.symbol_kind === 'method') {
+        console.log(`  Trying to resolve method ref ${ref.name} -> ${resolved?.name || 'null'}`);
+      }
+      
       // If we can't resolve a method reference directly, check if it's a method call on a typed variable
       if (!resolved && ref.symbol_kind === 'method') {
         // This might be a method call like obj.method()
@@ -773,6 +885,13 @@ export class ProjectCallGraph {
           { row: ref.range.start.row, column: ref.range.start.column },
           { row: ref.range.end.row, column: ref.range.end.column }
         );
+        
+        if (def.name === 'run_logging') {
+          console.log(`  Method ref ${ref.name} AST node: type=${astNode?.type}, parent=${astNode?.parent?.type}`);
+          if (astNode?.parent) {
+            console.log(`    Parent text: ${astNode.parent.text}`);
+          }
+        }
         
         // Handle both JavaScript/TypeScript (member_expression) and Python (attribute)
         const parentNode = astNode?.parent;
@@ -785,19 +904,66 @@ export class ProjectCallGraph {
           }
         }
         
-        if (parentNode && (parentNode.type === 'member_expression' || parentNode.type === 'attribute')) {
-          const objectNode = parentNode.childForFieldName('object') || 
-                            (parentNode.type === 'attribute' ? parentNode.children[0] : null);
-          if (objectNode && objectNode.type === 'identifier') {
-            const objName = objectNode.text;
-            const typeInfo = localTypeTracker.getVariableType(objName);
-            
-            // Debug
-            if (def.file_path.endsWith('.py')) {
-              console.log(`Looking up type for: ${objName}, found:`, typeInfo);
+        if (parentNode && (parentNode.type === 'member_expression' || parentNode.type === 'attribute' || 
+                           parentNode.type === 'field_expression' || parentNode.type === 'scoped_identifier')) {
+          
+          // Handle Rust Type::method() pattern
+          if (parentNode.type === 'scoped_identifier') {
+            // For Logger::new, we need to resolve Logger to the type, then find new in that type
+            const typeName = parentNode.childForFieldName('path')?.text || parentNode.children[0]?.text;
+            if (typeName) {
+              console.log(`  Rust Type::method pattern - type: ${typeName}, method: ${ref.name}`);
+              
+              // For cross-file resolution, always check imports
+              console.log(`  Checking imports for ${typeName}`);
+              try {
+                  const imports = this.get_imports_with_definitions(def.file_path);
+                  console.log(`  Looking for import ${typeName}, found ${imports.length} imports`);
+                  imports.forEach(imp => {
+                    console.log(`    Import: ${imp.import_statement.name}`);
+                  });
+                  const importInfo = imports.find(imp => imp.import_statement.name === typeName);
+                
+                if (importInfo && importInfo.imported_function) {
+                  // We found the imported type
+                  const importedType = importInfo.imported_function;
+                  console.log(`  Found imported type: ${importedType.name} from ${importedType.file_path}`);
+                  
+                  // Now find the method in that file
+                  const targetGraph = this.file_graphs.get(importedType.file_path);
+                  if (targetGraph) {
+                    const defs = targetGraph.getNodes<Def>('definition');
+                    const method = defs.find(d => 
+                      d.name === ref.name && 
+                      (d.symbol_kind === 'method' || d.symbol_kind === 'function')
+                    );
+                    
+                    if (method) {
+                      resolved = method;
+                      console.log(`  Resolved to method: ${method.symbol_id}`);
+                    }
+                  }
+                }
+                } catch (e) {
+                  console.log(`  Error getting imports: ${e}`);
+                }
             }
-            
-            if (typeInfo && typeInfo.classDef) {
+          } 
+          // Handle instance.method() patterns (all languages)
+          else {
+            const objectNode = parentNode.childForFieldName('object') || 
+                              parentNode.childForFieldName('value') ||  // Rust field_expression uses 'value'
+                              (parentNode.type === 'attribute' ? parentNode.children[0] : null);
+            if (objectNode && objectNode.type === 'identifier') {
+              const objName = objectNode.text;
+              const typeInfo = localTypeTracker.getVariableType(objName);
+              
+              // Debug
+              if (def.file_path.endsWith('.py') || def.file_path.endsWith('.rs')) {
+                console.log(`Looking up type for: ${objName}, found:`, typeInfo);
+              }
+              
+              if (typeInfo && typeInfo.classDef) {
               // We have type information for this variable
               // Now find the method in the class definition
               const methodName = ref.name;
@@ -812,17 +978,44 @@ export class ProjectCallGraph {
               const classRange = (typeInfo.classDef as any).enclosing_range || typeInfo.classDef.range;
               
               const classMethods = classDefs;
-              const method = classMethods.find((m: Def) => 
-                m.name === methodName && 
-                m.symbol_kind === 'method' &&
-                // Ensure the method is within the class definition
-                this.is_position_within_range(m.range.start, classRange) &&
-                this.is_position_within_range(m.range.end, classRange)
-              );
+              
+              // Debug logging
+              if (def.file_path.endsWith('.rs') && def.name === 'run_logging') {
+                console.log(`  Looking for method ${methodName} in ${typeInfo.classDef.file_path}`);
+                console.log(`  Class range:`, classRange);
+                const methods = classMethods.filter((m: Def) => m.symbol_kind === 'method');
+                console.log(`  Found ${methods.length} methods in file`);
+                methods.forEach(m => {
+                  console.log(`    Method: ${m.name}, range: ${m.range.start.row}-${m.range.end.row}`);
+                });
+              }
+              
+              // For Rust, methods are in impl blocks, not in the struct definition
+              // So we need to look for methods with the same struct name
+              let method = null;
+              if (def.file_path.endsWith('.rs')) {
+                // For Rust, just find the method by name and type
+                method = classMethods.find((m: Def) => 
+                  m.name === methodName && 
+                  m.symbol_kind === 'method'
+                );
+              } else {
+                // For other languages, ensure the method is within the class definition
+                method = classMethods.find((m: Def) => 
+                  m.name === methodName && 
+                  m.symbol_kind === 'method' &&
+                  this.is_position_within_range(m.range.start, classRange) &&
+                  this.is_position_within_range(m.range.end, classRange)
+                );
+              }
               
               if (method) {
                 resolved = method;
+                if (def.file_path.endsWith('.rs') && def.name === 'run_logging') {
+                  console.log(`  Resolved method ${methodName} to ${method.symbol_id}`);
+                }
               }
+            }
             }
           }
         }
@@ -954,8 +1147,16 @@ export class ProjectCallGraph {
       file_filter: options?.file_filter ?? undefined
     };
     
+    // First, detect exports for all files
+    for (const file_path of this.file_graphs.keys()) {
+      this.detectFileExports(file_path);
+    }
+    
     // Get all functions based on file filter
-    const functions_by_file = this.get_all_functions();
+    // Include private functions for now, we'll filter them later if they're not called
+    const functions_by_file = this.get_all_functions({
+      include_private: true
+    });
     
     // First pass: Create nodes for all functions
     for (const [file_path, functions] of Array.from(functions_by_file)) {
@@ -1112,6 +1313,33 @@ export class ProjectCallGraph {
     if (opts.max_depth !== undefined) {
       final_nodes = this.apply_max_depth_filter(nodes, edges, opts.max_depth);
     }
+    
+    // Filter out private uncalled functions
+    // For Rust: Only exclude private methods that are both uncalled and make no calls
+    // For other languages: Include all methods and functions (they might be entry points)
+    const filtered_nodes = new Map<string, CallGraphNode>();
+    for (const [symbol, node] of Array.from(final_nodes)) {
+      const def = node.definition;
+      
+      // Special handling for Rust
+      if (def.file_path.endsWith('.rs')) {
+        // For Rust, exclude private methods that are isolated (not called and make no calls)
+        // Check if this is a method by looking at the symbol pattern (contains Class.method)
+        const is_method = symbol.includes('.') && !symbol.includes('#<module>');
+        const is_private = !def.is_exported;
+        const is_uncalled = !called_symbols.has(symbol);
+        const makes_no_calls = node.calls.length === 0;
+        
+        // Exclude if it's a private method that's both uncalled and makes no calls
+        if (is_method && is_private && is_uncalled && makes_no_calls) {
+          continue;
+        }
+      }
+      
+      // Include all other nodes
+      filtered_nodes.set(symbol, node);
+    }
+    final_nodes = filtered_nodes;
     
     // Identify top-level nodes (not called by any other node in the graph)
     const top_level_nodes: string[] = [];

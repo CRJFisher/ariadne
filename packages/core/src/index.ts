@@ -524,6 +524,21 @@ export class Project {
           targetFile = ModuleResolver.resolvePythonImport(file_path, imp.source_module);
         } else if (ext === '.rs') {
           targetFile = ModuleResolver.resolveRustModule(file_path, imp.source_module);
+          console.log(`Rust import resolution: ${imp.source_module} from ${file_path} -> ${targetFile}`);
+          
+          // Fallback for virtual file system (tests)
+          if (!targetFile && imp.source_module) {
+            // Try to find a file that matches the last part of the module path
+            const parts = imp.source_module.split('::');
+            const moduleName = parts[parts.length - 1];
+            const possibleFile = moduleName + '.rs';
+            
+            // Check if this file exists in our project
+            if (this.file_graphs.has(possibleFile)) {
+              targetFile = possibleFile;
+              console.log(`  Fallback resolved to: ${targetFile}`);
+            }
+          }
         } else {
           targetFile = ModuleResolver.resolveModulePath(file_path, imp.source_module);
         }
@@ -532,7 +547,19 @@ export class Project {
         if (targetFile) {
           const targetGraph = this.file_graphs.get(targetFile);
           if (targetGraph) {
-            const exportedDef = targetGraph.findExportedDef(export_name);
+            let exportedDef = targetGraph.findExportedDef(export_name);
+            
+            // If not found by is_exported flag, check the export tracker
+            if (!exportedDef) {
+              const defs = targetGraph.getNodes<Def>('definition');
+              for (const def of defs) {
+                if (def.name === export_name && this.call_graph.isDefinitionExported(targetFile, def.name)) {
+                  exportedDef = def;
+                  break;
+                }
+              }
+            }
+            
             if (exportedDef) {
               importInfos.push({
                 imported_function: exportedDef,
@@ -550,7 +577,19 @@ export class Project {
         for (const [otherFile, otherGraph] of this.file_graphs) {
           if (otherFile === file_path) continue;
           
-          const exportedDef = otherGraph.findExportedDef(export_name);
+          let exportedDef = otherGraph.findExportedDef(export_name);
+          
+          // If not found by is_exported flag, check the export tracker
+          if (!exportedDef) {
+            const defs = otherGraph.getNodes<Def>('definition');
+            for (const def of defs) {
+              if (def.name === export_name && this.call_graph.isDefinitionExported(otherFile, def.name)) {
+                exportedDef = def;
+                break;
+              }
+            }
+          }
+          
           if (exportedDef) {
             importInfos.push({
               imported_function: exportedDef,

@@ -303,11 +303,11 @@
 
 ;; Type::method() - e.g., Rectangle::new()
 ;;
-;; Both the type and method are references
+;; The type is a reference, the method is a method reference
 (call_expression
   function: (scoped_identifier
     path: (identifier) @local.reference
-    name: (identifier) @local.reference))
+    name: (identifier) @local.reference.method))
 
 ;; self.foo() 
 ;;
