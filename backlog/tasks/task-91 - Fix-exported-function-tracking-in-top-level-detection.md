@@ -19,10 +19,37 @@ Functions that are exported and used in other files are incorrectly marked as to
 - [ ] Top-level detection considers both internal calls and exports
 - [ ] Only truly unused functions are marked as top-level
 
+## Implementation Plan
+
+1. Fix export detection in call graph nodes
+2. Ensure exported status is properly tracked
+3. Test with validation examples
+4. Verify top-level detection accuracy
+
 ## Implementation Notes
 
-Test cases from validation:
-- get_symbol_id: Exported from index.ts:23 and called from scope_resolution.ts:355 but marked as top-level
-- extract_class_relationships: Exported and called from index.ts and project_inheritance.ts:58 but marked as top-level
+Fixed export detection as part of the function counting fix (task-89).
 
-These functions are exported from one module and imported/used in another, but the system doesn't track this as a 'call' relationship. Need to consider re-exports and module boundaries.
+### Problem
+- All exported functions showed as not exported in call graph
+- This affected top-level detection since export status wasn't considered
+
+### Root Cause
+- Export status was hardcoded to false in call graph node creation
+- Line: `const is_exported = false;` in project_call_graph.ts
+
+### Solution
+1. Fixed export detection by using definition export status
+2. Changed to: `const is_exported = func.is_exported || this.isDefinitionExported(file_path, func.name)`
+3. Export status now properly propagates from definitions to call graph nodes
+
+### Files Modified
+- src/project_call_graph.ts: Fixed export detection in get_call_graph() at line 1171
+
+### Test Results
+- All exported functions now correctly marked as exported
+- Export status available for top-level detection logic
+- Functions like get_symbol_id now show is_exported=true
+
+### Note
+The actual top-level detection logic (considering exports) may need additional work beyond just tracking export status. The current fix ensures the export information is available for such logic.
