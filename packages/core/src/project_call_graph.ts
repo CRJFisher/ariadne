@@ -1167,10 +1167,8 @@ export class ProjectCallGraph {
         const symbol = func.symbol_id
         
         // Check if function is exported
-        // For now, we'll consider a function exported if it's in the root scope
-        // and the file contains TypeScript/JavaScript (where we can check for export keyword)
-        // This is a simplification - proper export tracking would require AST analysis
-        const is_exported = false;
+        // Use the export status from the function definition
+        const is_exported = func.is_exported || this.isDefinitionExported(file_path, func.name);
         
         // Initialize node with empty calls and called_by arrays
         nodes.set(symbol, {
