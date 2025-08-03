@@ -528,15 +528,35 @@ export class Project {
           
           // Fallback for virtual file system (tests)
           if (!targetFile && imp.source_module) {
-            // Try to find a file that matches the last part of the module path
+            // Try to find a file that matches the module path
             const parts = imp.source_module.split('::');
-            const moduleName = parts[parts.length - 1];
-            const possibleFile = moduleName + '.rs';
             
-            // Check if this file exists in our project
-            if (this.file_graphs.has(possibleFile)) {
-              targetFile = possibleFile;
-              console.log(`  Fallback resolved to: ${targetFile}`);
+            if (parts[0] === 'crate') {
+              // For crate:: imports, try to resolve relative to src/
+              parts.shift(); // Remove 'crate'
+              const possiblePaths = [
+                `src/${parts.join('/')}.rs`,
+                `src/${parts.join('/')}/mod.rs`,
+                `${parts.join('/')}.rs`,
+                `${parts.join('/')}/mod.rs`
+              ];
+              
+              for (const possiblePath of possiblePaths) {
+                if (this.file_graphs.has(possiblePath)) {
+                  targetFile = possiblePath;
+                  console.log(`  Fallback resolved crate:: to: ${targetFile}`);
+                  break;
+                }
+              }
+            } else {
+              // Original fallback for non-crate imports
+              const moduleName = parts[parts.length - 1];
+              const possibleFile = moduleName + '.rs';
+              
+              if (this.file_graphs.has(possibleFile)) {
+                targetFile = possibleFile;
+                console.log(`  Fallback resolved to: ${targetFile}`);
+              }
             }
           }
         } else if (ext === '.ts' || ext === '.tsx' || ext === '.js' || ext === '.jsx') {
