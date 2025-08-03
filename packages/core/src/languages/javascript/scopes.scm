@@ -368,6 +368,11 @@
       [(import_specifier !alias (identifier) @local.import)
        (import_specifier alias: (identifier) @local.import)])))
 
+;; import * as namespace from "module";
+(import_statement
+  (import_clause
+    (namespace_import (identifier) @local.import)))
+
 ;; for (item in list) and for (item of list)
 ;;
 ;; `item` is a def

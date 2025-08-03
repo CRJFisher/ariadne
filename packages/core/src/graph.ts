@@ -329,6 +329,23 @@ export class ScopeGraph implements IScopeGraph {
   getAllImports(): Import[] {
     return this.getNodes<Import>('import');
   }
+  
+  // Get count of import statements (not individual imported symbols)
+  getImportStatementCount(): number {
+    const imports = this.getAllImports();
+    const uniqueStatements = new Map<string, Set<string>>();
+    
+    for (const imp of imports) {
+      // Group by source module and line number to identify unique import statements
+      const key = `${imp.source_module || 'unnamed'}:${imp.range.start.row}`;
+      if (!uniqueStatements.has(key)) {
+        uniqueStatements.set(key, new Set());
+      }
+      uniqueStatements.get(key)!.add(imp.name);
+    }
+    
+    return uniqueStatements.size;
+  }
 
   // Find a definition by name in the root scope (for exports)
   findExportedDef(name: string): Def | null {
