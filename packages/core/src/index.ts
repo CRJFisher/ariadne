@@ -539,13 +539,36 @@ export class Project {
               console.log(`  Fallback resolved to: ${targetFile}`);
             }
           }
+        } else if (ext === '.ts' || ext === '.tsx' || ext === '.js' || ext === '.jsx') {
+          // For TypeScript/JavaScript, use the generic module resolver
+          targetFile = ModuleResolver.resolveModulePath(file_path, imp.source_module);
+          
+          if (process.env.DEBUG_IMPORTS) {
+            console.log(`TS/JS import resolution: ${imp.source_module} from ${file_path} -> ${targetFile}`);
+          }
         } else {
           targetFile = ModuleResolver.resolveModulePath(file_path, imp.source_module);
         }
         
         // If we resolved a specific file, only search that file
         if (targetFile) {
-          const targetGraph = this.file_graphs.get(targetFile);
+          let targetGraph = this.file_graphs.get(targetFile);
+          
+          // If not found with absolute path, try to find a matching relative path
+          if (!targetGraph && path.isAbsolute(targetFile)) {
+            // Try to find a file in the project that ends with the same relative path
+            for (const [projectFile, graph] of this.file_graphs) {
+              if (targetFile.endsWith(projectFile) || targetFile.endsWith(projectFile.replace(/\\/g, '/'))) {
+                targetGraph = graph;
+                targetFile = projectFile;
+                if (process.env.DEBUG_IMPORTS) {
+                  console.log(`  Matched absolute path to project file: ${projectFile}`);
+                }
+                break;
+              }
+            }
+          }
+          
           if (targetGraph) {
             let exportedDef = targetGraph.findExportedDef(export_name);
             
