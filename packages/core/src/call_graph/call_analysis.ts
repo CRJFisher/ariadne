@@ -1,7 +1,7 @@
 import { Def, Ref, ScopeGraph, Import } from '../graph';
 import { FileCache } from '../file_cache';
 import { TreeNode } from '../parse';
-import { FunctionCall } from '../types';
+import { FunctionCall } from '../graph';
 import { 
   FileTypeTrackerData, 
   LocalTypeTrackerData,
@@ -10,10 +10,10 @@ import {
   get_variable_type as get_variable_type_immutable,
   get_local_variable_type,
   get_local_imported_class
-} from './immutable_type_tracking';
+} from './type_tracker';
 
 // Re-export types we need
-export type { FunctionCall } from '../types';
+export type { FunctionCall } from '../graph';
 
 /**
  * Result of analyzing calls from a definition
@@ -112,12 +112,14 @@ export function analyze_calls_from_definition(
         const is_method_call = ref.symbol_kind === 'method' || 
           is_method_call_pattern(ref, def.file_path, fileCache);
         
-        calls.push({
+        const call: FunctionCall = {
           caller_def: def,
-          function_ref: ref,
-          resolved_definition: resolved.resolved,
-          kind: is_method_call ? 'method' : 'function'
-        });
+          called_def: resolved.resolved,
+          call_location: ref.range.start,
+          is_method_call,
+          is_constructor_call: ref.symbol_kind === 'constructor'
+        };
+        calls.push(call);
       }
     }
     

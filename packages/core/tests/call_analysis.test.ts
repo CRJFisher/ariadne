@@ -7,14 +7,14 @@ import {
   TypeDiscovery,
   MethodResolutionResult,
   CallAnalysisConfig
-} from '../src/call_graph/immutable_call_analysis';
+} from '../src/call_graph/call_analysis';
 import { 
   create_file_type_tracker, 
   create_local_type_tracker,
   FileTypeTrackerData,
   LocalTypeTrackerData,
   set_local_variable_type
-} from '../src/call_graph/immutable_type_tracking';
+} from '../src/call_graph/type_tracker';
 import { ScopeGraph, Def, Ref, Import } from '../src/graph';
 import { FileCache } from '../src/file_cache';
 import { TreeNode } from '../src/parse';

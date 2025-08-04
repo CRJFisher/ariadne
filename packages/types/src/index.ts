@@ -185,3 +185,6 @@ export interface IScopeGraph {
   getImportInfo(): ImportInfo[];
   getCallGraph(options?: CallGraphOptions): CallGraph;
 }
+
+// Re-export call graph types
+export * from './call-graph-types';

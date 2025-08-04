@@ -7,7 +7,7 @@ import {
   is_function_export,
   ExportDetectionResult,
   ImportDetectionResult
-} from '../src/call_graph/immutable_import_export';
+} from '../src/call_graph/import_export_detector';
 import { ScopeGraph, Def, Ref, DefKind, RefKind } from '../src/graph';
 import { FileCache } from '../src/file_cache';
 import { TreeNode } from '../src/parse';

@@ -9,7 +9,7 @@ import {
   FileTypeTrackerData,
   TypeInfo,
   ImportedClassInfo
-} from '../src/call_graph/immutable_type_tracking';
+} from '../src/call_graph/type_tracker';
 import {
   create_project_call_graph,
   add_file_graph,
@@ -17,7 +17,7 @@ import {
   batch_update_files,
   merge_project_graphs,
   ProjectCallGraphData
-} from '../src/call_graph/immutable_project_call_graph';
+} from '../src/call_graph/project_graph_data';
 import { Def } from '../src/graph';
 
 /**

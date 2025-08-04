@@ -8,11 +8,11 @@ import {
   FileAnalysisData,
   ProjectAnalysisData,
   TwoPhaseBuildConfig
-} from '../src/call_graph/immutable_graph_builder';
+} from '../src/call_graph/graph_builder';
 import { 
   create_project_call_graph,
   ProjectCallGraphData
-} from '../src/call_graph/immutable_project_call_graph';
+} from '../src/call_graph/project_graph_data';
 import { ScopeGraph, Def, Ref } from '../src/graph';
 import { FileCache } from '../src/file_cache';
 import { LanguageConfig } from '../src/types';

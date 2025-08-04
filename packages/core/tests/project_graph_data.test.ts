@@ -15,12 +15,12 @@ import {
   get_file_data,
   create_updater,
   FileUpdate
-} from '../src/call_graph/immutable_project_call_graph';
+} from '../src/call_graph/project_graph_data';
 import { 
   create_file_type_tracker,
   create_project_type_registry,
   set_variable_type
-} from '../src/call_graph/immutable_type_tracking';
+} from '../src/call_graph/type_tracker';
 import { ScopeGraph } from '../src/graph';
 import { FileCache } from '../src/file_cache';
 import { LanguageConfig } from '../src/types';

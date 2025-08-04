@@ -1,8 +1,9 @@
 ---
 id: task-100.11.7
 title: Migrate and update all tests for immutable implementation
-status: To Do
-assignee: []
+status: In Progress
+assignee:
+  - '@chuck'
 created_date: '2025-08-04 14:19'
 updated_date: '2025-08-04 14:20'
 labels:

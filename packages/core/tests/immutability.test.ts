@@ -8,7 +8,7 @@ import {
   register_export,
   create_local_type_tracker,
   set_local_variable_type
-} from '../src/call_graph/immutable_type_tracking';
+} from '../src/call_graph/type_tracker';
 import {
   create_project_call_graph,
   add_file_graph,
@@ -18,7 +18,7 @@ import {
   batch_update_files,
   clear_file_data,
   merge_project_graphs
-} from '../src/call_graph/immutable_project_call_graph';
+} from '../src/call_graph/project_graph_data';
 import { ScopeGraph, Def } from '../src/graph';
 import { FileCache } from '../src/file_cache';
 

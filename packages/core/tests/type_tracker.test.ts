@@ -24,7 +24,7 @@ import {
   FileTypeTrackerData,
   LocalTypeTrackerData,
   ProjectTypeRegistryData
-} from '../src/call_graph/immutable_type_tracking';
+} from '../src/call_graph/type_tracker';
 import { TypeInfo, ImportedClassInfo } from '../src/call_graph/types';
 import { Def } from '../src/graph';
 

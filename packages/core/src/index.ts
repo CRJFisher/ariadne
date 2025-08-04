@@ -10,7 +10,7 @@ import { rust_config } from './languages/rust';
 import { Edit } from './edit';
 import { Tree } from 'tree-sitter';
 import { ClassRelationship, extract_class_relationships } from './inheritance';
-import { ProjectCallGraph } from './project_call_graph';
+import { ProjectCallGraph } from './call_graph/project_call_graph_adapter';
 import { ProjectSource } from './project_source';
 import { ProjectInheritance } from './project_inheritance';
 import * as path from 'path';

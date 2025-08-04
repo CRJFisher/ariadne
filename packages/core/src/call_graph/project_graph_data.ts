@@ -6,7 +6,7 @@ import {
   ProjectTypeRegistryData,
   create_file_type_tracker,
   create_project_type_registry
-} from './immutable_type_tracking';
+} from './type_tracker';
 
 /**
  * Immutable project call graph data structure

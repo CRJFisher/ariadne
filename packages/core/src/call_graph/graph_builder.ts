@@ -10,7 +10,7 @@ import {
   update_project_registry,
   batch_update_files,
   FileUpdate
-} from './immutable_project_call_graph';
+} from './project_graph_data';
 import {
   FileTypeTrackerData,
   ProjectTypeRegistryData,
@@ -19,18 +19,18 @@ import {
   set_variable_type,
   register_export,
   clear_file_exports
-} from './immutable_type_tracking';
+} from './type_tracker';
 import {
   detect_file_exports,
   detect_file_imports,
   ExportDetectionResult,
   ImportDetectionResult
-} from './immutable_import_export';
+} from './import_export_detector';
 import {
   analyze_calls_from_definition,
   analyze_module_level_calls,
   CallAnalysisResult
-} from './immutable_call_analysis';
+} from './call_analysis';
 
 /**
  * Result of analyzing a single file
