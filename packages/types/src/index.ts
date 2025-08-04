@@ -131,7 +131,11 @@ export interface RefToImport extends BaseEdge {
   kind: 'ref_to_import';
 }
 
-export type Edge = DefToScope | RefToDef | ScopeToScope | ImportToScope | RefToImport;
+export interface RefToScope extends BaseEdge {
+  kind: 'ref_to_scope';
+}
+
+export type Edge = DefToScope | RefToDef | ScopeToScope | ImportToScope | RefToImport | RefToScope;
 
 // Call graph types
 export interface Call {

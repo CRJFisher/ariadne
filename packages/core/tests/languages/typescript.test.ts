@@ -181,7 +181,11 @@ describe('TypeScript parsing', () => {
           ],
         },
       ],
-      references: [],
+      references: [
+        { name: 'createRoot', context: 'ReactDOM.§createRoot§(document.getElementById(\'root\') as HTMLElement).render(' },
+        { name: 'document', context: 'ReactDOM.createRoot(§document§.getElementById(\'root\') as HTMLElement).render(' },
+        { name: 'getElementById', context: 'ReactDOM.createRoot(document.§getElementById§(\'root\') as HTMLElement).render(' },
+      ],
       child_scopes: [],
     };
 

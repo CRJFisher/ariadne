@@ -152,6 +152,9 @@ export class ScopeGraph implements IScopeGraph {
     // This is important for method references that need type-based resolution
     this.nodes.push(ref);
     
+    // Create edge to attach reference to its containing scope
+    this.edges.push({ kind: 'ref_to_scope', source_id: ref.id, target_id: local_scope_id });
+    
     // Create edges to found definitions/imports
     for (const def_id of possible_defs) {
       this.edges.push({ kind: 'ref_to_def', source_id: ref.id, target_id: def_id });

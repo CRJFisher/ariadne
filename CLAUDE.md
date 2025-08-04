@@ -28,14 +28,12 @@ Use a clear brief title that summarizes the task.
 
 ### **Description**: (The **"why"**)
 
-Provide a concise summary of the task purpose and its goal. Do not add implementation details here. It
-should explain the purpose and context of the task. Code snippets should be avoided.
+Provide a concise summary of the task purpose and its goal. Do not add implementation details here. It should explain the purpose and context of the task. Code snippets should be avoided.
 
 ### **Acceptance Criteria**: (The **"what"**)
 
 List specific, measurable outcomes that define what means to reach the goal from the description. Use checkboxes (`- [ ]`) for tracking.
-When defining `## Acceptance Criteria` for a task, focus on **outcomes, behaviors, and verifiable requirements** rather
-than step-by-step implementation details.
+When defining `## Acceptance Criteria` for a task, focus on **outcomes, behaviors, and verifiable requirements** rather than step-by-step implementation details.
 Acceptance Criteria (AC) define *what* conditions must be met for the task to be considered complete.
 They should be testable and confirm that the core purpose of the task is achieved.
 **Key Principles for Good ACs:**
@@ -46,29 +44,23 @@ They should be testable and confirm that the core purpose of the task is achieve
 - **Complete:** Collectively, ACs should cover the scope of the task.
 - **User-Focused (where applicable):** Frame ACs from the perspective of the end-user or the system's external behavior.
 
-    - *Good Example:* "- [ ] User can successfully log in with valid credentials."
-    - *Good Example:* "- [ ] System processes 1000 requests per second without errors."
-    - *Bad Example (Implementation Step):* "- [ ] Add a new function `handleLogin()` in `auth.ts`."
+  - *Good Example:* "- [ ] User can successfully log in with valid credentials."
+  - *Good Example:* "- [ ] System processes 1000 requests per second without errors."
+  - *Bad Example (Implementation Step):* "- [ ] Add a new function `handleLogin()` in `auth.ts`."
 
 ### Task file
 
-Once a task is created it will be stored in `backlog/tasks/` directory as a Markdown file with the format
-`task-<id> - <title>.md` (e.g. `task-42 - Add GraphQL resolver.md`).
+Once a task is created it will be stored in `backlog/tasks/` directory as a Markdown file with the format `task-<id> - <title>.md` (e.g. `task-42 - Add GraphQL resolver.md`).
 
 ### Additional task requirements
 
-- Tasks must be **atomic** and **testable**. If a task is too large, break it down into smaller subtasks.
-  Each task should represent a single unit of work that can be completed in a single PR.
+- Tasks must be **atomic** and **testable**. If a task is too large, break it down into smaller subtasks. Each task should represent a single unit of work that can be completed in a single PR.
 
-- **Never** reference tasks that are to be done in the future or that are not yet created. You can only reference
-  previous
-  tasks (id < current task id).
+- **Never** reference tasks that are to be done in the future or that are not yet created. You can only reference previous tasks (id < current task id).
 
-- When creating multiple tasks, ensure they are **independent** and they do not depend on future tasks.   
-  Example of wrong tasks splitting: task 1: "Add API endpoint for user data", task 2: "Define the user model and DB
-  schema".  
-  Example of correct tasks splitting: task 1: "Add system for handling API requests", task 2: "Add user model and DB
-  schema", task 3: "Add API endpoint for user data".
+- When creating multiple tasks, ensure they are **independent** and they do not depend on future tasks.
+  Example of wrong tasks splitting: task 1: "Add API endpoint for user data", task 2: "Define the user model and DB schema".  
+  Example of correct tasks splitting: task 1: "Add system for handling API requests", task 2: "Add user model and DB schema", task 3: "Add API endpoint for user data".
 
 ## 3. Recommended Task Anatomy
 
@@ -105,15 +97,10 @@ Short, imperative explanation of the goal of the task and why it is needed.
 
 Mandatory sections for every task:
 
-- **Implementation Plan**: (The **"how"**) Outline the steps to achieve the task. Because the implementation details may
-  change after the task is created, **the implementation notes must be added only after putting the task in progress**
-  and before starting working on the task.
-- **Implementation Notes**: Document your approach, decisions, challenges, and any deviations from the plan. This
-  section is added after you are done working on the task. It should summarize what you did and why you did it. Keep it
-  concise but informative.
+- **Implementation Plan**: (The **"how"**) Outline the steps to achieve the task. Because the implementation details may change after the task is created, **the implementation notes must be added only after putting the task in progress** and before starting working on the task.
+- **Implementation Notes**: Document your approach, decisions, challenges, and any deviations from the plan. This section is added after you are done working on the task. It should summarize what you did and why you did it. Keep it concise but informative.
 
-**IMPORTANT**: Do not implement anything else that deviates from the **Acceptance Criteria**. If you need to
-implement something that is not in the AC, update the AC first and then implement it or create a new task for it.
+**IMPORTANT**: Do not implement anything else that deviates from the **Acceptance Criteria**. If you need to implement something that is not in the AC, update the AC first and then implement it or create a new task for it.
 
 ## 2. Typical Workflow
 
@@ -197,54 +184,3 @@ A task is **Done** only when **ALL** of the following are complete:
 - When users mention to create a task, they mean to create a task using Backlog.md CLI tool.
 
 <!-- BACKLOG.MD GUIDELINES END -->
-
-## Releasing New Code
-
-This project uses changesets for version management and automated releases. Here's the complete release process:
-
-### 1. After Making Code Changes
-
-When you've made changes that should be released, create a changeset:
-
-```bash
-npm run changeset
-```
-
-This will prompt you to:
-- Select which packages changed (`@ariadnejs/core`, `@ariadnejs/types`, or both)
-- Choose the version bump type:
-  - `patch`: Bug fixes, minor changes (0.5.10 → 0.5.11)
-  - `minor`: New features, backwards compatible (0.5.10 → 0.6.0)
-  - `major`: Breaking changes (0.5.10 → 1.0.0)
-- Write a summary of the changes
-
-### 2. Commit the Changeset
-
-The changeset tool creates a markdown file in `.changeset/`. Commit this file:
-
-```bash
-git add .changeset/
-git commit -m "chore: add changeset"
-```
-
-### 3. Create and Merge PR
-
-Create a PR with your changes AND the changeset file. Once merged to `main`, the GitHub Actions will:
-1. Detect the changeset
-2. Automatically create a "Version Packages" PR
-
-### 4. Release to npm
-
-When you merge the "Version Packages" PR:
-1. Package versions are bumped
-2. CHANGELOGs are updated
-3. Packages are published to npm as `@ariadnejs/core` and `@ariadnejs/types`
-4. Prebuilt binaries are created for all platforms
-5. A GitHub release is created with the binaries
-
-### Important Notes
-
-- **Always include a changeset** when making changes that should be released
-- Without a changeset, no version PR will be created
-- The packages are linked - they always release together with the same version
-- CI/CD fixes (like workflow changes) don't need changesets unless they affect the published packages
