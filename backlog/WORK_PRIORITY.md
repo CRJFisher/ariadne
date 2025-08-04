@@ -4,14 +4,9 @@
 
 *All critical issues have been resolved!*
 
-## 🔥 HIGH PRIORITY - Work on these NEXT
+## 🔥 HIGH PRIORITY
 
-### task-100: Fix hoisted variable reference resolution
-
-- **Why**: `var` declarations inside blocks should be hoisted to function scope
-- **Symptom**: References to hoisted variables appear as orphaned instead of resolving
-- **Example**: `var hoisted` declared in if block, referenced outside
-- **Impact**: Affects JavaScript variable scoping accuracy
+*All high priority issues have been resolved!*
 
 ## 📋 MEDIUM PRIORITY - Important but not blocking
 
@@ -48,6 +43,7 @@
 
 ✅ **Completed Recently** (2025-08-04):
 
+- Fix hoisted variable reference resolution (task-100)
 - Fix missing ref_to_scope edges (task-97)
 - Update JavaScript/TypeScript tests for ref_to_scope (task-98)
 - Fix duplicate call tracking (task-73)
@@ -91,8 +87,7 @@
 
 ## Next Steps
 
-1. Fix hoisted variable reference resolution (task-100)
-2. Handle variable reassignments in type registry (task-81)
-3. Add edge case tests (task-82)
-4. Add validation test to CI/CD pipeline (task-92)
-5. Complete remaining JavaScript test updates (task-99) - low priority
+1. Handle variable reassignments in type registry (task-81)
+2. Add edge case tests (task-82)
+3. Add validation test to CI/CD pipeline (task-92)
+4. Complete remaining JavaScript test updates (task-99) - low priority

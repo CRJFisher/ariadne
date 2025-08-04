@@ -85,11 +85,13 @@ cross_file_resolution:
       completed: "2025-08-04"
       notes: "Actually implemented Rust crate:: path resolution"
 
-  todo:
+  completed:
     - id: task-100
       title: "Fix hoisted variable reference resolution"
-      priority: "High"
-      notes: "var declarations should hoist to function scope"
+      completed: "2025-08-04"
+      notes: "Implemented var hoisting for nested blocks"
+      
+  todo:
       
     - id: task-81
       title: "Handle variable reassignments in type registry"
@@ -192,7 +194,7 @@ documentation:
 # SUGGESTED WORK ORDER
 work_order:
   immediate:
-    - task-100  # HIGH: Fix hoisted variable reference resolution
+    # All immediate tasks completed!
     
   next:
     - task-81  # Variable reassignments
