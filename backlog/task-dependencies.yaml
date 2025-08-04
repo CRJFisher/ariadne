@@ -1,26 +1,28 @@
 # Task Dependencies and Work Order
-# Generated: 2025-08-03
+# Generated: 2025-08-04
 # Purpose: Track task relationships and identify next work items
 
 # CRITICAL PATH - These are blocking other work
 critical_issues:
+  - id: task-97
+    title: "Fix missing ref_to_scope edges causing references to not be attached to scopes"
+    status: "To Do"
+    priority: "CRITICAL"
+    blocking:
+      - task-98  # JavaScript/TypeScript test updates
+    description: "References are not attached to their containing scopes, causing test failures"
+    next_steps: "Add ref_to_scope edge creation during scope graph construction"
+
   - id: task-73
     title: "Fix duplicate call tracking causing test failures"
     status: "To Do"
-    priority: "CRITICAL"
+    priority: "HIGH"
     blocking:
       - task-75  # Test failures
       - task-76  # Top-level nodes
       - task-77  # Remaining test failures
     description: "Methods are being processed multiple times, causing doubled call counts"
     next_steps: "Investigate get_calls_from_definition being called multiple times"
-
-  - id: task-30
-    title: "Export detection" 
-    status: "Unknown (external)"
-    blocking:
-      - task-62  # Agent validation
-    description: "Export detection shows 0% - blocking accurate validation"
 
 # TEST FAILURES - Need to be fixed for stable codebase
 test_failures:
@@ -47,35 +49,60 @@ cross_file_resolution:
       
     - id: task-65
       title: "Implement file-level variable type tracking"
+      completed: "2025-08-03"
       
     - id: task-66
       title: "Connect import resolution with constructor type tracking"
+      completed: "2025-08-03"
       
     - id: task-70
       title: "Add language-specific parameter type tracking for Python self"
-
-  in_progress:
+      completed: "2025-08-03"
+      
     - id: task-64
       title: "Add cross-file method resolution for imported classes"
-      status: "In Progress"
-      related: [task-65, task-66, task-70, task-86]
+      completed: "2025-08-03"
+      
+    - id: task-87
+      title: "Fix cross-file call tracking functions called from other files show 0 incoming calls"
+      completed: "2025-08-04"
+      
+    - id: task-89
+      title: "Fix function over-counting in file summaries"
+      completed: "2025-08-04"
+      
+    - id: task-91
+      title: "Fix exported function tracking in top-level detection"
+      completed: "2025-08-04"
+      
+    - id: task-29
+      title: "Add circular import detection to prevent infinite loops"
+      completed: "2025-08-04"
+      notes: "Actually implemented Rust crate:: path resolution"
 
   todo:
-    - id: task-79
-      title: "Add support for Rust crate:: module paths"
-      depends_on: [task-86]
-      
     - id: task-81
       title: "Handle variable reassignments in type registry"
       related: [task-65]
+      priority: "Medium"
 
 # VALIDATION & TESTING
 validation:
+  completed:
+    - id: task-93
+      title: "Fix TypeScript interface and type counting"
+      completed: "2025-08-04"
+      notes: "Verified interfaces/types are NOT counted as functions"
+      
+    - id: task-96
+      title: "Fix JavaScript reference detection over-counting"
+      completed: "2025-08-04"
+      notes: "Investigation revealed missing ref_to_scope edges, created task-97"
+      
   in_progress:
     - id: task-62
       title: "Fix agent validation call graph extraction issues"
       status: "In Progress"
-      depends_on: [task-30]  # Export detection
       related: [task-74]     # File size limit
       
   todo:
@@ -84,30 +111,53 @@ validation:
       description: "32KB limit skips critical files like project_call_graph.ts"
       priority: "High"
       
+    - id: task-92
+      title: "Add validation test to CI/CD pipeline"
+      depends_on: [task-62]
+      priority: "Medium"
+      
     - id: task-84
       title: "Create generic validation script for external repositories"
       depends_on: [task-62]
+      priority: "Low"
 
 # COMPREHENSIVE TESTING
 testing:
-  - id: task-80
-    title: "Add comprehensive import/export tests for all languages"
-    depends_on: [task-73]  # Fix duplicate tracking first
-    
-  - id: task-82
-    title: "Add edge case tests for cross-file resolution"
-    depends_on: [task-73]
-    related: [task-29]  # Circular import detection
+  completed:
+    - id: task-80
+      title: "Add comprehensive import/export tests for all languages"
+      completed: "2025-08-04"
+      notes: "Created 16 tests covering all import/export patterns"
+      
+    - id: task-28
+      title: "Implement proper module path resolution for imports"
+      completed: "2025-08-02"
+      notes: "Comprehensive implementation with ModuleResolver class"
+      
+  todo:
+    - id: task-82
+      title: "Add edge case tests for cross-file resolution"
+      related: [task-29]  # Circular import detection
+      priority: "Medium"
+      
+    - id: task-98
+      title: "Update JavaScript/TypeScript tests after ref_to_scope edge fix"
+      depends_on: [task-97]
+      priority: "Medium"
 
 # API IMPROVEMENTS
 api_improvements:
-  - id: task-78
-    title: "Fix get_all_functions to properly handle methods vs functions"
-    related: [task-73]  # May be related to duplicate tracking
-    
-  - id: task-41
-    title: "Add error handling and diagnostics for call graph API"
-    depends_on: [task-73, task-75, task-76, task-77]  # Fix core issues first
+  completed:
+    - id: task-78
+      title: "Fix get_all_functions to properly handle methods vs functions"
+      completed: "2025-08-04"
+      notes: "Verified get_all_functions already includes methods by default"
+      
+  todo:
+    - id: task-41
+      title: "Add error handling and diagnostics for call graph API"
+      depends_on: [task-73, task-75, task-76, task-77]  # Fix core issues first
+      priority: "Low"
 
 # EXPORT SUPPORT
 export_support:
@@ -123,28 +173,30 @@ export_support:
 documentation:
   - id: task-83
     title: "Document supported import/export patterns"
-    depends_on: [task-71, task-72, task-80]
+    depends_on: [task-71, task-72]
     priority: "Low"
+    notes: "task-80 already completed"
 
 # SUGGESTED WORK ORDER
 work_order:
   immediate:
-    - task-73  # CRITICAL: Fix duplicate call tracking
+    - task-97  # CRITICAL: Fix missing ref_to_scope edges
     
   next:
+    - task-98  # Update JS/TS tests after ref_to_scope fix
+    - task-73  # Fix duplicate call tracking
     - task-74  # Fix file size limit for better validation
-    - task-75  # Fix test failures (after task-73)
-    - task-76  # Fix top-level nodes (after task-73)
     
   then:
+    - task-75  # Fix test failures (after task-73)
+    - task-76  # Fix top-level nodes (after task-73)
     - task-77  # Investigate remaining failures
-    - task-78  # Fix get_all_functions API
-    - task-79  # Rust crate:: support
     
   later:
-    - task-80  # Comprehensive tests
     - task-81  # Variable reassignments
     - task-82  # Edge case tests
+    - task-92  # Add validation to CI/CD
+    - task-83  # Document import/export patterns
     - task-84  # Generic validation script
 
 # TASK GROUPS
