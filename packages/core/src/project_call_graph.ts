@@ -8,22 +8,59 @@ import { normalize_module_path } from './symbol_naming';
  * Tracks variable type information at the file level
  */
 class FileTypeTracker {
-  private variableTypes = new Map<string, { className: string; classDef?: Def & { enclosing_range?: SimpleRange } }>();
+  // Track variable types with position information
+  private variableTypes = new Map<string, Array<{ 
+    className: string; 
+    classDef?: Def & { enclosing_range?: SimpleRange };
+    position: { row: number; column: number }; // Position where the assignment happens
+  }>>();
   private importedClasses = new Map<string, { className: string; classDef: Def & { enclosing_range?: SimpleRange }; sourceFile: string }>();
   private exportedDefinitions = new Set<string>(); // Track which definitions are exported
   
   /**
-   * Set the type of a variable
+   * Set the type of a variable at a specific position
    */
-  setVariableType(varName: string, typeInfo: { className: string; classDef?: Def & { enclosing_range?: SimpleRange } }) {
-    this.variableTypes.set(varName, typeInfo);
+  setVariableType(varName: string, typeInfo: { 
+    className: string; 
+    classDef?: Def & { enclosing_range?: SimpleRange };
+    position: { row: number; column: number };
+  }) {
+    const types = this.variableTypes.get(varName) || [];
+    types.push(typeInfo);
+    // Sort by position (row, then column) so we can find the right type for a given position
+    types.sort((a, b) => {
+      if (a.position.row !== b.position.row) {
+        return a.position.row - b.position.row;
+      }
+      return a.position.column - b.position.column;
+    });
+    this.variableTypes.set(varName, types);
   }
   
   /**
-   * Get the type of a variable
+   * Get the type of a variable at a specific position
    */
-  getVariableType(varName: string) {
-    return this.variableTypes.get(varName);
+  getVariableType(varName: string, position?: { row: number; column: number }) {
+    const types = this.variableTypes.get(varName);
+    if (!types || types.length === 0) return undefined;
+    
+    // If no position specified, return the last type (backward compatibility)
+    if (!position) {
+      return types[types.length - 1];
+    }
+    
+    // Find the type that was assigned before this position
+    let lastType = undefined;
+    for (const typeInfo of types) {
+      // If this assignment is after the position we're checking, stop
+      if (typeInfo.position.row > position.row || 
+          (typeInfo.position.row === position.row && typeInfo.position.column > position.column)) {
+        break;
+      }
+      lastType = typeInfo;
+    }
+    
+    return lastType;
   }
   
   /**
@@ -82,17 +119,54 @@ class FileTypeTracker {
  * Local type tracker that inherits from a parent tracker
  */
 class LocalTypeTracker {
-  private localTypes = new Map<string, { className: string; classDef?: Def & { enclosing_range?: SimpleRange } }>();
+  private localTypes = new Map<string, Array<{
+    className: string;
+    classDef?: Def & { enclosing_range?: SimpleRange };
+    position: { row: number; column: number };
+  }>>();
   
   constructor(private parent: FileTypeTracker) {}
   
-  setVariableType(varName: string, typeInfo: { className: string; classDef?: Def & { enclosing_range?: SimpleRange } }) {
-    this.localTypes.set(varName, typeInfo);
+  setVariableType(varName: string, typeInfo: { 
+    className: string; 
+    classDef?: Def & { enclosing_range?: SimpleRange };
+    position: { row: number; column: number };
+  }) {
+    const types = this.localTypes.get(varName) || [];
+    types.push(typeInfo);
+    // Sort by position (row, then column)
+    types.sort((a, b) => {
+      if (a.position.row !== b.position.row) {
+        return a.position.row - b.position.row;
+      }
+      return a.position.column - b.position.column;
+    });
+    this.localTypes.set(varName, types);
   }
   
-  getVariableType(varName: string) {
-    // First check local types, then parent
-    return this.localTypes.get(varName) || this.parent.getVariableType(varName);
+  getVariableType(varName: string, position?: { row: number; column: number }) {
+    // First check local types
+    const localTypes = this.localTypes.get(varName);
+    if (localTypes && localTypes.length > 0) {
+      if (!position) {
+        return localTypes[localTypes.length - 1];
+      }
+      
+      // Find the type that was assigned before this position
+      let lastType = undefined;
+      for (const typeInfo of localTypes) {
+        if (typeInfo.position.row > position.row || 
+            (typeInfo.position.row === position.row && typeInfo.position.column > position.column)) {
+          break;
+        }
+        lastType = typeInfo;
+      }
+      
+      if (lastType) return lastType;
+    }
+    
+    // Then check parent
+    return this.parent.getVariableType(varName, position);
   }
   
   getImportedClass(localName: string) {
@@ -503,23 +577,27 @@ export class ProjectCallGraph {
             console.log(`Setting Python self type to ${classDef.name}`);
             localTypeTracker.setVariableType('self', {
               className: classDef.name,
-              classDef: classDefWithRange
+              classDef: classDefWithRange,
+              position: methodDef.range.start
             });
             localTypeTracker.setVariableType('cls', {
               className: classDef.name,
-              classDef: classDefWithRange
+              classDef: classDefWithRange,
+              position: methodDef.range.start
             });
           } else if (methodDef.file_path.match(/\.(js|jsx|ts|tsx)$/)) {
             // JavaScript/TypeScript: track 'this'
             localTypeTracker.setVariableType('this', {
               className: classDef.name,
-              classDef: classDefWithRange
+              classDef: classDefWithRange,
+              position: methodDef.range.start
             });
           } else if (methodDef.file_path.endsWith('.rs')) {
             // Rust: track 'self' (various forms)
             localTypeTracker.setVariableType('self', {
               className: classDef.name,
-              classDef: classDefWithRange
+              classDef: classDefWithRange,
+              position: methodDef.range.start
             });
           }
           
@@ -800,7 +878,10 @@ export class ProjectCallGraph {
               const varName = varNameNode.text;
               localTypeTracker.setVariableType(varName, {
                 className: importedClass.className,
-                classDef: importedClass.classDef
+                classDef: importedClass.classDef,
+                position: assignmentNode.startPosition ? 
+                  { row: assignmentNode.startPosition.row, column: assignmentNode.startPosition.column } : 
+                  ref.range.start
               });
             }
           }
@@ -859,7 +940,10 @@ export class ProjectCallGraph {
                   };
                   localTypeTracker.setVariableType(varName, {
                     className: final_resolved.name,
-                    classDef: classDefWithRange
+                    classDef: classDefWithRange,
+                    position: assignmentNode.startPosition ? 
+                      { row: assignmentNode.startPosition.row, column: assignmentNode.startPosition.column } : 
+                      ref.range.start
                   });
                 }
               }
@@ -954,7 +1038,7 @@ export class ProjectCallGraph {
                               (parentNode.type === 'attribute' ? parentNode.children[0] : null);
             if (objectNode && objectNode.type === 'identifier') {
               const objName = objectNode.text;
-              const typeInfo = localTypeTracker.getVariableType(objName);
+              const typeInfo = localTypeTracker.getVariableType(objName, ref.range.start);
               
               // Debug
               if (def.file_path.endsWith('.py') || def.file_path.endsWith('.rs')) {

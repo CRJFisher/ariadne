@@ -6,3 +6,8 @@
 - Call graphs -> Flow charts
 - Refactoring help
   - Concisely display call graph
+
+
+## Strategy
+
+- There is probably 
