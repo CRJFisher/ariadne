@@ -63,6 +63,8 @@ Epic task implementing the iterative validation process to meet accuracy thresho
 
 **Today's completions:**
 
+- Implement return type tracking for method chains (task-100.11.13)
+- Track all function calls including built-ins (task-100.11.14)
 - Fix Rust-specific cross-file method resolution (task-100.11.11)
 - Fix import counting accuracy (task-100.7)
 
@@ -100,9 +102,9 @@ Epic task implementing the iterative validation process to meet accuracy thresho
 🚧 **In Progress**:
 
 - task-100: Improve self-analysis accuracy (EPIC) - active subtasks
-- task-100.8: Fix incoming call detection (investigated, root cause identified)
-- task-100.1: Fix nodes-with-calls percentage (investigated, root cause identified)
-- task-100.2: Fix nodes-called-by-others percentage (same as 100.8)
+- task-100.3: Complete remaining agent validation fixes
+- task-100.6: Add file size linting to prevent validation failures
+- task-100.9: Add CommonJS and ES6 export support
 
 ❌ **Blocked**:
 
@@ -118,15 +120,16 @@ Epic task implementing the iterative validation process to meet accuracy thresho
 
 ## Next Steps
 
-1. **Implement return type tracking** (task-100.11.13) - critical for method chains
-2. **Track all function calls** (task-100.11.12) - include built-ins
-3. **Complete remaining agent validation fixes** (task-100.3)
-4. **Add CommonJS and ES6 export support** (task-100.9)
-5. **Add file size linting** (task-100.6)
-6. **Complete JavaScript test updates** (task-100.10)
+1. **Complete remaining agent validation fixes** (task-100.3)
+2. **Add CommonJS and ES6 export support** (task-100.9)
+3. **Add file size linting** (task-100.6)
+4. **Complete JavaScript test updates** (task-100.10)
+5. **Optimize two-pass call analysis** (task-100.11.17)
+6. **Review export/import timing** (task-100.11.16)
 
 ## Key Findings from Investigation
 
-1. **Low nodes-with-calls (36.9%)**: Only tracks internal calls, not built-in/external
-2. **Low nodes-called-by-others (65%)**: Method chains like `obj.getInner().process()` only detect first call
+1. **Low nodes-with-calls (36.9% → 40.8%)**: Now tracks built-in calls (fixed in 100.11.14)
+2. **Low nodes-called-by-others (65% → 52%)**: Method chains now fully resolved (fixed in 100.11.13)
 3. **Import counting**: Was counting symbols not statements (fixed in 100.7)
+4. **File size limits**: Two key files exceed 32KB and can't be analyzed
