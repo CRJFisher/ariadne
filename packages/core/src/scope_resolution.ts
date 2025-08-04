@@ -5,6 +5,76 @@ import { extract_function_metadata } from "./function_metadata";
 import { get_symbol_id } from "./symbol_naming";
 
 /**
+ * Determines if a JavaScript/TypeScript variable declaration should be hoisted.
+ * In JavaScript, 'var' declarations are hoisted to the function scope, but only
+ * if they're inside a nested block (not at the top level of the function).
+ */
+function shouldHoistVarDeclaration(node: any, config: LanguageConfig): boolean {
+  // Only process JavaScript/TypeScript var declarations
+  if (config.name !== 'javascript' && config.name !== 'typescript') {
+    return false;
+  }
+  
+  // Check if this is a var declaration
+  let parent = node.parent;
+  while (parent && parent.type !== 'variable_declaration') {
+    parent = parent.parent;
+  }
+  
+  if (!parent) return false;
+  
+  // Check if it's actually a 'var' (not let/const)
+  const firstChild = parent.firstChild;
+  if (!firstChild || firstChild.text !== 'var') {
+    return false;
+  }
+  
+  // Now check if the var is inside a block that's not directly in a function
+  let current = parent.parent;
+  let inNestedBlock = false;
+  
+  while (current) {
+    // If we're in a block statement (but not a function body directly)
+    if (current.type === 'statement_block') {
+      // Check if the parent is a function - if so, this is the function body
+      if (current.parent && (
+        current.parent.type === 'function_declaration' || 
+        current.parent.type === 'function_expression' ||
+        current.parent.type === 'arrow_function' ||
+        current.parent.type === 'method_definition')) {
+        // This block is the function body, no hoisting needed if we haven't seen a nested block
+        return inNestedBlock;
+      } else {
+        // This is a nested block
+        inNestedBlock = true;
+      }
+    }
+    
+    // If we're in a control flow statement, we're in a nested block
+    if (current.type === 'if_statement' ||
+        current.type === 'for_statement' ||
+        current.type === 'while_statement' ||
+        current.type === 'do_statement' ||
+        current.type === 'switch_statement' ||
+        current.type === 'try_statement') {
+      inNestedBlock = true;
+    }
+    
+    // If we hit a function-like node, we're done checking
+    if (current.type === 'function_declaration' || 
+        current.type === 'function_expression' ||
+        current.type === 'arrow_function' ||
+        current.type === 'method_definition') {
+      return inNestedBlock;
+    }
+    
+    current = current.parent;
+  }
+  
+  return false;
+}
+
+/**
  * The equivalent of `scope_res_generic`.
  * Takes a tree-sitter AST, a query string, and source code and builds a ScopeGraph for a single file.
  */
@@ -373,7 +443,12 @@ export function build_scope_graph(
 
     // Insert definition based on scoping
     if (scoping === "local") {
-      graph.insert_local_def(new_def);
+      // Check if this is a JavaScript/TypeScript var that should be hoisted
+      if (kind === "variable" && shouldHoistVarDeclaration(node, config)) {
+        graph.insert_hoisted_def(new_def);
+      } else {
+        graph.insert_local_def(new_def);
+      }
     } else if (scoping === "hoist") {
       graph.insert_hoisted_def(new_def);
     } else if (scoping === "global") {
