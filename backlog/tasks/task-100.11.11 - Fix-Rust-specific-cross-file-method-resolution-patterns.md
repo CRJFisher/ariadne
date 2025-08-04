@@ -19,3 +19,11 @@ Rust has specific patterns for method calls like Type::method() for associated f
 - [ ] Rust instance method calls work across files
 - [ ] Import resolution handles crate:: paths correctly
 - [ ] Tests for Rust cross-file method resolution pass
+
+## Implementation Plan
+
+1. Fix the import resolution for crate:: paths in virtual file system (done)
+2. Ensure Type::new() calls are resolved correctly (working)
+3. Track variable types from constructor calls (calc = Calculator::new())
+4. Resolve instance method calls (calc.add(), calc.get_value())
+5. Verify all tests pass

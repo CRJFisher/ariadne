@@ -4,7 +4,7 @@ import { z } from "zod";
 
 // 1. Create an MCP server that communicates over stdin/stdout.
 // No network configuration is needed.
-const server = new McpServer({
+const mcpServer = new McpServer({
   name: "poem-generator",
   version: "1.0.0",
 });
@@ -14,23 +14,35 @@ const server = new McpServer({
 console.error("STDIO poemGenerator server process started.");
 
 // 2. Define the tool using the tool method
-server.registerTool(
+mcpServer.registerTool(
   "poemGenerator",
-  z.object({
-    topic: z.string().describe("The subject for the poem"),
-  }),
+  {
+    description: "Generates a poem about a given topic",
+    inputSchema: {
+      topic: z.string().describe("The subject for the poem"),
+    },
+  },
   async ({ topic }) => {
     // Using console.error for logging ensures it goes to stderr and doesn't
     // interfere with the JSON-RPC messages on stdout.
     console.error(`Tool 'poemGenerator' called with topic: "${topic}"`);
 
-    // For this test, we'll return a simple static poem
-    // In a real implementation, you'd use the host LLM sampling feature
-    const poem = `A poem about ${topic}:
-Roses are red,
-Violets are blue,
-${topic} is wonderful,
-And so are you!`;
+    // Use the mcpServer's server.createMessage method for LLM sampling
+    const llmResponse = await mcpServer.server.createMessage({
+        messages: [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: `Write a four-line poem about ${topic}.`,
+            },
+          },
+        ],
+        // You can also request specific models or parameters
+        // model: "claude-3-5-sonnet-20240620", 
+      });
+
+    const poem = llmResponse.content.type === "text" ? llmResponse.content.text : "Unable to generate poem";
     console.error(`Received poem from host LLM:\n${poem}`);
 
     return {
@@ -42,7 +54,7 @@ And so are you!`;
 // Start the server
 async function main() {
   const transport = new StdioServerTransport();
-  await server.connect(transport);
+  await mcpServer.connect(transport);
   console.error("Poem generator MCP server running on stdio");
 }
 

@@ -711,9 +711,9 @@ export class Project {
                 if (this.file_graphs.has(possiblePath)) {
                   targetFile = possiblePath;
                   console.log(`  Fallback resolved crate:: to: ${targetFile}`);
-            } else {
-              console.log(`  No match found for: ${possiblePath}`);
                   break;
+                } else {
+                  console.log(`  No match found for: ${possiblePath}`);
                 }
               }
             } else {

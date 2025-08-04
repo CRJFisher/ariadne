@@ -1748,6 +1748,16 @@ pub fn compute() -> i32 {
 
     project.add_or_update_file("calculator.rs", file1);
     project.add_or_update_file("compute.rs", file2);
+    
+    // Get the compute function definition
+    const computeDef = project.get_definitions("compute.rs").find(d => d.name === "compute");
+    console.log("Compute def:", computeDef);
+    
+    if (computeDef) {
+      const calls = project.get_calls_from_definition(computeDef);
+      console.log("Calls from compute:", calls);
+    }
+    
     const callGraph = project.get_call_graph();
 
     // Methods should NOT be top-level since they're called
@@ -1758,6 +1768,7 @@ pub fn compute() -> i32 {
     // The compute function should have the detected calls
     const computeNode = callGraph.nodes.get("compute#compute");
     expect(computeNode).toBeDefined();
+    console.log("Compute node calls:", computeNode?.calls);
     expect(computeNode!.calls.length).toBe(4); // new, add, add, get_value
     
     const callSymbols = computeNode!.calls.map(c => c.symbol);
