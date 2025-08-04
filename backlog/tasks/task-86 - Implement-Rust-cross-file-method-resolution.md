@@ -23,6 +23,7 @@ Implement cross-file method resolution for Rust, including Type::method() patter
 ## Implementation Notes
 
 Successfully implemented Rust cross-file method resolution including:
+
 - Added Rust use_declaration handling in scope_resolution.ts
 - Added 'method' to Rust namespaces in languages/rust/index.ts
 - Modified scopes.scm to mark Type::method() as reference.method

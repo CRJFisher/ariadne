@@ -55,7 +55,13 @@ describe('JavaScript parsing', () => {
         },
       ],
       imports: [],
-      references: [],
+      references: [
+        { name: 'console', context: '      §console§.log(globalVar, functionVar, hoisted, blockLocal);' },
+        { name: 'log', context: '      console.§log§(globalVar, functionVar, hoisted, blockLocal);' },
+        { name: 'console', context: '    §console§.log(hoisted); // var is hoisted' },
+        { name: 'log', context: '    console.§log§(hoisted); // var is hoisted' },
+        { name: 'hoisted', context: '    console.log(§hoisted§); // var is hoisted' },
+      ],
       child_scopes: [
         // testFunction declaration scope
         {
