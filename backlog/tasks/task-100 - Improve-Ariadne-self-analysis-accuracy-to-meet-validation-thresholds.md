@@ -43,6 +43,7 @@ This iterative approach ensures we address all issues systematically and verify 
 1. ✅ Run validation guide process (task-100.5) - identified method call and file size issues
 2. Create test cases for identified issues (method-call-detection.test.ts, large-file-handling.test.ts)
 3. Fix identified issues through sub-tasks:
+   - task-100.11: Refactor project_call_graph.ts (60KB → under 32KB) - critical for analysis
    - task-100.8: Fix incoming call detection (method calls)
    - task-100.1: Fix low nodes-with-calls percentage
    - task-100.2: Fix low nodes-called-by-others percentage
@@ -63,11 +64,12 @@ Sub-tasks:
 - task-100.1: Fix low nodes-with-calls percentage
 - task-100.2: Fix low nodes-called-by-others percentage  
 - task-100.3: Complete remaining agent validation fixes
-- task-100.5: Run validation guide process
+- task-100.5: Run validation guide process ✅
 - task-100.6: Add file size linting to prevent validation failures
 - task-100.7: Fix import counting accuracy (task-88)
 - task-100.8: Fix incoming call detection (task-90)
 - task-100.9: Add CommonJS and ES6 export support (tasks 71-72)
 - task-100.10: Complete JavaScript test updates (task-99)
+- task-100.11: Refactor project_call_graph.ts to be under 32KB
 
-Note: File size limit is tracked in task-60 (only affects project_call_graph.ts)
+Note: File size limit is tracked in task-60 (affects project_call_graph.ts)
