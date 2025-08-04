@@ -4,41 +4,46 @@
 
 # CRITICAL PATH - These are blocking other work
 critical_issues:
-  - id: task-97
-    title: "Fix missing ref_to_scope edges causing references to not be attached to scopes"
-    status: "To Do"
-    priority: "CRITICAL"
-    blocking:
-      - task-98  # JavaScript/TypeScript test updates
-    description: "References are not attached to their containing scopes, causing test failures"
-    next_steps: "Add ref_to_scope edge creation during scope graph construction"
-
-  - id: task-73
-    title: "Fix duplicate call tracking causing test failures"
-    status: "To Do"
-    priority: "HIGH"
-    blocking:
-      - task-75  # Test failures
-      - task-76  # Top-level nodes
-      - task-77  # Remaining test failures
-    description: "Methods are being processed multiple times, causing doubled call counts"
-    next_steps: "Investigate get_calls_from_definition being called multiple times"
+  # All critical issues have been resolved!
 
 # TEST FAILURES - Need to be fixed for stable codebase
 test_failures:
-  - id: task-75
-    title: "Fix failing call_graph.test.ts tests with incorrect call counts"
-    depends_on: [task-73]
-    related: [task-73, task-76]
-    
-  - id: task-76
-    title: "Fix methods incorrectly appearing in top-level nodes"
-    depends_on: [task-73]
-    related: [task-75]
-    
-  - id: task-77
-    title: "Investigate and fix remaining test suite failures"
-    depends_on: [task-73, task-75, task-76]
+  completed:
+    - id: task-75
+      title: "Fix failing call_graph.test.ts tests with incorrect call counts"
+      completed: "2025-08-04"
+      notes: "Resolved as part of cross-file implementation"
+      
+    - id: task-76
+      title: "Fix methods incorrectly appearing in top-level nodes"
+      completed: "2025-08-04"
+      notes: "Top-level detection now works correctly"
+      
+    - id: task-77
+      title: "Investigate and fix remaining test suite failures"
+      completed: "2025-08-04"
+      notes: "Only JavaScript test updates remain (task-99)"
+      
+    - id: task-73
+      title: "Fix duplicate call tracking causing test failures"
+      completed: "2025-08-04"
+      notes: "Resolved during cross-file method resolution implementation"
+      
+    - id: task-97
+      title: "Fix missing ref_to_scope edges causing references to not be attached to scopes"
+      completed: "2025-08-04"
+      notes: "Implemented ref_to_scope edges successfully"
+      
+    - id: task-98
+      title: "Update JavaScript/TypeScript tests after ref_to_scope edge fix"
+      completed: "2025-08-04"
+      notes: "TypeScript tests all pass, JavaScript partially updated"
+  
+  todo:
+    - id: task-99
+      title: "Complete remaining JavaScript test updates for ref_to_scope changes"
+      priority: "Low"
+      notes: "6 JavaScript tests need mechanical updates"
 
 # CROSS-FILE RESOLUTION - Core functionality
 cross_file_resolution:
@@ -81,6 +86,11 @@ cross_file_resolution:
       notes: "Actually implemented Rust crate:: path resolution"
 
   todo:
+    - id: task-100
+      title: "Fix hoisted variable reference resolution"
+      priority: "High"
+      notes: "var declarations should hoist to function scope"
+      
     - id: task-81
       title: "Handle variable reassignments in type registry"
       related: [task-65]
@@ -110,6 +120,8 @@ validation:
       title: "Fix file size limit preventing analysis of large files"
       description: "32KB limit skips critical files like project_call_graph.ts"
       priority: "High"
+      status: "Blocked"
+      notes: "Waiting for tree-sitter-node response"
       
     - id: task-92
       title: "Add validation test to CI/CD pipeline"
@@ -180,24 +192,20 @@ documentation:
 # SUGGESTED WORK ORDER
 work_order:
   immediate:
-    - task-97  # CRITICAL: Fix missing ref_to_scope edges
+    - task-100  # HIGH: Fix hoisted variable reference resolution
     
   next:
-    - task-98  # Update JS/TS tests after ref_to_scope fix
-    - task-73  # Fix duplicate call tracking
-    - task-74  # Fix file size limit for better validation
-    
-  then:
-    - task-75  # Fix test failures (after task-73)
-    - task-76  # Fix top-level nodes (after task-73)
-    - task-77  # Investigate remaining failures
+    - task-81  # Variable reassignments
+    - task-23  # Edge case tests
+    - task-92  # Add validation to CI/CD
     
   later:
-    - task-81  # Variable reassignments
-    - task-82  # Edge case tests
-    - task-92  # Add validation to CI/CD
+    - task-99  # Complete JavaScript test updates (low priority)
     - task-83  # Document import/export patterns
     - task-84  # Generic validation script
+    
+  blocked:
+    - task-74  # File size limit (waiting for tree-sitter-node)
 
 # TASK GROUPS
 groups:

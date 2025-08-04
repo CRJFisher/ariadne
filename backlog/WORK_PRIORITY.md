@@ -2,49 +2,18 @@
 
 ## 🚨 CRITICAL - Work on this FIRST
 
-### task-97: Fix missing ref_to_scope edges
-
-- **Why**: References are not attached to their containing scopes, causing JavaScript/TypeScript test failures
-- **Symptom**: All orphaned references appear at root level instead of proper scopes
-- **Where to look**:
-  - Scope graph construction where references are added
-  - Need to create `ref_to_scope` edges when references are created
-  - Check `addReference` or similar methods in scope graph builder
-- **Blocks**: task-98 (JavaScript/TypeScript test updates)
+*All critical issues have been resolved!*
 
 ## 🔥 HIGH PRIORITY - Work on these NEXT
 
-### task-73: Fix duplicate call tracking causing test failures
+### task-100: Fix hoisted variable reference resolution
 
-- **Why**: This is blocking multiple test fixes. Methods are being processed multiple times.
-- **Symptom**: Tests expect 2 calls but get 4 or 8
-- **Where to look**:
-  - `get_calls_from_definition` is being called multiple times
-  - Check if methods appear with both 'method' and 'function' symbol_kinds
-  - Look for duplicate processing in `build_call_graph`
-- **Blocks**: tasks 75, 76, 77 (all test fixes)
-
-### task-74: Fix file size limit (32KB)
-
-- **Why**: Missing critical files like `project_call_graph.ts` (57KB)
-- **Impact**: False top-level nodes, incomplete validation
-- **Fix**: Increase limit or implement chunking
-
-### task-98: Update JavaScript/TypeScript tests
-
-- **Wait for**: task-97 to be completed first
-- **Then**: Update test expectations to match correct scope hierarchy
-- **Impact**: 8 JavaScript tests and 1 TypeScript test currently failing
+- **Why**: `var` declarations inside blocks should be hoisted to function scope
+- **Symptom**: References to hoisted variables appear as orphaned instead of resolving
+- **Example**: `var hoisted` declared in if block, referenced outside
+- **Impact**: Affects JavaScript variable scoping accuracy
 
 ## 📋 MEDIUM PRIORITY - Important but not blocking
-
-### task-75, 76, 77: Fix test failures
-
-- **Wait for**: task-73 to be completed first
-- **Then fix**:
-  - task-75: Call count issues
-  - task-76: Top-level node issues  
-  - task-77: Remaining failures
 
 ### task-81: Variable reassignments
 
@@ -79,6 +48,12 @@
 
 ✅ **Completed Recently** (2025-08-04):
 
+- Fix missing ref_to_scope edges (task-97)
+- Update JavaScript/TypeScript tests for ref_to_scope (task-98)
+- Fix duplicate call tracking (task-73)
+- Fix call graph test failures (task-75)
+- Fix top-level node detection (task-76)
+- Fix remaining test suite failures (task-77)
 - Fix cross-file call tracking (task-87)
 - Fix function over-counting (task-89)
 - Fix exported function tracking (task-91)
@@ -102,7 +77,7 @@
 
 ❌ **Blocked**:
 
-- Export detection improvements need investigation
+- task-74: File size limit - waiting for tree-sitter-node response
 
 ## Key Achievements
 
@@ -113,7 +88,8 @@
 
 ## Next Steps
 
-1. Fix ref_to_scope edges (task-97) - CRITICAL
-2. Update JS/TS tests after fix (task-98)
-3. Fix duplicate call tracking (task-73)
-4. Continue with test suite stabilization
+1. Fix hoisted variable reference resolution (task-100)
+2. Handle variable reassignments in type registry (task-81)
+3. Add edge case tests (task-23)
+4. Add validation test to CI/CD pipeline (task-92)
+5. Complete remaining JavaScript test updates (task-99) - low priority
