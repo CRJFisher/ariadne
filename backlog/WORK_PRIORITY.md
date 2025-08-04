@@ -61,6 +61,13 @@ Epic task implementing the iterative validation process to meet accuracy thresho
 
 *Note: Several parsing/accuracy tasks (88, 90, 71, 72, 99) were consolidated into epic task-100*
 
+**Today's completions:**
+
+- Fix Rust-specific cross-file method resolution (task-100.11.11)
+- Fix import counting accuracy (task-100.7)
+
+**Previous completions:**
+
 - Add validation test to CI/CD pipeline (task-92)
 - Add edge case tests for cross-file resolution (task-82)
 - Handle variable reassignments in type registry (task-81)
@@ -92,9 +99,10 @@ Epic task implementing the iterative validation process to meet accuracy thresho
 
 🚧 **In Progress**:
 
-- task-100: Improve self-analysis accuracy (EPIC) - 10 subtasks
-- task-62: Agent validation issues (being completed in task-100.3)
-- task-67: Cross-file type registry for method resolution
+- task-100: Improve self-analysis accuracy (EPIC) - active subtasks
+- task-100.8: Fix incoming call detection (investigated, root cause identified)
+- task-100.1: Fix nodes-with-calls percentage (investigated, root cause identified)
+- task-100.2: Fix nodes-called-by-others percentage (same as 100.8)
 
 ❌ **Blocked**:
 
@@ -110,9 +118,15 @@ Epic task implementing the iterative validation process to meet accuracy thresho
 
 ## Next Steps
 
-1. ✅ **Run validation guide process** (task-100.5) - completed, identified method call and file size issues
-2. **Fix incoming call detection** (task-100.8) - critical for metrics
-3. **Fix nodes-with-calls issues** (task-100.1) - major metric gap
-4. **Fix nodes-called-by-others** (task-100.2) - major metric gap
-5. **Fix import counting** (task-100.7) - affects file summaries
-6. Complete remaining subtasks in priority order
+1. **Implement return type tracking** (task-100.11.13) - critical for method chains
+2. **Track all function calls** (task-100.11.12) - include built-ins
+3. **Complete remaining agent validation fixes** (task-100.3)
+4. **Add CommonJS and ES6 export support** (task-100.9)
+5. **Add file size linting** (task-100.6)
+6. **Complete JavaScript test updates** (task-100.10)
+
+## Key Findings from Investigation
+
+1. **Low nodes-with-calls (36.9%)**: Only tracks internal calls, not built-in/external
+2. **Low nodes-called-by-others (65%)**: Method chains like `obj.getInner().process()` only detect first call
+3. **Import counting**: Was counting symbols not statements (fixed in 100.7)

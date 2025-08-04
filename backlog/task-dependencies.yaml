@@ -127,6 +127,17 @@ validation:
       status: "In Progress"
       related: [task-74, task-100.3]     # File size limit and epic subtask
       
+  completed:
+    - id: task-100.7
+      title: "Fix import counting accuracy (task-88)"
+      completed: "2025-08-04"
+      notes: "Fixed validation script to use getImportStatementCount()"
+      
+    - id: task-100.11.11
+      title: "Fix Rust-specific cross-file method resolution patterns"
+      completed: "2025-08-04"
+      notes: "Fixed Type::new() pattern and import resolution for crate:: paths"
+      
   todo:
     - id: task-100.1
       title: "Fix low nodes-with-calls percentage (36.9% vs 85% threshold)"
@@ -155,17 +166,25 @@ validation:
       priority: "Medium"
       notes: "Proactive measure to prevent files exceeding 32KB limit"
       
-    - id: task-100.7
-      title: "Fix import counting accuracy (task-88)"
-      parent: task-100
-      priority: "High"
-      notes: "Import counting currently uses word occurrences instead of actual statements"
       
     - id: task-100.8
       title: "Fix incoming call detection (task-90)"
       parent: task-100
       priority: "Critical"
-      notes: "Directly impacts nodes-called-by-others metric"
+      status: "Investigated"
+      notes: "Root cause: method chains not tracked due to lack of return type tracking"
+      
+    - id: task-100.11.14
+      title: "Track all function calls including built-ins"
+      parent: task-100.11
+      priority: "High"
+      notes: "Currently only tracks internal calls, missing built-in/external calls"
+      
+    - id: task-100.11.13
+      title: "Implement return type tracking for method chains"
+      parent: task-100.11
+      priority: "Critical"
+      notes: "Required for method chain resolution (obj.getInner().process())"
       
     - id: task-100.9
       title: "Add CommonJS and ES6 export support (tasks 71-72)"
@@ -244,25 +263,26 @@ documentation:
 # SUGGESTED WORK ORDER
 work_order:
   immediate:
-    - task-100    # EPIC: Improve self-analysis accuracy
-    - task-100.5  # Run validation guide process
-    - task-100.8  # Fix incoming call detection (critical for metrics)
-    - task-100.1  # Fix nodes-with-calls percentage
-    - task-100.2  # Fix nodes-called-by-others percentage
+    - task-100        # EPIC: Improve self-analysis accuracy
+    - task-100.11.13  # Implement return type tracking (critical for method chains)
+    - task-100.11.14  # Track all function calls including built-ins
     
   next:
-    - task-100.7  # Fix import counting accuracy
-    - task-100.3  # Complete remaining validation fixes
-    - task-100.6  # Add file size linting
-    - task-100.9  # Add export support
+    - task-100.3   # Complete remaining validation fixes
+    - task-100.9   # Add CommonJS/ES6 export support
+    - task-100.6   # Add file size linting
     
   later:
-    - task-100.10 # Complete JavaScript test updates
-    - task-83     # Document import/export patterns
-    - task-84  # Generic validation script
+    - task-100.10  # Complete JavaScript test updates
+    - task-83      # Document import/export patterns
+    - task-84      # Generic validation script
     
   blocked:
-    - task-74  # File size limit (waiting for tree-sitter-node)
+    - task-74      # File size limit (waiting for tree-sitter-node)
+    
+  completed_today:
+    - task-100.11.11  # Fix Rust cross-file method resolution
+    - task-100.7      # Fix import counting accuracy
 
 # TASK GROUPS
 groups:
