@@ -91,12 +91,13 @@ cross_file_resolution:
       completed: "2025-08-04"
       notes: "Implemented var hoisting for nested blocks"
       
-  todo:
-      
     - id: task-81
       title: "Handle variable reassignments in type registry"
-      related: [task-65]
-      priority: "Medium"
+      completed: "2025-08-04"
+      notes: "Implemented position-aware type tracking"
+      
+  todo:
+      
 
 # VALIDATION & TESTING
 validation:

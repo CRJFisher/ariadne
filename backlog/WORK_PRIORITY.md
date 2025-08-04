@@ -10,11 +10,6 @@
 
 ## 📋 MEDIUM PRIORITY - Important but not blocking
 
-### task-81: Variable reassignments
-
-- Type registry doesn't handle reassignments
-- Example: `let x = Foo::new(); x = Bar::new();`
-
 ### task-82: Edge case tests (circular imports, etc.)
 
 - Add tests for complex scenarios
@@ -43,6 +38,7 @@
 
 ✅ **Completed Recently** (2025-08-04):
 
+- Handle variable reassignments in type registry (task-81)
 - Fix hoisted variable reference resolution (task-100)
 - Fix missing ref_to_scope edges (task-97)
 - Update JavaScript/TypeScript tests for ref_to_scope (task-98)
@@ -87,7 +83,6 @@
 
 ## Next Steps
 
-1. Handle variable reassignments in type registry (task-81)
-2. Add edge case tests (task-82)
-3. Add validation test to CI/CD pipeline (task-92)
-4. Complete remaining JavaScript test updates (task-99) - low priority
+1. Add edge case tests (task-82)
+2. Add validation test to CI/CD pipeline (task-92)
+3. Complete remaining JavaScript test updates (task-99) - low priority
