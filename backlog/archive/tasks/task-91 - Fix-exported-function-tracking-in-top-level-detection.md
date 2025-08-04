@@ -1,10 +1,10 @@
 ---
 id: task-91
 title: Fix exported function tracking in top-level detection
-status: To Do
+status: Done
 assignee: []
 created_date: '2025-08-03'
-updated_date: '2025-08-03'
+updated_date: '2025-08-04 08:31'
 labels: []
 dependencies: []
 ---
@@ -59,3 +59,5 @@ Fixed export detection as part of the function counting fix (task-89).
 ### Note
 
 The actual top-level detection logic (considering exports) may need additional work beyond just tracking export status. The current fix ensures the export information is available for such logic.
+
+Fixed export detection as part of the function counting fix

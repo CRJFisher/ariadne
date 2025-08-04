@@ -3,10 +3,10 @@ id: task-87
 title: >-
   Fix cross-file call tracking - functions called from other files show 0
   incoming calls
-status: In Progress
+status: Done
 assignee: []
 created_date: '2025-08-03'
-updated_date: '2025-08-03'
+updated_date: '2025-08-04 08:31'
 labels: []
 dependencies: []
 ---
@@ -55,3 +55,5 @@ Successfully implemented cross-file call tracking fix for TypeScript/JavaScript 
 - extract_function_metadata correctly shows 1 incoming call from build_scope_graph
 - Validation metrics show proper function call tracking
 - Top-level accuracy improved from 25% to 100% in test cases
+
+Successfully implemented cross-file call tracking fix for TypeScript/JavaScript imports

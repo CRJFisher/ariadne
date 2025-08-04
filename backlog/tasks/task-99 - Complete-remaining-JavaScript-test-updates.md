@@ -1,4 +1,11 @@
-# task-99 - Complete remaining JavaScript test updates for ref_to_scope changes
+---
+id: task-99
+title: Complete remaining JavaScript test updates for ref_to_scope changes
+status: To Do
+created_date: '2025-08-04'
+labels: []
+dependencies: [task-97]
+---
 
 ## Description
 

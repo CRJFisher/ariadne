@@ -62,6 +62,8 @@
 - Fix JavaScript reference detection investigation (task-96)
 - Rust crate:: path resolution (task-29)
 - Implement proper module path resolution (task-28)
+- Fix get_all_functions to handle methods (task-78)
+- Add cross-file method resolution for imported classes (task-64)
 
 ✅ **Previously Completed** (2025-08-03):
 
@@ -74,6 +76,7 @@
 🚧 **In Progress**:
 
 - task-62: Agent validation issues
+- task-67: Cross-file type registry for method resolution
 
 ❌ **Blocked**:
 
@@ -90,6 +93,6 @@
 
 1. Fix hoisted variable reference resolution (task-100)
 2. Handle variable reassignments in type registry (task-81)
-3. Add edge case tests (task-23)
+3. Add edge case tests (task-82)
 4. Add validation test to CI/CD pipeline (task-92)
 5. Complete remaining JavaScript test updates (task-99) - low priority

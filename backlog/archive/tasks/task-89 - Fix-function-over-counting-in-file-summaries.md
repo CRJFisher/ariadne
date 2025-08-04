@@ -1,10 +1,10 @@
 ---
 id: task-89
 title: Fix function over-counting in file summaries
-status: To Do
+status: Done
 assignee: []
 created_date: '2025-08-03'
-updated_date: '2025-08-03'
+updated_date: '2025-08-04 08:31'
 labels: []
 dependencies: []
 ---
@@ -57,3 +57,5 @@ Successfully fixed function over-counting and export detection issues.
 - All exported functions correctly marked as exported
 - Export status properly propagates from definitions to call graph nodes
 - Note: The file actually has 9 functions, not the list mentioned in the original task description
+
+Successfully fixed function over-counting and export detection issues

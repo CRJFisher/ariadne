@@ -1,4 +1,11 @@
-# task-100 - Fix hoisted variable reference resolution
+---
+id: task-100
+title: Fix hoisted variable reference resolution
+status: To Do
+created_date: '2025-08-04'
+labels: []
+dependencies: []
+---
 
 ## Description
 
