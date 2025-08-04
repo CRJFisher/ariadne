@@ -258,7 +258,7 @@ async function main() {
       fileMap.set(filePath, {
         functions: funcs.length,
         exported: exportedFuncs.length,
-        imports: scopeGraph.getAllImports().length
+        imports: scopeGraph.getImportStatementCount()
       });
     }
     

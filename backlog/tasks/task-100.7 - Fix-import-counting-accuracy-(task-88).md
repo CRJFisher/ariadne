@@ -16,6 +16,27 @@ Import counting currently counts word occurrences instead of actual import state
 
 ## Acceptance Criteria
 
-- [ ] Import count reflects actual import statements
-- [ ] ScopeGraph.getAllImports() returns correct data
-- [ ] File summary import counts are accurate
+- [x] Import count reflects actual import statements
+- [x] ScopeGraph.getAllImports() returns correct data
+- [x] File summary import counts are accurate
+
+## Implementation Notes
+
+The issue was in the validation script, not in the core functionality. The validation was using `getAllImports().length` which counts individual imported symbols, not import statements.
+
+### Root Cause
+- `getAllImports()` returns individual imported symbols (e.g., `import { a, b, c }` returns 3 items)
+- `getImportStatementCount()` correctly counts unique import statements (returns 1 for above)
+- Validation script was using the wrong method
+
+### Fix Applied
+Changed `validate-ariadne.ts` line 261 from:
+```typescript
+imports: scopeGraph.getAllImports().length
+```
+to:
+```typescript
+imports: scopeGraph.getImportStatementCount()
+```
+
+This ensures import counts in file summaries reflect actual import statements, not individual symbols.
