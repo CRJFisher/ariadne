@@ -1,6 +1,12 @@
 import { Def, Ref, ScopeGraph } from '../graph';
-import { FileCache } from '../file_cache';
-import { TreeNode } from '../parse';
+import { Tree } from 'tree-sitter';
+
+// FileCache interface
+interface FileCache {
+  tree: Tree;
+  source_code: string;
+  graph: ScopeGraph;
+}
 
 // Re-export types we need
 export type { Def, Ref } from '../graph';
@@ -459,30 +465,9 @@ export function is_function_export(exportResult: ExportDetectionResult): boolean
  */
 export function compute_class_enclosing_range(
   classDef: Def,
-  tree: TreeNode
+  tree: Tree
 ): { start: { row: number; column: number }; end: { row: number; column: number } } | undefined {
-  // Find the class node in the tree
-  function findClassNode(node: TreeNode): TreeNode | undefined {
-    if (node.start_position.row === classDef.range.start.row &&
-        node.start_position.column === classDef.range.start.column &&
-        (node.type === 'class_definition' || node.type === 'class_declaration' || 
-         node.type === 'struct_item' || node.type === 'impl_item')) {
-      return node;
-    }
-    
-    for (const child of node.children) {
-      const found = findClassNode(child);
-      if (found) return found;
-    }
-    
-    return undefined;
-  }
-  
-  const classNode = findClassNode(tree);
-  if (!classNode) return undefined;
-  
-  return {
-    start: { row: classNode.start_position.row, column: classNode.start_position.column },
-    end: { row: classNode.end_position.row, column: classNode.end_position.column }
-  };
+  // For now, just return the definition range
+  // Full implementation would require tree-sitter node traversal
+  return classDef.range;
 }

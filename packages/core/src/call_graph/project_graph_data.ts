@@ -1,5 +1,5 @@
 import { ScopeGraph } from '../graph';
-import { FileCache } from '../file_cache';
+import { Tree } from 'tree-sitter';
 import { LanguageConfig } from '../types';
 import { 
   FileTypeTrackerData, 
@@ -7,6 +7,13 @@ import {
   create_file_type_tracker,
   create_project_type_registry
 } from './type_tracker';
+
+// FileCache interface
+interface FileCache {
+  tree: Tree;
+  source_code: string;
+  graph: ScopeGraph;
+}
 
 /**
  * Immutable project call graph data structure

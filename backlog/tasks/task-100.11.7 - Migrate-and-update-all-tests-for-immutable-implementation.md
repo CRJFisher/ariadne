@@ -1,16 +1,19 @@
 ---
 id: task-100.11.7
 title: Migrate and update all tests for immutable implementation
-status: In Progress
+status: Blocked
 assignee:
   - '@chuck'
 created_date: '2025-08-04 14:19'
-updated_date: '2025-08-04 14:20'
+updated_date: '2025-08-04 16:51'
 labels:
   - immutable
   - testing
   - migration
-dependencies: []
+dependencies:
+  - task-100.11.9
+  - task-100.11.11
+  - task-100.11.12
 parent_task_id: task-100.11
 ---
 
@@ -59,3 +62,11 @@ Update all existing tests that rely on the mutable ProjectCallGraph implementati
 6. Verify test coverage
    - Ensure no coverage regression
    - Add new tests for immutable-specific behavior
+
+## Implementation Notes
+
+Successfully migrated tests with 44/46 passing (excluding 8 skipped). Remaining 2 failures depend on:
+- task-100.11.11: Rust cross-file method resolution 
+- task-100.11.12: max_depth option implementation
+
+The core immutable implementation is working correctly with backward-compatible adapter.

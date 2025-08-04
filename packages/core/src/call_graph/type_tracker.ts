@@ -1,10 +1,10 @@
 import { Def } from '../graph';
 import { normalize_module_path } from '../symbol_naming';
-import { DeepReadonly, ImmutableMap, ImmutableSet } from './immutable_types';
-import { TypeInfo, ImportedClassInfo, ExportedTypeInfo } from './types';
+import { DeepReadonly, ImmutableMap, ImmutableSet } from './readonly_types';
+import type { TypeInfo, ImportedClassInfo, ExportedTypeInfo } from '@ariadnejs/types';
 
 // Re-export types for consumers
-export type { TypeInfo, ImportedClassInfo, ExportedTypeInfo } from './types';
+export type { TypeInfo, ImportedClassInfo, ExportedTypeInfo };
 
 // SimpleRange type for position tracking
 interface SimpleRange {

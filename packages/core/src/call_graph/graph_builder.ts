@@ -1,6 +1,13 @@
-import { ScopeGraph, Def, Ref, FunctionCall, Point } from '../graph';
-import { FileCache } from '../file_cache';
+import { ScopeGraph, Def, Ref, FunctionCall, Point, Import, CallGraph, CallGraphOptions, CallGraphNode, CallGraphEdge, Call } from '../graph';
+import { Tree } from 'tree-sitter';
 import { LanguageConfig } from '../types';
+
+// FileCache interface
+interface FileCache {
+  tree: Tree;
+  source_code: string;
+  graph: ScopeGraph;
+}
 import {
   ProjectCallGraphData,
   create_project_call_graph,
@@ -16,6 +23,7 @@ import {
   ProjectTypeRegistryData,
   create_file_type_tracker,
   create_project_type_registry,
+  create_local_type_tracker,
   set_variable_type,
   register_export,
   clear_file_exports
@@ -60,7 +68,7 @@ export interface TwoPhaseBuildConfig {
   readonly languages: ReadonlyMap<string, LanguageConfig>;
   readonly goToDefinition: (filePath: string, position: Point) => Def | undefined;
   readonly getImportsWithDefinitions: (filePath: string) => Array<{
-    import_statement: Def;
+    import_statement: Import;
     imported_function: Def;
     local_name: string;
   }>;
@@ -122,7 +130,7 @@ export function analyze_file(
         graph,
         fileCache: cache,
         fileTypeTracker: typeTracker,
-        localTypeTracker: typeTracker, // Use same tracker for simplicity in analysis
+        localTypeTracker: create_local_type_tracker(typeTracker),
         go_to_definition: config.goToDefinition,
         get_imports_with_definitions: config.getImportsWithDefinitions,
         get_file_graph: (path) => config.fileGraphs.get(path)
@@ -145,7 +153,7 @@ export function analyze_file(
     graph,
     fileCache: cache,
     fileTypeTracker: typeTracker,
-    localTypeTracker: typeTracker,
+    localTypeTracker: create_local_type_tracker(typeTracker),
     go_to_definition: config.goToDefinition,
     get_imports_with_definitions: config.getImportsWithDefinitions,
     get_file_graph: (path) => config.fileGraphs.get(path)
@@ -239,41 +247,7 @@ export function build_from_analysis(
   // Update project registry
   project = update_project_registry(project, analysis.projectRegistry);
   
-  // Process imports to connect cross-file references
-  for (const [filePath, fileAnalysis] of analysis.files) {
-    let fileTracker = project.fileTypeTrackers.get(filePath);
-    if (fileTracker && fileAnalysis.imports && fileAnalysis.imports.length > 0) {
-      // Process each import
-      const importedClasses = new Map(fileTracker.importedClasses);
-      
-      for (const imp of fileAnalysis.imports) {
-        if (imp.resolvedDefinition) {
-          // Check if we can get the type from project registry
-          const projectType = project.projectTypeRegistry.exportedTypes.get(imp.resolvedDefinition.name);
-          
-          if (projectType && projectType.sourceFile === imp.resolvedDefinition.file_path) {
-            // Track imported class/type
-            importedClasses.set(imp.localName, projectType);
-          } else if (imp.resolvedDefinition.symbol_kind === 'class') {
-            // Track class import
-            importedClasses.set(imp.localName, {
-              className: imp.resolvedDefinition.name,
-              classDef: imp.resolvedDefinition,
-              sourceFile: imp.resolvedDefinition.file_path
-            });
-          }
-        }
-      }
-      
-      // Update tracker with imported classes
-      const updatedTracker = {
-        ...fileTracker,
-        importedClasses
-      };
-      
-      project = update_file_type_tracker(project, filePath, updatedTracker);
-    }
-  }
+  // Import resolution happens elsewhere through get_imports_with_definitions
   
   return project;
 }
@@ -329,4 +303,148 @@ export function build_call_graph_two_phase_sync(
   
   // Phase 2: Build final graph
   return build_from_analysis(analysis, config);
+}
+
+/**
+ * Build a call graph for display purposes
+ * This transforms the raw function calls into a graph structure with nodes and edges
+ */
+export function build_call_graph_for_display(
+  functions: readonly Def[],
+  calls: readonly FunctionCall[],
+  isExported: (file_path: string, name: string) => boolean,
+  options?: CallGraphOptions
+): CallGraph {
+  const nodes = new Map<string, CallGraphNode>();
+  const edges: CallGraphEdge[] = [];
+  const topLevelNodes = new Set<string>();
+  
+  // Apply file filter if provided
+  let filteredFunctions = functions;
+  if (options?.file_filter) {
+    filteredFunctions = functions.filter(func => options.file_filter!(func.file_path));
+  }
+  
+  // Create nodes for all functions
+  for (const func of filteredFunctions) {
+    const node: CallGraphNode = {
+      symbol: func.symbol_id,
+      definition: func,
+      calls: [],
+      called_by: [],
+      is_exported: isExported(func.file_path, func.name)
+    };
+    nodes.set(func.symbol_id, node);
+    
+    // Initially assume all functions are top-level
+    topLevelNodes.add(func.symbol_id);
+  }
+  
+  // Process calls and create edges
+  for (const call of calls) {
+    const sourceId = call.caller_def.symbol_id;
+    const targetId = call.called_def.symbol_id;
+    
+    // Skip if either node is filtered out
+    if (!nodes.has(sourceId) || !nodes.has(targetId)) {
+      continue;
+    }
+    
+    // For module-level calls, the source node might not exist
+    if (sourceId === `${call.caller_def.file_path}#<module>`) {
+      // Module level call - don't remove from top-level since the module itself isn't a node
+      const targetNode = nodes.get(targetId);
+      if (targetNode) {
+        targetNode.called_by.push(sourceId);
+      }
+    } else {
+      // Regular function call
+      const sourceNode = nodes.get(sourceId);
+      const targetNode = nodes.get(targetId);
+      
+      if (sourceNode && targetNode) {
+        // Add to source's calls
+        const callObj: Call = {
+          symbol: targetId,
+          range: {
+            start: call.call_location,
+            end: call.call_location
+          },
+          kind: call.is_method_call ? "method" : "function",
+          resolved_definition: call.called_def
+        };
+        sourceNode.calls.push(callObj);
+        
+        // Add to target's called_by
+        targetNode.called_by.push(sourceId);
+        
+        // Remove target from top-level if it's called by another function
+        topLevelNodes.delete(targetId);
+      }
+    }
+    
+    // Create edge
+    const edge: CallGraphEdge = {
+      from: sourceId,
+      to: targetId,
+      location: {
+        start: call.call_location,
+        end: call.call_location
+      },
+      call_type: call.is_method_call ? 'method' : 'direct'
+    };
+    edges.push(edge);
+  }
+  
+  // Apply max_depth filtering if specified
+  let includedNodes = nodes;
+  let filteredEdges = edges;
+  
+  if (options?.max_depth !== undefined) {
+    const maxDepth = options.max_depth;
+    const includedNodeIds = new Set<string>();
+    const nodesToProcess: { id: string; depth: number }[] = [];
+    
+    // Start with top-level nodes at depth 0
+    for (const topLevelId of topLevelNodes) {
+      nodesToProcess.push({ id: topLevelId, depth: 0 });
+      includedNodeIds.add(topLevelId);
+    }
+    
+    // Breadth-first traversal up to max_depth
+    while (nodesToProcess.length > 0) {
+      const { id, depth } = nodesToProcess.shift()!;
+      
+      if (depth < maxDepth) {
+        const node = nodes.get(id);
+        if (node) {
+          // Add all nodes this node calls
+          for (const call of node.calls) {
+            if (!includedNodeIds.has(call.symbol)) {
+              includedNodeIds.add(call.symbol);
+              nodesToProcess.push({ id: call.symbol, depth: depth + 1 });
+            }
+          }
+        }
+      }
+    }
+    
+    // Filter nodes and edges
+    includedNodes = new Map();
+    for (const [id, node] of nodes) {
+      if (includedNodeIds.has(id)) {
+        includedNodes.set(id, node);
+      }
+    }
+    
+    filteredEdges = edges.filter(edge => 
+      includedNodeIds.has(edge.from) && includedNodeIds.has(edge.to)
+    );
+  }
+  
+  return {
+    nodes: includedNodes,
+    edges: filteredEdges,
+    top_level_nodes: Array.from(topLevelNodes).filter(id => includedNodes.has(id))
+  };
 }

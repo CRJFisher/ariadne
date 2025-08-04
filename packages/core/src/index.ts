@@ -10,7 +10,31 @@ import { rust_config } from './languages/rust';
 import { Edit } from './edit';
 import { Tree } from 'tree-sitter';
 import { ClassRelationship, extract_class_relationships } from './inheritance';
-import { ProjectCallGraph } from './call_graph/project_call_graph_adapter';
+import { 
+  ProjectCallGraphData,
+  create_project_call_graph,
+  add_file_graph,
+  add_file_cache,
+  update_file_type_tracker,
+  get_or_create_file_type_tracker,
+  clear_file_data
+} from './call_graph/project_graph_data';
+import {
+  analyze_calls_from_definition,
+  analyze_module_level_calls,
+  CallAnalysisConfig
+} from './call_graph/call_analysis';
+import {
+  detect_file_exports,
+  detect_file_imports
+} from './call_graph/import_export_detector';
+import {
+  set_imported_class,
+  create_local_type_tracker,
+  set_local_variable_type,
+  set_variable_type
+} from './call_graph/type_tracker';
+import { build_call_graph_for_display } from './call_graph/graph_builder';
 import { ProjectSource } from './project_source';
 import { ProjectInheritance } from './project_inheritance';
 import * as path from 'path';
@@ -40,7 +64,7 @@ export class Project {
   private file_cache: Map<string, FileCache> = new Map();
   private languages: Map<string, LanguageConfig> = new Map();
   private inheritance_map: Map<string, ClassRelationship> = new Map();
-  private call_graph: ProjectCallGraph;
+  private call_graph_data: ProjectCallGraphData;
   private source: ProjectSource;
   private inheritance!: ProjectInheritance; // Initialized after constructor
 
@@ -53,23 +77,61 @@ export class Project {
     // TODO: Add other languages as they are implemented
     
     // Initialize helper classes with dependencies
-    this.call_graph = new ProjectCallGraph(this.file_graphs, this.file_cache, this.languages);
+    this.call_graph_data = create_project_call_graph(this.languages as ReadonlyMap<string, LanguageConfig>);
     this.source = new ProjectSource(this.file_cache, this.languages);
     
     // Initialize inheritance with empty map - will be updated when files are added
     const fileGraphsWithContent = new Map<string, { graph: ScopeGraph; content: string; tree: Tree }>();
     this.inheritance = new ProjectInheritance(fileGraphsWithContent, this.inheritance_map, this.languages);
+  }
+
+  /**
+   * Check if a definition is exported
+   */
+  private isDefinitionExported(file_path: string, def_name: string): boolean {
+    const tracker = this.call_graph_data.fileTypeTrackers.get(file_path);
+    return tracker ? tracker.exportedDefinitions.has(def_name) : false;
+  }
+
+  /**
+   * Process file exports
+   */
+  private process_file_exports(file_path: string, graph: ScopeGraph, cache: FileCache): void {
+    let tracker = get_or_create_file_type_tracker(this.call_graph_data, file_path);
+    const exports = detect_file_exports(file_path, graph, cache);
     
-    // Set up delegation methods
-    this.call_graph.set_go_to_definition_delegate((file_path: string, position: Point) => 
-      this.go_to_definition(file_path, position)
-    );
-    this.call_graph.set_get_imports_with_definitions_delegate((file_path: string) => 
-      this.get_imports_with_definitions(file_path)
-    );
-    this.call_graph.set_get_all_functions_delegate((options) => 
-      this.get_all_functions(options)
-    );
+    // Update the tracker and registry with exports
+    for (const exp of exports) {
+      if (exp.definition) {
+        // Mark as exported in tracker
+        tracker = {
+          ...tracker,
+          exportedDefinitions: new Set([...tracker.exportedDefinitions, exp.exportName])
+        };
+      }
+    }
+    
+    this.call_graph_data = update_file_type_tracker(this.call_graph_data, file_path, tracker);
+  }
+
+  /**
+   * Process file imports
+   */
+  private process_file_imports(file_path: string, imports: ImportInfo[]): void {
+    let tracker = get_or_create_file_type_tracker(this.call_graph_data, file_path);
+    
+    for (const imp of imports) {
+      if (imp.imported_function.symbol_kind === 'class') {
+        // Track imported classes
+        tracker = set_imported_class(tracker, imp.local_name, {
+          className: imp.imported_function.name,
+          classDef: imp.imported_function,
+          sourceFile: imp.imported_function.file_path
+        });
+      }
+    }
+    
+    this.call_graph_data = update_file_type_tracker(this.call_graph_data, file_path, tracker);
   }
 
   /**
@@ -105,7 +167,7 @@ export class Project {
     }
     
     // Clear type tracking for this file since it's being updated
-    this.call_graph.clearFileTypeTracker(file_path);
+    this.call_graph_data = clear_file_data(this.call_graph_data, file_path);
 
     const cached = this.file_cache.get(file_path);
     let tree: Tree;
@@ -166,13 +228,21 @@ export class Project {
       graph,
     });
     
-    // Detect exports for this file
-    this.call_graph.detect_exports(file_path);
+    // Update immutable call graph data
+    this.call_graph_data = add_file_graph(this.call_graph_data, file_path, graph);
+    this.call_graph_data = add_file_cache(this.call_graph_data, file_path, {
+      tree,
+      source_code,
+      graph,
+    });
+    
+    // Detect and track exports for this file
+    this.process_file_exports(file_path, graph, { tree, source_code, graph });
     
     // Initialize imports for this file
     const imports = this.get_imports_with_definitions(file_path);
     if (imports.length > 0) {
-      this.call_graph.initialize_file_imports(file_path, imports);
+      this.process_file_imports(file_path, imports);
     }
     
     // Update inheritance file info map
@@ -428,7 +498,44 @@ export class Project {
    * @returns Array of FunctionCall objects representing calls made within this definition
    */
   get_calls_from_definition(def: Def): FunctionCall[] {
-    return this.call_graph.get_calls_from_definition(def);
+    const graph = this.call_graph_data.fileGraphs.get(def.file_path);
+    const cache = this.call_graph_data.fileCache.get(def.file_path);
+    
+    if (!graph || !cache) {
+      return [];
+    }
+    
+    const tracker = get_or_create_file_type_tracker(this.call_graph_data, def.file_path);
+    let localTracker = create_local_type_tracker(tracker);
+    
+    const config: CallAnalysisConfig = {
+      file_path: def.file_path,
+      graph,
+      fileCache: cache,
+      fileTypeTracker: tracker,
+      localTypeTracker: localTracker,
+      go_to_definition: (file_path: string, position: { row: number; column: number }) => 
+        this.go_to_definition(file_path, position) || undefined,
+      get_imports_with_definitions: (file_path: string) => 
+        this.get_imports_with_definitions(file_path),
+      get_file_graph: (path: string) => this.call_graph_data.fileGraphs.get(path)
+    };
+    
+    const result = analyze_calls_from_definition(def, config);
+    
+    // Apply type discoveries
+    for (const discovery of result.typeDiscoveries) {
+      if (discovery.scope === 'file') {
+        const updatedTracker = set_variable_type(
+          tracker,
+          discovery.variableName,
+          discovery.typeInfo
+        );
+        this.call_graph_data = update_file_type_tracker(this.call_graph_data, def.file_path, updatedTracker);
+      }
+    }
+    
+    return [...result.calls];
   }
 
   /**
@@ -457,7 +564,47 @@ export class Project {
     functions: Def[];
     calls: FunctionCall[];
   } {
-    return this.call_graph.extract_call_graph();
+    const allFunctions = this.get_all_functions();
+    const functions: Def[] = [];
+    const calls: FunctionCall[] = [];
+    
+    // Flatten the function map into an array
+    for (const [_, fileFunctions] of allFunctions) {
+      functions.push(...fileFunctions);
+    }
+    
+    // Get calls from all functions
+    for (const func of functions) {
+      const funcCalls = this.get_calls_from_definition(func);
+      calls.push(...funcCalls);
+    }
+    
+    // Add module-level calls
+    for (const file_path of this.call_graph_data.fileGraphs.keys()) {
+      const graph = this.call_graph_data.fileGraphs.get(file_path);
+      const cache = this.call_graph_data.fileCache.get(file_path);
+      
+      if (graph && cache) {
+        const tracker = get_or_create_file_type_tracker(this.call_graph_data, file_path);
+        const config: CallAnalysisConfig = {
+          file_path,
+          graph,
+          fileCache: cache,
+          fileTypeTracker: tracker,
+          localTypeTracker: create_local_type_tracker(tracker),
+          go_to_definition: (fp: string, pos: { row: number; column: number }) => 
+            this.go_to_definition(fp, pos) || undefined,
+          get_imports_with_definitions: (fp: string) => 
+            this.get_imports_with_definitions(fp),
+          get_file_graph: (path: string) => this.call_graph_data.fileGraphs.get(path)
+        };
+        
+        const moduleCalls = analyze_module_level_calls(file_path, config);
+        calls.push(...moduleCalls.calls);
+      }
+    }
+    
+    return { functions, calls };
   }
 
   /**
@@ -471,7 +618,17 @@ export class Project {
    * @returns Complete call graph with nodes, edges, and top-level functions
    */
   get_call_graph(options?: CallGraphOptions): CallGraph {
-    return this.call_graph.get_call_graph(options);
+    const { functions, calls } = this.extract_call_graph();
+    
+    return build_call_graph_for_display(
+      functions,
+      calls,
+      (file_path: string, name: string) => {
+        const tracker = this.call_graph_data.fileTypeTrackers.get(file_path);
+        return tracker ? tracker.exportedDefinitions.has(name) : false;
+      },
+      options
+    );
   }
 
 
@@ -554,6 +711,8 @@ export class Project {
                 if (this.file_graphs.has(possiblePath)) {
                   targetFile = possiblePath;
                   console.log(`  Fallback resolved crate:: to: ${targetFile}`);
+            } else {
+              console.log(`  No match found for: ${possiblePath}`);
                   break;
                 }
               }
@@ -605,7 +764,7 @@ export class Project {
             if (!exportedDef) {
               const defs = targetGraph.getNodes<Def>('definition');
               for (const def of defs) {
-                if (def.name === export_name && this.call_graph.isDefinitionExported(targetFile, def.name)) {
+                if (def.name === export_name && this.isDefinitionExported(targetFile, def.name)) {
                   exportedDef = def;
                   break;
                 }
@@ -635,7 +794,7 @@ export class Project {
           if (!exportedDef) {
             const defs = otherGraph.getNodes<Def>('definition');
             for (const def of defs) {
-              if (def.name === export_name && this.call_graph.isDefinitionExported(otherFile, def.name)) {
+              if (def.name === export_name && this.isDefinitionExported(otherFile, def.name)) {
                 exportedDef = def;
                 break;
               }
