@@ -525,9 +525,9 @@ function analyze_constructor_call(
         if (resolved && resolved.symbol_kind === 'import') {
           const imports = config.get_imports_with_definitions(def.file_path);
           const importInfo = imports.find(imp => 
-            imp.import_statement.name === resolved.name &&
-            imp.import_statement.range.start.row === resolved.range.start.row &&
-            imp.import_statement.range.start.column === resolved.range.start.column
+            imp.import_statement.name === resolved!.name &&
+            imp.import_statement.range.start.row === resolved!.range.start.row &&
+            imp.import_statement.range.start.column === resolved!.range.start.column
           );
           
           if (importInfo && importInfo.imported_function) {
