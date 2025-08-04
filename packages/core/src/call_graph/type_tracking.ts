@@ -1,47 +1,55 @@
-import { Def } from '../graph';
-import { normalize_module_path } from '../symbol_naming';
-import { TypeInfo, ImportedClassInfo, ExportedTypeInfo } from './types';
-
 /**
- * File-level type tracking data structure
+ * Type tracking module that provides backward compatibility for mutable operations
+ * by wrapping the immutable implementation.
+ * 
+ * This module re-exports all types and provides wrapper functions that maintain
+ * the mutable API while using the immutable implementation internally.
  */
-export interface FileTypeTrackerData {
-  variableTypes: Map<string, TypeInfo[]>;
-  importedClasses: Map<string, ImportedClassInfo>;
+
+import * as Immutable from './immutable_type_tracking';
+
+// Re-export types with mutable interfaces for backward compatibility
+export type FileTypeTrackerData = {
+  variableTypes: Map<string, Immutable.TypeInfo[]>;
+  importedClasses: Map<string, Immutable.ImportedClassInfo>;
   exportedDefinitions: Set<string>;
-}
+  // Internal reference to immutable data
+  _immutable: Immutable.FileTypeTrackerData;
+};
+
+// Re-export other types
+export type { TypeInfo, ImportedClassInfo, ExportedTypeInfo } from './types';
 
 /**
- * Create a new file type tracker
+ * Create a new file type tracker with mutable wrapper
  */
 export function create_file_type_tracker(): FileTypeTrackerData {
+  const immutable = Immutable.create_file_type_tracker();
   return {
-    variableTypes: new Map(),
-    importedClasses: new Map(),
-    exportedDefinitions: new Set()
+    variableTypes: new Map(
+      Array.from(immutable.variableTypes.entries()).map(([k, v]) => [k, [...v]])
+    ),
+    importedClasses: new Map(immutable.importedClasses),
+    exportedDefinitions: new Set(immutable.exportedDefinitions),
+    _immutable: immutable
   };
 }
 
 /**
- * Set the type of a variable at a specific position
+ * Set the type of a variable at a specific position (mutates tracker)
  */
 export function set_variable_type(
   tracker: FileTypeTrackerData,
   varName: string,
-  typeInfo: TypeInfo
+  typeInfo: Immutable.TypeInfo
 ): void {
-  const types = tracker.variableTypes.get(varName) || [];
-  types.push(typeInfo);
+  // Update immutable data
+  tracker._immutable = Immutable.set_variable_type(tracker._immutable, varName, typeInfo);
   
-  // Sort by position (row, then column) so we can find the right type for a given position
-  types.sort((a, b) => {
-    if (a.position.row !== b.position.row) {
-      return a.position.row - b.position.row;
-    }
-    return a.position.column - b.position.column;
-  });
-  
-  tracker.variableTypes.set(varName, types);
+  // Update mutable references
+  tracker.variableTypes = new Map(
+    Array.from(tracker._immutable.variableTypes.entries()).map(([k, v]) => [k, [...v]])
+  );
 }
 
 /**
@@ -51,38 +59,23 @@ export function get_variable_type(
   tracker: FileTypeTrackerData,
   varName: string,
   position?: { row: number; column: number }
-): TypeInfo | undefined {
-  const types = tracker.variableTypes.get(varName);
-  if (!types || types.length === 0) return undefined;
-  
-  // If no position specified, return the last type (backward compatibility)
-  if (!position) {
-    return types[types.length - 1];
-  }
-  
-  // Find the type that was assigned before this position
-  let lastType: TypeInfo | undefined = undefined;
-  for (const typeInfo of types) {
-    // If this assignment is after the position we're checking, stop
-    if (typeInfo.position.row > position.row || 
-        (typeInfo.position.row === position.row && typeInfo.position.column > position.column)) {
-      break;
-    }
-    lastType = typeInfo;
-  }
-  
-  return lastType;
+): Immutable.TypeInfo | undefined {
+  return Immutable.get_variable_type(tracker._immutable, varName, position);
 }
 
 /**
- * Track an imported class
+ * Track an imported class (mutates tracker)
  */
 export function set_imported_class(
   tracker: FileTypeTrackerData,
   localName: string,
-  classInfo: ImportedClassInfo
+  classInfo: Immutable.ImportedClassInfo
 ): void {
-  tracker.importedClasses.set(localName, classInfo);
+  // Update immutable data
+  tracker._immutable = Immutable.set_imported_class(tracker._immutable, localName, classInfo);
+  
+  // Update mutable references
+  tracker.importedClasses = new Map(tracker._immutable.importedClasses);
 }
 
 /**
@@ -91,18 +84,22 @@ export function set_imported_class(
 export function get_imported_class(
   tracker: FileTypeTrackerData,
   localName: string
-): ImportedClassInfo | undefined {
-  return tracker.importedClasses.get(localName);
+): Immutable.ImportedClassInfo | undefined {
+  return Immutable.get_imported_class(tracker._immutable, localName);
 }
 
 /**
- * Mark a definition as exported
+ * Mark a definition as exported (mutates tracker)
  */
 export function mark_as_exported(
   tracker: FileTypeTrackerData,
   defName: string
 ): void {
-  tracker.exportedDefinitions.add(defName);
+  // Update immutable data
+  tracker._immutable = Immutable.mark_as_exported(tracker._immutable, defName);
+  
+  // Update mutable references
+  tracker.exportedDefinitions = new Set(tracker._immutable.exportedDefinitions);
 }
 
 /**
@@ -112,7 +109,7 @@ export function is_exported(
   tracker: FileTypeTrackerData,
   defName: string
 ): boolean {
-  return tracker.exportedDefinitions.has(defName);
+  return Immutable.is_exported(tracker._immutable, defName);
 }
 
 /**
@@ -121,58 +118,66 @@ export function is_exported(
 export function get_exported_definitions(
   tracker: FileTypeTrackerData
 ): Set<string> {
-  return tracker.exportedDefinitions;
+  // Return mutable copy for backward compatibility
+  return new Set(tracker._immutable.exportedDefinitions);
 }
 
 /**
- * Clear all type information for this file
+ * Clear all type information for this file (mutates tracker)
  */
 export function clear_file_type_tracker(
   tracker: FileTypeTrackerData
 ): void {
-  tracker.variableTypes.clear();
-  tracker.importedClasses.clear();
-  tracker.exportedDefinitions.clear();
+  // Update immutable data
+  tracker._immutable = Immutable.clear_file_type_tracker(tracker._immutable);
+  
+  // Update mutable references
+  tracker.variableTypes = new Map(
+    Array.from(tracker._immutable.variableTypes.entries()).map(([k, v]) => [k, [...v]])
+  );
+  tracker.importedClasses = new Map(tracker._immutable.importedClasses);
+  tracker.exportedDefinitions = new Set(tracker._immutable.exportedDefinitions);
 }
 
 /**
- * Local type tracking with parent fallback
+ * Local type tracking with parent fallback (mutable wrapper)
  */
-export interface LocalTypeTrackerData {
-  localTypes: Map<string, TypeInfo[]>;
+export type LocalTypeTrackerData = {
+  localTypes: Map<string, Immutable.TypeInfo[]>;
   parent: FileTypeTrackerData;
-}
+  // Internal reference to immutable data
+  _immutable: Immutable.LocalTypeTrackerData;
+};
 
 /**
  * Create a local type tracker that inherits from a parent
  */
 export function create_local_type_tracker(parent: FileTypeTrackerData): LocalTypeTrackerData {
+  const immutable = Immutable.create_local_type_tracker(parent._immutable);
   return {
-    localTypes: new Map(),
-    parent
+    localTypes: new Map(
+      Array.from(immutable.localTypes.entries()).map(([k, v]) => [k, [...v]])
+    ),
+    parent,
+    _immutable: immutable
   };
 }
 
 /**
- * Set variable type in local scope
+ * Set variable type in local scope (mutates tracker)
  */
 export function set_local_variable_type(
   tracker: LocalTypeTrackerData,
   varName: string,
-  typeInfo: TypeInfo
+  typeInfo: Immutable.TypeInfo
 ): void {
-  const types = tracker.localTypes.get(varName) || [];
-  types.push(typeInfo);
+  // Update immutable data
+  tracker._immutable = Immutable.set_local_variable_type(tracker._immutable, varName, typeInfo);
   
-  // Sort by position
-  types.sort((a, b) => {
-    if (a.position.row !== b.position.row) {
-      return a.position.row - b.position.row;
-    }
-    return a.position.column - b.position.column;
-  });
-  
-  tracker.localTypes.set(varName, types);
+  // Update mutable references
+  tracker.localTypes = new Map(
+    Array.from(tracker._immutable.localTypes.entries()).map(([k, v]) => [k, [...v]])
+  );
 }
 
 /**
@@ -182,29 +187,8 @@ export function get_local_variable_type(
   tracker: LocalTypeTrackerData,
   varName: string,
   position?: { row: number; column: number }
-): TypeInfo | undefined {
-  // First check local types
-  const localTypes = tracker.localTypes.get(varName);
-  if (localTypes && localTypes.length > 0) {
-    if (!position) {
-      return localTypes[localTypes.length - 1];
-    }
-    
-    // Find the type that was assigned before this position
-    let lastType: TypeInfo | undefined = undefined;
-    for (const typeInfo of localTypes) {
-      if (typeInfo.position.row > position.row || 
-          (typeInfo.position.row === position.row && typeInfo.position.column > position.column)) {
-        break;
-      }
-      lastType = typeInfo;
-    }
-    
-    if (lastType) return lastType;
-  }
-  
-  // Then check parent
-  return get_variable_type(tracker.parent, varName, position);
+): Immutable.TypeInfo | undefined {
+  return Immutable.get_local_variable_type(tracker._immutable, varName, position);
 }
 
 /**
@@ -213,51 +197,61 @@ export function get_local_variable_type(
 export function get_local_imported_class(
   tracker: LocalTypeTrackerData,
   localName: string
-): ImportedClassInfo | undefined {
-  return get_imported_class(tracker.parent, localName);
+): Immutable.ImportedClassInfo | undefined {
+  return Immutable.get_local_imported_class(tracker._immutable, localName);
 }
 
 /**
- * Project-wide type registry data
+ * Project-wide type registry data (mutable wrapper)
  */
-export interface ProjectTypeRegistryData {
-  exportedTypes: Map<string, ExportedTypeInfo>;
+export type ProjectTypeRegistryData = {
+  exportedTypes: Map<string, Immutable.ExportedTypeInfo>;
   fileExports: Map<string, Set<string>>;
-}
+  // Internal reference to immutable data
+  _immutable: Immutable.ProjectTypeRegistryData;
+};
+
+// Re-export SimpleRange type if needed
+import { Def } from '../graph';
 
 /**
  * Create a new project type registry
  */
 export function create_project_type_registry(): ProjectTypeRegistryData {
+  const immutable = Immutable.create_project_type_registry();
   return {
-    exportedTypes: new Map(),
-    fileExports: new Map()
+    exportedTypes: new Map(immutable.exportedTypes),
+    fileExports: new Map(
+      Array.from(immutable.fileExports.entries()).map(([k, v]) => [k, new Set(v)])
+    ),
+    _immutable: immutable
   };
 }
 
 /**
- * Register an exported type from a file
+ * Register an exported type from a file (mutates registry)
  */
 export function register_export(
   registry: ProjectTypeRegistryData,
   file_path: string,
   exportName: string,
   className: string,
-  classDef: Def & { enclosing_range?: SimpleRange }
+  classDef: Def & { enclosing_range?: any }
 ): void {
-  const symbol = `${normalize_module_path(file_path)}#${exportName}`;
-  
-  registry.exportedTypes.set(symbol, {
+  // Update immutable data
+  registry._immutable = Immutable.register_export(
+    registry._immutable,
+    file_path,
+    exportName,
     className,
-    classDef,
-    sourceFile: file_path
-  });
+    classDef
+  );
   
-  // Track which file exports this symbol
-  if (!registry.fileExports.has(file_path)) {
-    registry.fileExports.set(file_path, new Set());
-  }
-  registry.fileExports.get(file_path)!.add(symbol);
+  // Update mutable references
+  registry.exportedTypes = new Map(registry._immutable.exportedTypes);
+  registry.fileExports = new Map(
+    Array.from(registry._immutable.fileExports.entries()).map(([k, v]) => [k, new Set(v)])
+  );
 }
 
 /**
@@ -267,23 +261,23 @@ export function get_imported_type(
   registry: ProjectTypeRegistryData,
   importedFrom: string,
   importName: string
-): ExportedTypeInfo | undefined {
-  const symbol = `${normalize_module_path(importedFrom)}#${importName}`;
-  return registry.exportedTypes.get(symbol);
+): Immutable.ExportedTypeInfo | undefined {
+  return Immutable.get_imported_type(registry._immutable, importedFrom, importName);
 }
 
 /**
- * Clear type information for a specific file (when file is updated)
+ * Clear type information for a specific file (mutates registry)
  */
 export function clear_file_exports(
   registry: ProjectTypeRegistryData,
   file_path: string
 ): void {
-  const exports = registry.fileExports.get(file_path);
-  if (exports) {
-    for (const symbol of exports) {
-      registry.exportedTypes.delete(symbol);
-    }
-    registry.fileExports.delete(file_path);
-  }
+  // Update immutable data
+  registry._immutable = Immutable.clear_file_exports(registry._immutable, file_path);
+  
+  // Update mutable references
+  registry.exportedTypes = new Map(registry._immutable.exportedTypes);
+  registry.fileExports = new Map(
+    Array.from(registry._immutable.fileExports.entries()).map(([k, v]) => [k, new Set(v)])
+  );
 }
