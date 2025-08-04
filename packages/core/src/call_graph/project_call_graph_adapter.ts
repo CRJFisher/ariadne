@@ -3,7 +3,7 @@
  * while using the immutable implementation internally.
  */
 
-import { ScopeGraph, Def, Ref, Point, FunctionCall, ImportInfo, CallGraph, CallGraphOptions } from '../graph';
+import { ScopeGraph, Def, Ref, Point, FunctionCall, ImportInfo, CallGraph, CallGraphOptions, CallGraphNode, Call } from '../graph';
 import { FileCache } from '../file_cache';
 import { LanguageConfig } from '../types';
 import {
@@ -60,7 +60,7 @@ export class ProjectCallGraph {
     include_private?: boolean;
     include_tests?: boolean;
     file_filter?: (file_path: string) => boolean;
-  }) => Def[] = () => [];
+  }) => Def[] | Map<string, Def[]> = () => [];
 
   constructor(
     file_graphs: Map<string, ScopeGraph>,
@@ -224,7 +224,19 @@ export class ProjectCallGraph {
   } {
     this.sync_with_live_data();
     
-    const functions = this.get_all_functions();
+    const functionsResult = this.get_all_functions();
+    let functions: Def[] = [];
+    
+    // Handle both Map and array returns
+    if (functionsResult instanceof Map) {
+      // Flatten the Map values into a single array
+      for (const defs of functionsResult.values()) {
+        functions.push(...defs);
+      }
+    } else if (Array.isArray(functionsResult)) {
+      functions = functionsResult;
+    }
+    
     const calls: FunctionCall[] = [];
     
     for (const func of functions) {
@@ -250,20 +262,25 @@ export class ProjectCallGraph {
     const edges: any[] = [];
     const topLevelFunctions = new Set<string>();
     
-    // Build nodes
-    for (const func of functions) {
+    // Apply file filter if provided
+    const filteredFunctions = options?.file_filter 
+      ? functions.filter(f => options.file_filter!(f.file_path))
+      : functions;
+    
+    // Build nodes  
+    for (const func of filteredFunctions) {
       const id = func.symbol_id;
-      nodes.set(id, {
-        id,
-        label: func.name,
-        file: func.file_path,
-        kind: func.symbol_kind,
-        range: func.range,
+      const node: CallGraphNode = {
+        symbol: id,
+        definition: func,
+        calls: [],
+        called_by: [],
         is_exported: this.isDefinitionExported(func.file_path, func.name)
-      });
+      };
+      nodes.set(id, node);
       
       // Track top-level functions
-      const moduleDef = functions.find(f => 
+      const moduleDef = filteredFunctions.find((f: Def) => 
         f.file_path === func.file_path && 
         f.name === '<module>'
       );
@@ -272,20 +289,42 @@ export class ProjectCallGraph {
       }
     }
     
-    // Build edges
+    // Build edges and populate calls/called_by
+    const nodeIds = new Set(nodes.keys());
     for (const call of calls) {
       const sourceId = call.caller_def.symbol_id;
-      const targetId = call.resolved_definition.symbol_id;
+      const targetId = call.called_def.symbol_id;
       
-      edges.push({
-        source: sourceId,
-        target: targetId,
-        kind: call.kind
-      });
-      
-      // Remove from top-level if it's called
-      if (targetId !== sourceId) {
-        topLevelFunctions.delete(targetId);
+      // Only include edge if both nodes are in our filtered set
+      if (nodeIds.has(sourceId) && nodeIds.has(targetId)) {
+        edges.push({
+          source: sourceId,
+          target: targetId,
+          kind: call.is_method_call ? 'method' : 'function'
+        });
+        
+        // Add to source node's calls array
+        const sourceNode = nodes.get(sourceId);
+        if (sourceNode) {
+          const callInfo: Call = {
+            symbol: targetId,
+            range: { start: call.call_location, end: call.call_location },
+            kind: call.is_method_call ? 'method' : (call.is_constructor_call ? 'constructor' : 'function'),
+            resolved_definition: call.called_def
+          };
+          sourceNode.calls.push(callInfo);
+        }
+        
+        // Add to target node's called_by array
+        const targetNode = nodes.get(targetId);
+        if (targetNode && !targetNode.called_by.includes(sourceId)) {
+          targetNode.called_by.push(sourceId);
+        }
+        
+        // Remove from top-level if it's called
+        if (targetId !== sourceId) {
+          topLevelFunctions.delete(targetId);
+        }
       }
     }
     
@@ -380,7 +419,7 @@ export class ProjectCallGraph {
     include_private?: boolean;
     include_tests?: boolean;
     file_filter?: (file_path: string) => boolean;
-  }) => Def[]) {
+  }) => Def[] | Map<string, Def[]>) {
     this.get_all_functions = delegate;
   }
 }

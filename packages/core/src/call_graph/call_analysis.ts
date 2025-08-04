@@ -202,12 +202,14 @@ export function analyze_module_level_calls(
         const is_method_call = ref.symbol_kind === 'method' || 
           is_method_call_pattern(ref, file_path, fileCache);
         
-        calls.push({
+        const call: FunctionCall = {
           caller_def: moduleDef,
-          function_ref: ref,
-          resolved_definition: final_resolved,
-          kind: is_method_call ? 'method' : 'function'
-        });
+          called_def: final_resolved,
+          call_location: ref.range.start,
+          is_method_call,
+          is_constructor_call: ref.symbol_kind === 'constructor' || final_resolved.symbol_kind === 'constructor'
+        };
+        calls.push(call);
       }
     }
   }
@@ -467,7 +469,7 @@ function analyze_constructor_call(
           const classDefWithRange = {
             ...resolved,
             enclosing_range: (resolved as any).enclosing_range || 
-              compute_class_enclosing_range(resolved, fileCache.tree)
+              (fileCache.tree?.rootNode ? compute_class_enclosing_range(resolved, fileCache.tree.rootNode) : undefined)
           };
           
           typeDiscoveries.push({
@@ -579,6 +581,10 @@ function compute_class_enclosing_range(
   classDef: Def,
   tree: TreeNode
 ): { start: { row: number; column: number }; end: { row: number; column: number } } | undefined {
+  if (!classDef || !classDef.range || !tree) {
+    return undefined;
+  }
+  
   // Find the class node in the tree
   function findClassNode(node: TreeNode): TreeNode | undefined {
     if (node.start_position.row === classDef.range.start.row &&
