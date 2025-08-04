@@ -63,8 +63,10 @@ export class ScopeGraph implements IScopeGraph {
   private edges: Edge[] = [];
   private next_node_id = 0;
   private root_id: number;
+  public readonly lang: string;
 
   constructor(root_node: SyntaxNode, lang_id: string) {
+    this.lang = lang_id;
     // A new graph is created with a root scope that spans the entire file.
     const root_scope: Scope = {
       id: this.get_next_node_id(),

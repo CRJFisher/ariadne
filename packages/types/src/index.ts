@@ -69,6 +69,7 @@ export interface Def extends BaseNode {
   signature?: string;
   docstring?: string;
   is_exported?: boolean;
+  return_type?: string; // Type information for function/method return values
 }
 
 export interface Ref extends BaseNode {

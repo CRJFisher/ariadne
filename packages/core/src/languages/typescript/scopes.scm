@@ -308,6 +308,12 @@
     object: [(this) (identifier)]
     property: (property_identifier) @local.reference.method))
 
+;; chained method call expression: obj.method1().method2()
+(call_expression
+  (member_expression
+    object: (call_expression)
+    property: (property_identifier) @local.reference.method))
+
 ;; private method call expression: this.#privateMethod() or obj.#privateMethod()
 (call_expression
   (member_expression

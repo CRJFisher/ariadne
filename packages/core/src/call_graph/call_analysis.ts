@@ -114,6 +114,10 @@ export function analyze_calls_from_definition(
   }
   
   for (const ref of definitionRefs) {
+    if (process.env.DEBUG_METHOD_CHAINS && ref.symbol_kind === 'method') {
+      console.log(`\nAnalyzing reference: ${ref.name} (${ref.symbol_kind}) at ${ref.range.start.row}:${ref.range.start.column}`);
+    }
+    
     const resolved = resolve_reference(ref, def, config, currentLocalTracker);
     
     
@@ -616,14 +620,31 @@ function resolve_reference(
                           parentNode.childForFieldName('value') ||
                           (parentNode.type === 'attribute' ? parentNode.children[0] : null);
         
-        if (objectNode && objectNode.type === 'identifier') {
-          const objName = objectNode.text;
-          const methodResult = resolve_method_call_pure(ref, objName, config, localTypeTracker);
-          
-          if (methodResult.resolved) {
-            resolved = methodResult.resolved;
+        if (objectNode) {
+          if (objectNode.type === 'identifier') {
+            // Handle simple case: obj.method()
+            const objName = objectNode.text;
+            const methodResult = resolve_method_call_pure(ref, objName, config, localTypeTracker);
+            
+            if (methodResult.resolved) {
+              resolved = methodResult.resolved;
+            }
+            typeDiscoveries.push(...methodResult.typeDiscoveries);
+          } else if (objectNode.type === 'call_expression') {
+            // Handle chained case: obj.getInner().method()
+            // We need to resolve the return type of the call expression
+            const returnType = resolve_call_return_type(objectNode, def, config, localTypeTracker);
+            if (process.env.DEBUG_METHOD_CHAINS) {
+              console.log(`\nResolving chained method ${ref.name} on call expression`);
+              console.log(`  Return type from call: ${returnType}`);
+            }
+            if (returnType) {
+              const methodResult = resolve_method_on_type(ref, returnType, config);
+              if (methodResult) {
+                resolved = methodResult;
+              }
+            }
           }
-          typeDiscoveries.push(...methodResult.typeDiscoveries);
         }
       }
     }
@@ -644,6 +665,128 @@ function resolve_reference(
   }
   
   return { resolved, typeDiscoveries };
+}
+
+/**
+ * Resolve the return type of a call expression
+ */
+function resolve_call_return_type(
+  callNode: any,
+  contextDef: Def,
+  config: CallAnalysisConfig,
+  localTypeTracker: LocalTypeTrackerData
+): string | undefined {
+  // Get the function being called
+  const funcNode = callNode.childForFieldName('function');
+  if (!funcNode) return undefined;
+  
+  if (process.env.DEBUG_METHOD_CHAINS) {
+    console.log(`\n  resolve_call_return_type: funcNode type = ${funcNode.type}`);
+  }
+
+  // Handle method calls: obj.method()
+  if (funcNode.type === 'member_expression' || 
+      funcNode.type === 'field_expression' ||
+      funcNode.type === 'attribute') {
+    const propertyNode = funcNode.childForFieldName('property') || 
+                        funcNode.childForFieldName('field') ||
+                        funcNode.child(funcNode.childCount - 1);
+    
+    if (propertyNode) {
+      // Create a ref-like object for the method
+      const methodRef: Ref = {
+        id: -1,
+        kind: 'reference',
+        name: propertyNode.text,
+        symbol_kind: 'method',
+        range: {
+          start: { 
+            row: propertyNode.startPosition.row, 
+            column: propertyNode.startPosition.column 
+          },
+          end: { 
+            row: propertyNode.endPosition.row, 
+            column: propertyNode.endPosition.column 
+          }
+        }
+      };
+      
+      // Resolve the method
+      const result = resolve_reference(methodRef, contextDef, config, localTypeTracker);
+      if (result.resolved && result.resolved.return_type) {
+        return result.resolved.return_type;
+      }
+    }
+  }
+  
+  // Handle direct function calls: func()
+  else if (funcNode.type === 'identifier') {
+    const funcName = funcNode.text;
+    const funcDef = config.go_to_definition(contextDef.file_path, {
+      row: funcNode.startPosition.row,
+      column: funcNode.startPosition.column
+    });
+    
+    if (funcDef && funcDef.return_type) {
+      return funcDef.return_type;
+    }
+  }
+  
+  return undefined;
+}
+
+/**
+ * Resolve a method on a specific type
+ */
+function resolve_method_on_type(
+  methodRef: Ref,
+  typeName: string,
+  config: CallAnalysisConfig
+): Def | undefined {
+  // Try to find the type definition
+  // This is simplified - in a real implementation we'd need to handle imports, namespaces, etc.
+  
+  // First, check if it's a class/struct in the current file
+  const currentGraph = config.graph;
+  const typeDef = currentGraph.getNodes<Def>('definition').find(d => 
+    d.name === typeName && 
+    (d.symbol_kind === 'class' || d.symbol_kind === 'struct')
+  );
+  
+  if (typeDef && config.get_file_graph) {
+    const typeGraph = config.get_file_graph(typeDef.file_path);
+    if (typeGraph) {
+      const classDefs = typeGraph.getNodes<Def>('definition');
+      
+      // Look for the method within the class
+      const method = classDefs.find(d => 
+        d.name === methodRef.name && 
+        (d.symbol_kind === 'method' || d.symbol_kind === 'function') &&
+        is_method_of_class(d, typeDef, typeGraph)
+      );
+      
+      if (method) {
+        return method;
+      }
+    }
+  }
+  
+  return undefined;
+}
+
+/**
+ * Check if a definition is a method of a specific class
+ */
+function is_method_of_class(
+  methodDef: Def,
+  classDef: Def,
+  graph: ScopeGraph
+): boolean {
+  // Check if the method is within the class's enclosing range
+  const classRange = (classDef as any).enclosing_range || classDef.range;
+  
+  return is_position_within_range(methodDef.range.start, classRange) &&
+         is_position_within_range(methodDef.range.end, classRange);
 }
 
 /**

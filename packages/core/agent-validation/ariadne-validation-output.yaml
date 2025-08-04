@@ -1,10 +1,304 @@
 meta:
-  timestamp: '2025-08-04T13:36:16.959Z'
+  timestamp: '2025-08-04T21:03:50.747Z'
   ariadne_version: 0.5.18
-  total_files: 20
-  total_functions: 104
-  total_calls: 104
+  total_files: 29
+  total_functions: 184
+  total_calls: 155
 top_level_nodes:
+  - id: src/benchmark-incremental#generateLargeFile
+    name: generateLargeFile
+    file: src/benchmark-incremental.ts
+    line: 8
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: src/benchmark-incremental#benchmark
+    name: benchmark
+    file: src/benchmark-incremental.ts
+    line: 47
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/constants#isCallableSymbolKind
+    name: isCallableSymbolKind
+    file: src/call_graph/constants.ts
+    line: 58
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/constants#isTypeSymbolKind
+    name: isTypeSymbolKind
+    file: src/call_graph/constants.ts
+    line: 62
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/constants#isValidLanguageExtension
+    name: isValidLanguageExtension
+    file: src/call_graph/constants.ts
+    line: 66
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/graph_builder#build_call_graph_two_phase
+    name: build_call_graph_two_phase
+    file: src/call_graph/graph_builder.ts
+    line: 258
+    is_exported: true
+    calls_count: 2
+    called_by_count: 0
+  - id: src/call_graph/graph_builder#build_call_graph_two_phase_sync
+    name: build_call_graph_two_phase_sync
+    file: src/call_graph/graph_builder.ts
+    line: 271
+    is_exported: true
+    calls_count: 4
+    called_by_count: 0
+  - id: src/call_graph/graph_builder#build_call_graph_for_display
+    name: build_call_graph_for_display
+    file: src/call_graph/graph_builder.ts
+    line: 312
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/import_export_detector#analyze_file_import_export
+    name: analyze_file_import_export
+    file: src/call_graph/import_export_detector.ts
+    line: 437
+    is_exported: true
+    calls_count: 2
+    called_by_count: 0
+  - id: src/call_graph/import_export_detector#is_class_export
+    name: is_class_export
+    file: src/call_graph/import_export_detector.ts
+    line: 451
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/import_export_detector#is_function_export
+    name: is_function_export
+    file: src/call_graph/import_export_detector.ts
+    line: 458
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/import_export_detector#compute_class_enclosing_range
+    name: compute_class_enclosing_range
+    file: src/call_graph/import_export_detector.ts
+    line: 466
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/project_graph_data#add_file_graph
+    name: add_file_graph
+    file: src/call_graph/project_graph_data.ts
+    line: 47
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/project_graph_data#add_file_cache
+    name: add_file_cache
+    file: src/call_graph/project_graph_data.ts
+    line: 64
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/project_graph_data#update_file_type_tracker
+    name: update_file_type_tracker
+    file: src/call_graph/project_graph_data.ts
+    line: 81
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/project_graph_data#get_or_create_file_type_tracker
+    name: get_or_create_file_type_tracker
+    file: src/call_graph/project_graph_data.ts
+    line: 111
+    is_exported: true
+    calls_count: 1
+    called_by_count: 0
+  - id: src/call_graph/project_graph_data#clear_file_data
+    name: clear_file_data
+    file: src/call_graph/project_graph_data.ts
+    line: 121
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/project_graph_data#merge_project_graphs
+    name: merge_project_graphs
+    file: src/call_graph/project_graph_data.ts
+    line: 187
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/project_graph_data#get_all_file_paths
+    name: get_all_file_paths
+    file: src/call_graph/project_graph_data.ts
+    line: 228
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/project_graph_data#has_file
+    name: has_file
+    file: src/call_graph/project_graph_data.ts
+    line: 246
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/project_graph_data#get_file_data
+    name: get_file_data
+    file: src/call_graph/project_graph_data.ts
+    line: 262
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/project_graph_data#ProjectCallGraphUpdater.constructor
+    name: constructor
+    file: src/call_graph/project_graph_data.ts
+    line: 288
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/project_graph_data#ProjectCallGraphUpdater.addFileGraph
+    name: addFileGraph
+    file: src/call_graph/project_graph_data.ts
+    line: 290
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/project_graph_data#ProjectCallGraphUpdater.addFileCache
+    name: addFileCache
+    file: src/call_graph/project_graph_data.ts
+    line: 298
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/project_graph_data#ProjectCallGraphUpdater.updateFileTypeTracker
+    name: updateFileTypeTracker
+    file: src/call_graph/project_graph_data.ts
+    line: 306
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/project_graph_data#ProjectCallGraphUpdater.updateProjectRegistry
+    name: updateProjectRegistry
+    file: src/call_graph/project_graph_data.ts
+    line: 314
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/project_graph_data#ProjectCallGraphUpdater.build
+    name: build
+    file: src/call_graph/project_graph_data.ts
+    line: 319
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/project_graph_data#create_updater
+    name: create_updater
+    file: src/call_graph/project_graph_data.ts
+    line: 333
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/readonly_types#isReadonly
+    name: isReadonly
+    file: src/call_graph/readonly_types.ts
+    line: 45
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/readonly_types#asDeepReadonly
+    name: asDeepReadonly
+    file: src/call_graph/readonly_types.ts
+    line: 54
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/readonly_types#asImmutableArray
+    name: asImmutableArray
+    file: src/call_graph/readonly_types.ts
+    line: 61
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/readonly_types#asConst
+    name: asConst
+    file: src/call_graph/readonly_types.ts
+    line: 68
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/type_tracker#mark_as_exported
+    name: mark_as_exported
+    file: src/call_graph/type_tracker.ts
+    line: 124
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/type_tracker#is_exported
+    name: is_exported
+    file: src/call_graph/type_tracker.ts
+    line: 140
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/type_tracker#get_exported_definitions
+    name: get_exported_definitions
+    file: src/call_graph/type_tracker.ts
+    line: 150
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/type_tracker#clear_file_type_tracker
+    name: clear_file_type_tracker
+    file: src/call_graph/type_tracker.ts
+    line: 159
+    is_exported: true
+    calls_count: 1
+    called_by_count: 0
+  - id: src/call_graph/type_tracker#get_imported_type
+    name: get_imported_type
+    file: src/call_graph/type_tracker.ts
+    line: 304
+    is_exported: true
+    calls_count: 1
+    called_by_count: 0
+  - id: src/call_graph/type_tracker#clear_file_exports
+    name: clear_file_exports
+    file: src/call_graph/type_tracker.ts
+    line: 316
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/type_tracker#set_variable_types
+    name: set_variable_types
+    file: src/call_graph/type_tracker.ts
+    line: 343
+    is_exported: true
+    calls_count: 1
+    called_by_count: 0
+  - id: src/call_graph/type_tracker#set_imported_classes
+    name: set_imported_classes
+    file: src/call_graph/type_tracker.ts
+    line: 356
+    is_exported: true
+    calls_count: 1
+    called_by_count: 0
+  - id: src/call_graph/type_tracker#mark_as_exported_batch
+    name: mark_as_exported_batch
+    file: src/call_graph/type_tracker.ts
+    line: 369
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/type_tracker#register_exports
+    name: register_exports
+    file: src/call_graph/type_tracker.ts
+    line: 387
+    is_exported: true
+    calls_count: 1
+    called_by_count: 0
   - id: src/call_graph_utils#apply_max_depth_filter
     name: apply_max_depth_filter
     file: src/call_graph_utils.ts
@@ -43,112 +337,182 @@ top_level_nodes:
   - id: src/graph#ScopeGraph.constructor
     name: constructor
     file: src/graph.ts
-    line: 67
+    line: 68
     is_exported: false
     calls_count: 1
     called_by_count: 0
   - id: src/graph#ScopeGraph.getEdges
     name: getEdges
     file: src/graph.ts
-    line: 247
+    line: 249
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: src/graph#ScopeGraph.getDefsForRef
     name: getDefsForRef
     file: src/graph.ts
-    line: 252
+    line: 254
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: src/graph#ScopeGraph.getImportsForRef
     name: getImportsForRef
     file: src/graph.ts
-    line: 263
+    line: 265
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: src/graph#ScopeGraph.getRefsForDef
     name: getRefsForDef
     file: src/graph.ts
-    line: 274
+    line: 276
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: src/graph#ScopeGraph.findNodeAtPosition
     name: findNodeAtPosition
     file: src/graph.ts
-    line: 285
+    line: 287
     is_exported: false
     calls_count: 1
     called_by_count: 0
   - id: src/graph#ScopeGraph.getAllDefs
     name: getAllDefs
     file: src/graph.ts
-    line: 327
+    line: 329
     is_exported: false
     calls_count: 1
     called_by_count: 0
   - id: src/graph#ScopeGraph.getImportStatementCount
     name: getImportStatementCount
     file: src/graph.ts
-    line: 337
+    line: 339
     is_exported: false
     calls_count: 1
     called_by_count: 0
   - id: src/graph#ScopeGraph.findExportedDef
     name: findExportedDef
     file: src/graph.ts
-    line: 354
+    line: 356
     is_exported: false
     calls_count: 1
     called_by_count: 0
   - id: src/graph#ScopeGraph.debug_print
     name: debug_print
     file: src/graph.ts
-    line: 372
+    line: 374
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: src/graph#ScopeGraph.getCallsFromDef
     name: getCallsFromDef
     file: src/graph.ts
-    line: 385
+    line: 387
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: src/graph#ScopeGraph.getSymbolId
     name: getSymbolId
     file: src/graph.ts
-    line: 390
+    line: 392
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: src/graph#ScopeGraph.getDefinitionBySymbol
     name: getDefinitionBySymbol
     file: src/graph.ts
-    line: 394
+    line: 396
     is_exported: false
     calls_count: 1
     called_by_count: 0
   - id: src/graph#ScopeGraph.getFunctionCalls
     name: getFunctionCalls
     file: src/graph.ts
-    line: 398
+    line: 400
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: src/graph#ScopeGraph.getImportInfo
     name: getImportInfo
     file: src/graph.ts
-    line: 403
+    line: 405
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: src/graph#ScopeGraph.getCallGraph
     name: getCallGraph
     file: src/graph.ts
-    line: 408
+    line: 410
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: src/languages/javascript/index#initialize_parser
+    name: initialize_parser
+    file: src/languages/javascript/index.ts
+    line: 8
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: src/languages/javascript/index#get_scope_query
+    name: get_scope_query
+    file: src/languages/javascript/index.ts
+    line: 21
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: src/languages/python/index#initialize_parser
+    name: initialize_parser
+    file: src/languages/python/index.ts
+    line: 8
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: src/languages/python/index#get_scope_query
+    name: get_scope_query
+    file: src/languages/python/index.ts
+    line: 33
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: src/languages/python/index#extract_python_context
+    name: extract_python_context
+    file: src/languages/python/index.ts
+    line: 58
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: src/languages/rust/index#initialize_parser
+    name: initialize_parser
+    file: src/languages/rust/index.ts
+    line: 8
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: src/languages/rust/index#get_scope_query
+    name: get_scope_query
+    file: src/languages/rust/index.ts
+    line: 19
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: src/languages/shared_extractors#extract_jsdoc_context
+    name: extract_jsdoc_context
+    file: src/languages/shared_extractors.ts
+    line: 7
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/languages/typescript/index#initialize_parser
+    name: initialize_parser
+    file: src/languages/typescript/index.ts
+    line: 8
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: src/languages/typescript/index#get_scope_query
+    name: get_scope_query
+    file: src/languages/typescript/index.ts
+    line: 22
     is_exported: false
     calls_count: 0
     called_by_count: 0
@@ -218,9 +582,9 @@ top_level_nodes:
   - id: src/scope_resolution#build_scope_graph
     name: build_scope_graph
     file: src/scope_resolution.ts
-    line: 81
+    line: 82
     is_exported: true
-    calls_count: 22
+    calls_count: 23
     called_by_count: 0
   - id: src/symbol_naming#create_method_symbol_id
     name: create_method_symbol_id
@@ -258,110 +622,6 @@ top_level_nodes:
     calls_count: 0
     called_by_count: 0
 sampled_nodes:
-  - node:
-      id: src/call_graph_utils#apply_max_depth_filter
-      name: apply_max_depth_filter
-      file: src/call_graph_utils.ts
-      line: 16
-    outgoing_calls: []
-    incoming_calls: []
-    source_snippet: |2-
-       * @returns Filtered nodes and edges within max_depth from top-level nodes
-       */
-      export function apply_max_depth_filter(
-        nodes: Map<string, CallGraphNode>,
-        edges: CallGraphEdge[],
-        top_level_nodes: string[],
-        max_depth: number
-      ): { nodes: Map<string, CallGraphNode>; edges: CallGraphEdge[] } {
-        // BFS from top-level nodes to find nodes within max_depth
-        const visited = new Set<string>();
-        const queue: { node: string; depth: number }[] = [];
-        
-        // Start with top-level nodes
-        for (const node of top_level_nodes) {
-          queue.push({ node, depth: 0 });
-          visited.add(node);
-        }
-        
-        // BFS traversal
-        while (queue.length > 0) {
-          const { node, depth } = queue.shift()!;
-          
-          if (depth >= max_depth) continue;
-          
-          // Add all nodes called by this node
-          const caller_node = nodes.get(node);
-          if (caller_node) {
-            for (const call of caller_node.calls) {
-              if (!visited.has(call.symbol)) {
-                visited.add(call.symbol);
-                queue.push({ node: call.symbol, depth: depth + 1 });
-              }
-            }
-          }
-        }
-        
-        // Filter nodes and edges
-        const filtered_nodes = new Map<string, CallGraphNode>();
-        for (const [symbol, node] of nodes) {
-          if (visited.has(symbol)) {
-            filtered_nodes.set(symbol, node);
-          }
-        }
-        
-        const filtered_edges = edges.filter(
-          edge => visited.has(edge.from) && visited.has(edge.to)
-        );
-        
-        return {
-          nodes: filtered_nodes,
-          edges: filtered_edges
-        };
-      }
-
-      /**
-  - node:
-      id: src/call_graph_utils#is_position_within_range
-      name: is_position_within_range
-      file: src/call_graph_utils.ts
-      line: 71
-    outgoing_calls: []
-    incoming_calls: []
-    source_snippet: |2-
-       * Check if a position is within a range
-       */
-      export function is_position_within_range(position: SimpleRange, range: SimpleRange): boolean {
-        // Check if position start is after range start
-        const afterStart = position.start.row > range.start.row ||
-          (position.start.row === range.start.row && position.start.column >= range.start.column);
-        
-        // Check if position end is before range end  
-        const beforeEnd = position.end.row < range.end.row ||
-          (position.end.row === range.end.row && position.end.column <= range.end.column);
-        
-        return afterStart && beforeEnd;
-      }
-
-      /**
-  - node:
-      id: src/call_graph_utils#get_function_node_range
-      name: get_function_node_range
-      file: src/call_graph_utils.ts
-      line: 86
-    outgoing_calls: []
-    incoming_calls: []
-    source_snippet: |2-
-       * Extract function metadata from AST node
-       */
-      export function get_function_node_range(node: any): SimpleRange | null {
-        if (!node) return null;
-        
-        return {
-          start: { row: node.startPosition.row, column: node.startPosition.column },
-          end: { row: node.endPosition.row, column: node.endPosition.column }
-        };
-      }
   - node:
       id: src/benchmark-incremental#generateLargeFile
       name: generateLargeFile
@@ -432,310 +692,485 @@ sampled_nodes:
 
       // Run benchmarks
   - node:
-      id: src/function_metadata#extract_function_metadata
-      name: extract_function_metadata
-      file: src/function_metadata.ts
-      line: 9
+      id: src/call_graph/constants#isCallableSymbolKind
+      name: isCallableSymbolKind
+      file: src/call_graph/constants.ts
+      line: 58
+    outgoing_calls: []
+    incoming_calls: []
+    source_snippet: |2-
+       * Type guards using const arrays
+       */
+      export function isCallableSymbolKind(kind: string): kind is typeof CALLABLE_SYMBOL_KINDS[number] {
+        return (CALLABLE_SYMBOL_KINDS as readonly string[]).includes(kind);
+      }
+
+      export function isTypeSymbolKind(kind: string): kind is typeof TYPE_SYMBOL_KINDS[number] {
+  - node:
+      id: src/call_graph/call_analysis#analyze_calls_from_definition
+      name: analyze_calls_from_definition
+      file: src/call_graph/call_analysis.ts
+      line: 71
     outgoing_calls:
-      - target_id: src/function_metadata#extract_typescript_function_metadata
-        target_name: extract_typescript_function_metadata
-        target_file: src/function_metadata.ts
-        call_line: 20
+      - target_id: src/call_graph/call_analysis#find_definition_range
+        target_name: find_definition_range
+        target_file: src/call_graph/call_analysis.ts
+        call_line: 81
         call_type: direct
-      - target_id: src/function_metadata#extract_javascript_function_metadata
-        target_name: extract_javascript_function_metadata
-        target_file: src/function_metadata.ts
-        call_line: 23
+      - target_id: src/call_graph/call_analysis#is_position_within_range
+        target_name: is_position_within_range
+        target_file: src/call_graph/call_analysis.ts
+        call_line: 88
         call_type: direct
-      - target_id: src/function_metadata#extract_python_function_metadata
-        target_name: extract_python_function_metadata
-        target_file: src/function_metadata.ts
-        call_line: 25
+      - target_id: src/call_graph/call_analysis#is_position_within_range
+        target_name: is_position_within_range
+        target_file: src/call_graph/call_analysis.ts
+        call_line: 89
         call_type: direct
-      - target_id: src/function_metadata#extract_rust_function_metadata
-        target_name: extract_rust_function_metadata
-        target_file: src/function_metadata.ts
-        call_line: 27
+      - target_id: src/call_graph/call_analysis#analyze_constructor_call
+        target_name: analyze_constructor_call
+        target_file: src/call_graph/call_analysis.ts
+        call_line: 95
+        call_type: direct
+      - target_id: src/call_graph/type_tracker#set_local_variable_type
+        target_name: set_local_variable_type
+        target_file: src/call_graph/type_tracker.ts
+        call_line: 108
+        call_type: direct
+      - target_id: src/call_graph/call_analysis#resolve_reference
+        target_name: resolve_reference
+        target_file: src/call_graph/call_analysis.ts
+        call_line: 121
+        call_type: direct
+      - target_id: src/call_graph/call_analysis#is_method_call_pattern
+        target_name: is_method_call_pattern
+        target_file: src/call_graph/call_analysis.ts
+        call_line: 130
         call_type: direct
     incoming_calls:
-      - source_id: src/scope_resolution#build_scope_graph
-        source_name: build_scope_graph
-        source_file: src/scope_resolution.ts
+      - source_id: src/call_graph/graph_builder#analyze_file
+        source_name: analyze_file
+        source_file: src/call_graph/graph_builder.ts
     source_snippet: |2-
-       * This is language-agnostic and delegates to language-specific extractors.
+       * Analyze calls from a definition using immutable state
        */
-      export function extract_function_metadata(
-        node: SyntaxNode,
-        parent_node: SyntaxNode | null,
-        config: LanguageConfig,
-        source_code: string
-      ): FunctionMetadata | undefined {
-        const language_name = config.name.toLowerCase();
+      export function analyze_calls_from_definition(
+        def: Def,
+        config: CallAnalysisConfig
+      ): CallAnalysisResult {
+        const calls: FunctionCall[] = [];
+        const typeDiscoveries: TypeDiscovery[] = [];
         
-        switch (language_name) {
-          case "typescript":
-          case "tsx":
-            return extract_typescript_function_metadata(node, parent_node, source_code);
-          case "javascript":
-          case "jsx":
-            return extract_javascript_function_metadata(node, parent_node, source_code);
-          case "python":
-            return extract_python_function_metadata(node, parent_node, source_code);
-          case "rust":
-            return extract_rust_function_metadata(node, parent_node, source_code);
-          default:
-            return undefined;
+        const { graph, fileCache, localTypeTracker } = config;
+        
+        // Find the full definition body range
+        const definitionRange = find_definition_range(def, fileCache);
+        
+        // Get all references in this file
+        const refs = graph.getNodes<Ref>('reference');
+        
+        // Filter to only refs within this definition's range
+        const definitionRefs = refs.filter(ref => 
+          is_position_within_range(ref.range.start, definitionRange) &&
+          is_position_within_range(ref.range.end, definitionRange)
+        );
+        
+        
+        // First pass: identify constructor calls and collect type discoveries
+        for (const ref of definitionRefs) {
+          const constructorAnalysis = analyze_constructor_call(ref, def, config);
+          if (constructorAnalysis && constructorAnalysis.typeDiscoveries.length > 0) {
+            typeDiscoveries.push(...constructorAnalysis.typeDiscoveries);
+          }
         }
+        
+        // Second pass: resolve all references including method calls
+        // Create an updated local type tracker with discovered types
+        let currentLocalTracker = localTypeTracker;
+        
+        // Apply discovered types to the local tracker
+        for (const discovery of typeDiscoveries) {
+          if (discovery.scope === 'local') {
+            currentLocalTracker = set_local_variable_type(
+              currentLocalTracker,
+              discovery.variableName,
+              discovery.typeInfo
+            );
+          }
+        }
+        
+        for (const ref of definitionRefs) {
+          if (process.env.DEBUG_METHOD_CHAINS && ref.symbol_kind === 'method') {
+            console.log(`\nAnalyzing reference: ${ref.name} (${ref.symbol_kind}) at ${ref.range.start.row}:${ref.range.start.column}`);
+          }
+          
+          const resolved = resolve_reference(ref, def, config, currentLocalTracker);
+          
+          
+          if (resolved.resolved) {
+            // Check if this is a callable symbol
+            const callable_kinds = ['function', 'method', 'generator', 'class', 'constructor', 'struct'];
+            if (callable_kinds.includes(resolved.resolved.symbol_kind)) {
+              // Determine if this is a method call
+              const is_method_call = ref.symbol_kind === 'method' || 
+                is_method_call_pattern(ref, def.file_path, fileCache);
+              
+              const call: FunctionCall = {
+                caller_def: def,
+                called_def: resolved.resolved,
+                call_location: ref.range.start,
+                is_method_call,
+                is_constructor_call: ref.symbol_kind === 'constructor'
+              };
+              calls.push(call);
+            }
+          }
+          
+          // Collect any type discoveries from method resolution
+          typeDiscoveries.push(...resolved.typeDiscoveries);
+        }
+        
+        return {
+          calls,
+          typeDiscoveries
+        };
       }
 
       /**
   - node:
-      id: src/function_metadata#extract_typescript_function_metadata
-      name: extract_typescript_function_metadata
-      file: src/function_metadata.ts
-      line: 36
+      id: src/call_graph/call_analysis#analyze_module_level_calls
+      name: analyze_module_level_calls
+      file: src/call_graph/call_analysis.ts
+      line: 156
     outgoing_calls:
-      - target_id: src/function_metadata#extract_parameter_names
-        target_name: extract_parameter_names
-        target_file: src/function_metadata.ts
-        call_line: 69
+      - target_id: src/call_graph/call_analysis#is_position_within_range
+        target_name: is_position_within_range
+        target_file: src/call_graph/call_analysis.ts
+        call_line: 176
         call_type: direct
-      - target_id: src/function_metadata#is_typescript_test_function
-        target_name: is_typescript_test_function
-        target_file: src/function_metadata.ts
-        call_line: 73
+      - target_id: src/call_graph/call_analysis#is_position_within_range
+        target_name: is_position_within_range
+        target_file: src/call_graph/call_analysis.ts
+        call_line: 177
         call_type: direct
-      - target_id: src/function_metadata#is_arrow_function_in_test_block
-        target_name: is_arrow_function_in_test_block
-        target_file: src/function_metadata.ts
-        call_line: 77
+      - target_id: src/call_graph/call_analysis#is_method_call_pattern
+        target_name: is_method_call_pattern
+        target_file: src/call_graph/call_analysis.ts
+        call_line: 220
         call_type: direct
     incoming_calls:
-      - source_id: src/function_metadata#extract_function_metadata
-        source_name: extract_function_metadata
-        source_file: src/function_metadata.ts
+      - source_id: src/call_graph/graph_builder#analyze_file
+        source_name: analyze_file
+        source_file: src/call_graph/graph_builder.ts
     source_snippet: |2-
-       * Extract metadata for TypeScript functions
+       * Analyze module-level calls (calls made outside any function/class)
        */
-      function extract_typescript_function_metadata(
-        node: SyntaxNode,
-        parent_node: SyntaxNode | null,
-        source_code: string
-      ): FunctionMetadata {
-        // If node is an identifier and parent is a function, use parent as the function node
-        let function_node = node;
-        let actual_parent = parent_node;
+      export function analyze_module_level_calls(
+        file_path: string,
+        config: CallAnalysisConfig
+      ): CallAnalysisResult {
+        const { graph, fileCache } = config;
+        const calls: FunctionCall[] = [];
+        const typeDiscoveries: TypeDiscovery[] = [];
         
-        if ((node.type === "identifier" || node.type === "property_identifier" || node.type === "private_property_identifier") && parent_node) {
-          if (parent_node.type === "function_declaration" || 
-              parent_node.type === "function_expression" ||
-              parent_node.type === "arrow_function" ||
-              parent_node.type === "method_definition" ||
-              parent_node.type === "generator_function_declaration") {
-            function_node = parent_node;
-            actual_parent = parent_node.parent;
+        // Get all references in the file
+        const refs = graph.getNodes<Ref>('reference');
+        
+        // Get all definitions to check ranges
+        const defs = graph.getNodes<Def>('definition');
+        
+        // Filter to only references that are NOT within any definition
+        const moduleLevelRefs = refs.filter(ref => {
+          // Check if this ref is inside any definition
+          for (const def of defs) {
+            // Use enclosing_range if available, otherwise use range
+            const defRange = (def as any).enclosing_range || def.range;
+            if (is_position_within_range(ref.range.start, defRange) &&
+                is_position_within_range(ref.range.end, defRange)) {
+              return false; // This ref is inside a definition
+            }
           }
-        }
-
-        const metadata: FunctionMetadata = {
-          line_count: function_node.endPosition.row - function_node.startPosition.row + 1,
+          return true; // This ref is at module level
+        });
+        
+        // Create a pseudo-definition for the module
+        const moduleDef: Def = {
+          id: -1, // Special ID for module
+          kind: 'definition',
+          name: '<module>',
+          symbol_id: `${file_path}#<module>`,
+          symbol_kind: 'module' as any,
+          range: { start: { row: 0, column: 0 }, end: { row: 0, column: 0 } },
+          file_path: file_path
         };
-
-        // Check if async
-        const first_child = function_node.child(0);
-        if (first_child && first_child.type === "async") {
-          metadata.is_async = true;
-        }
-
-        // Extract parameter names
-        const params_node = function_node.childForFieldName("parameters");
-        if (params_node) {
-          metadata.parameter_names = extract_parameter_names(params_node);
-        }
-
-        // Check if it's a test function
-        metadata.is_test = is_typescript_test_function(function_node, source_code);
         
-        // For arrow functions, also check if they're inside test blocks
-        if (!metadata.is_test && function_node.type === "arrow_function") {
-          metadata.is_test = is_arrow_function_in_test_block(function_node);
-        }
-
-        // Check if it's a method within a class
-        if (actual_parent && (actual_parent.type === "class_body" || actual_parent.type === "class_declaration")) {
-          // Find the class name
-          let class_node = actual_parent;
-          if (actual_parent.type === "class_body") {
-            class_node = actual_parent.parent!;
+        // For each module-level reference, try to resolve it
+        for (const ref of moduleLevelRefs) {
+          const resolved = config.go_to_definition(file_path, ref.range.start);
+          
+          if (resolved) {
+            // If resolved to an import, try to resolve the import
+            let final_resolved = resolved;
+            if (resolved.symbol_kind === 'import') {
+              const imports = config.get_imports_with_definitions(file_path);
+              const import_info = imports.find(imp => 
+                imp.import_statement.name === resolved.name &&
+                imp.import_statement.range.start.row === resolved.range.start.row &&
+                imp.import_statement.range.start.column === resolved.range.start.column
+              );
+              
+              if (import_info && import_info.imported_function) {
+                final_resolved = import_info.imported_function;
+              }
+            }
+            
+            // Include all callable symbol kinds
+            const callable_kinds = ['function', 'method', 'generator', 'class', 'constructor'];
+            if (callable_kinds.includes(final_resolved.symbol_kind)) {
+              // Check if this is a method call
+              const is_method_call = ref.symbol_kind === 'method' || 
+                is_method_call_pattern(ref, file_path, fileCache);
+              
+              const call: FunctionCall = {
+                caller_def: moduleDef,
+                called_def: final_resolved,
+                call_location: ref.range.start,
+                is_method_call,
+                is_constructor_call: ref.symbol_kind === 'constructor' || final_resolved.symbol_kind === 'constructor'
+              };
+              calls.push(call);
+            }
           }
-          const class_name_node = class_node.childForFieldName("name");
-          if (class_name_node) {
-            metadata.class_name = class_name_node.text;
+        }
+        
+        return {
+          calls,
+          typeDiscoveries
+        };
+      }
+
+      /**
+  - node:
+      id: src/call_graph/call_analysis#resolve_method_call_pure
+      name: resolve_method_call_pure
+      file: src/call_graph/call_analysis.ts
+      line: 243
+    outgoing_calls:
+      - target_id: src/call_graph/type_tracker#get_local_variable_type
+        target_name: get_local_variable_type
+        target_file: src/call_graph/type_tracker.ts
+        call_line: 252
+        call_type: direct
+      - target_id: src/call_graph/call_analysis#is_position_within_range
+        target_name: is_position_within_range
+        target_file: src/call_graph/call_analysis.ts
+        call_line: 292
+        call_type: direct
+      - target_id: src/call_graph/call_analysis#is_position_within_range
+        target_name: is_position_within_range
+        target_file: src/call_graph/call_analysis.ts
+        call_line: 293
+        call_type: direct
+    incoming_calls:
+      - source_id: src/call_graph/call_analysis#resolve_reference
+        source_name: resolve_reference
+        source_file: src/call_graph/call_analysis.ts
+    source_snippet: |2-
+       * Resolve a method call without mutations
+       */
+      export function resolve_method_call_pure(
+        ref: Ref,
+        objectName: string,
+        config: CallAnalysisConfig,
+        localTypeTracker: LocalTypeTrackerData
+      ): MethodResolutionResult {
+        const typeDiscoveries: TypeDiscovery[] = [];
+        
+        // Get type information for the object
+        const typeInfo = get_local_variable_type(localTypeTracker, objectName, ref.range.start);
+        
+        
+        if (typeInfo && typeInfo.classDef) {
+          // We have type information for this variable
+          const methodName = ref.name;
+          
+          // Get all methods in the class file
+          if (config.get_file_graph && typeInfo.classDef.file_path) {
+            const classGraph = config.get_file_graph(typeInfo.classDef.file_path);
+            const classDefs = classGraph ? classGraph.getNodes<Def>('definition') : [];
+            
+            // For class definitions, compute enclosing_range if not available
+            let classRange = (typeInfo.classDef as any).enclosing_range;
+            if (!classRange && classGraph) {
+              // Try to compute the enclosing range
+              const classNode = classGraph.getNodes<Def>('definition').find(d => 
+                d.name === typeInfo.className && d.symbol_kind === 'class'
+              );
+              if (classNode) {
+                // Get the file cache to access the tree
+                const classFile = typeInfo.classDef.file_path;
+                // We need to get the cache for the class file
+                // This is a cross-file reference, so we don't have direct access to other file caches
+                // For now, just use the available range
+                classRange = typeInfo.classDef.range;
+              }
+            }
+            classRange = classRange || typeInfo.classDef.range;
+            
+            
+            // Find method by checking symbol_id pattern: file#ClassName.methodName
+            // Remove extension from file path for symbol_id
+            const fileBase = typeInfo.classDef.file_path.replace(/\.[^.]+$/, '');
+            const expectedSymbolId = `${fileBase}#${typeInfo.className}.${methodName}`;
+            const method = classDefs.find((m: Def) => 
+              m.name === methodName && 
+              (m.symbol_kind === 'method' || m.symbol_kind === 'function') &&
+              (m.symbol_id === expectedSymbolId || 
+               // Fallback: check if within class range
+               (is_position_within_range(m.range.start, classRange) &&
+                is_position_within_range(m.range.end, classRange)))
+            );
+            
+            
+            if (method) {
+              return { resolved: method, typeDiscoveries };
+            }
           }
         }
+        
+        return { typeDiscoveries };
+      }
 
-        // Check if private (TypeScript uses private keyword or # prefix)
-        if (function_node.type === "method_definition") {
-          // Check for private keyword
-          for (let i = 0; i < function_node.childCount; i++) {
-            const child = function_node.child(i);
-            if (child && child.type === "accessibility_modifier" && child.text === "private") {
-              metadata.is_private = true;
+      // Helper functions
+  - node:
+      id: src/call_graph/call_analysis#find_definition_range
+      name: find_definition_range
+      file: src/call_graph/call_analysis.ts
+      line: 311
+    outgoing_calls: []
+    incoming_calls:
+      - source_id: src/call_graph/call_analysis#analyze_calls_from_definition
+        source_name: analyze_calls_from_definition
+        source_file: src/call_graph/call_analysis.ts
+    source_snippet: |2-
+       * Find the full definition range including body
+       */
+      function find_definition_range(def: Def, fileCache: FileCache): { 
+        start: { row: number; column: number }; 
+        end: { row: number; column: number } 
+      } {
+        let definitionRange = def.range;
+        
+        // Find the AST node for this definition
+        const defNode = fileCache.tree.rootNode.descendantForPosition(
+          { row: def.range.start.row, column: def.range.start.column },
+          { row: def.range.end.row, column: def.range.end.column }
+        );
+        
+        if (defNode) {
+          // Walk up the tree to find the full definition node
+          let current = defNode.parent;
+          while (current) {
+            const nodeType = current.type;
+            let foundDefinitionNode = false;
+            
+            // Check for function/method nodes
+            if (['function', 'method', 'generator'].includes(def.symbol_kind)) {
+              if (nodeType === 'function_declaration' ||
+                  nodeType === 'method_definition' ||
+                  nodeType === 'generator_function_declaration' ||
+                  nodeType === 'function_expression' ||
+                  nodeType === 'arrow_function' ||
+                  nodeType === 'function_definition' || // Python
+                  nodeType === 'decorated_definition' || // Python with decorators
+                  nodeType === 'function_item') { // Rust
+                foundDefinitionNode = true;
+              }
+            }
+            // Check for class nodes
+            else if (def.symbol_kind === 'class') {
+              if (nodeType === 'class_declaration' ||
+                  nodeType === 'class_definition' || // Python
+                  nodeType === 'struct_item' || // Rust
+                  nodeType === 'impl_item') { // Rust
+                foundDefinitionNode = true;
+              }
+            }
+            // Check for variable/const nodes
+            else if (['variable', 'const', 'let', 'constant'].includes(def.symbol_kind)) {
+              if (nodeType === 'variable_declarator' ||
+                  nodeType === 'variable_declaration' ||
+                  nodeType === 'lexical_declaration' ||
+                  nodeType === 'assignment' || // Python
+                  nodeType === 'let_declaration' || // Rust
+                  nodeType === 'const_item') { // Rust
+                foundDefinitionNode = true;
+              }
+            }
+            
+            if (foundDefinitionNode) {
+              definitionRange = {
+                start: { row: current.startPosition.row, column: current.startPosition.column },
+                end: { row: current.endPosition.row, column: current.endPosition.column }
+              };
               break;
             }
-          }
-          // Check for # prefix
-          const property_name = function_node.childForFieldName("name");
-          if (property_name && property_name.text.startsWith("#")) {
-            metadata.is_private = true;
+            current = current.parent;
           }
         }
         
-        // Also check if the original node was a private_property_identifier
-        if (node.type === "private_property_identifier") {
-          metadata.is_private = true;
-          
-          // For private methods, we need to check the grandparent for the class
-          if (!metadata.class_name && function_node.parent && function_node.parent.type === "class_body") {
-            const class_body = function_node.parent;
-            if (class_body.parent && class_body.parent.type === "class_declaration") {
-              const class_name_node = class_body.parent.childForFieldName("name");
-              if (class_name_node) {
-                metadata.class_name = class_name_node.text;
-              }
-            }
-          }
-        }
-
-        return metadata;
+        return definitionRange;
       }
 
       /**
   - node:
-      id: src/function_metadata#extract_javascript_function_metadata
-      name: extract_javascript_function_metadata
-      file: src/function_metadata.ts
-      line: 132
-    outgoing_calls:
-      - target_id: src/function_metadata#extract_parameter_names
-        target_name: extract_parameter_names
-        target_file: src/function_metadata.ts
-        call_line: 166
-        call_type: direct
-      - target_id: src/function_metadata#is_javascript_test_function
-        target_name: is_javascript_test_function
-        target_file: src/function_metadata.ts
-        call_line: 170
-        call_type: direct
-      - target_id: src/function_metadata#is_arrow_function_in_test_block
-        target_name: is_arrow_function_in_test_block
-        target_file: src/function_metadata.ts
-        call_line: 174
-        call_type: direct
+      id: src/call_graph/call_analysis#is_position_within_range
+      name: is_position_within_range
+      file: src/call_graph/call_analysis.ts
+      line: 381
+    outgoing_calls: []
     incoming_calls:
-      - source_id: src/function_metadata#extract_function_metadata
-        source_name: extract_function_metadata
-        source_file: src/function_metadata.ts
+      - source_id: src/call_graph/call_analysis#analyze_calls_from_definition
+        source_name: analyze_calls_from_definition
+        source_file: src/call_graph/call_analysis.ts
+      - source_id: src/call_graph/call_analysis#analyze_calls_from_definition
+        source_name: analyze_calls_from_definition
+        source_file: src/call_graph/call_analysis.ts
+      - source_id: src/call_graph/call_analysis#analyze_module_level_calls
+        source_name: analyze_module_level_calls
+        source_file: src/call_graph/call_analysis.ts
+      - source_id: src/call_graph/call_analysis#analyze_module_level_calls
+        source_name: analyze_module_level_calls
+        source_file: src/call_graph/call_analysis.ts
+      - source_id: src/call_graph/call_analysis#resolve_method_call_pure
+        source_name: resolve_method_call_pure
+        source_file: src/call_graph/call_analysis.ts
+      - source_id: src/call_graph/call_analysis#resolve_method_call_pure
+        source_name: resolve_method_call_pure
+        source_file: src/call_graph/call_analysis.ts
+      - source_id: src/call_graph/call_analysis#is_method_of_class
+        source_name: is_method_of_class
+        source_file: src/call_graph/call_analysis.ts
+      - source_id: src/call_graph/call_analysis#is_method_of_class
+        source_name: is_method_of_class
+        source_file: src/call_graph/call_analysis.ts
     source_snippet: |2-
-       * Extract metadata for JavaScript functions
+       * Check if a position is within a range
        */
-      function extract_javascript_function_metadata(
-        node: SyntaxNode,
-        parent_node: SyntaxNode | null,
-        source_code: string
-      ): FunctionMetadata {
-        // If node is an identifier and parent is a function, use parent as the function node
-        let function_node = node;
-        let actual_parent = parent_node;
-        
-        if ((node.type === "identifier" || node.type === "property_identifier" || node.type === "private_property_identifier") && parent_node) {
-          if (parent_node.type === "function_declaration" || 
-              parent_node.type === "function_expression" ||
-              parent_node.type === "arrow_function" ||
-              parent_node.type === "method_definition" ||
-              parent_node.type === "generator_function_declaration") {
-            function_node = parent_node;
-            actual_parent = parent_node.parent;
-          }
+      function is_position_within_range(
+        pos: { row: number; column: number },
+        range: { start: { row: number; column: number }; end: { row: number; column: number } }
+      ): boolean {
+        if (pos.row < range.start.row || pos.row > range.end.row) {
+          return false;
         }
-
-        // JavaScript metadata extraction is similar to TypeScript but without type information
-        const metadata: FunctionMetadata = {
-          line_count: function_node.endPosition.row - function_node.startPosition.row + 1,
-        };
-
-        // Check if async
-        const first_child = function_node.child(0);
-        if (first_child && first_child.type === "async") {
-          metadata.is_async = true;
+        if (pos.row === range.start.row && pos.column < range.start.column) {
+          return false;
         }
-
-        // Extract parameter names
-        const params_node = function_node.childForFieldName("parameters");
-        if (params_node) {
-          metadata.parameter_names = extract_parameter_names(params_node);
+        if (pos.row === range.end.row && pos.column > range.end.column) {
+          return false;
         }
-
-        // Check if it's a test function
-        metadata.is_test = is_javascript_test_function(function_node, source_code);
-        
-        // For arrow functions, also check if they're inside test blocks
-        if (!metadata.is_test && function_node.type === "arrow_function") {
-          metadata.is_test = is_arrow_function_in_test_block(function_node);
-        }
-
-        // Check if it's a method within a class
-        if (actual_parent && (actual_parent.type === "class_body" || actual_parent.type === "class_declaration")) {
-          // Find the class name
-          let class_node = actual_parent;
-          if (actual_parent.type === "class_body") {
-            class_node = actual_parent.parent!;
-          }
-          const class_name_node = class_node.childForFieldName("name");
-          if (class_name_node) {
-            metadata.class_name = class_name_node.text;
-          }
-        } else if (!metadata.class_name && function_node.type === "method_definition") {
-          // Alternative path: when actual_parent wasn't set correctly, check function_node's parent
-          if (function_node.parent && function_node.parent.type === "class_body") {
-            const class_body = function_node.parent;
-            if (class_body.parent && class_body.parent.type === "class_declaration") {
-              const class_name_node = class_body.parent.childForFieldName("name");
-              if (class_name_node) {
-                metadata.class_name = class_name_node.text;
-              }
-            }
-          }
-        }
-
-        // Check if private (# prefix for private fields/methods)
-        if (function_node.type === "method_definition") {
-          const property_name = function_node.childForFieldName("name");
-          if (property_name && property_name.text.startsWith("#")) {
-            metadata.is_private = true;
-          }
-        }
-        
-        // Also check if the original node was a private_property_identifier
-        if (node.type === "private_property_identifier") {
-          metadata.is_private = true;
-          
-          // For private methods, we need to check if we're in a class
-          if (!metadata.class_name && function_node.type === "method_definition") {
-            // Method definition's parent is class_body
-            if (function_node.parent && function_node.parent.type === "class_body") {
-              const class_body = function_node.parent;
-              if (class_body.parent && class_body.parent.type === "class_declaration") {
-                const class_name_node = class_body.parent.childForFieldName("name");
-                if (class_name_node) {
-                  metadata.class_name = class_name_node.text;
-                }
-              }
-            }
-          }
-        }
-
-        return metadata;
+        return true;
       }
 
       /**
@@ -743,7 +1178,19 @@ file_summary:
   - file: src/graph.ts
     function_count: 31
     exported_function_count: 0
-    import_count: 27
+    import_count: 26
+  - file: src/call_graph/type_tracker.ts
+    function_count: 21
+    exported_function_count: 21
+    import_count: 4
+  - file: src/call_graph/project_graph_data.ts
+    function_count: 19
+    exported_function_count: 13
+    import_count: 7
+  - file: src/call_graph/call_analysis.ts
+    function_count: 12
+    exported_function_count: 4
+    import_count: 11
   - file: src/function_metadata.ts
     function_count: 11
     exported_function_count: 1
@@ -752,6 +1199,10 @@ file_summary:
     function_count: 10
     exported_function_count: 0
     import_count: 2
+  - file: src/call_graph/return_type_analyzer.ts
+    function_count: 9
+    exported_function_count: 1
+    import_count: 2
   - file: src/symbol_naming.ts
     function_count: 9
     exported_function_count: 9
@@ -759,31 +1210,47 @@ file_summary:
   - file: src/project_inheritance.ts
     function_count: 8
     exported_function_count: 0
-    import_count: 7
+    import_count: 5
+  - file: src/call_graph/graph_builder.ts
+    function_count: 6
+    exported_function_count: 6
+    import_count: 26
+  - file: src/call_graph/import_export_detector.ts
+    function_count: 6
+    exported_function_count: 6
+    import_count: 2
   - file: src/inheritance.ts
     function_count: 5
     exported_function_count: 1
-    import_count: 3
+    import_count: 2
   - file: src/project_source.ts
     function_count: 5
     exported_function_count: 0
-    import_count: 4
+    import_count: 3
+  - file: src/call_graph/readonly_types.ts
+    function_count: 4
+    exported_function_count: 4
+    import_count: 0
   - file: src/scope_resolution.ts
     function_count: 4
     exported_function_count: 1
-    import_count: 10
+    import_count: 6
+  - file: src/call_graph/constants.ts
+    function_count: 3
+    exported_function_count: 3
+    import_count: 0
   - file: src/call_graph_utils.ts
     function_count: 3
     exported_function_count: 3
-    import_count: 5
+    import_count: 1
   - file: src/languages/python/index.ts
     function_count: 3
     exported_function_count: 0
-    import_count: 7
+    import_count: 6
   - file: src/symbol_resolver.ts
     function_count: 3
     exported_function_count: 2
-    import_count: 5
+    import_count: 1
   - file: src/benchmark-incremental.ts
     function_count: 2
     exported_function_count: 0
@@ -791,7 +1258,7 @@ file_summary:
   - file: src/edit.ts
     function_count: 2
     exported_function_count: 2
-    import_count: 2
+    import_count: 1
   - file: src/languages/javascript/index.ts
     function_count: 2
     exported_function_count: 0
@@ -813,8 +1280,8 @@ file_summary:
     exported_function_count: 1
     import_count: 2
 validation_stats:
-  nodes_with_calls_pct: 36.89320388349515
-  nodes_called_by_others_pct: 65.0485436893204
-  exported_nodes_pct: 19.41747572815534
+  nodes_with_calls_pct: 36.6120218579235
+  nodes_called_by_others_pct: 51.91256830601093
+  exported_nodes_pct: 42.62295081967213
   edges_with_call_type_pct: 100
   top_level_accuracy_pct: 100

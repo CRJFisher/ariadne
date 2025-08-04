@@ -3,6 +3,7 @@ import { ScopeGraph, Def, Scope, Ref, Import } from "./graph";
 import { LanguageConfig } from "./types";
 import { extract_function_metadata } from "./function_metadata";
 import { get_symbol_id } from "./symbol_naming";
+import { analyze_return_type } from "./call_graph/return_type_analyzer";
 
 /**
  * Determines if a JavaScript/TypeScript variable declaration should be hoisted.
@@ -416,6 +417,17 @@ export function build_scope_graph(
 
     // Now compute the symbol ID with all information available
     new_def.symbol_id = get_symbol_id(new_def);
+    
+    // Add return type analysis for functions/methods (after symbol_id is set)
+    if (kind === "function" || kind === "method") {
+      const returnType = analyze_return_type(new_def, graph, tree, source_code || '');
+      if (returnType) {
+        new_def.return_type = returnType;
+      }
+      if (process.env.DEBUG_RETURN_TYPES) {
+        console.log(`Return type for ${new_def.name}: ${returnType}`);
+      }
+    }
 
     // Check for duplicate definitions at the same location
     // This can happen when multiple scope patterns match the same node
