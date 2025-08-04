@@ -24,9 +24,24 @@ Epic task implementing the iterative validation process to meet accuracy thresho
 
 - **Current metrics**: nodes-with-calls 40.8% (need 85%), nodes-called-by-others 52.2% (need 85%)
 - **Iteration 1 findings**: Method calls not detected, file size limit causing skipped files
-- **Active sub-tasks**: task-100.3, task-100.6, task-100.9, task-100.10 (focusing on validation and file size issues)
+- **Active sub-tasks**: task-100.3, task-100.6, task-100.9, task-100.10, task-100.12 (focusing on validation and file size issues)
 - **Process**: Fix sub-tasks → Re-run validation → Create new sub-tasks if needed → Repeat
 - **Goal**: Achieve 85%+ accuracy through iterative improvements
+
+### task-100.12: Refactor Project class to be immutable (EPIC)
+
+Critical sub-task to address index.ts exceeding 32KB limit (currently 34KB):
+
+- **Problem**: index.ts cannot be analyzed by Ariadne due to file size
+- **Solution**: Split Project class into smaller modules with immutable architecture
+- **Sub-tasks**:
+  - task-100.12.1: Design storage interface
+  - task-100.12.2: Extract file management
+  - task-100.12.3: Extract navigation logic
+  - task-100.12.4: Extract call graph operations
+  - task-100.12.5: Implement in-memory storage
+  - task-100.12.6: Make Project immutable
+  - task-100.12.7: Pluggable storage providers
 
 ## 🔥 HIGH PRIORITY
 

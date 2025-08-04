@@ -263,13 +263,16 @@ documentation:
 work_order:
   immediate:
     - task-100        # EPIC: Improve self-analysis accuracy
-    - task-100.3      # Complete remaining validation fixes
-    - task-100.6      # Add file size linting to prevent validation failures
+    - task-100.12     # EPIC: Refactor Project class (index.ts > 32KB!)
+    - task-100.12.1   # Design storage interface
     
   next:
-    - task-100.3   # Complete remaining validation fixes
-    - task-100.9   # Add CommonJS/ES6 export support
-    - task-100.6   # Add file size linting
+    - task-100.12.2   # Extract file management
+    - task-100.12.3   # Extract navigation logic
+    - task-100.12.4   # Extract call graph operations
+    - task-100.3      # Complete remaining validation fixes
+    - task-100.9      # Add CommonJS/ES6 export support
+    - task-100.6      # Add file size linting
     
   later:
     - task-100.10  # Complete JavaScript test updates
@@ -280,6 +283,9 @@ work_order:
     - task-74      # File size limit (waiting for tree-sitter-node)
     
   completed_today:
+    - task-100.11     # Refactor project_call_graph.ts (deleted - was unused)
+    - task-100.11.7   # Migrate tests for immutable implementation
+    - task-100.11.9   # Add enclosing_range for class definitions
     - task-100.11.11  # Fix Rust cross-file method resolution
     - task-100.7      # Fix import counting accuracy
     - task-100.11.13  # Implement return type tracking for method chains

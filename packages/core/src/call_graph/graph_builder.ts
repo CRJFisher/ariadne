@@ -345,8 +345,8 @@ export function build_call_graph_for_display(
     const sourceId = call.caller_def.symbol_id;
     const targetId = call.called_def.symbol_id;
     
-    // Skip if source node is filtered out
-    if (!nodes.has(sourceId)) {
+    // Skip if source node is filtered out (unless it's a module-level call)
+    if (!nodes.has(sourceId) && !sourceId.endsWith('#<module>')) {
       continue;
     }
     
@@ -354,11 +354,13 @@ export function build_call_graph_for_display(
     const isBuiltin = targetId.startsWith('<builtin>#');
     
     // For module-level calls, the source node might not exist
-    if (sourceId === `${call.caller_def.file_path}#<module>`) {
-      // Module level call - don't remove from top-level since the module itself isn't a node
+    if (sourceId.endsWith('#<module>')) {
+      // Module level call - remove target from top-level since it's called
       const targetNode = nodes.get(targetId);
       if (targetNode) {
         targetNode.called_by.push(sourceId);
+        // Remove from top-level since it's called (even if by module)
+        topLevelNodes.delete(targetId);
       }
     } else {
       // Regular function call

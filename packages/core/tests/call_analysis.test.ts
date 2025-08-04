@@ -135,9 +135,9 @@ describe('Immutable Call Analysis', () => {
       expect(result.calls).toHaveLength(1);
       expect(result.calls[0]).toMatchObject({
         caller_def: def,
-        function_ref: funcRef,
-        resolved_definition: calledFunc,
-        kind: 'function'
+        called_def: calledFunc,
+        call_location: funcRef.range.start,
+        is_method_call: false
       });
     });
 
@@ -283,9 +283,13 @@ function myFunc() {
       
       expect(result.calls).toHaveLength(1);
       expect(result.calls[0]).toMatchObject({
-        function_ref: moduleLevelRef,
-        resolved_definition: logDef,
-        kind: 'method'
+        caller_def: expect.objectContaining({
+          name: '<module>',
+          symbol_kind: 'module'
+        }),
+        called_def: logDef,
+        call_location: moduleLevelRef.range.start,
+        is_method_call: true
       });
       expect(result.calls[0].caller_def.name).toBe('<module>');
     });

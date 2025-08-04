@@ -1,7 +1,7 @@
 ---
 id: task-100.11
 title: Refactor project_call_graph.ts to be under 32KB tree-sitter limit
-status: Partially Complete
+status: Done
 assignee:
   - '@chuck'
 created_date: '2025-08-04 13:54'

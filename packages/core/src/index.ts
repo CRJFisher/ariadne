@@ -9,7 +9,7 @@ import { python_config } from './languages/python';
 import { rust_config } from './languages/rust';
 import { Edit } from './edit';
 import { Tree } from 'tree-sitter';
-import { ClassRelationship, extract_class_relationships } from './inheritance';
+import { ClassRelationship } from './inheritance';
 import { 
   ProjectCallGraphData,
   create_project_call_graph,
@@ -31,7 +31,6 @@ import {
 import {
   set_imported_class,
   create_local_type_tracker,
-  set_local_variable_type,
   set_variable_type
 } from './call_graph/type_tracker';
 import { build_call_graph_for_display } from './call_graph/graph_builder';
@@ -183,7 +182,16 @@ export class Project {
         newEndPosition: edit.new_end_position,
       });
       
-      tree = config.parser.parse(source_code, cached.tree);
+      try {
+        tree = config.parser.parse(source_code, cached.tree);
+      } catch (error: any) {
+        // Handle tree-sitter limitations
+        if (error.message === 'Invalid argument') {
+          console.warn(`File ${file_path} cannot be parsed by tree-sitter (${(source_code.length / 1024).toFixed(1)}KB). Error: ${error.message}. Skipping.`);
+          return;
+        }
+        throw error;
+      }
     } else {
       // Full parsing
       // Set a longer timeout for CI environments
@@ -192,6 +200,13 @@ export class Project {
       
       try {
         tree = config.parser.parse(source_code);
+      } catch (error: any) {
+        // Handle tree-sitter limitations
+        if (error.message === 'Invalid argument') {
+          console.warn(`File ${file_path} cannot be parsed by tree-sitter (${(source_code.length / 1024).toFixed(1)}KB). Error: ${error.message}. Skipping.`);
+          return;
+        }
+        throw error;
       } finally {
         // Restore original timeout
         config.parser.setTimeoutMicros(oldTimeout);

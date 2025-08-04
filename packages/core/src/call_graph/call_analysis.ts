@@ -11,8 +11,6 @@ import {
   FileTypeTrackerData, 
   LocalTypeTrackerData,
   TypeInfo,
-  ImportedClassInfo,
-  get_variable_type as get_variable_type_immutable,
   get_local_variable_type,
   get_local_imported_class,
   get_imported_class,
@@ -308,36 +306,16 @@ export function resolve_method_call_pure(
       const classGraph = config.get_file_graph(typeInfo.classDef.file_path);
       const classDefs = classGraph ? classGraph.getNodes<Def>('definition') : [];
       
-      // For class definitions, compute enclosing_range if not available
-      let classRange = (typeInfo.classDef as any).enclosing_range;
-      if (!classRange && classGraph) {
-        // Try to compute the enclosing range
-        const classNode = classGraph.getNodes<Def>('definition').find(d => 
-          d.name === typeInfo.className && d.symbol_kind === 'class'
-        );
-        if (classNode) {
-          // Get the file cache to access the tree
-          const classFile = typeInfo.classDef.file_path;
-          // We need to get the cache for the class file
-          // This is a cross-file reference, so we don't have direct access to other file caches
-          // For now, just use the available range
-          classRange = typeInfo.classDef.range;
-        }
-      }
-      classRange = classRange || typeInfo.classDef.range;
+      // Use enclosing_range if available, otherwise fall back to range
+      const classRange = typeInfo.classDef.enclosing_range || typeInfo.classDef.range;
       
-      
-      // Find method by checking symbol_id pattern: file#ClassName.methodName
-      // Remove extension from file path for symbol_id
-      const fileBase = typeInfo.classDef.file_path.replace(/\.[^.]+$/, '');
-      const expectedSymbolId = `${fileBase}#${typeInfo.className}.${methodName}`;
+      // Find method by checking if it's within the class range
+      // This is more reliable than symbol_id matching
       const method = classDefs.find((m: Def) => 
         m.name === methodName && 
         (m.symbol_kind === 'method' || m.symbol_kind === 'function') &&
-        (m.symbol_id === expectedSymbolId || 
-         // Fallback: check if within class range
-         (is_position_within_range(m.range.start, classRange) &&
-          is_position_within_range(m.range.end, classRange)))
+        is_position_within_range(m.range.start, classRange) &&
+        is_position_within_range(m.range.end, classRange)
       );
       
       

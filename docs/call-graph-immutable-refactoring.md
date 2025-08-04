@@ -2,6 +2,10 @@
 
 This document consolidates all the documentation created during the immutable refactoring of the Ariadne call graph system (task-100.11).
 
+## Final Update (2025-08-04)
+
+During the final task triage, it was discovered that the original 60KB `project_call_graph.ts` file was no longer being used anywhere in the codebase after the immutable refactoring. The file was deleted rather than refactored, which successfully completes task-100.11. The immutable implementation is now used directly throughout the codebase without any adapter layer.
+
 ## Table of Contents
 
 1. [Overview](#overview)
@@ -43,7 +47,8 @@ The system is now split into these modules:
 - `project_graph_data.ts` (was immutable_project_call_graph.ts): Core data structures
 - `graph_builder.ts` (was immutable_graph_builder.ts): Two-phase graph building
 - `readonly_types.ts` (was immutable_types.ts): TypeScript immutability utilities
-- `project_call_graph_adapter.ts`: Backward compatibility adapter
+
+Note: The `project_call_graph_adapter.ts` was removed and the Project class now uses the immutable API directly.
 
 ## Refactoring Plan
 
@@ -556,10 +561,9 @@ The immutable implementation has comparable memory usage to the mutable version 
 ## Conclusion
 
 The immutable refactoring successfully:
-1. Split the monolithic 60KB file into manageable modules
-2. Implemented comprehensive immutability patterns
-3. Maintained backward compatibility
-4. Improved testability and maintainability
-5. Achieved comparable performance with better safety guarantees
+1. Implemented comprehensive immutability patterns across the codebase
+2. Improved testability and maintainability
+3. Achieved comparable performance with better safety guarantees
+4. Eliminated the need for the 60KB project_call_graph.ts file entirely
 
-The new architecture is more modular, safer, and easier to extend while staying within tree-sitter's file size limits.
+The original goal of splitting the 60KB file was achieved in an unexpected way - the file was discovered to be unused after the refactoring and was deleted. The new immutable architecture is more modular, safer, and easier to extend.

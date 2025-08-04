@@ -179,7 +179,7 @@ function helper() {}
       expect(result).toBeDefined();
       expect(result!.calls).toHaveLength(3); // 2 functions + module-level
       expect(result!.calls[0].calls).toHaveLength(1);
-      expect(result!.calls[0].calls[0].resolved_definition).toBe(calledDef);
+      expect(result!.calls[0].calls[0].called_def).toBe(calledDef);
     });
 
     it('should track type discoveries', () => {
@@ -316,9 +316,10 @@ function test() {
       });
       
       const resolvedDef = createMockDef({
-        name: 'helper',
+        name: 'MyClass',
+        symbol_kind: 'class',
         file_path: 'other.ts',
-        symbol_id: 'other#helper'
+        symbol_id: 'other#MyClass'
       });
       
       const analysis: ProjectAnalysisData = {
@@ -328,28 +329,34 @@ function test() {
             exports: [],
             imports: [{
               importStatement: importDef,
-              localName: 'helper',
+              localName: 'MyClass',
               resolvedDefinition: resolvedDef,
               isTypeImport: false
             }],
             calls: [],
             typeTracker: {
               variableTypes: new Map(),
-              importedClasses: new Map(),
+              importedClasses: new Map([
+                ['MyClass', {
+                  className: 'MyClass',
+                  classDef: resolvedDef,
+                  sourceFile: 'other.ts'
+                }]
+              ]),
               exportedDefinitions: new Set()
             }
           }]
         ]),
         projectRegistry: {
           exportedTypes: new Map([
-            ['helper', {
-              className: 'helper',
+            ['MyClass', {
+              className: 'MyClass',
               classDef: resolvedDef,
               sourceFile: 'other.ts'
             }]
           ]),
           fileExports: new Map([
-            ['other.ts', new Set(['helper'])]
+            ['other.ts', new Set(['MyClass'])]
           ])
         }
       };

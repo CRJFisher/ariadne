@@ -400,6 +400,32 @@ export function build_scope_graph(
         new_def.enclosing_range = graph.node_to_simple_range(parent_node);
       }
     }
+    
+    // For class-like definitions, set enclosing_range to the parent node
+    // which contains the full class body
+    if (
+      node.parent &&
+      (kind === "class" || kind === "struct" || kind === "interface" || kind === "trait") &&
+      (node.type === "identifier" || node.type === "type_identifier")
+    ) {
+      const parent_node = node.parent;
+      // Check if parent is a class-like node
+      if (
+        // JavaScript/TypeScript
+        parent_node.type === "class_declaration" ||
+        parent_node.type === "class" ||
+        parent_node.type === "interface_declaration" ||
+        // Python
+        parent_node.type === "class_definition" ||
+        // Rust
+        parent_node.type === "struct_item" ||
+        parent_node.type === "impl_item" ||
+        parent_node.type === "enum_item" ||
+        parent_node.type === "trait_item"
+      ) {
+        new_def.enclosing_range = graph.node_to_simple_range(parent_node);
+      }
+    }
 
     // Add function metadata if this is a function definition
     if (
