@@ -345,10 +345,13 @@ export function build_call_graph_for_display(
     const sourceId = call.caller_def.symbol_id;
     const targetId = call.called_def.symbol_id;
     
-    // Skip if either node is filtered out
-    if (!nodes.has(sourceId) || !nodes.has(targetId)) {
+    // Skip if source node is filtered out
+    if (!nodes.has(sourceId)) {
       continue;
     }
+    
+    // For built-in functions, we still want to track the call
+    const isBuiltin = targetId.startsWith('<builtin>#');
     
     // For module-level calls, the source node might not exist
     if (sourceId === `${call.caller_def.file_path}#<module>`) {
@@ -362,8 +365,8 @@ export function build_call_graph_for_display(
       const sourceNode = nodes.get(sourceId);
       const targetNode = nodes.get(targetId);
       
-      if (sourceNode && targetNode) {
-        // Add to source's calls
+      if (sourceNode) {
+        // Always add to source's calls, even for built-ins
         const callObj: Call = {
           symbol: targetId,
           range: {
@@ -375,25 +378,29 @@ export function build_call_graph_for_display(
         };
         sourceNode.calls.push(callObj);
         
-        // Add to target's called_by
-        targetNode.called_by.push(sourceId);
-        
-        // Remove target from top-level if it's called by another function
-        topLevelNodes.delete(targetId);
+        // Only update target's called_by if it exists
+        if (targetNode) {
+          targetNode.called_by.push(sourceId);
+          
+          // Remove target from top-level if it's called by another function
+          topLevelNodes.delete(targetId);
+        }
       }
     }
     
-    // Create edge
-    const edge: CallGraphEdge = {
-      from: sourceId,
-      to: targetId,
-      location: {
-        start: call.call_location,
-        end: call.call_location
-      },
-      call_type: call.is_method_call ? 'method' : 'direct'
-    };
-    edges.push(edge);
+    // Create edge (skip for built-ins since they're not in the graph)
+    if (!isBuiltin) {
+      const edge: CallGraphEdge = {
+        from: sourceId,
+        to: targetId,
+        location: {
+          start: call.call_location,
+          end: call.call_location
+        },
+        call_type: call.is_method_call ? 'method' : 'direct'
+      };
+      edges.push(edge);
+    }
   }
   
   // Apply max_depth filtering if specified

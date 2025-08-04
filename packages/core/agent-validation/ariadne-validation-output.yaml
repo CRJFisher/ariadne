@@ -1,9 +1,9 @@
 meta:
-  timestamp: '2025-08-04T21:03:50.747Z'
+  timestamp: '2025-08-04T21:09:26.432Z'
   ariadne_version: 0.5.18
   total_files: 29
-  total_functions: 184
-  total_calls: 155
+  total_functions: 185
+  total_calls: 174
 top_level_nodes:
   - id: src/benchmark-incremental#generateLargeFile
     name: generateLargeFile
@@ -66,7 +66,7 @@ top_level_nodes:
     file: src/call_graph/import_export_detector.ts
     line: 437
     is_exported: true
-    calls_count: 2
+    calls_count: 3
     called_by_count: 0
   - id: src/call_graph/import_export_detector#is_class_export
     name: is_class_export
@@ -94,7 +94,7 @@ top_level_nodes:
     file: src/call_graph/project_graph_data.ts
     line: 47
     is_exported: true
-    calls_count: 0
+    calls_count: 1
     called_by_count: 0
   - id: src/call_graph/project_graph_data#add_file_cache
     name: add_file_cache
@@ -164,7 +164,7 @@ top_level_nodes:
     file: src/call_graph/project_graph_data.ts
     line: 290
     is_exported: false
-    calls_count: 0
+    calls_count: 1
     called_by_count: 0
   - id: src/call_graph/project_graph_data#ProjectCallGraphUpdater.addFileCache
     name: addFileCache
@@ -199,7 +199,7 @@ top_level_nodes:
     file: src/call_graph/project_graph_data.ts
     line: 333
     is_exported: true
-    calls_count: 0
+    calls_count: 2
     called_by_count: 0
   - id: src/call_graph/readonly_types#isReadonly
     name: isReadonly
@@ -584,7 +584,7 @@ top_level_nodes:
     file: src/scope_resolution.ts
     line: 82
     is_exported: true
-    calls_count: 23
+    calls_count: 25
     called_by_count: 0
   - id: src/symbol_naming#create_method_symbol_id
     name: create_method_symbol_id
@@ -619,7 +619,7 @@ top_level_nodes:
     file: src/symbol_resolver.ts
     line: 86
     is_exported: true
-    calls_count: 0
+    calls_count: 1
     called_by_count: 0
 sampled_nodes:
   - node:
@@ -742,10 +742,15 @@ sampled_nodes:
         target_file: src/call_graph/call_analysis.ts
         call_line: 121
         call_type: direct
+      - target_id: src/call_graph/call_analysis#is_reference_called
+        target_name: is_reference_called
+        target_file: src/call_graph/call_analysis.ts
+        call_line: 124
+        call_type: direct
       - target_id: src/call_graph/call_analysis#is_method_call_pattern
         target_name: is_method_call_pattern
         target_file: src/call_graph/call_analysis.ts
-        call_line: 130
+        call_line: 132
         call_type: direct
     incoming_calls:
       - source_id: src/call_graph/graph_builder#analyze_file
@@ -806,6 +811,8 @@ sampled_nodes:
           
           const resolved = resolve_reference(ref, def, config, currentLocalTracker);
           
+          // Check if this reference is part of a call expression
+          const isCallExpression = is_reference_called(ref, fileCache);
           
           if (resolved.resolved) {
             // Check if this is a callable symbol
@@ -824,6 +831,27 @@ sampled_nodes:
               };
               calls.push(call);
             }
+          } else if (isCallExpression) {
+            // This is an unresolved call (likely a built-in)
+            // Create a synthetic definition for tracking
+            const syntheticDef: Def = {
+              id: -1, // Special ID for built-ins
+              kind: 'definition',
+              name: ref.name,
+              symbol_id: `<builtin>#${ref.name}`,
+              symbol_kind: ref.symbol_kind === 'method' ? 'method' : 'function',
+              range: ref.range,
+              file_path: '<builtin>'
+            };
+            
+            const call: FunctionCall = {
+              caller_def: def,
+              called_def: syntheticDef,
+              call_location: ref.range.start,
+              is_method_call: ref.symbol_kind === 'method',
+              is_constructor_call: false
+            };
+            calls.push(call);
           }
           
           // Collect any type discoveries from method resolution
@@ -841,22 +869,27 @@ sampled_nodes:
       id: src/call_graph/call_analysis#analyze_module_level_calls
       name: analyze_module_level_calls
       file: src/call_graph/call_analysis.ts
-      line: 156
+      line: 179
     outgoing_calls:
       - target_id: src/call_graph/call_analysis#is_position_within_range
         target_name: is_position_within_range
         target_file: src/call_graph/call_analysis.ts
-        call_line: 176
+        call_line: 199
         call_type: direct
       - target_id: src/call_graph/call_analysis#is_position_within_range
         target_name: is_position_within_range
         target_file: src/call_graph/call_analysis.ts
-        call_line: 177
+        call_line: 200
+        call_type: direct
+      - target_id: src/call_graph/call_analysis#is_reference_called
+        target_name: is_reference_called
+        target_file: src/call_graph/call_analysis.ts
+        call_line: 223
         call_type: direct
       - target_id: src/call_graph/call_analysis#is_method_call_pattern
         target_name: is_method_call_pattern
         target_file: src/call_graph/call_analysis.ts
-        call_line: 220
+        call_line: 246
         call_type: direct
     incoming_calls:
       - source_id: src/call_graph/graph_builder#analyze_file
@@ -908,6 +941,9 @@ sampled_nodes:
         for (const ref of moduleLevelRefs) {
           const resolved = config.go_to_definition(file_path, ref.range.start);
           
+          // Check if this reference is part of a call expression
+          const isCallExpression = is_reference_called(ref, fileCache);
+          
           if (resolved) {
             // If resolved to an import, try to resolve the import
             let final_resolved = resolved;
@@ -940,6 +976,27 @@ sampled_nodes:
               };
               calls.push(call);
             }
+          } else if (isCallExpression) {
+            // This is an unresolved call (likely a built-in)
+            // Create a synthetic definition for tracking
+            const syntheticDef: Def = {
+              id: -1, // Special ID for built-ins
+              kind: 'definition',
+              name: ref.name,
+              symbol_id: `<builtin>#${ref.name}`,
+              symbol_kind: ref.symbol_kind === 'method' ? 'method' : 'function',
+              range: ref.range,
+              file_path: '<builtin>'
+            };
+            
+            const call: FunctionCall = {
+              caller_def: moduleDef,
+              called_def: syntheticDef,
+              call_location: ref.range.start,
+              is_method_call: ref.symbol_kind === 'method',
+              is_constructor_call: false
+            };
+            calls.push(call);
           }
         }
         
@@ -954,22 +1011,22 @@ sampled_nodes:
       id: src/call_graph/call_analysis#resolve_method_call_pure
       name: resolve_method_call_pure
       file: src/call_graph/call_analysis.ts
-      line: 243
+      line: 290
     outgoing_calls:
       - target_id: src/call_graph/type_tracker#get_local_variable_type
         target_name: get_local_variable_type
         target_file: src/call_graph/type_tracker.ts
-        call_line: 252
+        call_line: 299
         call_type: direct
       - target_id: src/call_graph/call_analysis#is_position_within_range
         target_name: is_position_within_range
         target_file: src/call_graph/call_analysis.ts
-        call_line: 292
+        call_line: 339
         call_type: direct
       - target_id: src/call_graph/call_analysis#is_position_within_range
         target_name: is_position_within_range
         target_file: src/call_graph/call_analysis.ts
-        call_line: 293
+        call_line: 340
         call_type: direct
     incoming_calls:
       - source_id: src/call_graph/call_analysis#resolve_reference
@@ -1046,7 +1103,7 @@ sampled_nodes:
       id: src/call_graph/call_analysis#find_definition_range
       name: find_definition_range
       file: src/call_graph/call_analysis.ts
-      line: 311
+      line: 358
     outgoing_calls: []
     incoming_calls:
       - source_id: src/call_graph/call_analysis#analyze_calls_from_definition
@@ -1127,7 +1184,7 @@ sampled_nodes:
       id: src/call_graph/call_analysis#is_position_within_range
       name: is_position_within_range
       file: src/call_graph/call_analysis.ts
-      line: 381
+      line: 428
     outgoing_calls: []
     incoming_calls:
       - source_id: src/call_graph/call_analysis#analyze_calls_from_definition
@@ -1188,7 +1245,7 @@ file_summary:
     exported_function_count: 13
     import_count: 7
   - file: src/call_graph/call_analysis.ts
-    function_count: 12
+    function_count: 13
     exported_function_count: 4
     import_count: 11
   - file: src/function_metadata.ts
@@ -1280,8 +1337,8 @@ file_summary:
     exported_function_count: 1
     import_count: 2
 validation_stats:
-  nodes_with_calls_pct: 36.6120218579235
-  nodes_called_by_others_pct: 51.91256830601093
-  exported_nodes_pct: 42.62295081967213
+  nodes_with_calls_pct: 40.76086956521739
+  nodes_called_by_others_pct: 52.17391304347826
+  exported_nodes_pct: 42.391304347826086
   edges_with_call_type_pct: 100
   top_level_accuracy_pct: 100

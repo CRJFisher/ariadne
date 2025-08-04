@@ -120,6 +120,8 @@ export function analyze_calls_from_definition(
     
     const resolved = resolve_reference(ref, def, config, currentLocalTracker);
     
+    // Check if this reference is part of a call expression
+    const isCallExpression = is_reference_called(ref, fileCache);
     
     if (resolved.resolved) {
       // Check if this is a callable symbol
@@ -138,6 +140,27 @@ export function analyze_calls_from_definition(
         };
         calls.push(call);
       }
+    } else if (isCallExpression) {
+      // This is an unresolved call (likely a built-in)
+      // Create a synthetic definition for tracking
+      const syntheticDef: Def = {
+        id: -1, // Special ID for built-ins
+        kind: 'definition',
+        name: ref.name,
+        symbol_id: `<builtin>#${ref.name}`,
+        symbol_kind: ref.symbol_kind === 'method' ? 'method' : 'function',
+        range: ref.range,
+        file_path: '<builtin>'
+      };
+      
+      const call: FunctionCall = {
+        caller_def: def,
+        called_def: syntheticDef,
+        call_location: ref.range.start,
+        is_method_call: ref.symbol_kind === 'method',
+        is_constructor_call: false
+      };
+      calls.push(call);
     }
     
     // Collect any type discoveries from method resolution
@@ -196,6 +219,9 @@ export function analyze_module_level_calls(
   for (const ref of moduleLevelRefs) {
     const resolved = config.go_to_definition(file_path, ref.range.start);
     
+    // Check if this reference is part of a call expression
+    const isCallExpression = is_reference_called(ref, fileCache);
+    
     if (resolved) {
       // If resolved to an import, try to resolve the import
       let final_resolved = resolved;
@@ -228,6 +254,27 @@ export function analyze_module_level_calls(
         };
         calls.push(call);
       }
+    } else if (isCallExpression) {
+      // This is an unresolved call (likely a built-in)
+      // Create a synthetic definition for tracking
+      const syntheticDef: Def = {
+        id: -1, // Special ID for built-ins
+        kind: 'definition',
+        name: ref.name,
+        symbol_id: `<builtin>#${ref.name}`,
+        symbol_kind: ref.symbol_kind === 'method' ? 'method' : 'function',
+        range: ref.range,
+        file_path: '<builtin>'
+      };
+      
+      const call: FunctionCall = {
+        caller_def: moduleDef,
+        called_def: syntheticDef,
+        call_location: ref.range.start,
+        is_method_call: ref.symbol_kind === 'method',
+        is_constructor_call: false
+      };
+      calls.push(call);
     }
   }
   
@@ -413,6 +460,49 @@ function is_method_call_pattern(ref: Ref, file_path: string, fileCache: FileCach
   } else if (file_path.endsWith('.rs') && 
              (beforeRef.endsWith('.') || beforeRef.endsWith('::'))) {
     return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Check if a reference is part of a call expression
+ */
+function is_reference_called(ref: Ref, fileCache: FileCache): boolean {
+  // Get the AST node for this reference
+  const astNode = fileCache.tree.rootNode.descendantForPosition(
+    { row: ref.range.start.row, column: ref.range.start.column },
+    { row: ref.range.end.row, column: ref.range.end.column }
+  );
+  
+  if (!astNode) return false;
+  
+  // Check if this node's parent is a call expression
+  const parent = astNode.parent;
+  if (!parent) return false;
+  
+  // Direct function call: func()
+  if (parent.type === 'call_expression' && parent.childForFieldName('function') === astNode) {
+    return true;
+  }
+  
+  // Method call: obj.method() - the reference is the property of a member_expression
+  if (parent.type === 'member_expression' && parent.childForFieldName('property') === astNode) {
+    // Check if the member_expression is the function of a call_expression
+    const grandparent = parent.parent;
+    if (grandparent && grandparent.type === 'call_expression' && 
+        grandparent.childForFieldName('function') === parent) {
+      return true;
+    }
+  }
+  
+  // Handle nested identifiers in some languages
+  if (parent.type === 'nested_identifier' || parent.type === 'scoped_identifier') {
+    const grandparent = parent.parent;
+    if (grandparent && grandparent.type === 'call_expression' && 
+        grandparent.childForFieldName('function') === parent) {
+      return true;
+    }
   }
   
   return false;
