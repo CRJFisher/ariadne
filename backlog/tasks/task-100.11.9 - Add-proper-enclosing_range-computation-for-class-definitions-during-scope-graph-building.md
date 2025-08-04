@@ -18,11 +18,11 @@ Currently, enclosing_range is only set for functions in scope_resolution.ts, not
 
 ## Acceptance Criteria
 
-- [ ] Class definitions have enclosing_range set in scope_resolution.ts
-- [ ] Method resolution can use range checking instead of symbol_id matching
-- [ ] All language-specific class patterns are handled (TypeScript/JavaScript classes
-- [ ] Python classes
-- [ ] Rust structs/impl blocks)
+- [x] Class definitions have enclosing_range set in scope_resolution.ts
+- [x] Method resolution can use range checking instead of symbol_id matching
+- [x] All language-specific class patterns are handled (TypeScript/JavaScript classes
+- [x] Python classes
+- [x] Rust structs/impl blocks)
 
 ## Implementation Plan
 
@@ -42,6 +42,7 @@ Successfully implemented enclosing_range computation for class definitions:
 - All enclosing_range tests passing (12/12)
 
 The implementation now properly sets enclosing_range for:
+
 - JavaScript/TypeScript: class_declaration, class, interface_declaration
 - Python: class_definition
 - Rust: struct_item, impl_item, enum_item, trait_item

@@ -533,7 +533,8 @@ export class Project {
         this.go_to_definition(file_path, position) || undefined,
       get_imports_with_definitions: (file_path: string) => 
         this.get_imports_with_definitions(file_path),
-      get_file_graph: (path: string) => this.call_graph_data.fileGraphs.get(path)
+      get_file_graph: (path: string) => this.call_graph_data.fileGraphs.get(path),
+      get_file_cache: (path: string) => this.call_graph_data.fileCache.get(path)
     };
     
     const result = analyze_calls_from_definition(def, config);
@@ -611,7 +612,8 @@ export class Project {
             this.go_to_definition(fp, pos) || undefined,
           get_imports_with_definitions: (fp: string) => 
             this.get_imports_with_definitions(fp),
-          get_file_graph: (path: string) => this.call_graph_data.fileGraphs.get(path)
+          get_file_graph: (path: string) => this.call_graph_data.fileGraphs.get(path),
+          get_file_cache: (path: string) => this.call_graph_data.fileCache.get(path)
         };
         
         const moduleCalls = analyze_module_level_calls(file_path, config);

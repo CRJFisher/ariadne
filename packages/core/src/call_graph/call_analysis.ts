@@ -61,6 +61,7 @@ export interface CallAnalysisConfig {
     imported_function: Def;
   }>;
   readonly get_file_graph?: (file_path: string) => ScopeGraph | undefined;
+  readonly get_file_cache?: (file_path: string) => FileCache | undefined;
 }
 
 /**
@@ -306,8 +307,16 @@ export function resolve_method_call_pure(
       const classGraph = config.get_file_graph(typeInfo.classDef.file_path);
       const classDefs = classGraph ? classGraph.getNodes<Def>('definition') : [];
       
-      // Use enclosing_range if available, otherwise fall back to range
-      const classRange = typeInfo.classDef.enclosing_range || typeInfo.classDef.range;
+      // Compute enclosing_range if not available
+      let classRange = typeInfo.classDef.enclosing_range;
+      if (!classRange && config.get_file_cache) {
+        const classFileCache = config.get_file_cache(typeInfo.classDef.file_path);
+        if (classFileCache) {
+          classRange = compute_class_enclosing_range(typeInfo.classDef, classFileCache.tree);
+        }
+      }
+      // Fall back to range if still not available
+      classRange = classRange || typeInfo.classDef.range;
       
       // Find method by checking if it's within the class range
       // This is more reliable than symbol_id matching
@@ -789,7 +798,6 @@ function resolve_call_return_type(
   
   // Handle direct function calls: func()
   else if (funcNode.type === 'identifier') {
-    const funcName = funcNode.text;
     const funcDef = config.go_to_definition(contextDef.file_path, {
       row: funcNode.startPosition.row,
       column: funcNode.startPosition.column
@@ -830,7 +838,7 @@ function resolve_method_on_type(
       const method = classDefs.find(d => 
         d.name === methodRef.name && 
         (d.symbol_kind === 'method' || d.symbol_kind === 'function') &&
-        is_method_of_class(d, typeDef, typeGraph)
+        is_method_of_class(d, typeDef)
       );
       
       if (method) {
@@ -847,8 +855,7 @@ function resolve_method_on_type(
  */
 function is_method_of_class(
   methodDef: Def,
-  classDef: Def,
-  graph: ScopeGraph
+  classDef: Def
 ): boolean {
   // Check if the method is within the class's enclosing range
   const classRange = (classDef as any).enclosing_range || classDef.range;
@@ -868,7 +875,51 @@ export function compute_class_enclosing_range(
     return undefined;
   }
   
-  // For now, just return the definition range
-  // Full implementation would require tree-sitter node traversal
+  // Find the AST node for this class definition
+  const classNode = tree.rootNode.descendantForPosition(
+    { row: classDef.range.start.row, column: classDef.range.start.column },
+    { row: classDef.range.end.row, column: classDef.range.end.column }
+  );
+  
+  if (!classNode) {
+    return classDef.range;
+  }
+  
+  // Walk up to find the full class/struct definition node
+  let current = classNode;
+  while (current.parent) {
+    const nodeType = current.parent.type;
+    
+    // Check for class-like definition nodes
+    if (
+      // JavaScript/TypeScript
+      nodeType === 'class_declaration' ||
+      nodeType === 'class' ||
+      nodeType === 'interface_declaration' ||
+      // Python
+      nodeType === 'class_definition' ||
+      // Rust
+      nodeType === 'struct_item' ||
+      nodeType === 'impl_item' ||
+      nodeType === 'enum_item' ||
+      nodeType === 'trait_item'
+    ) {
+      // Return the range of the full class node
+      return {
+        start: { 
+          row: current.parent.startPosition.row, 
+          column: current.parent.startPosition.column 
+        },
+        end: { 
+          row: current.parent.endPosition.row, 
+          column: current.parent.endPosition.column 
+        }
+      };
+    }
+    
+    current = current.parent;
+  }
+  
+  // Fallback to the definition range if we couldn't find a parent class node
   return classDef.range;
 }
