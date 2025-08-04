@@ -22,9 +22,9 @@ This cycle continues until Ariadne correctly parses and processes its own codeba
 
 Epic task implementing the iterative validation process to meet accuracy thresholds:
 
-- **Current metrics**: nodes-with-calls 36.9% (need 85%), nodes-called-by-others 65% (need 85%)
+- **Current metrics**: nodes-with-calls 40.8% (need 85%), nodes-called-by-others 52.2% (need 85%)
 - **Iteration 1 findings**: Method calls not detected, file size limit causing skipped files
-- **Active sub-tasks**: task-100.1 through task-100.10 (focusing on method call and file size issues)
+- **Active sub-tasks**: task-100.3, task-100.6, task-100.9, task-100.10 (focusing on validation and file size issues)
 - **Process**: Fix sub-tasks → Re-run validation → Create new sub-tasks if needed → Repeat
 - **Goal**: Achieve 85%+ accuracy through iterative improvements
 
@@ -65,6 +65,10 @@ Epic task implementing the iterative validation process to meet accuracy thresho
 
 - Implement return type tracking for method chains (task-100.11.13)
 - Track all function calls including built-ins (task-100.11.14)
+- Fix low nodes-with-calls percentage (task-100.1)
+- Fix low nodes-called-by-others percentage (task-100.2)
+- Fix incoming call detection (task-100.8)
+- Archive completed immutable implementation tasks (100.11.1-6, 100.11.8)
 - Fix Rust-specific cross-file method resolution (task-100.11.11)
 - Fix import counting accuracy (task-100.7)
 

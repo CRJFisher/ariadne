@@ -1,7 +1,7 @@
 ---
 id: task-100.11
 title: Refactor project_call_graph.ts to be under 32KB tree-sitter limit
-status: In Progress
+status: Partially Complete
 assignee:
   - '@chuck'
 created_date: '2025-08-04 13:54'
@@ -60,3 +60,23 @@ Key principles:
 - All functions are pure (no side effects)
 - State changes flow through return values
 - Use structural sharing for efficiency
+
+## Status Update
+
+The immutable refactoring subtasks have been completed:
+- ✅ task-100.11.1: Implement immutable type tracking system
+- ✅ task-100.11.2: Create immutable import/export detection module
+- ✅ task-100.11.3: Implement immutable call analysis with state passing
+- ✅ task-100.11.4: Create immutable ProjectCallGraphData with update functions
+- ✅ task-100.11.5: Implement two-phase call graph building
+- ✅ task-100.11.6: Add immutability tests and performance benchmarks
+- ✅ task-100.11.8: Research TypeScript immutability patterns
+- ✅ task-100.11.13: Implement return type tracking for method chains
+- ✅ task-100.11.14: Track all function calls including built-ins
+
+However, the main goal of reducing file size was not achieved:
+- project_call_graph.ts is still 60KB (exceeds 32KB limit)
+- The immutable implementation improved code quality but didn't reduce file size
+- The file still cannot be analyzed by Ariadne during self-validation
+
+To complete this task, we still need to physically split the large file into smaller modules.

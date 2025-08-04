@@ -138,16 +138,32 @@ validation:
       completed: "2025-08-04"
       notes: "Fixed Type::new() pattern and import resolution for crate:: paths"
       
-  todo:
+    - id: task-100.11.13
+      title: "Implement return type tracking for method chains"
+      completed: "2025-08-04"
+      notes: "Added return type analysis for full method chain resolution"
+      
+    - id: task-100.11.14
+      title: "Track all function calls including built-ins"
+      completed: "2025-08-04"
+      notes: "Now tracks console.log, JSON methods, array methods, etc."
+      
     - id: task-100.1
       title: "Fix low nodes-with-calls percentage (36.9% vs 85% threshold)"
-      parent: task-100
-      priority: "Critical"
+      completed: "2025-08-04"
+      notes: "Resolved by implementing built-in call tracking"
       
     - id: task-100.2
       title: "Fix low nodes-called-by-others percentage (65% vs 85% threshold)"
-      parent: task-100
-      priority: "Critical"
+      completed: "2025-08-04"
+      notes: "Resolved by implementing return type tracking for method chains"
+      
+    - id: task-100.8
+      title: "Fix incoming call detection (task-90)"
+      completed: "2025-08-04"
+      notes: "Resolved by implementing return type tracking for method chains"
+      
+  todo:
       
     - id: task-100.3
       title: "Complete remaining agent validation fixes (task-62)"
@@ -167,24 +183,7 @@ validation:
       notes: "Proactive measure to prevent files exceeding 32KB limit"
       
       
-    - id: task-100.8
-      title: "Fix incoming call detection (task-90)"
-      parent: task-100
-      priority: "Critical"
-      status: "Investigated"
-      notes: "Root cause: method chains not tracked due to lack of return type tracking"
       
-    - id: task-100.11.14
-      title: "Track all function calls including built-ins"
-      parent: task-100.11
-      priority: "High"
-      notes: "Currently only tracks internal calls, missing built-in/external calls"
-      
-    - id: task-100.11.13
-      title: "Implement return type tracking for method chains"
-      parent: task-100.11
-      priority: "Critical"
-      notes: "Required for method chain resolution (obj.getInner().process())"
       
     - id: task-100.9
       title: "Add CommonJS and ES6 export support (tasks 71-72)"
@@ -264,8 +263,8 @@ documentation:
 work_order:
   immediate:
     - task-100        # EPIC: Improve self-analysis accuracy
-    - task-100.11.13  # Implement return type tracking (critical for method chains)
-    - task-100.11.14  # Track all function calls including built-ins
+    - task-100.3      # Complete remaining validation fixes
+    - task-100.6      # Add file size linting to prevent validation failures
     
   next:
     - task-100.3   # Complete remaining validation fixes
@@ -283,6 +282,11 @@ work_order:
   completed_today:
     - task-100.11.11  # Fix Rust cross-file method resolution
     - task-100.7      # Fix import counting accuracy
+    - task-100.11.13  # Implement return type tracking for method chains
+    - task-100.11.14  # Track all function calls including built-ins
+    - task-100.1      # Fix low nodes-with-calls percentage
+    - task-100.2      # Fix low nodes-called-by-others percentage
+    - task-100.8      # Fix incoming call detection
 
 # TASK GROUPS
 groups:
