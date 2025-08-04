@@ -690,8 +690,6 @@ export class Project {
           targetFile = ModuleResolver.resolvePythonImport(file_path, imp.source_module);
         } else if (ext === '.rs') {
           targetFile = ModuleResolver.resolveRustModule(file_path, imp.source_module);
-          console.log(`Rust import resolution: ${imp.source_module} from ${file_path} -> ${targetFile}`);
-          
           // Fallback for virtual file system (tests)
           if (!targetFile && imp.source_module) {
             // Try to find a file that matches the module path
@@ -710,11 +708,9 @@ export class Project {
               for (const possiblePath of possiblePaths) {
                 if (this.file_graphs.has(possiblePath)) {
                   targetFile = possiblePath;
-                  console.log(`  Fallback resolved crate:: to: ${targetFile}`);
-                  break;
+        break;
                 } else {
-                  console.log(`  No match found for: ${possiblePath}`);
-                }
+        }
               }
             } else {
               // Original fallback for non-crate imports

@@ -216,12 +216,6 @@ export function build_scope_graph(
             // The structure is use_declaration -> scoped_identifier or use_declaration -> use_as_clause -> scoped_identifier
             let scopedIdent = null;
             
-            // Debug logging
-            console.log(`Processing Rust use_declaration, children:`, current.childCount);
-            for (let i = 0; i < current.childCount; i++) {
-              const child = current.child(i);
-              console.log(`  Child ${i}: type=${child?.type}, text=${child?.text}`);
-            }
             
             // First check if there's a use_as_clause child
             for (let i = 0; i < current.childCount; i++) {
@@ -251,7 +245,6 @@ export function build_scope_graph(
               } else {
                 module_path = fullPath;
               }
-              console.log(`  Extracted module_path: ${module_path} from fullPath: ${fullPath}`);
             }
           } else if (current.type === "use_as_clause") {
             // This case is handled by the parent use_declaration

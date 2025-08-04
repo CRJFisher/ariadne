@@ -38,6 +38,7 @@ mcpServer.registerTool(
             },
           },
         ],
+        maxTokens: 200,
         // You can also request specific models or parameters
         // model: "claude-3-5-sonnet-20240620", 
       });

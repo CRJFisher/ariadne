@@ -93,7 +93,7 @@ export function analyze_calls_from_definition(
   // First pass: identify constructor calls and collect type discoveries
   for (const ref of definitionRefs) {
     const constructorAnalysis = analyze_constructor_call(ref, def, config);
-    if (constructorAnalysis) {
+    if (constructorAnalysis && constructorAnalysis.typeDiscoveries.length > 0) {
       typeDiscoveries.push(...constructorAnalysis.typeDiscoveries);
     }
   }
@@ -431,6 +431,7 @@ function analyze_constructor_call(
     { row: ref.range.end.row, column: ref.range.end.column }
   );
   
+  
   // Check for constructor calls
   const isConstructorCall = astNode && astNode.parent && (
     astNode.parent.type === 'new_expression' ||  // JS/TS: new ClassName()
@@ -448,10 +449,13 @@ function analyze_constructor_call(
   let constructorName = ref.name;
   
   // For Rust Type::new() pattern, get the type name
+  let rustTypeNode: any = null;
   if (def.file_path.endsWith('.rs') && ref.name === 'new' && astNode?.parent?.type === 'scoped_identifier') {
     const typeName = astNode.parent.childForFieldName('path')?.text || astNode.parent.children[0]?.text;
     if (typeName) {
       constructorName = typeName;
+      // Also store the node for the type name for later resolution
+      rustTypeNode = astNode.parent.childForFieldName('path') || astNode.parent.children[0];
     }
   }
   
@@ -472,6 +476,7 @@ function analyze_constructor_call(
     assignmentNode = assignmentNode.parent;
   }
   
+  
   if (assignmentNode) {
     let varNameNode: any = null;
     
@@ -485,11 +490,13 @@ function analyze_constructor_call(
       varNameNode = assignmentNode.childForFieldName('pattern');
     }
     
+    
     if (varNameNode && varNameNode.type === 'identifier') {
       const varName = varNameNode.text;
       const position = assignmentNode.startPosition ? 
         { row: assignmentNode.startPosition.row, column: assignmentNode.startPosition.column } : 
         ref.range.start;
+      
       
       
       if (fileImportedClass) {
@@ -506,7 +513,28 @@ function analyze_constructor_call(
         typeDiscoveries.push(discovery);
       } else {
         // Try to resolve the constructor
-        const resolved = config.go_to_definition(def.file_path, ref.range.start);
+        // For Rust, use the type node position instead of the 'new' method position
+        let resolvePosition = ref.range.start;
+        if (rustTypeNode && rustTypeNode.startPosition) {
+          resolvePosition = { row: rustTypeNode.startPosition.row, column: rustTypeNode.startPosition.column };
+        }
+        
+        let resolved = config.go_to_definition(def.file_path, resolvePosition);
+        
+        // If we resolved to an import, follow it
+        if (resolved && resolved.symbol_kind === 'import') {
+          const imports = config.get_imports_with_definitions(def.file_path);
+          const importInfo = imports.find(imp => 
+            imp.import_statement.name === resolved.name &&
+            imp.import_statement.range.start.row === resolved.range.start.row &&
+            imp.import_statement.range.start.column === resolved.range.start.column
+          );
+          
+          if (importInfo && importInfo.imported_function) {
+            resolved = importInfo.imported_function;
+          }
+        }
+        
         if (resolved && (resolved.symbol_kind === 'class' || resolved.symbol_kind === 'struct')) {
           // Compute enclosing range if needed
           const classDefWithRange = {
@@ -515,15 +543,16 @@ function analyze_constructor_call(
               compute_class_enclosing_range(resolved, fileCache.tree)
           };
           
-          typeDiscoveries.push({
+          const discovery = {
             variableName: varName,
             typeInfo: {
               className: resolved.name,
               classDef: classDefWithRange,
               position
             },
-            scope: 'local'
-          });
+            scope: 'local' as const
+          };
+          typeDiscoveries.push(discovery);
         }
       }
     }
