@@ -1,11 +1,11 @@
 ---
 id: task-81
 title: Handle variable reassignments in type registry
-status: In Progress
+status: Done
 assignee:
   - '@assistant'
 created_date: '2025-08-03'
-updated_date: '2025-08-04 08:54'
+updated_date: '2025-08-04 10:12'
 labels: []
 dependencies: []
 ---

@@ -7,7 +7,7 @@
 - Refactoring help
   - Concisely display call graph
 
-
 ## Strategy
 
-- There is probably 
+- There is probably a lot of value in further prototyping of the features in the code-charter repo.
+- Then we can split the modules out (e.g. `ui`, )

@@ -1,51 +1,44 @@
 meta:
-  timestamp: '2025-08-03T10:48:06.678Z'
+  timestamp: '2025-08-04T10:43:25.617Z'
   ariadne_version: 0.5.18
-  total_files: 19
-  total_functions: 121
-  total_calls: 100
+  total_files: 20
+  total_functions: 104
+  total_calls: 104
 top_level_nodes:
   - id: src/call_graph_utils#apply_max_depth_filter
     name: apply_max_depth_filter
     file: src/call_graph_utils.ts
     line: 16
-    is_exported: false
+    is_exported: true
     calls_count: 0
     called_by_count: 0
   - id: src/call_graph_utils#is_position_within_range
     name: is_position_within_range
     file: src/call_graph_utils.ts
     line: 71
-    is_exported: false
+    is_exported: true
     calls_count: 0
     called_by_count: 0
   - id: src/call_graph_utils#get_function_node_range
     name: get_function_node_range
     file: src/call_graph_utils.ts
     line: 86
-    is_exported: false
+    is_exported: true
     calls_count: 0
     called_by_count: 0
   - id: src/edit#create_edit
     name: create_edit
     file: src/edit.ts
     line: 13
-    is_exported: false
+    is_exported: true
     calls_count: 0
     called_by_count: 0
   - id: src/edit#calculate_end_position
     name: calculate_end_position
     file: src/edit.ts
     line: 39
-    is_exported: false
+    is_exported: true
     calls_count: 0
-    called_by_count: 0
-  - id: src/function_metadata#extract_function_metadata
-    name: extract_function_metadata
-    file: src/function_metadata.ts
-    line: 9
-    is_exported: false
-    calls_count: 8
     called_by_count: 0
   - id: src/graph#ScopeGraph.constructor
     name: constructor
@@ -54,171 +47,108 @@ top_level_nodes:
     is_exported: false
     calls_count: 1
     called_by_count: 0
-  - id: src/graph#ScopeGraph.insert_local_def
-    name: insert_local_def
-    file: src/graph.ts
-    line: 82
-    is_exported: false
-    calls_count: 1
-    called_by_count: 0
-  - id: src/graph#ScopeGraph.insert_hoisted_def
-    name: insert_hoisted_def
-    file: src/graph.ts
-    line: 88
-    is_exported: false
-    calls_count: 1
-    called_by_count: 0
-  - id: src/graph#ScopeGraph.insert_global_def
-    name: insert_global_def
-    file: src/graph.ts
-    line: 104
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/graph#ScopeGraph.insert_local_scope
-    name: insert_local_scope
-    file: src/graph.ts
-    line: 109
-    is_exported: false
-    calls_count: 1
-    called_by_count: 0
-  - id: src/graph#ScopeGraph.insert_local_import
-    name: insert_local_import
-    file: src/graph.ts
-    line: 115
-    is_exported: false
-    calls_count: 1
-    called_by_count: 0
-  - id: src/graph#ScopeGraph.insert_ref
-    name: insert_ref
-    file: src/graph.ts
-    line: 121
-    is_exported: false
-    calls_count: 4
-    called_by_count: 0
-  - id: src/graph#ScopeGraph.node_to_simple_range
-    name: node_to_simple_range
-    file: src/graph.ts
-    line: 194
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
   - id: src/graph#ScopeGraph.getEdges
     name: getEdges
     file: src/graph.ts
-    line: 244
+    line: 247
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: src/graph#ScopeGraph.getDefsForRef
     name: getDefsForRef
     file: src/graph.ts
-    line: 249
+    line: 252
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: src/graph#ScopeGraph.getImportsForRef
     name: getImportsForRef
     file: src/graph.ts
-    line: 260
+    line: 263
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: src/graph#ScopeGraph.getRefsForDef
     name: getRefsForDef
     file: src/graph.ts
-    line: 271
+    line: 274
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: src/graph#ScopeGraph.findNodeAtPosition
     name: findNodeAtPosition
     file: src/graph.ts
-    line: 282
+    line: 285
     is_exported: false
     calls_count: 1
     called_by_count: 0
   - id: src/graph#ScopeGraph.getAllDefs
     name: getAllDefs
     file: src/graph.ts
-    line: 324
+    line: 327
     is_exported: false
     calls_count: 1
     called_by_count: 0
-  - id: src/graph#ScopeGraph.getAllImports
-    name: getAllImports
+  - id: src/graph#ScopeGraph.getImportStatementCount
+    name: getImportStatementCount
     file: src/graph.ts
-    line: 329
+    line: 337
     is_exported: false
     calls_count: 1
     called_by_count: 0
   - id: src/graph#ScopeGraph.findExportedDef
     name: findExportedDef
     file: src/graph.ts
-    line: 334
+    line: 354
     is_exported: false
     calls_count: 1
     called_by_count: 0
   - id: src/graph#ScopeGraph.debug_print
     name: debug_print
     file: src/graph.ts
-    line: 352
+    line: 372
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: src/graph#ScopeGraph.getCallsFromDef
     name: getCallsFromDef
     file: src/graph.ts
-    line: 365
+    line: 385
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: src/graph#ScopeGraph.getSymbolId
     name: getSymbolId
     file: src/graph.ts
-    line: 370
+    line: 390
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: src/graph#ScopeGraph.getDefinitionBySymbol
     name: getDefinitionBySymbol
     file: src/graph.ts
-    line: 374
+    line: 394
     is_exported: false
     calls_count: 1
     called_by_count: 0
   - id: src/graph#ScopeGraph.getFunctionCalls
     name: getFunctionCalls
     file: src/graph.ts
-    line: 378
+    line: 398
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: src/graph#ScopeGraph.getImportInfo
     name: getImportInfo
     file: src/graph.ts
-    line: 383
+    line: 403
     is_exported: false
     calls_count: 0
     called_by_count: 0
   - id: src/graph#ScopeGraph.getCallGraph
     name: getCallGraph
     file: src/graph.ts
-    line: 388
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/inheritance#extract_class_relationships
-    name: extract_class_relationships
-    file: src/inheritance.ts
-    line: 14
-    is_exported: false
-    calls_count: 6
-    called_by_count: 0
-  - id: src/languages/shared_extractors#extract_jsdoc_context
-    name: extract_jsdoc_context
-    file: src/languages/shared_extractors.ts
-    line: 7
+    line: 408
     is_exported: false
     calls_count: 0
     called_by_count: 0
@@ -288,50 +218,43 @@ top_level_nodes:
   - id: src/scope_resolution#build_scope_graph
     name: build_scope_graph
     file: src/scope_resolution.ts
-    line: 11
-    is_exported: false
-    calls_count: 4
-    called_by_count: 0
-  - id: src/symbol_naming#get_symbol_id
-    name: get_symbol_id
-    file: src/symbol_naming.ts
-    line: 16
-    is_exported: false
-    calls_count: 4
+    line: 81
+    is_exported: true
+    calls_count: 22
     called_by_count: 0
   - id: src/symbol_naming#create_method_symbol_id
     name: create_method_symbol_id
     file: src/symbol_naming.ts
     line: 104
-    is_exported: false
+    is_exported: true
     calls_count: 0
     called_by_count: 0
   - id: src/symbol_naming#get_symbol_container
     name: get_symbol_container
     file: src/symbol_naming.ts
     line: 129
-    is_exported: false
-    calls_count: 4
+    is_exported: true
+    calls_count: 2
     called_by_count: 0
   - id: src/symbol_naming#get_unqualified_name
     name: get_unqualified_name
     file: src/symbol_naming.ts
     line: 146
-    is_exported: false
-    calls_count: 2
+    is_exported: true
+    calls_count: 1
     called_by_count: 0
   - id: src/symbol_naming#same_module
     name: same_module
     file: src/symbol_naming.ts
     line: 165
-    is_exported: false
-    calls_count: 4
+    is_exported: true
+    calls_count: 2
     called_by_count: 0
   - id: src/symbol_resolver#find_definition
     name: find_definition
     file: src/symbol_resolver.ts
     line: 86
-    is_exported: false
+    is_exported: true
     calls_count: 0
     called_by_count: 0
 sampled_nodes:
@@ -509,6 +432,64 @@ sampled_nodes:
 
       // Run benchmarks
   - node:
+      id: src/function_metadata#extract_function_metadata
+      name: extract_function_metadata
+      file: src/function_metadata.ts
+      line: 9
+    outgoing_calls:
+      - target_id: src/function_metadata#extract_typescript_function_metadata
+        target_name: extract_typescript_function_metadata
+        target_file: src/function_metadata.ts
+        call_line: 20
+        call_type: direct
+      - target_id: src/function_metadata#extract_javascript_function_metadata
+        target_name: extract_javascript_function_metadata
+        target_file: src/function_metadata.ts
+        call_line: 23
+        call_type: direct
+      - target_id: src/function_metadata#extract_python_function_metadata
+        target_name: extract_python_function_metadata
+        target_file: src/function_metadata.ts
+        call_line: 25
+        call_type: direct
+      - target_id: src/function_metadata#extract_rust_function_metadata
+        target_name: extract_rust_function_metadata
+        target_file: src/function_metadata.ts
+        call_line: 27
+        call_type: direct
+    incoming_calls:
+      - source_id: src/scope_resolution#build_scope_graph
+        source_name: build_scope_graph
+        source_file: src/scope_resolution.ts
+    source_snippet: |2-
+       * This is language-agnostic and delegates to language-specific extractors.
+       */
+      export function extract_function_metadata(
+        node: SyntaxNode,
+        parent_node: SyntaxNode | null,
+        config: LanguageConfig,
+        source_code: string
+      ): FunctionMetadata | undefined {
+        const language_name = config.name.toLowerCase();
+        
+        switch (language_name) {
+          case "typescript":
+          case "tsx":
+            return extract_typescript_function_metadata(node, parent_node, source_code);
+          case "javascript":
+          case "jsx":
+            return extract_javascript_function_metadata(node, parent_node, source_code);
+          case "python":
+            return extract_python_function_metadata(node, parent_node, source_code);
+          case "rust":
+            return extract_rust_function_metadata(node, parent_node, source_code);
+          default:
+            return undefined;
+        }
+      }
+
+      /**
+  - node:
       id: src/function_metadata#extract_typescript_function_metadata
       name: extract_typescript_function_metadata
       file: src/function_metadata.ts
@@ -530,9 +511,6 @@ sampled_nodes:
         call_line: 77
         call_type: direct
     incoming_calls:
-      - source_id: src/function_metadata#extract_function_metadata
-        source_name: extract_function_metadata
-        source_file: src/function_metadata.ts
       - source_id: src/function_metadata#extract_function_metadata
         source_name: extract_function_metadata
         source_file: src/function_metadata.ts
@@ -658,9 +636,6 @@ sampled_nodes:
       - source_id: src/function_metadata#extract_function_metadata
         source_name: extract_function_metadata
         source_file: src/function_metadata.ts
-      - source_id: src/function_metadata#extract_function_metadata
-        source_name: extract_function_metadata
-        source_file: src/function_metadata.ts
     source_snippet: |2-
        * Extract metadata for JavaScript functions
        */
@@ -764,154 +739,59 @@ sampled_nodes:
       }
 
       /**
-  - node:
-      id: src/function_metadata#extract_python_function_metadata
-      name: extract_python_function_metadata
-      file: src/function_metadata.ts
-      line: 234
-    outgoing_calls:
-      - target_id: src/function_metadata#extract_python_parameter_names
-        target_name: extract_python_parameter_names
-        target_file: src/function_metadata.ts
-        call_line: 261
-        call_type: direct
-    incoming_calls:
-      - source_id: src/function_metadata#extract_function_metadata
-        source_name: extract_function_metadata
-        source_file: src/function_metadata.ts
-      - source_id: src/function_metadata#extract_function_metadata
-        source_name: extract_function_metadata
-        source_file: src/function_metadata.ts
-    source_snippet: |2-
-       * Extract metadata for Python functions
-       */
-      function extract_python_function_metadata(
-        node: SyntaxNode,
-        parent_node: SyntaxNode | null,
-        _source_code: string
-      ): FunctionMetadata {
-        // If node is an identifier and parent is a function, use parent as the function node
-        let function_node = node;
-        let actual_parent = parent_node;
-        
-        if (node.type === "identifier" && parent_node && parent_node.type === "function_definition") {
-          function_node = parent_node;
-          actual_parent = parent_node.parent;
-        }
-
-        const metadata: FunctionMetadata = {
-          line_count: function_node.endPosition.row - function_node.startPosition.row + 1,
-        };
-
-        // Check if async
-        const async_keyword = function_node.child(0);
-        if (async_keyword && async_keyword.type === "async") {
-          metadata.is_async = true;
-        }
-
-        // Extract parameter names
-        const params_node = function_node.childForFieldName("parameters");
-        if (params_node) {
-          metadata.parameter_names = extract_python_parameter_names(params_node);
-        }
-
-        // Get function name to check if private
-        const name_node = function_node.childForFieldName("name");
-        if (name_node && name_node.text.startsWith("_")) {
-          metadata.is_private = true;
-        }
-
-        // Check if it's a test function
-        if (name_node) {
-          const func_name = name_node.text;
-          if (func_name.startsWith("test_") || func_name === "setUp" || func_name === "tearDown") {
-            metadata.is_test = true;
-          }
-        }
-
-        // Check for decorators
-        if (actual_parent && actual_parent.type === "decorated_definition") {
-          metadata.has_decorator = true;
-          // Check for test decorators
-          const decorator_list = actual_parent.child(0);
-          if (decorator_list && decorator_list.type === "decorator") {
-            const decorator_text = decorator_list.text;
-            if (decorator_text.includes("@pytest") || decorator_text.includes("@unittest")) {
-              metadata.is_test = true;
-            }
-          }
-        }
-
-        // Check if it's a method within a class
-        let current = actual_parent;
-        while (current) {
-          if (current.type === "class_definition") {
-            const class_name_node = current.childForFieldName("name");
-            if (class_name_node) {
-              metadata.class_name = class_name_node.text;
-            }
-            break;
-          }
-          current = current.parent;
-        }
-
-        return metadata;
-      }
-
-      /**
 file_summary:
   - file: src/graph.ts
-    function_count: 30
+    function_count: 31
     exported_function_count: 0
     import_count: 27
-  - file: src/symbol_naming.ts
-    function_count: 18
-    exported_function_count: 0
-    import_count: 1
   - file: src/function_metadata.ts
-    function_count: 12
-    exported_function_count: 0
+    function_count: 11
+    exported_function_count: 1
     import_count: 3
   - file: src/module_resolver.ts
     function_count: 10
     exported_function_count: 0
-    import_count: 0
+    import_count: 2
+  - file: src/symbol_naming.ts
+    function_count: 9
+    exported_function_count: 9
+    import_count: 1
   - file: src/project_inheritance.ts
     function_count: 8
     exported_function_count: 0
     import_count: 7
-  - file: src/call_graph_utils.ts
-    function_count: 6
-    exported_function_count: 0
-    import_count: 5
   - file: src/inheritance.ts
-    function_count: 6
-    exported_function_count: 0
+    function_count: 5
+    exported_function_count: 1
     import_count: 3
   - file: src/project_source.ts
     function_count: 5
     exported_function_count: 0
     import_count: 4
-  - file: src/symbol_resolver.ts
-    function_count: 5
-    exported_function_count: 0
-    import_count: 5
-  - file: src/edit.ts
-    function_count: 4
-    exported_function_count: 0
-    import_count: 2
   - file: src/scope_resolution.ts
     function_count: 4
-    exported_function_count: 0
+    exported_function_count: 1
     import_count: 10
+  - file: src/call_graph_utils.ts
+    function_count: 3
+    exported_function_count: 3
+    import_count: 5
   - file: src/languages/python/index.ts
     function_count: 3
     exported_function_count: 0
     import_count: 7
+  - file: src/symbol_resolver.ts
+    function_count: 3
+    exported_function_count: 2
+    import_count: 5
   - file: src/benchmark-incremental.ts
     function_count: 2
     exported_function_count: 0
     import_count: 1
+  - file: src/edit.ts
+    function_count: 2
+    exported_function_count: 2
+    import_count: 2
   - file: src/languages/javascript/index.ts
     function_count: 2
     exported_function_count: 0
@@ -920,17 +800,21 @@ file_summary:
     function_count: 2
     exported_function_count: 0
     import_count: 4
-  - file: src/languages/shared_extractors.ts
-    function_count: 2
-    exported_function_count: 0
-    import_count: 2
   - file: src/languages/typescript/index.ts
     function_count: 2
     exported_function_count: 0
     import_count: 6
+  - file: src/languages/shared_extractors.js
+    function_count: 1
+    exported_function_count: 1
+    import_count: 0
+  - file: src/languages/shared_extractors.ts
+    function_count: 1
+    exported_function_count: 1
+    import_count: 2
 validation_stats:
-  nodes_with_calls_pct: 36.633663366336634
-  nodes_called_by_others_pct: 53.46534653465347
-  exported_nodes_pct: 0
+  nodes_with_calls_pct: 36.89320388349515
+  nodes_called_by_others_pct: 65.0485436893204
+  exported_nodes_pct: 19.41747572815534
   edges_with_call_type_pct: 100
   top_level_accuracy_pct: 100
