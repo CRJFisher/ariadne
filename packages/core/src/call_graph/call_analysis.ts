@@ -9,7 +9,9 @@ import {
   ImportedClassInfo,
   get_variable_type as get_variable_type_immutable,
   get_local_variable_type,
-  get_local_imported_class
+  get_local_imported_class,
+  get_imported_class,
+  set_local_variable_type
 } from './type_tracker';
 
 // Re-export types we need
@@ -82,6 +84,7 @@ export function analyze_calls_from_definition(
     is_position_within_range(ref.range.end, definitionRange)
   );
   
+  
   // First pass: identify constructor calls and collect type discoveries
   for (const ref of definitionRefs) {
     const constructorAnalysis = analyze_constructor_call(ref, def, config);
@@ -93,16 +96,21 @@ export function analyze_calls_from_definition(
   // Second pass: resolve all references including method calls
   // Create an updated local type tracker with discovered types
   let currentLocalTracker = localTypeTracker;
+  
+  // Apply discovered types to the local tracker
   for (const discovery of typeDiscoveries) {
     if (discovery.scope === 'local') {
-      // In a real implementation, we'd update the local tracker
-      // For now, we'll use the existing one
-      // This is where the caller would apply the type updates
+      currentLocalTracker = set_local_variable_type(
+        currentLocalTracker,
+        discovery.variableName,
+        discovery.typeInfo
+      );
     }
   }
   
   for (const ref of definitionRefs) {
     const resolved = resolve_reference(ref, def, config, currentLocalTracker);
+    
     
     if (resolved.resolved) {
       // Check if this is a callable symbol
@@ -234,25 +242,48 @@ export function resolve_method_call_pure(
   // Get type information for the object
   const typeInfo = get_local_variable_type(localTypeTracker, objectName, ref.range.start);
   
+  
   if (typeInfo && typeInfo.classDef) {
     // We have type information for this variable
     const methodName = ref.name;
     
     // Get all methods in the class file
-    if (config.get_file_graph) {
+    if (config.get_file_graph && typeInfo.classDef.file_path) {
       const classGraph = config.get_file_graph(typeInfo.classDef.file_path);
       const classDefs = classGraph ? classGraph.getNodes<Def>('definition') : [];
       
-      // For class definitions, use enclosing_range if available
-      const classRange = (typeInfo.classDef as any).enclosing_range || typeInfo.classDef.range;
+      // For class definitions, compute enclosing_range if not available
+      let classRange = (typeInfo.classDef as any).enclosing_range;
+      if (!classRange && classGraph) {
+        // Try to compute the enclosing range
+        const classNode = classGraph.getNodes<Def>('definition').find(d => 
+          d.name === typeInfo.className && d.symbol_kind === 'class'
+        );
+        if (classNode) {
+          // Get the file cache to access the tree
+          const classFile = typeInfo.classDef.file_path;
+          // We need to get the cache for the class file
+          // This is a cross-file reference, so we don't have direct access to other file caches
+          // For now, just use the available range
+          classRange = typeInfo.classDef.range;
+        }
+      }
+      classRange = classRange || typeInfo.classDef.range;
       
-      // Find method within the class range
+      
+      // Find method by checking symbol_id pattern: file#ClassName.methodName
+      // Remove extension from file path for symbol_id
+      const fileBase = typeInfo.classDef.file_path.replace(/\.[^.]+$/, '');
+      const expectedSymbolId = `${fileBase}#${typeInfo.className}.${methodName}`;
       const method = classDefs.find((m: Def) => 
         m.name === methodName && 
         (m.symbol_kind === 'method' || m.symbol_kind === 'function') &&
-        is_position_within_range(m.range.start, classRange) &&
-        is_position_within_range(m.range.end, classRange)
+        (m.symbol_id === expectedSymbolId || 
+         // Fallback: check if within class range
+         (is_position_within_range(m.range.start, classRange) &&
+          is_position_within_range(m.range.end, classRange)))
       );
+      
       
       if (method) {
         return { resolved: method, typeDiscoveries };
@@ -404,6 +435,7 @@ function analyze_constructor_call(
      ref.name === 'new' && def.file_path.endsWith('.rs'))  // Rust: Type::new()
   );
   
+  
   if (!isConstructorCall) {
     return null;
   }
@@ -420,6 +452,10 @@ function analyze_constructor_call(
   
   // Check if this is an imported class
   const importedClass = get_local_imported_class(localTypeTracker, constructorName);
+  
+  // Also check the file type tracker directly
+  const fileImportedClass = importedClass || get_imported_class(config.fileTypeTracker, constructorName);
+  
   
   // Find variable assignment
   let assignmentNode: any = astNode.parent;
@@ -450,17 +486,19 @@ function analyze_constructor_call(
         { row: assignmentNode.startPosition.row, column: assignmentNode.startPosition.column } : 
         ref.range.start;
       
-      if (importedClass) {
+      
+      if (fileImportedClass) {
         // Type from imported class
-        typeDiscoveries.push({
+        const discovery = {
           variableName: varName,
           typeInfo: {
-            className: importedClass.className,
-            classDef: importedClass.classDef,
+            className: fileImportedClass.className,
+            classDef: fileImportedClass.classDef,
             position
           },
-          scope: 'local'
-        });
+          scope: 'local' as const
+        };
+        typeDiscoveries.push(discovery);
       } else {
         // Try to resolve the constructor
         const resolved = config.go_to_definition(def.file_path, ref.range.start);
@@ -502,7 +540,7 @@ function resolve_reference(
   let resolved = config.go_to_definition(def.file_path, ref.range.start);
   
   // If we can't resolve a method reference directly, check if it's a method call
-  if (!resolved && ref.symbol_kind === 'method') {
+  if (!resolved && (ref.symbol_kind === 'method' || ref.name === 'insert_global_def' || ref.name === 'insert_local_def')) {
     const astNode = config.fileCache.tree.rootNode.descendantForPosition(
       { row: ref.range.start.row, column: ref.range.start.column },
       { row: ref.range.end.row, column: ref.range.end.column }
@@ -577,7 +615,7 @@ function resolve_reference(
 /**
  * Compute enclosing range for a class definition
  */
-function compute_class_enclosing_range(
+export function compute_class_enclosing_range(
   classDef: Def,
   tree: TreeNode
 ): { start: { row: number; column: number }; end: { row: number; column: number } } | undefined {
@@ -587,6 +625,10 @@ function compute_class_enclosing_range(
   
   // Find the class node in the tree
   function findClassNode(node: TreeNode): TreeNode | undefined {
+    if (!node || !node.start_position) {
+      return undefined;
+    }
+    
     if (node.start_position.row === classDef.range.start.row &&
         node.start_position.column === classDef.range.start.column &&
         (node.type === 'class_definition' || node.type === 'class_declaration' || 

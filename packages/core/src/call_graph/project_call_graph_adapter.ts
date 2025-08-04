@@ -3,7 +3,7 @@
  * while using the immutable implementation internally.
  */
 
-import { ScopeGraph, Def, Ref, Point, FunctionCall, ImportInfo, CallGraph, CallGraphOptions, CallGraphNode, Call } from '../graph';
+import { ScopeGraph, Def, Ref, Point, FunctionCall, ImportInfo, CallGraph, CallGraphOptions, CallGraphNode, Call, CallGraphEdge } from '../graph';
 import { FileCache } from '../file_cache';
 import { LanguageConfig } from '../types';
 import {
@@ -39,7 +39,8 @@ import {
 import {
   analyze_calls_from_definition,
   analyze_module_level_calls,
-  CallAnalysisConfig
+  CallAnalysisConfig,
+  compute_class_enclosing_range
 } from './call_analysis';
 
 /**
@@ -259,7 +260,7 @@ export class ProjectCallGraph {
   get_call_graph(options?: CallGraphOptions): CallGraph {
     const { functions, calls } = this.extract_call_graph();
     const nodes = new Map<string, any>();
-    const edges: any[] = [];
+    const edges: CallGraphEdge[] = [];
     const topLevelFunctions = new Set<string>();
     
     // Apply file filter if provided
@@ -295,24 +296,32 @@ export class ProjectCallGraph {
       const sourceId = call.caller_def.symbol_id;
       const targetId = call.called_def.symbol_id;
       
-      // Only include edge if both nodes are in our filtered set
-      if (nodeIds.has(sourceId) && nodeIds.has(targetId)) {
+      // Special handling for module-level calls
+      const isModuleCall = call.caller_def.name === '<module>';
+      
+      // Only include edge if target node exists and either:
+      // 1. Both nodes are in our filtered set (regular calls)
+      // 2. This is a module-level call (source is <module>)
+      if (nodeIds.has(targetId) && (nodeIds.has(sourceId) || isModuleCall)) {
         edges.push({
-          source: sourceId,
-          target: targetId,
-          kind: call.is_method_call ? 'method' : 'function'
+          from: sourceId,
+          to: targetId,
+          location: { start: call.call_location, end: call.call_location },
+          call_type: call.is_constructor_call ? 'constructor' : (call.is_method_call ? 'method' : 'direct')
         });
         
-        // Add to source node's calls array
-        const sourceNode = nodes.get(sourceId);
-        if (sourceNode) {
-          const callInfo: Call = {
-            symbol: targetId,
-            range: { start: call.call_location, end: call.call_location },
-            kind: call.is_method_call ? 'method' : (call.is_constructor_call ? 'constructor' : 'function'),
-            resolved_definition: call.called_def
-          };
-          sourceNode.calls.push(callInfo);
+        // Add to source node's calls array (only if source node exists)
+        if (!isModuleCall) {
+          const sourceNode = nodes.get(sourceId);
+          if (sourceNode) {
+            const callInfo: Call = {
+              symbol: targetId,
+              range: { start: call.call_location, end: call.call_location },
+              kind: call.is_method_call ? 'method' : (call.is_constructor_call ? 'constructor' : 'function'),
+              resolved_definition: call.called_def
+            };
+            sourceNode.calls.push(callInfo);
+          }
         }
         
         // Add to target node's called_by array
@@ -331,7 +340,7 @@ export class ProjectCallGraph {
     return {
       nodes,
       edges,
-      topLevelFunctions: Array.from(topLevelFunctions)
+      top_level_nodes: Array.from(topLevelFunctions)
     };
   }
 
@@ -395,9 +404,22 @@ export class ProjectCallGraph {
       
       // Track imported classes
       if (imp.imported_function.symbol_kind === 'class') {
+        // Ensure the class has an enclosing_range
+        const classDefWithRange = imp.imported_function;
+        if (!(classDefWithRange as any).enclosing_range) {
+          // Try to compute it from the file cache
+          const sourceCache = this.data.fileCache.get(sourceFile);
+          if (sourceCache && sourceCache.tree) {
+            (classDefWithRange as any).enclosing_range = compute_class_enclosing_range(
+              classDefWithRange,
+              sourceCache.tree.rootNode
+            );
+          }
+        }
+        
         tracker = set_imported_class(tracker, imp.local_name, {
           className: imp.imported_function.name,
-          classDef: imp.imported_function,
+          classDef: classDefWithRange,
           sourceFile
         });
       }

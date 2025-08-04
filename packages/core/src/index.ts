@@ -166,6 +166,15 @@ export class Project {
       graph,
     });
     
+    // Detect exports for this file
+    this.call_graph.detect_exports(file_path);
+    
+    // Initialize imports for this file
+    const imports = this.get_imports_with_definitions(file_path);
+    if (imports.length > 0) {
+      this.call_graph.initialize_file_imports(file_path, imports);
+    }
+    
     // Update inheritance file info map
     const file_info_map = new Map<string, { graph: ScopeGraph; content: string; tree: Tree }>();
     for (const [path, cache] of this.file_cache) {
