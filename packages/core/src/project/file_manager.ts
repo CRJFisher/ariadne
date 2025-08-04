@@ -11,10 +11,12 @@ import {
   detect_file_imports
 } from '../call_graph/import_export_detector';
 import {
-  get_or_create_file_type_tracker,
-  update_file_type_tracker,
   set_imported_class
 } from '../call_graph/type_tracker';
+import {
+  get_or_create_file_type_tracker,
+  update_file_type_tracker
+} from '../call_graph/project_graph_data';
 import { ImportInfo } from '../graph';
 
 /**
@@ -55,14 +57,16 @@ export class FileManager {
     
     if (oldTree && edit) {
       // Incremental parsing
-      oldTree.edit({
-        startIndex: edit.start_byte,
-        oldEndIndex: edit.old_end_byte,
-        newEndIndex: edit.new_end_byte,
-        startPosition: edit.start_position,
-        oldEndPosition: edit.old_end_position,
-        newEndPosition: edit.new_end_position,
-      });
+      // Convert from our Edit interface to tree-sitter's expected format
+      const treeEdit = {
+        startIndex: edit.startIndex || edit.start_byte,
+        oldEndIndex: edit.oldEndIndex || edit.old_end_byte,
+        newEndIndex: edit.newEndIndex || edit.new_end_byte,
+        startPosition: edit.startPosition || edit.start_position,
+        oldEndPosition: edit.oldEndPosition || edit.old_end_position,
+        newEndPosition: edit.newEndPosition || edit.new_end_position,
+      };
+      oldTree.edit(treeEdit);
       
       try {
         tree = config.parser.parse(sourceCode, oldTree);
