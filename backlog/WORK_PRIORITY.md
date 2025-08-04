@@ -86,6 +86,10 @@ Critical sub-task to address index.ts exceeding 32KB limit (currently 34KB):
 - Archive completed immutable implementation tasks (100.11.1-6, 100.11.8)
 - Fix Rust-specific cross-file method resolution (task-100.11.11)
 - Fix import counting accuracy (task-100.7)
+- Add cross-file cache access to CallAnalysisConfig (task-100.11.10)
+- Verify max_depth option implementation (task-100.11.12)
+- Review export/import initialization performance (task-100.11.16)
+- Analyze two-pass call analysis approach (task-100.11.17)
 
 **Previous completions:**
 
@@ -139,12 +143,12 @@ Critical sub-task to address index.ts exceeding 32KB limit (currently 34KB):
 
 ## Next Steps
 
-1. **Complete remaining agent validation fixes** (task-100.3)
-2. **Add CommonJS and ES6 export support** (task-100.9)
-3. **Add file size linting** (task-100.6)
-4. **Complete JavaScript test updates** (task-100.10)
-5. **Optimize two-pass call analysis** (task-100.11.17)
-6. **Review export/import timing** (task-100.11.16)
+1. **Start Project refactoring epic** (task-100.12)
+2. **Design storage interface** (task-100.12.1)
+3. **Complete remaining agent validation fixes** (task-100.3)
+4. **Add CommonJS and ES6 export support** (task-100.9)
+5. **Add file size linting** (task-100.6)
+6. **Complete JavaScript test updates** (task-100.10)
 
 ## Key Findings from Investigation
 

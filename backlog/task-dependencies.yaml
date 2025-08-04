@@ -163,6 +163,26 @@ validation:
       completed: "2025-08-04"
       notes: "Resolved by implementing return type tracking for method chains"
       
+    - id: task-100.11.10
+      title: "Add cross-file cache access to CallAnalysisConfig"
+      completed: "2025-08-04"
+      notes: "Added get_file_cache method for better enclosing_range computation"
+      
+    - id: task-100.11.12
+      title: "Implement max_depth option in get_call_graph API"
+      completed: "2025-08-04"
+      notes: "Already implemented and working correctly"
+      
+    - id: task-100.11.16
+      title: "Review export/import initialization timing and performance"
+      completed: "2025-08-04"
+      notes: "Current implementation is acceptable, identified future optimizations"
+      
+    - id: task-100.11.17
+      title: "Optimize two-pass call analysis approach"
+      completed: "2025-08-04"
+      notes: "Two-pass approach is necessary for correctness, already optimized"
+      
   todo:
       
     - id: task-100.3
@@ -293,6 +313,10 @@ work_order:
     - task-100.1      # Fix low nodes-with-calls percentage
     - task-100.2      # Fix low nodes-called-by-others percentage
     - task-100.8      # Fix incoming call detection
+    - task-100.11.10  # Add cross-file cache access to CallAnalysisConfig
+    - task-100.11.12  # Implement max_depth option in get_call_graph API
+    - task-100.11.16  # Review export/import initialization timing and performance
+    - task-100.11.17  # Optimize two-pass call analysis approach
 
 # TASK GROUPS
 groups:
