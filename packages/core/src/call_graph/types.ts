@@ -7,27 +7,27 @@ import { FileTypeTrackerData, ProjectTypeRegistryData } from './type_tracking';
  * Type information for a variable at a specific position
  */
 export interface TypeInfo {
-  className: string;
-  classDef?: Def & { enclosing_range?: SimpleRange };
-  position: { row: number; column: number };
+  readonly className: string;
+  readonly classDef?: Def & { enclosing_range?: SimpleRange };
+  readonly position: { readonly row: number; readonly column: number };
 }
 
 /**
  * Imported class information
  */
 export interface ImportedClassInfo {
-  className: string;
-  classDef: Def & { enclosing_range?: SimpleRange };
-  sourceFile: string;
+  readonly className: string;
+  readonly classDef: Def & { enclosing_range?: SimpleRange };
+  readonly sourceFile: string;
 }
 
 /**
  * Exported type information
  */
 export interface ExportedTypeInfo {
-  className: string;
-  classDef: Def & { enclosing_range?: SimpleRange };
-  sourceFile: string;
+  readonly className: string;
+  readonly classDef: Def & { enclosing_range?: SimpleRange };
+  readonly sourceFile: string;
 }
 
 /**

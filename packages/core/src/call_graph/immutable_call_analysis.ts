@@ -381,7 +381,7 @@ function analyze_constructor_call(
   ref: Ref,
   def: Def,
   config: CallAnalysisConfig
-): { typeDiscoveries: TypeDiscovery[] } | null {
+): { typeDiscoveries: readonly TypeDiscovery[] } | null {
   const { fileCache, localTypeTracker } = config;
   const typeDiscoveries: TypeDiscovery[] = [];
   

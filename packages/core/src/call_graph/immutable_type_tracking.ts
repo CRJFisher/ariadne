@@ -1,5 +1,6 @@
 import { Def } from '../graph';
 import { normalize_module_path } from '../symbol_naming';
+import { DeepReadonly, ImmutableMap, ImmutableSet } from './immutable_types';
 import { TypeInfo, ImportedClassInfo, ExportedTypeInfo } from './types';
 
 // Re-export types for consumers
