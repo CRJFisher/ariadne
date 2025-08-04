@@ -14,13 +14,22 @@ dependencies: []
 
 ## Description
 
-Epic task to drive real-world effectiveness by fixing validation discrepancies. The goal is to run the validation process in packages/core/agent-validation/validation-guide.md and fix all issues until accuracy thresholds are met.
+Epic task to drive real-world effectiveness through an iterative validation and fix process. The goal is to repeatedly run the validation process until Ariadne can accurately parse and process its own codebase, meeting all accuracy thresholds.
 
 Current validation results show:
 - Nodes with calls: 36.9% (threshold: 85%)
 - Nodes called by others: 65.0% (threshold: 85%)
 
-This involves identifying discrepancies, adding test cases, creating fix tasks, and implementing solutions.
+**Iterative Process:**
+1. Run the validation guide (packages/core/agent-validation/validation-guide.md)
+2. Identify specific discrepancies and failures
+3. Create test cases that capture each fault
+4. Create sub-tasks for each issue found
+5. Fix the issues by debugging and implementing solutions
+6. Once all sub-tasks are complete, re-run the validation guide
+7. Repeat steps 1-6 until all thresholds are met
+
+This iterative approach ensures we address all issues systematically and verify fixes work correctly.
 
 ## Acceptance Criteria
 
@@ -30,14 +39,25 @@ This involves identifying discrepancies, adding test cases, creating fix tasks, 
 
 ## Implementation Plan
 
-1. Run the validation process to establish baseline metrics
-2. Analyze validation output to identify specific issues:
-   - Low nodes-with-calls percentage (36.9% vs 85%)
-   - Low nodes-called-by-others percentage (65% vs 85%)
-3. Create test cases that capture each identified fault
-4. Implement fixes for each issue
-5. Re-run validation to verify improvements
-6. Remove continue-on-error from CI/CD once thresholds are met
+**Iteration 1 (Current):**
+1. ✅ Run validation guide process (task-100.5) - identified method call and file size issues
+2. Create test cases for identified issues (method-call-detection.test.ts, large-file-handling.test.ts)
+3. Fix identified issues through sub-tasks:
+   - task-100.8: Fix incoming call detection (method calls)
+   - task-100.1: Fix low nodes-with-calls percentage
+   - task-100.2: Fix low nodes-called-by-others percentage
+   - Other sub-tasks as needed
+
+**Iteration 2+ (After fixes):**
+1. Re-run validation guide to check improvements
+2. Identify any remaining discrepancies
+3. Create new test cases and sub-tasks if needed
+4. Fix new issues found
+5. Repeat until all thresholds are met
+
+**Final Steps:**
+- Remove continue-on-error from CI/CD validation
+- Document the fixes and improvements made
 
 Sub-tasks:
 - task-100.1: Fix low nodes-with-calls percentage

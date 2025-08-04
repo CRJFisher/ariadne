@@ -1,16 +1,26 @@
 # Ariadne Agent Validation Guide
 
-This guide provides instructions for LLM agents to validate the accuracy of Ariadne's self-analysis output.
+This guide provides instructions for LLM agents to validate the accuracy of Ariadne's self-analysis output through an iterative process.
 
 ## Overview
 
-The agent validation test runs Ariadne on its own codebase and outputs a YAML file (`ariadne-validation-output.yaml`) containing:
+The agent validation test is part of an **iterative process** to improve Ariadne's accuracy:
+
+1. **Run validation** - Execute Ariadne on its own codebase
+2. **Identify issues** - Find discrepancies in the output
+3. **Create tests** - Write test cases capturing each fault
+4. **Fix issues** - Debug and implement solutions
+5. **Re-validate** - Run validation again to verify fixes
+6. **Repeat** - Continue until accuracy thresholds are met
+
+The validation outputs a YAML file (`ariadne-validation-output.yaml`) containing:
 
 - Top-level function nodes
 - Sampled function details with call relationships
 - File summaries
+- Validation statistics with accuracy percentages
 
-Your task is to validate that the parsed data accurately represents the actual codebase structure.
+Your task is to validate the parsed data, identify specific discrepancies, and help create actionable tasks for fixes.
 
 ## Running the Agent Validation Test
 
@@ -162,3 +172,35 @@ The agent validation test is considered successful if:
 4. No major structural parsing errors are found
 
 Remember: The goal is to validate that Ariadne can accurately parse and understand code structure, not to achieve 100% perfect parsing of every edge case.
+
+## Iterative Validation Workflow
+
+This validation guide is part of a larger iterative process (see task-100):
+
+### Phase 1: Initial Validation
+1. Run `npx tsx validate-ariadne.ts`
+2. Analyze the output and create a validation report
+3. Identify specific failing patterns (e.g., method calls not tracked)
+4. Create test cases for each pattern found
+5. Create sub-tasks in the backlog for each issue
+
+### Phase 2: Fix Implementation
+1. Work on each sub-task to fix identified issues
+2. Debug why certain patterns aren't detected
+3. Implement solutions and verify with test cases
+4. Complete all sub-tasks for the current iteration
+
+### Phase 3: Re-validation
+1. Once all sub-tasks are complete, run validation again
+2. Check if accuracy metrics have improved
+3. Identify any new issues that weren't visible before
+4. If thresholds aren't met, return to Phase 1
+
+### Success Metrics
+Continue the iteration until:
+- Nodes with calls: ≥ 85%
+- Nodes called by others: ≥ 85%
+- Top-level node accuracy: ≥ 90%
+- File summaries: within 20% of actual counts
+
+This iterative approach ensures systematic improvement and helps identify issues that may only become visible after fixing others.

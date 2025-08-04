@@ -2,25 +2,40 @@
 
 ## Current priority
 
-Debug ariadne by running the `packages/core/agent-validation/validation-guide.md` process which is essentially a real-world, high-level integration test. Fixing the errors here will give us confidence that the code is working as expected. This will involve:
+Debug Ariadne through an **iterative validation process** using `packages/core/agent-validation/validation-guide.md` as a real-world, high-level integration test. This iterative approach ensures systematic fixes until Ariadne can accurately parse itself.
 
-- When we see discrepancies between the expected and actual results, we should add test cases which capture the faults.
-- We should create tasks which reference the new test cases and describe the faults.
-- We should then fix the faults to pass the test cases.
+**The Iterative Process:**
+
+1. **Run validation guide** to identify discrepancies
+2. **Create test cases** that capture each fault found
+3. **Create sub-tasks** for each issue with clear descriptions
+4. **Fix the issues** by debugging and implementing solutions
+5. **Complete all sub-tasks** for the current iteration
+6. **Re-run validation guide** to verify improvements
+7. **Repeat** until all accuracy thresholds are met (85%+)
+
+This cycle continues until Ariadne correctly parses and processes its own codebase.
 
 ## 🚨 CRITICAL - Work on this FIRST
 
 ### task-100: Improve Ariadne self-analysis accuracy (EPIC)
 
-Epic task to meet validation thresholds through the validation-guide.md process:
+Epic task implementing the iterative validation process to meet accuracy thresholds:
 
-- Current: nodes-with-calls 36.9% (need 85%), nodes-called-by-others 65% (need 85%)
-- Sub-tasks: task-100.1 through task-100.10 (10 total)
-- Goal: Fix discrepancies to achieve real-world effectiveness
+- **Current metrics**: nodes-with-calls 36.9% (need 85%), nodes-called-by-others 65% (need 85%)
+- **Iteration 1 findings**: Method calls not detected, file size limit causing skipped files
+- **Active sub-tasks**: task-100.1 through task-100.10 (focusing on method call and file size issues)
+- **Process**: Fix sub-tasks → Re-run validation → Create new sub-tasks if needed → Repeat
+- **Goal**: Achieve 85%+ accuracy through iterative improvements
 
 ## 🔥 HIGH PRIORITY
 
-*All high priority issues have been resolved!*
+### task-101: Test Ariadne-MCP integration with Claude Code
+
+- Real-world validation by integrating ariadne-mcp as an MCP server
+- Claude Code will use Ariadne for code exploration workflows
+- Validates accuracy by comparing with grep/find results
+- Ensures Ariadne provides practical value for AI-assisted development
 
 ## 📋 MEDIUM PRIORITY - Important but not blocking
 
@@ -95,7 +110,7 @@ Epic task to meet validation thresholds through the validation-guide.md process:
 
 ## Next Steps
 
-1. **Run validation guide process** (task-100.5) - identify specific discrepancies
+1. ✅ **Run validation guide process** (task-100.5) - completed, identified method call and file size issues
 2. **Fix incoming call detection** (task-100.8) - critical for metrics
 3. **Fix nodes-with-calls issues** (task-100.1) - major metric gap
 4. **Fix nodes-called-by-others** (task-100.2) - major metric gap
