@@ -1,8 +1,22 @@
 # Work Priority Guide
 
+## Current priority
+
+Debug ariadne by running the `packages/core/agent-validation/validation-guide.md` process which is essentially a real-world, high-level integration test. Fixing the errors here will give us confidence that the code is working as expected. This will involve:
+
+- When we see discrepancies between the expected and actual results, we should add test cases which capture the faults.
+- We should create tasks which reference the new test cases and describe the faults.
+- We should then fix the faults to pass the test cases.
+
 ## 🚨 CRITICAL - Work on this FIRST
 
-*All critical issues have been resolved!*
+### task-100: Improve Ariadne self-analysis accuracy (EPIC)
+
+Epic task to meet validation thresholds through the validation-guide.md process:
+
+- Current: nodes-with-calls 36.9% (need 85%), nodes-called-by-others 65% (need 85%)
+- Sub-tasks: task-100.1 through task-100.10 (10 total)
+- Goal: Fix discrepancies to achieve real-world effectiveness
 
 ## 🔥 HIGH PRIORITY
 
@@ -30,10 +44,12 @@
 
 ✅ **Completed Recently** (2025-08-04):
 
+*Note: Several parsing/accuracy tasks (88, 90, 71, 72, 99) were consolidated into epic task-100*
+
 - Add validation test to CI/CD pipeline (task-92)
 - Add edge case tests for cross-file resolution (task-82)
 - Handle variable reassignments in type registry (task-81)
-- Fix hoisted variable reference resolution (task-100)
+- Fix hoisted variable reference resolution (task-100 - old, archived)
 - Fix missing ref_to_scope edges (task-97)
 - Update JavaScript/TypeScript tests for ref_to_scope (task-98)
 - Fix duplicate call tracking (task-73)
@@ -61,12 +77,14 @@
 
 🚧 **In Progress**:
 
-- task-62: Agent validation issues
+- task-100: Improve self-analysis accuracy (EPIC) - 10 subtasks
+- task-62: Agent validation issues (being completed in task-100.3)
 - task-67: Cross-file type registry for method resolution
 
 ❌ **Blocked**:
 
-- task-74: File size limit - waiting for tree-sitter-node response
+- task-74: File size limit - duplicate of task-60
+- task-60: Handle tree-sitter 32KB limit - waiting for response
 
 ## Key Achievements
 
@@ -77,6 +95,9 @@
 
 ## Next Steps
 
-1. Complete remaining JavaScript test updates (task-99) - low priority
-2. Document import/export patterns (task-83) - low priority
-3. Create generic validation script (task-84) - low priority
+1. **Run validation guide process** (task-100.5) - identify specific discrepancies
+2. **Fix incoming call detection** (task-100.8) - critical for metrics
+3. **Fix nodes-with-calls issues** (task-100.1) - major metric gap
+4. **Fix nodes-called-by-others** (task-100.2) - major metric gap
+5. **Fix import counting** (task-100.7) - affects file summaries
+6. Complete remaining subtasks in priority order

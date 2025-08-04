@@ -1,15 +1,3 @@
-# Rules
-
-- Use snake_case for all typescript names (variables, functions, files, etc.) other than class names which should be PascalCase.
-
-## Language-specific code
-
-- When writing language-specific code, ideally at the processing function to the LanguageConfiguration object, so that new languages know to account for that feature processing requirement.
-
-## Testing
-
-- When doing language-specific tests, refer to the [testing guide](./docs/testing-guide.md) for more information.
-
 <!-- BACKLOG.MD GUIDELINES START -->
 # Instructions for the usage of Backlog.md CLI Tool
 

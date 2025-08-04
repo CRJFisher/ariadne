@@ -40,10 +40,7 @@ test_failures:
       notes: "TypeScript tests all pass, JavaScript partially updated"
   
   todo:
-    - id: task-99
-      title: "Complete remaining JavaScript test updates for ref_to_scope changes"
-      priority: "Low"
-      notes: "6 JavaScript tests need mechanical updates"
+    # JavaScript test updates moved to task-100.10
 
 # CROSS-FILE RESOLUTION - Core functionality
 cross_file_resolution:
@@ -84,8 +81,7 @@ cross_file_resolution:
       title: "Add circular import detection to prevent infinite loops"
       completed: "2025-08-04"
       notes: "Actually implemented Rust crate:: path resolution"
-
-  completed:
+      
     - id: task-100
       title: "Fix hoisted variable reference resolution"
       completed: "2025-08-04"
@@ -101,6 +97,14 @@ cross_file_resolution:
 
 # VALIDATION & TESTING
 validation:
+  epic:
+    - id: task-100
+      title: "Improve Ariadne self-analysis accuracy to meet validation thresholds"
+      status: "To Do"
+      priority: "Critical"
+      subtasks: [task-100.1, task-100.2, task-100.3, task-100.5, task-100.6, task-100.7, task-100.8, task-100.9, task-100.10]
+      notes: "Epic to drive real-world effectiveness through validation process"
+      
   completed:
     - id: task-93
       title: "Fix TypeScript interface and type counting"
@@ -112,25 +116,75 @@ validation:
       completed: "2025-08-04"
       notes: "Investigation revealed missing ref_to_scope edges, created task-97"
       
-  in_progress:
-    - id: task-62
-      title: "Fix agent validation call graph extraction issues"
-      status: "In Progress"
-      related: [task-74]     # File size limit
-      
-  completed:
     - id: task-92
       title: "Add validation test to CI/CD pipeline"
       completed: "2025-08-04"
       notes: "CI/CD validation infrastructure created with continue-on-error"
       
+  in_progress:
+    - id: task-62
+      title: "Fix agent validation call graph extraction issues"
+      status: "In Progress"
+      related: [task-74, task-100.3]     # File size limit and epic subtask
+      
   todo:
+    - id: task-100.1
+      title: "Fix low nodes-with-calls percentage (36.9% vs 85% threshold)"
+      parent: task-100
+      priority: "Critical"
+      
+    - id: task-100.2
+      title: "Fix low nodes-called-by-others percentage (65% vs 85% threshold)"
+      parent: task-100
+      priority: "Critical"
+      
+    - id: task-100.3
+      title: "Complete remaining agent validation fixes (task-62)"
+      parent: task-100
+      depends_on: [task-62]
+      priority: "High"
+      
+    - id: task-100.5
+      title: "Run validation guide process and identify discrepancies"
+      parent: task-100
+      priority: "Critical"
+      
+    - id: task-100.6
+      title: "Add file size linting to prevent validation failures"
+      parent: task-100
+      priority: "Medium"
+      notes: "Proactive measure to prevent files exceeding 32KB limit"
+      
+    - id: task-100.7
+      title: "Fix import counting accuracy (task-88)"
+      parent: task-100
+      priority: "High"
+      notes: "Import counting currently uses word occurrences instead of actual statements"
+      
+    - id: task-100.8
+      title: "Fix incoming call detection (task-90)"
+      parent: task-100
+      priority: "Critical"
+      notes: "Directly impacts nodes-called-by-others metric"
+      
+    - id: task-100.9
+      title: "Add CommonJS and ES6 export support (tasks 71-72)"
+      parent: task-100
+      priority: "Medium"
+      notes: "Needed for export detection accuracy"
+      
+    - id: task-100.10
+      title: "Complete JavaScript test updates (task-99)"
+      parent: task-100
+      priority: "Low"
+      notes: "6 JavaScript tests need mechanical updates after ref_to_scope"
+      
     - id: task-74
       title: "Fix file size limit preventing analysis of large files"
       description: "32KB limit skips critical files like project_call_graph.ts"
       priority: "High"
       status: "Blocked"
-      notes: "Waiting for tree-sitter-node response"
+      notes: "Duplicate of task-60. Only affects project_call_graph.ts (60KB)"
       
     - id: task-84
       title: "Create generic validation script for external repositories"
@@ -177,33 +231,34 @@ api_improvements:
 
 # EXPORT SUPPORT
 export_support:
-  - id: task-71
-    title: "Support CommonJS property assignment exports"
-    related: [task-30]
-    
-  - id: task-72
-    title: "Support ES6 exports in .js files and new TypeScript extensions"
-    related: [task-30]
+  # Export support tasks moved to task-100.9
 
 # DOCUMENTATION
 documentation:
   - id: task-83
     title: "Document supported import/export patterns"
-    depends_on: [task-71, task-72]
+    depends_on: [task-100.9]  # Wait for export support implementation
     priority: "Low"
-    notes: "task-80 already completed"
+    notes: "Wait until export patterns are stable"
 
 # SUGGESTED WORK ORDER
 work_order:
   immediate:
-    # All immediate tasks completed!
+    - task-100    # EPIC: Improve self-analysis accuracy
+    - task-100.5  # Run validation guide process
+    - task-100.8  # Fix incoming call detection (critical for metrics)
+    - task-100.1  # Fix nodes-with-calls percentage
+    - task-100.2  # Fix nodes-called-by-others percentage
     
   next:
-    # No high/medium priority tasks available
+    - task-100.7  # Fix import counting accuracy
+    - task-100.3  # Complete remaining validation fixes
+    - task-100.6  # Add file size linting
+    - task-100.9  # Add export support
     
   later:
-    - task-99  # Complete JavaScript test updates (low priority)
-    - task-83  # Document import/export patterns
+    - task-100.10 # Complete JavaScript test updates
+    - task-83     # Document import/export patterns
     - task-84  # Generic validation script
     
   blocked:

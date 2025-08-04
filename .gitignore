@@ -42,8 +42,8 @@ coverage/
 
 # Claude AI specific
 .claude/
+CLAUDE.local.md
 
 venv
 
 __pycache__/
-CLAUDE.local.md

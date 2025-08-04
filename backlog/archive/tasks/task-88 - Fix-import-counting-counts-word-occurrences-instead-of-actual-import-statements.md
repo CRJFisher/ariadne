@@ -6,7 +6,7 @@ title: >-
 status: To Do
 assignee: []
 created_date: '2025-08-03'
-updated_date: '2025-08-03'
+updated_date: '2025-08-04 13:28'
 labels: []
 dependencies: []
 ---
@@ -62,3 +62,5 @@ Successfully clarified import counting behavior and added namespace import suppo
 - Import statement counting available via new method
 - Namespace imports now properly captured
 - Validation should expect symbol counts, not statement counts
+
+Moved to epic task-100.7 as part of validation accuracy improvements

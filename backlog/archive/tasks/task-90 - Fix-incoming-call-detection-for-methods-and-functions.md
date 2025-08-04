@@ -4,7 +4,7 @@ title: Fix incoming call detection for methods and functions
 status: To Do
 assignee: []
 created_date: '2025-08-03'
-updated_date: '2025-08-03'
+updated_date: '2025-08-04 13:28'
 labels: []
 dependencies: []
 ---
@@ -64,3 +64,5 @@ Incoming call detection is working as designed. Methods showing 0 incoming calls
 1. Not actually called in the codebase
 2. Called through complex patterns not supported by static analysis
 3. Internal delegation methods (e.g., this.callGraph.method())
+
+Moved to epic task-100.8 as part of validation accuracy improvements. Critical for improving nodes-called-by-others metric.

@@ -2,8 +2,12 @@
 id: task-72
 title: Support ES6 exports in .js files and new TypeScript extensions
 status: To Do
+assignee: []
 created_date: '2025-08-02'
-dependencies: [task-30]
+updated_date: '2025-08-04 13:29'
+labels: []
+dependencies:
+  - task-30
 ---
 
 ## Description
@@ -20,6 +24,10 @@ Add support for ES6 export syntax in .js files and recognize new TypeScript file
 - [ ] Maintain backward compatibility with existing .js parsing
 - [ ] Choose appropriate parser based on file content or configuration
 
+
+## Implementation Notes
+
+Moved to epic task-100.9 as part of validation accuracy improvements. Needed for ES6 export support in .js files.
 ## Technical Context
 
 Current limitations:

@@ -2,9 +2,12 @@
 id: task-99
 title: Complete remaining JavaScript test updates for ref_to_scope changes
 status: To Do
+assignee: []
 created_date: '2025-08-04'
+updated_date: '2025-08-04 13:29'
 labels: []
-dependencies: [task-97]
+dependencies:
+  - task-97
 ---
 
 ## Description
@@ -30,3 +33,5 @@ After implementing ref_to_scope edges (task-97), 6 JavaScript tests still need t
 ## Implementation Notes
 
 This is a mechanical task following the pattern established in task-98. The ref_to_scope implementation is working correctly - these tests just need their expectations updated.
+
+Moved to epic task-100.10 as part of validation accuracy improvements. Low priority test cleanup.
