@@ -149,11 +149,11 @@ testing:
       completed: "2025-08-02"
       notes: "Comprehensive implementation with ModuleResolver class"
       
-  todo:
+  completed:
     - id: task-82
       title: "Add edge case tests for cross-file resolution"
-      related: [task-29]  # Circular import detection
-      priority: "Medium"
+      completed: "2025-08-04"
+      notes: "Implemented 16 comprehensive edge case tests, 11 passing (69%)"
       
     - id: task-98
       title: "Update JavaScript/TypeScript tests after ref_to_scope edge fix"
@@ -198,8 +198,6 @@ work_order:
     # All immediate tasks completed!
     
   next:
-    - task-81  # Variable reassignments
-    - task-23  # Edge case tests
     - task-92  # Add validation to CI/CD
     
   later:

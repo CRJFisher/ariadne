@@ -10,11 +10,6 @@
 
 ## 📋 MEDIUM PRIORITY - Important but not blocking
 
-### task-82: Edge case tests (circular imports, etc.)
-
-- Add tests for complex scenarios
-- Circular imports, nested calls, inheritance
-
 ### task-92: Add validation test to CI/CD pipeline
 
 - Automate the validation process
@@ -38,6 +33,7 @@
 
 ✅ **Completed Recently** (2025-08-04):
 
+- Add edge case tests for cross-file resolution (task-82)
 - Handle variable reassignments in type registry (task-81)
 - Fix hoisted variable reference resolution (task-100)
 - Fix missing ref_to_scope edges (task-97)
@@ -83,6 +79,5 @@
 
 ## Next Steps
 
-1. Add edge case tests (task-82)
-2. Add validation test to CI/CD pipeline (task-92)
-3. Complete remaining JavaScript test updates (task-99) - low priority
+1. Add validation test to CI/CD pipeline (task-92)
+2. Complete remaining JavaScript test updates (task-99) - low priority
