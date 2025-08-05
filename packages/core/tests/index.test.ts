@@ -1,4 +1,4 @@
-import { Project, get_definitions, Def } from "../src/index";
+import { Project, Def } from "../src/index";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -973,7 +973,7 @@ describe("get_definitions API", () => {
   });
 });
 
-describe("get_definitions standalone function", () => {
+describe.skip("get_definitions standalone function - REMOVED IN NEW API", () => {
   const tempFile = path.join(__dirname, "temp-test-definitions.ts");
 
   afterEach(() => {

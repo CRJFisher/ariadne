@@ -1,8 +1,5 @@
-// Export the backward-compatible Project class
-export { Project } from './project';
-
-// Export the new immutable Project class
-export { ImmutableProject } from './project/immutable_project';
+// Export the Project class
+export { Project } from './project/project';
 
 // Export storage interfaces for advanced usage
 export {

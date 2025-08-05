@@ -4,7 +4,7 @@ import {
   createStorage,
   registerStorageProvider,
   InMemoryStorage,
-  ImmutableProject
+  Project
 } from '../src';
 import { typescript_config } from '../src/languages/typescript';
 import { SyncToAsyncStorageAdapter } from '../src/storage/storage_interface_sync';
@@ -130,10 +130,10 @@ describe('Storage Interface', () => {
     expect(receivedOptions).toEqual({ foo: 'bar' });
   });
   
-  test('ImmutableProject uses provided storage', async () => {
+  test('Project uses provided storage', async () => {
     const mockStorage = new MockStorage();
     
-    // Convert to sync storage for ImmutableProject
+    // Convert to sync storage for Project
     const syncMockStorage = {
       initialize: () => mockStorage.initialize(),
       getState: () => ({
@@ -167,7 +167,7 @@ describe('Storage Interface', () => {
       close: () => {}
     };
     
-    const project = new ImmutableProject(syncMockStorage as any);
+    const project = new Project(syncMockStorage as any);
     
     // Add a file - should trigger storage methods
     project.add_or_update_file('test.ts', 'const x = 1;');

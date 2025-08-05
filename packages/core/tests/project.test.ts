@@ -1,13 +1,13 @@
 import { describe, test, expect } from 'vitest';
-import { ImmutableProject } from '../src/project/immutable_project';
+import { Project } from '../src/project/project';
 import { InMemoryStorage } from '../src/storage/in_memory_storage';
 import { typescript_config } from '../src/languages/typescript';
 import { javascript_config } from '../src/languages/javascript';
 import { python_config } from '../src/languages/python';
 
-describe('ImmutableProject', () => {
+describe('Project', () => {
   test('creates new instance on file add', () => {
-    const project = new ImmutableProject();
+    const project = new Project();
     
     const code = `
       function test() {
@@ -28,7 +28,7 @@ describe('ImmutableProject', () => {
   });
   
   test('handles file removal', () => {
-    const project = new ImmutableProject();
+    const project = new Project();
     
     // Add a file
     const withFile = project.add_or_update_file('test.ts', 'const x = 1;');
@@ -41,7 +41,7 @@ describe('ImmutableProject', () => {
   });
   
   test('navigation works correctly', () => {
-    const project = new ImmutableProject();
+    const project = new Project();
     
     const code = `
       function greet(name: string) {
@@ -61,7 +61,7 @@ describe('ImmutableProject', () => {
   });
   
   test('finds references correctly', () => {
-    const project = new ImmutableProject();
+    const project = new Project();
     
     const code = `
       const x = 10;
@@ -77,7 +77,7 @@ describe('ImmutableProject', () => {
   });
   
   test('extracts functions correctly', () => {
-    const project = new ImmutableProject();
+    const project = new Project();
     
     const code = `
       function foo() {}
@@ -97,7 +97,7 @@ describe('ImmutableProject', () => {
   });
   
   test('handles multiple languages', () => {
-    const project = new ImmutableProject();
+    const project = new Project();
     
     // Add TypeScript file
     const withTS = project.add_or_update_file('test.ts', 'function tsFunc() {}');
@@ -117,7 +117,7 @@ describe('ImmutableProject', () => {
   });
   
   test('handles incremental updates', () => {
-    const project = new ImmutableProject();
+    const project = new Project();
     
     const code = 'const x = 1;';
     const withFile = project.add_or_update_file('test.ts', code);
@@ -141,7 +141,7 @@ describe('ImmutableProject', () => {
   });
   
   test('storage state is immutable', () => {
-    const project = new ImmutableProject();
+    const project = new Project();
     
     // Get initial state
     const state1 = project.getState();
@@ -161,7 +161,7 @@ describe('ImmutableProject', () => {
   });
   
   test('withState allows custom state updates', () => {
-    const project = new ImmutableProject();
+    const project = new Project();
     
     // Add a file
     const withFile = project.add_or_update_file('test.ts', 'const x = 1;');

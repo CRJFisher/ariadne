@@ -17,10 +17,10 @@ import { python_config } from '../languages/python';
 import { rust_config } from '../languages/rust';
 
 /**
- * Immutable Project class that uses storage interface for all state management.
- * All methods that modify state return a new Project instance.
+ * Project class that uses storage interface for all state management.
+ * Uses immutable state patterns with a pluggable storage backend.
  */
-export class ImmutableProject {
+export class Project {
   private readonly storage: StorageInterfaceSync;
   private readonly fileManager: FileManager;
   private readonly languageManager: LanguageManager;
@@ -63,15 +63,14 @@ export class ImmutableProject {
   /**
    * Create a new Project instance with the given storage
    */
-  private withStorage(newStorage: StorageInterfaceSync): ImmutableProject {
-    return new ImmutableProject(newStorage);
+  private withStorage(newStorage: StorageInterfaceSync): Project {
+    return new Project(newStorage);
   }
   
   /**
    * Add or update a file in the project
-   * Returns a new Project instance with the updated state
    */
-  add_or_update_file(file_path: string, source_code: string, edit?: Edit): ImmutableProject {
+  add_or_update_file(file_path: string, source_code: string, edit?: Edit): Project {
     const tx = this.storage.beginTransaction();
     
     try {
@@ -100,9 +99,8 @@ export class ImmutableProject {
   
   /**
    * Remove a file from the project
-   * Returns a new Project instance with the file removed
    */
-  remove_file(file_path: string): ImmutableProject {
+  remove_file(file_path: string): Project {
     const tx = this.storage.beginTransaction();
     
     try {
@@ -295,14 +293,13 @@ export class ImmutableProject {
   
   /**
    * Update a file range (for incremental updates)
-   * Returns a new Project instance
    */
   update_file_range(
     file_path: string,
     start_position: Point,
     old_end_position: Point,
     new_text: string
-  ): ImmutableProject {
+  ): Project {
     const state = this.storage.getState();
     const fileCache = state.file_cache.get(file_path);
     
@@ -380,7 +377,7 @@ export class ImmutableProject {
   /**
    * Create a new project with updated state (for advanced usage)
    */
-  withState(updater: (state: ProjectState) => ProjectState): ImmutableProject {
+  withState(updater: (state: ProjectState) => ProjectState): Project {
     const tx = this.storage.beginTransaction();
     
     try {

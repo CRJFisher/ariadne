@@ -10,14 +10,14 @@ AriadneJS uses a pluggable storage interface to handle project state management.
 ## Using a Storage Provider
 
 ```typescript
-import { ImmutableProject, createStorage } from '@ariadnejs/core';
+import { Project, createStorage } from '@ariadnejs/core';
 
 // Use default in-memory storage
-const project1 = new ImmutableProject();
+const project1 = new Project();
 
 // Use disk storage
 const storage = await createStorage('disk', { storageDir: './cache' });
-const project2 = new ImmutableProject(storage);
+const project2 = new Project(storage);
 ```
 
 ## Creating Custom Providers
