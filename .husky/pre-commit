@@ -1,0 +1,15 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Check file sizes before commit
+echo "📏 Checking file sizes..."
+cd packages/core && npm run check:size
+
+# If file size check fails, prevent commit
+if [ $? -ne 0 ]; then
+  echo "❌ Commit aborted: Some files exceed the 32KB limit."
+  echo "   Please refactor large files before committing."
+  exit 1
+fi
+
+echo "✅ File size check passed!"

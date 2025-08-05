@@ -16,7 +16,9 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "clean": "rm -rf dist",
-    "prepublishOnly": "npm run build && npm test"
+    "prepublishOnly": "npm run build && npm test",
+    "check:size": "npx tsx scripts/check-file-sizes.ts",
+    "check:size:warn": "npx tsx scripts/check-file-sizes.ts || true"
   },
   "keywords": [
     "tree-sitter",

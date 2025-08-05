@@ -29,6 +29,9 @@ jobs:
       - name: Build
         run: npm run build
         
+      - name: Check file sizes
+        run: cd packages/core && npm run check:size
+        
       - name: Run tests
         run: npm test
         
