@@ -46,19 +46,12 @@ describe('Multi-file built-in call tracking regression tests', () => {
     // This should still track built-in calls
     expect(processData).toBeDefined();
     
-    // Debug output
-    console.log('processData calls after adding second file:', processData!.calls.length);
-    console.log('Call details:', processData!.calls.map(c => ({
-      name: c.called_def?.name,
-      file: c.called_def?.file_path,
-      isBuiltin: c.called_def?.file_path === '<builtin>'
-    })));
     
     expect(processData!.calls.length).toBeGreaterThan(0); // At least some calls
     
     const builtinCalls = processData!.calls
-      .filter(c => c.called_def && c.called_def.file_path === '<builtin>')
-      .map(c => c.called_def.name)
+      .filter(c => c.symbol.startsWith('<builtin>#'))
+      .map(c => c.symbol.replace('<builtin>#', ''))
       .sort();
     
     // Should have built-in calls

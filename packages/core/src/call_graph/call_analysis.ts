@@ -122,10 +122,6 @@ export function analyze_calls_from_definition(
     // Check if this reference is part of a call expression
     const isCallExpression = is_reference_called(ref, fileCache);
     
-    // Debug for built-in tracking
-    if (def.name === 'generateLargeFile' && !resolved.resolved && (ref.name === 'push' || ref.name === 'join')) {
-      console.log(`  Checking ${ref.name}: isCallExpression = ${isCallExpression}`);
-    }
     
     if (resolved.resolved) {
       // Check if this is a callable symbol
@@ -144,12 +140,8 @@ export function analyze_calls_from_definition(
         };
         calls.push(call);
       }
-    } else if (isCallExpression) {
+    } else if (!resolved.resolved && isCallExpression) {
       // This is an unresolved call (likely a built-in)
-      // Debug for generateLargeFile
-      if (def.name === 'generateLargeFile' && (ref.name === 'push' || ref.name === 'join')) {
-        console.log(`  Found built-in call: ${ref.name} at row ${ref.range.start.row}`);
-      }
       // Create a synthetic definition for tracking
       const syntheticDef: Def = {
         id: -1, // Special ID for built-ins
@@ -262,7 +254,7 @@ export function analyze_module_level_calls(
         };
         calls.push(call);
       }
-    } else if (isCallExpression) {
+    } else if (!resolved && isCallExpression) {
       // This is an unresolved call (likely a built-in)
       // Create a synthetic definition for tracking
       const syntheticDef: Def = {
@@ -476,7 +468,9 @@ function is_reference_called(ref: Ref, fileCache: FileCache): boolean {
     { row: ref.range.end.row, column: ref.range.end.column }
   );
   
-  if (!astNode) return false;
+  if (!astNode) {
+    return false;
+  }
   
   // Check if this node's parent is a call expression
   const parent = astNode.parent;

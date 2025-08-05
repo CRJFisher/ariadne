@@ -196,18 +196,12 @@ validation:
       completed: "2025-08-05"
       notes: "task-62 was completed and archived. All validation fixes implemented successfully."
       
-  todo:
-      
-    - id: task-100.5
-      title: "Run validation guide process and identify discrepancies"
-      parent: task-100
-      priority: "Critical"
-      
     - id: task-100.6
       title: "Add file size linting to prevent validation failures"
-      parent: task-100
-      priority: "Medium"
-      notes: "Proactive measure to prevent files exceeding 32KB limit"
+      completed: "2025-08-05"
+      notes: "Implemented comprehensive file size linting with CI/CD integration and pre-commit hooks"
+      
+  todo:
       
       
       
@@ -290,11 +284,9 @@ documentation:
 work_order:
   immediate:
     - task-100          # EPIC: Improve self-analysis accuracy - run final validation
-    - task-100.5        # URGENT: Re-run validation guide to verify fixes
     
   next:
     - task-100.9        # Add CommonJS/ES6 export support
-    - task-100.6        # Add file size linting
     - task-101          # Test Ariadne-MCP integration with Claude Code
     
   later:
@@ -309,6 +301,7 @@ work_order:
     - task-100.11.14  # Track all function calls including built-ins (re-implemented after regression)
     - task-100.13     # Debug and fix built-in call tracking in multi-file projects
     - task-100.3      # Complete remaining agent validation fixes (task-62)
+    - task-100.6      # Add file size linting to prevent validation failures
     
   completed_2025-08-04:
     - task-100.11     # Refactor project_call_graph.ts (deleted - was unused)

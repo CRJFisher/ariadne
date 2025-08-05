@@ -4,7 +4,7 @@
  * in YAML format for LLM/agent validation
  */
 
-import { Project, CallGraph } from "../src";
+import { Project, CallGraph } from "../src/index";
 import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";

@@ -1,5 +1,5 @@
 meta:
-  timestamp: '2025-08-05T08:07:18.468Z'
+  timestamp: '2025-08-05T11:44:45.002Z'
   ariadne_version: 0.5.18
   total_files: 43
   total_functions: 335
@@ -15,7 +15,7 @@ top_level_nodes:
   - id: src/call_graph/call_analysis#analyze_module_level_calls
     name: analyze_module_level_calls
     file: src/call_graph/call_analysis.ts
-    line: 182
+    line: 179
     is_exported: true
     calls_count: 4
     called_by_count: 0
@@ -1515,7 +1515,7 @@ sampled_nodes:
       - target_id: src/call_graph/call_analysis#is_method_call_pattern
         target_name: is_method_call_pattern
         target_file: src/call_graph/call_analysis.ts
-        call_line: 131
+        call_line: 132
         call_type: direct
     incoming_calls: []
     source_snippet: |2-
@@ -1528,27 +1528,27 @@ sampled_nodes:
       id: src/call_graph/call_analysis#analyze_module_level_calls
       name: analyze_module_level_calls
       file: src/call_graph/call_analysis.ts
-      line: 182
+      line: 179
     outgoing_calls:
       - target_id: src/call_graph/call_analysis#is_position_within_range
         target_name: is_position_within_range
         target_file: src/call_graph/call_analysis.ts
-        call_line: 202
+        call_line: 199
         call_type: direct
       - target_id: src/call_graph/call_analysis#is_position_within_range
         target_name: is_position_within_range
         target_file: src/call_graph/call_analysis.ts
-        call_line: 203
+        call_line: 200
         call_type: direct
       - target_id: src/call_graph/call_analysis#is_reference_called
         target_name: is_reference_called
         target_file: src/call_graph/call_analysis.ts
-        call_line: 226
+        call_line: 223
         call_type: direct
       - target_id: src/call_graph/call_analysis#is_method_call_pattern
         target_name: is_method_call_pattern
         target_file: src/call_graph/call_analysis.ts
-        call_line: 249
+        call_line: 246
         call_type: direct
     incoming_calls: []
     source_snippet: |2-
@@ -1600,22 +1600,22 @@ sampled_nodes:
       id: src/call_graph/call_analysis#resolve_method_call_pure
       name: resolve_method_call_pure
       file: src/call_graph/call_analysis.ts
-      line: 293
+      line: 290
     outgoing_calls:
       - target_id: src/call_graph/call_analysis#compute_class_enclosing_range
         target_name: compute_class_enclosing_range
         target_file: src/call_graph/call_analysis.ts
-        call_line: 319
+        call_line: 316
         call_type: direct
       - target_id: src/call_graph/call_analysis#is_position_within_range
         target_name: is_position_within_range
         target_file: src/call_graph/call_analysis.ts
-        call_line: 330
+        call_line: 327
         call_type: direct
       - target_id: src/call_graph/call_analysis#is_position_within_range
         target_name: is_position_within_range
         target_file: src/call_graph/call_analysis.ts
-        call_line: 331
+        call_line: 328
         call_type: direct
     incoming_calls:
       - source_id: src/call_graph/call_analysis#resolve_reference
@@ -1631,7 +1631,7 @@ sampled_nodes:
       id: src/call_graph/call_analysis#find_definition_range
       name: find_definition_range
       file: src/call_graph/call_analysis.ts
-      line: 349
+      line: 346
     outgoing_calls: []
     incoming_calls:
       - source_id: src/call_graph/call_analysis#analyze_calls_from_definition
@@ -1647,7 +1647,7 @@ sampled_nodes:
       id: src/call_graph/call_analysis#is_position_within_range
       name: is_position_within_range
       file: src/call_graph/call_analysis.ts
-      line: 424
+      line: 421
     outgoing_calls: []
     incoming_calls:
       - source_id: src/call_graph/call_analysis#analyze_calls_from_definition
@@ -1834,7 +1834,7 @@ file_summary:
     exported_function_count: 1
     import_count: 2
 validation_stats:
-  nodes_with_calls_pct: 35.62874251497006
+  nodes_with_calls_pct: 34.73053892215569
   nodes_called_by_others_pct: 37.12574850299401
   exported_nodes_pct: 25.748502994011975
   edges_with_call_type_pct: 100

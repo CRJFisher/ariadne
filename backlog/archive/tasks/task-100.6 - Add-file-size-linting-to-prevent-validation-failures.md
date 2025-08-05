@@ -3,9 +3,9 @@ id: task-100.6
 title: Add file size linting to prevent validation failures
 status: Done
 assignee:
-  - '@claude'
-created_date: '2025-08-04 12:03'
-updated_date: '2025-08-05 11:01'
+  - "@claude"
+created_date: "2025-08-04 12:03"
+updated_date: "2025-08-05 11:01"
 labels: []
 dependencies: []
 parent_task_id: task-100
@@ -58,6 +58,7 @@ Implemented comprehensive file size linting:
 6. Created documentation in docs/file-size-linting.md
 
 Currently 3 files exceed the limit:
+
 - agent-validation/src/project_call_graph.js (62.7KB)
 - tests/call_graph.test.ts (54.7KB)
 - tests/languages/javascript.test.ts (40.9KB)

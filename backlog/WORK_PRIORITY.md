@@ -23,8 +23,8 @@ This cycle continues until Ariadne correctly parses and processes its own codeba
 Epic task implementing the iterative validation process to meet accuracy thresholds:
 
 - **Status**: Major fixes completed - built-in tracking working, multi-file bug fixed, validation fixes done
-- **URGENT**: task-100.5 - Re-run validation guide to verify all fixes work correctly
-- **Active sub-tasks**: task-100.5 (re-run validation), task-100.6, task-100.9, task-100.10
+- **Active sub-tasks**: task-100.9, task-100.10
+- **Next**: Re-run validation guide to verify all fixes work correctly
 - **Process**: Fix sub-tasks → Re-run validation → Create new sub-tasks if needed → Repeat
 - **Goal**: Achieve 85%+ accuracy through iterative improvements
 
@@ -91,6 +91,10 @@ Successfully addressed index.ts exceeding 32KB limit:
 - **Complete remaining agent validation fixes (task-100.3)** ✨
   - All validation fixes from task-62 confirmed working
   - Export detection and module-level call detection operational
+- **Add file size linting to prevent validation failures (task-100.6)** ✨
+  - Implemented comprehensive file size linting with 28KB warning and 32KB error thresholds
+  - Added CI/CD integration and pre-commit hooks for automatic checking
+  - Created documentation and npm scripts for manual checks
 
 **2025-08-04 completions:**
 
@@ -165,11 +169,10 @@ Successfully addressed index.ts exceeding 32KB limit:
 
 ## Next Steps
 
-1. **Re-run validation guide** (task-100.5) - URGENT: Verify all fixes work and meet 85% thresholds
+1. **Re-run validation guide** - URGENT: Verify all fixes work and meet 85% thresholds
 2. **Add CommonJS and ES6 export support** (task-100.9) - needed for export detection accuracy
-3. **Add file size linting** (task-100.6) - prevent future validation failures  
-4. **Test with Claude Code** (task-101) - real-world validation with MCP integration
-5. **Complete JavaScript test updates** (task-100.10) - mechanical updates after ref_to_scope
+3. **Test with Claude Code** (task-101) - real-world validation with MCP integration
+4. **Complete JavaScript test updates** (task-100.10) - mechanical updates after ref_to_scope
 
 ## Key Findings from Investigation
 
