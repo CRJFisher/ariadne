@@ -1,12 +1,15 @@
 ---
 id: task-100.11.14
 title: Track all function calls including built-ins
-status: To Do
+status: Done
 assignee: []
 created_date: '2025-08-04 19:00'
-updated_date: '2025-08-05'
-labels: ['bug', 'regression']
-dependencies: [100.13]
+updated_date: '2025-08-05 10:39'
+labels:
+  - bug
+  - regression
+dependencies:
+  - '100.13'
 parent_task_id: task-100.11
 ---
 
@@ -33,6 +36,10 @@ Currently, Ariadne only tracks calls to functions defined within the project. Th
 3. Update call counting logic
 4. Test with real codebase to verify improvement
 
+
+## Implementation Notes
+
+Re-implemented built-in call tracking after refactoring regression. Modified analyze_calls_from_definition to track unresolved references in call expressions. Added is_reference_called function for AST-based call detection. Creates synthetic definitions for built-ins with <builtin># pattern. Fixed multi-file bug through task-100.13. Comprehensive tests added in builtin_call_tracking.test.ts. All function calls now tracked including console.log, JSON methods, array methods.
 ## Regression Note (2025-08-05)
 
 This task was previously completed on 2025-08-04 but the implementation was lost during the major refactoring (task-100.12). The validation run on 2025-08-05 showed:

@@ -1,11 +1,17 @@
 ---
 id: task-100.13
 title: Debug and fix built-in call tracking in multi-file projects
-status: To Do
-assignee: ['@claude']
+status: Done
+assignee:
+  - '@claude'
 created_date: '2025-08-05 07:04'
-labels: ['bug', 'critical', 'validation']
-dependencies: ['task-100.11.14']
+updated_date: '2025-08-05 10:39'
+labels:
+  - bug
+  - critical
+  - validation
+dependencies:
+  - task-100.11.14
 parent_task_id: task-100
 ---
 
@@ -212,3 +218,5 @@ With this fix:
 - Built-in calls are properly tracked even when multiple files are loaded
 - generateLargeFile shows all 19 calls in multi-file scenarios
 - The validation should now achieve 85%+ nodes with calls
+
+Fixed critical AST node object identity bug in is_reference_called function. Built-in calls now tracked correctly in multi-file projects. Modified call_analysis.ts to use type-based checking instead of object identity comparison. Added comprehensive regression tests in multi_file_builtin_calls.test.ts. Validation should now achieve 85%+ nodes with calls.
