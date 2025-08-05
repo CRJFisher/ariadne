@@ -123,6 +123,7 @@ export function analyze_calls_from_definition(
     const isCallExpression = is_reference_called(ref, fileCache);
     
     
+    
     if (resolved.resolved) {
       // Check if this is a callable symbol
       const callable_kinds = ['function', 'method', 'generator', 'class', 'constructor', 'struct'];
@@ -182,6 +183,7 @@ export function analyze_module_level_calls(
 ): CallAnalysisResult {
   const { graph, fileCache } = config;
   const calls: FunctionCall[] = [];
+  
   const typeDiscoveries: TypeDiscovery[] = [];
   
   // Get all references in the file
@@ -469,12 +471,17 @@ function is_reference_called(ref: Ref, fileCache: FileCache): boolean {
   );
   
   if (!astNode) {
+    if (process.env.DEBUG_CALL_GRAPH && ref.name === 'push') {
+      console.log(`[is_reference_called] No AST node found for ${ref.name} at ${ref.range.start.row}:${ref.range.start.column}`);
+    }
     return false;
   }
+  
   
   // Check if this node's parent is a call expression
   const parent = astNode.parent;
   if (!parent) return false;
+  
   
   // Direct function call: func()
   if (parent.type === 'call_expression' && parent.childForFieldName('function') === astNode) {
@@ -482,7 +489,13 @@ function is_reference_called(ref: Ref, fileCache: FileCache): boolean {
   }
   
   // Method call: obj.method() - the reference is the property of a member_expression
-  if (parent.type === 'member_expression' && parent.childForFieldName('property') === astNode) {
+  const propertyChild = parent.type === 'member_expression' ? parent.childForFieldName('property') : null;
+  // Fix: Same issue as below - object identity fails when files are reparsed
+  // Check if this is the property of a member expression by comparing positions
+  if (parent.type === 'member_expression' && propertyChild && 
+      propertyChild.type === astNode.type &&
+      propertyChild.startPosition.row === astNode.startPosition.row &&
+      propertyChild.startPosition.column === astNode.startPosition.column) {
     // Check if the member_expression is the function of a call_expression
     const grandparent = parent.parent;
     if (grandparent && grandparent.type === 'call_expression') {
