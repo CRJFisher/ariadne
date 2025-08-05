@@ -1,700 +1,1577 @@
 meta:
-  timestamp: '2025-08-04T21:54:47.619Z'
+  timestamp: '2025-08-05T06:30:16.804Z'
   ariadne_version: 0.5.18
-  total_files: 29
-  total_functions: 185
-  total_calls: 174
+  total_files: 44
+  total_functions: 335
+  total_calls: 210
 top_level_nodes:
-  - id: src/benchmark-incremental#generateLargeFile
-    name: generateLargeFile
-    file: src/benchmark-incremental.ts
-    line: 8
-    is_exported: false
-    calls_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#analyze_calls_from_definition
+    name: analyze_calls_from_definition
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+    line: 70
+    is_exported: true
+    calls_count: 7
     called_by_count: 0
-  - id: src/benchmark-incremental#benchmark
-    name: benchmark
-    file: src/benchmark-incremental.ts
-    line: 47
-    is_exported: false
-    calls_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#analyze_module_level_calls
+    name: analyze_module_level_calls
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+    line: 178
+    is_exported: true
+    calls_count: 4
     called_by_count: 0
-  - id: src/call_graph/constants#isCallableSymbolKind
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/constants#isCallableSymbolKind
     name: isCallableSymbolKind
-    file: src/call_graph/constants.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/constants.ts
     line: 58
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/constants#isTypeSymbolKind
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/constants#isTypeSymbolKind
     name: isTypeSymbolKind
-    file: src/call_graph/constants.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/constants.ts
     line: 62
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/constants#isValidLanguageExtension
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/constants#isValidLanguageExtension
     name: isValidLanguageExtension
-    file: src/call_graph/constants.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/constants.ts
     line: 66
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/graph_builder#build_call_graph_two_phase
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/graph_builder#build_call_graph_two_phase
     name: build_call_graph_two_phase
-    file: src/call_graph/graph_builder.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/graph_builder.ts
     line: 258
     is_exported: true
     calls_count: 2
     called_by_count: 0
-  - id: src/call_graph/graph_builder#build_call_graph_two_phase_sync
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/graph_builder#build_call_graph_two_phase_sync
     name: build_call_graph_two_phase_sync
-    file: src/call_graph/graph_builder.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/graph_builder.ts
     line: 271
     is_exported: true
-    calls_count: 4
+    calls_count: 2
     called_by_count: 0
-  - id: src/call_graph/graph_builder#build_call_graph_for_display
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/graph_builder#build_call_graph_for_display
     name: build_call_graph_for_display
-    file: src/call_graph/graph_builder.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/graph_builder.ts
     line: 312
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/import_export_detector#analyze_file_import_export
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/import_export_detector#analyze_file_import_export
     name: analyze_file_import_export
-    file: src/call_graph/import_export_detector.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/import_export_detector.ts
     line: 437
     is_exported: true
-    calls_count: 3
+    calls_count: 2
     called_by_count: 0
-  - id: src/call_graph/import_export_detector#is_class_export
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/import_export_detector#is_class_export
     name: is_class_export
-    file: src/call_graph/import_export_detector.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/import_export_detector.ts
     line: 451
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/import_export_detector#is_function_export
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/import_export_detector#is_function_export
     name: is_function_export
-    file: src/call_graph/import_export_detector.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/import_export_detector.ts
     line: 458
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/import_export_detector#compute_class_enclosing_range
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/import_export_detector#compute_class_enclosing_range
     name: compute_class_enclosing_range
-    file: src/call_graph/import_export_detector.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/import_export_detector.ts
     line: 466
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/project_graph_data#add_file_graph
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data#create_project_call_graph
+    name: create_project_call_graph
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data.ts
+    line: 32
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data#add_file_graph
     name: add_file_graph
-    file: src/call_graph/project_graph_data.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data.ts
     line: 47
     is_exported: true
-    calls_count: 1
+    calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/project_graph_data#add_file_cache
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data#add_file_cache
     name: add_file_cache
-    file: src/call_graph/project_graph_data.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data.ts
     line: 64
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/project_graph_data#update_file_type_tracker
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data#update_file_type_tracker
     name: update_file_type_tracker
-    file: src/call_graph/project_graph_data.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data.ts
     line: 81
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/project_graph_data#get_or_create_file_type_tracker
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data#update_project_registry
+    name: update_project_registry
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data.ts
+    line: 98
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data#get_or_create_file_type_tracker
     name: get_or_create_file_type_tracker
-    file: src/call_graph/project_graph_data.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data.ts
     line: 111
     is_exported: true
-    calls_count: 1
+    calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/project_graph_data#clear_file_data
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data#clear_file_data
     name: clear_file_data
-    file: src/call_graph/project_graph_data.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data.ts
     line: 121
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/project_graph_data#merge_project_graphs
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data#batch_update_files
+    name: batch_update_files
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data.ts
+    line: 154
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data#merge_project_graphs
     name: merge_project_graphs
-    file: src/call_graph/project_graph_data.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data.ts
     line: 187
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/project_graph_data#get_all_file_paths
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data#get_all_file_paths
     name: get_all_file_paths
-    file: src/call_graph/project_graph_data.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data.ts
     line: 228
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/project_graph_data#has_file
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data#has_file
     name: has_file
-    file: src/call_graph/project_graph_data.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data.ts
     line: 246
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/project_graph_data#get_file_data
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data#get_file_data
     name: get_file_data
-    file: src/call_graph/project_graph_data.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data.ts
     line: 262
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/project_graph_data#ProjectCallGraphUpdater.constructor
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data#ProjectCallGraphUpdater.constructor
     name: constructor
-    file: src/call_graph/project_graph_data.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data.ts
     line: 288
     is_exported: false
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/project_graph_data#ProjectCallGraphUpdater.addFileGraph
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data#ProjectCallGraphUpdater.addFileGraph
     name: addFileGraph
-    file: src/call_graph/project_graph_data.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data.ts
     line: 290
     is_exported: false
-    calls_count: 1
+    calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/project_graph_data#ProjectCallGraphUpdater.addFileCache
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data#ProjectCallGraphUpdater.addFileCache
     name: addFileCache
-    file: src/call_graph/project_graph_data.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data.ts
     line: 298
     is_exported: false
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/project_graph_data#ProjectCallGraphUpdater.updateFileTypeTracker
+  - id: >-
+      Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data#ProjectCallGraphUpdater.updateFileTypeTracker
     name: updateFileTypeTracker
-    file: src/call_graph/project_graph_data.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data.ts
     line: 306
     is_exported: false
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/project_graph_data#ProjectCallGraphUpdater.updateProjectRegistry
+  - id: >-
+      Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data#ProjectCallGraphUpdater.updateProjectRegistry
     name: updateProjectRegistry
-    file: src/call_graph/project_graph_data.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data.ts
     line: 314
     is_exported: false
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/project_graph_data#ProjectCallGraphUpdater.build
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data#ProjectCallGraphUpdater.build
     name: build
-    file: src/call_graph/project_graph_data.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data.ts
     line: 319
     is_exported: false
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/project_graph_data#create_updater
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data#create_updater
     name: create_updater
-    file: src/call_graph/project_graph_data.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data.ts
     line: 333
     is_exported: true
     calls_count: 2
     called_by_count: 0
-  - id: src/call_graph/readonly_types#isReadonly
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/readonly_types#isReadonly
     name: isReadonly
-    file: src/call_graph/readonly_types.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/readonly_types.ts
     line: 45
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/readonly_types#asDeepReadonly
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/readonly_types#asDeepReadonly
     name: asDeepReadonly
-    file: src/call_graph/readonly_types.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/readonly_types.ts
     line: 54
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/readonly_types#asImmutableArray
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/readonly_types#asImmutableArray
     name: asImmutableArray
-    file: src/call_graph/readonly_types.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/readonly_types.ts
     line: 61
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/readonly_types#asConst
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/readonly_types#asConst
     name: asConst
-    file: src/call_graph/readonly_types.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/readonly_types.ts
     line: 68
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/type_tracker#mark_as_exported
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/return_type_analyzer#analyze_return_type
+    name: analyze_return_type
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/return_type_analyzer.ts
+    line: 7
+    is_exported: true
+    calls_count: 4
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker#mark_as_exported
     name: mark_as_exported
-    file: src/call_graph/type_tracker.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker.ts
     line: 124
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/type_tracker#is_exported
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker#is_exported
     name: is_exported
-    file: src/call_graph/type_tracker.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker.ts
     line: 140
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/type_tracker#get_exported_definitions
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker#get_exported_definitions
     name: get_exported_definitions
-    file: src/call_graph/type_tracker.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker.ts
     line: 150
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/type_tracker#clear_file_type_tracker
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker#clear_file_type_tracker
     name: clear_file_type_tracker
-    file: src/call_graph/type_tracker.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker.ts
     line: 159
     is_exported: true
     calls_count: 1
     called_by_count: 0
-  - id: src/call_graph/type_tracker#get_imported_type
-    name: get_imported_type
-    file: src/call_graph/type_tracker.ts
-    line: 304
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker#create_local_type_tracker
+    name: create_local_type_tracker
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker.ts
+    line: 176
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker#set_local_variable_type
+    name: set_local_variable_type
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker.ts
+    line: 186
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker#get_local_variable_type
+    name: get_local_variable_type
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker.ts
+    line: 212
     is_exported: true
     calls_count: 1
     called_by_count: 0
-  - id: src/call_graph/type_tracker#clear_file_exports
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker#get_local_imported_class
+    name: get_local_imported_class
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker.ts
+    line: 242
+    is_exported: true
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker#create_project_type_registry
+    name: create_project_type_registry
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker.ts
+    line: 260
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker#get_imported_type
+    name: get_imported_type
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker.ts
+    line: 304
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker#clear_file_exports
     name: clear_file_exports
-    file: src/call_graph/type_tracker.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker.ts
     line: 316
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/type_tracker#set_variable_types
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker#set_variable_types
     name: set_variable_types
-    file: src/call_graph/type_tracker.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker.ts
     line: 343
     is_exported: true
     calls_count: 1
     called_by_count: 0
-  - id: src/call_graph/type_tracker#set_imported_classes
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker#set_imported_classes
     name: set_imported_classes
-    file: src/call_graph/type_tracker.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker.ts
     line: 356
     is_exported: true
     calls_count: 1
     called_by_count: 0
-  - id: src/call_graph/type_tracker#mark_as_exported_batch
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker#mark_as_exported_batch
     name: mark_as_exported_batch
-    file: src/call_graph/type_tracker.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker.ts
     line: 369
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph/type_tracker#register_exports
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker#register_exports
     name: register_exports
-    file: src/call_graph/type_tracker.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker.ts
     line: 387
     is_exported: true
     calls_count: 1
     called_by_count: 0
-  - id: src/call_graph_utils#apply_max_depth_filter
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph_utils#apply_max_depth_filter
     name: apply_max_depth_filter
-    file: src/call_graph_utils.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph_utils.ts
     line: 16
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph_utils#is_position_within_range
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph_utils#is_position_within_range
     name: is_position_within_range
-    file: src/call_graph_utils.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph_utils.ts
     line: 71
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/call_graph_utils#get_function_node_range
+  - id: Users/chuck/workspace/ariadne/packages/core/src/call_graph_utils#get_function_node_range
     name: get_function_node_range
-    file: src/call_graph_utils.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph_utils.ts
     line: 86
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/edit#create_edit
+  - id: Users/chuck/workspace/ariadne/packages/core/src/edit#create_edit
     name: create_edit
-    file: src/edit.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/edit.ts
     line: 13
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/edit#calculate_end_position
+  - id: Users/chuck/workspace/ariadne/packages/core/src/edit#calculate_end_position
     name: calculate_end_position
-    file: src/edit.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/edit.ts
     line: 39
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/graph#ScopeGraph.constructor
+  - id: Users/chuck/workspace/ariadne/packages/core/src/function_metadata#extract_function_metadata
+    name: extract_function_metadata
+    file: /Users/chuck/workspace/ariadne/packages/core/src/function_metadata.ts
+    line: 9
+    is_exported: true
+    calls_count: 4
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/graph#ScopeGraph.constructor
     name: constructor
-    file: src/graph.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
     line: 68
     is_exported: false
     calls_count: 1
     called_by_count: 0
-  - id: src/graph#ScopeGraph.getEdges
-    name: getEdges
-    file: src/graph.ts
-    line: 249
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/graph#ScopeGraph.getDefsForRef
-    name: getDefsForRef
-    file: src/graph.ts
-    line: 254
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/graph#ScopeGraph.getImportsForRef
-    name: getImportsForRef
-    file: src/graph.ts
-    line: 265
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/graph#ScopeGraph.getRefsForDef
-    name: getRefsForDef
-    file: src/graph.ts
-    line: 276
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/graph#ScopeGraph.findNodeAtPosition
-    name: findNodeAtPosition
-    file: src/graph.ts
-    line: 287
+  - id: Users/chuck/workspace/ariadne/packages/core/src/graph#ScopeGraph.insert_local_def
+    name: insert_local_def
+    file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
+    line: 84
     is_exported: false
     calls_count: 1
     called_by_count: 0
-  - id: src/graph#ScopeGraph.getAllDefs
-    name: getAllDefs
-    file: src/graph.ts
-    line: 329
+  - id: Users/chuck/workspace/ariadne/packages/core/src/graph#ScopeGraph.insert_hoisted_def
+    name: insert_hoisted_def
+    file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
+    line: 90
     is_exported: false
     calls_count: 1
     called_by_count: 0
-  - id: src/graph#ScopeGraph.getImportStatementCount
-    name: getImportStatementCount
-    file: src/graph.ts
-    line: 339
-    is_exported: false
-    calls_count: 1
-    called_by_count: 0
-  - id: src/graph#ScopeGraph.findExportedDef
-    name: findExportedDef
-    file: src/graph.ts
-    line: 356
-    is_exported: false
-    calls_count: 1
-    called_by_count: 0
-  - id: src/graph#ScopeGraph.debug_print
-    name: debug_print
-    file: src/graph.ts
-    line: 374
+  - id: Users/chuck/workspace/ariadne/packages/core/src/graph#ScopeGraph.insert_global_def
+    name: insert_global_def
+    file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
+    line: 106
     is_exported: false
     calls_count: 0
     called_by_count: 0
-  - id: src/graph#ScopeGraph.getCallsFromDef
-    name: getCallsFromDef
-    file: src/graph.ts
-    line: 387
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/graph#ScopeGraph.getSymbolId
-    name: getSymbolId
-    file: src/graph.ts
-    line: 392
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/graph#ScopeGraph.getDefinitionBySymbol
-    name: getDefinitionBySymbol
-    file: src/graph.ts
-    line: 396
-    is_exported: false
-    calls_count: 1
-    called_by_count: 0
-  - id: src/graph#ScopeGraph.getFunctionCalls
-    name: getFunctionCalls
-    file: src/graph.ts
-    line: 400
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/graph#ScopeGraph.getImportInfo
-    name: getImportInfo
-    file: src/graph.ts
-    line: 405
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/graph#ScopeGraph.getCallGraph
-    name: getCallGraph
-    file: src/graph.ts
-    line: 410
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/languages/javascript/index#initialize_parser
-    name: initialize_parser
-    file: src/languages/javascript/index.ts
-    line: 8
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/languages/javascript/index#get_scope_query
-    name: get_scope_query
-    file: src/languages/javascript/index.ts
-    line: 21
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/languages/python/index#initialize_parser
-    name: initialize_parser
-    file: src/languages/python/index.ts
-    line: 8
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/languages/python/index#get_scope_query
-    name: get_scope_query
-    file: src/languages/python/index.ts
-    line: 33
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/languages/python/index#extract_python_context
-    name: extract_python_context
-    file: src/languages/python/index.ts
-    line: 58
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/languages/rust/index#initialize_parser
-    name: initialize_parser
-    file: src/languages/rust/index.ts
-    line: 8
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/languages/rust/index#get_scope_query
-    name: get_scope_query
-    file: src/languages/rust/index.ts
-    line: 19
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/languages/shared_extractors#extract_jsdoc_context
-    name: extract_jsdoc_context
-    file: src/languages/shared_extractors.ts
-    line: 7
-    is_exported: true
-    calls_count: 0
-    called_by_count: 0
-  - id: src/languages/typescript/index#initialize_parser
-    name: initialize_parser
-    file: src/languages/typescript/index.ts
-    line: 8
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/languages/typescript/index#get_scope_query
-    name: get_scope_query
-    file: src/languages/typescript/index.ts
-    line: 22
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/module_resolver#ModuleResolver.resolveModulePath
-    name: resolveModulePath
-    file: src/module_resolver.ts
-    line: 31
-    is_exported: false
-    calls_count: 2
-    called_by_count: 0
-  - id: src/module_resolver#ModuleResolver.resolvePythonImport
-    name: resolvePythonImport
-    file: src/module_resolver.ts
-    line: 171
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/module_resolver#ModuleResolver.resolveRustModule
-    name: resolveRustModule
-    file: src/module_resolver.ts
-    line: 233
-    is_exported: false
-    calls_count: 1
-    called_by_count: 0
-  - id: src/project_inheritance#ProjectInheritance.constructor
-    name: constructor
-    file: src/project_inheritance.ts
-    line: 22
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: src/project_inheritance#ProjectInheritance.find_subclasses
-    name: find_subclasses
-    file: src/project_inheritance.ts
-    line: 82
-    is_exported: false
-    calls_count: 1
-    called_by_count: 0
-  - id: src/project_inheritance#ProjectInheritance.find_implementations
-    name: find_implementations
-    file: src/project_inheritance.ts
+  - id: Users/chuck/workspace/ariadne/packages/core/src/graph#ScopeGraph.insert_local_scope
+    name: insert_local_scope
+    file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
     line: 111
     is_exported: false
     calls_count: 1
     called_by_count: 0
-  - id: src/project_inheritance#ProjectInheritance.is_subclass_of
+  - id: Users/chuck/workspace/ariadne/packages/core/src/graph#ScopeGraph.insert_local_import
+    name: insert_local_import
+    file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
+    line: 117
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/graph#ScopeGraph.insert_ref
+    name: insert_ref
+    file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
+    line: 123
+    is_exported: false
+    calls_count: 4
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/graph#ScopeGraph.node_to_simple_range
+    name: node_to_simple_range
+    file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
+    line: 199
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/graph#ScopeGraph.getEdges
+    name: getEdges
+    file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
+    line: 249
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/graph#ScopeGraph.getDefsForRef
+    name: getDefsForRef
+    file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
+    line: 254
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/graph#ScopeGraph.getImportsForRef
+    name: getImportsForRef
+    file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
+    line: 265
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/graph#ScopeGraph.getRefsForDef
+    name: getRefsForDef
+    file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
+    line: 276
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/graph#ScopeGraph.findNodeAtPosition
+    name: findNodeAtPosition
+    file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
+    line: 287
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/graph#ScopeGraph.getAllDefs
+    name: getAllDefs
+    file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
+    line: 329
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/graph#ScopeGraph.getImportStatementCount
+    name: getImportStatementCount
+    file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
+    line: 339
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/graph#ScopeGraph.findExportedDef
+    name: findExportedDef
+    file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
+    line: 356
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/graph#ScopeGraph.debug_print
+    name: debug_print
+    file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
+    line: 374
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/graph#ScopeGraph.getCallsFromDef
+    name: getCallsFromDef
+    file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
+    line: 387
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/graph#ScopeGraph.getSymbolId
+    name: getSymbolId
+    file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
+    line: 392
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/graph#ScopeGraph.getDefinitionBySymbol
+    name: getDefinitionBySymbol
+    file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
+    line: 396
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/graph#ScopeGraph.getFunctionCalls
+    name: getFunctionCalls
+    file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
+    line: 400
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/graph#ScopeGraph.getImportInfo
+    name: getImportInfo
+    file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
+    line: 405
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/graph#ScopeGraph.getCallGraph
+    name: getCallGraph
+    file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
+    line: 410
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/inheritance#extract_class_relationships
+    name: extract_class_relationships
+    file: /Users/chuck/workspace/ariadne/packages/core/src/inheritance.ts
+    line: 14
+    is_exported: true
+    calls_count: 3
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/module_resolver#ModuleResolver.resolveModulePath
+    name: resolveModulePath
+    file: /Users/chuck/workspace/ariadne/packages/core/src/module_resolver.ts
+    line: 31
+    is_exported: false
+    calls_count: 2
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/module_resolver#ModuleResolver.resolvePythonImport
+    name: resolvePythonImport
+    file: /Users/chuck/workspace/ariadne/packages/core/src/module_resolver.ts
+    line: 171
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/module_resolver#ModuleResolver.resolveRustModule
+    name: resolveRustModule
+    file: /Users/chuck/workspace/ariadne/packages/core/src/module_resolver.ts
+    line: 233
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/call_graph_service#CallGraphService.getFunctionCalls
+    name: getFunctionCalls
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/call_graph_service.ts
+    line: 69
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/call_graph_service#CallGraphService.getCallGraph
+    name: getCallGraph
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/call_graph_service.ts
+    line: 135
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/call_graph_service#CallGraphService.applyTypeDiscoveries
+    name: applyTypeDiscoveries
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/call_graph_service.ts
+    line: 164
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/file_manager#FileManager.constructor
+    name: constructor
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/file_manager.ts
+    line: 29
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/file_manager#FileManager.processFile
+    name: processFile
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/file_manager.ts
+    line: 128
+    is_exported: false
+    calls_count: 4
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/file_manager#FileManager.removeFile
+    name: removeFile
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/file_manager.ts
+    line: 243
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/file_manager#FileManager.calculateByteOffset
+    name: calculateByteOffset
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/file_manager.ts
+    line: 250
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/file_manager#FileManager.calculateEndPosition
+    name: calculateEndPosition
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/file_manager.ts
+    line: 275
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: >-
+      Users/chuck/workspace/ariadne/packages/core/src/project/inheritance_service#InheritanceService.getClassRelationships
+    name: getClassRelationships
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/inheritance_service.ts
+    line: 15
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/inheritance_service#InheritanceService.findSubclasses
+    name: findSubclasses
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/inheritance_service.ts
+    line: 33
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/inheritance_service#InheritanceService.findImplementations
+    name: findImplementations
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/inheritance_service.ts
+    line: 50
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/inheritance_service#InheritanceService.getInheritanceChain
+    name: getInheritanceChain
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/inheritance_service.ts
+    line: 67
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/inheritance_service#InheritanceService.isSubclassOf
+    name: isSubclassOf
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/inheritance_service.ts
+    line: 84
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: >-
+      Users/chuck/workspace/ariadne/packages/core/src/project/inheritance_service#InheritanceService.updateInheritanceMap
+    name: updateInheritanceMap
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/inheritance_service.ts
+    line: 102
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/language_manager#LanguageManager.constructor
+    name: constructor
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/language_manager.ts
+    line: 13
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/language_manager#LanguageManager.getLanguage
+    name: getLanguage
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/language_manager.ts
+    line: 42
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/language_manager#LanguageManager.getLanguages
+    name: getLanguages
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/language_manager.ts
+    line: 49
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/language_manager#LanguageManager.hasLanguage
+    name: hasLanguage
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/language_manager.ts
+    line: 56
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/language_manager#LanguageManager.getLanguageNames
+    name: getLanguageNames
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/language_manager.ts
+    line: 63
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/navigation_service#NavigationService.findReferences
+    name: findReferences
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/navigation_service.ts
+    line: 12
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/navigation_service#NavigationService.goToDefinition
+    name: goToDefinition
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/navigation_service.ts
+    line: 23
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/navigation_service#NavigationService.getScopeGraph
+    name: getScopeGraph
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/navigation_service.ts
+    line: 34
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/navigation_service#NavigationService.getAllScopeGraphs
+    name: getAllScopeGraphs
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/navigation_service.ts
+    line: 44
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/navigation_service#NavigationService.getFunctionsInFile
+    name: getFunctionsInFile
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/navigation_service.ts
+    line: 54
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/navigation_service#NavigationService.getDefinitions
+    name: getDefinitions
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/navigation_service.ts
+    line: 71
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/navigation_service#NavigationService.getAllFunctionsFlat
+    name: getAllFunctionsFlat
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/navigation_service.ts
+    line: 126
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/navigation_service#NavigationService.getExportedFunctions
+    name: getExportedFunctions
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/navigation_service.ts
+    line: 149
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/navigation_service#NavigationService.isDefinitionExported
+    name: isDefinitionExported
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/navigation_service.ts
+    line: 181
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: >-
+      Users/chuck/workspace/ariadne/packages/core/src/project/navigation_service#NavigationService.getImportsWithDefinitions
+    name: getImportsWithDefinitions
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/navigation_service.ts
+    line: 212
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.constructor
+    name: constructor
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 32
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.withStorage
+    name: withStorage
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 66
+    is_exported: false
+    calls_count: 2
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.remove_file
+    name: remove_file
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 103
+    is_exported: false
+    calls_count: 2
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.find_references
+    name: find_references
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 128
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.go_to_definition
+    name: go_to_definition
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 136
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.get_scope_graph
+    name: get_scope_graph
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 144
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.get_all_scope_graphs
+    name: get_all_scope_graphs
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 152
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.get_functions_in_file
+    name: get_functions_in_file
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 160
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.get_definitions
+    name: get_definitions
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 168
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.get_all_functions
+    name: get_all_functions
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 176
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.get_calls_from_definition
+    name: get_calls_from_definition
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 188
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.get_function_calls
+    name: get_function_calls
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 196
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.extract_call_graph
+    name: extract_call_graph
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 204
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.get_call_graph
+    name: get_call_graph
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 212
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.get_source_code
+    name: get_source_code
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 237
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.get_source_with_context
+    name: get_source_with_context
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 245
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.get_imports_with_definitions
+    name: get_imports_with_definitions
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 258
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.get_exported_functions
+    name: get_exported_functions
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 266
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.get_class_relationships
+    name: get_class_relationships
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 274
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.find_subclasses
+    name: find_subclasses
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 282
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.find_implementations
+    name: find_implementations
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 290
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.get_inheritance_chain
+    name: get_inheritance_chain
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 298
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.is_subclass_of
     name: is_subclass_of
-    file: src/project_inheritance.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 306
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.update_file_range
+    name: update_file_range
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 314
+    is_exported: false
+    calls_count: 3
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/project#Project.withState
+    name: withState
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    line: 397
+    is_exported: false
+    calls_count: 2
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/query_service#QueryService.constructor
+    name: constructor
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/query_service.ts
+    line: 13
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/query_service#QueryService.getSourceCode
+    name: getSourceCode
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/query_service.ts
+    line: 22
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/query_service#QueryService.getSourceWithContext
+    name: getSourceWithContext
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/query_service.ts
+    line: 57
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project/query_service#QueryService.getImportsWithDefinitions
+    name: getImportsWithDefinitions
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project/query_service.ts
+    line: 87
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project_inheritance#ProjectInheritance.constructor
+    name: constructor
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project_inheritance.ts
+    line: 22
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project_inheritance#ProjectInheritance.find_subclasses
+    name: find_subclasses
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project_inheritance.ts
+    line: 82
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project_inheritance#ProjectInheritance.find_implementations
+    name: find_implementations
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project_inheritance.ts
+    line: 111
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project_inheritance#ProjectInheritance.is_subclass_of
+    name: is_subclass_of
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project_inheritance.ts
     line: 167
     is_exported: false
     calls_count: 1
     called_by_count: 0
-  - id: src/project_source#ProjectSource.constructor
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project_source#ProjectSource.constructor
     name: constructor
-    file: src/project_source.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project_source.ts
     line: 19
     is_exported: false
     calls_count: 0
     called_by_count: 0
-  - id: src/project_source#ProjectSource.get_source_with_context
+  - id: Users/chuck/workspace/ariadne/packages/core/src/project_source#ProjectSource.get_source_with_context
     name: get_source_with_context
-    file: src/project_source.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/project_source.ts
     line: 132
     is_exported: false
     calls_count: 3
     called_by_count: 0
-  - id: src/scope_resolution#build_scope_graph
+  - id: Users/chuck/workspace/ariadne/packages/core/src/scope_resolution#build_scope_graph
     name: build_scope_graph
-    file: src/scope_resolution.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/scope_resolution.ts
     line: 82
     is_exported: true
-    calls_count: 25
+    calls_count: 3
     called_by_count: 0
-  - id: src/symbol_naming#create_method_symbol_id
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage#DiskStorage.constructor
+    name: constructor
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage.ts
+    line: 37
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage#DiskStorage.initialize
+    name: initialize
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage.ts
+    line: 45
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage#DiskStorage.beginTransaction
+    name: beginTransaction
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage.ts
+    line: 105
+    is_exported: false
+    calls_count: 2
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage#DiskStorage.getFileCache
+    name: getFileCache
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage.ts
+    line: 109
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage#DiskStorage.getFileGraph
+    name: getFileGraph
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage.ts
+    line: 117
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage#DiskStorage.updateFile
+    name: updateFile
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage.ts
+    line: 125
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage#DiskStorage.removeFile
+    name: removeFile
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage.ts
+    line: 129
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage#DiskStorage.getFilePaths
+    name: getFilePaths
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage.ts
+    line: 144
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage#DiskStorage.hasFile
+    name: hasFile
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage.ts
+    line: 148
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage#DiskStorage.close
+    name: close
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage.ts
+    line: 169
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage#DiskStorage.applyTransaction
+    name: applyTransaction
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage.ts
+    line: 177
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage#DiskStorageTransaction.constructor
+    name: constructor
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage.ts
+    line: 291
+    is_exported: false
+    calls_count: 2
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage#DiskStorageTransaction.getState
+    name: getState
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage.ts
+    line: 298
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage#DiskStorageTransaction.setState
+    name: setState
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage.ts
+    line: 303
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage#DiskStorageTransaction.updateFile
+    name: updateFile
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage.ts
+    line: 308
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage#DiskStorageTransaction.removeFile
+    name: removeFile
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage.ts
+    line: 318
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage#DiskStorageTransaction.commit
+    name: commit
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage.ts
+    line: 323
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage#DiskStorageTransaction.rollback
+    name: rollback
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage.ts
+    line: 329
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage#InMemoryTransaction.constructor
+    name: constructor
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage.ts
+    line: 24
+    is_exported: false
+    calls_count: 2
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage#InMemoryTransaction.getState
+    name: getState
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage.ts
+    line: 32
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage#InMemoryTransaction.setState
+    name: setState
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage.ts
+    line: 37
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage#InMemoryTransaction.updateFile
+    name: updateFile
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage.ts
+    line: 42
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage#InMemoryTransaction.removeFile
+    name: removeFile
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage.ts
+    line: 52
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage#InMemoryTransaction.commit
+    name: commit
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage.ts
+    line: 57
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage#InMemoryTransaction.rollback
+    name: rollback
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage.ts
+    line: 63
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage#InMemoryStorage.constructor
+    name: constructor
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage.ts
+    line: 98
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage#InMemoryStorage.initialize
+    name: initialize
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage.ts
+    line: 102
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage#InMemoryStorage.getState
+    name: getState
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage.ts
+    line: 106
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage#InMemoryStorage.setState
+    name: setState
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage.ts
+    line: 113
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage#InMemoryStorage.beginTransaction
+    name: beginTransaction
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage.ts
+    line: 117
+    is_exported: false
+    calls_count: 1
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage#InMemoryStorage.getFileCache
+    name: getFileCache
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage.ts
+    line: 121
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage#InMemoryStorage.getFileGraph
+    name: getFileGraph
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage.ts
+    line: 125
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage#InMemoryStorage.updateFile
+    name: updateFile
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage.ts
+    line: 129
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage#InMemoryStorage.removeFile
+    name: removeFile
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage.ts
+    line: 133
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage#InMemoryStorage.getFilePaths
+    name: getFilePaths
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage.ts
+    line: 137
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage#InMemoryStorage.hasFile
+    name: hasFile
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage.ts
+    line: 141
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage#InMemoryStorage.clear
+    name: clear
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage.ts
+    line: 145
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage#InMemoryStorage.close
+    name: close
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage.ts
+    line: 149
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage#InMemoryStorage.applyTransaction
+    name: applyTransaction
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage.ts
+    line: 156
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface#registerStorageProvider
+    name: registerStorageProvider
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface.ts
+    line: 141
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface#createStorage
+    name: createStorage
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface.ts
+    line: 148
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: >-
+      Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface_sync#SyncToAsyncStorageAdapter.constructor
+    name: constructor
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface_sync.ts
+    line: 109
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: >-
+      Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface_sync#SyncToAsyncStorageAdapter.initialize
+    name: initialize
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface_sync.ts
+    line: 111
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: >-
+      Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface_sync#SyncToAsyncStorageAdapter.beginTransaction
+    name: beginTransaction
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface_sync.ts
+    line: 123
+    is_exported: false
+    calls_count: 4
+    called_by_count: 0
+  - id: >-
+      Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface_sync#SyncToAsyncStorageAdapter.getFileCache
+    name: getFileCache
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface_sync.ts
+    line: 135
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: >-
+      Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface_sync#SyncToAsyncStorageAdapter.getFileGraph
+    name: getFileGraph
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface_sync.ts
+    line: 139
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: >-
+      Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface_sync#SyncToAsyncStorageAdapter.getFilePaths
+    name: getFilePaths
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface_sync.ts
+    line: 151
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface_sync#SyncToAsyncStorageAdapter.hasFile
+    name: hasFile
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface_sync.ts
+    line: 155
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface_sync#SyncToAsyncStorageAdapter.clear
+    name: clear
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface_sync.ts
+    line: 159
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface_sync#SyncToAsyncStorageAdapter.close
+    name: close
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface_sync.ts
+    line: 163
+    is_exported: false
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/storage_utils#createEmptyState
+    name: createEmptyState
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/storage_utils.ts
+    line: 15
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/storage_utils#updateFileInState
+    name: updateFileInState
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/storage_utils.ts
+    line: 33
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/storage_utils#removeFileFromState
+    name: removeFileFromState
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/storage_utils.ts
+    line: 62
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/storage_utils#updateInheritanceInState
+    name: updateInheritanceInState
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/storage_utils.ts
+    line: 97
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/storage/storage_utils#updateCallGraphDataInState
+    name: updateCallGraphDataInState
+    file: /Users/chuck/workspace/ariadne/packages/core/src/storage/storage_utils.ts
+    line: 115
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/symbol_naming#get_symbol_id
+    name: get_symbol_id
+    file: /Users/chuck/workspace/ariadne/packages/core/src/symbol_naming.ts
+    line: 16
+    is_exported: true
+    calls_count: 2
+    called_by_count: 0
+  - id: Users/chuck/workspace/ariadne/packages/core/src/symbol_naming#create_method_symbol_id
     name: create_method_symbol_id
-    file: src/symbol_naming.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/symbol_naming.ts
     line: 104
     is_exported: true
     calls_count: 0
     called_by_count: 0
-  - id: src/symbol_naming#get_symbol_container
+  - id: Users/chuck/workspace/ariadne/packages/core/src/symbol_naming#get_symbol_container
     name: get_symbol_container
-    file: src/symbol_naming.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/symbol_naming.ts
     line: 129
     is_exported: true
     calls_count: 2
     called_by_count: 0
-  - id: src/symbol_naming#get_unqualified_name
+  - id: Users/chuck/workspace/ariadne/packages/core/src/symbol_naming#get_unqualified_name
     name: get_unqualified_name
-    file: src/symbol_naming.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/symbol_naming.ts
     line: 146
     is_exported: true
     calls_count: 1
     called_by_count: 0
-  - id: src/symbol_naming#same_module
+  - id: Users/chuck/workspace/ariadne/packages/core/src/symbol_naming#same_module
     name: same_module
-    file: src/symbol_naming.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/symbol_naming.ts
     line: 165
     is_exported: true
     calls_count: 2
     called_by_count: 0
-  - id: src/symbol_resolver#find_definition
+  - id: Users/chuck/workspace/ariadne/packages/core/src/symbol_resolver#find_definition
     name: find_definition
-    file: src/symbol_resolver.ts
+    file: /Users/chuck/workspace/ariadne/packages/core/src/symbol_resolver.ts
     line: 86
     is_exported: true
-    calls_count: 1
+    calls_count: 0
     called_by_count: 0
 sampled_nodes:
   - node:
-      id: src/benchmark-incremental#generateLargeFile
-      name: generateLargeFile
-      file: src/benchmark-incremental.ts
-      line: 8
-    outgoing_calls: []
+      id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#analyze_calls_from_definition
+      name: analyze_calls_from_definition
+      file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+      line: 70
+    outgoing_calls:
+      - target_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#find_definition_range
+        target_name: find_definition_range
+        target_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+        call_line: 80
+        call_type: direct
+      - target_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#is_position_within_range
+        target_name: is_position_within_range
+        target_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+        call_line: 87
+        call_type: direct
+      - target_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#is_position_within_range
+        target_name: is_position_within_range
+        target_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+        call_line: 88
+        call_type: direct
+      - target_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#analyze_constructor_call
+        target_name: analyze_constructor_call
+        target_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+        call_line: 94
+        call_type: direct
+      - target_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#resolve_reference
+        target_name: resolve_reference
+        target_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+        call_line: 120
+        call_type: direct
+      - target_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#is_reference_called
+        target_name: is_reference_called
+        target_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+        call_line: 123
+        call_type: direct
+      - target_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#is_method_call_pattern
+        target_name: is_method_call_pattern
+        target_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+        call_line: 131
+        call_type: direct
     incoming_calls: []
-    source_snippet: |-
-
-      // Create a large TypeScript file for benchmarking
-      function generateLargeFile(functionCount: number): string {
-        const lines: string[] = [];
-        
-        // Add imports
-        lines.push(`import { Something } from './module';`);
-        lines.push('');
-        
-        // Add interfaces
-        for (let i = 0; i < 10; i++) {
-          lines.push(`interface Interface${i} {`);
-          lines.push(`  prop${i}: string;`);
-          lines.push(`  method${i}(): void;`);
-          lines.push(`}`);
-          lines.push('');
-        }
-        
-        // Add functions
-        for (let i = 0; i < functionCount; i++) {
-          lines.push(`function function_${i}(param${i}: number): number {`);
-          lines.push(`  const result = param${i} * 2;`);
-          lines.push(`  return result + ${i};`);
-          lines.push(`}`);
-          lines.push('');
-        }
-        
-        // Add a class
-        lines.push('class LargeClass {');
-        for (let i = 0; i < 20; i++) {
-          lines.push(`  method${i}() {`);
-          lines.push(`    return function_${i % functionCount}(${i});`);
-          lines.push(`  }`);
-          lines.push('');
-        }
-        lines.push('}');
-        
-        return lines.join('\n');
-      }
-
-      // Benchmark function
+    source_snippet: |2-
+       * Analyze calls from a definition using immutable state
+       */
+      export function analyze_calls_from_definition(
+        def: Def,
+        config: CallAnalysisConfig
   - node:
-      id: src/benchmark-incremental#benchmark
-      name: benchmark
-      file: src/benchmark-incremental.ts
-      line: 47
-    outgoing_calls: []
+      id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#analyze_module_level_calls
+      name: analyze_module_level_calls
+      file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+      line: 178
+    outgoing_calls:
+      - target_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#is_position_within_range
+        target_name: is_position_within_range
+        target_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+        call_line: 198
+        call_type: direct
+      - target_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#is_position_within_range
+        target_name: is_position_within_range
+        target_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+        call_line: 199
+        call_type: direct
+      - target_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#is_reference_called
+        target_name: is_reference_called
+        target_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+        call_line: 222
+        call_type: direct
+      - target_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#is_method_call_pattern
+        target_name: is_method_call_pattern
+        target_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+        call_line: 245
+        call_type: direct
     incoming_calls: []
-    source_snippet: |-
-
-      // Benchmark function
-      function benchmark(name: string, fn: () => void): number {
-        const start = process.hrtime.bigint();
-        fn();
-        const end = process.hrtime.bigint();
-        const duration = Number(end - start) / 1_000_000; // Convert to milliseconds
-        console.log(`${name}: ${duration.toFixed(2)}ms`);
-        return duration;
-      }
-
-      // Run benchmarks
+    source_snippet: |2-
+       * Analyze module-level calls (calls made outside any function/class)
+       */
+      export function analyze_module_level_calls(
+        file_path: string,
+        config: CallAnalysisConfig
   - node:
-      id: src/call_graph/constants#isCallableSymbolKind
+      id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/constants#isCallableSymbolKind
       name: isCallableSymbolKind
-      file: src/call_graph/constants.ts
+      file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/constants.ts
       line: 58
     outgoing_calls: []
     incoming_calls: []
@@ -704,641 +1581,272 @@ sampled_nodes:
       export function isCallableSymbolKind(kind: string): kind is typeof CALLABLE_SYMBOL_KINDS[number] {
         return (CALLABLE_SYMBOL_KINDS as readonly string[]).includes(kind);
       }
-
-      export function isTypeSymbolKind(kind: string): kind is typeof TYPE_SYMBOL_KINDS[number] {
   - node:
-      id: src/call_graph/call_analysis#analyze_calls_from_definition
-      name: analyze_calls_from_definition
-      file: src/call_graph/call_analysis.ts
-      line: 71
-    outgoing_calls:
-      - target_id: src/call_graph/call_analysis#find_definition_range
-        target_name: find_definition_range
-        target_file: src/call_graph/call_analysis.ts
-        call_line: 81
-        call_type: direct
-      - target_id: src/call_graph/call_analysis#is_position_within_range
-        target_name: is_position_within_range
-        target_file: src/call_graph/call_analysis.ts
-        call_line: 88
-        call_type: direct
-      - target_id: src/call_graph/call_analysis#is_position_within_range
-        target_name: is_position_within_range
-        target_file: src/call_graph/call_analysis.ts
-        call_line: 89
-        call_type: direct
-      - target_id: src/call_graph/call_analysis#analyze_constructor_call
-        target_name: analyze_constructor_call
-        target_file: src/call_graph/call_analysis.ts
-        call_line: 95
-        call_type: direct
-      - target_id: src/call_graph/type_tracker#set_local_variable_type
-        target_name: set_local_variable_type
-        target_file: src/call_graph/type_tracker.ts
-        call_line: 108
-        call_type: direct
-      - target_id: src/call_graph/call_analysis#resolve_reference
-        target_name: resolve_reference
-        target_file: src/call_graph/call_analysis.ts
-        call_line: 121
-        call_type: direct
-      - target_id: src/call_graph/call_analysis#is_reference_called
-        target_name: is_reference_called
-        target_file: src/call_graph/call_analysis.ts
-        call_line: 124
-        call_type: direct
-      - target_id: src/call_graph/call_analysis#is_method_call_pattern
-        target_name: is_method_call_pattern
-        target_file: src/call_graph/call_analysis.ts
-        call_line: 132
-        call_type: direct
-    incoming_calls:
-      - source_id: src/call_graph/graph_builder#analyze_file
-        source_name: analyze_file
-        source_file: src/call_graph/graph_builder.ts
-    source_snippet: |2-
-       * Analyze calls from a definition using immutable state
-       */
-      export function analyze_calls_from_definition(
-        def: Def,
-        config: CallAnalysisConfig
-      ): CallAnalysisResult {
-        const calls: FunctionCall[] = [];
-        const typeDiscoveries: TypeDiscovery[] = [];
-        
-        const { graph, fileCache, localTypeTracker } = config;
-        
-        // Find the full definition body range
-        const definitionRange = find_definition_range(def, fileCache);
-        
-        // Get all references in this file
-        const refs = graph.getNodes<Ref>('reference');
-        
-        // Filter to only refs within this definition's range
-        const definitionRefs = refs.filter(ref => 
-          is_position_within_range(ref.range.start, definitionRange) &&
-          is_position_within_range(ref.range.end, definitionRange)
-        );
-        
-        
-        // First pass: identify constructor calls and collect type discoveries
-        for (const ref of definitionRefs) {
-          const constructorAnalysis = analyze_constructor_call(ref, def, config);
-          if (constructorAnalysis && constructorAnalysis.typeDiscoveries.length > 0) {
-            typeDiscoveries.push(...constructorAnalysis.typeDiscoveries);
-          }
-        }
-        
-        // Second pass: resolve all references including method calls
-        // Create an updated local type tracker with discovered types
-        let currentLocalTracker = localTypeTracker;
-        
-        // Apply discovered types to the local tracker
-        for (const discovery of typeDiscoveries) {
-          if (discovery.scope === 'local') {
-            currentLocalTracker = set_local_variable_type(
-              currentLocalTracker,
-              discovery.variableName,
-              discovery.typeInfo
-            );
-          }
-        }
-        
-        for (const ref of definitionRefs) {
-          if (process.env.DEBUG_METHOD_CHAINS && ref.symbol_kind === 'method') {
-            console.log(`\nAnalyzing reference: ${ref.name} (${ref.symbol_kind}) at ${ref.range.start.row}:${ref.range.start.column}`);
-          }
-          
-          const resolved = resolve_reference(ref, def, config, currentLocalTracker);
-          
-          // Check if this reference is part of a call expression
-          const isCallExpression = is_reference_called(ref, fileCache);
-          
-          if (resolved.resolved) {
-            // Check if this is a callable symbol
-            const callable_kinds = ['function', 'method', 'generator', 'class', 'constructor', 'struct'];
-            if (callable_kinds.includes(resolved.resolved.symbol_kind)) {
-              // Determine if this is a method call
-              const is_method_call = ref.symbol_kind === 'method' || 
-                is_method_call_pattern(ref, def.file_path, fileCache);
-              
-              const call: FunctionCall = {
-                caller_def: def,
-                called_def: resolved.resolved,
-                call_location: ref.range.start,
-                is_method_call,
-                is_constructor_call: ref.symbol_kind === 'constructor'
-              };
-              calls.push(call);
-            }
-          } else if (isCallExpression) {
-            // This is an unresolved call (likely a built-in)
-            // Create a synthetic definition for tracking
-            const syntheticDef: Def = {
-              id: -1, // Special ID for built-ins
-              kind: 'definition',
-              name: ref.name,
-              symbol_id: `<builtin>#${ref.name}`,
-              symbol_kind: ref.symbol_kind === 'method' ? 'method' : 'function',
-              range: ref.range,
-              file_path: '<builtin>'
-            };
-            
-            const call: FunctionCall = {
-              caller_def: def,
-              called_def: syntheticDef,
-              call_location: ref.range.start,
-              is_method_call: ref.symbol_kind === 'method',
-              is_constructor_call: false
-            };
-            calls.push(call);
-          }
-          
-          // Collect any type discoveries from method resolution
-          typeDiscoveries.push(...resolved.typeDiscoveries);
-        }
-        
-        return {
-          calls,
-          typeDiscoveries
-        };
-      }
+      id: Users/chuck/workspace/ariadne/packages/core/src/benchmark-incremental#generateLargeFile
+      name: generateLargeFile
+      file: /Users/chuck/workspace/ariadne/packages/core/src/benchmark-incremental.ts
+      line: 8
+    outgoing_calls: []
+    incoming_calls: []
+    source_snippet: |-
 
-      /**
+      // Create a large TypeScript file for benchmarking
+      function generateLargeFile(functionCount: number): string {
+        const lines: string[] = [];
+        
   - node:
-      id: src/call_graph/call_analysis#analyze_module_level_calls
-      name: analyze_module_level_calls
-      file: src/call_graph/call_analysis.ts
-      line: 179
-    outgoing_calls:
-      - target_id: src/call_graph/call_analysis#is_position_within_range
-        target_name: is_position_within_range
-        target_file: src/call_graph/call_analysis.ts
-        call_line: 199
-        call_type: direct
-      - target_id: src/call_graph/call_analysis#is_position_within_range
-        target_name: is_position_within_range
-        target_file: src/call_graph/call_analysis.ts
-        call_line: 200
-        call_type: direct
-      - target_id: src/call_graph/call_analysis#is_reference_called
-        target_name: is_reference_called
-        target_file: src/call_graph/call_analysis.ts
-        call_line: 223
-        call_type: direct
-      - target_id: src/call_graph/call_analysis#is_method_call_pattern
-        target_name: is_method_call_pattern
-        target_file: src/call_graph/call_analysis.ts
-        call_line: 246
-        call_type: direct
-    incoming_calls:
-      - source_id: src/call_graph/graph_builder#analyze_file
-        source_name: analyze_file
-        source_file: src/call_graph/graph_builder.ts
-    source_snippet: |2-
-       * Analyze module-level calls (calls made outside any function/class)
-       */
-      export function analyze_module_level_calls(
-        file_path: string,
-        config: CallAnalysisConfig
-      ): CallAnalysisResult {
-        const { graph, fileCache } = config;
-        const calls: FunctionCall[] = [];
-        const typeDiscoveries: TypeDiscovery[] = [];
-        
-        // Get all references in the file
-        const refs = graph.getNodes<Ref>('reference');
-        
-        // Get all definitions to check ranges
-        const defs = graph.getNodes<Def>('definition');
-        
-        // Filter to only references that are NOT within any definition
-        const moduleLevelRefs = refs.filter(ref => {
-          // Check if this ref is inside any definition
-          for (const def of defs) {
-            // Use enclosing_range if available, otherwise use range
-            const defRange = (def as any).enclosing_range || def.range;
-            if (is_position_within_range(ref.range.start, defRange) &&
-                is_position_within_range(ref.range.end, defRange)) {
-              return false; // This ref is inside a definition
-            }
-          }
-          return true; // This ref is at module level
-        });
-        
-        // Create a pseudo-definition for the module
-        const moduleDef: Def = {
-          id: -1, // Special ID for module
-          kind: 'definition',
-          name: '<module>',
-          symbol_id: `${file_path}#<module>`,
-          symbol_kind: 'module' as any,
-          range: { start: { row: 0, column: 0 }, end: { row: 0, column: 0 } },
-          file_path: file_path
-        };
-        
-        // For each module-level reference, try to resolve it
-        for (const ref of moduleLevelRefs) {
-          const resolved = config.go_to_definition(file_path, ref.range.start);
-          
-          // Check if this reference is part of a call expression
-          const isCallExpression = is_reference_called(ref, fileCache);
-          
-          if (resolved) {
-            // If resolved to an import, try to resolve the import
-            let final_resolved = resolved;
-            if (resolved.symbol_kind === 'import') {
-              const imports = config.get_imports_with_definitions(file_path);
-              const import_info = imports.find(imp => 
-                imp.import_statement.name === resolved.name &&
-                imp.import_statement.range.start.row === resolved.range.start.row &&
-                imp.import_statement.range.start.column === resolved.range.start.column
-              );
-              
-              if (import_info && import_info.imported_function) {
-                final_resolved = import_info.imported_function;
-              }
-            }
-            
-            // Include all callable symbol kinds
-            const callable_kinds = ['function', 'method', 'generator', 'class', 'constructor'];
-            if (callable_kinds.includes(final_resolved.symbol_kind)) {
-              // Check if this is a method call
-              const is_method_call = ref.symbol_kind === 'method' || 
-                is_method_call_pattern(ref, file_path, fileCache);
-              
-              const call: FunctionCall = {
-                caller_def: moduleDef,
-                called_def: final_resolved,
-                call_location: ref.range.start,
-                is_method_call,
-                is_constructor_call: ref.symbol_kind === 'constructor' || final_resolved.symbol_kind === 'constructor'
-              };
-              calls.push(call);
-            }
-          } else if (isCallExpression) {
-            // This is an unresolved call (likely a built-in)
-            // Create a synthetic definition for tracking
-            const syntheticDef: Def = {
-              id: -1, // Special ID for built-ins
-              kind: 'definition',
-              name: ref.name,
-              symbol_id: `<builtin>#${ref.name}`,
-              symbol_kind: ref.symbol_kind === 'method' ? 'method' : 'function',
-              range: ref.range,
-              file_path: '<builtin>'
-            };
-            
-            const call: FunctionCall = {
-              caller_def: moduleDef,
-              called_def: syntheticDef,
-              call_location: ref.range.start,
-              is_method_call: ref.symbol_kind === 'method',
-              is_constructor_call: false
-            };
-            calls.push(call);
-          }
-        }
-        
-        return {
-          calls,
-          typeDiscoveries
-        };
-      }
+      id: Users/chuck/workspace/ariadne/packages/core/src/benchmark-incremental#benchmark
+      name: benchmark
+      file: /Users/chuck/workspace/ariadne/packages/core/src/benchmark-incremental.ts
+      line: 47
+    outgoing_calls: []
+    incoming_calls: []
+    source_snippet: |-
 
-      /**
+      // Benchmark function
+      function benchmark(name: string, fn: () => void): number {
+        const start = process.hrtime.bigint();
+        fn();
   - node:
-      id: src/call_graph/call_analysis#resolve_method_call_pure
+      id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#resolve_method_call_pure
       name: resolve_method_call_pure
-      file: src/call_graph/call_analysis.ts
-      line: 290
+      file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+      line: 289
     outgoing_calls:
-      - target_id: src/call_graph/type_tracker#get_local_variable_type
-        target_name: get_local_variable_type
-        target_file: src/call_graph/type_tracker.ts
-        call_line: 299
+      - target_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#compute_class_enclosing_range
+        target_name: compute_class_enclosing_range
+        target_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+        call_line: 315
         call_type: direct
-      - target_id: src/call_graph/call_analysis#is_position_within_range
+      - target_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#is_position_within_range
         target_name: is_position_within_range
-        target_file: src/call_graph/call_analysis.ts
-        call_line: 339
+        target_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+        call_line: 326
         call_type: direct
-      - target_id: src/call_graph/call_analysis#is_position_within_range
+      - target_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#is_position_within_range
         target_name: is_position_within_range
-        target_file: src/call_graph/call_analysis.ts
-        call_line: 340
+        target_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+        call_line: 327
         call_type: direct
     incoming_calls:
-      - source_id: src/call_graph/call_analysis#resolve_reference
+      - source_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#resolve_reference
         source_name: resolve_reference
-        source_file: src/call_graph/call_analysis.ts
+        source_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
     source_snippet: |2-
        * Resolve a method call without mutations
        */
       export function resolve_method_call_pure(
         ref: Ref,
         objectName: string,
-        config: CallAnalysisConfig,
-        localTypeTracker: LocalTypeTrackerData
-      ): MethodResolutionResult {
-        const typeDiscoveries: TypeDiscovery[] = [];
-        
-        // Get type information for the object
-        const typeInfo = get_local_variable_type(localTypeTracker, objectName, ref.range.start);
-        
-        
-        if (typeInfo && typeInfo.classDef) {
-          // We have type information for this variable
-          const methodName = ref.name;
-          
-          // Get all methods in the class file
-          if (config.get_file_graph && typeInfo.classDef.file_path) {
-            const classGraph = config.get_file_graph(typeInfo.classDef.file_path);
-            const classDefs = classGraph ? classGraph.getNodes<Def>('definition') : [];
-            
-            // For class definitions, compute enclosing_range if not available
-            let classRange = (typeInfo.classDef as any).enclosing_range;
-            if (!classRange && classGraph) {
-              // Try to compute the enclosing range
-              const classNode = classGraph.getNodes<Def>('definition').find(d => 
-                d.name === typeInfo.className && d.symbol_kind === 'class'
-              );
-              if (classNode) {
-                // Get the file cache to access the tree
-                const classFile = typeInfo.classDef.file_path;
-                // We need to get the cache for the class file
-                // This is a cross-file reference, so we don't have direct access to other file caches
-                // For now, just use the available range
-                classRange = typeInfo.classDef.range;
-              }
-            }
-            classRange = classRange || typeInfo.classDef.range;
-            
-            
-            // Find method by checking symbol_id pattern: file#ClassName.methodName
-            // Remove extension from file path for symbol_id
-            const fileBase = typeInfo.classDef.file_path.replace(/\.[^.]+$/, '');
-            const expectedSymbolId = `${fileBase}#${typeInfo.className}.${methodName}`;
-            const method = classDefs.find((m: Def) => 
-              m.name === methodName && 
-              (m.symbol_kind === 'method' || m.symbol_kind === 'function') &&
-              (m.symbol_id === expectedSymbolId || 
-               // Fallback: check if within class range
-               (is_position_within_range(m.range.start, classRange) &&
-                is_position_within_range(m.range.end, classRange)))
-            );
-            
-            
-            if (method) {
-              return { resolved: method, typeDiscoveries };
-            }
-          }
-        }
-        
-        return { typeDiscoveries };
-      }
-
-      // Helper functions
   - node:
-      id: src/call_graph/call_analysis#find_definition_range
+      id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#find_definition_range
       name: find_definition_range
-      file: src/call_graph/call_analysis.ts
-      line: 358
+      file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+      line: 345
     outgoing_calls: []
     incoming_calls:
-      - source_id: src/call_graph/call_analysis#analyze_calls_from_definition
+      - source_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#analyze_calls_from_definition
         source_name: analyze_calls_from_definition
-        source_file: src/call_graph/call_analysis.ts
+        source_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
     source_snippet: |2-
        * Find the full definition range including body
        */
       function find_definition_range(def: Def, fileCache: FileCache): { 
         start: { row: number; column: number }; 
         end: { row: number; column: number } 
-      } {
-        let definitionRange = def.range;
-        
-        // Find the AST node for this definition
-        const defNode = fileCache.tree.rootNode.descendantForPosition(
-          { row: def.range.start.row, column: def.range.start.column },
-          { row: def.range.end.row, column: def.range.end.column }
-        );
-        
-        if (defNode) {
-          // Walk up the tree to find the full definition node
-          let current = defNode.parent;
-          while (current) {
-            const nodeType = current.type;
-            let foundDefinitionNode = false;
-            
-            // Check for function/method nodes
-            if (['function', 'method', 'generator'].includes(def.symbol_kind)) {
-              if (nodeType === 'function_declaration' ||
-                  nodeType === 'method_definition' ||
-                  nodeType === 'generator_function_declaration' ||
-                  nodeType === 'function_expression' ||
-                  nodeType === 'arrow_function' ||
-                  nodeType === 'function_definition' || // Python
-                  nodeType === 'decorated_definition' || // Python with decorators
-                  nodeType === 'function_item') { // Rust
-                foundDefinitionNode = true;
-              }
-            }
-            // Check for class nodes
-            else if (def.symbol_kind === 'class') {
-              if (nodeType === 'class_declaration' ||
-                  nodeType === 'class_definition' || // Python
-                  nodeType === 'struct_item' || // Rust
-                  nodeType === 'impl_item') { // Rust
-                foundDefinitionNode = true;
-              }
-            }
-            // Check for variable/const nodes
-            else if (['variable', 'const', 'let', 'constant'].includes(def.symbol_kind)) {
-              if (nodeType === 'variable_declarator' ||
-                  nodeType === 'variable_declaration' ||
-                  nodeType === 'lexical_declaration' ||
-                  nodeType === 'assignment' || // Python
-                  nodeType === 'let_declaration' || // Rust
-                  nodeType === 'const_item') { // Rust
-                foundDefinitionNode = true;
-              }
-            }
-            
-            if (foundDefinitionNode) {
-              definitionRange = {
-                start: { row: current.startPosition.row, column: current.startPosition.column },
-                end: { row: current.endPosition.row, column: current.endPosition.column }
-              };
-              break;
-            }
-            current = current.parent;
-          }
-        }
-        
-        return definitionRange;
-      }
-
-      /**
   - node:
-      id: src/call_graph/call_analysis#is_position_within_range
+      id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#is_position_within_range
       name: is_position_within_range
-      file: src/call_graph/call_analysis.ts
-      line: 428
+      file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+      line: 415
     outgoing_calls: []
     incoming_calls:
-      - source_id: src/call_graph/call_analysis#analyze_calls_from_definition
+      - source_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#analyze_calls_from_definition
         source_name: analyze_calls_from_definition
-        source_file: src/call_graph/call_analysis.ts
-      - source_id: src/call_graph/call_analysis#analyze_calls_from_definition
+        source_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+      - source_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#analyze_calls_from_definition
         source_name: analyze_calls_from_definition
-        source_file: src/call_graph/call_analysis.ts
-      - source_id: src/call_graph/call_analysis#analyze_module_level_calls
+        source_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+      - source_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#analyze_module_level_calls
         source_name: analyze_module_level_calls
-        source_file: src/call_graph/call_analysis.ts
-      - source_id: src/call_graph/call_analysis#analyze_module_level_calls
+        source_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+      - source_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#analyze_module_level_calls
         source_name: analyze_module_level_calls
-        source_file: src/call_graph/call_analysis.ts
-      - source_id: src/call_graph/call_analysis#resolve_method_call_pure
+        source_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+      - source_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#resolve_method_call_pure
         source_name: resolve_method_call_pure
-        source_file: src/call_graph/call_analysis.ts
-      - source_id: src/call_graph/call_analysis#resolve_method_call_pure
+        source_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+      - source_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#resolve_method_call_pure
         source_name: resolve_method_call_pure
-        source_file: src/call_graph/call_analysis.ts
-      - source_id: src/call_graph/call_analysis#is_method_of_class
+        source_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+      - source_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#is_method_of_class
         source_name: is_method_of_class
-        source_file: src/call_graph/call_analysis.ts
-      - source_id: src/call_graph/call_analysis#is_method_of_class
+        source_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
+      - source_id: Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis#is_method_of_class
         source_name: is_method_of_class
-        source_file: src/call_graph/call_analysis.ts
+        source_file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
     source_snippet: |2-
        * Check if a position is within a range
        */
       function is_position_within_range(
         pos: { row: number; column: number },
         range: { start: { row: number; column: number }; end: { row: number; column: number } }
-      ): boolean {
-        if (pos.row < range.start.row || pos.row > range.end.row) {
-          return false;
-        }
-        if (pos.row === range.start.row && pos.column < range.start.column) {
-          return false;
-        }
-        if (pos.row === range.end.row && pos.column > range.end.column) {
-          return false;
-        }
-        return true;
-      }
-
-      /**
 file_summary:
-  - file: src/graph.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/graph.ts
     function_count: 31
     exported_function_count: 0
     import_count: 26
-  - file: src/call_graph/type_tracker.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/storage/examples/disk_storage.ts
+    function_count: 31
+    exported_function_count: 0
+    import_count: 14
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/project/project.ts
+    function_count: 29
+    exported_function_count: 0
+    import_count: 17
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/storage/in_memory_storage.ts
+    function_count: 23
+    exported_function_count: 0
+    import_count: 12
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/type_tracker.ts
     function_count: 21
     exported_function_count: 21
     import_count: 4
-  - file: src/call_graph/project_graph_data.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/project_graph_data.ts
     function_count: 19
     exported_function_count: 13
     import_count: 7
-  - file: src/call_graph/call_analysis.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/call_analysis.ts
     function_count: 13
     exported_function_count: 4
-    import_count: 11
-  - file: src/function_metadata.ts
+    import_count: 9
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/project/navigation_service.ts
+    function_count: 13
+    exported_function_count: 0
+    import_count: 3
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface_sync.ts
+    function_count: 13
+    exported_function_count: 0
+    import_count: 2
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/function_metadata.ts
     function_count: 11
     exported_function_count: 1
     import_count: 3
-  - file: src/module_resolver.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/module_resolver.ts
     function_count: 10
     exported_function_count: 0
     import_count: 2
-  - file: src/call_graph/return_type_analyzer.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/return_type_analyzer.ts
     function_count: 9
     exported_function_count: 1
     import_count: 2
-  - file: src/symbol_naming.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/project/file_manager.ts
+    function_count: 9
+    exported_function_count: 0
+    import_count: 14
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/symbol_naming.ts
     function_count: 9
     exported_function_count: 9
     import_count: 1
-  - file: src/project_inheritance.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/project_inheritance.ts
     function_count: 8
     exported_function_count: 0
     import_count: 5
-  - file: src/call_graph/graph_builder.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/project/inheritance_service.ts
+    function_count: 7
+    exported_function_count: 0
+    import_count: 6
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/project/language_manager.ts
+    function_count: 7
+    exported_function_count: 0
+    import_count: 5
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/graph_builder.ts
     function_count: 6
     exported_function_count: 6
     import_count: 26
-  - file: src/call_graph/import_export_detector.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/import_export_detector.ts
     function_count: 6
     exported_function_count: 6
     import_count: 2
-  - file: src/inheritance.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/storage/storage_utils.ts
+    function_count: 6
+    exported_function_count: 6
+    import_count: 8
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/inheritance.ts
     function_count: 5
     exported_function_count: 1
     import_count: 2
-  - file: src/project_source.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/project/call_graph_service.ts
+    function_count: 5
+    exported_function_count: 0
+    import_count: 14
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/project/query_service.ts
+    function_count: 5
+    exported_function_count: 0
+    import_count: 5
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/project_source.ts
     function_count: 5
     exported_function_count: 0
     import_count: 3
-  - file: src/call_graph/readonly_types.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/readonly_types.ts
     function_count: 4
     exported_function_count: 4
     import_count: 0
-  - file: src/scope_resolution.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/scope_resolution.ts
     function_count: 4
     exported_function_count: 1
     import_count: 6
-  - file: src/call_graph/constants.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph/constants.ts
     function_count: 3
     exported_function_count: 3
     import_count: 0
-  - file: src/call_graph_utils.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/call_graph_utils.ts
     function_count: 3
     exported_function_count: 3
     import_count: 1
-  - file: src/languages/python/index.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/languages/python/index.ts
     function_count: 3
     exported_function_count: 0
     import_count: 6
-  - file: src/symbol_resolver.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/symbol_resolver.ts
     function_count: 3
     exported_function_count: 2
     import_count: 1
-  - file: src/benchmark-incremental.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/benchmark-incremental.ts
     function_count: 2
     exported_function_count: 0
     import_count: 1
-  - file: src/edit.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/edit.ts
     function_count: 2
     exported_function_count: 2
     import_count: 1
-  - file: src/languages/javascript/index.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/languages/javascript/index.ts
     function_count: 2
     exported_function_count: 0
     import_count: 6
-  - file: src/languages/rust/index.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/languages/rust/index.ts
     function_count: 2
     exported_function_count: 0
     import_count: 4
-  - file: src/languages/typescript/index.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/languages/typescript/index.ts
     function_count: 2
     exported_function_count: 0
     import_count: 6
-  - file: src/languages/shared_extractors.js
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/storage/storage_interface.ts
+    function_count: 2
+    exported_function_count: 2
+    import_count: 5
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/languages/shared_extractors.js
     function_count: 1
     exported_function_count: 1
     import_count: 0
-  - file: src/languages/shared_extractors.ts
+  - file: /Users/chuck/workspace/ariadne/packages/core/src/languages/shared_extractors.ts
     function_count: 1
     exported_function_count: 1
     import_count: 2
 validation_stats:
-  nodes_with_calls_pct: 40.76086956521739
-  nodes_called_by_others_pct: 52.17391304347826
-  exported_nodes_pct: 42.391304347826086
+  nodes_with_calls_pct: 34.13173652694611
+  nodes_called_by_others_pct: 37.12574850299401
+  exported_nodes_pct: 25.748502994011975
   edges_with_call_type_pct: 100
   top_level_accuracy_pct: 100

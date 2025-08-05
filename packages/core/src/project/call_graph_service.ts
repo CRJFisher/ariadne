@@ -12,11 +12,13 @@ import {
   CallAnalysisConfig
 } from '../call_graph/call_analysis';
 import {
-  get_or_create_file_type_tracker,
   create_local_type_tracker,
-  set_variable_type,
-  update_file_type_tracker
+  set_variable_type
 } from '../call_graph/type_tracker';
+import {
+  get_or_create_file_type_tracker,
+  update_file_type_tracker
+} from '../call_graph/project_graph_data';
 import { build_call_graph_for_display } from '../call_graph/graph_builder';
 
 /**
@@ -47,7 +49,7 @@ export class CallGraphService {
       graph,
       fileCache: cache,
       fileTypeTracker: tracker,
-      localTypeTracker,
+      localTypeTracker: localTracker,
       go_to_definition: goToDefinition,
       get_imports_with_definitions: getImportsWithDefinitions,
       get_file_graph: (path: string) => state.file_graphs.get(path),

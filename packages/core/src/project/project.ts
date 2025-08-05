@@ -211,7 +211,24 @@ export class Project {
    */
   get_call_graph(options?: CallGraphOptions): CallGraph {
     const state = this.storage.getState();
-    return this.callGraphService.getCallGraph(state, options);
+    
+    // Create helper functions that use the appropriate services
+    const goToDefinition = (filePath: string, position: { row: number; column: number }) => 
+      this.navigationService.goToDefinition(state, filePath, position);
+    
+    const getImportsWithDefinitions = (filePath: string) =>
+      this.navigationService.getImportsWithDefinitions(state, filePath);
+    
+    const getAllFunctions = () => 
+      this.navigationService.getAllFunctionsFlat(state);
+    
+    return this.callGraphService.getCallGraph(
+      state, 
+      options,
+      goToDefinition,
+      getImportsWithDefinitions,
+      getAllFunctions
+    );
   }
   
   /**

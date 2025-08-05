@@ -33,9 +33,9 @@ This iterative approach ensures we address all issues systematically and verify 
 
 ## Acceptance Criteria
 
-- [ ] Validation passes all accuracy thresholds
+- [ ] Validation passes all accuracy thresholds (nodes-with-calls: 85%+, nodes-called-by-others: 85%+)
 - [ ] CI/CD validation runs without continue-on-error
-- [ ] All sub-tasks completed
+- [ ] All sub-tasks completed (remaining: 100.3, 100.6, 100.9, 100.10, and re-do 100.11.14)
 
 ## Implementation Plan
 
@@ -60,16 +60,51 @@ This iterative approach ensures we address all issues systematically and verify 
 - Remove continue-on-error from CI/CD validation
 - Document the fixes and improvements made
 
-Sub-tasks:
-- task-100.1: Fix low nodes-with-calls percentage
-- task-100.2: Fix low nodes-called-by-others percentage  
-- task-100.3: Complete remaining agent validation fixes
-- task-100.5: Run validation guide process ✅
-- task-100.6: Add file size linting to prevent validation failures
-- task-100.7: Fix import counting accuracy (task-88)
+## Sub-tasks Status
+
+**✅ Completed:**
+- task-100.2: Fix low nodes-called-by-others percentage (return type tracking)
+- task-100.5: Run validation guide process ✅ (2025-08-05: Found built-in calls issue)
+- task-100.7: Fix import counting accuracy (task-88) 
 - task-100.8: Fix incoming call detection (task-90)
+- task-100.11: Refactor project_call_graph.ts to be under 32KB (immutable architecture)
+- task-100.12: Refactor Project class to be immutable with pluggable storage
+
+**❌ Needs Re-implementation:**
+- task-100.1: Fix low nodes-with-calls percentage (built-in call tracking) - Implementation missing after refactor
+- task-100.11.14: Track all function calls including built-ins - Implementation lost during refactoring
+
+**🚧 Remaining:**
+- task-100.3: Complete remaining agent validation fixes (task-62 completed, final validation needed)
+- task-100.6: Add file size linting to prevent validation failures
 - task-100.9: Add CommonJS and ES6 export support (tasks 71-72)
 - task-100.10: Complete JavaScript test updates (task-99)
-- task-100.11: Refactor project_call_graph.ts to be under 32KB
 
-Note: File size limit is tracked in task-60 (affects project_call_graph.ts)
+Note: File size limit is resolved - index.ts reduced from 34KB to 1.4KB
+
+## Implementation Notes
+
+### 2025-08-05 Validation Results
+
+Ran validation after completing the immutable refactoring (task-100.12):
+
+**Current Metrics:**
+- Nodes with calls: 34.1% (threshold: 85%) ❌
+- Nodes called by others: 37.1% (threshold: 85%) ❌
+- Total functions: 334
+- Total edges: 210
+
+**Key Finding:** Built-in function calls are not being tracked. This is the primary cause of low "nodes with calls" percentage. Examples include:
+- console.log() calls (very common in codebase)
+- Array methods (map, filter, forEach)
+- JSON methods (parse, stringify)
+- Object methods (keys, values)
+
+**Root Cause:** The implementation for tracking built-in calls (task-100.11.14) appears to be missing after the refactoring. The call analysis only tracks calls to definitions found within the project.
+
+**Next Steps:**
+1. Re-implement built-in call tracking
+2. Add tests for built-in call detection
+3. Re-run validation to confirm improvement
+
+The validation infrastructure is working correctly - it properly loads files, builds graphs, and tracks call relationships when they exist. The issue is purely in the call detection logic.

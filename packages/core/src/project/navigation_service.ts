@@ -1,4 +1,4 @@
-import { Point, Def, Ref, IScopeGraph } from '../graph';
+import { Point, Def, Ref, IScopeGraph, ImportInfo } from '../graph';
 import { find_all_references, find_definition } from '../symbol_resolver';
 import { ProjectState } from '../storage/storage_interface';
 
@@ -204,5 +204,18 @@ export class NavigationService {
            name.includes('_test') ||
            name === 'setup' ||
            name === 'teardown';
+  }
+  
+  /**
+   * Get imports with their resolved definitions for a file
+   */
+  getImportsWithDefinitions(
+    state: ProjectState,
+    filePath: string
+  ): ImportInfo[] {
+    const graph = state.file_graphs.get(filePath);
+    if (!graph) return [];
+    
+    return graph.getImportInfo();
   }
 }

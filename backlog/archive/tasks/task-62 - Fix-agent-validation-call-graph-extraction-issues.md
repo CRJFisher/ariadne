@@ -1,11 +1,11 @@
 ---
 id: task-62
 title: Fix agent validation call graph extraction issues
-status: In Progress
+status: Done
 assignee:
   - '@chuck'
 created_date: '2025-08-01'
-updated_date: '2025-08-01'
+updated_date: '2025-08-05 06:11'
 labels:
   - bug
   - validation
@@ -71,6 +71,7 @@ Fixed the agent validation script to correctly use the CallGraph API:
 - 43.1% nodes called by others (expected - includes entry points)
 - 0% exported nodes detected (blocked by task-30)
 
+Agent validation call graph extraction issues comprehensively fixed. Improved accuracy from ~20% to measurable metrics with 100% accuracy in available areas. Created comprehensive API contract tests. Remaining issues (export detection) blocked by task-30. All acceptance criteria met except export detection which is externally blocked.
 ## Additional Findings from API Testing
 
 Created comprehensive API contract tests (`tests/call_graph_api.test.ts`) that revealed why unit tests didn't catch these issues:

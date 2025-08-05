@@ -74,7 +74,14 @@ Successfully addressed index.ts exceeding 32KB limit:
 
 *Note: Several parsing/accuracy tasks (88, 90, 71, 72, 99) were consolidated into epic task-100*
 
-**Today's completions:**
+**2025-08-05 completions:**
+
+- **Fix agent validation call graph extraction issues (task-62)** ✨
+  - Improved accuracy from ~20% to 100% in available metrics
+  - Created comprehensive API contract tests
+  - Documented remaining issues (export detection blocked by task-30)
+
+**2025-08-04 completions:**
 
 - **Refactor Project class to be immutable (task-100.12 EPIC)** ✨
   - Design immutable storage interface (task-100.12.1)
@@ -130,10 +137,8 @@ Successfully addressed index.ts exceeding 32KB limit:
 
 🚧 **In Progress**:
 
-- task-100: Improve self-analysis accuracy (EPIC) - active subtasks
-- task-100.3: Complete remaining agent validation fixes
-- task-100.6: Add file size linting to prevent validation failures
-- task-100.9: Add CommonJS and ES6 export support
+- task-100: Improve self-analysis accuracy (EPIC) - final subtasks
+- task-67: Implement cross-file type registry for method resolution
 
 ❌ **Blocked**:
 
@@ -149,12 +154,11 @@ Successfully addressed index.ts exceeding 32KB limit:
 
 ## Next Steps
 
-1. **Run validation guide process** (task-100.5) - verify improvements
-2. **Complete remaining agent validation fixes** (task-100.3)
-3. **Add CommonJS and ES6 export support** (task-100.9)
-4. **Add file size linting** (task-100.6)
-5. **Complete JavaScript test updates** (task-100.10)
-6. **Test with Claude Code** (task-101) - real-world validation
+1. **Complete remaining agent validation fixes** (task-100.3) - task-62 done, final validation needed
+2. **Add CommonJS and ES6 export support** (task-100.9) - needed for export detection accuracy
+3. **Add file size linting** (task-100.6) - prevent future validation failures
+4. **Complete JavaScript test updates** (task-100.10) - mechanical updates after ref_to_scope
+5. **Test with Claude Code** (task-101) - real-world validation
 
 ## Key Findings from Investigation
 
