@@ -8,7 +8,7 @@ import { Project, CallGraph } from "../src";
 import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
-import { checkFileSizes } from "../scripts/check-file-sizes";
+import { checkFileSizes } from "../../../scripts/check-file-sizes";
 
 // Output interface for YAML
 interface ValidationOutput {

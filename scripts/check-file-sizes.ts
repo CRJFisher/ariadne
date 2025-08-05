@@ -127,8 +127,8 @@ async function main() {
   console.log('🔍 Checking file sizes...\n');
 
   // Check files in the packages directory
-  const packagesDir = path.join(__dirname, '..', '..', '..');
-  const { results, hasWarnings, hasErrors } = await checkFileSizes(path.join(packagesDir, 'packages'));
+  const packagesDir = path.join(__dirname, '..', 'packages');
+  const { results, hasWarnings, hasErrors } = await checkFileSizes(packagesDir);
 
   // Sort by size descending
   results.sort((a, b) => b.size - a.size);
