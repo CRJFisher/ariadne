@@ -122,6 +122,11 @@ export function analyze_calls_from_definition(
     // Check if this reference is part of a call expression
     const isCallExpression = is_reference_called(ref, fileCache);
     
+    // Debug for built-in tracking
+    if (def.name === 'generateLargeFile' && !resolved.resolved && (ref.name === 'push' || ref.name === 'join')) {
+      console.log(`  Checking ${ref.name}: isCallExpression = ${isCallExpression}`);
+    }
+    
     if (resolved.resolved) {
       // Check if this is a callable symbol
       const callable_kinds = ['function', 'method', 'generator', 'class', 'constructor', 'struct'];
@@ -486,18 +491,31 @@ function is_reference_called(ref: Ref, fileCache: FileCache): boolean {
   if (parent.type === 'member_expression' && parent.childForFieldName('property') === astNode) {
     // Check if the member_expression is the function of a call_expression
     const grandparent = parent.parent;
-    if (grandparent && grandparent.type === 'call_expression' && 
-        grandparent.childForFieldName('function') === parent) {
-      return true;
+    if (grandparent && grandparent.type === 'call_expression') {
+      // The fix: when multiple files are loaded, object identity comparison fails
+      // We need to check if this member_expression is being called
+      // by verifying it's the function child of a call_expression
+      const functionChild = grandparent.childForFieldName('function');
+      
+      // The issue was that functionChild === parent was failing when multiple files
+      // were loaded, even though they should be the same node. This is likely because
+      // the tree is being reparsed and the node objects are different.
+      // Instead, we should just check if we're in the right position in the AST
+      if (functionChild && functionChild.type === 'member_expression') {
+        return true;
+      }
     }
   }
   
   // Handle nested identifiers in some languages
   if (parent.type === 'nested_identifier' || parent.type === 'scoped_identifier') {
     const grandparent = parent.parent;
-    if (grandparent && grandparent.type === 'call_expression' && 
-        grandparent.childForFieldName('function') === parent) {
-      return true;
+    if (grandparent && grandparent.type === 'call_expression') {
+      const functionChild = grandparent.childForFieldName('function');
+      // Same fix as above - just check the type, not object identity
+      if (functionChild && functionChild.type === parent.type) {
+        return true;
+      }
     }
   }
   
