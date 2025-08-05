@@ -38,15 +38,7 @@ export class CallGraphService {
     const cache = state.file_cache.get(def.file_path);
     
     if (!graph || !cache) {
-      if (process.env.DEBUG_CALL_GRAPH) {
-        console.log(`[getCallsFromDefinition] No graph/cache for ${def.name} in ${def.file_path}`);
-      }
       return [];
-    }
-    
-    if (process.env.DEBUG_CALL_GRAPH && def.name === 'generateLargeFile') {
-      console.log(`[getCallsFromDefinition] Analyzing ${def.name} in ${def.file_path}`);
-      console.log(`[getCallsFromDefinition] Graph exists: ${!!graph}, Cache exists: ${!!cache}`);
     }
     
     const tracker = get_or_create_file_type_tracker(state.call_graph_data, def.file_path);
@@ -104,22 +96,12 @@ export class CallGraphService {
     const functions = getAllFunctions();
     const calls: FunctionCall[] = [];
     
-    // Debug logging
-    if (process.env.DEBUG_CALL_GRAPH) {
-      console.log(`[CallGraphService] Extracting call graph for ${functions.length} functions`);
-    }
     
     // Get calls from all functions
     for (const func of functions) {
       const funcCalls = this.getCallsFromDefinition(state, func, goToDefinition, getImportsWithDefinitions);
       calls.push(...funcCalls);
       
-      // Debug logging
-      if (process.env.DEBUG_CALL_GRAPH && func.name === 'generateLargeFile') {
-        console.log(`[CallGraphService] ${func.name} has ${funcCalls.length} calls`);
-        const builtinCalls = funcCalls.filter(c => c.called_def.file_path === '<builtin>');
-        console.log(`[CallGraphService] ${func.name} built-in calls: ${builtinCalls.length}`);
-      }
     }
     
     // Add module-level calls

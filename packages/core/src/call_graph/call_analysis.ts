@@ -113,9 +113,6 @@ export function analyze_calls_from_definition(
   }
   
   for (const ref of definitionRefs) {
-    if (process.env.DEBUG_METHOD_CHAINS && ref.symbol_kind === 'method') {
-      console.log(`\nAnalyzing reference: ${ref.name} (${ref.symbol_kind}) at ${ref.range.start.row}:${ref.range.start.column}`);
-    }
     
     const resolved = resolve_reference(ref, def, config, currentLocalTracker);
     
@@ -471,9 +468,6 @@ function is_reference_called(ref: Ref, fileCache: FileCache): boolean {
   );
   
   if (!astNode) {
-    if (process.env.DEBUG_CALL_GRAPH && ref.name === 'push') {
-      console.log(`[is_reference_called] No AST node found for ${ref.name} at ${ref.range.start.row}:${ref.range.start.column}`);
-    }
     return false;
   }
   
@@ -745,10 +739,6 @@ function resolve_reference(
             // Handle chained case: obj.getInner().method()
             // We need to resolve the return type of the call expression
             const returnType = resolve_call_return_type(objectNode, def, config, localTypeTracker);
-            if (process.env.DEBUG_METHOD_CHAINS) {
-              console.log(`\nResolving chained method ${ref.name} on call expression`);
-              console.log(`  Return type from call: ${returnType}`);
-            }
             if (returnType) {
               const methodResult = resolve_method_on_type(ref, returnType, config);
               if (methodResult) {
@@ -791,9 +781,6 @@ function resolve_call_return_type(
   const funcNode = callNode.childForFieldName('function');
   if (!funcNode) return undefined;
   
-  if (process.env.DEBUG_METHOD_CHAINS) {
-    console.log(`\n  resolve_call_return_type: funcNode type = ${funcNode.type}`);
-  }
 
   // Handle method calls: obj.method()
   if (funcNode.type === 'member_expression' || 
