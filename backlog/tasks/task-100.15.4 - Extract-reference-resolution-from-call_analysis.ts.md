@@ -15,7 +15,7 @@ Extract reference resolution functions (resolve_reference, resolve_call_return_t
 
 ## Acceptance Criteria
 
-- [ ] Create reference_resolution.ts with extracted functions
+- [ ] Create call_analysis/reference_resolution.ts with extracted functions
 - [ ] Maintain pure functional approach
-- [ ] Update imports in call_analysis.ts
+- [ ] Update imports to use new module location
 - [ ] All reference resolution tests pass

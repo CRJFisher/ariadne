@@ -15,7 +15,7 @@ Extract call pattern detection functions (is_method_call_pattern, is_reference_c
 
 ## Acceptance Criteria
 
-- [ ] Create call_detection.ts with extracted functions
+- [ ] Create call_analysis/call_detection.ts with extracted functions
 - [ ] Preserve AST node identity fix with proper documentation
-- [ ] Update imports in call_analysis.ts
+- [ ] Update imports to use new module location
 - [ ] All tests pass

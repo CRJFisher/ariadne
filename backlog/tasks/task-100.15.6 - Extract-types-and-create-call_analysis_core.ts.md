@@ -15,8 +15,9 @@ Create call_analysis_types.ts with all interfaces, then refactor the remaining a
 
 ## Acceptance Criteria
 
-- [ ] Create call_analysis_types.ts with all interfaces
-- [ ] Create call_analysis_core.ts with main analysis functions
+- [ ] Create call_analysis/types.ts with all interfaces
+- [ ] Create call_analysis/core.ts with main analysis functions
+- [ ] Create call_analysis/index.ts to export public API
 - [ ] Original call_analysis.ts can be deleted
 - [ ] All tests pass with new module structure
 - [ ] Total size of all modules is under 28KB each

@@ -15,7 +15,7 @@ Extract method-specific resolution functions (resolve_method_call_pure, resolve_
 
 ## Acceptance Criteria
 
-- [ ] Create method_resolution.ts with extracted functions
+- [ ] Create call_analysis/method_resolution.ts with extracted functions
 - [ ] Functions use immutable MethodResolutionResult
-- [ ] Update imports in call_analysis.ts
+- [ ] Update imports to use new module location
 - [ ] All method resolution tests pass

@@ -15,7 +15,7 @@ Extract the analyze_constructor_call function and related logic into constructor
 
 ## Acceptance Criteria
 
-- [ ] Create constructor_analysis.ts with analyze_constructor_call
+- [ ] Create call_analysis/constructor_analysis.ts with analyze_constructor_call
 - [ ] Function returns immutable TypeDiscovery arrays
-- [ ] Update imports in call_analysis.ts
+- [ ] Update imports to use new module location
 - [ ] All constructor detection tests pass

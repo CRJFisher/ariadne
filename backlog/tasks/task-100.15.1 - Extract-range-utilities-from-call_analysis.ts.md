@@ -15,7 +15,8 @@ Extract range-related functions (find_definition_range, is_position_within_range
 
 ## Acceptance Criteria
 
-- [ ] Create range_utils.ts with extracted functions
-- [ ] Update imports in call_analysis.ts
+- [ ] Create call_analysis/ folder structure
+- [ ] Create call_analysis/range_utils.ts with extracted functions
+- [ ] Update imports to use new module location
 - [ ] All tests pass
 - [ ] File follows immutable patterns

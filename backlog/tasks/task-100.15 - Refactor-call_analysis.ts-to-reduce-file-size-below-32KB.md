@@ -24,17 +24,27 @@ The call_analysis.ts file has reached the 32KB limit (945 lines), preventing com
 
 ## Implementation Plan
 
-The 945-line call_analysis.ts will be split into 7 focused modules:
+The 945-line call_analysis.ts will be split into 7 focused modules in a new `call_analysis/` folder:
 
-1. **range_utils.ts** (~100 lines) - Range calculation utilities
-2. **call_detection.ts** (~150 lines) - Call pattern detection (includes AST fix)
-3. **constructor_analysis.ts** (~150 lines) - Constructor call analysis
-4. **reference_resolution.ts** (~200 lines) - Reference resolution logic
-5. **method_resolution.ts** (~150 lines) - Method-specific resolution
-6. **call_analysis_types.ts** (~45 lines) - Shared interfaces
-7. **call_analysis_core.ts** (~150 lines) - Main orchestration functions
+```
+src/call_graph/
+├── call_analysis.ts (to be removed)
+└── call_analysis/
+    ├── index.ts (~20 lines) - Public API exports
+    ├── types.ts (~45 lines) - Shared interfaces
+    ├── range_utils.ts (~100 lines) - Range calculation utilities
+    ├── call_detection.ts (~150 lines) - Call pattern detection (includes AST fix)
+    ├── constructor_analysis.ts (~150 lines) - Constructor call analysis
+    ├── reference_resolution.ts (~200 lines) - Reference resolution logic
+    ├── method_resolution.ts (~150 lines) - Method-specific resolution
+    └── core.ts (~150 lines) - Main orchestration functions
+```
 
-Total: ~945 lines split into modules of max 200 lines each
+Benefits of folder structure:
+- Clear separation from other call_graph modules
+- Easy to locate all call analysis related code
+- Clean imports via index.ts
+- Allows for future expansion without cluttering call_graph/
 
 ## Sub-tasks Created
 
