@@ -6,6 +6,9 @@
 - Call graphs -> Flow charts
 - Refactoring help
   - Concisely display call graph
+  - Suggest module refactoring. Compare existing modules to LLM-augmented call-graph clusters.
+  - Suggest module re-structuring. Would require creation of high-level semantic graph of the project.
+  - Suggest information two-way links between docs and code
 
 ## Strategy
 
