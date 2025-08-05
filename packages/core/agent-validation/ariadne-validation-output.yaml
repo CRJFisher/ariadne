@@ -1,10 +1,80 @@
 meta:
-  timestamp: '2025-08-05T13:35:14.224Z'
+  timestamp: '2025-08-05T20:45:32.893Z'
   ariadne_version: 0.5.18
-  total_files: 42
-  total_functions: 322
-  total_calls: 188
+  total_files: 50
+  total_functions: 341
+  total_calls: 197
 top_level_nodes:
+  - id: src/call_graph/call_analysis/call_detection#is_method_call_pattern
+    name: is_method_call_pattern
+    file: src/call_graph/call_analysis/call_detection.ts
+    line: 26
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/call_analysis/call_detection#is_reference_called
+    name: is_reference_called
+    file: src/call_graph/call_analysis/call_detection.ts
+    line: 62
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/call_analysis/constructor_analysis#analyze_constructor_call
+    name: analyze_constructor_call
+    file: src/call_graph/call_analysis/constructor_analysis.ts
+    line: 61
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/call_analysis/core#analyze_calls_from_definition
+    name: analyze_calls_from_definition
+    file: src/call_graph/call_analysis/core.ts
+    line: 50
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/call_analysis/core#analyze_module_level_calls
+    name: analyze_module_level_calls
+    file: src/call_graph/call_analysis/core.ts
+    line: 191
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/call_analysis/method_resolution#resolve_method_call_pure
+    name: resolve_method_call_pure
+    file: src/call_graph/call_analysis/method_resolution.ts
+    line: 53
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/call_analysis/method_resolution#resolve_method_on_type
+    name: resolve_method_on_type
+    file: src/call_graph/call_analysis/method_resolution.ts
+    line: 114
+    is_exported: true
+    calls_count: 1
+    called_by_count: 0
+  - id: src/call_graph/call_analysis/range_utils#find_definition_range
+    name: find_definition_range
+    file: src/call_graph/call_analysis/range_utils.ts
+    line: 30
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/call_analysis/range_utils#is_position_within_range
+    name: is_position_within_range
+    file: src/call_graph/call_analysis/range_utils.ts
+    line: 104
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
+  - id: src/call_graph/call_analysis/range_utils#compute_class_enclosing_range
+    name: compute_class_enclosing_range
+    file: src/call_graph/call_analysis/range_utils.ts
+    line: 126
+    is_exported: true
+    calls_count: 0
+    called_by_count: 0
   - id: src/call_graph/constants#isCallableSymbolKind
     name: isCallableSymbolKind
     file: src/call_graph/constants.ts
@@ -38,14 +108,14 @@ top_level_nodes:
     file: src/call_graph/graph_builder.ts
     line: 271
     is_exported: true
-    calls_count: 4
+    calls_count: 2
     called_by_count: 0
   - id: src/call_graph/graph_builder#build_call_graph_for_display
     name: build_call_graph_for_display
     file: src/call_graph/graph_builder.ts
     line: 312
     is_exported: true
-    calls_count: 28
+    calls_count: 0
     called_by_count: 0
   - id: src/call_graph/import_export_detector#analyze_file_import_export
     name: analyze_file_import_export
@@ -87,21 +157,21 @@ top_level_nodes:
     file: src/call_graph/project_graph_data.ts
     line: 47
     is_exported: true
-    calls_count: 1
+    calls_count: 0
     called_by_count: 0
   - id: src/call_graph/project_graph_data#add_file_cache
     name: add_file_cache
     file: src/call_graph/project_graph_data.ts
     line: 64
     is_exported: true
-    calls_count: 1
+    calls_count: 0
     called_by_count: 0
   - id: src/call_graph/project_graph_data#update_file_type_tracker
     name: update_file_type_tracker
     file: src/call_graph/project_graph_data.ts
     line: 81
     is_exported: true
-    calls_count: 1
+    calls_count: 0
     called_by_count: 0
   - id: src/call_graph/project_graph_data#update_project_registry
     name: update_project_registry
@@ -122,14 +192,14 @@ top_level_nodes:
     file: src/call_graph/project_graph_data.ts
     line: 121
     is_exported: true
-    calls_count: 3
+    calls_count: 0
     called_by_count: 0
   - id: src/call_graph/project_graph_data#batch_update_files
     name: batch_update_files
     file: src/call_graph/project_graph_data.ts
     line: 154
     is_exported: true
-    calls_count: 3
+    calls_count: 0
     called_by_count: 0
   - id: src/call_graph/project_graph_data#merge_project_graphs
     name: merge_project_graphs
@@ -143,7 +213,7 @@ top_level_nodes:
     file: src/call_graph/project_graph_data.ts
     line: 228
     is_exported: true
-    calls_count: 3
+    calls_count: 0
     called_by_count: 0
   - id: src/call_graph/project_graph_data#has_file
     name: has_file
@@ -241,14 +311,14 @@ top_level_nodes:
     file: src/call_graph/return_type_analyzer.ts
     line: 7
     is_exported: true
-    calls_count: 9
+    calls_count: 4
     called_by_count: 0
   - id: src/call_graph/type_tracker#mark_as_exported
     name: mark_as_exported
     file: src/call_graph/type_tracker.ts
     line: 124
     is_exported: true
-    calls_count: 1
+    calls_count: 0
     called_by_count: 0
   - id: src/call_graph/type_tracker#is_exported
     name: is_exported
@@ -283,7 +353,7 @@ top_level_nodes:
     file: src/call_graph/type_tracker.ts
     line: 186
     is_exported: true
-    calls_count: 1
+    calls_count: 0
     called_by_count: 0
   - id: src/call_graph/type_tracker#get_local_variable_type
     name: get_local_variable_type
@@ -318,42 +388,42 @@ top_level_nodes:
     file: src/call_graph/type_tracker.ts
     line: 316
     is_exported: true
-    calls_count: 2
+    calls_count: 0
     called_by_count: 0
   - id: src/call_graph/type_tracker#set_variable_types
     name: set_variable_types
     file: src/call_graph/type_tracker.ts
     line: 343
     is_exported: true
-    calls_count: 2
+    calls_count: 1
     called_by_count: 0
   - id: src/call_graph/type_tracker#set_imported_classes
     name: set_imported_classes
     file: src/call_graph/type_tracker.ts
     line: 356
     is_exported: true
-    calls_count: 2
+    calls_count: 1
     called_by_count: 0
   - id: src/call_graph/type_tracker#mark_as_exported_batch
     name: mark_as_exported_batch
     file: src/call_graph/type_tracker.ts
     line: 369
     is_exported: true
-    calls_count: 1
+    calls_count: 0
     called_by_count: 0
   - id: src/call_graph/type_tracker#register_exports
     name: register_exports
     file: src/call_graph/type_tracker.ts
     line: 387
     is_exported: true
-    calls_count: 2
+    calls_count: 1
     called_by_count: 0
   - id: src/call_graph_utils#apply_max_depth_filter
     name: apply_max_depth_filter
     file: src/call_graph_utils.ts
     line: 16
     is_exported: true
-    calls_count: 12
+    calls_count: 0
     called_by_count: 0
   - id: src/call_graph_utils#is_position_within_range
     name: is_position_within_range
@@ -437,7 +507,7 @@ top_level_nodes:
     file: src/graph.ts
     line: 123
     is_exported: false
-    calls_count: 6
+    calls_count: 4
     called_by_count: 0
   - id: src/graph#ScopeGraph.node_to_simple_range
     name: node_to_simple_range
@@ -458,21 +528,21 @@ top_level_nodes:
     file: src/graph.ts
     line: 254
     is_exported: false
-    calls_count: 3
+    calls_count: 0
     called_by_count: 0
   - id: src/graph#ScopeGraph.getImportsForRef
     name: getImportsForRef
     file: src/graph.ts
     line: 265
     is_exported: false
-    calls_count: 3
+    calls_count: 0
     called_by_count: 0
   - id: src/graph#ScopeGraph.getRefsForDef
     name: getRefsForDef
     file: src/graph.ts
     line: 276
     is_exported: false
-    calls_count: 3
+    calls_count: 0
     called_by_count: 0
   - id: src/graph#ScopeGraph.findNodeAtPosition
     name: findNodeAtPosition
@@ -493,7 +563,7 @@ top_level_nodes:
     file: src/graph.ts
     line: 339
     is_exported: false
-    calls_count: 4
+    calls_count: 1
     called_by_count: 0
   - id: src/graph#ScopeGraph.findExportedDef
     name: findExportedDef
@@ -507,7 +577,7 @@ top_level_nodes:
     file: src/graph.ts
     line: 374
     is_exported: false
-    calls_count: 5
+    calls_count: 0
     called_by_count: 0
   - id: src/graph#ScopeGraph.getCallsFromDef
     name: getCallsFromDef
@@ -528,7 +598,7 @@ top_level_nodes:
     file: src/graph.ts
     line: 396
     is_exported: false
-    calls_count: 2
+    calls_count: 1
     called_by_count: 0
   - id: src/graph#ScopeGraph.getFunctionCalls
     name: getFunctionCalls
@@ -556,47 +626,47 @@ top_level_nodes:
     file: src/inheritance.ts
     line: 14
     is_exported: true
-    calls_count: 4
+    calls_count: 3
     called_by_count: 0
   - id: src/module_resolver#ModuleResolver.resolveModulePath
     name: resolveModulePath
     file: src/module_resolver.ts
     line: 31
     is_exported: false
-    calls_count: 6
+    calls_count: 2
     called_by_count: 0
   - id: src/module_resolver#ModuleResolver.resolvePythonImport
     name: resolvePythonImport
     file: src/module_resolver.ts
     line: 171
     is_exported: false
-    calls_count: 18
+    calls_count: 0
     called_by_count: 0
   - id: src/module_resolver#ModuleResolver.resolveRustModule
     name: resolveRustModule
     file: src/module_resolver.ts
     line: 233
     is_exported: false
-    calls_count: 15
+    calls_count: 1
     called_by_count: 0
   - id: src/project/call_graph_service#CallGraphService.getFunctionCalls
     name: getFunctionCalls
     file: src/project/call_graph_service.ts
-    line: 77
+    line: 69
     is_exported: false
-    calls_count: 2
+    calls_count: 1
     called_by_count: 0
   - id: src/project/call_graph_service#CallGraphService.getCallGraph
     name: getCallGraph
     file: src/project/call_graph_service.ts
-    line: 155
+    line: 137
     is_exported: false
     calls_count: 1
     called_by_count: 0
   - id: src/project/call_graph_service#CallGraphService.applyTypeDiscoveries
     name: applyTypeDiscoveries
     file: src/project/call_graph_service.ts
-    line: 184
+    line: 166
     is_exported: false
     calls_count: 0
     called_by_count: 0
@@ -640,35 +710,35 @@ top_level_nodes:
     file: src/project/inheritance_service.ts
     line: 15
     is_exported: false
-    calls_count: 2
+    calls_count: 1
     called_by_count: 0
   - id: src/project/inheritance_service#InheritanceService.findSubclasses
     name: findSubclasses
     file: src/project/inheritance_service.ts
     line: 33
     is_exported: false
-    calls_count: 2
+    calls_count: 1
     called_by_count: 0
   - id: src/project/inheritance_service#InheritanceService.findImplementations
     name: findImplementations
     file: src/project/inheritance_service.ts
     line: 50
     is_exported: false
-    calls_count: 2
+    calls_count: 1
     called_by_count: 0
   - id: src/project/inheritance_service#InheritanceService.getInheritanceChain
     name: getInheritanceChain
     file: src/project/inheritance_service.ts
     line: 67
     is_exported: false
-    calls_count: 2
+    calls_count: 1
     called_by_count: 0
   - id: src/project/inheritance_service#InheritanceService.isSubclassOf
     name: isSubclassOf
     file: src/project/inheritance_service.ts
     line: 84
     is_exported: false
-    calls_count: 2
+    calls_count: 1
     called_by_count: 0
   - id: src/project/inheritance_service#InheritanceService.updateInheritanceMap
     name: updateInheritanceMap
@@ -710,7 +780,7 @@ top_level_nodes:
     file: src/project/language_manager.ts
     line: 63
     is_exported: false
-    calls_count: 2
+    calls_count: 0
     called_by_count: 0
   - id: src/project/navigation_service#NavigationService.findReferences
     name: findReferences
@@ -745,28 +815,28 @@ top_level_nodes:
     file: src/project/navigation_service.ts
     line: 54
     is_exported: false
-    calls_count: 2
+    calls_count: 0
     called_by_count: 0
   - id: src/project/navigation_service#NavigationService.getDefinitions
     name: getDefinitions
     file: src/project/navigation_service.ts
     line: 71
     is_exported: false
-    calls_count: 1
+    calls_count: 0
     called_by_count: 0
   - id: src/project/navigation_service#NavigationService.getAllFunctionsFlat
     name: getAllFunctionsFlat
     file: src/project/navigation_service.ts
     line: 126
     is_exported: false
-    calls_count: 3
+    calls_count: 1
     called_by_count: 0
   - id: src/project/navigation_service#NavigationService.getExportedFunctions
     name: getExportedFunctions
     file: src/project/navigation_service.ts
     line: 149
     is_exported: false
-    calls_count: 2
+    calls_count: 0
     called_by_count: 0
   - id: src/project/navigation_service#NavigationService.isDefinitionExported
     name: isDefinitionExported
@@ -780,14 +850,14 @@ top_level_nodes:
     file: src/project/navigation_service.ts
     line: 212
     is_exported: false
-    calls_count: 1
+    calls_count: 0
     called_by_count: 0
   - id: src/project/project#Project.constructor
     name: constructor
     file: src/project/project.ts
     line: 32
     is_exported: false
-    calls_count: 2
+    calls_count: 1
     called_by_count: 0
   - id: src/project/project#Project.withStorage
     name: withStorage
@@ -801,7 +871,7 @@ top_level_nodes:
     file: src/project/project.ts
     line: 103
     is_exported: false
-    calls_count: 6
+    calls_count: 2
     called_by_count: 0
   - id: src/project/project#Project.find_references
     name: find_references
@@ -955,7 +1025,7 @@ top_level_nodes:
     file: src/project/project.ts
     line: 410
     is_exported: false
-    calls_count: 5
+    calls_count: 2
     called_by_count: 0
   - id: src/project/query_service#QueryService.constructor
     name: constructor
@@ -976,14 +1046,14 @@ top_level_nodes:
     file: src/project/query_service.ts
     line: 57
     is_exported: false
-    calls_count: 4
+    calls_count: 0
     called_by_count: 0
   - id: src/project/query_service#QueryService.getImportsWithDefinitions
     name: getImportsWithDefinitions
     file: src/project/query_service.ts
     line: 87
     is_exported: false
-    calls_count: 20
+    calls_count: 1
     called_by_count: 0
   - id: src/project_inheritance#ProjectInheritance.constructor
     name: constructor
@@ -997,21 +1067,21 @@ top_level_nodes:
     file: src/project_inheritance.ts
     line: 82
     is_exported: false
-    calls_count: 3
+    calls_count: 1
     called_by_count: 0
   - id: src/project_inheritance#ProjectInheritance.find_implementations
     name: find_implementations
     file: src/project_inheritance.ts
     line: 111
     is_exported: false
-    calls_count: 3
+    calls_count: 1
     called_by_count: 0
   - id: src/project_inheritance#ProjectInheritance.is_subclass_of
     name: is_subclass_of
     file: src/project_inheritance.ts
     line: 167
     is_exported: false
-    calls_count: 2
+    calls_count: 1
     called_by_count: 0
   - id: src/project_source#ProjectSource.constructor
     name: constructor
@@ -1025,28 +1095,28 @@ top_level_nodes:
     file: src/project_source.ts
     line: 132
     is_exported: false
-    calls_count: 11
+    calls_count: 3
     called_by_count: 0
   - id: src/scope_resolution#build_scope_graph
     name: build_scope_graph
     file: src/scope_resolution.ts
     line: 82
     is_exported: true
-    calls_count: 66
+    calls_count: 3
     called_by_count: 0
   - id: src/storage/examples/disk_storage#DiskStorage.constructor
     name: constructor
     file: src/storage/examples/disk_storage.ts
     line: 37
     is_exported: false
-    calls_count: 3
+    calls_count: 0
     called_by_count: 0
   - id: src/storage/examples/disk_storage#DiskStorage.initialize
     name: initialize
     file: src/storage/examples/disk_storage.ts
     line: 45
     is_exported: false
-    calls_count: 9
+    calls_count: 1
     called_by_count: 0
   - id: src/storage/examples/disk_storage#DiskStorage.beginTransaction
     name: beginTransaction
@@ -1081,14 +1151,14 @@ top_level_nodes:
     file: src/storage/examples/disk_storage.ts
     line: 129
     is_exported: false
-    calls_count: 4
+    calls_count: 1
     called_by_count: 0
   - id: src/storage/examples/disk_storage#DiskStorage.getFilePaths
     name: getFilePaths
     file: src/storage/examples/disk_storage.ts
     line: 144
     is_exported: false
-    calls_count: 1
+    calls_count: 0
     called_by_count: 0
   - id: src/storage/examples/disk_storage#DiskStorage.hasFile
     name: hasFile
@@ -1277,7 +1347,7 @@ top_level_nodes:
     file: src/storage/in_memory_storage.ts
     line: 137
     is_exported: false
-    calls_count: 1
+    calls_count: 0
     called_by_count: 0
   - id: src/storage/in_memory_storage#InMemoryStorage.hasFile
     name: hasFile
@@ -1312,14 +1382,14 @@ top_level_nodes:
     file: src/storage/storage_interface.ts
     line: 141
     is_exported: true
-    calls_count: 1
+    calls_count: 0
     called_by_count: 0
   - id: src/storage/storage_interface#createStorage
     name: createStorage
     file: src/storage/storage_interface.ts
     line: 148
     is_exported: true
-    calls_count: 1
+    calls_count: 0
     called_by_count: 0
   - id: src/storage/storage_interface_sync#SyncToAsyncStorageAdapter.constructor
     name: constructor
@@ -1340,7 +1410,7 @@ top_level_nodes:
     file: src/storage/storage_interface_sync.ts
     line: 123
     is_exported: false
-    calls_count: 6
+    calls_count: 4
     called_by_count: 0
   - id: src/storage/storage_interface_sync#SyncToAsyncStorageAdapter.getFileCache
     name: getFileCache
@@ -1396,21 +1466,21 @@ top_level_nodes:
     file: src/storage/storage_utils.ts
     line: 33
     is_exported: true
-    calls_count: 2
+    calls_count: 0
     called_by_count: 0
   - id: src/storage/storage_utils#removeFileFromState
     name: removeFileFromState
     file: src/storage/storage_utils.ts
     line: 62
     is_exported: true
-    calls_count: 4
+    calls_count: 0
     called_by_count: 0
   - id: src/storage/storage_utils#updateInheritanceInState
     name: updateInheritanceInState
     file: src/storage/storage_utils.ts
     line: 97
     is_exported: true
-    calls_count: 1
+    calls_count: 0
     called_by_count: 0
   - id: src/storage/storage_utils#updateCallGraphDataInState
     name: updateCallGraphDataInState
@@ -1438,14 +1508,14 @@ top_level_nodes:
     file: src/symbol_naming.ts
     line: 129
     is_exported: true
-    calls_count: 4
+    calls_count: 2
     called_by_count: 0
   - id: src/symbol_naming#get_unqualified_name
     name: get_unqualified_name
     file: src/symbol_naming.ts
     line: 146
     is_exported: true
-    calls_count: 3
+    calls_count: 1
     called_by_count: 0
   - id: src/symbol_naming#same_module
     name: same_module
@@ -1459,149 +1529,54 @@ top_level_nodes:
     file: src/symbol_resolver.ts
     line: 86
     is_exported: true
-    calls_count: 5
+    calls_count: 0
     called_by_count: 0
 sampled_nodes:
   - node:
-      id: src/call_graph/constants#isCallableSymbolKind
-      name: isCallableSymbolKind
-      file: src/call_graph/constants.ts
-      line: 58
+      id: src/call_graph/call_analysis/call_detection#is_method_call_pattern
+      name: is_method_call_pattern
+      file: src/call_graph/call_analysis/call_detection.ts
+      line: 26
     outgoing_calls: []
     incoming_calls: []
     source_snippet: |2-
-       * Type guards using const arrays
+       * in different programming languages by checking what precedes the reference.
        */
-      export function isCallableSymbolKind(kind: string): kind is typeof CALLABLE_SYMBOL_KINDS[number] {
-        return (CALLABLE_SYMBOL_KINDS as readonly string[]).includes(kind);
-      }
+      export function is_method_call_pattern(ref: Ref, file_path: string, fileCache: FileCache): boolean {
+        const lines = fileCache.source_code.split('\n');
+        const refLine = lines[ref.range.start.row];
   - node:
-      id: src/call_graph/constants#isTypeSymbolKind
-      name: isTypeSymbolKind
-      file: src/call_graph/constants.ts
+      id: src/call_graph/call_analysis/call_detection#is_reference_called
+      name: is_reference_called
+      file: src/call_graph/call_analysis/call_detection.ts
       line: 62
     outgoing_calls: []
     incoming_calls: []
-    source_snippet: |-
-      }
-
-      export function isTypeSymbolKind(kind: string): kind is typeof TYPE_SYMBOL_KINDS[number] {
-        return (TYPE_SYMBOL_KINDS as readonly string[]).includes(kind);
-      }
+    source_snippet: |2-
+       * in multi-file projects.
+       */
+      export function is_reference_called(ref: Ref, fileCache: FileCache): boolean {
+        // Get the AST node for this reference
+        const astNode = fileCache.tree.rootNode.descendantForPosition(
   - node:
-      id: src/call_graph/constants#isValidLanguageExtension
-      name: isValidLanguageExtension
-      file: src/call_graph/constants.ts
-      line: 66
+      id: src/call_graph/call_analysis/constructor_analysis#analyze_constructor_call
+      name: analyze_constructor_call
+      file: src/call_graph/call_analysis/constructor_analysis.ts
+      line: 61
     outgoing_calls: []
     incoming_calls: []
-    source_snippet: |-
-      }
-
-      export function isValidLanguageExtension(
-        language: keyof typeof LANGUAGE_EXTENSIONS,
-        extension: string
+    source_snippet: |2-
+       * @returns TypeDiscoveries if this is a constructor call, null otherwise
+       */
+      export function analyze_constructor_call(
+        ref: Ref,
+        def: Def,
   - node:
       id: src/benchmark-incremental#generateLargeFile
       name: generateLargeFile
       file: src/benchmark-incremental.ts
       line: 8
-    outgoing_calls:
-      - target_id: <builtin>#push
-        target_name: push
-        target_file: <builtin>
-        call_line: 12
-        call_type: method
-      - target_id: <builtin>#push
-        target_name: push
-        target_file: <builtin>
-        call_line: 13
-        call_type: method
-      - target_id: <builtin>#push
-        target_name: push
-        target_file: <builtin>
-        call_line: 17
-        call_type: method
-      - target_id: <builtin>#push
-        target_name: push
-        target_file: <builtin>
-        call_line: 18
-        call_type: method
-      - target_id: <builtin>#push
-        target_name: push
-        target_file: <builtin>
-        call_line: 19
-        call_type: method
-      - target_id: <builtin>#push
-        target_name: push
-        target_file: <builtin>
-        call_line: 20
-        call_type: method
-      - target_id: <builtin>#push
-        target_name: push
-        target_file: <builtin>
-        call_line: 21
-        call_type: method
-      - target_id: <builtin>#push
-        target_name: push
-        target_file: <builtin>
-        call_line: 26
-        call_type: method
-      - target_id: <builtin>#push
-        target_name: push
-        target_file: <builtin>
-        call_line: 27
-        call_type: method
-      - target_id: <builtin>#push
-        target_name: push
-        target_file: <builtin>
-        call_line: 28
-        call_type: method
-      - target_id: <builtin>#push
-        target_name: push
-        target_file: <builtin>
-        call_line: 29
-        call_type: method
-      - target_id: <builtin>#push
-        target_name: push
-        target_file: <builtin>
-        call_line: 30
-        call_type: method
-      - target_id: <builtin>#push
-        target_name: push
-        target_file: <builtin>
-        call_line: 34
-        call_type: method
-      - target_id: <builtin>#push
-        target_name: push
-        target_file: <builtin>
-        call_line: 36
-        call_type: method
-      - target_id: <builtin>#push
-        target_name: push
-        target_file: <builtin>
-        call_line: 37
-        call_type: method
-      - target_id: <builtin>#push
-        target_name: push
-        target_file: <builtin>
-        call_line: 38
-        call_type: method
-      - target_id: <builtin>#push
-        target_name: push
-        target_file: <builtin>
-        call_line: 39
-        call_type: method
-      - target_id: <builtin>#push
-        target_name: push
-        target_file: <builtin>
-        call_line: 41
-        call_type: method
-      - target_id: <builtin>#join
-        target_name: join
-        target_file: <builtin>
-        call_line: 43
-        call_type: method
+    outgoing_calls: []
     incoming_calls: []
     source_snippet: |-
 
@@ -1614,17 +1589,7 @@ sampled_nodes:
       name: benchmark
       file: src/benchmark-incremental.ts
       line: 47
-    outgoing_calls:
-      - target_id: <builtin>#log
-        target_name: log
-        target_file: <builtin>
-        call_line: 52
-        call_type: method
-      - target_id: <builtin>#toFixed
-        target_name: toFixed
-        target_file: <builtin>
-        call_line: 52
-        call_type: method
+    outgoing_calls: []
     incoming_calls: []
     source_snippet: |-
 
@@ -1633,114 +1598,93 @@ sampled_nodes:
         const start = process.hrtime.bigint();
         fn();
   - node:
-      id: src/call_graph/graph_builder#analyze_file
-      name: analyze_file
-      file: src/call_graph/graph_builder.ts
-      line: 85
-    outgoing_calls:
-      - target_id: <builtin>#add
-        target_name: add
-        target_file: <builtin>
-        call_line: 105
-        call_type: method
-      - target_id: <builtin>#getAllFunctions
-        target_name: getAllFunctions
-        target_file: <builtin>
-        call_line: 121
-        call_type: method
-      - target_id: <builtin>#push
-        target_name: push
-        target_file: <builtin>
-        call_line: 146
-        call_type: method
-      - target_id: <builtin>#push
-        target_name: push
-        target_file: <builtin>
-        call_line: 162
-        call_type: method
+      id: src/call_graph/call_analysis/method_resolution#is_method_of_class
+      name: is_method_of_class
+      file: src/call_graph/call_analysis/method_resolution.ts
+      line: 159
+    outgoing_calls: []
     incoming_calls:
-      - source_id: src/call_graph/graph_builder#analyze_all_files
-        source_name: analyze_all_files
-        source_file: src/call_graph/graph_builder.ts
-      - source_id: src/call_graph/graph_builder#build_call_graph_two_phase_sync
-        source_name: build_call_graph_two_phase_sync
-        source_file: src/call_graph/graph_builder.ts
+      - source_id: src/call_graph/call_analysis/method_resolution#resolve_method_on_type
+        source_name: resolve_method_on_type
+        source_file: src/call_graph/call_analysis/method_resolution.ts
     source_snippet: |2-
-       * Phase 1: Analyze a single file without mutations
+       * @returns True if the method belongs to the class
        */
-      export function analyze_file(
-        filePath: string,
-        config: TwoPhaseBuildConfig
+      export function is_method_of_class(
+        methodDef: Def,
+        classDef: Def,
   - node:
-      id: src/call_graph/graph_builder#analyze_all_files
-      name: analyze_all_files
-      file: src/call_graph/graph_builder.ts
-      line: 176
+      id: src/call_graph/call_analysis/reference_resolution#resolve_reference
+      name: resolve_reference
+      file: src/call_graph/call_analysis/reference_resolution.ts
+      line: 59
     outgoing_calls:
-      - target_id: <builtin>#from
-        target_name: from
-        target_file: <builtin>
-        call_line: 179
-        call_type: method
-      - target_id: <builtin>#map
-        target_name: map
-        target_file: <builtin>
-        call_line: 182
-        call_type: method
-      - target_id: src/call_graph/graph_builder#analyze_file
-        target_name: analyze_file
-        target_file: src/call_graph/graph_builder.ts
-        call_line: 183
+      - target_id: src/call_graph/call_analysis/reference_resolution#is_likely_method
+        target_name: is_likely_method
+        target_file: src/call_graph/call_analysis/reference_resolution.ts
+        call_line: 69
         call_type: direct
-      - target_id: <builtin>#all
-        target_name: all
-        target_file: <builtin>
-        call_line: 186
-        call_type: method
-      - target_id: <builtin>#set
-        target_name: set
-        target_file: <builtin>
-        call_line: 194
-        call_type: method
+      - target_id: src/call_graph/call_analysis/reference_resolution#is_method_call_node
+        target_name: is_method_call_node
+        target_file: src/call_graph/call_analysis/reference_resolution.ts
+        call_line: 77
+        call_type: direct
+      - target_id: src/call_graph/call_analysis/reference_resolution#resolve_rust_static_method
+        target_name: resolve_rust_static_method
+        target_file: src/call_graph/call_analysis/reference_resolution.ts
+        call_line: 80
+        call_type: direct
+      - target_id: src/call_graph/call_analysis/reference_resolution#resolve_instance_method
+        target_name: resolve_instance_method
+        target_file: src/call_graph/call_analysis/reference_resolution.ts
+        call_line: 84
+        call_type: direct
+      - target_id: src/call_graph/call_analysis/reference_resolution#follow_import
+        target_name: follow_import
+        target_file: src/call_graph/call_analysis/reference_resolution.ts
+        call_line: 93
+        call_type: direct
     incoming_calls:
-      - source_id: src/call_graph/graph_builder#build_call_graph_two_phase
-        source_name: build_call_graph_two_phase
-        source_file: src/call_graph/graph_builder.ts
+      - source_id: src/call_graph/call_analysis/reference_resolution#resolve_call_return_type
+        source_name: resolve_call_return_type
+        source_file: src/call_graph/call_analysis/reference_resolution.ts
     source_snippet: |2-
-       * Phase 1: Analyze all files in parallel
+       * @returns The resolved definition and any type discoveries made during resolution
        */
-      export async function analyze_all_files(
-        config: TwoPhaseBuildConfig
-      ): Promise<ProjectAnalysisData> {
+      export function resolve_reference(
+        ref: Ref,
+        def: Def,
   - node:
-      id: src/call_graph/graph_builder#build_from_analysis
-      name: build_from_analysis
-      file: src/call_graph/graph_builder.ts
-      line: 220
+      id: src/call_graph/call_analysis/reference_resolution#resolve_call_return_type
+      name: resolve_call_return_type
+      file: src/call_graph/call_analysis/reference_resolution.ts
+      line: 105
     outgoing_calls:
-      - target_id: <builtin>#push
-        target_name: push
-        target_file: <builtin>
-        call_line: 235
-        call_type: method
+      - target_id: src/call_graph/call_analysis/reference_resolution#is_method_expression_node
+        target_name: is_method_expression_node
+        target_file: src/call_graph/call_analysis/reference_resolution.ts
+        call_line: 116
+        call_type: direct
+      - target_id: src/call_graph/call_analysis/reference_resolution#resolve_reference
+        target_name: resolve_reference
+        target_file: src/call_graph/call_analysis/reference_resolution.ts
+        call_line: 141
+        call_type: direct
     incoming_calls:
-      - source_id: src/call_graph/graph_builder#build_call_graph_two_phase
-        source_name: build_call_graph_two_phase
-        source_file: src/call_graph/graph_builder.ts
-      - source_id: src/call_graph/graph_builder#build_call_graph_two_phase_sync
-        source_name: build_call_graph_two_phase_sync
-        source_file: src/call_graph/graph_builder.ts
+      - source_id: src/call_graph/call_analysis/reference_resolution#resolve_instance_method
+        source_name: resolve_instance_method
+        source_file: src/call_graph/call_analysis/reference_resolution.ts
     source_snippet: |2-
-       * Phase 2: Build the final immutable call graph from analysis results
+       * it returns. This is essential for method chaining.
        */
-      export function build_from_analysis(
-        analysis: ProjectAnalysisData,
-        config: TwoPhaseBuildConfig
+      export function resolve_call_return_type(
+        callNode: any,
+        contextDef: Def,
 file_summary:
   - file: src/graph.ts
     function_count: 31
     exported_function_count: 0
-    import_count: 26
+    import_count: 27
   - file: src/storage/examples/disk_storage.ts
     function_count: 31
     exported_function_count: 0
@@ -1748,7 +1692,7 @@ file_summary:
   - file: src/project/project.ts
     function_count: 29
     exported_function_count: 0
-    import_count: 17
+    import_count: 24
   - file: src/storage/in_memory_storage.ts
     function_count: 23
     exported_function_count: 0
@@ -1756,7 +1700,7 @@ file_summary:
   - file: src/call_graph/type_tracker.ts
     function_count: 21
     exported_function_count: 21
-    import_count: 4
+    import_count: 8
   - file: src/call_graph/project_graph_data.ts
     function_count: 19
     exported_function_count: 13
@@ -1764,11 +1708,11 @@ file_summary:
   - file: src/project/navigation_service.ts
     function_count: 13
     exported_function_count: 0
-    import_count: 3
+    import_count: 8
   - file: src/storage/storage_interface_sync.ts
     function_count: 13
     exported_function_count: 0
-    import_count: 2
+    import_count: 3
   - file: src/function_metadata.ts
     function_count: 11
     exported_function_count: 1
@@ -1780,19 +1724,23 @@ file_summary:
   - file: src/call_graph/return_type_analyzer.ts
     function_count: 9
     exported_function_count: 1
-    import_count: 2
+    import_count: 3
   - file: src/project/file_manager.ts
     function_count: 9
     exported_function_count: 0
-    import_count: 14
+    import_count: 16
   - file: src/symbol_naming.ts
     function_count: 9
     exported_function_count: 9
     import_count: 1
+  - file: src/call_graph/call_analysis/reference_resolution.ts
+    function_count: 8
+    exported_function_count: 2
+    import_count: 5
   - file: src/project_inheritance.ts
     function_count: 8
     exported_function_count: 0
-    import_count: 5
+    import_count: 7
   - file: src/project/inheritance_service.ts
     function_count: 7
     exported_function_count: 0
@@ -1804,19 +1752,19 @@ file_summary:
   - file: src/call_graph/graph_builder.ts
     function_count: 6
     exported_function_count: 6
-    import_count: 26
+    import_count: 36
   - file: src/call_graph/import_export_detector.ts
     function_count: 6
     exported_function_count: 6
-    import_count: 2
+    import_count: 4
   - file: src/storage/storage_utils.ts
     function_count: 6
     exported_function_count: 6
-    import_count: 8
+    import_count: 9
   - file: src/inheritance.ts
     function_count: 5
     exported_function_count: 1
-    import_count: 2
+    import_count: 3
   - file: src/project/call_graph_service.ts
     function_count: 5
     exported_function_count: 0
@@ -1824,11 +1772,11 @@ file_summary:
   - file: src/project/query_service.ts
     function_count: 5
     exported_function_count: 0
-    import_count: 5
+    import_count: 7
   - file: src/project_source.ts
     function_count: 5
     exported_function_count: 0
-    import_count: 3
+    import_count: 4
   - file: src/call_graph/readonly_types.ts
     function_count: 4
     exported_function_count: 4
@@ -1836,7 +1784,15 @@ file_summary:
   - file: src/scope_resolution.ts
     function_count: 4
     exported_function_count: 1
-    import_count: 6
+    import_count: 11
+  - file: src/call_graph/call_analysis/method_resolution.ts
+    function_count: 3
+    exported_function_count: 3
+    import_count: 11
+  - file: src/call_graph/call_analysis/range_utils.ts
+    function_count: 3
+    exported_function_count: 3
+    import_count: 3
   - file: src/call_graph/constants.ts
     function_count: 3
     exported_function_count: 3
@@ -1844,23 +1800,31 @@ file_summary:
   - file: src/call_graph_utils.ts
     function_count: 3
     exported_function_count: 3
-    import_count: 1
+    import_count: 5
   - file: src/languages/python/index.ts
     function_count: 3
     exported_function_count: 0
-    import_count: 6
+    import_count: 7
   - file: src/symbol_resolver.ts
     function_count: 3
     exported_function_count: 2
-    import_count: 1
+    import_count: 5
   - file: src/benchmark-incremental.ts
     function_count: 2
     exported_function_count: 0
     import_count: 1
+  - file: src/call_graph/call_analysis/call_detection.ts
+    function_count: 2
+    exported_function_count: 2
+    import_count: 2
+  - file: src/call_graph/call_analysis/core.ts
+    function_count: 2
+    exported_function_count: 2
+    import_count: 19
   - file: src/edit.ts
     function_count: 2
     exported_function_count: 2
-    import_count: 1
+    import_count: 2
   - file: src/languages/javascript/index.ts
     function_count: 2
     exported_function_count: 0
@@ -1876,7 +1840,11 @@ file_summary:
   - file: src/storage/storage_interface.ts
     function_count: 2
     exported_function_count: 2
-    import_count: 5
+    import_count: 6
+  - file: src/call_graph/call_analysis/constructor_analysis.ts
+    function_count: 1
+    exported_function_count: 1
+    import_count: 10
   - file: src/languages/shared_extractors.js
     function_count: 1
     exported_function_count: 1
@@ -1886,8 +1854,8 @@ file_summary:
     exported_function_count: 1
     import_count: 2
 validation_stats:
-  nodes_with_calls_pct: 60.12461059190031
-  nodes_called_by_others_pct: 35.202492211838006
-  exported_nodes_pct: 25.54517133956386
+  nodes_with_calls_pct: 32.35294117647059
+  nodes_called_by_others_pct: 35.88235294117647
+  exported_nodes_pct: 27.941176470588236
   edges_with_call_type_pct: 100
   top_level_accuracy_pct: 100

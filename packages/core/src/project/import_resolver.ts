@@ -1,109 +1,102 @@
+/**
+ * ImportResolver Service
+ * 
+ * Dedicated service for all import resolution logic.
+ * This service is the single source of truth for resolving imports to their definitions.
+ * 
+ * Responsibilities:
+ * - Resolving import statements to their actual definitions
+ * - Module path resolution across different languages
+ * - Managing import-to-definition mappings
+ * 
+ * This service eliminates circular dependencies by being a leaf service
+ * that only depends on core types and utilities.
+ */
+
+import { Def, Import, ImportInfo } from '../graph';
 import { ProjectState } from '../storage/storage_interface';
-import { ProjectSource } from '../project_source';
-import { Def, ImportInfo, Import } from '../graph';
-import { ImportResolver } from './import_resolver';
+import { ModuleResolver } from '../module_resolver';
+import * as path from 'path';
 
 /**
- * QueryService handles complex queries across the project
+ * Interface for ImportResolver service
  */
-export class QueryService {
-  private readonly projectSource: ProjectSource;
-  private readonly importResolver: ImportResolver;
-  
-  constructor(importResolver?: ImportResolver) {
-    // We'll need to refactor ProjectSource to work with ProjectState
-    // For now, create a temporary instance
-    this.projectSource = new ProjectSource(new Map(), new Map());
-    this.importResolver = importResolver || new ImportResolver();
-  }
-  
+export interface IImportResolver {
   /**
-   * Get the source code for a definition
+   * Resolve a single import to its definition
+   * @param importDef The import definition to resolve
+   * @param filePath The file containing the import
+   * @param state The project state containing all graphs
+   * @returns The resolved definition or undefined if not found
    */
-  getSourceCode(
-    state: ProjectState,
-    def: Def,
-    filePath: string
-  ): string {
-    const cache = state.file_cache.get(filePath);
-    if (!cache) return '';
-    
-    // Calculate byte positions from line/column positions
-    const sourceLines = cache.source_code.split('\n');
-    let startByte = 0;
-    let endByte = 0;
-    
-    // Calculate start byte
-    for (let i = 0; i < def.range.start.row; i++) {
-      startByte += sourceLines[i].length + 1; // +1 for newline
-    }
-    startByte += def.range.start.column;
-    
-    // Calculate end byte
-    endByte = startByte;
-    for (let i = def.range.start.row; i <= def.range.end.row; i++) {
-      if (i === def.range.end.row) {
-        endByte += def.range.end.column - (i === def.range.start.row ? def.range.start.column : 0);
-      } else {
-        endByte += sourceLines[i].length - (i === def.range.start.row ? def.range.start.column : 0) + 1;
-      }
-    }
-    
-    return cache.source_code.substring(startByte, endByte);
-  }
-  
-  /**
-   * Get the source code with context for a definition
-   */
-  getSourceWithContext(
-    state: ProjectState,
-    def: Def,
+  resolveImport(
+    importDef: Import | Def,
     filePath: string,
-    contextLines: number = 0
-  ): {
-    source: string;
-    docstring?: string;
-    decorators?: string[];
-  } {
-    const cache = state.file_cache.get(filePath);
-    if (!cache) {
-      return { source: '' };
-    }
-    
-    const sourceLines = cache.source_code.split('\n');
-    const startLine = Math.max(0, def.range.start.row - contextLines);
-    const endLine = Math.min(sourceLines.length - 1, def.range.end.row + contextLines);
-    
-    const contextSource = sourceLines.slice(startLine, endLine + 1).join('\n');
-    
-    // TODO: Extract docstring and decorators based on language
-    return {
-      source: contextSource
-    };
-  }
-  
+    state: ProjectState
+  ): Def | undefined;
+
   /**
    * Get all imports in a file with their resolved definitions
-   * 
-   * Now delegates to ImportResolver for all import resolution logic
+   * @param state The project state
+   * @param filePath The file to get imports for
+   * @returns Array of import information with resolved definitions
    */
   getImportsWithDefinitions(
     state: ProjectState,
-    filePath: string,
-    goToDefinition?: (filePath: string, position: { row: number; column: number }) => Def | undefined
-  ): ImportInfo[] {
-    // Simply delegate to ImportResolver which owns this logic
-    return this.importResolver.getImportsWithDefinitions(state, filePath);
-  }
-  
+    filePath: string
+  ): ImportInfo[];
+
   /**
-   * Legacy implementation - kept for reference during migration
-   * TODO: Remove this once ImportResolver is fully tested
+   * Resolve a module path to an actual file path
+   * @param fromFile The file containing the import
+   * @param importPath The import path to resolve
+   * @returns The resolved file path or null if not found
    */
-  private getImportsWithDefinitions_OLD(
-    state: ProjectState,
+  resolveModulePath(
+    fromFile: string,
+    importPath: string
+  ): string | null;
+}
+
+/**
+ * Implementation of ImportResolver service
+ */
+export class ImportResolver implements IImportResolver {
+  /**
+   * Resolve a single import to its definition
+   */
+  resolveImport(
+    importDef: Import | Def,
     filePath: string,
-    goToDefinition: (filePath: string, position: { row: number; column: number }) => Def | undefined
+    state: ProjectState
+  ): Def | undefined {
+    // If it's not an import, return as-is
+    if ('symbol_kind' in importDef && importDef.symbol_kind !== 'import') {
+      return importDef as Def;
+    }
+
+    const imports = this.getImportsWithDefinitions(state, filePath);
+    const importInfo = imports.find(imp => {
+      // First try exact position match
+      if (imp.import_statement.name === importDef.name &&
+          imp.import_statement.range.start.row === importDef.range.start.row &&
+          imp.import_statement.range.start.column === importDef.range.start.column) {
+        return true;
+      }
+      // Fallback to name-only match (for cases where position differs)
+      return imp.import_statement.name === importDef.name;
+    });
+
+    return importInfo?.imported_function;
+  }
+
+  /**
+   * Get all imports in a file with their resolved definitions
+   * This is the core logic extracted from QueryService
+   */
+  getImportsWithDefinitions(
+    state: ProjectState,
+    filePath: string
   ): ImportInfo[] {
     const graph = state.file_graphs.get(filePath);
     if (!graph) return [];
@@ -119,23 +112,7 @@ export class QueryService {
       let targetFile: string | null = null;
       
       if (imp.source_module) {
-        // Detect language and use appropriate resolver
-        const ext = path.extname(filePath).toLowerCase();
-        
-        if (ext === '.py') {
-          targetFile = ModuleResolver.resolvePythonImport(filePath, imp.source_module);
-        } else if (ext === '.rs') {
-          targetFile = ModuleResolver.resolveRustModule(filePath, imp.source_module);
-          // Fallback for virtual file system (tests)
-          if (!targetFile && imp.source_module) {
-            targetFile = this.resolveRustModuleFallback(state, imp.source_module);
-          }
-        } else if (ext === '.ts' || ext === '.tsx' || ext === '.js' || ext === '.jsx') {
-          // For TypeScript/JavaScript, use the generic module resolver
-          targetFile = ModuleResolver.resolveModulePath(filePath, imp.source_module);
-        } else {
-          targetFile = ModuleResolver.resolveModulePath(filePath, imp.source_module);
-        }
+        targetFile = this.resolveModulePath(filePath, imp.source_module);
         
         // If we resolved a specific file, only search that file
         if (targetFile) {
@@ -207,11 +184,36 @@ export class QueryService {
     
     return importInfos;
   }
-  
+
+  /**
+   * Resolve a module path to an actual file path
+   * This consolidates module resolution logic for all languages
+   */
+  resolveModulePath(
+    fromFile: string,
+    importPath: string
+  ): string | null {
+    // Detect language and use appropriate resolver
+    const ext = path.extname(fromFile).toLowerCase();
+    
+    if (ext === '.py') {
+      return ModuleResolver.resolvePythonImport(fromFile, importPath);
+    } else if (ext === '.rs') {
+      return ModuleResolver.resolveRustModule(fromFile, importPath);
+    } else if (ext === '.ts' || ext === '.tsx' || ext === '.js' || ext === '.jsx') {
+      // For TypeScript/JavaScript, use the generic module resolver
+      return ModuleResolver.resolveModulePath(fromFile, importPath);
+    } else {
+      // Default to generic module resolver
+      return ModuleResolver.resolveModulePath(fromFile, importPath);
+    }
+  }
+
   /**
    * Resolve Rust module fallback for virtual file system
+   * This is used when the standard resolution fails in test environments
    */
-  private resolveRustModuleFallback(
+  resolveRustModuleFallback(
     state: ProjectState,
     sourceModule: string
   ): string | null {

@@ -1,11 +1,17 @@
 import { Point, Def, Ref, IScopeGraph, ImportInfo } from '../graph';
 import { find_all_references, find_definition } from '../symbol_resolver';
 import { ProjectState } from '../storage/storage_interface';
+import { ImportResolver } from './import_resolver';
 
 /**
  * NavigationService handles all code navigation and query operations
  */
 export class NavigationService {
+  private readonly importResolver: ImportResolver;
+  
+  constructor(importResolver?: ImportResolver) {
+    this.importResolver = importResolver || new ImportResolver();
+  }
   /**
    * Find all references to a symbol at a given position in a file
    */
@@ -209,22 +215,12 @@ export class NavigationService {
   /**
    * Get imports with their resolved definitions for a file
    * 
-   * This delegates to QueryService which has the actual implementation
-   * for resolving imports to their definitions across files.
+   * Delegates to ImportResolver which handles all import resolution logic
    */
   getImportsWithDefinitions(
     state: ProjectState,
     filePath: string
   ): ImportInfo[] {
-    // Import resolution requires complex module resolution logic
-    // that is implemented in QueryService
-    // For now, we'll use a simplified version here
-    const graph = state.file_graphs.get(filePath);
-    if (!graph) return [];
-    
-    // TODO: This should use QueryService's implementation
-    // but that would create a circular dependency
-    // For now, returning empty to avoid breaking changes
-    return graph.getImportInfo();
+    return this.importResolver.getImportsWithDefinitions(state, filePath);
   }
 }

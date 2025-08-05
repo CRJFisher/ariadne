@@ -29,6 +29,9 @@ export interface MethodResolutionResult {
 
 /**
  * Configuration for reference resolution
+ * 
+ * Note: get_imports_with_definitions should ideally be replaced with
+ * direct ImportResolver usage to avoid callback complexity
  */
 export interface ReferenceResolutionConfig {
   readonly file_path: string;

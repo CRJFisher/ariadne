@@ -9,6 +9,7 @@ import { NavigationService } from './navigation_service';
 import { QueryService } from './query_service';
 import { CallGraphService } from './call_graph_service';
 import { InheritanceService } from './inheritance_service';
+import { ImportResolver } from './import_resolver';
 import { ProjectState } from '../storage/storage_interface';
 import { InMemoryStorage } from '../storage/in_memory_storage';
 import { typescript_config } from '../languages/typescript';
@@ -24,6 +25,7 @@ export class Project {
   private readonly storage: StorageInterfaceSync;
   private readonly fileManager: FileManager;
   private readonly languageManager: LanguageManager;
+  private readonly importResolver: ImportResolver;
   private readonly navigationService: NavigationService;
   private readonly queryService: QueryService;
   private readonly callGraphService: CallGraphService;
@@ -44,8 +46,13 @@ export class Project {
       }
     }
     this.fileManager = new FileManager(extensionMap);
-    this.navigationService = new NavigationService();
-    this.queryService = new QueryService();
+    
+    // Create ImportResolver first as other services depend on it
+    this.importResolver = new ImportResolver();
+    
+    // Inject ImportResolver into services that need it
+    this.navigationService = new NavigationService(this.importResolver);
+    this.queryService = new QueryService(this.importResolver);
     this.callGraphService = new CallGraphService();
     this.inheritanceService = new InheritanceService();
   }
