@@ -283,9 +283,12 @@ documentation:
 # SUGGESTED WORK ORDER
 work_order:
   immediate:
-    - task-100          # EPIC: Improve self-analysis accuracy - run final validation
+    - task-100.11       # Fix built-in call preservation in multi-file projects (critical)
+    - task-100.14       # Add detailed validation metrics (helps debug other issues)
     
   next:
+    - task-100.12       # Investigate low nodes-called-by-others percentage
+    - task-100.13       # Document and test AST node fix
     - task-100.9        # Add CommonJS/ES6 export support
     - task-101          # Test Ariadne-MCP integration with Claude Code
     
