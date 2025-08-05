@@ -70,12 +70,12 @@ This iterative approach ensures we address all issues systematically and verify 
 - task-100.11: Refactor project_call_graph.ts to be under 32KB (immutable architecture)
 - task-100.12: Refactor Project class to be immutable with pluggable storage
 
-**❌ Needs Re-implementation:**
-- task-100.1: Fix low nodes-with-calls percentage (built-in call tracking) - Implementation missing after refactor
-- task-100.11.14: Track all function calls including built-ins - Implementation lost during refactoring
+**🔧 In Progress:**
+- task-100.11.14: Track all function calls including built-ins - Implementation found but has multi-file bug
+- task-100.13: Debug and fix built-in call tracking in multi-file projects - NEW (critical bug)
 
 **🚧 Remaining:**
-- task-100.3: Complete remaining agent validation fixes (task-62 completed, final validation needed)
+- task-100.3: Complete remaining agent validation fixes (task-62 completed, needs 100.13 fix first)
 - task-100.6: Add file size linting to prevent validation failures
 - task-100.9: Add CommonJS and ES6 export support (tasks 71-72)
 - task-100.10: Complete JavaScript test updates (task-99)

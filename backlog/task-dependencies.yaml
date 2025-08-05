@@ -185,15 +185,22 @@ validation:
     - id: task-100.11.14
       title: "Track all function calls including built-ins"
       parent: task-100
+      priority: "High"
+      notes: "Implementation exists but has multi-file bug - see task-100.13"
+      
+    - id: task-100.13
+      title: "Debug and fix built-in call tracking in multi-file projects"
+      parent: task-100
+      depends_on: [task-100.11.14]
       priority: "URGENT"
-      notes: "REGRESSION: Implementation lost during refactoring. Must re-implement with tests"
+      notes: "Critical bug: built-in tracking works for single files but fails with multiple files"
       
     - id: task-100.3
       title: "Complete remaining agent validation fixes (task-62)"
       parent: task-100
-      depends_on: [task-62, task-100.11.14]
+      depends_on: [task-62, task-100.13]
       priority: "High"
-      notes: "task-62 completed, needs task-100.11.14 fix before final validation"
+      notes: "task-62 completed, needs task-100.13 fix before final validation"
       
     - id: task-100.5
       title: "Run validation guide process and identify discrepancies"
@@ -287,9 +294,10 @@ documentation:
 work_order:
   immediate:
     - task-100          # EPIC: Improve self-analysis accuracy
-    - task-100.11.14    # URGENT: Re-implement built-in call tracking (regression)
+    - task-100.13       # URGENT: Fix built-in tracking multi-file bug
     
   next:
+    - task-100.11.14    # Complete built-in tracking (after 100.13 fix)
     - task-100.3        # Complete remaining validation fixes
     - task-100.9        # Add CommonJS/ES6 export support
     - task-100.6        # Add file size linting

@@ -22,10 +22,10 @@ This cycle continues until Ariadne correctly parses and processes its own codeba
 
 Epic task implementing the iterative validation process to meet accuracy thresholds:
 
-- **Current metrics (2025-08-05)**: nodes-with-calls 34.1% (need 85%), nodes-called-by-others 37.1% (need 85%)
-- **Latest finding**: Built-in call tracking implementation lost during refactoring
-- **URGENT**: task-100.11.14 needs re-implementation (regression from refactoring)
-- **Active sub-tasks**: task-100.11.14 (urgent), task-100.3, task-100.6, task-100.9, task-100.10
+- **Current metrics (2025-08-05)**: nodes-with-calls 34.7% (need 85%), nodes-called-by-others 37.1% (need 85%)
+- **Latest finding**: Built-in tracking exists but fails in multi-file projects (works 100% single file, 48.5% multi-file)
+- **URGENT**: task-100.13 - Fix critical multi-file bug in built-in tracking
+- **Active sub-tasks**: task-100.13 (urgent bug), task-100.11.14, task-100.3, task-100.6, task-100.9, task-100.10
 - **Process**: Fix sub-tasks → Re-run validation → Create new sub-tasks if needed → Repeat
 - **Goal**: Achieve 85%+ accuracy through iterative improvements
 
