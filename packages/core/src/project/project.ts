@@ -187,7 +187,20 @@ export class Project {
    */
   get_calls_from_definition(def: Def): FunctionCall[] {
     const state = this.storage.getState();
-    return this.callGraphService.getCallsFromDefinition(state, def);
+    
+    // Create helper functions
+    const goToDefinition = (filePath: string, position: { row: number; column: number }) => 
+      this.navigationService.goToDefinition(state, filePath, position);
+    
+    const getImportsWithDefinitions = (filePath: string) =>
+      this.navigationService.getImportsWithDefinitions(state, filePath);
+    
+    return this.callGraphService.getCallsFromDefinition(
+      state, 
+      def,
+      goToDefinition,
+      getImportsWithDefinitions
+    );
   }
   
   /**

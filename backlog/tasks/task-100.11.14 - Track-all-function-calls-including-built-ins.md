@@ -18,12 +18,13 @@ Currently, Ariadne only tracks calls to functions defined within the project. Th
 
 ## Acceptance Criteria
 
-- [ ] All function calls are tracked, including built-ins
-- [ ] Method calls on built-in types are counted
-- [ ] Nodes-with-calls percentage improves significantly
-- [ ] **NEW**: Comprehensive tests added to prevent regression
-- [ ] **NEW**: Tests must cover console.log, Array methods, JSON methods, Object methods
-- [ ] **NEW**: Tests must be part of the regular test suite (not just validation)
+- [x] All function calls are tracked, including built-ins (works for single files)
+- [x] Method calls on built-in types are counted (works for single files)
+- [ ] Nodes-with-calls percentage improves significantly (still at 34.7%)
+- [x] **NEW**: Comprehensive tests added to prevent regression
+- [x] **NEW**: Tests must cover console.log, Array methods, JSON methods, Object methods
+- [x] **NEW**: Tests must be part of the regular test suite (not just validation)
+- [ ] **NEW**: Built-in tracking must work correctly in multi-file projects
 
 ## Implementation Plan
 
@@ -40,6 +41,20 @@ This task was previously completed on 2025-08-04 but the implementation was lost
 - No tests were found for built-in call tracking
 
 This needs to be re-implemented with proper test coverage to prevent future regressions.
+
+## Current Status (2025-08-05)
+
+Found that the built-in tracking implementation is actually present in the code:
+- `analyze_calls_from_definition` correctly creates synthetic definitions for unresolved calls
+- `is_reference_called` properly detects call expressions
+- Tests pass showing built-in tracking works
+
+However, there's a critical bug:
+- **Single file analysis**: Built-in tracking works perfectly (100% nodes with calls)
+- **Multi-file analysis**: Built-in calls are lost (only 48.5% nodes with calls)
+- The validation uses multi-file analysis, hence the low 34.7% result
+
+The issue appears to be in how the call graph is constructed when multiple files are involved, not in the built-in tracking logic itself.
 
 ## Previous Implementation Notes
 

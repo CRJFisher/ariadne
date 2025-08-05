@@ -114,7 +114,7 @@ async function main() {
     const stats = {
       totalNodes: callGraph.nodes.size,
       nodesWithCalls: Array.from(callGraph.nodes.values()).filter(n => 
-        callGraph.edges.some(e => e.from === n.symbol)
+        n.calls.length > 0  // Count nodes with any calls (including built-ins)
       ).length,
       nodesCalledByOthers: Array.from(callGraph.nodes.values()).filter(n =>
         callGraph.edges.some(e => e.to === n.symbol)
@@ -169,7 +169,7 @@ async function main() {
       file: node.definition.file_path,
       line: node.definition.range?.start?.row ? node.definition.range.start.row + 1 : 0,
       is_exported: node.is_exported,
-      calls_count: outgoingCalls.length,
+      calls_count: node.calls.length, // Use node.calls to include built-in calls
       called_by_count: incomingCalls.length
     });
   }
@@ -189,19 +189,16 @@ async function main() {
     const node = callGraph.nodes.get(nodeId);
     if (!node) continue;
     
-    const outgoing = callGraph.edges
-      .filter(e => e.from === nodeId)
-      .map(e => {
-        const target = callGraph.nodes.get(e.to);
-        return target ? {
-          target_id: e.to,
-          target_name: target.definition.name,
-          target_file: target.definition.file_path,
-          call_line: e.location?.start?.row ? e.location.start.row + 1 : 0,
-          call_type: e.call_type
-        } : null;
-      })
-      .filter(Boolean) as any[];
+    const outgoing = node.calls.map(call => {
+      const isBuiltin = call.symbol.startsWith('<builtin>#');
+      return {
+        target_id: call.symbol,
+        target_name: isBuiltin ? call.symbol.replace('<builtin>#', '') : call.resolved_definition?.name || call.symbol,
+        target_file: isBuiltin ? '<builtin>' : call.resolved_definition?.file_path || '',
+        call_line: call.range.start.row + 1,
+        call_type: call.kind === 'method' ? 'method' : 'direct'
+      };
+    });
     
     const incoming = callGraph.edges
       .filter(e => e.to === nodeId)
