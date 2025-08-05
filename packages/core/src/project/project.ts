@@ -5,11 +5,18 @@ import { ImportInfo } from '../graph';
 import { StorageInterfaceSync } from '../storage/storage_interface_sync';
 import { FileManager } from './file_manager';
 import { LanguageManager } from './language_manager';
-import { NavigationService } from './navigation_service';
-import { QueryService } from './query_service';
 import { CallGraphService } from './call_graph_service';
 import { InheritanceService } from './inheritance_service';
 import { ImportResolver } from './import_resolver';
+import { find_all_references, find_definition } from '../symbol_resolver';
+import { extract_source_code, extract_source_with_context } from '../utils/source_utils';
+import { 
+  get_functions_in_file,
+  get_all_functions,
+  get_all_functions_flat,
+  get_exported_functions,
+  is_definition_exported
+} from '../utils/query_utils';
 import { ProjectState } from '../storage/storage_interface';
 import { InMemoryStorage } from '../storage/in_memory_storage';
 import { typescript_config } from '../languages/typescript';
@@ -26,8 +33,6 @@ export class Project {
   private readonly fileManager: FileManager;
   private readonly languageManager: LanguageManager;
   private readonly importResolver: ImportResolver;
-  private readonly navigationService: NavigationService;
-  private readonly queryService: QueryService;
   private readonly callGraphService: CallGraphService;
   private readonly inheritanceService: InheritanceService;
   
@@ -47,12 +52,8 @@ export class Project {
     }
     this.fileManager = new FileManager(extensionMap);
     
-    // Create ImportResolver first as other services depend on it
+    // Create services
     this.importResolver = new ImportResolver();
-    
-    // Inject ImportResolver into services that need it
-    this.navigationService = new NavigationService(this.importResolver);
-    this.queryService = new QueryService(this.importResolver);
     this.callGraphService = new CallGraphService();
     this.inheritanceService = new InheritanceService();
   }
@@ -134,7 +135,7 @@ export class Project {
    */
   find_references(file_path: string, position: Point): Ref[] {
     const state = this.storage.getState();
-    return this.navigationService.findReferences(state, file_path, position);
+    return find_all_references(file_path, position, state.file_graphs);
   }
   
   /**
@@ -142,7 +143,7 @@ export class Project {
    */
   go_to_definition(file_path: string, position: Point): Def | null {
     const state = this.storage.getState();
-    return this.navigationService.goToDefinition(state, file_path, position);
+    return find_definition(file_path, position, state.file_graphs);
   }
   
   /**
@@ -166,7 +167,8 @@ export class Project {
    */
   get_functions_in_file(file_path: string): Def[] {
     const state = this.storage.getState();
-    return this.navigationService.getFunctionsInFile(state, file_path);
+    const graph = state.file_graphs.get(file_path);
+    return get_functions_in_file(graph);
   }
   
   /**
@@ -174,7 +176,9 @@ export class Project {
    */
   get_definitions(file_path: string): Def[] {
     const state = this.storage.getState();
-    return this.navigationService.getDefinitions(state, file_path);
+    const graph = state.file_graphs.get(file_path);
+    if (!graph) return [];
+    return graph.getNodes<Def>('definition');
   }
   
   /**
@@ -186,7 +190,7 @@ export class Project {
     include_tests?: boolean
   }): Map<string, Def[]> {
     const state = this.storage.getState();
-    return this.navigationService.getAllFunctions(state, options);
+    return get_all_functions(state, options);
   }
   
   /**
@@ -197,10 +201,10 @@ export class Project {
     
     // Create helper functions
     const goToDefinition = (filePath: string, position: { row: number; column: number }) => 
-      this.navigationService.goToDefinition(state, filePath, position);
+      find_definition(filePath, position, state.file_graphs);
     
     const getImportsWithDefinitions = (filePath: string) =>
-      this.queryService.getImportsWithDefinitions(state, filePath, goToDefinition);
+      this.importResolver.getImportsWithDefinitions(state, filePath);
     
     return this.callGraphService.getCallsFromDefinition(
       state, 
@@ -211,11 +215,23 @@ export class Project {
   }
   
   /**
+   * Get function calls from a specific definition (convenience method)
+   */
+  get_function_calls(def: Def): FunctionCall[];
+  /**
    * Get function calls (module-level or all)
    */
-  get_function_calls(module_level_only: boolean = false): Map<string, FunctionCall[]> {
-    const state = this.storage.getState();
-    return this.callGraphService.getFunctionCalls(state, module_level_only);
+  get_function_calls(module_level_only?: boolean): Map<string, FunctionCall[]>;
+  get_function_calls(arg?: Def | boolean): FunctionCall[] | Map<string, FunctionCall[]> {
+    // Check if arg is a Def object
+    if (arg && typeof arg === 'object' && 'symbol_kind' in arg) {
+      // This is a Def, get calls from this definition
+      return this.get_calls_from_definition(arg as Def);
+    } else {
+      // This is a boolean or undefined, get all function calls
+      const state = this.storage.getState();
+      return this.callGraphService.getFunctionCalls(state, arg as boolean || false);
+    }
   }
   
   /**
@@ -223,7 +239,31 @@ export class Project {
    */
   extract_call_graph(functions: Def[]): Map<string, FunctionCall[]> {
     const state = this.storage.getState();
-    return this.callGraphService.extractCallGraph(state, functions);
+    
+    const goToDefinition = (filePath: string, position: { row: number; column: number }) => 
+      find_definition(filePath, position, state.file_graphs);
+    
+    const getImportsWithDefinitions = (filePath: string) =>
+      this.importResolver.getImportsWithDefinitions(state, filePath);
+    
+    const getAllFunctions = () => functions;  // Use the provided functions
+    
+    const result = this.callGraphService.extractCallGraph(
+      state,
+      goToDefinition,
+      getImportsWithDefinitions,
+      getAllFunctions
+    );
+    
+    // Convert the result format
+    const callMap = new Map<string, FunctionCall[]>();
+    for (const func of result.functions) {
+      const funcCalls = result.calls.filter(c => c.caller_def === func);
+      if (funcCalls.length > 0) {
+        callMap.set(func.symbol_id, funcCalls);
+      }
+    }
+    return callMap;
   }
   
   /**
@@ -234,13 +274,13 @@ export class Project {
     
     // Create helper functions that use the appropriate services
     const goToDefinition = (filePath: string, position: { row: number; column: number }) => 
-      this.navigationService.goToDefinition(state, filePath, position);
+      find_definition(filePath, position, state.file_graphs);
     
     const getImportsWithDefinitions = (filePath: string) =>
-      this.queryService.getImportsWithDefinitions(state, filePath, goToDefinition);
+      this.importResolver.getImportsWithDefinitions(state, filePath);
     
     const getAllFunctions = () => 
-      this.navigationService.getAllFunctionsFlat(state);
+      get_all_functions_flat(state);
     
     return this.callGraphService.getCallGraph(
       state, 
@@ -256,7 +296,8 @@ export class Project {
    */
   get_source_code(def: Def, file_path: string): string {
     const state = this.storage.getState();
-    return this.queryService.getSourceCode(state, def, file_path);
+    const cache = state.file_cache.get(file_path);
+    return extract_source_code(cache, def.range);
   }
   
   /**
@@ -269,7 +310,8 @@ export class Project {
     context: { before: string[], after: string[] }
   } {
     const state = this.storage.getState();
-    return this.queryService.getSourceWithContext(state, def, file_path, context_lines);
+    const cache = state.file_cache.get(file_path);
+    return extract_source_with_context(cache, def.range, context_lines);
   }
   
   /**
@@ -277,7 +319,7 @@ export class Project {
    */
   get_imports_with_definitions(file_path: string): ImportInfo[] {
     const state = this.storage.getState();
-    return this.queryService.getImportsWithDefinitions(state, file_path);
+    return this.importResolver.getImportsWithDefinitions(state, file_path);
   }
   
   /**
@@ -285,7 +327,8 @@ export class Project {
    */
   get_exported_functions(module_path: string): Def[] {
     const state = this.storage.getState();
-    return this.queryService.getExportedFunctions(state, module_path);
+    const graph = state.file_graphs.get(module_path);
+    return get_exported_functions(graph);
   }
   
   /**

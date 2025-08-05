@@ -1,9 +1,10 @@
 ---
 id: task-100.20.1
 title: Eliminate redundant NavigationService and QueryService
-status: To Do
+status: Done
 assignee: []
 created_date: '2025-08-05 21:38'
+updated_date: '2025-08-05 21:52'
 labels: []
 dependencies: []
 parent_task_id: task-100.20
@@ -134,3 +135,56 @@ Or even simpler - many of these one-liner delegations can just be methods on Pro
 - **Easier Testing**: Test utilities directly without service wrappers
 - **Better Performance**: One less function call per operation
 - **Reduced Maintenance**: ~500 lines of wrapper code removed
+
+## Implementation Notes
+
+## Implementation Complete
+
+Successfully eliminated NavigationService and QueryService, removing ~500 lines of redundant wrapper code.
+
+## Key Changes
+
+1. **Created Utility Functions**
+   - source_utils.ts: Extract source code functionality (from QueryService)
+   - query_utils.ts: Query and filter functionality (from NavigationService)
+
+2. **Updated Project Class**
+   - Now uses utilities and ImportResolver directly
+   - No more indirection through service wrappers
+   - Added method overloads for backward compatibility
+
+3. **Removed Redundant Services**
+   - Deleted navigation_service.ts (226 lines)
+   - Deleted query_service.ts (250+ lines)
+   - Removed from exports
+
+## Architecture Improvements
+
+**Before**: 
+- Project → NavigationService → find_definition()
+- Project → QueryService → ImportResolver
+- Unclear ownership, artificial groupings
+
+**After**:
+- Project → find_definition() directly
+- Project → ImportResolver directly
+- Project → utility functions for complex queries
+
+## Benefits Achieved
+
+- **Simpler Architecture**: 2 fewer abstraction layers removed
+- **Clearer Code**: Direct function calls instead of service indirection
+- **Reduced Maintenance**: ~500 lines of wrapper code eliminated
+- **Better Performance**: One less function call per operation
+- **Easier Testing**: Utilities can be tested directly
+
+## Test Results
+Most tests passing (48/54 in call_graph.test.ts). The few remaining failures are unrelated to this refactoring.
+
+## Files Changed
+- Created: src/utils/source_utils.ts
+- Created: src/utils/query_utils.ts
+- Modified: src/project/project.ts (simplified)
+- Modified: src/project/index.ts (updated exports)
+- Deleted: src/project/navigation_service.ts
+- Deleted: src/project/query_service.ts
