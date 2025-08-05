@@ -181,13 +181,19 @@ validation:
       completed: "2025-08-04"
       notes: "Two-pass approach is necessary for correctness, already optimized"
       
-  todo:      
+  todo:
+    - id: task-100.11.14
+      title: "Track all function calls including built-ins"
+      parent: task-100
+      priority: "URGENT"
+      notes: "REGRESSION: Implementation lost during refactoring. Must re-implement with tests"
+      
     - id: task-100.3
       title: "Complete remaining agent validation fixes (task-62)"
       parent: task-100
-      depends_on: [task-62]
+      depends_on: [task-62, task-100.11.14]
       priority: "High"
-      notes: "task-62 completed, final validation run needed"
+      notes: "task-62 completed, needs task-100.11.14 fix before final validation"
       
     - id: task-100.5
       title: "Run validation guide process and identify discrepancies"
@@ -280,13 +286,13 @@ documentation:
 # SUGGESTED WORK ORDER
 work_order:
   immediate:
-    - task-100        # EPIC: Improve self-analysis accuracy
-    - task-100.5      # Run validation guide process
+    - task-100          # EPIC: Improve self-analysis accuracy
+    - task-100.11.14    # URGENT: Re-implement built-in call tracking (regression)
     
   next:
-    - task-100.3      # Complete remaining validation fixes
-    - task-100.9      # Add CommonJS/ES6 export support
-    - task-100.6      # Add file size linting
+    - task-100.3        # Complete remaining validation fixes
+    - task-100.9        # Add CommonJS/ES6 export support
+    - task-100.6        # Add file size linting
     
   later:
     - task-100.10  # Complete JavaScript test updates

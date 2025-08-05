@@ -1,10 +1,11 @@
 ---
 id: task-100.11.14
 title: Track all function calls including built-ins
-status: Done
+status: To Do
 assignee: []
 created_date: '2025-08-04 19:00'
-labels: []
+updated_date: '2025-08-05'
+labels: ['bug', 'regression']
 dependencies: []
 parent_task_id: task-100.11
 ---
@@ -13,12 +14,16 @@ parent_task_id: task-100.11
 
 Currently, Ariadne only tracks calls to functions defined within the project. This misses calls to built-in functions (console.log, JSON.stringify) and methods on built-in types (string.trim, array.push), resulting in a low nodes-with-calls percentage (36.9% vs 85% threshold).
 
+**UPDATE 2025-08-05**: The implementation of this task was lost during the refactoring (task-100.12). Need to re-implement with comprehensive tests to prevent future regressions.
+
 ## Acceptance Criteria
 
-- [x] All function calls are tracked, including built-ins
-- [x] Method calls on built-in types are counted
-- [x] Nodes-with-calls percentage improves significantly
-- [x] Tests verify built-in call tracking
+- [ ] All function calls are tracked, including built-ins
+- [ ] Method calls on built-in types are counted
+- [ ] Nodes-with-calls percentage improves significantly
+- [ ] **NEW**: Comprehensive tests added to prevent regression
+- [ ] **NEW**: Tests must cover console.log, Array methods, JSON methods, Object methods
+- [ ] **NEW**: Tests must be part of the regular test suite (not just validation)
 
 ## Implementation Plan
 
@@ -27,7 +32,16 @@ Currently, Ariadne only tracks calls to functions defined within the project. Th
 3. Update call counting logic
 4. Test with real codebase to verify improvement
 
-## Implementation Notes
+## Regression Note (2025-08-05)
+
+This task was previously completed on 2025-08-04 but the implementation was lost during the major refactoring (task-100.12). The validation run on 2025-08-05 showed:
+- Nodes with calls: 34.1% (same as before the fix)
+- Built-in calls like console.log are not being tracked
+- No tests were found for built-in call tracking
+
+This needs to be re-implemented with proper test coverage to prevent future regressions.
+
+## Previous Implementation Notes
 
 ### Approach taken
 - Modified `analyze_calls_from_definition` to track unresolved references that are part of call expressions
