@@ -283,19 +283,24 @@ documentation:
 # SUGGESTED WORK ORDER
 work_order:
   immediate:
-    - task-100.15       # Refactor call_analysis.ts to reduce file size (blocking commits)
+    - task-100.15.1     # Extract range utilities from call_analysis.ts
+    - task-100.15.2     # Extract call detection functions from call_analysis.ts
+    - task-100.15.3     # Extract constructor analysis from call_analysis.ts
+    
+  next:
+    - task-100.15.4     # Extract reference resolution from call_analysis.ts
+    - task-100.15.5     # Extract method resolution from call_analysis.ts
+    - task-100.15.6     # Extract types and create call_analysis_core.ts
     - task-100.16       # Clean up debug logging in call graph service
     - task-100.17       # Document AST node identity comparison fix
     
-  next:
+  later:
     - task-100.9        # Add CommonJS/ES6 export support
     - task-101          # Test Ariadne-MCP integration with Claude Code
     - task-102          # Implement graph traversal methods
     - task-103          # Extract docstring and decorators in query service
-    
-  later:
-    - task-100.10  # Complete JavaScript test updates
-    - task-83      # Document import/export patterns
+    - task-100.10       # Complete JavaScript test updates
+    - task-83           # Document import/export patterns
     - task-84      # Generic validation script
     
   blocked:
@@ -303,7 +308,7 @@ work_order:
     
   completed_2025-08-05:
     - task-100.11.14  # Track all function calls including built-ins (re-implemented after regression)
-    - task-100.13     # Debug and fix built-in call tracking in multi-file projects
+    - task-100.13     # Document and test AST node identity comparison fix (completed as part of 100.11)
     - task-100.3      # Complete remaining agent validation fixes (task-62)
     - task-100.6      # Add file size linting to prevent validation failures
     - task-100.11     # Fix built-in call preservation in multi-file projects

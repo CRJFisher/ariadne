@@ -22,9 +22,9 @@ This cycle continues until Ariadne correctly parses and processes its own codeba
 
 Epic task implementing the iterative validation process to meet accuracy thresholds:
 
-- **Status**: Critical built-in call preservation fixed! AST node identity issue resolved
-- **Active sub-tasks**: task-100.15 (file size), task-100.16 (debug cleanup), task-100.17 (documentation)
-- **Next**: Refactor call_analysis.ts to enable commits, then re-run validation
+- **Status**: Critical built-in call preservation fixed! Now refactoring call_analysis.ts
+- **Active sub-tasks**: task-100.15.1-6 (modularizing call_analysis.ts into folder structure)
+- **Next**: Execute refactoring subtasks, then re-run validation to verify 85%+ thresholds
 - **Process**: Fix sub-tasks → Re-run validation → Create new sub-tasks if needed → Repeat
 - **Goal**: Achieve 85%+ accuracy through iterative improvements
 
@@ -86,10 +86,10 @@ Successfully addressed index.ts exceeding 32KB limit:
   - Improved accuracy from ~20% to 100% in available metrics
   - Created comprehensive API contract tests
   - Documented remaining issues (export detection blocked by task-30)
-- **Debug and fix built-in call tracking in multi-file projects (task-100.13)** ✨
-  - Fixed critical AST node object identity bug in is_reference_called function
-  - Built-in calls now work correctly in multi-file projects  
-  - Added comprehensive regression tests
+- **Document and test AST node identity comparison fix (task-100.13)** ✨
+  - Completed as part of task-100.11 implementation
+  - Added comprehensive regression tests in builtin_calls_multi_file.test.ts
+  - Documentation task created as task-100.17 for proper architectural docs
 - **Track all function calls including built-ins (task-100.11.14)** ✨
   - Re-implemented after refactoring regression
   - All built-in calls now tracked (console.log, JSON methods, array methods)
@@ -175,10 +175,13 @@ Successfully addressed index.ts exceeding 32KB limit:
 
 ## Next Steps
 
-1. **Refactor call_analysis.ts** (task-100.15) - URGENT: File is 32KB, blocking commits
-2. **Clean up debug logging** (task-100.16) - Remove temporary debug code
-3. **Document AST fix** (task-100.17) - Important architectural documentation
-4. **Re-run validation guide** - Verify all fixes work and meet 85% thresholds
+1. **Execute call_analysis.ts refactoring** (task-100.15.1-6) - URGENT: File is 32KB, blocking commits
+   - Extract range utilities → call detection → constructor analysis
+   - Then reference resolution → method resolution → create core module
+   - New folder structure: `src/call_graph/call_analysis/`
+2. **Re-run validation guide** - Verify all fixes work and meet 85% thresholds
+3. **Clean up debug logging** (task-100.16) - Remove temporary debug code
+4. **Document AST fix** (task-100.17) - Important architectural documentation
 5. **Add CommonJS and ES6 export support** (task-100.9) - needed for export detection accuracy
 6. **Test with Claude Code** (task-101) - real-world validation with MCP integration
 

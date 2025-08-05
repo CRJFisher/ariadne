@@ -1,9 +1,10 @@
 ---
 id: task-100.13
 title: Document and test AST node identity comparison fix
-status: To Do
+status: Done
 assignee: []
 created_date: '2025-08-05 12:01'
+updated_date: '2025-08-05 20:14'
 labels: []
 dependencies: []
 parent_task_id: task-100
@@ -20,6 +21,10 @@ The fix for is_reference_called involved changing from object identity compariso
 - [ ] Ensure fix works with all tree-sitter language parsers
 - [ ] Add regression test for the generateLargeFile scenario
 
+
+## Implementation Notes
+
+Work completed as part of task-100.11. Tests added in builtin_calls_multi_file.test.ts. Documentation task created as task-100.17.
 ## Technical Details
 
 ### The Bug
