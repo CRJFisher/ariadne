@@ -1,207 +1,115 @@
 # Work Priority Guide
 
-## Current priority
+## Current Focus: Call Analysis Architecture Refactoring
 
-Debug Ariadne through an **iterative validation process** using `packages/core/agent-validation/validation-guide.md` as a real-world, high-level integration test. This iterative approach ensures systematic fixes until Ariadne can accurately parse itself.
+The goal is to fix cross-file resolution properly and make the codebase maintainable through clean separation of concerns. We've identified that the current architecture has circular dependencies, unclear ownership, and overly complex functions that make debugging difficult.
 
-**The Iterative Process:**
+## Phase 1: Foundation (Immediate Priority)
 
-1. **Run validation guide** to identify discrepancies
-2. **Create test cases** that capture each fault found
-3. **Create sub-tasks** for each issue with clear descriptions
-4. **Fix the issues** by debugging and implementing solutions
-5. **Complete all sub-tasks** for the current iteration
-6. **Re-run validation guide** to verify improvements
-7. **Repeat** until all accuracy thresholds are met (85%+)
+### 1. Create ImportResolver Service (task-100.20)
 
-This cycle continues until Ariadne correctly parses and processes its own codebase.
+**Why First**: This is the foundation - import resolution is currently scattered across multiple services with unclear ownership. Creating a dedicated service will:
 
-## 🚨 CRITICAL - Work on this FIRST
+- Eliminate the circular dependency between NavigationService and QueryService
+- Provide a single source of truth for import resolution
+- Enable proper testing of import logic in isolation
 
-### task-100: Improve Ariadne self-analysis accuracy (EPIC)
+### 2. Add Error Handling (task-100.19)
 
-Epic task implementing the iterative validation process to meet accuracy thresholds:
+**Why Second**: Silent failures (empty arrays, null returns) made debugging the cross-file bug extremely difficult. Adding proper "not implemented" errors will:
 
-- **Status**: call_analysis.ts refactoring completed! Ready for final validation
-- **Completed**: task-100.15 (refactored call_analysis.ts from 32KB to 8 modules under 28KB each)
-- **Next**: Re-run validation to verify 85%+ thresholds are maintained
-- **Process**: Fix sub-tasks → Re-run validation → Create new sub-tasks if needed → Repeat
-- **Goal**: Achieve 85%+ accuracy through iterative improvements
+- Make future issues immediately visible
+- Prevent wasted debugging time
+- Force proper implementation instead of placeholders
 
-### ✅ task-100.12: Refactor Project class to be immutable (COMPLETED)
+### 3. Standardize Import Patterns (task-100.25)
 
-Successfully addressed index.ts exceeding 32KB limit:
+**Why Third**: Before refactoring other components, we need consistent patterns so that:
 
-- **Problem**: index.ts was 34KB and couldn't be analyzed
-- **Solution**: Split into modules with immutable architecture
-- **Result**: index.ts reduced to 1.4KB (96% reduction)
-- **Benefits**: 
-  - Immutable state management with transactions
-  - Pluggable storage backends (memory, disk, etc.)
-  - Clean separation of concerns
-  - Full backward compatibility (then removed for cleaner API)
+- All services use ImportResolver consistently
+- No duplicate import resolution logic exists
+- Clear boundaries between services
 
-## 🔥 HIGH PRIORITY
+## Phase 2: Refactoring (Next Priority)
 
-### task-101: Test Ariadne-MCP integration with Claude Code
+### 4. Split Reference Resolution (task-100.21)
 
-- Real-world validation by integrating ariadne-mcp as an MCP server
-- Claude Code will use Ariadne for code exploration workflows
-- Validates accuracy by comparing with grep/find results
-- Ensures Ariadne provides practical value for AI-assisted development
+**After Foundation**: With ImportResolver in place, we can properly separate:
 
-## 📋 MEDIUM PRIORITY - Important but not blocking
+- DirectReferenceResolver
+- MethodCallResolver
+- StaticMethodResolver
+- ChainedCallResolver
+  Each <50 lines, single responsibility, fully testable
 
-*All medium priority issues have been resolved!*
+### 5. Refactor CallAnalyzer (task-100.22)
 
-## 📚 DOCUMENTATION
+**Depends on #4**: Clear two-phase separation:
 
-### task-83: Document import/export patterns
+- Phase 1: Type discovery (constructors, assignments)
+- Phase 2: Call resolution (using discovered types)
+- Clean data flow between phases
 
-- Wait until implementation is stable
-- Document all supported patterns for each language
+### 6. Simplify Import Matching (task-100.26)
 
-### task-84: Generic validation script for external repos
+**Depends on #1**: With ImportResolver established, simplify the complex fallback logic:
 
-- Create reusable validation script
-- Test on multiple open-source projects
+- Maximum nesting depth of 2
+- Each strategy in its own method
+- Clear documentation of fallback order
 
----
+## Phase 3: Clean-up & Testing
 
-## Current Status
+### 7. Remove Dead Code (task-100.24)
 
-✅ **Completed Recently** (2025-08-04):
+**After Refactoring**: Clean up all TODOs and placeholder implementations
 
-*Note: Several parsing/accuracy tasks (88, 90, 71, 72, 99) were consolidated into epic task-100*
+### 8. Clean Debug Logging (task-100.16)
 
-**2025-08-05 completions:**
+**After Refactoring**: Remove temporary debug statements
 
-- **Refactor call_analysis.ts to reduce file size below 32KB (task-100.15)** ✨
-  - Successfully split 32KB monolithic file into 8 focused modules
-  - Created folder structure: `src/call_graph/call_analysis/` with 8 modules
-  - All modules are now under 28KB warning threshold (largest is 10KB)
-  - Preserved all functionality including critical AST node identity fix
-  - Used immutable patterns throughout with types from @ariadnejs/types
-  - Clean public API exports via index.ts for backward compatibility
-- **Fix built-in call preservation in multi-file projects (task-100.11)** ✨
-  - Fixed critical AST node object identity comparison issue
-  - Tree-sitter reparses AST nodes when files are added, breaking === comparisons
-  - Solution: Use position-based comparison instead of object identity
-  - Built-in calls now persist correctly across file additions
-  - Added regression tests for 30+ file scenarios
-- **Fix agent validation call graph extraction issues (task-62)** ✨
-  - Improved accuracy from ~20% to 100% in available metrics
-  - Created comprehensive API contract tests
-  - Documented remaining issues (export detection blocked by task-30)
-- **Document and test AST node identity comparison fix (task-100.13)** ✨
-  - Completed as part of task-100.11 implementation
-  - Added comprehensive regression tests in builtin_calls_multi_file.test.ts
-  - Documentation task created as task-100.17 for proper architectural docs
-- **Track all function calls including built-ins (task-100.11.14)** ✨
-  - Re-implemented after refactoring regression
-  - All built-in calls now tracked (console.log, JSON methods, array methods)
-  - Fixed multi-file issues through task-100.13
-- **Complete remaining agent validation fixes (task-100.3)** ✨
-  - All validation fixes from task-62 confirmed working
-  - Export detection and module-level call detection operational
-- **Add file size linting to prevent validation failures (task-100.6)** ✨
-  - Implemented comprehensive file size linting with 28KB warning and 32KB error thresholds
-  - Added CI/CD integration and pre-commit hooks for automatic checking
-  - Created documentation and npm scripts for manual checks
+### 9. Add Import Tests (task-100.23)
 
-**2025-08-04 completions:**
+**After ImportResolver**: Comprehensive test suite for the new service
 
-- **Refactor Project class to be immutable (task-100.12 EPIC)** ✨
-  - Design immutable storage interface (task-100.12.1)
-  - Extract file management logic (task-100.12.2)
-  - Extract navigation and query logic (task-100.12.3)
-  - Extract call graph operations (task-100.12.4)
-  - Implement in-memory storage provider (task-100.12.5)
-  - Make Project class fully immutable (task-100.12.6)
-  - Implement pluggable storage interface (task-100.12.7)
-- Implement return type tracking for method chains (task-100.11.13)
-- Track all function calls including built-ins (task-100.11.14)
-- Fix low nodes-with-calls percentage (task-100.1)
-- Fix low nodes-called-by-others percentage (task-100.2)
-- Fix incoming call detection (task-100.8)
-- Archive completed immutable implementation tasks (100.11.1-6, 100.11.8)
-- Fix Rust-specific cross-file method resolution (task-100.11.11)
-- Fix import counting accuracy (task-100.7)
-- Add cross-file cache access to CallAnalysisConfig (task-100.11.10)
-- Verify max_depth option implementation (task-100.11.12)
-- Review export/import initialization performance (task-100.11.16)
-- Analyze two-pass call analysis approach (task-100.11.17)
+### 10. Document AST Fix (task-100.17)
 
-**Previous completions:**
+**Documentation**: Explain the object identity comparison issue for future reference
 
-- Add validation test to CI/CD pipeline (task-92)
-- Add edge case tests for cross-file resolution (task-82)
-- Handle variable reassignments in type registry (task-81)
-- Fix hoisted variable reference resolution (task-100 - old, archived)
-- Fix missing ref_to_scope edges (task-97)
-- Update JavaScript/TypeScript tests for ref_to_scope (task-98)
-- Fix duplicate call tracking (task-73)
-- Fix call graph test failures (task-75)
-- Fix top-level node detection (task-76)
-- Fix remaining test suite failures (task-77)
-- Fix cross-file call tracking (task-87)
-- Fix function over-counting (task-89)
-- Fix exported function tracking (task-91)
-- Fix TypeScript interface counting (task-93)
-- Add comprehensive import/export tests (task-80)
-- Fix JavaScript reference detection investigation (task-96)
-- Rust crate:: path resolution (task-29)
-- Implement proper module path resolution (task-28)
-- Fix get_all_functions to handle methods (task-78)
-- Add cross-file method resolution for imported classes (task-64)
+## Phase 4: Validation & Metrics
 
-✅ **Previously Completed** (2025-08-03):
+### 11. JavaScript Test Updates (task-100.10)
 
-- Rust cross-file method resolution (task-86)
-- File-level variable type tracking (task-65)
-- Constructor type tracking (task-66)
-- Python self parameter tracking (task-70)
-- Cross-file method resolution for imported classes (task-64)
+**After Core Fixes**: Update tests to match new architecture
 
-🚧 **In Progress**:
+### 12. Validation Metrics (task-100.14)
 
-- task-100: Improve self-analysis accuracy (EPIC) - final subtasks
-- task-67: Implement cross-file type registry for method resolution
+**After All Fixes**: Add detailed breakdown to understand improvements
 
-❌ **Blocked**:
+### 13. Investigate Metrics (task-100.12)
 
-- task-74: File size limit - duplicate of task-60
-- task-60: Handle tree-sitter 32KB limit - waiting for response
+**Final Analysis**: Verify we meet the 85% thresholds
 
-## Key Achievements
+## Phase 5: Feature Additions
 
-1. **Cross-file Resolution**: Now works for TypeScript, JavaScript, Python, and Rust
-2. **Import Resolution**: Fixed TypeScript/JavaScript imports and Rust crate:: paths
-3. **Function Counting**: Fixed double-counting and export detection
-4. **Test Coverage**: Added 16 comprehensive import/export tests
+### 14. CommonJS/ES6 Support (task-100.9)
 
-## Next Steps
+**Only After Stable**: Add new export formats once architecture is solid
 
-1. **Re-run validation guide** - Verify all fixes work and meet 85% thresholds after refactoring
-2. **Clean up debug logging** (task-100.16) - Remove temporary debug code
-3. **Document AST fix** (task-100.17) - Important architectural documentation  
-4. **Add CommonJS and ES6 export support** (task-100.9) - needed for export detection accuracy
-5. **Test with Claude Code** (task-101) - real-world validation with MCP integration
+## Success Criteria
 
-## Key Findings from Investigation
+Each phase must be completed before moving to the next:
 
-1. **Low nodes-with-calls**: ✅ FIXED - Built-in calls now tracked correctly in multi-file projects (tasks 100.11.14, 100.13, 100.11)
-2. **Low nodes-called-by-others**: ✅ FIXED - Method chains fully resolved (task 100.11.13)  
-3. **Import counting**: ✅ FIXED - Now counts statements not symbols (task 100.7)
-4. **File size limits**: ✅ FIXED - index.ts reduced from 34KB to 1.4KB through refactoring (task 100.12)
-5. **Agent validation**: ✅ FIXED - All call graph extraction issues resolved (task-62, task-100.3)
+- Phase 1 establishes the foundation with proper service boundaries
+- Phase 2 refactors complexity into manageable, testable units
+- Phase 3 ensures code quality and test coverage
+- Phase 4 validates that our changes actually improved the metrics
+- Phase 5 adds new capabilities on the solid foundation
 
-**Expected result**: With all fixes implemented, validation should now achieve 85%+ thresholds.
+## Key Principles
 
-## Major Architectural Improvements
-
-1. **Immutable Project Class**: All state managed through storage interface
-2. **Pluggable Storage**: Support for memory, disk, database backends
-3. **Service-Oriented Architecture**: Logic split into focused modules
-4. **Transaction Support**: Atomic state updates with rollback
-5. **File Size Solution**: Modular structure prevents tree-sitter limits
+1. **Fix Architecture First**: Don't add features to broken foundations
+2. **Test Each Change**: Every refactoring needs tests before and after
+3. **Clear Ownership**: Each service should have a single, clear responsibility
+4. **No Silent Failures**: Explicit errors are better than wrong results
+5. **Incremental Progress**: Complete each task fully before starting the next

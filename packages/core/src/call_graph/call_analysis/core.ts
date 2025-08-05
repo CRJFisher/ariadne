@@ -130,7 +130,11 @@ export function analyze_calls_from_definition(
     if (resolved.resolved) {
       // Check if this is a callable symbol
       const callable_kinds = ['function', 'method', 'generator', 'class', 'constructor', 'struct'];
-      if (callable_kinds.includes(resolved.resolved.symbol_kind)) {
+      
+      // Also treat unresolved imports as callable if they are being called
+      const isImportBeingCalled = resolved.resolved.symbol_kind === 'import' && isCallExpression;
+      
+      if (callable_kinds.includes(resolved.resolved.symbol_kind) || isImportBeingCalled) {
         // Determine if this is a method call
         const is_method_call = ref.symbol_kind === 'method' || 
           is_method_call_pattern(ref, def.file_path, fileCache);

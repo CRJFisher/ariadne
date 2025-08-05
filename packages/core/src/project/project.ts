@@ -193,7 +193,7 @@ export class Project {
       this.navigationService.goToDefinition(state, filePath, position);
     
     const getImportsWithDefinitions = (filePath: string) =>
-      this.navigationService.getImportsWithDefinitions(state, filePath);
+      this.queryService.getImportsWithDefinitions(state, filePath, goToDefinition);
     
     return this.callGraphService.getCallsFromDefinition(
       state, 
@@ -230,7 +230,7 @@ export class Project {
       this.navigationService.goToDefinition(state, filePath, position);
     
     const getImportsWithDefinitions = (filePath: string) =>
-      this.navigationService.getImportsWithDefinitions(state, filePath);
+      this.queryService.getImportsWithDefinitions(state, filePath, goToDefinition);
     
     const getAllFunctions = () => 
       this.navigationService.getAllFunctionsFlat(state);

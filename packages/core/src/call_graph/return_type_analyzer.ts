@@ -33,7 +33,7 @@ export function analyze_return_type(
   }
 
   // Find the function/method declaration node
-  let funcNode = defNode;
+  let funcNode: any = defNode;
   while (funcNode && !isFunctionNode(funcNode)) {
     funcNode = funcNode.parent;
   }

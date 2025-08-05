@@ -59,12 +59,12 @@ export class FileManager {
       // Incremental parsing
       // Convert from our Edit interface to tree-sitter's expected format
       const treeEdit = {
-        startIndex: edit.startIndex || edit.start_byte,
-        oldEndIndex: edit.oldEndIndex || edit.old_end_byte,
-        newEndIndex: edit.newEndIndex || edit.new_end_byte,
-        startPosition: edit.startPosition || edit.start_position,
-        oldEndPosition: edit.oldEndPosition || edit.old_end_position,
-        newEndPosition: edit.newEndPosition || edit.new_end_position,
+        startIndex: edit.start_byte,
+        oldEndIndex: edit.old_end_byte,
+        newEndIndex: edit.new_end_byte,
+        startPosition: edit.start_position,
+        oldEndPosition: edit.old_end_position,
+        newEndPosition: edit.new_end_position,
       };
       oldTree.edit(treeEdit);
       

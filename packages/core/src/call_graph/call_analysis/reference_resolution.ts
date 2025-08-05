@@ -251,11 +251,22 @@ function follow_import(
   config: ReferenceResolutionConfig
 ): Def | undefined {
   const imports = config.get_imports_with_definitions(filePath);
-  const import_info = imports.find(imp => 
-    imp.import_statement.name === importDef.name &&
-    imp.import_statement.range.start.row === importDef.range.start.row &&
-    imp.import_statement.range.start.column === importDef.range.start.column
-  );
+  
+  // First try exact position match
+  let import_info = imports.find(imp => {
+    const matches = imp.import_statement.name === importDef.name &&
+      imp.import_statement.range.start.row === importDef.range.start.row &&
+      imp.import_statement.range.start.column === importDef.range.start.column;
+    
+    return matches;
+  });
+  
+  // If exact position match fails, try matching by name only
+  // This handles cases where go_to_definition returns the import declaration
+  // but with a different position (e.g., the position in the import statement)
+  if (!import_info) {
+    import_info = imports.find(imp => imp.import_statement.name === importDef.name);
+  }
   
   if (import_info && import_info.imported_function) {
     return import_info.imported_function;
