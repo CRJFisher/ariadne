@@ -22,9 +22,9 @@ This cycle continues until Ariadne correctly parses and processes its own codeba
 
 Epic task implementing the iterative validation process to meet accuracy thresholds:
 
-- **Status**: Critical built-in call preservation fixed! Now refactoring call_analysis.ts
-- **Active sub-tasks**: task-100.15.1-6 (modularizing call_analysis.ts into folder structure)
-- **Next**: Execute refactoring subtasks, then re-run validation to verify 85%+ thresholds
+- **Status**: call_analysis.ts refactoring completed! Ready for final validation
+- **Completed**: task-100.15 (refactored call_analysis.ts from 32KB to 8 modules under 28KB each)
+- **Next**: Re-run validation to verify 85%+ thresholds are maintained
 - **Process**: Fix sub-tasks → Re-run validation → Create new sub-tasks if needed → Repeat
 - **Goal**: Achieve 85%+ accuracy through iterative improvements
 
@@ -76,6 +76,13 @@ Successfully addressed index.ts exceeding 32KB limit:
 
 **2025-08-05 completions:**
 
+- **Refactor call_analysis.ts to reduce file size below 32KB (task-100.15)** ✨
+  - Successfully split 32KB monolithic file into 8 focused modules
+  - Created folder structure: `src/call_graph/call_analysis/` with 8 modules
+  - All modules are now under 28KB warning threshold (largest is 10KB)
+  - Preserved all functionality including critical AST node identity fix
+  - Used immutable patterns throughout with types from @ariadnejs/types
+  - Clean public API exports via index.ts for backward compatibility
 - **Fix built-in call preservation in multi-file projects (task-100.11)** ✨
   - Fixed critical AST node object identity comparison issue
   - Tree-sitter reparses AST nodes when files are added, breaking === comparisons
@@ -175,15 +182,11 @@ Successfully addressed index.ts exceeding 32KB limit:
 
 ## Next Steps
 
-1. **Execute call_analysis.ts refactoring** (task-100.15.1-6) - URGENT: File is 32KB, blocking commits
-   - Extract range utilities → call detection → constructor analysis
-   - Then reference resolution → method resolution → create core module
-   - New folder structure: `src/call_graph/call_analysis/`
-2. **Re-run validation guide** - Verify all fixes work and meet 85% thresholds
-3. **Clean up debug logging** (task-100.16) - Remove temporary debug code
-4. **Document AST fix** (task-100.17) - Important architectural documentation
-5. **Add CommonJS and ES6 export support** (task-100.9) - needed for export detection accuracy
-6. **Test with Claude Code** (task-101) - real-world validation with MCP integration
+1. **Re-run validation guide** - Verify all fixes work and meet 85% thresholds after refactoring
+2. **Clean up debug logging** (task-100.16) - Remove temporary debug code
+3. **Document AST fix** (task-100.17) - Important architectural documentation  
+4. **Add CommonJS and ES6 export support** (task-100.9) - needed for export detection accuracy
+5. **Test with Claude Code** (task-101) - real-world validation with MCP integration
 
 ## Key Findings from Investigation
 
