@@ -22,9 +22,9 @@ This cycle continues until Ariadne correctly parses and processes its own codeba
 
 Epic task implementing the iterative validation process to meet accuracy thresholds:
 
-- **Status**: Major fixes completed - built-in tracking working, multi-file bug fixed, validation fixes done
-- **Active sub-tasks**: task-100.9, task-100.10
-- **Next**: Re-run validation guide to verify all fixes work correctly
+- **Status**: Critical built-in call preservation fixed! AST node identity issue resolved
+- **Active sub-tasks**: task-100.15 (file size), task-100.16 (debug cleanup), task-100.17 (documentation)
+- **Next**: Refactor call_analysis.ts to enable commits, then re-run validation
 - **Process**: Fix sub-tasks → Re-run validation → Create new sub-tasks if needed → Repeat
 - **Goal**: Achieve 85%+ accuracy through iterative improvements
 
@@ -76,6 +76,12 @@ Successfully addressed index.ts exceeding 32KB limit:
 
 **2025-08-05 completions:**
 
+- **Fix built-in call preservation in multi-file projects (task-100.11)** ✨
+  - Fixed critical AST node object identity comparison issue
+  - Tree-sitter reparses AST nodes when files are added, breaking === comparisons
+  - Solution: Use position-based comparison instead of object identity
+  - Built-in calls now persist correctly across file additions
+  - Added regression tests for 30+ file scenarios
 - **Fix agent validation call graph extraction issues (task-62)** ✨
   - Improved accuracy from ~20% to 100% in available metrics
   - Created comprehensive API contract tests
@@ -169,14 +175,16 @@ Successfully addressed index.ts exceeding 32KB limit:
 
 ## Next Steps
 
-1. **Re-run validation guide** - URGENT: Verify all fixes work and meet 85% thresholds
-2. **Add CommonJS and ES6 export support** (task-100.9) - needed for export detection accuracy
-3. **Test with Claude Code** (task-101) - real-world validation with MCP integration
-4. **Complete JavaScript test updates** (task-100.10) - mechanical updates after ref_to_scope
+1. **Refactor call_analysis.ts** (task-100.15) - URGENT: File is 32KB, blocking commits
+2. **Clean up debug logging** (task-100.16) - Remove temporary debug code
+3. **Document AST fix** (task-100.17) - Important architectural documentation
+4. **Re-run validation guide** - Verify all fixes work and meet 85% thresholds
+5. **Add CommonJS and ES6 export support** (task-100.9) - needed for export detection accuracy
+6. **Test with Claude Code** (task-101) - real-world validation with MCP integration
 
 ## Key Findings from Investigation
 
-1. **Low nodes-with-calls**: ✅ FIXED - Built-in calls now tracked correctly in multi-file projects (tasks 100.11.14, 100.13)
+1. **Low nodes-with-calls**: ✅ FIXED - Built-in calls now tracked correctly in multi-file projects (tasks 100.11.14, 100.13, 100.11)
 2. **Low nodes-called-by-others**: ✅ FIXED - Method chains fully resolved (task 100.11.13)  
 3. **Import counting**: ✅ FIXED - Now counts statements not symbols (task 100.7)
 4. **File size limits**: ✅ FIXED - index.ts reduced from 34KB to 1.4KB through refactoring (task 100.12)

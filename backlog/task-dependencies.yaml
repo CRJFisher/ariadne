@@ -283,14 +283,15 @@ documentation:
 # SUGGESTED WORK ORDER
 work_order:
   immediate:
-    - task-100.11       # Fix built-in call preservation in multi-file projects (critical)
-    - task-100.14       # Add detailed validation metrics (helps debug other issues)
+    - task-100.15       # Refactor call_analysis.ts to reduce file size (blocking commits)
+    - task-100.16       # Clean up debug logging in call graph service
+    - task-100.17       # Document AST node identity comparison fix
     
   next:
-    - task-100.12       # Investigate low nodes-called-by-others percentage
-    - task-100.13       # Document and test AST node fix
     - task-100.9        # Add CommonJS/ES6 export support
     - task-101          # Test Ariadne-MCP integration with Claude Code
+    - task-102          # Implement graph traversal methods
+    - task-103          # Extract docstring and decorators in query service
     
   later:
     - task-100.10  # Complete JavaScript test updates
@@ -305,9 +306,9 @@ work_order:
     - task-100.13     # Debug and fix built-in call tracking in multi-file projects
     - task-100.3      # Complete remaining agent validation fixes (task-62)
     - task-100.6      # Add file size linting to prevent validation failures
+    - task-100.11     # Fix built-in call preservation in multi-file projects
     
   completed_2025-08-04:
-    - task-100.11     # Refactor project_call_graph.ts (deleted - was unused)
     - task-100.11.7   # Migrate tests for immutable implementation
     - task-100.11.9   # Add enclosing_range for class definitions
     - task-100.11.11  # Fix Rust cross-file method resolution
