@@ -283,13 +283,9 @@ documentation:
 work_order:
   immediate:
     - task-100        # EPIC: Improve self-analysis accuracy
-    - task-100.12     # EPIC: Refactor Project class (index.ts > 32KB!)
-    - task-100.12.1   # Design storage interface
+    - task-100.5      # Run validation guide process
     
   next:
-    - task-100.12.2   # Extract file management
-    - task-100.12.3   # Extract navigation logic
-    - task-100.12.4   # Extract call graph operations
     - task-100.3      # Complete remaining validation fixes
     - task-100.9      # Add CommonJS/ES6 export support
     - task-100.6      # Add file size linting
@@ -317,6 +313,14 @@ work_order:
     - task-100.11.12  # Implement max_depth option in get_call_graph API
     - task-100.11.16  # Review export/import initialization timing and performance
     - task-100.11.17  # Optimize two-pass call analysis approach
+    - task-100.12     # EPIC: Refactor Project class to be immutable with pluggable storage
+    - task-100.12.1   # Design immutable storage interface
+    - task-100.12.2   # Extract file management logic
+    - task-100.12.3   # Extract navigation and query logic
+    - task-100.12.4   # Extract call graph operations
+    - task-100.12.5   # Implement default in-memory storage
+    - task-100.12.6   # Make Project class fully immutable
+    - task-100.12.7   # Implement pluggable storage interface
 
 # TASK GROUPS
 groups:
