@@ -141,6 +141,10 @@ export function analyze_calls_from_definition(
       }
     } else if (isCallExpression) {
       // This is an unresolved call (likely a built-in)
+      // Debug for generateLargeFile
+      if (def.name === 'generateLargeFile' && (ref.name === 'push' || ref.name === 'join')) {
+        console.log(`  Found built-in call: ${ref.name} at row ${ref.range.start.row}`);
+      }
       // Create a synthetic definition for tracking
       const syntheticDef: Def = {
         id: -1, // Special ID for built-ins
@@ -346,6 +350,11 @@ function find_definition_range(def: Def, fileCache: FileCache): {
   start: { row: number; column: number }; 
   end: { row: number; column: number } 
 } {
+  // If the definition already has an enclosing_range, use it
+  if ((def as any).enclosing_range) {
+    return (def as any).enclosing_range;
+  }
+  
   let definitionRange = def.range;
   
   // Find the AST node for this definition

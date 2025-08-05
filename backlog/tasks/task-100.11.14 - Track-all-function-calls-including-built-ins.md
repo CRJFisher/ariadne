@@ -6,7 +6,7 @@ assignee: []
 created_date: '2025-08-04 19:00'
 updated_date: '2025-08-05'
 labels: ['bug', 'regression']
-dependencies: []
+dependencies: [100.13]
 parent_task_id: task-100.11
 ---
 
