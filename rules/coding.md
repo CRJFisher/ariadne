@@ -1,5 +1,12 @@
 # Coding Standards
 
+## File Organization
+
+- **Keep files small and focused** - each file should have a single, clear purpose
+- **Hard limit: 32KB per file** - tree-sitter cannot parse larger files
+- **Split large modules** - prefer multiple small files over monolithic ones
+- **Group related functionality** - use directories to organize related files
+
 ## Coding Style
 
 - Prefer a functional style of coding.

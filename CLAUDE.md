@@ -23,14 +23,14 @@ This file references all the rules files that are relevant for different types o
 **💻 `rules/coding.md`** - Code style and patterns
 
 - When: Writing any code
-- Key rules: Functional style, immutable classes, snake_case naming
+- Key rules: Small focused files (<32KB), functional style, snake_case naming
 - Never: Use stateful classes
 
 **🧪 `rules/testing.md`** - Test requirements
 
 - When: Adding features, fixing bugs, writing tests
 - Key rule: Fix issues don't hide them - never modify tests to pass
-- Critical: Test all supported languages (JS, TS, Python, Rust)
+- Critical: Write tests for all supported languages (JS, TS, Python, Rust)
 
 **🔧 `rules/refactoring.md`** - Refactoring approach
 
@@ -54,6 +54,6 @@ This file references all the rules files that are relevant for different types o
 ## Critical Reminders
 
 - **Always use `--plain` flag** with backlog commands for AI-friendly output
-- **Never create files** unless absolutely necessary - prefer editing existing
-- **Test all languages** before marking tasks complete
+- **Keep files small and focused** - tree-sitter also has 32KB parsing limit
+- **Add tests all languages** before marking tasks complete
 - **Document test gaps** in Implementation Notes when closing tasks
