@@ -405,14 +405,15 @@ export function build_call_graph_for_display(
     }
   }
   
-  // Filter out private Rust methods that are never called
-  // Private Rust methods (without 'pub') shouldn't appear in the call graph if uncalled
+  // Filter out private Rust methods that are never called AND make no calls
+  // Private Rust methods (without 'pub') shouldn't appear in the call graph if they're isolated
   const nodesToRemove = new Set<string>();
   for (const [nodeId, node] of nodes) {
     if (node.definition.file_path.endsWith('.rs') && 
         node.definition.symbol_kind === 'method' &&
         !node.is_exported && 
         node.called_by.length === 0 &&
+        node.calls.length === 0 &&  // Only remove if it makes no calls
         // Don't remove methods marked as exported in their definition
         node.definition.is_exported !== true) {
       nodesToRemove.add(nodeId);
