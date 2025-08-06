@@ -1,50 +1,36 @@
 # Work Priority Guide
 
-## Current Status: Post-Refactoring Test Fixes
+## Current Status: Near-Complete Test Suite
 
-Major refactoring completed (NavigationService/QueryService eliminated). Now focusing on fixing remaining test failures and implementing edge case support.
+Major test fixes completed! Down to only 2 failing tests for unimplemented features.
 
 ### Recent Progress
 
-- ✅ **Rust cross-file method resolution fixed** - All language cross-file tests now passing
-- ✅ **CommonJS export detection improved** - module.exports patterns now detected
-- ✅ **Virtual file system support added** - Enables proper testing of cross-file features
+- ✅ **get_source_code regression fixed** - Now returns full function bodies
+- ✅ **Recursive call detection fixed** - Tests were using wrong comparison
+- ✅ **Test comparisons corrected** - Fixed id vs name comparisons in edge case tests
+- ✅ **Rust self parameter tracking fixed** - Methods with outgoing calls now included
+- ✅ **Python/Rust import resolution fixed** - Non-relative imports now supported
 
 ### Test Status
 
-- **484 tests passing** ✅
-- **8 tests failing** 🔧
+- **490 tests passing** ✅ (was 484)
+- **2 tests failing** 🔧 (was 8)
 - **21 tests skipped** 📋
 
-## Phase 1: Critical Bug Fixes (Immediate)
+## Completed Tasks ✅
 
-### ~~1. Fix Rust Cross-file Method Resolution (task-100.37)~~ ✅ COMPLETED
+1. **Fix Rust Cross-file Method Resolution (task-100.37)** - COMPLETED
+2. **Fix Variable Reassignment Type Tracking (task-100.42)** - COMPLETED  
+3. **Fix get_source_code regression (task-100.28)** - COMPLETED
+4. **Fix Recursive/Self-referential Call Tracking (task-100.38)** - COMPLETED
+5. **Add Graceful Error Handling for Missing Imports (task-100.41)** - COMPLETED
+6. **Fix Python/Rust Import Resolution** - COMPLETED
+7. **Fix Rust self parameter tracking** - COMPLETED
 
-**Priority**: HIGH
+## Remaining Work: Feature Implementation
 
-- ✅ Rust method calls on imported structs now resolving correctly
-- ✅ Instance methods working (logger.log, logger.get_logs)
-- ✅ Private methods filtered from call graph when uncalled
-
-### ~~2. Fix Variable Reassignment Type Tracking (task-100.42)~~ ✅ COMPLETED
-
-**Priority**: HIGH
-
-- ✅ Variable reassignment tracking was already working correctly!
-- ✅ Test was incorrectly counting unresolved calls as bugs
-- ✅ System correctly tracks type changes and resolves methods based on current type
-
-## Phase 2: Core Functionality Gaps (Next)
-
-### 3. Add Recursive/Self-referential Call Tracking (task-100.38)
-
-**Priority**: MEDIUM
-
-- Functions calling themselves not tracked
-- Affects both same-file and cross-file patterns
-- Common pattern in many codebases
-
-### 4. Support Method Chaining and Return Type Tracking (task-100.39)
+### 1. Support Method Chaining and Return Type Tracking (task-100.39)
 
 **Priority**: MEDIUM
 
@@ -52,7 +38,7 @@ Major refactoring completed (NavigationService/QueryService eliminated). Now foc
 - Only first level of calls tracked
 - Need return type tracking for fluent APIs
 
-### 5. Add Namespace Import Resolution (task-100.40)
+### 2. Add Namespace Import Resolution (task-100.40)
 
 **Priority**: MEDIUM
 
@@ -60,17 +46,9 @@ Major refactoring completed (NavigationService/QueryService eliminated). Now foc
 - `namespace.function()` calls fail
 - Common in TypeScript projects
 
-## Phase 3: Robustness & Error Handling
+## Optional Enhancements
 
-### 6. Add Graceful Error Handling for Missing Imports (task-100.41)
-
-**Priority**: MEDIUM
-
-- Missing files cause analysis failures
-- Non-existent exports not handled gracefully
-- Should continue analyzing valid code
-
-### 7. Fix JavaScript Scope Hoisting Issues (task-100.43)
+### 3. Fix JavaScript Scope Hoisting Issues (task-100.43)
 
 **Priority**: LOW
 
@@ -78,7 +56,7 @@ Major refactoring completed (NavigationService/QueryService eliminated). Now foc
 - `var` declarations not hoisted to function scope
 - Affects scope resolution accuracy
 
-### 8. Fix TypeScript TSX Reference Tracking (task-100.44)
+### 4. Fix TypeScript TSX Reference Tracking (task-100.44)
 
 **Priority**: LOW
 
@@ -86,9 +64,7 @@ Major refactoring completed (NavigationService/QueryService eliminated). Now foc
 - React-specific patterns need support
 - Props and hooks tracking incomplete
 
-## Phase 4: File Format Support
-
-### 9. Add Support for .mts/.cts TypeScript Extensions (task-100.45)
+### 5. Add Support for .mts/.cts TypeScript Extensions (task-100.45)
 
 **Priority**: LOW
 
@@ -96,25 +72,15 @@ Major refactoring completed (NavigationService/QueryService eliminated). Now foc
 - `.mts` for ES modules, `.cts` for CommonJS
 - Increasingly common in modern projects
 
-## Success Metrics
+## Current Test Failures
 
-### Failing Tests to Fix
+### Only 2 Tests Failing (Both Unimplemented Features)
 
-1. **Edge Cases (5 tests)**
-
-   - Self-referential imports
-   - Multi-level method calls
-   - Recursive function calls
-   - Namespace imports
-   - Missing file handling
-
-2. **Cross-file Tests (1 test)**
-
-   - Rust method resolution
-
-3. **Other Failures (2 tests)**
-   - Variable reassignment tracking
-   - Specific language edge cases
+1. **Method Chaining** - `tracks multi-level method calls across files`
+   - Feature not yet implemented (task-100.39)
+   
+2. **Namespace Imports** - `handles namespace imports with nested access`
+   - Feature not yet implemented (task-100.40)
 
 ### Skipped Tests to Enable
 
@@ -131,15 +97,24 @@ Major refactoring completed (NavigationService/QueryService eliminated). Now foc
 3. **Document Limitations**: For complex edge cases that may remain unsupported
 4. **Add Regression Tests**: For each fix to prevent future breakage
 
-## Definition of Done
+## Summary
 
-- All 8 failing tests pass OR are documented as intentional limitations
-- Skipped tests reviewed and either:
-  - Enabled and passing
-  - Deleted if obsolete
-  - Documented as future work
-- Test coverage maintained above 80%
-- No regression in currently passing tests
+From 8 failing tests down to 2! Both remaining failures are for unimplemented features (method chaining and namespace imports), not bugs.
+
+### Major Fixes Completed
+- ✅ Cross-file call tracking restored
+- ✅ Recursive call detection working
+- ✅ Source code extraction returning full functions
+- ✅ Rust methods properly included in call graph
+- ✅ Python/Rust import resolution working
+- ✅ Test comparisons corrected
+
+### Next Steps
+The 2 remaining failing tests require new feature implementation:
+1. Method chaining with return type tracking
+2. Namespace import resolution
+
+These are non-trivial features that would benefit from dedicated design and implementation effort.
 
 ## Notes
 
