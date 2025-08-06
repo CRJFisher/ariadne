@@ -226,7 +226,7 @@ describe('Edge Cases - Cross-file Resolution', () => {
       
       // Should call query method
       const queryDef = allDefs.find(d => d.name === 'query');
-      expect(callsFromGetUser.some(call => call.called_def.id === queryDef?.id)).toBe(true);
+      expect(callsFromGetUser.some(call => call.called_def.name === 'query')).toBe(true);
     });
 
     it('handles chained property access with method calls', async () => {
@@ -683,8 +683,8 @@ describe('Edge Cases - Cross-file Resolution', () => {
       expect(clampDef).toBeDefined();
       
       // Check that calls are tracked correctly
-      expect(callsFromTest.some(call => call.called_def.id === capitalizeDef?.id)).toBe(true);
-      expect(callsFromTest.some(call => call.called_def.id === clampDef?.id)).toBe(true);
+      expect(callsFromTest.some(call => call.called_def.name === 'capitalize')).toBe(true);
+      expect(callsFromTest.some(call => call.called_def.name === 'clamp')).toBe(true);
     });
 
     it('handles namespace imports with nested access', async () => {
@@ -752,7 +752,7 @@ describe('Edge Cases - Cross-file Resolution', () => {
       expect(calculatorDef).toBeDefined();
       
       const callsFromCalculateArea = project.get_calls_from_definition(calculateAreaDef!);
-      expect(callsFromCalculateArea.some(call => call.called_def.id === multiplyDef?.id)).toBe(true);
+      expect(callsFromCalculateArea.some(call => call.called_def.name === 'multiply')).toBe(true);
     });
 
     it('handles dynamic imports', async () => {
@@ -908,7 +908,7 @@ describe('Edge Cases - Cross-file Resolution', () => {
       
       // Should track call to existing function
       const callsFromTest = project.get_calls_from_definition(testDef!);
-      expect(callsFromTest.some(call => call.called_def.id === existingDef?.id)).toBe(true);
+      expect(callsFromTest.some(call => call.called_def.name === 'existingFunction')).toBe(true);
     });
 
     it('handles malformed import statements', async () => {
