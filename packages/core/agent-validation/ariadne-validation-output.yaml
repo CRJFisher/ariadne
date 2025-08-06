@@ -1,10 +1,155 @@
 meta:
-  timestamp: '2025-08-06T15:10:35.382Z'
+  timestamp: '2025-08-06T15:39:52.172Z'
   ariadne_version: 0.5.18
   total_files: 50
   total_functions: 341
   total_calls: 372
-api_methods: []
+api_methods:
+  - name: constructor
+    file: src/project/project.ts
+    line: 40
+    is_exported: false
+    symbol_kind: method
+  - name: createDefaultStorage
+    file: src/project/project.ts
+    line: 62
+    is_exported: false
+    symbol_kind: method
+  - name: withStorage
+    file: src/project/project.ts
+    line: 75
+    is_exported: false
+    symbol_kind: method
+  - name: add_or_update_file
+    file: src/project/project.ts
+    line: 82
+    is_exported: false
+    symbol_kind: method
+  - name: remove_file
+    file: src/project/project.ts
+    line: 130
+    is_exported: false
+    symbol_kind: method
+  - name: find_references
+    file: src/project/project.ts
+    line: 152
+    is_exported: false
+    symbol_kind: method
+  - name: go_to_definition
+    file: src/project/project.ts
+    line: 160
+    is_exported: false
+    symbol_kind: method
+  - name: get_scope_graph
+    file: src/project/project.ts
+    line: 168
+    is_exported: false
+    symbol_kind: method
+  - name: get_all_scope_graphs
+    file: src/project/project.ts
+    line: 176
+    is_exported: false
+    symbol_kind: method
+  - name: get_functions_in_file
+    file: src/project/project.ts
+    line: 184
+    is_exported: false
+    symbol_kind: method
+  - name: get_definitions
+    file: src/project/project.ts
+    line: 193
+    is_exported: false
+    symbol_kind: method
+  - name: get_all_functions
+    file: src/project/project.ts
+    line: 203
+    is_exported: false
+    symbol_kind: method
+  - name: get_calls_from_definition
+    file: src/project/project.ts
+    line: 215
+    is_exported: false
+    symbol_kind: method
+  - name: get_function_calls
+    file: src/project/project.ts
+    line: 236
+    is_exported: false
+    symbol_kind: method
+  - name: extract_call_graph
+    file: src/project/project.ts
+    line: 243
+    is_exported: false
+    symbol_kind: method
+  - name: get_call_graph
+    file: src/project/project.ts
+    line: 270
+    is_exported: false
+    symbol_kind: method
+  - name: get_source_code
+    file: src/project/project.ts
+    line: 295
+    is_exported: false
+    symbol_kind: method
+  - name: get_source_with_context
+    file: src/project/project.ts
+    line: 306
+    is_exported: false
+    symbol_kind: method
+  - name: get_imports_with_definitions
+    file: src/project/project.ts
+    line: 321
+    is_exported: false
+    symbol_kind: method
+  - name: get_exported_functions
+    file: src/project/project.ts
+    line: 329
+    is_exported: false
+    symbol_kind: method
+  - name: get_class_relationships
+    file: src/project/project.ts
+    line: 338
+    is_exported: false
+    symbol_kind: method
+  - name: find_subclasses
+    file: src/project/project.ts
+    line: 346
+    is_exported: false
+    symbol_kind: method
+  - name: find_implementations
+    file: src/project/project.ts
+    line: 354
+    is_exported: false
+    symbol_kind: method
+  - name: get_inheritance_chain
+    file: src/project/project.ts
+    line: 362
+    is_exported: false
+    symbol_kind: method
+  - name: is_subclass_of
+    file: src/project/project.ts
+    line: 370
+    is_exported: false
+    symbol_kind: method
+  - name: update_file_range
+    file: src/project/project.ts
+    line: 378
+    is_exported: false
+    symbol_kind: method
+  - name: calculate_end_position
+    file: src/project/project.ts
+    line: 435
+    is_exported: false
+    symbol_kind: method
+  - name: getState
+    file: src/project/project.ts
+    line: 454
+    is_exported: false
+    symbol_kind: method
+  - name: withState
+    file: src/project/project.ts
+    line: 461
+    is_exported: false
+    symbol_kind: method
 sampled_functions:
   - name: generateLargeFile
     file: src/benchmark-incremental.ts

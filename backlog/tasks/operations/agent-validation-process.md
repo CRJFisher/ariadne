@@ -1,6 +1,7 @@
 # Agent Validation Process
 
 ## Purpose
+
 Validate Ariadne's API completeness and accuracy by running it against its own codebase and comparing results with the documented API in `packages/core/README.md`.
 
 ## Process
@@ -21,6 +22,7 @@ echo "Exit code: $?"  # Should be 0 for success
 ```
 
 **Common Issues:**
+
 - If you get `ERR_MODULE_NOT_FOUND`, you're in the wrong directory
 - The script needs to be run from `packages/core` because it imports from `../src/index`
 - The output file will be created in `packages/core/agent-validation/`
@@ -93,15 +95,13 @@ sampled_nodes:
 The YAML output contains:
 
 - `meta`: Summary statistics (timestamp, version, file/function/call counts)
-- `api_methods`: Public API methods from the Project class (currently empty - needs script update)
+- `api_methods`: Public API methods from the Project class
 - `sampled_functions`: Detailed function analysis with:
   - `name`: Function name
   - `file`: Source file path
   - `line`: Line number
   - `calls`: Functions this function calls
   - `called_by`: Functions that call this function
-
-**Note:** As of 2025-08-06, the `api_methods` array is empty even though the API works. This is a known issue with the validation script that needs fixing.
 
 ## Success Criteria
 
@@ -132,8 +132,8 @@ The YAML output contains:
 
 - ✅ Validation runs successfully
 - ✅ Analyzes 341 functions and 372 calls
-- ⚠️ `api_methods` array is empty (script needs update to detect Project class methods)
-- ✅ Core functionality working despite validation script limitation
+- ✅ Detects 30+ Project class API methods correctly
+- ✅ Core functionality fully validated
 
 ## Contact
 

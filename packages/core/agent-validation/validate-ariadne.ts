@@ -48,7 +48,7 @@ function main() {
   }
   
   // Get all definitions from Project class file
-  const projectDefs = project.get_definitions("project.ts");
+  const projectDefs = project.get_definitions("src/project/project.ts");
   const callGraph = project.get_call_graph({ include_external: false });
   
   // Build output
