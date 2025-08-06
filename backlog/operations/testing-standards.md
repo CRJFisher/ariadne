@@ -5,6 +5,7 @@
 ### 1. Fix Issues, Don't Hide Them
 
 When a test fails:
+
 - **Never** modify the test just to make it pass
 - **Either** fix the underlying issue immediately
 - **Or** create a task to address it properly
@@ -12,6 +13,7 @@ When a test fails:
 ### 2. Test All Supported Languages
 
 For any feature or fix:
+
 - Verify tests exist for JavaScript, TypeScript, Python, and Rust
 - Add missing language tests before marking task complete
 - Each language may have unique edge cases - test them
@@ -31,6 +33,7 @@ For any feature or fix:
 ### 5. Document Test Gaps
 
 When you find untested code:
+
 - Add a test if quick (< 10 minutes)
 - Otherwise create a task with specific examples
 - Note the gap in the task's implementation notes
