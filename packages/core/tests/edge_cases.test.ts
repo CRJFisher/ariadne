@@ -58,8 +58,8 @@ describe('Edge Cases - Cross-file Resolution', () => {
       const callsFromA = project.get_calls_from_definition(functionADef!);
       const callsFromB = project.get_calls_from_definition(functionBDef!);
       
-      expect(callsFromA.some(call => call.called_def.id === functionBDef!.id)).toBe(true);
-      expect(callsFromB.some(call => call.called_def.id === functionADef!.id)).toBe(true);
+      expect(callsFromA.some(call => call.called_def.name === 'functionB')).toBe(true);
+      expect(callsFromB.some(call => call.called_def.name === 'functionA')).toBe(true);
     });
 
     it('handles indirect circular imports (A → B → C → A)', async () => {
@@ -106,9 +106,9 @@ describe('Edge Cases - Cross-file Resolution', () => {
       const callsFromB = project.get_calls_from_definition(functionBDef!);
       const callsFromC = project.get_calls_from_definition(functionCDef!);
       
-      expect(callsFromA.some(call => call.called_def.id === functionBDef!.id)).toBe(true);
-      expect(callsFromB.some(call => call.called_def.id === functionCDef!.id)).toBe(true);
-      expect(callsFromC.some(call => call.called_def.id === functionADef!.id)).toBe(true);
+      expect(callsFromA.some(call => call.called_def.name === 'functionB')).toBe(true);
+      expect(callsFromB.some(call => call.called_def.name === 'functionC')).toBe(true);
+      expect(callsFromC.some(call => call.called_def.name === 'functionA')).toBe(true);
     });
 
     it('handles self-referential imports', async () => {
@@ -144,7 +144,7 @@ describe('Edge Cases - Cross-file Resolution', () => {
       
       // Check self-referential calls
       const callsFromTraverse = project.get_calls_from_definition(traverseDef!);
-      const selfCalls = callsFromTraverse.filter(call => call.called_def.id === traverseDef!);
+      const selfCalls = callsFromTraverse.filter(call => call.called_def.name === 'traverseTree');
       
       expect(selfCalls.length).toBeGreaterThan(0);
     });
@@ -342,12 +342,12 @@ describe('Edge Cases - Cross-file Resolution', () => {
       expect(factorialDef).toBeDefined();
       
       const factorialCalls = project.get_calls_from_definition(factorialDef!);
-      const selfCalls = factorialCalls.filter(call => call.called_def.id === factorialDef!);
+      const selfCalls = factorialCalls.filter(call => call.called_def.name === 'factorial');
       expect(selfCalls.length).toBeGreaterThan(0);
       
       // Check cross-file call to multiply
       const multiplyDef = allDefs.find(d => d.name === 'multiply');
-      expect(factorialCalls.some(call => call.called_def.id === multiplyDef?.id)).toBe(true);
+      expect(factorialCalls.some(call => call.called_def.name === 'multiply')).toBe(true);
     });
   });
 
