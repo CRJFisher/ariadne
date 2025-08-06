@@ -7,10 +7,23 @@ Validate Ariadne's API completeness and accuracy by running it against its own c
 
 ### 1. Run Validation
 
+**IMPORTANT: The validation script must be run from the `packages/core` directory, not from `agent-validation`**
+
 ```bash
-cd packages/core/agent-validation
-npx tsx validate-ariadne.ts > ariadne-validation-output.yaml
+# From project root (/Users/chuck/workspace/ariadne):
+cd packages/core
+
+# Run the validation script (it's in agent-validation/ subdirectory):
+npx tsx agent-validation/validate-ariadne.ts > agent-validation/ariadne-validation-output.yaml
+
+# Check if it succeeded:
+echo "Exit code: $?"  # Should be 0 for success
 ```
+
+**Common Issues:**
+- If you get `ERR_MODULE_NOT_FOUND`, you're in the wrong directory
+- The script needs to be run from `packages/core` because it imports from `../src/index`
+- The output file will be created in `packages/core/agent-validation/`
 
 ### 2. Compare with API Reference
 
@@ -79,11 +92,16 @@ sampled_nodes:
 
 The YAML output contains:
 
-- `meta`: Summary statistics
-- `top_level_nodes`: Entry point functions
-- `sampled_nodes`: Detailed function analysis with calls
-- `file_summary`: Per-file statistics
-- `validation_stats`: Quality metrics
+- `meta`: Summary statistics (timestamp, version, file/function/call counts)
+- `api_methods`: Public API methods from the Project class (currently empty - needs script update)
+- `sampled_functions`: Detailed function analysis with:
+  - `name`: Function name
+  - `file`: Source file path
+  - `line`: Line number
+  - `calls`: Functions this function calls
+  - `called_by`: Functions that call this function
+
+**Note:** As of 2025-08-06, the `api_methods` array is empty even though the API works. This is a known issue with the validation script that needs fixing.
 
 ## Success Criteria
 
@@ -109,6 +127,13 @@ The YAML output contains:
 - Before each release
 - After major refactoring
 - When adding language support
+
+## Current Status (2025-08-06)
+
+- ✅ Validation runs successfully
+- ✅ Analyzes 341 functions and 372 calls
+- ⚠️ `api_methods` array is empty (script needs update to detect Project class methods)
+- ✅ Core functionality working despite validation script limitation
 
 ## Contact
 

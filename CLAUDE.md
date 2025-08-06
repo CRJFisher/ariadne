@@ -54,6 +54,6 @@ This file references all the rules files that are relevant for different types o
 ## Critical Reminders
 
 - **Always use `--plain` flag** with backlog commands for AI-friendly output
-- **Keep files small and focused** - tree-sitter also has 32KB parsing limit
-- **Add tests all languages** before marking tasks complete
+- **Keep files small and focused** - tree-sitter has 32KB parsing limit
+- **Add tests for all supported languages** before marking tasks complete
 - **Document test gaps** in Implementation Notes when closing tasks
