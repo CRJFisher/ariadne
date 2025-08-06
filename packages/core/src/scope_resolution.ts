@@ -129,8 +129,13 @@ export function build_scope_graph(
         let module_path: string | undefined;
         let is_type_import = false;
 
+        // Check if this is a namespace import: import * as name
+        if (node.parent && node.parent.type === "namespace_import") {
+          // This is a namespace import, set source_name to '*'
+          source_name = '*';
+        }
         // Check if this is part of a renamed import
-        if (node.parent && node.parent.type === "import_specifier") {
+        else if (node.parent && node.parent.type === "import_specifier") {
           const import_spec = node.parent;
           // Check if this import specifier has an 'as' keyword (renamed import)
           // Structure: import_specifier [name "as" alias]

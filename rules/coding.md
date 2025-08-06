@@ -12,6 +12,7 @@
 - Prefer a functional style of coding.
 - Classes should be for holding immutable data. Functions should be for performing actions.
 - _Never_ use stateful classes.
+- Prefer short, focussed functions. As soon as there control flow with multi-line processing, consider splitting the function into multiple smaller functions.
 
 ## Naming Rules
 

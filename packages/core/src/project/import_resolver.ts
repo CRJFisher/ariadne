@@ -108,6 +108,54 @@ export class ImportResolver implements IImportResolver {
     const importInfos: ImportInfo[] = [];
     
     for (const imp of imports) {
+      // Check if this is a namespace import (import * as name)
+      const isNamespaceImport = imp.source_name === '*';
+      
+      // For namespace imports, we need to handle them specially
+      if (isNamespaceImport) {
+        // Try to resolve the import path if source_module is available
+        if (imp.source_module) {
+          const targetFile = this.resolveModulePath(filePath, imp.source_module, state);
+          
+          if (targetFile) {
+            let targetGraph = state.file_graphs.get(targetFile);
+            
+            // If not found with absolute path, try to find a matching relative path
+            if (!targetGraph && path.isAbsolute(targetFile)) {
+              // Try to find a file in the project that ends with the same relative path
+              for (const [projectFile, graph] of state.file_graphs) {
+                if (targetFile.endsWith(projectFile) || targetFile.endsWith(projectFile.replace(/\\/g, '/'))) {
+                  targetGraph = graph;
+                  break;
+                }
+              }
+            }
+            
+            if (targetGraph) {
+              // For namespace imports, create a synthetic definition that represents the module
+              // This allows namespace.member resolution to work
+              const moduleDef: Def = {
+                id: -1,
+                kind: 'definition',
+                name: imp.name, // The local name of the namespace
+                symbol_kind: 'module',
+                file_path: targetFile,
+                symbol_id: `${targetFile}#module`,
+                range: imp.range,
+                is_exported: true
+              };
+              
+              importInfos.push({
+                imported_function: moduleDef,
+                import_statement: imp,
+                local_name: imp.name
+              });
+              continue;
+            }
+          }
+        }
+      }
+      
       // Use source_name if available (for renamed imports), otherwise use the import name
       const export_name = imp.source_name || imp.name;
       

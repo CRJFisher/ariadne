@@ -231,7 +231,12 @@ function resolve_instance_method(
     if (objectNode.type === 'identifier') {
       // Handle simple case: obj.method()
       const objName = objectNode.text;
-      if (config.resolve_method_call) {
+      
+      // First check if this is a namespace import
+      const namespaceResolution = resolve_namespace_member(objName, ref, def, config);
+      if (namespaceResolution) {
+        resolved = namespaceResolution;
+      } else if (config.resolve_method_call) {
         const methodResult = config.resolve_method_call(ref, objName);
         resolved = methodResult.resolved;
         typeDiscoveries.push(...methodResult.typeDiscoveries);
@@ -242,10 +247,203 @@ function resolve_instance_method(
       if (returnType && config.resolve_method_on_type) {
         resolved = config.resolve_method_on_type(ref, returnType);
       }
+    } else if (is_method_expression_node(objectNode)) {
+      // Handle nested namespace access: namespace.submodule.method()
+      const nestedNamespaceResolution = resolve_nested_namespace_member(objectNode, ref, def, config);
+      if (nestedNamespaceResolution) {
+        resolved = nestedNamespaceResolution;
+      }
     }
   }
   
   return { resolved, typeDiscoveries };
+}
+
+/**
+ * Resolve all exported members from a namespace import target
+ * This handles the * import case comprehensively
+ */
+function resolve_namespace_all_exports(
+  targetFile: string,
+  config: ReferenceResolutionConfig
+): Map<string, Def> {
+  const exports = new Map<string, Def>();
+  const targetGraph = config.get_file_graph?.(targetFile);
+  
+  if (targetGraph) {
+    const defs = targetGraph.getNodes('definition') as Def[];
+    // Collect all exported members
+    for (const def of defs) {
+      if (def.is_exported === true) {
+        exports.set(def.name, def);
+      }
+    }
+  }
+  
+  return exports;
+}
+
+/**
+ * Resolve a member access on a namespace import
+ * For example: math.multiply() where math is import * as math
+ */
+function resolve_namespace_member(
+  namespaceName: string,
+  memberRef: Ref,
+  contextDef: Def,
+  config: ReferenceResolutionConfig
+): Def | undefined {
+  // Get all imports in the current file
+  const imports = config.get_imports_with_definitions(contextDef.file_path);
+  
+  // Find if this is a namespace import
+  const namespaceImport = imports.find(imp => 
+    imp.local_name === namespaceName && 
+    imp.import_statement.source_name === '*'
+  );
+  
+  if (process.env.DEBUG_NAMESPACE) {
+    console.log(`Checking namespace '${namespaceName}' for member '${memberRef.name}'`);
+    console.log(`Found imports:`, imports.map(i => ({
+      local: i.local_name, 
+      source: i.import_statement.source_name,
+      name: i.import_statement.name
+    })));
+    console.log(`Namespace import found:`, !!namespaceImport);
+  }
+  
+  if (!namespaceImport) {
+    return undefined;
+  }
+  
+  // The namespace import points to a module, get all its exports
+  const targetFile = namespaceImport.imported_function.file_path;
+  const allExports = resolve_namespace_all_exports(targetFile, config);
+  
+  // Direct member access: namespace.member
+  const directMember = allExports.get(memberRef.name);
+  if (directMember) {
+    return directMember;
+  }
+  
+  // Check for re-exported namespaces
+  // If the member is itself a namespace that was re-exported
+  // we need to look deeper
+  for (const [exportName, exportDef] of allExports) {
+    if (exportDef.symbol_kind === 'module' || exportDef.symbol_kind === 'namespace') {
+      // This export might be a re-exported namespace
+      // Try to resolve the member from this namespace
+      const nestedExports = resolve_namespace_all_exports(exportDef.file_path, config);
+      const nestedMember = nestedExports.get(memberRef.name);
+      if (nestedMember) {
+        return nestedMember;
+      }
+    }
+  }
+  
+  return undefined;
+}
+
+/**
+ * Resolve nested namespace member access
+ * For example: math.operations.multiply() where math is a namespace
+ */
+function resolve_nested_namespace_member(
+  objectNode: any,
+  memberRef: Ref,
+  contextDef: Def,
+  config: ReferenceResolutionConfig
+): Def | undefined {
+  // Extract the full namespace path
+  const namespacePath: string[] = [];
+  let currentNode = objectNode;
+  
+  while (is_method_expression_node(currentNode)) {
+    const propertyNode = currentNode.childForFieldName('property') || 
+                        currentNode.childForFieldName('field') ||
+                        currentNode.child(currentNode.childCount - 1);
+    
+    if (propertyNode) {
+      namespacePath.unshift(propertyNode.text);
+    }
+    
+    currentNode = currentNode.childForFieldName('object') || 
+                  currentNode.childForFieldName('value') ||
+                  (currentNode.type === 'attribute' ? currentNode.children[0] : null);
+    
+    if (!currentNode) break;
+  }
+  
+  // Add the base namespace
+  if (currentNode && currentNode.type === 'identifier') {
+    namespacePath.unshift(currentNode.text);
+  }
+  
+  if (namespacePath.length < 2) {
+    return undefined;
+  }
+  
+  // Try to resolve through the namespace chain
+  const baseNamespace = namespacePath[0];
+  const imports = config.get_imports_with_definitions(contextDef.file_path);
+  
+  // Find if the base is a namespace import
+  const namespaceImport = imports.find(imp => 
+    imp.local_name === baseNamespace && 
+    imp.import_statement.source_name === '*'
+  );
+  
+  if (!namespaceImport) {
+    return undefined;
+  }
+  
+  // For nested namespaces like math.operations.multiply,
+  // we need to look for re-exports in the imported module
+  const targetFile = namespaceImport.imported_function.file_path;
+  const allExports = resolve_namespace_all_exports(targetFile, config);
+  
+  // Try direct member first
+  const directMember = allExports.get(memberRef.name);
+  if (directMember) {
+    return directMember;
+  }
+  
+  // For nested paths like math.operations.multiply
+  // We need to follow the chain: math -> operations -> multiply
+  if (namespacePath.length > 1) {
+    // Start from the namespace import's target
+    let currentExports = allExports;
+    let currentFile = targetFile;
+    
+    // Walk through the intermediate path segments
+    // Skip the first (namespace name) and last (member name)
+    for (let i = 1; i < namespacePath.length - 1; i++) {
+      const segment = namespacePath[i];
+      const intermediateExport = currentExports.get(segment);
+      
+      if (!intermediateExport) {
+        // Intermediate segment not found
+        return undefined;
+      }
+      
+      // If this is a re-exported namespace/module, follow it
+      if (intermediateExport.file_path && intermediateExport.file_path !== currentFile) {
+        currentFile = intermediateExport.file_path;
+        currentExports = resolve_namespace_all_exports(currentFile, config);
+      } else {
+        // Can't follow further
+        break;
+      }
+    }
+    
+    // Now look for the final member
+    const finalMember = currentExports.get(memberRef.name);
+    if (finalMember) {
+      return finalMember;
+    }
+  }
+  
+  return undefined;
 }
 
 function follow_import(
