@@ -1,9 +1,11 @@
 # Test Suite Health Check
 
 ## Purpose
+
 Monitor the health of the test suite to prevent regression, track skipped tests, and ensure comprehensive coverage.
 
 ## Frequency
+
 - **Automated**: On every PR (CI)
 - **Manual Review**: Weekly
 - **Deep Audit**: Monthly
@@ -24,6 +26,7 @@ Monitor the health of the test suite to prevent regression, track skipped tests,
 ### 2. Weekly Manual Review
 
 #### Count Test Status
+
 ```bash
 # Get current test counts
 npm test 2>&1 | grep "Tests" | tail -1
@@ -37,13 +40,16 @@ npx vitest run --reporter=verbose 2>&1 | grep "×" > failing-tests.txt
 ```
 
 #### Analyze Skipped Tests
+
 For each skipped test, categorize:
+
 - **Obsolete**: Can be deleted
 - **Broken**: Needs fixing (create task)
 - **Future Feature**: Keep skipped (document why)
 - **Flaky**: Needs investigation
 
 #### Coverage Analysis
+
 ```bash
 # Generate coverage report
 npm test -- --coverage
@@ -58,13 +64,16 @@ done
 ### 3. Monthly Deep Audit
 
 #### Test Performance
+
 ```bash
 # Find slow tests
 npx vitest run --reporter=verbose | grep -E "ms$" | sort -rn -k2 | head -20
 ```
 
 #### Test Stability
+
 Run tests multiple times to find flaky tests:
+
 ```bash
 for i in {1..10}; do
   echo "Run $i"
@@ -73,7 +82,9 @@ done
 ```
 
 #### Dead Test Detection
+
 Find tests that never fail (might not be testing anything):
+
 ```bash
 # Temporarily break each module and see if tests fail
 # This is manual but important for test quality
@@ -82,16 +93,19 @@ Find tests that never fail (might not be testing anything):
 ## Metrics to Track
 
 ### Key Indicators
-| Metric | Target | Alert Threshold |
-|--------|--------|-----------------|
-| Test Pass Rate | 100% | <98% |
-| Skipped Tests | <10 | >20 |
-| Coverage | >80% | <75% |
-| Test Runtime | <30s | >60s |
-| Flaky Tests | 0 | >2 |
+
+| Metric         | Target | Alert Threshold |
+| -------------- | ------ | --------------- |
+| Test Pass Rate | 100%   | <98%            |
+| Skipped Tests  | <10    | >20             |
+| Coverage       | >80%   | <75%            |
+| Test Runtime   | <30s   | >60s            |
+| Flaky Tests    | 0      | >2              |
 
 ### Trend Tracking
+
 Track week-over-week changes:
+
 - New tests added
 - Tests removed/deleted
 - Coverage delta
@@ -124,6 +138,7 @@ test-reports/
 # Test Suite Health Report - [DATE]
 
 ## Summary
+
 - Total Tests: X (△ +Y from last week)
 - Passing: X (X%)
 - Failing: X
@@ -133,25 +148,32 @@ test-reports/
 ## Status: 🟢 Healthy / 🟡 Attention Needed / 🔴 Critical
 
 ## This Week's Changes
+
 ### New Tests Added
+
 - [List of new test files/suites]
 
 ### Tests Fixed
+
 - [List of previously failing/skipped tests now passing]
 
 ### New Failures
+
 - [List with error summaries]
 
 ### Newly Skipped
+
 - [List with reasons]
 
 ## Action Items
+
 - [ ] Fix failing test: [test name]
 - [ ] Investigate flaky test: [test name]
 - [ ] Remove obsolete test: [test name]
 - [ ] Improve coverage in: [module]
 
 ## Performance
+
 - Average runtime: Xs
 - Slowest test: [name] (Xs)
 - Memory usage: XMB peak
@@ -160,6 +182,7 @@ test-reports/
 ## Automation Scripts
 
 ### `scripts/analyze-test-health.js`
+
 ```javascript
 // Analyzes test results and outputs health metrics
 const results = require(process.argv[2]);
@@ -169,8 +192,8 @@ const health = {
   passed: results.numPassedTests,
   failed: results.numFailedTests,
   skipped: results.numPendingTests,
-  passRate: (results.numPassedTests / results.numTotalTests * 100).toFixed(2),
-  runtime: results.startTime ? Date.now() - results.startTime : 0
+  passRate: ((results.numPassedTests / results.numTotalTests) * 100).toFixed(2),
+  runtime: results.startTime ? Date.now() - results.startTime : 0,
 };
 
 // Alert if health degrades
@@ -185,16 +208,19 @@ console.log(JSON.stringify(health, null, 2));
 ## Response Procedures
 
 ### When Tests Fail
+
 1. **In CI**: Block merge until fixed
 2. **In main branch**: Revert or hotfix within 1 hour
 3. **Pattern of failures**: Create priority task
 
 ### When Coverage Drops
+
 1. **Small drop (<2%)**: Note in weekly report
 2. **Medium drop (2-5%)**: Investigate cause
 3. **Large drop (>5%)**: Block release, add tests
 
 ### When Tests Are Skipped
+
 1. **Temporary skip**: Must include TODO comment
 2. **Permanent skip**: Must document in this file
 3. **>20 skipped**: Dedicate sprint to cleanup
@@ -202,6 +228,7 @@ console.log(JSON.stringify(health, null, 2));
 ## Integration Points
 
 ### GitHub Actions
+
 ```yaml
 - name: Test Health Check
   if: always()
@@ -211,19 +238,22 @@ console.log(JSON.stringify(health, null, 2));
 ```
 
 ### Slack Notifications
+
 ```javascript
 // Post weekly summary to #eng-testing channel
-if (dayOfWeek === 'Monday') {
+if (dayOfWeek === "Monday") {
   postToSlack(generateWeeklySummary());
 }
 ```
 
 ## Related Documents
+
 - `performance-benchmarking.md`: Performance testing
 - `agent-validation-process.md`: External validation
 - `WORK_PRIORITY.md`: Current sprint priorities
 
 ## Owner
+
 **Team**: Engineering
 **Reviewer**: Tech Lead
 **Last Updated**: 2024-08-06
