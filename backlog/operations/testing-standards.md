@@ -36,7 +36,7 @@ When you find untested code:
 
 - Add a test if quick (< 10 minutes)
 - Otherwise create a task with specific examples
-- Note the gap in the task's implementation notes
+- When completing a task, document any test gaps you found in its Implementation Notes section
 
 ## Quick Checklist
 
@@ -47,8 +47,3 @@ Before marking any task complete:
 - [ ] All supported languages covered
 - [ ] No test shortcuts taken
 - [ ] Test files within size limits
-
-## Contact
-
-**Owner**: Engineering Team  
-**Last Updated**: 2025-08-06
