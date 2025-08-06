@@ -18,6 +18,13 @@ Task-100 started as "Improve Ariadne self-analysis accuracy" but became a catch-
 
 **Priority: HIGH** - Core feature enhancement
 
+**Initial Audit Task:**
+- **NEW**: Audit type system module structure
+  - Review folder organization in `src/call_graph/` and `src/types/`
+  - Check module/function naming clarity
+  - Identify oversized files needing split
+  - Output: Refactoring sub-tasks
+
 **Tasks to Move:**
 
 - task-68: Add type inference for function returns and parameters
@@ -29,6 +36,13 @@ Task-100 started as "Improve Ariadne self-analysis accuracy" but became a catch-
 ### Epic 2: Import/Export Resolution System 📦
 
 **Priority: MEDIUM** - Important for modern codebases
+
+**Initial Audit Task:**
+- **NEW**: Audit import/export resolution structure
+  - Review `src/project/import_resolver.ts` organization
+  - Check clarity of module resolution logic
+  - Identify language-specific code that should be separated
+  - Output: Refactoring sub-tasks
 
 **Tasks to Move:**
 
@@ -117,9 +131,31 @@ Task-100 started as "Improve Ariadne self-analysis accuracy" but became a catch-
 - task-100.32: Fix method call detection on built-in types ✅
 - task-100.37: Fix Rust cross-file method resolution ✅
 
+### Epic 9: Test Suite Maintenance 🧪
+
+**Priority: HIGH** - Critical for quality
+
+**Initial Tasks:**
+- **NEW**: Split oversized test files
+  - Split `tests/call_graph.test.ts` (51KB) into logical modules
+  - Split `tests/languages/javascript.test.ts` (41KB) into feature groups
+  - Apply testing-standards.md after split
+  
+**Ongoing:**
+- Monitor test file sizes (keep under 32KB)
+- Review and enable skipped tests
+- Maintain test coverage above 80%
+
+## Refactoring Process for Each Epic
+
+**Each Initial Audit Task should spawn a refactoring sub-epic with:**
+1. Specific refactoring tasks based on audit findings
+2. Apply `backlog/tasks/operations/testing-standards.md`
+3. Apply `backlog/tasks/operations/coding-standards.md`
+
 ## New Operations/Maintenance Structure
 
-### Create: `backlog/operations/`
+### Create: `backlog/tasks/operations/` and `backlog/tasks/epics/`
 
 This folder contains recurring processes, validation procedures, and maintenance tasks that need periodic execution.
 
@@ -171,9 +207,10 @@ This folder contains recurring processes, validation procedures, and maintenance
 
 ### Phase 1: Create Structure (Immediate)
 
-1. Create `backlog/operations/` folder
-2. Create epic folders: `backlog/epics/`
-3. Move first operation task (agent-validation-process.md)
+1. Create `backlog/tasks/operations/` folder
+2. Create `backlog/tasks/epics/` folder structure
+3. Move operations files to new location
+4. Update CLAUDE.md with new folder documentation
 
 ### Phase 2: Task Migration (This Week)
 

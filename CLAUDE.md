@@ -4,6 +4,9 @@
 ## 1. Source of Truth
 
 - Tasks live under **`backlog/tasks/`** (drafts under **`backlog/drafts/`**).
+  - **Epics**: Major features in **`backlog/tasks/epics/`** (e.g., `epic-1-type-system/`)
+  - **Operations**: Recurring processes in **`backlog/tasks/operations/`** (e.g., `agent-validation-process.md`)
+  - **Regular Tasks**: Direct in **`backlog/tasks/`** (e.g., `task-42-feature.md`)
 - Every implementation decision starts with reading the corresponding Markdown task file.
 - Project documentation is in **`backlog/docs/`**.
 - Project decisions are in **`backlog/decisions/`**.
@@ -170,5 +173,39 @@ A task is **Done** only when **ALL** of the following are complete:
 - **Always use `--plain` flag** when listing or viewing tasks for AI-friendly text output instead of using Backlog.md
   interactive UI.
 - When users mention to create a task, they mean to create a task using Backlog.md CLI tool.
+
+## 11. Epic and Operations Structure
+
+### Epics
+Epics are collections of related tasks for major features. Structure:
+```
+backlog/tasks/epics/
+├── epic-1-type-system/
+│   ├── README.md           # Epic overview and goals
+│   ├── audit-task.md       # Initial audit of module structure
+│   └── task-*.md          # Individual feature tasks
+```
+
+Each epic should have:
+1. Initial audit task to review code structure
+2. Refactoring sub-tasks based on audit
+3. Feature implementation tasks
+4. Final tasks applying testing-standards.md and coding-standards.md
+
+### Operations
+Operations are recurring maintenance tasks that run periodically:
+```
+backlog/tasks/operations/
+├── agent-validation-process.md    # Weekly validation runs
+├── testing-standards.md          # Apply to all code changes
+├── coding-standards.md           # Apply to all refactoring
+└── release-checklist.md          # Per-release process
+```
+
+Operations tasks specify:
+- Frequency of execution
+- Output location for results
+- Success criteria
+- Process steps to follow
 
 <!-- BACKLOG.MD GUIDELINES END -->
