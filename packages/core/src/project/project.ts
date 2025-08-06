@@ -10,7 +10,7 @@ import { CallGraphService } from './call_graph_service';
 import { InheritanceService } from './inheritance_service';
 import { ImportResolver } from './import_resolver';
 import { find_all_references, find_definition } from '../symbol_resolver';
-import { extract_source_code, extract_source_with_context } from '../utils/source_utils';
+import { ProjectSource } from '../project_source';
 import { 
   get_functions_in_file,
   get_all_functions,
@@ -294,8 +294,10 @@ export class Project {
    */
   get_source_code(def: Def, file_path: string): string {
     const state = this.storage.getState();
-    const cache = state.file_cache.get(file_path);
-    return extract_source_code(cache, def.range);
+    // Convert ReadonlyMap to Map for ProjectSource
+    const fileCache = new Map(state.file_cache);
+    const projectSource = new ProjectSource(fileCache, state.languages as Map<string, LanguageConfig>);
+    return projectSource.get_source_code(def, file_path);
   }
   
   /**
@@ -303,13 +305,14 @@ export class Project {
    */
   get_source_with_context(def: Def, file_path: string, context_lines: number = 0): {
     source: string,
-    start_line: number,
-    end_line: number,
-    context: { before: string[], after: string[] }
+    docstring?: string,
+    decorators?: string[]
   } {
     const state = this.storage.getState();
-    const cache = state.file_cache.get(file_path);
-    return extract_source_with_context(cache, def.range, context_lines);
+    // Convert ReadonlyMap to Map for ProjectSource
+    const fileCache = new Map(state.file_cache);
+    const projectSource = new ProjectSource(fileCache, state.languages as Map<string, LanguageConfig>);
+    return projectSource.get_source_with_context(def, file_path, context_lines);
   }
   
   /**
