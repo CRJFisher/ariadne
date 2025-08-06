@@ -2,7 +2,7 @@
 
 ## Current Focus: Epic-Based Organization
 
-The project has been reorganized into 9 epics for better tracking and prioritization. Each epic contains related tasks that advance a specific capability.
+The project has been reorganized into 10 epics for better tracking and prioritization. Each epic contains related tasks that advance a specific capability.
 
 ## High Priority Epics 🔴
 
@@ -51,6 +51,11 @@ The project has been reorganized into 9 epics for better tracking and prioritiza
 **Goal:** Comprehensive docs and tests  
 **Current State:** Needs significant work  
 **Next:** API docs, integration tests
+
+### Epic 10: Language Expansion Framework
+**Goal:** Systematic framework for adding new languages  
+**Current State:** Need to build matrix framework first  
+**Next:** Create Language-Feature-Testing matrix, then add 7 new languages
 
 ## Low Priority Epics 🟢
 
