@@ -67,21 +67,25 @@ export class DiskStorage implements StorageInterfaceSync {
     // Load metadata
     const metadata = this.loadMetadata();
     
-    // Create state with lazy-loaded file data
-    const state: ProjectState = {
-      ...metadata,
-      file_graphs: new Map(),
-      file_cache: new Map()
-    };
+    // Create mutable maps for loading
+    const fileGraphs = new Map<string, ScopeGraph>();
+    const fileCache = new Map<string, StoredFileCache>();
     
     // Load all files from index
     for (const [filePath, hash] of this.fileIndex) {
       const fileData = this.loadFileData(hash);
       if (fileData) {
-        state.file_cache.set(filePath, fileData.cache);
-        state.file_graphs.set(filePath, fileData.graph);
+        fileCache.set(filePath, fileData.cache);
+        fileGraphs.set(filePath, fileData.graph);
       }
     }
+    
+    // Create state with loaded data
+    const state: ProjectState = {
+      ...metadata,
+      file_graphs: fileGraphs,
+      file_cache: fileCache
+    };
     
     return state;
   }
@@ -242,12 +246,13 @@ export class DiskStorage implements StorageInterfaceSync {
     const metadata = JSON.parse(fs.readFileSync(this.metadataPath, 'utf-8'));
     
     // Reconstruct state from metadata
-    const state = createEmptyState(this.languages);
+    const emptyState = createEmptyState(this.languages);
     
-    // Restore inheritance map
-    if (metadata.inheritance_map) {
-      state.inheritance_map = new Map(metadata.inheritance_map);
-    }
+    // Create new state with restored inheritance map
+    const state: ProjectState = {
+      ...emptyState,
+      inheritance_map: metadata.inheritance_map ? new Map(metadata.inheritance_map) : new Map()
+    };
     
     return state;
   }

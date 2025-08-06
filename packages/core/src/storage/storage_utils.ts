@@ -22,7 +22,11 @@ export function createEmptyState(languages: ReadonlyMap<string, LanguageConfig>)
       fileGraphs: new Map(),
       fileCache: new Map(),
       fileTypeTrackers: new Map(),
-      languages
+      languages,
+      projectTypeRegistry: {
+        exportedTypes: new Map(),
+        fileExports: new Map()
+      }
     }
   };
 }

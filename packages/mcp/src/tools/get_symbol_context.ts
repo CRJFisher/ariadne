@@ -128,7 +128,7 @@ function findSymbolDefinitions(
   const definitions: any[] = [];
   
   // Get all file graphs from the project
-  const fileGraphs = (project as any).file_graphs as Map<string, any>;
+  const fileGraphs = project.get_all_scope_graphs();
   
   for (const [filePath, graph] of fileGraphs) {
     // Include all files - we'll filter test functions later if needed
@@ -156,7 +156,7 @@ function findSimilarSymbols(
   _searchScope: string
 ): string[] {
   const allSymbols = new Set<string>();
-  const fileGraphs = (project as any).file_graphs as Map<string, any>;
+  const fileGraphs = project.get_all_scope_graphs();
   
   for (const [_filePath, graph] of fileGraphs) {
     // Include all files - test filtering happens at the function level
@@ -215,24 +215,15 @@ function extractSymbolInfo(def: any): SymbolInfo {
 }
 
 function extractDefinitionInfo(def: any, project: Project): DefinitionInfo {
-  const fileCache = (project as any).file_cache.get(def.file_path);
-  if (!fileCache) {
-    return {
-      file: def.file_path,
-      line: def.range.start.row + 1, // Convert to 1-indexed
-      implementation: "// Source code not available"
-    };
+  let implementation = "// Source code not available";
+  let startLine = def.range.start.row;
+  
+  try {
+    // Use the public API to get source code
+    implementation = project.get_source_code(def, def.file_path);
+  } catch (error) {
+    // If source code extraction fails, use fallback
   }
-  
-  const sourceLines = fileCache.source_code.split('\n');
-  
-  // Use enclosing_range if available (includes full function body), otherwise fall back to range
-  const range = def.enclosing_range || def.range;
-  const startLine = range.start.row;
-  const endLine = range.end.row;
-  
-  // Extract the implementation
-  const implementation = sourceLines.slice(startLine, endLine + 1).join('\n');
   
   // Extract documentation and decorators using Ariadne's built-in API
   let documentation: string | undefined;
@@ -241,18 +232,6 @@ function extractDefinitionInfo(def: any, project: Project): DefinitionInfo {
   // Use the docstring from the def if available
   if (def.docstring) {
     documentation = def.docstring;
-  } else {
-    // Try to extract using get_source_with_context
-    try {
-      const sourceWithContext = project.get_source_with_context(def, def.file_path);
-      documentation = sourceWithContext.docstring;
-      if (sourceWithContext.decorators && sourceWithContext.decorators.length > 0) {
-        annotations = sourceWithContext.decorators;
-      }
-    } catch (error) {
-      // Fallback gracefully if context extraction fails
-      console.warn(`Failed to extract context for ${def.name}:`, error);
-    }
   }
   
   return {
@@ -273,7 +252,7 @@ function findSymbolUsages(
   const imports: UsageReference[] = [];
   const tests: TestReference[] = [];
   
-  const fileGraphs = (project as any).file_graphs as Map<string, any>;
+  const fileGraphs = project.get_all_scope_graphs();
   
   // First, find local references in the same file
   const localRefs = def.graph.getRefsForDef(def.id);
@@ -358,35 +337,49 @@ function findReferencesToImport(graph: any, imp: any): any[] {
 }
 
 function extractReferenceContext(filePath: string, ref: any, project: Project): string {
-  const fileCache = (project as any).file_cache.get(filePath);
-  if (!fileCache) return "";
-  
-  const lines = fileCache.source_code.split('\n');
-  const lineIndex = ref.range.start.row;
-  
-  // Get the line containing the reference
-  const line = lines[lineIndex] || "";
-  
-  // Trim whitespace and limit length
-  return line.trim().substring(0, 100);
+  try {
+    // Create a dummy def with just the range we need (one line)
+    const dummyDef = {
+      ...ref,
+      file_path: filePath,
+      range: {
+        start: { row: ref.range.start.row, column: 0 },
+        end: { row: ref.range.start.row, column: 999 }
+      }
+    };
+    
+    const line = project.get_source_code(dummyDef, filePath);
+    
+    // Trim whitespace and limit length
+    return line.trim().substring(0, 100);
+  } catch (error) {
+    return "";
+  }
 }
 
 function extractTestName(filePath: string, ref: any, project: Project): string | null {
-  const fileCache = (project as any).file_cache.get(filePath);
-  if (!fileCache) return null;
-  
-  const lines = fileCache.source_code.split('\n');
-  
-  // Search backwards for test/it/describe
-  for (let i = ref.range.start.row; i >= 0; i--) {
-    const line = lines[i];
-    const testMatch = line.match(/(?:test|it|describe)\s*\(\s*['"`]([^'"`]+)['"`]/);
-    if (testMatch) {
-      return testMatch[1];
+  try {
+    // Search backwards for test/it/describe
+    for (let i = ref.range.start.row; i >= 0; i--) {
+      const dummyDef = {
+        file_path: filePath,
+        range: {
+          start: { row: i, column: 0 },
+          end: { row: i, column: 999 }
+        }
+      };
+      
+      const line = project.get_source_code(dummyDef, filePath);
+      const testMatch = line.match(/(?:test|it|describe)\s*\(\s*['"`]([^'"`]+)['"`]/);
+      if (testMatch) {
+        return testMatch[1];
+      }
+      
+      // Don't search too far
+      if (ref.range.start.row - i > 20) break;
     }
-    
-    // Don't search too far
-    if (ref.range.start.row - i > 20) break;
+  } catch (error) {
+    // Failed to extract test name
   }
   
   return null;

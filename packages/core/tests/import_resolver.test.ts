@@ -1,60 +1,106 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ImportResolver } from '../src/project/import_resolver';
 import { ProjectState } from '../src/storage/storage_interface';
-import { ScopeGraph } from '../src/graph';
 import { Import, Def } from '@ariadnejs/types';
+import * as fs from 'fs';
+
+// Mock fs module
+vi.mock('fs');
 
 describe('ImportResolver', () => {
+  // Create a minimal mock state for testing
   const createMockState = (): ProjectState => {
-    const libGraph = new ScopeGraph('typescript', 'lib.ts');
-    const mainGraph = new ScopeGraph('typescript', 'main.ts');
+    const mockFileGraphs = new Map();
     
-    // Add a function definition to lib.ts
-    const libFunc: Def = {
-      id: 1,
-      kind: 'definition',
-      name: 'libraryFunction',
-      symbol_id: 'lib#libraryFunction',
-      symbol_kind: 'function',
-      range: {
-        start: { row: 0, column: 0 },
-        end: { row: 2, column: 1 }
+    // Create mock graphs with necessary methods
+    const libGraph = {
+      findExportedDef: (name: string) => {
+        if (name === 'libraryFunction') {
+          return {
+            id: 1,
+            kind: 'definition',
+            name: 'libraryFunction',
+            symbol_id: 'lib#libraryFunction',
+            symbol_kind: 'function',
+            range: { start: { row: 0, column: 0 }, end: { row: 2, column: 1 } },
+            file_path: 'lib.ts',
+            is_exported: true
+          } as Def;
+        }
+        return null;
       },
-      file_path: 'lib.ts',
-      is_exported: true
-    };
-    libGraph.insert('definition', libFunc);
-    
-    // Add an import to main.ts
-    const importStatement: Import = {
-      id: 2,
-      kind: 'import',
-      name: 'libraryFunction',
-      source_module: './lib',
-      range: {
-        start: { row: 0, column: 9 },
-        end: { row: 0, column: 24 }
+      getAllImports: () => [],
+      getNodes: (kind: string) => {
+        if (kind === 'definition') {
+          return [{
+            id: 1,
+            kind: 'definition',
+            name: 'libraryFunction',
+            symbol_id: 'lib#libraryFunction',
+            symbol_kind: 'function',
+            range: { start: { row: 0, column: 0 }, end: { row: 2, column: 1 } },
+            file_path: 'lib.ts',
+            is_exported: true
+          }];
+        }
+        if (kind === 'import') {
+          return [];
+        }
+        return [];
       }
     };
-    mainGraph.insert('import', importStatement);
+    
+    const mainGraph = {
+      findExportedDef: (name: string) => null,
+      getAllImports: () => [{
+        id: 2,
+        kind: 'import',
+        name: 'libraryFunction',
+        source_module: './lib',
+        range: { start: { row: 0, column: 9 }, end: { row: 0, column: 24 } }
+      }],
+      getNodes: (kind: string) => {
+        if (kind === 'import') {
+          return [{
+            id: 2,
+            kind: 'import',
+            name: 'libraryFunction',
+            source_module: './lib',
+            range: { start: { row: 0, column: 9 }, end: { row: 0, column: 24 } }
+          }];
+        }
+        return [];
+      }
+    };
+    
+    mockFileGraphs.set('lib.ts', libGraph);
+    mockFileGraphs.set('main.ts', mainGraph);
     
     return {
-      file_graphs: new Map([
-        ['lib.ts', libGraph],
-        ['main.ts', mainGraph]
-      ]),
+      file_graphs: mockFileGraphs,
       file_cache: new Map(),
       call_graph_data: {
         fileGraphs: new Map(),
         fileCache: new Map(),
         fileTypeTrackers: new Map(),
-        projectTypeRegistry: new Map(),
+        projectTypeRegistry: {
+          exportedTypes: new Map(),
+          fileExports: new Map()
+        },
         languages: new Map()
       },
       inheritance_map: new Map(),
       languages: new Map()
     };
   };
+  
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
   
   describe('resolveImport', () => {
     it('should resolve an import to its definition', () => {
@@ -67,10 +113,7 @@ describe('ImportResolver', () => {
         name: 'libraryFunction',
         symbol_id: 'main#libraryFunction',
         symbol_kind: 'import',
-        range: {
-          start: { row: 0, column: 9 },
-          end: { row: 0, column: 24 }
-        },
+        range: { start: { row: 0, column: 9 }, end: { row: 0, column: 24 } },
         file_path: 'main.ts'
       };
       
@@ -92,16 +135,14 @@ describe('ImportResolver', () => {
         name: 'localFunction',
         symbol_id: 'main#localFunction',
         symbol_kind: 'function',
-        range: {
-          start: { row: 5, column: 0 },
-          end: { row: 7, column: 1 }
-        },
+        range: { start: { row: 5, column: 0 }, end: { row: 7, column: 1 } },
         file_path: 'main.ts'
       };
       
       const resolved = resolver.resolveImport(funcDef, 'main.ts', state);
       
       expect(resolved).toBe(funcDef);
+      expect(resolved?.symbol_kind).toBe('function');
     });
   });
   
@@ -119,43 +160,6 @@ describe('ImportResolver', () => {
       const state = createMockState();
       const resolver = new ImportResolver();
       
-      // Mock the necessary methods on ScopeGraph
-      const mainGraph = state.file_graphs.get('main.ts');
-      if (mainGraph) {
-        mainGraph.getAllImports = () => [{
-          id: 2,
-          kind: 'import',
-          name: 'libraryFunction',
-          source_module: './lib',
-          range: {
-            start: { row: 0, column: 9 },
-            end: { row: 0, column: 24 }
-          }
-        }];
-        
-        const libGraph = state.file_graphs.get('lib.ts');
-        if (libGraph) {
-          libGraph.findExportedDef = (name: string) => {
-            if (name === 'libraryFunction') {
-              return {
-                id: 1,
-                kind: 'definition',
-                name: 'libraryFunction',
-                symbol_id: 'lib#libraryFunction',
-                symbol_kind: 'function',
-                range: {
-                  start: { row: 0, column: 0 },
-                  end: { row: 2, column: 1 }
-                },
-                file_path: 'lib.ts',
-                is_exported: true
-              } as Def;
-            }
-            return undefined;
-          };
-        }
-      }
-      
       const imports = resolver.getImportsWithDefinitions(state, 'main.ts');
       
       expect(imports).toHaveLength(1);
@@ -169,25 +173,46 @@ describe('ImportResolver', () => {
     it('should resolve TypeScript relative imports', () => {
       const resolver = new ImportResolver();
       
-      const resolved = resolver.resolveModulePath('src/main.ts', './lib');
+      // Mock fs functions for TypeScript
+      vi.mocked(fs.existsSync).mockImplementation((path: any) => {
+        if (path === '/Users/test/src/lib.ts') return true;
+        if (path === '/Users/test/src/lib') return false;
+        return false;
+      });
       
-      expect(resolved).toBe('src/lib.ts');
+      const resolved = resolver.resolveModulePath('/Users/test/src/main.ts', './lib');
+      
+      expect(resolved).toBe('/Users/test/src/lib.ts');
     });
     
     it('should resolve Python imports', () => {
       const resolver = new ImportResolver();
       
-      const resolved = resolver.resolveModulePath('src/main.py', 'lib');
+      // Mock fs functions for Python
+      vi.mocked(fs.existsSync).mockImplementation((path: any) => {
+        if (path === '/Users/test/src/lib.py') return true;
+        if (path === '/Users/test/src/lib') return false;
+        return false;
+      });
       
-      expect(resolved).toBe('src/lib.py');
+      const resolved = resolver.resolveModulePath('/Users/test/src/main.py', 'lib');
+      
+      expect(resolved).toBe('/Users/test/src/lib.py');
     });
     
     it('should resolve Rust module paths', () => {
       const resolver = new ImportResolver();
       
-      const resolved = resolver.resolveModulePath('src/main.rs', 'lib');
+      // Mock fs functions for Rust
+      vi.mocked(fs.existsSync).mockImplementation((path: any) => {
+        if (path === '/Users/test/src/lib.rs') return true;
+        if (path === '/Users/test/src/lib') return false;
+        return false;
+      });
       
-      expect(resolved).toBe('src/lib.rs');
+      const resolved = resolver.resolveModulePath('/Users/test/src/main.rs', 'lib');
+      
+      expect(resolved).toBe('/Users/test/src/lib.rs');
     });
   });
 });

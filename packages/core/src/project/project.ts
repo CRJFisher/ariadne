@@ -2,6 +2,7 @@ import { Point, Def, Ref, FunctionCall, SimpleRange, CallGraph, CallGraphOptions
 import { Edit } from '../edit';
 import { ClassRelationship } from '../inheritance';
 import { ImportInfo } from '../graph';
+import { LanguageConfig } from '../types';
 import { StorageInterfaceSync } from '../storage/storage_interface_sync';
 import { FileManager } from './file_manager';
 import { LanguageManager } from './language_manager';
@@ -41,7 +42,7 @@ export class Project {
     this.storage.initialize();
     
     const state = this.storage.getState();
-    this.languageManager = new LanguageManager(state.languages);
+    this.languageManager = new LanguageManager();
     
     // Build extension map for FileManager
     const extensionMap = new Map<string, LanguageConfig>();
@@ -90,11 +91,12 @@ export class Project {
         edit
       );
       
+      if (!newState) {
+        throw new Error(`Failed to process file: ${file_path}`);
+      }
+      
       // Update inheritance after file change
-      const updatedState = this.inheritanceService.updateInheritanceMap(
-        newState,
-        file_path
-      );
+      const updatedState = this.inheritanceService.updateInheritanceMap(newState);
       
       tx.setState(updatedState);
       tx.commit();
@@ -116,10 +118,7 @@ export class Project {
       
       // Update inheritance after file removal
       const state = tx.getState();
-      const updatedState = this.inheritanceService.updateInheritanceMap(
-        state,
-        file_path
-      );
+      const updatedState = this.inheritanceService.updateInheritanceMap(state);
       
       tx.setState(updatedState);
       tx.commit();
@@ -135,7 +134,7 @@ export class Project {
    */
   find_references(file_path: string, position: Point): Ref[] {
     const state = this.storage.getState();
-    return find_all_references(file_path, position, state.file_graphs);
+    return find_all_references(file_path, position, new Map(state.file_graphs));
   }
   
   /**
@@ -143,7 +142,7 @@ export class Project {
    */
   go_to_definition(file_path: string, position: Point): Def | null {
     const state = this.storage.getState();
-    return find_definition(file_path, position, state.file_graphs);
+    return find_definition(file_path, position, new Map(state.file_graphs));
   }
   
   /**
@@ -201,7 +200,7 @@ export class Project {
     
     // Create helper functions
     const goToDefinition = (filePath: string, position: { row: number; column: number }) => 
-      find_definition(filePath, position, state.file_graphs);
+      find_definition(filePath, position, new Map(state.file_graphs)) || undefined;
     
     const getImportsWithDefinitions = (filePath: string) =>
       this.importResolver.getImportsWithDefinitions(state, filePath);
@@ -215,55 +214,37 @@ export class Project {
   }
   
   /**
-   * Get function calls from a specific definition (convenience method)
+   * Get function calls from a specific definition
    */
-  get_function_calls(def: Def): FunctionCall[];
-  /**
-   * Get function calls (module-level or all)
-   */
-  get_function_calls(module_level_only?: boolean): Map<string, FunctionCall[]>;
-  get_function_calls(arg?: Def | boolean): FunctionCall[] | Map<string, FunctionCall[]> {
-    // Check if arg is a Def object
-    if (arg && typeof arg === 'object' && 'symbol_kind' in arg) {
-      // This is a Def, get calls from this definition
-      return this.get_calls_from_definition(arg as Def);
-    } else {
-      // This is a boolean or undefined, get all function calls
-      const state = this.storage.getState();
-      return this.callGraphService.getFunctionCalls(state, arg as boolean || false);
-    }
+  get_function_calls(def: Def): FunctionCall[] {
+    return this.get_calls_from_definition(def);
   }
   
   /**
-   * Extract call graph for specific functions
+   * Extract call graph for specific functions (or all functions if not specified)
    */
-  extract_call_graph(functions: Def[]): Map<string, FunctionCall[]> {
+  extract_call_graph(functions?: Def[]): {
+    functions: Def[];
+    calls: FunctionCall[];
+  } {
     const state = this.storage.getState();
     
     const goToDefinition = (filePath: string, position: { row: number; column: number }) => 
-      find_definition(filePath, position, state.file_graphs);
+      find_definition(filePath, position, new Map(state.file_graphs)) || undefined;
     
     const getImportsWithDefinitions = (filePath: string) =>
       this.importResolver.getImportsWithDefinitions(state, filePath);
     
-    const getAllFunctions = () => functions;  // Use the provided functions
+    // If no functions provided, get all functions
+    const functionsToAnalyze = functions || get_all_functions_flat(state);
+    const getAllFunctions = () => functionsToAnalyze;
     
-    const result = this.callGraphService.extractCallGraph(
+    return this.callGraphService.extractCallGraph(
       state,
       goToDefinition,
       getImportsWithDefinitions,
       getAllFunctions
     );
-    
-    // Convert the result format
-    const callMap = new Map<string, FunctionCall[]>();
-    for (const func of result.functions) {
-      const funcCalls = result.calls.filter(c => c.caller_def === func);
-      if (funcCalls.length > 0) {
-        callMap.set(func.symbol_id, funcCalls);
-      }
-    }
-    return callMap;
   }
   
   /**
@@ -274,7 +255,7 @@ export class Project {
     
     // Create helper functions that use the appropriate services
     const goToDefinition = (filePath: string, position: { row: number; column: number }) => 
-      find_definition(filePath, position, state.file_graphs);
+      find_definition(filePath, position, new Map(state.file_graphs)) || undefined;
     
     const getImportsWithDefinitions = (filePath: string) =>
       this.importResolver.getImportsWithDefinitions(state, filePath);
@@ -413,12 +394,12 @@ export class Project {
     // Create the edit
     const new_end_position = this.calculate_end_position(start_position, new_text);
     const edit: Edit = {
-      startIndex: start_byte,
-      oldEndIndex: old_end_byte,
-      newEndIndex: start_byte + new_text.length,
-      startPosition: start_position,
-      oldEndPosition: old_end_position,
-      newEndPosition: new_end_position
+      start_byte,
+      old_end_byte,
+      new_end_byte: start_byte + new_text.length,
+      start_position,
+      old_end_position,
+      new_end_position
     };
     
     // Apply the edit to create new source code

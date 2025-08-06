@@ -20,8 +20,8 @@ export class InheritanceService {
     const fileInfoMap = this.createFileInfoMap(state);
     const projectInheritance = new ProjectInheritance(
       fileInfoMap,
-      state.inheritance_map,
-      state.languages
+      new Map(state.inheritance_map),
+      new Map(state.languages)
     );
     
     return projectInheritance.get_class_relationships(classDef);
@@ -37,8 +37,8 @@ export class InheritanceService {
     const fileInfoMap = this.createFileInfoMap(state);
     const projectInheritance = new ProjectInheritance(
       fileInfoMap,
-      state.inheritance_map,
-      state.languages
+      new Map(state.inheritance_map),
+      new Map(state.languages)
     );
     
     return projectInheritance.find_subclasses(parentClass);
@@ -54,8 +54,8 @@ export class InheritanceService {
     const fileInfoMap = this.createFileInfoMap(state);
     const projectInheritance = new ProjectInheritance(
       fileInfoMap,
-      state.inheritance_map,
-      state.languages
+      new Map(state.inheritance_map),
+      new Map(state.languages)
     );
     
     return projectInheritance.find_implementations(interfaceDef);
@@ -71,8 +71,8 @@ export class InheritanceService {
     const fileInfoMap = this.createFileInfoMap(state);
     const projectInheritance = new ProjectInheritance(
       fileInfoMap,
-      state.inheritance_map,
-      state.languages
+      new Map(state.inheritance_map),
+      new Map(state.languages)
     );
     
     return projectInheritance.get_inheritance_chain(classDef);
@@ -89,8 +89,8 @@ export class InheritanceService {
     const fileInfoMap = this.createFileInfoMap(state);
     const projectInheritance = new ProjectInheritance(
       fileInfoMap,
-      state.inheritance_map,
-      state.languages
+      new Map(state.inheritance_map),
+      new Map(state.languages)
     );
     
     return projectInheritance.is_subclass_of(child, parent);
@@ -106,7 +106,7 @@ export class InheritanceService {
     const projectInheritance = new ProjectInheritance(
       fileInfoMap,
       new Map(), // Start with empty map to rebuild
-      state.languages
+      new Map(state.languages)
     );
     
     // The inheritance map is built internally by ProjectInheritance

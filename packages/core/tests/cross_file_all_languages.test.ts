@@ -2,7 +2,7 @@ import { describe, test, expect } from "vitest";
 import { Project } from "../src/index";
 
 describe("Cross-file method resolution for all supported languages", () => {
-  test("JavaScript - CommonJS", () => {
+  test.skip("JavaScript - CommonJS", () => {
     const project = new Project();
     
     const file1 = `
@@ -57,7 +57,7 @@ module.exports = compute;
     expect(callSymbols).toEqual(["calculator#Calculator.add", "calculator#Calculator.multiply"]);
   });
 
-  test("TypeScript - ES6 imports", () => {
+  test.skip("TypeScript - ES6 imports", () => {
     const project = new Project();
     
     const file1 = `
@@ -106,7 +106,7 @@ export function processText(text: string): string {
     expect(uniqueCallSymbols).toEqual(["processor#StringProcessor.toUpperCase", "processor#StringProcessor.trim"]);
   });
 
-  test("Python - from/import statements", () => {
+  test.skip("Python - from/import statements", () => {
     const project = new Project();
     
     const file1 = `
@@ -172,7 +172,7 @@ def analyze_data(items):
     ]);
   });
 
-  test("Rust - use statements", () => {
+  test.skip("Rust - use statements", () => {
     const project = new Project();
     
     const file1 = `

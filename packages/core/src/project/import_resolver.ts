@@ -77,13 +77,14 @@ export class ImportResolver implements IImportResolver {
 
     const imports = this.getImportsWithDefinitions(state, filePath);
     const importInfo = imports.find(imp => {
-      // First try exact position match
-      if (imp.import_statement.name === importDef.name &&
+      // First try exact position match if ranges are available
+      if (importDef.range && imp.import_statement.range &&
+          imp.import_statement.name === importDef.name &&
           imp.import_statement.range.start.row === importDef.range.start.row &&
           imp.import_statement.range.start.column === importDef.range.start.column) {
         return true;
       }
-      // Fallback to name-only match (for cases where position differs)
+      // Fallback to name-only match (for cases where position differs or ranges missing)
       return imp.import_statement.name === importDef.name;
     });
 
@@ -138,7 +139,7 @@ export class ImportResolver implements IImportResolver {
               const tracker = state.call_graph_data.fileTypeTrackers.get(targetFile);
               if (tracker && tracker.exportedDefinitions.has(export_name)) {
                 const defs = targetGraph.getNodes<Def>('definition');
-                exportedDef = defs.find(def => def.name === export_name);
+                exportedDef = defs.find(def => def.name === export_name) || null;
               }
             }
             
@@ -166,7 +167,7 @@ export class ImportResolver implements IImportResolver {
             const tracker = state.call_graph_data.fileTypeTrackers.get(otherFile);
             if (tracker && tracker.exportedDefinitions.has(export_name)) {
               const defs = otherGraph.getNodes<Def>('definition');
-              exportedDef = defs.find(def => def.name === export_name);
+              exportedDef = defs.find(def => def.name === export_name) || null;
             }
           }
           

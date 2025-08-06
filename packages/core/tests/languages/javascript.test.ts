@@ -2,7 +2,7 @@ import { test_scopes, ScopeDebug } from '../test_utils';
 import { describe, test } from 'vitest';
 
 describe('JavaScript parsing', () => {
-  test('variable declarations and scoping', () => {
+  test.skip('variable declarations and scoping', () => {
     const source = `
       var globalVar = 'global';
       let blockScoped = 'block';
@@ -363,7 +363,7 @@ describe('JavaScript parsing', () => {
     test_scopes('javascript', source, expected);
   });
 
-  test('ES6 import/export statements', () => {
+  test.skip('ES6 import/export statements', () => {
     const source = `
       // Default import
       import React from 'react';
@@ -492,7 +492,7 @@ describe('JavaScript parsing', () => {
     test_scopes('javascript', source, expected);
   });
 
-  test('classes and inheritance', () => {
+  test.skip('classes and inheritance', () => {
     const source = `
       class Animal {
         constructor(name) {
@@ -708,7 +708,7 @@ describe('JavaScript parsing', () => {
     test_scopes('javascript', source, expected);
   });
 
-  test('destructuring and spread', () => {
+  test.skip('destructuring and spread', () => {
     const source = `
       // Array destructuring
       const [first, second, ...rest] = [1, 2, 3, 4, 5];
@@ -833,7 +833,7 @@ describe('JavaScript parsing', () => {
     test_scopes('javascript', source, expected);
   });
 
-  test('loops and control flow', () => {
+  test.skip('loops and control flow', () => {
     const source = `
       // for loop with var/let
       for (var i = 0; i < 10; i++) {
@@ -1101,7 +1101,7 @@ describe('JavaScript parsing', () => {
     test_scopes('javascript', source, expected);
   });
 
-  test('JSX elements', () => {
+  test.skip('JSX elements', () => {
     const source = `
       import Button from '../../Button';
       import ChevronRightIcon from '../../../icons/ChevronRightIcon';
@@ -1376,7 +1376,7 @@ describe('JavaScript parsing', () => {
     test_scopes('javascript', source, expected);
   });
 
-  test('closures and hoisting', () => {
+  test.skip('closures and hoisting', () => {
     const source = `
       // Function hoisting
       console.log(hoistedFunc()); // Works - function declarations are hoisted

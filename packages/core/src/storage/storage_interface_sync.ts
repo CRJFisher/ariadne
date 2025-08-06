@@ -1,5 +1,8 @@
 import { ScopeGraph } from '../graph';
-import { ProjectState, StoredFileCache } from './storage_interface';
+import { ProjectState, StoredFileCache, StorageInterface } from './storage_interface';
+
+// Re-export types for consumers
+export { ProjectState, StoredFileCache } from './storage_interface';
 
 /**
  * Synchronous transaction handle for atomic operations
@@ -105,7 +108,7 @@ export interface StorageInterfaceSync {
 /**
  * Adapter to convert sync storage to async
  */
-export class SyncToAsyncStorageAdapter implements import('./storage_interface').StorageInterface {
+export class SyncToAsyncStorageAdapter implements StorageInterface {
   constructor(private readonly syncStorage: StorageInterfaceSync) {}
   
   async initialize(): Promise<void> {

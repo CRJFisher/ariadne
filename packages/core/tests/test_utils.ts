@@ -174,7 +174,7 @@ export function test_scopes(
 
   project.add_or_update_file(file_path, source_code);
 
-  const graph = (project as any).file_graphs.get(file_path);
+  const graph = project.get_scope_graph(file_path);
   if (!graph) throw new Error("No graph found for file");
 
   const actual = debug_scope_graph(graph, source_code);
