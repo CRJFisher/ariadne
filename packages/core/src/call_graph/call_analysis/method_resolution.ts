@@ -61,6 +61,7 @@ export function resolve_method_call_pure(
   // Get type information for the object
   const typeInfo = get_local_variable_type(localTypeTracker, objectName, ref.range.start);
   
+  
   if (typeInfo && typeInfo.classDef) {
     // We have type information for this variable
     const methodName = ref.name;
@@ -96,6 +97,7 @@ export function resolve_method_call_pure(
           m.symbol_id === expectedSymbolId
         )
       );
+      
       
       if (method) {
         return { resolved: method, typeDiscoveries };

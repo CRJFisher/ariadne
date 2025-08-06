@@ -3,8 +3,8 @@ id: task-100.29
 title: Fix incremental parsing - oldEndPosition.row must be an integer
 status: Done
 assignee: []
-created_date: '2025-08-05 22:38'
-updated_date: '2025-08-06 05:46'
+created_date: "2025-08-05 22:38"
+updated_date: "2025-08-06 05:46"
 labels: []
 dependencies: []
 parent_task_id: task-100
@@ -22,9 +22,10 @@ All incremental parsing tests are failing with TypeError: oldEndPosition.row mus
 
 ## Implementation Notes
 
-The incremental parsing functionality was not actually broken. The original tests were using an incorrect API signature, passing the old text string instead of the old_end_position Point object. 
+The incremental parsing functionality was not actually broken. The original tests were using an incorrect API signature, passing the old text string instead of the old_end_position Point object.
 
 The correct signature is:
+
 ```typescript
 update_file_range(
   file_path: string,

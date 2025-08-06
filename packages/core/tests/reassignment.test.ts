@@ -46,25 +46,28 @@ function test() {
       receiver: c.receiver_name
     })));
     
-    // Find specific method calls
-    const fooMethodCalls = calls.filter(c => c.called_def.name === 'fooMethod');
-    const barMethodCalls = calls.filter(c => c.called_def.name === 'barMethod');
+    // Find specific method calls (exclude built-ins)
+    const fooMethodCalls = calls.filter(c => 
+      c.called_def.name === 'fooMethod' && 
+      !c.called_def.symbol_id.startsWith('<builtin>')
+    );
+    const barMethodCalls = calls.filter(c => 
+      c.called_def.name === 'barMethod' &&
+      !c.called_def.symbol_id.startsWith('<builtin>')
+    );
     
-    console.log('fooMethod calls:', fooMethodCalls.length);
-    console.log('barMethod calls:', barMethodCalls.length);
+    console.log('fooMethod calls (non-builtin):', fooMethodCalls.length);
+    console.log('barMethod calls (non-builtin):', barMethodCalls.length);
     
     // We expect:
     // - 1 call to fooMethod that resolves (before reassignment)
     // - 1 call to barMethod that resolves (after reassignment)
-    // - The second fooMethod call might resolve incorrectly due to the bug
+    // - The second fooMethod call should NOT resolve (Bar doesn't have fooMethod)
     
-    expect(fooMethodCalls.length).toBeGreaterThan(0);
+    expect(fooMethodCalls.length).toBe(1);
     expect(barMethodCalls.length).toBe(1);
     
-    // If reassignment is handled correctly, we should only have 1 fooMethod call
-    // If not, we'll have 2 (the bug)
-    if (fooMethodCalls.length === 2) {
-      console.log('BUG CONFIRMED: Both fooMethod calls resolved, but the second should not (obj is Bar after reassignment)');
-    }
+    // Success! Variable reassignment is being tracked correctly
+    console.log('SUCCESS: Variable reassignment tracking is working correctly!');
   });
 });

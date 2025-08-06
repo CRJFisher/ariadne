@@ -215,6 +215,8 @@ export function get_local_variable_type(
   position?: { row: number; column: number }
 ): TypeInfo | undefined {
   const localTypes = tracker.localTypes.get(varName);
+  
+  
   if (localTypes && localTypes.length > 0) {
     if (!position) {
       return localTypes[localTypes.length - 1];

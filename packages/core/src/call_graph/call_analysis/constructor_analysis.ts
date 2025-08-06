@@ -133,6 +133,7 @@ export function analyze_constructor_call(
         { row: assignmentNode.startPosition.row, column: assignmentNode.startPosition.column } : 
         ref.range.start;
       
+      
       if (fileImportedClass) {
         // Type from imported class
         const discovery = {
