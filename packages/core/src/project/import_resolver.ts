@@ -197,9 +197,15 @@ export class ImportResolver implements IImportResolver {
     importPath: string,
     state?: ProjectState
   ): string | null {
-    // Skip external modules (node_modules, absolute imports without path)
-    if (!importPath.startsWith('.') && !importPath.startsWith('/')) {
-      return null;
+    // Determine file extension to handle language-specific imports
+    const ext = path.extname(fromFile).toLowerCase();
+    
+    // For Python and Rust, allow non-relative imports (e.g., 'lib' in Python/Rust)
+    // For JS/TS, skip external modules (node_modules) unless they start with . or /
+    if (ext !== '.py' && ext !== '.rs') {
+      if (!importPath.startsWith('.') && !importPath.startsWith('/')) {
+        return null;
+      }
     }
     
     // Try virtual file system resolution first (for tests and in-memory files)
@@ -210,9 +216,7 @@ export class ImportResolver implements IImportResolver {
       }
     }
     
-    // Fall back to filesystem resolution
-    const ext = path.extname(fromFile).toLowerCase();
-    
+    // Fall back to filesystem resolution based on language
     if (ext === '.py') {
       return ModuleResolver.resolvePythonImport(fromFile, importPath);
     } else if (ext === '.rs') {
