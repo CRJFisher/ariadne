@@ -81,13 +81,20 @@ export function resolve_method_call_pure(
       // Fall back to range if still not available
       classRange = classRange || typeInfo.classDef.range;
       
-      // Find method by checking if it's within the class range
-      // This is more reliable than symbol_id matching
+      // Find method by checking if it's within the class range OR has matching symbol_id
+      // For Rust, methods are in impl blocks separate from structs, so we check symbol_id
+      const expectedSymbolId = `${typeInfo.classDef.file_path.replace('.rs', '')}#${typeInfo.className}.${methodName}`;
+      
       const method = classDefs.find((m: Def) => 
         m.name === methodName && 
         (m.symbol_kind === 'method' || m.symbol_kind === 'function') &&
-        is_position_within_range(m.range.start, classRange!) &&
-        is_position_within_range(m.range.end, classRange!)
+        (
+          // Either within class range (for most languages)
+          (is_position_within_range(m.range.start, classRange!) &&
+           is_position_within_range(m.range.end, classRange!)) ||
+          // Or has matching symbol_id (for Rust impl blocks)
+          m.symbol_id === expectedSymbolId
+        )
       );
       
       if (method) {

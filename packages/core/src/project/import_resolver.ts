@@ -50,11 +50,13 @@ export interface IImportResolver {
    * Resolve a module path to an actual file path
    * @param fromFile The file containing the import
    * @param importPath The import path to resolve
+   * @param state Optional project state for virtual file resolution
    * @returns The resolved file path or null if not found
    */
   resolveModulePath(
     fromFile: string,
-    importPath: string
+    importPath: string,
+    state?: ProjectState
   ): string | null;
 }
 
@@ -113,7 +115,7 @@ export class ImportResolver implements IImportResolver {
       let targetFile: string | null = null;
       
       if (imp.source_module) {
-        targetFile = this.resolveModulePath(filePath, imp.source_module);
+        targetFile = this.resolveModulePath(filePath, imp.source_module, state);
         
         // If we resolved a specific file, only search that file
         if (targetFile) {
@@ -192,9 +194,23 @@ export class ImportResolver implements IImportResolver {
    */
   resolveModulePath(
     fromFile: string,
-    importPath: string
+    importPath: string,
+    state?: ProjectState
   ): string | null {
-    // Detect language and use appropriate resolver
+    // Skip external modules (node_modules, absolute imports without path)
+    if (!importPath.startsWith('.') && !importPath.startsWith('/')) {
+      return null;
+    }
+    
+    // Try virtual file system resolution first (for tests and in-memory files)
+    if (state) {
+      const resolved = this.resolveModulePathVirtual(fromFile, importPath, state);
+      if (resolved) {
+        return resolved;
+      }
+    }
+    
+    // Fall back to filesystem resolution
     const ext = path.extname(fromFile).toLowerCase();
     
     if (ext === '.py') {
@@ -208,6 +224,53 @@ export class ImportResolver implements IImportResolver {
       // Default to generic module resolver
       return ModuleResolver.resolveModulePath(fromFile, importPath);
     }
+  }
+  
+  /**
+   * Resolve module path using virtual file system (project state)
+   */
+  private resolveModulePathVirtual(
+    fromFile: string,
+    importPath: string,
+    state: ProjectState
+  ): string | null {
+    // Handle relative imports
+    if (importPath.startsWith('.')) {
+      const dir = path.dirname(fromFile);
+      const basePath = path.join(dir, importPath).replace(/\\/g, '/');
+      
+      // Common extensions to try
+      const extensions = ['.js', '.jsx', '.ts', '.tsx', '.py', '.rs', ''];
+      
+      for (const ext of extensions) {
+        const testPath = basePath + ext;
+        // Normalize the path for comparison
+        const normalizedPath = testPath.replace(/^\.\//, '');
+        
+        // Check if this file exists in the project
+        if (state.file_graphs.has(normalizedPath)) {
+          return normalizedPath;
+        }
+        
+        // Also try without leading directory separators
+        const withoutLeading = testPath.replace(/^[./\\]+/, '');
+        if (state.file_graphs.has(withoutLeading)) {
+          return withoutLeading;
+        }
+      }
+      
+      // Try index files
+      const indexFiles = ['index.js', 'index.ts', '__init__.py', 'mod.rs'];
+      for (const indexFile of indexFiles) {
+        const indexPath = path.join(basePath, indexFile).replace(/\\/g, '/');
+        const normalizedIndex = indexPath.replace(/^\.\//, '');
+        if (state.file_graphs.has(normalizedIndex)) {
+          return normalizedIndex;
+        }
+      }
+    }
+    
+    return null;
   }
 
   /**

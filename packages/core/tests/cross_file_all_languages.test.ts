@@ -2,7 +2,7 @@ import { describe, test, expect } from "vitest";
 import { Project } from "../src/index";
 
 describe("Cross-file method resolution for all supported languages", () => {
-  test.skip("JavaScript - CommonJS", () => {
+  test("JavaScript - CommonJS", () => {
     const project = new Project();
     
     const file1 = `
@@ -48,16 +48,20 @@ module.exports = compute;
     expect(callGraph.top_level_nodes).not.toContain("calculator#Calculator.add");
     expect(callGraph.top_level_nodes).not.toContain("calculator#Calculator.multiply");
     
-    // compute should call Calculator methods
+    // compute should call Calculator constructor and methods
     const computeNode = callGraph.nodes.get("compute#compute");
     expect(computeNode).toBeDefined();
-    expect(computeNode!.calls.length).toBe(2);
+    expect(computeNode!.calls.length).toBe(3); // Constructor + 2 method calls
     
     const callSymbols = computeNode!.calls.map(c => c.symbol).sort();
-    expect(callSymbols).toEqual(["calculator#Calculator.add", "calculator#Calculator.multiply"]);
+    expect(callSymbols).toEqual([
+      "calculator#Calculator",           // Constructor
+      "calculator#Calculator.add",        // Method
+      "calculator#Calculator.multiply"    // Method
+    ]);
   });
 
-  test.skip("TypeScript - ES6 imports", () => {
+  test("TypeScript - ES6 imports", () => {
     const project = new Project();
     
     const file1 = `
@@ -97,16 +101,20 @@ export function processText(text: string): string {
     // So we'll just check that processText calls the right methods
     expect(callGraph.nodes.has("main#processText")).toBe(true);
     
-    // processText should call two methods
+    // processText should call constructor and two methods
     const processNode = callGraph.nodes.get("main#processText");
     expect(processNode).toBeDefined();
     
     // Get unique method calls (dedup any duplicates)
     const uniqueCallSymbols = [...new Set(processNode!.calls.map(c => c.symbol))].sort();
-    expect(uniqueCallSymbols).toEqual(["processor#StringProcessor.toUpperCase", "processor#StringProcessor.trim"]);
+    expect(uniqueCallSymbols).toEqual([
+      "processor#StringProcessor",              // Constructor
+      "processor#StringProcessor.toUpperCase",  // Method
+      "processor#StringProcessor.trim"          // Method
+    ]);
   });
 
-  test.skip("Python - from/import statements", () => {
+  test("Python - from/import statements", () => {
     const project = new Project();
     
     const file1 = `
@@ -159,20 +167,25 @@ def analyze_data(items):
       expect(internalMethod.is_exported).toBe(false);
     }
     
-    // analyze_data should call the three methods
+    // analyze_data should call constructor and the three methods
     const analyzeNode = callGraph.nodes.get("analyzer#analyze_data");
     expect(analyzeNode).toBeDefined();
-    expect(analyzeNode!.calls.length).toBe(3);
+    
+    console.log("Python test - analyze_data calls:", analyzeNode!.calls.map(c => c.symbol));
+    
+    // Expecting 4 calls: constructor + 3 methods
+    expect(analyzeNode!.calls.length).toBe(4);
     
     const callSymbols = analyzeNode!.calls.map(c => c.symbol).sort();
     expect(callSymbols).toEqual([
+      "processor#DataProcessor",           // Constructor
       "processor#DataProcessor.add_data",
       "processor#DataProcessor.clear_data",
       "processor#DataProcessor.process_data"
     ]);
   });
 
-  test.skip("Rust - use statements", () => {
+  test("Rust - use statements", () => {
     const project = new Project();
     
     const file1 = `
