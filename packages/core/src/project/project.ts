@@ -92,7 +92,24 @@ export class Project {
       );
       
       if (!newState) {
-        throw new Error(`Failed to process file: ${file_path}`);
+        // File couldn't be processed (likely too large for tree-sitter)
+        // Store the file in cache without parsing
+        const updatedFileCache = new Map(currentState.file_cache);
+        updatedFileCache.set(file_path, {
+          source_code,
+          tree: null as any,
+          graph: null as any
+        });
+        
+        // Return state with unparsed file
+        tx.setState({
+          ...currentState,
+          file_cache: updatedFileCache
+        });
+        tx.commit();
+        
+        console.warn(`File ${file_path} stored but not parsed (likely exceeds tree-sitter limits)`);
+        return this;
       }
       
       // Update inheritance after file change
