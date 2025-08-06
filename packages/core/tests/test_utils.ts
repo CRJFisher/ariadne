@@ -1,5 +1,6 @@
 import { Project } from "../src/index";
 import { ScopeGraph, Def, Ref, Import, Scope } from "../src/graph";
+import { expect } from "vitest";
 
 export interface ScopeDebug {
   definitions: DefDebug[];

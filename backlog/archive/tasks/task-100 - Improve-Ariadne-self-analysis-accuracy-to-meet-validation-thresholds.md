@@ -208,6 +208,7 @@ The core cross-file tracking functionality is now working for the primary use ca
 - This task remains as a historical reference showing the evolution from a single epic task to the current organized structure
 
 **See the new structure:**
+
 - Epic organization: `/backlog/tasks/epics/`
 - Operations tasks: `/backlog/tasks/operations/`
 - Work priorities: `/backlog/WORK_PRIORITY.md`
