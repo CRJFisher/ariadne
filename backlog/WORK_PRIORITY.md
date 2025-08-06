@@ -1,170 +1,113 @@
-# Work Priority Guide - Testing Focus
+# Work Priority 🎯
 
-## Current State: Core Functionality Stable
+## Current Focus: Epic-Based Organization
 
-**Test Status**: 490 passing ✅ | 2 failing 🔧 | 17 skipped ⏭️
+The project has been reorganized into 9 epics for better tracking and prioritization. Each epic contains related tasks that advance a specific capability.
 
-The core system is working well. Most critical cross-file tracking and method resolution issues have been resolved. Skipped tests have been audited and categorized.
+## High Priority Epics 🔴
 
-## Skipped Test Analysis 🔍
+### Epic 1: Type System & Inference
+**Goal:** Implement comprehensive type tracking for method resolution  
+**Why Critical:** Core functionality that enables accurate cross-file analysis  
+**Next Steps:** 
+1. Complete initial audit of type system modules
+2. Implement return type inference (task-68)
+3. Build cross-file type registry (task-67)
 
-### Category 1: JavaScript Language Features (7 tests) - LOW PRIORITY ⬇️
+### Epic 4: Performance & Scalability
+**Goal:** Handle enterprise-scale codebases efficiently  
+**Why Critical:** Real-world usage requires analyzing large projects  
+**Next Steps:**
+1. Profile current bottlenecks (task-100.12)
+2. Implement file chunking for >32KB files (task-60)
+3. Optimize for 1M+ LOC codebases (task-25)
 
-**Location**: `tests/languages/javascript.test.ts`
+### Epic 9: Test Suite Maintenance
+**Goal:** Keep tests fast, comprehensive, and within limits  
+**Why Critical:** Quality assurance and preventing regressions  
+**Next Steps:**
+1. Split oversized test files immediately
+2. Review and enable skipped tests
+3. Maintain >80% coverage
 
-- Variable declarations and scoping (hoisting, let/const)
-- ES6 import/export statements
-- Classes and inheritance
-- Destructuring and spread operators
-- Loops and control flow
-- JSX elements
-- Closures and hoisting
+## Medium Priority Epics 🟡
 
-**Assessment**: These test low-level JavaScript parsing edge cases. Core functionality works (490 tests passing include JS). These are nice-to-have for completeness.
+### Epic 2: Import/Export Resolution
+**Goal:** Robust dependency tracking across module systems  
+**Current State:** CommonJS/ES6 basics working, needs enhancement  
+**Next:** Namespace imports, .mts/.cts support
 
-### Category 2: Cross-file Type Tracking (8 tests) - MEDIUM PRIORITY ⚠️
+### Epic 5: MCP Server Features
+**Goal:** Enhanced AI agent integration  
+**Current State:** Basic MCP working, needs features  
+**Next:** Code visualization, sub-agents
 
-**Location**: `tests/call_graph.test.ts`
+### Epic 6: Call Graph Enhancement
+**Goal:** Better analysis capabilities  
+**Current State:** Needs refactoring and cleanup  
+**Next:** Complete audit, then refactor
 
-- Type persistence across functions
-- Cross-file method resolution (TS, JS, Python, Rust)
-- Method chaining with type tracking
-- Renamed imports with type tracking
-- Multiple class instances
+### Epic 7: Documentation & Testing
+**Goal:** Comprehensive docs and tests  
+**Current State:** Needs significant work  
+**Next:** API docs, integration tests
 
-**Assessment**: These require implementing return type inference and variable type tracking across function boundaries. Would improve method resolution accuracy but system functions without them.
+## Low Priority Epics 🟢
 
-### Category 3: Framework-Specific (2 tests) - LOW PRIORITY ⬇️
+### Epic 3: Language Support & Edge Cases
+**Goal:** Expand language coverage  
+**Current State:** Core languages working  
+**Next:** Fix edge cases as needed
 
-- Python method calls (original implementation)
-- TypeScript TSX parsing
+## Completed Epic ✅
 
-**Assessment**: Framework-specific edge cases. Core language support already works.
+### Epic 8: Bug Fixes & Regressions
+**Status:** ARCHIVED  
+**Result:** All critical bugs fixed, cross-file tracking operational
 
-## Recommended Priority Order 🎯
+## Test Status Summary
+**Current:** 490 passing ✅ | 2 failing 🔧 | 17 skipped ⏭️
 
-### Priority 1: Core Functionality Verification ✅
+### Skipped Test Breakdown
+- **7 tests:** JavaScript parsing edge cases (LOW priority)
+- **8 tests:** Type tracking enhancements (MEDIUM priority)  
+- **2 tests:** Framework-specific features (LOW priority)
 
-**Good news**: No skipped tests indicate broken core functionality!
+### Key Finding
+The tool is stable! Skipped tests are enhancements, not critical gaps.
 
-- ✅ Cross-file tracking works (490 tests passing)
-- ✅ Basic method resolution works
-- ✅ All languages supported (TS, JS, Python, Rust)
-- ✅ Inheritance tracking appears functional (no failed inheritance tests)
+## Weekly Process
 
-### Priority 2: High-Value Enhancements 🚀
+1. **Monday:** Review epic progress, adjust priorities
+2. **Daily:** Focus on highest priority incomplete tasks
+3. **Friday:** Run validation, update metrics
 
-Focus on the features that would benefit the most users:
+## Success Metrics
 
-1. **Return Type Inference & Variable Type Tracking**
+- **Type System:** 90% return type inference accuracy
+- **Performance:** <5 min for 1M LOC analysis
+- **Tests:** 100% passing, >80% coverage, all <32KB
+- **MCP:** Working with Claude Code
+- **Documentation:** Complete API docs with examples
 
-   - Would enable 8 skipped tests
-   - Improves method resolution accuracy
-   - Benefits all languages
-   - Significant complexity - needs design work
+## Next Immediate Actions
 
-2. **Method Chaining Support** (task-100.39)
+1. **Split oversized test files** (Epic 9)
+   - `call_graph.test.ts` (51KB)
+   - `javascript.test.ts` (41KB)
 
-   - Currently failing test
-   - Common pattern in modern APIs
-   - Depends on return type tracking
+2. **Run initial audits** (Epics 1, 2, 6)
+   - Generate refactoring sub-tasks
+   - Apply `@rules/refactoring.md`
 
-3. **Namespace Import Resolution** (task-100.40)
-   - Currently failing test
-   - TypeScript-specific but common pattern
-
-### Priority 3: Low Priority Edge Cases 📋
-
-These can be deferred or documented as limitations:
-
-1. **JavaScript Advanced Parsing** (7 skipped tests)
-
-   - Hoisting, destructuring, JSX
-   - Core JS works, these are edge cases
-
-2. **TSX Support** (1 skipped test)
-
-   - React-specific parsing
-   - Specialized use case
-
-3. **Python Method Call Original Implementation** (1 skipped test)
-   - Legacy test, new implementation works
-
-## Recommended Actions 🚀
-
-### Immediate (This Week)
-
-1. ✅ **Test audit complete** - No critical gaps found!
-2. **Document current limitations** in README
-   - Method chaining not supported
-   - Namespace imports not supported
+3. **Document limitations** (Epic 7)
+   - Method chaining not yet supported
+   - Namespace imports pending
    - Return type inference limited
 
-### Short Term (Next 2 Weeks)
+## Notes
 
-1. **Design return type inference system**
-
-   - Research approaches (basic type propagation vs full inference)
-   - Consider performance implications
-   - Create implementation plan
-
-2. **Create detailed tasks for type tracking**
-   - Break down into manageable chunks
-   - Prioritize by language (TypeScript first?)
-
-### Long Term (Month+)
-
-1. **Implement type tracking incrementally**
-
-   - Start with simple cases
-   - Add method chaining support
-   - Enable skipped tests as features land
-
-2. **Consider JavaScript edge cases**
-   - Only if users report issues
-   - Document as known limitations for now
-
-## Key Findings 📊
-
-### The Good News 🎉
-
-- ✅ **All 17 skipped tests reviewed** - None represent critical gaps!
-- ✅ **Core functionality confirmed working** - 490 tests passing
-- ✅ **No high-level features broken** - Just enhancements needed
-
-### Test Breakdown
-
-- **7 tests**: JavaScript parsing edge cases (LOW priority)
-- **8 tests**: Type tracking enhancements (MEDIUM priority)
-- **2 tests**: Framework-specific features (LOW priority)
-
-### What This Means
-
-The tool is in excellent shape! The skipped tests are either:
-
-1. Edge cases that don't affect most users
-2. Enhancements that would be nice but aren't critical
-3. Legacy tests that can be removed
-
-## Summary & Next Steps 📝
-
-**Current State**: System is stable and feature-complete for basic use cases.
-
-**Philosophy**: Ship what works well rather than chase edge case perfection.
-
-**Immediate Next Step**: Document current limitations and close out task-100 as substantially complete.
-
-**Future Work**: Consider implementing return type inference as a major feature enhancement (new epic, not a bug fix).
-
-## Test Commands Reference
-
-```bash
-# Run all tests with detailed output
-npx vitest run --reporter=verbose
-
-# Run specific skipped test
-npx vitest run -t "test name"
-
-# Count skipped tests by file
-npx vitest run --reporter=verbose 2>&1 | grep "↓" | awk '{print $2}' | sort | uniq -c
-```
+- Apply `@rules/refactoring.md` to all changes
+- Each epic has initial audit tasks - complete these first
+- Create refactoring sub-tasks based on audit findings
+- Track progress in epic README files

@@ -19,9 +19,10 @@ Maintain a healthy, fast, and comprehensive test suite that stays within tree-si
 
 ### Process
 1. Split files into logical units
-2. Apply `backlog/tasks/operations/testing-standards.md`
-3. Ensure each file < 32KB
-4. Maintain test organization clarity
+2. Apply `@rules/refactoring.md` for the split
+3. Follow `@rules/testing.md` for test standards
+4. Ensure each file < 32KB (tree-sitter limit)
+5. Maintain test organization clarity
 
 ## Ongoing Maintenance
 - Monitor test file sizes weekly

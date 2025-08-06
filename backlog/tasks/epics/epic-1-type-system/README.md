@@ -26,8 +26,9 @@ Implement comprehensive type inference and tracking to improve method resolution
 ## Refactoring Process
 After audit, create refactoring sub-tasks that:
 1. Improve module structure based on findings
-2. Apply `backlog/tasks/operations/testing-standards.md`
-3. Apply `backlog/tasks/operations/coding-standards.md`
+2. Apply `@rules/refactoring.md` for all changes
+3. Follow `@rules/testing.md` for test coverage
+4. Follow `@rules/coding.md` for code style
 
 ## Success Criteria
 - Return types correctly inferred for 90% of functions

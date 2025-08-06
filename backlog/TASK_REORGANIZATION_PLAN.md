@@ -19,6 +19,7 @@ Task-100 started as "Improve Ariadne self-analysis accuracy" but became a catch-
 **Priority: HIGH** - Core feature enhancement
 
 **Initial Audit Task:**
+
 - **NEW**: Audit type system module structure
   - Review folder organization in `src/call_graph/` and `src/types/`
   - Check module/function naming clarity
@@ -38,6 +39,7 @@ Task-100 started as "Improve Ariadne self-analysis accuracy" but became a catch-
 **Priority: MEDIUM** - Important for modern codebases
 
 **Initial Audit Task:**
+
 - **NEW**: Audit import/export resolution structure
   - Review `src/project/import_resolver.ts` organization
   - Check clarity of module resolution logic
@@ -136,12 +138,15 @@ Task-100 started as "Improve Ariadne self-analysis accuracy" but became a catch-
 **Priority: HIGH** - Critical for quality
 
 **Initial Tasks:**
+
 - **NEW**: Split oversized test files
   - Split `tests/call_graph.test.ts` (51KB) into logical modules
+    - Apply @rules/refactoring.md
   - Split `tests/languages/javascript.test.ts` (41KB) into feature groups
-  - Apply testing-standards.md after split
-  
+    - Apply @rules/refactoring.md
+
 **Ongoing:**
+
 - Monitor test file sizes (keep under 32KB)
 - Review and enable skipped tests
 - Maintain test coverage above 80%
@@ -149,9 +154,9 @@ Task-100 started as "Improve Ariadne self-analysis accuracy" but became a catch-
 ## Refactoring Process for Each Epic
 
 **Each Initial Audit Task should spawn a refactoring sub-epic with:**
-1. Specific refactoring tasks based on audit findings
-2. Apply `backlog/tasks/operations/testing-standards.md`
-3. Apply `backlog/tasks/operations/coding-standards.md`
+
+- Specific refactoring tasks based on audit findings
+  - For each epic, apply @rules/refactoring.md
 
 ## New Operations/Maintenance Structure
 
@@ -167,41 +172,6 @@ This folder contains recurring processes, validation procedures, and maintenance
 - **Frequency**: Weekly or before major releases
 - **Output Location**: `validation-results/YYYY-MM-DD/`
 - **Description**: Run comprehensive validation against Ariadne and diverse repos
-
-**2. Test Suite Health Check**
-
-- **File**: `test-suite-health-check.md`
-- **Frequency**: Daily in CI, weekly manual review
-- **Output Location**: `test-reports/`
-- **Description**: Monitor skipped/failing tests, coverage trends
-
-**3. Performance Benchmarking**
-
-- **File**: `performance-benchmarking.md`
-- **Frequency**: Before/after major changes
-- **Output Location**: `benchmarks/YYYY-MM-DD/`
-- **Description**: Track parsing speed, memory usage, large file handling
-
-**4. Documentation Sync**
-
-- **File**: `documentation-sync.md`
-- **Frequency**: After each sprint
-- **Output Location**: Update README.md, API docs
-- **Description**: Ensure docs reflect current capabilities and limitations
-
-**5. Dependency Audit**
-
-- **File**: `dependency-audit.md`
-- **Frequency**: Monthly
-- **Output Location**: `security-reports/`
-- **Description**: Check for vulnerabilities, update tree-sitter, etc.
-
-**6. Release Checklist**
-
-- **File**: `release-checklist.md`
-- **Frequency**: Per release
-- **Output Location**: GitHub releases
-- **Description**: Version bump, changelog, test suite, validation
 
 ## Implementation Steps
 
