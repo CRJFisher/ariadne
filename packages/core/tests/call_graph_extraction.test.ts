@@ -29,7 +29,7 @@ main();
 `;
     project.add_or_update_file("test.js", code);
     
-    const mainDef = project.get_all_definitions().find(d => d.name === "main");
+    const mainDef = project.get_definitions().find(d => d.name === "main");
     expect(mainDef).toBeDefined();
     if (!mainDef) return;
     
@@ -56,7 +56,7 @@ calc.calculate();
 `;
     project.add_or_update_file("test.js", code);
     
-    const calculateDef = project.get_all_definitions().find(
+    const calculateDef = project.get_definitions().find(
       d => d.name === "calculate" && d.symbol_kind === "method"
     );
     expect(calculateDef).toBeDefined();
@@ -80,7 +80,7 @@ factorial(5);
 `;
     project.add_or_update_file("test.js", code);
     
-    const factorialDef = project.get_all_definitions().find(d => d.name === "factorial");
+    const factorialDef = project.get_definitions().find(d => d.name === "factorial");
     expect(factorialDef).toBeDefined();
     if (!factorialDef) return;
     
@@ -117,7 +117,7 @@ function tsFunction(): void {
 tsFunction();
 `);
     
-    const allDefs = project.get_all_definitions();
+    const allDefs = project.get_definitions();
     const jsDef = allDefs.find(d => d.name === "jsFunction");
     const pyDef = allDefs.find(d => d.name === "py_function");
     const tsDef = allDefs.find(d => d.name === "tsFunction");
@@ -162,7 +162,7 @@ function main() {
 `;
       project.add_or_update_file("test.js", code);
       
-      const moduleDef = project.get_all_definitions().find(
+      const moduleDef = project.get_definitions().find(
         d => d.name === "__module__" && d.symbol_kind === "module"
       );
       
@@ -205,7 +205,7 @@ calculate();
 `;
     project.add_or_update_file("test.js", code);
     
-    const calculateDef = project.get_all_definitions().find(d => d.name === "calculate");
+    const calculateDef = project.get_definitions().find(d => d.name === "calculate");
     expect(calculateDef).toBeDefined();
     if (!calculateDef) return;
     
@@ -231,7 +231,7 @@ processData();
 `;
     project.add_or_update_file("test.js", code);
     
-    const processDef = project.get_all_definitions().find(d => d.name === "processData");
+    const processDef = project.get_definitions().find(d => d.name === "processData");
     expect(processDef).toBeDefined();
     if (!processDef) return;
     
@@ -257,7 +257,7 @@ function useGenerator() {
 `;
     project.add_or_update_file("test.js", code);
     
-    const useDef = project.get_all_definitions().find(d => d.name === "useGenerator");
+    const useDef = project.get_definitions().find(d => d.name === "useGenerator");
     expect(useDef).toBeDefined();
     if (!useDef) return;
     
@@ -281,7 +281,7 @@ dispatch("handler1");
 `;
     project.add_or_update_file("test.js", code);
     
-    const dispatchDef = project.get_all_definitions().find(d => d.name === "dispatch");
+    const dispatchDef = project.get_definitions().find(d => d.name === "dispatch");
     expect(dispatchDef).toBeDefined();
     if (!dispatchDef) return;
     
@@ -311,7 +311,7 @@ function main() {
 `;
     project.add_or_update_file("test.js", code);
     
-    const mainDef = project.get_all_definitions().find(d => d.name === "main");
+    const mainDef = project.get_definitions().find(d => d.name === "main");
     expect(mainDef).toBeDefined();
     if (!mainDef) return;
     
@@ -320,7 +320,7 @@ function main() {
     expect(calls[0].name).toBe("level1");
     
     // Check level1 calls level2
-    const level1Def = project.get_all_definitions().find(d => d.name === "level1");
+    const level1Def = project.get_definitions().find(d => d.name === "level1");
     if (level1Def) {
       const level1Calls = project.get_calls_from_definition(level1Def);
       expect(level1Calls).toHaveLength(1);
@@ -346,8 +346,8 @@ function another() {
 `;
     project.add_or_update_file("test.js", code);
     
-    const outerDef = project.get_all_definitions().find(d => d.name === "outer");
-    const anotherDef = project.get_all_definitions().find(d => d.name === "another");
+    const outerDef = project.get_definitions().find(d => d.name === "outer");
+    const anotherDef = project.get_definitions().find(d => d.name === "another");
     
     expect(outerDef).toBeDefined();
     expect(anotherDef).toBeDefined();
@@ -383,7 +383,7 @@ function main() {
 `;
     project.add_or_update_file("test.js", code);
     
-    const mainDef = project.get_all_definitions().find(d => d.name === "main");
+    const mainDef = project.get_definitions().find(d => d.name === "main");
     expect(mainDef).toBeDefined();
     if (!mainDef) return;
     
@@ -411,7 +411,7 @@ function createService() {
 `;
     project.add_or_update_file("test.js", code);
     
-    const createDef = project.get_all_definitions().find(d => d.name === "createService");
+    const createDef = project.get_definitions().find(d => d.name === "createService");
     expect(createDef).toBeDefined();
     if (!createDef) return;
     
@@ -419,7 +419,7 @@ function createService() {
     expect(calls.some(c => c.name === "Service")).toBe(true);
     
     // Check constructor calls init
-    const constructorDef = project.get_all_definitions().find(
+    const constructorDef = project.get_definitions().find(
       d => d.name === "constructor" && d.symbol_kind === "method"
     );
     if (constructorDef) {
@@ -442,7 +442,7 @@ function calculate() {
 `;
     project.add_or_update_file("test.js", code);
     
-    const calculateDef = project.get_all_definitions().find(d => d.name === "calculate");
+    const calculateDef = project.get_definitions().find(d => d.name === "calculate");
     expect(calculateDef).toBeDefined();
     if (!calculateDef) return;
     
@@ -464,7 +464,7 @@ function useTag() {
 `;
     project.add_or_update_file("test.js", code);
     
-    const useTagDef = project.get_all_definitions().find(d => d.name === "useTag");
+    const useTagDef = project.get_definitions().find(d => d.name === "useTag");
     expect(useTagDef).toBeDefined();
     if (!useTagDef) return;
     
