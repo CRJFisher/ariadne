@@ -5,7 +5,7 @@
  * by using a factory pattern instead of class inheritance
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { Project } from '../../index';
 
 /**

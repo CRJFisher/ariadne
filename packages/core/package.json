@@ -1,6 +1,6 @@
 {
   "name": "@ariadnejs/core",
-  "version": "0.5.18",
+  "version": "0.6.0",
   "description": "Core functionality for Ariadne - Find references and definitions in your codebase using tree-sitter",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -465,7 +465,8 @@ function resolve_nested_namespace_member(
   
   // Try direct member first
   const directMember = allExports.get(memberRef.name);
-  if (directMember) {
+  if (directMember && 'kind' in directMember) {
+    // Only return if it's actually a Def, not a namespace re-export marker
     return directMember;
   }
   
