@@ -56,6 +56,15 @@ This file references all the rules files that are relevant for different types o
 - Structure: Organize by feature category → feature → language tests
 - Support: Test file existence = language support (no registry needed)
 
+### Release Process
+
+**🚀 `rules/release.md`** - Complete release workflow
+
+- When: Preparing to release new versions
+- Process: Changesets → Version → Build → Test → Tag → Publish
+- Critical: All tests must pass, builds must succeed
+- Tools: Uses changesets for version management, npm for publishing
+
 ## Workflow Overview
 
 1. **Start Work**: Read `rules/backlog.md` → Find task → Set to "In Progress"

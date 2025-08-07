@@ -137,7 +137,8 @@ function findSymbolDefinitions(
     const defs = graph.getNodes('definition');
     
     for (const def of defs) {
-      if (def.name === symbolName) {
+      // Type guard to ensure we have a definition node with required properties
+      if ('name' in def && def.name === symbolName) {
         definitions.push({
           ...def,
           file_path: filePath,
@@ -163,7 +164,10 @@ function findSimilarSymbols(
     
     const defs = graph.getNodes('definition');
     for (const def of defs) {
-      allSymbols.add(def.name);
+      // Type guard to ensure we have a definition node with name property
+      if ('name' in def && typeof def.name === 'string') {
+        allSymbols.add(def.name);
+      }
     }
   }
   
@@ -266,19 +270,25 @@ function findSymbolUsages(
   }
   
   // Check if this is an exported definition
-  const exportedDef = def.graph.findExportedDef(def.name);
-  if (exportedDef && exportedDef.id === def.id) {
+  // Use the graph's getNodes method to find exports
+  const exports = def.graph.getNodes('export') as any[];
+  const isExported = exports.some((exp: any) => 
+    'name' in exp && exp.name === def.name
+  );
+  
+  if (isExported) {
     // Search for imports and references in other files
     for (const [filePath, graph] of fileGraphs) {
       if (filePath === def.file_path) continue;
       
-      // Find imports
-      const allImports = graph.getAllImports();
-      for (const imp of allImports) {
-        if (imp.name === def.name || imp.source_name === def.name) {
+      // Find imports using getNodes method
+      const importNodes = graph.getNodes('import') as any[];
+      for (const imp of importNodes) {
+        if ('name' in imp && 'source_name' in imp && 
+            (imp.name === def.name || imp.source_name === def.name)) {
           imports.push({
             file: filePath,
-            line: imp.range.start.row + 1,
+            line: 'range' in imp ? imp.range.start.row + 1 : 0,
             context: `import { ${imp.name} } from '...'`
           });
           
@@ -361,7 +371,12 @@ function extractTestName(filePath: string, ref: any, project: Project): string |
   try {
     // Search backwards for test/it/describe
     for (let i = ref.range.start.row; i >= 0; i--) {
-      const dummyDef = {
+      const dummyDef: any = {
+        kind: 'variable' as const,
+        name: '_dummy',
+        symbol_kind: 'variable' as const,
+        symbol_id: '_dummy',
+        id: -1,
         file_path: filePath,
         range: {
           start: { row: i, column: 0 },
