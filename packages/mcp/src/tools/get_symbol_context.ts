@@ -225,6 +225,42 @@ function extractDefinitionInfo(def: any, project: Project): DefinitionInfo {
   try {
     // Use the public API to get source code
     implementation = project.get_source_code(def, def.file_path);
+    
+    // Check if this definition is exported and prepend export keyword if needed
+    // Since export detection via graph nodes isn't working reliably,
+    // let's check if the source code around the definition contains 'export'
+    if (!implementation.startsWith('export ')) {
+      // Try to get the full line including export keyword
+      try {
+        const fullLineDef: any = {
+          kind: 'variable' as const,
+          name: '_dummy',
+          symbol_kind: 'variable' as const,
+          symbol_id: '_dummy',
+          id: -1,
+          file_path: def.file_path,
+          range: {
+            start: { row: def.range.start.row, column: 0 },
+            end: { row: def.range.end.row, column: 999 }
+          }
+        };
+        const fullLine = project.get_source_code(fullLineDef, def.file_path);
+        
+        // Check if the line starts with 'export'
+        if (fullLine.trimStart().startsWith('export ')) {
+          implementation = 'export ' + implementation;
+        }
+      } catch (e) {
+        // Fallback to checking graph nodes
+        if (def.graph) {
+          const exports = def.graph.getNodes('export') as any[];
+          const isExported = exports.length > 0;  // Simplified check
+          if (isExported) {
+            implementation = 'export ' + implementation;
+          }
+        }
+      }
+    }
   } catch (error) {
     // If source code extraction fails, use fallback
   }
@@ -236,6 +272,67 @@ function extractDefinitionInfo(def: any, project: Project): DefinitionInfo {
   // Use the docstring from the def if available
   if (def.docstring) {
     documentation = def.docstring;
+  }
+  
+  // If no docstring, try to extract JSDoc from the source
+  if (!documentation && implementation) {
+    // Look for JSDoc comment in the implementation or just before it
+    const jsdocMatch = implementation.match(/\/\*\*([\s\S]*?)\*\//);
+    if (jsdocMatch) {
+      documentation = jsdocMatch[0];
+    } else {
+      // Try to get the line before the definition to check for JSDoc
+      try {
+        if (def.range.start.row > 0) {
+          const prevLineDef: any = {
+            kind: 'variable' as const,
+            name: '_dummy',
+            symbol_kind: 'variable' as const,
+            symbol_id: '_dummy',
+            id: -1,
+            file_path: def.file_path,
+            range: {
+              start: { row: Math.max(0, def.range.start.row - 10), column: 0 },
+              end: { row: def.range.start.row - 1, column: 999 }
+            }
+          };
+          const prevLines = project.get_source_code(prevLineDef, def.file_path);
+          const jsdocInPrev = prevLines.match(/\/\*\*([\s\S]*?)\*\//);
+          if (jsdocInPrev) {
+            documentation = jsdocInPrev[0];
+          }
+        }
+      } catch (e) {
+        // Ignore errors in documentation extraction
+      }
+    }
+  }
+  
+  // Extract annotations/decorators
+  try {
+    if (def.range.start.row > 0) {
+      const prevLineDef: any = {
+        kind: 'variable' as const,
+        name: '_dummy',
+        symbol_kind: 'variable' as const,
+        symbol_id: '_dummy',
+        id: -1,
+        file_path: def.file_path,
+        range: {
+          start: { row: Math.max(0, def.range.start.row - 10), column: 0 },
+          end: { row: def.range.start.row, column: 999 }
+        }
+      };
+      const prevLines = project.get_source_code(prevLineDef, def.file_path);
+      
+      // Look for decorators/annotations like @deprecated, @override, etc.
+      const decoratorMatches = prevLines.match(/@\w+/g);
+      if (decoratorMatches && decoratorMatches.length > 0) {
+        annotations = decoratorMatches;
+      }
+    }
+  } catch (e) {
+    // Ignore errors in annotation extraction
   }
   
   return {
@@ -262,19 +359,29 @@ function findSymbolUsages(
   const localRefs = def.graph.getRefsForDef(def.id);
   for (const ref of localRefs) {
     const context = extractReferenceContext(def.file_path, ref, project);
-    directReferences.push({
-      file: def.file_path,
-      line: ref.range.start.row + 1,
-      context
-    });
+    
+    // Check if this is a test file and we should track it as a test
+    const isInTestFunction = isReferenceInTestFunction(def.file_path, ref, fileGraphs);
+    
+    if (isInTestFunction && includeTests) {
+      const testName = extractTestName(def.file_path, ref, project);
+      tests.push({
+        file: def.file_path,
+        testName: testName || "test function",
+        line: ref.range.start.row + 1
+      });
+    } else if (!isInTestFunction) {
+      directReferences.push({
+        file: def.file_path,
+        line: ref.range.start.row + 1,
+        context
+      });
+    }
   }
   
-  // Check if this is an exported definition
-  // Use the graph's getNodes method to find exports
-  const exports = def.graph.getNodes('export') as any[];
-  const isExported = exports.some((exp: any) => 
-    'name' in exp && exp.name === def.name
-  );
+  // Check if this is an exported definition by looking for is_exported property
+  // The core library sets this property during parsing
+  const isExported = def.is_exported === true;
   
   if (isExported) {
     // Search for imports and references in other files
@@ -284,20 +391,33 @@ function findSymbolUsages(
       // Find imports using getNodes method
       const importNodes = graph.getNodes('import') as any[];
       for (const imp of importNodes) {
-        if ('name' in imp && 'source_name' in imp && 
-            (imp.name === def.name || imp.source_name === def.name)) {
+        // Check if this import matches our definition
+        // Import nodes have 'name' (local name) and optionally 'source_name' (imported name)
+        const matchesName = 'name' in imp && (
+          imp.name === def.name || 
+          ('source_name' in imp && imp.source_name === def.name)
+        );
+        
+        if (matchesName) {
+          // Verify the import is actually from the file containing the definition
+          // For now, we'll include all matching imports (TODO: improve module resolution)
           imports.push({
             file: filePath,
             line: 'range' in imp ? imp.range.start.row + 1 : 0,
-            context: `import { ${imp.name} } from '...'`
+            context: `import { ${imp.name} } from '${imp.source_module || '...'}'`
           });
           
-          // Find references to this import
+          // Find references to this import using the helper function
           const importRefs = findReferencesToImport(graph, imp);
-          for (const ref of importRefs) {
+          
+          // Also find direct references by name in this file
+          const allRefs = graph.getNodes('reference') as any[];
+          const nameMatchingRefs = allRefs.filter(ref => ref.name === imp.name);
+          
+          for (const ref of nameMatchingRefs) {
             const context = extractReferenceContext(filePath, ref, project);
             
-            // Check if the reference is inside a test function using Ariadne's test detection
+            // Check if the reference is inside a test function
             const isInTestFunction = isReferenceInTestFunction(filePath, ref, fileGraphs);
             
             if (isInTestFunction) {
@@ -445,26 +565,65 @@ function analyzeRelationships(project: Project, def: any): RelationshipInfo {
   
   // Analyze class inheritance relationships
   if (def.symbol_kind === 'class' || def.symbol_kind === 'struct' || def.symbol_kind === 'interface') {
-    const classRelationships = project.get_class_relationships(def);
-    if (classRelationships) {
-      // Set parent class
-      if (classRelationships.parent_class) {
-        relationships.extends = classRelationships.parent_class;
+    try {
+      const classRelationships = project.get_class_relationships(def);
+      if (classRelationships) {
+        // Set parent class
+        if (classRelationships.parent_class) {
+          relationships.extends = classRelationships.parent_class;
+        }
+        
+        // Set implemented interfaces
+        if (classRelationships.implemented_interfaces && classRelationships.implemented_interfaces.length > 0) {
+          relationships.implements = classRelationships.implemented_interfaces;
+        }
+      } else {
+        // Fallback: try to extract inheritance from source code
+        const fallbackRelationships = extractInheritanceFromSource(project, def);
+        if (fallbackRelationships.extends) {
+          relationships.extends = fallbackRelationships.extends;
+        }
+        if (fallbackRelationships.implements && fallbackRelationships.implements.length > 0) {
+          relationships.implements = fallbackRelationships.implements;
+        }
       }
+    } catch (error) {
+      // Inheritance analysis might fail for some classes
+      console.warn(`Failed to analyze inheritance for ${def.name}: ${error}`);
       
-      // Set implemented interfaces
-      if (classRelationships.implemented_interfaces.length > 0) {
-        relationships.implements = classRelationships.implemented_interfaces;
+      // Try fallback method
+      const fallbackRelationships = extractInheritanceFromSource(project, def);
+      if (fallbackRelationships.extends) {
+        relationships.extends = fallbackRelationships.extends;
+      }
+      if (fallbackRelationships.implements && fallbackRelationships.implements.length > 0) {
+        relationships.implements = fallbackRelationships.implements;
       }
     }
     
-    // Find subclasses/implementations
-    if (def.symbol_kind === 'class' || def.symbol_kind === 'struct') {
-      const subclasses = project.find_subclasses(def);
-      relationships.dependents = subclasses.map(sub => sub.name);
-    } else if (def.symbol_kind === 'interface') {
-      const implementations = project.find_implementations(def);
-      relationships.dependents = implementations.map(impl => impl.name);
+    // Find subclasses/implementations using fallback if needed
+    try {
+      if (def.symbol_kind === 'class' || def.symbol_kind === 'struct') {
+        const subclasses = project.find_subclasses(def);
+        if (subclasses.length > 0) {
+          relationships.dependents = subclasses.map(sub => sub.name);
+        } else {
+          // Fallback: search for classes that extend this one
+          relationships.dependents = findDependentClassesFromSource(project, def);
+        }
+      } else if (def.symbol_kind === 'interface') {
+        const implementations = project.find_implementations(def);
+        if (implementations.length > 0) {
+          relationships.dependents = implementations.map(impl => impl.name);
+        } else {
+          // Fallback: search for classes that implement this interface
+          relationships.dependents = findDependentClassesFromSource(project, def);
+        }
+      }
+    } catch (error) {
+      console.warn(`Failed to find dependents for ${def.name}: ${error}`);
+      // Use fallback method
+      relationships.dependents = findDependentClassesFromSource(project, def);
     }
   }
   
@@ -473,6 +632,161 @@ function analyzeRelationships(project: Project, def: any): RelationshipInfo {
   // - Cross-file type dependencies
   
   return relationships;
+}
+
+// Fallback inheritance extraction functions
+function extractInheritanceFromSource(project: Project, def: any): { extends?: string; implements?: string[] } {
+  try {
+    // Get the source code around the class definition using enclosing_range
+    const defWithEnclosingRange = {
+      ...def,
+      range: def.enclosing_range || def.range
+    };
+    const implementation = project.get_source_code(defWithEnclosingRange, def.file_path);
+    
+    const result: { extends?: string; implements?: string[] } = {};
+    
+    // Extract extends relationship
+    const extendsMatch = implementation.match(/class\s+\w+\s+extends\s+(\w+)/);
+    if (extendsMatch) {
+      result.extends = extendsMatch[1];
+    }
+    
+    // Extract implements relationships
+    const implementsMatch = implementation.match(/(?:class|interface)\s+\w+(?:\s+extends\s+\w+)?\s+implements\s+([\w\s,]+)/);
+    if (implementsMatch) {
+      result.implements = implementsMatch[1]
+        .split(',')
+        .map(name => name.trim())
+        .filter(name => name.length > 0);
+    }
+    
+    // Handle interface extension
+    if (def.symbol_kind === 'interface') {
+      const interfaceExtendsMatch = implementation.match(/interface\s+\w+\s+extends\s+([\w\s,]+)/);
+      if (interfaceExtendsMatch) {
+        const extendedInterfaces = interfaceExtendsMatch[1]
+          .split(',')
+          .map(name => name.trim())
+          .filter(name => name.length > 0);
+        
+        if (extendedInterfaces.length === 1) {
+          result.extends = extendedInterfaces[0];
+        } else if (extendedInterfaces.length > 1) {
+          // For multiple interface inheritance, use the first one as extends
+          result.extends = extendedInterfaces[0];
+          // Could also set implements to the rest, but this is less common
+        }
+      }
+    }
+    
+    // Handle Rust trait implementations by looking at references
+    if (def.symbol_kind === 'struct' && def.file_path.endsWith('.rs')) {
+      // Look for references to this struct in impl blocks
+      try {
+        const fileGraphs = project.get_all_scope_graphs();
+        const graph = fileGraphs.get(def.file_path);
+        
+        if (graph) {
+          const refs = graph.getNodes('reference') as any[];
+          const structRefs = refs.filter(ref => ref.name === def.name);
+          
+          const implementedTraits: string[] = [];
+          
+          for (const ref of structRefs) {
+            try {
+              const refDef = {
+                ...ref,
+                range: {
+                  start: { row: ref.range.start.row, column: 0 },
+                  end: { row: ref.range.start.row, column: 999 }
+                }
+              };
+              const line = project.get_source_code(refDef, def.file_path);
+              
+              // Look for impl patterns: "impl TraitName for StructName"
+              const implMatch = line.match(/impl\s+(\w+)\s+for\s+\w+/);
+              if (implMatch) {
+                const traitName = implMatch[1];
+                if (!implementedTraits.includes(traitName)) {
+                  implementedTraits.push(traitName);
+                }
+              }
+            } catch (error) {
+              // Skip this reference
+            }
+          }
+          
+          if (implementedTraits.length > 0) {
+            result.implements = implementedTraits;
+          }
+        }
+      } catch (error) {
+        // Fallback failed, ignore
+      }
+    }
+    
+    return result;
+  } catch (error) {
+    return {};
+  }
+}
+
+function findDependentClassesFromSource(project: Project, def: any): string[] {
+  const dependents: string[] = [];
+  
+  try {
+    // Search all files for classes that extend or implement this definition
+    const fileGraphs = project.get_all_scope_graphs();
+    
+    for (const [filePath, graph] of fileGraphs) {
+      const definitions = graph.getNodes('definition') as any[];
+      const classDefinitions = definitions.filter(d => 
+        d.symbol_kind === 'class' || d.symbol_kind === 'struct' || d.symbol_kind === 'interface'
+      );
+      
+      for (const classDef of classDefinitions) {
+        if (classDef.name === def.name) continue; // Skip self
+        
+        try {
+          const defWithEnclosingRange = {
+            ...classDef,
+            range: (classDef as any).enclosing_range || (classDef as any).range
+          };
+          const implementation = project.get_source_code(defWithEnclosingRange as any, filePath);
+          
+          // Check for extends relationship
+          const extendsPattern = new RegExp(`(?:class|interface)\\s+\\w+\\s+extends\\s+${def.name}\\b`);
+          if (extendsPattern.test(implementation)) {
+            dependents.push(classDef.name);
+            continue;
+          }
+          
+          // Check for implements relationship
+          const implementsPattern = new RegExp(`class\\s+\\w+(?:\\s+extends\\s+\\w+)?\\s+implements\\s+[\\w\\s,]*\\b${def.name}\\b`);
+          if (implementsPattern.test(implementation)) {
+            dependents.push(classDef.name);
+            continue;
+          }
+          
+          // Handle Rust trait implementations
+          if (filePath.endsWith('.rs')) {
+            const rustImplPattern = new RegExp(`impl\\s+${def.name}\\s+for\\s+(\\w+)`);
+            const rustMatch = implementation.match(rustImplPattern);
+            if (rustMatch) {
+              dependents.push(rustMatch[1]);
+            }
+          }
+        } catch (error) {
+          // Skip this definition if we can't get its source
+        }
+      }
+    }
+  } catch (error) {
+    // Return empty array on error
+  }
+  
+  return dependents;
 }
 
 function calculateMetrics(def: any, _usage: UsageInfo): MetricsInfo {

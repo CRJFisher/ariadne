@@ -135,26 +135,37 @@ git push origin [branch-name]
 git push origin --tags
 ```
 
-### Step 7: Publish to NPM 📦
+### Step 7: Create Pull Request and Merge 📦
 
-**Option A: Local Publishing**
+**GitHub Actions Workflow (Primary Method)**
+
+1. **Push your branch with changeset**:
 ```bash
-# Ensure you're logged in to npm
-npm login
-
-# Run the release script
-npm run release
-
-# Or manually publish
-npx changeset publish
+# Push the branch containing changeset files
+git push origin [branch-name]
 ```
 
-**Option B: GitHub Actions (Recommended)**
-1. Create a GitHub Release from the tag
-2. GitHub Actions will automatically:
-   - Run tests
-   - Build packages
-   - Publish to npm
+2. **Create Pull Request**:
+   - Open PR from your branch to `main`
+   - GitHub Actions will validate tests and builds
+   - Review the changeset preview in PR comments
+
+3. **When PR is merged to main**:
+   - Changesets Action automatically creates a "Version Packages" PR
+   - This PR contains all version bumps and changelog updates
+   - Review and merge the Version Packages PR
+
+4. **After Version Packages PR is merged**:
+   - GitHub Actions automatically publishes to npm
+   - Creates GitHub releases with tags
+   - No manual npm login required (uses NPM_TOKEN secret)
+
+**Alternative: Local Publishing (Emergency Only)**
+```bash
+# Only use if GitHub Actions is broken
+npm login
+npx changeset publish
+```
 
 ### Step 8: Verify Release ✔️
 
@@ -271,27 +282,30 @@ git checkout -b hotfix/critical-bug
 
 ## Quick Release Commands
 
-For experienced users, here's the minimal flow:
+For experienced users, here's the actual flow:
 
 ```bash
-# 1. Create changeset
-npx changeset add  # or manual creation
+# 1. Create changeset (don't version yet!)
+cat > .changeset/my-release.md << 'EOF'
+---
+"@ariadnejs/core": minor
+---
+Description of changes
+EOF
 
-# 2. Version
-npx changeset version
+# 2. Commit changeset
+git add .changeset/
+git commit -m "chore: add changeset for release"
 
-# 3. Commit
-git add -A && git commit -m "chore: release vX.Y.Z"
+# 3. Push branch
+git push origin [branch-name]
 
-# 4. Tag
-git tag -a vX.Y.Z -m "Release vX.Y.Z"
-
-# 5. Push
-git push origin main --tags
-
-# 6. Publish
-npm run release  # or let GitHub Actions handle it
+# 4. Create PR to main
+# 5. After PR merged, Version Packages PR appears
+# 6. Merge Version Packages PR → Auto-publishes
 ```
+
+**Important**: Do NOT run `changeset version` locally - let the GitHub Action handle it!
 
 ## Related Documentation
 

@@ -61,9 +61,9 @@ This file references all the rules files that are relevant for different types o
 **🚀 `rules/release.md`** - Complete release workflow
 
 - When: Preparing to release new versions
-- Process: Changesets → Version → Build → Test → Tag → Publish
-- Critical: All tests must pass, builds must succeed
-- Tools: Uses changesets for version management, npm for publishing
+- Process: Create changeset → Push branch → Open PR → Merge → Auto-publish
+- Critical: Do NOT run `changeset version` locally - GitHub Actions handles it
+- Workflow: PR to main triggers version PR → Merge version PR publishes to npm
 
 ## Workflow Overview
 

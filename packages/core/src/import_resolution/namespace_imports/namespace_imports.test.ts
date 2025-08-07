@@ -5,6 +5,7 @@
  * for namespace import support.
  */
 
+import { describe, it } from 'vitest';
 import { Project, Def } from '../../index';
 
 export interface NamespaceImportTests {
@@ -128,3 +129,11 @@ export abstract class NamespaceImportTestBase {
     return [];
   }
 }
+
+// Placeholder test suite to satisfy vitest
+describe('Namespace Import Test Contract', () => {
+  it('test contract is defined', () => {
+    // This is just the test contract definition file
+    // Actual tests are in language-specific files
+  });
+});
