@@ -70,11 +70,12 @@ functionCounts.forEach(count => {
   
   // Small edit in the middle
   const editPosition = { row: Math.floor(count / 2) * 5 + 2, column: 20 };
+  const oldEndPosition = { row: editPosition.row, column: editPosition.column + 5 }; // 'param' is 5 chars
   const incrementalTime = benchmark('Incremental update (small edit)', () => {
     project.update_file_range(
       'large.ts',
       editPosition,
-      'param',
+      oldEndPosition,
       'parameter'
     );
   });
@@ -91,13 +92,18 @@ functionCounts.forEach(count => {
 }`;
   
   const largeEditTime = benchmark('Incremental update (large edit)', () => {
+    // Calculate old end position for the function being replaced
+    const oldFunctionText = `function function_5(param5: number): number {
+  const result = param5 * 2;
+  return result + 5;
+}`;
+    const lines = oldFunctionText.split('\n');
+    const oldEndPosition = { row: 20 + lines.length - 1, column: lines[lines.length - 1].length };
+    
     project.update_file_range(
       'large.ts',
       { row: 20, column: 0 },
-      `function function_5(param5: number): number {
-  const result = param5 * 2;
-  return result + 5;
-}`,
+      oldEndPosition,
       largeFunctionReplacement
     );
   });
@@ -109,10 +115,12 @@ functionCounts.forEach(count => {
   const multiEditTime = benchmark('Multiple incremental updates', () => {
     for (let i = 0; i < 10; i++) {
       const row = 15 + (i * 10);
+      const startPos = { row, column: 10 };
+      const oldEndPos = { row, column: 15 }; // 'const' is 5 chars
       project.update_file_range(
         'large.ts',
-        { row, column: 10 },
-        'const',
+        startPos,
+        oldEndPos,
         'let'
       );
     }

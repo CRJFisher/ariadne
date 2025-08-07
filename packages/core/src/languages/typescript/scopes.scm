@@ -64,8 +64,18 @@
 (function_declaration
   (identifier) @hoist.definition.function)
 
+;; export function x()
+(export_statement
+  (function_declaration
+    (identifier) @hoist.definition.function.exported))
+
 (generator_function_declaration
   (identifier) @hoist.definition.generator)
+
+;; export function* x()
+(export_statement
+  (generator_function_declaration
+    (identifier) @hoist.definition.generator.exported))
 
 ;; function params
 (formal_parameters
@@ -107,10 +117,22 @@
   "const"
   (variable_declarator . (identifier) @local.definition.constant))
 
+;; export const x = _
+(export_statement
+  (lexical_declaration
+    "const"
+    (variable_declarator . (identifier) @local.definition.constant.exported)))
+
 ;; let x = _
 (lexical_declaration
   "let"
   (variable_declarator . (identifier) @local.definition.variable))
+
+;; export let x = _
+(export_statement
+  (lexical_declaration
+    "let"
+    (variable_declarator . (identifier) @local.definition.variable.exported)))
 
 ;; capture the value in variable declarations: const x = VALUE
 (variable_declarator
@@ -137,6 +159,11 @@
 (class_declaration
   (type_identifier) @local.definition.class)
 
+;; export class
+(export_statement
+  (class_declaration
+    (type_identifier) @local.definition.class.exported))
+
 ;; arrow func
 (arrow_function
   (identifier) @local.definition.variable)
@@ -156,6 +183,11 @@
       [(import_specifier !alias (identifier) @local.import)
        (import_specifier alias: (identifier) @local.import)])))
 
+;; import * as namespace from "module";
+(import_statement
+  (import_clause
+    (namespace_import (identifier) @local.import)))
+
 ;; for (item in list)
 ;;
 ;; `item` is a def
@@ -171,6 +203,12 @@
   name:
   (type_identifier) @local.definition.alias)
 
+;; export type T
+(export_statement
+  (type_alias_declaration
+    name:
+    (type_identifier) @local.definition.alias.exported))
+
 ;; type parameters in generic
 ;; functions or interfaces
 (type_parameters
@@ -180,6 +218,11 @@
 ;; enum T
 (enum_declaration
   (identifier) @local.definition.enum)
+
+;; export enum T
+(export_statement
+  (enum_declaration
+    (identifier) @local.definition.enum.exported))
 
 ;; enumerators
 ;;
@@ -212,6 +255,11 @@
 ;; interface T
 (interface_declaration
   (type_identifier) @local.definition.interface)
+
+;; export interface T
+(export_statement
+  (interface_declaration
+    (type_identifier) @local.definition.interface.exported))
 
 ;; catch clauses
 (catch_clause
@@ -253,17 +301,23 @@
 (call_expression
   (identifier) @local.reference)
   
-;; method call expression: this.method() or obj.method()
+;; method call expression: this.method() or obj.method() or obj.prop.method()
 ;; We need to exclude super.method() calls since they reference parent class methods
 (call_expression
   (member_expression
-    object: [(this) (identifier)]
+    object: [(this) (identifier) (member_expression)]
     property: (property_identifier) @local.reference.method))
 
-;; private method call expression: this.#privateMethod() or obj.#privateMethod()
+;; chained method call expression: obj.method1().method2()
 (call_expression
   (member_expression
-    object: [(this) (identifier)]
+    object: (call_expression)
+    property: (property_identifier) @local.reference.method))
+
+;; private method call expression: this.#privateMethod() or obj.#privateMethod() or obj.prop.#privateMethod()
+(call_expression
+  (member_expression
+    object: [(this) (identifier) (member_expression)]
     property: (private_property_identifier) @local.reference.method))
 
 ;; call arguments
@@ -356,7 +410,35 @@
 ;; export { name as alias };
 (export_statement
   (export_clause
-    (export_specifier name: (identifier) @local.reference)))
+    (export_specifier name: (identifier) @local.reference.exported)))
+
+;; CommonJS exports: module.exports = { func1, func2 }
+(assignment_expression
+  left: (member_expression
+    object: (identifier) @_module
+    property: (property_identifier) @_exports)
+  right: (object
+    (shorthand_property_identifier) @local.reference.exported)
+  (#eq? @_module "module")
+  (#eq? @_exports "exports"))
+
+;; CommonJS exports: module.exports = { key: value }
+(assignment_expression
+  left: (member_expression
+    object: (identifier) @_module
+    property: (property_identifier) @_exports)
+  right: (object
+    (pair
+      key: (property_identifier) @local.reference.exported))
+  (#eq? @_module "module")
+  (#eq? @_exports "exports"))
+
+;; CommonJS exports: exports.name = ...
+(assignment_expression
+  left: (member_expression
+    object: (identifier) @_exports
+    property: (property_identifier) @local.reference.exported)
+  (#eq? @_exports "exports"))
 
 ;; export default ident;
 (export_statement

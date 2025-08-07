@@ -227,13 +227,13 @@ impl MyClass {
       python: {
         definitions: [
           { name: "MyClass", kind: "class" },
-          { name: "get_value", kind: "function" },
+          { name: "get_value", kind: "method" },
         ],
       },
       rust: {
         definitions: [
           { name: "MyClass", kind: "struct" },
-          { name: "get_value", kind: "function" },
+          { name: "get_value", kind: "method" },
         ],
       },
     },

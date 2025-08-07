@@ -1,0 +1,103 @@
+# Task Dependencies for Ariadne Project
+# This file defines the dependency relationships between tasks
+
+# Task 100: Improve Ariadne self-analysis accuracy
+# Main epic task that contains all the refactoring work
+
+# Phase 1: Foundation (Must be completed first)
+task-100.20:  # Create ImportResolver service
+  description: "Foundation - creates dedicated import resolution service"
+  depends_on: []
+  blocks: [task-100.25, task-100.26, task-100.23]
+
+task-100.19:  # Add error handling for unimplemented methods
+  description: "Make debugging easier with explicit errors"
+  depends_on: []
+  blocks: []
+
+task-100.25:  # Standardize import resolution patterns
+  description: "Ensure consistent use of ImportResolver across codebase"
+  depends_on: [task-100.20]
+  blocks: [task-100.21, task-100.22]
+
+# Phase 2: Refactoring
+task-100.21:  # Split reference resolution into strategies
+  description: "Break down complex resolve_reference() into focused strategies"
+  depends_on: [task-100.20, task-100.25]
+  blocks: [task-100.22]
+
+task-100.22:  # Refactor CallAnalyzer with two-phase separation
+  description: "Clear separation of type discovery and call resolution"
+  depends_on: [task-100.21]
+  blocks: []
+
+task-100.26:  # Simplify complex conditionals in import matching
+  description: "Refactor multi-level fallback logic in follow_import()"
+  depends_on: [task-100.20]
+  blocks: []
+
+# Phase 3: Clean-up & Testing
+task-100.24:  # Remove dead code and TODOs
+  description: "Clean up after refactoring is complete"
+  depends_on: [task-100.21, task-100.22, task-100.26]
+  blocks: []
+
+task-100.16:  # Clean up debug logging
+  description: "Remove temporary debug statements"
+  depends_on: [task-100.21, task-100.22, task-100.26]
+  blocks: []
+
+task-100.23:  # Add focused unit tests for import resolution
+  description: "Comprehensive test suite for ImportResolver"
+  depends_on: [task-100.20]
+  blocks: []
+
+task-100.17:  # Document AST node identity comparison fix
+  description: "Documentation task"
+  depends_on: []
+  blocks: []
+
+# Phase 4: Validation & Metrics
+task-100.10:  # Complete JavaScript test updates
+  description: "Update tests for new architecture"
+  depends_on: [task-100.21, task-100.22]
+  blocks: []
+
+task-100.14:  # Add detailed validation metrics breakdown
+  description: "Better visibility into what's being measured"
+  depends_on: [task-100.24]
+  blocks: [task-100.12]
+
+task-100.12:  # Investigate low nodes-called-by-others percentage
+  description: "Final validation that we meet thresholds"
+  depends_on: [task-100.14]
+  blocks: []
+
+# Phase 5: Feature Additions
+task-100.9:  # Add CommonJS and ES6 export support
+  description: "New features only after architecture is stable"
+  depends_on: [task-100.21, task-100.22, task-100.24]
+  blocks: []
+
+# Already completed
+task-100.18:  # Fix critical cross-file call tracking failure
+  status: done
+  description: "Fixed the immediate issue but revealed architectural problems"
+
+# Critical path (tasks that must be done in order):
+critical_path:
+  - task-100.20  # Create ImportResolver (foundation)
+  - task-100.25  # Standardize patterns
+  - task-100.21  # Split reference resolution
+  - task-100.22  # Refactor CallAnalyzer
+  - task-100.24  # Clean up code
+  - task-100.14  # Add metrics
+  - task-100.12  # Validate thresholds
+
+# Parallel work (can be done alongside critical path):
+parallel_work:
+  - task-100.19  # Error handling (can start immediately)
+  - task-100.17  # Documentation (can be done anytime)
+  - task-100.26  # Simplify conditionals (after 100.20)
+  - task-100.23  # Tests for ImportResolver (after 100.20)
+  - task-100.16  # Clean debug logging (after refactoring)

@@ -68,6 +68,8 @@ export interface Def extends BaseNode {
   enclosing_range?: SimpleRange;
   signature?: string;
   docstring?: string;
+  is_exported?: boolean;
+  return_type?: string; // Type information for function/method return values
 }
 
 export interface Ref extends BaseNode {
@@ -81,6 +83,7 @@ export interface Import extends BaseNode {
   name: string;
   source_name?: string;
   source_module?: string;
+  is_type_import?: boolean;
 }
 
 export interface Scope extends BaseNode {
@@ -94,6 +97,7 @@ export interface FunctionCall {
   called_def: Def;
   call_location: Point;
   is_method_call: boolean;
+  is_constructor_call?: boolean;
 }
 
 export interface ImportInfo {
@@ -128,7 +132,11 @@ export interface RefToImport extends BaseEdge {
   kind: 'ref_to_import';
 }
 
-export type Edge = DefToScope | RefToDef | ScopeToScope | ImportToScope | RefToImport;
+export interface RefToScope extends BaseEdge {
+  kind: 'ref_to_scope';
+}
+
+export type Edge = DefToScope | RefToDef | ScopeToScope | ImportToScope | RefToImport | RefToScope;
 
 // Call graph types
 export interface Call {
@@ -149,12 +157,14 @@ export interface CallGraphNode {
   definition: Def;
   calls: Call[];
   called_by: string[];
+  is_exported: boolean;
 }
 
 export interface CallGraphEdge {
   from: string;
   to: string;
   location: SimpleRange;
+  call_type: 'direct' | 'method' | 'constructor';
 }
 
 export interface CallGraph {
@@ -176,3 +186,6 @@ export interface IScopeGraph {
   getImportInfo(): ImportInfo[];
   getCallGraph(options?: CallGraphOptions): CallGraph;
 }
+
+// Re-export call graph types
+export * from './call-graph-types';

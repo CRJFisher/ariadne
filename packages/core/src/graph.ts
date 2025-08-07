@@ -63,8 +63,10 @@ export class ScopeGraph implements IScopeGraph {
   private edges: Edge[] = [];
   private next_node_id = 0;
   private root_id: number;
+  public readonly lang: string;
 
   constructor(root_node: SyntaxNode, lang_id: string) {
+    this.lang = lang_id;
     // A new graph is created with a root scope that spans the entire file.
     const root_scope: Scope = {
       id: this.get_next_node_id(),
@@ -148,17 +150,20 @@ export class ScopeGraph implements IScopeGraph {
       }
     }
     
-    // Add the reference node and create edges to found definitions/imports
-    if (possible_defs.length > 0 || possible_imports.length > 0) {
-      this.nodes.push(ref);
-      
-      for (const def_id of possible_defs) {
-        this.edges.push({ kind: 'ref_to_def', source_id: ref.id, target_id: def_id });
-      }
-      
-      for (const import_id of possible_imports) {
-        this.edges.push({ kind: 'ref_to_import', source_id: ref.id, target_id: import_id });
-      }
+    // Always add the reference node, even if we can't resolve it yet
+    // This is important for method references that need type-based resolution
+    this.nodes.push(ref);
+    
+    // Create edge to attach reference to its containing scope
+    this.edges.push({ kind: 'ref_to_scope', source_id: ref.id, target_id: local_scope_id });
+    
+    // Create edges to found definitions/imports
+    for (const def_id of possible_defs) {
+      this.edges.push({ kind: 'ref_to_def', source_id: ref.id, target_id: def_id });
+    }
+    
+    for (const import_id of possible_imports) {
+      this.edges.push({ kind: 'ref_to_import', source_id: ref.id, target_id: import_id });
     }
   }
 
@@ -329,14 +334,79 @@ export class ScopeGraph implements IScopeGraph {
   getAllImports(): Import[] {
     return this.getNodes<Import>('import');
   }
+  
+  // Get count of import statements (not individual imported symbols)
+  getImportStatementCount(): number {
+    const imports = this.getAllImports();
+    const uniqueStatements = new Map<string, Set<string>>();
+    
+    for (const imp of imports) {
+      // Group by source module and line number to identify unique import statements
+      const key = `${imp.source_module || 'unnamed'}:${imp.range.start.row}`;
+      if (!uniqueStatements.has(key)) {
+        uniqueStatements.set(key, new Set());
+      }
+      uniqueStatements.get(key)!.add(imp.name);
+    }
+    
+    return uniqueStatements.size;
+  }
 
   // Find a definition by name in the root scope (for exports)
   findExportedDef(name: string): Def | null {
+    // First check for explicitly exported definitions (ES6 style)
     const rootDefs = this.get_defs_in_scope(this.root_id);
     
     for (const def_id of rootDefs) {
       const def = this.nodes.find(n => n.id === def_id) as Def;
       if (def && def.name === name) {
+        // Skip definitions explicitly marked as not exported
+        if (def.is_exported === false) {
+          continue;
+        }
+        // If explicitly marked as exported, return it
+        if (def.is_exported === true) {
+          return def;
+        }
+      }
+    }
+    
+    // Check for CommonJS exports (module.exports = Name or module.exports.Name = ...)
+    // Look for references to 'module' in root scope
+    const moduleRefs = this.nodes.filter(n => 
+      n.kind === 'reference' && 
+      n.name === 'module'
+    ) as Ref[];
+    
+    for (const moduleRef of moduleRefs) {
+      // Check if this is a module.exports assignment
+      // We need to check the context around the reference
+      // For now, we'll use a simple heuristic: if there's a definition with the name
+      // and there's a module reference, assume it's exported via CommonJS
+      // Check if there's a definition with this name in root scope
+      const def = this.nodes.find(n => {
+        if (n.kind !== 'definition' || (n as Def).name !== name) {
+          return false;
+        }
+        // Check if it's in root scope
+        const defToScope = this.edges.find(e => 
+          e.kind === 'def_to_scope' && e.source_id === n.id
+        );
+        return defToScope && defToScope.target_id === this.root_id;
+      }) as Def;
+      
+      if (def) {
+        // Mark it as exported for future lookups
+        def.is_exported = true;
+        return def;
+      }
+    }
+    
+    // Fallback: check root scope definitions without explicit export marking
+    // (for backward compatibility)
+    for (const def_id of rootDefs) {
+      const def = this.nodes.find(n => n.id === def_id) as Def;
+      if (def && def.name === name && def.is_exported === undefined) {
         return def;
       }
     }

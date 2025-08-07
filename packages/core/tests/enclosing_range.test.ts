@@ -122,8 +122,8 @@ describe("enclosing_range", () => {
       
       project.add_or_update_file("test.py", code);
       const defs = project.get_definitions("test.py");
-      const add = defs.find(d => d.name === "add" && d.symbol_kind === "function");
-      const multiply = defs.find(d => d.name === "multiply" && d.symbol_kind === "function");
+      const add = defs.find(d => d.name === "add" && d.symbol_kind === "method");
+      const multiply = defs.find(d => d.name === "multiply" && d.symbol_kind === "method");
       
       expect(add).toBeDefined();
       expect(add!.enclosing_range).toBeDefined();
@@ -173,8 +173,8 @@ describe("enclosing_range", () => {
       
       project.add_or_update_file("test.rs", code);
       const defs = project.get_definitions("test.rs");
-      const add = defs.find(d => d.name === "add" && d.symbol_kind === "function");
-      const multiply = defs.find(d => d.name === "multiply" && d.symbol_kind === "function");
+      const add = defs.find(d => d.name === "add" && d.symbol_kind === "method");
+      const multiply = defs.find(d => d.name === "multiply" && d.symbol_kind === "method");
       
       expect(add).toBeDefined();
       expect(add!.enclosing_range).toBeDefined();
@@ -188,27 +188,85 @@ describe("enclosing_range", () => {
     });
   });
 
+  describe("Python", () => {
+    it("should populate enclosing_range for Python classes", () => {
+      const project = new Project();
+      const code = `class Calculator:
+    def __init__(self):
+        self.value = 0
+    
+    def add(self, x):
+        self.value += x`;
+      
+      project.add_or_update_file("test.py", code);
+      const defs = project.get_definitions("test.py");
+      const calc = defs.find(d => d.name === "Calculator");
+      
+      expect(calc).toBeDefined();
+      expect(calc!.enclosing_range).toBeDefined();
+      expect(calc!.enclosing_range!.start.row).toBe(0);
+      expect(calc!.enclosing_range!.end.row).toBe(5);
+    });
+  });
+
+  describe("Rust", () => {
+    it("should populate enclosing_range for Rust structs", () => {
+      const project = new Project();
+      const code = `struct Point {
+    x: f64,
+    y: f64,
+}
+
+impl Point {
+    fn new(x: f64, y: f64) -> Self {
+        Point { x, y }
+    }
+}`;
+      
+      project.add_or_update_file("test.rs", code);
+      const defs = project.get_definitions("test.rs");
+      const point = defs.find(d => d.name === "Point");
+      
+      expect(point).toBeDefined();
+      expect(point!.enclosing_range).toBeDefined();
+      expect(point!.enclosing_range!.start.row).toBe(0);
+      expect(point!.enclosing_range!.end.row).toBe(3);
+    });
+  });
+
   describe("edge cases", () => {
-    it("should not populate enclosing_range for non-function definitions", () => {
+    it("should not populate enclosing_range for simple variable definitions", () => {
       const project = new Project();
       const code = `const PI = 3.14159;
-let counter = 0;
-class Shape {}`;
+let counter = 0;`;
       
       project.add_or_update_file("test.js", code);
       const defs = project.get_definitions("test.js");
       const pi = defs.find(d => d.name === "PI");
       const counter = defs.find(d => d.name === "counter");
-      const shape = defs.find(d => d.name === "Shape");
       
       expect(pi).toBeDefined();
       expect(pi!.enclosing_range).toBeUndefined();
       
       expect(counter).toBeDefined();
       expect(counter!.enclosing_range).toBeUndefined();
+    });
+    
+    it("should populate enclosing_range for class definitions", () => {
+      const project = new Project();
+      const code = `class Shape {
+  constructor() {}
+  area() { return 0; }
+}`;
+      
+      project.add_or_update_file("test.js", code);
+      const defs = project.get_definitions("test.js");
+      const shape = defs.find(d => d.name === "Shape");
       
       expect(shape).toBeDefined();
-      expect(shape!.enclosing_range).toBeUndefined();
+      expect(shape!.enclosing_range).toBeDefined();
+      expect(shape!.enclosing_range!.start.row).toBe(0);
+      expect(shape!.enclosing_range!.end.row).toBe(3);
     });
   });
 });

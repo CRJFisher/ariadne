@@ -102,10 +102,22 @@
 ;; (ref x: T)
 (ref_pattern (identifier) @local.definition.variable)
 
-;; const x = ...;
+;; pub const x = ...;
+(const_item
+  (visibility_modifier) @_pub
+  (identifier) @local.definition.const.exported
+  (#match? @_pub "^pub"))
+
+;; const x = ... (private)
 (const_item (identifier) @local.definition.const)
 
-;; static x = ...;
+;; pub static x = ...;
+(static_item
+  (visibility_modifier) @_pub
+  (identifier) @local.definition.const.exported
+  (#match? @_pub "^pub"))
+
+;; static x = ... (private)
 (static_item (identifier) @local.definition.const)
 
 ;; fn _(x: _)
@@ -135,8 +147,21 @@
   (parameter
     (identifier) @local.definition.variable))
 
-;;fn x(..)
-(function_item (identifier) @hoist.definition.function)
+;; Methods in impl blocks are captured as methods
+(impl_item
+  (declaration_list
+    (function_item
+      (identifier) @hoist.definition.method)))
+
+;; pub fn x(..)
+(function_item
+  (visibility_modifier) @_pub
+  (identifier) @hoist.definition.function.exported
+  (#match? @_pub "^pub"))
+
+;; fn x(..) (private)
+(function_item 
+  (identifier) @hoist.definition.function)
 
 ;; 'outer: loop { .. }
 (loop_expression
@@ -151,11 +176,49 @@
 (while_expression
   (label) @local.definition.label)
 
-;; type definitions
+;; pub struct
+(struct_item
+  (visibility_modifier) @_pub
+  (type_identifier) @hoist.definition.struct.exported
+  (#match? @_pub "^pub"))
+
+;; struct (private)
 (struct_item (type_identifier) @hoist.definition.struct)
+
+;; pub enum
+(enum_item
+  (visibility_modifier) @_pub
+  (type_identifier) @hoist.definition.enum.exported
+  (#match? @_pub "^pub"))
+
+;; enum (private)
 (enum_item (type_identifier) @hoist.definition.enum)
+
+;; pub union
+(union_item
+  (visibility_modifier) @_pub
+  (type_identifier) @hoist.definition.union.exported
+  (#match? @_pub "^pub"))
+
+;; union (private)
 (union_item (type_identifier) @hoist.definition.union)
+
+;; pub type
+(type_item
+  (visibility_modifier) @_pub
+  . (type_identifier) @hoist.definition.typedef.exported
+  (#match? @_pub "^pub"))
+
+;; type (private)
 (type_item . (type_identifier) @hoist.definition.typedef)
+
+;; pub trait
+(trait_item
+  (visibility_modifier) @_pub
+  (type_identifier) @hoist.definition.interface.exported
+  (#match? @_pub "^pub"))
+
+;; trait (private)
 (trait_item (type_identifier) @hoist.definition.interface)
 
 ;; struct and union fields
@@ -168,7 +231,13 @@
   (enum_variant 
     (identifier) @local.definition.enumerator))
 
-;; mod x;
+;; pub mod x;
+(mod_item
+  (visibility_modifier) @_pub
+  (identifier) @local.definition.module.exported
+  (#match? @_pub "^pub"))
+
+;; mod x; (private)
 (mod_item (identifier) @local.definition.module)
 
 ;; use statements
@@ -234,26 +303,26 @@
 
 ;; Type::method() - e.g., Rectangle::new()
 ;;
-;; Both the type and method are references
+;; The type is a reference, the method is a method reference
 (call_expression
   function: (scoped_identifier
     path: (identifier) @local.reference
-    name: (identifier) @local.reference))
+    name: (identifier) @local.reference.method))
 
 ;; self.foo() 
 ;;
-;; `foo` can be resolved
+;; `foo` can be resolved as a method call
 (call_expression 
   function: (field_expression
     value: (self)
-    field: (field_identifier) @local.reference))
+    field: (field_identifier) @local.reference.method))
 
 ;; obj.method() - e.g., rect.area()
 ;;
 ;; method is a reference (obj is already captured by field_expression)
 (call_expression
   function: (field_expression
-    field: (field_identifier) @local.reference))
+    field: (field_identifier) @local.reference.method))
 
 ;; return a
 (return_expression (identifier) @local.reference)

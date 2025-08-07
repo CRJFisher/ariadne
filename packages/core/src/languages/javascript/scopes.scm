@@ -43,6 +43,11 @@
 ;; - lexical
 ;; - variable
 
+;; exported function
+(export_statement
+  (function_declaration
+    (identifier) @hoist.definition.function.exported))
+
 ;; function x()
 (function_declaration
   (identifier) @hoist.definition.function)
@@ -331,6 +336,11 @@
 (method_definition
   (private_property_identifier) @hoist.definition.method)
 
+;; exported class
+(export_statement
+  (class_declaration
+    (identifier) @local.definition.class.exported))
+
 ;; class
 (class_declaration
   (identifier) @local.definition.class)
@@ -357,6 +367,11 @@
     (named_imports
       [(import_specifier !alias (identifier) @local.import)
        (import_specifier alias: (identifier) @local.import)])))
+
+;; import * as namespace from "module";
+(import_statement
+  (import_clause
+    (namespace_import (identifier) @local.import)))
 
 ;; for (item in list) and for (item of list)
 ;;
@@ -432,17 +447,17 @@
 (call_expression
   (identifier) @local.reference)
   
-;; method call expression: this.method() or obj.method()
+;; method call expression: this.method() or obj.method() or obj.prop.method()
 ;; We need to exclude super.method() calls since they reference parent class methods
 (call_expression
   function: (member_expression
-    object: [(this) (identifier)]
+    object: [(this) (identifier) (member_expression)]
     property: (property_identifier) @local.reference.method))
 
-;; private method call expression: this.#privateMethod() or obj.#privateMethod()
+;; private method call expression: this.#privateMethod() or obj.#privateMethod() or obj.prop.#privateMethod()
 (call_expression
   function: (member_expression
-    object: [(this) (identifier)]
+    object: [(this) (identifier) (member_expression)]
     property: (private_property_identifier) @local.reference.method))
 
 ;; call arguments
@@ -509,11 +524,39 @@
 ;; export { name as alias };
 (export_statement
   (export_clause
-    (export_specifier name: (identifier) @local.reference)))
+    (export_specifier name: (identifier) @local.reference.exported)))
 
 ;; export default ident;
 (export_statement
   (identifier) @local.reference)
+
+;; CommonJS exports: module.exports = { func1, func2 }
+(assignment_expression
+  left: (member_expression
+    object: (identifier) @_module
+    property: (property_identifier) @_exports)
+  right: (object
+    (shorthand_property_identifier) @local.reference.exported)
+  (#eq? @_module "module")
+  (#eq? @_exports "exports"))
+
+;; CommonJS exports: module.exports = { key: value }
+(assignment_expression
+  left: (member_expression
+    object: (identifier) @_module
+    property: (property_identifier) @_exports)
+  right: (object
+    (pair
+      key: (property_identifier) @local.reference.exported))
+  (#eq? @_module "module")
+  (#eq? @_exports "exports"))
+
+;; CommonJS exports: exports.name = ...
+(assignment_expression
+  left: (member_expression
+    object: (identifier) @_exports
+    property: (property_identifier) @local.reference.exported)
+  (#eq? @_exports "exports"))
 
 ;; for (item in list) and for (item of list)
 ;;

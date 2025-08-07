@@ -78,6 +78,7 @@ export const rust_config: LanguageConfig = {
       // variables
       "const",
       "function",
+      "method",
       "variable",
       // types
       "struct",

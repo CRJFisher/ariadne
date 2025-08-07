@@ -1,280 +1,243 @@
 meta:
-  timestamp: '2025-08-01T16:44:47.537Z'
-  ariadne_version: 0.5.17
-  total_files: 15
-  total_functions: 71
-  total_calls: 43
-top_level_nodes:
-  - id: benchmark-incremental#generateLargeFile
-    line: 0
+  timestamp: '2025-08-06T15:39:52.172Z'
+  ariadne_version: 0.5.18
+  total_files: 50
+  total_functions: 341
+  total_calls: 372
+api_methods:
+  - name: constructor
+    file: src/project/project.ts
+    line: 40
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: benchmark-incremental#benchmark
-    line: 0
+    symbol_kind: method
+  - name: createDefaultStorage
+    file: src/project/project.ts
+    line: 62
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: edit#create_edit
-    line: 0
+    symbol_kind: method
+  - name: withStorage
+    file: src/project/project.ts
+    line: 75
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: edit#calculate_end_position
-    line: 0
+    symbol_kind: method
+  - name: add_or_update_file
+    file: src/project/project.ts
+    line: 82
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: graph#ScopeGraph.constructor
-    line: 0
+    symbol_kind: method
+  - name: remove_file
+    file: src/project/project.ts
+    line: 130
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: graph#ScopeGraph.insert_local_def
-    line: 0
+    symbol_kind: method
+  - name: find_references
+    file: src/project/project.ts
+    line: 152
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: graph#ScopeGraph.insert_hoisted_def
-    line: 0
+    symbol_kind: method
+  - name: go_to_definition
+    file: src/project/project.ts
+    line: 160
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: graph#ScopeGraph.insert_global_def
-    line: 0
+    symbol_kind: method
+  - name: get_scope_graph
+    file: src/project/project.ts
+    line: 168
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: graph#ScopeGraph.insert_local_scope
-    line: 0
+    symbol_kind: method
+  - name: get_all_scope_graphs
+    file: src/project/project.ts
+    line: 176
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: graph#ScopeGraph.insert_local_import
-    line: 0
+    symbol_kind: method
+  - name: get_functions_in_file
+    file: src/project/project.ts
+    line: 184
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: graph#ScopeGraph.insert_ref
-    line: 0
+    symbol_kind: method
+  - name: get_definitions
+    file: src/project/project.ts
+    line: 193
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: graph#ScopeGraph.node_to_simple_range
-    line: 0
+    symbol_kind: method
+  - name: get_all_functions
+    file: src/project/project.ts
+    line: 203
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: graph#ScopeGraph.getEdges
-    line: 0
+    symbol_kind: method
+  - name: get_calls_from_definition
+    file: src/project/project.ts
+    line: 215
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: graph#ScopeGraph.getDefsForRef
-    line: 0
+    symbol_kind: method
+  - name: get_function_calls
+    file: src/project/project.ts
+    line: 236
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: graph#ScopeGraph.getImportsForRef
-    line: 0
+    symbol_kind: method
+  - name: extract_call_graph
+    file: src/project/project.ts
+    line: 243
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: graph#ScopeGraph.getRefsForDef
-    line: 0
+    symbol_kind: method
+  - name: get_call_graph
+    file: src/project/project.ts
+    line: 270
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: graph#ScopeGraph.findNodeAtPosition
-    line: 0
+    symbol_kind: method
+  - name: get_source_code
+    file: src/project/project.ts
+    line: 295
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: graph#ScopeGraph.getAllDefs
-    line: 0
+    symbol_kind: method
+  - name: get_source_with_context
+    file: src/project/project.ts
+    line: 306
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: graph#ScopeGraph.getAllImports
-    line: 0
+    symbol_kind: method
+  - name: get_imports_with_definitions
+    file: src/project/project.ts
+    line: 321
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: graph#ScopeGraph.findExportedDef
-    line: 0
+    symbol_kind: method
+  - name: get_exported_functions
+    file: src/project/project.ts
+    line: 329
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: graph#ScopeGraph.debug_print
-    line: 0
+    symbol_kind: method
+  - name: get_class_relationships
+    file: src/project/project.ts
+    line: 338
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: graph#ScopeGraph.getCallsFromDef
-    line: 0
+    symbol_kind: method
+  - name: find_subclasses
+    file: src/project/project.ts
+    line: 346
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: graph#ScopeGraph.getSymbolId
-    line: 0
+    symbol_kind: method
+  - name: find_implementations
+    file: src/project/project.ts
+    line: 354
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: graph#ScopeGraph.getDefinitionBySymbol
-    line: 0
+    symbol_kind: method
+  - name: get_inheritance_chain
+    file: src/project/project.ts
+    line: 362
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: graph#ScopeGraph.getFunctionCalls
-    line: 0
+    symbol_kind: method
+  - name: is_subclass_of
+    file: src/project/project.ts
+    line: 370
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: graph#ScopeGraph.getImportInfo
-    line: 0
+    symbol_kind: method
+  - name: update_file_range
+    file: src/project/project.ts
+    line: 378
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: graph#ScopeGraph.getCallGraph
-    line: 0
+    symbol_kind: method
+  - name: calculate_end_position
+    file: src/project/project.ts
+    line: 435
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: inheritance#extract_class_relationships
-    line: 0
+    symbol_kind: method
+  - name: getState
+    file: src/project/project.ts
+    line: 454
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: languages/javascript/index#initialize_parser
-    line: 0
+    symbol_kind: method
+  - name: withState
+    file: src/project/project.ts
+    line: 461
     is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: languages/javascript/index#get_scope_query
-    line: 0
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: languages/python/index#initialize_parser
-    line: 0
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: languages/python/index#get_scope_query
-    line: 0
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: languages/python/index#extract_python_context
-    line: 0
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: languages/rust/index#initialize_parser
-    line: 0
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: languages/rust/index#get_scope_query
-    line: 0
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: languages/shared_extractors#extract_jsdoc_context
-    line: 0
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: languages/typescript/index#initialize_parser
-    line: 0
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: languages/typescript/index#get_scope_query
-    line: 0
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: scope_resolution#build_scope_graph
-    line: 0
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: symbol_naming#create_method_symbol_id
-    line: 0
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: symbol_naming#get_symbol_container
-    line: 0
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: symbol_naming#get_unqualified_name
-    line: 0
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: symbol_naming#same_module
-    line: 0
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-  - id: symbol_resolver#find_definition
-    line: 0
-    is_exported: false
-    calls_count: 0
-    called_by_count: 0
-sampled_nodes:
-  - node:
-      id: benchmark-incremental#generateLargeFile
-      line: 0
-    outgoing_calls: []
-    incoming_calls: []
-    source_snippet: ''
-  - node:
-      id: benchmark-incremental#benchmark
-      line: 0
-    outgoing_calls: []
-    incoming_calls: []
-    source_snippet: ''
-  - node:
-      id: edit#create_edit
-      line: 0
-    outgoing_calls: []
-    incoming_calls: []
-    source_snippet: ''
-  - node:
-      id: graph#ScopeGraph.get_next_node_id
-      line: 0
-    outgoing_calls: []
-    incoming_calls: []
-    source_snippet: ''
-  - node:
-      id: graph#ScopeGraph.find_containing_scope
-      line: 0
-    outgoing_calls: []
-    incoming_calls: []
-    source_snippet: ''
-  - node:
-      id: graph#ScopeGraph.get_scope_stack
-      line: 0
-    outgoing_calls: []
-    incoming_calls: []
-    source_snippet: ''
-  - node:
-      id: graph#ScopeGraph.get_defs_in_scope
-      line: 0
-    outgoing_calls: []
-    incoming_calls: []
-    source_snippet: ''
-  - node:
-      id: graph#ScopeGraph.get_imports_in_scope
-      line: 0
-    outgoing_calls: []
-    incoming_calls: []
-    source_snippet: ''
-file_summary:
-  - function_count: 71
-    exported_function_count: 0
-    import_count: 0
+    symbol_kind: method
+sampled_functions:
+  - name: generateLargeFile
+    file: src/benchmark-incremental.ts
+    line: 8
+    calls: []
+    called_by:
+      - src/benchmark-incremental.ts#<module>
+  - name: benchmark
+    file: src/benchmark-incremental.ts
+    line: 47
+    calls: []
+    called_by:
+      - src/benchmark-incremental.ts#<module>
+      - src/benchmark-incremental.ts#<module>
+      - src/benchmark-incremental.ts#<module>
+      - src/benchmark-incremental.ts#<module>
+  - name: is_method_call_pattern
+    file: src/call_graph/call_analysis/call_detection.ts
+    line: 26
+    calls: []
+    called_by:
+      - analyze_calls_from_definition
+      - analyze_module_level_calls
+  - name: is_reference_called
+    file: src/call_graph/call_analysis/call_detection.ts
+    line: 62
+    calls: []
+    called_by:
+      - analyze_calls_from_definition
+      - analyze_module_level_calls
+  - name: analyze_constructor_call
+    file: src/call_graph/call_analysis/constructor_analysis.ts
+    line: 61
+    calls:
+      - get_local_imported_class
+      - get_imported_class
+      - compute_class_enclosing_range
+    called_by:
+      - analyze_calls_from_definition
+  - name: analyze_calls_from_definition
+    file: src/call_graph/call_analysis/core.ts
+    line: 50
+    calls:
+      - find_definition_range
+      - is_position_within_range
+      - is_position_within_range
+      - analyze_constructor_call
+      - set_local_variable_type
+      - resolve_method_call_pure
+      - resolve_method_on_type
+      - resolve_reference
+      - is_reference_called
+      - is_method_call_pattern
+    called_by: []
+  - name: analyze_module_level_calls
+    file: src/call_graph/call_analysis/core.ts
+    line: 195
+    calls:
+      - is_position_within_range
+      - is_position_within_range
+      - is_reference_called
+      - is_method_call_pattern
+    called_by: []
+  - name: resolve_method_call_pure
+    file: src/call_graph/call_analysis/method_resolution.ts
+    line: 53
+    calls:
+      - get_local_variable_type
+      - compute_class_enclosing_range
+      - is_position_within_range
+      - is_position_within_range
+    called_by:
+      - analyze_calls_from_definition
+      - src/call_graph/call_analysis/core.ts#<module>
+  - name: resolve_method_on_type
+    file: src/call_graph/call_analysis/method_resolution.ts
+    line: 123
+    calls:
+      - is_method_of_class
+    called_by:
+      - analyze_calls_from_definition
+  - name: is_method_of_class
+    file: src/call_graph/call_analysis/method_resolution.ts
+    line: 168
+    calls:
+      - compute_class_enclosing_range
+      - is_position_within_range
+      - is_position_within_range
+    called_by:
+      - resolve_method_on_type
+

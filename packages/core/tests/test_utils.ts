@@ -1,5 +1,6 @@
 import { Project } from "../src/index";
 import { ScopeGraph, Def, Ref, Import, Scope } from "../src/graph";
+import { expect } from "vitest";
 
 export interface ScopeDebug {
   definitions: DefDebug[];
@@ -130,8 +131,16 @@ export function debug_scope_graph(
       build_scope_debug(child.id)
     );
 
-    // Find references that aren't to definitions or imports (orphaned)
+    // Find references in this scope that aren't to definitions or imports (orphaned)
     const scope_refs = refs.filter((ref) => {
+      // Check if reference belongs to this scope
+      const ref_edges = graph.getEdges("ref_to_scope");
+      const in_this_scope = ref_edges.some(
+        (e) => e.source_id === ref.id && e.target_id === scope_id
+      );
+      if (!in_this_scope) return false;
+      
+      // Check if reference has a target (definition or import)
       const def_edges = graph.getEdges("ref_to_def");
       const imp_edges = graph.getEdges("ref_to_import");
       const has_target =
@@ -166,7 +175,7 @@ export function test_scopes(
 
   project.add_or_update_file(file_path, source_code);
 
-  const graph = (project as any).file_graphs.get(file_path);
+  const graph = project.get_scope_graph(file_path);
   if (!graph) throw new Error("No graph found for file");
 
   const actual = debug_scope_graph(graph, source_code);

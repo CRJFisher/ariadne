@@ -29,6 +29,9 @@ jobs:
       - name: Build
         run: npm run build
         
+      - name: Check file sizes
+        run: npm run check:size
+        
       - name: Run tests
         run: npm test
         
@@ -37,3 +40,10 @@ jobs:
           npm pack --dry-run -w @ariadnejs/types
           npm pack --dry-run -w @ariadnejs/core
           npm pack --dry-run -w @ariadnejs/mcp
+          
+      - name: Self-analysis validation
+        # Run validation but don't fail the build yet (accuracy improvements in progress)
+        continue-on-error: true
+        run: |
+          echo "🔍 Running Ariadne self-analysis validation..."
+          npx tsx packages/core/agent-validation/ci-validation.ts || echo "⚠️ Validation thresholds not met (expected during development)"
