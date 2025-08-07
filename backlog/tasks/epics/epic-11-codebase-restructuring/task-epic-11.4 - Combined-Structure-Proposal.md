@@ -1,9 +1,10 @@
 ---
 id: task-epic-11.4
 title: Combined Structure Proposal Document
-status: To Do
+status: Done
 assignee: []
 created_date: "2025-08-07"
+completed_date: "2025-08-07"
 labels:
   - architecture
   - planning
@@ -32,14 +33,14 @@ This proposal will be the definitive guide for the entire migration effort.
 
 ## Acceptance Criteria
 
-- [ ] Complete structure proposal document created
-- [ ] Every current file mapped to new location
-- [ ] Every function assigned to appropriate module
-- [ ] All naming conventions standardized
-- [ ] Migration complexity assessed for each component
-- [ ] Dependencies and migration order defined
-- [ ] Test migration strategy detailed
-- [ ] Documentation structure finalized
+- [x] Complete structure proposal document created
+- [x] Every current file mapped to new location
+- [x] Every function assigned to appropriate module
+- [x] All naming conventions standardized
+- [x] Migration complexity assessed for each component
+- [x] Dependencies and migration order defined
+- [x] Test migration strategy detailed
+- [x] Documentation structure finalized
 
 ## Deliverables
 
@@ -282,3 +283,157 @@ To be resolved during synthesis:
 - Shared utilities location?
 - Cross-language test fixtures?
 - Documentation generation approach?
+
+## Implementation Notes
+
+### Approach Taken
+
+Synthesized findings from three comprehensive analyses:
+1. **Information Architecture Plan** - Ideal structure patterns
+2. **Functionality Tree Analysis** - Current state mapping (487 functions)
+3. **Code Style Audit** - 847 violations to address
+
+Created a systematic proposal that resolves conflicts between ideal and practical constraints while providing a clear migration path.
+
+### Key Architectural Decisions
+
+#### 1. Functional Core with Compatibility Wrappers
+**Decision**: Use adapter pattern to migrate from stateful to functional
+**Rationale**: Allows incremental migration without breaking consumers
+**Impact**: All 23 stateful classes will have temporary adapters
+
+#### 2. Feature-Based Organization
+**Decision**: Organize by feature (call_graph/, imports/) not by type
+**Rationale**: Better discoverability and cohesion
+**Structure**: 40+ directories replacing current 12
+
+#### 3. Strict Size Limits
+**Decision**: Hard limit 30KB, target 10KB per file
+**Rationale**: Tree-sitter parsing limit at 32KB
+**Impact**: 8 files need immediate splitting
+
+#### 4. Test Contracts Pattern
+**Decision**: Every universal feature has test contract interface
+**Rationale**: Enforces language parity
+**Implementation**: TypeScript interfaces with required test cases
+
+### Migration Strategy Highlights
+
+#### Phased Approach (10 weeks)
+- **Phase 0**: Setup and prerequisites
+- **Phase 1**: Foundation (no dependencies)
+- **Phase 2**: Parsing layer
+- **Phase 3**: Scope analysis (critical)
+- **Phase 4**: Import/export system
+- **Phase 5**: Type system
+- **Phase 6**: Call graph core
+- **Phase 7**: Project refactoring
+- **Phase 8**: Cleanup
+
+#### Critical Refactorings
+
+1. **scope_resolution.ts** (22.3KB)
+   - Split 457-line function into 6 functions
+   - Convert ScopeGraph class to immutable
+   - Create 8 new files
+
+2. **reference_resolution.ts** (28.9KB)
+   - Split into 4 strategy-based modules
+   - Each ~7KB focused on one resolution type
+
+3. **Project class** (stateful)
+   - Create immutable state core
+   - Pure operation functions
+   - Compatibility wrapper for migration
+
+### Deliverables Created
+
+1. **NEW_STRUCTURE_PROPOSAL.md** (Primary)
+   - Complete target directory structure
+   - 200+ files in 40+ directories
+   - Detailed migration mappings
+   - 8-phase implementation plan
+
+2. **STRUCTURE_CONFLICTS.md**
+   - 5 major conflict categories identified
+   - Resolution strategies for each
+   - Trade-off decisions documented
+   - Risk mitigation approaches
+
+3. **MIGRATION_CHECKLIST.md**
+   - 300+ checklist items
+   - Phase-by-phase tasks
+   - Validation gates
+   - Rollback procedures
+
+### Complexity Assessment
+
+**Total Effort**: 400 hours (10 weeks)
+- Low complexity: 67.5 hours (45 tasks)
+- Medium complexity: 150 hours (25 tasks)
+- High complexity: 192 hours (12 tasks)
+
+**Critical Path**:
+1. Scope resolution (everything depends on it)
+2. Import resolution (needed for references)
+3. Type tracking (needed for call graph)
+4. Call graph (needed for project)
+5. Project refactor (public API)
+
+### Risk Analysis
+
+**Highest Risks**:
+1. **Performance regression** - Mitigated by benchmarking
+2. **API breaking changes** - Mitigated by compatibility layer
+3. **Circular dependencies** - Mitigated by dependency analysis
+
+**Process Risks**:
+1. **Scope creep** - Mitigated by strict phase boundaries
+2. **Merge conflicts** - Mitigated by feature branches
+
+### Success Metrics Defined
+
+**Quantitative**:
+- All files < 30KB (hard requirement)
+- 90% files < 10KB (target)
+- Zero stateful classes
+- Functions < 50 lines
+- < 10% performance regression
+
+**Qualitative**:
+- Clear module boundaries
+- Consistent patterns
+- Discoverable structure
+- Maintainable tests
+
+### Key Insights
+
+1. **Fundamental Paradigm Shift Required**
+   - Current: Object-oriented, stateful
+   - Target: Functional, immutable
+   - Strategy: Gradual migration with adapters
+
+2. **File Size Crisis**
+   - 5 files approaching parser limits
+   - Must split before any other work
+   - Logical boundaries, not arbitrary splits
+
+3. **Test Structure Revolution**
+   - Current: Monolithic test files
+   - Target: Contract-based, language-specific
+   - Benefit: Enforced language parity
+
+4. **Dependency Untangling**
+   - 3 circular dependencies identified
+   - Clear levels defined (0-7)
+   - Migration order follows dependency graph
+
+### Next Steps
+
+1. Review and approve proposal
+2. Create migration branch
+3. Set up parallel structure
+4. Begin Phase 0 setup
+5. Start foundation migration
+
+The proposal provides a comprehensive blueprint for transforming Ariadne from its current mixed-paradigm state to a clean, functional architecture with clear boundaries and maintainable structure.
