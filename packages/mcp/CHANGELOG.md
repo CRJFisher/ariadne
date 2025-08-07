@@ -1,5 +1,12 @@
 # @ariadnejs/mcp
 
+## 0.1.4
+
+### Patch Changes
+
+- Updated dependencies
+  - @ariadnejs/core@0.6.0
+
 ## 0.1.3
 
 ### Patch Changes

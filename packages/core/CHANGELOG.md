@@ -7,11 +7,13 @@
 - feat: Major improvements in namespace imports, test coverage, and architecture planning
 
   **New Features:**
+
   - ✅ **Namespace imports implemented** - Added partial support for JavaScript/TypeScript namespace imports (`import * as name from 'module'`)
   - ✅ **New folder structure migration** - Started migration to feature→language→testing pattern with namespace imports as pilot
   - ✅ **Feature validation framework** - Added scripts for discovering and validating feature coverage across languages
 
   **Improvements:**
+
   - ✅ **500 tests passing** (96% pass rate, up from 387 tests / 95%)
   - ✅ Cross-file call tracking fixed for all supported languages
   - ✅ CommonJS and ES6 export support significantly improved
@@ -19,12 +21,14 @@
   - ✅ Import resolution more robust with better error handling
 
   **Architecture & Documentation:**
+
   - ✅ Created comprehensive Information Architecture Plan for repository restructuring
   - ✅ Added ARCHITECTURE.md and FEATURE_DEVELOPMENT.md guides
   - ✅ Updated testing patterns to support test contracts and language adapters
   - ✅ Prepared foundation for systematic language expansion (7 new languages planned)
 
   **Bug Fixes:**
+
   - Fixed reference resolution to properly handle namespace member access
   - Updated tree-sitter queries for JavaScript/TypeScript to support namespace patterns
   - Resolved issues with import/export detection edge cases
