@@ -19,27 +19,52 @@ Design and implement a systematic framework for adding new language support with
 ## Acceptance Criteria
 
 - [ ] Language configuration architecture designed
-- [ ] Feature capability matrix defined (Language × Feature × Test)
+- [ ] Feature capability matrix defined (Language × Feature × Test) - `src/feature_registry.ts`
 - [ ] Language addition template created
-- [ ] Testing requirements documented per feature
-- [ ] Existing languages analyzed for patterns
+- [ ] Testing requirements documented per feature - Started with namespace imports
+- [ ] Existing languages analyzed for patterns - See `docs/FEATURE_MATRIX_MIGRATION.md`
 - [ ] Automated compliance validator created
 - [ ] Document the new folder structure in a new @rules/folder-structure.md file
 - [ ] Document the new testing framework in a new @rules/testing.md file
 
 ## Implementation Notes
 
+### Progress (Started 2025-08-06)
+
+Initial implementation begun with simpler approach - no registry needed:
+
+- Created `src/import_resolution/namespace_imports/` - Example of new structure for namespace import feature
+- Created `docs/FEATURE_MATRIX_MIGRATION.md` - Migration plan and gap analysis
+- Created `scripts/discover_features.ts` - Script to scan folder structure and generate matrices
+- Created `rules/folder-structure-migration.md` - Complete guidelines for the new structure
+
+Key insight: The folder structure IS the registry - test file existence indicates language support. No separate registry to maintain!
+
 ### Folder Structure
+
+### Case 1
 
 Most features will be supported by every language and so these follow the structure:
 
 - /src/[feature]/[sub-feature]
-  - .../[sub-sub-feature].ts
-  - .../[sub-sub-feature].test.ts
-    - _important_ - this test file defines all the main _cases_ we should cover for this feature, exported as an interface that the language-specific test files will implement
-  - .../[sub-sub-feature].python.test.ts
-  - .../[sub-sub-feature].javascript.test.ts
+  - .../[sub-sub-feature].ts // the main feature file covering all the multi-language functionality
+  - .../[sub-sub-feature].javascript.ts // the language-specific implementation for javascript
+  - .../[sub-sub-feature].python.ts // the language-specific implementation for python
+  - .../[sub-sub-feature].rust.ts // the language-specific implementation for rust
+  - .../[sub-sub-feature].test.ts // this test file defines all the main cases we should cover for this feature, exported as an interface that the language-specific test files will implement
+  - .../[sub-sub-feature].python.test.ts // the language-specific test file for python
+  - .../[sub-sub-feature].javascript.test.ts // the language-specific test file for javascript
+  - .../[sub-sub-feature].rust.test.ts // the language-specific test file for rust
   - ...
+
+#### Questions
+
+- Main code:
+  - How to 'override'/intercept the feature processing with a language-specific implementation?
+- Testing:
+  - How to ensure that the language-specific test files are covering all the cases?
+
+### Case 2
 
 This will allow us to run a script to generate the language-specific test files from the main test file and then quickly measure the test coverage for each feature and language.
 

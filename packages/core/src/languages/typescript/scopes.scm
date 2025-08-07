@@ -301,11 +301,11 @@
 (call_expression
   (identifier) @local.reference)
   
-;; method call expression: this.method() or obj.method()
+;; method call expression: this.method() or obj.method() or obj.prop.method()
 ;; We need to exclude super.method() calls since they reference parent class methods
 (call_expression
   (member_expression
-    object: [(this) (identifier)]
+    object: [(this) (identifier) (member_expression)]
     property: (property_identifier) @local.reference.method))
 
 ;; chained method call expression: obj.method1().method2()
@@ -314,10 +314,10 @@
     object: (call_expression)
     property: (property_identifier) @local.reference.method))
 
-;; private method call expression: this.#privateMethod() or obj.#privateMethod()
+;; private method call expression: this.#privateMethod() or obj.#privateMethod() or obj.prop.#privateMethod()
 (call_expression
   (member_expression
-    object: [(this) (identifier)]
+    object: [(this) (identifier) (member_expression)]
     property: (private_property_identifier) @local.reference.method))
 
 ;; call arguments

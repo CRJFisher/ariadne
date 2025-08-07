@@ -16,7 +16,8 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "clean": "rm -rf dist",
-    "prepublishOnly": "npm run build && npm test"
+    "prepublishOnly": "npm run build && npm test",
+    "discover-features": "tsx scripts/discover_features.ts"
   },
   "keywords": [
     "tree-sitter",

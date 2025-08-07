@@ -2,6 +2,11 @@
 
 This file references all the rules files that are relevant for different types of tasks. Choose the appropriate rules file for the task at hand.
 
+## Tempo
+
+- As a general practice, be methodical and thorough. It's better to examine and scrutinise the plan from many angles before rushing to implement.
+- Once you've thought about your plan, explain it to me and we'll discuss it. I like to be part of the strategy and architecture. Then we can implement.
+
 ## Quick Reference
 
 ### Task Management
@@ -37,12 +42,19 @@ This file references all the rules files that are relevant for different types o
 - When: Improving existing code
 - Key principle: Move boldly forward, don't maintain backwards compatibility
 - Focus: Language-specific features should be explicit
+- Follow `rules/folder-structure-migration.md` when reorganizing code
 
 **🌐 `rules/language-support.md`** - Multi-language handling
 
 - When: Adding language-specific features
 - Key rule: Add processing functions to LanguageConfiguration
 - Structure: Explicit handling of language differences
+
+**📁 `rules/folder-structure-migration.md`** - Feature-based organization
+
+- When: Adding new features or refactoring existing ones
+- Structure: Organize by feature category → feature → language tests
+- Support: Test file existence = language support (no registry needed)
 
 ## Workflow Overview
 

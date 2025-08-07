@@ -266,8 +266,8 @@ function resolve_instance_method(
 function resolve_namespace_all_exports(
   targetFile: string,
   config: ReferenceResolutionConfig
-): Map<string, Def> {
-  const exports = new Map<string, Def>();
+): Map<string, Def | { isNamespaceReExport: true; targetModule: string }> {
+  const exports = new Map<string, Def | { isNamespaceReExport: true; targetModule: string }>();
   const targetGraph = config.get_file_graph?.(targetFile);
   
   if (targetGraph) {
@@ -276,6 +276,31 @@ function resolve_namespace_all_exports(
     for (const def of defs) {
       if (def.is_exported === true) {
         exports.set(def.name, def);
+      }
+    }
+    
+    // Also check for re-exported namespaces
+    // Look for export { name } patterns where name is a namespace import
+    const imports = targetGraph.getAllImports();
+    const refs = targetGraph.getNodes('reference') as Ref[];
+    
+    for (const imp of imports) {
+      if (imp.source_name === '*') {
+        // This is a namespace import, check if it's re-exported
+        const exportRef = refs.find(ref => 
+          ref.name === imp.name &&
+          // Check if this ref is in an export context (rough heuristic)
+          // A more precise check would require access to the source code
+          true
+        );
+        
+        if (exportRef && imp.source_module) {
+          // Mark this as a namespace re-export
+          exports.set(imp.name, {
+            isNamespaceReExport: true,
+            targetModule: imp.source_module
+          });
+        }
       }
     }
   }
@@ -303,13 +328,17 @@ function resolve_namespace_member(
   );
   
   if (process.env.DEBUG_NAMESPACE) {
-    console.log(`Checking namespace '${namespaceName}' for member '${memberRef.name}'`);
+    console.log(`\nChecking namespace '${namespaceName}' for member '${memberRef.name}'`);
     console.log(`Found imports:`, imports.map(i => ({
       local: i.local_name, 
       source: i.import_statement.source_name,
-      name: i.import_statement.name
+      name: i.import_statement.name,
+      module: i.import_statement.source_module
     })));
     console.log(`Namespace import found:`, !!namespaceImport);
+    if (namespaceImport) {
+      console.log(`Target file:`, namespaceImport.imported_function.file_path);
+    }
   }
   
   if (!namespaceImport) {
@@ -320,9 +349,13 @@ function resolve_namespace_member(
   const targetFile = namespaceImport.imported_function.file_path;
   const allExports = resolve_namespace_all_exports(targetFile, config);
   
+  if (process.env.DEBUG_NAMESPACE) {
+    console.log(`All exports from ${targetFile}:`, Array.from(allExports.keys()));
+  }
+  
   // Direct member access: namespace.member
   const directMember = allExports.get(memberRef.name);
-  if (directMember) {
+  if (directMember && 'symbol_kind' in directMember) {
     return directMember;
   }
   
@@ -330,12 +363,26 @@ function resolve_namespace_member(
   // If the member is itself a namespace that was re-exported
   // we need to look deeper
   for (const [exportName, exportDef] of allExports) {
-    if (exportDef.symbol_kind === 'module' || exportDef.symbol_kind === 'namespace') {
+    if ('isNamespaceReExport' in exportDef && exportDef.isNamespaceReExport) {
+      // This is a re-exported namespace, resolve its target
+      const imports = config.get_imports_with_definitions(targetFile);
+      const namespaceImport = imports.find(imp => 
+        imp.local_name === exportName && imp.import_statement.source_name === '*'
+      );
+      
+      if (namespaceImport) {
+        const nestedExports = resolve_namespace_all_exports(namespaceImport.imported_function.file_path, config);
+        const nestedMember = nestedExports.get(memberRef.name);
+        if (nestedMember && 'symbol_kind' in nestedMember) {
+          return nestedMember;
+        }
+      }
+    } else if ('symbol_kind' in exportDef && (exportDef.symbol_kind === 'module' || exportDef.symbol_kind === 'namespace')) {
       // This export might be a re-exported namespace
       // Try to resolve the member from this namespace
       const nestedExports = resolve_namespace_all_exports(exportDef.file_path, config);
       const nestedMember = nestedExports.get(memberRef.name);
-      if (nestedMember) {
+      if (nestedMember && 'symbol_kind' in nestedMember) {
         return nestedMember;
       }
     }
@@ -358,6 +405,13 @@ function resolve_nested_namespace_member(
   const namespacePath: string[] = [];
   let currentNode = objectNode;
   
+  if (process.env.DEBUG_NAMESPACE) {
+    console.log(`\n=== Resolving nested namespace member ===`);
+    console.log(`Member: ${memberRef.name}`);
+    console.log(`Object node type: ${objectNode.type}`);
+    console.log(`Object node text: ${objectNode.text}`);
+  }
+  
   while (is_method_expression_node(currentNode)) {
     const propertyNode = currentNode.childForFieldName('property') || 
                         currentNode.childForFieldName('field') ||
@@ -379,7 +433,14 @@ function resolve_nested_namespace_member(
     namespacePath.unshift(currentNode.text);
   }
   
+  if (process.env.DEBUG_NAMESPACE) {
+    console.log(`Namespace path:`, namespacePath);
+  }
+  
   if (namespacePath.length < 2) {
+    if (process.env.DEBUG_NAMESPACE) {
+      console.log(`Path too short, returning undefined`);
+    }
     return undefined;
   }
   
@@ -426,8 +487,31 @@ function resolve_nested_namespace_member(
         return undefined;
       }
       
+      // Check if this is a namespace re-export
+      if ('isNamespaceReExport' in intermediateExport && intermediateExport.isNamespaceReExport) {
+        // This is a re-exported namespace, resolve its target module
+        const targetModule = intermediateExport.targetModule;
+        const resolvedPath = config.get_imports_with_definitions(currentFile)
+          .find(imp => imp.import_statement.source_module === targetModule)
+          ?.imported_function?.file_path;
+        
+        if (resolvedPath) {
+          currentFile = resolvedPath;
+          currentExports = resolve_namespace_all_exports(currentFile, config);
+        } else {
+          // Try to resolve the module path directly
+          const imports = config.get_imports_with_definitions(currentFile);
+          for (const imp of imports) {
+            if (imp.local_name === segment && imp.import_statement.source_name === '*') {
+              currentFile = imp.imported_function.file_path;
+              currentExports = resolve_namespace_all_exports(currentFile, config);
+              break;
+            }
+          }
+        }
+      }
       // If this is a re-exported namespace/module, follow it
-      if (intermediateExport.file_path && intermediateExport.file_path !== currentFile) {
+      else if ('file_path' in intermediateExport && intermediateExport.file_path && intermediateExport.file_path !== currentFile) {
         currentFile = intermediateExport.file_path;
         currentExports = resolve_namespace_all_exports(currentFile, config);
       } else {
@@ -438,7 +522,7 @@ function resolve_nested_namespace_member(
     
     // Now look for the final member
     const finalMember = currentExports.get(memberRef.name);
-    if (finalMember) {
+    if (finalMember && 'symbol_kind' in finalMember) {
       return finalMember;
     }
   }

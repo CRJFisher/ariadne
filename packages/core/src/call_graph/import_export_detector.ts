@@ -172,15 +172,39 @@ export function detect_file_exports(
       const beforeRef = line.substring(0, ref.range.start.column);
       if (beforeRef.match(/export\s*(default\s*)?$/)) {
         const isDefault = beforeRef.includes('default');
-        const def = defs.find(d => d.name === ref.name);
         
-        exports.push({
-          name: ref.name,
-          exportName: isDefault ? 'default' : ref.name,
-          definition: def,
-          isDefault,
-          range: ref.range
-        });
+        // Check if this is a namespace import being re-exported
+        // Look through the graph's imports to see if this ref matches a namespace import
+        const imports = graph.getAllImports();
+        const namespaceImport = imports.find(imp => 
+          imp.name === ref.name && imp.source_name === '*'
+        );
+        
+        if (namespaceImport) {
+          // This is a re-exported namespace
+          // Create a special export entry that indicates this is a namespace re-export
+          exports.push({
+            name: ref.name,
+            exportName: isDefault ? 'default' : ref.name,
+            definition: undefined, // No local definition, it's a namespace
+            isDefault,
+            range: ref.range,
+            // Add a marker to indicate this is a namespace re-export
+            isNamespaceReExport: true,
+            sourceModule: namespaceImport.source_module
+          } as ExportDetectionResult & { isNamespaceReExport?: boolean; sourceModule?: string });
+        } else {
+          // Regular export
+          const def = defs.find(d => d.name === ref.name);
+          
+          exports.push({
+            name: ref.name,
+            exportName: isDefault ? 'default' : ref.name,
+            definition: def,
+            isDefault,
+            range: ref.range
+          });
+        }
       }
     }
   }

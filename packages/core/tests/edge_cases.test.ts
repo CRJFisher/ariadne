@@ -752,6 +752,12 @@ describe('Edge Cases - Cross-file Resolution', () => {
       expect(calculatorDef).toBeDefined();
       
       const callsFromCalculateArea = project.get_calls_from_definition(calculateAreaDef!);
+      if (process.env.DEBUG_NAMESPACE) {
+        console.log('Calls from calculateArea:', callsFromCalculateArea.map(c => ({
+          name: c.called_def.name,
+          file: c.called_def.file_path
+        })));
+      }
       expect(callsFromCalculateArea.some(call => call.called_def.name === 'multiply')).toBe(true);
     });
 
