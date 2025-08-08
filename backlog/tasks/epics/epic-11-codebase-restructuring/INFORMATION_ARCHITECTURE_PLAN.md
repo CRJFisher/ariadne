@@ -13,7 +13,7 @@ User Abstractions (What users want)
     ↓
 Programming Concepts (How it's expressed in code)
     ↓
-Language Features (Language-specific syntax/semantics)
+Common Language Feature Processing **OR** Language-Specific Feature Processing (Language-specific syntax/semantics)
     ↓
 Parsing Implementation (Tree-sitter queries and AST processing)
 ```

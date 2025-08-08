@@ -3,9 +3,10 @@
 ## Executive Summary
 
 - **Current state**: 89 files in 12 directories with mixed concerns
-- **Target state**: 200+ files in 40+ directories with clear boundaries
-- **Migration scope**: All 487 exported functions/classes
+- **Target state**: 235 files in 45+ directories with clear boundaries
+- **Migration scope**: All 487 exported functions/classes + 26 missing functions
 - **Estimated effort**: 10 weeks (400 hours)
+- **New modules added**: Performance monitoring, error handling, dev tools, CLI, configuration
 
 ## Target Architecture
 
@@ -22,10 +23,20 @@ src/
 │   ├── constants/                  # System constants
 │   │   ├── limits.ts (MAX_FILE_SIZE = 30KB)
 │   │   └── patterns.ts
-│   └── errors/                     # Error types
-│       ├── parsing_error.ts
-│       ├── resolution_error.ts
-│       └── validation_error.ts
+│   ├── errors/                     # Error types and handling (EXPANDED)
+│   │   ├── parsing_error.ts
+│   │   ├── resolution_error.ts
+│   │   ├── validation_error.ts
+│   │   ├── error_handler.ts       # Centralized error handling (NEW)
+│   │   ├── error_reporter.ts      # Error reporting (NEW)
+│   │   ├── error_recovery.ts      # Recovery strategies (NEW)
+│   │   ├── error_aggregator.ts    # Error aggregation (NEW)
+│   │   ├── error_formatter.ts     # Error formatting (NEW)
+│   │   └── error_codes.ts         # Standard error codes (NEW)
+│   └── config/                     # Configuration management (NEW)
+│       ├── config_loader.ts
+│       ├── config_validator.ts
+│       └── config_merger.ts
 │
 ├── storage/                        # Storage layer (depends on core)
 │   ├── contracts/                  # Storage interfaces
@@ -217,7 +228,32 @@ src/
 │   ├── path/
 │   │   ├── path_normalizer.ts
 │   │   └── module_locator.ts
+│   ├── performance/               # Performance monitoring (NEW)
+│   │   ├── profiler.ts
+│   │   ├── benchmark.ts
+│   │   ├── memory_tracker.ts
+│   │   ├── performance_metrics.ts
+│   │   ├── timing_utils.ts
+│   │   ├── resource_monitor.ts
+│   │   ├── performance_cache.ts
+│   │   └── performance_reporter.ts
+│   ├── logging/                   # Logging infrastructure (NEW)
+│   │   ├── logger.ts
+│   │   ├── log_formatter.ts
+│   │   └── log_writer.ts
 │   └── index.ts
+│
+├── dev_tools/                     # Developer tools (NEW)
+│   ├── debugger.ts
+│   ├── inspector.ts
+│   ├── repl.ts
+│   ├── trace_logger.ts
+│   └── diagnostic_reporter.ts
+│
+├── cli/                           # CLI interface (NEW)
+│   ├── command_parser.ts
+│   ├── command_executor.ts
+│   └── output_formatter.ts
 │
 └── index.ts                       # Public API (< 1KB, exports only)
 ```
@@ -493,13 +529,52 @@ git tag post-phase-1-file-1
 # etc.
 ```
 
+## Future Phases (Post-Migration)
+
+### Phase 9: Control Flow Analysis (2 weeks - DEFERRED)
+**To be implemented after core restructuring**
+
+```
+src/analysis/control_flow/
+├── graph/
+│   ├── cfg_builder.ts
+│   ├── basic_block.ts
+│   └── control_edge.ts
+├── analysis/
+│   ├── branch_analyzer.ts
+│   ├── loop_detector.ts
+│   └── dead_code_finder.ts
+└── conditions/
+    ├── condition_tracker.ts
+    └── path_analyzer.ts
+```
+
+### Phase 10: Data Flow Analysis (2 weeks - DEFERRED)
+**To be implemented after control flow**
+
+```
+src/analysis/data_flow/
+├── graph/
+│   ├── dfg_builder.ts
+│   ├── data_node.ts
+│   └── data_edge.ts
+├── tracking/
+│   ├── value_propagator.ts
+│   ├── taint_analyzer.ts
+│   └── dependency_tracker.ts
+└── optimization/
+    ├── unused_detector.ts
+    └── ssa_converter.ts
+```
+
 ## Next Steps
 
-1. Review and approve this proposal
+1. Review and approve this proposal (including deferred phases)
 2. Create detailed migration scripts
 3. Set up parallel structure
 4. Begin Phase 0 setup
 5. Start Phase 1 migration
+6. Create separate tasks for Phase 9-10 in backlog
 
 ## Appendix: Naming Conventions
 

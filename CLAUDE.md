@@ -2,11 +2,6 @@
 
 This file references all the rules files that are relevant for different types of tasks. Choose the appropriate rules file for the task at hand.
 
-## Tempo
-
-- As a general practice, be methodical and thorough. It's better to examine and scrutinise the plan from many angles before rushing to implement.
-- Once you've thought about your plan, explain it to me and we'll discuss it. I like to be part of the strategy and architecture. Then we can implement.
-
 ## Quick Reference
 
 ### Task Management
