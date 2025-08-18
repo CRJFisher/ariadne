@@ -69,9 +69,11 @@ export class FileManager {
       oldTree.edit(treeEdit);
       
       try {
-        // Use dynamic bufferSize based on actual file size (fixes 32KB limit)
+        // Use dynamic bufferSize based on actual byte size (fixes 32KB limit)
+        // Calculate actual byte length for UTF-8 encoding
+        const byteLength = Buffer.byteLength(sourceCode, 'utf8');
         // Add 10% padding to ensure we have enough buffer space
-        const bufferSize = Math.max(32 * 1024, Math.ceil(sourceCode.length * 1.1));
+        const bufferSize = Math.max(32 * 1024, Math.ceil(byteLength * 1.1));
         const options = {
           bufferSize
         };
@@ -91,9 +93,11 @@ export class FileManager {
       config.parser.setTimeoutMicros(10000000); // 10 seconds
       
       try {
-        // Use dynamic bufferSize based on actual file size (fixes 32KB limit)
+        // Use dynamic bufferSize based on actual byte size (fixes 32KB limit)
+        // Calculate actual byte length for UTF-8 encoding
+        const byteLength = Buffer.byteLength(sourceCode, 'utf8');
         // Add 10% padding to ensure we have enough buffer space
-        const bufferSize = Math.max(32 * 1024, Math.ceil(sourceCode.length * 1.1));
+        const bufferSize = Math.max(32 * 1024, Math.ceil(byteLength * 1.1));
         const options = {
           bufferSize
         };
