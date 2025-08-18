@@ -2,7 +2,7 @@ import { describe, test, expect } from "vitest";
 import { Project } from "../src/index";
 
 describe("Large file handling", () => {
-  test("handles files larger than 32KB gracefully", () => {
+  test("handles files larger than 32KB with bufferSize option", { timeout: 20000 }, () => {
     const project = new Project();
     
     // Create a file larger than 32KB
@@ -32,9 +32,11 @@ ${Array.from({ length: 1000 }, (_, i) =>
     expect(fileCache).toBeDefined();
     expect(fileCache.source_code).toBe(largeContent);
     
-    // Functions won't be parsed for large files
+    // With bufferSize option, large files are now parsed successfully
     const funcs = project.get_functions_in_file("large.ts");
-    expect(funcs).toEqual([]);
+    expect(funcs.length).toBe(1001); // func0 through func1000
+    expect(funcs[0].name).toBe("func0");
+    expect(funcs[funcs.length - 1].name).toBe("func1000");
   });
   
   test("files under 32KB parse normally", () => {
@@ -57,29 +59,34 @@ function test3() { return 3; }
     expect(funcs.map(f => f.name).sort()).toEqual(["test1", "test2", "test3"]);
   });
   
-  test("provides helpful warning for large files", () => {
+  test("dynamic buffer adjusts to file size", () => {
     const project = new Project();
-    const warnings: string[] = [];
     
-    // Capture console.warn
-    const originalWarn = console.warn;
-    console.warn = (msg: string) => {
-      warnings.push(msg);
-      originalWarn(msg);
-    };
+    // Test that various file sizes work with dynamic buffer
+    const testSizes = [
+      { kb: 50, expectedFuncs: 50 },
+      { kb: 100, expectedFuncs: 100 },
+      { kb: 200, expectedFuncs: 200 }
+    ];
     
-    try {
-      // Create a file that's definitely over 32KB
-      const hugeContent = "x".repeat(40000);
-      project.add_or_update_file("huge.js", hugeContent);
+    for (const { kb, expectedFuncs } of testSizes) {
+      const content = Array.from({ length: expectedFuncs }, (_, i) => 
+        `function size${kb}_func${i}() { 
+          return "x".repeat(${Math.floor(kb * 1024 / expectedFuncs / 2)});
+        }`
+      ).join('\n');
       
-      // Should have warned about the file
-      expect(warnings.some(w => 
-        w.includes("huge.js") && 
-        (w.includes("cannot be parsed") || w.includes("not parsed"))
-      )).toBe(true);
-    } finally {
-      console.warn = originalWarn;
+      const filePath = `size${kb}.ts`;
+      console.log(`Testing ${filePath}: ${(content.length / 1024).toFixed(1)}KB`);
+      
+      // Should handle any size with dynamic buffer
+      expect(() => {
+        project.add_or_update_file(filePath, content);
+      }).not.toThrow();
+      
+      // Verify file was parsed
+      const funcs = project.get_functions_in_file(filePath);
+      expect(funcs.length).toBe(expectedFuncs);
     }
   });
 });

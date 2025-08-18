@@ -1,4 +1,4 @@
-# Tree-sitter 32KB Buffer Limit Issue
+# Tree-sitter 32KB Buffer Limit Issue (RESOLVED)
 
 ## Context
 
@@ -9,6 +9,19 @@ Failed to read file: /path/to/file.py Error: Invalid argument
 ```
 
 Investigation revealed this is caused by a hardcoded buffer limit in the tree-sitter Node.js bindings where files larger than 32,767 bytes cannot be parsed.
+
+## Resolution
+
+**✅ FIXED**: The 32KB limit has been resolved by using the `bufferSize` option in parser.parse() with dynamic sizing.
+
+```javascript
+// Dynamic buffer size based on actual file size (with 10% padding)
+const bufferSize = Math.max(32 * 1024, Math.ceil(sourceCode.length * 1.1));
+const options = { bufferSize };
+const tree = parser.parse(sourceCode, oldTree, options);
+```
+
+This option is available in tree-sitter 0.21.1 and dynamically adjusts the buffer to handle files of any size. The buffer automatically scales with the file size, eliminating any hard limits.
 
 ## Current State
 
@@ -161,7 +174,9 @@ We should maintain our current workaround but also:
 
 ## Summary
 
-After thorough investigation, the "Invalid argument" error is confirmed to be caused by a hardcoded 32KB buffer limit in the tree-sitter Node.js bindings. The buffer is set to exactly 32,768 bytes in the C++ source code. This is not a version-specific issue but a fundamental limitation of how the Node.js bindings handle string parsing.
+**UPDATE (2025)**: The 32KB limit has been completely resolved by using the `bufferSize` option with dynamic sizing. The buffer now automatically adjusts to the file size, allowing files of any size to be parsed successfully. There is no longer any hard limit.
+
+~~After thorough investigation, the "Invalid argument" error is confirmed to be caused by a hardcoded 32KB buffer limit in the tree-sitter Node.js bindings. The buffer is set to exactly 32,768 bytes in the C++ source code. This is not a version-specific issue but a fundamental limitation of how the Node.js bindings handle string parsing.~~
 
 ## References
 
