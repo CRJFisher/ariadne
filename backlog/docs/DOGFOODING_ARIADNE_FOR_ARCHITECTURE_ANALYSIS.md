@@ -44,6 +44,10 @@ interface FunctionInventory {
 - Never miss hidden exports
 - Size violations immediately visible
 
+**Downsides:**
+
+- `getAllFunctions` - depending on the codebase, this might still be too much context. Mabye we shoulnd't worry about this - the agent should be able to split and merge as required.
+
 ### 2. Feature Boundary Detection
 
 #### Challenge
@@ -91,34 +95,38 @@ const scopeCluster = {
 };
 ```
 
-### 3. Universal vs Language-Specific Detection
+### 3. Multi-Feature Function Detection
 
 #### Challenge
 
-- Manually determined which code is universal vs language-specific
-- Mixed implementations in single functions
-- Couldn't quantify the split (guessed 60/40)
-- Missed subtle language-specific branches
+- Functions handling multiple unrelated features
+- Dense implementations mixing different concerns
+- Couldn't quantify feature density or complexity
+- Missed opportunities to split monolithic functions
 
-#### Ariadne Solution: Language Variance Analysis
+#### Ariadne Solution: Function Complexity and Feature Density Analysis
 
 ```typescript
-interface LanguageVarianceAnalyzer {
-  analyzeLanguageSpecificity(func: string): {
-    isUniversal: boolean;
-    languageSpecificParts: {
-      language: string;
-      codeRanges: Range[];
-      percentage: number;
-    }[];
-    recommendedSplit?: SplitStrategy;
+interface ComplexityAnalyzer {
+  analyzeFunctionComplexity(func: string): {
+    cyclomaticComplexity: number;
+    cognitiveComplexity: number;
+    halsteadCOmplexity: number;
   };
 
-  findMixedImplementations(): {
+  findOverloadedFunctions(): {
     function: string;
-    languages: string[];
+    complexityScore: number;
+    features: string[];
     shouldSplit: boolean;
     splitStrategy: SplitStrategy;
+  }[];
+  
+  rankByComplexity(scope: 'repo' | 'folder' | 'file'): {
+    function: string;
+    file: string;
+    score: number;
+    reasons: string[];
   }[];
 }
 ```
@@ -128,15 +136,17 @@ interface LanguageVarianceAnalyzer {
 ```typescript
 // Ariadne could have detected:
 {
-  function: "detect_function_call",
-  languages: ["javascript", "python", "rust"],
+  function: "processUserData",
+  complexityScore: 87,
+  features: ["validation", "transformation", "caching", "logging"],
   shouldSplit: true,
   splitStrategy: {
-    universal: "call_detector_interface.ts",
-    implementations: [
-      "javascript/js_call_detector.ts",
-      "python/py_call_detector.ts",
-      "rust/rust_call_detector.ts"
+    core: "user_processor.ts",
+    extractedFunctions: [
+      "validation/user_validator.ts",
+      "transform/user_transformer.ts", 
+      "cache/user_cache_manager.ts",
+      "logging/user_activity_logger.ts"
     ]
   }
 }
@@ -229,45 +239,6 @@ const testSplits = [
     coveredFunctions: ["detect_recursive_call", "analyze_call_cycle"],
   },
   // ... 6 more logical splits
-];
-```
-
-### 6. Architecture Conformance Checking
-
-#### Challenge
-
-- No way to validate if code matches intended architecture
-- Can't detect architecture violations
-- Manual checking is error-prone
-- No enforcement mechanism
-
-#### Ariadne Solution: Architecture Rules Engine
-
-```typescript
-interface ArchitectureValidator {
-  defineRules(rules: ArchitectureRule[]): void;
-  validateConformance(): ViolationReport;
-  suggestRefactoring(violation: Violation): RefactoringSuggestion;
-  enforceLayering(): LayerViolation[];
-}
-
-// Example rules we could have defined:
-const architectureRules = [
-  {
-    rule: "NoStateifulClasses",
-    detect: (node) => node.type === "ClassDeclaration" && hasMutableState(node),
-    severity: "error",
-  },
-  {
-    rule: "MaxFileSize",
-    detect: (file) => file.size > 30000,
-    severity: "error",
-  },
-  {
-    rule: "UniversalVsSpecific",
-    detect: (func) => hasLanguageSpecificLogic(func) && !inLanguageFolder(func),
-    severity: "warning",
-  },
 ];
 ```
 
@@ -427,56 +398,6 @@ const scopeResolutionSplit = {
     { name: "finalize_graph", lines: 62, purpose: "Validation" },
   ],
 };
-```
-
-### Feature 2: Language Parity Enforcer
-
-```typescript
-interface LanguageParityEnforcer {
-  defineUniversalFeature(feature: FeatureSpec): void;
-  checkLanguageImplementations(): ParityReport;
-  generateMissingStubs(): StubFile[];
-  enforceTestContracts(): ContractViolation[];
-}
-
-// Would have caught:
-const parityViolations = [
-  {
-    feature: "call_detection",
-    implementations: {
-      javascript: "✓ Complete",
-      typescript: "✓ Complete",
-      python: "⚠ Missing async detection",
-      rust: "✗ Missing trait calls",
-    },
-  },
-];
-```
-
-### Feature 3: Functional Paradigm Validator
-
-```typescript
-interface FunctionalValidator {
-  detectMutations(): Mutation[];
-  findStatefulPatterns(): StatefulPattern[];
-  suggestImmutableAlternatives(): RefactoringSuggestion[];
-  validatePureFunctions(): PurityViolation[];
-}
-
-// Would have found all 23 stateful classes instantly:
-const statefulViolations = [
-  {
-    class: "Project",
-    violations: [
-      {
-        line: 168,
-        code: "this.files.set(path, file)",
-        suggestion: "Return new Project",
-      },
-      { line: 195, code: "this.cache.clear()", suggestion: "Return new state" },
-    ],
-  },
-];
 ```
 
 ## Implementation Priority
