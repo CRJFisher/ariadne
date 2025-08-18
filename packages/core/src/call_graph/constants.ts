@@ -48,9 +48,11 @@ export const TYPE_SYMBOL_KINDS = [
 ] as const;
 
 /**
- * Maximum file size for tree-sitter parsing (32KB)
+ * Maximum file size for tree-sitter parsing
+ * Note: With dynamic bufferSize option, there's no hard limit - buffer adjusts to file size
+ * This constant represents a reasonable maximum for performance considerations
  */
-export const MAX_FILE_SIZE = 32 * 1024; // 32KB
+export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB (soft limit for performance)
 
 /**
  * Type guards using const arrays

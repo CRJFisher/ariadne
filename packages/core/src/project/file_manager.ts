@@ -69,7 +69,15 @@ export class FileManager {
       oldTree.edit(treeEdit);
       
       try {
-        tree = config.parser.parse(sourceCode, oldTree);
+        // Use dynamic bufferSize based on actual byte size (fixes 32KB limit)
+        // Calculate actual byte length for UTF-8 encoding
+        const byteLength = Buffer.byteLength(sourceCode, 'utf8');
+        // Add 10% padding to ensure we have enough buffer space
+        const bufferSize = Math.max(32 * 1024, Math.ceil(byteLength * 1.1));
+        const options = {
+          bufferSize
+        };
+        tree = config.parser.parse(sourceCode, oldTree, options);
       } catch (error: any) {
         // Handle tree-sitter limitations
         if (error.message === 'Invalid argument') {
@@ -85,7 +93,15 @@ export class FileManager {
       config.parser.setTimeoutMicros(10000000); // 10 seconds
       
       try {
-        tree = config.parser.parse(sourceCode);
+        // Use dynamic bufferSize based on actual byte size (fixes 32KB limit)
+        // Calculate actual byte length for UTF-8 encoding
+        const byteLength = Buffer.byteLength(sourceCode, 'utf8');
+        // Add 10% padding to ensure we have enough buffer space
+        const bufferSize = Math.max(32 * 1024, Math.ceil(byteLength * 1.1));
+        const options = {
+          bufferSize
+        };
+        tree = config.parser.parse(sourceCode, undefined, options);
       } catch (error: any) {
         // Handle tree-sitter limitations
         if (error.message === 'Invalid argument') {
