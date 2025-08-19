@@ -7,6 +7,8 @@ import * as path from "path";
 import * as fs from "fs/promises";
 import { getSymbolContext, getSymbolContextSchema } from "./tools/get_symbol_context";
 import { getFileMetadata, getFileMetadataSchema } from "./tools/get_file_metadata";
+import { findReferences, findReferencesSchema } from "./tools/find_references";
+import { getSourceCode, getSourceCodeSchema } from "./tools/get_source_code";
 import { VERSION } from "./version";
 
 export interface AriadneMCPServerOptions {
@@ -74,6 +76,47 @@ export async function startServer(options: AriadneMCPServerOptions = {}): Promis
             },
             required: ["filePath"]
           }
+        },
+        {
+          name: "find_references",
+          description: "Find all references to a symbol by name across the codebase",
+          inputSchema: {
+            type: "object",
+            properties: {
+              symbol: {
+                type: "string",
+                description: "Name of the symbol to find references for"
+              },
+              includeDeclaration: {
+                type: "boolean",
+                description: "Include the declaration itself in results (default: false)"
+              },
+              searchScope: {
+                type: "string",
+                enum: ["file", "project"],
+                description: "Scope to search within (default: project)"
+              }
+            },
+            required: ["symbol"]
+          }
+        },
+        {
+          name: "get_source_code",
+          description: "Extract the complete source code of a function, class, or other symbol",
+          inputSchema: {
+            type: "object",
+            properties: {
+              symbol: {
+                type: "string",
+                description: "Name of the symbol to get source code for"
+              },
+              includeDocstring: {
+                type: "boolean",
+                description: "Include documentation/comments if available (default: true)"
+              }
+            },
+            required: ["symbol"]
+          }
         }
       ]
     };
@@ -116,6 +159,42 @@ export async function startServer(options: AriadneMCPServerOptions = {}): Promis
           await loadFileIfNeeded(project, resolvedPath);
           
           const result = await getFileMetadata(project, validatedArgs);
+          
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(result, null, 2)
+              }
+            ]
+          };
+        }
+
+        case "find_references": {
+          const validatedArgs = findReferencesSchema.parse(args);
+          
+          // Load all project files for reference finding
+          await loadProjectFiles(project, projectPath);
+          
+          const result = await findReferences(project, validatedArgs);
+          
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(result, null, 2)
+              }
+            ]
+          };
+        }
+
+        case "get_source_code": {
+          const validatedArgs = getSourceCodeSchema.parse(args);
+          
+          // Load all project files to find the symbol
+          await loadProjectFiles(project, projectPath);
+          
+          const result = await getSourceCode(project, validatedArgs);
           
           return {
             content: [
