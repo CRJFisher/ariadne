@@ -8,19 +8,19 @@ This plan defines a comprehensive strategy for refining the Ariadne repository's
 
 ### Hierarchy Levels (Top to Bottom)
 
-```
-User Abstractions (What users want)
+```txt
+User Abstractions aka the API (what users understand e.g. call-graphs, references etc)
     ↓
-Programming Concepts (How it's expressed in code)
+Programming Language Concepts (as parsed by tree-sitter, being used to facilitate the user abstraction)
     ↓
-Common Language Feature Processing **OR** Language-Specific Feature Processing (Language-specific syntax/semantics)
+Common Language Feature Processing (i.e. its the same for most languages) **AND / OR** Language-Specific Feature Processing (Language-specific syntax/semantics)
     ↓
 Parsing Implementation (Tree-sitter queries and AST processing)
 ```
 
 ### Concrete Example
 
-```
+```txt
 "Find all function calls" (User Abstraction)
     ↓
 Call Graph Analysis (Programming Concept)
@@ -38,7 +38,7 @@ Tree-sitter queries for each language's call syntax
 
 Features supported across all languages with language-specific variations:
 
-```
+```txt
 src/[feature_category]/[feature]/
 ├── README.md                              # Feature documentation
 ├── [feature].ts                           # Core abstraction layer
