@@ -115,7 +115,7 @@ export async function findReferences(
   project: Project,
   request: FindReferencesRequest
 ): Promise<FindReferencesResponse> {
-  const { symbol, includeDeclaration, searchScope } = request;
+  const { symbol, includeDeclaration = false, searchScope = "project" } = request;
   
   // First, find the definition(s) of the symbol
   const definitions = findSymbolDefinitions(project, symbol);
@@ -132,38 +132,41 @@ export async function findReferences(
   const allReferences: ReferenceLocation[] = [];
   const filesWithReferences = new Set<string>();
   
-  // First, search for references across all files in the project
-  // This is more comprehensive than relying on find_references which only works in single files
-  if (searchScope === 'project') {
-    const allGraphs = project.get_all_scope_graphs();
-    for (const [filePath, graph] of allGraphs) {
-      // Get all references in this file
-      const fileRefs = graph.getNodes<Ref>('reference');
-      for (const fileRef of fileRefs) {
-        if (fileRef.name === symbol && fileRef.range?.start) {
-          const context = await getLineContext(filePath, fileRef.range.start.row + 1);
-          
-          // Check if this is actually a definition
-          const isDefinition = definitions.some(d => 
-            d.file === filePath && 
-            d.position.row === fileRef.range!.start.row && 
-            d.position.column === fileRef.range!.start.column
-          );
-          
-          // Skip definitions if not including them
-          if (isDefinition && !includeDeclaration) {
-            continue;
-          }
-          
-          allReferences.push({
-            file: filePath,
-            line: fileRef.range.start.row + 1,
-            column: fileRef.range.start.column + 1,
-            context,
-            isDefinition
-          });
-          filesWithReferences.add(filePath);
+  // Determine which files to search based on scope
+  const allGraphs = project.get_all_scope_graphs();
+  
+  for (const [filePath, graph] of allGraphs) {
+    // For file scope, only search in files that contain a definition
+    if (searchScope === 'file' && !definitions.some(d => d.file === filePath)) {
+      continue;
+    }
+    
+    // Get all references in this file
+    const fileRefs = graph.getNodes<Ref>('reference');
+    for (const fileRef of fileRefs) {
+      if (fileRef.name === symbol && fileRef.range?.start) {
+        const context = await getLineContext(filePath, fileRef.range.start.row + 1);
+        
+        // Check if this is actually a definition
+        const isDefinition = definitions.some(d => 
+          d.file === filePath && 
+          d.position.row === fileRef.range!.start.row && 
+          d.position.column === fileRef.range!.start.column
+        );
+        
+        // Skip definitions if not including them
+        if (isDefinition && !includeDeclaration) {
+          continue;
         }
+        
+        allReferences.push({
+          file: filePath,
+          line: fileRef.range.start.row + 1,
+          column: fileRef.range.start.column + 1,
+          context,
+          isDefinition
+        });
+        filesWithReferences.add(filePath);
       }
     }
   }
@@ -193,55 +196,9 @@ export async function findReferences(
       }
     }
     
-    // Find references using the core API
-    // Note: find_references only works within the same file, returning Ref[] for that file
-    try {
-      const refs = project.find_references(def.file, def.position);
-      
-      for (const ref of refs) {
-        // References are in the same file as we're searching
-        const refFile = def.file;
-        
-        // Skip if in file scope and we're looking at references beyond the definition file
-        if (searchScope === 'file' && refFile !== def.file) {
-          continue;
-        }
-        
-        if (ref.range?.start) {
-          const context = await getLineContext(refFile, ref.range.start.row + 1);
-          
-          // Check if this is the definition itself
-          const isDefinition = ref.range.start.row === def.position.row && 
-                              ref.range.start.column === def.position.column;
-          
-          // Skip definitions if not including them
-          if (isDefinition && !includeDeclaration) {
-            continue;
-          }
-          
-          // Check for duplicates
-          const exists = allReferences.some(r => 
-            r.file === refFile && 
-            r.line === ref.range!.start.row + 1 && 
-            r.column === ref.range!.start.column + 1
-          );
-          
-          if (!exists) {
-            allReferences.push({
-              file: refFile,
-              line: ref.range.start.row + 1, // Convert to 1-based
-              column: ref.range.start.column + 1,
-              context,
-              isDefinition
-            });
-            filesWithReferences.add(refFile);
-          }
-        }
-      }
-    } catch (error) {
-      // If find_references fails for this definition, continue with others
-      console.warn(`Failed to find references for ${symbol} at ${def.file}:${def.position.row}:${def.position.column}`, error);
-    }
+    // Skip the project.find_references call entirely
+    // The scope graph approach above already collected all references correctly
+    // The find_references API was causing incorrect file attribution for references
   }
   
   // Sort references by file and line

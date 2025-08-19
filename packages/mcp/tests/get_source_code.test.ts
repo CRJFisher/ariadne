@@ -271,7 +271,7 @@ def simple_function(x, y):
     """
     return x + y
 
-class Calculator:
+class PythonCalculator:
     """
     A calculator class with basic operations
     """
@@ -307,7 +307,7 @@ async def async_function():
       });
       
       const classResult = await getSourceCode(project, { 
-        symbol: 'Calculator'
+        symbol: 'PythonCalculator'
       });
       
       expect(funcResult).not.toHaveProperty('error');
@@ -323,7 +323,7 @@ async def async_function():
         expect(funcResult.docstring).toContain('adds two numbers');
       }
       
-      expect(classResult.sourceCode).toContain('class Calculator');
+      expect(classResult.sourceCode).toContain('class PythonCalculator');
       expect(classResult.sourceCode).toContain('def __init__');
       expect(classResult.sourceCode).toContain('def add(self, x)');
       expect(classResult.sourceCode).toContain('def get_result(self)');
@@ -335,17 +335,17 @@ async def async_function():
       const testFile = path.join(testDir, 'source.rs');
       const content = `
 /// Calculate the sum of two numbers
-pub fn calculate(a: i32, b: i32) -> i32 {
+pub fn rust_calculate(a: i32, b: i32) -> i32 {
     a + b
 }
 
-pub struct Calculator {
+pub struct RustCalculator {
     value: i32,
 }
 
-impl Calculator {
+impl RustCalculator {
     pub fn new(initial: i32) -> Self {
-        Calculator { value: initial }
+        RustCalculator { value: initial }
     }
     
     pub fn add(&mut self, x: i32) {
@@ -366,11 +366,11 @@ fn private_helper() -> String {
       project.add_or_update_file(testFile, content);
       
       const funcResult = await getSourceCode(project, { 
-        symbol: 'calculate'
+        symbol: 'rust_calculate'
       });
       
       const structResult = await getSourceCode(project, { 
-        symbol: 'Calculator'
+        symbol: 'RustCalculator'
       });
       
       expect(funcResult).not.toHaveProperty('error');
@@ -378,10 +378,10 @@ fn private_helper() -> String {
       if ('error' in funcResult || 'error' in structResult) return;
       
       expect(funcResult.language).toBe('rust');
-      expect(funcResult.sourceCode).toContain('pub fn calculate');
+      expect(funcResult.sourceCode).toContain('pub fn rust_calculate');
       expect(funcResult.sourceCode).toContain('a + b');
       
-      expect(structResult.sourceCode).toContain('pub struct Calculator');
+      expect(structResult.sourceCode).toContain('pub struct RustCalculator');
       expect(structResult.sourceCode).toContain('value: i32');
     });
   });
@@ -408,11 +408,11 @@ fn private_helper() -> String {
     it('should provide suggestions for similar symbols', async () => {
       const testFile = path.join(testDir, 'similar.ts');
       const content = `
-function calculateSum(a: number, b: number): number {
+function computeSum(a: number, b: number): number {
   return a + b;
 }
 
-function calculateProduct(a: number, b: number): number {
+function computeProduct(a: number, b: number): number {
   return a * b;
 }
 
@@ -425,15 +425,15 @@ function computeAverage(values: number[]): number {
       project.add_or_update_file(testFile, content);
       
       const result = await getSourceCode(project, { 
-        symbol: 'calculate'  // Typo - missing the full name
+        symbol: 'compute'  // Typo - missing the full name
       });
       
       expect(result).toHaveProperty('error');
       if (!('error' in result)) return;
       
       expect(result.suggestions).toBeDefined();
-      expect(result.suggestions).toContain('calculateSum');
-      expect(result.suggestions).toContain('calculateProduct');
+      expect(result.suggestions).toContain('computeSum');
+      expect(result.suggestions).toContain('computeProduct');
     });
   });
 

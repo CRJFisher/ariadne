@@ -151,7 +151,58 @@ async function extractSourceCode(
   const lines = content.split('\n');
   
   // Use enclosing_range if available (for full function/class body)
-  const range = def.enclosing_range || def.range;
+  let range = def.enclosing_range || def.range;
+  
+  // Special handling for type aliases which need the full declaration
+  if (def.symbol_kind === 'alias' && def.range && !def.enclosing_range) {
+    // For type aliases, we need to extend the range to include the entire type definition
+    // The def.range only points to the identifier, we need to find the closing semicolon/brace
+    const startLine = def.range.start.row;
+    const startCol = Math.max(0, def.range.start.column - 12); // Go back to catch "export type "
+    
+    // Find the end of the type definition by looking for the closing semicolon or next export
+    let endLine = startLine;
+    let endCol = lines[startLine].length;
+    let braceCount = 0;
+    let foundStart = false;
+    
+    for (let i = startLine; i < lines.length && i < startLine + 50; i++) {
+      const line = lines[i];
+      const startIdx = (i === startLine) ? def.range.start.column : 0;
+      
+      for (let j = startIdx; j < line.length; j++) {
+        const char = line[j];
+        if (char === '{') {
+          braceCount++;
+          foundStart = true;
+        } else if (char === '}') {
+          braceCount--;
+          if (foundStart && braceCount === 0) {
+            // Found the closing brace
+            endLine = i;
+            endCol = j + 1;
+            // Look for optional semicolon
+            if (j + 1 < line.length && line[j + 1] === ';') {
+              endCol = j + 2;
+            }
+            break;
+          }
+        } else if (char === ';' && braceCount === 0) {
+          // Found semicolon at top level
+          endLine = i;
+          endCol = j + 1;
+          break;
+        }
+      }
+      
+      if (endLine !== startLine) break;
+    }
+    
+    range = {
+      start: { row: startLine, column: startCol },
+      end: { row: endLine, column: endCol }
+    };
+  }
   
   if (!range || !range.start || !range.end) {
     // Fallback: just return the line with the definition
@@ -163,17 +214,33 @@ async function extractSourceCode(
     };
   }
   
-  const startLine = range.start.row;
+  let startLine = range.start.row;
+  let startColumn = range.start.column;
   const endLine = range.end.row;
+  
+  // Look backwards on the same line to capture export/public/async keywords
+  if (startColumn > 0 && startLine < lines.length) {
+    const lineBeforeSymbol = lines[startLine].substring(0, startColumn);
+    // Check for common keywords that should be included
+    // For type aliases, we need to capture "export type" which might be further back
+    const keywordMatch = lineBeforeSymbol.match(/(export\s+type\s+|export\s+interface\s+|export\s+class\s+|export\s+function\s+|export\s+const\s+|export\s+let\s+|export\s+var\s+|export\s+async\s+function\s+|export\s+|public\s+|private\s+|protected\s+|async\s+|const\s+|let\s+|var\s+|static\s+|abstract\s+|type\s+)*$/);
+    if (keywordMatch && keywordMatch[0]) {
+      // Adjust start column to include these keywords
+      startColumn = startColumn - keywordMatch[0].length;
+    }
+  }
   
   // Extract the source code
   let sourceLines = lines.slice(startLine, endLine + 1);
   
   // Handle partial lines (using column information)
   if (sourceLines.length > 0) {
-    // First line: start from the specified column
-    if (range.start.column > 0) {
-      sourceLines[0] = sourceLines[0].substring(range.start.column);
+    // First line: start from the adjusted column
+    if (startColumn > 0) {
+      sourceLines[0] = sourceLines[0].substring(startColumn);
+    } else {
+      // If we've gone back to column 0, take the whole line
+      sourceLines[0] = sourceLines[0];
     }
     
     // Last line: end at the specified column
