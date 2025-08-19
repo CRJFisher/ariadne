@@ -44,9 +44,22 @@ export type GetFileMetadataResponse = FileMetadata | FileNotFoundError;
 function extractSignature(source: string, startLine: number): string {
   const lines = source.split('\n');
   if (startLine > 0 && startLine <= lines.length) {
-    const line = lines[startLine - 1].trim();
-    // Remove trailing { or ; for cleaner signatures
-    return line.replace(/[\{;]\s*$/, '').trim();
+    let line = lines[startLine - 1].trim();
+    
+    // For constructors and methods with inline braces, remove the body
+    // Match patterns like: constructor(...) { } or method() {}
+    line = line.replace(/\s*\{.*\}\s*$/, '');
+    
+    // Remove trailing opening brace for multi-line functions
+    line = line.replace(/\s*\{\s*$/, '');
+    
+    // Remove trailing semicolon
+    line = line.replace(/;\s*$/, '');
+    
+    // Remove arrow function body markers
+    line = line.replace(/\s*=>\s*\{?\s*$/, '');
+    
+    return line.trim();
   }
   return '';
 }
@@ -116,7 +129,8 @@ export async function getFileMetadata(
       type = 'class';
     } else if (symbolKind.includes('interface')) {
       type = 'interface';
-    } else if (symbolKind.includes('type')) {
+    } else if (symbolKind.includes('type') || symbolKind.includes('alias')) {
+      // 'alias' is used for TypeScript type aliases
       type = 'type';
     } else if (symbolKind.includes('enum')) {
       type = 'enum';
@@ -125,7 +139,8 @@ export async function getFileMetadata(
     }
     
     // Get line number (1-based)
-    const line = def.range?.start.row ? def.range.start.row + 1 : 0;
+    // Note: def.range.start.row is 0-based, so we add 1
+    const line = def.range?.start?.row !== undefined ? def.range.start.row + 1 : 1;
     
     // Extract signature
     let signature = '';
@@ -158,7 +173,7 @@ export async function getFileMetadata(
   
   // Extract imports (basic pattern matching)
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+    const line = lines[i].trim();
     
     // JavaScript/TypeScript imports
     const importMatch = line.match(/import\s+.*\s+from\s+['"]([^'"]+)['"]/);
@@ -167,9 +182,24 @@ export async function getFileMetadata(
     }
     
     // Python imports
-    const pyImportMatch = line.match(/^(?:from\s+(\S+)\s+)?import\s+/);
-    if (pyImportMatch && pyImportMatch[1]) {
-      imports.add(pyImportMatch[1]);
+    // Handle: from X import Y
+    const pyFromImportMatch = line.match(/^from\s+(\S+)\s+import\s+/);
+    if (pyFromImportMatch) {
+      imports.add(pyFromImportMatch[1]);
+    }
+    // Handle: import X
+    const pyDirectImportMatch = line.match(/^import\s+(\S+)/);
+    if (pyDirectImportMatch && !line.includes(' from ')) {
+      // Split comma-separated imports
+      const modules = pyDirectImportMatch[1].split(',').map(m => m.trim());
+      modules.forEach(m => {
+        if (m && !m.includes(' as ')) {
+          imports.add(m);
+        } else if (m.includes(' as ')) {
+          const [module] = m.split(' as ');
+          imports.add(module.trim());
+        }
+      });
     }
     
     // Rust use statements
