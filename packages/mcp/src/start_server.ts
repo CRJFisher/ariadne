@@ -6,6 +6,7 @@ import { z } from "zod";
 import * as path from "path";
 import * as fs from "fs/promises";
 import { getSymbolContext, getSymbolContextSchema } from "./tools/get_symbol_context";
+import { getFileMetadata, getFileMetadataSchema } from "./tools/get_file_metadata";
 import { VERSION } from "./version";
 
 export interface AriadneMCPServerOptions {
@@ -59,6 +60,20 @@ export async function startServer(options: AriadneMCPServerOptions = {}): Promis
             },
             required: ["symbol"]
           }
+        },
+        {
+          name: "get_file_metadata",
+          description: "Get all symbols defined in a file with their signatures and line numbers",
+          inputSchema: {
+            type: "object",
+            properties: {
+              filePath: {
+                type: "string",
+                description: "Path to the file to analyze (relative or absolute)"
+              }
+            },
+            required: ["filePath"]
+          }
         }
       ]
     };
@@ -79,6 +94,28 @@ export async function startServer(options: AriadneMCPServerOptions = {}): Promis
           await loadProjectFiles(project, projectPath);
           
           const result = await getSymbolContext(project, validatedArgs);
+          
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(result, null, 2)
+              }
+            ]
+          };
+        }
+
+        case "get_file_metadata": {
+          const validatedArgs = getFileMetadataSchema.parse(args);
+          
+          // Load the specific file
+          const resolvedPath = path.isAbsolute(validatedArgs.filePath)
+            ? validatedArgs.filePath
+            : path.join(projectPath, validatedArgs.filePath);
+          
+          await loadFileIfNeeded(project, resolvedPath);
+          
+          const result = await getFileMetadata(project, validatedArgs);
           
           return {
             content: [
