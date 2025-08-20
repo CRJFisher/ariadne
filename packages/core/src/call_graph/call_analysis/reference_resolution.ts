@@ -9,7 +9,12 @@ import { Def, Ref } from '../../graph';
 import { Tree } from 'tree-sitter';
 import { TypeDiscovery } from '@ariadnejs/types';
 import { LocalTypeTrackerData } from '../type_tracker';
-import { NamespaceImportAPI } from '../../import_resolution/namespace_imports';
+import { 
+  resolve_namespace_member,
+  resolve_namespace_exports,
+  resolve_nested_namespace_member,
+  get_language_metadata
+} from '../../import_resolution';
 
 /**
  * File cache interface
@@ -234,15 +239,18 @@ function resolve_instance_method(
       const objName = objectNode.text;
       
       // First check if this is a namespace import
-      const namespaceResolution = NamespaceImportAPI.resolveNamespaceMember(
+      const metadata = get_language_metadata(def.file_path);
+      const namespaceResolution = resolve_namespace_member(
         objName,
         ref,
         def,
         {
           get_file_graph: config.get_file_graph,
           get_imports_with_definitions: config.get_imports_with_definitions,
-          debug: !!process.env.DEBUG_NAMESPACE
-        }
+          get_definitions: (file_path: string) => [],
+          resolve_import_source: (source: string, from_file: string) => source
+        },
+        metadata
       );
       if (namespaceResolution) {
         resolved = namespaceResolution;
@@ -259,9 +267,48 @@ function resolve_instance_method(
       }
     } else if (is_method_expression_node(objectNode)) {
       // Handle nested namespace access: namespace.submodule.method()
-      const nestedNamespaceResolution = resolve_nested_namespace_member(objectNode, ref, def, config);
-      if (nestedNamespaceResolution) {
-        resolved = nestedNamespaceResolution;
+      // Extract the namespace path from the AST node
+      const namespacePath: string[] = [];
+      let currentNode = objectNode;
+      
+      while (is_method_expression_node(currentNode)) {
+        const propertyNode = currentNode.childForFieldName('property') || 
+                            currentNode.childForFieldName('field') ||
+                            currentNode.child(currentNode.childCount - 1);
+        
+        if (propertyNode) {
+          namespacePath.unshift(propertyNode.text);
+        }
+        
+        currentNode = currentNode.childForFieldName('object') || 
+                      currentNode.childForFieldName('value') ||
+                      (currentNode.type === 'attribute' ? currentNode.children[0] : null);
+        
+        if (!currentNode) break;
+      }
+      
+      // Add the base namespace
+      if (currentNode && currentNode.type === 'identifier') {
+        namespacePath.unshift(currentNode.text);
+      }
+      
+      if (namespacePath.length >= 2) {
+        const metadata = get_language_metadata(def.file_path);
+        const nestedNamespaceResolution = resolve_nested_namespace_member(
+          namespacePath,
+          ref,
+          def,
+          {
+            get_file_graph: config.get_file_graph,
+            get_imports_with_definitions: config.get_imports_with_definitions,
+            get_definitions: (file_path: string) => [],
+            resolve_import_source: (source: string, from_file: string) => source
+          },
+          metadata
+        );
+        if (nestedNamespaceResolution) {
+          resolved = nestedNamespaceResolution;
+        }
       }
     }
   }
@@ -269,113 +316,6 @@ function resolve_instance_method(
   return { resolved, typeDiscoveries };
 }
 
-/**
- * DEPRECATED: Namespace resolution has been moved to import_resolution/namespace_imports
- * 
- * The following functions have been refactored into the new architecture:
- * - resolve_namespace_all_exports -> NamespaceImportAPI.resolveNamespaceExports
- * - resolve_namespace_member -> NamespaceImportAPI.resolveNamespaceMember
- * - resolve_nested_namespace_member -> handled by NamespaceImportAPI
- * 
- * These stub functions remain for backward compatibility during migration.
- */
-
-/**
- * @deprecated Use NamespaceImportAPI.resolveNamespaceExports instead
- */
-function resolve_namespace_all_exports(
-  targetFile: string,
-  config: ReferenceResolutionConfig
-): Map<string, any> {
-  return NamespaceImportAPI.resolveNamespaceExports(
-    targetFile,
-    {
-      get_file_graph: config.get_file_graph,
-      get_imports_with_definitions: config.get_imports_with_definitions,
-      debug: !!process.env.DEBUG_NAMESPACE
-    }
-  );
-}
-
-/**
- * @deprecated Use NamespaceImportAPI.resolveNamespaceMember instead
- */
-function resolve_namespace_member(
-  namespaceName: string,
-  memberRef: Ref,
-  contextDef: Def,
-  config: ReferenceResolutionConfig
-): Def | undefined {
-  return NamespaceImportAPI.resolveNamespaceMember(
-    namespaceName,
-    memberRef,
-    contextDef,
-    {
-      get_file_graph: config.get_file_graph,
-      get_imports_with_definitions: config.get_imports_with_definitions,
-      debug: !!process.env.DEBUG_NAMESPACE
-    }
-  );
-}
-
-/**
- * @deprecated Complex nested namespace resolution moved to NamespaceImportAPI
- * 
- * This function extracts namespace paths from AST nodes and delegates
- * to the new namespace import module for resolution.
- */
-function resolve_nested_namespace_member(
-  objectNode: any,
-  memberRef: Ref,
-  contextDef: Def,
-  config: ReferenceResolutionConfig
-): Def | undefined {
-  // Extract the namespace path from the AST node
-  const namespacePath: string[] = [];
-  let currentNode = objectNode;
-  
-  while (is_method_expression_node(currentNode)) {
-    const propertyNode = currentNode.childForFieldName('property') || 
-                        currentNode.childForFieldName('field') ||
-                        currentNode.child(currentNode.childCount - 1);
-    
-    if (propertyNode) {
-      namespacePath.unshift(propertyNode.text);
-    }
-    
-    currentNode = currentNode.childForFieldName('object') || 
-                  currentNode.childForFieldName('value') ||
-                  (currentNode.type === 'attribute' ? currentNode.children[0] : null);
-    
-    if (!currentNode) break;
-  }
-  
-  // Add the base namespace
-  if (currentNode && currentNode.type === 'identifier') {
-    namespacePath.unshift(currentNode.text);
-  }
-  
-  if (namespacePath.length < 2) {
-    return undefined;
-  }
-  
-  // Use the new API for resolution
-  // Note: The new API handles nested namespace resolution internally
-  const baseNamespace = namespacePath[0];
-  
-  // For now, use the simple member resolution
-  // TODO: Extend NamespaceImportAPI to handle full path resolution
-  return NamespaceImportAPI.resolveNamespaceMember(
-    baseNamespace,
-    memberRef,
-    contextDef,
-    {
-      get_file_graph: config.get_file_graph,
-      get_imports_with_definitions: config.get_imports_with_definitions,
-      debug: !!process.env.DEBUG_NAMESPACE
-    }
-  );
-}
 
 function follow_import(
   importDef: Def,
