@@ -73,7 +73,7 @@ For each task:
 - [ ] task-epic-11.34 - graph_algorithms
 
 ### High-Level Features
-- [ ] task-epic-11.6 - function_calls
+- [x] task-epic-11.6 - function_calls ✅ DONE
 - [ ] task-epic-11.7 - method_calls
 - [ ] task-epic-11.8 - constructor_calls
 - [ ] task-epic-11.9 - call_chain_analysis

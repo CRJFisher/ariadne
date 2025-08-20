@@ -71,6 +71,46 @@ export {
   is_async_call_rust
 } from './call_graph/function_calls';
 
+// Method calls exports
+export {
+  MethodCallInfo,
+  MethodCallContext,
+  MethodResolutionContext,
+  find_method_calls,
+  find_method_calls_from_source,
+  is_method_call_node,
+  is_member_access,
+  extract_receiver_name,
+  extract_method_name,
+  is_static_method_call,
+  is_chained_method_call,
+  count_method_arguments,
+  get_enclosing_class,
+  resolve_method_simple,
+  filter_instance_methods,
+  filter_static_methods,
+  filter_chained_calls,
+  group_by_receiver,
+  group_by_method,
+  // Language-specific utilities
+  is_prototype_method_call,
+  is_indirect_method_call,
+  is_optional_chaining_call,
+  has_type_arguments_method,
+  is_abstract_method_call,
+  is_interface_method_call,
+  extract_type_arguments,
+  is_super_method_call,
+  is_classmethod_call,
+  is_dunder_method_call,
+  is_property_access,
+  is_trait_method_call,
+  is_unsafe_method_call,
+  has_turbofish_syntax,
+  is_ref_method_call,
+  get_impl_trait
+} from './call_graph/method_calls';
+
 // TODO: Add feature exports as they are migrated
 // - import_export exports
 // - type_analysis exports
