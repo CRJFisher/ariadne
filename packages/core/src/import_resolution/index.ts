@@ -12,16 +12,17 @@ import { resolve_rust_namespace_exports, resolve_rust_namespace_member } from '.
 import { 
   resolve_common_namespace_exports, 
   resolve_common_namespace_member,
-  resolve_common_nested_namespace,
-  is_common_namespace_import,
+  resolve_common_nested_namespace as resolve_nested_namespace_member,
+  is_common_namespace_import as is_namespace_import,
   type LanguageMetadata,
   type NamespaceResolutionConfig,
   type NamespaceExport 
 } from './namespace_imports';
-import type { Def, Import, Ref } from '../graph';
+import type { Def, Ref } from '../graph';
 
-// Re-export types for external use
+// Re-export types and common functions for external use
 export type { LanguageMetadata, NamespaceResolutionConfig, NamespaceExport };
+export { is_namespace_import, resolve_nested_namespace_member };
 
 // Language-specific export resolvers mapping
 const namespace_export_resolvers = {
@@ -38,18 +39,6 @@ const namespace_member_resolvers = {
   python: resolve_python_namespace_member,
   rust: resolve_rust_namespace_member
 };
-
-/**
- * Check if an import is a namespace import
- */
-export function is_namespace_import(
-  imp: Import,
-  metadata: LanguageMetadata
-): boolean {
-  // Most languages use the common check
-  // but this allows for language-specific overrides
-  return is_common_namespace_import(imp, metadata);
-}
 
 /**
  * Resolve all exports from a namespace
@@ -108,26 +97,6 @@ export function resolve_namespace_member(
   
   return resolver(
     namespace_name,
-    member_ref,
-    context_def,
-    config,
-    metadata
-  );
-}
-
-/**
- * Resolve nested namespace member access
- */
-export function resolve_nested_namespace_member(
-  namespace_path: string[],
-  member_ref: Ref,
-  context_def: Def,
-  config: NamespaceResolutionConfig,
-  metadata: LanguageMetadata
-): Def | undefined {
-  // Use common nested resolution
-  return resolve_common_nested_namespace(
-    namespace_path,
     member_ref,
     context_def,
     config,
