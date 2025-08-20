@@ -42,7 +42,7 @@ export async function startServer(options: AriadneMCPServerOptions = {}): Promis
       tools: [
         {
           name: "get_symbol_context",
-          description: "Get comprehensive information about any code symbol by name (function, class, variable, etc.)",
+          description: "REFACTORING HELPER: Before changing any function/class, use this to see ALL its usages, dependencies, and relationships. Shows where it's called from, what it calls, imports, exports, and type information. Essential for safe refactoring, understanding impact of changes, or debugging unexpected behavior.",
           inputSchema: {
             type: "object",
             properties: {
@@ -65,7 +65,7 @@ export async function startServer(options: AriadneMCPServerOptions = {}): Promis
         },
         {
           name: "get_file_metadata",
-          description: "Get all symbols defined in a file with their signatures and line numbers",
+          description: "FILE OVERVIEW: When exploring unfamiliar code or planning changes to a file, use this to instantly see ALL functions, classes, and methods defined in it with their signatures and locations. Perfect for understanding file structure, finding specific functions, or documenting what a module exports.",
           inputSchema: {
             type: "object",
             properties: {
@@ -79,7 +79,7 @@ export async function startServer(options: AriadneMCPServerOptions = {}): Promis
         },
         {
           name: "find_references",
-          description: "Find all references to a symbol by name across the codebase",
+          description: "IMPACT ANALYSIS: Before renaming, removing, or changing a function/variable signature, use this to find EVERY place it's used across the entire codebase. Critical for safe deletion, renaming operations, changing parameters, or understanding usage patterns. Prevents breaking changes by showing all dependencies.",
           inputSchema: {
             type: "object",
             properties: {
@@ -102,7 +102,7 @@ export async function startServer(options: AriadneMCPServerOptions = {}): Promis
         },
         {
           name: "get_source_code",
-          description: "Extract the complete source code of a function, class, or other symbol",
+          description: "CODE EXTRACTION: When you need to see the EXACT implementation of a function/class including its body, comments, and docstrings. Use when copying code, understanding complex logic, debugging issues, or when Read tool shows too much surrounding code. Returns just the symbol's implementation cleanly extracted.",
           inputSchema: {
             type: "object",
             properties: {
