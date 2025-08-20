@@ -1,0 +1,73 @@
+---
+id: task-epic-11.6
+title: Migrate function_calls feature
+status: To Do
+assignee: []
+created_date: '2025-08-20'
+labels: [migration, call-graph, epic-11]
+dependencies: [task-epic-11.2]
+parent_task_id: epic-11
+---
+
+## Description
+
+Migrate the `function_calls` feature to `src/call_graph/function_calls/` following Architecture.md patterns.
+
+## Research Phase
+
+### Current Location
+
+- [ ] Find where function call detection currently lives
+- [ ] Document all language-specific implementations (JS, TS, Python, Rust)
+- [ ] Identify common logic vs language-specific logic
+
+### Test Location
+
+- [ ] Find all tests related to function calls
+- [ ] Document test coverage for each language
+- [ ] Identify missing test cases
+
+## Planning Phase
+
+### Folder Structure
+
+- [ ] Determine if sub-folders needed for complex logic
+- [ ] Plan file organization per Architecture.md patterns
+- [ ] List all files to create (index.ts, function_calls.ts, function_calls.*.ts)
+
+### Architecture Verification
+
+- [ ] Verify against docs/Architecture.md folder patterns
+- [ ] Ensure functional paradigm (no classes)
+- [ ] Plan dispatcher/marshaler pattern
+
+## Implementation Phase
+
+### Code Migration
+
+- [ ] Create folder structure at src/call_graph/function_calls/
+- [ ] Move/create common function_calls.ts
+- [ ] Move/create language-specific files
+- [ ] Create index.ts dispatcher
+- [ ] Update all imports
+
+### Test Migration
+
+- [ ] Move/create function_calls.test.ts
+- [ ] Move/create language-specific test files
+- [ ] Ensure all tests pass
+- [ ] Add test contract if needed
+
+## Verification Phase
+
+### Quality Checks
+
+- [ ] All tests pass
+- [ ] Comprehensive test coverage
+- [ ] Follows rules/coding.md standards
+- [ ] Files under 32KB limit
+- [ ] Linting and type checking pass
+
+## Notes
+
+Research findings will be documented here during execution.
