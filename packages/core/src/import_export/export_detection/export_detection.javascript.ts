@@ -54,11 +54,32 @@ export function detect_javascript_exports(
   
   // Detect ES6 export statements
   const es6_exports = detect_es6_exports(graph, source_code);
-  exports.push(...es6_exports);
+  
+  // Add ES6 exports, avoiding duplicates
+  for (const es6_export of es6_exports) {
+    const exists = exports.some(e => 
+      e.name === es6_export.name && 
+      e.export_name === es6_export.export_name
+    );
+    if (!exists) {
+      exports.push(es6_export);
+    }
+  }
   
   // Detect re-export patterns
   const reexports = detect_javascript_reexports(graph, source_code);
-  exports.push(...reexports);
+  
+  // Add re-exports, avoiding duplicates
+  for (const reexport of reexports) {
+    const exists = exports.some(e => 
+      e.name === reexport.name && 
+      e.export_name === reexport.export_name &&
+      e.source_module === reexport.source_module
+    );
+    if (!exists) {
+      exports.push(reexport);
+    }
+  }
   
   return exports;
 }
