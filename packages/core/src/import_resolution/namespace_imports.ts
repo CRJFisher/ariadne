@@ -95,7 +95,7 @@ function find_reexported_namespaces(
       if (export_ref) {
         exports.set(imp.name, {
           is_namespace_reexport: true,
-          target_module: imp.imported_from
+          target_module: imp.source_module || ''
         });
       }
     }
@@ -106,9 +106,10 @@ function find_reexported_namespaces(
  * Check if a reference is in an export context
  */
 function is_in_export_context(ref: Ref, graph: ScopeGraph): boolean {
-  // This is a simplified check - would need more sophisticated AST analysis
-  // For now, check if the reference is at module scope
-  return ref.scope_id === 0; // Module scope
+  // TODO: Implement proper export context detection
+  // This requires analyzing the AST to check if the reference is in an export statement
+  // For now, return false as we don't have access to scope information on Ref
+  return false;
 }
 
 /**
@@ -134,9 +135,16 @@ export function resolve_common_namespace_member(
     }
     return undefined;
   }
-  
+
   // Get exports from the target module
-  const target_file = namespace_import.import_statement.imported_from;
+  const target_file = namespace_import.import_statement.source_module;
+  if (!target_file) {
+    if (config.debug) {
+      console.log(`No target file found for ${namespace_name}`);
+    }
+    return undefined;
+  }
+
   const exports = resolve_common_namespace_exports(
     target_file,
     config,
