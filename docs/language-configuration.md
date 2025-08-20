@@ -22,17 +22,17 @@ Adding a new language requires:
 
 ### File Structure
 
+Per the [Architecture](./Architecture.md) document, language support follows feature-based organization:
+
 ```
-src/languages/
-├── typescript/
-│   ├── index.ts        # Language configuration
-│   ├── scopes.scm      # Tree-sitter queries
-│   └── typescript.test.ts  # Language tests
-├── python/             # Example new language
-│   ├── index.ts
-│   ├── scopes.scm
-│   └── python.test.ts
-└── index.ts            # Language registry
+src/[feature]/[sub-feature]/
+├── index.ts                      # Feature dispatcher with language routing
+├── common.ts                     # Shared logic across languages
+├── [feature].javascript.ts      # JavaScript implementation
+├── [feature].python.ts           # Python implementation
+├── [feature].rust.ts            # Rust implementation
+├── test.contract.ts             # Test contract all languages must implement
+└── [feature].[language].test.ts # Language-specific tests
 ```
 
 ## Language Configuration Structure
@@ -73,13 +73,17 @@ namespaces: [
 npm install tree-sitter-python
 ```
 
-### Step 2: Create Language Directory
+### Step 2: Add Language to Feature Implementations
+
+For each feature that should support the new language, add a language-specific implementation file following the Architecture patterns:
 
 ```bash
-mkdir -p src/languages/python
+# Example: Adding Python support to function_calls feature
+touch src/call_graph/function_calls/function_calls.python.ts
+touch src/call_graph/function_calls/function_calls.python.test.ts
 ```
 
-### Step 3: Write Scope Queries
+### Step 3: Write Language Adapter
 
 Create `src/languages/python/scopes.scm`:
 
@@ -126,54 +130,53 @@ Create `src/languages/python/scopes.scm`:
 (identifier) @local.reference
 ```
 
-### Step 4: Create Language Configuration
+### Step 4: Implement Language Adapter
 
-Create `src/languages/python/index.ts`:
+Following the Architecture's functional paradigm, create the language adapter:
 
 ```typescript
-import Parser from 'tree-sitter';
-// @ts-ignore
-import Python from 'tree-sitter-python';
-import * as fs from 'fs';
-import * as path from 'path';
-import { LanguageConfig } from '../../types';
+// src/call_graph/function_calls/function_calls.python.ts
+export function find_python_calls(
+  ast: ASTNode,
+  metadata: { language: Language, file_path: string },
+  common_calls: CallInfo[]
+): CallInfo[] {
+  // Python-specific call detection
+  const python_calls = detect_decorator_calls(ast);
+  const method_calls = detect_method_calls(ast);
+  
+  return [...common_calls, ...python_calls, ...method_calls];
+}
 
-const scope_query = fs.readFileSync(
-  path.join(__dirname, 'scopes.scm'),
-  'utf8'
-);
-
-export const pythonConfig: LanguageConfig = {
-  name: 'python',
-  parser: Python as Parser.Language,
-  scope_query,
-  namespaces: [
-    // Types
-    ['class', 'type'],
-    
-    // Values
-    ['function', 'variable', 'constant', 'parameter', 'import'],
-    
-    // Members
-    ['method', 'property', 'attribute']
-  ]
-};
+function detect_decorator_calls(ast: ASTNode): CallInfo[] {
+  // Python decorators are function calls
+  // Implementation here
+}
 ```
 
-### Step 5: Register the Language
+### Step 5: Register in Feature Dispatcher
 
-Update `src/languages/index.ts`:
+Update the feature's `index.ts` to include the new language:
 
 ```typescript
-import { typescriptConfig } from './typescript';
-import { pythonConfig } from './python';
+// src/call_graph/function_calls/index.ts
+import { find_python_calls } from './function_calls.python';
 
-export const languageConfigs = {
-  typescript: typescriptConfig,
-  tsx: typescriptConfig,  // Reuse for TSX
-  python: pythonConfig,
-  py: pythonConfig        // Alias
+const call_finders = {
+  javascript: find_javascript_calls,
+  typescript: find_javascript_calls,
+  python: find_python_calls,  // Add new language
+  rust: find_rust_calls
 };
+
+export function find_function_calls(
+  ast: ASTNode,
+  metadata: { language: Language, file_path: string }
+): CallInfo[] {
+  const common_calls = find_common_calls(ast, metadata);
+  const finder = call_finders[metadata.language];
+  return finder ? finder(ast, metadata, common_calls) : common_calls;
+}
 ```
 
 ### Step 6: Write Tests
