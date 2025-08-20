@@ -74,8 +74,8 @@ For each task:
 
 ### High-Level Features
 - [x] task-epic-11.6 - function_calls ✅ DONE
-- [ ] task-epic-11.7 - method_calls
-- [ ] task-epic-11.8 - constructor_calls
+- [x] task-epic-11.7 - method_calls ✅ DONE
+- [x] task-epic-11.8 - constructor_calls ✅ DONE
 - [ ] task-epic-11.9 - call_chain_analysis
 - [ ] task-epic-11.10 - import_resolution
 - [ ] task-epic-11.11 - export_detection
