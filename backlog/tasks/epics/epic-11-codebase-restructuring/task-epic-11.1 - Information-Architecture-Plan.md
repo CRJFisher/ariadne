@@ -58,12 +58,6 @@ Key insight: The folder structure IS the registry - test file existence indicate
    - Scope queries and language configuration
    - Complete examples with real implementations
 
-2. **Folder Structure Rules** ✅
-   - Location: `rules/folder-structure-migration.md`
-   - Detailed guidelines for the new structure
-   - Pattern definitions for different feature types
-   - Already being applied to namespace imports feature
-
 3. **Feature Matrix Migration Plan** ✅
    - Location: `docs/FEATURE_MATRIX_MIGRATION.md`
    - Gap analysis of current implementation

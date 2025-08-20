@@ -1,15 +1,15 @@
 ---
 id: task-epic-11.2
 title: Deep Functionality Tree Analysis of Codebase
-status: Done
+status: In Progress
 assignee: []
 created_date: "2025-08-07"
-completed_date: "2025-08-07"
+completed_date: ""
 labels:
   - analysis
   - documentation
   - architecture
-dependencies: 
+dependencies:
   - task-epic-11.1
 parent_task_id: task-epic-11-codebase-restructuring
 ---
@@ -21,6 +21,7 @@ Conduct a comprehensive analysis of the entire Ariadne codebase to map all funct
 ## Motivation
 
 Before restructuring the codebase, we need a complete map of:
+
 - What functionality exists
 - Where it's currently implemented
 - What tests cover it
@@ -47,19 +48,23 @@ This map will be critical for ensuring no functionality is lost during migration
 Location: `backlog/tasks/epics/epic-11-codebase-restructuring/FUNCTIONALITY_TREE.md`
 
 Structure:
+
 ```markdown
 # Ariadne Functionality Tree
 
 ## Core Features
 
 ### Call Graph Analysis
+
 #### Function Calls
+
 - Implementation: src/call_graph/call_analysis.ts:123
 - Tests: tests/call_graph.test.ts:45-89 ✅
 - Docs: README.md:234-245 ⚠️ (outdated)
 - Languages: JS ✅, TS ✅, Python ✅, Rust ❌
 
-#### Method Calls  
+#### Method Calls
+
 - Implementation: ABSENT ❌
 - Tests: ABSENT ❌
 - Docs: ABSENT ❌
@@ -71,6 +76,7 @@ Structure:
 ### Secondary Deliverables
 
 1. **Gap Analysis Report** (`docs/FUNCTIONALITY_GAPS.md`)
+
    - List of missing features
    - Incomplete implementations
    - Test coverage gaps
@@ -84,29 +90,34 @@ Structure:
 ## Analysis Methodology
 
 ### Phase 1: High-Level Feature Discovery
+
 1. Scan all source directories
 2. Identify major feature categories
 3. Map to existing documentation
 
 ### Phase 2: Deep Implementation Analysis
+
 1. Parse each source file
 2. Extract all exported functions/classes
 3. Map internal dependencies
 4. Identify language-specific code
 
 ### Phase 3: Test Coverage Mapping
+
 1. Analyze all test files
 2. Map tests to implementation
 3. Identify untested functionality
 4. Calculate coverage percentages
 
 ### Phase 4: Documentation Audit
+
 1. Review all markdown files
 2. Map docs to features
 3. Identify outdated documentation
 4. Find undocumented features
 
 ### Phase 5: Gap Identification
+
 1. Compare implementation to requirements
 2. Identify missing features
 3. Find incomplete implementations
@@ -115,6 +126,7 @@ Structure:
 ## Tools and Scripts
 
 Create analysis scripts:
+
 - `scripts/analyze_functionality.ts` - Main analysis runner
 - `scripts/map_tests_to_code.ts` - Test coverage mapper
 - `scripts/find_undocumented.ts` - Documentation gap finder
@@ -130,7 +142,7 @@ Create analysis scripts:
 ## Estimated Timeline
 
 - Phase 1: 0.5 days
-- Phase 2: 1.5 days  
+- Phase 2: 1.5 days
 - Phase 3: 0.5 days
 - Phase 4: 0.5 days
 - Phase 5: 0.5 days
@@ -141,6 +153,7 @@ Create analysis scripts:
 ## Implementation Notes
 
 Key areas to focus analysis:
+
 - Call graph functionality (most complex)
 - Import/export resolution (foundational)
 - Type system and inference
@@ -151,6 +164,7 @@ Key areas to focus analysis:
 - Scope analysis
 
 Output format should be:
+
 - Machine-readable for migration scripts
 - Human-readable for planning
 - Searchable for quick reference
@@ -161,6 +175,7 @@ Output format should be:
 ### Approach Taken
 
 Performed an exhaustive analysis of the entire Ariadne codebase using a systematic approach:
+
 1. Started with directory structure analysis to understand feature categories
 2. Deep-dived into each module to extract all exported functions/classes
 3. Mapped test coverage by analyzing test files
@@ -169,18 +184,21 @@ Performed an exhaustive analysis of the entire Ariadne codebase using a systemat
 ### Key Findings
 
 **Architecture Strengths:**
+
 - Clean separation between modules with clear boundaries
 - Immutable design patterns throughout most of the codebase
 - Language-agnostic core with pluggable language support
 - Comprehensive test coverage (~85%) for core functionality
 
 **Critical Issues Discovered:**
+
 1. **src/index.ts exceeds 32KB limit (41KB)** - BLOCKS PARSING
 2. **Inheritance service has no tests** - Core feature broken
 3. **Type inference is incomplete** - Only basic return types
 4. **Several test files approaching size limits**
 
 **Documentation Analysis:**
+
 - ~60% documentation coverage overall
 - Good high-level architecture docs
 - Missing inline function documentation
@@ -195,7 +213,7 @@ Performed an exhaustive analysis of the entire Ariadne codebase using a systemat
 ### Statistics Summary
 
 - Total Source Files: 89
-- Total Test Files: 124  
+- Total Test Files: 124
 - Total Functions/Classes: 487 exported items
 - Lines of Code: ~25,000 (src) + ~35,000 (tests)
 - Test Coverage: ~85% of core functionality
@@ -209,6 +227,7 @@ Performed an exhaustive analysis of the entire Ariadne codebase using a systemat
 ### Migration Insights
 
 Based on the analysis, the recommended migration order is:
+
 1. Foundation (storage, types, utilities) - no dependencies
 2. File Management (file manager, language manager)
 3. Core Analysis (scope resolution, import/export)

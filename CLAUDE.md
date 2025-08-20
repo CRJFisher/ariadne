@@ -37,7 +37,6 @@ This file references all the rules files that are relevant for different types o
 - When: Improving existing code
 - Key principle: Move boldly forward, don't maintain backwards compatibility
 - Focus: Language-specific features should be explicit
-- Follow `rules/folder-structure-migration.md` when reorganizing code
 
 **🌐 `rules/language-support.md`** - Multi-language handling
 

@@ -70,13 +70,6 @@ export class Project {
   }
   
   /**
-   * Create a new Project instance with the given storage
-   */
-  private withStorage(newStorage: StorageInterfaceSync): Project {
-    return new Project(newStorage);
-  }
-  
-  /**
    * Add or update a file in the project
    */
   add_or_update_file(file_path: string, source_code: string, edit?: Edit): Project {
