@@ -1,7 +1,7 @@
 ---
 id: task-epic-11.13
 title: Migrate module_graph feature
-status: To Do
+status: Completed
 assignee: []
 created_date: '2025-08-20'
 labels: [migration, import-export, epic-11]
