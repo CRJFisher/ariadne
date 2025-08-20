@@ -109,3 +109,6 @@ export const SUPPORTED_LANGUAGES: Language[] = ['javascript', 'typescript', 'pyt
 
 // Export file extension mapping for external use
 export { FILE_EXTENSIONS };
+
+// Re-export Language type from @ariadnejs/types
+export type { Language } from '@ariadnejs/types';

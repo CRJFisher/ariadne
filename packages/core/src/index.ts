@@ -45,8 +45,33 @@ export * from './utils/path_utils';
 export * from './utils/string_utils';
 export * from './utils/collection_utils';
 
+// Call graph exports
+export {
+  FunctionCallInfo,
+  FunctionCallContext,
+  find_function_calls,
+  find_function_calls_from_source,
+  is_language_supported,
+  is_function_call_node,
+  get_call_expression_types,
+  extract_callee_name,
+  is_method_call,
+  get_method_receiver,
+  count_arguments,
+  get_enclosing_function_name,
+  // Language-specific utilities
+  is_async_call,
+  is_generator_call,
+  has_type_arguments,
+  is_decorator_call,
+  is_comprehension_call,
+  is_async_call_python,
+  is_super_call,
+  is_unsafe_call,
+  is_async_call_rust
+} from './call_graph/function_calls';
+
 // TODO: Add feature exports as they are migrated
-// - call_graph exports
 // - import_export exports
 // - type_analysis exports
 // - scope_analysis exports

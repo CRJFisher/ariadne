@@ -17,3 +17,8 @@
 ## Naming Rules
 
 - Use pythonic naming conventions- snake_case for all typescript names (variables, functions, files, etc.) other than class names which should be PascalCase.
+
+## Call Graph clarity
+
+- We should avoid invoking function references dynamically i.e. based on some runtime variable. Instead, we should use regular control flow to invoke functions directly.
+  - E.g. we shouldn't use a map with string keys to function references, then get function refs from this map based on some string variable.
