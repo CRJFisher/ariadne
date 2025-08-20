@@ -67,5 +67,3 @@ Key insight: The folder structure IS the registry - test file existence indicate
 - **No separate registry needed** - Self-documenting through file organization
 - **Test contracts enforce parity** - Interface pattern ensures consistent coverage
 - **Feature bundles for migration** - Move code + tests + docs together
-
-
