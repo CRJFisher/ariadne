@@ -304,12 +304,12 @@ export function process_file_for_return_types(
   };
 
   for (const def of defs) {
-    if (def.type === 'function' || def.type === 'method') {
+    if (def.symbol_kind === 'function' || def.symbol_kind === 'method') {
       // Find the AST node for this definition
       const func_node = find_function_node(def, tree);
       if (func_node) {
         // Add class context for methods
-        if (def.type === 'method') {
+        if (def.symbol_kind === 'method') {
           context.class_name = get_enclosing_class_name(func_node);
         }
 

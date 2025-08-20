@@ -247,35 +247,56 @@ export function track_javascript_imports(
   source_code: string,
   context: TypeTrackingContext
 ): FileTypeTracker {
+  let updated_tracker = tracker;
+  
   // ES6 imports: import ClassName from 'module'
   if (node.type === 'import_statement') {
-    const import_clause = node.childForFieldName('import');
+    // Find import_clause by looking through children
+    let import_clause = null;
+    for (let i = 0; i < node.childCount; i++) {
+      const child = node.child(i);
+      if (child && child.type === 'import_clause') {
+        import_clause = child;
+        break;
+      }
+    }
+    
     const source = node.childForFieldName('source');
     
     if (import_clause && source) {
       const source_module = source_code.substring(source.startIndex + 1, source.endIndex - 1);
       
-      // Default import
-      const default_import = import_clause.child(0);
-      if (default_import && default_import.type === 'identifier') {
-        const local_name = source_code.substring(
-          default_import.startIndex,
-          default_import.endIndex
-        );
-        
-        return set_imported_class(tracker, local_name, {
-          class_name: local_name,
-          source_module,
-          local_name,
-          is_default: true
-        });
+      // Check for default import
+      // import_clause contains an identifier child for default import
+      for (let i = 0; i < import_clause.childCount; i++) {
+        const child = import_clause.child(i);
+        if (child && child.type === 'identifier') {
+          const local_name = source_code.substring(
+            child.startIndex,
+            child.endIndex
+          );
+          
+          updated_tracker = set_imported_class(updated_tracker, local_name, {
+            class_name: local_name,
+            source_module,
+            local_name,
+            is_default: true
+          });
+          break; // Only first identifier is default import
+        }
       }
       
       // Named imports: import { Class1, Class2 } from 'module'
-      const named_imports = import_clause.childForFieldName('named_imports');
+      let named_imports = null;
+      for (let i = 0; i < import_clause.childCount; i++) {
+        const child = import_clause.child(i);
+        if (child && child.type === 'named_imports') {
+          named_imports = child;
+          break;
+        }
+      }
+      
       if (named_imports) {
-        let updated_tracker = tracker;
-        
         for (let i = 0; i < named_imports.childCount; i++) {
           const import_spec = named_imports.child(i);
           if (import_spec && import_spec.type === 'import_specifier') {
@@ -300,8 +321,33 @@ export function track_javascript_imports(
             }
           }
         }
-        
-        return updated_tracker;
+      }
+      
+      // Check for namespace import: import * as utils from './utils'
+      let namespace_import = null;
+      for (let i = 0; i < import_clause.childCount; i++) {
+        const child = import_clause.child(i);
+        if (child && child.type === 'namespace_import') {
+          namespace_import = child;
+          break;
+        }
+      }
+      
+      if (namespace_import) {
+        const alias_node = namespace_import.childForFieldName('alias');
+        if (alias_node) {
+          const local_name = source_code.substring(
+            alias_node.startIndex,
+            alias_node.endIndex
+          );
+          
+          updated_tracker = set_imported_class(updated_tracker, local_name, {
+            class_name: '*',
+            source_module,
+            local_name,
+            is_default: false
+          });
+        }
       }
     }
   }
@@ -333,7 +379,7 @@ export function track_javascript_imports(
               name_node.endIndex
             );
             
-            return set_imported_class(tracker, local_name, {
+            updated_tracker = set_imported_class(updated_tracker, local_name, {
               class_name: local_name,
               source_module,
               local_name,
@@ -345,7 +391,7 @@ export function track_javascript_imports(
     }
   }
   
-  return tracker;
+  return updated_tracker;
 }
 
 /**

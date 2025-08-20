@@ -28,22 +28,17 @@ export function extract_rust_return_type(
   // Rust has explicit return types after ->
   const return_type_node = func_node.childForFieldName('return_type');
   if (return_type_node) {
-    // Skip the '->' and get the actual type
-    for (let i = 0; i < return_type_node.childCount; i++) {
-      const child = return_type_node.child(i);
-      if (child && child.type !== '->') {
-        const type_name = extract_rust_type_name(child, context.source_code);
-        return {
-          type_name,
-          confidence: 'explicit',
-          source: 'annotation',
-          position: {
-            row: return_type_node.startPosition.row,
-            column: return_type_node.startPosition.column
-          }
-        };
+    // The return_type field directly contains the type node
+    const type_name = extract_rust_type_name(return_type_node, context.source_code);
+    return {
+      type_name,
+      confidence: 'explicit',
+      source: 'annotation',
+      position: {
+        row: return_type_node.startPosition.row,
+        column: return_type_node.startPosition.column
       }
-    }
+    };
   }
   
   // No explicit return type means () (unit type) in Rust
@@ -966,7 +961,7 @@ export function check_rust_patterns(
   }
   
   // Builder pattern methods
-  if (def.type === 'method' && 
+  if (def.symbol_kind === 'method' && 
       (def.name.startsWith('with_') || def.name.startsWith('set_'))) {
     // Often return Self for chaining
     return {

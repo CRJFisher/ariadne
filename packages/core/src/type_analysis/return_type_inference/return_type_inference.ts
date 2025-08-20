@@ -61,7 +61,7 @@ export function analyze_return_type(
   context: ReturnTypeContext
 ): ReturnTypeInfo | undefined {
   // Only analyze functions and methods
-  if (def.type !== 'function' && def.type !== 'method') {
+  if (def.symbol_kind !== 'function' && def.symbol_kind !== 'method') {
     return undefined;
   }
 
@@ -227,7 +227,7 @@ export function check_special_patterns(
   }
 
   // Getter patterns
-  if (def.type === 'method' && def.name.startsWith('get')) {
+  if (def.symbol_kind === 'method' && def.name.startsWith('get')) {
     // Simple heuristic: getXxx() often returns the type of xxx
     const property_name = def.name.substring(3);
     if (property_name) {
@@ -240,7 +240,7 @@ export function check_special_patterns(
   }
 
   // Setter patterns (usually void/None)
-  if (def.type === 'method' && def.name.startsWith('set')) {
+  if (def.symbol_kind === 'method' && def.name.startsWith('set')) {
     return {
       type_name: get_void_type(context.language),
       confidence: 'heuristic',
@@ -286,9 +286,15 @@ export function infer_common_type(
   // If all returns have the same type, use it
   const first_type = return_types[0].type_name;
   if (return_types.every(t => t.type_name === first_type)) {
+    // If all returns have the same confidence, preserve it
+    const first_confidence = return_types[0].confidence;
+    const confidence = return_types.every(t => t.confidence === first_confidence)
+      ? first_confidence
+      : 'inferred';
+    
     return {
       type_name: first_type,
-      confidence: 'inferred',
+      confidence,
       source: 'return_statement'
     };
   }

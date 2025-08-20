@@ -17,7 +17,9 @@ import {
   ReturnTypeContext,
   is_constructor_name,
   get_void_type,
-  get_enclosing_class_name
+  get_enclosing_class_name,
+  is_async_function,
+  find_return_statements
 } from './return_type_inference';
 
 /**
@@ -60,6 +62,7 @@ export function analyze_javascript_return(
   if (inferred_type) {
     return {
       ...inferred_type,
+      confidence: 'explicit', // Return statements have explicit values
       source: 'return_statement',
       position: {
         row: return_stmt.startPosition.row,
@@ -192,7 +195,10 @@ function analyze_constructor_call(
 ): ReturnTypeInfo | undefined {
   const constructor = expr_node.childForFieldName('constructor');
   if (constructor) {
-    const class_name = constructor.text;
+    const class_name = context.source_code.substring(
+      constructor.startIndex,
+      constructor.endIndex
+    );
     return {
       type_name: class_name,
       confidence: 'explicit',
@@ -525,6 +531,44 @@ export function check_javascript_patterns(
   func_node: SyntaxNode,
   context: ReturnTypeContext
 ): ReturnTypeInfo | undefined {
+  // Check for async functions first
+  if (is_async_function(func_node)) {
+    // Analyze the body to determine the inner type
+    const body = func_node.childForFieldName('body');
+    if (body) {
+      const returns = find_return_statements(body);
+      if (returns.length > 0) {
+        const return_types: string[] = [];
+        for (const ret of returns) {
+          const ret_type = analyze_javascript_return(ret, context);
+          if (ret_type) {
+            return_types.push(ret_type.type_name);
+          }
+        }
+        
+        if (return_types.length > 0) {
+          const unique_types = [...new Set(return_types)];
+          const inner_type = unique_types.length === 1 
+            ? unique_types[0] 
+            : 'any';
+          
+          return {
+            type_name: `Promise<${inner_type}>`,
+            confidence: 'inferred',
+            source: 'pattern'
+          };
+        }
+      }
+    }
+    
+    // Async function with no explicit returns
+    return {
+      type_name: 'Promise<undefined>',
+      confidence: 'inferred',
+      source: 'pattern'
+    };
+  }
+  
   // Constructor function pattern
   if (def.name === 'constructor') {
     const class_name = get_enclosing_class_name(func_node);
@@ -537,20 +581,8 @@ export function check_javascript_patterns(
     }
   }
   
-  // Factory function pattern (functions that return new instances)
-  if (def.name.startsWith('create') || def.name.startsWith('make')) {
-    const type_name = def.name.replace(/^(create|make)/, '');
-    if (type_name) {
-      return {
-        type_name,
-        confidence: 'heuristic',
-        source: 'pattern'
-      };
-    }
-  }
-  
   // Builder pattern (returns this)
-  if (def.type === 'method' && 
+  if (def.symbol_kind === 'method' && 
       (def.name.startsWith('with') || def.name.startsWith('set'))) {
     const body = func_node.childForFieldName('body');
     if (body && contains_return_this(body)) {

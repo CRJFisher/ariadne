@@ -237,27 +237,27 @@ export function track_type_definition(
 ): FileTypeTracker {
   switch (context.language) {
     case 'typescript':
-      if (def.type === 'interface') {
+      if (def.symbol_kind === 'interface') {
         return track_typescript_interface(tracker, def, source_code, context);
-      } else if (def.type === 'type_alias') {
+      } else if (def.symbol_kind === 'type_alias') {
         return track_typescript_type_alias(tracker, def, source_code, context);
-      } else if (def.type === 'enum') {
+      } else if (def.symbol_kind === 'enum') {
         return track_typescript_enum(tracker, def, source_code, context);
       }
       break;
     case 'python':
-      if (def.type === 'class') {
+      if (def.symbol_kind === 'class') {
         return track_python_class(tracker, def, source_code, context);
-      } else if (def.type === 'function') {
+      } else if (def.symbol_kind === 'function') {
         return track_python_function(tracker, def, source_code, context);
       }
       break;
     case 'rust':
-      if (def.type === 'struct') {
+      if (def.symbol_kind === 'struct') {
         return track_rust_struct(tracker, def, source_code, context);
-      } else if (def.type === 'enum') {
+      } else if (def.symbol_kind === 'enum') {
         return track_rust_enum(tracker, def, source_code, context);
-      } else if (def.type === 'trait') {
+      } else if (def.symbol_kind === 'trait') {
         return track_rust_trait(tracker, def, source_code, context);
       }
       break;
@@ -403,7 +403,9 @@ function is_import_node(node: SyntaxNode, language: Language): boolean {
   switch (language) {
     case 'javascript':
     case 'typescript':
-      return node.type === 'import_statement';
+      // ES6 imports and CommonJS requires (which are in variable_declarator)
+      return node.type === 'import_statement' ||
+             node.type === 'variable_declarator';
     case 'python':
       return node.type === 'import_statement' || 
              node.type === 'import_from_statement';

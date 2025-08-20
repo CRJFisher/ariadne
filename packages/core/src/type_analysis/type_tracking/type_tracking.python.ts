@@ -321,25 +321,21 @@ export function track_python_imports(
   source_code: string,
   context: TypeTrackingContext
 ): FileTypeTracker {
+  let updated_tracker = tracker;
+  
   // from module import Class
   if (node.type === 'import_from_statement') {
     const module_node = node.childForFieldName('module_name');
-    const import_list = node.children.find(c => c.type === 'import_list' || c.type === 'aliased_import');
     
-    if (module_node && import_list) {
+    if (module_node) {
       const source_module = source_code.substring(module_node.startIndex, module_node.endIndex);
       
-      let updated_tracker = tracker;
-      
-      // Process each import
-      for (let i = 0; i < import_list.childCount; i++) {
-        const import_item = import_list.child(i);
-        if (import_item) {
-          if (import_item.type === 'dotted_name' || import_item.type === 'identifier') {
-            const import_name = source_code.substring(
-              import_item.startIndex,
-              import_item.endIndex
-            );
+      // Process imports - they can be direct children
+      for (let i = 0; i < node.childCount; i++) {
+        const child = node.child(i);
+        if (child) {
+          if (child.type === 'dotted_name' || child.type === 'identifier') {
+            const import_name = source_code.substring(child.startIndex, child.endIndex);
             
             updated_tracker = set_imported_class(updated_tracker, import_name, {
               class_name: import_name,
@@ -347,9 +343,9 @@ export function track_python_imports(
               local_name: import_name,
               is_default: false
             });
-          } else if (import_item.type === 'aliased_import') {
-            const name_node = import_item.childForFieldName('name');
-            const alias_node = import_item.childForFieldName('alias');
+          } else if (child.type === 'aliased_import') {
+            const name_node = child.childForFieldName('name');
+            const alias_node = child.childForFieldName('alias');
             
             if (name_node) {
               const import_name = source_code.substring(
@@ -370,25 +366,17 @@ export function track_python_imports(
           }
         }
       }
-      
-      return updated_tracker;
     }
   }
   
   // import module
   if (node.type === 'import_statement') {
-    const import_list = node.children.find(c => c.type === 'dotted_as_names' || c.type === 'aliased_import');
-    
-    if (import_list) {
-      let updated_tracker = tracker;
-      
-      for (let i = 0; i < import_list.childCount; i++) {
-        const import_item = import_list.child(i);
-        if (import_item && (import_item.type === 'dotted_name' || import_item.type === 'aliased_import')) {
-          const module_name = source_code.substring(
-            import_item.startIndex,
-            import_item.endIndex
-          );
+    // Process direct children which are the imports
+    for (let i = 0; i < node.childCount; i++) {
+      const child = node.child(i);
+      if (child) {
+        if (child.type === 'dotted_name') {
+          const module_name = source_code.substring(child.startIndex, child.endIndex);
           
           // For module imports, we track the module itself
           updated_tracker = set_imported_class(updated_tracker, module_name, {
@@ -397,14 +385,32 @@ export function track_python_imports(
             local_name: module_name,
             is_default: true
           });
+        } else if (child.type === 'aliased_import') {
+          const name_node = child.childForFieldName('name');
+          const alias_node = child.childForFieldName('alias');
+          
+          if (name_node) {
+            const module_name = source_code.substring(
+              name_node.startIndex,
+              name_node.endIndex
+            );
+            const local_name = alias_node
+              ? source_code.substring(alias_node.startIndex, alias_node.endIndex)
+              : module_name;
+            
+            updated_tracker = set_imported_class(updated_tracker, local_name, {
+              class_name: module_name,
+              source_module: module_name,
+              local_name,
+              is_default: true
+            });
+          }
         }
       }
-      
-      return updated_tracker;
     }
   }
   
-  return tracker;
+  return updated_tracker;
 }
 
 /**
@@ -581,4 +587,49 @@ function infer_python_type_kind(type_name: string): TypeInfo['type_kind'] {
   }
   
   return 'unknown';
+}
+
+/**
+ * Track Python class definitions
+ */
+export function track_python_class(
+  tracker: FileTypeTracker,
+  def: Def,
+  source_code: string,
+  context: TypeTrackingContext
+): FileTypeTracker {
+  // Mark class as exported if public
+  if (!def.name.startsWith('_')) {
+    return mark_as_exported(tracker, def.name);
+  }
+  return tracker;
+}
+
+/**
+ * Track Python function definitions
+ */
+export function track_python_function(
+  tracker: FileTypeTracker,
+  def: Def,
+  source_code: string,
+  context: TypeTrackingContext
+): FileTypeTracker {
+  // Mark function as exported if public
+  if (!def.name.startsWith('_')) {
+    return mark_as_exported(tracker, def.name);
+  }
+  return tracker;
+}
+
+/**
+ * Check if a type is a Python built-in type
+ */
+export function is_builtin_type(type_name: string): boolean {
+  const builtins = [
+    'str', 'int', 'float', 'bool', 'None', 'Any',
+    'list', 'dict', 'set', 'tuple', 'bytes', 'bytearray',
+    'object', 'type', 'complex', 'range', 'frozenset',
+    'List', 'Dict', 'Set', 'Tuple', 'Optional', 'Union'
+  ];
+  return builtins.includes(type_name);
 }
