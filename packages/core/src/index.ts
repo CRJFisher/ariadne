@@ -152,8 +152,65 @@ export {
   has_derive_default
 } from './call_graph/constructor_calls';
 
+// Call chain analysis exports
+export {
+  CallChainNode,
+  CallChain,
+  CallChainContext,
+  CallChainAnalysisResult,
+  CallChainStats,
+  build_call_chains,
+  detect_recursion,
+  find_paths_between,
+  get_longest_chain,
+  get_recursive_functions,
+  analyze_call_graph,
+  analyze_call_chains,
+  analyze_file_call_chains,
+  find_chains_from_function,
+  find_recursive_chains,
+  get_call_chain_stats,
+  format_call_chain,
+  export_call_chains_to_json,
+  export_call_chains_to_dot
+} from './call_graph/call_chain_analysis';
+
+// Import resolution exports
+export {
+  ImportInfo,
+  ImportResolutionConfig,
+  ImportResolutionContext,
+  NamespaceExport,
+  resolve_import_definition,
+  get_imports_with_definitions,
+  resolve_namespace_exports,
+  resolve_namespace_member,
+  resolve_module_file_path,
+  get_language_from_file,
+  is_namespace_member_access,
+  extract_namespace_and_member,
+  is_namespace_import,
+  is_default_import,
+  is_named_import,
+  is_index_file,
+  find_exported_definition,
+  create_module_definition,
+  // Language-specific utilities
+  is_dynamic_import,
+  resolve_typescript_import,
+  is_package_import,
+  is_python_relative_import,
+  resolve_init_exports,
+  resolve_from_import,
+  is_glob_import,
+  is_std_import,
+  resolve_std_import
+} from './import_export/import_resolution';
+
 // TODO: Add feature exports as they are migrated
-// - import_export exports
+// - export_detection exports
+// - namespace_resolution exports
+// - module_graph exports
 // - type_analysis exports
 // - scope_analysis exports
 // - inheritance_analysis exports
