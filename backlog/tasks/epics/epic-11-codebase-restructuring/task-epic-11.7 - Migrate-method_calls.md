@@ -3,7 +3,7 @@ id: task-epic-11.7
 title: Migrate method_calls feature
 status: Done
 assignee: []
-created_date: '2025-08-20'
+created_date: "2025-08-20"
 labels: [migration, call-graph, epic-11]
 dependencies: [task-epic-11.2]
 parent_task_id: epic-11
@@ -16,6 +16,7 @@ Migrate the `method_calls` feature to `src/call_graph/method_calls/` following A
 ## Research Phase
 
 **NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+
 - `## Current Codebase Structure (As Implemented)` - understand current locations
 - `### Proposed Structure` - understand target architecture
 
@@ -145,11 +146,13 @@ Migrate the `method_calls` feature to `src/call_graph/method_calls/` following A
 ### Implementation Details
 
 1. **Architecture Changes**:
+
    - Moved from class-based method resolution to functional approach
    - Split method detection from resolution (resolution needs scope analysis)
    - Created clean separation between languages
 
 2. **Key Features Implemented**:
+
    - Method call detection for all languages
    - Receiver and method name extraction
    - Static vs instance method detection
@@ -157,7 +160,8 @@ Migrate the `method_calls` feature to `src/call_graph/method_calls/` following A
    - Language-specific patterns (prototype, super, trait methods)
 
 3. **Detection Capabilities**:
-   - **JavaScript**: 
+
+   - **JavaScript**:
      - Regular method calls (obj.method())
      - Prototype methods (Class.prototype.method)
      - Indirect calls (call/apply/bind)
@@ -170,7 +174,7 @@ Migrate the `method_calls` feature to `src/call_graph/method_calls/` following A
      - Class methods (@classmethod)
      - Static methods (capitalized receivers)
      - Super() calls
-     - Dunder methods (__init__, __str__, etc.)
+     - Dunder methods (**init**, **str**, etc.)
    - **Rust**:
      - Instance methods (value.method())
      - Associated functions (Type::method())
@@ -178,6 +182,7 @@ Migrate the `method_calls` feature to `src/call_graph/method_calls/` following A
      - Methods with turbofish syntax (method::<Type>())
 
 4. **Utility Functions Added**:
+
    - `filter_instance_methods` - Get only instance methods
    - `filter_static_methods` - Get only static/class methods
    - `filter_chained_calls` - Get only chained method calls
@@ -185,12 +190,14 @@ Migrate the `method_calls` feature to `src/call_graph/method_calls/` following A
    - `group_by_method` - Group calls by method name
 
 5. **Technical Decisions**:
+
    - Kept detection separate from resolution (resolution needs type info)
    - Used simple heuristics for static detection (capitalized = likely static)
    - Language-specific files extend common functionality
    - TypeScript reuses JavaScript detection with additions
 
 6. **Files Created**:
+
    - `src/call_graph/method_calls/method_calls.ts`
    - `src/call_graph/method_calls/method_calls.javascript.ts`
    - `src/call_graph/method_calls/method_calls.typescript.ts`

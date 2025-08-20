@@ -3,7 +3,7 @@ id: task-epic-11.6
 title: Migrate function_calls feature
 status: Done
 assignee: []
-created_date: '2025-08-20'
+created_date: "2025-08-20"
 labels: [migration, call-graph, epic-11]
 dependencies: [task-epic-11.2]
 parent_task_id: epic-11
@@ -16,6 +16,7 @@ Migrate the `function_calls` feature to `src/call_graph/function_calls/` followi
 ## Research Phase
 
 **NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+
 - `## Current Codebase Structure (As Implemented)` - understand current locations
 - `### Proposed Structure` - understand target architecture
 
@@ -55,7 +56,7 @@ Migrate the `function_calls` feature to `src/call_graph/function_calls/` followi
   - Common logic in `function_calls.ts`
   - Language-specific in `function_calls.{language}.ts`
   - Dispatcher in `index.ts`
-- [x] List all files to create (index.ts, function_calls.ts, function_calls.*.ts)
+- [x] List all files to create (index.ts, function_calls.ts, function_calls.\*.ts)
   - `function_calls.ts` - Common interfaces and utilities
   - `function_calls.javascript.ts` - JavaScript-specific
   - `function_calls.typescript.ts` - TypeScript-specific (extends JS)
@@ -132,23 +133,27 @@ Migrate the `function_calls` feature to `src/call_graph/function_calls/` followi
 ### Implementation Details
 
 1. **Architecture Changes**:
+
    - Moved from class-based `CallAnalysis` to functional approach
    - Split monolithic analysis into language-specific modules
    - Created clean dispatcher pattern per Architecture.md
 
 2. **Key Improvements**:
+
    - Better separation of concerns
    - Language-specific logic isolated
    - Common utilities shared across languages
    - Type-safe Language parameter throughout
 
 3. **Technical Challenges Resolved**:
+
    - Fixed Parser.Language type issues (using `any` for tree-sitter language object)
    - Added Language type export to loader.ts
    - Fixed predicatesForPattern issue (method doesn't exist, commented out)
    - Ensured Language type flows from @ariadnejs/types
 
 4. **Functionality Preserved**:
+
    - Function call detection
    - Method call detection
    - Constructor call detection
@@ -156,6 +161,7 @@ Migrate the `function_calls` feature to `src/call_graph/function_calls/` followi
    - Enclosing function detection
 
 5. **New Capabilities Added**:
+
    - TypeScript decorator detection
    - Python comprehension detection
    - Rust macro invocation detection
@@ -163,11 +169,13 @@ Migrate the `function_calls` feature to `src/call_graph/function_calls/` followi
    - Generator/yield detection
 
 6. **Test Coverage**:
+
    - Created test structure for all languages
    - Tests need tree-sitter parsers to run
    - Cross-language consistency tests
 
 7. **Files Created**:
+
    - `src/call_graph/function_calls/function_calls.ts`
    - `src/call_graph/function_calls/function_calls.javascript.ts`
    - `src/call_graph/function_calls/function_calls.typescript.ts`

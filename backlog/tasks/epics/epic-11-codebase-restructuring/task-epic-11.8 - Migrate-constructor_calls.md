@@ -3,7 +3,7 @@ id: task-epic-11.8
 title: Migrate constructor_calls feature
 status: Done
 assignee: []
-created_date: '2025-08-20'
+created_date: "2025-08-20"
 labels: [migration, call-graph, epic-11]
 dependencies: [task-epic-11.2]
 parent_task_id: epic-11
@@ -16,6 +16,7 @@ Migrate the `constructor_calls` feature to `src/call_graph/constructor_calls/` f
 ## Research Phase
 
 **NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+
 - `## Current Codebase Structure (As Implemented)` - understand current locations
 - `### Proposed Structure` - understand target architecture
 
@@ -91,7 +92,7 @@ Migrate the `constructor_calls` feature to `src/call_graph/constructor_calls/` f
 - [x] Move/create language-specific files
   - JavaScript: new expressions, factory functions, Object.create
   - TypeScript: generic constructors, abstract classes, interfaces
-  - Python: class calls, dataclasses, super().__init__(), metaclasses
+  - Python: class calls, dataclasses, super().**init**(), metaclasses
   - Rust: Type::new(), struct literals, enum variants, smart pointers
 - [x] Create index.ts dispatcher
   - Switch-based dispatch on language parameter
@@ -138,11 +139,13 @@ Migrate the `constructor_calls` feature to `src/call_graph/constructor_calls/` f
 ### Implementation Details
 
 1. **Architecture Changes**:
+
    - Moved from class-based constructor analysis to functional approach
    - Split from general call analysis into dedicated module
    - Focus on both detection and type tracking
 
 2. **Key Features Implemented**:
+
    - Constructor call detection for all languages
    - Type assignment tracking for variables
    - Scope detection (local/global/member)
@@ -150,6 +153,7 @@ Migrate the `constructor_calls` feature to `src/call_graph/constructor_calls/` f
    - Support for different constructor patterns per language
 
 3. **Detection Capabilities**:
+
    - **JavaScript/TypeScript**:
      - `new ClassName()` expressions
      - Factory functions (capitalized)
@@ -170,6 +174,7 @@ Migrate the `constructor_calls` feature to `src/call_graph/constructor_calls/` f
      - Derive macros (Default)
 
 4. **Type Tracking Features**:
+
    - Track variable assignments from constructors
    - Maintain type information for method resolution
    - Support different scopes:
@@ -178,6 +183,7 @@ Migrate the `constructor_calls` feature to `src/call_graph/constructor_calls/` f
      - Member variables (self.attr, this.prop)
 
 5. **Utility Functions Added**:
+
    - `get_type_assignments` - Extract type info from constructor calls
    - `create_type_map` - Create variable->type mapping
    - `filter_with_assignments` - Get only assigned constructors
@@ -186,12 +192,14 @@ Migrate the `constructor_calls` feature to `src/call_graph/constructor_calls/` f
    - `group_by_constructor` - Group calls by constructor name
 
 6. **Technical Decisions**:
+
    - Separated detection from resolution (like method_calls)
    - Used heuristics for constructor detection (capitalization)
    - TypeAssignment interface for type tracking
    - Language-specific files extend common functionality
 
 7. **Files Created**:
+
    - `src/call_graph/constructor_calls/constructor_calls.ts`
    - `src/call_graph/constructor_calls/constructor_calls.javascript.ts`
    - `src/call_graph/constructor_calls/constructor_calls.typescript.ts`
