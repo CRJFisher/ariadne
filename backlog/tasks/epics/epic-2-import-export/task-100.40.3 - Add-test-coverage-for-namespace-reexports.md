@@ -1,12 +1,12 @@
 ---
-id: task-111
+id: task-100.40.3
 title: Add test coverage for namespace re-exports
 status: To Do
 assignee: []
 created_date: '2025-08-20 14:49'
 labels: [testing, import-resolution, technical-debt]
 dependencies: []
-parent_task_id: epic-11
+parent_task_id: task-100.40
 ---
 
 ## Description
