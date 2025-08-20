@@ -1,3 +1,6 @@
+// Language type
+export type Language = 'javascript' | 'typescript' | 'python' | 'rust';
+
 // Common types
 export interface Point {
   row: number;

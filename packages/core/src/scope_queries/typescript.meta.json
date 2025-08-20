@@ -1,0 +1,5 @@
+{
+  "language": "typescript",
+  "symbolKinds": ["function", "class", "method", "variable", "import", "export", "interface", "type"],
+  "captureNames": ["@name", "@function", "@class", "@method", "@variable", "@interface", "@type"]
+}

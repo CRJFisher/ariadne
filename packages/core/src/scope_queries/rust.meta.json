@@ -1,0 +1,5 @@
+{
+  "language": "rust",
+  "symbolKinds": ["function", "struct", "impl", "trait", "method", "variable", "use"],
+  "captureNames": ["@name", "@function", "@struct", "@impl", "@trait", "@method", "@variable"]
+}

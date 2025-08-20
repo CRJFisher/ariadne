@@ -1,154 +1,119 @@
-import { ScopeGraph, IScopeGraph } from '../graph';
+/**
+ * Storage interface for project state management
+ * 
+ * Provides an abstraction for storing and retrieving project data.
+ * Supports both in-memory and persistent implementations.
+ */
+
 import { Tree } from 'tree-sitter';
-import { LanguageConfig } from '../types';
-import { ClassRelationship } from '../inheritance';
-import { ProjectCallGraphData } from '../call_graph/project_graph_data';
+import { Language } from '@ariadnejs/types';
 
 /**
- * File cache data stored in the storage layer
+ * File data stored in the storage layer
  */
-export interface StoredFileCache {
-  readonly tree: Tree;
+export interface StoredFile {
+  readonly file_path: string;
   readonly source_code: string;
-  readonly graph: ScopeGraph;
+  readonly language: Language;
+  readonly tree?: Tree;
+  readonly last_modified: number;
+  readonly metadata?: Record<string, any>;
 }
 
 /**
- * Complete project state that can be persisted
+ * Complete project state
  */
 export interface ProjectState {
-  readonly file_graphs: ReadonlyMap<string, ScopeGraph>;
-  readonly file_cache: ReadonlyMap<string, StoredFileCache>;
-  readonly languages: ReadonlyMap<string, LanguageConfig>;
-  readonly inheritance_map: ReadonlyMap<string, ClassRelationship>;
-  readonly call_graph_data: ProjectCallGraphData;
+  readonly files: ReadonlyMap<string, StoredFile>;
+  readonly metadata: Record<string, any>;
+  readonly version: string;
 }
 
 /**
- * Transaction handle for atomic operations
+ * Storage transaction for atomic operations
  */
 export interface StorageTransaction {
-  /**
-   * Get the current state within the transaction
-   */
-  getState(): Promise<ProjectState>;
-  
-  /**
-   * Update the state within the transaction
-   */
-  setState(state: ProjectState): Promise<void>;
-  
-  /**
-   * Update a specific file's data
-   */
-  updateFile(filePath: string, fileCache: StoredFileCache, scopeGraph: ScopeGraph): Promise<void>;
-  
-  /**
-   * Remove a file from the project
-   */
-  removeFile(filePath: string): Promise<void>;
-  
-  /**
-   * Commit the transaction
-   */
+  get_state(): Promise<ProjectState>;
+  set_state(state: ProjectState): Promise<void>;
+  update_file(file: StoredFile): Promise<void>;
+  remove_file(file_path: string): Promise<void>;
   commit(): Promise<void>;
-  
-  /**
-   * Rollback the transaction
-   */
   rollback(): Promise<void>;
 }
 
 /**
- * Storage interface for Project state management
- * Supports both synchronous (in-memory) and asynchronous (persistent) implementations
+ * Main storage interface
  */
 export interface StorageInterface {
-  /**
-   * Initialize the storage (e.g., create tables, load initial data)
-   */
   initialize(): Promise<void>;
+  get_state(): Promise<ProjectState>;
+  set_state(state: ProjectState): Promise<void>;
   
-  /**
-   * Get the current project state
-   */
-  getState(): Promise<ProjectState>;
+  // File operations
+  get_file(file_path: string): Promise<StoredFile | undefined>;
+  update_file(file: StoredFile): Promise<void>;
+  remove_file(file_path: string): Promise<void>;
+  list_files(): Promise<string[]>;
   
-  /**
-   * Update the entire project state
-   */
-  setState(state: ProjectState): Promise<void>;
+  // Transaction support
+  begin_transaction(): Promise<StorageTransaction>;
   
-  /**
-   * Begin a new transaction
-   */
-  beginTransaction(): Promise<StorageTransaction>;
-  
-  /**
-   * Get a specific file's cache data
-   */
-  getFileCache(filePath: string): Promise<StoredFileCache | undefined>;
-  
-  /**
-   * Get a specific file's scope graph
-   */
-  getFileGraph(filePath: string): Promise<ScopeGraph | undefined>;
-  
-  /**
-   * Update a specific file's data
-   */
-  updateFile(filePath: string, fileCache: StoredFileCache, scopeGraph: ScopeGraph): Promise<void>;
-  
-  /**
-   * Remove a file from storage
-   */
-  removeFile(filePath: string): Promise<void>;
-  
-  /**
-   * Get all file paths in the project
-   */
-  getFilePaths(): Promise<string[]>;
-  
-  /**
-   * Check if a file exists in the project
-   */
-  hasFile(filePath: string): Promise<boolean>;
-  
-  /**
-   * Clear all data (useful for testing)
-   */
-  clear(): Promise<void>;
-  
-  /**
-   * Close the storage (e.g., close database connections)
-   */
+  // Cleanup
   close(): Promise<void>;
 }
 
 /**
- * Factory function type for creating storage implementations
+ * Create an empty project state
  */
-export type StorageFactory = (options?: any) => Promise<StorageInterface>;
-
-/**
- * Registry of available storage implementations
- */
-export const storageProviders = new Map<string, StorageFactory>();
-
-/**
- * Register a storage provider
- */
-export function registerStorageProvider(name: string, factory: StorageFactory): void {
-  storageProviders.set(name, factory);
+export function create_empty_state(): ProjectState {
+  return {
+    files: new Map(),
+    metadata: {},
+    version: '1.0.0'
+  };
 }
 
 /**
- * Create a storage instance by name
+ * Add a file to the project state (immutable)
  */
-export async function createStorage(name: string, options?: any): Promise<StorageInterface> {
-  const factory = storageProviders.get(name);
-  if (!factory) {
-    throw new Error(`Unknown storage provider: ${name}`);
-  }
-  return factory(options);
+export function add_file_to_state(
+  state: ProjectState,
+  file: StoredFile
+): ProjectState {
+  const newFiles = new Map(state.files);
+  newFiles.set(file.file_path, file);
+  
+  return {
+    ...state,
+    files: newFiles
+  };
+}
+
+/**
+ * Remove a file from the project state (immutable)
+ */
+export function remove_file_from_state(
+  state: ProjectState,
+  file_path: string
+): ProjectState {
+  const newFiles = new Map(state.files);
+  newFiles.delete(file_path);
+  
+  return {
+    ...state,
+    files: newFiles
+  };
+}
+
+/**
+ * Update metadata in the project state (immutable)
+ */
+export function update_state_metadata(
+  state: ProjectState,
+  metadata: Record<string, any>
+): ProjectState {
+  return {
+    ...state,
+    metadata: { ...state.metadata, ...metadata }
+  };
 }

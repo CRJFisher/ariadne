@@ -1,0 +1,5 @@
+{
+  "language": "python",
+  "symbolKinds": ["function", "class", "method", "variable", "import"],
+  "captureNames": ["@name", "@function", "@class", "@method", "@variable"]
+}
