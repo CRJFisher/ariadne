@@ -111,6 +111,47 @@ export {
   get_impl_trait
 } from './call_graph/method_calls';
 
+// Constructor calls exports
+export {
+  ConstructorCallInfo,
+  ConstructorCallContext,
+  TypeAssignment,
+  find_constructor_calls,
+  find_constructor_calls_from_source,
+  get_type_assignments,
+  is_constructor_call_node,
+  extract_constructor_name,
+  find_assignment_target,
+  count_constructor_arguments,
+  uses_new_keyword,
+  is_factory_method_pattern,
+  get_assignment_scope,
+  create_type_assignment,
+  filter_with_assignments,
+  filter_new_expressions,
+  filter_factory_methods,
+  group_by_constructor,
+  create_type_map,
+  get_local_type_assignments,
+  get_member_type_assignments,
+  // Language-specific utilities
+  is_object_create_pattern,
+  is_class_extends,
+  get_parent_class,
+  has_type_arguments_constructor,
+  extract_constructor_type_arguments,
+  is_abstract_class,
+  get_implemented_interfaces,
+  has_satisfies_constraint,
+  is_super_init_call,
+  is_metaclass_instantiation,
+  is_namedtuple_creation,
+  extract_init_parameters,
+  is_box_new_pattern,
+  is_smart_pointer_creation,
+  has_derive_default
+} from './call_graph/constructor_calls';
+
 // TODO: Add feature exports as they are migrated
 // - import_export exports
 // - type_analysis exports
