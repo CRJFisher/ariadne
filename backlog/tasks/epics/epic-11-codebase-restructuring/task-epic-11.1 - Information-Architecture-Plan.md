@@ -39,16 +39,24 @@ Initial implementation begun with simpler approach - no registry needed:
 
 Key insight: The folder structure IS the registry - test file existence indicates language support. No separate registry to maintain!
 
+### Recent Updates (2025-08-20)
+
+- **Migrated namespace_imports to functional paradigm** - Removed all classes, using functional approach
+- **Flattened import_resolution structure** - Since namespace_imports is the only sub-feature, removed unnecessary nesting
+- **Replaced dynamic dispatch with switch statements** - Better static analysis and type safety
+- **Fixed type errors in untested code paths** - Re-export functionality had type errors but no test coverage
+- **Updated Architecture.md** - Added note about only creating folders when modules spill into sub-modules
+
 ### Key Deliverables
 
-1. **Information Architecture Plan Document** ✅
-   - Location: `backlog/tasks/epics/epic-11-codebase-restructuring/INFORMATION_ARCHITECTURE_PLAN.md`
-   - Comprehensive 300+ line plan defining the new architecture
-   - Hierarchy from user abstractions to parsing implementation
-   - Universal and language-specific feature patterns
-   - Test contract system design
-   - Migration strategy with 5 phases over 12 weeks
-   - Success metrics and risk mitigation
+1. **Information Architecture Document** ✅
+   - Location: `docs/Architecture.md`
+   - Core architectural patterns with processing hierarchy
+   - Folder structure patterns for standard and grouped features
+   - Marshaling and dispatcher patterns with functional paradigm
+   - Test contract system for cross-language consistency
+   - Scope queries and language configuration
+   - Complete examples with real implementations
 
 2. **Folder Structure Rules** ✅
    - Location: `rules/folder-structure-migration.md`
