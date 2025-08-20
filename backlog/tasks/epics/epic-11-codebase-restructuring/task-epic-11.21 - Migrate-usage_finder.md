@@ -15,6 +15,10 @@ Migrate the `usage_finder` feature to `src/scope_analysis/usage_finder/` followi
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where usage_finder currently lives

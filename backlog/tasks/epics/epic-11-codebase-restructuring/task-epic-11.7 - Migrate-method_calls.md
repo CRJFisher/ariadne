@@ -15,6 +15,10 @@ Migrate the `method_calls` feature to `src/call_graph/method_calls/` following A
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where method call detection currently lives

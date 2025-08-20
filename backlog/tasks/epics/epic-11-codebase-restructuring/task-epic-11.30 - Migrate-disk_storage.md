@@ -15,6 +15,10 @@ Migrate the `disk_storage` feature to `src/storage/disk_storage/` following Arch
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where disk_storage currently lives

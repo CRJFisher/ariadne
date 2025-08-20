@@ -15,6 +15,10 @@ Migrate the `call_chain_analysis` feature to `src/call_graph/call_chain_analysis
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where call chain analysis currently lives

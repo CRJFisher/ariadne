@@ -15,6 +15,10 @@ Migrate the `type_propagation` feature to `src/type_analysis/type_propagation/` 
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where type_propagation currently lives

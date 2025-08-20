@@ -15,6 +15,10 @@ Migrate the `incremental_updates` feature to `src/project/incremental_updates/` 
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where incremental_updates currently lives

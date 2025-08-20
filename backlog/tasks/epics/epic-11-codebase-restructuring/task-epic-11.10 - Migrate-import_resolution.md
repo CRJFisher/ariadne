@@ -15,6 +15,10 @@ Migrate the `import_resolution` feature to `src/import_export/import_resolution/
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where import resolution currently lives

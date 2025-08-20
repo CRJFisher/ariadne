@@ -15,6 +15,10 @@ Migrate the `export_detection` feature to `src/import_export/export_detection/` 
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where export detection currently lives

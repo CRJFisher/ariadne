@@ -15,6 +15,10 @@ Migrate the `symbol_resolution` feature to `src/scope_analysis/symbol_resolution
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where symbol_resolution currently lives

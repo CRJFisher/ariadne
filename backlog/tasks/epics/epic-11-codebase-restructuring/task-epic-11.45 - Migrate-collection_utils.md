@@ -15,6 +15,10 @@ Migrate collection/data structure utilities to src/utils/collection_utils.ts
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where collection_utils currently lives

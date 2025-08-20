@@ -15,6 +15,10 @@ Migrate the `storage_interface` feature to `src/storage/storage_interface/` foll
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where storage_interface currently lives

@@ -15,6 +15,10 @@ Migrate the `return_type_inference` feature to `src/type_analysis/return_type_in
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where return_type_inference currently lives

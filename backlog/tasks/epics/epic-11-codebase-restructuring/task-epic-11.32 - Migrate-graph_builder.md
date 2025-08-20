@@ -15,6 +15,10 @@ Migrate the `graph_builder` feature to `src/graph/graph_builder/` following Arch
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where graph_builder currently lives

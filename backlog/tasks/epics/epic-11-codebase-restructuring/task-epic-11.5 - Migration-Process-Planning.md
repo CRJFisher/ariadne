@@ -1,7 +1,7 @@
 ---
 id: task-epic-11.5
 title: Migration Process Planning
-status: To Do
+status: Skipped
 assignee: []
 created_date: "2025-08-07"
 labels:

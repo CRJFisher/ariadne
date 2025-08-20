@@ -15,6 +15,10 @@ Migrate the `class_hierarchy` feature to `src/inheritance_analysis/class_hierarc
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where class_hierarchy currently lives

@@ -15,6 +15,10 @@ Migrate the `memory_storage` feature to `src/storage/memory_storage/` following 
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where memory_storage currently lives

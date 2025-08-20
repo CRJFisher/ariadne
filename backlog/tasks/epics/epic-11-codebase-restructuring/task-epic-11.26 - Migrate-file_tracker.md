@@ -15,6 +15,10 @@ Migrate the `file_tracker` feature to `src/project/file_tracker/` following Arch
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where file_tracker currently lives

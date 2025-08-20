@@ -15,6 +15,10 @@ Migrate the `project_manager` feature to `src/project/project_manager/` followin
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where project_manager currently lives

@@ -15,6 +15,10 @@ Migrate the `module_graph` feature to `src/import_export/module_graph/` followin
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where module dependency graph currently lives

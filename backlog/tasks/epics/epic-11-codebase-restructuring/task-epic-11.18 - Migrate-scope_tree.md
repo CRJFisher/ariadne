@@ -15,6 +15,10 @@ Migrate the `scope_tree` feature to `src/scope_analysis/scope_tree/` following A
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where scope_tree currently lives

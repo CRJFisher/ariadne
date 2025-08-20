@@ -15,6 +15,10 @@ Migrate the `type_tracking` feature to `src/type_analysis/type_tracking/` follow
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where type_tracking currently lives

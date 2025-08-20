@@ -15,6 +15,10 @@ Migrate the `interface_implementation` feature to `src/inheritance_analysis/inte
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where interface_implementation currently lives

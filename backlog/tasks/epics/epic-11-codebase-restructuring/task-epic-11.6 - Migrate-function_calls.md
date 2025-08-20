@@ -15,6 +15,10 @@ Migrate the `function_calls` feature to `src/call_graph/function_calls/` followi
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where function call detection currently lives

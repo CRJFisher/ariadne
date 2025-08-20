@@ -15,6 +15,10 @@ Migrate the `definition_finder` feature to `src/scope_analysis/definition_finder
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where definition_finder currently lives

@@ -15,6 +15,10 @@ Migrate the `parameter_type_inference` feature to `src/type_analysis/parameter_t
 
 ## Research Phase
 
+**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+- `## Current Codebase Structure (As Implemented)` - understand current locations
+- `### Proposed Structure` - understand target architecture
+
 ### Current Location
 
 - [ ] Find where parameter_type_inference currently lives
