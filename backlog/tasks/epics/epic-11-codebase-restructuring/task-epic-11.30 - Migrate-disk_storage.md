@@ -31,6 +31,30 @@ Migrate the `disk_storage` feature to `src/storage/disk_storage/` following Arch
 - [ ] Document test coverage for each language
 - [ ] Identify missing test cases
 
+## Integration Analysis
+
+### Integration Points
+
+- [ ] Identify how disk_storage connects to other features
+- [ ] Document dependencies on other migrated features
+- [ ] Plan stub interfaces for not-yet-migrated features
+
+### Required Integrations
+
+1. **Storage Interface**: Implement disk storage
+   - TODO: Persist data to disk
+2. **Project Manager**: Persist project to disk
+   - TODO: Save project state
+3. **Cache Layer**: Disk-based cache
+   - TODO: Persistent cache storage
+
+### Stub Interfaces to Create
+
+```typescript
+// TODO: Add these stubs in implementation
+class DiskStorage implements StorageInterface { private base_path: string; }
+```
+
 ## Planning Phase
 
 ### Folder Structure
@@ -75,3 +99,22 @@ Migrate the `disk_storage` feature to `src/storage/disk_storage/` following Arch
 ## Notes
 
 Research findings will be documented here during execution.
+
+### Integration TODOs to Add
+
+When implementing, add these TODO comments:
+
+1. In `disk_storage.ts`:
+   ```typescript
+   // TODO: Integration with Storage Interface
+   // - Persist data to disk
+   // TODO: Integration with Project Manager
+   // - Save project state
+   // TODO: Integration with Cache Layer
+   // - Persistent cache storage
+   ```
+
+2. In language-specific files (if applicable):
+   ```typescript
+
+   ```

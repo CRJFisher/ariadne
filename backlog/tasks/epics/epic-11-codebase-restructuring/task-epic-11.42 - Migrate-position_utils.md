@@ -31,6 +31,30 @@ Migrate position/range utilities to src/ast/position_utils.ts
 - [ ] Document test coverage
 - [ ] Identify missing test cases
 
+## Integration Analysis
+
+### Integration Points
+
+- [ ] Identify how position_utils connects to other features
+- [ ] Document dependencies on other migrated features
+- [ ] Plan stub interfaces for not-yet-migrated features
+
+### Required Integrations
+
+1. **Node Utils**: Position helpers for nodes
+   - TODO: Node position utilities
+2. **Definition Finder**: Position-based lookup
+   - TODO: Find def at position
+3. **Usage Finder**: Position-based search
+   - TODO: Find refs at position
+
+### Stub Interfaces to Create
+
+```typescript
+// TODO: Add these stubs in implementation
+interface PositionUtils { contains(range: Range, pos: Position): boolean; compare(p1: Position, p2: Position): number; }
+```
+
 ## Planning Phase
 
 ### Architecture Verification
@@ -65,3 +89,22 @@ Migrate position/range utilities to src/ast/position_utils.ts
 ## Notes
 
 Research findings will be documented here during execution.
+
+### Integration TODOs to Add
+
+When implementing, add these TODO comments:
+
+1. In `position_utils.ts`:
+   ```typescript
+   // TODO: Integration with Node Utils
+   // - Node position utilities
+   // TODO: Integration with Definition Finder
+   // - Find def at position
+   // TODO: Integration with Usage Finder
+   // - Find refs at position
+   ```
+
+2. In language-specific files (if applicable):
+   ```typescript
+
+   ```

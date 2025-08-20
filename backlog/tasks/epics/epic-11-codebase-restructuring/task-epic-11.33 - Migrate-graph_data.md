@@ -31,6 +31,30 @@ Migrate the `graph_data` feature to `src/graph/graph_data/` following Architectu
 - [ ] Document test coverage for each language
 - [ ] Identify missing test cases
 
+## Integration Analysis
+
+### Integration Points
+
+- [ ] Identify how graph_data connects to other features
+- [ ] Document dependencies on other migrated features
+- [ ] Plan stub interfaces for not-yet-migrated features
+
+### Required Integrations
+
+1. **Graph Builder**: Store graph structures
+   - TODO: Provide graph storage
+2. **Graph Algorithms**: Support graph algorithms
+   - TODO: Enable graph traversal
+3. **Storage Interface**: Persist graphs
+   - TODO: Serialize graph data
+
+### Stub Interfaces to Create
+
+```typescript
+// TODO: Add these stubs in implementation
+interface Graph<N, E> { nodes: Map<string, N>; edges: E[]; get_node(id: string): N | undefined; get_edges(from: string): E[]; }
+```
+
 ## Planning Phase
 
 ### Folder Structure
@@ -75,3 +99,22 @@ Migrate the `graph_data` feature to `src/graph/graph_data/` following Architectu
 ## Notes
 
 Research findings will be documented here during execution.
+
+### Integration TODOs to Add
+
+When implementing, add these TODO comments:
+
+1. In `graph_data.ts`:
+   ```typescript
+   // TODO: Integration with Graph Builder
+   // - Provide graph storage
+   // TODO: Integration with Graph Algorithms
+   // - Enable graph traversal
+   // TODO: Integration with Storage Interface
+   // - Serialize graph data
+   ```
+
+2. In language-specific files (if applicable):
+   ```typescript
+
+   ```

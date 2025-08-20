@@ -31,6 +31,33 @@ Migrate the `class_hierarchy` feature to `src/inheritance_analysis/class_hierarc
 - [ ] Document test coverage for each language
 - [ ] Identify missing test cases
 
+## Integration Analysis
+
+### Integration Points
+
+- [ ] Identify how class_hierarchy connects to other features
+- [ ] Document dependencies on other migrated features
+- [ ] Plan stub interfaces for not-yet-migrated features
+
+### Required Integrations
+
+1. **Method Calls**: Resolve methods in hierarchy
+   - TODO: Walk class hierarchy for methods
+2. **Constructor Calls**: Track class instantiation
+   - TODO: Link constructors to classes
+3. **Type Tracking**: Track class types
+   - TODO: Register class type information
+4. **Method Override**: Track override relationships
+   - TODO: Build override chains
+
+### Stub Interfaces to Create
+
+```typescript
+// TODO: Add these stubs in implementation
+interface ClassHierarchy { get_parent(cls: ClassDef): ClassDef | undefined; get_methods(cls: ClassDef): MethodDef[]; }
+interface InheritanceEdge { child: ClassDef; parent: ClassDef; type: 'extends' | 'implements'; }
+```
+
 ## Planning Phase
 
 ### Folder Structure
@@ -75,3 +102,22 @@ Migrate the `class_hierarchy` feature to `src/inheritance_analysis/class_hierarc
 ## Notes
 
 Research findings will be documented here during execution.
+
+### Integration TODOs to Add
+
+When implementing, add these TODO comments:
+
+1. In `class_hierarchy.ts`:
+   ```typescript
+   // TODO: Integration with Method Calls
+   // - Walk class hierarchy for methods
+   // TODO: Integration with Constructor Calls
+   // - Link constructors to classes
+   // TODO: Integration with Type Tracking
+   // - Register class type information
+   ```
+
+2. In language-specific files (if applicable):
+   ```typescript
+   // TODO: Method Override - Build override chains
+   ```

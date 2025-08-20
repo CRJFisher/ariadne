@@ -29,6 +29,9 @@ export interface ImportResolutionConfig {
   get_file_exports?: (file_path: string) => Set<string>;
   resolve_module_path?: (from_file: string, import_path: string) => string | null;
   debug?: boolean;
+  // TODO: Integration with other features
+  // get_export_info?: (file_path: string) => ExportInfo[];  // From export_detection
+  // type_tracker?: TypeTracker;  // For resolving typed imports
 }
 
 /**

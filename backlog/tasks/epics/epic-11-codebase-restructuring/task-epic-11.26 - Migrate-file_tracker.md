@@ -31,6 +31,32 @@ Migrate the `file_tracker` feature to `src/project/file_tracker/` following Arch
 - [ ] Document test coverage for each language
 - [ ] Identify missing test cases
 
+## Integration Analysis
+
+### Integration Points
+
+- [ ] Identify how file_tracker connects to other features
+- [ ] Document dependencies on other migrated features
+- [ ] Plan stub interfaces for not-yet-migrated features
+
+### Required Integrations
+
+1. **Project Manager**: Track files for project
+   - TODO: Report file changes to project
+2. **Incremental Updates**: Detect file changes
+   - TODO: Trigger incremental updates
+3. **Scope Tree**: Build scope tree per file
+   - TODO: Create file scope trees
+4. **Import Resolution**: Track file imports
+   - TODO: Extract imports per file
+
+### Stub Interfaces to Create
+
+```typescript
+// TODO: Add these stubs in implementation
+interface FileTracker { track_file(path: string): void; get_file_state(path: string): FileState; on_change(callback: FileChangeCallback): void; }
+```
+
 ## Planning Phase
 
 ### Folder Structure
@@ -75,3 +101,22 @@ Migrate the `file_tracker` feature to `src/project/file_tracker/` following Arch
 ## Notes
 
 Research findings will be documented here during execution.
+
+### Integration TODOs to Add
+
+When implementing, add these TODO comments:
+
+1. In `file_tracker.ts`:
+   ```typescript
+   // TODO: Integration with Project Manager
+   // - Report file changes to project
+   // TODO: Integration with Incremental Updates
+   // - Trigger incremental updates
+   // TODO: Integration with Scope Tree
+   // - Create file scope trees
+   ```
+
+2. In language-specific files (if applicable):
+   ```typescript
+   // TODO: Import Resolution - Extract imports per file
+   ```

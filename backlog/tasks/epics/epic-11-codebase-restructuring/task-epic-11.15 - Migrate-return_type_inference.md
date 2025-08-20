@@ -31,6 +31,33 @@ Migrate the `return_type_inference` feature to `src/type_analysis/return_type_in
 - [ ] Document test coverage for each language
 - [ ] Identify missing test cases
 
+## Integration Analysis
+
+### Integration Points
+
+- [ ] Identify how return_type_inference connects to other features
+- [ ] Document dependencies on other migrated features
+- [ ] Plan stub interfaces for not-yet-migrated features
+
+### Required Integrations
+
+1. **Function Calls**: Infer types from return statements
+   - TODO: Analyze function body for returns
+2. **Type Tracking**: Update type tracker with inferred types
+   - TODO: Register inferred return types
+3. **Method Calls**: Infer method return types
+   - TODO: Consider class context for methods
+4. **Type Propagation**: Propagate inferred types
+   - TODO: Flow return types through calls
+
+### Stub Interfaces to Create
+
+```typescript
+// TODO: Add these stubs in implementation
+interface ReturnTypeInferrer { infer_return_type(func: FunctionDef): TypeInfo; }
+interface ReturnAnalysis { explicit_returns: TypeInfo[]; inferred_type: TypeInfo; }
+```
+
 ## Planning Phase
 
 ### Folder Structure
@@ -75,3 +102,22 @@ Migrate the `return_type_inference` feature to `src/type_analysis/return_type_in
 ## Notes
 
 Research findings will be documented here during execution.
+
+### Integration TODOs to Add
+
+When implementing, add these TODO comments:
+
+1. In `return_type_inference.ts`:
+   ```typescript
+   // TODO: Integration with Function Calls
+   // - Analyze function body for returns
+   // TODO: Integration with Type Tracking
+   // - Register inferred return types
+   // TODO: Integration with Method Calls
+   // - Consider class context for methods
+   ```
+
+2. In language-specific files (if applicable):
+   ```typescript
+   // TODO: Type Propagation - Flow return types through calls
+   ```

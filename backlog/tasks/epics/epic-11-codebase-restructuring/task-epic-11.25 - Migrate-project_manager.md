@@ -31,6 +31,32 @@ Migrate the `project_manager` feature to `src/project/project_manager/` followin
 - [ ] Document test coverage for each language
 - [ ] Identify missing test cases
 
+## Integration Analysis
+
+### Integration Points
+
+- [ ] Identify how project_manager connects to other features
+- [ ] Document dependencies on other migrated features
+- [ ] Plan stub interfaces for not-yet-migrated features
+
+### Required Integrations
+
+1. **File Tracker**: Manage project files
+   - TODO: Track all project files
+2. **Incremental Updates**: Handle file changes
+   - TODO: Update on file modifications
+3. **Module Graph**: Build project module graph
+   - TODO: Aggregate module relationships
+4. **Storage Interface**: Persist project state
+   - TODO: Save/load project data
+
+### Stub Interfaces to Create
+
+```typescript
+// TODO: Add these stubs in implementation
+interface ProjectManager { add_file(path: string): void; remove_file(path: string): void; get_state(): ProjectState; }
+```
+
 ## Planning Phase
 
 ### Folder Structure
@@ -75,3 +101,22 @@ Migrate the `project_manager` feature to `src/project/project_manager/` followin
 ## Notes
 
 Research findings will be documented here during execution.
+
+### Integration TODOs to Add
+
+When implementing, add these TODO comments:
+
+1. In `project_manager.ts`:
+   ```typescript
+   // TODO: Integration with File Tracker
+   // - Track all project files
+   // TODO: Integration with Incremental Updates
+   // - Update on file modifications
+   // TODO: Integration with Module Graph
+   // - Aggregate module relationships
+   ```
+
+2. In language-specific files (if applicable):
+   ```typescript
+   // TODO: Storage Interface - Save/load project data
+   ```

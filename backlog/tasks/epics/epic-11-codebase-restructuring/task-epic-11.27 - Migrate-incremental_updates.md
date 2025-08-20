@@ -31,6 +31,32 @@ Migrate the `incremental_updates` feature to `src/project/incremental_updates/` 
 - [ ] Document test coverage for each language
 - [ ] Identify missing test cases
 
+## Integration Analysis
+
+### Integration Points
+
+- [ ] Identify how incremental_updates connects to other features
+- [ ] Document dependencies on other migrated features
+- [ ] Plan stub interfaces for not-yet-migrated features
+
+### Required Integrations
+
+1. **File Tracker**: React to file changes
+   - TODO: Update on file modifications
+2. **Scope Tree**: Update scope incrementally
+   - TODO: Rebuild affected scopes
+3. **Type Tracking**: Update types incrementally
+   - TODO: Recompute affected types
+4. **Module Graph**: Update graph incrementally
+   - TODO: Update module edges
+
+### Stub Interfaces to Create
+
+```typescript
+// TODO: Add these stubs in implementation
+interface IncrementalUpdater { update_file(path: string, content: string): UpdateResult; get_affected_files(path: string): string[]; }
+```
+
 ## Planning Phase
 
 ### Folder Structure
@@ -75,3 +101,22 @@ Migrate the `incremental_updates` feature to `src/project/incremental_updates/` 
 ## Notes
 
 Research findings will be documented here during execution.
+
+### Integration TODOs to Add
+
+When implementing, add these TODO comments:
+
+1. In `incremental_updates.ts`:
+   ```typescript
+   // TODO: Integration with File Tracker
+   // - Update on file modifications
+   // TODO: Integration with Scope Tree
+   // - Rebuild affected scopes
+   // TODO: Integration with Type Tracking
+   // - Recompute affected types
+   ```
+
+2. In language-specific files (if applicable):
+   ```typescript
+   // TODO: Module Graph - Update module edges
+   ```

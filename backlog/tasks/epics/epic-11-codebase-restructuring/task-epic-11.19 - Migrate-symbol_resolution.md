@@ -31,6 +31,33 @@ Migrate the `symbol_resolution` feature to `src/scope_analysis/symbol_resolution
 - [ ] Document test coverage for each language
 - [ ] Identify missing test cases
 
+## Integration Analysis
+
+### Integration Points
+
+- [ ] Identify how symbol_resolution connects to other features
+- [ ] Document dependencies on other migrated features
+- [ ] Plan stub interfaces for not-yet-migrated features
+
+### Required Integrations
+
+1. **Scope Tree**: Resolve symbols in scope hierarchy
+   - TODO: Walk scope tree for resolution
+2. **Import Resolution**: Resolve imported symbols
+   - TODO: Check imports for external symbols
+3. **Type Tracking**: Resolve typed symbols
+   - TODO: Use type info for disambiguation
+4. **Namespace Resolution**: Resolve qualified names
+   - TODO: Handle namespace.member patterns
+
+### Stub Interfaces to Create
+
+```typescript
+// TODO: Add these stubs in implementation
+interface SymbolResolver { resolve(name: string, scope: ScopeNode): Def | undefined; }
+interface ResolutionContext { scope: ScopeNode; imports: ImportInfo[]; types: TypeContext; }
+```
+
 ## Planning Phase
 
 ### Folder Structure
@@ -75,3 +102,22 @@ Migrate the `symbol_resolution` feature to `src/scope_analysis/symbol_resolution
 ## Notes
 
 Research findings will be documented here during execution.
+
+### Integration TODOs to Add
+
+When implementing, add these TODO comments:
+
+1. In `symbol_resolution.ts`:
+   ```typescript
+   // TODO: Integration with Scope Tree
+   // - Walk scope tree for resolution
+   // TODO: Integration with Import Resolution
+   // - Check imports for external symbols
+   // TODO: Integration with Type Tracking
+   // - Use type info for disambiguation
+   ```
+
+2. In language-specific files (if applicable):
+   ```typescript
+   // TODO: Namespace Resolution - Handle namespace.member patterns
+   ```

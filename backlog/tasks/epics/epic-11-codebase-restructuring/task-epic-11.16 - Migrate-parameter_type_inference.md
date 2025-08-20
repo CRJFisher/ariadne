@@ -31,6 +31,33 @@ Migrate the `parameter_type_inference` feature to `src/type_analysis/parameter_t
 - [ ] Document test coverage for each language
 - [ ] Identify missing test cases
 
+## Integration Analysis
+
+### Integration Points
+
+- [ ] Identify how parameter_type_inference connects to other features
+- [ ] Document dependencies on other migrated features
+- [ ] Plan stub interfaces for not-yet-migrated features
+
+### Required Integrations
+
+1. **Function Calls**: Infer types from call arguments
+   - TODO: Analyze argument types at call sites
+2. **Type Tracking**: Track parameter types
+   - TODO: Update type context with parameters
+3. **Method Calls**: Infer method parameter types
+   - TODO: Consider receiver type for context
+4. **Type Propagation**: Propagate parameter types
+   - TODO: Flow types into function body
+
+### Stub Interfaces to Create
+
+```typescript
+// TODO: Add these stubs in implementation
+interface ParameterInferrer { infer_parameter_types(func: FunctionDef, calls: CallInfo[]): Map<string, TypeInfo>; }
+interface ParameterAnalysis { param_name: string; inferred_types: TypeInfo[]; resolved_type: TypeInfo; }
+```
+
 ## Planning Phase
 
 ### Folder Structure
@@ -75,3 +102,22 @@ Migrate the `parameter_type_inference` feature to `src/type_analysis/parameter_t
 ## Notes
 
 Research findings will be documented here during execution.
+
+### Integration TODOs to Add
+
+When implementing, add these TODO comments:
+
+1. In `parameter_type_inference.ts`:
+   ```typescript
+   // TODO: Integration with Function Calls
+   // - Analyze argument types at call sites
+   // TODO: Integration with Type Tracking
+   // - Update type context with parameters
+   // TODO: Integration with Method Calls
+   // - Consider receiver type for context
+   ```
+
+2. In language-specific files (if applicable):
+   ```typescript
+   // TODO: Type Propagation - Flow types into function body
+   ```

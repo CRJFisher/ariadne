@@ -31,6 +31,32 @@ Migrate the `graph_algorithms` feature to `src/graph/graph_algorithms/` followin
 - [ ] Document test coverage for each language
 - [ ] Identify missing test cases
 
+## Integration Analysis
+
+### Integration Points
+
+- [ ] Identify how graph_algorithms connects to other features
+- [ ] Document dependencies on other migrated features
+- [ ] Plan stub interfaces for not-yet-migrated features
+
+### Required Integrations
+
+1. **Graph Data**: Operate on graphs
+   - TODO: Traverse graph structures
+2. **Call Chain Analysis**: Find call paths
+   - TODO: Path finding in call graph
+3. **Module Graph**: Detect circular deps
+   - TODO: Find cycles in module graph
+4. **Class Hierarchy**: Find inheritance paths
+   - TODO: Traverse class hierarchy
+
+### Stub Interfaces to Create
+
+```typescript
+// TODO: Add these stubs in implementation
+interface GraphAlgorithms { find_path<N>(graph: Graph<N, any>, from: string, to: string): N[]; detect_cycles<N>(graph: Graph<N, any>): N[][]; }
+```
+
 ## Planning Phase
 
 ### Folder Structure
@@ -75,3 +101,22 @@ Migrate the `graph_algorithms` feature to `src/graph/graph_algorithms/` followin
 ## Notes
 
 Research findings will be documented here during execution.
+
+### Integration TODOs to Add
+
+When implementing, add these TODO comments:
+
+1. In `graph_algorithms.ts`:
+   ```typescript
+   // TODO: Integration with Graph Data
+   // - Traverse graph structures
+   // TODO: Integration with Call Chain Analysis
+   // - Path finding in call graph
+   // TODO: Integration with Module Graph
+   // - Find cycles in module graph
+   ```
+
+2. In language-specific files (if applicable):
+   ```typescript
+   // TODO: Class Hierarchy - Traverse class hierarchy
+   ```

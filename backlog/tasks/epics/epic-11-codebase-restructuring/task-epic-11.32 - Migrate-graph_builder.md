@@ -31,6 +31,32 @@ Migrate the `graph_builder` feature to `src/graph/graph_builder/` following Arch
 - [ ] Document test coverage for each language
 - [ ] Identify missing test cases
 
+## Integration Analysis
+
+### Integration Points
+
+- [ ] Identify how graph_builder connects to other features
+- [ ] Document dependencies on other migrated features
+- [ ] Plan stub interfaces for not-yet-migrated features
+
+### Required Integrations
+
+1. **Call Graph**: Build call graph
+   - TODO: Aggregate function calls into graph
+2. **Module Graph**: Build module graph
+   - TODO: Create module dependency graph
+3. **Class Hierarchy**: Build inheritance graph
+   - TODO: Create class hierarchy graph
+4. **Graph Data**: Use graph data structures
+   - TODO: Store in graph format
+
+### Stub Interfaces to Create
+
+```typescript
+// TODO: Add these stubs in implementation
+interface GraphBuilder<N, E> { add_node(node: N): void; add_edge(edge: E): void; build(): Graph<N, E>; }
+```
+
 ## Planning Phase
 
 ### Folder Structure
@@ -75,3 +101,22 @@ Migrate the `graph_builder` feature to `src/graph/graph_builder/` following Arch
 ## Notes
 
 Research findings will be documented here during execution.
+
+### Integration TODOs to Add
+
+When implementing, add these TODO comments:
+
+1. In `graph_builder.ts`:
+   ```typescript
+   // TODO: Integration with Call Graph
+   // - Aggregate function calls into graph
+   // TODO: Integration with Module Graph
+   // - Create module dependency graph
+   // TODO: Integration with Class Hierarchy
+   // - Create class hierarchy graph
+   ```
+
+2. In language-specific files (if applicable):
+   ```typescript
+   // TODO: Graph Data - Store in graph format
+   ```

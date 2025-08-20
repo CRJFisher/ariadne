@@ -31,6 +31,32 @@ Migrate the `cache_layer` feature to `src/storage/cache_layer/` following Archit
 - [ ] Document test coverage for each language
 - [ ] Identify missing test cases
 
+## Integration Analysis
+
+### Integration Points
+
+- [ ] Identify how cache_layer connects to other features
+- [ ] Document dependencies on other migrated features
+- [ ] Plan stub interfaces for not-yet-migrated features
+
+### Required Integrations
+
+1. **Storage Interface**: Cache storage operations
+   - TODO: Cache storage results
+2. **Type Inference**: Cache inferred types
+   - TODO: Avoid re-inference
+3. **Symbol Resolution**: Cache resolutions
+   - TODO: Speed up resolution
+4. **Module Graph**: Cache graph computations
+   - TODO: Cache graph algorithms
+
+### Stub Interfaces to Create
+
+```typescript
+// TODO: Add these stubs in implementation
+interface CacheLayer { get<T>(key: string): T | undefined; set<T>(key: string, value: T, ttl?: number): void; invalidate(pattern: string): void; }
+```
+
 ## Planning Phase
 
 ### Folder Structure
@@ -75,3 +101,22 @@ Migrate the `cache_layer` feature to `src/storage/cache_layer/` following Archit
 ## Notes
 
 Research findings will be documented here during execution.
+
+### Integration TODOs to Add
+
+When implementing, add these TODO comments:
+
+1. In `cache_layer.ts`:
+   ```typescript
+   // TODO: Integration with Storage Interface
+   // - Cache storage results
+   // TODO: Integration with Type Inference
+   // - Avoid re-inference
+   // TODO: Integration with Symbol Resolution
+   // - Speed up resolution
+   ```
+
+2. In language-specific files (if applicable):
+   ```typescript
+   // TODO: Module Graph - Cache graph algorithms
+   ```

@@ -31,6 +31,32 @@ Migrate the `usage_finder` feature to `src/scope_analysis/usage_finder/` followi
 - [ ] Document test coverage for each language
 - [ ] Identify missing test cases
 
+## Integration Analysis
+
+### Integration Points
+
+- [ ] Identify how usage_finder connects to other features
+- [ ] Document dependencies on other migrated features
+- [ ] Plan stub interfaces for not-yet-migrated features
+
+### Required Integrations
+
+1. **Scope Tree**: Search scopes for usages
+   - TODO: Find all refs in scope tree
+2. **Symbol Resolution**: Find symbol usages
+   - TODO: Resolve all references to a definition
+3. **Import Resolution**: Find cross-file usages
+   - TODO: Track usage through imports
+4. **Call Graph**: Find function call usages
+   - TODO: Include calls as usages
+
+### Stub Interfaces to Create
+
+```typescript
+// TODO: Add these stubs in implementation
+interface UsageFinder { find_usages(def: Def): Ref[]; find_references(symbol: string): Ref[]; }
+```
+
 ## Planning Phase
 
 ### Folder Structure
@@ -75,3 +101,22 @@ Migrate the `usage_finder` feature to `src/scope_analysis/usage_finder/` followi
 ## Notes
 
 Research findings will be documented here during execution.
+
+### Integration TODOs to Add
+
+When implementing, add these TODO comments:
+
+1. In `usage_finder.ts`:
+   ```typescript
+   // TODO: Integration with Scope Tree
+   // - Find all refs in scope tree
+   // TODO: Integration with Symbol Resolution
+   // - Resolve all references to a definition
+   // TODO: Integration with Import Resolution
+   // - Track usage through imports
+   ```
+
+2. In language-specific files (if applicable):
+   ```typescript
+   // TODO: Call Graph - Include calls as usages
+   ```

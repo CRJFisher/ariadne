@@ -31,6 +31,31 @@ Migrate Python scope patterns to src/scope_queries/
 - [ ] Document test coverage
 - [ ] Identify missing test cases
 
+## Integration Analysis
+
+### Integration Points
+
+- [ ] Identify how python.scm connects to other features
+- [ ] Document dependencies on other migrated features
+- [ ] Plan stub interfaces for not-yet-migrated features
+
+### Required Integrations
+
+1. **Loader**: Loaded by query loader
+   - TODO: Provide Python scope queries
+2. **Class Hierarchy**: Python classes
+   - TODO: Python inheritance patterns
+3. **Type Tracking**: Python type hints
+   - TODO: Extract Python type hints
+
+### Stub Interfaces to Create
+
+```typescript
+// TODO: Add these stubs in implementation
+; TODO: Integration markers in .scm file
+; Used by: scope_tree, class_hierarchy, type_tracking
+```
+
 ## Planning Phase
 
 ### Architecture Verification
@@ -65,3 +90,22 @@ Migrate Python scope patterns to src/scope_queries/
 ## Notes
 
 Research findings will be documented here during execution.
+
+### Integration TODOs to Add
+
+When implementing, add these TODO comments:
+
+1. In `python.scm.ts`:
+   ```typescript
+   // TODO: Integration with Loader
+   // - Provide Python scope queries
+   // TODO: Integration with Class Hierarchy
+   // - Python inheritance patterns
+   // TODO: Integration with Type Tracking
+   // - Extract Python type hints
+   ```
+
+2. In language-specific files (if applicable):
+   ```typescript
+
+   ```

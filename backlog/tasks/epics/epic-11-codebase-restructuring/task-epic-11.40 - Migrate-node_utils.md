@@ -31,6 +31,30 @@ Migrate AST node utilities to src/ast/node_utils.ts
 - [ ] Document test coverage
 - [ ] Identify missing test cases
 
+## Integration Analysis
+
+### Integration Points
+
+- [ ] Identify how node_utils connects to other features
+- [ ] Document dependencies on other migrated features
+- [ ] Plan stub interfaces for not-yet-migrated features
+
+### Required Integrations
+
+1. **AST traversal**: All features need AST utils
+   - TODO: Provide node helpers
+2. **Query Executor**: Support query execution
+   - TODO: Node matching utilities
+3. **Position Utils**: Node position helpers
+   - TODO: Get node positions
+
+### Stub Interfaces to Create
+
+```typescript
+// TODO: Add these stubs in implementation
+interface NodeUtils { get_node_text(node: SyntaxNode): string; find_parent(node: SyntaxNode, type: string): SyntaxNode | null; }
+```
+
 ## Planning Phase
 
 ### Architecture Verification
@@ -65,3 +89,22 @@ Migrate AST node utilities to src/ast/node_utils.ts
 ## Notes
 
 Research findings will be documented here during execution.
+
+### Integration TODOs to Add
+
+When implementing, add these TODO comments:
+
+1. In `node_utils.ts`:
+   ```typescript
+   // TODO: Integration with AST traversal
+   // - Provide node helpers
+   // TODO: Integration with Query Executor
+   // - Node matching utilities
+   // TODO: Integration with Position Utils
+   // - Get node positions
+   ```
+
+2. In language-specific files (if applicable):
+   ```typescript
+
+   ```

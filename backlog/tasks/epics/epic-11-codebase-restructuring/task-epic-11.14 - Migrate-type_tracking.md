@@ -31,6 +31,33 @@ Migrate the `type_tracking` feature to `src/type_analysis/type_tracking/` follow
 - [ ] Document test coverage for each language
 - [ ] Identify missing test cases
 
+## Integration Analysis
+
+### Integration Points
+
+- [ ] Identify how type_tracking connects to other features
+- [ ] Document dependencies on other migrated features
+- [ ] Plan stub interfaces for not-yet-migrated features
+
+### Required Integrations
+
+1. **Constructor Calls**: Track types from constructor calls
+   - TODO: Update type map on construction
+2. **Method Calls**: Resolve methods based on receiver type
+   - TODO: Provide type context for method resolution
+3. **Import Resolution**: Track types of imported symbols
+   - TODO: Add import type tracking
+4. **Return Type Inference**: Track inferred return types
+   - TODO: Update type map with inferred types
+
+### Stub Interfaces to Create
+
+```typescript
+// TODO: Add these stubs in implementation
+interface TypeTracker { set_type(var: string, type: TypeInfo): void; get_type(var: string): TypeInfo; }
+interface TypeContext { scope: string; types: Map<string, TypeInfo>; parent?: TypeContext; }
+```
+
 ## Planning Phase
 
 ### Folder Structure
@@ -75,3 +102,22 @@ Migrate the `type_tracking` feature to `src/type_analysis/type_tracking/` follow
 ## Notes
 
 Research findings will be documented here during execution.
+
+### Integration TODOs to Add
+
+When implementing, add these TODO comments:
+
+1. In `type_tracking.ts`:
+   ```typescript
+   // TODO: Integration with Constructor Calls
+   // - Update type map on construction
+   // TODO: Integration with Method Calls
+   // - Provide type context for method resolution
+   // TODO: Integration with Import Resolution
+   // - Add import type tracking
+   ```
+
+2. In language-specific files (if applicable):
+   ```typescript
+   // TODO: Return Type Inference - Update type map with inferred types
+   ```

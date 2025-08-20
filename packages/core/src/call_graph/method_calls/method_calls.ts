@@ -23,12 +23,19 @@ export interface MethodCallContext {
   file_path: string;
   language: Language;
   ast_root: SyntaxNode;
+  // TODO: Integration with type tracking for accurate method resolution
+  // type_tracker?: TypeTracker;  // Track variable types
+  // class_hierarchy?: ClassHierarchy;  // For inheritance-based resolution
+  // import_resolver?: ImportResolver;  // For imported class methods
 }
 
 export interface MethodResolutionContext {
   receiver_type?: string; // Known type of the receiver
   scope_definitions?: Def[]; // Available definitions in scope
   type_info?: Map<string, string>; // Variable to type mapping
+  // TODO: Enhanced resolution with cross-file support
+  // get_class_methods?: (class_name: string) => MethodInfo[];
+  // resolve_imported_class?: (class_name: string) => ClassDef;
 }
 
 /**

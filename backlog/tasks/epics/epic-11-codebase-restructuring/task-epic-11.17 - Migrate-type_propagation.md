@@ -31,6 +31,33 @@ Migrate the `type_propagation` feature to `src/type_analysis/type_propagation/` 
 - [ ] Document test coverage for each language
 - [ ] Identify missing test cases
 
+## Integration Analysis
+
+### Integration Points
+
+- [ ] Identify how type_propagation connects to other features
+- [ ] Document dependencies on other migrated features
+- [ ] Plan stub interfaces for not-yet-migrated features
+
+### Required Integrations
+
+1. **Type Tracking**: Propagate types through assignments
+   - TODO: Update type map on assignment
+2. **Call Chain Analysis**: Propagate types through call chains
+   - TODO: Flow types along call paths
+3. **Scope Analysis**: Respect scope boundaries
+   - TODO: Type flow within scope rules
+4. **Module Graph**: Cross-module type flow
+   - TODO: Propagate types across module boundaries
+
+### Stub Interfaces to Create
+
+```typescript
+// TODO: Add these stubs in implementation
+interface TypePropagator { propagate(from: TypedNode, to: TypedNode): void; }
+interface TypeFlow { source: TypeInfo; target: string; path: string[]; }
+```
+
 ## Planning Phase
 
 ### Folder Structure
@@ -75,3 +102,22 @@ Migrate the `type_propagation` feature to `src/type_analysis/type_propagation/` 
 ## Notes
 
 Research findings will be documented here during execution.
+
+### Integration TODOs to Add
+
+When implementing, add these TODO comments:
+
+1. In `type_propagation.ts`:
+   ```typescript
+   // TODO: Integration with Type Tracking
+   // - Update type map on assignment
+   // TODO: Integration with Call Chain Analysis
+   // - Flow types along call paths
+   // TODO: Integration with Scope Analysis
+   // - Type flow within scope rules
+   ```
+
+2. In language-specific files (if applicable):
+   ```typescript
+   // TODO: Module Graph - Propagate types across module boundaries
+   ```

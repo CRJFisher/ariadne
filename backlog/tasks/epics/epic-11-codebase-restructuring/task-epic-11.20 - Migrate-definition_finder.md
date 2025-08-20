@@ -31,6 +31,32 @@ Migrate the `definition_finder` feature to `src/scope_analysis/definition_finder
 - [ ] Document test coverage for each language
 - [ ] Identify missing test cases
 
+## Integration Analysis
+
+### Integration Points
+
+- [ ] Identify how definition_finder connects to other features
+- [ ] Document dependencies on other migrated features
+- [ ] Plan stub interfaces for not-yet-migrated features
+
+### Required Integrations
+
+1. **Scope Tree**: Search scopes for definitions
+   - TODO: Use scope tree for def lookup
+2. **Symbol Resolution**: Find symbol definitions
+   - TODO: Resolve references to definitions
+3. **Import Resolution**: Find imported definitions
+   - TODO: Resolve across file boundaries
+4. **Export Detection**: Find exported definitions
+   - TODO: Check if definitions are exported
+
+### Stub Interfaces to Create
+
+```typescript
+// TODO: Add these stubs in implementation
+interface DefinitionFinder { find_definition(ref: Ref): Def | undefined; go_to_definition(pos: Position): Def | undefined; }
+```
+
 ## Planning Phase
 
 ### Folder Structure
@@ -75,3 +101,22 @@ Migrate the `definition_finder` feature to `src/scope_analysis/definition_finder
 ## Notes
 
 Research findings will be documented here during execution.
+
+### Integration TODOs to Add
+
+When implementing, add these TODO comments:
+
+1. In `definition_finder.ts`:
+   ```typescript
+   // TODO: Integration with Scope Tree
+   // - Use scope tree for def lookup
+   // TODO: Integration with Symbol Resolution
+   // - Resolve references to definitions
+   // TODO: Integration with Import Resolution
+   // - Resolve across file boundaries
+   ```
+
+2. In language-specific files (if applicable):
+   ```typescript
+   // TODO: Export Detection - Check if definitions are exported
+   ```

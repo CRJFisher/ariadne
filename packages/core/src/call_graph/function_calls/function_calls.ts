@@ -22,6 +22,11 @@ export interface FunctionCallContext {
   file_path: string;
   language: Language;
   ast_root: SyntaxNode;
+  // TODO: Integration points for cross-feature functionality
+  // scope_graph?: ScopeGraph;  // For symbol resolution
+  // import_resolver?: (name: string) => ImportInfo | undefined;  // For resolving imported functions
+  // export_detector?: (file: string) => ExportInfo[];  // For checking if functions are exported
+  // type_tracker?: TypeTracker;  // For tracking variable types to resolve method calls
 }
 
 /**

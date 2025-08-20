@@ -31,6 +31,30 @@ Migrate the scope query loader to src/scope_queries/loader.ts
 - [ ] Document test coverage
 - [ ] Identify missing test cases
 
+## Integration Analysis
+
+### Integration Points
+
+- [ ] Identify how loader connects to other features
+- [ ] Document dependencies on other migrated features
+- [ ] Plan stub interfaces for not-yet-migrated features
+
+### Required Integrations
+
+1. **Scope Queries**: Load language queries
+   - TODO: Load .scm files
+2. **File Tracker**: Determine file language
+   - TODO: Map extensions to languages
+3. **AST Utils**: Provide parser access
+   - TODO: Load language parsers
+
+### Stub Interfaces to Create
+
+```typescript
+// TODO: Add these stubs in implementation
+interface QueryLoader { load_query(language: Language): Query; get_language_parser(language: Language): Parser; }
+```
+
 ## Planning Phase
 
 ### Architecture Verification
@@ -65,3 +89,22 @@ Migrate the scope query loader to src/scope_queries/loader.ts
 ## Notes
 
 Research findings will be documented here during execution.
+
+### Integration TODOs to Add
+
+When implementing, add these TODO comments:
+
+1. In `loader.ts`:
+   ```typescript
+   // TODO: Integration with Scope Queries
+   // - Load .scm files
+   // TODO: Integration with File Tracker
+   // - Map extensions to languages
+   // TODO: Integration with AST Utils
+   // - Load language parsers
+   ```
+
+2. In language-specific files (if applicable):
+   ```typescript
+
+   ```

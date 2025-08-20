@@ -44,6 +44,10 @@ export interface CallChainContext {
   max_depth?: number; // Maximum depth to traverse (default: 10)
   include_external?: boolean; // Include external/builtin calls
   track_recursion?: boolean; // Track recursive calls
+  // TODO: Cross-file chain traversal
+  // import_resolver?: ImportResolver;  // Resolve cross-file calls
+  // export_detector?: ExportDetector;  // Check if functions are exported
+  // resolve_cross_file?: boolean;  // Follow chains across file boundaries
 }
 
 /**

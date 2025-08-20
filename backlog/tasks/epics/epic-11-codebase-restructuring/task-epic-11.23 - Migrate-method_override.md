@@ -31,6 +31,32 @@ Migrate the `method_override` feature to `src/inheritance_analysis/method_overri
 - [ ] Document test coverage for each language
 - [ ] Identify missing test cases
 
+## Integration Analysis
+
+### Integration Points
+
+- [ ] Identify how method_override connects to other features
+- [ ] Document dependencies on other migrated features
+- [ ] Plan stub interfaces for not-yet-migrated features
+
+### Required Integrations
+
+1. **Class Hierarchy**: Find overridden methods
+   - TODO: Walk hierarchy for base methods
+2. **Method Calls**: Resolve to correct override
+   - TODO: Dynamic dispatch resolution
+3. **Type Tracking**: Track override types
+   - TODO: Ensure type compatibility
+4. **Symbol Resolution**: Resolve super calls
+   - TODO: Find parent implementation
+
+### Stub Interfaces to Create
+
+```typescript
+// TODO: Add these stubs in implementation
+interface OverrideResolver { find_base_method(method: MethodDef): MethodDef | undefined; find_overrides(method: MethodDef): MethodDef[]; }
+```
+
 ## Planning Phase
 
 ### Folder Structure
@@ -75,3 +101,22 @@ Migrate the `method_override` feature to `src/inheritance_analysis/method_overri
 ## Notes
 
 Research findings will be documented here during execution.
+
+### Integration TODOs to Add
+
+When implementing, add these TODO comments:
+
+1. In `method_override.ts`:
+   ```typescript
+   // TODO: Integration with Class Hierarchy
+   // - Walk hierarchy for base methods
+   // TODO: Integration with Method Calls
+   // - Dynamic dispatch resolution
+   // TODO: Integration with Type Tracking
+   // - Ensure type compatibility
+   ```
+
+2. In language-specific files (if applicable):
+   ```typescript
+   // TODO: Symbol Resolution - Find parent implementation
+   ```
