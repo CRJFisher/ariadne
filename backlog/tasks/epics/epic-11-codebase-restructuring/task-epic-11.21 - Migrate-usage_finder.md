@@ -35,20 +35,20 @@ Migrate the `usage_finder` feature to `src/scope_analysis/usage_finder/` followi
 
 ### Integration Points
 
-- [ ] Identify how usage_finder connects to other features
-- [ ] Document dependencies on other migrated features
-- [ ] Plan stub interfaces for not-yet-migrated features
+- [x] Identify how usage_finder connects to other features - **Uses scope_tree for traversal, provides usage finding API**
+- [x] Document dependencies on other migrated features - **Depends on scope_tree, imports ResolvedSymbol type from symbol_resolution**
+- [x] Plan stub interfaces for not-yet-migrated features - **Created Usage and UsageFinderContext interfaces**
 
 ### Required Integrations
 
 1. **Scope Tree**: Search scopes for usages
-   - TODO: Find all refs in scope tree
+   - ✅ Implemented: Traverses scope_tree.nodes and symbols
 2. **Symbol Resolution**: Find symbol usages
-   - TODO: Resolve all references to a definition
+   - ⚠️ Partial: Imports ResolvedSymbol type but doesn't use resolution functions
 3. **Import Resolution**: Find cross-file usages
-   - TODO: Track usage through imports
+   - ⚠️ Stubbed: Has TODO comment but not yet implemented
 4. **Call Graph**: Find function call usages
-   - TODO: Include calls as usages
+   - ✅ Implemented: find_function_calls function working
 
 ### Stub Interfaces to Create
 
@@ -61,15 +61,15 @@ interface UsageFinder { find_usages(def: Def): Ref[]; find_references(symbol: st
 
 ### Folder Structure
 
-- [ ] Determine if sub-folders needed for complex logic
-- [ ] Plan file organization per Architecture.md patterns
-- [ ] List all files to create
+- [x] Determine if sub-folders needed for complex logic - **No sub-folders needed**
+- [x] Plan file organization per Architecture.md patterns - **Core + language-specific + dispatcher**
+- [x] List all files to create - **3 files: usage_finder.ts, javascript.ts, index.ts**
 
 ### Architecture Verification
 
-- [ ] Verify against docs/Architecture.md folder patterns
-- [ ] Ensure functional paradigm (no classes)
-- [ ] Plan dispatcher/marshaler pattern
+- [x] Verify against docs/Architecture.md folder patterns - **Follows feature-based organization**
+- [x] Ensure functional paradigm (no classes) - **All functions, no classes**
+- [x] Plan dispatcher/marshaler pattern - **Implemented in index.ts with language routing**
 
 ## Implementation Phase
 

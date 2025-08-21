@@ -10,7 +10,8 @@ This file references all the rules files that are relevant for different types o
 
 - When: Starting any task, creating tasks, updating status
 - Key commands: `backlog task list --plain`, `backlog task edit <id> -s "In Progress"`
-- Critical: Always read task file first, update ACs before implementing
+- Critical: Always read task file first and update the task doc after implementing
+- Critical: Don't take shortcuts. If there are follow-up tasks, create them as sub-tasks.
 
 **✅ `rules/backlog-post.md`** - Post-work checklist
 
