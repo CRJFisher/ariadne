@@ -23,7 +23,7 @@ Tree-sitter AST Processing
 
 ### Folder Structure Patterns
 
-#### Case 1: Standard Multi-Language Feature
+#### Feature including some language-specific logic
 
 Most features follow this pattern:
 
@@ -39,25 +39,9 @@ Most features follow this pattern:
 ...
 ```
 
-#### Case 1b: Language Grouping Feature
+**Note**: We should always prefer to add processing logic to the `[sub-feature].ts` file - the language-specific implementations are only used if there are special cases for that language.
 
-When languages share implementation approaches:
-
-```txt
-/src/[feature]/[sub-feature]/
-├── index.ts                           # Dispatcher/marshaler
-├── common.ts                          # Shared logic
-├── prototype_approach.ts              # Shared by JS/TS
-├── type_approach.ts                   # Shared by Python/Rust
-├── [feature].javascript.ts           # Uses prototype_approach
-├── [feature].typescript.ts           # Uses prototype_approach
-├── [feature].python.ts               # Uses type_approach
-├── [feature].rust.ts                 # Uses type_approach
-└── test files...
-```
-
-**Note**: We should always prefer to 
-**Note**: Language-specific features (e.g., Python decorators, Rust macros) follow Case 1 but only implement files for their specific language. If complex multi-module processing is needed, use nested folders: `/src/[feature]/[sub-feature]/[sub-sub-feature]/`.
+**Note**: Language-specific features (e.g., Python decorators, Rust macros) follow the multi-language feature pattern but only implement files for their specific language. If complex multi-module processing is needed, use nested folders: `/src/[feature]/[sub-feature]/[sub-sub-feature]/`.
 
 **Important**: Only create folders when a module spills out into further sub-modules, either because of complex code requiring an extra conceptual layer or for language-specific processing files. If a feature has only one sub-functionality, keep it flat. For example, if `import_resolution` only contains namespace imports, all namespace import files should be directly in `import_resolution/`, not in a `namespace_imports/` subfolder.
 
@@ -67,30 +51,30 @@ Every feature's `index.ts` dispatcher follows this functional pattern:
 
 ```typescript
 // index.ts - Feature dispatcher
-import { process_javascript } from './[feature].javascript';
-import { process_python } from './[feature].python';
-import { process_common } from './common';
+import { process_javascript } from "./[feature].javascript";
+import { process_python } from "./[feature].python";
+import { process_common } from "./common";
 
 const processors = {
   javascript: process_javascript,
   typescript: process_javascript, // Can share processor
   python: process_python,
-  rust: process_rust
+  rust: process_rust,
 };
 
 export function process_feature(
-  ast: ASTNode, 
-  metadata: { language: Language, file_path: string }
+  ast: ASTNode,
+  metadata: { language: Language; file_path: string }
 ): Result {
   // Common pre-processing
   const prepared = process_common(ast, metadata);
-  
+
   // Dispatch to language-specific processor
   const processor = processors[metadata.language];
   if (!processor) {
     return prepared; // Fallback to common-only processing
   }
-  
+
   // Language-specific enhancement
   return processor(prepared, metadata);
 }
@@ -105,7 +89,7 @@ export interface FeatureTestContract {
   test_basic_case(): void;
   test_edge_case(): void;
   test_error_handling(): void;
-  
+
   // Optional language-specific extensions
   test_language_specific?(): void;
 }
@@ -127,20 +111,20 @@ export interface FeatureTestContract {
 
 ```typescript
 // call_graph/function_calls/index.ts
-import { find_common_calls } from './common';
-import { find_javascript_calls } from './function_calls.javascript';
-import { find_python_calls } from './function_calls.python';
+import { find_common_calls } from "./common";
+import { find_javascript_calls } from "./function_calls.javascript";
+import { find_python_calls } from "./function_calls.python";
 
 const call_finders = {
   javascript: find_javascript_calls,
   typescript: find_javascript_calls,
   python: find_python_calls,
-  rust: find_rust_calls
+  rust: find_rust_calls,
 };
 
 export function find_function_calls(
   ast: ASTNode,
-  metadata: { language: Language, file_path: string }
+  metadata: { language: Language; file_path: string }
 ): CallInfo[] {
   const common_calls = find_common_calls(ast, metadata);
   const finder = call_finders[metadata.language];
@@ -152,19 +136,19 @@ export function find_function_calls(
 
 ```typescript
 // import_resolution/imports/index.ts
-import { resolve_esmodule_import } from './esmodule_approach';
-import { resolve_commonjs_import } from './commonjs_approach';
+import { resolve_esmodule_import } from "./esmodule_approach";
+import { resolve_commonjs_import } from "./commonjs_approach";
 
 const import_resolvers = {
   javascript: resolve_esmodule_import,
   typescript: resolve_esmodule_import,
   python: resolve_python_import,
-  rust: resolve_rust_use
+  rust: resolve_rust_use,
 };
 
 export function resolve_import(
   import_node: ASTNode,
-  metadata: { language: Language, file_path: string }
+  metadata: { language: Language; file_path: string }
 ): ResolvedImport | null {
   const resolver = import_resolvers[metadata.language];
   return resolver ? resolver(import_node, metadata) : null;
@@ -203,10 +187,17 @@ The central loader manages file extensions, parsers, and scope queries:
 
 // File extension to language mapping - single source of truth
 const FILE_EXTENSIONS: Record<string, Language> = {
-  'js': 'javascript', 'mjs': 'javascript', 'cjs': 'javascript', 'jsx': 'javascript',
-  'ts': 'typescript', 'tsx': 'typescript', 'mts': 'typescript', 'cts': 'typescript',
-  'py': 'python', 'pyw': 'python',
-  'rs': 'rust',
+  js: "javascript",
+  mjs: "javascript",
+  cjs: "javascript",
+  jsx: "javascript",
+  ts: "typescript",
+  tsx: "typescript",
+  mts: "typescript",
+  cts: "typescript",
+  py: "python",
+  pyw: "python",
+  rs: "rust",
 };
 
 export function get_language_for_file(file_path: string): Language | null {
@@ -216,12 +207,12 @@ export function get_language_for_file(file_path: string): Language | null {
 
 export function load_scope_query(language: Language): string {
   const query_path = path.join(__dirname, `${language}.scm`);
-  return fs.readFileSync(query_path, 'utf8');
+  return fs.readFileSync(query_path, "utf8");
 }
 
 export function load_language_metadata(language: Language): LanguageMetadata {
   const meta_path = path.join(__dirname, `${language}.meta.json`);
-  return JSON.parse(fs.readFileSync(meta_path, 'utf8'));
+  return JSON.parse(fs.readFileSync(meta_path, "utf8"));
 }
 
 export function get_language_parser(language: Language): Parser {
@@ -229,9 +220,9 @@ export function get_language_parser(language: Language): Parser {
     javascript: create_javascript_parser,
     typescript: create_typescript_parser,
     python: create_python_parser,
-    rust: create_rust_parser
+    rust: create_rust_parser,
   };
-  
+
   const create_parser = parsers[language];
   return create_parser ? create_parser() : null;
 }
@@ -243,19 +234,20 @@ Language-specific features access scope queries through the central loader:
 
 ```typescript
 // scope_resolution/basic_scopes/basic_scopes.javascript.ts
-import { load_scope_query } from '../../scope_queries/loader';
+import { load_scope_query } from "../../scope_queries/loader";
 
 export function extract_javascript_scopes(
   ast: ASTNode,
-  metadata: { language: Language, file_path: string }
+  metadata: { language: Language; file_path: string }
 ): ScopeInfo[] {
-  const scope_query = load_scope_query('javascript');
-  const parser = get_language_parser('javascript');
+  const scope_query = load_scope_query("javascript");
+  const parser = get_language_parser("javascript");
   // JavaScript-specific scope extraction
 }
 ```
 
 This approach:
+
 - **Centralizes** all scope queries in one location
 - **Simplifies** the loading mechanism (no path hunting)
 - **Separates** parsing configuration from feature logic
@@ -275,20 +267,20 @@ This approach:
 
 ```typescript
 // import_resolution/basic_imports/index.ts
-import { normalize_import_path } from './common';
-import { resolve_javascript_import } from './basic_imports.javascript';
-import { resolve_python_import } from './basic_imports.python';
+import { normalize_import_path } from "./common";
+import { resolve_javascript_import } from "./basic_imports.javascript";
+import { resolve_python_import } from "./basic_imports.python";
 
 const import_resolvers = {
   javascript: resolve_javascript_import,
   typescript: resolve_javascript_import,
   python: resolve_python_import,
-  rust: resolve_rust_import
+  rust: resolve_rust_import,
 };
 
 export function resolve_basic_import(
   node: ASTNode,
-  metadata: { language: Language, file_path: string }
+  metadata: { language: Language; file_path: string }
 ): ResolvedImport | null {
   const normalized_path = normalize_import_path(node, metadata);
   const resolver = import_resolvers[metadata.language];
@@ -299,13 +291,13 @@ export function resolve_basic_import(
 export function resolve_javascript_import(
   node: ASTNode,
   normalized_path: string,
-  metadata: { language: Language, file_path: string }
+  metadata: { language: Language; file_path: string }
 ): ResolvedImport {
   // JavaScript-specific import resolution
   return {
     path: normalized_path,
     symbols: extract_esmodule_symbols(node),
-    type: 'esmodule'
+    type: "esmodule",
   };
 }
 ```

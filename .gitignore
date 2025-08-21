@@ -41,9 +41,11 @@ coverage/
 .cache/
 
 # Claude AI specific
-.claude/
+.claude/settings.local.json
 CLAUDE.local.md
+.cursorrules
 
 venv
 
 __pycache__/
+.cursorrules
