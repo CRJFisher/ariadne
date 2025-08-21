@@ -11,7 +11,7 @@ parent_task_id: epic-11
 
 ## Description
 
-Create new index.ts with exports only (no logic)
+Create new index.ts with exports only (no logic). The ONLY exports it should contain are the ones that are directly used by the user. ALL OTHERS should be removed.
 
 ## Research Phase
 
