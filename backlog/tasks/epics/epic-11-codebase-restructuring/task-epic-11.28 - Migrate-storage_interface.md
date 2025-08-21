@@ -3,7 +3,7 @@ id: task-epic-11.28
 title: Migrate storage_interface feature
 status: In Progress
 assignee: []
-created_date: '2025-08-20'
+created_date: "2025-08-20"
 labels: [migration, data-layer, epic-11]
 dependencies: [task-epic-11.2]
 parent_task_id: epic-11
@@ -16,6 +16,7 @@ Migrate the `storage_interface` feature to `src/storage/storage_interface/` foll
 ## Research Phase
 
 **NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+
 - `## Current Codebase Structure (As Implemented)` - understand current locations
 - `### Proposed Structure` - understand target architecture
 
@@ -54,10 +55,15 @@ Migrate the `storage_interface` feature to `src/storage/storage_interface/` foll
 
 ```typescript
 // TODO: Add these stubs in implementation
-interface StorageInterface { save(key: string, data: any): Promise<void>; load(key: string): Promise<any>; delete(key: string): Promise<void>; }
+interface StorageInterface {
+  save(key: string, data: any): Promise<void>;
+  load(key: string): Promise<any>;
+  delete(key: string): Promise<void>;
+}
 ```
 
 ## Planning Phase
+
 ## Implementation Plan (the how)
 
 1. Colocate storage tests under `src/storage/__tests__/` and adapt to async API
@@ -82,7 +88,7 @@ interface StorageInterface { save(key: string, data: any): Promise<void>; load(k
 
 ### Code Migration
 
-- [x] Create folder structure at src/storage/__tests__ and colocate tests
+- [x] Create folder structure at src/storage/**tests** and colocate tests
 - [x] Move/create common storage_interface tests (memory)
 - [x] Language-specific files not required (storage is backend)
 - [ ] Create index.ts dispatcher (not required for current interface; consider later if multiple backends exposed)
@@ -114,6 +120,7 @@ Research findings will be documented here during execution.
 When implementing, add these TODO comments:
 
 1. In `storage_interface.ts`:
+
    ```typescript
    // TODO: Integration with Project Manager
    // - Persist project data

@@ -50,17 +50,11 @@ Most features follow this pattern:
 Every feature's `index.ts` dispatcher follows this functional pattern:
 
 ```typescript
-// index.ts - Feature dispatcher
+// index.ts - Feature dispatcher (explicit dispatch preferred)
 import { process_javascript } from "./[feature].javascript";
 import { process_python } from "./[feature].python";
+import { process_rust } from "./[feature].rust";
 import { process_common } from "./common";
-
-const processors = {
-  javascript: process_javascript,
-  typescript: process_javascript, // Can share processor
-  python: process_python,
-  rust: process_rust,
-};
 
 export function process_feature(
   ast: ASTNode,
@@ -69,16 +63,23 @@ export function process_feature(
   // Common pre-processing
   const prepared = process_common(ast, metadata);
 
-  // Dispatch to language-specific processor
-  const processor = processors[metadata.language];
-  if (!processor) {
-    return prepared; // Fallback to common-only processing
+  // Explicit dispatch to language-specific processor
+  switch (metadata.language) {
+    case "javascript":
+    case "typescript":
+      return process_javascript(prepared, metadata);
+    case "python":
+      return process_python(prepared, metadata);
+    case "rust":
+      return process_rust(prepared, metadata);
+    default:
+      // Fallback to common-only processing
+      return prepared;
   }
-
-  // Language-specific enhancement
-  return processor(prepared, metadata);
 }
 ```
+
+Note: Using an explicit switch/if dispatcher (rather than a map of function references) creates direct call sites that are clearer for static call-graph analysis.
 
 ### Test Contract Pattern
 
