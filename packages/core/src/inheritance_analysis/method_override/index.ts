@@ -17,6 +17,7 @@ import {
   get_root_method
 } from './method_override';
 import { detect_javascript_overrides } from './method_override.javascript';
+import { detect_typescript_overrides } from './method_override.typescript';
 import { detect_python_overrides } from './method_override.python';
 import { detect_rust_overrides } from './method_override.rust';
 import { ClassHierarchy } from '../class_hierarchy/class_hierarchy';
@@ -54,7 +55,7 @@ type OverrideProcessor = (
  */
 const processors: Record<string, OverrideProcessor> = {
   javascript: detect_javascript_overrides,
-  typescript: detect_javascript_overrides, // Share with JavaScript
+  typescript: detect_typescript_overrides,
   python: detect_python_overrides,
   rust: detect_rust_overrides
 };

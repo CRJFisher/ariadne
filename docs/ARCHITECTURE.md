@@ -56,6 +56,7 @@ When languages share implementation approaches:
 └── test files...
 ```
 
+**Note**: We should always prefer to 
 **Note**: Language-specific features (e.g., Python decorators, Rust macros) follow Case 1 but only implement files for their specific language. If complex multi-module processing is needed, use nested folders: `/src/[feature]/[sub-feature]/[sub-sub-feature]/`.
 
 **Important**: Only create folders when a module spills out into further sub-modules, either because of complex code requiring an extra conceptual layer or for language-specific processing files. If a feature has only one sub-functionality, keep it flat. For example, if `import_resolution` only contains namespace imports, all namespace import files should be directly in `import_resolution/`, not in a `namespace_imports/` subfolder.

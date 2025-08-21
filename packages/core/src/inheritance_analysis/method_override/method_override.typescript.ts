@@ -1,8 +1,8 @@
 /**
- * JavaScript/TypeScript Method Override Detection
+ * TypeScript Method Override Detection
  * 
- * Handles method override detection for JavaScript ES6+ and TypeScript,
- * including explicit override annotations in TypeScript.
+ * Handles method override detection for TypeScript, including
+ * interfaces, abstract classes, and explicit override annotations.
  */
 
 import { Parser, Query, SyntaxNode } from 'tree-sitter';
@@ -145,17 +145,19 @@ function build_simple_hierarchy(
     classes: new Map(),
     edges: [],
     roots: [],
-    language: 'javascript'
+    language: 'typescript'
   };
   
   // Query for all class declarations with inheritance
-  // JavaScript uses class_heritage directly with the parent identifier
+  // TypeScript uses class_heritage with extends_clause
   const hierarchy_query = new Query(
     parser.getLanguage(),
     `
     (class_declaration
-      name: (identifier) @class_name
-      (class_heritage [(identifier) (member_expression)] @parent_name)?) @class
+      name: (type_identifier) @class_name
+      (class_heritage 
+        (extends_clause 
+          [(identifier) (member_expression) (generic_type)] @parent_name))?) @class
     `
   );
   
@@ -237,9 +239,9 @@ function build_simple_hierarchy(
 }
 
 /**
- * Detect method overrides in JavaScript/TypeScript code
+ * Detect method overrides in TypeScript code
  */
-export function detect_javascript_overrides(
+export function detect_typescript_overrides(
   ast: SyntaxNode,
   file_path: string,
   parser: Parser
@@ -256,7 +258,7 @@ export function detect_javascript_overrides(
     parser.getLanguage(),
     `
     (class_declaration
-      name: (identifier) @class_name) @class
+      name: (type_identifier) @class_name) @class
     `
   );
   
@@ -362,7 +364,7 @@ export function detect_javascript_overrides(
           is_abstract: false,
           is_virtual: true, // All methods are virtual in JS
           is_explicit: false, // TODO: Check for TypeScript override keyword
-          language: 'javascript'
+          language: 'typescript'
         });
       }
     }
@@ -373,7 +375,7 @@ export function detect_javascript_overrides(
     override_edges,
     leaf_methods,
     abstract_methods,
-    language: 'javascript'
+    language: 'typescript'
   };
 }
 
