@@ -10,7 +10,7 @@ import {
   StorageTransaction,
   StoredFile,
   ProjectState
-} from './storage_interface';
+} from '../storage_interface';
 
 /**
  * Cache configuration
