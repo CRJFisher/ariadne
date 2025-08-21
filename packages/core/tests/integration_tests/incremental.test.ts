@@ -1,4 +1,4 @@
-import { Project } from "../src/index";
+import { Project } from "../../src/index";
 import { describe, test, expect } from "vitest";
 
 describe("Incremental Parsing", () => {
@@ -82,3 +82,5 @@ modified
 line3`);
   });
 });
+
+

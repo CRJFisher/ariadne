@@ -110,7 +110,7 @@
       "source": "packages/core/tests/incremental.test.ts",
       "target": "packages/core/tests/integration_tests/incremental.test.ts",
       "category": "integration_tests",
-      "status": "planned_move"
+      "status": "moved"
     },
     {
       "source": "packages/core/tests/index.test.ts",

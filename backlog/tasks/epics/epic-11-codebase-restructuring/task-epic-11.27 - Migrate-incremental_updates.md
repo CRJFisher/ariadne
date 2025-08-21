@@ -1,9 +1,9 @@
 ---
 id: task-epic-11.27
 title: Migrate incremental_updates feature
-status: To Do
+status: In Progress
 assignee: []
-created_date: '2025-08-20'
+created_date: "2025-08-20"
 labels: [migration, data-layer, epic-11]
 dependencies: [task-epic-11.2]
 parent_task_id: epic-11
@@ -16,6 +16,7 @@ Migrate the `incremental_updates` feature to `src/project/incremental_updates/` 
 ## Research Phase
 
 **NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+
 - `## Current Codebase Structure (As Implemented)` - understand current locations
 - `### Proposed Structure` - understand target architecture
 
@@ -54,7 +55,10 @@ Migrate the `incremental_updates` feature to `src/project/incremental_updates/` 
 
 ```typescript
 // TODO: Add these stubs in implementation
-interface IncrementalUpdater { update_file(path: string, content: string): UpdateResult; get_affected_files(path: string): string[]; }
+interface IncrementalUpdater {
+  update_file(path: string, content: string): UpdateResult;
+  get_affected_files(path: string): string[];
+}
 ```
 
 ## Planning Phase
@@ -72,6 +76,16 @@ interface IncrementalUpdater { update_file(path: string, content: string): Updat
 - [ ] Plan dispatcher/marshaler pattern
 
 ## Implementation Phase
+
+## Implementation Plan (the how)
+
+1. Inventory current incremental behavior in src_old and map responsibilities
+2. Create `src/project/incremental_updates/` with `index.ts` and `incremental_updates.ts` stubs
+3. Define minimal `IncrementalUpdater` interface and return types in `types.ts`
+4. Implement no-op but wired `update_file(path, content)` and `get_affected_files(path)` with TODOs
+5. Move `incremental.test.ts` to `tests/integration_tests/` and update imports if needed
+6. Re-export incremental APIs from `src/index.ts`; verify type checks and tests pass
+7. Document integration points with File Tracker, Scope Tree, Type Tracking, Module Graph
 
 ### Code Migration
 
@@ -107,6 +121,7 @@ Research findings will be documented here during execution.
 When implementing, add these TODO comments:
 
 1. In `incremental_updates.ts`:
+
    ```typescript
    // TODO: Integration with File Tracker
    // - Update on file modifications
