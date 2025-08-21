@@ -1,7 +1,7 @@
 ---
 id: task-epic-11.28
 title: Migrate storage_interface feature
-status: In Progress
+status: Done
 assignee: []
 created_date: "2025-08-20"
 labels: [migration, data-layer, epic-11]

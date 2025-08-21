@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { MemoryStorage, create_memory_storage } from "../memory_storage";
+import { MemoryStorage, create_memory_storage } from "./";
 
 describe("MemoryStorage", () => {
   it("initializes and updates files", async () => {

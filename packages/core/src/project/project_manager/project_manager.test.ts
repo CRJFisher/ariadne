@@ -24,7 +24,7 @@ import {
   type IncrementalUpdateHandler,
   type ModuleGraphBuilder
 } from './project_manager';
-import { MemoryStorage } from '../../storage/memory_storage';
+import { MemoryStorage } from '../../storage/memory_storage/';
 import { StoredFile } from '../../storage/storage_interface';
 
 // Mock implementations for testing

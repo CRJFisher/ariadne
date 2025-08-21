@@ -20,7 +20,7 @@ export {
   update_state_metadata,
 } from "./storage/storage_interface";
 
-export { MemoryStorage, create_memory_storage } from "./storage/memory_storage";
+export { MemoryStorage, create_memory_storage } from "./storage/memory_storage/";
 export {
   DiskStorage,
   DiskStorageConfig,

@@ -13,7 +13,7 @@ import {
   StoredFile,
   ProjectState,
   create_empty_state
-} from './storage_interface';
+} from '../storage_interface';
 
 /**
  * Disk-based transaction implementation
