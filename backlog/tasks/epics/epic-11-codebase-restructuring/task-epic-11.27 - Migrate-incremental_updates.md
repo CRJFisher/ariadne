@@ -1,7 +1,7 @@
 ---
 id: task-epic-11.27
 title: Migrate incremental_updates feature
-status: In Progress
+status: Done
 assignee: []
 created_date: "2025-08-20"
 labels: [migration, data-layer, epic-11]
@@ -58,6 +58,7 @@ interface IncrementalUpdater {
 ```
 
 Created:
+
 - `create_incremental_updater()` in `updater.ts`
 - `create_incremental_adapter()` in `adapter.ts`
 - `CONTRACT.md` describing responsibilities and boundaries
@@ -120,6 +121,8 @@ Created:
 - Moved `packages/core/tests/incremental.test.ts` → `packages/core/tests/integration_tests/incremental.test.ts` and updated imports.
 - Updated `packages/core/tests/test_migration_map.json` entry for incremental test to `moved`.
 - Left integration TODOs in place to wire with File Tracker, Scope Tree, Type Tracking, and Module Graph.
+
+Finalization note: Feature-level implementation and tests are complete; global test suite still has unrelated failures outside incremental_updates. This task is marked Done with integration wiring deferred to the integration-phase tasks.
 
 ## Notes
 
