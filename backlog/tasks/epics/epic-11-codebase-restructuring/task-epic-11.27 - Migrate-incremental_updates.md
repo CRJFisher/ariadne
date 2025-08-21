@@ -23,33 +23,29 @@ Migrate the `incremental_updates` feature to `src/project/incremental_updates/` 
 ### Current Location
 
 - [x] Find where incremental_updates currently lives
-- [ ] Document all language-specific implementations
-- [ ] Identify common logic vs language-specific logic
+- [x] Document all language-specific implementations (none required; language resolution delegated to loader)
+- [x] Identify common logic vs language-specific logic (common updater + adapter; language-specific parsing handled elsewhere)
 
 ### Test Location
 
 - [x] Find all tests related to incremental_updates
-- [ ] Document test coverage for each language
-- [ ] Identify missing test cases
+- [x] Document test coverage for each language (integration via `integration_tests/incremental.test.ts`; unit under feature)
+- [x] Identify missing test cases (cross-file affected files; adapter integration paths) – follow-up planned in integration layer tasks
 
 ## Integration Analysis
 
 ### Integration Points
 
-- [ ] Identify how incremental_updates connects to other features
-- [ ] Document dependencies on other migrated features
-- [ ] Plan stub interfaces for not-yet-migrated features
+- [x] Identify how incremental_updates connects to other features (storage, scope_tree, type_tracking, module_graph)
+- [x] Document dependencies on other migrated features
+- [x] Plan stub interfaces for not-yet-migrated features (adapter + CONTRACT.md)
 
 ### Required Integrations
 
-1. **File Tracker**: React to file changes
-   - TODO: Update on file modifications
-2. **Scope Tree**: Update scope incrementally
-   - TODO: Rebuild affected scopes
-3. **Type Tracking**: Update types incrementally
-   - TODO: Recompute affected types
-4. **Module Graph**: Update graph incrementally
-   - TODO: Update module edges
+1. **File Tracker**: React to file changes – pending in integration phase
+2. **Scope Tree**: Update scope incrementally – pending wiring
+3. **Type Tracking**: Update types incrementally – pending wiring
+4. **Module Graph**: Update graph incrementally – pending wiring
 
 ### Stub Interfaces to Create
 
@@ -60,6 +56,11 @@ interface IncrementalUpdater {
   get_affected_files(path: string): string[];
 }
 ```
+
+Created:
+- `create_incremental_updater()` in `updater.ts`
+- `create_incremental_adapter()` in `adapter.ts`
+- `CONTRACT.md` describing responsibilities and boundaries
 
 ## Planning Phase
 
@@ -91,7 +92,7 @@ interface IncrementalUpdater {
 
 - [x] Create folder structure at src/project/incremental_updates/
 - [x] Move/create common incremental_updates.ts (split into `types.ts` and `updater.ts`)
-- [ ] Move/create language-specific files
+- [x] Move/create language-specific files (N/A – none required by design)
 - [x] Create index.ts dispatcher
 - [x] Update all imports
 
@@ -99,17 +100,17 @@ interface IncrementalUpdater {
 
 - [x] Move/create incremental_updates.test.ts
 - [x] Move/create language-specific test files (colocated unit test under feature)
-- [ ] Ensure all tests pass
-- [ ] Add test contract if needed
+- [ ] Ensure all tests pass (global suite has unrelated failures; feature-specific tests pass)
+- [x] Add test contract if needed (CONTRACT.md added)
 
 ## Verification Phase
 
 ### Quality Checks
 
-- [ ] All tests pass
+- [ ] All tests pass (blocked by unrelated global regressions; see CI output)
 - [x] Comprehensive test coverage (initial unit + integration present)
-- [ ] Follows rules/coding.md standards
-- [ ] Files under 32KB limit
+- [x] Follows rules/coding.md standards
+- [x] Files under 32KB limit
 - [x] Linting and type checking pass (new files)
 
 ## Implementation Notes

@@ -1,6 +1,6 @@
 /**
  * Ariadne Core - Public API
- *
+ * 
  * This file exports only the public-facing APIs.
  * No implementation logic should be in this file.
  */
@@ -513,3 +513,4 @@ export {
   type IncrementalUpdater,
   type UpdateResult,
 } from "./project/incremental_updates";
+export { create_incremental_adapter, type IncrementalAdapter } from "./project/incremental_updates/adapter";
