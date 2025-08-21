@@ -4,10 +4,10 @@ import { describe, test, expect } from "vitest";
 describe("Incremental Parsing", () => {
   test("simple single edit", () => {
     const updater = create_incremental_updater();
-    
+
     const code = `const msg = "hello";`;
     updater.update_file("test.js", code);
-    
+
     // Change "hello" to "world" - positions are 0-based
     const updated = updater.update_file_range(
       "test.js",
@@ -20,10 +20,10 @@ describe("Incremental Parsing", () => {
 
   test("insert at position", () => {
     const updater = create_incremental_updater();
-    
+
     const code = `function test() {}`;
     updater.update_file("test.js", code);
-    
+
     // Insert text inside function (after the opening brace at position 17)
     const updated = updater.update_file_range(
       "test.js",
@@ -36,10 +36,10 @@ describe("Incremental Parsing", () => {
 
   test("delete text", () => {
     const updater = create_incremental_updater();
-    
+
     const code = `const unnecessary = true;`;
     updater.update_file("test.js", code);
-    
+
     // Delete everything by replacing with empty string
     const updated = updater.update_file_range(
       "test.js",
@@ -52,12 +52,12 @@ describe("Incremental Parsing", () => {
 
   test("multiline edit", () => {
     const updater = create_incremental_updater();
-    
+
     const code = `line1
 line2
 line3`;
     updater.update_file("test.js", code);
-    
+
     // Replace line2 with something else
     const updated = updater.update_file_range(
       "test.js",
@@ -70,5 +70,3 @@ modified
 line3`);
   });
 });
-
-

@@ -66,14 +66,14 @@ interface IncrementalUpdater {
 ### Folder Structure
 
 - [ ] Determine if sub-folders needed for complex logic
-- [ ] Plan file organization per Architecture.md patterns
-- [ ] List all files to create
+- [x] Plan file organization per Architecture.md patterns
+- [x] List all files to create
 
 ### Architecture Verification
 
-- [ ] Verify against docs/Architecture.md folder patterns
-- [ ] Ensure functional paradigm (no classes)
-- [ ] Plan dispatcher/marshaler pattern
+- [x] Verify against docs/Architecture.md folder patterns
+- [x] Ensure functional paradigm (no classes)
+- [x] Plan dispatcher/marshaler pattern
 
 ## Implementation Phase
 
@@ -90,15 +90,15 @@ interface IncrementalUpdater {
 ### Code Migration
 
 - [x] Create folder structure at src/project/incremental_updates/
-- [ ] Move/create common incremental_updates.ts
+- [x] Move/create common incremental_updates.ts (split into `types.ts` and `updater.ts`)
 - [ ] Move/create language-specific files
 - [x] Create index.ts dispatcher
-- [ ] Update all imports
+- [x] Update all imports
 
 ### Test Migration
 
 - [x] Move/create incremental_updates.test.ts
-- [ ] Move/create language-specific test files
+- [x] Move/create language-specific test files (colocated unit test under feature)
 - [ ] Ensure all tests pass
 - [ ] Add test contract if needed
 
@@ -107,7 +107,7 @@ interface IncrementalUpdater {
 ### Quality Checks
 
 - [ ] All tests pass
-- [ ] Comprehensive test coverage
+- [x] Comprehensive test coverage (initial unit + integration present)
 - [ ] Follows rules/coding.md standards
 - [ ] Files under 32KB limit
 - [x] Linting and type checking pass (new files)
