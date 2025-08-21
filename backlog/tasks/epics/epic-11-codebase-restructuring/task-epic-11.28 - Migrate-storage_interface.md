@@ -23,8 +23,8 @@ Migrate the `storage_interface` feature to `src/storage/storage_interface/` foll
 ### Current Location
 
 - [x] Find where storage_interface currently lives
-- [ ] Document all language-specific implementations
-- [ ] Identify common logic vs language-specific logic
+- [x] Document all language-specific implementations (N/A — storage is backend-agnostic)
+- [x] Identify common logic vs language-specific logic (common async interface; backends implement same contract)
 
 ### Test Location
 
@@ -36,9 +36,9 @@ Migrate the `storage_interface` feature to `src/storage/storage_interface/` foll
 
 ### Integration Points
 
-- [ ] Identify how storage_interface connects to other features
-- [ ] Document dependencies on other migrated features
-- [ ] Plan stub interfaces for not-yet-migrated features
+- [x] Identify how storage_interface connects to other features (Project Manager, Graph Data, Cache Layer)
+- [x] Document dependencies on other migrated features (none blocking; integrates via async API)
+- [x] Plan stub interfaces for not-yet-migrated features (adapter used where needed)
 
 ### Required Integrations
 
@@ -74,15 +74,15 @@ interface StorageInterface {
 
 ### Folder Structure
 
-- [ ] Determine if sub-folders needed for complex logic
-- [ ] Plan file organization per Architecture.md patterns
-- [ ] List all files to create
+- [x] Determine if sub-folders needed for complex logic (only `__tests__` required)
+- [x] Plan file organization per Architecture.md patterns
+- [x] List all files to create
 
 ### Architecture Verification
 
-- [ ] Verify against docs/Architecture.md folder patterns
-- [ ] Ensure functional paradigm (no classes)
-- [ ] Plan dispatcher/marshaler pattern
+- [x] Verify against docs/Architecture.md folder patterns
+- [x] Ensure functional paradigm (no classes)
+- [x] Plan dispatcher/marshaler pattern (explicit switch-based dispatch documented in Architecture)
 
 ## Implementation Phase
 
@@ -105,11 +105,19 @@ interface StorageInterface {
 
 ### Quality Checks
 
-- [ ] All tests pass
-- [ ] Comprehensive test coverage
-- [ ] Follows rules/coding.md standards
-- [ ] Files under 32KB limit
-- [ ] Linting and type checking pass
+- [ ] All tests pass (pending global suite)
+- [x] Comprehensive test coverage
+- [x] Follows rules/coding.md standards
+- [x] Files under 32KB limit
+- [x] Linting and type checking pass
+
+## Implementation Notes
+
+- Colocated storage unit tests under `packages/core/src/storage/__tests__/memory_storage.test.ts` per Architecture.
+- Updated test migration map to reflect moved storage tests.
+- Confirmed `MemoryStorage` implements async `StorageInterface`; no language-specific variants needed.
+- Verified folder structure alignment; only `__tests__` subfolder needed.
+- Architecture doc updated to prefer explicit switch-based dispatch for clearer call-graph analysis.
 
 ## Notes
 
