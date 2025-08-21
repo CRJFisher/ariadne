@@ -22,13 +22,13 @@ Migrate the `incremental_updates` feature to `src/project/incremental_updates/` 
 
 ### Current Location
 
-- [ ] Find where incremental_updates currently lives
+- [x] Find where incremental_updates currently lives
 - [ ] Document all language-specific implementations
 - [ ] Identify common logic vs language-specific logic
 
 ### Test Location
 
-- [ ] Find all tests related to incremental_updates
+- [x] Find all tests related to incremental_updates
 - [ ] Document test coverage for each language
 - [ ] Identify missing test cases
 
@@ -89,15 +89,15 @@ interface IncrementalUpdater {
 
 ### Code Migration
 
-- [ ] Create folder structure at src/project/incremental_updates/
+- [x] Create folder structure at src/project/incremental_updates/
 - [ ] Move/create common incremental_updates.ts
 - [ ] Move/create language-specific files
-- [ ] Create index.ts dispatcher
+- [x] Create index.ts dispatcher
 - [ ] Update all imports
 
 ### Test Migration
 
-- [ ] Move/create incremental_updates.test.ts
+- [x] Move/create incremental_updates.test.ts
 - [ ] Move/create language-specific test files
 - [ ] Ensure all tests pass
 - [ ] Add test contract if needed
@@ -110,7 +110,15 @@ interface IncrementalUpdater {
 - [ ] Comprehensive test coverage
 - [ ] Follows rules/coding.md standards
 - [ ] Files under 32KB limit
-- [ ] Linting and type checking pass
+- [x] Linting and type checking pass (new files)
+
+## Implementation Notes
+
+- Created `packages/core/src/project/incremental_updates/index.ts` with `create_incremental_updater`, `IncrementalUpdater` types, and simple in-memory range application (temporary facade).
+- Exported incremental API from `packages/core/src/index.ts`.
+- Moved `packages/core/tests/incremental.test.ts` → `packages/core/tests/integration_tests/incremental.test.ts` and updated imports.
+- Updated `packages/core/tests/test_migration_map.json` entry for incremental test to `moved`.
+- Left integration TODOs in place to wire with File Tracker, Scope Tree, Type Tracking, and Module Graph.
 
 ## Notes
 
