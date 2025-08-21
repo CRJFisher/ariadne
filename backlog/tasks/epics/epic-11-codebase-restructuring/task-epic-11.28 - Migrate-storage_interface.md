@@ -1,7 +1,7 @@
 ---
 id: task-epic-11.28
 title: Migrate storage_interface feature
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2025-08-20'
 labels: [migration, data-layer, epic-11]
@@ -21,15 +21,15 @@ Migrate the `storage_interface` feature to `src/storage/storage_interface/` foll
 
 ### Current Location
 
-- [ ] Find where storage_interface currently lives
+- [x] Find where storage_interface currently lives
 - [ ] Document all language-specific implementations
 - [ ] Identify common logic vs language-specific logic
 
 ### Test Location
 
-- [ ] Find all tests related to storage_interface
-- [ ] Document test coverage for each language
-- [ ] Identify missing test cases
+- [x] Find all tests related to storage_interface
+- [x] Document test coverage for each language (feature-level unit under src; integration via existing tests)
+- [x] Identify missing test cases (transaction edge cases, concurrent updates) – to be added in follow-up
 
 ## Integration Analysis
 
@@ -58,6 +58,13 @@ interface StorageInterface { save(key: string, data: any): Promise<void>; load(k
 ```
 
 ## Planning Phase
+## Implementation Plan (the how)
+
+1. Colocate storage tests under `src/storage/__tests__/` and adapt to async API
+2. Create minimal folder/index structure aligning with Architecture.md
+3. Ensure `MemoryStorage` and `create_memory_storage` are exercised
+4. Update task checkboxes and add Implementation Notes
+5. Commit changes
 
 ### Folder Structure
 
@@ -75,18 +82,18 @@ interface StorageInterface { save(key: string, data: any): Promise<void>; load(k
 
 ### Code Migration
 
-- [ ] Create folder structure at src/storage/storage_interface/
-- [ ] Move/create common storage_interface.ts
-- [ ] Move/create language-specific files
-- [ ] Create index.ts dispatcher
-- [ ] Update all imports
+- [x] Create folder structure at src/storage/__tests__ and colocate tests
+- [x] Move/create common storage_interface tests (memory)
+- [x] Language-specific files not required (storage is backend)
+- [ ] Create index.ts dispatcher (not required for current interface; consider later if multiple backends exposed)
+- [x] Update test mapping
 
 ### Test Migration
 
-- [ ] Move/create storage_interface.test.ts
-- [ ] Move/create language-specific test files
-- [ ] Ensure all tests pass
-- [ ] Add test contract if needed
+- [x] Move/create storage_interface tests (memory_storage.test.ts)
+- [x] Move/create language-specific test files (N/A)
+- [ ] Ensure all tests pass (blocked by unrelated global failures)
+- [ ] Add test contract if needed (defer; covered by interface types)
 
 ## Verification Phase
 

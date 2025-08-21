@@ -201,9 +201,9 @@
     },
     {
       "source": "packages/core/tests/in_memory_storage.test.ts",
-      "target": "packages/core/src/storage/__tests__/in_memory_storage.test.ts",
+      "target": "packages/core/src/storage/__tests__/memory_storage.test.ts",
       "category": "src_colocated",
-      "status": "planned_move"
+      "status": "moved"
     },
     {
       "source": "packages/core/tests/immutability.test.ts",
