@@ -18,10 +18,10 @@ import {
   add_file_to_state,
   remove_file_from_state,
   update_state_metadata
-} from '../storage_interface';
-import { MemoryStorage, create_memory_storage } from '../memory_storage';
-import { DiskStorage, create_disk_storage } from '../disk_storage';
-import { CacheLayer, create_cache_layer } from '../cache_layer';
+} from './storage_interface';
+import { MemoryStorage, create_memory_storage } from './memory_storage';
+import { DiskStorage, create_disk_storage } from './disk_storage';
+import { CacheLayer, create_cache_layer } from './cache_layer';
 
 /**
  * Storage implementation factory for testing
