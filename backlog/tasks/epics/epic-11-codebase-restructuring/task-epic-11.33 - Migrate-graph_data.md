@@ -1,120 +1,145 @@
 ---
 id: task-epic-11.33
-title: Migrate graph_data feature
+title: Create graph data structures and move types to packages/types
 status: To Do
 assignee: []
 created_date: '2025-08-20'
-labels: [migration, data-layer, epic-11]
-dependencies: [task-epic-11.2]
+labels: [migration, data-layer, epic-11, types]
+dependencies: [task-epic-11.32]
 parent_task_id: epic-11
 ---
 
 ## Description
 
-Migrate the `graph_data` feature to `src/graph/graph_data/` following Architecture.md patterns.
+Create proper graph data structures to replace the stub interfaces in graph_builder, and move all public graph types to `packages/types` following the architecture pattern where shared types belong in the types package.
 
 ## Research Phase
 
-**NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
-- `## Current Codebase Structure (As Implemented)` - understand current locations
-- `### Proposed Structure` - understand target architecture
+### Current State (from task-epic-11.32)
 
-### Current Location
+- [ ] Review graph_builder implementation in `src/graph/graph_builder/`
+- [ ] Identify types currently defined in graph_builder.ts:
+  - GraphNode, GraphEdge, ProjectGraph interfaces
+  - FileAnalysisResult, GraphBuilderConfig interfaces
+- [ ] Identify the stub Graph<N, E> interface that needs replacement
+- [ ] Analyze what graph operations are needed
 
-- [ ] Find where graph_data currently lives
-- [ ] Document all language-specific implementations
-- [ ] Identify common logic vs language-specific logic
+### Type Organization
 
-### Test Location
-
-- [ ] Find all tests related to graph_data
-- [ ] Document test coverage for each language
-- [ ] Identify missing test cases
+- [ ] Determine which types are public API (go to packages/types)
+- [ ] Determine which are internal implementation (stay in packages/core)
+- [ ] Plan the structure for packages/types/src/graph/
 
 ## Integration Analysis
 
-### Integration Points
+### Integration with graph_builder
 
-- [ ] Identify how graph_data connects to other features
-- [ ] Document dependencies on other migrated features
-- [ ] Plan stub interfaces for not-yet-migrated features
+- [ ] graph_builder currently uses Map<string, GraphNode> and Map<string, GraphEdge>
+- [ ] Need proper graph data structure with:
+  - Efficient node/edge lookup
+  - Graph traversal methods
+  - Serialization support
+  - Memory efficiency for large graphs
 
-### Required Integrations
+### Required Features
 
-1. **Graph Builder**: Store graph structures
-   - TODO: Provide graph storage
-2. **Graph Algorithms**: Support graph algorithms
-   - TODO: Enable graph traversal
-3. **Storage Interface**: Persist graphs
-   - TODO: Serialize graph data
+1. **Graph Operations**:
+   - Add/remove nodes and edges
+   - Find neighbors, predecessors, successors
+   - Path finding (shortest path, all paths)
+   - Cycle detection
+   - Connected components
 
-### Stub Interfaces to Create
+2. **Graph Types**:
+   - Directed graph (for call graphs, dependencies)
+   - Support for multiple edge types
+   - Node and edge metadata/properties
 
-```typescript
-// TODO: Add these stubs in implementation
-interface Graph<N, E> { nodes: Map<string, N>; edges: E[]; get_node(id: string): N | undefined; get_edges(from: string): E[]; }
-```
+3. **Performance Requirements**:
+   - Handle graphs with 10,000+ nodes
+   - Efficient traversal operations
+   - Low memory footprint
 
 ## Planning Phase
 
-### Folder Structure
+### Type Package Structure (packages/types)
 
-- [ ] Determine if sub-folders needed for complex logic
-- [ ] Plan file organization per Architecture.md patterns
-- [ ] List all files to create
+- [ ] Create `packages/types/src/graph/` for public graph types:
+  - `graph.types.ts` - Core graph interfaces (GraphNode, GraphEdge, etc.)
+  - `index.ts` - Public exports
 
-### Architecture Verification
+### Core Package Structure (packages/core)
 
-- [ ] Verify against docs/Architecture.md folder patterns
-- [ ] Ensure functional paradigm (no classes)
-- [ ] Plan dispatcher/marshaler pattern
+- [ ] Determine if internal graph utilities needed in `src/graph/graph_data/`:
+  - Only if implementation details that shouldn't be exposed
+  - Graph algorithms that are internal to core
+  - Private helper functions
+
+### Architecture Decisions
+
+- [ ] Public types go to packages/types (consumed by other packages)
+- [ ] Implementation details stay in packages/core
+- [ ] Follow functional paradigm for graph operations
 
 ## Implementation Phase
 
-### Code Migration
+### Step 1: Move Types to packages/types
 
-- [ ] Create folder structure at src/graph/graph_data/
-- [ ] Move/create common graph_data.ts
-- [ ] Move/create language-specific files
-- [ ] Create index.ts dispatcher
-- [ ] Update all imports
+- [ ] Extract graph types from `packages/core/src/graph/graph_builder/graph_builder.ts`:
+  - GraphNode, GraphEdge, ProjectGraph
+  - FileAnalysisResult, GraphBuilderConfig
+- [ ] Create `packages/types/src/graph/graph.types.ts` with these types
+- [ ] Export from `packages/types/src/index.ts`
+- [ ] Update graph_builder imports to use @ariadnejs/types
 
-### Test Migration
+### Step 2: Create Graph Data Structure (if needed)
 
-- [ ] Move/create graph_data.test.ts
-- [ ] Move/create language-specific test files
-- [ ] Ensure all tests pass
-- [ ] Add test contract if needed
+- [ ] Evaluate if a proper graph class is needed or if Maps are sufficient
+- [ ] If needed, create implementation in `packages/core/src/graph/graph_data/`:
+  - `directed_graph.ts` - Directed graph implementation
+  - `graph_algorithms.ts` - Graph algorithms (private to core)
+  - `index.ts` - Internal exports
+- [ ] Replace stub interfaces in graph_builder
+
+### Step 3: Update graph_builder
+
+- [ ] Update to use types from @ariadnejs/types
+- [ ] If graph data structure created, integrate it
+- [ ] Update tests to reflect new type locations
 
 ## Verification Phase
 
 ### Quality Checks
 
+- [ ] Types properly separated (public in types, private in core)
+- [ ] No circular dependencies between packages
+- [ ] graph_builder still works with moved types
 - [ ] All tests pass
-- [ ] Comprehensive test coverage
-- [ ] Follows rules/coding.md standards
-- [ ] Files under 32KB limit
-- [ ] Linting and type checking pass
+- [ ] TypeScript compilation succeeds
+- [ ] Follows Architecture.md patterns
 
 ## Notes
 
-Research findings will be documented here during execution.
+### Key Architecture Principle
 
-### Integration TODOs to Add
+**Types Placement Strategy:**
 
-When implementing, add these TODO comments:
+- **packages/types**: Public interfaces and types used across packages
+  - GraphNode, GraphEdge, ProjectGraph (consumed by MCP, CLI, etc.)
+  - FileAnalysisResult, GraphBuilderConfig
+  - Any type that forms part of the public API
+  
+- **packages/core**: Private implementation details
+  - Internal helper types (BuildContext, GraphBuilder stub)
+  - Implementation-specific interfaces
+  - Graph algorithms that aren't exposed
 
-1. In `graph_data.ts`:
-   ```typescript
-   // TODO: Integration with Graph Builder
-   // - Provide graph storage
-   // TODO: Integration with Graph Algorithms
-   // - Enable graph traversal
-   // TODO: Integration with Storage Interface
-   // - Serialize graph data
-   ```
+### Context from task-epic-11.32
 
-2. In language-specific files (if applicable):
-   ```typescript
+The graph_builder implementation currently defines all its types inline. These should be:
 
-   ```
+1. Extracted to packages/types for public API types
+2. Graph data structure implementation (if needed) stays private in core
+3. The stub `Graph<N, E>` interface should be replaced with either:
+   - A proper implementation if complex graph operations are needed
+   - Keep using Maps if simple structure is sufficient

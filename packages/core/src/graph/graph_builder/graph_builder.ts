@@ -1,58 +1,59 @@
 /**
  * Graph Builder - Core orchestration module
- * 
+ *
  * Coordinates all analysis features to build a unified project graph.
  * This module connects the various analysis capabilities (call graph,
  * scope analysis, type tracking, etc.) into a cohesive system.
  */
 
-import { StorageInterface, StoredFile, ProjectState } from '../../storage/storage_interface';
-import { 
+import {
+  StorageInterface,
+  StoredFile,
+  ProjectState,
+} from "../../storage/storage_interface";
+import {
   FunctionCallInfo,
   find_function_calls,
-  find_function_calls_from_source
-} from '../../call_graph/function_calls';
+  find_function_calls_from_source,
+} from "../../call_graph/function_calls";
 import {
   MethodCallInfo,
-  find_method_calls
-} from '../../call_graph/method_calls';
+  find_method_calls,
+} from "../../call_graph/method_calls";
 import {
   ConstructorCallInfo,
-  find_constructor_calls
-} from '../../call_graph/constructor_calls';
-import {
-  ScopeTree,
-  build_scope_tree
-} from '../../scope_analysis/scope_tree';
+  find_constructor_calls,
+} from "../../call_graph/constructor_calls";
+import { ScopeTree, build_scope_tree } from "../../scope_analysis/scope_tree";
 import {
   ImportInfo,
-  resolve_imports
-} from '../../import_export/import_resolution';
+  resolve_imports,
+} from "../../import_export/import_resolution";
 import {
   ExportInfo,
-  detect_exports
-} from '../../import_export/export_detection';
+  detect_exports,
+} from "../../import_export/export_detection";
 import {
   ModuleGraph,
-  build_module_graph
-} from '../../import_export/module_graph';
+  build_module_graph,
+} from "../../import_export/module_graph";
 import {
   TypeInfo,
-  track_variable_types
-} from '../../type_analysis/type_tracking';
+  track_variable_types,
+} from "../../type_analysis/type_tracking";
 import {
   ClassHierarchy,
-  build_class_hierarchy
-} from '../../inheritance/class_hierarchy';
-import { Tree } from 'tree-sitter';
-import { Language } from '@ariadnejs/types';
+  build_class_hierarchy,
+} from "../../inheritance/class_hierarchy";
+import { Tree } from "tree-sitter";
+import { Language } from "@ariadnejs/types";
 
 /**
  * Graph node representing a code entity
  */
 export interface GraphNode {
   id: string;
-  type: 'function' | 'class' | 'module' | 'variable' | 'method' | 'constructor';
+  type: "function" | "class" | "module" | "variable" | "method" | "constructor";
   name: string;
   file_path: string;
   metadata: Record<string, any>;
@@ -63,9 +64,16 @@ export interface GraphNode {
  */
 export interface GraphEdge {
   id: string;
-  type: 'calls' | 'imports' | 'exports' | 'inherits' | 'implements' | 'uses' | 'defines';
-  source: string;  // Node ID
-  target: string;  // Node ID
+  type:
+    | "calls"
+    | "imports"
+    | "exports"
+    | "inherits"
+    | "implements"
+    | "uses"
+    | "defines";
+  source: string; // Node ID
+  target: string; // Node ID
   metadata: Record<string, any>;
 }
 
@@ -148,7 +156,7 @@ export async function analyze_file(
 ): Promise<FileAnalysisResult> {
   const metadata = {
     language: file.language,
-    file_path: file.file_path
+    file_path: file.file_path,
   };
 
   // Phase 1: Build scope tree
@@ -175,32 +183,34 @@ export async function analyze_file(
   const edges: GraphEdge[] = [];
 
   // Add function nodes from scope tree
-  for (const scope of scopes.scopes) {
-    if (scope.type === 'function' || scope.type === 'method') {
+  for (const [_, scope] of scopes.nodes.entries()) {
+    if (scope.type === "function" || scope.type === "method") {
+      const function_name = scope.metadata?.name;
       nodes.push({
-        id: `${file.file_path}#${scope.name}`,
-        type: scope.type === 'method' ? 'method' : 'function',
-        name: scope.name || '<anonymous>',
+        id: `${file.file_path}#${function_name}`,
+        type: scope.type === "method" ? "method" : "function",
+        name: function_name || "<anonymous>",
         file_path: file.file_path,
         metadata: {
           scope_id: scope.id,
-          parent_scope: scope.parent_id
-        }
+          parent_scope: scope.parent_id,
+        },
       });
     }
   }
 
   // Add class nodes
-  for (const scope of scopes.scopes) {
-    if (scope.type === 'class') {
+  for (const [_, scope] of scopes.nodes.entries()) {
+    if (scope.type === "class") {
+      const class_name = scope.metadata?.name;
       nodes.push({
-        id: `${file.file_path}#class:${scope.name}`,
-        type: 'class',
-        name: scope.name || '<anonymous>',
+        id: `${file.file_path}#class:${class_name}`,
+        type: "class",
+        name: class_name || "<anonymous>",
         file_path: file.file_path,
         metadata: {
-          scope_id: scope.id
-        }
+          scope_id: scope.id,
+        },
       });
     }
   }
@@ -208,29 +218,31 @@ export async function analyze_file(
   // Add module node
   nodes.push({
     id: `module:${file.file_path}`,
-    type: 'module',
+    type: "module",
     name: file.file_path,
     file_path: file.file_path,
     metadata: {
-      language: file.language
-    }
+      language: file.language,
+    },
   });
 
   // Add call edges
   for (const call of function_calls) {
-    const source_id = `${file.file_path}#${call.enclosing_function || '<module>'}`;
-    const target_id = `${file.file_path}#${call.function_name}`;
-    
+    const source_id = `${file.file_path}#${
+      call.caller_name || "<module>"
+    }`;
+    const target_id = `${file.file_path}#${call.callee_name}`;
+
     edges.push({
       id: `call:${source_id}->${target_id}`,
-      type: 'calls',
+      type: "calls",
       source: source_id,
       target: target_id,
       metadata: {
         line: call.line,
         column: call.column,
-        is_async: call.is_async
-      }
+        is_async: call.is_async,
+      },
     });
   }
 
@@ -238,16 +250,16 @@ export async function analyze_file(
   for (const imp of imports) {
     const source_id = `module:${file.file_path}`;
     const target_id = `module:${imp.module_path}`;
-    
+
     edges.push({
       id: `import:${source_id}->${target_id}`,
-      type: 'imports',
+      type: "imports",
       source: source_id,
       target: target_id,
       metadata: {
         symbols: imp.imported_names,
-        is_default: imp.is_default
-      }
+        is_default: imp.is_default,
+      },
     });
   }
 
@@ -255,16 +267,16 @@ export async function analyze_file(
   for (const exp of exports) {
     const source_id = `${file.file_path}#${exp.exported_name}`;
     const target_id = `module:${file.file_path}`;
-    
+
     edges.push({
       id: `export:${source_id}->${target_id}`,
-      type: 'exports',
+      type: "exports",
       source: source_id,
       target: target_id,
       metadata: {
         is_default: exp.is_default,
-        original_name: exp.original_name
-      }
+        original_name: exp.original_name,
+      },
     });
   }
 
@@ -278,7 +290,7 @@ export async function analyze_file(
     constructor_calls,
     types: type_map,
     nodes,
-    edges
+    edges,
   };
 }
 
@@ -294,13 +306,15 @@ export async function build_project_graph(
     languages: config.languages,
     file_analyses: new Map(),
     module_graph: {
-      modules: new Map(),
-      edges: []
+      nodes: new Map(),
+      edges: [],
+      entry_points: new Set(),
+      external_modules: new Set(),
     },
     class_hierarchy: {
       classes: new Map(),
-      inheritance_edges: []
-    }
+      inheritance_edges: [],
+    },
   };
 
   // Get all files from storage
@@ -308,9 +322,9 @@ export async function build_project_graph(
   const files = Array.from(state.files.values());
 
   // Phase 1: Analyze all files
-  const analysis_promises = files.map(file => analyze_file(file, context));
+  const analysis_promises = files.map((file) => analyze_file(file, context));
   const analyses = await Promise.all(analysis_promises);
-  
+
   for (const analysis of analyses) {
     context.file_analyses.set(analysis.file_path, analysis);
   }
@@ -318,18 +332,18 @@ export async function build_project_graph(
   // Phase 2: Build module graph
   const all_imports: ImportInfo[] = [];
   const all_exports: ExportInfo[] = [];
-  
+
   for (const analysis of analyses) {
     all_imports.push(...analysis.imports);
     all_exports.push(...analysis.exports);
   }
-  
+
   // Create metadata for module graph building
   const module_metadata = {
-    language: 'javascript' as Language,  // TODO: Handle multi-language
-    file_path: ''
+    language: "javascript" as Language, // TODO: Handle multi-language
+    file_path: "",
   };
-  
+
   context.module_graph = build_module_graph(
     all_imports,
     all_exports,
@@ -368,15 +382,15 @@ export async function build_project_graph(
       file_count: files.length,
       node_count: all_nodes.size,
       edge_count: all_edges.size,
-      build_time: Date.now()
-    }
+      build_time: Date.now(),
+    },
   };
 }
 
 /**
  * Update graph for a single file (incremental update)
  */
-export async function update_file_graph(
+export async function update_graph_for_file(
   file_path: string,
   config: GraphBuilderConfig,
   current_graph: ProjectGraph
@@ -384,7 +398,7 @@ export async function update_file_graph(
   // Get the updated file
   const state = await config.storage.get_state();
   const file = state.files.get(file_path);
-  
+
   if (!file) {
     // File was deleted, remove its nodes and edges
     return remove_file_from_graph(file_path, current_graph);
@@ -396,7 +410,7 @@ export async function update_file_graph(
     languages: config.languages,
     file_analyses: new Map(),
     module_graph: current_graph.modules,
-    class_hierarchy: current_graph.classes
+    class_hierarchy: current_graph.classes,
   };
 
   // Analyze the updated file
@@ -450,7 +464,7 @@ function remove_file_from_graph(
   return {
     ...graph,
     nodes: updated_nodes,
-    edges: updated_edges
+    edges: updated_edges,
   };
 }
 
@@ -475,7 +489,7 @@ export function query_graph(
   // Filter nodes
   for (const node of graph.nodes.values()) {
     let matches = true;
-    
+
     if (query.node_type && node.type !== query.node_type) {
       matches = false;
     }
@@ -485,7 +499,7 @@ export function query_graph(
     if (query.name_pattern && !query.name_pattern.test(node.name)) {
       matches = false;
     }
-    
+
     if (matches) {
       matching_nodes.push(node);
     }
@@ -494,11 +508,11 @@ export function query_graph(
   // Filter edges
   for (const edge of graph.edges.values()) {
     let matches = true;
-    
+
     if (query.edge_type && edge.type !== query.edge_type) {
       matches = false;
     }
-    
+
     if (matches) {
       matching_edges.push(edge);
     }
@@ -506,6 +520,6 @@ export function query_graph(
 
   return {
     nodes: matching_nodes,
-    edges: matching_edges
+    edges: matching_edges,
   };
 }
