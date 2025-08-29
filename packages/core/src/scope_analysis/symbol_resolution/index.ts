@@ -77,7 +77,9 @@ export function resolve_symbol_with_language(
   symbol_name: string,
   scope_id: string,
   context: ResolutionContext,
-  language: Language
+  language: Language,
+  imports?: any[], // From import_resolution - Layer 1
+  module_graph?: any // From module_graph - Layer 4
 ): ResolvedSymbol | undefined {
   switch (language) {
     case 'javascript':
@@ -106,7 +108,8 @@ export function resolve_symbol_with_language(
 export function extract_imports(
   root_node: SyntaxNode,
   source_code: string,
-  language: Language
+  language: Language,
+  file_path?: string // For relative import resolution
 ): ImportInfo[] {
   switch (language) {
     case 'javascript':
@@ -165,7 +168,8 @@ export function extract_imports(
 export function extract_exports(
   root_node: SyntaxNode,
   source_code: string,
-  language: Language
+  language: Language,
+  file_path?: string // For export tracking
 ): ExportInfo[] {
   switch (language) {
     case 'javascript':
@@ -199,7 +203,9 @@ export function create_resolution_context(
   language: Language,
   file_path?: string,
   root_node?: SyntaxNode,
-  source_code?: string
+  source_code?: string,
+  imports?: any[], // From import_resolution - Layer 1
+  module_graph?: any // From module_graph - Layer 4
 ): ResolutionContext {
   const base_context: ResolutionContext = {
     scope_tree,
@@ -304,7 +310,9 @@ export function resolve_at_cursor(
   language: Language,
   file_path: string,
   root_node?: SyntaxNode,
-  source_code?: string
+  source_code?: string,
+  imports?: any[], // From import_resolution - Layer 1
+  module_graph?: any // From module_graph - Layer 4
 ): ResolvedSymbol | undefined {
   const context = create_resolution_context(
     scope_tree,
@@ -326,7 +334,9 @@ export function find_all_references(
   language: Language,
   file_path: string,
   root_node?: SyntaxNode,
-  source_code?: string
+  source_code?: string,
+  imports?: any[], // From import_resolution - Layer 1
+  module_graph?: any // From module_graph - Layer 4
 ): Ref[] {
   const context = create_resolution_context(
     scope_tree,
@@ -349,7 +359,9 @@ export function go_to_definition(
   language: Language,
   file_path: string,
   root_node?: SyntaxNode,
-  source_code?: string
+  source_code?: string,
+  imports?: any[], // From import_resolution - Layer 1
+  module_graph?: any // From module_graph - Layer 4
 ): Def | undefined {
   const context = create_resolution_context(
     scope_tree,

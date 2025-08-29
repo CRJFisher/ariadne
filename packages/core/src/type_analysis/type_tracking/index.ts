@@ -5,7 +5,7 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language } from '@ariadnejs/types';
+import { Language, Def } from '@ariadnejs/types';
 import {
   TypeInfo,
   FileTypeTracker,
@@ -128,7 +128,9 @@ export function track_assignment(
   tracker: FileTypeTracker,
   node: SyntaxNode,
   source_code: string,
-  context: TypeTrackingContext
+  context: TypeTrackingContext,
+  scope_tree?: any, // From scope_tree - Layer 2
+  imports?: any[] // From import_resolution - Layer 1
 ): FileTypeTracker {
   switch (context.language) {
     case 'javascript':
@@ -154,7 +156,8 @@ export function track_imports(
   tracker: FileTypeTracker,
   node: SyntaxNode,
   source_code: string,
-  context: TypeTrackingContext
+  context: TypeTrackingContext,
+  imports?: any[] // From import_resolution - Layer 1
 ): FileTypeTracker {
   switch (context.language) {
     case 'javascript':
@@ -180,7 +183,8 @@ export function infer_return_type(
   func_node: SyntaxNode,
   source_code: string,
   tracker: FileTypeTracker,
-  context: TypeTrackingContext
+  context: TypeTrackingContext,
+  scope_tree?: any // From scope_tree - Layer 2
 ): TypeInfo | undefined {
   switch (context.language) {
     case 'javascript':
@@ -205,7 +209,9 @@ export function infer_return_type(
 export function infer_type(
   node: SyntaxNode,
   source_code: string,
-  context: TypeTrackingContext
+  context: TypeTrackingContext,
+  scope_tree?: any, // From scope_tree - Layer 2
+  classes?: any[] // From class_detection - Layer 5
 ): TypeInfo | undefined {
   switch (context.language) {
     case 'javascript':
@@ -233,32 +239,29 @@ export function track_type_definition(
   tracker: FileTypeTracker,
   def: Def,
   source_code: string,
-  context: TypeTrackingContext
+  context: TypeTrackingContext,
+  classes?: any[] // From class_detection - Layer 5
 ): FileTypeTracker {
   switch (context.language) {
     case 'typescript':
-      if (def.symbol_kind === 'interface') {
-        return track_typescript_interface(tracker, def, source_code, context);
-      } else if (def.symbol_kind === 'type_alias') {
-        return track_typescript_type_alias(tracker, def, source_code, context);
-      } else if (def.symbol_kind === 'enum') {
-        return track_typescript_enum(tracker, def, source_code, context);
+      if (def.kind === 'type') {
+        // For TypeScript type definitions, we'd need more specific type info
+        // This is a simplified approach - real implementation would need more context
+        return tracker;
       }
       break;
     case 'python':
-      if (def.symbol_kind === 'class') {
+      if (def.kind === 'class') {
         return track_python_class(tracker, def, source_code, context);
-      } else if (def.symbol_kind === 'function') {
+      } else if (def.kind === 'function') {
         return track_python_function(tracker, def, source_code, context);
       }
       break;
     case 'rust':
-      if (def.symbol_kind === 'struct') {
-        return track_rust_struct(tracker, def, source_code, context);
-      } else if (def.symbol_kind === 'enum') {
-        return track_rust_enum(tracker, def, source_code, context);
-      } else if (def.symbol_kind === 'trait') {
-        return track_rust_trait(tracker, def, source_code, context);
+      if (def.kind === 'type') {
+        // For Rust type definitions, we'd need more specific type info
+        // This is a simplified approach - real implementation would need more context
+        return tracker;
       }
       break;
   }
@@ -347,7 +350,10 @@ export function is_constructor(
 export function process_file_for_types(
   source_code: string,
   tree: SyntaxNode,
-  context: TypeTrackingContext
+  context: TypeTrackingContext,
+  scope_tree?: any, // From scope_tree - Layer 2
+  imports?: any[], // From import_resolution - Layer 1
+  classes?: any[] // From class_detection - Layer 5
 ): FileTypeTracker {
   let tracker = create_file_type_tracker();
   

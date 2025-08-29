@@ -1,6 +1,3 @@
-// Language type
-export type Language = "javascript" | "typescript" | "python" | "rust";
-
 // Export new CodeGraph architecture types
 export * from './immutable';
 export * from './aliases';

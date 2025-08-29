@@ -45,13 +45,17 @@ export {
  * @param method_calls Array of method calls
  * @param constructor_calls Array of constructor calls
  * @param context Analysis context with options
+ * @param symbol_resolution Optional symbol resolution data from Layer 7
+ * @param type_propagation Optional type propagation data from Layer 8
  * @returns Complete call chain analysis
  */
 export function analyze_call_chains(
   function_calls: FunctionCallInfo[],
   method_calls: MethodCallInfo[],
   constructor_calls: ConstructorCallInfo[],
-  context: CallChainContext
+  context: CallChainContext,
+  symbol_resolution?: any, // From symbol_resolution - Layer 7
+  type_propagation?: any // From type_propagation - Layer 8
 ): CallChainAnalysisResult {
   // Combine all calls
   const all_calls = [
@@ -75,7 +79,9 @@ export function analyze_file_call_chains(
   options?: {
     max_depth?: number;
     track_recursion?: boolean;
-  }
+  },
+  symbol_resolution?: any, // From symbol_resolution - Layer 7
+  type_propagation?: any // From type_propagation - Layer 8
 ): CallChainAnalysisResult {
   // Filter calls from this file
   const file_function_calls = function_calls.filter(c => c.file_path === file_path);
@@ -105,7 +111,9 @@ export function find_chains_from_function(
   method_calls: MethodCallInfo[],
   constructor_calls: ConstructorCallInfo[],
   language: Language,
-  max_depth: number = 10
+  max_depth: number = 10,
+  symbol_resolution?: any, // From symbol_resolution - Layer 7
+  type_propagation?: any // From type_propagation - Layer 8
 ): CallChain[] {
   const context: CallChainContext = {
     language,
@@ -131,7 +139,9 @@ export function find_recursive_chains(
   function_calls: FunctionCallInfo[],
   method_calls: MethodCallInfo[],
   constructor_calls: ConstructorCallInfo[],
-  language: Language
+  language: Language,
+  symbol_resolution?: any, // From symbol_resolution - Layer 7
+  type_propagation?: any // From type_propagation - Layer 8
 ): CallChain[] {
   const context: CallChainContext = {
     language,

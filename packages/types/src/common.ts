@@ -1,5 +1,8 @@
 import { ParameterName, TypeString, FilePath, FunctionName, ClassName, MethodName, PropertyName, DocString, DecoratorName } from './aliases';
 
+// Language type
+export type Language = "javascript" | "typescript" | "python" | "rust";
+
 export interface Location {
   readonly file_path?: FilePath;
   readonly line: number;

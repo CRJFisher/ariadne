@@ -53,8 +53,11 @@ export function analyze_type_propagation(
   node: SyntaxNode,
   source_code: string,
   language: Language,
-  scope_tree?: any,
-  known_types?: Map<string, string>
+  scope_tree?: any, // From scope_tree - Layer 2
+  known_types?: Map<string, string>,
+  type_tracker?: any, // From type_tracking - Layer 3
+  function_calls?: any[], // From function_calls - Layer 4
+  method_calls?: any[] // From method_calls - Layer 4
 ): TypeFlow[] {
   const context: TypePropagationContext = {
     source_code,
@@ -92,8 +95,11 @@ export function propagate_types_in_tree(
   root: SyntaxNode,
   source_code: string,
   language: Language,
-  scope_tree?: any,
-  initial_types?: Map<string, string>
+  scope_tree?: any, // From scope_tree - Layer 2
+  initial_types?: Map<string, string>,
+  type_tracker?: any, // From type_tracking - Layer 3
+  function_calls?: any[], // From function_calls - Layer 4
+  method_calls?: any[] // From method_calls - Layer 4
 ): Map<string, TypeFlow[]> {
   const type_flows_by_identifier = new Map<string, TypeFlow[]>();
   const known_types = new Map(initial_types);
@@ -143,7 +149,9 @@ export function find_all_propagation_paths(
   to_identifier: string,
   root: SyntaxNode,
   source_code: string,
-  language: Language
+  language: Language,
+  scope_tree?: any, // From scope_tree - Layer 2
+  type_tracker?: any // From type_tracking - Layer 3
 ): PropagationPath[] {
   const type_flows = propagate_types_in_tree(root, source_code, language);
   const paths: PropagationPath[] = [];
