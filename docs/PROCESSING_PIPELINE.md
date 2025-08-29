@@ -49,7 +49,10 @@ Each file is analyzed independently to extract local information without needing
 #### Existing Modules:
 
 - [`/import_export/import_resolution`](/packages/core/src/import_export/import_resolution) - Extracts import declarations
+  - **TODO**: Add namespace import detection (`import * as name`) - See task 11.70
+  - **TODO**: Add type-only import tracking for TypeScript - See task 11.71
 - [`/import_export/export_detection`](/packages/core/src/import_export/export_detection) - Detects export statements
+  - **TODO**: Add type-only export tracking for TypeScript - See task 11.71
 
 #### Missing Modules:
 
@@ -76,6 +79,7 @@ Each file is analyzed independently to extract local information without needing
 #### Missing Modules:
 
 - **Type Annotation Parsing** - Parse explicit type annotations
+  - **TODO**: Python type hint parsing - See task 11.72
 - **Type Guard Analysis** - Track type narrowing in conditionals
 - **Generic Type Parameter Extraction** - Extract generic parameters from definitions
 
@@ -120,6 +124,7 @@ Combines per-file analyses to build global understanding and resolve cross-file 
 - **Module Resolution Strategy** - Resolve module paths (node_modules, relative, absolute, aliases)
 - **Circular Dependency Detection** - Detect and handle circular imports
 - **Re-export Resolution** - Trace through re-exports to find actual definitions
+  - **TODO**: Implement re-export chain resolution - See task 11.69
 
 **Outputs:** `ModuleGraph`, resolved import paths, circular dependencies
 
@@ -317,8 +322,8 @@ For each file in parallel:
 
 ### Critical Gaps:
 
-1. **Type Registry** - No central type definition storage
-2. **Class Detection** - Referenced but missing
+1. ~~**Type Registry** - No central type definition storage~~ ✅ Completed (task 11.61)
+2. ~~**Class Detection** - Referenced but missing~~ ✅ Completed (task 11.60)
 3. **Generic Type Resolution** - No generic type support
 4. **Virtual Method Resolution** - No polymorphic call resolution
 5. **Async Flow Analysis** - No async execution tracking
@@ -328,10 +333,10 @@ For each file in parallel:
 
 ### Immediate Priority (Breaking Issues):
 
-1. Create [`/inheritance/class_detection`](/packages/core/src/inheritance/class_detection) module
-2. Create `/type_analysis/type_registry` module
-3. Remove import extraction from symbol_resolution
-4. Wire type_tracking to use import_resolution
+1. ~~Create [`/inheritance/class_detection`](/packages/core/src/inheritance/class_detection) module~~ ✅ Completed (task 11.60)
+2. ~~Create `/type_analysis/type_registry` module~~ ✅ Completed (task 11.61)
+3. Wire layer dependencies (task 11.62) - **CRITICAL**
+4. Remove import extraction from symbol_resolution (task 11.62.8)
 
 ### Medium Priority (Integration):
 
