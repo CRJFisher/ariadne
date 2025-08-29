@@ -34,21 +34,21 @@ A stub was created at `/packages/core/src/type_analysis/type_registry/index.ts` 
 
 ### Core Registry Functions
 
-- [ ] Complete implementation of type registration functions:
+- [x] Complete implementation of type registration functions:
   - `register_type()` - Add type to registry with proper namespacing
   - `lookup_type()` - Find type by name with file context
   - `get_file_types()` - Get all types from a file
   - `get_module_exports()` - Get exported types from a module
   - `clear_file_types()` - Support incremental updates
-- [ ] Support type namespacing:
+- [x] Support type namespacing:
   - File-local types
   - Module-exported types
   - Global types (built-ins)
-- [ ] Handle type aliases and remapping
+- [x] Handle type aliases and remapping
 
 ### Type Categories
 
-- [ ] Register and track different type kinds:
+- [x] Register and track different type kinds:
   - Classes (from class_detection)
   - Interfaces/Traits
   - Enums
@@ -56,7 +56,7 @@ A stub was created at `/packages/core/src/type_analysis/type_registry/index.ts` 
   - Structs (Rust)
   - Protocols (Python)
   - Union/Intersection types (TypeScript)
-- [ ] Track type metadata:
+- [x] Track type metadata:
   - Generic parameters with constraints
   - Member signatures
   - Visibility/export status
@@ -64,36 +64,38 @@ A stub was created at `/packages/core/src/type_analysis/type_registry/index.ts` 
 
 ### Cross-Module Resolution
 
-- [ ] Integrate with module_graph for import resolution
-- [ ] Resolve types through re-exports
-- [ ] Handle namespace imports (e.g., `import * as foo`)
-- [ ] Track type-only imports (TypeScript)
+- [x] Integrate with module_graph for import resolution
+- [ ] Resolve types through re-exports - **Requires task 11.69**
+- [ ] Handle namespace imports (e.g., `import * as foo`) - **Requires task 11.70**
+- [ ] Track type-only imports (TypeScript) - **Requires task 11.71**
 
 ### Language-Specific Support
 
-- [ ] JavaScript: Constructor functions as types
-- [ ] TypeScript: Structural types, mapped types, conditional types
-- [ ] Python: Type hints, Protocol types, ABCs
-- [ ] Rust: Trait objects, associated types
+- [x] JavaScript: Constructor functions as types
+- [x] TypeScript: Basic interfaces, enums, type aliases
+- [ ] TypeScript: Structural types, mapped types, conditional types - **Complex feature**
+- [x] Python: Classes, Protocols (as interfaces)
+- [ ] Python: Full type hint parsing - **Requires task 11.72**
+- [x] Rust: Structs, Traits, associated types
 
 ### Integration Points
 
-- [ ] Consume output from:
+- [x] Consume output from:
   - class_detection (ClassDefinition[])
   - export_detection (exported type names)
   - import_resolution (imported types)
-- [ ] Provide input to:
+- [x] Provide input to:
   - class_hierarchy (for building inheritance)
   - type_resolution (for resolving references)
   - type_tracking (for variable types)
 
 ### Testing
 
-- [ ] Unit tests for all registry operations
-- [ ] Integration tests with class_detection output
-- [ ] Test incremental updates (file changes)
-- [ ] Test circular type dependencies
-- [ ] Performance tests with large codebases
+- [x] Unit tests for all registry operations
+- [x] Integration tests with class_detection output
+- [x] Test incremental updates (file changes)
+- [x] Test circular type dependencies (basic validation)
+- [ ] Performance tests with large codebases - **Requires task 11.73**
 
 ## Implementation Notes
 
@@ -229,10 +231,35 @@ Fully implemented the type registry module with comprehensive support for all ty
 - ✅ Integrates with import/export information
 - ⚠️ Not yet integrated into code_graph.ts (requires task 11.62)
 
-### Remaining Work
+### What Still Needs Implementation
 
-- [ ] Re-export chain resolution (complex feature)
-- [ ] Namespace import handling
-- [ ] Type-only import tracking (TypeScript specific)
-- [ ] Performance testing with large codebases
-- [ ] Integration with code_graph.ts via task 11.62
+The following features were identified as gaps but require separate tasks:
+
+1. **Re-export Chain Resolution** (task 11.69)
+   - Belongs in module_graph layer (Layer 5)
+   - Need to trace through re-export chains to find actual definitions
+   - Type registry would consume the resolved information
+
+2. **Namespace Import Support** (task 11.70)
+   - Belongs in import_resolution (Layer 2)
+   - Need to detect and extract namespace imports during per-file analysis
+   - Type registry would consume namespace information for member resolution
+
+3. **Type-Only Import Tracking** (task 11.71)
+   - Belongs in import_resolution (Layer 2)
+   - TypeScript-specific feature to mark imports as type-only
+   - Type registry would know these are compile-time only
+
+4. **Python Type Hint Parsing** (task 11.72)
+   - Belongs in type annotation parsing (Layer 3)
+   - Need to parse Python type hints from annotations
+   - Type registry would store parsed type information
+
+5. **Performance Testing** (task 11.73)
+   - Test registry performance with large codebases (10K+ files)
+   - Optimize data structures if needed
+   - Add caching strategies for hot paths
+
+6. **Integration with code_graph.ts** (task 11.62)
+   - Wire type registry into processing pipeline
+   - Already covered by task 11.62
