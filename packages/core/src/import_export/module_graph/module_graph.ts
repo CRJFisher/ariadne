@@ -4,40 +4,39 @@
  * Builds a graph showing import/export relationships between files.
  */
 
-import { Language } from '@ariadnejs/types';
+import { Language, ModuleNode, ModuleGraph, ImportedSymbol, ExportedSymbol, ImportedModule } from '@ariadnejs/types';
+import { FilePath, ModulePath } from '@ariadnejs/types';
 import { ExportInfo } from '../export_detection';
 import { ImportInfo as ImportResolutionInfo } from '../import_resolution';
 
 /**
- * A node in the module graph representing a single module/file
+ * Extended module node with additional metadata for graph building
  */
-export interface ModuleNode {
-  file_path: string;
-  language: Language;
-  exports: ExportInfo[];
-  imports: ModuleImportInfo[];
-  is_entry_point?: boolean;
-  is_external?: boolean;
-  metadata?: {
-    package_name?: string;
-    version?: string;
-    size?: number;
-    last_modified?: Date;
+export interface ModuleNodeWithMetadata extends Omit<ModuleNode, 'imports' | 'exports'> {
+  readonly legacy_exports: ExportInfo[];
+  readonly legacy_imports: ModuleImportInfo[];
+  readonly is_entry_point?: boolean;
+  readonly is_external?: boolean;
+  readonly metadata?: {
+    readonly package_name?: string;
+    readonly version?: string;
+    readonly size?: number;
+    readonly last_modified?: Date;
   };
 }
 
 /**
- * Information about an import in a module
+ * Legacy import information for compatibility
  */
 export interface ModuleImportInfo {
-  source_module: string;  // Module being imported from
-  imported_names: string[];  // Names being imported
-  is_namespace: boolean;  // import * as ns
-  is_default: boolean;  // import default
-  is_dynamic?: boolean;  // Dynamic import()
-  location?: {
-    line: number;
-    column: number;
+  readonly source_module: string;  // Module being imported from
+  readonly imported_names: readonly string[];  // Names being imported
+  readonly is_namespace: boolean;  // import * as ns
+  readonly is_default: boolean;  // import default
+  readonly is_dynamic?: boolean;  // Dynamic import()
+  readonly location?: {
+    readonly line: number;
+    readonly column: number;
   };
 }
 
@@ -45,72 +44,72 @@ export interface ModuleImportInfo {
  * An edge in the module graph representing a dependency
  */
 export interface ModuleEdge {
-  from: string;  // Source module file path
-  to: string;    // Target module file path
-  type: 'import' | 'export' | 'namespace' | 'dynamic' | 'type';
-  imports: string[];  // What is imported
-  weight?: number;  // Number of imports (for visualization)
+  readonly from: FilePath;  // Source module file path
+  readonly to: FilePath;    // Target module file path
+  readonly type: 'import' | 'export' | 'namespace' | 'dynamic' | 'type';
+  readonly imports: readonly string[];  // What is imported
+  readonly weight?: number;  // Number of imports (for visualization)
 }
 
 /**
- * The complete module dependency graph
+ * Extended module graph with edges and metadata
  */
-export interface ModuleGraph {
-  nodes: Map<string, ModuleNode>;
-  edges: ModuleEdge[];
-  entry_points: Set<string>;
-  external_modules: Set<string>;
+export interface ModuleGraphWithEdges extends ModuleGraph {
+  readonly edges: readonly ModuleEdge[];
+  readonly external_modules: ReadonlySet<FilePath>;
 }
 
 /**
  * Options for building module graph
  */
 export interface ModuleGraphOptions {
-  root_path?: string;
-  include_external?: boolean;
+  readonly root_path?: string;
+  readonly include_external?: boolean;
 }
 
 /**
  * Build a module graph from analyzed files
  */
 export function build_module_graph(
-  files: Map<string, {
-    file_path: string;
+  files: Map<FilePath, {
+    file_path: FilePath;
     language: Language;
     imports: ImportResolutionInfo[];
     exports: ExportInfo[];
   }>,
   options: ModuleGraphOptions = {}
-): ModuleGraph {
-  const graph: ModuleGraph = {
-    nodes: new Map(),
+): ModuleGraphWithEdges {
+  const graph: ModuleGraphWithEdges = {
+    modules: new Map(),
     edges: [],
     entry_points: new Set(),
-    external_modules: new Set()
+    external_modules: new Set(),
+    dependency_order: []
   };
   
   // First pass: Create nodes for all files
   for (const [file_path, analysis] of files) {
     const node = create_module_node(file_path, analysis);
     if (node) {
-      graph.nodes.set(file_path, node);
+      (graph.modules as Map<FilePath, ModuleNode>).set(file_path, node);
       
       // Check if it's an entry point
       if (is_entry_point(file_path)) {
-        graph.entry_points.add(file_path);
+        (graph.entry_points as Set<FilePath>).add(file_path);
       }
     }
   }
   
   // Second pass: Create edges based on imports
-  for (const [file_path, node] of graph.nodes) {
-    const edges = create_module_edges(node, graph, options);
-    graph.edges.push(...edges);
+  for (const [file_path, node] of graph.modules) {
+    const nodeWithMetadata = node as ModuleNodeWithMetadata;
+    const edges = create_module_edges(nodeWithMetadata, graph, options);
+    (graph.edges as ModuleEdge[]).push(...edges);
     
     // Track external modules
-    for (const imp of node.imports) {
+    for (const imp of nodeWithMetadata.legacy_imports || []) {
       if (is_external_module(imp.source_module)) {
-        graph.external_modules.add(imp.source_module);
+        (graph.external_modules as Set<FilePath>).add(imp.source_module);
       }
     }
   }
@@ -122,21 +121,24 @@ export function build_module_graph(
  * Create a module node from analyzed file data
  */
 function create_module_node(
-  file_path: string,
+  file_path: FilePath,
   analysis: {
     language: Language;
     imports: ImportResolutionInfo[];
     exports: ExportInfo[];
   }
-): ModuleNode {
+): ModuleNodeWithMetadata {
   // Convert ImportResolutionInfo to ModuleImportInfo
-  const imports = convert_to_module_imports(analysis.imports, file_path);
+  const legacy_imports = convert_to_module_imports(analysis.imports, file_path);
   
   return {
-    file_path,
+    path: file_path,
+    imports: new Map(), // TODO: Convert to new ImportedModule format
+    exports: new Map(), // TODO: Convert to new ExportedSymbol format
+    imported_by: new Set(),
     language: analysis.language,
-    exports: analysis.exports,
-    imports
+    legacy_exports: analysis.exports,
+    legacy_imports
   };
 }
 
@@ -145,7 +147,7 @@ function create_module_node(
  */
 function convert_to_module_imports(
   imports: ImportResolutionInfo[],
-  file_path: string
+  file_path: FilePath
 ): ModuleImportInfo[] {
   const module_imports: ModuleImportInfo[] = [];
   
@@ -180,24 +182,24 @@ function convert_to_module_imports(
  * Create edges from a module node
  */
 function create_module_edges(
-  node: ModuleNode,
-  graph: ModuleGraph,
+  node: ModuleNodeWithMetadata,
+  graph: ModuleGraphWithEdges,
   options: ModuleGraphOptions
 ): ModuleEdge[] {
   const edges: ModuleEdge[] = [];
   
-  for (const imp of node.imports) {
+  for (const imp of node.legacy_imports || []) {
     // Resolve the module path (for now just use as-is)
-    const resolved_path = resolve_module_path(node.file_path, imp.source_module);
+    const resolved_path = resolve_module_path(node.path, imp.source_module);
     
     // Check if target module is in the graph
-    const target_node = graph.nodes.get(resolved_path);
+    const target_node = graph.modules.get(resolved_path);
     if (!target_node && !options.include_external) {
       continue;
     }
     
     const edge: ModuleEdge = {
-      from: node.file_path,
+      from: node.path,
       to: resolved_path,
       type: determine_edge_type(imp),
       imports: imp.imported_names,
@@ -213,7 +215,7 @@ function create_module_edges(
 /**
  * Resolve a module import path (simplified for now)
  */
-function resolve_module_path(from_file: string, import_path: string): string {
+function resolve_module_path(from_file: FilePath, import_path: string): FilePath {
   // TODO: Implement proper module resolution
   // For now, just return the import path as-is
   return import_path;
@@ -232,7 +234,7 @@ function determine_edge_type(imp: ModuleImportInfo): ModuleEdge['type'] {
 /**
  * Check if a file is an entry point
  */
-function is_entry_point(file_path: string): boolean {
+function is_entry_point(file_path: FilePath): boolean {
   // Common entry point patterns
   const entry_patterns = [
     /index\.(js|ts|jsx|tsx)$/,
@@ -259,4 +261,75 @@ function is_external_module(module_path: string): boolean {
     return true;
   }
   return false;
+}
+
+/**
+ * Find circular dependencies in the module graph
+ */
+export function find_circular_dependencies(_graph: ModuleGraphWithEdges): FilePath[][] {
+  // TODO: Implement cycle detection algorithm
+  return [];
+}
+
+/**
+ * Get all dependencies of a module
+ */
+export function get_module_dependencies(graph: ModuleGraphWithEdges, module_path: FilePath): FilePath[] {
+  const dependencies: FilePath[] = [];
+  for (const edge of graph.edges) {
+    if (edge.from === module_path) {
+      dependencies.push(edge.to);
+    }
+  }
+  return dependencies;
+}
+
+/**
+ * Get all dependents of a module (modules that depend on this one)
+ */
+export function get_module_dependents(graph: ModuleGraphWithEdges, module_path: FilePath): FilePath[] {
+  const dependents: FilePath[] = [];
+  for (const edge of graph.edges) {
+    if (edge.to === module_path) {
+      dependents.push(edge.from);
+    }
+  }
+  return dependents;
+}
+
+/**
+ * Calculate importance score of a module based on dependencies
+ */
+export function calculate_module_importance(graph: ModuleGraphWithEdges, module_path: FilePath): number {
+  const dependents = get_module_dependents(graph, module_path);
+  const dependencies = get_module_dependencies(graph, module_path);
+  
+  // Simple scoring: more dependents = more important, more dependencies = less independent
+  return dependents.length - dependencies.length * 0.1;
+}
+
+/**
+ * Create a module graph builder (placeholder for compatibility)
+ */
+export function create_module_graph_builder() {
+  // TODO: Implement builder pattern if needed
+  return {
+    build: build_module_graph
+  };
+}
+
+/**
+ * Analyze module graph and return analysis results
+ */
+export function analyze_module_graph(graph: ModuleGraphWithEdges) {
+  return {
+    total_modules: graph.modules.size,
+    entry_points: graph.entry_points.size,
+    external_modules: graph.external_modules.size,
+    circular_dependencies: find_circular_dependencies(graph),
+    most_important_modules: Array.from(graph.modules.keys())
+      .map(path => ({ path, importance: calculate_module_importance(graph, path) }))
+      .sort((a, b) => b.importance - a.importance)
+      .slice(0, 10)
+  };
 }
