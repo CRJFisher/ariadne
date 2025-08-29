@@ -6,7 +6,8 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Point, Language, Def } from '@ariadnejs/types';
+import { Language } from '@ariadnejs/types';
+import { Point } from '../../ast/types';
 
 export interface ConstructorCallInfo {
   constructor_name: string; // Name of the class/type being instantiated
