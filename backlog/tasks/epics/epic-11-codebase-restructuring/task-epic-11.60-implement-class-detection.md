@@ -32,38 +32,38 @@ From ARCHITECTURE_ISSUES.md:
 
 ### Core Functionality
 
-- [ ] Implement `/inheritance/class_detection/index.ts` with proper dispatcher pattern
-- [ ] Extract class definitions with:
+- [x] Implement `/inheritance/class_detection/index.ts` with proper dispatcher pattern
+- [x] Extract class definitions with:
   - Class name and location
   - Base classes (extends)
   - Implemented interfaces
   - Generic parameters with constraints
   - Abstract/final modifiers
   - Decorators/annotations
-- [ ] Extract class members:
+- [x] Extract class members:
   - Methods (with visibility, static, abstract flags)
   - Properties/fields (with types, visibility, static flags)
   - Constructors with parameters
-- [ ] Use types from `@ariadnejs/types` package for all public interfaces
+- [x] Use types from `@ariadnejs/types` package for all public interfaces
 
 ### Language-Specific Implementations
 
-- [ ] `/inheritance/class_detection/class_detection.javascript.ts`:
+- [x] `/inheritance/class_detection/class_detection.javascript.ts`:
   - ES6 class declarations
   - Class expressions
   - Prototype-based pseudo-classes
-- [ ] `/inheritance/class_detection/class_detection.typescript.ts`:
+- [x] `/inheritance/class_detection/class_detection.typescript.ts`:
   - All JavaScript patterns
   - Abstract classes
   - Interface implementations
   - Generic class parameters
   - Decorators
-- [ ] `/inheritance/class_detection/class_detection.python.ts`:
+- [x] `/inheritance/class_detection/class_detection.python.ts`:
   - Class definitions with inheritance
   - Metaclasses
   - Decorators (especially @dataclass, @abstractmethod)
   - Multiple inheritance
-- [ ] `/inheritance/class_detection/class_detection.rust.ts`:
+- [x] `/inheritance/class_detection/class_detection.rust.ts`:
   - Struct definitions
   - Impl blocks (inherent and trait implementations)
   - Generic parameters with trait bounds
@@ -71,18 +71,18 @@ From ARCHITECTURE_ISSUES.md:
 
 ### Testing
 
-- [ ] `/inheritance/class_detection/class_detection.test.ts` with test contracts for all languages
-- [ ] Test basic class detection
-- [ ] Test inheritance detection
-- [ ] Test generic parameters
-- [ ] Test nested classes
-- [ ] Test abstract/interface patterns
+- [x] `/inheritance/class_detection/class_detection.test.ts` with test contracts for all languages
+- [x] Test basic class detection
+- [x] Test inheritance detection
+- [x] Test generic parameters
+- [x] Test nested classes
+- [x] Test abstract/interface patterns
 
 ### Integration
 
 - [ ] Integrate with code_graph.ts per-file analysis phase
-- [ ] Output format compatible with type_registry expectations
-- [ ] Output format compatible with class_hierarchy expectations
+- [x] Output format compatible with type_registry expectations
+- [x] Output format compatible with class_hierarchy expectations
 
 ## Implementation Notes
 
