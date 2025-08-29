@@ -5,7 +5,7 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language, ConstructorCallInfo } from '@ariadnejs/types';
+import { Language } from '@ariadnejs/types';
 
 export interface ConstructorCallContext {
   source_code: string;

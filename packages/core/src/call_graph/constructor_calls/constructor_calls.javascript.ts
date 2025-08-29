@@ -3,7 +3,7 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { ConstructorCallInfo } from '@ariadnejs/types';
+import { ConstructorCallInfo, Language } from '@ariadnejs/types';
 import {
   ConstructorCallContext,
   is_constructor_call_node,
@@ -66,10 +66,9 @@ function extract_javascript_constructor_call(
   return {
     constructor_name,
     location: {
-      row: node.startPosition.row,
+      line: node.startPosition.row,
       column: node.startPosition.column
     },
-    file_path: context.file_path,
     arguments_count: count_constructor_arguments(node, language),
     assigned_to: assigned_to || undefined,
     is_new_expression: true,
@@ -94,10 +93,9 @@ function extract_javascript_factory_call(
   return {
     constructor_name,
     location: {
-      row: node.startPosition.row,
+      line: node.startPosition.row,
       column: node.startPosition.column
     },
-    file_path: context.file_path,
     arguments_count: count_constructor_arguments(node, language),
     assigned_to: assigned_to || undefined,
     is_new_expression: false,

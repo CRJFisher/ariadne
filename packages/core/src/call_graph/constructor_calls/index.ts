@@ -16,18 +16,20 @@ import { find_constructor_calls_python } from './constructor_calls.python';
 import { find_constructor_calls_rust } from './constructor_calls.rust';
 
 /**
- * Find all constructor calls in code
+ * Find all constructor calls in code (Per-File Phase - Layer 4)
  * 
  * Dispatches to language-specific implementations based on the language parameter.
  * Each implementation handles the unique syntax and patterns of its language.
  * 
+ * NOTE: This is a per-file analysis function. It identifies constructor call syntax
+ * but cannot validate if the constructor actually exists in the codebase.
+ * Full validation happens in the global phase with the type registry.
+ * 
  * @param context The context containing source code, AST, and metadata
- * @param type_registry Optional type registry for validating constructor types (from Layer 6)
- * @returns Array of constructor call information
+ * @returns Array of constructor call information (unvalidated)
  */
 export function find_constructor_calls(
-  context: ConstructorCallContext,
-  type_registry?: any // From type_registry - Layer 6
+  context: ConstructorCallContext
 ): ConstructorCallInfo[] {
   switch (context.language) {
     case 'javascript':

@@ -17,4 +17,13 @@ export {
   type CallGraphInfo,
 } from './graph_queries';
 
+// Call resolution functions (global phase)
+export {
+  resolve_method_calls,
+  resolve_constructor_calls,
+  resolve_all_calls,
+  type ResolvedMethodCall,
+  type ResolvedConstructorCall
+} from './call_graph/call_resolution';
+
 // That's it! Everything else is internal implementation details.

@@ -42,6 +42,7 @@ function find_typescript_specific_constructors(
     if (node.type === 'new_expression') {
       const type_args = node.childForFieldName('type_arguments');
       if (type_args) {
+        // TODO: record the type arguments in ConstructorCallInfo
         // This is a generic constructor call
         // The basic structure is already handled by JavaScript detection
         // We just note that it has type arguments

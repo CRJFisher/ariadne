@@ -146,6 +146,17 @@ export async function generate_code_graph(
 
   // CALL GRAPH
   const calls = build_call_graph(analyses);
+  
+  // TODO: LAYER 9 - Global Call Resolution
+  // After class hierarchy and type registry are built (Layers 6-7),
+  // resolve method and constructor calls using global information:
+  // const { resolve_all_calls } = await import('./call_graph/call_resolution');
+  // const resolved = resolve_all_calls(
+  //   all_method_calls,
+  //   all_constructor_calls,
+  //   classes,
+  //   type_registry
+  // );
 
   // CLASS HIERARCHY
   // TODO: Wire up the existing class hierarchy builder once it's converted to new types
@@ -279,11 +290,9 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
     language: file.language,
     ast_root: tree.rootNode,
   };
-  // Pass type tracker to method calls (optional parameter)
   const method_calls = find_method_calls(
     method_call_context,
-    type_tracker.variable_types,  // From Layer 3
-    undefined  // class_hierarchy not available yet (Layer 6)
+    type_tracker.variable_types  // From Layer 3 (local types only)
   );
 
   const constructor_call_context = {
@@ -292,11 +301,7 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
     language: file.language,
     ast_root: tree.rootNode,
   };
-  // Note: type_registry is from Layer 6, not available in per-file phase
-  const constructor_calls = find_constructor_calls(
-    constructor_call_context,
-    undefined  // type_registry not available yet (Layer 6)
-  );
+  const constructor_calls = find_constructor_calls(constructor_call_context);
 
   // FUNCTIONS AND CLASSES
   const functions: FunctionInfo[] = [];
