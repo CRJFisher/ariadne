@@ -1,10 +1,11 @@
 import { Language } from './index';
 import { FunctionInfo, ClassInfo, Location } from './common';
 import { ModuleGraph } from './modules';
-import { CallGraph } from './calls';
+import { CallGraph, FunctionCallInfo, MethodCallInfo, ConstructorCallInfo } from './calls';
 import { ClassHierarchy } from './classes';
-import { TypeIndex } from './types';
+import { TypeIndex, TypeInfo } from './types';
 import { SymbolIndex } from './symbols';
+import { ScopeTree } from './scopes';
 import { FilePath, ModulePath, SymbolName, VariableName, TypeString } from './aliases';
 
 export interface FileAnalysis {
@@ -14,13 +15,13 @@ export interface FileAnalysis {
   readonly classes: readonly ClassInfo[];
   readonly imports: readonly ImportStatement[];
   readonly exports: readonly ExportStatement[];
-  readonly variables?: readonly VariableDeclaration[];
-  readonly errors?: readonly AnalysisError[];
-  readonly scopes?: any; // ScopeTree - TODO: move ScopeTree to types package
-  readonly function_calls?: readonly any[]; // FunctionCallInfo[] - TODO: move to types package
-  readonly method_calls?: readonly any[]; // MethodCallInfo[] - TODO: move to types package  
-  readonly constructor_calls?: readonly any[]; // ConstructorCallInfo[] - TODO: move to types package
-  readonly type_info?: ReadonlyMap<string, any>; // Map<string, TypeInfo> - TODO: move TypeInfo to types package
+  readonly variables: readonly VariableDeclaration[];
+  readonly errors: readonly AnalysisError[];
+  readonly scopes: ScopeTree;
+  readonly function_calls: readonly FunctionCallInfo[];
+  readonly method_calls: readonly MethodCallInfo[];
+  readonly constructor_calls: readonly ConstructorCallInfo[];
+  readonly type_info: ReadonlyMap<VariableName, TypeInfo>;
 }
 
 export interface ImportStatement {

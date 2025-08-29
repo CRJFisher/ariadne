@@ -1,5 +1,6 @@
 import { Location } from './common';
 import { TypeName, FilePath, VariableName, TypeString, PropertyName, MethodName, QualifiedName } from './aliases';
+import { Language } from './index';
 
 export interface TypeDefinition {
   readonly name: TypeName;
@@ -45,4 +46,33 @@ export interface TypeIndex {
   readonly types: ReadonlyMap<TypeName, TypeDefinition>;
   readonly variables: ReadonlyMap<QualifiedName, VariableType>;
   readonly type_graph?: TypeGraph;
+}
+
+// ============================================================================
+// Type Tracking and Inference Types
+// ============================================================================
+
+/**
+ * Type information for a variable at a specific position
+ */
+export interface TypeInfo {
+  readonly type_name: string;           // The type name (e.g., "string", "MyClass")
+  readonly type_kind: 'primitive' | 'class' | 'interface' | 'function' | 'object' | 'array' | 'unknown';
+  readonly position: {
+    readonly row: number;
+    readonly column: number;
+  };
+  readonly confidence: 'explicit' | 'inferred' | 'assumed';
+  readonly source?: 'annotation' | 'assignment' | 'constructor' | 'return' | 'parameter';
+}
+
+/**
+ * Information about an imported class/type
+ */
+export interface ImportedClassInfo {
+  readonly class_name: string;
+  readonly source_module: string;
+  readonly local_name: string;
+  readonly is_default?: boolean;
+  readonly is_type_only?: boolean;  // TypeScript type-only import
 }
