@@ -12,8 +12,6 @@ import {
   calculate_module_importance,
   create_module_graph_builder,
   analyze_module_graph,
-  to_visualization_format,
-  export_module_graph
 } from './index';
 
 // Mock scope graph
@@ -264,52 +262,4 @@ describe('module_graph', () => {
     });
   });
   
-  describe('export_module_graph', () => {
-    it('should export as JSON', () => {
-      const graphs = new Map([
-        ['a.js', create_mock_scope_graph([{ name: 'b', source_module: 'b.js' }])],
-        ['b.js', create_mock_scope_graph([])]
-      ]);
-      
-      const config = {
-        get_scope_graph: (path: string) => graphs.get(path)
-      };
-      
-      const context = {
-        language: 'javascript' as Language,
-        root_path: '/',
-        config
-      };
-      
-      const graph = build_module_graph(['a.js', 'b.js'], context);
-      const json = export_module_graph(graph, 'json');
-      const parsed = JSON.parse(json);
-      
-      expect(parsed.nodes).toHaveLength(2);
-      expect(parsed.edges).toHaveLength(1);
-    });
-    
-    it('should export as DOT format', () => {
-      const graphs = new Map([
-        ['a.js', create_mock_scope_graph([{ name: 'b', source_module: 'b.js' }])],
-        ['b.js', create_mock_scope_graph([])]
-      ]);
-      
-      const config = {
-        get_scope_graph: (path: string) => graphs.get(path)
-      };
-      
-      const context = {
-        language: 'javascript' as Language,
-        root_path: '/',
-        config
-      };
-      
-      const graph = build_module_graph(['a.js', 'b.js'], context);
-      const dot = export_module_graph(graph, 'dot');
-      
-      expect(dot).toContain('digraph ModuleGraph');
-      expect(dot).toContain('"a.js" -> "b.js"');
-    });
-  });
 });

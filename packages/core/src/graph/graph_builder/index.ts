@@ -15,7 +15,12 @@ export {
 
   // Main functions
   build_project_graph,
-  update_graph_for_file as update_file_graph,
-  analyze_file,
   query_graph,
 } from "./graph_builder";
+
+export {
+  // File scanning utilities
+  scan_files,
+  read_file,
+  detect_language,
+} from "./file_scanner";

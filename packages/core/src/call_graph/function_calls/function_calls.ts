@@ -7,11 +7,19 @@
 import { SyntaxNode } from 'tree-sitter';
 import { Point, SimpleRange, Language } from '@ariadnejs/types';
 
+/**
+ * Special constant for module-level calls (calls not within any function)
+ */
+export const MODULE_CONTEXT = "<module>";
+
 export interface FunctionCallInfo {
-  caller_name: string;
+  caller_name: string;  // Use MODULE_CONTEXT for module-level calls
   callee_name: string;
   location: Point;
   file_path: string;
+  line?: number;        // Line number of the call
+  column?: number;      // Column number of the call
+  is_async?: boolean;   // Whether the call is async
   is_method_call: boolean;
   is_constructor_call: boolean;
   arguments_count: number;

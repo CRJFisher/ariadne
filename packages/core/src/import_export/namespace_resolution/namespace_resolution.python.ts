@@ -18,7 +18,6 @@ import { Def, Import } from '@ariadnejs/types';
 import {
   NamespaceExport,
   NamespaceResolutionContext,
-  resolve_namespace_exports
 } from './namespace_resolution';
 
 /**

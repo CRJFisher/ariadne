@@ -5,7 +5,7 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Point, SimpleRange, Language, Def } from '@ariadnejs/types';
+import { Point, Language, Def } from '@ariadnejs/types';
 
 export interface MethodCallInfo {
   caller_name: string;

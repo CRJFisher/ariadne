@@ -16,6 +16,7 @@ import { find_function_calls_rust } from './function_calls.rust';
 export {
   FunctionCallInfo,
   FunctionCallContext,
+  MODULE_CONTEXT,
   is_function_call_node,
   get_call_expression_types,
   extract_callee_name,
