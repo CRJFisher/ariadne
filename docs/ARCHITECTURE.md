@@ -14,7 +14,7 @@ This document defines the information architecture for the Ariadne repository, e
 // User calls this single function
 const graph = await generate_code_graph({
   root_path: "/project",
-  include_patterns: ["src/**/*.ts"]
+  include_patterns: ["src/**/*.ts"],
 });
 
 // Then queries the results
@@ -50,7 +50,7 @@ Result: `FileAnalysis` containing scopes, local calls, imports/exports, types, c
 
 [`generate_code_graph()`](/packages/core/src/code_graph.ts) orchestrates global assembly modules to combine file analyses:
 
-**Global Assembly Modules** (resolve/build/*_graph/*_hierarchy pattern):
+**Global Assembly Modules** (resolve/build/_\_graph/_\_hierarchy pattern):
 
 - [`/import_export/module_graph`](/packages/core/src/import_export/module_graph) - Builds `ModuleGraph` from imports/exports
 - [`/import_export/namespace_resolution`](/packages/core/src/import_export/namespace_resolution) - Resolves namespace members
@@ -160,37 +160,5 @@ This flexibility allows consistent structure while enabling domain-appropriate p
 
 ### Type Location Policy
 
-All **public API types** must be defined in the `@ariadnejs/types` package (`/packages/types`). This provides:
-
-1. **Single source of truth** - All consumers use the same type definitions
-2. **Clear API boundaries** - Public vs internal types are explicitly separated  
-3. **Versioning control** - Type changes are tracked through package versioning
-4. **Documentation** - All public types are in one discoverable location
-
-Internal implementation types remain in `/packages/core` and are not exported.
-
-### Type Immutability
-
-All public types enforce immutability using TypeScript's `readonly` modifiers and utility types:
-
-```typescript
-// All properties are readonly by default
-export interface FunctionNode {
-  readonly symbol: SymbolId;
-  readonly file_path: FilePath;
-  readonly calls: readonly CallEdge[];
-  // ...
-}
-
-// Collections use immutable variants
-export interface CodeGraph {
-  readonly files: ReadonlyMap<FilePath, FileAnalysis>;
-  readonly modules: DeepReadonly<ModuleGraph>;
-  // ...
-}
-```
-
-This ensures:
-- **Predictable behavior** - Data structures cannot be accidentally mutated
-- **Type safety** - TypeScript prevents mutation at compile time
-- **Functional programming** - Encourages pure transformations
+- All **public API types** must be defined in the `@ariadnejs/types` package (`/packages/types`).
+- Internal implementation types remain in `/packages/core` and are not exported.
