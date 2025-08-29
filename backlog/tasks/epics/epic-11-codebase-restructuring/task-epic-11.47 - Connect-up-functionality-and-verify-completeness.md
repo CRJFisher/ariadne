@@ -27,3 +27,4 @@ Make sure the `index.ts` files are using the correct dispatcher/marshaler patter
 - [ ] All code is properly documented
 - [ ] All code is properly tested
 - [ ] All code is properly documented
+- [ ] All 'shared' (cross-module) types are in the packages/types package
