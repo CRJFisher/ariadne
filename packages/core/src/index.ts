@@ -26,4 +26,16 @@ export {
   type ResolvedConstructorCall
 } from './call_graph/call_resolution';
 
+// Symbol construction utilities
+export {
+  construct_symbol,
+  parse_symbol,
+  construct_function_symbol,
+  construct_method_symbol,
+  construct_class_symbol,
+  SPECIAL_SYMBOLS,
+  type SymbolComponents,
+  type ParsedSymbol
+} from './utils';
+
 // That's it! Everything else is internal implementation details.

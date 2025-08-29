@@ -77,6 +77,7 @@ export interface ClassInfo {
   readonly docstring?: DocString;
   readonly decorators?: readonly DecoratorName[];
   readonly methods: readonly MethodInfo[];
+  readonly properties: readonly PropertyInfo[];
 }
 
 export interface MethodInfo {

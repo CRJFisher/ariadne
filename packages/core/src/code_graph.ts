@@ -67,6 +67,7 @@ import {
   ResolvedSymbol,
   // Class types
   ClassHierarchy,
+  MethodNode,
 } from "@ariadnejs/types";
 import {
   scan_files,
@@ -377,8 +378,6 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
         },
         methods: class_methods,
         properties: [], // TODO: Extract properties
-        extends: undefined, // TODO: Extract parent class
-        implements: [], // TODO: Extract implements
         is_abstract: false, // TODO: Extract actual abstract status
         is_exported: false, // TODO: Extract export status
         base_classes: [], // TODO: Extract base classes
@@ -411,6 +410,7 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
  */
 function build_call_graph(analyses: FileAnalysis[]): CallGraph {
   const functions = new Map<string, FunctionNode>();
+  const methods = new Map<string, MethodNode>();
   const calls: CallEdge[] = [];
   const resolved_calls = new Map<string, ResolvedCall[]>();
   const call_chains = new Map<string, CallChain>();
@@ -418,7 +418,7 @@ function build_call_graph(analyses: FileAnalysis[]): CallGraph {
   // Build function nodes
   for (const analysis of analyses) {
     for (const func of analysis.functions) {
-      const symbol = func.id;
+      const symbol = func.name;
       functions.set(symbol, {
         symbol,
         file_path: analysis.file_path,
