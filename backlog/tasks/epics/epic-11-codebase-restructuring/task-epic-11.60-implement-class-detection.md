@@ -71,12 +71,12 @@ From ARCHITECTURE_ISSUES.md:
 
 ### Testing
 
-- [x] `/inheritance/class_detection/class_detection.test.ts` with test contracts for all languages
-- [x] Test basic class detection
-- [x] Test inheritance detection
-- [x] Test generic parameters
-- [x] Test nested classes
-- [x] Test abstract/interface patterns
+- [ ] `/inheritance/class_detection/class_detection.test.ts` with test contracts for all languages
+- [ ] Test basic class detection
+- [ ] Test inheritance detection
+- [ ] Test generic parameters
+- [ ] Test nested classes
+- [ ] Test abstract/interface patterns
 
 ### Integration
 
@@ -199,10 +199,10 @@ Fully implemented the class detection module with complete support for all 4 lan
      - Derive macros
      - Visibility modifiers (pub, pub(crate), etc.)
 
-4. **Test Coverage** (`class_detection.test.ts`):
-   - Comprehensive test contracts for all languages
-   - Tests for basic classes, inheritance, generics, nested classes
-   - Edge cases: empty classes, anonymous classes, decorators
+4. **Test Coverage**: NOT IMPLEMENTED YET
+   - Tests need to be written for all language implementations
+   - Should cover basic classes, inheritance, generics, nested classes
+   - Should test edge cases: empty classes, anonymous classes, decorators
 
 ### Key Design Decisions
 
