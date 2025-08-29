@@ -155,3 +155,42 @@ export function process_feature(
 - **Transformation**: Language-specific reshapes the output format (e.g., import path resolution rules)
 
 This flexibility allows consistent structure while enabling domain-appropriate processing for each feature.
+
+## Type System
+
+### Type Location Policy
+
+All **public API types** must be defined in the `@ariadnejs/types` package (`/packages/types`). This provides:
+
+1. **Single source of truth** - All consumers use the same type definitions
+2. **Clear API boundaries** - Public vs internal types are explicitly separated  
+3. **Versioning control** - Type changes are tracked through package versioning
+4. **Documentation** - All public types are in one discoverable location
+
+Internal implementation types remain in `/packages/core` and are not exported.
+
+### Type Immutability
+
+All public types enforce immutability using TypeScript's `readonly` modifiers and utility types:
+
+```typescript
+// All properties are readonly by default
+export interface FunctionNode {
+  readonly symbol: SymbolId;
+  readonly file_path: FilePath;
+  readonly calls: readonly CallEdge[];
+  // ...
+}
+
+// Collections use immutable variants
+export interface CodeGraph {
+  readonly files: ReadonlyMap<FilePath, FileAnalysis>;
+  readonly modules: DeepReadonly<ModuleGraph>;
+  // ...
+}
+```
+
+This ensures:
+- **Predictable behavior** - Data structures cannot be accidentally mutated
+- **Type safety** - TypeScript prevents mutation at compile time
+- **Functional programming** - Encourages pure transformations
