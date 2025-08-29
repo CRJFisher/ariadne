@@ -44,7 +44,7 @@ Due to the complexity and critical nature, this task MUST be broken into smaller
 - Implement ProcessingContext accumulation
 - Ensure data flows from layer to layer
 
-#### 11.62.3-11.62.8: Individual Integration Tasks
+#### 11.62.3-11.62.10: Individual Integration Tasks
 
 **Do in parallel or sequence** - Each critical dependency gets its own sub-task
 
@@ -171,6 +171,18 @@ Update code_graph.ts to build and pass this context.
 **Dependency**: ImportInfo[] from import_resolution
 **Current**: Duplicates import extraction
 **Impact**: Inconsistent import handling
+
+### task-epic-11.62.9: Add Namespace Import Detection
+
+**Dependency**: Enhanced ImportInfo with namespace support
+**Current**: Namespace imports not properly detected
+**Impact**: Cannot resolve namespace member access
+
+### task-epic-11.62.10: Track Type-Only Imports
+
+**Dependency**: Enhanced ImportInfo with type-only flag
+**Current**: No distinction between runtime and type-only imports
+**Impact**: Cannot optimize or handle circular type dependencies
 
 ---
 

@@ -49,10 +49,10 @@ Each file is analyzed independently to extract local information without needing
 #### Existing Modules:
 
 - [`/import_export/import_resolution`](/packages/core/src/import_export/import_resolution) - Extracts import declarations
-  - **TODO**: Add namespace import detection (`import * as name`) - See task 11.70
-  - **TODO**: Add type-only import tracking for TypeScript - See task 11.71
+  - **TODO**: Add namespace import detection (`import * as name`) - See task 11.62.9
+  - **TODO**: Add type-only import tracking for TypeScript - See task 11.62.10
 - [`/import_export/export_detection`](/packages/core/src/import_export/export_detection) - Detects export statements
-  - **TODO**: Add type-only export tracking for TypeScript - See task 11.71
+  - **TODO**: Add type-only export tracking for TypeScript - See task 11.62.10
 
 #### Missing Modules:
 

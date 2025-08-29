@@ -1,12 +1,12 @@
 ---
-id: task-epic-11.70
+id: task-epic-11.62.9
 title: Add Namespace Import Detection and Resolution
 status: To Do
 assignee: []
 created_date: "2025-08-29"
-labels: [epic-11, layer-2, import-export, per-file-analysis]
-dependencies: []
-parent_task_id: epic-11
+labels: [epic-11, sub-task, layer-2, import-export, integration]
+dependencies: [task-epic-11.62.1]
+parent_task_id: task-epic-11.62
 ---
 
 ## Description

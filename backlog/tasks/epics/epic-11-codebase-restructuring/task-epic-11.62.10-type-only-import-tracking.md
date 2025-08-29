@@ -1,12 +1,12 @@
 ---
-id: task-epic-11.71
+id: task-epic-11.62.10
 title: Track Type-Only Imports for TypeScript
 status: To Do
 assignee: []
 created_date: "2025-08-29"
-labels: [epic-11, layer-2, import-export, typescript-specific]
-dependencies: []
-parent_task_id: epic-11
+labels: [epic-11, sub-task, layer-2, import-export, typescript-specific, integration]
+dependencies: [task-epic-11.62.1]
+parent_task_id: task-epic-11.62
 ---
 
 ## Description

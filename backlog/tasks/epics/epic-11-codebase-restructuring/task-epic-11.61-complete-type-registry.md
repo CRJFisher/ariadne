@@ -66,8 +66,8 @@ A stub was created at `/packages/core/src/type_analysis/type_registry/index.ts` 
 
 - [x] Integrate with module_graph for import resolution
 - [ ] Resolve types through re-exports - **Requires task 11.69**
-- [ ] Handle namespace imports (e.g., `import * as foo`) - **Requires task 11.70**
-- [ ] Track type-only imports (TypeScript) - **Requires task 11.71**
+- [ ] Handle namespace imports (e.g., `import * as foo`) - **Requires task 11.62.9**
+- [ ] Track type-only imports (TypeScript) - **Requires task 11.62.10**
 
 ### Language-Specific Support
 
@@ -240,12 +240,12 @@ The following features were identified as gaps but require separate tasks:
    - Need to trace through re-export chains to find actual definitions
    - Type registry would consume the resolved information
 
-2. **Namespace Import Support** (task 11.70)
+2. **Namespace Import Support** (task 11.62.9)
    - Belongs in import_resolution (Layer 2)
    - Need to detect and extract namespace imports during per-file analysis
    - Type registry would consume namespace information for member resolution
 
-3. **Type-Only Import Tracking** (task 11.71)
+3. **Type-Only Import Tracking** (task 11.62.10)
    - Belongs in import_resolution (Layer 2)
    - TypeScript-specific feature to mark imports as type-only
    - Type registry would know these are compile-time only
