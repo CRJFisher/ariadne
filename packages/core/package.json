@@ -43,6 +43,8 @@
   "homepage": "https://github.com/CRJFisher/ariadne#readme",
   "dependencies": {
     "@ariadnejs/types": "0.5.15",
+    "@types/glob": "^8.1.0",
+    "glob": "^11.0.3",
     "tree-sitter": "0.21.1",
     "tree-sitter-javascript": "0.21.4",
     "tree-sitter-python": "0.21.0",
