@@ -20,7 +20,8 @@
 // - Type exports need different handling than value exports
 // - Track whether export is type-only (TypeScript)
 
-import { Def, Ref, ScopeGraph, Language, Point } from '@ariadnejs/types';
+import { Language } from '@ariadnejs/types';
+import { Point } from '../../ast/types';
 
 /**
  * Result of export detection for a single export
