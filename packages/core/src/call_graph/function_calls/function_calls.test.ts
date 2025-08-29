@@ -9,11 +9,8 @@ import TypeScript from 'tree-sitter-typescript';
 import Python from 'tree-sitter-python';
 import Rust from 'tree-sitter-rust';
 import { Language } from '@ariadnejs/types';
-import { 
-  find_function_calls,
-  FunctionCallContext,
-  FunctionCallInfo
-} from './index';
+import { find_function_calls } from './index';
+import { FunctionCallContext } from './function_calls';
 
 describe('Function Call Detection', () => {
   

@@ -1,36 +1,17 @@
 /**
- * Common constructor call detection and type tracking logic
+ * Common constructor call detection logic
  * 
- * Provides shared functionality for detecting constructor calls and tracking
- * the types of variables assigned from constructors across languages
+ * Provides shared functionality for detecting constructor calls across languages
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language } from '@ariadnejs/types';
-import { Point } from '../../ast/types';
-
-export interface ConstructorCallInfo {
-  constructor_name: string; // Name of the class/type being instantiated
-  location: Point;
-  file_path: string;
-  arguments_count: number;
-  assigned_to?: string; // Variable name if constructor result is assigned
-  is_new_expression: boolean; // Uses 'new' keyword (JS/TS)
-  is_factory_method: boolean; // Factory method pattern (e.g., Type::new())
-}
+import { Language, ConstructorCallInfo } from '@ariadnejs/types';
 
 export interface ConstructorCallContext {
   source_code: string;
   file_path: string;
   language: Language;
   ast_root: SyntaxNode;
-}
-
-export interface TypeAssignment {
-  variable_name: string;
-  type_name: string;
-  constructor_location: Point;
-  scope: 'local' | 'global' | 'member';
 }
 
 /**
@@ -311,61 +292,3 @@ export function is_factory_method_pattern(
   return false;
 }
 
-/**
- * Get the scope of a variable assignment
- */
-export function get_assignment_scope(
-  node: SyntaxNode,
-  language: Language
-): 'local' | 'global' | 'member' {
-  let current = node.parent;
-  
-  while (current) {
-    // Check if we're inside a function/method
-    if (current.type === 'function_declaration' ||
-        current.type === 'function_expression' ||
-        current.type === 'arrow_function' ||
-        current.type === 'method_definition' ||
-        current.type === 'function_definition' ||
-        current.type === 'function_item') {
-      return 'local';
-    }
-    
-    // Check if we're assigning to a class member
-    if (language === 'python' && current.type === 'assignment') {
-      const left = current.child(0);
-      if (left && left.type === 'attribute') {
-        const object = left.childForFieldName('object');
-        if (object && object.text === 'self') {
-          return 'member';
-        }
-      }
-    }
-    
-    // Check for class property assignment in JS/TS
-    if ((language === 'javascript' || language === 'typescript') &&
-        current.type === 'public_field_definition') {
-      return 'member';
-    }
-    
-    current = current.parent;
-  }
-  
-  return 'global';
-}
-
-/**
- * Create a type assignment record for a constructor call
- */
-export function create_type_assignment(
-  constructor_call: ConstructorCallInfo,
-  variable_name: string,
-  scope: 'local' | 'global' | 'member'
-): TypeAssignment {
-  return {
-    variable_name,
-    type_name: constructor_call.constructor_name,
-    constructor_location: constructor_call.location,
-    scope
-  };
-}

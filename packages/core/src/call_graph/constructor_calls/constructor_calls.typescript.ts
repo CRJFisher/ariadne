@@ -3,12 +3,11 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language } from '@ariadnejs/types';
+import { ConstructorCallInfo } from '@ariadnejs/types';
 import { 
-  find_constructor_calls_javascript,
-  get_type_assignments_javascript 
+  find_constructor_calls_javascript
 } from './constructor_calls.javascript';
-import { ConstructorCallInfo, ConstructorCallContext, TypeAssignment } from './constructor_calls';
+import { ConstructorCallContext } from './constructor_calls';
 
 /**
  * Find all constructor calls in TypeScript code
@@ -53,15 +52,6 @@ function find_typescript_specific_constructors(
   return calls;
 }
 
-/**
- * Get type assignments from constructor calls
- */
-export function get_type_assignments_typescript(
-  context: ConstructorCallContext
-): TypeAssignment[] {
-  // TypeScript can use the same logic as JavaScript
-  return get_type_assignments_javascript(context);
-}
 
 /**
  * Walk the AST tree

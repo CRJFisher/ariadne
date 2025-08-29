@@ -1,7 +1,7 @@
 import { ParameterName, TypeString, FilePath, FunctionName, ClassName, MethodName, PropertyName, DocString, DecoratorName } from './aliases';
 
 export interface Location {
-  readonly file_path?: string;
+  readonly file_path?: FilePath;
   readonly line: number;
   readonly column: number;
   readonly end_line?: number;

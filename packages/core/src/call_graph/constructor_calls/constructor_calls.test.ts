@@ -8,17 +8,11 @@ import JavaScript from 'tree-sitter-javascript';
 import TypeScript from 'tree-sitter-typescript';
 import Python from 'tree-sitter-python';
 import Rust from 'tree-sitter-rust';
-import { Language } from '@ariadnejs/types';
 import { 
   find_constructor_calls,
   get_type_assignments,
-  ConstructorCallContext,
-  ConstructorCallInfo,
-  TypeAssignment,
-  filter_with_assignments,
-  filter_new_expressions,
-  create_type_map
 } from './index';
+import { ConstructorCallContext } from './constructor_calls';
 
 describe('Constructor Call Detection', () => {
   
@@ -275,57 +269,6 @@ fn main() {
       const qualifiedCall = calls.find(c => c.constructor_name === 'Option::Some');
       const unqualifiedCall = calls.find(c => c.constructor_name === 'Some');
       expect(qualifiedCall || unqualifiedCall).toBeDefined();
-    });
-  });
-  
-  describe('Utility Functions', () => {
-    it('should filter constructor calls with assignments', () => {
-      const calls: ConstructorCallInfo[] = [
-        {
-          constructor_name: 'ClassA',
-          location: { row: 0, column: 0 },
-          file_path: 'test.js',
-          arguments_count: 0,
-          assigned_to: 'varA',
-          is_new_expression: true,
-          is_factory_method: false
-        },
-        {
-          constructor_name: 'ClassB',
-          location: { row: 1, column: 0 },
-          file_path: 'test.js',
-          arguments_count: 0,
-          assigned_to: undefined,
-          is_new_expression: true,
-          is_factory_method: false
-        }
-      ];
-      
-      const withAssignments = filter_with_assignments(calls);
-      expect(withAssignments).toHaveLength(1);
-      expect(withAssignments[0].constructor_name).toBe('ClassA');
-    });
-    
-    it('should create type map from assignments', () => {
-      const assignments: TypeAssignment[] = [
-        {
-          variable_name: 'obj1',
-          type_name: 'MyClass',
-          constructor_location: { row: 0, column: 0 },
-          scope: 'local'
-        },
-        {
-          variable_name: 'obj2',
-          type_name: 'AnotherClass',
-          constructor_location: { row: 1, column: 0 },
-          scope: 'local'
-        }
-      ];
-      
-      const typeMap = create_type_map(assignments);
-      expect(typeMap.size).toBe(2);
-      expect(typeMap.get('obj1')).toBe('MyClass');
-      expect(typeMap.get('obj2')).toBe('AnotherClass');
     });
   });
 });

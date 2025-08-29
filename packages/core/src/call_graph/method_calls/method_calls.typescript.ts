@@ -3,9 +3,9 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language } from '@ariadnejs/types';
 import { find_method_calls_javascript } from './method_calls.javascript';
-import { MethodCallInfo, MethodCallContext } from './method_calls';
+import { MethodCallContext } from './method_calls';
+import { MethodCallInfo } from '@ariadnejs/types';
 
 /**
  * Find all method calls in TypeScript code

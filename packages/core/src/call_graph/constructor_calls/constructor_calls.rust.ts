@@ -3,18 +3,14 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language } from '@ariadnejs/types';
+import { ConstructorCallInfo } from '@ariadnejs/types';
 import {
-  ConstructorCallInfo,
   ConstructorCallContext,
-  TypeAssignment,
   is_constructor_call_node,
   extract_constructor_name,
   find_assignment_target,
   count_constructor_arguments,
-  is_factory_method_pattern,
-  get_assignment_scope,
-  create_type_assignment
+  is_factory_method_pattern
 } from './constructor_calls';
 
 /**
@@ -219,44 +215,6 @@ function is_enum_variant_construction(
   }
   
   return false;
-}
-
-/**
- * Get type assignments from constructor calls
- */
-export function get_type_assignments_rust(
-  context: ConstructorCallContext
-): TypeAssignment[] {
-  const assignments: TypeAssignment[] = [];
-  const calls = find_constructor_calls_rust(context);
-  
-  for (const call of calls) {
-    if (call.assigned_to) {
-      const scope = get_assignment_scope_rust(context.ast_root, call.location);
-      const assignment = create_type_assignment(call, call.assigned_to, scope);
-      assignments.push(assignment);
-    }
-  }
-  
-  return assignments;
-}
-
-/**
- * Get the scope of an assignment at a specific location
- */
-function get_assignment_scope_rust(
-  root: SyntaxNode,
-  location: { row: number; column: number }
-): 'local' | 'global' | 'member' {
-  // Find the node at this location
-  const node = root.descendantForPosition(
-    { row: location.row, column: location.column },
-    { row: location.row, column: location.column + 1 }
-  );
-  
-  if (!node) return 'global';
-  
-  return get_assignment_scope(node, 'rust');
 }
 
 /**

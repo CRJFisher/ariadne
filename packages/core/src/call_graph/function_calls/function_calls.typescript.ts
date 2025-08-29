@@ -3,9 +3,9 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language } from '@ariadnejs/types';
+import { FunctionCallContext } from './function_calls';
+import { FunctionCallInfo } from '@ariadnejs/types';
 import { find_function_calls_javascript } from './function_calls.javascript';
-import { FunctionCallInfo, FunctionCallContext } from './function_calls';
 
 /**
  * Find all function calls in TypeScript code
@@ -110,10 +110,9 @@ function extract_decorator_call(
     caller_name,
     callee_name,
     location: {
-      row: node.startPosition.row,
+      line: node.startPosition.row,
       column: node.startPosition.column
     },
-    file_path: context.file_path,
     is_method_call: false,
     is_constructor_call: false,
     arguments_count: is_call ? count_decorator_arguments(expr) : 0

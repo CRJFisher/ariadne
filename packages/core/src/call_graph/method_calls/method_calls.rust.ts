@@ -3,14 +3,12 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language } from '@ariadnejs/types';
+import { Language, MethodCallInfo } from '@ariadnejs/types';
 import {
-  MethodCallInfo,
   MethodCallContext,
   is_method_call_node,
   extract_receiver_name,
   extract_method_name,
-  is_static_method_call,
   is_chained_method_call,
   count_method_arguments
 } from './method_calls';
@@ -63,10 +61,9 @@ function extract_rust_method_call(
     method_name,
     receiver_name,
     location: {
-      row: node.startPosition.row,
+      line: node.startPosition.row,
       column: node.startPosition.column
     },
-    file_path: context.file_path,
     is_static_method: is_associated,
     is_chained_call: is_chained_method_call(node, language),
     arguments_count: count_method_arguments(node, language)

@@ -3,9 +3,8 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language } from '@ariadnejs/types';
+import { Language, FunctionCallInfo } from '@ariadnejs/types';
 import {
-  FunctionCallInfo,
   FunctionCallContext,
   is_function_call_node,
   extract_callee_name,
@@ -33,13 +32,12 @@ export function find_function_calls_javascript(
       const caller_name = get_enclosing_function_name(node, context.source_code, language) || '<module>';
       
       const call_info: FunctionCallInfo = {
-        caller_name,
         callee_name,
+        caller_name,
         location: {
-          row: node.startPosition.row,
+          line: node.startPosition.row,
           column: node.startPosition.column
         },
-        file_path: context.file_path,
         is_method_call: is_method_call(node, language),
         is_constructor_call: is_constructor_call_js(node, context.source_code),
         arguments_count: count_arguments(node, language)

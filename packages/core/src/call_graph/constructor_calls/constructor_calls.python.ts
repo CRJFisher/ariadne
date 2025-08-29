@@ -3,17 +3,13 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language } from '@ariadnejs/types';
+import { ConstructorCallInfo } from '@ariadnejs/types';
 import {
-  ConstructorCallInfo,
   ConstructorCallContext,
-  TypeAssignment,
   is_constructor_call_node,
   extract_constructor_name,
   find_assignment_target,
-  count_constructor_arguments,
-  get_assignment_scope,
-  create_type_assignment
+  count_constructor_arguments
 } from './constructor_calls';
 
 /**
@@ -104,60 +100,6 @@ function count_python_arguments(node: SyntaxNode): number {
   }
   
   return count;
-}
-
-/**
- * Get type assignments from constructor calls
- */
-export function get_type_assignments_python(
-  context: ConstructorCallContext
-): TypeAssignment[] {
-  const assignments: TypeAssignment[] = [];
-  const calls = find_constructor_calls_python(context);
-  
-  for (const call of calls) {
-    if (call.assigned_to) {
-      const scope = get_assignment_scope_python(context.ast_root, call.location, context.source_code);
-      const assignment = create_type_assignment(call, call.assigned_to, scope);
-      assignments.push(assignment);
-    }
-  }
-  
-  return assignments;
-}
-
-/**
- * Get the scope of an assignment at a specific location
- */
-function get_assignment_scope_python(
-  root: SyntaxNode,
-  location: { row: number; column: number },
-  source: string
-): 'local' | 'global' | 'member' {
-  // Find the node at this location
-  const node = root.descendantForPosition(
-    { row: location.row, column: location.column },
-    { row: location.row, column: location.column + 1 }
-  );
-  
-  if (!node) return 'global';
-  
-  // Check for self.attribute assignment
-  let current = node.parent;
-  while (current) {
-    if (current.type === 'assignment') {
-      const left = current.child(0);
-      if (left && left.type === 'attribute') {
-        const object = left.childForFieldName('object');
-        if (object && object.text === 'self') {
-          return 'member';
-        }
-      }
-    }
-    current = current.parent;
-  }
-  
-  return get_assignment_scope(node, 'python');
 }
 
 /**

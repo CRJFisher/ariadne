@@ -3,10 +3,9 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language } from '@ariadnejs/types';
+import { FunctionCallContext } from './function_calls';
+import { FunctionCallInfo, Language } from '@ariadnejs/types';
 import {
-  FunctionCallInfo,
-  FunctionCallContext,
   extract_callee_name,
   get_enclosing_function_name,
   count_arguments
@@ -63,10 +62,9 @@ function extract_rust_call(
     caller_name,
     callee_name,
     location: {
-      row: node.startPosition.row,
+      line: node.startPosition.row,
       column: node.startPosition.column
     },
-    file_path: context.file_path,
     is_method_call: is_method,
     is_constructor_call: is_constructor,
     arguments_count: count_arguments(node, language)
@@ -161,10 +159,9 @@ function extract_macro_call(
     caller_name,
     callee_name: macro_name + '!', // Add ! to indicate it's a macro
     location: {
-      row: node.startPosition.row,
+      line: node.startPosition.row,
       column: node.startPosition.column
     },
-    file_path: context.file_path,
     is_method_call: false,
     is_constructor_call: false,
     arguments_count: args_count

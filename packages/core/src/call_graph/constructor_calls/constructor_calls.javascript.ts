@@ -3,18 +3,14 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language } from '@ariadnejs/types';
+import { ConstructorCallInfo } from '@ariadnejs/types';
 import {
-  ConstructorCallInfo,
   ConstructorCallContext,
-  TypeAssignment,
   is_constructor_call_node,
   extract_constructor_name,
   find_assignment_target,
   count_constructor_arguments,
-  uses_new_keyword,
-  get_assignment_scope,
-  create_type_assignment
+  uses_new_keyword
 } from './constructor_calls';
 
 /**
@@ -107,45 +103,6 @@ function extract_javascript_factory_call(
     is_new_expression: false,
     is_factory_method: true
   };
-}
-
-/**
- * Get type assignments from constructor calls
- */
-export function get_type_assignments_javascript(
-  context: ConstructorCallContext
-): TypeAssignment[] {
-  const assignments: TypeAssignment[] = [];
-  const calls = find_constructor_calls_javascript(context);
-  
-  for (const call of calls) {
-    if (call.assigned_to) {
-      const scope = get_assignment_scope_js(context.ast_root, call.location, context.source_code);
-      const assignment = create_type_assignment(call, call.assigned_to, scope);
-      assignments.push(assignment);
-    }
-  }
-  
-  return assignments;
-}
-
-/**
- * Get the scope of an assignment at a specific location
- */
-function get_assignment_scope_js(
-  root: SyntaxNode,
-  location: { row: number; column: number },
-  source: string
-): 'local' | 'global' | 'member' {
-  // Find the node at this location
-  const node = root.descendantForPosition(
-    { row: location.row, column: location.column },
-    { row: location.row, column: location.column + 1 }
-  );
-  
-  if (!node) return 'global';
-  
-  return get_assignment_scope(node, 'javascript');
 }
 
 /**

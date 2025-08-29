@@ -53,18 +53,10 @@ export interface CallGraphOptions {
 // Raw Call Detection Types
 // ============================================================================
 
-export interface Point {
-  readonly row: number;
-  readonly column: number;
-}
-
 export interface FunctionCallInfo {
   readonly caller_name: string; // Use MODULE_CONTEXT for module-level calls
   readonly callee_name: string;
-  readonly location: Point;
-  readonly file_path: string;
-  readonly line?: number; // Line number of the call
-  readonly column?: number; // Column number of the call
+  readonly location: Location;
   readonly is_async?: boolean; // Whether the call is async
   readonly is_method_call: boolean;
   readonly is_constructor_call: boolean;
@@ -75,8 +67,7 @@ export interface MethodCallInfo {
   readonly caller_name: string;
   readonly method_name: string;
   readonly receiver_name: string; // The object/instance the method is called on
-  readonly location: Point;
-  readonly file_path: string;
+  readonly location: Location;
   readonly is_static_method: boolean; // Static/class method vs instance method
   readonly is_chained_call: boolean; // Part of a method chain
   readonly arguments_count: number;
@@ -84,8 +75,7 @@ export interface MethodCallInfo {
 
 export interface ConstructorCallInfo {
   readonly constructor_name: string; // Name of the class/type being instantiated
-  readonly location: Point;
-  readonly file_path: string;
+  readonly location: Location;
   readonly arguments_count: number;
   readonly assigned_to?: string; // Variable name if constructor result is assigned
   readonly is_new_expression: boolean; // Uses 'new' keyword (JS/TS)
