@@ -17,6 +17,10 @@ import {
 import { ScopeTree, build_scope_tree } from "./scope_analysis/scope_tree";
 import { ImportInfo } from "./import_export/import_resolution";
 import { ExportInfo, detect_exports } from "./import_export/export_detection";
+import { extract_imports, extract_exports } from "./scope_analysis/symbol_resolution";
+import { find_class_definitions, ClassDefinition } from "./inheritance/class_detection";
+import { process_file_for_types, FileTypeTracker, TypeTrackingContext } from "./type_analysis/type_tracking";
+import { register_class, TypeRegistry } from "./type_analysis/type_registry";
 import { build_module_graph } from "./import_export/module_graph";
 import { TypeInfo } from "./type_analysis/type_tracking";
 import Parser from 'tree-sitter';
@@ -176,21 +180,6 @@ export async function generate_code_graph(
   };
 }
 
-/**
- * Temporary stub for resolve_imports until proper implementation
- */
-function resolve_imports(tree: Parser.Tree, metadata: any): ImportInfo[] {
-  // TODO: Implement proper import resolution
-  return [];
-}
-
-/**
- * Temporary stub for track_variable_types until proper implementation
- */
-function track_variable_types(tree: Parser.Tree, metadata: any): TypeInfo[] {
-  // TODO: Implement proper type tracking
-  return [];
-}
 
 /**
  * Analyze a single file
@@ -224,7 +213,7 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
   
   tree = parser.parse(file.source_code);
 
-  // SCOPE TREE
+  // LAYER 1: SCOPE ANALYSIS
   const source_code = file.source_code || "";
   const scopes = build_scope_tree(
     tree.rootNode,
@@ -233,26 +222,49 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
     file.file_path
   );
 
-  // IMPORT/EXPORT ANALYSIS
-  const imports = resolve_imports(tree, metadata);
+  // LAYER 2: LOCAL STRUCTURE DETECTION
+  // Extract imports (needs scope tree)
+  const imports = extract_imports(
+    tree.rootNode,
+    source_code,
+    file.language,
+    file.file_path
+  );
 
-  // Create ExportDetectionContext for detect_exports
-  const exportContext = {
+  // Extract exports
+  const exports = extract_exports(
+    tree.rootNode,
+    source_code,
+    file.language,
+    file.file_path
+  );
+  
+  // Detect class definitions
+  const classDetectionContext = {
+    source_code,
+    file_path: file.file_path,
+    language: file.language,
+    ast_root: tree.rootNode,
+  };
+  const class_definitions = find_class_definitions(classDetectionContext);
+
+  // LAYER 3: LOCAL TYPE ANALYSIS (needs scope tree, imports, classes)
+  const typeTrackingContext: TypeTrackingContext = {
     language: file.language,
     file_path: file.file_path,
-    config: {
-      get_scope_graph: () => undefined, // We don't have ScopeGraph, using our ScopeTree
-      get_source_code: () => source_code,
-    },
+    debug: false
   };
-  const exports = detect_exports(exportContext);
-
-  // TYPE ANALYSIS
+  const type_tracker = process_file_for_types(
+    source_code,
+    tree.rootNode,
+    typeTrackingContext,
+    scopes,      // From Layer 1
+    imports,     // From Layer 2
+    class_definitions // From Layer 2
+  );
   const type_map = new Map<string, TypeInfo>();
-  const types = track_variable_types(tree, metadata);
-  // TODO: Fix type tracking - TypeInfo doesn't have variable_name
 
-  // CALL ANALYSIS
+  // LAYER 4: LOCAL CALL ANALYSIS (needs type info from Layer 3)
   const function_call_context = {
     source_code,
     file_path: file.file_path,
@@ -267,7 +279,12 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
     language: file.language,
     ast_root: tree.rootNode,
   };
-  const method_calls = find_method_calls(method_call_context);
+  // Pass type tracker to method calls (optional parameter)
+  const method_calls = find_method_calls(
+    method_call_context,
+    type_tracker.variable_types,  // From Layer 3
+    undefined  // class_hierarchy not available yet (Layer 6)
+  );
 
   const constructor_call_context = {
     source_code,
@@ -275,7 +292,11 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
     language: file.language,
     ast_root: tree.rootNode,
   };
-  const constructor_calls = find_constructor_calls(constructor_call_context);
+  // Note: type_registry is from Layer 6, not available in per-file phase
+  const constructor_calls = find_constructor_calls(
+    constructor_call_context,
+    undefined  // type_registry not available yet (Layer 6)
+  );
 
   // FUNCTIONS AND CLASSES
   const functions: FunctionInfo[] = [];
@@ -370,6 +391,8 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
     classes,
     imports: [], // TODO: Convert ImportInfo[] to ImportStatement[]
     exports: [], // TODO: Convert ExportInfo[] to ExportStatement[]
+    variables: [], // TODO: Extract variable declarations
+    errors: [], // TODO: Collect any analysis errors
     scopes,
     function_calls,
     method_calls,
