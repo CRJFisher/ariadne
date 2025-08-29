@@ -8,7 +8,8 @@
  * with comprehensive chain analysis capabilities that were planned but not implemented.
  */
 
-import { Point, Language, FunctionCall, CallGraphNode, CallGraphEdge } from '@ariadnejs/types';
+import { Language } from '@ariadnejs/types';
+import { Point } from '../../ast/types';
 import { FunctionCallInfo } from '../function_calls';
 import { MethodCallInfo } from '../method_calls';
 import { ConstructorCallInfo } from '../constructor_calls';
@@ -62,11 +63,9 @@ export interface CallChainAnalysisResult {
 
 /**
  * Build call chains from function calls
- * 
- * Accepts both new call info formats and existing FunctionCall format for compatibility
  */
 export function build_call_chains(
-  calls: (FunctionCallInfo | MethodCallInfo | ConstructorCallInfo | FunctionCall)[],
+  calls: (FunctionCallInfo | MethodCallInfo | ConstructorCallInfo)[],
   context: CallChainContext
 ): CallChainAnalysisResult {
   const max_depth = context.max_depth || 10;
@@ -124,11 +123,9 @@ export function build_call_chains(
 
 /**
  * Build a call graph (adjacency list) from calls
- * 
- * Handles both new call info formats and existing FunctionCall format
  */
 function build_call_graph(
-  calls: (FunctionCallInfo | MethodCallInfo | ConstructorCallInfo | FunctionCall)[]
+  calls: (FunctionCallInfo | MethodCallInfo | ConstructorCallInfo)[]
 ): Map<string, Set<string>> {
   const graph = new Map<string, Set<string>>();
   
@@ -136,11 +133,7 @@ function build_call_graph(
     let caller: string;
     let callee: string;
     
-    if ('caller_def' in call && 'called_def' in call) {
-      // FunctionCall from existing types
-      caller = call.caller_def.name;
-      callee = call.called_def.name;
-    } else if ('caller_name' in call) {
+    if ('caller_name' in call) {
       // FunctionCallInfo or MethodCallInfo
       caller = call.caller_name;
       callee = 'callee_name' in call ? call.callee_name : (call as any).method_name;
@@ -171,7 +164,7 @@ function traverse_chain(
   recursive_chains: CallChain[],
   max_depth: number,
   depth: number,
-  original_calls: (FunctionCallInfo | MethodCallInfo | ConstructorCallInfo | FunctionCall)[]
+  original_calls: (FunctionCallInfo | MethodCallInfo | ConstructorCallInfo)[]
 ): void {
   // Check for max depth
   if (depth >= max_depth) {
@@ -267,15 +260,10 @@ function create_chain(
 function find_call_info(
   caller: string,
   callee: string,
-  calls: (FunctionCallInfo | MethodCallInfo | ConstructorCallInfo | FunctionCall)[]
+  calls: (FunctionCallInfo | MethodCallInfo | ConstructorCallInfo)[]
 ): any {
   for (const call of calls) {
-    if ('caller_def' in call && 'called_def' in call) {
-      // FunctionCall from existing types
-      if (call.caller_def.name === caller && call.called_def.name === callee) {
-        return call;
-      }
-    } else if ('caller_name' in call && call.caller_name === caller) {
+    if ('caller_name' in call && call.caller_name === caller) {
       if ('callee_name' in call && call.callee_name === callee) {
         return call;
       }
@@ -298,13 +286,11 @@ function determine_call_type(
 ): 'function' | 'method' | 'constructor' {
   if (!call_info) return 'function';
   
-  // Handle FunctionCall from existing types
-  if ('is_constructor_call' in call_info && call_info.is_constructor_call) return 'constructor';
-  if ('is_method_call' in call_info && call_info.is_method_call) return 'method';
-  
   // Handle new call info types
   if ('constructor_name' in call_info) return 'constructor';
   if ('method_name' in call_info) return 'method';
+  if ('is_constructor_call' in call_info && call_info.is_constructor_call) return 'constructor';
+  if ('is_method_call' in call_info && call_info.is_method_call) return 'method';
   return 'function';
 }
 
@@ -431,46 +417,3 @@ export function get_recursive_functions(
   return recursive_funcs;
 }
 
-/**
- * Convert from existing CallGraph structure to call chain analysis
- * 
- * This bridges the gap between the existing call graph representation
- * and our chain analysis capabilities
- */
-export function analyze_call_graph(
-  nodes: Map<string, CallGraphNode>,
-  edges: CallGraphEdge[],
-  top_level_nodes: string[],
-  language: Language,
-  options?: {
-    max_depth?: number;
-    track_recursion?: boolean;
-  }
-): CallChainAnalysisResult {
-  // Convert edges to FunctionCall format
-  const calls: FunctionCall[] = [];
-  
-  for (const edge of edges) {
-    const from_node = nodes.get(edge.from);
-    const to_node = nodes.get(edge.to);
-    
-    if (from_node && to_node) {
-      const call: FunctionCall = {
-        caller_def: from_node.definition,
-        called_def: to_node.definition,
-        call_location: edge.location.start,
-        is_method_call: edge.call_type === 'method',
-        is_constructor_call: false // Would need additional info
-      };
-      calls.push(call);
-    }
-  }
-  
-  const context: CallChainContext = {
-    language,
-    max_depth: options?.max_depth || 10,
-    track_recursion: options?.track_recursion !== false
-  };
-  
-  return build_call_chains(calls, context);
-}

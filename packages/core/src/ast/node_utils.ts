@@ -1,63 +1,69 @@
 /**
  * AST node utility functions
- * 
+ *
  * Provides helpers for working with tree-sitter AST nodes
  */
 
-import { SyntaxNode } from 'tree-sitter';
-import { SimpleRange, Point } from '@ariadnejs/types';
+import { SyntaxNode } from "tree-sitter";
+import { Range, Point } from "./types";
 
 /**
  * Convert a tree-sitter node to a SimpleRange
  */
-export function node_to_range(node: SyntaxNode): SimpleRange {
+export function node_to_range(node: SyntaxNode): Range {
   return {
     start: {
       row: node.startPosition.row,
-      column: node.startPosition.column
+      column: node.startPosition.column,
     },
     end: {
       row: node.endPosition.row,
-      column: node.endPosition.column
-    }
+      column: node.endPosition.column,
+    },
   };
 }
 
 /**
  * Check if a point is within a range
  */
-export function point_in_range(point: Point, range: SimpleRange): boolean {
+export function point_in_range(point: Point, range: Range): boolean {
   if (point.row < range.start.row || point.row > range.end.row) {
     return false;
   }
-  
+
   if (point.row === range.start.row && point.column < range.start.column) {
     return false;
   }
-  
+
   if (point.row === range.end.row && point.column > range.end.column) {
     return false;
   }
-  
+
   return true;
 }
 
 /**
  * Check if two ranges overlap
  */
-export function ranges_overlap(range1: SimpleRange, range2: SimpleRange): boolean {
+export function ranges_overlap(range1: Range, range2: Range): boolean {
   // Check if range1 ends before range2 starts
-  if (range1.end.row < range2.start.row ||
-      (range1.end.row === range2.start.row && range1.end.column < range2.start.column)) {
+  if (
+    range1.end.row < range2.start.row ||
+    (range1.end.row === range2.start.row &&
+      range1.end.column < range2.start.column)
+  ) {
     return false;
   }
-  
+
   // Check if range2 ends before range1 starts
-  if (range2.end.row < range1.start.row ||
-      (range2.end.row === range1.start.row && range2.end.column < range1.start.column)) {
+  if (
+    range2.end.row < range1.start.row ||
+    (range2.end.row === range1.start.row &&
+      range2.end.column < range1.start.column)
+  ) {
     return false;
   }
-  
+
   return true;
 }
 
@@ -76,14 +82,14 @@ export function find_parent_of_type(
   type: string | string[]
 ): SyntaxNode | null {
   const types = Array.isArray(type) ? type : [type];
-  
+
   while (node) {
     if (types.includes(node.type)) {
       return node;
     }
     node = node.parent;
   }
-  
+
   return null;
 }
 
@@ -96,14 +102,14 @@ export function find_children_of_type(
 ): SyntaxNode[] {
   const types = Array.isArray(type) ? type : [type];
   const children: SyntaxNode[] = [];
-  
+
   for (let i = 0; i < node.childCount; i++) {
     const child = node.child(i);
     if (child && types.includes(child.type)) {
       children.push(child);
     }
   }
-  
+
   return children;
 }
 
@@ -115,12 +121,12 @@ export function walk_tree(
   callback: (node: SyntaxNode) => void | boolean
 ): void {
   const shouldContinue = callback(node);
-  
+
   // If callback returns false, stop walking this branch
   if (shouldContinue === false) {
     return;
   }
-  
+
   for (let i = 0; i < node.childCount; i++) {
     const child = node.child(i);
     if (child) {
@@ -132,16 +138,18 @@ export function walk_tree(
 /**
  * Get the enclosing function or method node for a given node
  */
-export function get_enclosing_function(node: SyntaxNode | null): SyntaxNode | null {
+export function get_enclosing_function(
+  node: SyntaxNode | null
+): SyntaxNode | null {
   const functionTypes = [
-    'function_declaration',
-    'function_expression',
-    'arrow_function',
-    'method_definition',
-    'function_definition',
-    'lambda'
+    "function_declaration",
+    "function_expression",
+    "arrow_function",
+    "method_definition",
+    "function_definition",
+    "lambda",
   ];
-  
+
   return find_parent_of_type(node, functionTypes);
 }
 
@@ -149,7 +157,7 @@ export function get_enclosing_function(node: SyntaxNode | null): SyntaxNode | nu
  * Check if a node is an identifier
  */
 export function is_identifier(node: SyntaxNode): boolean {
-  return node.type === 'identifier' || node.type === 'property_identifier';
+  return node.type === "identifier" || node.type === "property_identifier";
 }
 
 /**
@@ -157,12 +165,12 @@ export function is_identifier(node: SyntaxNode): boolean {
  */
 export function get_identifiers(node: SyntaxNode): SyntaxNode[] {
   const identifiers: SyntaxNode[] = [];
-  
+
   walk_tree(node, (n) => {
     if (is_identifier(n)) {
       identifiers.push(n);
     }
   });
-  
+
   return identifiers;
 }

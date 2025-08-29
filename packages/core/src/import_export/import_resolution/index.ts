@@ -5,7 +5,7 @@
  * following the functional paradigm from Architecture.md
  */
 
-import { Def, Import, Ref, Language } from '@ariadnejs/types';
+import { Language, ExportedSymbol, ImportedSymbol } from '@ariadnejs/types';
 import {
   ImportInfo,
   ImportResolutionConfig,
@@ -18,8 +18,8 @@ import {
   resolve_import,
   resolve_all_imports,
   resolve_module_path,
-  find_exported_definition,
-  create_module_definition,
+  find_exported_symbol,
+  create_module_export,
   get_module_exports
 } from './import_resolution';
 
@@ -57,8 +57,8 @@ export {
   is_default_import,
   is_named_import,
   is_index_file,
-  find_exported_definition,
-  create_module_definition
+  find_exported_symbol,
+  create_module_export
 };
 
 // Re-export language-specific utilities

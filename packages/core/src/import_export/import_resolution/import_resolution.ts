@@ -9,15 +9,15 @@
  * - src_old/import_resolution/ (namespace import resolution)
  */
 
-import { Def, Import, ScopeGraph, Language } from '@ariadnejs/types';
+import { Language, ExportedSymbol, ImportedSymbol, ModuleNode, ModuleGraph } from '@ariadnejs/types';
 import * as path from 'path';
 
 /**
  * Import information with resolved definition
  */
 export interface ImportInfo {
-  import_statement: Import;
-  imported_function: Def;
+  import_statement: ImportedSymbol;
+  imported_function: ExportedSymbol;
   local_name: string;
 }
 
@@ -25,7 +25,8 @@ export interface ImportInfo {
  * Configuration for import resolution
  */
 export interface ImportResolutionConfig {
-  get_file_graph: (file_path: string) => ScopeGraph | undefined;
+  get_module_graph: () => ModuleGraph | undefined;
+  get_module_node: (file_path: string) => ModuleNode | undefined;
   get_file_exports?: (file_path: string) => Set<string>;
   resolve_module_path?: (from_file: string, import_path: string) => string | null;
   debug?: boolean;
@@ -47,86 +48,90 @@ export interface ImportResolutionContext {
  * Result of namespace export resolution
  */
 export type NamespaceExport = 
-  | Def 
+  | ExportedSymbol 
   | { is_namespace_reexport: true; target_module: string };
 
 /**
  * Check if an import is a namespace import (import * as name)
  */
 export function is_namespace_import(
-  imp: Import,
+  imp: ImportedSymbol,
   language: Language
 ): boolean {
-  // Most languages use * to indicate namespace import
-  // Python uses specific patterns for namespace imports
-  if (language === 'python') {
-    // In Python, imports without specific names are namespace imports
-    return !imp.source_name || imp.source_name === '*';
-  }
-  
-  return imp.source_name === '*';
+  // Check the is_namespace flag
+  return imp.is_namespace === true;
 }
 
 /**
  * Check if an import is a default import
  */
 export function is_default_import(
-  imp: Import,
+  imp: ImportedSymbol,
   language: Language
 ): boolean {
-  // JavaScript/TypeScript have default imports
-  if (language === 'javascript' || language === 'typescript') {
-    return imp.source_name === 'default' || 
-           (!imp.source_name && !is_namespace_import(imp, language));
-  }
-  
-  // Other languages don't have default imports in the same way
-  return false;
+  // Check the is_default flag
+  return imp.is_default === true;
 }
 
 /**
  * Check if an import is a named import
  */
 export function is_named_import(
-  imp: Import,
+  imp: ImportedSymbol,
   language: Language
 ): boolean {
   return !is_namespace_import(imp, language) && 
-         !is_default_import(imp, language) &&
-         imp.source_name !== undefined;
+         !is_default_import(imp, language);
 }
 
 /**
  * Resolve a single import to its definition
  */
 export function resolve_import(
-  imp: Import,
+  imp: ImportedSymbol,
   context: ImportResolutionContext
-): Def | undefined {
+): ExportedSymbol | undefined {
   const { language, file_path, config } = context;
   
-  // If there's no source module, we can't resolve
-  if (!imp.source_module) {
+  // Get the module node for the current file to find imports
+  const module_node = config.get_module_node(file_path);
+  if (!module_node) {
     if (config.debug) {
-      console.log(`No source module for import ${imp.name}`);
+      console.log(`No module node found for ${file_path}`);
+    }
+    return undefined;
+  }
+  
+  // Find the imported module that contains this symbol
+  let target_module_path: string | undefined;
+  for (const [module_path, imported_module] of Array.from(module_node.imports)) {
+    if (imported_module.symbols.some(s => s.name === imp.name)) {
+      target_module_path = module_path;
+      break;
+    }
+  }
+  
+  if (!target_module_path) {
+    if (config.debug) {
+      console.log(`Could not find source module for import ${imp.name}`);
     }
     return undefined;
   }
   
   // Resolve the module path
-  const target_file = config.resolve_module_path?.(file_path, imp.source_module);
+  const target_file = config.resolve_module_path?.(file_path, target_module_path);
   if (!target_file) {
     if (config.debug) {
-      console.log(`Could not resolve module path for ${imp.source_module}`);
+      console.log(`Could not resolve module path for ${target_module_path}`);
     }
     return undefined;
   }
   
-  // Get the target file's graph
-  const target_graph = config.get_file_graph(target_file);
-  if (!target_graph) {
+  // Get the target module node
+  const target_module = config.get_module_node(target_file);
+  if (!target_module) {
     if (config.debug) {
-      console.log(`No graph found for ${target_file}`);
+      console.log(`No module node found for ${target_file}`);
     }
     return undefined;
   }
@@ -136,76 +141,68 @@ export function resolve_import(
   
   if (is_namespace_import(imp, language)) {
     // For namespace imports, create a synthetic module definition
-    return create_module_definition(imp, target_file);
+    return create_module_export(imp, target_file);
   } else if (is_default_import(imp, language)) {
     // Look for default export
     export_name = 'default';
-  } else if (is_named_import(imp, language)) {
-    // Use the source name for named imports
-    export_name = imp.source_name || imp.name;
   } else {
-    // Use the import name as fallback
+    // Use the import name for named imports
     export_name = imp.name;
   }
   
-  // Find the exported definition
-  const exported_def = find_exported_definition(target_graph, export_name, config);
+  // Find the exported symbol
+  const exported_symbol = find_exported_symbol(target_module, export_name, config);
   
-  if (config.debug && !exported_def) {
+  if (config.debug && !exported_symbol) {
     console.log(`Could not find export ${export_name} in ${target_file}`);
   }
   
-  return exported_def;
+  return exported_symbol;
 }
 
 /**
- * Find an exported definition in a graph
+ * Find an exported symbol in a module
  */
-export function find_exported_definition(
-  graph: ScopeGraph,
+export function find_exported_symbol(
+  module_node: ModuleNode,
   export_name: string,
   config: ImportResolutionConfig
-): Def | undefined {
-  // First try to find by is_exported flag
-  const defs = graph.getNodes<Def>('definition');
-  let exported_def = defs.find(def => 
-    def.name === export_name && def.is_exported === true
-  );
+): ExportedSymbol | undefined {
+  // Look in the module's exports
+  const exported_symbol = module_node.exports.get(export_name);
   
-  if (exported_def) {
-    return exported_def;
+  if (exported_symbol) {
+    return exported_symbol;
   }
   
-  // If not found by is_exported flag, check the export tracker if available
+  // If not found, check the export tracker if available
   if (config.get_file_exports) {
-    const file_path = defs[0]?.file_path;
-    if (file_path) {
-      const exports = config.get_file_exports(file_path);
-      if (exports?.has(export_name)) {
-        exported_def = defs.find(def => def.name === export_name);
+    const exports = config.get_file_exports(module_node.path);
+    if (exports?.has(export_name)) {
+      // If export tracker says it exists, look again in all exports
+      for (const [name, symbol] of Array.from(module_node.exports)) {
+        if (name === export_name) {
+          return symbol;
+        }
       }
     }
   }
   
-  return exported_def;
+  return undefined;
 }
 
 /**
- * Create a synthetic module definition for namespace imports
+ * Create a synthetic module export for namespace imports
  */
-export function create_module_definition(
-  imp: Import,
+export function create_module_export(
+  imp: ImportedSymbol,
   target_file: string
-): Def {
+): ExportedSymbol {
   return {
-    id: -1,
-    kind: 'definition',
     name: imp.name, // The local name of the namespace
-    symbol_kind: 'module',
-    file_path: target_file,
-    symbol_id: `${target_file}#module`,
-    range: imp.range,
-    is_exported: true
+    kind: 'variable', // Namespace is treated as a variable
+    location: { line: 1, column: 1, file_path: target_file }, // Default location
+    is_default: false
   };
 }
 
@@ -219,40 +216,40 @@ export function get_module_exports(
 ): Map<string, NamespaceExport> {
   const exports = new Map<string, NamespaceExport>();
   
-  // Get the scope graph for the target file
-  const target_graph = config.get_file_graph(target_file);
-  if (!target_graph) {
+  // Get the module node for the target file
+  const target_module = config.get_module_node(target_file);
+  if (!target_module) {
     if (config.debug) {
-      console.log(`No graph found for ${target_file}`);
+      console.log(`No module node found for ${target_file}`);
     }
     return exports;
   }
   
-  // Collect all exported definitions
-  const defs = target_graph.getNodes<Def>('definition');
-  for (const def of defs) {
-    if (def.is_exported === true) {
-      exports.set(def.name, def);
-    }
+  // Collect all exported symbols
+  for (const [export_name, exported_symbol] of Array.from(target_module.exports)) {
+    exports.set(export_name, exported_symbol);
   }
   
   // Check export tracker if available
   if (config.get_file_exports) {
     const file_exports = config.get_file_exports(target_file);
     if (file_exports) {
-      for (const export_name of file_exports) {
+      for (const export_name of Array.from(file_exports)) {
         if (!exports.has(export_name)) {
-          const def = defs.find(d => d.name === export_name);
-          if (def) {
-            exports.set(export_name, def);
-          }
+          // Create a basic exported symbol if not found
+          const symbol: ExportedSymbol = {
+            name: export_name,
+            kind: 'variable', // Default kind
+            location: { line: 1, column: 1, file_path: target_file }
+          };
+          exports.set(export_name, symbol);
         }
       }
     }
   }
   
   // Find re-exported namespaces
-  find_reexported_namespaces(target_graph, exports, language);
+  find_reexported_namespaces(target_module, exports, language);
   
   return exports;
 }
@@ -261,22 +258,23 @@ export function get_module_exports(
  * Find re-exported namespaces in the target file
  */
 function find_reexported_namespaces(
-  target_graph: ScopeGraph,
+  target_module: ModuleNode,
   exports: Map<string, NamespaceExport>,
   language: Language
 ): void {
-  const imports = target_graph.getAllImports();
-  
-  for (const imp of imports) {
-    if (is_namespace_import(imp, language)) {
-      // Check if this namespace might be re-exported
-      // This is a simplified check - full implementation would need AST analysis
-      // For now, we'll mark namespace imports that have the same name as exports
-      if (exports.has(imp.name)) {
-        exports.set(imp.name, {
-          is_namespace_reexport: true,
-          target_module: imp.source_module || ''
-        });
+  // Look through all imports in the module
+  for (const [module_path, imported_module] of Array.from(target_module.imports)) {
+    for (const imported_symbol of imported_module.symbols) {
+      if (is_namespace_import(imported_symbol, language)) {
+        // Check if this namespace might be re-exported
+        // This is a simplified check - full implementation would need AST analysis
+        // For now, we'll mark namespace imports that have the same name as exports
+        if (exports.has(imported_symbol.name)) {
+          exports.set(imported_symbol.name, {
+            is_namespace_reexport: true,
+            target_module: module_path
+          });
+        }
       }
     }
   }
@@ -290,23 +288,25 @@ export function resolve_all_imports(
   config: ImportResolutionConfig,
   language: Language
 ): ImportInfo[] {
-  const graph = config.get_file_graph(file_path);
-  if (!graph) {
+  const module_node = config.get_module_node(file_path);
+  if (!module_node) {
     return [];
   }
   
-  const imports = graph.getAllImports();
   const import_infos: ImportInfo[] = [];
   const context: ImportResolutionContext = { language, file_path, config };
   
-  for (const imp of imports) {
-    const resolved = resolve_import(imp, context);
-    if (resolved) {
-      import_infos.push({
-        import_statement: imp,
-        imported_function: resolved,
-        local_name: imp.name
-      });
+  // Go through all imported modules and their symbols
+  for (const [module_path, imported_module] of Array.from(module_node.imports)) {
+    for (const imported_symbol of imported_module.symbols) {
+      const resolved = resolve_import(imported_symbol, context);
+      if (resolved) {
+        import_infos.push({
+          import_statement: imported_symbol,
+          imported_function: resolved,
+          local_name: imported_symbol.local_name || imported_symbol.name
+        });
+      }
     }
   }
   

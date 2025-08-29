@@ -9,29 +9,14 @@ import {
   find_paths_between,
   get_longest_chain,
   get_recursive_functions,
-  analyze_call_graph,
   CallChainContext,
   CallChain
 } from './call_chain_analysis';
 import { FunctionCallInfo } from '../function_calls';
 import { MethodCallInfo } from '../method_calls';
 import { ConstructorCallInfo } from '../constructor_calls';
-import { FunctionCall, CallGraphNode, CallGraphEdge, Def } from '@ariadnejs/types';
 
 describe('call_chain_analysis', () => {
-  // Helper to create a mock definition
-  const create_def = (name: string, file_path: string = 'test.js'): Def => ({
-    id: 1,
-    kind: 'definition',
-    name,
-    symbol_id: `${file_path}#${name}`,
-    symbol_kind: 'function',
-    range: {
-      start: { row: 0, column: 0 },
-      end: { row: 10, column: 0 }
-    },
-    file_path
-  });
 
   describe('build_call_chains', () => {
     it('should build simple linear chain', () => {
@@ -185,26 +170,6 @@ describe('call_chain_analysis', () => {
       expect(result.max_chain_depth).toBeLessThanOrEqual(2);
     });
 
-    it('should handle FunctionCall from existing types', () => {
-      const calls: FunctionCall[] = [
-        {
-          caller_def: create_def('main'),
-          called_def: create_def('helper'),
-          call_location: { row: 1, column: 0 },
-          is_method_call: false,
-          is_constructor_call: false
-        }
-      ];
-
-      const context: CallChainContext = {
-        language: 'javascript'
-      };
-
-      const result = build_call_chains(calls, context);
-      
-      expect(result.call_graph.has('main')).toBe(true);
-      expect(result.call_graph.get('main')?.has('helper')).toBe(true);
-    });
   });
 
   describe('detect_recursion', () => {
@@ -388,58 +353,4 @@ describe('call_chain_analysis', () => {
     });
   });
 
-  describe('analyze_call_graph', () => {
-    it('should convert CallGraph to chain analysis', () => {
-      const nodes = new Map<string, CallGraphNode>();
-      const mainDef = create_def('main');
-      const fooDef = create_def('foo');
-      
-      nodes.set('test.js#main', {
-        symbol: 'test.js#main',
-        definition: mainDef,
-        calls: [{
-          symbol: 'test.js#foo',
-          range: {
-            start: { row: 1, column: 0 },
-            end: { row: 1, column: 3 }
-          },
-          kind: 'function',
-          resolved_definition: fooDef
-        }],
-        called_by: [],
-        is_exported: false
-      });
-      
-      nodes.set('test.js#foo', {
-        symbol: 'test.js#foo',
-        definition: fooDef,
-        calls: [],
-        called_by: ['test.js#main'],
-        is_exported: false
-      });
-
-      const edges: CallGraphEdge[] = [
-        {
-          from: 'test.js#main',
-          to: 'test.js#foo',
-          location: {
-            start: { row: 1, column: 0 },
-            end: { row: 1, column: 3 }
-          },
-          call_type: 'direct'
-        }
-      ];
-
-      const result = analyze_call_graph(
-        nodes,
-        edges,
-        ['test.js#main'],
-        'javascript',
-        { max_depth: 10 }
-      );
-
-      expect(result.call_graph.has('main')).toBe(true);
-      expect(result.call_graph.get('main')?.has('foo')).toBe(true);
-    });
-  });
 });
