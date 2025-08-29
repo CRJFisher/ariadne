@@ -5,7 +5,7 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Def, Language } from '@ariadnejs/types';
+import { Language } from '@ariadnejs/types';
 import {
   TypeInfo,
   FileTypeTracker,

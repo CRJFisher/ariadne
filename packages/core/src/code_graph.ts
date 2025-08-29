@@ -70,17 +70,6 @@ import {
   CodeFile,
 } from "./project/file_scanner";
 
-// ============================================================================
-// Internal Types (not part of public API)
-// ============================================================================
-
-
-
-
-
-
-
-
 /**
  * Generate a comprehensive code graph from a codebase
  *
@@ -264,33 +253,33 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
   // TODO: Fix type tracking - TypeInfo doesn't have variable_name
 
   // CALL ANALYSIS
-  const functionCallContext = {
+  const function_call_context = {
     source_code,
     file_path: file.file_path,
     language: file.language,
     ast_root: tree.rootNode,
   };
-  const function_calls = find_function_calls(functionCallContext);
+  const function_calls = find_function_calls(function_call_context);
 
-  const methodCallContext = {
+  const method_call_context = {
     source_code,
     file_path: file.file_path,
     language: file.language,
     ast_root: tree.rootNode,
   };
-  const method_calls = find_method_calls(methodCallContext);
+  const method_calls = find_method_calls(method_call_context);
 
-  const constructorCallContext = {
+  const constructor_call_context = {
     source_code,
     file_path: file.file_path,
     language: file.language,
     ast_root: tree.rootNode,
   };
-  const constructor_calls = find_constructor_calls(constructorCallContext);
+  const constructor_calls = find_constructor_calls(constructor_call_context);
 
   // FUNCTIONS AND CLASSES
-  const functions: ExtractedFunctionInfo[] = [];
-  const classes: ExtractedClassInfo[] = [];
+  const functions: FunctionInfo[] = [];
+  const classes: ClassInfo[] = [];
 
   // Extract functions
   for (const [_, scope] of scopes.nodes.entries()) {
@@ -302,7 +291,6 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
       const is_method = parent_scope?.type === "class";
 
       functions.push({
-        id: `${file.file_path}#${function_name}`,
         name: function_name,
         location: {
           file_path: file.file_path,
@@ -311,8 +299,6 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
           end_line: scope.range.end.row,
           end_column: scope.range.end.column,
         },
-        type: is_method ? "method" : "function",
-        parent_class: is_method ? parent_scope?.metadata?.name : undefined,
         signature: {
           parameters: [],
           is_async: false,
@@ -355,7 +341,6 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
       }
 
       classes.push({
-        id: `${file.file_path}#class:${class_name}`,
         name: class_name,
         location: {
           file_path: file.file_path,

@@ -14,7 +14,7 @@
 // TODO: Integration with Import Resolution
 // - Add import type tracking
 
-import { Def, Language } from '@ariadnejs/types';
+import { Language } from '@ariadnejs/types';
 
 /**
  * Type information for a variable at a specific position
