@@ -79,53 +79,7 @@ import {
 
 
 
-/**
- * Internal file analysis result
- */
-interface InternalFileAnalysis {
-  file_path: string;
-  language: Language;
-  scopes: ScopeTree;
-  imports: ImportInfo[];
-  exports: ExportInfo[];
-  function_calls: FunctionCallInfo[];
-  method_calls: MethodCallInfo[];
-  constructor_calls: ConstructorCallInfo[];
-  types: Map<string, TypeInfo>;
-  functions: ExtractedFunctionInfo[];
-  classes: ExtractedClassInfo[];
-}
 
-/**
- * Internal function info with id
- */
-interface ExtractedFunctionInfo {
-  id: string;
-  name: string;
-  location: Location;
-  type?: "function" | "method" | "constructor";
-  parent_class?: string;
-  signature?: FunctionSignature;
-}
-
-/**
- * Internal class info with id  
- */
-interface ExtractedClassInfo {
-  id: string;
-  name: string;
-  location: Location;
-  methods: MethodInfo[];
-  properties: PropertyInfo[];
-  extends?: string;
-  implements?: string[];
-  is_abstract?: boolean;
-  is_exported?: boolean;
-  base_classes?: string[];
-  interfaces?: string[];
-  docstring?: string;
-  decorators?: string[];
-}
 
 /**
  * Generate a comprehensive code graph from a codebase
@@ -172,16 +126,7 @@ export async function generate_code_graph(
 
   // Convert internal analyses to FileAnalysis
   for (const analysis of analyses) {
-    const file_analysis: FileAnalysis = {
-      path: analysis.file_path,
-      language: analysis.language,
-      scopes: analysis.scopes,
-      imports: analysis.imports,
-      exports: analysis.exports,
-      functions: analysis.functions,
-      classes: analysis.classes,
-    };
-    files.set(analysis.file_path, file_analysis);
+    files.set(analysis.file_path, analysis);
 
     // Track language statistics
     const count = language_stats.get(analysis.language) || 0;
@@ -261,7 +206,7 @@ function track_variable_types(tree: Parser.Tree, metadata: any): TypeInfo[] {
 /**
  * Analyze a single file
  */
-async function analyze_file(file: CodeFile): Promise<InternalFileAnalysis> {
+async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
   const metadata = {
     language: file.language,
     file_path: file.file_path,
@@ -436,22 +381,22 @@ async function analyze_file(file: CodeFile): Promise<InternalFileAnalysis> {
   return {
     file_path: file.file_path,
     language: file.language,
+    functions,
+    classes,
+    imports: [], // TODO: Convert ImportInfo[] to ImportStatement[]
+    exports: [], // TODO: Convert ExportInfo[] to ExportStatement[]
     scopes,
-    imports,
-    exports,
     function_calls,
     method_calls,
     constructor_calls,
-    types: type_map,
-    functions,
-    classes,
+    type_info: type_map,
   };
 }
 
 /**
  * Build call graph from file analyses
  */
-function build_call_graph(analyses: InternalFileAnalysis[]): CallGraph {
+function build_call_graph(analyses: FileAnalysis[]): CallGraph {
   const functions = new Map<string, FunctionNode>();
   const calls: CallEdge[] = [];
   const resolved_calls = new Map<string, ResolvedCall[]>();
@@ -526,7 +471,7 @@ function build_call_graph(analyses: InternalFileAnalysis[]): CallGraph {
 /**
  * Build type index from file analyses
  */
-function build_type_index(analyses: InternalFileAnalysis[]): TypeIndex {
+function build_type_index(analyses: FileAnalysis[]): TypeIndex {
   const variables = new Map<string, VariableType>();
   const functions = new Map<string, FunctionSignature>();
   const definitions = new Map<string, TypeDefinition>();
@@ -561,7 +506,7 @@ function build_type_index(analyses: InternalFileAnalysis[]): TypeIndex {
 /**
  * Build symbol index from file analyses
  */
-function build_symbol_index(analyses: InternalFileAnalysis[]): SymbolIndex {
+function build_symbol_index(analyses: FileAnalysis[]): SymbolIndex {
   const definitions = new Map<string, Definition>();
   const usages = new Map<string, Usage[]>();
   const exports_by_file = new Map<string, ExportedSymbol[]>();

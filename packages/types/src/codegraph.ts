@@ -16,6 +16,11 @@ export interface FileAnalysis {
   readonly exports: readonly ExportStatement[];
   readonly variables?: readonly VariableDeclaration[];
   readonly errors?: readonly AnalysisError[];
+  readonly scopes?: any; // ScopeTree - TODO: move ScopeTree to types package
+  readonly function_calls?: readonly any[]; // FunctionCallInfo[] - TODO: move to types package
+  readonly method_calls?: readonly any[]; // MethodCallInfo[] - TODO: move to types package  
+  readonly constructor_calls?: readonly any[]; // ConstructorCallInfo[] - TODO: move to types package
+  readonly type_info?: ReadonlyMap<string, any>; // Map<string, TypeInfo> - TODO: move TypeInfo to types package
 }
 
 export interface ImportStatement {
