@@ -12,12 +12,19 @@ import {
   is_chained_method_call,
   count_method_arguments
 } from './method_calls';
+import { TypeInfo } from '../../type_analysis/type_tracking';
+import { 
+  resolve_receiver_type,
+  MethodCallWithType,
+  infer_defining_class
+} from './receiver_type_resolver';
 
 /**
  * Find all method calls in Rust code
  */
 export function find_method_calls_rust(
-  context: MethodCallContext
+  context: MethodCallContext,
+  type_map?: Map<string, TypeInfo[]>
 ): MethodCallInfo[] {
   const calls: MethodCallInfo[] = [];
   const language: Language = 'rust';
@@ -25,9 +32,9 @@ export function find_method_calls_rust(
   // Walk the AST to find all call expressions
   walk_tree(context.ast_root, (node) => {
     if (is_method_call_node(node, language)) {
-      const method_info = extract_rust_method_call(node, context, language);
+      const method_info = extract_rust_method_call(node, context, language, type_map);
       if (method_info) {
-        calls.push(method_info);
+        calls.push(method_info as MethodCallInfo);
       }
     }
   });
@@ -36,13 +43,14 @@ export function find_method_calls_rust(
 }
 
 /**
- * Extract Rust method call information
+ * Extract Rust method call information with type resolution
  */
 function extract_rust_method_call(
   node: SyntaxNode,
   context: MethodCallContext,
-  language: Language
-): MethodCallInfo | null {
+  language: Language,
+  type_map?: Map<string, TypeInfo[]>
+): MethodCallWithType | null {
   const receiver_name = extract_receiver_name(node, context.source_code, language);
   const method_name = extract_method_name(node, context.source_code, language);
   
@@ -56,10 +64,37 @@ function extract_rust_method_call(
   // Check if it's an associated function (static method)
   const is_associated = is_associated_function_call(node, context.source_code);
   
+  // Try to resolve the receiver type
+  let receiver_type: string | undefined;
+  let defining_class: string | undefined;
+  
+  // Get the receiver node to resolve its type
+  if (node.type === 'call_expression') {
+    const func = node.childForFieldName('function');
+    if (func?.type === 'field_expression') {
+      const value = func.childForFieldName('value');
+      if (value) {
+        receiver_type = resolve_receiver_type(value, type_map, context.source_code, language);
+        if (receiver_type) {
+          defining_class = infer_defining_class(method_name, receiver_type);
+        }
+      }
+    } else if (func?.type === 'scoped_identifier') {
+      // For associated functions (Type::method), the receiver type is the scope
+      const path = func.childForFieldName('path');
+      if (path) {
+        receiver_type = context.source_code.substring(path.startIndex, path.endIndex);
+        defining_class = receiver_type;
+      }
+    }
+  }
+  
   return {
     caller_name,
     method_name,
     receiver_name,
+    receiver_type,
+    defining_class,
     location: {
       line: node.startPosition.row,
       column: node.startPosition.column
@@ -160,7 +195,7 @@ function walk_tree(node: SyntaxNode, callback: (node: SyntaxNode) => void): void
  */
 export function is_trait_method_call(
   node: SyntaxNode,
-  source: string
+  _source: string
 ): boolean {
   const func = node.childForFieldName('function');
   if (!func) return false;
@@ -196,7 +231,7 @@ export function is_unsafe_method_call(
  */
 export function has_turbofish_syntax(
   node: SyntaxNode,
-  source: string
+  _source: string
 ): boolean {
   const func = node.childForFieldName('function');
   if (!func) return false;
@@ -217,7 +252,7 @@ export function has_turbofish_syntax(
  */
 export function is_ref_method_call(
   node: SyntaxNode,
-  source: string
+  _source: string
 ): boolean {
   const func = node.childForFieldName('function');
   if (!func || func.type !== 'field_expression') {

@@ -13,12 +13,19 @@ import {
   count_method_arguments,
   get_enclosing_class
 } from './method_calls';
+import { TypeInfo } from '../../type_analysis/type_tracking';
+import { 
+  resolve_receiver_type,
+  MethodCallWithType,
+  infer_defining_class
+} from './receiver_type_resolver';
 
 /**
  * Find all method calls in Python code
  */
 export function find_method_calls_python(
-  context: MethodCallContext
+  context: MethodCallContext,
+  type_map?: Map<string, TypeInfo[]>
 ): MethodCallInfo[] {
   const calls: MethodCallInfo[] = [];
   const language: Language = 'python';
@@ -26,9 +33,9 @@ export function find_method_calls_python(
   // Walk the AST to find all call nodes
   walk_tree(context.ast_root, (node) => {
     if (is_method_call_node(node, language)) {
-      const method_info = extract_python_method_call(node, context, language);
+      const method_info = extract_python_method_call(node, context, language, type_map);
       if (method_info) {
-        calls.push(method_info);
+        calls.push(method_info as MethodCallInfo);
       }
     }
   });
@@ -42,8 +49,9 @@ export function find_method_calls_python(
 function extract_python_method_call(
   node: SyntaxNode,
   context: MethodCallContext,
-  language: Language
-): MethodCallInfo | null {
+  language: Language,
+  type_map?: Map<string, TypeInfo[]>
+): MethodCallWithType | null {
   const receiver_name = extract_receiver_name(node, context.source_code, language);
   const method_name = extract_method_name(node, context.source_code, language);
   
@@ -58,10 +66,30 @@ function extract_python_method_call(
   const is_static = is_static_method_python(node, context.source_code, receiver_name);
   const is_class_method = is_classmethod_call(node, context.source_code, receiver_name);
   
+  // Try to resolve the receiver type
+  let receiver_type: string | undefined;
+  let defining_class: string | undefined;
+  
+  // Get the attribute node to resolve its type
+  if (node.type === 'call') {
+    const func = node.childForFieldName('function');
+    if (func?.type === 'attribute') {
+      const object = func.childForFieldName('object');
+      if (object) {
+        receiver_type = resolve_receiver_type(object, type_map, context.source_code, language);
+        if (receiver_type) {
+          defining_class = infer_defining_class(method_name, receiver_type);
+        }
+      }
+    }
+  }
+  
   return {
     caller_name,
     method_name,
     receiver_name,
+    receiver_type,
+    defining_class,
     location: {
       line: node.startPosition.row,
       column: node.startPosition.column

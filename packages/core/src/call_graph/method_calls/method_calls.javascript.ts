@@ -14,12 +14,19 @@ import {
   count_method_arguments,
   get_enclosing_class
 } from './method_calls';
+import { TypeInfo } from '../../type_analysis/type_tracking';
+import { 
+  resolve_receiver_type,
+  MethodCallWithType,
+  infer_defining_class
+} from './receiver_type_resolver';
 
 /**
  * Find all method calls in JavaScript code
  */
 export function find_method_calls_javascript(
-  context: MethodCallContext
+  context: MethodCallContext,
+  type_map?: Map<string, TypeInfo[]>
 ): MethodCallInfo[] {
   const calls: MethodCallInfo[] = [];
   const language: Language = 'javascript';
@@ -27,9 +34,9 @@ export function find_method_calls_javascript(
   // Walk the AST to find all call expressions
   walk_tree(context.ast_root, (node) => {
     if (is_method_call_node(node, language)) {
-      const method_info = extract_javascript_method_call(node, context, language);
+      const method_info = extract_javascript_method_call(node, context, language, type_map);
       if (method_info) {
-        calls.push(method_info);
+        calls.push(method_info as MethodCallInfo);
       }
     }
   });
@@ -38,13 +45,14 @@ export function find_method_calls_javascript(
 }
 
 /**
- * Extract JavaScript method call information
+ * Extract JavaScript method call information with type resolution
  */
 function extract_javascript_method_call(
   node: SyntaxNode,
   context: MethodCallContext,
-  language: Language
-): MethodCallInfo | null {
+  language: Language,
+  type_map?: Map<string, TypeInfo[]>
+): MethodCallWithType | null {
   const receiver_name = extract_receiver_name(node, context.source_code, language);
   const method_name = extract_method_name(node, context.source_code, language);
   
@@ -55,10 +63,29 @@ function extract_javascript_method_call(
   // Determine the caller (enclosing function or class)
   const caller_name = get_caller_context(node, context.source_code, language) || '<module>';
   
+  // Try to resolve the receiver type
+  let receiver_type: string | undefined;
+  let defining_class: string | undefined;
+  
+  // Get the receiver node to resolve its type
+  const member = node.type === 'call_expression' ? 
+    node.childForFieldName('function') : node;
+  if (member?.type === 'member_expression') {
+    const receiver_node = member.childForFieldName('object');
+    if (receiver_node) {
+      receiver_type = resolve_receiver_type(receiver_node, type_map, context.source_code, language);
+      if (receiver_type) {
+        defining_class = infer_defining_class(method_name, receiver_type);
+      }
+    }
+  }
+  
   return {
     caller_name,
     method_name,
     receiver_name,
+    receiver_type,
+    defining_class,
     location: {
       line: node.startPosition.row,
       column: node.startPosition.column

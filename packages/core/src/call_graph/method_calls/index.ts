@@ -34,16 +34,16 @@ export function find_method_calls(
 ): MethodCallInfo[] {
   switch (context.language) {
     case "javascript":
-      return find_method_calls_javascript(context);
+      return find_method_calls_javascript(context, type_map);
 
     case "typescript":
-      return find_method_calls_typescript(context);
+      return find_method_calls_typescript(context, type_map);
 
     case "python":
-      return find_method_calls_python(context);
+      return find_method_calls_python(context, type_map);
 
     case "rust":
-      return find_method_calls_rust(context);
+      return find_method_calls_rust(context, type_map);
 
     default:
       // Return empty array for unsupported languages

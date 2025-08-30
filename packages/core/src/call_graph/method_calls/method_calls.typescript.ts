@@ -6,6 +6,7 @@ import { SyntaxNode } from 'tree-sitter';
 import { find_method_calls_javascript } from './method_calls.javascript';
 import { MethodCallContext } from './method_calls';
 import { MethodCallInfo } from '@ariadnejs/types';
+import { TypeInfo } from '../../type_analysis/type_tracking';
 
 /**
  * Find all method calls in TypeScript code
@@ -16,13 +17,14 @@ import { MethodCallInfo } from '@ariadnejs/types';
  * - Abstract method calls
  */
 export function find_method_calls_typescript(
-  context: MethodCallContext
+  context: MethodCallContext,
+  type_map?: Map<string, TypeInfo[]>
 ): MethodCallInfo[] {
-  // Start with JavaScript detection
-  const calls = find_method_calls_javascript(context);
+  // Start with JavaScript detection, passing through type_map
+  const calls = find_method_calls_javascript(context, type_map);
   
   // Add TypeScript-specific method calls
-  const ts_calls = find_typescript_specific_method_calls(context);
+  const ts_calls = find_typescript_specific_method_calls(context, type_map);
   
   return [...calls, ...ts_calls];
 }
@@ -31,7 +33,8 @@ export function find_method_calls_typescript(
  * Find TypeScript-specific method call patterns
  */
 function find_typescript_specific_method_calls(
-  context: MethodCallContext
+  context: MethodCallContext,
+  type_map?: Map<string, TypeInfo[]>
 ): MethodCallInfo[] {
   const calls: MethodCallInfo[] = [];
   
