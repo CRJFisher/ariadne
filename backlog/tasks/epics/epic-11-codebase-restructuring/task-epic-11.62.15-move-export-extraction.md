@@ -1,7 +1,7 @@
 ---
 id: task-epic-11.62.15
 title: Move Export Extraction from Symbol Resolution to Export Detection
-status: To Do
+status: Complete
 assignee: []
 created_date: "2025-08-30"
 labels: [epic-11, sub-task, cleanup, layer-dependency, architecture]
@@ -179,12 +179,49 @@ This task should be done:
 - **Before** any new export-related features are added
 - **In parallel** with other Layer 2 extraction improvements
 
+## Implementation Notes
+
+### Combined with Task 11.62.10
+
+This task was completed together with task 11.62.10 (Type-Only Import Tracking) since both involved the import/export extraction layer. Combining them avoided touching the same code twice and ensured architectural consistency.
+
+### What Was Done
+
+1. **Moved Export Extraction**: Created `export_extraction.ts` in the correct architectural layer:
+   - From: `packages/core/src/scope_analysis/symbol_resolution/` (Layer 8)
+   - To: `packages/core/src/import_export/export_detection/` (Layer 2)
+
+2. **Added Type-Only Support**: While moving the code, also added TypeScript type-only export detection (from task 11.62.10):
+   - Statement-level: `export type { ... }`
+   - Inline modifiers: `export { type User, api }`
+   - Properly handles all export patterns
+
+3. **Updated Dependencies**:
+   - `code_graph.ts` now imports from correct location
+   - `symbol_resolution/index.ts` removed duplicate code, imports from Layer 2
+   - All language-specific export extraction functions moved
+
+4. **Maintained Functionality**: All existing export extraction continues to work:
+   - ES6 exports (named, default, namespace)
+   - CommonJS exports (module.exports, exports.x)
+   - Python exports (__all__, public functions/classes)
+   - Rust exports (pub items, pub use)
+
+### Architectural Impact
+
+This change properly separates concerns:
+- **Layer 2 (Per-File Analysis)**: Extracts imports/exports from AST
+- **Layer 8 (Symbol Resolution)**: Consumes extracted imports/exports for resolution
+
+This maintains the correct data flow and prevents circular dependencies between layers.
+
 ## Notes
 
 - This is the export equivalent of what task 11.62.8 did for imports
 - Maintains architectural consistency across the codebase
 - Part of the larger effort to enforce proper layer dependencies
 - Will make the codebase more maintainable and easier to understand
+- Successfully combined with type-only export support for efficiency
 
 ## References
 

@@ -85,38 +85,30 @@ export function extract_typescript_imports(
   root_node: SyntaxNode,
   source_code: string
 ): ImportInfo[] {
-  const imports = extract_javascript_imports(root_node, source_code);
+  const imports: ImportInfo[] = [];
+  const processed_nodes = new Set<SyntaxNode>();
   
-  // Add TypeScript-specific handling
   const visit = (node: SyntaxNode) => {
-    // Type-only imports: import type { Foo } from './foo'
-    if (node.type === 'import_statement') {
-      const import_clause = node.childForFieldName('import_clause');
-      if (import_clause) {
-        const type_keyword = import_clause.children.find(
-          child => child.type === 'type' && child.text === 'type'
-        );
-        if (type_keyword) {
-          // Mark these imports as type-only
-          const source_node = node.childForFieldName('source');
-          if (source_node) {
-            const module_source = extract_string_literal(source_node, source_code);
-            const type_imports = extract_import_specifiers(import_clause, source_code);
-            for (const imp of type_imports) {
-              imports.push({
-                name: imp.name,
-                source: module_source,
-                alias: imp.alias,
-                kind: 'named',
-                is_type_only: true,
-                location: node_to_location(node)
-              });
-            }
-          }
-        }
-      }
+    // Handle import statements
+    if (node.type === 'import_statement' && !processed_nodes.has(node)) {
+      processed_nodes.add(node);
+      const ts_imports = extract_typescript_import(node, source_code);
+      if (ts_imports) imports.push(...ts_imports);
     }
     
+    // Handle CommonJS require (same as JavaScript)
+    if (node.type === 'call_expression') {
+      const commonjs = extract_commonjs_require(node, source_code);
+      if (commonjs) imports.push(commonjs);
+    }
+    
+    // Handle dynamic import()
+    if (node.type === 'import' && node.parent?.type === 'call_expression') {
+      const dynamic = extract_dynamic_import(node.parent, source_code);
+      if (dynamic) imports.push(dynamic);
+    }
+    
+    // Continue traversal
     for (const child of node.children) {
       visit(child);
     }
@@ -186,6 +178,140 @@ export function extract_rust_imports(
   
   visit(root_node);
   return imports;
+}
+
+// --- Helper functions for TypeScript ---
+
+function extract_typescript_import(
+  import_node: SyntaxNode,
+  source_code: string
+): ImportInfo[] {
+  const imports: ImportInfo[] = [];
+  const source_node = import_node.childForFieldName('source');
+  if (!source_node) return imports;
+  
+  const module_source = extract_string_literal(source_node, source_code);
+  
+  // Check if this is a type-only import at the statement level
+  // Pattern: import type { ... } from '...' or import type * as ... from '...'
+  let statement_level_type = false;
+  // The 'type' keyword appears as a direct child of import_statement after 'import'
+  const children = import_node.children;
+  for (let i = 0; i < children.length; i++) {
+    if (children[i].type === 'import' && 
+        i + 1 < children.length && 
+        children[i + 1].type === 'type') {
+      statement_level_type = true;
+      break;
+    }
+  }
+  
+  // Find import_clause - it might be a field or just a child when 'type' keyword is present
+  let import_clause = import_node.childForFieldName('import_clause');
+  if (!import_clause) {
+    // When there's a 'type' keyword, import_clause is a child but not a field
+    import_clause = import_node.children.find(c => c.type === 'import_clause') || null;
+  }
+  
+  if (!import_clause) {
+    // Side-effect import: import './styles.css'
+    return [{
+      name: '<side-effect>',
+      source: module_source,
+      kind: 'dynamic',
+      location: node_to_location(import_node)
+    }];
+  }
+  
+  // Process import clause
+  for (const child of import_clause.children) {
+    if (child.type === 'identifier') {
+      // Default import: import foo from './foo' or import type Foo from './foo'
+      imports.push({
+        name: child.text,
+        source: module_source,
+        kind: 'default',
+        is_type_only: statement_level_type,
+        location: node_to_location(child)
+      });
+    } else if (child.type === 'namespace_import') {
+      // Namespace import: import * as foo from './foo' or import type * as foo from './foo'
+      // The identifier is a child, not a field
+      const identifier_node = child.children.find(c => c.type === 'identifier');
+      if (identifier_node) {
+        imports.push({
+          name: identifier_node.text,
+          source: module_source,
+          kind: 'namespace',
+          namespace_name: identifier_node.text,
+          is_type_only: statement_level_type,
+          location: node_to_location(child)
+        });
+      }
+    } else if (child.type === 'named_imports') {
+      // Named imports with potential inline type modifiers
+      const specs = extract_typescript_import_specifiers(child, source_code, statement_level_type);
+      for (const spec of specs) {
+        imports.push({
+          name: spec.name,
+          source: module_source,
+          alias: spec.alias,
+          kind: 'named',
+          is_type_only: spec.is_type_only,
+          location: node_to_location(child)
+        });
+      }
+    }
+  }
+  
+  return imports;
+}
+
+function extract_typescript_import_specifiers(
+  named_imports: SyntaxNode,
+  source_code: string,
+  statement_level_type: boolean
+): Array<{ name: string; alias?: string; is_type_only: boolean }> {
+  const specifiers: Array<{ name: string; alias?: string; is_type_only: boolean }> = [];
+  
+  for (const child of named_imports.children) {
+    if (child.type === 'import_specifier') {
+      // Check for inline type modifier (TS 4.5+)
+      // Pattern: import { type Foo, Bar } from '...'
+      let inline_type = false;
+      let actual_name_node: SyntaxNode | null = null;
+      let actual_alias_node: SyntaxNode | null = null;
+      
+      // Check if first child is 'type' keyword
+      const first_child = child.children[0];
+      if (first_child && first_child.type === 'type') {
+        inline_type = true;
+        // The identifier comes after the type keyword
+        actual_name_node = child.children.find(c => c.type === 'identifier') || null;
+      } else {
+        // Normal import specifier
+        actual_name_node = child.childForFieldName('name');
+      }
+      
+      actual_alias_node = child.childForFieldName('alias');
+      
+      if (actual_name_node) {
+        specifiers.push({
+          name: actual_alias_node?.text || actual_name_node.text,
+          alias: actual_alias_node ? actual_name_node.text : undefined,
+          is_type_only: statement_level_type || inline_type
+        });
+      }
+    } else if (child.type === 'identifier') {
+      // Simple identifier without specifier wrapper
+      specifiers.push({ 
+        name: child.text,
+        is_type_only: statement_level_type
+      });
+    }
+  }
+  
+  return specifiers;
 }
 
 // --- Helper functions for ES6/JavaScript ---

@@ -25,6 +25,17 @@ import { detect_typescript_exports } from './export_detection.typescript';
 import { detect_python_exports } from './export_detection.python';
 import { detect_rust_exports, RustExportInfo, RustVisibility } from './export_detection.rust';
 
+// Import export extraction functionality (moved from symbol_resolution)
+import {
+  extract_exports,
+  extract_javascript_exports,
+  extract_typescript_exports,
+  extract_python_exports,
+  extract_rust_exports,
+  extract_es6_exports,
+  extract_commonjs_exports
+} from './export_extraction';
+
 // Re-export common types and utilities
 export {
   ExportInfo,
@@ -44,6 +55,17 @@ export {
 export {
   RustExportInfo,
   RustVisibility
+};
+
+// Re-export export extraction (moved from symbol_resolution - Layer 8 functionality)
+export {
+  extract_exports,
+  extract_javascript_exports,
+  extract_typescript_exports,
+  extract_python_exports,
+  extract_rust_exports,
+  extract_es6_exports,
+  extract_commonjs_exports
 };
 
 /**

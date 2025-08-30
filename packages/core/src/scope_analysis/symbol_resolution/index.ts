@@ -22,31 +22,26 @@ import {
 } from './symbol_resolution';
 import {
   resolve_javascript_symbol,
-  extract_es6_imports,
-  extract_commonjs_imports,
-  extract_es6_exports,
-  extract_commonjs_exports,
   JavaScriptResolutionContext
 } from './symbol_resolution.javascript';
 import {
   resolve_typescript_symbol,
-  extract_typescript_imports,
-  extract_typescript_exports,
   TypeScriptResolutionContext
 } from './symbol_resolution.typescript';
 import {
   resolve_python_symbol,
-  extract_python_imports,
-  extract_python_exports,
   extract_python_declarations,
   PythonResolutionContext
 } from './symbol_resolution.python';
 import {
   resolve_rust_symbol,
   extract_rust_use_statements,
-  extract_rust_exports,
   RustResolutionContext
 } from './symbol_resolution.rust';
+
+// Import extraction functionality from proper architectural layers (Layer 2)
+import { extract_imports } from '../../import_export/import_resolution';
+import { extract_exports } from '../../import_export/export_detection';
 
 // Re-export core types and functions
 export {
@@ -162,38 +157,8 @@ export function extract_imports(
   }
 }
 
-/**
- * Extract exports with language-specific handling
- */
-export function extract_exports(
-  root_node: SyntaxNode,
-  source_code: string,
-  language: Language,
-  file_path?: string // For export tracking
-): ExportInfo[] {
-  switch (language) {
-    case 'javascript':
-    case 'jsx': {
-      const exports: ExportInfo[] = [];
-      exports.push(...extract_es6_exports(root_node, source_code));
-      exports.push(...extract_commonjs_exports(root_node, source_code));
-      return exports;
-    }
-    
-    case 'typescript':
-    case 'tsx':
-      return extract_typescript_exports(root_node, source_code);
-    
-    case 'python':
-      return extract_python_exports(root_node, source_code);
-    
-    case 'rust':
-      return extract_rust_exports(root_node, source_code);
-    
-    default:
-      return [];
-  }
-}
+// Export extraction is now handled by export_detection module (Layer 2)
+// This maintains proper architectural layering - extraction happens in Per-File Analysis
 
 /**
  * Create language-specific resolution context
