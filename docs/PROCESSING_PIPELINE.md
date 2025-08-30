@@ -19,6 +19,7 @@ Each file is analyzed independently to extract local information. This phase can
 **Dependencies:** None
 
 **Processing:**
+
 - Parse source code into AST using tree-sitter
 - Prepare file metadata (language, path, source)
 
@@ -29,12 +30,14 @@ Each file is analyzed independently to extract local information. This phase can
 **Dependencies:** AST
 
 **Processing:**
+
 - Build hierarchical scope structure
 - Find symbol definitions within scopes
 - Track symbol usages and references
 - Analyze variable declarations and closures
 
 **Modules:**
+
 - `/scope_analysis/scope_tree` - Hierarchical scope structure
 - `/scope_analysis/definition_finder` - Symbol definitions
 - `/scope_analysis/usage_finder` - Symbol usages
@@ -46,6 +49,7 @@ Each file is analyzed independently to extract local information. This phase can
 **Dependencies:** Scope Analysis
 
 **Processing:**
+
 - Extract import declarations (including namespace and type-only imports)
 - Detect export statements (including type-only exports)
 - Find class definitions and inheritance relationships
@@ -53,6 +57,7 @@ Each file is analyzed independently to extract local information. This phase can
 - Extract decorators and annotations
 
 **Modules:**
+
 - `/import_export/import_resolution` - Import extraction
 - `/import_export/export_detection` - Export detection
 - `/inheritance/class_detection` - Class structure extraction
@@ -64,6 +69,7 @@ Each file is analyzed independently to extract local information. This phase can
 **Dependencies:** Local Structure Detection, Scope Analysis
 
 **Processing:**
+
 - Track variable types within file scope
 - Infer parameter types from usage
 - Infer return types from function bodies
@@ -71,6 +77,7 @@ Each file is analyzed independently to extract local information. This phase can
 - Track type guards and narrowing
 
 **Modules:**
+
 - `/type_analysis/type_tracking` - Variable type tracking
 - `/type_analysis/parameter_type_inference` - Parameter inference
 - `/type_analysis/return_type_inference` - Return type inference
@@ -82,6 +89,7 @@ Each file is analyzed independently to extract local information. This phase can
 **Dependencies:** Local Type Analysis, Scope Analysis
 
 **Processing:**
+
 - Find function calls and their arguments
 - Find method calls with receiver types (when available locally)
 - Find constructor calls
@@ -90,6 +98,7 @@ Each file is analyzed independently to extract local information. This phase can
 - Identify callbacks and event handlers
 
 **Modules:**
+
 - `/call_graph/function_calls` - Function call detection
 - `/call_graph/method_calls` - Method call detection
 - `/call_graph/constructor_calls` - Constructor call detection with type extraction
@@ -107,12 +116,14 @@ Combines per-file analyses to build global understanding. This phase runs sequen
 **Dependencies:** All per-file imports/exports
 
 **Processing:**
+
 - Build module dependency graph
 - Resolve module paths (relative, absolute, aliases)
 - Detect circular dependencies
 - Trace re-export chains
 
 **Modules:**
+
 - `/import_export/module_graph` - Dependency graph builder
 
 **Outputs:** `ModuleGraph`, resolved import paths, circular dependencies
@@ -122,6 +133,7 @@ Combines per-file analyses to build global understanding. This phase runs sequen
 **Dependencies:** Module Graph, All per-file type definitions
 
 **Processing:**
+
 - Build central type registry from all type definitions
 - Construct class inheritance hierarchy
 - Track interface implementations
@@ -130,6 +142,7 @@ Combines per-file analyses to build global understanding. This phase runs sequen
 - Build virtual method tables
 
 **Modules:**
+
 - `/type_analysis/type_registry` - Central type storage
 - `/inheritance/class_hierarchy` - Inheritance tree builder
 - `/inheritance/interface_implementation` - Interface tracking
@@ -142,6 +155,7 @@ Combines per-file analyses to build global understanding. This phase runs sequen
 **Dependencies:** Type Registry, Module Graph, Class Hierarchy
 
 **Processing:**
+
 - Resolve types across file boundaries
 - Propagate types through data flow
 - Resolve namespace members
@@ -150,6 +164,7 @@ Combines per-file analyses to build global understanding. This phase runs sequen
 - Expand type aliases
 
 **Modules:**
+
 - `/type_analysis/type_resolution` - Cross-file type resolver
 - `/type_analysis/type_propagation` - Type flow analysis
 - `/import_export/namespace_resolution` - Namespace member resolver
@@ -161,12 +176,14 @@ Combines per-file analyses to build global understanding. This phase runs sequen
 **Dependencies:** Type Resolution, Module Graph
 
 **Processing:**
+
 - Build global symbol table
 - Resolve symbol references across files
 - Handle import/export aliases
 - Track symbol visibility and accessibility
 
 **Modules:**
+
 - `/scope_analysis/symbol_resolution` - Symbol reference resolver
 
 **Outputs:** resolved symbol references, global symbol table
@@ -188,6 +205,7 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 ### Method Call Enrichment
 
 **Processing:**
+
 - Validate method calls against class hierarchy
 - Resolve inherited methods to their defining class
 - Identify method overrides and their chains
@@ -197,6 +215,7 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 **Function:** `enrich_method_calls_with_hierarchy(calls, hierarchy)`
 
 **Enhancements:**
+
 - `defining_class_resolved` - Actual class that defines the method
 - `is_override` - Whether this overrides a parent method
 - `override_chain` - Full inheritance chain for overrides
@@ -206,6 +225,7 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 ### Constructor Call Enrichment
 
 **Processing:**
+
 - Validate constructor calls against type registry
 - Resolve imported class constructors
 - Check constructor parameter compatibility
@@ -215,6 +235,7 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 **Function:** `enrich_constructor_calls_with_types(calls, registry, imports)`
 
 **Enhancements:**
+
 - `is_valid` - Whether the type exists in registry
 - `resolved_type` - Fully qualified type name
 - `expected_params` - Expected constructor signature
@@ -224,6 +245,7 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 ### Type Flow Enhancement
 
 **Processing:**
+
 - Merge constructor-discovered types into type maps
 - Propagate types through call chains
 - Update type confidence based on global validation
@@ -232,6 +254,7 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 **Function:** `merge_constructor_types(existing_types, constructor_types)`
 
 **Enhancements:**
+
 - Types discovered from constructor calls
 - Cross-file type validation
 - Improved type confidence scores
@@ -241,6 +264,7 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 **Dependencies:** All enriched data
 
 **Processing:**
+
 - Trace complete call chains with validated methods
 - Resolve polymorphic calls using hierarchy
 - Track async execution flows
@@ -248,6 +272,7 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 - Identify unreachable code
 
 **Modules:**
+
 - `/call_graph/call_chain_analysis` - Call chain tracer
 
 **Outputs:** complete call graph, validated call chains, execution flows
@@ -309,21 +334,25 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 ### Critical Gaps
 
 **Generic Type Support**
+
 - No resolution of generic type parameters with concrete types
 - Cannot track type parameter constraints
 - Missing variance analysis for generics
 
 **Virtual Method Resolution**
+
 - Incomplete polymorphic call analysis
 - Cannot fully trace virtual dispatch
 - Missing interface method resolution in some languages
 
 **Async Flow Analysis**
+
 - Limited async/await tracking
 - No Promise chain analysis
 - Missing event-driven execution flow
 
 **Module Resolution**
+
 - No configurable resolution strategies
 - Limited support for complex module systems
 - Cannot handle all bundler configurations
@@ -331,18 +360,21 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 ### Missing Capabilities
 
 **Type System**
+
 - No structural type checking for TypeScript
 - Limited union/intersection type support
 - Missing type alias expansion
 - No recursive type handling
 
 **Meta-Programming**
+
 - No macro expansion (Rust)
 - Limited decorator processing (Python/TypeScript)
 - No metaclass analysis (Python)
 - Cannot analyze generated code
 
 **Advanced Analysis**
+
 - No dead code detection
 - Limited data flow analysis
 - No taint analysis
@@ -351,12 +383,14 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 ### Performance Limitations
 
 **Scalability**
+
 - Global assembly phase is sequential
 - Enrichment phase cannot be parallelized
 - Memory usage grows with codebase size
 - No incremental analysis support
 
 **Caching**
+
 - Limited caching between runs
 - No persistent cache storage
 - Cannot share cache across processes
@@ -366,6 +400,7 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 ## Language-Specific Considerations
 
 ### JavaScript/TypeScript
+
 - Prototype chain affects method resolution
 - Dynamic typing requires runtime-like analysis
 - Multiple module systems (CommonJS, ES6, UMD)
@@ -373,6 +408,7 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 - Decorators have different semantics than Python
 
 ### Python
+
 - Duck typing affects all type analysis
 - Multiple inheritance with MRO
 - Metaclasses can generate runtime behavior
@@ -380,6 +416,7 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 - Protocol/ABC system for interface-like contracts
 
 ### Rust
+
 - Trait bounds constrain type resolution
 - No class inheritance, only trait composition
 - Ownership system affects call semantics
@@ -391,23 +428,27 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 ## Benefits of This Architecture
 
 **Performance**
+
 - Per-file parallelization uses all CPU cores
 - Clear phase boundaries enable optimization
 - Predictable memory usage patterns
 
 **Maintainability**
+
 - Clear separation of concerns
 - Each phase has explicit inputs/outputs
 - Language-agnostic core with specific extensions
 - Testable modules with defined interfaces
 
 **Extensibility**
+
 - New languages can be added incrementally
 - Additional analysis passes can be inserted
 - Enrichment functions can be extended
 - Cache layers can be added transparently
 
 **Correctness**
+
 - Phase separation prevents circular dependencies
 - Enrichment pattern ensures consistency
 - Global validation catches cross-file issues
