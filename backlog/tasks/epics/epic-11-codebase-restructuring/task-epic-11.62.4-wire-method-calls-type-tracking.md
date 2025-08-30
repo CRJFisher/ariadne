@@ -185,3 +185,56 @@ Tests follow Architecture.md pattern - colocated with implementation:
 - Type lookups are O(1) Map operations
 - Minimal performance impact as type resolution only occurs when type_map is provided
 - Backward compatible - existing code without type_map continues to work
+
+## Critical Bug Fix (2025-08-30)
+
+### Issue: Method Calls Could Not Resolve Imported Classes
+
+**Problem**: Method calls were receiving the pre-enrichment type map, which only contained local types. This prevented resolution of methods on imported classes, breaking cross-file analysis.
+
+**Root Cause**: In `code_graph.ts`, method calls were created with `type_tracker.variable_types` BEFORE constructor calls enriched the type map with inferred types.
+
+**Solution**: Reordered per-file analysis operations:
+
+```typescript
+// Old (broken) order:
+1. Type tracking → type_tracker
+2. Find method calls with type_tracker.variable_types  // ❌ Too early!
+3. Find constructor calls → enriched_type_map
+
+// New (fixed) order:
+1. Type tracking → type_tracker  
+2. Find constructor calls → enriched_type_map
+3. Find method calls with enriched_type_map  // ✅ Has all types!
+```
+
+### Changes Made
+
+1. **Reordered operations in code_graph.ts**:
+   - Moved constructor call analysis before method call analysis
+   - Created enriched_type_map with both imported and constructor-inferred types
+   - Passed enriched_type_map to find_method_calls instead of raw type_tracker.variable_types
+
+2. **Fixed type compatibility**:
+   - Changed type_map from `Map<string, TypeInfo>` to `Map<string, TypeInfo[]>` to match type tracking output
+   - Created flattened version for FileAnalysis interface compatibility
+
+3. **Added comprehensive tests**:
+   - Created method_calls.cross_file.test.ts with 4 test scenarios
+   - All tests pass, confirming cross-file method resolution works
+
+### Test Results
+
+✅ All cross-file method resolution tests passing:
+- Resolves methods on imported JavaScript classes
+- Resolves methods on imported TypeScript classes with type annotations  
+- Handles namespace imports in TypeScript
+- Distinguishes between local and imported classes
+
+### Impact
+
+This fix enables proper cross-file method analysis, which is essential for:
+- Accurate call graph construction across modules
+- IDE features like "Find All References" across files
+- Method override detection in inheritance hierarchies
+- Type-aware refactoring tools

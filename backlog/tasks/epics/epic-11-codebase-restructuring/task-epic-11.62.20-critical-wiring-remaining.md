@@ -22,11 +22,11 @@ Based on comprehensive review of PROCESSING_PIPELINE.md, these critical wirings 
 **Location:** `/type_analysis/type_tracking` now receives import info
 **Fix:** ✅ Imports passed to type tracking, imported types properly qualified
 
-### 2. Method Calls → Type Tracking (task 11.62.4 claims complete but partial)
-**Current State:** Method calls get local types only
-**Impact:** Cannot resolve methods on imported classes
-**Location:** `/call_graph/method_calls` line where type_tracker.variable_types passed
-**Fix:** Pass enriched type map after constructor type merge
+### 2. ✅ Method Calls → Type Tracking (task 11.62.4 - FIXED 2025-08-30)
+**Current State:** ✅ Method calls now receive enriched type map with imports
+**Impact:** ✅ Can resolve methods on imported classes correctly
+**Location:** `/call_graph/method_calls` now receives enriched_type_map
+**Fix:** ✅ Reordered operations to pass enriched map after constructor merge
 
 ### 3. Symbol Resolution → Import Resolution (task 11.62.14)
 **Current State:** Symbol resolution still duplicates import extraction
@@ -81,7 +81,7 @@ Based on comprehensive review of PROCESSING_PIPELINE.md, these critical wirings 
 
 ### Per-File Phase Wirings
 - [x] Type tracking receives imports (✅ Fixed 2025-08-30)
-- [ ] Method calls receive enriched type map
+- [x] Method calls receive enriched type map (✅ Fixed 2025-08-30)
 - [ ] Constructor types flow back to type map (✅ Done in 11.62.11)
 - [ ] Return types integrated into type tracking
 

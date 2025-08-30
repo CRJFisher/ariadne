@@ -312,7 +312,7 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
     imports,     // From Layer 2
     class_definitions // From Layer 2
   );
-  const type_map = new Map<string, TypeInfo>();
+  const type_map = new Map<string, TypeInfo[]>();
 
   // LAYER 4: LOCAL CALL ANALYSIS (needs type info from Layer 3)
   const function_call_context = {
@@ -323,17 +323,7 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
   };
   const function_calls = find_function_calls(function_call_context);
 
-  const method_call_context = {
-    source_code,
-    file_path: file.file_path,
-    language: file.language,
-    ast_root: tree.rootNode,
-  };
-  const method_calls = find_method_calls(
-    method_call_context,
-    type_tracker.variable_types  // From Layer 3 (local types only)
-  );
-
+  // CONSTRUCTORS FIRST - Extract types from constructor calls for enrichment
   const constructor_call_context = {
     source_code,
     file_path: file.file_path,
@@ -351,10 +341,23 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
     constructor_result.type_assignments
   );
   
-  // Update the type_map with enriched data
+  // Replace type_map with enriched data (includes constructor types)
+  type_map.clear();
   for (const [variable, types] of enriched_type_map) {
     type_map.set(variable, types);
   }
+
+  // METHODS - Now with enriched type map including constructor types and imports
+  const method_call_context = {
+    source_code,
+    file_path: file.file_path,
+    language: file.language,
+    ast_root: tree.rootNode,
+  };
+  const method_calls = find_method_calls(
+    method_call_context,
+    enriched_type_map  // FIXED: Now includes imports AND constructor-inferred types!
+  )
 
   // FUNCTIONS AND CLASSES
   const functions: FunctionInfo[] = [];
@@ -440,6 +443,17 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
     }
   }
 
+  // Create flattened type_info for FileAnalysis interface (expects single TypeInfo)
+  // TODO: Update FileAnalysis interface to support TypeInfo[] arrays
+  const flattened_type_info = new Map<string, TypeInfo>();
+  for (const [variable, types] of type_map) {
+    if (types && types.length > 0) {
+      // Prefer explicit type annotations, otherwise use last type
+      const explicit = types.find(t => t.confidence === 'explicit' && t.source === 'annotation');
+      flattened_type_info.set(variable, explicit || types[types.length - 1]);
+    }
+  }
+
   return {
     file_path: file.file_path,
     language: file.language,
@@ -453,7 +467,7 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
     function_calls,
     method_calls,
     constructor_calls,
-    type_info: type_map,
+    type_info: flattened_type_info,
   };
 }
 
