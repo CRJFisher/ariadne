@@ -15,6 +15,16 @@ import { find_method_calls_typescript } from "./method_calls.typescript";
 import { find_method_calls_python } from "./method_calls.python";
 import { find_method_calls_rust } from "./method_calls.rust";
 
+// Export hierarchy enrichment functions for Global Assembly phase
+export {
+  enrich_method_calls_with_hierarchy,
+  resolve_method_in_hierarchy,
+  analyze_virtual_call,
+  get_available_methods,
+  is_inherited_method,
+  MethodCallWithHierarchy
+} from "./method_hierarchy_resolver";
+
 /**
  * Find all method calls in code (Per-File Phase - Layer 4)
  *

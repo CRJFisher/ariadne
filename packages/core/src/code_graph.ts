@@ -166,6 +166,16 @@ export async function generate_code_graph(
   // The inheritance_analysis/class_hierarchy module exists and works but uses old Def types
   // const { build_class_hierarchy } = await import('./inheritance/class_hierarchy');
   
+  // TODO: METHOD HIERARCHY ENRICHMENT (task 11.62.5)
+  // After class hierarchy is built, enrich method calls with inheritance information:
+  // const { enrich_method_calls_with_hierarchy } = await import('./call_graph/method_calls');
+  // for (const [file_path, analysis] of files) {
+  //   analysis.method_calls = enrich_method_calls_with_hierarchy(
+  //     analysis.method_calls,
+  //     classes
+  //   );
+  // }
+  
   const classes: ClassHierarchy = {
     classes: new Map(),
     inheritance_edges: [],
