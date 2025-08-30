@@ -16,7 +16,8 @@ Also, tests have been added to the /tests folder, not added inline alongside the
 We also need to verify that we are using the maximum multi-language / shared processing per feature. I'm concerned that the language-specific processing files have been written for every feature without considering if there is shared processing logic.
 Are tests using the real `.scm` files or are they creating bespoke parsing logic? I've seen some lisp-style syntax whizzing past in the CC terminal. We should be using the real `.scm` files for tests.
 Make sure the `index.ts` files are using the correct dispatcher/marshaler pattern i.e. using if/switch, not objects containing function references looped up dynamically.
-Need to verify that modules are splitting out 
+Need to verify that modules are splitting out language-specific logic into language-specific files. There are definitely cases where this hasn't happened. and the language-specific files are still in the monolithic `index.ts` file or the top level module.ts file.
+The index.ts files should only contain exports. The 'common' module.ts files should contain the shared logic as well as marshalling logic.
 
 ## Acceptance Criteria
 
