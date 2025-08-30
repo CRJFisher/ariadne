@@ -335,19 +335,23 @@ function extract_python_import(
       const name = child.childForFieldName('name');
       const alias = child.childForFieldName('alias');
       if (name) {
+        // import module as alias - the alias becomes a namespace binding
         imports.push({
           name: alias?.text || name.text,
           alias: alias ? name.text : undefined,
           source: name.text,
-          kind: 'named',
+          kind: 'namespace',  // Python module imports are namespaces
+          namespace_name: alias?.text || name.text,
           location: node_to_location(child)
         });
       }
     } else if (child.type === 'dotted_name' || child.type === 'identifier') {
+      // import module - creates a namespace binding
       imports.push({
         name: child.text,
         source: child.text,
-        kind: 'named',
+        kind: 'namespace',  // Python treats module imports as namespaces
+        namespace_name: child.text,
         location: node_to_location(child)
       });
     }

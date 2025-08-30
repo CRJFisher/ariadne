@@ -79,6 +79,16 @@ export {
   extract_rust_imports
 };
 
+// Re-export namespace helper functions
+export {
+  is_namespace_access,
+  resolve_namespace_member,
+  get_namespace_imports,
+  is_namespace_binding,
+  resolve_nested_namespace,
+  expand_namespace_import
+} from './namespace_helpers';
+
 // Re-export language-specific utilities
 export {
   // JavaScript/TypeScript

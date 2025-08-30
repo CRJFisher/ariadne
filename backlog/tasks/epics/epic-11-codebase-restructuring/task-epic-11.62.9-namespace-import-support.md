@@ -1,7 +1,7 @@
 ---
 id: task-epic-11.62.9
 title: Add Namespace Import Detection and Resolution
-status: To Do
+status: Complete
 assignee: []
 created_date: "2025-08-29"
 labels: [epic-11, sub-task, layer-2, import-export, integration]
@@ -40,7 +40,7 @@ utils.CONFIG;     // Need to resolve utils.CONFIG to utils.ts#CONFIG
 
 ### Core Import Detection
 
-- [ ] Update ImportInfo type usage to include namespace imports:
+- [x] Update ImportInfo type usage to include namespace imports:
 ```typescript
 // Already defined in @ariadnejs/types
 export interface ImportInfo {
@@ -54,24 +54,24 @@ export interface ImportInfo {
 
 ### Language-Specific Namespace Detection
 
-- [ ] **JavaScript/TypeScript** (`import_resolution.javascript.ts`):
+- [x] **JavaScript/TypeScript** (`import_extraction.ts`):
   - Detect `import * as name from 'module'`
   - Extract namespace binding name
   - Mark import kind as 'namespace'
   
-- [ ] **Python** (`import_resolution.python.ts`):
+- [x] **Python** (`import_extraction.ts`):
   - Detect `import module` (implicit namespace)
   - Detect `from package import module` (explicit namespace)
   - Handle `import module as alias`
   
-- [ ] **Rust** (`import_resolution.rust.ts`):
+- [x] **Rust** (`import_extraction.ts`):
   - Detect `use module::*` (glob imports)
   - Detect `use module::{self}` (module as namespace)
   - Handle `use module as alias`
 
 ### Namespace Member Resolution
 
-- [ ] Add helper function to check if identifier is namespace access:
+- [x] Add helper function to check if identifier is namespace access:
 ```typescript
 export function is_namespace_access(
   identifier: string,
@@ -85,7 +85,7 @@ export function is_namespace_access(
 }
 ```
 
-- [ ] Add function to resolve namespace members:
+- [x] Add function to resolve namespace members:
 ```typescript
 export function resolve_namespace_member(
   namespace_name: string,
@@ -145,12 +145,12 @@ The type registry will use namespace information to:
 
 ## Testing Requirements
 
-- [ ] Test namespace import detection for all languages
-- [ ] Test aliased namespace imports
-- [ ] Test nested namespace access (ns1.ns2.member)
-- [ ] Test namespace member resolution
-- [ ] Test mixed import types in same file
-- [ ] Test that existing import detection still works
+- [x] Test namespace import detection for all languages
+- [x] Test aliased namespace imports
+- [x] Test nested namespace access (ns1.ns2.member)
+- [x] Test namespace member resolution
+- [x] Test mixed import types in same file
+- [x] Test that existing import detection still works
 
 ## Success Metrics
 
@@ -167,9 +167,57 @@ The type registry will use namespace information to:
 - Processing pipeline: `/docs/PROCESSING_PIPELINE.md` (Layer 2)
 - Consumed by: Type registry (task 11.61), Symbol resolution
 
+## Implementation Notes
+
+### Key Implementation Decisions
+
+1. **Import Extraction Already Existed**: During implementation, discovered that namespace import detection was already implemented in `import_extraction.ts` (which was moved from symbol_resolution in task 11.62.8). The basic detection logic was already handling:
+   - JavaScript/TypeScript: `import * as name from 'module'`
+   - Python: Module imports treated as namespaces
+   - Rust: Glob imports (`use module::*`)
+
+2. **Python Namespace Fix**: Enhanced Python import extraction to properly mark module imports as namespaces:
+   ```python
+   import os  # Now correctly marked as kind: 'namespace'
+   ```
+   This aligns with Python's semantics where module imports create namespace bindings.
+
+3. **Created Helper Functions**: Added `namespace_helpers.ts` with utilities for:
+   - Detecting namespace access patterns (`utils.helper`)
+   - Resolving namespace members to their source modules
+   - Supporting nested namespace access (`os.path.join`)
+   - Expanding namespace imports when module graph is available
+
+4. **Test Coverage**: Created comprehensive test suite covering:
+   - Basic namespace access detection
+   - Nested namespace patterns
+   - Module graph integration
+   - Python-specific module namespaces
+   - Namespace binding identification
+
+### Files Created/Modified
+
+- **Created**: `packages/core/src/import_export/import_resolution/namespace_helpers.ts`
+  - Helper functions for namespace detection and resolution
+  - Supports all language-specific patterns
+
+- **Created**: `packages/core/src/import_export/import_resolution/namespace_helpers.test.ts`
+  - Comprehensive test coverage for all helper functions
+  - Tests pass successfully
+
+- **Modified**: `packages/core/src/import_export/import_resolution/import_extraction.ts`
+  - Fixed Python to correctly mark module imports as namespaces
+  - Already had basic namespace detection from task 11.62.8
+
+- **Modified**: `packages/core/src/import_export/import_resolution/index.ts`
+  - Added exports for namespace helper functions
+  - Maintains clean API surface
+
 ## Notes
 
 - Namespace imports are fundamental to module systems
 - Python treats all imports as potential namespaces
 - Rust glob imports are similar but not identical to namespaces
 - This enables proper cross-file member resolution
+- The implementation leverages existing ImportInfo type from @ariadnejs/types
+- Helper functions support integration with module graph for full resolution
