@@ -24,10 +24,10 @@ const callGraphs = get_call_graphs(graph);
 #### Internal Processing
 
 ```txt
-┌─────────────┐     ┌──────────────┐     ┌──────────────┐
-│   Per-File  │ →   │    Global    │ →   │  Analytical  │
-│   Analysis  │     │   Assembly   │     │   Queries    │
-└─────────────┘     └──────────────┘     └──────────────┘
+┌─────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   Per-File  │ →   │    Global    │ →   │  Enrichment  │ →   │  Analytical  │
+│   Analysis  │     │   Assembly   │     │              │     │   Queries    │
+└─────────────┘     └──────────────┘     └──────────────┘     └──────────────┘
 ```
 
 ##### Per-File Analysis
@@ -71,6 +71,18 @@ CodeGraph {
   symbols: SymbolIndex                  // Global definitions
 }
 ```
+
+##### Enrichment
+
+Enhances per-file data with global knowledge to validate and resolve cross-file relationships:
+
+**Enrichment Functions** (enrich/validate/merge pattern):
+
+- `enrich_method_calls_with_hierarchy()` - Validates methods against inheritance
+- `enrich_constructor_calls_with_types()` - Validates constructors against registry
+- `merge_constructor_types()` - Merges discovered types bidirectionally
+
+Result: Enhanced `FileAnalysis` with validated calls, resolved inheritance, and cross-file type flow
 
 ##### Analytical Queries
 

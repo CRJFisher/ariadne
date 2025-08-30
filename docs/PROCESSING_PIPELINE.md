@@ -2,451 +2,413 @@
 
 ## Overview
 
-The processing pipeline follows a **two-phase architecture**:
+The processing pipeline follows a **three-phase architecture**:
 
 1. **Per-File Analysis** (parallel) - Extract local information from each file independently
-2. **Global Assembly** (sequential) - Combine file analyses to resolve cross-file dependencies
+2. **Global Assembly** (sequential) - Build cross-file registries and hierarchies
+3. **Enrichment** (sequential) - Enhance per-file data with global knowledge
+
+This architecture enables parallelization while maintaining cross-file consistency through a carefully orchestrated enrichment phase that bridges local and global analysis.
 
 ## Phase 1: Per-File Analysis (Parallel)
 
-Each file is analyzed independently to extract local information without needing other files.
+Each file is analyzed independently to extract local information. This phase can be fully parallelized across CPU cores.
 
 ### Layer 0: Foundation
 
-**No dependencies**
+**Dependencies:** None
 
-#### Existing Modules:
-
-- AST Parsing (via tree-sitter) - Parse source into AST
+**Processing:**
+- Parse source code into AST using tree-sitter
+- Prepare file metadata (language, path, source)
 
 **Outputs:** `ParsedFile { ast: SyntaxNode, source: string, language: Language }`
 
----
-
 ### Layer 1: Scope Analysis
 
-**Depends on: AST**
+**Dependencies:** AST
 
-#### Existing Modules:
+**Processing:**
+- Build hierarchical scope structure
+- Find symbol definitions within scopes
+- Track symbol usages and references
+- Analyze variable declarations and closures
 
-- [`/scope_analysis/scope_tree`](/packages/core/src/scope_analysis/scope_tree) - Builds hierarchical scope structure
-- [`/scope_analysis/definition_finder`](/packages/core/src/scope_analysis/definition_finder) - Finds symbol definitions
-- [`/scope_analysis/usage_finder`](/packages/core/src/scope_analysis/usage_finder) - Finds symbol usages
-
-#### Missing Modules:
-
-- **Variable Declaration Analysis** - Track where variables are declared with their initial types
-- **Closure Analysis** - Track captured variables in closures/lambdas
+**Modules:**
+- `/scope_analysis/scope_tree` - Hierarchical scope structure
+- `/scope_analysis/definition_finder` - Symbol definitions
+- `/scope_analysis/usage_finder` - Symbol usages
 
 **Outputs:** `ScopeTree`, symbol definitions, variable declarations, closure captures
 
----
-
 ### Layer 2: Local Structure Detection
 
-**Depends on: Scope Analysis**
+**Dependencies:** Scope Analysis
 
-#### Existing Modules:
+**Processing:**
+- Extract import declarations (including namespace and type-only imports)
+- Detect export statements (including type-only exports)
+- Find class definitions and inheritance relationships
+- Identify interfaces, traits, enums, and type aliases
+- Extract decorators and annotations
 
-- [`/import_export/import_resolution`](/packages/core/src/import_export/import_resolution) - Extracts import declarations
-  - ✅ **COMPLETED**: Namespace import detection (`import * as name`) - task 11.62.9
-  - ✅ **COMPLETED**: Type-only import tracking for TypeScript - task 11.62.10
-  - ✅ **COMPLETED**: Import extraction moved here from symbol_resolution - task 11.62.8
-- [`/import_export/export_detection`](/packages/core/src/import_export/export_detection) - Detects export statements
-  - ✅ **COMPLETED**: Type-only export tracking for TypeScript - task 11.62.10
-  - ✅ **COMPLETED**: Export extraction moved here from symbol_resolution - task 11.62.15
-
-#### Completed Modules:
-
-- [`/inheritance/class_detection`](/packages/core/src/inheritance/class_detection) - ✅ **COMPLETED** (task 11.60)
-- **Interface/Trait Detection** - Extract interface/trait definitions
-- **Enum Detection** - Extract enum definitions
-- **Type Alias Detection** - Extract type aliases
-- **Decorator/Annotation Detection** - Extract decorators (Python/TS)
+**Modules:**
+- `/import_export/import_resolution` - Import extraction
+- `/import_export/export_detection` - Export detection
+- `/inheritance/class_detection` - Class structure extraction
 
 **Outputs:** imports, exports, class/interface/enum definitions, type aliases, decorators
 
----
-
 ### Layer 3: Local Type Analysis
 
-**Depends on: Local Structure Detection, Scope Analysis**
+**Dependencies:** Local Structure Detection, Scope Analysis
 
-#### Existing Modules:
+**Processing:**
+- Track variable types within file scope
+- Infer parameter types from usage
+- Infer return types from function bodies
+- Parse explicit type annotations
+- Track type guards and narrowing
 
-- [`/type_analysis/type_tracking`](/packages/core/src/type_analysis/type_tracking) - Tracks local variable types
-- [`/type_analysis/parameter_type_inference`](/packages/core/src/type_analysis/parameter_type_inference) - Infers parameter types
-- [`/type_analysis/return_type_inference`](/packages/core/src/type_analysis/return_type_inference) - Infers return types
-
-#### Missing Modules:
-
-- **Type Annotation Parsing** - Parse explicit type annotations
-  - **TODO**: Python type hint parsing - See task 11.72
-- **Type Guard Analysis** - Track type narrowing in conditionals
-- **Generic Type Parameter Extraction** - Extract generic parameters from definitions
+**Modules:**
+- `/type_analysis/type_tracking` - Variable type tracking
+- `/type_analysis/parameter_type_inference` - Parameter inference
+- `/type_analysis/return_type_inference` - Return type inference
 
 **Outputs:** variable type maps, inferred types, type annotations, type guards
 
----
-
 ### Layer 4: Local Call Analysis
 
-**Depends on: Local Type Analysis, Scope Analysis**
+**Dependencies:** Local Type Analysis, Scope Analysis
 
-#### Existing Modules:
+**Processing:**
+- Find function calls and their arguments
+- Find method calls with receiver types (when available locally)
+- Find constructor calls
+- Extract types from constructor calls (bidirectional flow)
+- Track async/await patterns
+- Identify callbacks and event handlers
 
-- [`/call_graph/function_calls`](/packages/core/src/call_graph/function_calls) - Finds function calls
-- [`/call_graph/method_calls`](/packages/core/src/call_graph/method_calls) - Finds method calls
-- [`/call_graph/constructor_calls`](/packages/core/src/call_graph/constructor_calls) - Finds constructor calls
+**Modules:**
+- `/call_graph/function_calls` - Function call detection
+- `/call_graph/method_calls` - Method call detection
+- `/call_graph/constructor_calls` - Constructor call detection with type extraction
 
-#### Missing Modules:
-
-- **Async Call Detection** - Track async/await calls and promise chains
-- **Callback Registration** - Track callback and event handler registration
-- **Dynamic Call Detection** - Track indirect calls (through variables, computed properties)
-
-**Outputs:** function calls, method calls, constructor calls, async calls, callbacks
+**Outputs:** function calls, method calls, constructor calls with discovered types
 
 ---
 
 ## Phase 2: Global Assembly (Sequential)
 
-Combines per-file analyses to build global understanding and resolve cross-file dependencies.
+Combines per-file analyses to build global understanding. This phase runs sequentially after all files are analyzed.
 
 ### Layer 5: Module Graph Construction
 
-**Depends on: All per-file imports/exports**
+**Dependencies:** All per-file imports/exports
 
-#### Existing Modules:
+**Processing:**
+- Build module dependency graph
+- Resolve module paths (relative, absolute, aliases)
+- Detect circular dependencies
+- Trace re-export chains
 
-- [`/import_export/module_graph`](/packages/core/src/import_export/module_graph) - Builds module dependency graph
-
-#### Missing Modules:
-
-- **Module Resolution Strategy** - Resolve module paths (node_modules, relative, absolute, aliases)
-- **Circular Dependency Detection** - Detect and handle circular imports
-- **Re-export Resolution** - Trace through re-exports to find actual definitions
-  - **TODO**: Implement re-export chain resolution - See task 11.69
+**Modules:**
+- `/import_export/module_graph` - Dependency graph builder
 
 **Outputs:** `ModuleGraph`, resolved import paths, circular dependencies
 
----
-
 ### Layer 6: Type Registry & Class Hierarchy
 
-**Depends on: Module Graph, All per-file type definitions**
+**Dependencies:** Module Graph, All per-file type definitions
 
-#### Existing Modules:
+**Processing:**
+- Build central type registry from all type definitions
+- Construct class inheritance hierarchy
+- Track interface implementations
+- Identify method overrides
+- Compute method resolution order
+- Build virtual method tables
 
-- [`/inheritance/class_hierarchy`](/packages/core/src/inheritance/class_hierarchy) - Builds inheritance tree
-- [`/inheritance/interface_implementation`](/packages/core/src/inheritance/interface_implementation) - Tracks interface implementations
-- [`/inheritance/method_override`](/packages/core/src/inheritance/method_override) - Tracks method overrides
-
-#### Completed Modules:
-
-- [`/type_analysis/type_registry`](/packages/core/src/type_analysis/type_registry) - ✅ **COMPLETED** (task 11.61) - Central registry of all type definitions
-
-#### Missing Modules:
-- **Trait Implementation Registry** - Track trait implementations (Rust)
-- **Mixin Resolution** - Resolve mixin chains (Python, TS)
-- **Protocol Conformance** - Track protocol implementations (Python)
+**Modules:**
+- `/type_analysis/type_registry` - Central type storage
+- `/inheritance/class_hierarchy` - Inheritance tree builder
+- `/inheritance/interface_implementation` - Interface tracking
+- `/inheritance/method_override` - Override detection
 
 **Outputs:** `TypeRegistry`, `ClassHierarchy`, method resolution order, virtual method tables
 
----
-
 ### Layer 7: Cross-File Type Resolution
 
-**Depends on: Type Registry, Module Graph, Class Hierarchy**
+**Dependencies:** Type Registry, Module Graph, Class Hierarchy
 
-#### Existing Modules:
+**Processing:**
+- Resolve types across file boundaries
+- Propagate types through data flow
+- Resolve namespace members
+- Handle generic type instantiation
+- Resolve union/intersection types
+- Expand type aliases
 
-- [`/type_analysis/type_resolution`](/packages/core/src/type_analysis/type_resolution) - Resolves cross-file types
-- [`/type_analysis/type_propagation`](/packages/core/src/type_analysis/type_propagation) - Propagates types through data flow
-- [`/import_export/namespace_resolution`](/packages/core/src/import_export/namespace_resolution) - Resolves namespace members
-
-#### Missing Modules:
-
-- **Generic Type Resolution** - Resolve generic type parameters with concrete types
-- **Union/Intersection Type Resolution** - Resolve complex type compositions
-- **Type Alias Resolution** - Resolve type aliases to their definitions
-- **Structural Type Checking** - Check structural compatibility (TS duck typing)
+**Modules:**
+- `/type_analysis/type_resolution` - Cross-file type resolver
+- `/type_analysis/type_propagation` - Type flow analysis
+- `/import_export/namespace_resolution` - Namespace member resolver
 
 **Outputs:** resolved types, generic instantiations, type compatibility matrix
 
----
-
 ### Layer 8: Global Symbol Resolution
 
-**Depends on: Type Resolution, Module Graph**
+**Dependencies:** Type Resolution, Module Graph
 
-#### Existing Modules:
+**Processing:**
+- Build global symbol table
+- Resolve symbol references across files
+- Handle import/export aliases
+- Track symbol visibility and accessibility
 
-- [`/scope_analysis/symbol_resolution`](/packages/core/src/scope_analysis/symbol_resolution) - Resolves symbol references
-  - ✅ **FIXED**: Import/export extraction moved to Layer 2 (tasks 11.62.8, 11.62.15)
-
-#### Missing Modules:
-
-- **Global Symbol Table** - Unified symbol table across all files
-- **Namespace Member Resolution** - Resolve namespaced symbols
-- **Alias Resolution** - Resolve import/export aliases
+**Modules:**
+- `/scope_analysis/symbol_resolution` - Symbol reference resolver
 
 **Outputs:** resolved symbol references, global symbol table
 
 ---
 
-### Layer 9: Call Graph Completion
+## Phase 3: Enrichment (Sequential)
 
-**Depends on: Symbol Resolution, Type Resolution, Class Hierarchy**
+Uses global knowledge to enhance and validate per-file analysis results. This critical phase bridges the gap between local and global analysis.
 
-#### Existing Modules:
+### Enrichment Pattern
 
-- [`/call_graph/call_chain_analysis`](/packages/core/src/call_graph/call_chain_analysis) - Traces call chains
+The enrichment phase operates on the principle of **progressive enhancement**:
 
-#### Missing Modules:
+1. Per-file analysis extracts raw, unvalidated data
+2. Global assembly builds comprehensive registries
+3. Enrichment validates and enhances per-file data with global context
 
-- **Virtual Method Resolution** - Resolve polymorphic calls
-- **Async Flow Analysis** - Trace async execution flows
-- **Event Flow Analysis** - Trace event-driven execution
-- **Recursive Call Detection** - Detect direct and indirect recursion
-- **Dead Code Detection** - Find unreachable code
+### Method Call Enrichment
 
-**Outputs:** complete call graph, call chains, execution flows, dead code
+**Processing:**
+- Validate method calls against class hierarchy
+- Resolve inherited methods to their defining class
+- Identify method overrides and their chains
+- Mark virtual method calls with possible targets
+- Distinguish interface methods from class methods
+
+**Function:** `enrich_method_calls_with_hierarchy(calls, hierarchy)`
+
+**Enhancements:**
+- `defining_class_resolved` - Actual class that defines the method
+- `is_override` - Whether this overrides a parent method
+- `override_chain` - Full inheritance chain for overrides
+- `is_virtual_call` - Whether this could dispatch to subclasses
+- `possible_targets` - All possible dispatch targets
+
+### Constructor Call Enrichment
+
+**Processing:**
+- Validate constructor calls against type registry
+- Resolve imported class constructors
+- Check constructor parameter compatibility
+- Handle type aliases in constructor calls
+- Mark invalid constructor calls
+
+**Function:** `enrich_constructor_calls_with_types(calls, registry, imports)`
+
+**Enhancements:**
+- `is_valid` - Whether the type exists in registry
+- `resolved_type` - Fully qualified type name
+- `expected_params` - Expected constructor signature
+- `is_imported` - Whether this is an imported class
+- `type_kind` - class/interface/struct/trait
+
+### Type Flow Enhancement
+
+**Processing:**
+- Merge constructor-discovered types into type maps
+- Propagate types through call chains
+- Update type confidence based on global validation
+- Resolve ambiguous types using global context
+
+**Function:** `merge_constructor_types(existing_types, constructor_types)`
+
+**Enhancements:**
+- Types discovered from constructor calls
+- Cross-file type validation
+- Improved type confidence scores
+
+### Call Graph Completion
+
+**Dependencies:** All enriched data
+
+**Processing:**
+- Trace complete call chains with validated methods
+- Resolve polymorphic calls using hierarchy
+- Track async execution flows
+- Detect recursive call patterns
+- Identify unreachable code
+
+**Modules:**
+- `/call_graph/call_chain_analysis` - Call chain tracer
+
+**Outputs:** complete call graph, validated call chains, execution flows
 
 ---
 
-### Layer 10: Macro & Meta-Programming
+## Processing Order
 
-**Depends on: All previous layers**
+### Execution Flow
 
-#### Missing Modules (Language-Specific):
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Per-File Phase                        │
+│                     (Parallel)                           │
+├─────────────────────────────────────────────────────────┤
+│  For each file in parallel:                              │
+│    1. Parse AST                                          │
+│    2. Build scope tree                                   │
+│    3. Find definitions and usages                        │
+│    4. Extract imports/exports                            │
+│    5. Detect classes/interfaces/types                    │
+│    6. Track local types                                  │
+│    7. Find calls (with type extraction)                  │
+└─────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────┐
+│                  Global Assembly Phase                   │
+│                     (Sequential)                         │
+├─────────────────────────────────────────────────────────┤
+│  1. Build module graph from imports/exports              │
+│  2. Build type registry from all type definitions        │
+│  3. Build class hierarchy from all classes               │
+│  4. Resolve types across files                           │
+│  5. Resolve symbols globally                             │
+└─────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────┐
+│                   Enrichment Phase                       │
+│                     (Sequential)                         │
+├─────────────────────────────────────────────────────────┤
+│  1. Enrich method calls with hierarchy                   │
+│  2. Enrich constructor calls with types                  │
+│  3. Merge type discoveries                               │
+│  4. Complete call graph with validations                 │
+│  5. Trace execution flows                                │
+└─────────────────────────────────────────────────────────┘
+```
 
-- **Rust Macro Expansion** - Expand and analyze Rust macros
-- **Python Decorator Application** - Apply and analyze decorators
-- **TypeScript Decorator Processing** - Process TS decorators
-- **Python Metaclass Analysis** - Analyze metaclass-generated code
-- **Code Generation Analysis** - Analyze generated code patterns
+### Data Flow
 
-**Outputs:** expanded code, decorator effects, generated symbols
+- **Forward Flow**: Per-file → Global Assembly → Enrichment
+- **Bidirectional Flow**: Constructor calls ↔ Type tracking (within per-file)
+- **Enrichment Flow**: Global registries → Per-file enhancements
 
 ---
 
-## Enrichment Pattern (NEW INSIGHT)
+## Architectural Deficiencies
 
-### The Two-Phase Enrichment Architecture
+### Critical Gaps
 
-**Critical Discovery**: We need an enrichment pattern to bridge Per-File Analysis and Global Assembly without violating phase separation.
+**Generic Type Support**
+- No resolution of generic type parameters with concrete types
+- Cannot track type parameter constraints
+- Missing variance analysis for generics
 
-#### Pattern Implementation:
+**Virtual Method Resolution**
+- Incomplete polymorphic call analysis
+- Cannot fully trace virtual dispatch
+- Missing interface method resolution in some languages
 
-1. **Per-File Phase**: Extract raw data (calls, types, classes)
-2. **Global Assembly Phase**: Build registries and hierarchies
-3. **Enrichment Phase**: Use global data to validate/resolve per-file data
+**Async Flow Analysis**
+- Limited async/await tracking
+- No Promise chain analysis
+- Missing event-driven execution flow
 
-#### Created Enrichment Functions (NOT YET WIRED):
+**Module Resolution**
+- No configurable resolution strategies
+- Limited support for complex module systems
+- Cannot handle all bundler configurations
 
-- `enrich_method_calls_with_hierarchy()` - Validates methods against inheritance
-- `enrich_constructor_calls_with_types()` - Validates constructors against registry
-- `find_constructor_calls_with_types()` - Bidirectional type flow
+### Missing Capabilities
 
-**CRITICAL**: These exist but are never called! Task 11.62.11 must wire them.
+**Type System**
+- No structural type checking for TypeScript
+- Limited union/intersection type support
+- Missing type alias expansion
+- No recursive type handling
 
-## Critical Dependencies
+**Meta-Programming**
+- No macro expansion (Rust)
+- Limited decorator processing (Python/TypeScript)
+- No metaclass analysis (Python)
+- Cannot analyze generated code
 
-### Dependencies Status:
+**Advanced Analysis**
+- No dead code detection
+- Limited data flow analysis
+- No taint analysis
+- Missing security vulnerability detection
 
-#### ✅ Completed Wirings:
+### Performance Limitations
 
-1. **Import/Export Extraction → Proper Layer**
-   - Import extraction moved to Layer 2 (task 11.62.8)
-   - Export extraction moved to Layer 2 (task 11.62.15)
-   - Symbol resolution now consumes from Layer 2
+**Scalability**
+- Global assembly phase is sequential
+- Enrichment phase cannot be parallelized
+- Memory usage grows with codebase size
+- No incremental analysis support
 
-2. **Constructor Type Enrichment Created**
-   - Constructor type resolver created (task 11.62.6)
-   - Bidirectional type flow created (task 11.62.7)
-   - **BUT NOT WIRED YET**
+**Caching**
+- Limited caching between runs
+- No persistent cache storage
+- Cannot share cache across processes
 
-3. **Method Hierarchy Enrichment Created**
-   - Method hierarchy resolver created (task 11.62.5)
-   - **BUT NOT WIRED YET**
-
-#### ⚠️ Still Need Wiring:
-
-1. **Type Tracking → Import Resolution**
-
-   - Type tracking needs to know about imported types
-   - Currently has TODO but no actual dependency
-
-2. **Method Calls → Type Tracking**
-
-   - Method calls need receiver types to resolve methods
-   - Currently missing this dependency
-
-3. **Method Calls → Class Hierarchy**
-
-   - Need inheritance info for virtual method resolution
-   - Currently missing this dependency
-
-4. **Constructor Calls → Type Tracking**
-
-   - Constructors should update type maps
-   - Currently no bidirectional flow
-
-5. **Type Propagation → Call Graph**
-
-   - Type flow follows execution flow
-   - Needs all call types (function, method, constructor)
-
-6. **Symbol Resolution → Import Resolution**
-   - Should consume imports, not re-extract them
-   - Currently duplicates import extraction
-
-### Circular Dependency Concerns:
-
-These require careful handling or event-based updates:
-
-1. **Type Inference ↔ Call Analysis**
-
-   - Calls need types to resolve targets
-   - Type inference needs calls to propagate types
-   - Solution: Iterative refinement or event propagation
-
-2. **Constructor Calls ↔ Type Tracking**
-   - Constructors create typed instances
-   - Type tracking helps identify constructor calls
-   - Solution: Constructor detection first, then type update
-
-## Processing Order (UPDATED)
-
-### Current Implementation Issues:
-
-1. **Enrichment functions exist but aren't called**
-2. **Type registry and class hierarchy aren't built**
-3. **No bidirectional type flow between phases**
-4. **Cross-file resolution is broken**
-
-### Per-File Phase (Parallel):
-
-```
-For each file in parallel:
-  1. Parse AST
-  2. Build scope tree
-  3. Find definitions and usages
-  4. Extract imports/exports (✅ in correct layer now)
-  5. Detect classes/interfaces/types (✅ class detection works)
-  6. Track local types
-  7. Find local calls
-  8. [NEW] Extract types from constructor calls (bidirectional flow)
-```
-
-### Global Assembly Phase (Sequential):
-
-```
-1. Build module graph from all imports/exports
-2. [MISSING] Build type registry from all type definitions
-3. [MISSING] Build class hierarchy from all classes
-4. [MISSING] Enrich method calls with hierarchy
-5. [MISSING] Enrich constructor calls with types
-6. Resolve types across files
-7. Resolve symbols globally (✅ uses correct imports now)
-8. Complete call graph with cross-file calls
-9. Analyze call chains and flows
-10. Process meta-programming constructs
-```
-
-## Implementation Status
-
-### Fully Implemented:
-
-- Basic scope analysis
-- Import/export detection (with namespace and type-only support)
-- Local call detection (function, method, constructor)
-- Module graph construction
-- Basic type tracking
-- Type registry (task 11.61)
-- Class detection (task 11.60)
-- Import/export extraction in correct layers
-
-### Partially Implemented:
-
-- Type resolution (missing generic support)
-- Symbol resolution (✅ fixed duplication, but missing some cross-file features)
-- Class hierarchy (✅ type registry exists, but enrichment not wired)
-- Call chain analysis (missing virtual method resolution)
-- Constructor enrichment (✅ created but not wired)
-- Method enrichment (✅ created but not wired)
-
-### Critical Gaps:
-
-1. ~~**Type Registry** - No central type definition storage~~ ✅ Completed (task 11.61)
-2. ~~**Class Detection** - Referenced but missing~~ ✅ Completed (task 11.60)
-3. **🚨 CRITICAL: Enrichment Functions Not Wired** - Created but never called (task 11.62.11 will fix)
-   - Method calls can't resolve inherited methods
-   - Constructor calls can't validate against types
-   - Types from constructors don't flow to type maps
-4. **Generic Type Resolution** - No generic type support (task 11.62.12 planned)
-5. **Virtual Method Resolution** - No polymorphic call resolution
-6. **Return Type Inference Integration** - Created but not integrated (task 11.62.13 planned)
-7. **Async Flow Analysis** - No async execution tracking
-8. **Module Resolution Strategy** - No configurable resolution
-9. **Re-export Chain Resolution** - TODO in task 11.69
-
-## Next Steps
-
-### Immediate Priority (Breaking Issues):
-
-1. ~~Create [`/inheritance/class_detection`](/packages/core/src/inheritance/class_detection) module~~ ✅ Completed (task 11.60)
-2. ~~Create `/type_analysis/type_registry` module~~ ✅ Completed (task 11.61)
-3. ~~Remove import extraction from symbol_resolution~~ ✅ Completed (tasks 11.62.8, 11.62.15)
-4. **Wire enrichment functions (task 11.62.11) - CRITICAL**
-5. Wire remaining layer dependencies (task 11.62 subtasks)
-
-### Medium Priority (Integration):
-
-1. Connect method_calls to type_tracking
-2. Connect method_calls to class_hierarchy
-3. Implement generic type resolution
-4. Add virtual method resolution
-
-### Long Term (Completeness):
-
-1. Add async flow analysis
-2. Add macro/decorator processing
-3. Add structural type checking
-4. Add dead code detection
+---
 
 ## Language-Specific Considerations
 
-### JavaScript/TypeScript:
-
+### JavaScript/TypeScript
 - Prototype chain affects method resolution
 - Dynamic typing requires runtime-like analysis
-- Multiple module systems (CommonJS, ES6)
-- Decorators (experimental in JS, stable in TS)
-- Structural typing in TypeScript
+- Multiple module systems (CommonJS, ES6, UMD)
+- Structural typing needs special handling
+- Decorators have different semantics than Python
 
-### Python:
-
-- Duck typing affects type inference
-- Metaclasses can modify class behavior
-- Decorators are first-class
+### Python
+- Duck typing affects all type analysis
 - Multiple inheritance with MRO
-- Protocol/ABC system
+- Metaclasses can generate runtime behavior
+- First-class decorators modify function behavior
+- Protocol/ABC system for interface-like contracts
 
-### Rust:
+### Rust
+- Trait bounds constrain type resolution
+- No class inheritance, only trait composition
+- Ownership system affects call semantics
+- Macros can generate substantial code
+- Lifetime analysis impacts type compatibility
 
-- Trait bounds affect type resolution
-- Ownership affects call semantics
-- Macros can generate significant code
-- No inheritance, only trait composition
-- Lifetime analysis affects type compatibility
+---
 
 ## Benefits of This Architecture
 
-1. **Parallelization**: Per-file analysis can use all CPU cores
-2. **Incremental Updates**: Only reprocess changed files and their dependents
-3. **Clear Dependencies**: Each layer has explicit inputs/outputs
-4. **Language Agnostic Core**: Common patterns with language-specific implementations
-5. **Testability**: Each module can be tested in isolation
-6. **Caching**: Results at each layer can be cached
+**Performance**
+- Per-file parallelization uses all CPU cores
+- Clear phase boundaries enable optimization
+- Predictable memory usage patterns
+
+**Maintainability**
+- Clear separation of concerns
+- Each phase has explicit inputs/outputs
+- Language-agnostic core with specific extensions
+- Testable modules with defined interfaces
+
+**Extensibility**
+- New languages can be added incrementally
+- Additional analysis passes can be inserted
+- Enrichment functions can be extended
+- Cache layers can be added transparently
+
+**Correctness**
+- Phase separation prevents circular dependencies
+- Enrichment pattern ensures consistency
+- Global validation catches cross-file issues
+- Type flow is bidirectional where needed
