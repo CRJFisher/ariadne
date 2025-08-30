@@ -176,6 +176,18 @@ export async function generate_code_graph(
   //   );
   // }
   
+  // TODO: CONSTRUCTOR TYPE VALIDATION (task 11.62.6)
+  // After type registry is built, validate constructor calls:
+  // const { enrich_constructor_calls_with_types } = await import('./call_graph/constructor_calls');
+  // const type_registry = build_type_registry(analyses); // Need to implement
+  // for (const [file_path, analysis] of files) {
+  //   analysis.constructor_calls = enrich_constructor_calls_with_types(
+  //     analysis.constructor_calls,
+  //     type_registry,
+  //     imports_by_file
+  //   );
+  // }
+  
   const classes: ClassHierarchy = {
     classes: new Map(),
     inheritance_edges: [],

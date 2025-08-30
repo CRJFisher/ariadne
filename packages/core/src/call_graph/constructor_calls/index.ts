@@ -15,6 +15,16 @@ import { find_constructor_calls_typescript } from './constructor_calls.typescrip
 import { find_constructor_calls_python } from './constructor_calls.python';
 import { find_constructor_calls_rust } from './constructor_calls.rust';
 
+// Export type validation functions for Global Assembly phase
+export {
+  enrich_constructor_calls_with_types,
+  validate_constructor,
+  batch_validate_constructors,
+  get_constructable_types,
+  ConstructorCallWithType,
+  ParameterInfo
+} from './constructor_type_resolver';
+
 /**
  * Find all constructor calls in code (Per-File Phase - Layer 4)
  * 
