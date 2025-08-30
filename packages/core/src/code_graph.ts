@@ -15,9 +15,9 @@ import {
   find_constructor_calls,
 } from "./call_graph/constructor_calls";
 import { ScopeTree, build_scope_tree } from "./scope_analysis/scope_tree";
-import { ImportInfo } from "./import_export/import_resolution";
+import { ImportInfo, extract_imports } from "./import_export/import_resolution";
 import { ExportInfo, detect_exports } from "./import_export/export_detection";
-import { extract_imports, extract_exports } from "./scope_analysis/symbol_resolution";
+import { extract_exports } from "./scope_analysis/symbol_resolution";
 import { find_class_definitions, ClassDefinition } from "./inheritance/class_detection";
 import { process_file_for_types, FileTypeTracker, TypeTrackingContext } from "./type_analysis/type_tracking";
 import { register_class, TypeRegistry } from "./type_analysis/type_registry";

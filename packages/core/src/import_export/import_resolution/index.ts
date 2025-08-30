@@ -23,6 +23,15 @@ import {
   get_module_exports
 } from './import_resolution';
 
+// Import extraction functionality (moved from symbol_resolution)
+import {
+  extract_imports,
+  extract_javascript_imports,
+  extract_typescript_imports,
+  extract_python_imports,
+  extract_rust_imports
+} from './import_extraction';
+
 import {
   resolve_javascript_namespace_exports,
   resolve_javascript_namespace_member,
@@ -59,6 +68,15 @@ export {
   is_index_file,
   find_exported_symbol,
   create_module_export
+};
+
+// Re-export import extraction (moved from symbol_resolution - Layer 2 functionality)
+export {
+  extract_imports,
+  extract_javascript_imports,
+  extract_typescript_imports,
+  extract_python_imports,
+  extract_rust_imports
 };
 
 // Re-export language-specific utilities
