@@ -6,6 +6,7 @@
 
 import { ConstructorCallInfo } from '@ariadnejs/types';
 import { ConstructorCallContext } from './constructor_calls';
+import { TypeInfo } from '../../type_analysis/type_tracking';
 
 // Re-export types
 export { ConstructorCallInfo } from '@ariadnejs/types';
@@ -24,6 +25,14 @@ export {
   ConstructorCallWithType,
   ParameterInfo
 } from './constructor_type_resolver';
+
+// Export bidirectional flow functions
+export {
+  extract_constructor_calls_and_types,
+  merge_constructor_types,
+  ConstructorCallResult,
+  ConstructorTypeAssignment
+} from './constructor_type_extraction';
 
 /**
  * Find all constructor calls in code (Per-File Phase - Layer 4)
@@ -58,6 +67,34 @@ export function find_constructor_calls(
       // Return empty array for unsupported languages
       return [];
   }
+}
+
+/**
+ * Find constructor calls and extract type assignments (Bidirectional Flow)
+ * 
+ * This enhanced version returns both constructor calls and type assignments
+ * discovered from those calls. This enables bidirectional flow between
+ * constructor_calls and type_tracking.
+ * 
+ * When we see `const foo = new Bar()`, we return:
+ * - Constructor call: Bar was constructed
+ * - Type assignment: foo is of type Bar
+ * 
+ * @param context The context containing source code, AST, and metadata
+ * @returns Constructor calls and type assignments
+ */
+export function find_constructor_calls_with_types(
+  context: ConstructorCallContext
+): ConstructorCallResult {
+  // Use the extraction function that handles both calls and types
+  const { extract_constructor_calls_and_types } = require('./constructor_type_extraction');
+  
+  return extract_constructor_calls_and_types(
+    context.ast_root,
+    context.source_code,
+    context.file_path,
+    context.language
+  );
 }
 
 

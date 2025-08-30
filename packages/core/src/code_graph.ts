@@ -187,6 +187,8 @@ export async function generate_code_graph(
   //     imports_by_file
   //   );
   // }
+  // Note: Works together with BIDIRECTIONAL FLOW (task 11.62.7) - constructor types
+  // discovered during per-file phase can be validated here in global phase
   
   const classes: ClassHierarchy = {
     classes: new Map(),
@@ -326,6 +328,15 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
     language: file.language,
     ast_root: tree.rootNode,
   };
+  
+  // TODO: BIDIRECTIONAL FLOW (task 11.62.7)
+  // Option to use find_constructor_calls_with_types() instead for bidirectional flow:
+  // const { find_constructor_calls_with_types } = await import('./call_graph/constructor_calls');
+  // const result = find_constructor_calls_with_types(constructor_call_context);
+  // const constructor_calls = result.calls;
+  // const constructor_types = result.type_assignments;
+  // Then merge constructor_types into type_map using merge_constructor_types()
+  
   const constructor_calls = find_constructor_calls(constructor_call_context);
 
   // FUNCTIONS AND CLASSES
