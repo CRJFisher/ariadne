@@ -469,6 +469,7 @@ function build_call_graph(analyses: FileAnalysis[]): CallGraph {
   // Build function nodes
   for (const analysis of analyses) {
     for (const func of analysis.functions) {
+      // TODO: what do the keys in the scope graph actually mean? How can we link functions to scopes?
       const scope_path = analysis.scopes.nodes.get(func.location.file_path)?.metadata?.name;
       const symbol = construct_symbol({
         file_path: analysis.file_path,

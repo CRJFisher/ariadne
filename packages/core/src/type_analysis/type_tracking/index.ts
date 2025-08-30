@@ -358,6 +358,11 @@ export function process_file_for_types(
       tracker = track_assignment(tracker, node, source_code, context);
     }
     
+    // Track function declarations (for parameter types)
+    if (is_function_node(node, context.language)) {
+      tracker = track_assignment(tracker, node, source_code, context);
+    }
+    
     // NOTE: Import tracking removed - now using imports from Layer 1
     
     // Recurse
@@ -408,6 +413,26 @@ function is_assignment_node(node: SyntaxNode, language: Language): boolean {
       return node.type === 'let_declaration' || 
              node.type === 'const_item' || 
              node.type === 'static_item';
+    default:
+      return false;
+  }
+}
+
+/**
+ * Check if a node is a function (for parameter tracking)
+ */
+function is_function_node(node: SyntaxNode, language: Language): boolean {
+  switch (language) {
+    case 'javascript':
+    case 'typescript':
+      return node.type === 'function_declaration' || 
+             node.type === 'method_definition' ||
+             node.type === 'arrow_function' ||
+             node.type === 'function_expression';
+    case 'python':
+      return node.type === 'function_definition';
+    case 'rust':
+      return node.type === 'function_item';
     default:
       return false;
   }

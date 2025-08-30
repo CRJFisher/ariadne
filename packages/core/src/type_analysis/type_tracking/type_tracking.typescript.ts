@@ -45,7 +45,7 @@ export function track_typescript_assignment(
     
     if (name_node && type_node) {
       const var_name = source_code.substring(name_node.startIndex, name_node.endIndex);
-      const type_info = extract_typescript_type(type_node, source_code, context);
+      const type_info = extract_typescript_type(type_node, source_code, context, tracker);
       
       if (type_info) {
         updated_tracker = set_variable_type(updated_tracker, var_name, type_info);
@@ -70,7 +70,8 @@ export function track_typescript_assignment(
 export function extract_typescript_type(
   type_node: SyntaxNode,
   source_code: string,
-  context: TypeTrackingContext
+  context: TypeTrackingContext,
+  tracker?: FileTypeTracker
 ): TypeInfo | undefined {
   const position = {
     row: type_node.startPosition.row,
@@ -81,7 +82,7 @@ export function extract_typescript_type(
   if (type_node.type === 'type_annotation') {
     const actual_type = type_node.child(1); // Skip the colon
     if (actual_type) {
-      return extract_typescript_type(actual_type, source_code, context);
+      return extract_typescript_type(actual_type, source_code, context, tracker);
     }
   }
   
@@ -100,12 +101,25 @@ export function extract_typescript_type(
   // Type identifiers (custom types, interfaces, classes)
   if (type_node.type === 'type_identifier') {
     const type_name = source_code.substring(type_node.startIndex, type_node.endIndex);
+    
+    // Check if this type is imported
+    let qualified_name = type_name;
+    let is_imported = false;
+    if (tracker && tracker.imported_classes) {
+      const import_info = tracker.imported_classes.get(type_name);
+      if (import_info) {
+        qualified_name = `${import_info.source_module}#${import_info.class_name}`;
+        is_imported = true;
+      }
+    }
+    
     return {
-      type_name,
-      type_kind: determine_type_kind(type_name),
+      type_name: qualified_name,
+      type_kind: is_imported ? 'imported' : determine_type_kind(type_name),
       position,
       confidence: 'explicit',
-      source: 'annotation'
+      source: 'annotation',
+      is_imported
     };
   }
   
@@ -113,7 +127,7 @@ export function extract_typescript_type(
   if (type_node.type === 'array_type') {
     const element_type = type_node.child(0);
     if (element_type) {
-      const base_type = extract_typescript_type(element_type, source_code, context);
+      const base_type = extract_typescript_type(element_type, source_code, context, tracker);
       if (base_type) {
         return {
           type_name: `${base_type.type_name}[]`,
@@ -161,7 +175,7 @@ export function extract_typescript_type(
     for (let i = 0; i < type_node.childCount; i++) {
       const child = type_node.child(i);
       if (child && child.type !== '|') {
-        const child_type = extract_typescript_type(child, source_code, context);
+        const child_type = extract_typescript_type(child, source_code, context, tracker);
         if (child_type) {
           types.push(child_type.type_name);
         }
@@ -183,7 +197,7 @@ export function extract_typescript_type(
     for (let i = 0; i < type_node.childCount; i++) {
       const child = type_node.child(i);
       if (child && child.type !== '&') {
-        const child_type = extract_typescript_type(child, source_code, context);
+        const child_type = extract_typescript_type(child, source_code, context, tracker);
         if (child_type) {
           types.push(child_type.type_name);
         }
@@ -258,7 +272,7 @@ function track_typed_parameters(
       
       if (pattern && type_node) {
         const param_name = source_code.substring(pattern.startIndex, pattern.endIndex);
-        const type_info = extract_typescript_type(type_node, source_code, context);
+        const type_info = extract_typescript_type(type_node, source_code, context, updated_tracker);
         
         if (type_info) {
           updated_tracker = set_variable_type(updated_tracker, param_name, type_info);
@@ -413,7 +427,7 @@ export function infer_typescript_return_type(
   // Check for explicit return type annotation
   const return_type_node = func_node.childForFieldName('return_type');
   if (return_type_node) {
-    return extract_typescript_type(return_type_node, source_code, context);
+    return extract_typescript_type(return_type_node, source_code, context, tracker);
   }
   
   // Fall back to JavaScript inference

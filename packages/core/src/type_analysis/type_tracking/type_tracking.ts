@@ -151,22 +151,35 @@ export function get_variable_type(
   const types = tracker.variable_types.get(var_name);
   if (!types || types.length === 0) return undefined;
   
-  // If no position specified, return the last type
+  // If no position specified, prefer explicit type annotations
   if (!position) {
+    // First look for explicit type annotations
+    const explicit_type = types.find(t => t.confidence === 'explicit' && t.source === 'annotation');
+    if (explicit_type) return explicit_type;
+    
+    // Otherwise return the last type
     return types[types.length - 1];
   }
   
   // Find the type that was assigned before this position
   let last_type: TypeInfo | undefined = undefined;
+  let explicit_type: TypeInfo | undefined = undefined;
+  
   for (const type_info of types) {
     if (type_info.position.row > position.row || 
         (type_info.position.row === position.row && type_info.position.column > position.column)) {
       break;
     }
     last_type = type_info;
+    
+    // Track explicit annotations separately
+    if (type_info.confidence === 'explicit' && type_info.source === 'annotation') {
+      explicit_type = type_info;
+    }
   }
   
-  return last_type;
+  // Prefer explicit type annotations over inferred types
+  return explicit_type || last_type;
 }
 
 /**

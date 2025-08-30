@@ -4,16 +4,21 @@
  * Builds a graph showing import/export relationships between files.
  */
 
-import { Language, ModuleNode, ModuleGraph, FilePath } from "@ariadnejs/types";
-import { ExportInfo } from "../export_detection";
-import { ImportInfo as ImportResolutionInfo } from "../import_resolution";
+import {
+  Language,
+  ModuleNode,
+  ModuleGraph,
+  FilePath,
+  ImportStatement,
+  ExportStatement,
+} from "@ariadnejs/types";
 
 /**
  * Extended module node with additional metadata for graph building
  */
 export interface ModuleNodeWithMetadata extends ModuleNode {
-  readonly legacy_exports: ExportInfo[];
-  readonly legacy_imports: ModuleImportInfo[];
+  readonly legacy_exports: ExportStatement[];
+  readonly legacy_imports: ImportStatement[];
   readonly is_entry_point?: boolean;
   readonly is_external?: boolean;
   readonly metadata?: {
@@ -75,8 +80,8 @@ export function build_module_graph(
     {
       file_path: FilePath;
       language: Language;
-      imports: ImportResolutionInfo[];
-      exports: ExportInfo[];
+      imports: readonly ImportStatement[];
+      exports: readonly ExportStatement[];
     }
   >,
   options: ModuleGraphOptions = {}
@@ -126,8 +131,8 @@ function create_module_node(
   file_path: FilePath,
   analysis: {
     language: Language;
-    imports: ImportResolutionInfo[];
-    exports: ExportInfo[];
+    imports: ImportStatement[];
+    exports: ExportStatement[];
   }
 ): ModuleNodeWithMetadata {
   // Convert ImportResolutionInfo to ModuleImportInfo
@@ -148,13 +153,13 @@ function create_module_node(
  * Convert import resolution info to module import info
  */
 function convert_to_module_imports(
-  imports: ImportResolutionInfo[],
+  imports: ImportStatement[],
   _file_path: FilePath
 ): ModuleImportInfo[] {
   const module_imports: ModuleImportInfo[] = [];
 
-  // Group imports by source module  
-  const by_module = new Map<string, ImportResolutionInfo[]>();
+  // Group imports by source module
+  const by_module = new Map<string, ImportStatement[]>();
   for (const imp of imports) {
     // For now, use a placeholder since ImportedSymbol doesn't have source_module
     // TODO: Update when ImportResolutionInfo is properly migrated

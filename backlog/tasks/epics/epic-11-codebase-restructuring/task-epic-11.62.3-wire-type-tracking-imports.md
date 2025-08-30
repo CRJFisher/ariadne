@@ -195,3 +195,79 @@ This change properly implements the layered architecture where:
 - No duplicate work or inconsistent import handling
 
 The type_tracking module is now properly integrated with the processing pipeline.
+
+### Critical Bugs Fixed (2025-08-30)
+
+After initial implementation, integration testing revealed critical bugs in type resolution. These have been fixed:
+
+#### Issue 1: Imported Types Not Being Resolved
+
+**Problem**: Types imported from other files were not being qualified with their source module.
+- Variables typed with imported types were resolving as plain type names (e.g., "User" instead of "./models/user#User")
+- The `extract_typescript_type()` function wasn't checking if types were imported
+
+**Fix**: Modified `extract_typescript_type()` in type_tracking.typescript.ts:
+- Added `tracker` parameter to access imported_classes map
+- Check if type identifiers are imported and qualify them with source module
+- Pass tracker through all recursive calls
+
+```typescript
+// Check if this type is imported
+let qualified_name = type_name;
+let is_imported = false;
+if (tracker && tracker.imported_classes) {
+  const import_info = tracker.imported_classes.get(type_name);
+  if (import_info) {
+    qualified_name = `${import_info.source_module}#${import_info.class_name}`;
+    is_imported = true;
+  }
+}
+```
+
+#### Issue 2: Type Annotations Overridden by Inferred Types
+
+**Problem**: Explicit TypeScript type annotations were being overridden by inferred types.
+- Variable with type annotation `User` was resolving as "Object" (from object literal assignment)
+- `get_variable_type()` was returning the last type instead of prioritizing explicit annotations
+
+**Fix**: Modified `get_variable_type()` in type_tracking.ts:
+- Prioritize explicit type annotations (confidence: 'explicit', source: 'annotation')
+- Only fall back to inferred types if no explicit annotation exists
+
+```typescript
+// First look for explicit type annotations
+const explicit_type = types.find(t => t.confidence === 'explicit' && t.source === 'annotation');
+if (explicit_type) return explicit_type;
+
+// Otherwise return the last type
+return types[types.length - 1];
+```
+
+#### Issue 3: Function Parameters Not Tracked
+
+**Problem**: Function parameters with type annotations were not being tracked at all.
+- The type tracker had empty variable_types for function parameters
+- Only assignment nodes were being processed, not function declarations
+
+**Fix**: Updated `process_file_for_types()` in type_tracking/index.ts:
+- Added `is_function_node()` helper to identify function declarations
+- Process function nodes to track parameter types
+- Supports function_declaration, method_definition, arrow_function, etc.
+
+```typescript
+// Track function declarations (for parameter types)
+if (is_function_node(node, context.language)) {
+  tracker = track_assignment(tracker, node, source_code, context);
+}
+```
+
+#### Test Results
+
+Created comprehensive integration tests in `type_tracking.typescript.integration.test.ts`:
+- ✅ Resolves imported types in variable declarations
+- ✅ Handles type-only imports
+- ✅ Handles namespace imports
+- ✅ Tracks imported types in function parameters
+- ✅ Distinguishes between imported and local types
+
+All 5 integration tests now pass, confirming proper import resolution and type tracking.
