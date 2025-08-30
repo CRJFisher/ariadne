@@ -49,14 +49,16 @@ Each file is analyzed independently to extract local information without needing
 #### Existing Modules:
 
 - [`/import_export/import_resolution`](/packages/core/src/import_export/import_resolution) - Extracts import declarations
-  - **TODO**: Add namespace import detection (`import * as name`) - See task 11.62.9
-  - **TODO**: Add type-only import tracking for TypeScript - See task 11.62.10
+  - ✅ **COMPLETED**: Namespace import detection (`import * as name`) - task 11.62.9
+  - ✅ **COMPLETED**: Type-only import tracking for TypeScript - task 11.62.10
+  - ✅ **COMPLETED**: Import extraction moved here from symbol_resolution - task 11.62.8
 - [`/import_export/export_detection`](/packages/core/src/import_export/export_detection) - Detects export statements
-  - **TODO**: Add type-only export tracking for TypeScript - See task 11.62.10
+  - ✅ **COMPLETED**: Type-only export tracking for TypeScript - task 11.62.10
+  - ✅ **COMPLETED**: Export extraction moved here from symbol_resolution - task 11.62.15
 
-#### Missing Modules:
+#### Completed Modules:
 
-- [`/inheritance/class_detection`](/packages/core/src/inheritance/class_detection) - **MISSING** (referenced in Architecture.md but doesn't exist!)
+- [`/inheritance/class_detection`](/packages/core/src/inheritance/class_detection) - ✅ **COMPLETED** (task 11.60)
 - **Interface/Trait Detection** - Extract interface/trait definitions
 - **Enum Detection** - Extract enum definitions
 - **Type Alias Detection** - Extract type aliases
@@ -140,9 +142,11 @@ Combines per-file analyses to build global understanding and resolve cross-file 
 - [`/inheritance/interface_implementation`](/packages/core/src/inheritance/interface_implementation) - Tracks interface implementations
 - [`/inheritance/method_override`](/packages/core/src/inheritance/method_override) - Tracks method overrides
 
-#### Missing Modules:
+#### Completed Modules:
 
-- **Type Registry** - **CRITICAL GAP** - Central registry of all type definitions
+- [`/type_analysis/type_registry`](/packages/core/src/type_analysis/type_registry) - ✅ **COMPLETED** (task 11.61) - Central registry of all type definitions
+
+#### Missing Modules:
 - **Trait Implementation Registry** - Track trait implementations (Rust)
 - **Mixin Resolution** - Resolve mixin chains (Python, TS)
 - **Protocol Conformance** - Track protocol implementations (Python)
@@ -179,7 +183,7 @@ Combines per-file analyses to build global understanding and resolve cross-file 
 #### Existing Modules:
 
 - [`/scope_analysis/symbol_resolution`](/packages/core/src/scope_analysis/symbol_resolution) - Resolves symbol references
-  - **ISSUE**: Currently duplicates import extraction! Should consume from Layer 5
+  - ✅ **FIXED**: Import/export extraction moved to Layer 2 (tasks 11.62.8, 11.62.15)
 
 #### Missing Modules:
 
@@ -227,9 +231,47 @@ Combines per-file analyses to build global understanding and resolve cross-file 
 
 ---
 
+## Enrichment Pattern (NEW INSIGHT)
+
+### The Two-Phase Enrichment Architecture
+
+**Critical Discovery**: We need an enrichment pattern to bridge Per-File Analysis and Global Assembly without violating phase separation.
+
+#### Pattern Implementation:
+
+1. **Per-File Phase**: Extract raw data (calls, types, classes)
+2. **Global Assembly Phase**: Build registries and hierarchies
+3. **Enrichment Phase**: Use global data to validate/resolve per-file data
+
+#### Created Enrichment Functions (NOT YET WIRED):
+
+- `enrich_method_calls_with_hierarchy()` - Validates methods against inheritance
+- `enrich_constructor_calls_with_types()` - Validates constructors against registry
+- `find_constructor_calls_with_types()` - Bidirectional type flow
+
+**CRITICAL**: These exist but are never called! Task 11.62.11 must wire them.
+
 ## Critical Dependencies
 
-### Correct Dependencies That Need Wiring:
+### Dependencies Status:
+
+#### ✅ Completed Wirings:
+
+1. **Import/Export Extraction → Proper Layer**
+   - Import extraction moved to Layer 2 (task 11.62.8)
+   - Export extraction moved to Layer 2 (task 11.62.15)
+   - Symbol resolution now consumes from Layer 2
+
+2. **Constructor Type Enrichment Created**
+   - Constructor type resolver created (task 11.62.6)
+   - Bidirectional type flow created (task 11.62.7)
+   - **BUT NOT WIRED YET**
+
+3. **Method Hierarchy Enrichment Created**
+   - Method hierarchy resolver created (task 11.62.5)
+   - **BUT NOT WIRED YET**
+
+#### ⚠️ Still Need Wiring:
 
 1. **Type Tracking → Import Resolution**
 
@@ -275,7 +317,14 @@ These require careful handling or event-based updates:
    - Type tracking helps identify constructor calls
    - Solution: Constructor detection first, then type update
 
-## Processing Order
+## Processing Order (UPDATED)
+
+### Current Implementation Issues:
+
+1. **Enrichment functions exist but aren't called**
+2. **Type registry and class hierarchy aren't built**
+3. **No bidirectional type flow between phases**
+4. **Cross-file resolution is broken**
 
 ### Per-File Phase (Parallel):
 
@@ -284,23 +333,26 @@ For each file in parallel:
   1. Parse AST
   2. Build scope tree
   3. Find definitions and usages
-  4. Extract imports/exports
-  5. Detect classes/interfaces/types
+  4. Extract imports/exports (✅ in correct layer now)
+  5. Detect classes/interfaces/types (✅ class detection works)
   6. Track local types
   7. Find local calls
+  8. [NEW] Extract types from constructor calls (bidirectional flow)
 ```
 
 ### Global Assembly Phase (Sequential):
 
 ```
 1. Build module graph from all imports/exports
-2. Build type registry from all type definitions
-3. Build class hierarchy from all classes
-4. Resolve types across files
-5. Resolve symbols globally
-6. Complete call graph with cross-file calls
-7. Analyze call chains and flows
-8. Process meta-programming constructs
+2. [MISSING] Build type registry from all type definitions
+3. [MISSING] Build class hierarchy from all classes
+4. [MISSING] Enrich method calls with hierarchy
+5. [MISSING] Enrich constructor calls with types
+6. Resolve types across files
+7. Resolve symbols globally (✅ uses correct imports now)
+8. Complete call graph with cross-file calls
+9. Analyze call chains and flows
+10. Process meta-programming constructs
 ```
 
 ## Implementation Status
@@ -308,26 +360,37 @@ For each file in parallel:
 ### Fully Implemented:
 
 - Basic scope analysis
-- Import/export detection
+- Import/export detection (with namespace and type-only support)
 - Local call detection (function, method, constructor)
 - Module graph construction
 - Basic type tracking
+- Type registry (task 11.61)
+- Class detection (task 11.60)
+- Import/export extraction in correct layers
 
 ### Partially Implemented:
 
 - Type resolution (missing generic support)
-- Symbol resolution (duplicates import extraction)
-- Class hierarchy (missing type registry dependency)
+- Symbol resolution (✅ fixed duplication, but missing some cross-file features)
+- Class hierarchy (✅ type registry exists, but enrichment not wired)
 - Call chain analysis (missing virtual method resolution)
+- Constructor enrichment (✅ created but not wired)
+- Method enrichment (✅ created but not wired)
 
 ### Critical Gaps:
 
 1. ~~**Type Registry** - No central type definition storage~~ ✅ Completed (task 11.61)
 2. ~~**Class Detection** - Referenced but missing~~ ✅ Completed (task 11.60)
-3. **Generic Type Resolution** - No generic type support
-4. **Virtual Method Resolution** - No polymorphic call resolution
-5. **Async Flow Analysis** - No async execution tracking
-6. **Module Resolution Strategy** - No configurable resolution
+3. **🚨 CRITICAL: Enrichment Functions Not Wired** - Created but never called (task 11.62.11 will fix)
+   - Method calls can't resolve inherited methods
+   - Constructor calls can't validate against types
+   - Types from constructors don't flow to type maps
+4. **Generic Type Resolution** - No generic type support (task 11.62.12 planned)
+5. **Virtual Method Resolution** - No polymorphic call resolution
+6. **Return Type Inference Integration** - Created but not integrated (task 11.62.13 planned)
+7. **Async Flow Analysis** - No async execution tracking
+8. **Module Resolution Strategy** - No configurable resolution
+9. **Re-export Chain Resolution** - TODO in task 11.69
 
 ## Next Steps
 
@@ -335,8 +398,9 @@ For each file in parallel:
 
 1. ~~Create [`/inheritance/class_detection`](/packages/core/src/inheritance/class_detection) module~~ ✅ Completed (task 11.60)
 2. ~~Create `/type_analysis/type_registry` module~~ ✅ Completed (task 11.61)
-3. Wire layer dependencies (task 11.62) - **CRITICAL**
-4. Remove import extraction from symbol_resolution (task 11.62.8)
+3. ~~Remove import extraction from symbol_resolution~~ ✅ Completed (tasks 11.62.8, 11.62.15)
+4. **Wire enrichment functions (task 11.62.11) - CRITICAL**
+5. Wire remaining layer dependencies (task 11.62 subtasks)
 
 ### Medium Priority (Integration):
 
