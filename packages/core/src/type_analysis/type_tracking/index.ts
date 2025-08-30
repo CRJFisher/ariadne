@@ -5,7 +5,8 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language, Def } from '@ariadnejs/types';
+import { Language, Def, ImportInfo } from '@ariadnejs/types';
+import { merge_imported_types } from './import_type_resolver';
 import {
   TypeInfo,
   FileTypeTracker,
@@ -74,7 +75,6 @@ import {
 
 import {
   track_rust_assignment,
-  track_rust_imports,
   track_rust_struct,
   track_rust_enum,
   track_rust_trait,
@@ -150,30 +150,19 @@ export function track_assignment(
 }
 
 /**
- * Track imports based on language
+ * Process imports from import_resolution layer
+ * 
+ * Instead of extracting imports from AST (which was duplicate work),
+ * this now uses the ImportInfo[] already extracted by import_resolution.
  */
-export function track_imports(
+export function process_imports_for_types(
   tracker: FileTypeTracker,
-  node: SyntaxNode,
-  source_code: string,
-  context: TypeTrackingContext,
-  imports?: any[] // From import_resolution - Layer 1
+  imports: ImportInfo[],
+  context: TypeTrackingContext
 ): FileTypeTracker {
-  switch (context.language) {
-    case 'javascript':
-      return track_javascript_imports(tracker, node, source_code, context);
-    case 'typescript':
-      return track_typescript_imports(tracker, node, source_code, context);
-    case 'python':
-      return track_python_imports(tracker, node, source_code, context);
-    case 'rust':
-      return track_rust_imports(tracker, node, source_code, context);
-    default:
-      if (context.debug) {
-        console.warn(`Import tracking not implemented for language: ${context.language}`);
-      }
-      return tracker;
-  }
+  // Use the import type resolver to merge imports into tracker
+  merge_imported_types(tracker, imports);
+  return tracker;
 }
 
 /**
@@ -352,10 +341,15 @@ export function process_file_for_types(
   tree: SyntaxNode,
   context: TypeTrackingContext,
   scope_tree?: any, // From scope_tree - Layer 2
-  imports?: any[], // From import_resolution - Layer 1
+  imports?: ImportInfo[], // From import_resolution - Layer 1
   classes?: any[] // From class_detection - Layer 5
 ): FileTypeTracker {
   let tracker = create_file_type_tracker();
+  
+  // Process imports from Layer 1 (import_resolution)
+  if (imports && imports.length > 0) {
+    tracker = process_imports_for_types(tracker, imports, context);
+  }
   
   // Walk the tree and track types
   function visit(node: SyntaxNode) {
@@ -364,10 +358,7 @@ export function process_file_for_types(
       tracker = track_assignment(tracker, node, source_code, context);
     }
     
-    // Track imports
-    if (is_import_node(node, context.language)) {
-      tracker = track_imports(tracker, node, source_code, context);
-    }
+    // NOTE: Import tracking removed - now using imports from Layer 1
     
     // Recurse
     for (let i = 0; i < node.childCount; i++) {
@@ -380,6 +371,26 @@ export function process_file_for_types(
   
   visit(tree);
   return tracker;
+}
+
+/**
+ * Check if a node is a type definition
+ */
+function is_type_definition_node(node: SyntaxNode, language: Language): boolean {
+  switch (language) {
+    case 'typescript':
+      return node.type === 'interface_declaration' || 
+             node.type === 'type_alias_declaration' ||
+             node.type === 'enum_declaration';
+    case 'python':
+      return node.type === 'class_definition';
+    case 'rust':
+      return node.type === 'struct_item' || 
+             node.type === 'enum_item' ||
+             node.type === 'trait_item';
+    default:
+      return false;
+  }
 }
 
 /**
@@ -402,22 +413,3 @@ function is_assignment_node(node: SyntaxNode, language: Language): boolean {
   }
 }
 
-/**
- * Check if a node is an import
- */
-function is_import_node(node: SyntaxNode, language: Language): boolean {
-  switch (language) {
-    case 'javascript':
-    case 'typescript':
-      // ES6 imports and CommonJS requires (which are in variable_declarator)
-      return node.type === 'import_statement' ||
-             node.type === 'variable_declarator';
-    case 'python':
-      return node.type === 'import_statement' || 
-             node.type === 'import_from_statement';
-    case 'rust':
-      return node.type === 'use_declaration';
-    default:
-      return false;
-  }
-}

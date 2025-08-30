@@ -68,12 +68,14 @@ import {
   // Class types
   ClassHierarchy,
   MethodNode,
+  SymbolId,
 } from "@ariadnejs/types";
 import {
   scan_files,
   read_and_parse_file,
   CodeFile,
 } from "./project/file_scanner";
+import { construct_symbol } from "./utils/symbol_construction";
 
 /**
  * Generate a comprehensive code graph from a codebase
@@ -409,8 +411,7 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
  * Build call graph from file analyses
  */
 function build_call_graph(analyses: FileAnalysis[]): CallGraph {
-  const functions = new Map<string, FunctionNode>();
-  const methods = new Map<string, MethodNode>();
+  const functions = new Map<SymbolId, FunctionNode>();
   const calls: CallEdge[] = [];
   const resolved_calls = new Map<string, ResolvedCall[]>();
   const call_chains = new Map<string, CallChain>();
@@ -418,7 +419,14 @@ function build_call_graph(analyses: FileAnalysis[]): CallGraph {
   // Build function nodes
   for (const analysis of analyses) {
     for (const func of analysis.functions) {
-      const symbol = func.name;
+      const scope_path = analysis.scopes.nodes.get(func.location.file_path)?.metadata?.name;
+      const symbol = construct_symbol({
+        file_path: analysis.file_path,
+        name: func.name,
+        scope_path: [],
+        is_anonymous: false,
+        location: func.location,
+      });
       functions.set(symbol, {
         symbol,
         file_path: analysis.file_path,
@@ -428,7 +436,6 @@ function build_call_graph(analyses: FileAnalysis[]): CallGraph {
         called_by: [],
         is_exported: false,
         is_entry_point: false,
-        class_name: func.parent_class,
       });
     }
   }

@@ -10,7 +10,6 @@ export interface FunctionNode {
   readonly called_by: readonly CallEdge[];
   readonly is_exported: boolean;
   readonly is_entry_point?: boolean;
-  readonly class_name?: ClassName;
 }
 
 export interface CallEdge {

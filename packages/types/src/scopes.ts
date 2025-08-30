@@ -1,12 +1,6 @@
 import { Language } from './index';
-
-/**
- * Position in source code
- */
-export interface Position {
-  readonly row: number;
-  readonly column: number;
-}
+import { SymbolId, SymbolName } from './aliases';
+import { Location } from './common';
 
 /**
  * Type of scope (determines resolution rules)
@@ -20,16 +14,15 @@ export type ScopeType =
   | 'parameter'   // Function parameter scope
   | 'local';      // Local/let/const scope
 
+export type SymbolKind = 'variable' | 'function' | 'class' | 'module' | 'interface' | 'enum' | 'type' | 'alias' | 'namespace' | 'import' | 'export' | 'local';
+
 /**
  * Symbol information within a scope
  */
 export interface ScopeSymbol {
-  readonly name: string;
-  readonly kind: string;  // variable, function, class, etc.
-  readonly range: {
-    readonly start: Position;
-    readonly end: Position;
-  };
+  readonly name: SymbolName;
+  readonly kind: SymbolKind;  // variable, function, class, etc.
+  readonly location: Location;
   readonly is_hoisted?: boolean;     // var in JS, function declarations
   readonly is_imported?: boolean;    // Imported from another module
   readonly is_exported?: boolean;    // Exported from this module
@@ -42,13 +35,10 @@ export interface ScopeSymbol {
 export interface ScopeNode {
   readonly id: string;
   readonly type: ScopeType;
-  readonly range: {
-    readonly start: Position;
-    readonly end: Position;
-  };
+  readonly location: Location;
   readonly parent_id?: string;
   readonly child_ids: readonly string[];
-  readonly symbols: ReadonlyMap<string, ScopeSymbol>;
+  readonly symbols: ReadonlyMap<SymbolId, ScopeSymbol>;
   readonly metadata?: {
     readonly name?: string;          // Function/class/module name
     readonly is_async?: boolean;     // For function scopes
@@ -62,7 +52,7 @@ export interface ScopeNode {
  */
 export interface ScopeTree {
   readonly root_id: string;
-  readonly nodes: ReadonlyMap<string, ScopeNode>;
+  readonly nodes: ReadonlyMap<SymbolId, ScopeNode>;
   readonly language: Language;
   readonly file_path?: string;
 }

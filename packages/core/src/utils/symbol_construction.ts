@@ -20,7 +20,7 @@
  * - Module-level: `src/utils.ts#<module>`
  */
 
-import { Language, Location } from '@ariadnejs/types';
+import { Language, Location, SymbolId } from '@ariadnejs/types';
 import * as path from 'path';
 
 /**
@@ -74,7 +74,7 @@ export const SPECIAL_SYMBOLS = {
  * // Returns: "src/models/user.ts#User:validate"
  * ```
  */
-export function construct_symbol(components: SymbolComponents): string {
+export function construct_symbol(components: SymbolComponents): SymbolId {
   // Normalize file path (always use forward slashes)
   const normalized_path = components.file_path.replace(/\\/g, '/');
   
