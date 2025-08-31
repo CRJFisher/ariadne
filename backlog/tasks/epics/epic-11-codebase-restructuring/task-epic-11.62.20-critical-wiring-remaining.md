@@ -69,10 +69,11 @@ Based on comprehensive review of PROCESSING_PIPELINE.md, these critical wirings 
 **Non-compliant:** `/type_analysis/generic_resolution` needs refactoring
 **Fix:** Move embedded language functions to separate files in generic_resolution
 
-### 9. Remove Unused Parameters (task 11.62.17)
-**Current State:** Functions have unused parameters from old design
-**Impact:** Confusing API, maintenance burden
-**Fix:** Clean up function signatures
+### 9. ✅ Remove Unused Parameters (task 11.62.17 - CLEANED 2025-08-31)
+**Current State:** ✅ Removed 4 unused parameters from key functions
+**Impact:** ✅ Cleaner API, reduced confusion
+**Removed:** scope_tree/classes from infer_type, classes from track_type_definition, module_graph from create_resolution_context
+**Fix:** ✅ Function signatures cleaned up
 
 ### 10. Fix Remaining Export Tests (task 11.62.16)
 **Current State:** Some export tests still failing

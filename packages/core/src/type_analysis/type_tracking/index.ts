@@ -198,9 +198,7 @@ export function infer_return_type(
 export function infer_type(
   node: SyntaxNode,
   source_code: string,
-  context: TypeTrackingContext,
-  scope_tree?: any, // From scope_tree - Layer 2
-  classes?: any[] // From class_detection - Layer 5
+  context: TypeTrackingContext
 ): TypeInfo | undefined {
   switch (context.language) {
     case 'javascript':
@@ -228,8 +226,7 @@ export function track_type_definition(
   tracker: FileTypeTracker,
   def: Def,
   source_code: string,
-  context: TypeTrackingContext,
-  classes?: any[] // From class_detection - Layer 5
+  context: TypeTrackingContext
 ): FileTypeTracker {
   switch (context.language) {
     case 'typescript':

@@ -105,8 +105,7 @@ export function create_resolution_context(
   root_node?: SyntaxNode,
   source_code?: string,
   imports?: ImportInfo[], // From import_resolution - Layer 1
-  exports?: ExportInfo[], // From export_detection - Layer 2
-  module_graph?: any // From module_graph - Layer 4
+  exports?: ExportInfo[] // From export_detection - Layer 2
 ): ResolutionContext {
   const base_context: ResolutionContext = {
     scope_tree,
