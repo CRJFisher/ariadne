@@ -187,14 +187,14 @@ export function build_symbol_table(options: SymbolTableOptions): GlobalSymbolTab
 
 ## Acceptance Criteria
 
-- [ ] Global symbol table contains all file symbols
-- [ ] Imports resolve to their export definitions
-- [ ] Re-exports are properly traced
-- [ ] Namespace imports work correctly
-- [ ] Symbol visibility is tracked
-- [ ] Cross-file references are resolved
-- [ ] Resolution works for all supported languages
-- [ ] Enrichment phase can access resolved symbols
+- [x] Global symbol table contains all file symbols
+- [x] Imports resolve to their export definitions
+- [ ] Re-exports are properly traced (partial)
+- [ ] Namespace imports work correctly (not yet)
+- [x] Symbol visibility is tracked
+- [x] Cross-file references are resolved
+- [x] Resolution works for all supported languages
+- [x] Enrichment phase can access resolved symbols
 
 ## Dependencies
 
@@ -203,7 +203,44 @@ export function build_symbol_table(options: SymbolTableOptions): GlobalSymbolTab
 - Uses type registry from Layer 6
 - Must complete before enrichment uses symbols
 
-## Notes
+## Implementation Notes
+
+### Completed Implementation (2025-08-31)
+
+1. **Created global_symbol_table.ts** - Core module for building unified symbol table
+   - `GlobalSymbolTable` interface with symbols, exports, imports, visibility
+   - `SymbolDefinition` type for storing symbol metadata
+   - `build_symbol_table()` function to process all file analyses
+   - Visibility tracking (public/private/protected/internal)
+   - Export/import resolution and connection
+
+2. **Integrated into code_graph.ts** - Added as Layer 8 in processing pipeline
+   - Builds global symbol table after module graph (Layer 5)
+   - Uses type registry from Layer 6
+   - Enhanced symbol index to use global symbols
+   - Symbol table passed to enrichment functions
+
+3. **Symbol Processing** - Extracts and indexes all symbols
+   - Functions with async/generator metadata
+   - Classes with abstract status
+   - Methods with visibility and static status
+   - Variables with export tracking
+   - Proper file path and location tracking
+
+4. **Cross-file Resolution** - Basic import/export connections
+   - Maps exports by file and name
+   - Resolves imports to exported symbols
+   - Tracks symbol visibility across files
+   - Helper functions for visibility checking
+
+### Known Limitations
+
+- Re-export chains not fully traced yet
+- Namespace imports need additional work
+- Type mismatch issues with readonly types from @ariadnejs/types
+- Import path resolution simplified (needs full module resolution logic)
+
+### Notes
 
 This is the critical layer that connects all per-file analyses into a unified view. The global symbol table enables:
 - IDE features like go-to-definition across files
@@ -211,3 +248,10 @@ This is the critical layer that connects all per-file analyses into a unified vi
 - Type flow analysis across module boundaries
 - Dead code detection
 - Refactoring support
+
+### Next Steps
+
+- Implement full re-export tracing
+- Add namespace import resolution
+- Enhance import path resolution with aliases and bundler configs
+- Add incremental update support for performance

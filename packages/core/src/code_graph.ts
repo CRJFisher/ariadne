@@ -133,6 +133,10 @@ import {
 import { enrich_constructor_calls_with_types } from "./call_graph/constructor_calls/constructor_type_resolver";
 import { enrich_method_calls_with_hierarchy } from "./call_graph/method_calls/method_hierarchy_resolver";
 import { build_call_chains } from "./call_graph/call_chain_analysis/call_chain_analysis";
+import { 
+  build_symbol_table,
+  GlobalSymbolTable
+} from "./scope_analysis/symbol_resolution/global_symbol_table";
 
 /**
  * Generate a comprehensive code graph from a codebase
@@ -258,6 +262,15 @@ export async function generate_code_graph(
     root_path: options.root_path,
     include_external: false,
   });
+  
+  // LAYER 8: GLOBAL SYMBOL RESOLUTION - Build global symbol table and resolve references
+  const global_symbols = build_symbol_table({
+    analyses: enriched_analyses as any[], // Type cast needed due to extended FileAnalysis
+    module_graph: modules,
+    type_registry,
+    resolve_imports: true,
+    track_visibility: true
+  });
 
   // CALL GRAPH - Build from enriched analyses
   const calls = build_call_graph(enriched_analyses);
@@ -268,8 +281,8 @@ export async function generate_code_graph(
   // TYPE INDEX
   const types = build_type_index(enriched_analyses);
 
-  // SYMBOL INDEX
-  const symbols = build_symbol_index(enriched_analyses);
+  // SYMBOL INDEX - Enhanced with global symbol table
+  const symbols = build_symbol_index(enriched_analyses, global_symbols);
 
   return {
     files,
@@ -764,57 +777,67 @@ function build_type_index(analyses: FileAnalysis[]): TypeIndex {
 }
 
 /**
- * Build symbol index from file analyses
+ * Build symbol index from file analyses and global symbol table
  */
-function build_symbol_index(analyses: FileAnalysis[]): SymbolIndex {
+function build_symbol_index(
+  analyses: FileAnalysis[],
+  global_symbols?: GlobalSymbolTable
+): SymbolIndex {
   const definitions = new Map<string, Definition>();
   const usages = new Map<string, Usage[]>();
-  const exports_by_file = new Map<string, ExportedSymbol[]>();
   const resolution_cache = new Map<string, ResolvedSymbol>();
 
-  // Build definitions from functions and classes
-  for (const analysis of analyses) {
-    // Add function definitions
-    for (const func of analysis.functions) {
-      definitions.set(func.id, {
-        symbol: func.name,
-        location: func.location,
-        type: "function",
-        is_exported: false, // TODO: Check if exported
+  // If we have a global symbol table, use it to build definitions
+  if (global_symbols) {
+    for (const [symbol_id, def] of global_symbols.symbols) {
+      definitions.set(symbol_id, {
+        symbol: def.name,
+        location: def.location,
+        kind: def.kind as any, // Type mismatch - needs mapping
+        is_exported: def.is_exported,
       });
     }
+  } else {
+    // Fallback to old method if no global symbols
+    for (const analysis of analyses) {
+      const registry = (analysis as any).symbol_registry;
+      if (!registry) continue;
+      
+      // Add function definitions
+      for (const func of analysis.functions) {
+        const symbol_id = registry.get(func);
+        if (symbol_id) {
+          definitions.set(symbol_id, {
+            symbol: func.name,
+            location: func.location,
+            kind: "function",
+            is_exported: false, // TODO: Check if exported
+          });
+        }
+      }
 
-    // Add class definitions
-    for (const cls of analysis.classes) {
-      definitions.set(cls.id, {
-        symbol: cls.name,
-        location: cls.location,
-        type: "class",
-        is_exported: false, // TODO: Check if exported
-      });
+      // Add class definitions
+      for (const cls of analysis.classes) {
+        const symbol_id = registry.get(cls);
+        if (symbol_id) {
+          definitions.set(symbol_id, {
+            symbol: cls.name,
+            location: cls.location,
+            kind: "class",
+            is_exported: false, // TODO: Check if exported
+          });
+        }
+      }
     }
-
-    // Build exports by file
-    const file_exports: ExportedSymbol[] = [];
-    for (const exp of analysis.exports) {
-      file_exports.push({
-        name: exp.export_name,
-        original_name: exp.name, // Use the local name as original
-        is_default: exp.is_default,
-        location: {
-          file_path: analysis.file_path,
-          line: exp.range.start.row,
-          column: exp.range.start.column,
-        },
-      });
-    }
-    exports_by_file.set(analysis.file_path, file_exports);
   }
 
+  // Build exports from global symbol table or analyses
+  const exports = global_symbols ? global_symbols.exports : new Map();
+  
   return {
     definitions,
     usages,
-    exports_by_file,
+    exports,
     resolution_cache,
   };
 }
