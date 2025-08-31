@@ -28,11 +28,11 @@ Based on comprehensive review of PROCESSING_PIPELINE.md, these critical wirings 
 **Location:** `/call_graph/method_calls` now receives enriched_type_map
 **Fix:** ✅ Reordered operations to pass enriched map after constructor merge
 
-### 3. Symbol Resolution → Import Resolution (task 11.62.14)
-**Current State:** Symbol resolution still duplicates import extraction
-**Impact:** Performance hit, potential inconsistencies
-**Location:** `/scope_analysis/symbol_resolution`
-**Fix:** Consume imports from Layer 2 instead of re-extracting
+### 3. ✅ Symbol Resolution → Import Resolution (task 11.62.14 - FIXED 2025-08-31)
+**Current State:** ✅ Symbol resolution now uses imports from Layer 1/2
+**Impact:** ✅ No more duplicate extraction, improved performance
+**Location:** `/scope_analysis/symbol_resolution` now receives imports properly
+**Fix:** ✅ Removed duplicate extraction functions, uses imports parameter
 
 ### 4. Type Propagation → Call Graph
 **Current State:** Type propagation doesn't use call information
@@ -88,7 +88,7 @@ Based on comprehensive review of PROCESSING_PIPELINE.md, these critical wirings 
 ### Global Assembly Wirings
 - [ ] Type registry built from all files (✅ Done in 11.62.11)
 - [ ] Class hierarchy built from all classes (✅ Done in 11.62.11)
-- [ ] Symbol resolution consumes imports (not re-extracts)
+- [x] Symbol resolution consumes imports (✅ Fixed 2025-08-31)
 - [ ] Type propagation uses call graph
 
 ### Enrichment Phase Wirings

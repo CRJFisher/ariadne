@@ -35,13 +35,8 @@ import {
 } from './symbol_resolution.python';
 import {
   resolve_rust_symbol,
-  extract_rust_use_statements,
   RustResolutionContext
 } from './symbol_resolution.rust';
-
-// Import extraction functionality from proper architectural layers (Layer 2)
-import { extract_imports } from '../../import_export/import_resolution';
-import { extract_exports } from '../../import_export/export_detection';
 
 // Re-export core types and functions
 export {
@@ -97,68 +92,8 @@ export function resolve_symbol_with_language(
   }
 }
 
-/**
- * Extract imports with language-specific handling
- */
-export function extract_imports(
-  root_node: SyntaxNode,
-  source_code: string,
-  language: Language,
-  file_path?: string // For relative import resolution
-): ImportInfo[] {
-  switch (language) {
-    case 'javascript':
-    case 'jsx': {
-      const imports: ImportInfo[] = [];
-      imports.push(...extract_es6_imports(root_node, source_code));
-      imports.push(...extract_commonjs_imports(root_node, source_code));
-      return imports;
-    }
-    
-    case 'typescript':
-    case 'tsx':
-      return extract_typescript_imports(root_node, source_code);
-    
-    case 'python':
-      return extract_python_imports(root_node, source_code);
-    
-    case 'rust': {
-      // Convert use statements to ImportInfo
-      const use_statements = extract_rust_use_statements(root_node, source_code);
-      const imports: ImportInfo[] = [];
-      
-      for (const stmt of use_statements) {
-        if (stmt.is_group && stmt.items) {
-          // Expand grouped imports (e.g., use std::io::{Read, Write})
-          for (const item of stmt.items) {
-            imports.push({
-              name: item.alias || item.name,
-              module_path: stmt.path.join('::'),
-              is_namespace: false,
-              range: stmt.range
-            });
-          }
-        } else {
-          // Single import
-          imports.push({
-            name: stmt.alias || stmt.path[stmt.path.length - 1],
-            module_path: stmt.path.join('::'),
-            is_namespace: stmt.is_glob,
-            range: stmt.range
-          });
-        }
-      }
-      
-      return imports;
-    }
-    
-    default:
-      return [];
-  }
-}
-
-// Export extraction is now handled by export_detection module (Layer 2)
-// This maintains proper architectural layering - extraction happens in Per-File Analysis
+// Import/export extraction is now handled by import_resolution and export_detection modules
+// This maintains proper architectural layering - extraction happens in Per-File Analysis (Layers 1-2)
 
 /**
  * Create language-specific resolution context
@@ -169,7 +104,8 @@ export function create_resolution_context(
   file_path?: string,
   root_node?: SyntaxNode,
   source_code?: string,
-  imports?: any[], // From import_resolution - Layer 1
+  imports?: ImportInfo[], // From import_resolution - Layer 1
+  exports?: ExportInfo[], // From export_detection - Layer 2
   module_graph?: any // From module_graph - Layer 4
 ): ResolutionContext {
   const base_context: ResolutionContext = {
@@ -189,10 +125,12 @@ export function create_resolution_context(
         this_bindings: new Map()
       };
       
-      // Extract imports/exports if AST is provided
-      if (root_node && source_code) {
-        js_context.imports = extract_imports(root_node, source_code, language);
-        js_context.exports = extract_exports(root_node, source_code, language);
+      // Use imports/exports from Layer 1/2 instead of extracting
+      if (imports) {
+        js_context.imports = imports;
+      }
+      if (exports) {
+        js_context.exports = exports;
       }
       
       return js_context;
@@ -212,10 +150,12 @@ export function create_resolution_context(
         namespaces: new Map()
       };
       
-      // Extract imports/exports if AST is provided
-      if (root_node && source_code) {
-        ts_context.imports = extract_imports(root_node, source_code, language);
-        ts_context.exports = extract_exports(root_node, source_code, language);
+      // Use imports/exports from Layer 1/2 instead of extracting
+      if (imports) {
+        ts_context.imports = imports;
+      }
+      if (exports) {
+        ts_context.exports = exports;
       }
       
       return ts_context;
@@ -229,15 +169,19 @@ export function create_resolution_context(
         nonlocal_declarations: new Map()
       };
       
-      // Extract imports/exports and declarations if AST is provided
-      if (root_node && source_code) {
-        py_context.imports = extract_imports(root_node, source_code, language);
-        py_context.exports = extract_exports(root_node, source_code, language);
+      // Use imports/exports from Layer 1/2 instead of extracting
+      if (imports) {
+        py_context.imports = imports;
+      }
+      if (exports) {
+        py_context.exports = exports;
         
-        // Extract global/nonlocal declarations
-        const declarations = extract_python_declarations(root_node, source_code, scope_tree);
-        py_context.global_declarations = declarations.global_declarations;
-        py_context.nonlocal_declarations = declarations.nonlocal_declarations;
+        // Extract global/nonlocal declarations if AST is provided
+        if (root_node && source_code) {
+          const declarations = extract_python_declarations(root_node, source_code, scope_tree);
+          py_context.global_declarations = declarations.global_declarations;
+          py_context.nonlocal_declarations = declarations.nonlocal_declarations;
+        }
       }
       
       return py_context;
@@ -252,10 +196,19 @@ export function create_resolution_context(
         visibility_modifiers: new Map()
       };
       
-      // Extract use statements and exports if AST is provided
-      if (root_node && source_code) {
-        rust_context.use_statements = extract_rust_use_statements(root_node, source_code);
-        rust_context.exports = extract_exports(root_node, source_code, language);
+      // Use imports/exports from Layer 1/2 instead of extracting
+      if (imports) {
+        // Convert ImportInfo to use statements for Rust
+        rust_context.use_statements = imports.map(imp => ({
+          path: imp.module_path.split('::'),
+          alias: imp.source_name,
+          is_glob: imp.is_namespace || false,
+          is_group: false,
+          range: imp.range
+        }));
+      }
+      if (exports) {
+        rust_context.exports = exports;
       }
       
       return rust_context;
@@ -276,7 +229,8 @@ export function resolve_at_cursor(
   file_path: string,
   root_node?: SyntaxNode,
   source_code?: string,
-  imports?: any[], // From import_resolution - Layer 1
+  imports?: ImportInfo[], // From import_resolution - Layer 1
+  exports?: ExportInfo[], // From export_detection - Layer 2
   module_graph?: any // From module_graph - Layer 4
 ): ResolvedSymbol | undefined {
   const context = create_resolution_context(
@@ -284,7 +238,10 @@ export function resolve_at_cursor(
     language,
     file_path,
     root_node,
-    source_code
+    source_code,
+    imports,
+    exports,
+    module_graph
   );
   
   return resolve_symbol_at_position(position, context);
