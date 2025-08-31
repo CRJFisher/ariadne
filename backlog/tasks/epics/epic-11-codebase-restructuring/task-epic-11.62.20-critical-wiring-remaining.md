@@ -48,11 +48,12 @@ Based on comprehensive review of PROCESSING_PIPELINE.md, these critical wirings 
 **Location:** `/type_analysis/generic_resolution` module created
 **Fix:** ✅ Created resolver with context, binding, and substitution support
 
-### 6. Return Type Inference Integration (task 11.62.13)
-**Current State:** Return type inference exists but not integrated
+### 6. ⚠️ Return Type Inference Integration (task 11.62.13 - ATTEMPTED 2025-08-31)
+**Current State:** ⚠️ Module exists but code_graph.ts has major type incompatibilities
 **Impact:** Missing critical type information
 **Location:** `/type_analysis/return_type_inference`
-**Fix:** Wire return types to type maps and propagation
+**Issue:** code_graph.ts needs refactoring - type mismatches with FileAnalysis interface
+**Fix:** Refactor code_graph.ts to align with current type system, then integrate
 
 ### 7. Virtual Method Resolution
 **Current State:** Enrichment exists but no polymorphic resolution

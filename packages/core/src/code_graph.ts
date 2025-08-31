@@ -6,7 +6,6 @@
 
 import {
   FunctionCallInfo,
-  MODULE_CONTEXT,
   find_function_calls,
 } from "./call_graph/function_calls";
 import { MethodCallInfo, find_method_calls } from "./call_graph/method_calls";
@@ -24,7 +23,9 @@ import { process_file_for_types, FileTypeTracker, TypeTrackingContext } from "./
 import { TypeRegistry } from "./type_analysis/type_registry";
 import { build_module_graph } from "./import_export/module_graph";
 import { TypeInfo } from "./type_analysis/type_tracking";
-import Parser from 'tree-sitter';
+// TODO: Re-integrate return type inference after fixing type compatibility issues
+// The code_graph.ts file needs major refactoring to align with current types
+import Parser, { SyntaxNode } from 'tree-sitter';
 import JavaScript from 'tree-sitter-javascript';
 import TypeScript from 'tree-sitter-typescript';
 import Python from 'tree-sitter-python';
@@ -372,6 +373,10 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
         : null;
       const is_method = parent_scope?.type === "class";
 
+      // TODO: Integrate return type inference properly
+      // For now, just set return_type to undefined
+      let return_type: string | undefined;
+      
       functions.push({
         name: function_name,
         location: {
@@ -383,6 +388,7 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
         },
         signature: {
           parameters: [],
+          return_type,
           is_async: false,
           is_generator: false,
         },
@@ -470,6 +476,8 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
     type_info: flattened_type_info,
   };
 }
+
+// TODO: Add helper functions for AST navigation when re-integrating return type inference
 
 /**
  * Build call graph from file analyses
