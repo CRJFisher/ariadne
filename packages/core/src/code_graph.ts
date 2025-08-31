@@ -34,7 +34,7 @@ import {
   FileTypeTracker,
   TypeTrackingContext,
 } from "./type_analysis/type_tracking";
-import { TypeRegistry } from "./type_analysis/type_registry";
+import { create_type_registry, register_class, TypeRegistry } from "./type_analysis/type_registry";
 import { build_module_graph } from "./import_export/module_graph";
 import { TypeInfo } from "./type_analysis/type_tracking";
 import {
@@ -137,6 +137,10 @@ import {
   build_symbol_table,
   GlobalSymbolTable
 } from "./scope_analysis/symbol_resolution/global_symbol_table";
+import {
+  build_scope_entity_connections,
+  ScopeEntityConnections
+} from "./scope_analysis/scope_entity_connections";
 
 /**
  * Generate a comprehensive code graph from a codebase
@@ -627,9 +631,23 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
 
   // Get collected errors
   const analysis_errors = error_collector.get_errors();
+  
+  // Build scope-entity connections after all entities are created
+  const scope_entity_connections = build_scope_entity_connections(
+    scopes,
+    functions,
+    classes,
+    variables,
+    symbol_registry,
+    file.language,
+    file.file_path
+  );
 
-  // Create extended file analysis with symbol registry
-  const file_analysis: FileAnalysis & { symbol_registry: Map<any, SymbolId> } = {
+  // Create extended file analysis with symbol registry and connections
+  const file_analysis: FileAnalysis & { 
+    symbol_registry: Map<any, SymbolId>;
+    scope_entity_connections: ScopeEntityConnections;
+  } = {
     file_path: file.file_path,
     language: file.language,
     functions: create_readonly_array(functions),
@@ -644,6 +662,7 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
     constructor_calls: create_readonly_array(constructor_calls),
     type_info: public_type_info,
     symbol_registry, // Add symbol registry for later use
+    scope_entity_connections, // Add scope-entity connections
   };
   
   return file_analysis;
@@ -851,9 +870,7 @@ function build_symbol_index(
 async function build_type_registry_from_analyses(
   analyses: FileAnalysis[]
 ): Promise<TypeRegistry> {
-  const { create_type_registry, register_class } = await import(
-    "./type_analysis/type_registry"
-  );
+
   const registry = create_type_registry();
 
   // Register all classes from all files
@@ -891,9 +908,6 @@ async function build_type_registry_from_analyses(
 async function build_class_hierarchy_from_analyses(
   analyses: FileAnalysis[]
 ): Promise<ClassHierarchy> {
-  const { build_class_hierarchy } = await import(
-    "./inheritance/class_hierarchy"
-  );
 
   // Collect all class definitions with their file context
   const all_classes: any[] = [];
