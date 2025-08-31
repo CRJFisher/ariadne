@@ -21,6 +21,12 @@ import { propagate_javascript_types, handle_closure_capture } from './type_propa
 import { propagate_typescript_types, handle_utility_types } from './type_propagation.typescript';
 import { propagate_python_types, handle_with_statement } from './type_propagation.python';
 import { propagate_rust_types } from './type_propagation.rust';
+import {
+  propagate_function_call_types,
+  propagate_method_call_types,
+  propagate_constructor_call_types,
+  merge_call_type_flows
+} from './call_propagation';
 
 // Re-export core types and functions
 export {
@@ -44,6 +50,14 @@ export {
   propagate_python_types,
   handle_with_statement,
   propagate_rust_types
+};
+
+// Re-export call propagation functions
+export {
+  propagate_function_call_types,
+  propagate_method_call_types,
+  propagate_constructor_call_types,
+  merge_call_type_flows
 };
 
 /**
@@ -99,7 +113,10 @@ export function propagate_types_in_tree(
   initial_types?: Map<string, string>,
   type_tracker?: any, // From type_tracking - Layer 3
   function_calls?: any[], // From function_calls - Layer 4
-  method_calls?: any[] // From method_calls - Layer 4
+  method_calls?: any[], // From method_calls - Layer 4
+  constructor_calls?: any[], // From constructor_calls - Layer 4
+  class_hierarchy?: any, // From class_hierarchy - Global Assembly
+  type_registry?: any // From type_registry - Global Assembly
 ): Map<string, TypeFlow[]> {
   const type_flows_by_identifier = new Map<string, TypeFlow[]>();
   const known_types = new Map(initial_types);
@@ -138,6 +155,31 @@ export function propagate_types_in_tree(
   }
   
   traverse(root);
+  
+  // Add call graph type flows if available
+  if (function_calls || method_calls || constructor_calls) {
+    const function_flows = function_calls 
+      ? propagate_function_call_types(function_calls, context, type_tracker?.variable_types)
+      : [];
+    
+    const method_flows = method_calls
+      ? propagate_method_call_types(method_calls, context, type_tracker?.variable_types, class_hierarchy)
+      : [];
+    
+    const constructor_flows = constructor_calls
+      ? propagate_constructor_call_types(constructor_calls, context, type_registry)
+      : [];
+    
+    // Merge call flows into the main flows
+    const call_flows = merge_call_type_flows(function_flows, method_flows, constructor_flows);
+    
+    for (const flow of call_flows) {
+      const existing = type_flows_by_identifier.get(flow.target_identifier) || [];
+      existing.push(flow);
+      type_flows_by_identifier.set(flow.target_identifier, existing);
+    }
+  }
+  
   return type_flows_by_identifier;
 }
 

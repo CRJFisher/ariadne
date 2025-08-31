@@ -34,11 +34,11 @@ Based on comprehensive review of PROCESSING_PIPELINE.md, these critical wirings 
 **Location:** `/scope_analysis/symbol_resolution` now receives imports properly
 **Fix:** ✅ Removed duplicate extraction functions, uses imports parameter
 
-### 4. Type Propagation → Call Graph
-**Current State:** Type propagation doesn't use call information
-**Impact:** Types don't flow through function calls
-**Location:** `/type_analysis/type_propagation`
-**Fix:** Wire all call types (function, method, constructor) to type propagation
+### 4. ✅ Type Propagation → Call Graph (FIXED 2025-08-31)
+**Current State:** ✅ Type propagation now uses call graph information
+**Impact:** ✅ Types flow through function, method, and constructor calls
+**Location:** `/type_analysis/type_propagation` with new call_propagation module
+**Fix:** ✅ Added propagation functions for all call types
 
 ## High Priority - Incomplete Features
 
@@ -89,7 +89,7 @@ Based on comprehensive review of PROCESSING_PIPELINE.md, these critical wirings 
 - [ ] Type registry built from all files (✅ Done in 11.62.11)
 - [ ] Class hierarchy built from all classes (✅ Done in 11.62.11)
 - [x] Symbol resolution consumes imports (✅ Fixed 2025-08-31)
-- [ ] Type propagation uses call graph
+- [x] Type propagation uses call graph (✅ Fixed 2025-08-31)
 
 ### Enrichment Phase Wirings
 - [ ] Method enrichment applied (✅ Done in 11.62.11)
