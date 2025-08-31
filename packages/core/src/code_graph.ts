@@ -118,45 +118,11 @@ export async function generate_code_graph(
 
   const analyses = await Promise.all(analysis_promises);
 
-  // FILE ANALYSIS
-  const files = new Map<string, FileAnalysis>();
-  const language_stats = new Map<Language, number>();
-
-  // Convert internal analyses to FileAnalysis
-  for (const analysis of analyses) {
-    files.set(analysis.file_path, analysis);
-
-    // Track language statistics
-    const count = language_stats.get(analysis.language) || 0;
-    language_stats.set(analysis.language, count + 1);
-  }
-
-  // MODULE GRAPH
-  const file_data = new Map(
-    analyses.map((a) => [
-      a.file_path,
-      {
-        file_path: a.file_path,
-        language: a.language,
-        imports: a.imports,
-        exports: a.exports,
-      },
-    ])
-  );
-
-  const modules = build_module_graph(file_data, {
-    root_path: options.root_path,
-    include_external: false,
-  });
-
-  // TYPE REGISTRY - Build unified type registry from all files
+  // TYPE REGISTRY - Build unified type registry from all files (needed for enrichment)
   const type_registry = await build_type_registry_from_analyses(analyses);
   
-  // CLASS HIERARCHY - Build inheritance tree from all classes
+  // CLASS HIERARCHY - Build inheritance tree from all classes (needed for enrichment)
   const class_hierarchy = await build_class_hierarchy_from_analyses(analyses);
-
-  // CALL GRAPH
-  const calls = build_call_graph(analyses);
   
   // TODO: LAYER 9 - Global Call Resolution
   // After class hierarchy and type registry are built (Layers 6-7),
@@ -178,13 +144,6 @@ export async function generate_code_graph(
   // Enrich method calls with class hierarchy information
   const { enrich_method_calls_with_hierarchy } = await import('./call_graph/method_calls/method_hierarchy_resolver');
   
-  for (const analysis of analyses) {
-    analysis.method_calls = enrich_method_calls_with_hierarchy(
-      analysis.method_calls,
-      class_hierarchy
-    );
-  }
-  
   // CONSTRUCTOR TYPE VALIDATION (task 11.62.6)
   // Validate and enrich constructor calls with type registry
   const { enrich_constructor_calls_with_types } = await import('./call_graph/constructor_calls/constructor_type_resolver');
@@ -198,22 +157,66 @@ export async function generate_code_graph(
     imports_by_file.set(analysis.file_path, []);
   }
   
-  for (const analysis of analyses) {
-    analysis.constructor_calls = enrich_constructor_calls_with_types(
-      analysis.constructor_calls,
+  // Enrich analyses with method hierarchy and constructor types
+  // Create new analysis objects since properties are readonly
+  const enriched_analyses = analyses.map(analysis => {
+    const enriched_method_calls = enrich_method_calls_with_hierarchy(
+      [...analysis.method_calls], // Convert readonly to mutable
+      class_hierarchy
+    );
+    
+    const enriched_constructor_calls = enrich_constructor_calls_with_types(
+      [...analysis.constructor_calls], // Convert readonly to mutable
       type_registry,
       imports_by_file
     );
-  }
+    
+    return {
+      ...analysis,
+      method_calls: enriched_method_calls,
+      constructor_calls: enriched_constructor_calls
+    };
+  });
   
+  // FILE ANALYSIS - Build files map from enriched analyses
+  const files = new Map<string, FileAnalysis>();
+  const language_stats = new Map<Language, number>();
+
+  for (const analysis of enriched_analyses) {
+    files.set(analysis.file_path, analysis);
+    const count = language_stats.get(analysis.language) || 0;
+    language_stats.set(analysis.language, count + 1);
+  }
+
+  // MODULE GRAPH - Build from enriched analyses
+  const file_data = new Map(
+    enriched_analyses.map((a) => [
+      a.file_path,
+      {
+        file_path: a.file_path,
+        language: a.language,
+        imports: a.imports,
+        exports: a.exports,
+      },
+    ])
+  );
+
+  const modules = build_module_graph(file_data, {
+    root_path: options.root_path,
+    include_external: false,
+  });
+
+  // CALL GRAPH - Build from enriched analyses
+  const calls = build_call_graph(enriched_analyses);
+
   // Use the built class hierarchy instead of empty placeholder
   const classes = class_hierarchy;
 
   // TYPE INDEX
-  const types = build_type_index(analyses);
+  const types = build_type_index(enriched_analyses);
 
   // SYMBOL INDEX
-  const symbols = build_symbol_index(analyses);
+  const symbols = build_symbol_index(enriched_analyses);
 
   return {
     files,
@@ -517,7 +520,7 @@ function build_call_graph(analyses: FileAnalysis[]): CallGraph {
   for (const analysis of analyses) {
     for (const call of analysis.function_calls) {
       const from = `${analysis.file_path}#${
-        call.caller_name || MODULE_CONTEXT
+        call.caller_name || '<module>'
       }`;
       const to = `${analysis.file_path}#${call.callee_name}`;
 
@@ -526,8 +529,8 @@ function build_call_graph(analyses: FileAnalysis[]): CallGraph {
         to,
         location: {
           file_path: analysis.file_path,
-          line: call.line || call.location.row,
-          column: call.column || call.location.column,
+          line: call.location.line,
+          column: call.location.column,
         },
         call_type: 'direct', // TODO: Determine if dynamic
       });
@@ -536,7 +539,7 @@ function build_call_graph(analyses: FileAnalysis[]): CallGraph {
     // Add method calls
     for (const call of analysis.method_calls) {
       const from = `${analysis.file_path}#${
-        call.caller_name || MODULE_CONTEXT
+        call.caller_name || '<module>'
       }`;
       const to = `${analysis.file_path}#${call.method_name}`;
 
@@ -545,7 +548,7 @@ function build_call_graph(analyses: FileAnalysis[]): CallGraph {
         to,
         location: {
           file_path: analysis.file_path,
-          line: call.location.row,
+          line: call.location.line,
           column: call.location.column,
         },
         call_type: 'method',

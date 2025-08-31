@@ -193,16 +193,25 @@ function extract_typescript_export(
   const exports: ExportInfo[] = [];
   
   // Check if this is a type-only export at the statement level
-  // Pattern: export type { ... } from '...'
+  // Pattern: export type { ... } from '...' or export type * from '...'
   let statement_level_type = false;
   // The 'type' keyword appears as a direct child of export_statement after 'export'
+  // Note: TypeScript parser may put 'type' in an ERROR node for export type *
   const children = export_node.children;
   for (let i = 0; i < children.length; i++) {
-    if (children[i].type === 'export' && 
-        i + 1 < children.length && 
-        children[i + 1].type === 'type') {
-      statement_level_type = true;
-      break;
+    if (children[i].type === 'export' && i + 1 < children.length) {
+      const next = children[i + 1];
+      if (next.type === 'type') {
+        statement_level_type = true;
+        break;
+      }
+      // Check if 'type' is inside an ERROR node (happens with export type *)
+      if (next.type === 'ERROR' && next.children.length > 0) {
+        if (next.children[0].type === 'type') {
+          statement_level_type = true;
+          break;
+        }
+      }
     }
   }
   
@@ -560,42 +569,83 @@ function extract_rust_use_exports(
   source_code: string
 ): ExportInfo[] {
   const exports: ExportInfo[] = [];
-  const use_tree = use_node.childForFieldName('use_tree');
-  if (!use_tree) return exports;
   
-  const extract_from_tree = (tree: SyntaxNode): void => {
-    if (tree.type === 'scoped_identifier') {
-      const name = tree.childForFieldName('name');
-      if (name) {
-        exports.push({
-          name: name.text,
-          source: tree.text,
-          kind: 'named',
-          is_reexport: true,
-          location: node_to_location(tree)
-        });
-      }
-    } else if (tree.type === 'use_list') {
-      for (const child of tree.children) {
-        if (child.type === 'use' || child.type === 'scoped_identifier') {
-          extract_from_tree(child);
+  // Find the main identifier or use_list
+  let use_target: SyntaxNode | null = null;
+  for (const child of use_node.children) {
+    if (child.type === 'scoped_identifier' || 
+        child.type === 'identifier' || 
+        child.type === 'use_list' ||
+        child.type === 'use_as_clause' ||
+        child.type === 'use_wildcard') {
+      use_target = child;
+      break;
+    }
+  }
+  
+  if (!use_target) return exports;
+  
+  const extract_from_node = (node: SyntaxNode): void => {
+    if (node.type === 'scoped_identifier') {
+      // For nested scoped_identifiers like crate::module::Item,
+      // we want the last identifier
+      let lastIdentifier: SyntaxNode | null = null;
+      for (const child of node.children) {
+        if (child.type === 'identifier') {
+          lastIdentifier = child;
         }
       }
-    } else if (tree.type === 'use_as_clause') {
-      const alias = tree.childForFieldName('alias');
+      
+      if (lastIdentifier) {
+        exports.push({
+          name: lastIdentifier.text,
+          source: node.text,
+          kind: 'named',
+          is_reexport: true,
+          location: node_to_location(node)
+        });
+      }
+    } else if (node.type === 'identifier') {
+      // Simple identifier
+      exports.push({
+        name: node.text,
+        source: 'local',
+        kind: 'named',
+        is_reexport: true,
+        location: node_to_location(node)
+      });
+    } else if (node.type === 'use_list') {
+      // Multiple imports: use module::{Item1, Item2}
+      for (const child of node.children) {
+        if (child.type === 'scoped_identifier' || child.type === 'identifier') {
+          extract_from_node(child);
+        }
+      }
+    } else if (node.type === 'use_as_clause') {
+      // Aliased import: use module::Item as Alias
+      const alias = node.childForFieldName('alias');
       if (alias) {
         exports.push({
           name: alias.text,
-          source: tree.text,
+          source: node.text,
           kind: 'named',
           is_reexport: true,
-          location: node_to_location(tree)
+          location: node_to_location(node)
         });
       }
+    } else if (node.type === 'use_wildcard') {
+      // Wildcard import: use module::*
+      exports.push({
+        name: '*',
+        source: node.parent?.text || '',
+        kind: 'namespace',
+        is_reexport: true,
+        location: node_to_location(node)
+      });
     }
   };
   
-  extract_from_tree(use_tree);
+  extract_from_node(use_target);
   return exports;
 }
 
