@@ -31,18 +31,26 @@ Each file is analyzed independently to extract local information. This phase can
 
 **Processing:**
 
-- Build hierarchical scope structure
-- Find symbol definitions within scopes
-- Track symbol usages and references
+- Build hierarchical scope structure with unique scope IDs
+- Extract symbols (functions, classes, variables) within each scope
+- Track scope metadata (name, type, async/generator status)
+- Create parent-child scope relationships
+- Handle hoisted symbols (var, function declarations)
 - Analyze variable declarations and closures
 
 **Modules:**
 
-- `/scope_analysis/scope_tree` - Hierarchical scope structure
+- `/scope_analysis/scope_tree` - Hierarchical scope structure with symbol extraction
 - `/scope_analysis/definition_finder` - Symbol definitions
 - `/scope_analysis/usage_finder` - Symbol usages
 
-**Outputs:** `ScopeTree`, symbol definitions, variable declarations, closure captures
+**Outputs:** 
+
+- `ScopeTree` with nodes containing symbols
+- Scope metadata (names, types, locations)
+- Symbol definitions with scope context
+- Variable declarations
+- Closure captures
 
 ### Layer 2: Local Structure Detection
 
@@ -84,7 +92,7 @@ Each file is analyzed independently to extract local information. This phase can
 
 **Outputs:** variable type maps, inferred types, type annotations, type guards
 
-### Layer 4: Local Call Analysis
+### Layer 4: Local Call Analysis & Symbol Creation
 
 **Dependencies:** Local Type Analysis, Scope Analysis
 
@@ -94,6 +102,8 @@ Each file is analyzed independently to extract local information. This phase can
 - Find method calls with receiver types (when available locally)
 - Find constructor calls
 - Extract types from constructor calls (bidirectional flow)
+- **Create globally unique SymbolIds for all entities**
+- **Build symbol registry mapping entities to symbols**
 - Track async/await patterns
 - Identify callbacks and event handlers
 
@@ -102,8 +112,14 @@ Each file is analyzed independently to extract local information. This phase can
 - `/call_graph/function_calls` - Function call detection
 - `/call_graph/method_calls` - Method call detection
 - `/call_graph/constructor_calls` - Constructor call detection with type extraction
+- `/utils/symbol_construction` - Symbol ID creation
+- `/utils/scope_path_builder` - Scope path extraction for symbols
 
-**Outputs:** function calls, method calls, constructor calls with discovered types
+**Outputs:** 
+
+- Function calls, method calls, constructor calls with discovered types
+- **Symbol registry (Map<entity, SymbolId>)**
+- **Symbols for all functions, classes, methods, variables**
 
 ---
 
@@ -173,20 +189,32 @@ Combines per-file analyses to build global understanding. This phase runs sequen
 
 ### Layer 8: Global Symbol Resolution
 
-**Dependencies:** Type Resolution, Module Graph
+**Dependencies:** Type Resolution, Module Graph, Class Hierarchy, All per-file symbols
 
 **Processing:**
 
-- Build global symbol table
-- Resolve symbol references across files
-- Handle import/export aliases
-- Track symbol visibility and accessibility
+- Build global symbol table from all file analyses
+- Create unique SymbolIds for all entities (functions, classes, methods, variables)
+- Map exports to their symbol definitions
+- Resolve imports to exported symbols across files
+- Track symbol visibility (public/private/protected/internal)
+- Build symbol reference maps
+- Handle cross-file symbol accessibility
 
 **Modules:**
 
-- `/scope_analysis/symbol_resolution` - Symbol reference resolver
+- `/scope_analysis/symbol_resolution` - Core symbol resolution
+- `/scope_analysis/symbol_resolution/global_symbol_table` - Global symbol table builder
+- `/utils/symbol_construction` - Symbol ID creation utilities
+- `/utils/scope_path_builder` - Scope path extraction
 
-**Outputs:** resolved symbol references, global symbol table
+**Outputs:** 
+
+- `GlobalSymbolTable` - Unified symbol definitions
+- Symbol-to-entity mappings
+- Export/import resolution maps
+- Symbol visibility index
+- Cross-file reference tracking
 
 ---
 
@@ -283,19 +311,19 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 
 ### Execution Flow
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                    Per-File Phase                        │
 │                     (Parallel)                           │
 ├─────────────────────────────────────────────────────────┤
 │  For each file in parallel:                              │
 │    1. Parse AST                                          │
-│    2. Build scope tree                                   │
+│    2. Build scope tree with symbols                      │
 │    3. Find definitions and usages                        │
 │    4. Extract imports/exports                            │
 │    5. Detect classes/interfaces/types                    │
 │    6. Track local types                                  │
-│    7. Find calls (with type extraction)                  │
+│    7. Find calls and create SymbolIds                    │
 └─────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────┐
@@ -306,7 +334,8 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 │  2. Build type registry from all type definitions        │
 │  3. Build class hierarchy from all classes               │
 │  4. Resolve types across files                           │
-│  5. Resolve symbols globally                             │
+│  5. Build global symbol table                            │
+│  6. Resolve symbols and references globally              │
 └─────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────┐

@@ -36,15 +36,17 @@ Each file is analyzed independently (in parallel) to extract local information:
 
 **File Analysis Modules** (detect/extract/find/track pattern):
 
-- [`/scope_analysis/scope_tree`](/packages/core/src/scope_analysis/scope_tree) - Builds scope tree for the file
+- [`/scope_analysis/scope_tree`](/packages/core/src/scope_analysis/scope_tree) - Builds scope tree with symbol extraction
 - [`/call_graph/function_calls`](/packages/core/src/call_graph/function_calls) - Finds function calls within file
 - [`/call_graph/method_calls`](/packages/core/src/call_graph/method_calls) - Finds method calls within file
 - [`/import_export/import_resolution`](/packages/core/src/import_export/import_resolution) - Extracts import declarations
 - [`/import_export/export_detection`](/packages/core/src/import_export/export_detection) - Detects export statements
 - [`/type_analysis/type_tracking`](/packages/core/src/type_analysis/type_tracking) - Tracks local variable types
 - [`/inheritance/class_detection`](/packages/core/src/inheritance/class_detection) - Identifies class definitions
+- [`/utils/symbol_construction`](/packages/core/src/utils/symbol_construction) - Creates unique SymbolIds
+- [`/utils/scope_path_builder`](/packages/core/src/utils/scope_path_builder) - Extracts scope paths for symbols
 
-Result: `FileAnalysis` containing scopes, local calls, imports/exports, types, classes
+Result: `FileAnalysis` containing scopes, local calls, imports/exports, types, classes, and symbol registry
 
 ##### Global Assembly
 
@@ -54,10 +56,11 @@ Result: `FileAnalysis` containing scopes, local calls, imports/exports, types, c
 
 - [`/import_export/module_graph`](/packages/core/src/import_export/module_graph) - Builds `ModuleGraph` from imports/exports
 - [`/import_export/namespace_resolution`](/packages/core/src/import_export/namespace_resolution) - Resolves namespace members
-- [`/scope_analysis/symbol_resolution`](/packages/core/src/scope_analysis/symbol_resolution) - Resolves symbol references
 - [`/inheritance/class_hierarchy`](/packages/core/src/inheritance/class_hierarchy) - Builds inheritance tree
-- [`/call_graph/call_chain_analysis`](/packages/core/src/call_graph/call_chain_analysis) - Traces call chains
 - [`/type_analysis/type_resolution`](/packages/core/src/type_analysis/type_resolution) - Resolves cross-file types
+- [`/scope_analysis/symbol_resolution`](/packages/core/src/scope_analysis/symbol_resolution) - Resolves symbol references
+- [`/scope_analysis/symbol_resolution/global_symbol_table`](/packages/core/src/scope_analysis/symbol_resolution/global_symbol_table) - Builds global symbol table
+- [`/call_graph/call_chain_analysis`](/packages/core/src/call_graph/call_chain_analysis) - Traces call chains
 
 Result: Complete `CodeGraph` with cross-file references resolved:
 
