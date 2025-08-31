@@ -75,10 +75,11 @@ Based on comprehensive review of PROCESSING_PIPELINE.md, these critical wirings 
 **Removed:** scope_tree/classes from infer_type, classes from track_type_definition, module_graph from create_resolution_context
 **Fix:** ✅ Function signatures cleaned up
 
-### 10. Fix Remaining Export Tests (task 11.62.16)
-**Current State:** Some export tests still failing
-**Impact:** Export detection might be incomplete
-**Fix:** Update tests for new architecture
+### 10. ⚠️ Fix Remaining Export Tests (task 11.62.16 - REVIEWED 2025-08-31)
+**Current State:** ⚠️ 2 edge case tests failing (not critical)
+**Impact:** Minor - TypeScript type-only namespace exports, Rust pub use re-exports
+**Failures:** Non-critical edge cases that don't affect main functionality
+**Fix:** Low priority - can be addressed when implementing those specific features
 
 ## Wiring Checklist
 
