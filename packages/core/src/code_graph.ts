@@ -16,15 +16,33 @@ import {
   merge_constructor_types,
 } from "./call_graph/constructor_calls";
 import { ScopeTree, build_scope_tree } from "./scope_analysis/scope_tree";
-import { ImportInfo, extract_imports } from "./import_export/import_resolution";
-import { ExportInfo, detect_exports, extract_exports } from "./import_export/export_detection";
+import { extract_imports } from "./import_export/import_resolution";
+import { detect_exports, extract_exports } from "./import_export/export_detection";
 import { find_class_definitions, ClassDefinition } from "./inheritance/class_detection";
 import { process_file_for_types, FileTypeTracker, TypeTrackingContext } from "./type_analysis/type_tracking";
 import { TypeRegistry } from "./type_analysis/type_registry";
 import { build_module_graph } from "./import_export/module_graph";
 import { TypeInfo } from "./type_analysis/type_tracking";
-// TODO: Re-integrate return type inference after fixing type compatibility issues
-// The code_graph.ts file needs major refactoring to align with current types
+import { 
+  infer_function_return_type,
+  ReturnTypeContext
+} from "./type_analysis/return_type_inference";
+import {
+  convert_imports_to_statements,
+  convert_exports_to_statements,
+  convert_type_map_to_public,
+  create_readonly_array,
+  create_empty_variables,
+  create_empty_errors,
+  create_location_from_range
+} from "./type_analysis/type_adapters";
+import { extract_variable_declarations } from "./variable_analysis/variable_extraction";
+import { create_error_collector, ErrorCollector } from "./error_collection/analysis_errors";
+import { 
+  create_def_from_scope,
+  find_function_node,
+  get_enclosing_class_name
+} from "./definition_extraction/def_factory";
 import Parser, { SyntaxNode } from 'tree-sitter';
 import JavaScript from 'tree-sitter-javascript';
 import TypeScript from 'tree-sitter-typescript';
@@ -38,6 +56,8 @@ import {
   FileAnalysis,
   ImportStatement,
   ExportStatement,
+  ImportInfo,
+  ExportInfo,
   // Common types
   Location,
   FunctionInfo,
@@ -47,6 +67,8 @@ import {
   FunctionSignature,
   ParameterType,
   TypeParameter,
+  VariableDeclaration,
+  AnalysisError,
   // Module types
   ModuleGraph,
   // Call types
@@ -367,8 +389,8 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
   const functions: FunctionInfo[] = [];
   const classes: ClassInfo[] = [];
 
-  // Extract functions
-  for (const [_, scope] of scopes.nodes.entries()) {
+  // Extract functions with return type inference
+  for (const [scope_id, scope] of scopes.nodes.entries()) {
     if (scope.type === "function") {
       const function_name = scope.metadata?.name || "<anonymous>";
       const parent_scope = scope.parent_id
@@ -376,24 +398,39 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
         : null;
       const is_method = parent_scope?.type === "class";
 
-      // TODO: Integrate return type inference properly
-      // For now, just set return_type to undefined
+      // Create Def for return type inference
+      const def = create_def_from_scope(scope, file.file_path, scopes);
+      
+      // Find the function node in AST
+      const func_node = find_function_node(tree.rootNode, scope.range);
+      
+      // Infer return type if we have the function node
       let return_type: string | undefined;
+      if (func_node) {
+        const return_context: ReturnTypeContext = {
+          language: file.language,
+          source_code,
+          type_tracker: type_tracker,
+          class_name: get_enclosing_class_name(scope, scopes)
+        };
+        
+        const return_info = infer_function_return_type(
+          def,
+          func_node,
+          return_context
+        );
+        
+        return_type = return_info?.type_name;
+      }
       
       functions.push({
         name: function_name,
-        location: {
-          file_path: file.file_path,
-          line: scope.range.start.row,
-          column: scope.range.start.column,
-          end_line: scope.range.end.row,
-          end_column: scope.range.end.column,
-        },
+        location: create_location_from_range(scope.range, file.file_path),
         signature: {
           parameters: [],
           return_type,
-          is_async: false,
-          is_generator: false,
+          is_async: scope.metadata?.is_async || false,
+          is_generator: scope.metadata?.is_generator || false,
         },
       });
     }
@@ -452,31 +489,41 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
     }
   }
 
-  // Create flattened type_info for FileAnalysis interface (expects single TypeInfo)
-  // TODO: Update FileAnalysis interface to support TypeInfo[] arrays
-  const flattened_type_info = new Map<string, TypeInfo>();
-  for (const [variable, types] of type_map) {
-    if (types && types.length > 0) {
-      // Prefer explicit type annotations, otherwise use last type
-      const explicit = types.find(t => t.confidence === 'explicit' && t.source === 'annotation');
-      flattened_type_info.set(variable, explicit || types[types.length - 1]);
-    }
-  }
+  // Create error collector
+  const error_collector = create_error_collector(file.file_path, file.language);
+  
+  // Extract variable declarations
+  const variables = extract_variable_declarations(
+    tree.rootNode,
+    source_code,
+    file.language,
+    file.file_path
+  );
+  
+  // Convert imports and exports to public API types
+  const import_statements = convert_imports_to_statements(imports, file.file_path);
+  const export_statements = convert_exports_to_statements(exports, file.file_path);
+  
+  // Convert type map to public format
+  const public_type_info = convert_type_map_to_public(type_map);
+  
+  // Get collected errors
+  const analysis_errors = error_collector.get_errors();
 
   return {
     file_path: file.file_path,
     language: file.language,
-    functions,
-    classes,
-    imports: [], // TODO: Convert ImportInfo[] to ImportStatement[]
-    exports: [], // TODO: Convert ExportInfo[] to ExportStatement[]
-    variables: [], // TODO: Extract variable declarations
-    errors: [], // TODO: Collect any analysis errors
+    functions: create_readonly_array(functions),
+    classes: create_readonly_array(classes),
+    imports: import_statements,
+    exports: export_statements,
+    variables: create_readonly_array(variables),
+    errors: analysis_errors,
     scopes,
-    function_calls,
-    method_calls,
-    constructor_calls,
-    type_info: flattened_type_info,
+    function_calls: create_readonly_array(function_calls),
+    method_calls: create_readonly_array(method_calls),
+    constructor_calls: create_readonly_array(constructor_calls),
+    type_info: public_type_info,
   };
 }
 
