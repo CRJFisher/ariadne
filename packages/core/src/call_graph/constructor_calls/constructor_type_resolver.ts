@@ -49,10 +49,10 @@ export interface ParameterInfo {
  * @returns Constructor calls enriched with type validation
  */
 export function enrich_constructor_calls_with_types(
-  constructor_calls: ConstructorCallInfo[],
+  constructor_calls: readonly ConstructorCallInfo[],
   type_registry: TypeRegistry | undefined,
   imports?: Map<string, ImportInfo[]>
-): ConstructorCallWithType[] {
+): readonly ConstructorCallWithType[] {
   if (!type_registry) {
     // No registry available, return calls as-is
     return constructor_calls;

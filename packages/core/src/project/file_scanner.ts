@@ -44,8 +44,8 @@ export function detect_language(file_path: string): Language {
  */
 export async function scan_files(
   root_path: string,
-  include_patterns?: string[],
-  exclude_patterns?: string[]
+  include_patterns?: readonly string[],
+  exclude_patterns?: readonly string[]
 ): Promise<string[]> {
   // Default patterns if not provided
   const includes = include_patterns || [

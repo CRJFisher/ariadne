@@ -15,17 +15,31 @@ import {
   find_constructor_calls_with_types,
   merge_constructor_types,
 } from "./call_graph/constructor_calls";
-import { ScopeTree, build_scope_tree } from "./scope_analysis/scope_tree";
+import { 
+  ScopeTree, 
+  build_scope_tree,
+  find_scope_at_position
+} from "./scope_analysis/scope_tree";
 import { extract_imports } from "./import_export/import_resolution";
-import { detect_exports, extract_exports } from "./import_export/export_detection";
-import { find_class_definitions, ClassDefinition } from "./inheritance/class_detection";
-import { process_file_for_types, FileTypeTracker, TypeTrackingContext } from "./type_analysis/type_tracking";
+import {
+  detect_exports,
+  extract_exports,
+} from "./import_export/export_detection";
+import {
+  find_class_definitions,
+  ClassDefinition,
+} from "./inheritance/class_detection";
+import {
+  process_file_for_types,
+  FileTypeTracker,
+  TypeTrackingContext,
+} from "./type_analysis/type_tracking";
 import { TypeRegistry } from "./type_analysis/type_registry";
 import { build_module_graph } from "./import_export/module_graph";
 import { TypeInfo } from "./type_analysis/type_tracking";
-import { 
+import {
   infer_function_return_type,
-  ReturnTypeContext
+  ReturnTypeContext,
 } from "./type_analysis/return_type_inference";
 import {
   convert_imports_to_statements,
@@ -34,20 +48,23 @@ import {
   create_readonly_array,
   create_empty_variables,
   create_empty_errors,
-  create_location_from_range
+  create_location_from_range,
 } from "./type_analysis/type_adapters";
 import { extract_variable_declarations } from "./variable_analysis/variable_extraction";
-import { create_error_collector, ErrorCollector } from "./error_collection/analysis_errors";
-import { 
+import {
+  create_error_collector,
+  ErrorCollector,
+} from "./error_collection/analysis_errors";
+import {
   create_def_from_scope,
   find_function_node,
-  get_enclosing_class_name
+  get_enclosing_class_name,
 } from "./definition_extraction/def_factory";
-import Parser, { SyntaxNode } from 'tree-sitter';
-import JavaScript from 'tree-sitter-javascript';
-import TypeScript from 'tree-sitter-typescript';
-import Python from 'tree-sitter-python';
-import Rust from 'tree-sitter-rust';
+import Parser, { SyntaxNode } from "tree-sitter";
+import JavaScript from "tree-sitter-javascript";
+import TypeScript from "tree-sitter-typescript";
+import Python from "tree-sitter-python";
+import Rust from "tree-sitter-rust";
 import {
   Language,
   // Main types
@@ -99,7 +116,23 @@ import {
   read_and_parse_file,
   CodeFile,
 } from "./project/file_scanner";
-import { construct_symbol } from "./utils/symbol_construction";
+import { 
+  construct_symbol,
+  construct_function_symbol,
+  construct_class_symbol,
+  construct_method_symbol,
+  construct_variable_symbol,
+  SPECIAL_SYMBOLS
+} from "./utils/symbol_construction";
+import { 
+  build_scope_path,
+  build_full_scope_path,
+  get_parent_scope_name,
+  find_containing_class
+} from "./utils/scope_path_builder";
+import { enrich_constructor_calls_with_types } from "./call_graph/constructor_calls/constructor_type_resolver";
+import { enrich_method_calls_with_hierarchy } from "./call_graph/method_calls/method_hierarchy_resolver";
+import { build_call_chains } from "./call_graph/call_chain_analysis/call_chain_analysis";
 
 /**
  * Generate a comprehensive code graph from a codebase
@@ -142,10 +175,10 @@ export async function generate_code_graph(
 
   // TYPE REGISTRY - Build unified type registry from all files (needed for enrichment)
   const type_registry = await build_type_registry_from_analyses(analyses);
-  
+
   // CLASS HIERARCHY - Build inheritance tree from all classes (needed for enrichment)
   const class_hierarchy = await build_class_hierarchy_from_analyses(analyses);
-  
+
   // TODO: LAYER 9 - Global Call Resolution
   // After class hierarchy and type registry are built (Layers 6-7),
   // resolve method and constructor calls using global information:
@@ -161,15 +194,13 @@ export async function generate_code_graph(
   // TODO: Wire up the existing class hierarchy builder once it's converted to new types
   // The inheritance_analysis/class_hierarchy module exists and works but uses old Def types
   // const { build_class_hierarchy } = await import('./inheritance/class_hierarchy');
-  
+
   // METHOD HIERARCHY ENRICHMENT (task 11.62.5)
   // Enrich method calls with class hierarchy information
-  const { enrich_method_calls_with_hierarchy } = await import('./call_graph/method_calls/method_hierarchy_resolver');
-  
+
   // CONSTRUCTOR TYPE VALIDATION (task 11.62.6)
   // Validate and enrich constructor calls with type registry
-  const { enrich_constructor_calls_with_types } = await import('./call_graph/constructor_calls/constructor_type_resolver');
-  
+
   // Create imports map for cross-file resolution
   const imports_by_file = new Map<string, ImportInfo[]>();
   for (const analysis of analyses) {
@@ -178,28 +209,28 @@ export async function generate_code_graph(
     // TODO: Fix type conversion between ImportStatement and ImportInfo
     imports_by_file.set(analysis.file_path, []);
   }
-  
+
   // Enrich analyses with method hierarchy and constructor types
   // Create new analysis objects since properties are readonly
-  const enriched_analyses = analyses.map(analysis => {
+  const enriched_analyses = analyses.map((analysis) => {
     const enriched_method_calls = enrich_method_calls_with_hierarchy(
-      [...analysis.method_calls], // Convert readonly to mutable
+      analysis.method_calls,
       class_hierarchy
     );
-    
+
     const enriched_constructor_calls = enrich_constructor_calls_with_types(
-      [...analysis.constructor_calls], // Convert readonly to mutable
+      analysis.constructor_calls,
       type_registry,
       imports_by_file
     );
-    
+
     return {
       ...analysis,
       method_calls: enriched_method_calls,
-      constructor_calls: enriched_constructor_calls
+      constructor_calls: enriched_constructor_calls,
     };
   });
-  
+
   // FILE ANALYSIS - Build files map from enriched analyses
   const files = new Map<string, FileAnalysis>();
   const language_stats = new Map<Language, number>();
@@ -256,7 +287,6 @@ export async function generate_code_graph(
   };
 }
 
-
 /**
  * Analyze a single file
  */
@@ -269,24 +299,24 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
   // PARSE FILE
   const parser = new Parser();
   let tree;
-  
+
   switch (file.language) {
-    case 'javascript':
+    case "javascript":
       parser.setLanguage(JavaScript as any);
       break;
-    case 'typescript':
+    case "typescript":
       parser.setLanguage(TypeScript.typescript as any);
       break;
-    case 'python':
+    case "python":
       parser.setLanguage(Python as any);
       break;
-    case 'rust':
+    case "rust":
       parser.setLanguage(Rust as any);
       break;
     default:
       throw new Error(`Unsupported language: ${file.language}`);
   }
-  
+
   tree = parser.parse(file.source_code);
 
   // LAYER 1: SCOPE ANALYSIS
@@ -314,7 +344,7 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
     file.language,
     file.file_path
   );
-  
+
   // Detect class definitions
   const classDetectionContext = {
     source_code,
@@ -328,14 +358,14 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
   const typeTrackingContext: TypeTrackingContext = {
     language: file.language,
     file_path: file.file_path,
-    debug: false
+    debug: false,
   };
   const type_tracker = process_file_for_types(
     source_code,
     tree.rootNode,
     typeTrackingContext,
-    scopes,      // From Layer 1
-    imports,     // From Layer 2
+    scopes, // From Layer 1
+    imports, // From Layer 2
     class_definitions // From Layer 2
   );
   const type_map = new Map<string, TypeInfo[]>();
@@ -356,17 +386,19 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
     language: file.language,
     ast_root: tree.rootNode,
   };
-  
+
   // BIDIRECTIONAL FLOW (task 11.62.7) - Extract types from constructor calls
-  const constructor_result = find_constructor_calls_with_types(constructor_call_context);
+  const constructor_result = find_constructor_calls_with_types(
+    constructor_call_context
+  );
   const constructor_calls = constructor_result.calls;
-  
+
   // Merge constructor-discovered types into the type map
   const enriched_type_map = merge_constructor_types(
     type_tracker.variable_types,
     constructor_result.type_assignments
   );
-  
+
   // Replace type_map with enriched data (includes constructor types)
   type_map.clear();
   for (const [variable, types] of enriched_type_map) {
@@ -382,28 +414,53 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
   };
   const method_calls = find_method_calls(
     method_call_context,
-    enriched_type_map  // FIXED: Now includes imports AND constructor-inferred types!
-  )
+    enriched_type_map // FIXED: Now includes imports AND constructor-inferred types!
+  );
 
   // FUNCTIONS AND CLASSES
   const functions: FunctionInfo[] = [];
   const classes: ClassInfo[] = [];
+  
+  // Symbol registry to track entity symbols
+  const symbol_registry = new Map<any, SymbolId>();
 
-  // Extract functions with return type inference
+  // Extract functions with return type inference and symbol creation
   for (const [scope_id, scope] of scopes.nodes.entries()) {
     if (scope.type === "function") {
-      const function_name = scope.metadata?.name || "<anonymous>";
+      const function_name = scope.metadata?.name || SPECIAL_SYMBOLS.ANONYMOUS;
       const parent_scope = scope.parent_id
         ? scopes.nodes.get(scope.parent_id)
         : null;
       const is_method = parent_scope?.type === "class";
+      
+      // Build scope path for symbol creation
+      const scope_path = build_scope_path(scope, scopes);
+      
+      // Create symbol for this function
+      let symbol_id: SymbolId;
+      if (is_method && parent_scope?.metadata?.name) {
+        // Method symbol
+        symbol_id = construct_method_symbol(
+          file.file_path,
+          parent_scope.metadata.name,
+          function_name,
+          false // TODO: detect static methods
+        );
+      } else {
+        // Regular function symbol
+        symbol_id = construct_function_symbol(
+          file.file_path,
+          function_name,
+          scope_path.length > 0 ? scope_path[scope_path.length - 1] : undefined
+        );
+      }
 
       // Create Def for return type inference
       const def = create_def_from_scope(scope, file.file_path, scopes);
-      
-      // Find the function node in AST
-      const func_node = find_function_node(tree.rootNode, scope.range);
-      
+
+      // Find the function node in AST (using location instead of range)
+      const func_node = find_function_node(tree.rootNode, scope.location);
+
       // Infer return type if we have the function node
       let return_type: string | undefined;
       if (func_node) {
@@ -411,35 +468,50 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
           language: file.language,
           source_code,
           type_tracker: type_tracker,
-          class_name: get_enclosing_class_name(scope, scopes)
+          class_name: get_enclosing_class_name(scope, scopes),
         };
-        
+
         const return_info = infer_function_return_type(
           def,
           func_node,
           return_context
         );
-        
+
         return_type = return_info?.type_name;
       }
-      
-      functions.push({
+
+      const function_info: FunctionInfo = {
         name: function_name,
-        location: create_location_from_range(scope.range, file.file_path),
+        location: scope.location,
         signature: {
           parameters: [],
           return_type,
           is_async: scope.metadata?.is_async || false,
           is_generator: scope.metadata?.is_generator || false,
         },
-      });
+      };
+      
+      functions.push(function_info);
+      
+      // Store symbol mapping
+      symbol_registry.set(function_info, symbol_id);
     }
   }
 
-  // Extract classes
+  // Extract classes with symbol creation
   for (const [_, scope] of scopes.nodes.entries()) {
     if (scope.type === "class") {
-      const class_name = scope.metadata?.name || "<anonymous>";
+      const class_name = scope.metadata?.name || SPECIAL_SYMBOLS.ANONYMOUS;
+      
+      // Build scope path for symbol creation
+      const scope_path = build_scope_path(scope, scopes);
+      
+      // Create symbol for this class
+      const class_symbol_id = construct_class_symbol(
+        file.file_path,
+        class_name,
+        scope_path.length > 0 ? scope_path[scope_path.length - 1] : undefined
+      );
 
       // Find methods within this class
       const class_methods: MethodInfo[] = [];
@@ -448,35 +520,39 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
           child_scope.parent_id === scope.id &&
           child_scope.type === "function"
         ) {
-          class_methods.push({
-            name: child_scope.metadata?.name || "<anonymous>",
-            location: {
-              line: child_scope.range.start.row,
-              column: child_scope.range.start.column,
-              end_line: child_scope.range.end.row,
-              end_column: child_scope.range.end.column,
-            },
+          const method_name = child_scope.metadata?.name || SPECIAL_SYMBOLS.ANONYMOUS;
+          
+          // Create symbol for this method
+          const method_symbol_id = construct_method_symbol(
+            file.file_path,
+            class_name,
+            method_name,
+            false // TODO: detect static methods
+          );
+          
+          const method_info: MethodInfo = {
+            name: method_name,
+            location: child_scope.location,
             signature: {
               parameters: [],
-              is_async: false,
-              is_generator: false,
+              is_async: child_scope.metadata?.is_async || false,
+              is_generator: child_scope.metadata?.is_generator || false,
             },
             visibility: "public", // TODO: Extract actual visibility
             is_static: false, // TODO: Extract actual static status
             is_abstract: false, // TODO: Extract actual abstract status
-          });
+          };
+          
+          class_methods.push(method_info);
+          
+          // Store method symbol mapping
+          symbol_registry.set(method_info, method_symbol_id);
         }
       }
 
-      classes.push({
+      const class_info: ClassInfo = {
         name: class_name,
-        location: {
-          file_path: file.file_path,
-          line: scope.range.start.row,
-          column: scope.range.start.column,
-          end_line: scope.range.end.row,
-          end_column: scope.range.end.column,
-        },
+        location: scope.location,
         methods: class_methods,
         properties: [], // TODO: Extract properties
         is_abstract: false, // TODO: Extract actual abstract status
@@ -485,14 +561,19 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
         interfaces: [], // TODO: Extract interfaces
         docstring: undefined, // TODO: Extract docstring
         decorators: [], // TODO: Extract decorators
-      });
+      };
+      
+      classes.push(class_info);
+      
+      // Store class symbol mapping
+      symbol_registry.set(class_info, class_symbol_id);
     }
   }
 
   // Create error collector
   const error_collector = create_error_collector(file.file_path, file.language);
-  
-  // Extract variable declarations
+
+  // Extract variable declarations with symbol creation
   const variables = extract_variable_declarations(
     tree.rootNode,
     source_code,
@@ -500,17 +581,42 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
     file.file_path
   );
   
+  // Create symbols for variables
+  for (const variable of variables) {
+    // Find the scope containing this variable
+    const variable_scope = find_scope_at_position(scopes, variable.location);
+    
+    if (variable_scope) {
+      const scope_path = build_full_scope_path(variable_scope, scopes);
+      const variable_symbol_id = construct_variable_symbol(
+        file.file_path,
+        variable.name,
+        scope_path
+      );
+      
+      // Store variable symbol mapping
+      symbol_registry.set(variable, variable_symbol_id);
+    }
+  }
+
   // Convert imports and exports to public API types
-  const import_statements = convert_imports_to_statements(imports, file.file_path);
-  const export_statements = convert_exports_to_statements(exports, file.file_path);
-  
+  const import_statements = convert_imports_to_statements(
+    imports,
+    file.file_path
+  );
+  const export_statements = convert_exports_to_statements(
+    exports,
+    file.file_path
+  );
+
   // Convert type map to public format
   const public_type_info = convert_type_map_to_public(type_map);
-  
+
   // Get collected errors
   const analysis_errors = error_collector.get_errors();
 
-  return {
+  // Create extended file analysis with symbol registry
+  const file_analysis: FileAnalysis & { symbol_registry: Map<any, SymbolId> } = {
     file_path: file.file_path,
     language: file.language,
     functions: create_readonly_array(functions),
@@ -524,7 +630,10 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
     method_calls: create_readonly_array(method_calls),
     constructor_calls: create_readonly_array(constructor_calls),
     type_info: public_type_info,
+    symbol_registry, // Add symbol registry for later use
   };
+  
+  return file_analysis;
 }
 
 // TODO: Add helper functions for AST navigation when re-integrating return type inference
@@ -536,13 +645,13 @@ function build_call_graph(analyses: FileAnalysis[]): CallGraph {
   const functions = new Map<SymbolId, FunctionNode>();
   const calls: CallEdge[] = [];
   const resolved_calls = new Map<string, ResolvedCall[]>();
-  const call_chains = new Map<string, CallChain>();
 
   // Build function nodes
   for (const analysis of analyses) {
     for (const func of analysis.functions) {
       // TODO: what do the keys in the scope graph actually mean? How can we link functions to scopes?
-      const scope_path = analysis.scopes.nodes.get(func.location.file_path)?.metadata?.name;
+      const scope_path = analysis.scopes.nodes.get(func.location.file_path)
+        ?.metadata?.name;
       const symbol = construct_symbol({
         file_path: analysis.file_path,
         name: func.name,
@@ -566,9 +675,7 @@ function build_call_graph(analyses: FileAnalysis[]): CallGraph {
   // Build call edges
   for (const analysis of analyses) {
     for (const call of analysis.function_calls) {
-      const from = `${analysis.file_path}#${
-        call.caller_name || '<module>'
-      }`;
+      const from = `${analysis.file_path}#${call.caller_name || "<module>"}`;
       const to = `${analysis.file_path}#${call.callee_name}`;
 
       calls.push({
@@ -579,15 +686,13 @@ function build_call_graph(analyses: FileAnalysis[]): CallGraph {
           line: call.location.line,
           column: call.location.column,
         },
-        call_type: 'direct', // TODO: Determine if dynamic
+        call_type: "direct", // TODO: Determine if dynamic
       });
     }
 
     // Add method calls
     for (const call of analysis.method_calls) {
-      const from = `${analysis.file_path}#${
-        call.caller_name || '<module>'
-      }`;
+      const from = `${analysis.file_path}#${call.caller_name || "<module>"}`;
       const to = `${analysis.file_path}#${call.method_name}`;
 
       calls.push({
@@ -598,16 +703,28 @@ function build_call_graph(analyses: FileAnalysis[]): CallGraph {
           line: call.location.line,
           column: call.location.column,
         },
-        call_type: 'method',
+        call_type: "method",
       });
     }
   }
+
+  // Build call chains
+  const all_calls = [
+    ...analyses.flatMap(analysis => analysis.function_calls),
+    ...analyses.flatMap(analysis => analysis.method_calls),
+    ...analyses.flatMap(analysis => analysis.constructor_calls),
+  ];
+  const call_chains = build_call_chains(all_calls, {
+    language: analyses[0].language, // TODO: improve multi-language support
+    track_recursion: true,
+  });
+
 
   return {
     functions,
     calls,
     resolved_calls,
-    call_chains,
+    call_chains: call_chains.chains,
   };
 }
 
@@ -704,16 +821,18 @@ function build_symbol_index(analyses: FileAnalysis[]): SymbolIndex {
 
 /**
  * Build type registry from all file analyses
- * 
+ *
  * Creates a unified type registry combining type information from all files.
  * This enables cross-file type resolution and validation.
  */
 async function build_type_registry_from_analyses(
   analyses: FileAnalysis[]
 ): Promise<TypeRegistry> {
-  const { create_type_registry, register_class } = await import('./type_analysis/type_registry');
+  const { create_type_registry, register_class } = await import(
+    "./type_analysis/type_registry"
+  );
   const registry = create_type_registry();
-  
+
   // Register all classes from all files
   for (const analysis of analyses) {
     for (const class_def of analysis.classes) {
@@ -732,25 +851,27 @@ async function build_type_registry_from_analyses(
         decorators: class_def.decorators,
       });
     }
-    
+
     // TODO: Register interfaces, enums, type aliases, etc.
     // These need to be extracted during per-file analysis first
   }
-  
+
   return registry;
 }
 
 /**
  * Build class hierarchy from all file analyses
- * 
+ *
  * Creates an inheritance tree from all class definitions, enabling
  * method resolution and polymorphic call analysis.
  */
 async function build_class_hierarchy_from_analyses(
   analyses: FileAnalysis[]
 ): Promise<ClassHierarchy> {
-  const { build_class_hierarchy } = await import('./inheritance/class_hierarchy');
-  
+  const { build_class_hierarchy } = await import(
+    "./inheritance/class_hierarchy"
+  );
+
   // Collect all class definitions with their file context
   const all_classes: any[] = [];
   for (const analysis of analyses) {
@@ -770,7 +891,7 @@ async function build_class_hierarchy_from_analyses(
       });
     }
   }
-  
+
   // Build the hierarchy
   // Note: The actual build_class_hierarchy function signature may differ
   // This is a placeholder implementation
@@ -779,7 +900,7 @@ async function build_class_hierarchy_from_analyses(
     inheritance_edges: [],
     root_classes: new Set(),
   };
-  
+
   // TODO: Properly integrate with the actual class_hierarchy module
   // For now, return a basic structure
   return hierarchy;

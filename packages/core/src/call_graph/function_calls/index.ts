@@ -8,8 +8,6 @@ import { FunctionCallInfo } from '@ariadnejs/types';
 import { FunctionCallContext } from './function_calls';
 
 // Re-export types
-export { FunctionCallInfo } from '@ariadnejs/types';
-export { FunctionCallContext } from './function_calls';
 import { find_function_calls_javascript } from './function_calls.javascript';
 import { find_function_calls_typescript } from './function_calls.typescript';
 import { find_function_calls_python } from './function_calls.python';

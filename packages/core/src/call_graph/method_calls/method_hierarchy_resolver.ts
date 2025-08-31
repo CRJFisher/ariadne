@@ -37,9 +37,9 @@ export interface MethodCallWithHierarchy extends MethodCallInfo {
  * @returns Method calls enriched with hierarchy information
  */
 export function enrich_method_calls_with_hierarchy(
-  method_calls: MethodCallInfo[],
+  method_calls: readonly MethodCallInfo[],
   class_hierarchy: ClassHierarchy | undefined
-): MethodCallWithHierarchy[] {
+): readonly MethodCallWithHierarchy[] {
   if (!class_hierarchy) {
     // No hierarchy available, return calls as-is
     return method_calls;

@@ -16,7 +16,7 @@
 // - Use type info for disambiguation
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language, Def, Ref, Position } from '@ariadnejs/types';
+import { Language, Def, Ref, Location } from '@ariadnejs/types';
 import {
   ScopeTree,
   ScopeNode,

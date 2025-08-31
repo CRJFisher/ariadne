@@ -1,5 +1,5 @@
-import { Location, FunctionSignature } from './common';
-import { SymbolId, FilePath, ClassName } from './aliases';
+import { Location, FunctionSignature } from "./common";
+import { SymbolId, FilePath, ClassName } from "./aliases";
 
 export interface FunctionNode {
   readonly symbol: SymbolId;
@@ -16,7 +16,7 @@ export interface CallEdge {
   readonly from: SymbolId;
   readonly to: SymbolId;
   readonly location: Location;
-  readonly call_type: 'direct' | 'method' | 'constructor' | 'dynamic';
+  readonly call_type: "direct" | "method" | "constructor" | "dynamic";
   readonly is_async?: boolean;
   readonly argument_count?: number;
 }
@@ -24,14 +24,25 @@ export interface CallEdge {
 export interface ResolvedCall {
   readonly symbol: SymbolId;
   readonly resolved_path?: FilePath;
-  readonly confidence: 'high' | 'medium' | 'low';
+  readonly confidence: "high" | "medium" | "low";
   readonly resolution_reason?: string;
 }
 
 export interface CallChain {
-  readonly chain: readonly SymbolId[];
+  readonly root: SymbolId; // Starting function
+  readonly nodes: readonly CallChainNode[];
   readonly is_recursive: boolean;
-  readonly depth: number;
+  readonly max_depth: number;
+  readonly cycle_point?: SymbolId; // Where recursion occurs
+}
+
+export interface CallChainNode {
+  readonly caller: SymbolId; // Function/method making the call
+  readonly callee: SymbolId; // Function/method being called
+  readonly location: Location;
+  readonly file_path: FilePath;
+  readonly call_type: "function" | "method" | "constructor";
+  readonly depth: number; // Depth in the call chain
 }
 
 export interface CallGraph {
