@@ -227,6 +227,7 @@ interface EnhancedFileAnalysis extends FileAnalysis {
 ### Architecture Benefits
 
 This creates the critical bridge between the scope tree and extracted entities:
+
 - Enables accurate symbol resolution with scope awareness
 - Supports scope-aware refactoring operations
 - Allows "find all in scope" IDE features

@@ -1,244 +1,317 @@
 /**
- * Core symbol resolution functionality
+ * Symbol Resolution
  * 
- * Resolves symbol references to their definitions:
- * - Local variable resolution
- * - Import resolution
- * - Qualified name resolution
- * - Cross-file symbol tracking
+ * Resolves references to their definitions using the global symbol table
+ * and scope-entity connections. This is the bridge between names in code
+ * and their actual definitions across the codebase.
  */
 
-// TODO: Integration with Scope Tree
-// - Walk scope tree for resolution
-// TODO: Integration with Import Resolution
-// - Check imports for external symbols
-// TODO: Integration with Type Tracking
-// - Use type info for disambiguation
-
-import { SyntaxNode } from 'tree-sitter';
-import { Language, Def, Ref, Location } from '@ariadnejs/types';
 import {
+  SymbolId,
+  ScopeId,
+  Location,
+  Language,
+  FileAnalysis,
+  FunctionCallInfo,
+  MethodCallInfo,
+  ConstructorCallInfo,
+  VariableDeclaration,
+  ImportStatement,
+  ExportStatement,
   ScopeTree,
-  ScopeNode,
-  ScopeSymbol,
+  ScopeNode
+} from '@ariadnejs/types';
+
+import { GlobalSymbolTable, SymbolDefinition } from './global_symbol_table';
+import { ScopeEntityConnections, is_entity_visible_from_scope } from '../scope_entity_connections';
+import { 
   find_scope_at_position,
-  find_symbol_in_scope_chain,
   get_scope_chain,
   get_visible_symbols
 } from '../scope_tree';
+import {
+  construct_symbol,
+  construct_function_symbol,
+  construct_method_symbol,
+  construct_class_symbol,
+  parse_symbol,
+  get_symbol_file,
+  get_symbol_name,
+  SPECIAL_SYMBOLS
+} from '../../utils/symbol_construction';
 
 /**
- * Symbol resolution result
+ * Result of resolving a reference to a definition
  */
-export interface ResolvedSymbol {
-  symbol: ScopeSymbol;
-  scope: ScopeNode;
-  definition_file?: string;
-  is_imported?: boolean;
-  is_exported?: boolean;
+export interface ResolvedReference {
+  reference_location: Location;
+  target_symbol: SymbolId;
   confidence: 'exact' | 'likely' | 'possible';
+  resolution_type: 'local' | 'import' | 'global' | 'fuzzy';
 }
 
 /**
- * Symbol resolution context
+ * Context for symbol resolution within a file
  */
-export interface ResolutionContext {
-  scope_tree: ScopeTree;
-  file_path?: string;
-  imports?: ImportInfo[];
-  exports?: ExportInfo[];
-  type_context?: Map<string, string>;
-  cross_file_graphs?: Map<string, ScopeTree>;
-}
-
-/**
- * Import information
- */
-export interface ImportInfo {
-  name: string;
-  source_name?: string;  // Original name if renamed
-  module_path: string;
-  is_default?: boolean;
-  is_namespace?: boolean;
-  is_type_only?: boolean;
-  range: {
-    start: Position;
-    end: Position;
+export interface FileResolutionContext {
+  file_analysis: FileAnalysis & {
+    symbol_registry?: Map<any, SymbolId>;
+    scope_entity_connections?: ScopeEntityConnections;
   };
+  global_symbols: GlobalSymbolTable;
+  imports_by_file: Map<string, readonly ImportStatement[]>;
+  exports_by_file: Map<string, readonly ExportStatement[]>;
 }
 
 /**
- * Export information
+ * Main entry point for symbol resolution
+ * 
+ * Takes lists of entities that need resolving and returns maps of their
+ * resolved SymbolIds. This connects all references to their definitions.
  */
-export interface ExportInfo {
-  name: string;
-  local_name?: string;  // Local name if renamed
-  is_default?: boolean;
-  is_type_only?: boolean;
-  range: {
-    start: Position;
-    end: Position;
-  };
-}
+export function resolve_all_symbols(
+  analyses: FileAnalysis[],
+  global_symbols: GlobalSymbolTable
+): {
+  resolved_calls: Map<Location, SymbolId>;
+  resolved_methods: Map<Location, SymbolId>;
+  resolved_constructors: Map<Location, SymbolId>;
+  resolved_variables: Map<Location, SymbolId>;
+  unresolved: Location[];
+} {
+  const resolved_calls = new Map<Location, SymbolId>();
+  const resolved_methods = new Map<Location, SymbolId>();
+  const resolved_constructors = new Map<Location, SymbolId>();
+  const resolved_variables = new Map<Location, SymbolId>();
+  const unresolved: Location[] = [];
 
-/**
- * Resolve a symbol at a given position
- */
-export function resolve_symbol_at_position(
-  position: Position,
-  context: ResolutionContext
-): ResolvedSymbol | undefined {
-  const { scope_tree } = context;
+  // Build import/export maps for cross-file resolution
+  const imports_by_file = new Map<string, readonly ImportStatement[]>();
+  const exports_by_file = new Map<string, readonly ExportStatement[]>();
   
-  // Find the scope at this position
-  const scope = find_scope_at_position(scope_tree, position);
-  if (!scope) return undefined;
-  
-  // Get the symbol name at this position (would need AST access)
-  // For now, this is a placeholder - real implementation would extract from AST
-  const symbol_name = extract_symbol_at_position(position, context);
-  if (!symbol_name) return undefined;
-  
-  return resolve_symbol(symbol_name, scope.id, context);
-}
+  for (const analysis of analyses) {
+    imports_by_file.set(analysis.file_path, analysis.imports);
+    exports_by_file.set(analysis.file_path, analysis.exports);
+  }
 
-/**
- * Resolve a symbol by name from a given scope
- */
-export function resolve_symbol(
-  symbol_name: string,
-  scope_id: string,
-  context: ResolutionContext
-): ResolvedSymbol | undefined {
-  const { scope_tree, imports, cross_file_graphs } = context;
-  
-  // First, try to resolve locally within the scope chain
-  const local_resolution = find_symbol_in_scope_chain(scope_tree, scope_id, symbol_name);
-  if (local_resolution) {
-    return {
-      symbol: local_resolution.symbol,
-      scope: local_resolution.scope,
-      definition_file: context.file_path,
-      confidence: 'exact'
+  // Process each file
+  for (const analysis of analyses) {
+    const extended_analysis = analysis as FileAnalysis & {
+      symbol_registry?: Map<any, SymbolId>;
+      scope_entity_connections?: ScopeEntityConnections;
     };
-  }
-  
-  // Next, check imports
-  if (imports) {
-    const import_resolution = resolve_from_imports(symbol_name, imports, context);
-    if (import_resolution) {
-      return import_resolution;
-    }
-  }
-  
-  // Check for qualified names (e.g., namespace.member)
-  if (symbol_name.includes('.')) {
-    const qualified_resolution = resolve_qualified_name(symbol_name, scope_id, context);
-    if (qualified_resolution) {
-      return qualified_resolution;
-    }
-  }
-  
-  // Try fuzzy matching for possible typos
-  const fuzzy_resolution = resolve_with_fuzzy_matching(symbol_name, scope_id, context);
-  if (fuzzy_resolution) {
-    return fuzzy_resolution;
-  }
-  
-  return undefined;
-}
 
-/**
- * Resolve symbol from imports
- */
-function resolve_from_imports(
-  symbol_name: string,
-  imports: ImportInfo[],
-  context: ResolutionContext
-): ResolvedSymbol | undefined {
-  // Find matching import
-  const matching_import = imports.find(imp => {
-    if (imp.is_namespace) {
-      // Namespace imports don't directly provide the symbol
-      return false;
-    }
-    return imp.name === symbol_name;
-  });
-  
-  if (!matching_import) {
-    // Check namespace imports
-    return resolve_from_namespace_imports(symbol_name, imports, context);
-  }
-  
-  // If we have cross-file graphs, try to resolve in the imported module
-  if (context.cross_file_graphs && matching_import.module_path) {
-    const module_tree = find_module_scope_tree(matching_import.module_path, context.cross_file_graphs);
-    if (module_tree) {
-      // Look for exported symbol in the module
-      const export_name = matching_import.source_name || matching_import.name;
-      const exported_symbol = find_exported_symbol(export_name, module_tree);
-      
-      if (exported_symbol) {
-        return {
-          symbol: exported_symbol.symbol,
-          scope: exported_symbol.scope,
-          definition_file: matching_import.module_path,
-          is_imported: true,
-          confidence: 'exact'
-        };
+    const context: FileResolutionContext = {
+      file_analysis: extended_analysis,
+      global_symbols,
+      imports_by_file,
+      exports_by_file
+    };
+
+    // Resolve function calls
+    for (const call of analysis.function_calls) {
+      const resolved = resolve_function_call(call, context);
+      if (resolved) {
+        resolved_calls.set(call.location, resolved);
+      } else {
+        unresolved.push(call.location);
       }
     }
+
+    // Resolve method calls
+    for (const call of analysis.method_calls) {
+      const resolved = resolve_method_call(call, context);
+      if (resolved) {
+        resolved_methods.set(call.location, resolved);
+      } else {
+        unresolved.push(call.location);
+      }
+    }
+
+    // Resolve constructor calls
+    for (const call of analysis.constructor_calls) {
+      const resolved = resolve_constructor_call(call, context);
+      if (resolved) {
+        resolved_constructors.set(call.location, resolved);
+      } else {
+        unresolved.push(call.location);
+      }
+    }
+
+    // Resolve variable references (if we had them extracted)
+    // TODO: Add variable reference extraction and resolution
   }
-  
-  // Return the import itself as a resolved symbol
+
   return {
-    symbol: {
-      name: matching_import.name,
-      kind: 'import',
-      range: matching_import.range,
-      is_imported: true
-    },
-    scope: context.scope_tree.nodes.get(context.scope_tree.root_id)!,
-    is_imported: true,
-    confidence: 'exact'
+    resolved_calls,
+    resolved_methods,
+    resolved_constructors,
+    resolved_variables,
+    unresolved
   };
 }
 
 /**
- * Resolve from namespace imports
+ * Resolve a function call to its definition
  */
-function resolve_from_namespace_imports(
-  symbol_name: string,
-  imports: ImportInfo[],
-  context: ResolutionContext
-): ResolvedSymbol | undefined {
-  // Check if symbol_name is namespace.member pattern
-  const parts = symbol_name.split('.');
-  if (parts.length < 2) return undefined;
+export function resolve_function_call(
+  call: FunctionCallInfo,
+  context: FileResolutionContext
+): SymbolId | undefined {
+  const { file_analysis, global_symbols } = context;
   
-  const namespace = parts[0];
-  const member = parts.slice(1).join('.');
-  
-  // Find namespace import
-  const namespace_import = imports.find(imp => 
-    imp.is_namespace && imp.name === namespace
+  // Find the scope where this call is made
+  const call_scope = find_scope_at_position(
+    file_analysis.scopes,
+    call.location
   );
   
-  if (!namespace_import) return undefined;
+  if (!call_scope) return undefined;
+
+  // Try different resolution strategies
   
-  // Try to resolve member in the namespace module
-  if (context.cross_file_graphs && namespace_import.module_path) {
-    const module_tree = find_module_scope_tree(namespace_import.module_path, context.cross_file_graphs);
-    if (module_tree) {
-      const exported_symbol = find_exported_symbol(member, module_tree);
-      if (exported_symbol) {
-        return {
-          symbol: exported_symbol.symbol,
-          scope: exported_symbol.scope,
-          definition_file: namespace_import.module_path,
-          is_imported: true,
-          confidence: 'exact'
-        };
+  // 1. Check if it's a local function in the same file
+  const local_symbol = resolve_local_function(
+    call.callee_name,
+    call_scope,
+    file_analysis
+  );
+  if (local_symbol) return local_symbol;
+
+  // 2. Check imports
+  const imported_symbol = resolve_imported_function(
+    call.callee_name,
+    file_analysis.file_path,
+    context
+  );
+  if (imported_symbol) return imported_symbol;
+
+  // 3. Check global symbols (for same-file references)
+  const global_symbol = resolve_in_global_table(
+    call.callee_name,
+    file_analysis.file_path,
+    global_symbols
+  );
+  if (global_symbol) return global_symbol;
+
+  // 4. Try fuzzy matching for possible typos
+  const fuzzy_match = resolve_with_fuzzy_matching(
+    call.callee_name,
+    call_scope,
+    file_analysis,
+    global_symbols
+  );
+  if (fuzzy_match) return fuzzy_match;
+
+  return undefined;
+}
+
+/**
+ * Resolve a method call to its definition
+ */
+export function resolve_method_call(
+  call: MethodCallInfo,
+  context: FileResolutionContext
+): SymbolId | undefined {
+  const { file_analysis, global_symbols } = context;
+  
+  // If we have receiver name, try to infer its type
+  if (call.receiver_name) {
+    // TODO: Look up receiver_name in type map to get its type
+    // For now, try to use receiver_name as class name directly
+    const class_symbol = find_class_symbol(
+      call.receiver_name,
+      file_analysis.file_path,
+      global_symbols
+    );
+    
+    if (class_symbol) {
+      // Construct the method symbol
+      const method_symbol = construct_method_symbol(
+        get_symbol_file(class_symbol),
+        call.receiver_name,
+        call.method_name,
+        call.is_static_method
+      );
+      
+      // Check if this method exists
+      if (global_symbols.symbols.has(method_symbol)) {
+        return method_symbol;
+      }
+    }
+  }
+  
+  // Fallback: try to resolve as a function (could be a standalone function)
+  const call_scope = find_scope_at_position(
+    file_analysis.scopes,
+    call.location
+  );
+  
+  if (call_scope) {
+    return resolve_local_function(
+      call.method_name,
+      call_scope,
+      file_analysis
+    );
+  }
+  
+  return undefined;
+}
+
+/**
+ * Resolve a constructor call to its class definition
+ */
+export function resolve_constructor_call(
+  call: ConstructorCallInfo,
+  context: FileResolutionContext
+): SymbolId | undefined {
+  const { file_analysis, global_symbols } = context;
+  
+  // Find the class symbol
+  const class_symbol = find_class_symbol(
+    call.constructor_name,
+    file_analysis.file_path,
+    global_symbols
+  );
+  
+  return class_symbol;
+}
+
+/**
+ * Resolve a local function within the same file
+ */
+function resolve_local_function(
+  function_name: string,
+  from_scope: ScopeNode,
+  file_analysis: FileAnalysis & {
+    symbol_registry?: Map<any, SymbolId>;
+    scope_entity_connections?: ScopeEntityConnections;
+  }
+): SymbolId | undefined {
+  const { scopes, scope_entity_connections, symbol_registry } = file_analysis;
+  
+  if (!scope_entity_connections || !symbol_registry) return undefined;
+  
+  // Walk up the scope chain looking for this function
+  const scope_chain = get_scope_chain(scopes, from_scope.id);
+  
+  for (const scope of scope_chain) {
+    const scope_contents = scope_entity_connections.scope_contents.get(scope.id);
+    if (!scope_contents) continue;
+    
+    // Check functions in this scope
+    for (const func_symbol of scope_contents.functions) {
+      const parsed = parse_symbol(func_symbol);
+      if (parsed.name === function_name) {
+        // Check visibility
+        if (is_entity_visible_from_scope(
+          func_symbol,
+          from_scope.id,
+          scope_entity_connections,
+          scopes
+        )) {
+          return func_symbol;
+        }
       }
     }
   }
@@ -247,39 +320,105 @@ function resolve_from_namespace_imports(
 }
 
 /**
- * Resolve qualified name (namespace.member)
+ * Resolve an imported function
  */
-function resolve_qualified_name(
-  qualified_name: string,
-  scope_id: string,
-  context: ResolutionContext
-): ResolvedSymbol | undefined {
-  const parts = qualified_name.split('.');
-  if (parts.length < 2) return undefined;
+function resolve_imported_function(
+  function_name: string,
+  from_file: string,
+  context: FileResolutionContext
+): SymbolId | undefined {
+  const imports = context.imports_by_file.get(from_file);
+  if (!imports) return undefined;
   
-  const { scope_tree } = context;
-  
-  // Start by resolving the first part
-  let current_resolution = find_symbol_in_scope_chain(scope_tree, scope_id, parts[0]);
-  if (!current_resolution) return undefined;
-  
-  // For each subsequent part, look for it as a property/member
-  for (let i = 1; i < parts.length; i++) {
-    const member_name = parts[i];
-    
-    // This would require type information to properly resolve
-    // For now, return a partial resolution
-    if (i === parts.length - 1) {
-      return {
-        symbol: {
-          name: member_name,
-          kind: 'property',
-          range: current_resolution.symbol.range
-        },
-        scope: current_resolution.scope,
-        confidence: 'likely'
-      };
+  for (const import_stmt of imports) {
+    // Check if any of the imported symbols match
+    for (const symbol_name of import_stmt.symbols) {
+      if (symbol_name === function_name) {
+        // Find the exported symbol in the source module
+        const source_file = resolve_import_path(import_stmt.source, from_file);
+        if (source_file) {
+          const symbol = construct_function_symbol(
+            source_file,
+            symbol_name,
+            undefined
+          );
+          
+          // Check if this symbol exists and is exported
+          const def = context.global_symbols.symbols.get(symbol);
+          if (def && def.is_exported) {
+            return symbol;
+          }
+        }
+      }
     }
+    
+    // Check namespace imports
+    if (import_stmt.is_namespace_import && import_stmt.namespace_name && 
+        function_name.startsWith(import_stmt.namespace_name + '.')) {
+      const member_name = function_name.substring(import_stmt.namespace_name.length + 1);
+      const source_file = resolve_import_path(import_stmt.source, from_file);
+      
+      if (source_file) {
+        const symbol = construct_function_symbol(
+          source_file,
+          member_name,
+          undefined
+        );
+        
+        const def = context.global_symbols.symbols.get(symbol);
+        if (def && def.is_exported) {
+          return symbol;
+        }
+      }
+    }
+  }
+  
+  return undefined;
+}
+
+/**
+ * Find a class symbol by name
+ */
+function find_class_symbol(
+  class_name: string,
+  from_file: string,
+  global_symbols: GlobalSymbolTable
+): SymbolId | undefined {
+  // First try in the same file
+  let symbol = construct_class_symbol(from_file, class_name);
+  if (global_symbols.symbols.has(symbol)) {
+    return symbol;
+  }
+  
+  // Then check all files (for imported classes)
+  // TODO: This should use import resolution
+  for (const [sym_id, def] of global_symbols.symbols) {
+    if (def.kind === 'class' && def.name === class_name) {
+      return sym_id;
+    }
+  }
+  
+  return undefined;
+}
+
+/**
+ * Resolve in the global symbol table
+ */
+function resolve_in_global_table(
+  name: string,
+  file_path: string,
+  global_symbols: GlobalSymbolTable
+): SymbolId | undefined {
+  // Try as a function first
+  const func_symbol = construct_function_symbol(file_path, name);
+  if (global_symbols.symbols.has(func_symbol)) {
+    return func_symbol;
+  }
+  
+  // Try as a class
+  const class_symbol = construct_class_symbol(file_path, name);
+  if (global_symbols.symbols.has(class_symbol)) {
+    return class_symbol;
   }
   
   return undefined;
@@ -289,59 +428,39 @@ function resolve_qualified_name(
  * Resolve with fuzzy matching for typos
  */
 function resolve_with_fuzzy_matching(
-  symbol_name: string,
-  scope_id: string,
-  context: ResolutionContext
-): ResolvedSymbol | undefined {
-  const { scope_tree } = context;
+  name: string,
+  from_scope: ScopeNode,
+  file_analysis: FileAnalysis & {
+    scope_entity_connections?: ScopeEntityConnections;
+  },
+  global_symbols: GlobalSymbolTable
+): SymbolId | undefined {
+  const threshold = 0.8; // 80% similarity required
+  let best_match: { symbol: SymbolId; score: number } | undefined;
   
-  // Get all visible symbols
-  const visible = get_visible_symbols(scope_tree, scope_id);
-  
-  // Find symbols with similar names
-  let best_match: { symbol: ScopeSymbol; scope: ScopeNode; score: number } | undefined;
-  
-  for (const [name, symbol] of visible) {
-    const score = calculate_similarity(symbol_name, name);
-    if (score > 0.8) {  // 80% similarity threshold
+  // Check all symbols in the global table
+  for (const [symbol_id, def] of global_symbols.symbols) {
+    const score = calculate_similarity(name, def.name);
+    if (score > threshold) {
       if (!best_match || score > best_match.score) {
-        // Find which scope contains this symbol
-        const containing_scope = find_scope_containing_symbol(scope_tree, scope_id, name);
-        if (containing_scope) {
-          best_match = { symbol, scope: containing_scope, score };
+        // Check if this symbol is visible from the current scope
+        if (file_analysis.scope_entity_connections) {
+          const is_visible = is_entity_visible_from_scope(
+            symbol_id,
+            from_scope.id,
+            file_analysis.scope_entity_connections,
+            file_analysis.scopes
+          );
+          
+          if (is_visible || def.is_exported) {
+            best_match = { symbol: symbol_id, score };
+          }
         }
       }
     }
   }
   
-  if (best_match) {
-    return {
-      symbol: best_match.symbol,
-      scope: best_match.scope,
-      confidence: 'possible'
-    };
-  }
-  
-  return undefined;
-}
-
-/**
- * Find scope containing a symbol
- */
-function find_scope_containing_symbol(
-  tree: ScopeTree,
-  start_scope_id: string,
-  symbol_name: string
-): ScopeNode | undefined {
-  const chain = get_scope_chain(tree, start_scope_id);
-  
-  for (const scope of chain) {
-    if (scope.symbols.has(symbol_name)) {
-      return scope;
-    }
-  }
-  
-  return undefined;
+  return best_match?.symbol;
 }
 
 /**
@@ -384,97 +503,65 @@ function calculate_similarity(str1: string, str2: string): number {
 }
 
 /**
- * Find module scope tree
+ * Resolve an import path to an actual file path
  */
-function find_module_scope_tree(
-  module_path: string,
-  cross_file_graphs: Map<string, ScopeTree>
-): ScopeTree | undefined {
-  // Try direct path
-  let tree = cross_file_graphs.get(module_path);
-  if (tree) return tree;
-  
-  // Try with common extensions
-  const extensions = ['.js', '.ts', '.jsx', '.tsx', '.py', '.rs'];
-  for (const ext of extensions) {
-    tree = cross_file_graphs.get(module_path + ext);
-    if (tree) return tree;
-  }
-  
-  // Try resolving as node_modules package
-  if (!module_path.startsWith('.') && !module_path.startsWith('/')) {
-    // This would require package.json resolution
-    // For now, just try common patterns
-    tree = cross_file_graphs.get(`node_modules/${module_path}/index.js`);
-    if (tree) return tree;
-  }
-  
-  return undefined;
-}
-
-/**
- * Find exported symbol in a module
- */
-function find_exported_symbol(
-  symbol_name: string,
-  module_tree: ScopeTree
-): { symbol: ScopeSymbol; scope: ScopeNode } | undefined {
-  // Look in root scope for exported symbols
-  const root_scope = module_tree.nodes.get(module_tree.root_id);
-  if (!root_scope) return undefined;
-  
-  const symbol = root_scope.symbols.get(symbol_name);
-  if (symbol && symbol.is_exported) {
-    return { symbol, scope: root_scope };
-  }
-  
-  // Check all scopes for exported symbols (for nested exports)
-  for (const [scope_id, scope] of module_tree.nodes) {
-    const symbol = scope.symbols.get(symbol_name);
-    if (symbol && symbol.is_exported) {
-      return { symbol, scope };
-    }
-  }
-  
-  return undefined;
-}
-
-/**
- * Extract symbol name at position (placeholder)
- */
-function extract_symbol_at_position(
-  position: Position,
-  context: ResolutionContext
+function resolve_import_path(
+  import_path: string,
+  from_file: string
 ): string | undefined {
-  // This would require AST access to extract the actual symbol
-  // For now, return undefined - real implementation would parse the source
+  // TODO: Implement proper module resolution
+  // For now, just handle relative paths
+  if (import_path.startsWith('./') || import_path.startsWith('../')) {
+    const path = require('path');
+    const dir = path.dirname(from_file);
+    return path.resolve(dir, import_path).replace(/\\/g, '/');
+  }
+  
   return undefined;
+}
+
+/**
+ * Check if a symbol is exported from its file
+ */
+export function is_symbol_exported(
+  symbol_id: SymbolId,
+  global_symbols: GlobalSymbolTable
+): boolean {
+  const def = global_symbols.symbols.get(symbol_id);
+  return def?.is_exported || false;
 }
 
 /**
  * Find all references to a symbol
  */
 export function find_symbol_references(
-  symbol_name: string,
-  context: ResolutionContext
-): Ref[] {
-  const references: Ref[] = [];
-  const { scope_tree } = context;
+  symbol_id: SymbolId,
+  analyses: FileAnalysis[]
+): Location[] {
+  const references: Location[] = [];
+  const parsed = parse_symbol(symbol_id);
+  const symbol_name = parsed.name;
   
-  // Walk through all scopes looking for references
-  for (const [scope_id, scope] of scope_tree.nodes) {
-    // Check if this scope references the symbol
-    const resolution = resolve_symbol(symbol_name, scope_id, context);
-    if (resolution) {
-      // This would need AST traversal to find actual reference positions
-      // For now, add a reference for the scope that can see the symbol
-      references.push({
-        id: `ref_${scope_id}_${symbol_name}`,
-        kind: 'reference',
-        name: symbol_name,
-        range: scope.range,
-        file_path: context.file_path || ''
-      });
+  for (const analysis of analyses) {
+    // Check function calls
+    for (const call of analysis.function_calls) {
+      if (call.callee_name === symbol_name) {
+        references.push(call.location);
+      }
+    }
+    
+    // Check method calls
+    for (const call of analysis.method_calls) {
+      if (call.method_name === symbol_name) {
+        references.push(call.location);
+      }
+    }
+    
+    // Check constructor calls
+    for (const call of analysis.constructor_calls) {
+      if (call.constructor_name === symbol_name) {
+        references.push(call.location);
+      }
     }
   }
   
@@ -482,134 +569,12 @@ export function find_symbol_references(
 }
 
 /**
- * Find definition of a symbol
+ * Get definition location for a symbol
  */
-export function find_symbol_definition(
-  symbol_name: string,
-  scope_id: string,
-  context: ResolutionContext
-): Def | undefined {
-  const resolution = resolve_symbol(symbol_name, scope_id, context);
-  if (!resolution) return undefined;
-  
-  return {
-    id: `def_${resolution.scope.id}_${symbol_name}`,
-    kind: 'definition',
-    name: symbol_name,
-    symbol_kind: resolution.symbol.kind,
-    range: resolution.symbol.range,
-    file_path: resolution.definition_file || context.file_path || ''
-  };
-}
-
-/**
- * Get all symbols visible from a scope
- */
-export function get_all_visible_symbols(
-  scope_id: string,
-  context: ResolutionContext
-): ResolvedSymbol[] {
-  const { scope_tree, imports } = context;
-  const resolved: ResolvedSymbol[] = [];
-  
-  // Get local symbols
-  const visible = get_visible_symbols(scope_tree, scope_id);
-  for (const [name, symbol] of visible) {
-    const scope = find_scope_containing_symbol(scope_tree, scope_id, name);
-    if (scope) {
-      resolved.push({
-        symbol,
-        scope,
-        definition_file: context.file_path,
-        confidence: 'exact'
-      });
-    }
-  }
-  
-  // Add imported symbols
-  if (imports) {
-    for (const imp of imports) {
-      if (!imp.is_namespace) {
-        resolved.push({
-          symbol: {
-            name: imp.name,
-            kind: 'import',
-            range: imp.range,
-            is_imported: true
-          },
-          scope: scope_tree.nodes.get(scope_tree.root_id)!,
-          is_imported: true,
-          confidence: 'exact'
-        });
-      }
-    }
-  }
-  
-  return resolved;
-}
-
-/**
- * Check if a symbol is exported
- */
-export function is_symbol_exported(
-  symbol_name: string,
-  context: ResolutionContext
-): boolean {
-  const { scope_tree, exports } = context;
-  
-  // Check export list
-  if (exports) {
-    return exports.some(exp => exp.name === symbol_name);
-  }
-  
-  // Check root scope for exported symbols
-  const root_scope = scope_tree.nodes.get(scope_tree.root_id);
-  if (root_scope) {
-    const symbol = root_scope.symbols.get(symbol_name);
-    return symbol?.is_exported === true;
-  }
-  
-  return false;
-}
-
-/**
- * Resolve symbol with type disambiguation
- */
-export function resolve_symbol_with_type(
-  symbol_name: string,
-  expected_type: string,
-  scope_id: string,
-  context: ResolutionContext
-): ResolvedSymbol | undefined {
-  const { scope_tree, type_context } = context;
-  
-  // Get all possible resolutions
-  const all_visible = get_visible_symbols(scope_tree, scope_id);
-  const candidates: ResolvedSymbol[] = [];
-  
-  for (const [name, symbol] of all_visible) {
-    if (name === symbol_name) {
-      const scope = find_scope_containing_symbol(scope_tree, scope_id, name);
-      if (scope) {
-        candidates.push({
-          symbol,
-          scope,
-          confidence: 'possible'
-        });
-      }
-    }
-  }
-  
-  // Filter by type if available
-  if (type_context && candidates.length > 1) {
-    for (const candidate of candidates) {
-      const symbol_type = type_context.get(candidate.symbol.name);
-      if (symbol_type === expected_type) {
-        return { ...candidate, confidence: 'exact' };
-      }
-    }
-  }
-  
-  // Return first candidate if no type match
-  return candidates[0];
+export function get_symbol_definition(
+  symbol_id: SymbolId,
+  global_symbols: GlobalSymbolTable
+): Location | undefined {
+  const def = global_symbols.symbols.get(symbol_id);
+  return def?.location;
 }

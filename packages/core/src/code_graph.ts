@@ -141,6 +141,9 @@ import {
   build_scope_entity_connections,
   ScopeEntityConnections
 } from "./scope_analysis/scope_entity_connections";
+import {
+  resolve_all_symbols
+} from "./scope_analysis/symbol_resolution/symbol_resolution";
 
 /**
  * Generate a comprehensive code graph from a codebase
@@ -276,8 +279,22 @@ export async function generate_code_graph(
     track_visibility: true
   });
 
-  // CALL GRAPH - Build from enriched analyses
-  const calls = build_call_graph(enriched_analyses);
+  // LAYER 9: SYMBOL RESOLUTION - Resolve all references to their definitions
+  const resolution_results = resolve_all_symbols(
+    enriched_analyses,
+    global_symbols
+  );
+  
+  console.log(`Resolved ${resolution_results.resolved_calls.size} function calls`);
+  console.log(`Resolved ${resolution_results.resolved_methods.size} method calls`);
+  console.log(`Resolved ${resolution_results.resolved_constructors.size} constructor calls`);
+  console.log(`Unresolved references: ${resolution_results.unresolved.length}`);
+
+  // CALL GRAPH - Build from enriched analyses using resolved symbols
+  const calls = build_call_graph(
+    enriched_analyses,
+    resolution_results
+  );
 
   // Use the built class hierarchy instead of empty placeholder
   const classes = class_hierarchy;
@@ -671,26 +688,31 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
 // TODO: Add helper functions for AST navigation when re-integrating return type inference
 
 /**
- * Build call graph from file analyses
+ * Build call graph from file analyses using resolved symbols
  */
-function build_call_graph(analyses: FileAnalysis[]): CallGraph {
+function build_call_graph(
+  analyses: FileAnalysis[],
+  resolution_results?: {
+    resolved_calls: Map<Location, SymbolId>;
+    resolved_methods: Map<Location, SymbolId>;
+    resolved_constructors: Map<Location, SymbolId>;
+    resolved_variables: Map<Location, SymbolId>;
+    unresolved: Location[];
+  }
+): CallGraph {
   const functions = new Map<SymbolId, FunctionNode>();
-  const calls: CallEdge[] = [];
+  const edges: CallEdge[] = [];
   const resolved_calls = new Map<string, ResolvedCall[]>();
 
-  // Build function nodes
+  // Build function nodes from all functions and methods
   for (const analysis of analyses) {
+    const registry = (analysis as any).symbol_registry as Map<any, SymbolId> | undefined;
+    
+    // Add function nodes
     for (const func of analysis.functions) {
-      // TODO: what do the keys in the scope graph actually mean? How can we link functions to scopes?
-      const scope_path = analysis.scopes.nodes.get(func.location.file_path)
-        ?.metadata?.name;
-      const symbol = construct_symbol({
-        file_path: analysis.file_path,
-        name: func.name,
-        scope_path: [],
-        is_anonymous: false,
-        location: func.location,
-      });
+      const symbol = registry?.get(func) || 
+        construct_function_symbol(analysis.file_path, func.name);
+      
       functions.set(symbol, {
         symbol,
         file_path: analysis.file_path,
@@ -698,43 +720,69 @@ function build_call_graph(analyses: FileAnalysis[]): CallGraph {
         signature: func.signature,
         calls: [],
         called_by: [],
-        is_exported: false,
+        is_exported: false, // TODO: Check exports
         is_entry_point: false,
       });
     }
+    
+    // Add method nodes
+    for (const cls of analysis.classes) {
+      for (const method of cls.methods) {
+        const symbol = registry?.get(method) ||
+          construct_method_symbol(analysis.file_path, cls.name, method.name, method.is_static);
+        
+        functions.set(symbol, {
+          symbol,
+          file_path: analysis.file_path,
+          location: method.location,
+          signature: method.signature,
+          calls: [],
+          called_by: [],
+          is_exported: false, // TODO: Check if class is exported
+          is_entry_point: false,
+        });
+      }
+    }
   }
 
-  // Build call edges
+  // Build call edges using resolved symbols where available
   for (const analysis of analyses) {
+    const registry = (analysis as any).symbol_registry as Map<any, SymbolId> | undefined;
+    
+    // Function calls
     for (const call of analysis.function_calls) {
-      const from = `${analysis.file_path}#${call.caller_name || "<module>"}`;
-      const to = `${analysis.file_path}#${call.callee_name}`;
+      const from = construct_function_symbol(
+        analysis.file_path,
+        call.caller_name || SPECIAL_SYMBOLS.MODULE
+      );
+      
+      // Use resolved symbol if available, otherwise use unresolved name
+      const to = resolution_results?.resolved_calls.get(call.location) ||
+        construct_function_symbol(analysis.file_path, call.callee_name);
 
-      calls.push({
+      edges.push({
         from,
         to,
-        location: {
-          file_path: analysis.file_path,
-          line: call.location.line,
-          column: call.location.column,
-        },
-        call_type: "direct", // TODO: Determine if dynamic
+        location: call.location,
+        call_type: "direct",
       });
     }
 
-    // Add method calls
+    // Method calls
     for (const call of analysis.method_calls) {
-      const from = `${analysis.file_path}#${call.caller_name || "<module>"}`;
-      const to = `${analysis.file_path}#${call.method_name}`;
+      const from = construct_function_symbol(
+        analysis.file_path,
+        call.caller_name || SPECIAL_SYMBOLS.MODULE
+      );
+      
+      // Use resolved symbol if available
+      const to = resolution_results?.resolved_methods.get(call.location) ||
+        construct_method_symbol(analysis.file_path, call.receiver_name, call.method_name, call.is_static_method);
 
-      calls.push({
+      edges.push({
         from,
         to,
-        location: {
-          file_path: analysis.file_path,
-          line: call.location.line,
-          column: call.location.column,
-        },
+        location: call.location,
         call_type: "method",
       });
     }
@@ -751,12 +799,24 @@ function build_call_graph(analyses: FileAnalysis[]): CallGraph {
     track_recursion: true,
   });
 
+  // Find entry points (functions that are not called by anything)
+  const called_functions = new Set<SymbolId>();
+  for (const edge of edges) {
+    called_functions.add(edge.to);
+  }
+  
+  const entry_points = new Set<SymbolId>();
+  for (const [symbol, node] of functions) {
+    if (!called_functions.has(symbol)) {
+      entry_points.add(symbol);
+    }
+  }
 
   return {
     functions,
-    calls,
-    resolved_calls,
-    call_chains: call_chains.chains,
+    edges,
+    entry_points,
+    call_chains: call_chains.chains || [],
   };
 }
 
