@@ -4,7 +4,7 @@
  * Provides helpers for working with tree-sitter AST nodes
  */
 
-import { SyntaxNode } from "tree-sitter";
+import { SyntaxNode, Point } from "tree-sitter";
 import { Location } from "@ariadnejs/types";
 
 /**
@@ -18,5 +18,21 @@ export function node_to_location(node: SyntaxNode, file_path: string): Location 
     column: node.startPosition.column + 1,
     end_line: node.endPosition.row + 1,
     end_column: node.endPosition.column + 1,
+  };
+}
+
+export function location_to_start_end_points(location: Location): {
+  start: Point;
+  end: Point;
+} {
+  return {
+    start: {
+      row: location.line - 1,
+      column: location.column - 1,
+    },
+    end: {
+      row: location.end_line - 1,
+      column: location.end_column - 1,
+    },
   };
 }

@@ -4,11 +4,11 @@ import { ParameterName, TypeString, FilePath, FunctionName, ClassName, MethodNam
 export type Language = "javascript" | "typescript" | "python" | "rust";
 
 export interface Location {
-  readonly file_path?: FilePath;
+  readonly file_path: FilePath;
   readonly line: number;
   readonly column: number;
-  readonly end_line?: number;
-  readonly end_column?: number;
+  readonly end_line: number;
+  readonly end_column: number;
 }
 
 /**

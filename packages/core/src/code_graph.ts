@@ -111,6 +111,11 @@ import {
   MethodNode,
   SymbolId,
 } from "@ariadnejs/types";
+import type { ClassDefinition as SharedClassDefinition, AnyDefinition } from '@ariadnejs/types/definitions';
+import { build_class_hierarchy_new } from './inheritance/class_hierarchy/class_hierarchy_new';
+import { class_info_to_class_definition } from './utils/type_converters';
+import type { ClassHierarchyContext } from './inheritance/class_hierarchy/class_hierarchy';
+import { local_hierarchy_to_shared } from './inheritance/class_hierarchy/migration_adapters';
 import {
   scan_files,
   read_and_parse_file,
@@ -221,12 +226,16 @@ export async function generate_code_graph(
     imports_by_file.set(analysis.file_path, []);
   }
 
+  // Convert shared hierarchy to local format for enrichment (temporary during migration)
+  // TODO: Update enrich_method_calls_with_hierarchy to use shared types directly
+  const local_hierarchy = convert_shared_to_local_hierarchy(class_hierarchy);
+  
   // Enrich analyses with method hierarchy and constructor types
   // Create new analysis objects since properties are readonly
   const enriched_analyses = analyses.map((analysis) => {
     const enriched_method_calls = enrich_method_calls_with_hierarchy(
       analysis.method_calls,
-      class_hierarchy
+      local_hierarchy
     );
 
     const enriched_constructor_calls = enrich_constructor_calls_with_types(
@@ -692,7 +701,7 @@ async function analyze_file(file: CodeFile): Promise<FileAnalysis> {
  */
 function build_call_graph(
   analyses: FileAnalysis[],
-  resolution_results?: {
+  resolution_results: {
     resolved_calls: Map<Location, SymbolId>;
     resolved_methods: Map<Location, SymbolId>;
     resolved_constructors: Map<Location, SymbolId>;
@@ -702,15 +711,13 @@ function build_call_graph(
 ): CallGraph {
   const functions = new Map<SymbolId, FunctionNode>();
   const edges: CallEdge[] = [];
-  const resolved_calls = new Map<string, ResolvedCall[]>();
 
   // Build function nodes from all functions and methods
   for (const analysis of analyses) {
-    const registry = (analysis as any).symbol_registry as Map<any, SymbolId> | undefined;
     
     // Add function nodes
     for (const func of analysis.functions) {
-      const symbol = registry?.get(func) || 
+      const symbol = resolution_results.resolved_calls.get(func.location) || 
         construct_function_symbol(analysis.file_path, func.name);
       
       functions.set(symbol, {
@@ -728,7 +735,7 @@ function build_call_graph(
     // Add method nodes
     for (const cls of analysis.classes) {
       for (const method of cls.methods) {
-        const symbol = registry?.get(method) ||
+        const symbol = resolution_results.resolved_methods.get(method.location) ||
           construct_method_symbol(analysis.file_path, cls.name, method.name, method.is_static);
         
         functions.set(symbol, {
@@ -747,8 +754,7 @@ function build_call_graph(
 
   // Build call edges using resolved symbols where available
   for (const analysis of analyses) {
-    const registry = (analysis as any).symbol_registry as Map<any, SymbolId> | undefined;
-    
+   
     // Function calls
     for (const call of analysis.function_calls) {
       const from = construct_function_symbol(
@@ -757,7 +763,7 @@ function build_call_graph(
       );
       
       // Use resolved symbol if available, otherwise use unresolved name
-      const to = resolution_results?.resolved_calls.get(call.location) ||
+      const to = resolution_results.resolved_calls.get(call.location) ||
         construct_function_symbol(analysis.file_path, call.callee_name);
 
       edges.push({
@@ -776,7 +782,7 @@ function build_call_graph(
       );
       
       // Use resolved symbol if available
-      const to = resolution_results?.resolved_methods.get(call.location) ||
+      const to = resolution_results.resolved_methods.get(call.location) ||
         construct_method_symbol(analysis.file_path, call.receiver_name, call.method_name, call.is_static_method);
 
       edges.push({
@@ -816,7 +822,7 @@ function build_call_graph(
     functions,
     edges,
     entry_points,
-    call_chains: call_chains.chains || [],
+    call_chains,
   };
 }
 
@@ -969,36 +975,105 @@ async function build_class_hierarchy_from_analyses(
   analyses: FileAnalysis[]
 ): Promise<ClassHierarchy> {
 
-  // Collect all class definitions with their file context
-  const all_classes: any[] = [];
+  // Convert ClassInfo to ClassDefinition format
+  const class_definitions: SharedClassDefinition[] = [];
+  const contexts = new Map<string, ClassHierarchyContext>();
+  
   for (const analysis of analyses) {
-    for (const class_def of analysis.classes) {
-      all_classes.push({
-        symbol_id: `${analysis.file_path}#${class_def.name}`,
-        name: class_def.name,
-        file_path: analysis.file_path,
-        location: class_def.location,
-        parent_class: class_def.base_classes?.[0], // Primary parent
-        base_classes: class_def.base_classes || [],
-        implements: class_def.interfaces || [],
-        methods: class_def.methods,
-        properties: class_def.properties,
-        is_abstract: class_def.is_abstract,
-        language: analysis.language,
-      });
+    // Create context for this file (without AST for now)
+    contexts.set(analysis.file_path, {
+      tree: null as any, // AST not available in this context
+      source_code: '', // Source code not available here
+      file_path: analysis.file_path,
+      language: analysis.language,
+      all_definitions: [] // Will be populated if needed
+    });
+    
+    // Convert each ClassInfo to ClassDefinition
+    for (const classInfo of analysis.classes) {
+      const classDef = class_info_to_class_definition(
+        classInfo,
+        analysis.file_path,
+        analysis.language
+      );
+      class_definitions.push(classDef);
     }
   }
 
-  // Build the hierarchy
-  // Note: The actual build_class_hierarchy function signature may differ
-  // This is a placeholder implementation
-  const hierarchy: ClassHierarchy = {
-    classes: new Map(),
-    inheritance_edges: [],
-    root_classes: new Set(),
-  };
+  // Build the hierarchy using the new implementation
+  const hierarchy = build_class_hierarchy_new(class_definitions, contexts);
+  
+  // Convert to the expected shared ClassHierarchy type if needed
+  // The build_class_hierarchy_new already returns the enhanced shared type
+  return hierarchy as ClassHierarchy;
+}
 
-  // TODO: Properly integrate with the actual class_hierarchy module
-  // For now, return a basic structure
-  return hierarchy;
+/**
+ * Convert shared hierarchy to local format (temporary during migration)
+ * @deprecated TODO: Remove once enrichment functions use shared types
+ */
+function convert_shared_to_local_hierarchy(
+  shared: ClassHierarchy
+): any {
+  // Create a stub local hierarchy that matches the old interface
+  const local = {
+    classes: new Map(),
+    edges: [],
+    roots: [],
+    language: (shared as any).language || 'unknown'
+  };
+  
+  // Convert classes
+  if ((shared as any).classes) {
+    for (const [key, node] of (shared as any).classes) {
+      local.classes.set(key, {
+        definition: {
+          name: node.name,
+          file_path: node.file_path,
+          location: node.location,
+        },
+        parent_class: node.base_classes?.[0],
+        parent_class_def: node.parent_class,
+        implemented_interfaces: node.interfaces || [],
+        interface_defs: [],
+        subclasses: node.derived_classes?.map((name: string) => ({
+          name,
+          file_path: node.file_path,
+          location: node.location
+        })) || [],
+        all_ancestors: node.all_ancestors || [],
+        all_descendants: node.all_descendants || [],
+        method_resolution_order: node.method_resolution_order || [],
+        methods: node.methods,
+        properties: node.properties,
+        base_classes: node.base_classes,
+        derived_classes: node.derived_classes,
+        interfaces: node.interfaces,
+        is_abstract: node.is_abstract,
+        is_interface: node.is_interface,
+        is_trait: node.is_trait
+      });
+    }
+  }
+  
+  // Convert edges
+  if ((shared as any).inheritance_edges) {
+    for (const edge of (shared as any).inheritance_edges) {
+      local.edges.push({
+        from: edge.from,
+        to: edge.to,
+        type: edge.type,
+        source_location: edge.source_location
+      });
+    }
+  }
+  
+  // Convert roots
+  if ((shared as any).root_classes) {
+    for (const root of (shared as any).root_classes) {
+      local.roots.push({ name: root });
+    }
+  }
+  
+  return local;
 }

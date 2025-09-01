@@ -17,41 +17,90 @@
 // - Register class type information
 
 import { SyntaxNode, Tree } from 'tree-sitter';
-import { Def, Position } from '@ariadnejs/types';
+import type { Location } from '@ariadnejs/types/common';
+import type { 
+  ClassNode, 
+  ClassHierarchy as SharedClassHierarchy,
+  InheritanceEdge as SharedInheritanceEdge,
+  MethodNode,
+  PropertyNode
+} from '@ariadnejs/types/classes';
+import type { 
+  ClassDefinition,
+  MethodDefinition,
+  PropertyDefinition,
+  Definition,
+  AnyDefinition
+} from '@ariadnejs/types/definitions';
 
 /**
- * Represents a class/interface and its relationships
+ * Represents a class/interface and its relationships (DEPRECATED)
+ * @deprecated Use ClassNode from @ariadnejs/types/classes instead
  */
 export interface ClassInfo {
-  definition: Def;
+  definition: AnyDefinition;
   parent_class?: string;           // Name of parent class
-  parent_class_def?: Def;          // Definition of parent class (if resolved)
+  parent_class_def?: AnyDefinition;          // Definition of parent class (if resolved)
   implemented_interfaces: string[]; // Names of implemented interfaces
-  interface_defs: Def[];           // Definitions of interfaces (if resolved)
-  subclasses: Def[];               // Direct subclasses
-  all_ancestors: Def[];            // All ancestor classes (computed)
-  all_descendants: Def[];          // All descendant classes (computed)
-  method_resolution_order: Def[];  // MRO for method lookup
+  interface_defs: AnyDefinition[];           // Definitions of interfaces (if resolved)
+  subclasses: AnyDefinition[];               // Direct subclasses
+  all_ancestors: AnyDefinition[];            // All ancestor classes (computed)
+  all_descendants: AnyDefinition[];          // All descendant classes (computed)
+  method_resolution_order: AnyDefinition[];  // MRO for method lookup
+  // Additional fields for compatibility
+  base_classes?: string[];
+  derived_classes?: string[];
+  interfaces?: string[];
+  is_abstract?: boolean;
+  is_interface?: boolean;
+  is_trait?: boolean;
+  methods?: Map<string, MethodDefinition>;
+  properties?: Map<string, PropertyDefinition>;
 }
 
 /**
- * Represents an inheritance edge in the hierarchy
+ * Represents an inheritance edge in the hierarchy (DEPRECATED)
+ * @deprecated Use InheritanceEdge from @ariadnejs/types/classes instead
  */
 export interface InheritanceEdge {
-  child: Def;
-  parent: Def;
+  child: AnyDefinition;
+  parent: AnyDefinition;
   relationship_type: 'extends' | 'implements' | 'trait' | 'mixin';
-  source_location: Position;
+  source_location: Location;
+  // Additional fields for compatibility
+  from?: string;
+  to?: string;
+  type?: 'extends' | 'implements' | 'trait' | 'mixin';
 }
 
 /**
- * Class hierarchy for a project
+ * Class hierarchy for a project (DEPRECATED)
+ * @deprecated Use ClassHierarchy from @ariadnejs/types/classes instead
  */
 export interface ClassHierarchy {
   classes: Map<string, ClassInfo>;     // symbol_id -> ClassInfo
   edges: InheritanceEdge[];            // All inheritance relationships
-  roots: Def[];                        // Classes with no parents
+  roots: AnyDefinition[];                        // Classes with no parents
   language: string;
+}
+
+// Export the enhanced shared types as well
+export type { 
+  ClassNode as EnhancedClassNode,
+  SharedClassHierarchy as EnhancedClassHierarchy,
+  SharedInheritanceEdge as EnhancedInheritanceEdge
+} from '@ariadnejs/types/classes';
+
+/**
+ * Helper to get qualified identifier for a definition
+ */
+function get_symbol_id(def: AnyDefinition): string {
+  // Handle legacy format
+  if ((def as any).symbol_id) {
+    return (def as any).symbol_id;
+  }
+  // Generate from file_path and name
+  return `${def.file_path}#${def.name}`;
 }
 
 /**
@@ -62,14 +111,15 @@ export interface ClassHierarchyContext {
   source_code: string;
   file_path: string;
   language: string;
-  all_definitions?: Def[];  // All class/interface definitions in project
+  all_definitions?: AnyDefinition[];  // All class/interface definitions in project
 }
 
 /**
  * Build class hierarchy from definitions
+ * @deprecated Use build_class_hierarchy_new with ClassDefinition[] instead
  */
 export function build_class_hierarchy(
-  definitions: Def[],
+  definitions: AnyDefinition[],
   contexts: Map<string, ClassHierarchyContext>
 ): ClassHierarchy {
   const hierarchy: ClassHierarchy = {
@@ -100,7 +150,7 @@ export function build_class_hierarchy(
       method_resolution_order: []
     };
     
-    hierarchy.classes.set(def.symbol_id, info);
+    hierarchy.classes.set(get_symbol_id(def), info);
   }
   
   // Second pass: Extract relationships from AST
@@ -128,8 +178,12 @@ export function build_class_hierarchy(
 /**
  * Check if a definition is class-like
  */
-export function is_class_like(def: Def): boolean {
-  return ['class', 'interface', 'struct', 'trait'].includes(def.symbol_kind);
+export function is_class_like(def: AnyDefinition): boolean {
+  return def.type === 'class' || def.type === 'interface' || 
+         (def as any).symbol_kind === 'class' || 
+         (def as any).symbol_kind === 'interface' || 
+         (def as any).symbol_kind === 'struct' || 
+         (def as any).symbol_kind === 'trait';
 }
 
 /**
@@ -158,12 +212,12 @@ export function extract_class_relationships(
  */
 export function find_node_at_position(
   root: SyntaxNode,
-  start: Position,
-  end: Position
+  start: Location,
+  end: Location
 ): SyntaxNode | null {
   return root.descendantForPosition(
-    { row: start.row, column: start.column },
-    { row: end.row, column: end.column }
+    { row: start.line, column: start.column },
+    { row: end.line, column: end.column }
   );
 }
 
@@ -172,7 +226,7 @@ export function find_node_at_position(
  */
 function resolve_class_references(
   hierarchy: ClassHierarchy,
-  all_definitions: Def[]
+  all_definitions: AnyDefinition[]
 ): void {
   for (const info of hierarchy.classes.values()) {
     // Resolve parent class
@@ -198,8 +252,8 @@ function resolve_class_references(
  */
 export function find_class_by_name(
   name: string,
-  definitions: Def[]
-): Def | undefined {
+  definitions: AnyDefinition[]
+): AnyDefinition | undefined {
   return definitions.find(d => 
     is_class_like(d) && d.name === name
   );
@@ -220,7 +274,7 @@ function build_inheritance_edges(hierarchy: ClassHierarchy): void {
       });
       
       // Update parent's subclasses
-      const parent_info = hierarchy.classes.get(info.parent_class_def.symbol_id);
+      const parent_info = hierarchy.classes.get(get_symbol_id(info.parent_class_def));
       if (parent_info) {
         parent_info.subclasses.push(info.definition);
       }
@@ -255,19 +309,19 @@ export function get_all_ancestors(
   info: ClassInfo,
   hierarchy: ClassHierarchy,
   visited: Set<string> = new Set()
-): Def[] {
-  const ancestors: Def[] = [];
+): AnyDefinition[] {
+  const ancestors: AnyDefinition[] = [];
   
   // Avoid cycles
-  if (visited.has(info.definition.symbol_id)) {
+  if (visited.has(get_symbol_id(info.definition))) {
     return ancestors;
   }
-  visited.add(info.definition.symbol_id);
+  visited.add(get_symbol_id(info.definition));
   
   // Add parent
   if (info.parent_class_def) {
     ancestors.push(info.parent_class_def);
-    const parent_info = hierarchy.classes.get(info.parent_class_def.symbol_id);
+    const parent_info = hierarchy.classes.get(get_symbol_id(info.parent_class_def));
     if (parent_info) {
       ancestors.push(...get_all_ancestors(parent_info, hierarchy, visited));
     }
@@ -275,7 +329,7 @@ export function get_all_ancestors(
   
   // Add interfaces
   for (const interface_def of info.interface_defs) {
-    if (!ancestors.some(a => a.symbol_id === interface_def.symbol_id)) {
+    if (!ancestors.some(a => get_symbol_id(a) === get_symbol_id(interface_def))) {
       ancestors.push(interface_def);
     }
   }
@@ -290,19 +344,19 @@ export function get_all_descendants(
   info: ClassInfo,
   hierarchy: ClassHierarchy,
   visited: Set<string> = new Set()
-): Def[] {
-  const descendants: Def[] = [];
+): AnyDefinition[] {
+  const descendants: AnyDefinition[] = [];
   
   // Avoid cycles
-  if (visited.has(info.definition.symbol_id)) {
+  if (visited.has(get_symbol_id(info.definition))) {
     return descendants;
   }
-  visited.add(info.definition.symbol_id);
+  visited.add(get_symbol_id(info.definition));
   
   // Add direct subclasses
   for (const subclass of info.subclasses) {
     descendants.push(subclass);
-    const subclass_info = hierarchy.classes.get(subclass.symbol_id);
+    const subclass_info = hierarchy.classes.get(get_symbol_id(subclass));
     if (subclass_info) {
       descendants.push(...get_all_descendants(subclass_info, hierarchy, visited));
     }
@@ -334,7 +388,7 @@ function compute_method_resolution_order(hierarchy: ClassHierarchy): void {
 function compute_c3_linearization(
   info: ClassInfo,
   hierarchy: ClassHierarchy
-): Def[] {
+): AnyDefinition[] {
   // Simplified version - full C3 is complex
   // For now, just return class + ancestors in order
   return [
@@ -358,10 +412,10 @@ function identify_root_classes(hierarchy: ClassHierarchy): void {
  * Get the parent class of a given class
  */
 export function get_parent_class(
-  class_def: Def,
+  class_def: AnyDefinition,
   hierarchy: ClassHierarchy
-): Def | undefined {
-  const info = hierarchy.classes.get(class_def.symbol_id);
+): AnyDefinition | undefined {
+  const info = hierarchy.classes.get(get_symbol_id(class_def));
   return info?.parent_class_def;
 }
 
@@ -369,10 +423,10 @@ export function get_parent_class(
  * Get all subclasses of a given class
  */
 export function get_subclasses(
-  class_def: Def,
+  class_def: AnyDefinition,
   hierarchy: ClassHierarchy
-): Def[] {
-  const info = hierarchy.classes.get(class_def.symbol_id);
+): AnyDefinition[] {
+  const info = hierarchy.classes.get(get_symbol_id(class_def));
   return info?.subclasses || [];
 }
 
@@ -380,10 +434,10 @@ export function get_subclasses(
  * Get all implemented interfaces of a class
  */
 export function get_implemented_interfaces(
-  class_def: Def,
+  class_def: AnyDefinition,
   hierarchy: ClassHierarchy
-): Def[] {
-  const info = hierarchy.classes.get(class_def.symbol_id);
+): AnyDefinition[] {
+  const info = hierarchy.classes.get(get_symbol_id(class_def));
   return info?.interface_defs || [];
 }
 
@@ -391,15 +445,15 @@ export function get_implemented_interfaces(
  * Check if a class implements an interface
  */
 export function implements_interface(
-  class_def: Def,
-  interface_def: Def,
+  class_def: AnyDefinition,
+  interface_def: AnyDefinition,
   hierarchy: ClassHierarchy
 ): boolean {
-  const info = hierarchy.classes.get(class_def.symbol_id);
+  const info = hierarchy.classes.get(get_symbol_id(class_def));
   if (!info) return false;
   
   // Check direct implementation
-  if (info.interface_defs.some(i => i.symbol_id === interface_def.symbol_id)) {
+  if (info.interface_defs.some(i => get_symbol_id(i) === get_symbol_id(interface_def))) {
     return true;
   }
   
@@ -415,31 +469,31 @@ export function implements_interface(
  * Check if a class is a subclass of another
  */
 export function is_subclass_of(
-  child: Def,
-  parent: Def,
+  child: AnyDefinition,
+  parent: AnyDefinition,
   hierarchy: ClassHierarchy
 ): boolean {
-  const info = hierarchy.classes.get(child.symbol_id);
+  const info = hierarchy.classes.get(get_symbol_id(child));
   if (!info) return false;
   
-  return info.all_ancestors.some(a => a.symbol_id === parent.symbol_id);
+  return info.all_ancestors.some(a => get_symbol_id(a) === get_symbol_id(parent));
 }
 
 /**
  * Get the inheritance path between two classes
  */
 export function get_inheritance_path(
-  child: Def,
-  ancestor: Def,
+  child: AnyDefinition,
+  ancestor: AnyDefinition,
   hierarchy: ClassHierarchy
-): Def[] | undefined {
-  const info = hierarchy.classes.get(child.symbol_id);
+): AnyDefinition[] | undefined {
+  const info = hierarchy.classes.get(get_symbol_id(child));
   if (!info) return undefined;
   
   // Build path recursively
-  const path: Def[] = [child];
+  const path: AnyDefinition[] = [child];
   
-  if (child.symbol_id === ancestor.symbol_id) {
+  if (get_symbol_id(child) === get_symbol_id(ancestor)) {
     return path;
   }
   
@@ -457,14 +511,14 @@ export function get_inheritance_path(
  * Get all methods available to a class (including inherited)
  */
 export function get_all_methods(
-  class_def: Def,
+  class_def: AnyDefinition,
   hierarchy: ClassHierarchy,
-  method_provider?: (def: Def) => Def[]
-): Def[] {
-  const info = hierarchy.classes.get(class_def.symbol_id);
+  method_provider?: (def: AnyDefinition) => AnyDefinition[]
+): AnyDefinition[] {
+  const info = hierarchy.classes.get(get_symbol_id(class_def));
   if (!info) return [];
   
-  const methods: Def[] = [];
+  const methods: AnyDefinition[] = [];
   const seen = new Set<string>();
   
   // Walk MRO to collect methods

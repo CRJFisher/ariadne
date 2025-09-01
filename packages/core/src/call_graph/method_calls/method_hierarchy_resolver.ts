@@ -12,12 +12,14 @@
  */
 
 import { MethodCallInfo } from '@ariadnejs/types';
-import { ClassHierarchy, ClassInfo } from '../../inheritance/class_hierarchy';
+import { ClassHierarchy, ClassInfo } from '../../inheritance/class_hierarchy/class_hierarchy';
+import type { ClassNode } from '@ariadnejs/types/classes';
 
 /**
  * Extended method call info with hierarchy resolution
  */
 export interface MethodCallWithHierarchy extends MethodCallInfo {
+  receiver_type?: string;               // Resolved type of the receiver (from type tracking)
   defining_class_resolved?: string;    // Class that actually defines the method
   is_override?: boolean;               // If this overrides a parent method
   override_chain?: string[];           // Classes in override chain
@@ -34,11 +36,13 @@ export interface MethodCallWithHierarchy extends MethodCallInfo {
  * 
  * @param method_calls Method calls from Per-File analysis
  * @param class_hierarchy Class hierarchy from Global Assembly
+ * @param type_info Optional type information for resolving receiver types
  * @returns Method calls enriched with hierarchy information
  */
 export function enrich_method_calls_with_hierarchy(
   method_calls: readonly MethodCallInfo[],
-  class_hierarchy: ClassHierarchy | undefined
+  class_hierarchy: ClassHierarchy | undefined,
+  type_info?: Map<string, string>  // Maps receiver_name to type
 ): readonly MethodCallWithHierarchy[] {
   if (!class_hierarchy) {
     // No hierarchy available, return calls as-is
@@ -48,11 +52,16 @@ export function enrich_method_calls_with_hierarchy(
   return method_calls.map(call => {
     const enriched: MethodCallWithHierarchy = { ...call };
 
-    // If we already have a receiver type from type tracking
-    if (call.receiver_type) {
+    // Try to resolve receiver type from type info or receiver name
+    const receiver_type = type_info?.get(call.receiver_name) || 
+                         (call.receiver_name.charAt(0).toUpperCase() === call.receiver_name.charAt(0) ? 
+                          call.receiver_name : undefined);
+    
+    if (receiver_type) {
+      enriched.receiver_type = receiver_type;
       // Try to resolve the method through the class hierarchy
       const resolution = resolve_method_in_hierarchy(
-        call.receiver_type,
+        receiver_type,
         call.method_name,
         class_hierarchy
       );
@@ -66,7 +75,7 @@ export function enrich_method_calls_with_hierarchy(
 
       // Check if this is a virtual call (could dispatch to subclasses)
       const virtualInfo = analyze_virtual_call(
-        call.receiver_type,
+        receiver_type,
         call.method_name,
         class_hierarchy
       );
@@ -109,14 +118,17 @@ export function resolve_method_in_hierarchy(
   
   // Helper to check if a class has a method
   function class_has_method(class_info: ClassInfo): boolean {
-    // Check if any method in the class matches the name
-    const def = class_info.definition;
-    if (def.members) {
-      return def.members.some(member => 
-        member.symbol_kind === 'method' && 
-        member.symbol_name === method_name
-      );
+    // Check if the class has a methods map
+    if (class_info.methods) {
+      return class_info.methods.has(method_name);
     }
+    
+    // Fallback: check definition for method-like properties
+    const def = class_info.definition;
+    if ((def as any).methods && Array.isArray((def as any).methods)) {
+      return (def as any).methods.some((m: any) => m.name === method_name);
+    }
+    
     return false;
   }
 
@@ -150,7 +162,7 @@ export function resolve_method_in_hierarchy(
         defining_class: current_class,
         is_override: !is_first && is_override,
         override_chain,
-        is_interface_method: class_info.definition.symbol_kind === 'interface'
+        is_interface_method: class_info.is_interface || (class_info.definition as any).type === 'interface' || (class_info.definition as any).symbol_kind === 'interface'
       };
     }
 
@@ -161,12 +173,13 @@ export function resolve_method_in_hierarchy(
 
     // Check implemented interfaces
     for (const interface_def of class_info.interface_defs) {
-      const interface_info = hierarchy.classes.get(interface_def.symbol_id);
+      const interface_id = `${interface_def.file_path}#${interface_def.name}`;
+      const interface_info = hierarchy.classes.get(interface_id);
       if (interface_info && class_has_method(interface_info)) {
         return {
-          defining_class: interface_def.symbol_id,
+          defining_class: interface_id,
           is_override: false,
-          override_chain: [interface_def.symbol_id],
+          override_chain: [interface_id],
           is_interface_method: true
         };
       }
@@ -218,19 +231,20 @@ export function analyze_virtual_call(
   // Check all subclasses for overrides
   function check_subclasses(info: ClassInfo) {
     for (const subclass of info.subclasses) {
-      const subclass_info = hierarchy.classes.get(subclass.symbol_id);
+      const subclass_id = `${subclass.file_path}#${subclass.name}`;
+      const subclass_info = hierarchy.classes.get(subclass_id);
       if (subclass_info) {
         // Check if subclass overrides the method
         const subclass_resolution = resolve_method_in_hierarchy(
-          subclass.symbol_id,
+          subclass_id,
           method_name,
           hierarchy
         );
         
         if (subclass_resolution && 
-            subclass_resolution.defining_class === subclass.symbol_id) {
+            subclass_resolution.defining_class === subclass_id) {
           // Subclass overrides the method
-          possible_targets.push(subclass.symbol_id);
+          possible_targets.push(subclass_id);
         }
         
         // Recursively check subclass's subclasses
