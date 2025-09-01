@@ -12,7 +12,6 @@ export interface Definition {
   readonly name: string;
   readonly location: Location;
   readonly file_path: string;
-  readonly language: Language;
 }
 
 /**
