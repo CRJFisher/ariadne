@@ -21,16 +21,16 @@ The class_hierarchy.ts module is not properly integrated into the processing pip
 
 ### Three-Phase Approach
 
-1. **Type System Alignment** - Bridge local and shared types
-2. **Component Integration** - Wire components together
-3. **Validation & Testing** - Ensure everything works
+1. **Type Enrichment** - Enhance shared types with best functionality from both systems
+2. **Migration with Temporary Adapters** - Gradual migration to enhanced shared types
+3. **Type Harmony Achievement** - Direct usage of shared types everywhere
 
 ### Key Design Decisions
 
-1. **Adapter Pattern**: Use adapters to bridge between internal types and shared types
-2. **Gradual Migration**: Keep existing code working while migrating
-3. **Preserve Functionality**: Don't lose any computed fields or capabilities
-4. **Type Safety**: Improve type safety throughout
+1. **Enrich Shared Types**: Add the best features from local types to shared types
+2. **Temporary Adapters Only**: Adapters are scaffolding, removed after migration
+3. **Type Harmony Goal**: One source of truth - enhanced shared types used directly
+4. **No Permanent Conversions**: Eliminate all type conversions in final state
 
 ## Detailed Task Breakdown
 
@@ -45,32 +45,33 @@ The class_hierarchy.ts module is not properly integrated into the processing pip
 - Updated all definition types to extend Definition
 - Added type guards and discriminated union
 
-#### Task 11.62.23: Replace Local Types with Shared Types
+#### Task 11.62.23: Achieve Type Harmony with Enhanced Shared Types
 
-##### Sub-task 11.62.23.1: Analyze Type Differences
-**Status:** Not Started  
-**Effort:** 1 hour  
-
-- Document exact differences between local and shared types
-- Identify gaps and missing functionality
-- Propose solution approach
-
-##### Sub-task 11.62.23.2: Implement Adapter Pattern
+##### Sub-task 11.62.23.1: Analyze and Enrich Shared Types
 **Status:** Not Started  
 **Effort:** 2 hours  
 
-- Create internal types for building
-- Implement adapter functions to convert to shared types
-- Add metadata storage for computed fields
-- Update build_class_hierarchy to use adapters
+- Identify best functionality from both local and shared types
+- Design enhanced shared types with all necessary features
+- Document enrichment strategy for shared types package
 
-##### Sub-task 11.62.23.3: Update All Functions
+##### Sub-task 11.62.23.2: Implement Temporary Migration Adapters
 **Status:** Not Started  
-**Effort:** 2 hours  
+**Effort:** 3 hours  
 
-- Update helper functions to work with adapters
-- Ensure all computed fields accessible
-- Test with all languages
+- Create TEMPORARY adapters for gradual migration
+- Mark all adapters as @deprecated with removal TODOs
+- Enable both old and new code to work during transition
+- Set timeline for adapter removal
+
+##### Sub-task 11.62.23.3: Migrate to Enhanced Types Directly
+**Status:** Not Started  
+**Effort:** 4 hours  
+
+- Systematically migrate all code to use enhanced shared types
+- Remove need for any type conversions
+- Delete adapters once migration complete
+- Achieve full type harmony
 
 ### Phase 2: Component Integration (Tasks 11.62.24-25)
 
@@ -213,11 +214,13 @@ Still needed:
 
 ## Estimated Total Effort
 
-- Phase 1: 5 hours
-- Phase 2: 7 hours  
-- Phase 3: 5 hours
-- Testing: 3 hours
-- **Total: 20 hours**
+- Phase 1 (Type Enrichment & Migration): 9 hours
+- Phase 2 (Component Integration): 7 hours  
+- Phase 3 (Type Conversion Utilities): 5 hours
+- Testing & Validation: 4 hours
+- **Total: 25 hours**
+
+Note: The increased effort reflects the more comprehensive approach of enriching shared types rather than maintaining parallel type systems.
 
 ## Next Immediate Steps
 
