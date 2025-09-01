@@ -5,7 +5,19 @@
 import { Language, Location } from './common';
 
 /**
- * Base definition interface
+ * Common base interface for all definition types
+ * All entity-specific definition types should extend this
+ */
+export interface Definition {
+  readonly name: string;
+  readonly location: Location;
+  readonly file_path: string;
+  readonly language: Language;
+}
+
+/**
+ * Legacy base definition interface - DEPRECATED
+ * @deprecated Use specific definition types or Definition interface instead
  */
 export interface Def {
   readonly name: string;
@@ -16,11 +28,26 @@ export interface Def {
 }
 
 /**
+ * Standalone function definition
+ */
+export interface FunctionDefinition extends Definition {
+  readonly parameters: readonly ParameterDefinition[];
+  readonly return_type?: string;
+  readonly is_async: boolean;
+  readonly is_generator: boolean;
+  readonly is_exported: boolean;
+  readonly generics?: readonly GenericParameter[];
+  readonly decorators?: readonly string[];
+  readonly docstring?: string;
+  readonly is_arrow_function?: boolean; // For JS/TS
+  readonly is_anonymous?: boolean;
+  readonly closure_captures?: readonly string[]; // Variables from outer scope
+}
+
+/**
  * Class definition with all metadata
  */
-export interface ClassDefinition {
-  readonly name: string;
-  readonly location: Location;
+export interface ClassDefinition extends Definition {
   readonly extends?: readonly string[];
   readonly implements?: readonly string[];
   readonly is_abstract?: boolean;
@@ -29,8 +56,8 @@ export interface ClassDefinition {
   readonly methods: readonly MethodDefinition[];
   readonly properties: readonly PropertyDefinition[];
   readonly decorators?: readonly string[];
-  readonly language: Language;
-  readonly file_path: string;
+  readonly docstring?: string;
+  readonly is_exported?: boolean;
 }
 
 /**
@@ -90,15 +117,12 @@ export interface ParameterDefinition {
 /**
  * Interface definition
  */
-export interface InterfaceDefinition {
-  readonly name: string;
-  readonly location: Location;
+export interface InterfaceDefinition extends Definition {
   readonly extends?: readonly string[];
   readonly generics?: readonly GenericParameter[];
   readonly methods: readonly MethodSignature[];
   readonly properties: readonly PropertySignature[];
-  readonly language: Language;
-  readonly file_path: string;
+  readonly is_exported?: boolean;
 }
 
 /**
@@ -125,13 +149,10 @@ export interface PropertySignature {
 /**
  * Enum definition
  */
-export interface EnumDefinition {
-  readonly name: string;
-  readonly location: Location;
+export interface EnumDefinition extends Definition {
   readonly members: readonly EnumMember[];
   readonly is_const?: boolean; // TypeScript const enum
-  readonly language: Language;
-  readonly file_path: string;
+  readonly is_exported?: boolean;
 }
 
 /**
@@ -146,26 +167,21 @@ export interface EnumMember {
 /**
  * Type alias definition
  */
-export interface TypeAliasDefinition {
-  readonly name: string;
-  readonly location: Location;
+export interface TypeAliasDefinition extends Definition {
   readonly type_expression: string;
   readonly generics?: readonly GenericParameter[];
-  readonly language: Language;
-  readonly file_path: string;
+  readonly is_exported?: boolean;
 }
 
 /**
  * Rust-specific struct definition
  */
-export interface StructDefinition {
-  readonly name: string;
-  readonly location: Location;
+export interface StructDefinition extends Definition {
   readonly fields: readonly FieldDefinition[];
   readonly generics?: readonly GenericParameter[];
   readonly derives?: readonly string[];
   readonly is_tuple_struct: boolean;
-  readonly file_path: string;
+  readonly is_public?: boolean;
 }
 
 /**
@@ -181,14 +197,12 @@ export interface FieldDefinition {
 /**
  * Rust trait definition
  */
-export interface TraitDefinition {
-  readonly name: string;
-  readonly location: Location;
+export interface TraitDefinition extends Definition {
   readonly methods: readonly MethodSignature[];
   readonly associated_types?: readonly AssociatedType[];
   readonly supertraits?: readonly string[];
   readonly generics?: readonly GenericParameter[];
-  readonly file_path: string;
+  readonly is_public?: boolean;
 }
 
 /**
@@ -203,11 +217,55 @@ export interface AssociatedType {
 /**
  * Python-specific protocol definition
  */
-export interface ProtocolDefinition {
-  readonly name: string;
-  readonly location: Location;
+export interface ProtocolDefinition extends Definition {
   readonly methods: readonly MethodSignature[];
   readonly properties: readonly PropertySignature[];
   readonly bases?: readonly string[];
-  readonly file_path: string;
+}
+
+/**
+ * Discriminated union of all definition types
+ */
+export type AnyDefinition = 
+  | FunctionDefinition
+  | ClassDefinition
+  | InterfaceDefinition
+  | EnumDefinition
+  | TypeAliasDefinition
+  | StructDefinition
+  | TraitDefinition
+  | ProtocolDefinition;
+
+// Type guards for runtime type checking
+
+export function isFunctionDefinition(def: Definition): def is FunctionDefinition {
+  return 'parameters' in def && 'is_async' in def && 'is_generator' in def;
+}
+
+export function isClassDefinition(def: Definition): def is ClassDefinition {
+  return 'methods' in def && 'properties' in def && !('type_expression' in def);
+}
+
+export function isInterfaceDefinition(def: Definition): def is InterfaceDefinition {
+  return 'methods' in def && 'properties' in def && !('is_abstract' in def);
+}
+
+export function isEnumDefinition(def: Definition): def is EnumDefinition {
+  return 'members' in def && !('fields' in def);
+}
+
+export function isTypeAliasDefinition(def: Definition): def is TypeAliasDefinition {
+  return 'type_expression' in def;
+}
+
+export function isStructDefinition(def: Definition): def is StructDefinition {
+  return 'fields' in def && 'is_tuple_struct' in def;
+}
+
+export function isTraitDefinition(def: Definition): def is TraitDefinition {
+  return 'methods' in def && 'supertraits' in def;
+}
+
+export function isProtocolDefinition(def: Definition): def is ProtocolDefinition {
+  return 'methods' in def && 'bases' in def;
 }
