@@ -112,10 +112,8 @@ import {
   SymbolId,
 } from "@ariadnejs/types";
 import type { ClassDefinition as SharedClassDefinition, AnyDefinition } from '@ariadnejs/types/definitions';
-import { build_class_hierarchy_new } from './inheritance/class_hierarchy/class_hierarchy_new';
+import { build_class_hierarchy, type ClassHierarchyContext } from './inheritance/class_hierarchy/class_hierarchy';
 import { class_info_to_class_definition } from './utils/type_converters';
-import type { ClassHierarchyContext } from './inheritance/class_hierarchy/class_hierarchy';
-import { local_hierarchy_to_shared } from './inheritance/class_hierarchy/migration_adapters';
 import {
   scan_files,
   read_and_parse_file,
@@ -1000,8 +998,8 @@ async function build_class_hierarchy_from_analyses(
     }
   }
 
-  // Build the hierarchy using the new implementation
-  const hierarchy = build_class_hierarchy_new(class_definitions, contexts);
+  // Build the hierarchy using the updated implementation
+  const hierarchy = build_class_hierarchy(class_definitions as any[], contexts);
   
   // Convert to the expected shared ClassHierarchy type if needed
   // The build_class_hierarchy_new already returns the enhanced shared type

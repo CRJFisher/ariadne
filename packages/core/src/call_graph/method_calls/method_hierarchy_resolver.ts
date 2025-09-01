@@ -12,8 +12,7 @@
  */
 
 import { MethodCallInfo } from '@ariadnejs/types';
-import { ClassHierarchy, ClassInfo } from '../../inheritance/class_hierarchy/class_hierarchy';
-import type { ClassNode } from '@ariadnejs/types/classes';
+import type { ClassHierarchy, ClassNode } from '@ariadnejs/types';
 
 /**
  * Extended method call info with hierarchy resolution
@@ -117,7 +116,7 @@ export function resolve_method_in_hierarchy(
   const override_chain: string[] = [];
   
   // Helper to check if a class has a method
-  function class_has_method(class_info: ClassInfo): boolean {
+  function class_has_method(class_info: ClassNode): boolean {
     // Check if the class has a methods map
     if (class_info.methods) {
       return class_info.methods.has(method_name);
@@ -154,7 +153,8 @@ export function resolve_method_in_hierarchy(
       // Check if parent also has it (making this an override)
       let is_override = false;
       if (class_info.parent_class) {
-        const parent_resolution = resolve_recursive(class_info.parent_class, false);
+        const parent_name = class_info.base_classes?.[0];
+        const parent_resolution = parent_name ? resolve_recursive(parent_name, false) : undefined;
         is_override = parent_resolution !== undefined;
       }
 
@@ -162,18 +162,20 @@ export function resolve_method_in_hierarchy(
         defining_class: current_class,
         is_override: !is_first && is_override,
         override_chain,
-        is_interface_method: class_info.is_interface || (class_info.definition as any).type === 'interface' || (class_info.definition as any).symbol_kind === 'interface'
+        is_interface_method: class_info.is_interface || false
       };
     }
 
     // Method not in this class, check parent
-    if (class_info.parent_class) {
-      return resolve_recursive(class_info.parent_class, false);
+    const parent_name = class_info.base_classes?.[0];
+    if (parent_name) {
+      return resolve_recursive(parent_name, false);
     }
 
     // Check implemented interfaces
-    for (const interface_def of class_info.interface_defs) {
-      const interface_id = `${interface_def.file_path}#${interface_def.name}`;
+    if (class_info.interface_nodes) {
+      for (const interface_node of class_info.interface_nodes) {
+        const interface_id = `${interface_node.file_path}#${interface_node.name}`;
       const interface_info = hierarchy.classes.get(interface_id);
       if (interface_info && class_has_method(interface_info)) {
         return {
@@ -183,6 +185,7 @@ export function resolve_method_in_hierarchy(
           is_interface_method: true
         };
       }
+    }
     }
 
     return undefined;
@@ -229,8 +232,18 @@ export function analyze_virtual_call(
   possible_targets.push(resolution.defining_class);
 
   // Check all subclasses for overrides
-  function check_subclasses(info: ClassInfo) {
-    for (const subclass of info.subclasses) {
+  function check_subclasses(info: ClassNode) {
+    for (const subclass_name of info.derived_classes || []) {
+      // Find the subclass node by name
+      let subclass: ClassNode | undefined;
+      for (const node of hierarchy.classes.values()) {
+        if (node.name === subclass_name) {
+          subclass = node;
+          break;
+        }
+      }
+      if (!subclass) continue;
+      
       const subclass_id = `${subclass.file_path}#${subclass.name}`;
       const subclass_info = hierarchy.classes.get(subclass_id);
       if (subclass_info) {
@@ -287,22 +300,32 @@ export function get_available_methods(
     }
 
     // Add methods from this class
-    if (class_info.definition.members) {
-      for (const member of class_info.definition.members) {
-        if (member.symbol_kind === 'method' && !methods.has(member.symbol_name)) {
-          methods.set(member.symbol_name, current_class);
+    if (class_info.methods) {
+      for (const [method_name, _method] of class_info.methods) {
+        if (!methods.has(method_name)) {
+          methods.set(method_name, current_class);
         }
       }
     }
 
     // Collect from parent
-    if (class_info.parent_class) {
-      collect_methods(class_info.parent_class);
+    const parent_name = class_info.base_classes?.[0];
+    if (parent_name) {
+      // Find parent by name in hierarchy
+      for (const [key, node] of hierarchy.classes) {
+        if (node.name === parent_name) {
+          collect_methods(key);
+          break;
+        }
+      }
     }
 
     // Collect from interfaces
-    for (const interface_def of class_info.interface_defs) {
-      collect_methods(interface_def.symbol_id);
+    if (class_info.interface_nodes) {
+      for (const interface_node of class_info.interface_nodes) {
+        const interface_key = `${interface_node.file_path}#${interface_node.name}`;
+        collect_methods(interface_key);
+      }
     }
   }
 
