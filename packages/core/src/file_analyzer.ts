@@ -12,6 +12,10 @@ import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
 
 import { build_scope_tree } from "./scope_analysis/scope_tree";
+import { 
+  EnhancedScopeSymbol, 
+  extract_variables_from_symbols 
+} from "./scope_analysis/scope_tree/enhanced_symbols";
 import { extract_imports } from "./import_export/import_resolution";
 import { extract_exports } from "./import_export/export_detection";
 import { find_class_definitions } from "./inheritance/class_detection";
@@ -22,7 +26,7 @@ import {
 import { find_function_calls } from "./call_graph/function_calls";
 import { find_method_calls } from "./call_graph/method_calls";
 import { find_constructor_calls } from "./call_graph/constructor_calls";
-import { extract_variable_declarations } from "./variable_analysis/variable_extraction";
+// Variable extraction now done through scope_tree
 import {
   create_error_collector,
   ErrorCollector,
@@ -36,7 +40,6 @@ import {
   convert_exports_to_statements,
   convert_type_map_to_public,
   create_readonly_array,
-  create_empty_variables,
   create_empty_errors,
   create_location_from_range,
 } from "./type_analysis/type_adapters";
@@ -109,9 +112,7 @@ interface Layer4Results {
   constructor_calls: ConstructorCallInfo[];
 }
 
-interface Layer5Results {
-  variables: VariableDeclaration[];
-}
+// Layer 5 removed - variables extracted from scope tree
 
 interface Layer6Results {
   functions: FunctionInfo[];
@@ -374,13 +375,8 @@ export async function analyze_file(
     file.file_path
   );
   
-  // Layer 5: Variable Extraction
-  const layer5 = extract_variables(
-    tree.rootNode,
-    source_code,
-    file.language,
-    file.file_path
-  );
+  // Variables are now extracted from scope tree (Layer 1)
+  // No separate Layer 5 needed
   
   // Layer 6: Definition Extraction
   const layer6 = extract_definitions(
@@ -602,20 +598,39 @@ function analyze_calls(
 /**
  * Layer 5: Extract variable declarations
  */
-function extract_variables(
-  root_node: SyntaxNode,
-  source_code: string,
-  language: Language,
-  file_path: string
-): Layer5Results {
-  const variables = extract_variable_declarations(
-    root_node,
-    source_code,
-    language,
-    file_path
-  );
+// Variable extraction is now done through scope_tree in Layer 1
+
+/**
+ * Extract variables from scope tree
+ */
+function extract_variables_from_scopes(scopes: ScopeTree): VariableDeclaration[] {
+  const variables: VariableDeclaration[] = [];
   
-  return { variables };
+  // Iterate through all scopes and extract variable symbols
+  for (const [_, scope] of scopes.nodes) {
+    // Check if scope is a parameter scope - parameters are variables in parameter scopes
+    const isParameterScope = scope.type === 'parameter';
+    
+    for (const [name, symbol] of scope.symbols) {
+      // Variables can be marked as 'variable' kind or found in parameter scopes
+      if (symbol.kind === 'variable' || (isParameterScope && symbol.kind === 'local')) {
+        // Cast to EnhancedScopeSymbol to access variable-specific fields
+        const enhancedSymbol = symbol as EnhancedScopeSymbol;
+        
+        // Convert scope symbol to VariableDeclaration
+        const variable: VariableDeclaration = {
+          name,
+          location: symbol.location,
+          type: symbol.type_info,
+          is_const: enhancedSymbol.declaration_type === 'const',
+          is_exported: symbol.is_exported
+        };
+        variables.push(variable);
+      }
+    }
+  }
+  
+  return variables;
 }
 
 /**
@@ -815,8 +830,8 @@ function build_file_analysis(
   const export_statements = convert_exports_to_statements(exports);
   const public_type_info = convert_type_map_to_public(type_tracker.variable_types);
   
-  // Create empty collections for unimplemented features
-  const variables = create_empty_variables();
+  // Extract variables from scope tree
+  const variables = extract_variables_from_scopes(scopes);
   const errors = create_empty_errors();
   
   return {

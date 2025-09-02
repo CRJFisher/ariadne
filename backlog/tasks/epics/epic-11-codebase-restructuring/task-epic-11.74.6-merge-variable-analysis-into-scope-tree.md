@@ -1,6 +1,6 @@
 # Task 11.74.6: Merge Variable Analysis into Scope Tree
 
-## Status: Created
+## Status: Completed
 **Priority**: HIGH
 **Parent**: Task 11.74 - Wire and Consolidate Unwired Modules
 **Type**: Module Consolidation
@@ -44,14 +44,14 @@ We're traversing the AST twice to extract essentially the same information.
 
 ## Success Criteria
 
-- [ ] Variable extraction functionality merged into scope_tree
-- [ ] Single AST traversal for all symbol extraction
-- [ ] Variable-specific features preserved (const/let/var distinction)
-- [ ] file_analyzer updated to use unified extraction
-- [ ] variable_extraction module deleted
-- [ ] All types migrated to use @ariadnejs/types shared types
-- [ ] Duplicate type definitions removed and consolidated
-- [ ] All tests passing with consolidated module
+- [x] Variable extraction functionality merged into scope_tree
+- [x] Single AST traversal for all symbol extraction
+- [x] Variable-specific features preserved (const/let/var distinction)
+- [x] file_analyzer updated to use unified extraction
+- [x] variable_extraction module deleted
+- [x] All types migrated to use @ariadnejs/types shared types
+- [x] Duplicate type definitions removed and consolidated
+- [x] All tests passing with consolidated module
 
 ## Technical Approach
 
@@ -293,3 +293,45 @@ From `variable_extraction.ts`:
 ## Notes
 
 This consolidation makes sense because variables ARE symbols and should be tracked with other symbols in their scope context. The separate variable_extraction was likely created before scope_tree was comprehensive enough, but now it's redundant. This will also improve performance by eliminating duplicate AST traversal.
+
+## Implementation Notes
+
+### Completed 2025-09-02
+
+Successfully consolidated variable extraction into the scope_tree module. Key implementation details:
+
+1. **Enhanced Scope Tree with Variable Features**:
+   - Added `EnhancedScopeSymbol` interface in `scope_analysis/scope_tree/enhanced_symbols.ts`
+   - Added variable-specific fields: `declaration_type`, `is_mutable`, `initial_value`, `is_destructured`, `destructured_from`
+   - Enhanced `scope_tree.ts` with helper functions: `get_declaration_type()`, `get_mutability()`, `extract_initial_value()`, `check_destructuring()`
+
+2. **Updated file_analyzer.ts**:
+   - Removed Layer 5 (variable extraction) entirely
+   - Added `extract_variables_from_scopes()` function to extract variables from scope tree
+   - Updated `build_file_analysis()` to use extracted variables instead of empty variables
+   - Variables are now extracted in a single AST traversal along with other symbols
+
+3. **Fixed Scope Tree Builder Issues**:
+   - Fixed incorrect `create_scope_tree()` calls in JavaScript and TypeScript builders
+   - They were passing wrong parameters - fixed to pass `file_path` and `root_node` correctly
+
+4. **Deleted Redundant Module**:
+   - Completely removed `/src/variable_analysis/` directory
+   - No other modules were importing from it, so no additional cleanup needed
+
+5. **Created Comprehensive Tests**:
+   - Added `variable_extraction.test.ts` to verify variable extraction from scope tree
+   - Tests cover JavaScript, TypeScript, Python, and Rust
+   - Validates declaration types, mutability, and initial values
+
+### Benefits Achieved:
+- **Single AST traversal** instead of two - better performance
+- **Unified symbol tracking** with scope context
+- **Reduced maintenance burden** - one less module to maintain
+- **Better variable-in-scope detection** - variables now tracked with their scope context
+- **Type consistency** - using shared types from @ariadnejs/types
+
+### Challenges Resolved:
+- SymbolKind didn't include "parameter" - handled by checking scope type instead
+- Had to preserve all variable-specific features during consolidation
+- Fixed scope tree builder issues that were causing test failures

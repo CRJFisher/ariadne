@@ -8,7 +8,11 @@ import { SyntaxNode } from 'tree-sitter';
 import { 
   Language,
   TypeFlow,
-  PropagationPath
+  PropagationPath,
+  FilePath,
+  FileAnalysis,
+  ModuleGraph,
+  ResolvedGeneric
 } from '@ariadnejs/types';
 import {
   TypePropagationContext,
@@ -30,6 +34,8 @@ import {
   propagate_constructor_call_types,
   merge_call_type_flows
 } from './call_propagation';
+import { TypeRegistry } from '../type_registry';
+import { ModuleGraphWithEdges } from '../../import_export/module_graph';
 
 // Re-export core types and functions
 export {
@@ -329,11 +335,11 @@ export function are_types_compatible(type1: string, type2: string, language: Lan
  * This is the main entry point for Layer 7 type propagation
  */
 export async function propagate_types_across_files(
-  analyses: any[], // FileAnalysis from code_graph
-  type_registry: any, // TypeRegistry from type_registry module
-  resolved_generics: Map<string, any[]>, // From generic resolution (11.74.1)
-  modules: any // ModuleGraph from module_graph
-): Promise<Map<string, TypeFlow[]>> {
+  analyses: FileAnalysis[], // FileAnalysis from code_graph
+  type_registry: TypeRegistry, // TypeRegistry from type_registry module
+  resolved_generics: Map<string, ResolvedGeneric[]>, // From generic resolution (11.74.1)
+  modules: ModuleGraphWithEdges // ModuleGraph from module_graph
+): Promise<Map<FilePath, TypeFlow[]>> {
   const all_type_flows = new Map<string, TypeFlow[]>();
   
   // Process each file's analysis

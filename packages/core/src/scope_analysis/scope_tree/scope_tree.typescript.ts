@@ -29,20 +29,10 @@ export function build_typescript_scope_tree(
   source_code: string,
   file_path?: string
 ): ScopeTree {
-  const tree = create_scope_tree('typescript', file_path);
+  const tree = create_scope_tree(file_path || 'typescript', root_node);
   
-  // Update root node range
+  // Update root node range (already set by create_scope_tree)
   const root_scope = tree.nodes.get(tree.root_id)!;
-  root_scope.range = {
-    start: {
-      row: root_node.startPosition.row,
-      column: root_node.startPosition.column
-    },
-    end: {
-      row: root_node.endPosition.row,
-      column: root_node.endPosition.column
-    }
-  };
   
   const context: TypeScriptScopeContext = {
     language: 'typescript',

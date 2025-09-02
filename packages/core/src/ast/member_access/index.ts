@@ -52,6 +52,3 @@ export function find_member_access_expressions(
   
   return member_accesses;
 }
-
-// Re-export types for consumers
-export type { MemberAccessExpression } from './types';

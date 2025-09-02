@@ -19,7 +19,9 @@ import { SyntaxNode } from 'tree-sitter';
 import { 
   Language,
   TypeFlow,
-  PropagationPath
+  PropagationPath,
+  ScopeTree,
+  FilePath
 } from '@ariadnejs/types';
 
 /**
@@ -28,8 +30,8 @@ import {
 export interface TypePropagationContext {
   language: Language;
   source_code: string;
-  file_path?: string;
-  scope_tree?: any;
+  file_path?: FilePath;
+  scope_tree?: ScopeTree;
   known_types?: Map<string, string>;
   debug?: boolean;
 }

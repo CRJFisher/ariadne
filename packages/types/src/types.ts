@@ -2,11 +2,19 @@ import { Location } from './common';
 import { TypeName, FilePath, VariableName, TypeString, PropertyName, MethodName, QualifiedName } from './aliases';
 import { Language } from './index';
 
+export enum TypeKind {
+  CLASS = 'class',
+  INTERFACE = 'interface',
+  TYPE = 'type',
+  ENUM = 'enum',
+  TRAIT = 'trait',
+}
+
 export interface TypeDefinition {
   readonly name: TypeName;
   readonly file_path: FilePath;
   readonly location: Location;
-  readonly kind: 'class' | 'interface' | 'type' | 'enum' | 'trait';
+  readonly kind: TypeKind;
   readonly type_parameters?: readonly TypeName[];
   readonly members?: ReadonlyMap<PropertyName | MethodName, TypeMember>;
   readonly extends?: readonly TypeName[];

@@ -29,6 +29,7 @@ import {
   FilePath,
 } from "@ariadnejs/types";
 import { node_to_location } from "../../ast/node_utils";
+import { EnhancedScopeSymbol, DeclarationType } from "./enhanced_symbols";
 
 /**
  * Context for building scope tree
@@ -294,7 +295,7 @@ function extract_function_parameters(
 function extract_symbol(
   node: SyntaxNode,
   context: ScopeTreeContext
-): ScopeSymbol | undefined {
+): EnhancedScopeSymbol | undefined {
   const { language, source_code } = context;
 
   // Check if this is a definition node
@@ -305,13 +306,31 @@ function extract_symbol(
   const name = extract_symbol_name(node, source_code, language);
   if (!name) return undefined;
 
-  return {
+  const kind = get_symbol_kind(node, language);
+  const base_symbol: EnhancedScopeSymbol = {
     name,
-    kind: get_symbol_kind(node, language),
+    kind,
     location: node_to_location(node, context.file_path),
     is_hoisted: is_hoisted_symbol(node, language),
     type_info: extract_type_annotation(node, source_code, language),
   };
+
+  // Add variable-specific features
+  if (kind === 'variable' || kind === 'parameter') {
+    const declaration_type = get_declaration_type(node, language, source_code);
+    base_symbol.declaration_type = declaration_type;
+    base_symbol.is_mutable = get_mutability(node, declaration_type, language);
+    base_symbol.initial_value = extract_initial_value(node, source_code);
+    
+    // Check for destructuring
+    const destructure_info = check_destructuring(node, language);
+    if (destructure_info) {
+      base_symbol.is_destructured = true;
+      base_symbol.destructured_from = destructure_info;
+    }
+  }
+
+  return base_symbol;
 }
 
 /**
@@ -728,4 +747,164 @@ export function get_visible_symbols(
   }
 
   return visible;
+}
+
+/**
+ * Get declaration type for variable nodes
+ */
+function get_declaration_type(
+  node: SyntaxNode,
+  language: Language,
+  source_code: string
+): DeclarationType | undefined {
+  switch (language) {
+    case "javascript":
+    case "typescript": {
+      const parent = node.parent;
+      if (!parent) return undefined;
+      
+      if (parent.type === "lexical_declaration") {
+        // Check if it's const or let
+        const kind = source_code.substring(parent.startIndex, parent.startIndex + 5);
+        if (kind.startsWith("const")) return "const";
+        if (kind.startsWith("let")) return "let";
+      } else if (parent.type === "variable_declaration") {
+        return "var";
+      } else if (node.type === "parameter" || node.type === "rest_parameter") {
+        return "parameter";
+      } else if (node.type === "function_declaration") {
+        return "function";
+      } else if (node.type === "class_declaration") {
+        return "class";
+      }
+      return "var"; // Default for JS
+    }
+    
+    case "python":
+      // Python doesn't have declaration types like JS
+      if (node.type === "parameter" || node.type === "typed_parameter") {
+        return "parameter";
+      }
+      return undefined;
+      
+    case "rust":
+      // Rust uses let by default
+      if (node.type === "parameter") {
+        return "parameter";
+      }
+      return "let";
+      
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Determine mutability of a variable
+ */
+function get_mutability(
+  node: SyntaxNode,
+  declaration_type: DeclarationType | undefined,
+  language: Language
+): boolean {
+  switch (language) {
+    case "javascript":
+    case "typescript":
+      // const is immutable, everything else is mutable
+      return declaration_type !== "const";
+      
+    case "python":
+      // Python variables are always mutable
+      return true;
+      
+    case "rust":
+      // Check for mut keyword
+      for (let i = 0; i < node.childCount; i++) {
+        const child = node.child(i);
+        if (child && child.type === "mutable_specifier") {
+          return true;
+        }
+      }
+      return false; // Rust variables are immutable by default
+      
+    default:
+      return true;
+  }
+}
+
+/**
+ * Extract initial value from a variable declaration
+ */
+function extract_initial_value(
+  node: SyntaxNode,
+  source_code: string
+): string | undefined {
+  // Find the value/initializer node
+  const value_node = node.childForFieldName("value") || 
+                    node.childForFieldName("initializer") ||
+                    node.childForFieldName("right");
+  
+  if (value_node) {
+    return source_code.substring(value_node.startIndex, value_node.endIndex);
+  }
+  
+  return undefined;
+}
+
+/**
+ * Check if variable is part of a destructuring pattern
+ */
+function check_destructuring(
+  node: SyntaxNode,
+  language: Language
+): string | undefined {
+  switch (language) {
+    case "javascript":
+    case "typescript": {
+      const name_node = node.childForFieldName("name");
+      if (name_node && (
+        name_node.type === "object_pattern" ||
+        name_node.type === "array_pattern"
+      )) {
+        // It's a destructuring pattern
+        const value_node = node.childForFieldName("value");
+        if (value_node) {
+          return value_node.text;
+        }
+      }
+      break;
+    }
+    
+    case "python": {
+      // Check for tuple/list unpacking
+      const parent = node.parent;
+      if (parent && parent.type === "assignment") {
+        const left = parent.childForFieldName("left");
+        if (left && (left.type === "tuple" || left.type === "list")) {
+          const right = parent.childForFieldName("right");
+          if (right) {
+            return right.text;
+          }
+        }
+      }
+      break;
+    }
+    
+    case "rust": {
+      const pattern = node.childForFieldName("pattern");
+      if (pattern && (
+        pattern.type === "tuple_pattern" ||
+        pattern.type === "struct_pattern" ||
+        pattern.type === "slice_pattern"
+      )) {
+        const value = node.childForFieldName("value");
+        if (value) {
+          return value.text;
+        }
+      }
+      break;
+    }
+  }
+  
+  return undefined;
 }
