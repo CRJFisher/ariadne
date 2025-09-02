@@ -36,6 +36,8 @@ value = getString();  // Type should propagate to value
 - [ ] Types flow through assignments across files
 - [ ] Types propagate through function calls and returns
 - [ ] Type compatibility validated during propagation
+- [ ] All types migrated to use @ariadnejs/types shared types
+- [ ] Duplicate type definitions removed and consolidated
 - [ ] Integration tests demonstrate cross-file type flow
 
 ## Technical Approach
@@ -165,6 +167,51 @@ for (const [location, propagated_type] of propagated_types) {
     }
   }
 }
+```
+
+## Type Review Requirements
+
+### CRITICAL: Use Shared Types from @ariadnejs/types
+
+During implementation, review ALL type definitions to ensure:
+
+1. **Use shared types** from `@ariadnejs/types` package:
+   - `TypeInfo`, `TypeFlow`, `TypeCompatibility`
+   - `Location`, `Position`, `Range`
+   - `PropagatedType`, `TypeFlowGraph` (if they exist)
+   - Any other types that exist in the shared package
+
+2. **Remove duplicate definitions**:
+   - Check if local types duplicate shared types
+   - Replace local interfaces with shared ones
+   - Delete redundant type definitions
+
+3. **Type migration checklist**:
+   - [ ] Audit all imports - use `@ariadnejs/types` where possible
+   - [ ] Check for local `interface` or `type` definitions that duplicate shared types
+   - [ ] Verify `TypeFlowGraph` type exists in shared types or create it
+   - [ ] Ensure `TypePropagationContext` uses shared base types
+   - [ ] Remove any ad-hoc type definitions that should be shared
+
+4. **Common duplications to watch for**:
+   - `TypeInfo`, `TypeDefinition` - use shared
+   - `SymbolId`, `QualifiedName` - use shared
+   - `ModuleGraph`, `ClassHierarchy` - use shared
+   - Custom propagation-related types that might already exist
+
+### Example Migration
+
+```typescript
+// BEFORE: Local type definition
+interface TypeFlowEdge {
+  from: Location;
+  to: Location;
+  type: TypeInfo;
+}
+
+// AFTER: Use shared type
+import { TypeFlowEdge } from '@ariadnejs/types';
+// Or if it doesn't exist, add to @ariadnejs/types first
 ```
 
 ## Dependencies

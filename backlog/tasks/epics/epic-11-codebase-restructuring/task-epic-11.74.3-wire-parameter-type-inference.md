@@ -34,6 +34,8 @@ processUser({ name: "John", age: 30 });  // Call site provides type info
 - [ ] Parameter types inferred from function body usage
 - [ ] Parameter types refined from call sites
 - [ ] Inferred types stored in function signatures
+- [ ] All types migrated to use @ariadnejs/types shared types
+- [ ] Duplicate type definitions removed and consolidated
 - [ ] Tests demonstrate inference for all languages
 
 ## Technical Approach
@@ -173,6 +175,51 @@ function extract_definitions(
   
   // ... rest of function ...
 }
+```
+
+## Type Review Requirements
+
+### CRITICAL: Use Shared Types from @ariadnejs/types
+
+During implementation, review ALL type definitions to ensure:
+
+1. **Use shared types** from `@ariadnejs/types` package:
+   - `ParameterType`, `FunctionSignature`, `TypeInfo`
+   - `InferredType`, `TypeConfidence` (if they exist)
+   - `Location`, `Position`, `Range`
+   - Any other types that exist in the shared package
+
+2. **Remove duplicate definitions**:
+   - Check if local types duplicate shared types
+   - Replace local interfaces with shared ones
+   - Delete redundant type definitions
+
+3. **Type migration checklist**:
+   - [ ] Audit all imports - use `@ariadnejs/types` where possible
+   - [ ] Check for local `interface` or `type` definitions that duplicate shared types
+   - [ ] Verify `InferredParameters` type exists in shared types or create it
+   - [ ] Ensure `ParameterInferenceContext` uses shared base types
+   - [ ] Remove any ad-hoc type definitions that should be shared
+
+4. **Common duplications to watch for**:
+   - `FunctionSignature`, `ParameterType` - use shared
+   - `TypeInfo`, `TypeAnnotation` - use shared
+   - `ScopeTree`, `Symbol` - use shared
+   - Custom inference-related types that might already exist
+
+### Example Migration
+
+```typescript
+// BEFORE: Local type definition
+interface InferredParameter {
+  name: string;
+  type: string;
+  confidence: number;
+}
+
+// AFTER: Use shared type
+import { InferredParameter } from '@ariadnejs/types';
+// Or if it doesn't exist, add to @ariadnejs/types first
 ```
 
 ## Dependencies

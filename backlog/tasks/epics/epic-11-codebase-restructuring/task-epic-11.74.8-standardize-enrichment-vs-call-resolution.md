@@ -40,6 +40,8 @@ Both do the same thing - use global context to enhance call information.
 - [ ] Enrichment pattern documented as standard
 - [ ] Direct imports of enrichment functions removed
 - [ ] call_resolution module integrated or deleted
+- [ ] All types migrated to use @ariadnejs/types shared types
+- [ ] Duplicate type definitions removed and consolidated
 - [ ] Consistent enrichment API for all call types
 
 ## Technical Approach
@@ -215,6 +217,51 @@ const enriched_analyses = analyses.map(analysis =>
 
 // Option B: Delete if fully redundant
 // rm -rf packages/core/src/call_graph/call_resolution/
+```
+
+## Type Review Requirements
+
+### CRITICAL: Use Shared Types from @ariadnejs/types
+
+During standardization, review ALL type definitions to ensure:
+
+1. **Use shared types** from `@ariadnejs/types` package:
+   - `MethodCallInfo`, `FunctionCallInfo`, `ConstructorCallInfo`
+   - `EnrichedMethodCall`, `ResolvedCall`, `CallTarget`
+   - `ClassHierarchy`, `TypeRegistry`, `ModuleGraph`
+   - Any other types that exist in the shared package
+
+2. **Remove duplicate definitions**:
+   - Both enrichment and call_resolution have overlapping types
+   - Standardize on shared types for the unified approach
+   - Delete all redundant type definitions
+
+3. **Type migration checklist**:
+   - [ ] Audit enrichment function types - use `@ariadnejs/types` where possible
+   - [ ] Audit call_resolution types before integration/deletion
+   - [ ] Ensure `EnrichmentContext` uses shared base types
+   - [ ] Verify `EnrichedMethodCall` extends shared `MethodCallInfo`
+   - [ ] Standardize `ResolvedTarget` and similar types
+
+4. **Common duplications to watch for**:
+   - `CallInfo` types - use shared
+   - `ResolvedCall`, `CallTarget` - consolidate and use shared
+   - `ClassHierarchy`, `TypeRegistry` - use shared
+   - Custom enrichment-related types that might already exist
+
+### Example Migration
+
+```typescript
+// BEFORE: Different enrichment types
+// enrichment: interface EnrichedCall { ... }
+// call_resolution: interface ResolvedMethodCall { ... }
+
+// AFTER: Use shared type
+import { EnrichedMethodCall, ResolvedCall } from '@ariadnejs/types';
+// Or extend shared base types
+interface EnrichedMethodCall extends MethodCallInfo {
+  // Additional enriched fields
+}
 ```
 
 ## Dependencies

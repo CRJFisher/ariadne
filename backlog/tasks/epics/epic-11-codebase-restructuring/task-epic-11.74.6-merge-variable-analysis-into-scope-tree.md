@@ -49,6 +49,8 @@ We're traversing the AST twice to extract essentially the same information.
 - [ ] Variable-specific features preserved (const/let/var distinction)
 - [ ] file_analyzer updated to use unified extraction
 - [ ] variable_extraction module deleted
+- [ ] All types migrated to use @ariadnejs/types shared types
+- [ ] Duplicate type definitions removed and consolidated
 - [ ] All tests passing with consolidated module
 
 ## Technical Approach
@@ -173,6 +175,51 @@ function extract_variables_from_scopes(
 5. **Delete variable_extraction module**:
 ```bash
 rm -rf packages/core/src/variable_analysis/
+```
+
+## Type Review Requirements
+
+### CRITICAL: Use Shared Types from @ariadnejs/types
+
+During consolidation, review ALL type definitions to ensure:
+
+1. **Use shared types** from `@ariadnejs/types` package:
+   - `Symbol`, `SymbolKind`, `VariableDeclaration`
+   - `ScopeTree`, `Scope`, `ScopeType`
+   - `Location`, `Position`, `Range`
+   - Any other types that exist in the shared package
+
+2. **Remove duplicate definitions**:
+   - Check both modules for duplicate type definitions
+   - Use shared types for the consolidated module
+   - Delete all redundant type definitions
+
+3. **Type migration checklist**:
+   - [ ] Audit scope_tree types - use `@ariadnejs/types` where possible
+   - [ ] Audit variable_extraction types before deletion
+   - [ ] Ensure `EnhancedSymbol` extends shared `Symbol` type
+   - [ ] Verify `VariableDeclaration` type exists in shared types
+   - [ ] Remove any ad-hoc type definitions that should be shared
+
+4. **Common duplications to watch for**:
+   - `Symbol`, `SymbolKind` - use shared
+   - `VariableDeclaration`, `DeclarationType` - use shared
+   - `ScopeTree`, `Scope` - use shared
+   - Custom variable-related types that might already exist
+
+### Example Migration
+
+```typescript
+// BEFORE: Two different Symbol types
+// scope_tree: interface Symbol { name: string; kind: string; }
+// variable_extraction: interface Variable { name: string; type: string; }
+
+// AFTER: Use shared type
+import { Symbol, VariableDeclaration } from '@ariadnejs/types';
+// Extend if needed
+interface EnhancedSymbol extends Symbol {
+  declaration_type?: 'const' | 'let' | 'var';
+}
 ```
 
 ## Dependencies

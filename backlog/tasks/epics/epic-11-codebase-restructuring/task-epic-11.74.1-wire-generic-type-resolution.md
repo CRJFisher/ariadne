@@ -32,6 +32,8 @@ Without generic resolution, our type analysis is fundamentally incomplete.
 - [ ] Generic parameters resolved during global type resolution
 - [ ] Type constraints validated across file boundaries
 - [ ] Generic instantiations tracked in type registry
+- [ ] All types migrated to use @ariadnejs/types shared types
+- [ ] Duplicate type definitions removed and consolidated
 - [ ] Tests passing for all supported languages
 
 ## Technical Approach
@@ -119,6 +121,49 @@ function resolve_file_generics(
 for (const [key, resolved] of all_resolved_generics) {
   type_registry.generics.set(key, resolved);
 }
+```
+
+## Type Review Requirements
+
+### CRITICAL: Use Shared Types from @ariadnejs/types
+
+During implementation, review ALL type definitions to ensure:
+
+1. **Use shared types** from `@ariadnejs/types` package:
+   - `ResolvedGeneric`, `GenericParameter`, `TypeParameter`
+   - `TypeConstraint`, `TypeBounds`, `TypeVariance`
+   - Any other types that exist in the shared package
+
+2. **Remove duplicate definitions**:
+   - Check if local types duplicate shared types
+   - Replace local interfaces with shared ones
+   - Delete redundant type definitions
+
+3. **Type migration checklist**:
+   - [ ] Audit all imports - use `@ariadnejs/types` where possible
+   - [ ] Check for local `interface` or `type` definitions that duplicate shared types
+   - [ ] Verify `ResolvedGeneric` type exists in shared types or create it
+   - [ ] Ensure `GenericResolutionContext` uses shared base types
+   - [ ] Remove any ad-hoc type definitions that should be shared
+
+4. **Common duplications to watch for**:
+   - `Location`, `Position`, `Range` - use shared
+   - `TypeInfo`, `TypeDefinition` - use shared
+   - `SymbolId`, `QualifiedName` - use shared
+   - Custom generic-related types that might already exist
+
+### Example Migration
+
+```typescript
+// BEFORE: Local type definition
+interface ResolvedGeneric {
+  name: string;
+  concrete_type: string;
+}
+
+// AFTER: Use shared type
+import { ResolvedGeneric } from '@ariadnejs/types';
+// Or if it doesn't exist, add to @ariadnejs/types first
 ```
 
 ## Dependencies

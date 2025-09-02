@@ -41,6 +41,8 @@ The definition_finder module adds some language-specific enhancements, but these
 - [ ] Go-to-definition functionality integrated
 - [ ] Hoisting and special JS features preserved
 - [ ] definition_finder module deleted
+- [ ] All types migrated to use @ariadnejs/types shared types
+- [ ] Duplicate type definitions removed and consolidated
 - [ ] All consumers updated to use symbol_resolution
 
 ## Technical Approach
@@ -194,6 +196,48 @@ sed -i 's/definition_finder/symbol_resolution/g' packages/**/*.ts
 6. **Delete definition_finder**:
 ```bash
 rm -rf packages/core/src/scope_analysis/definition_finder/
+```
+
+## Type Review Requirements
+
+### CRITICAL: Use Shared Types from @ariadnejs/types
+
+During consolidation, review ALL type definitions to ensure:
+
+1. **Use shared types** from `@ariadnejs/types` package:
+   - `SymbolDefinition`, `ResolvedSymbol`, `SymbolKind`
+   - `ResolutionContext`, `Position`, `Location`
+   - `Def`, `Ref` (if still used)
+   - Any other types that exist in the shared package
+
+2. **Remove duplicate definitions**:
+   - Both modules likely have overlapping type definitions
+   - Use shared types for the consolidated module
+   - Delete all redundant type definitions
+
+3. **Type migration checklist**:
+   - [ ] Audit symbol_resolution types - use `@ariadnejs/types` where possible
+   - [ ] Audit definition_finder types before deletion
+   - [ ] Ensure `DefinitionResult` uses shared types or is added to shared
+   - [ ] Verify `ResolutionContext` uses shared base types
+   - [ ] Remove any ad-hoc type definitions that should be shared
+
+4. **Common duplications to watch for**:
+   - `SymbolDefinition`, `SymbolKind` - use shared
+   - `Position`, `Location`, `Range` - use shared
+   - `ResolutionContext`, `DefinitionContext` - consolidate and use shared
+   - Custom definition-related types that might already exist
+
+### Example Migration
+
+```typescript
+// BEFORE: Two different definition types
+// symbol_resolution: interface SymbolDefinition { ... }
+// definition_finder: interface DefinitionResult { ... }
+
+// AFTER: Use shared type
+import { SymbolDefinition, ResolvedSymbol } from '@ariadnejs/types';
+// Consolidate functionality into shared types
 ```
 
 ## Dependencies

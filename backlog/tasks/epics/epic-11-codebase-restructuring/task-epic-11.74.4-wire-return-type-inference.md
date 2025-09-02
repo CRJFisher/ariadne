@@ -28,6 +28,8 @@ Current integration problems:
 - [ ] Handles async/generator/promise returns
 - [ ] Return types available for type propagation
 - [ ] Layer 6 uses pre-computed return types
+- [ ] All types migrated to use @ariadnejs/types shared types
+- [ ] Duplicate type definitions removed and consolidated
 
 ## Technical Approach
 
@@ -179,6 +181,51 @@ function extract_definitions(
     // DELETE: const inferred_return_type = infer_function_return_type(...)
   }
 }
+```
+
+## Type Review Requirements
+
+### CRITICAL: Use Shared Types from @ariadnejs/types
+
+During implementation, review ALL type definitions to ensure:
+
+1. **Use shared types** from `@ariadnejs/types` package:
+   - `FunctionSignature`, `ReturnType`, `TypeInfo`
+   - `AsyncReturnType`, `GeneratorType` (if they exist)
+   - `Location`, `Position`, `Range`
+   - Any other types that exist in the shared package
+
+2. **Remove duplicate definitions**:
+   - Check if local types duplicate shared types
+   - Replace local interfaces with shared ones
+   - Delete redundant type definitions
+
+3. **Type migration checklist**:
+   - [ ] Audit all imports - use `@ariadnejs/types` where possible
+   - [ ] Check for local `interface` or `type` definitions that duplicate shared types
+   - [ ] Verify `InferredReturnType` type exists in shared types or create it
+   - [ ] Ensure `ReturnTypeContext` uses shared base types
+   - [ ] Remove any ad-hoc type definitions that should be shared
+
+4. **Common duplications to watch for**:
+   - `FunctionSignature`, `ReturnType` - use shared
+   - `TypeInfo`, `UnionType` - use shared
+   - `ScopeTree`, `FunctionInfo` - use shared
+   - Custom return-type-related types that might already exist
+
+### Example Migration
+
+```typescript
+// BEFORE: Local type definition
+interface InferredReturnType {
+  type: TypeInfo;
+  is_async: boolean;
+  is_generator: boolean;
+}
+
+// AFTER: Use shared type
+import { InferredReturnType } from '@ariadnejs/types';
+// Or if it doesn't exist, add to @ariadnejs/types first
 ```
 
 ## Dependencies
