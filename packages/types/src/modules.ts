@@ -74,3 +74,37 @@ export interface ModuleGraph {
   readonly entry_points: ReadonlySet<FilePath>;
   readonly dependency_order: readonly FilePath[];
 }
+
+/**
+ * Information about a namespace import and its exported members
+ * Used during Layer 7c (Namespace Resolution)
+ */
+export interface NamespaceInfo {
+  readonly name: string;
+  readonly source: ModulePath;
+  readonly source_path: FilePath;
+  readonly exports: ReadonlyMap<string, NamespaceExportInfo>;
+  readonly location: Location;
+  readonly file_path: FilePath;
+}
+
+/**
+ * Information about an export available through a namespace
+ */
+export interface NamespaceExportInfo {
+  readonly name: string;
+  readonly kind: 'function' | 'class' | 'variable' | 'type' | 'interface' | 'enum' | 'export';
+  readonly location: Location;
+}
+
+/**
+ * A resolved type from namespace member access
+ * Used when resolving namespace.member expressions
+ */
+export interface ResolvedNamespaceType {
+  readonly name: string;
+  readonly qualified_name: string;
+  readonly source_module: FilePath;
+  readonly kind: string;
+  readonly location: Location;
+}

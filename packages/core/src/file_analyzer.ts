@@ -130,12 +130,12 @@ interface Layer7Results {
 function location_to_range(location: Location): any {
   return {
     start: {
-      row: location.line - 1,  // Convert 1-based to 0-based
-      column: location.column,
+      row: location.line - 1,      // Convert 1-based to 0-based
+      column: location.column - 1,  // Convert 1-based to 0-based
     },
     end: {
-      row: (location.end_line || location.line) - 1,  // Convert 1-based to 0-based
-      column: location.end_column || location.column,
+      row: (location.end_line || location.line) - 1,      // Convert 1-based to 0-based
+      column: (location.end_column || location.column) - 1,  // Convert 1-based to 0-based
     },
     start_byte: 0,  // Not used by find_function_node
     end_byte: 0,    // Not used by find_function_node

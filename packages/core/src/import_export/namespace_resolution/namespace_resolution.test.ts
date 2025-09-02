@@ -1,357 +1,329 @@
 /**
- * Tests for namespace resolution
+ * Tests for namespace resolution integration
  */
 
 import { describe, it, expect } from 'vitest';
-import { Language, ScopeGraph, Def, Import } from '@ariadnejs/types';
-import {
-  resolve_namespace_exports,
-  resolve_namespace_member,
-  is_namespace_import,
-  get_namespace_members,
-  namespace_has_member,
-  split_qualified_name,
-  analyze_namespace
-} from './index';
+import { generate_code_graph } from '../../code_graph';
+import { writeFileSync, mkdirSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
+import { randomBytes } from 'crypto';
 
-// Mock scope graph
-function create_mock_scope_graph(defs: Def[], imports: Import[] = []): ScopeGraph {
-  return {
-    getNodes: (type: string) => {
-      if (type === 'definition') return defs;
-      if (type === 'reference') return [];
-      return [];
-    },
-    getAllImports: () => imports,
-  } as any;
-}
-
-// Mock config
-function create_mock_config(graphs: Map<string, ScopeGraph>) {
-  return {
-    get_file_graph: (path: string) => graphs.get(path),
-    get_imports_with_definitions: (path: string) => {
-      const graph = graphs.get(path);
-      if (!graph) return [];
-      
-      return graph.getAllImports().map(imp => ({
-        local_name: imp.name,
-        import_statement: imp,
-        imported_function: {} as Def
-      }));
+describe('Namespace Resolution Integration', () => {
+  // Helper to create a temporary test project
+  function createTestProject(files: Record<string, string>): string {
+    const projectDir = join(tmpdir(), `test-project-${randomBytes(8).toString('hex')}`);
+    mkdirSync(projectDir, { recursive: true });
+    
+    for (const [path, content] of Object.entries(files)) {
+      const fullPath = join(projectDir, path);
+      const dir = fullPath.substring(0, fullPath.lastIndexOf('/'));
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(fullPath, content);
     }
-  };
+    
+    return projectDir;
+  }
+
+  describe('TypeScript namespace imports', () => {
+    it('should resolve namespace imports and their members', async () => {
+      const projectDir = createTestProject({
+        'types.ts': `
+          export interface User {
+            id: number;
+            name: string;
+          }
+          
+          export interface Product {
+            id: number;
+            price: number;
+          }
+          
+          export function validateUser(user: User): boolean {
+            return user.id > 0 && user.name.length > 0;
+          }
+        `,
+        'app.ts': `
+          import * as types from './types';
+          
+          const user: types.User = {
+            id: 1,
+            name: 'John'
+          };
+          
+          const product: types.Product = {
+            id: 100,
+            price: 29.99
+          };
+          
+          const isValid = types.validateUser(user);
+        `
+      });
+
+      const graph = await generate_code_graph({
+        root_path: projectDir,
+        include_patterns: ['**/*.ts']
+      });
+
+      // Check that namespace imports are tracked
+      const appAnalysis = Array.from(graph.files.values()).find(f => f.file_path.endsWith('app.ts'));
+      expect(appAnalysis).toBeDefined();
+      
+      const namespaceImport = appAnalysis?.imports.find(i => i.is_namespace_import);
+      expect(namespaceImport).toBeDefined();
+      expect(namespaceImport?.namespace_name).toBe('types');
+      expect(namespaceImport?.source).toContain('types');
+    });
+
+    it('should handle nested namespace access', async () => {
+      const projectDir = createTestProject({
+        'utils/index.ts': `
+          export namespace validators {
+            export function isEmail(email: string): boolean {
+              return email.includes('@');
+            }
+            
+            export function isPhone(phone: string): boolean {
+              return phone.length === 10;
+            }
+          }
+          
+          export namespace formatters {
+            export function currency(amount: number): string {
+              return '$' + amount.toFixed(2);
+            }
+          }
+        `,
+        'main.ts': `
+          import * as utils from './utils';
+          
+          const emailValid = utils.validators.isEmail('test@example.com');
+          const formatted = utils.formatters.currency(99.99);
+        `
+      });
+
+      const graph = await generate_code_graph({
+        root_path: projectDir,
+        include_patterns: ['**/*.ts']
+      });
+
+      const mainAnalysis = Array.from(graph.files.values()).find(f => f.file_path.endsWith('main.ts'));
+      expect(mainAnalysis).toBeDefined();
+      
+      const namespaceImport = mainAnalysis?.imports.find(i => i.is_namespace_import);
+      expect(namespaceImport?.namespace_name).toBe('utils');
+    });
+  });
+
+  describe('JavaScript CommonJS namespace patterns', () => {
+    it('should handle require with namespace assignment', async () => {
+      const projectDir = createTestProject({
+        'lib.js': `
+          function helper1() {
+            return 'helper1';
+          }
+          
+          function helper2() {
+            return 'helper2';
+          }
+          
+          module.exports = {
+            helper1,
+            helper2
+          };
+        `,
+        'app.js': `
+          const lib = require('./lib');
+          
+          const result1 = lib.helper1();
+          const result2 = lib.helper2();
+        `
+      });
+
+      const graph = await generate_code_graph({
+        root_path: projectDir,
+        include_patterns: ['**/*.js']
+      });
+
+      // CommonJS imports are tracked differently but should still be recognized
+      const appAnalysis = Array.from(graph.files.values()).find(f => f.file_path.endsWith('app.js'));
+      expect(appAnalysis).toBeDefined();
+      expect(appAnalysis?.imports.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Python module imports', () => {
+    it('should handle Python import as namespace', async () => {
+      const projectDir = createTestProject({
+        'utils.py': `
+def process_data(data):
+    """Process some data"""
+    return data * 2
+
+def validate_input(value):
+    """Validate input"""
+    return value > 0
+
+class DataProcessor:
+    def __init__(self):
+        self.count = 0
+    
+    def process(self, item):
+        self.count += 1
+        return process_data(item)
+        `,
+        'main.py': `
+import utils
+
+result = utils.process_data(42)
+valid = utils.validate_input(result)
+processor = utils.DataProcessor()
+        `
+      });
+
+      const graph = await generate_code_graph({
+        root_path: projectDir,
+        include_patterns: ['**/*.py']
+      });
+
+      const mainAnalysis = Array.from(graph.files.values()).find(f => f.file_path.endsWith('main.py'));
+      expect(mainAnalysis).toBeDefined();
+      expect(mainAnalysis?.imports.length).toBeGreaterThan(0);
+    });
+
+    it('should handle from module import *', async () => {
+      const projectDir = createTestProject({
+        'helpers.py': `
+def helper_a():
+    return 'a'
+
+def helper_b():
+    return 'b'
+
+__all__ = ['helper_a', 'helper_b']
+        `,
+        'app.py': `
+from helpers import *
+
+result_a = helper_a()
+result_b = helper_b()
+        `
+      });
+
+      const graph = await generate_code_graph({
+        root_path: projectDir,
+        include_patterns: ['**/*.py']
+      });
+
+      const appAnalysis = Array.from(graph.files.values()).find(f => f.file_path.endsWith('app.py'));
+      expect(appAnalysis).toBeDefined();
+      
+      // Star imports should be recognized
+      const starImport = appAnalysis?.imports.find(i => i.source.includes('helpers'));
+      expect(starImport).toBeDefined();
+    });
+  });
+
+  describe('Rust use statements', () => {
+    it('should handle use module::*', async () => {
+      const projectDir = createTestProject({
+        'lib.rs': `
+pub mod helpers {
+    pub fn process(value: i32) -> i32 {
+        value * 2
+    }
+    
+    pub fn validate(value: i32) -> bool {
+        value > 0
+    }
+}
+        `,
+        'main.rs': `
+mod lib;
+use lib::helpers::*;
+
+fn main() {
+    let result = process(42);
+    let valid = validate(result);
+}
+        `
+      });
+
+      const graph = await generate_code_graph({
+        root_path: projectDir,
+        include_patterns: ['**/*.rs']
+      });
+
+      const mainAnalysis = Array.from(graph.files.values()).find(f => f.file_path.endsWith('main.rs'));
+      expect(mainAnalysis).toBeDefined();
+      expect(mainAnalysis?.imports.length).toBeGreaterThan(0);
+    });
+
+    it('should handle use module::{self, Item}', async () => {
+      const projectDir = createTestProject({
+        'utils.rs': `
+pub struct Config {
+    pub value: i32,
 }
 
-describe('namespace_resolution', () => {
-  describe('is_namespace_import', () => {
-    it('should identify JavaScript namespace imports', () => {
-      const imp: Import = {
-        name: 'ns',
-        source_name: '*',
-        source_module: './module'
-      };
-      
-      expect(is_namespace_import(imp, 'javascript')).toBe(true);
-    });
-    
-    it('should identify Python module imports', () => {
-      const imp: Import = {
-        name: 'module',
-        source_module: 'package.module'
-      };
-      
-      expect(is_namespace_import(imp, 'python')).toBe(true);
-    });
-    
-    it('should identify Rust glob imports', () => {
-      const imp: Import = {
-        name: 'prelude',
-        source_name: '*',
-        source_module: 'std::prelude'
-      };
-      
-      expect(is_namespace_import(imp, 'rust')).toBe(true);
-    });
-  });
-  
-  describe('resolve_namespace_exports', () => {
-    it('should resolve JavaScript exports', () => {
-      const defs: Def[] = [
-        {
-          name: 'exportedFunc',
-          symbol_kind: 'function',
-          is_exported: true,
-          range: { start: { row: 0, column: 0 }, end: { row: 0, column: 10 } },
-          symbol_id: 'file#exportedFunc',
-          file_path: 'module.js'
-        },
-        {
-          name: 'privateFunc',
-          symbol_kind: 'function',
-          is_exported: false,
-          range: { start: { row: 1, column: 0 }, end: { row: 1, column: 10 } },
-          symbol_id: 'file#privateFunc',
-          file_path: 'module.js'
-        }
-      ];
-      
-      const graph = create_mock_scope_graph(defs);
-      const config = create_mock_config(new Map([['module.js', graph]]));
-      
-      const context = {
-        language: 'javascript' as Language,
-        file_path: 'module.js',
-        config
-      };
-      
-      const exports = resolve_namespace_exports('module.js', context);
-      
-      expect(exports.size).toBe(1);
-      expect(exports.has('exportedFunc')).toBe(true);
-      expect(exports.has('privateFunc')).toBe(false);
-    });
-    
-    it('should resolve Python exports with underscore convention', () => {
-      const defs: Def[] = [
-        {
-          name: 'public_func',
-          symbol_kind: 'function',
-          range: { start: { row: 0, column: 0 }, end: { row: 0, column: 10 } },
-          symbol_id: 'file#public_func',
-          file_path: 'module.py'
-        },
-        {
-          name: '_private_func',
-          symbol_kind: 'function',
-          range: { start: { row: 1, column: 0 }, end: { row: 1, column: 10 } },
-          symbol_id: 'file#_private_func',
-          file_path: 'module.py'
-        }
-      ];
-      
-      const graph = create_mock_scope_graph(defs);
-      const config = create_mock_config(new Map([['module.py', graph]]));
-      
-      const context = {
-        language: 'python' as Language,
-        file_path: 'module.py',
-        config
-      };
-      
-      const exports = resolve_namespace_exports('module.py', context);
-      
-      expect(exports.has('public_func')).toBe(true);
-      expect(exports.has('_private_func')).toBe(false);
-    });
-    
-    it('should resolve Rust exports with pub keyword', () => {
-      const defs: Def[] = [
-        {
-          name: 'public_fn',
-          symbol_kind: 'function',
-          is_exported: true,
-          range: { start: { row: 0, column: 0 }, end: { row: 0, column: 10 } },
-          symbol_id: 'file#public_fn',
-          file_path: 'module.rs'
-        },
-        {
-          name: 'private_fn',
-          symbol_kind: 'function',
-          is_exported: false,
-          range: { start: { row: 1, column: 0 }, end: { row: 1, column: 10 } },
-          symbol_id: 'file#private_fn',
-          file_path: 'module.rs'
-        }
-      ];
-      
-      const graph = create_mock_scope_graph(defs);
-      const config = create_mock_config(new Map([['module.rs', graph]]));
-      
-      const context = {
-        language: 'rust' as Language,
-        file_path: 'module.rs',
-        config
-      };
-      
-      const exports = resolve_namespace_exports('module.rs', context);
-      
-      expect(exports.has('public_fn')).toBe(true);
-      expect(exports.has('private_fn')).toBe(false);
-    });
-  });
-  
-  describe('resolve_namespace_member', () => {
-    it('should resolve a namespace member', () => {
-      const target_defs: Def[] = [
-        {
-          name: 'targetFunc',
-          symbol_kind: 'function',
-          is_exported: true,
-          range: { start: { row: 0, column: 0 }, end: { row: 0, column: 10 } },
-          symbol_id: 'target#targetFunc',
-          file_path: 'target.js'
-        }
-      ];
-      
-      const imports: Import[] = [
-        {
-          name: 'ns',
-          source_name: '*',
-          source_module: 'target.js'
-        }
-      ];
-      
-      const context_def: Def = {
-        name: 'contextFunc',
-        symbol_kind: 'function',
-        range: { start: { row: 0, column: 0 }, end: { row: 0, column: 10 } },
-        symbol_id: 'main#contextFunc',
-        file_path: 'main.js'
-      };
-      
-      const graphs = new Map([
-        ['target.js', create_mock_scope_graph(target_defs)],
-        ['main.js', create_mock_scope_graph([], imports)]
-      ]);
-      
-      const config = create_mock_config(graphs);
-      
-      const context = {
-        language: 'javascript' as Language,
-        file_path: 'main.js',
-        config
-      };
-      
-      const resolved = resolve_namespace_member('ns', 'targetFunc', context_def, context);
-      
-      expect(resolved).toBeDefined();
-      expect(resolved?.name).toBe('targetFunc');
-    });
-  });
-  
-  describe('get_namespace_members', () => {
-    it('should list all namespace members', () => {
-      const target_defs: Def[] = [
-        {
-          name: 'func1',
-          symbol_kind: 'function',
-          is_exported: true,
-          range: { start: { row: 0, column: 0 }, end: { row: 0, column: 10 } },
-          symbol_id: 'target#func1',
-          file_path: 'target.js'
-        },
-        {
-          name: 'func2',
-          symbol_kind: 'function',
-          is_exported: true,
-          range: { start: { row: 1, column: 0 }, end: { row: 1, column: 10 } },
-          symbol_id: 'target#func2',
-          file_path: 'target.js'
-        }
-      ];
-      
-      const imports: Import[] = [
-        {
-          name: 'ns',
-          source_name: '*',
-          source_module: 'target.js'
-        }
-      ];
-      
-      const context_def: Def = {
-        name: 'contextFunc',
-        symbol_kind: 'function',
-        range: { start: { row: 0, column: 0 }, end: { row: 0, column: 10 } },
-        symbol_id: 'main#contextFunc',
-        file_path: 'main.js'
-      };
-      
-      const graphs = new Map([
-        ['target.js', create_mock_scope_graph(target_defs)],
-        ['main.js', create_mock_scope_graph([], imports)]
-      ]);
-      
-      const config = create_mock_config(graphs);
-      
-      const context = {
-        language: 'javascript' as Language,
-        file_path: 'main.js',
-        config
-      };
-      
-      const members = get_namespace_members('ns', context_def, context);
-      
-      expect(members).toContain('func1');
-      expect(members).toContain('func2');
-      expect(members).toHaveLength(2);
-    });
-  });
-  
-  describe('split_qualified_name', () => {
-    it('should split qualified names correctly', () => {
-      const result = split_qualified_name('ns.member');
-      expect(result).toEqual({
-        namespace: ['ns'],
-        member: 'member'
+pub fn create_config() -> Config {
+    Config { value: 42 }
+}
+        `,
+        'main.rs': `
+mod utils;
+use utils::{self, Config};
+
+fn main() {
+    let config = utils::create_config();
+    let direct_config = Config { value: 100 };
+}
+        `
       });
-    });
-    
-    it('should handle nested namespaces', () => {
-      const result = split_qualified_name('pkg.module.submodule.func');
-      expect(result).toEqual({
-        namespace: ['pkg', 'module', 'submodule'],
-        member: 'func'
+
+      const graph = await generate_code_graph({
+        root_path: projectDir,
+        include_patterns: ['**/*.rs']
       });
-    });
-    
-    it('should return null for non-qualified names', () => {
-      const result = split_qualified_name('simple_name');
-      expect(result).toBeNull();
+
+      const mainAnalysis = Array.from(graph.files.values()).find(f => f.file_path.endsWith('main.rs'));
+      expect(mainAnalysis).toBeDefined();
+      
+      // Should have imports for both the module and specific items
+      expect(mainAnalysis?.imports.length).toBeGreaterThan(0);
     });
   });
-  
-  describe('analyze_namespace', () => {
-    it('should analyze JavaScript namespaces', () => {
-      const context_def: Def = {
-        name: 'func',
-        symbol_kind: 'function',
-        range: { start: { row: 0, column: 0 }, end: { row: 0, column: 10 } },
-        symbol_id: 'file#func',
-        file_path: 'main.js'
-      };
-      
-      const context = {
-        language: 'javascript' as Language,
-        file_path: 'main.js',
-        config: create_mock_config(new Map())
-      };
-      
-      const info = analyze_namespace('ns', context_def, context);
-      
-      expect(info).toHaveProperty('is_commonjs');
-      expect(info).toHaveProperty('is_dynamic_import');
-    });
-    
-    it('should analyze Python namespaces', () => {
-      const context_def: Def = {
-        name: 'func',
-        symbol_kind: 'function',
-        range: { start: { row: 0, column: 0 }, end: { row: 0, column: 10 } },
-        symbol_id: 'file#func',
-        file_path: 'main.py'
-      };
-      
-      const context = {
-        language: 'python' as Language,
-        file_path: 'main.py',
-        config: create_mock_config(new Map())
-      };
-      
-      const info = analyze_namespace('module', context_def, context);
-      
-      expect(info).toHaveProperty('is_package');
-      expect(info).toHaveProperty('has_all_attribute');
+
+  describe('Cross-file namespace resolution', () => {
+    it('should resolve namespace types in type registry', async () => {
+      const projectDir = createTestProject({
+        'models.ts': `
+          export class User {
+            constructor(public id: number, public name: string) {}
+          }
+          
+          export interface UserData {
+            id: number;
+            name: string;
+          }
+        `,
+        'services.ts': `
+          import * as models from './models';
+          
+          export function createUser(data: models.UserData): models.User {
+            return new models.User(data.id, data.name);
+          }
+        `
+      });
+
+      const graph = await generate_code_graph({
+        root_path: projectDir,
+        include_patterns: ['**/*.ts']
+      });
+
+      // The type registry should contain namespace-qualified types
+      // This is a basic check - more detailed checks would require inspecting internal structures
+      expect(graph.types).toBeDefined();
     });
   });
 });

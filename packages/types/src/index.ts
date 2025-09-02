@@ -13,7 +13,10 @@ export {
   ImportedModule,
   ImportedSymbol,
   ExportedSymbol,
-  ModuleGraph
+  ModuleGraph,
+  NamespaceInfo,
+  NamespaceExportInfo,
+  ResolvedNamespaceType
 } from './modules';
 
 export * from './calls';

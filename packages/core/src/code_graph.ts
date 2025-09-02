@@ -9,6 +9,7 @@ import { build_module_graph } from "./import_export/module_graph";
 import {
   create_type_registry,
   register_class,
+  register_type,
   TypeRegistry,
 } from "./type_analysis/type_registry";
 import {
@@ -34,6 +35,9 @@ import {
   AnalysisError,
   // Module types
   ModuleGraph,
+  NamespaceInfo,
+  NamespaceExportInfo,
+  ResolvedNamespaceType,
   // Call types
   CallGraph,
   FunctionNode,
@@ -97,6 +101,192 @@ import {
 import { resolve_all_symbols } from "./scope_analysis/symbol_resolution/symbol_resolution";
 import { resolve_generics_across_files } from "./type_analysis/generic_resolution";
 import { propagate_types_across_files } from "./type_analysis/type_propagation";
+import {
+  resolve_namespace_exports,
+  resolve_namespace_member,
+  analyze_namespace,
+  is_namespace_import,
+  NamespaceImportInfo,
+  NamespaceExport,
+  NamespaceResolutionContext
+} from "./import_export/namespace_resolution";
+
+/**
+ * Resolve namespace imports and their members across all files
+ * 
+ * This function identifies namespace imports, resolves their exported members,
+ * and tracks namespace member access patterns across the codebase.
+ */
+async function resolve_namespaces_across_files(
+  analyses: FileAnalysis[],
+  module_graph: ModuleGraph,
+  type_registry: TypeRegistry,
+  propagated_types: any
+): Promise<Map<string, NamespaceInfo>> {
+  const namespace_map = new Map<string, NamespaceInfo>();
+  const resolved_members = new Map<Location, ResolvedNamespaceType>();
+  
+  // Build namespace import map from all files
+  for (const analysis of analyses) {
+    for (const import_stmt of analysis.imports) {
+      // Check if this is a namespace import
+      if (import_stmt.is_namespace_import && import_stmt.namespace_name) {
+        const namespace_key = `${analysis.file_path}:${import_stmt.namespace_name}`;
+        
+        // Get the exported members from the source module
+        const source_module_path = resolveModulePath(
+          import_stmt.source,
+          analysis.file_path,
+          module_graph
+        );
+        
+        if (source_module_path) {
+          const source_analysis = analyses.find(a => a.file_path === source_module_path);
+          if (source_analysis) {
+            const namespace_exports = collectNamespaceExports(source_analysis);
+            
+            namespace_map.set(namespace_key, {
+              name: import_stmt.namespace_name,
+              source: import_stmt.source,
+              source_path: source_module_path,
+              exports: namespace_exports,
+              location: import_stmt.location,
+              file_path: analysis.file_path
+            });
+          }
+        }
+      }
+    }
+  }
+  
+  // Resolve namespace member accesses
+  for (const analysis of analyses) {
+    // Find member access expressions in the AST
+    const member_accesses = findMemberAccessExpressions(analysis);
+    
+    for (const access of member_accesses) {
+      const namespace_key = `${analysis.file_path}:${access.namespace}`;
+      const namespace_info = namespace_map.get(namespace_key);
+      
+      if (namespace_info) {
+        const resolved_member = namespace_info.exports.get(access.member);
+        if (resolved_member) {
+          resolved_members.set(access.location, {
+            name: access.member,
+            qualified_name: `${access.namespace}.${access.member}`,
+            source_module: namespace_info.source_path,
+            kind: resolved_member.kind,
+            location: resolved_member.location
+          });
+        }
+      }
+    }
+  }
+  
+  // Update type registry with namespace-qualified types
+  for (const [_, resolved_type] of resolved_members) {
+    if (resolved_type.kind === 'type' || resolved_type.kind === 'interface' || resolved_type.kind === 'class') {
+      // Register the type with its qualified name
+      const type_def = {
+        name: resolved_type.qualified_name as any,
+        file_path: resolved_type.source_module as any,
+        location: resolved_type.location as any,
+        kind: resolved_type.kind as any
+      };
+      register_type(type_registry, type_def, true, resolved_type.name);
+    }
+  }
+  
+  return namespace_map;
+}
+
+// Helper function to resolve module paths
+function resolveModulePath(
+  source: string,
+  from_file: string,
+  module_graph: ModuleGraph
+): string | undefined {
+  // Check if it's a relative import
+  if (source.startsWith('./') || source.startsWith('../')) {
+    // Resolve relative to the importing file
+    const base_dir = from_file.substring(0, from_file.lastIndexOf('/'));
+    return normalizeModulePath(`${base_dir}/${source}`);
+  }
+  
+  // Check module graph for absolute imports
+  for (const [path, module_info] of module_graph.modules) {
+    if (module_info.name === source || path.endsWith(source)) {
+      return path;
+    }
+  }
+  
+  return undefined;
+}
+
+// Helper function to normalize module paths
+function normalizeModulePath(path: string): string {
+  // Remove .ts, .js, .tsx, .jsx extensions
+  const normalized = path.replace(/\.(ts|js|tsx|jsx)$/, '');
+  
+  // Resolve .. and . in the path
+  const parts = normalized.split('/');
+  const resolved: string[] = [];
+  
+  for (const part of parts) {
+    if (part === '..') {
+      resolved.pop();
+    } else if (part !== '.' && part !== '') {
+      resolved.push(part);
+    }
+  }
+  
+  return resolved.join('/');
+}
+
+// Helper function to collect namespace exports
+function collectNamespaceExports(analysis: FileAnalysis): Map<string, NamespaceExportInfo> {
+  const exports = new Map<string, NamespaceExportInfo>();
+  
+  // Collect named exports
+  for (const export_stmt of analysis.exports) {
+    if (export_stmt.symbol_name && !export_stmt.is_default) {
+      exports.set(export_stmt.symbol_name, {
+        name: export_stmt.symbol_name,
+        kind: 'export',
+        location: export_stmt.location
+      });
+    }
+  }
+  
+  // Collect exported functions
+  for (const func of analysis.functions) {
+    exports.set(func.name, {
+      name: func.name,
+      kind: 'function',
+      location: func.location
+    });
+  }
+  
+  // Collect exported classes
+  for (const cls of analysis.classes) {
+    exports.set(cls.name, {
+      name: cls.name,
+      kind: 'class',
+      location: cls.location
+    });
+  }
+  
+  return exports;
+}
+
+// Helper function to find member access expressions
+function findMemberAccessExpressions(analysis: FileAnalysis): any[] {
+  // This is a placeholder - in a real implementation, we would traverse the AST
+  // to find member access expressions (e.g., namespace.member)
+  // For now, return empty array
+  return [];
+}
+
 
 /**
  * Generate a comprehensive code graph from a codebase
@@ -254,6 +444,15 @@ export async function generate_code_graph(
     type_registry,
     resolved_generics,
     modules
+  );
+
+  // LAYER 7c - Namespace Resolution (after type propagation)
+  // Resolve namespace imports and their members across file boundaries
+  const namespace_resolutions = await resolve_namespaces_across_files(
+    enriched_analyses,
+    modules,
+    type_registry,
+    propagated_types
   );
 
   // LAYER 8: GLOBAL SYMBOL RESOLUTION - Build global symbol table and resolve references
@@ -465,14 +664,16 @@ function build_type_index(analyses: FileAnalysis[]): TypeIndex {
 
   // Build variable types
   for (const analysis of analyses) {
-    for (const [var_name, type_info] of analysis.types.entries()) {
-      const key = `${analysis.file_path}#${var_name}`;
-      variables.set(key, {
-        name: var_name,
-        type: type_info,
-        scope: analysis.file_path, // TODO: Get actual scope
-        is_mutable: true, // TODO: Determine mutability
-      });
+    if (analysis.type_info) {
+      for (const [var_name, type_info] of analysis.type_info.entries()) {
+        const key = `${analysis.file_path}#${var_name}`;
+        variables.set(key, {
+          name: var_name,
+          type: type_info.type_name || 'unknown',
+          scope: analysis.file_path, // TODO: Get actual scope
+          is_mutable: true, // TODO: Determine mutability
+        });
+      }
     }
   }
 

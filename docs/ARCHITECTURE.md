@@ -177,3 +177,9 @@ This flexibility allows consistent structure while enabling domain-appropriate p
 
 - All **public API types** must be defined in the `@ariadnejs/types` package (`/packages/types`).
 - Internal implementation types remain in `/packages/core` and are not exported.
+
+### Coordinate Systems
+
+- **Location type**: Uses 1-based line/column numbering (editor convention)
+- **tree-sitter AST**: Uses 0-based row/column positions
+- Conversion utilities in `/ast/node_utils.ts` handle this transformation

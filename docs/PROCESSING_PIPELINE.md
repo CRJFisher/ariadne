@@ -22,6 +22,7 @@ Each file is analyzed independently to extract local information. This phase can
 
 - Parse source code into AST using tree-sitter
 - Prepare file metadata (language, path, source)
+- Note: tree-sitter uses 0-based row/column positions while Location types use 1-based line/column (editor convention)
 
 **Outputs:** `ParsedFile { ast: SyntaxNode, source: string, language: Language }`
 

@@ -353,12 +353,14 @@ export async function propagate_types_across_files(
     
     // Add types from function parameters and returns
     for (const func of analysis.functions) {
-      if (func.return_type) {
-        known_types.set(func.name, `() => ${func.return_type}`);
+      if (func.signature.return_type) {
+        known_types.set(func.name, `() => ${func.signature.return_type}`);
       }
-      for (const param of func.parameters) {
-        if (param.type) {
-          known_types.set(param.name, param.type);
+      if (func.signature.parameters) {
+        for (const param of func.signature.parameters) {
+          if (param.type) {
+            known_types.set(param.name, param.type);
+          }
         }
       }
     }

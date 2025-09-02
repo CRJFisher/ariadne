@@ -158,7 +158,7 @@ function find_node_at_range(
   node: SyntaxNode,
   range: ScopeRange
 ): SyntaxNode | null {
-  // Check if this node matches the range
+  // Check if this node matches the range exactly
   if (node.startPosition.row === range.start.row &&
       node.startPosition.column === range.start.column &&
       node.endPosition.row === range.end.row &&
@@ -169,7 +169,7 @@ function find_node_at_range(
     }
   }
   
-  // Search children
+  // Search children recursively
   for (let i = 0; i < node.childCount; i++) {
     const child = node.child(i);
     if (child) {
