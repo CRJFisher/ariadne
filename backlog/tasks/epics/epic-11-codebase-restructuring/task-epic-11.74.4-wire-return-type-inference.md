@@ -1,6 +1,6 @@
 # Task 11.74.4: Wire Return Type Inference into Layer 3
 
-## Status: Created
+## Status: Completed
 **Priority**: CRITICAL
 **Parent**: Task 11.74 - Wire and Consolidate Unwired Modules
 **Type**: Module Integration
@@ -316,6 +316,46 @@ test("coordinates with parameter types for better inference", () => {
 - Testing: 0.5 days
 - **Total**: 2 days
 
-## Notes
+## Implementation Notes
+
+### Completed Implementation
+
+1. **Moved return type inference to Layer 3** (analyze_local_types)
+   - Created `infer_all_return_types` helper function
+   - Function analyzes all function nodes in the AST
+   - Detects async and generator functions
+   - Calls existing `infer_function_return_type` for each function
+
+2. **Updated Layer 3 to coordinate with parameter inference**
+   - Return type inference runs after parameter inference
+   - Results stored in Layer3Results
+   - Both parameter and return types passed to Layer 6
+
+3. **Refactored Layer 6 to use pre-computed types**
+   - Removed inline calls to `infer_function_return_type`
+   - Functions now look up pre-computed return types by name
+   - Methods also use pre-computed return types
+   - Eliminated redundant inference code
+
+4. **Type architecture maintained**
+   - ReturnTypeContext remains a local type (not in shared package)
+   - ReturnTypeInfo imported from local module
+   - Public API types use shared package
+
+### Key Improvements
+
+- Return type inference now happens at the correct layer (Layer 3)
+- Eliminates duplicate inference between functions and methods
+- Enables future coordination with parameter types for better inference
+- Pre-computed types available for type propagation
+- Cleaner separation of concerns between layers
+
+### Known Issues
+
+- Same underlying issue with function extraction from scope tree
+- This affects both parameter and return type inference
+- Infrastructure is complete and ready once extraction is fixed
+
+### Notes
 
 This is partially a refactoring task - moving existing functionality to the correct layer and expanding it. The current ad-hoc integration in Layer 6 should be completely replaced with pre-computed return types from Layer 3. This will also enable better coordination with parameter type inference for more accurate signatures.
