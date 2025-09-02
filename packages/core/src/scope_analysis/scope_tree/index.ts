@@ -29,10 +29,6 @@ import { build_rust_scope_tree, resolve_rust_symbol } from "./scope_tree.rust";
 
 // Re-export core types and functions
 export {
-  ScopeTree,
-  ScopeNode,
-  ScopeSymbol,
-  ScopeType,
   create_scope_tree,
   build_scope_tree,
   find_scope_at_position,

@@ -218,19 +218,6 @@ export interface ProtocolDefinition extends Definition {
   readonly bases?: readonly string[];
 }
 
-/**
- * Discriminated union of all definition types
- */
-export type AnyDefinition = 
-  | FunctionDefinition
-  | ClassDefinition
-  | InterfaceDefinition
-  | EnumDefinition
-  | TypeAliasDefinition
-  | StructDefinition
-  | TraitDefinition
-  | ProtocolDefinition;
-
 // Type guards for runtime type checking
 
 export function is_function_definition(def: Definition): def is FunctionDefinition {

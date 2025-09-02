@@ -21,12 +21,11 @@
 // - Track whether export is type-only (TypeScript)
 
 import { Language } from '@ariadnejs/types';
-import { Point } from '../../ast/types';
 
 /**
  * Result of export detection for a single export
  */
-export interface ExportInfo {
+export interface  ExportInfo {
   name: string;               // Local name of the exported item
   export_name: string;        // Name it's exported as (may differ for renamed exports)
   definition?: Def;           // The definition being exported

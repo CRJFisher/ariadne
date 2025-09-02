@@ -4,17 +4,16 @@
  * Dispatcher for language-specific constructor call detection
  */
 
-import { ConstructorCallInfo } from '@ariadnejs/types';
 import { ConstructorCallContext } from './constructor_calls';
-import { TypeInfo } from '../../type_analysis/type_tracking';
 
 // Re-export types
-export { ConstructorCallInfo } from '@ariadnejs/types';
 export { ConstructorCallContext } from './constructor_calls';
 import { find_constructor_calls_javascript } from './constructor_calls.javascript';
 import { find_constructor_calls_typescript } from './constructor_calls.typescript';
 import { find_constructor_calls_python } from './constructor_calls.python';
 import { find_constructor_calls_rust } from './constructor_calls.rust';
+import { ConstructorCallInfo } from '@ariadnejs/types';
+import { ConstructorCallResult } from './constructor_type_extraction';
 
 // Export type validation functions for Global Assembly phase
 export {

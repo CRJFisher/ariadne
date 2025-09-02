@@ -1,6 +1,6 @@
 /**
  * Type conversion utilities for bridging between different type systems
- * 
+ *
  * This module provides converters between:
  * - Legacy Def types and new Definition types
  * - ClassInfo (from common.ts) and ClassDefinition
@@ -13,8 +13,8 @@ import {
   PropertyInfo,
   FunctionInfo,
   Location,
-  Language
-} from '@ariadnejs/types';
+  Language,
+} from "@ariadnejs/types";
 
 import {
   ClassDefinition,
@@ -23,8 +23,8 @@ import {
   MethodDefinition,
   PropertyDefinition,
   ParameterDefinition,
-  Definition
-} from '@ariadnejs/types';
+  SymbolDefinition,
+} from "@ariadnejs/types";
 
 /**
  * Convert ClassInfo to ClassDefinition
@@ -44,11 +44,11 @@ export function class_info_to_class_definition(
     is_abstract: info.is_abstract,
     is_final: false,
     is_exported: info.is_exported,
-    methods: info.methods.map(m => method_info_to_definition(m)),
-    properties: info.properties.map(p => property_info_to_definition(p)),
+    methods: info.methods.map((m) => method_info_to_definition(m)),
+    properties: info.properties.map((p) => property_info_to_definition(p)),
     decorators: info.decorators,
     docstring: info.docstring,
-    generics: [] // TODO: Extract from type info
+    generics: [], // TODO: Extract from type info
   };
 }
 
@@ -61,37 +61,39 @@ export function method_info_to_definition(info: MethodInfo): MethodDefinition {
     location: info.location,
     is_static: info.is_static || false,
     is_abstract: info.is_abstract || false,
-    is_private: info.visibility === 'private',
-    is_protected: info.visibility === 'protected',
+    is_private: info.visibility === "private",
+    is_protected: info.visibility === "protected",
     is_constructor: false, // TODO: Detect constructor
     is_async: info.signature.is_async || false,
-    parameters: info.signature.parameters.map(p => ({
+    parameters: info.signature.parameters.map((p) => ({
       name: p.name,
       type: p.type,
       is_optional: p.is_optional || false,
       is_rest: p.is_rest || false,
-      default_value: p.default_value
+      default_value: p.default_value,
     })),
     return_type: info.signature.return_type,
     generics: info.signature.type_parameters,
-    decorators: info.decorators
+    decorators: info.decorators,
   };
 }
 
 /**
  * Convert PropertyInfo to PropertyDefinition
  */
-export function property_info_to_definition(info: PropertyInfo): PropertyDefinition {
+export function property_info_to_definition(
+  info: PropertyInfo
+): PropertyDefinition {
   return {
     name: info.name,
     location: info.location,
     type: info.type,
     is_static: info.is_static || false,
-    is_private: info.visibility === 'private',
-    is_protected: info.visibility === 'protected',
+    is_private: info.visibility === "private",
+    is_protected: info.visibility === "protected",
     is_readonly: info.is_readonly || false,
     initial_value: info.default_value,
-    decorators: []
+    decorators: [],
   };
 }
 
@@ -109,12 +111,12 @@ export function function_info_to_function_definition(
     location: info.location,
     file_path,
     language,
-    parameters: info.signature.parameters.map(p => ({
+    parameters: info.signature.parameters.map((p) => ({
       name: p.name,
       type: p.type,
       is_optional: p.is_optional || false,
       is_rest: p.is_rest || false,
-      default_value: p.default_value
+      default_value: p.default_value,
     })),
     return_type: info.signature.return_type,
     is_async: info.signature.is_async || false,
@@ -124,14 +126,14 @@ export function function_info_to_function_definition(
     decorators: info.decorators,
     docstring: info.docstring,
     is_arrow_function: false, // TODO: Detect arrow functions
-    is_anonymous: info.name === '<anonymous>'
+    is_anonymous: info.name === "<anonymous>",
   };
 }
 
 /**
  * Generate a unique key for a definition
  */
-export function generate_definition_key(def: Definition): string {
+export function generate_definition_key(def: SymbolDefinition): string {
   return `${def.file_path}#${def.name}`;
 }
 
@@ -154,10 +156,10 @@ export function create_stub_class_definition(
       line: 0,
       column: 0,
       end_line: 0,
-      end_column: 0
+      end_column: 0,
     },
     methods: [],
     properties: [],
-    is_exported: false
+    is_exported: false,
   };
 }

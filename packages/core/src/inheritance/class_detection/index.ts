@@ -42,6 +42,3 @@ export function find_class_definitions(
       return [];
   }
 }
-
-// Re-export for convenience
-export { ClassDefinition } from '@ariadnejs/types';

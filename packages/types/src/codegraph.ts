@@ -1,12 +1,18 @@
-import { Language } from './index';
-import { FunctionInfo, ClassInfo, Location } from './common';
-import { ModuleGraph } from './modules';
-import { CallGraph, FunctionCallInfo, MethodCallInfo, ConstructorCallInfo } from './calls';
-import { ClassHierarchy } from './classes';
-import { TypeIndex, TypeInfo } from './types';
-import { SymbolIndex } from './symbols';
-import { ScopeTree } from './scopes';
-import { FilePath, ModulePath, SymbolName, VariableName, TypeString } from './aliases';
+import { Language } from "./index";
+import { FunctionInfo, ClassInfo, Location } from "./common";
+import { ModuleGraph } from "./modules";
+import {
+  CallGraph,
+  FunctionCallInfo,
+  MethodCallInfo,
+  ConstructorCallInfo,
+} from "./calls";
+import { ClassHierarchy } from "./classes";
+import { TypeIndex, TypeInfo } from "./types";
+import { SymbolIndex } from "./symbols";
+import { ScopeTree } from "./scopes";
+import { FilePath, VariableName, TypeString } from "./aliases";
+import { ExportStatement, ImportStatement } from "./import_export";
 
 export interface FileAnalysis {
   readonly file_path: FilePath;
@@ -24,23 +30,6 @@ export interface FileAnalysis {
   readonly type_info: ReadonlyMap<VariableName, TypeInfo>;
 }
 
-export interface ImportStatement {
-  readonly source: ModulePath;
-  readonly symbols: readonly SymbolName[];
-  readonly location: Location;
-  readonly is_type_import?: boolean;
-  readonly is_namespace_import?: boolean;
-  readonly namespace_name?: string;
-}
-
-export interface ExportStatement {
-  readonly symbols: readonly SymbolName[];
-  readonly location: Location;
-  readonly is_default?: boolean;
-  readonly is_type_export?: boolean;
-  readonly source?: ModulePath; // for re-exports
-}
-
 export interface VariableDeclaration {
   readonly name: VariableName;
   readonly location: Location;
@@ -52,7 +41,7 @@ export interface VariableDeclaration {
 export interface AnalysisError {
   readonly message: string;
   readonly location?: Location;
-  readonly severity: 'error' | 'warning' | 'info';
+  readonly severity: "error" | "warning" | "info";
 }
 
 export interface CodeGraph {

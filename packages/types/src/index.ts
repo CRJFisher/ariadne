@@ -10,3 +10,4 @@ export * from './types';
 export * from './symbols';
 export * from './scopes';
 export * from './definitions';
+export * from './import_export';

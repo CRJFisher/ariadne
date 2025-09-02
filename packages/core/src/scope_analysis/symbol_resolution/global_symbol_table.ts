@@ -36,8 +36,6 @@ export interface SymbolDefinition {
   name: string;
   kind: 'function' | 'class' | 'method' | 'variable' | 'type' | 'namespace';
   location: Location;
-  file_path: string;
-  language: Language;
   visibility: SymbolVisibility;
   is_exported: boolean;
   export_name?: string;
