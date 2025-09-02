@@ -334,23 +334,21 @@ function resolve_imported_function(
   if (!imports) return undefined;
 
   for (const import_stmt of imports) {
-    // Check if any of the imported symbols match
-    for (const symbol_name of import_stmt.symbol_names) {
-      if (symbol_name === function_name) {
-        // Find the exported symbol in the source module
-        const source_file = resolve_import_path(import_stmt.source, from_file);
-        if (source_file) {
-          const symbol = construct_function_symbol(
-            source_file,
-            symbol_name,
-            undefined
-          );
+    // Check if the imported symbol matches
+    if (import_stmt.symbol_name === function_name) {
+      // Find the exported symbol in the source module
+      const source_file = resolve_import_path(import_stmt.source, from_file);
+      if (source_file) {
+        const symbol = construct_function_symbol(
+          source_file,
+          import_stmt.symbol_name,
+          undefined
+        );
 
-          // Check if this symbol exists and is exported
-          const def = context.global_symbols.symbols.get(symbol);
-          if (def && def.is_exported) {
-            return symbol;
-          }
+        // Check if this symbol exists and is exported
+        const def = context.global_symbols.symbols.get(symbol);
+        if (def && def.is_exported) {
+          return symbol;
         }
       }
     }

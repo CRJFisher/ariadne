@@ -28,12 +28,11 @@ export function convert_import_info_to_statement(
   import_info: ImportInfo,
   file_path: string
 ): ImportStatement {
-  // Build symbols array from imported items
-  const symbols: SymbolName[] = [];
-
-  if (import_info.name && import_info.kind !== "namespace") {
-    symbols.push(import_info.name);
-  }
+  // Get the single symbol name
+  const symbol_name: SymbolName | undefined = 
+    import_info.name && import_info.kind !== "namespace" 
+      ? import_info.name as SymbolName
+      : undefined;
 
   // Handle namespace imports
   const is_namespace_import = import_info.kind === "namespace";
@@ -44,7 +43,7 @@ export function convert_import_info_to_statement(
 
   return {
     source: import_info.source as ModulePath,
-    symbol_names: symbols,
+    symbol_name,  // Changed from symbol_names array to single symbol_name
     location,
     is_type_import: import_info.is_type_only,
     is_namespace_import,
@@ -58,18 +57,17 @@ export function convert_import_info_to_statement(
 export function convert_export_info_to_statement(
   export_info: ExportInfo
 ): ExportStatement {
-  // Build symbols array
-  const symbol_names: SymbolName[] = [];
-
-  if (export_info.name && export_info.kind !== "default") {
-    symbol_names.push(export_info.name);
-  }
+  // Get the single symbol name
+  const symbol_name: SymbolName | undefined = 
+    export_info.name && export_info.kind !== "default"
+      ? export_info.name as SymbolName
+      : undefined;
 
   // Use the location from export info directly
   const location = export_info.location;
 
   return {
-    symbol_names,
+    symbol_name,  // Changed from symbol_names array to single symbol_name
     location,
     is_default: export_info.kind === "default",
     is_type_export: export_info.is_type_only,

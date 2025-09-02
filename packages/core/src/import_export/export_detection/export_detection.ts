@@ -20,24 +20,11 @@
 // - Type exports need different handling than value exports
 // - Track whether export is type-only (TypeScript)
 
-import { Language } from '@ariadnejs/types';
+import { Language, Location, Definition } from '@ariadnejs/types';
+// Import the canonical ExportInfo from the consolidated types
+export { ExportInfo } from '@ariadnejs/types';
 
-/**
- * Result of export detection for a single export
- */
-export interface  ExportInfo {
-  name: string;               // Local name of the exported item
-  export_name: string;        // Name it's exported as (may differ for renamed exports)
-  definition?: Def;           // The definition being exported
-  is_default: boolean;        // Whether this is a default export
-  is_reexport: boolean;       // Whether this is a re-export from another module
-  source_module?: string;     // Source module for re-exports
-  is_type_export?: boolean;   // TODO: TypeScript type-only exports
-  range: {
-    start: Point;
-    end: Point;
-  };
-}
+// InternalExportInfo has been removed - use ExportInfo from @ariadnejs/types
 
 // TODO: Add these stub interfaces for future integration
 

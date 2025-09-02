@@ -13,9 +13,10 @@ import { Language, ExportedSymbol, ImportedSymbol, ModuleNode, ModuleGraph } fro
 import * as path from 'path';
 
 /**
- * Import information with resolved definition
+ * Resolved import information linking an import statement to its exported definition
+ * This is different from ImportInfo which just describes the import statement itself
  */
-export interface ImportInfo {
+export interface ResolvedImport {
   import_statement: ImportedSymbol;
   imported_function: ExportedSymbol;
   local_name: string;
@@ -287,13 +288,13 @@ export function resolve_all_imports(
   file_path: string,
   config: ImportResolutionConfig,
   language: Language
-): ImportInfo[] {
+): ResolvedImport[] {
   const module_node = config.get_module_node(file_path);
   if (!module_node) {
     return [];
   }
   
-  const import_infos: ImportInfo[] = [];
+  const import_infos: ResolvedImport[] = [];
   const context: ImportResolutionContext = { language, file_path, config };
   
   // Go through all imported modules and their symbols
