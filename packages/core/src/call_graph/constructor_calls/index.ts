@@ -8,6 +8,7 @@ import { ConstructorCallContext } from './constructor_calls';
 
 // Re-export types
 export { ConstructorCallContext } from './constructor_calls';
+export { ConstructorCallInfo } from '@ariadnejs/types';
 import { find_constructor_calls_javascript } from './constructor_calls.javascript';
 import { find_constructor_calls_typescript } from './constructor_calls.typescript';
 import { find_constructor_calls_python } from './constructor_calls.python';
