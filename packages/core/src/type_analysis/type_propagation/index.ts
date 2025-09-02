@@ -5,11 +5,14 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language } from '@ariadnejs/types';
-import {
+import { 
+  Language,
   TypeFlow,
-  PropagationPath,
+  PropagationPath
+} from '@ariadnejs/types';
+import {
   TypePropagationContext,
+  PropagationAnalysis,
   propagate_assignment_types,
   propagate_return_types,
   propagate_parameter_types,
@@ -319,4 +322,99 @@ export function are_types_compatible(type1: string, type2: string, language: Lan
     default:
       return false;
   }
+}
+
+/**
+ * Propagate types across all files in the codebase
+ * This is the main entry point for Layer 7 type propagation
+ */
+export async function propagate_types_across_files(
+  analyses: any[], // FileAnalysis from code_graph
+  type_registry: any, // TypeRegistry from type_registry module
+  resolved_generics: Map<string, any[]>, // From generic resolution (11.74.1)
+  modules: any // ModuleGraph from module_graph
+): Promise<Map<string, TypeFlow[]>> {
+  const all_type_flows = new Map<string, TypeFlow[]>();
+  
+  // Process each file's analysis
+  for (const analysis of analyses) {
+    const file_flows: TypeFlow[] = [];
+    const language = analysis.language;
+    
+    // Build context with known types from type registry and resolved generics
+    const known_types = new Map<string, string>();
+    
+    // Add types from variables
+    for (const variable of analysis.variables) {
+      if (variable.type) {
+        known_types.set(variable.name, variable.type);
+      }
+    }
+    
+    // Add types from function parameters and returns
+    for (const func of analysis.functions) {
+      if (func.return_type) {
+        known_types.set(func.name, `() => ${func.return_type}`);
+      }
+      for (const param of func.parameters) {
+        if (param.type) {
+          known_types.set(param.name, param.type);
+        }
+      }
+    }
+    
+    // Create propagation context
+    const context: TypePropagationContext = {
+      language,
+      source_code: analysis.source_code || '',
+      file_path: analysis.file_path,
+      known_types
+    };
+    
+    // Analyze assignments for type flow
+    // Note: This is simplified - in reality we'd need the AST
+    for (const variable of analysis.variables) {
+      if (variable.initial_value) {
+        // Create a type flow from the initial value to the variable
+        file_flows.push({
+          source_type: variable.type || 'unknown',
+          target_identifier: variable.name,
+          flow_kind: 'assignment',
+          confidence: variable.type ? 'explicit' : 'inferred',
+          position: {
+            row: variable.location.line,
+            column: variable.location.column
+          }
+        });
+      }
+    }
+    
+    // Analyze function calls for type propagation
+    for (const call of analysis.function_calls) {
+      // If we know the return type of the called function, propagate it
+      const func_type = known_types.get(call.function_name);
+      if (func_type && func_type.includes('=>')) {
+        const return_type = func_type.split('=>')[1].trim();
+        // This would need more context to know where the return value flows to
+        // For now, just track that this call site has a known return type
+        file_flows.push({
+          source_type: return_type,
+          target_identifier: `_call_${call.function_name}_${call.location.line}`,
+          flow_kind: 'return',
+          confidence: 'inferred',
+          position: {
+            row: call.location.line,
+            column: call.location.column
+          }
+        });
+      }
+    }
+    
+    // Store flows for this file
+    if (file_flows.length > 0) {
+      all_type_flows.set(analysis.file_path, file_flows);
+    }
+  }
+  
+  return all_type_flows;
 }

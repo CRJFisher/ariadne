@@ -3,6 +3,7 @@
  */
 
 import { Location } from './common';
+import { TypeName } from './aliases';
 
 /**
  * Common base interface for all definition types
@@ -58,6 +59,25 @@ export interface GenericParameter {
   readonly constraint?: string;
   readonly default?: string;
   readonly variance?: 'in' | 'out' | 'invariant';
+}
+
+/**
+ * Generic type instance with concrete type arguments
+ */
+export interface GenericInstance {
+  readonly base_type: TypeName;           // e.g., "Array"
+  readonly type_arguments: readonly TypeName[];    // e.g., ["string"]
+  readonly resolved_type: string;          // e.g., "Array<string>"
+}
+
+/**
+ * Result of generic type resolution
+ */
+export interface ResolvedGeneric {
+  readonly original_type: string;
+  readonly resolved_type: string;
+  readonly type_substitutions: Map<string, string>;
+  readonly confidence: 'exact' | 'partial' | 'inferred';
 }
 
 /**
@@ -250,4 +270,26 @@ export function is_trait_definition(def: Definition): def is TraitDefinition {
 
 export function is_protocol_definition(def: Definition): def is ProtocolDefinition {
   return 'methods' in def && 'bases' in def;
+}
+
+/**
+ * Type information that flows through the program
+ */
+export interface TypeFlow {
+  readonly source_type: string;
+  readonly target_identifier: string;
+  readonly flow_kind: 'assignment' | 'return' | 'parameter' | 'property' | 'narrowing';
+  readonly confidence: 'explicit' | 'inferred' | 'assumed';
+  readonly position: {
+    readonly row: number;
+    readonly column: number;
+  };
+}
+
+/**
+ * A propagation path showing how types flow
+ */
+export interface PropagationPath {
+  readonly path: readonly TypeFlow[];
+  readonly confidence: 'explicit' | 'inferred' | 'assumed';
 }

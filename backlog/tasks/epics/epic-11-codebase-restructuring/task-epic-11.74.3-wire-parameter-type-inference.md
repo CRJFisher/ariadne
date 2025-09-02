@@ -179,9 +179,24 @@ function extract_definitions(
 
 ## Type Review Requirements
 
-### CRITICAL: Use Shared Types from @ariadnejs/types
+### CRITICAL: Type Package Distinction
 
-During implementation, review ALL type definitions to ensure:
+**IMPORTANT**: Not all types belong in @ariadnejs/types!
+
+- **Shared types package (@ariadnejs/types)**: Only types that are part of the public API
+  - Types visible through CodeGraph and its nested structures
+  - Types that represent analysis results (e.g., InferredParameter if exposed)
+  - Types that cross module boundaries as part of the output
+
+- **Local module types**: Internal implementation types stay in the module
+  - Context types (e.g., ParameterInferenceContext)
+  - Processing state types
+  - Internal configuration types
+  - Any types only used within the module's implementation
+
+### Use Shared Types from @ariadnejs/types Where Appropriate
+
+During implementation, review type definitions to ensure:
 
 1. **Use shared types** from `@ariadnejs/types` package:
    - `ParameterType`, `FunctionSignature`, `TypeInfo`

@@ -95,6 +95,8 @@ import {
   ScopeEntityConnections,
 } from "./scope_analysis/scope_entity_connections";
 import { resolve_all_symbols } from "./scope_analysis/symbol_resolution/symbol_resolution";
+import { resolve_generics_across_files } from "./type_analysis/generic_resolution";
+import { propagate_types_across_files } from "./type_analysis/type_propagation";
 
 /**
  * Generate a comprehensive code graph from a codebase
@@ -235,6 +237,24 @@ export async function generate_code_graph(
     root_path: options.root_path,
     include_external: false,
   });
+
+  // LAYER 7 - Cross-File Type Resolution (Generic Resolution)
+  // Resolve generic types across all analyses using the type registry and class hierarchy
+  const resolved_generics = await resolve_generics_across_files(
+    enriched_analyses,
+    type_registry,
+    class_hierarchy,
+    modules
+  );
+
+  // LAYER 7b - Type Propagation (after generics)
+  // Propagate types through assignments, function calls, and control flow
+  const propagated_types = await propagate_types_across_files(
+    enriched_analyses,
+    type_registry,
+    resolved_generics,
+    modules
+  );
 
   // LAYER 8: GLOBAL SYMBOL RESOLUTION - Build global symbol table and resolve references
   const global_symbols = build_symbol_table({

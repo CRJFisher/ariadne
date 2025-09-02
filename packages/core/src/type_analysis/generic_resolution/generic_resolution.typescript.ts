@@ -7,8 +7,10 @@
 import { SyntaxNode } from 'tree-sitter';
 import {
   GenericParameter,
+  ResolvedGeneric
+} from '@ariadnejs/types';
+import {
   GenericContext,
-  ResolvedGeneric,
   parse_generic_type,
   resolve_generic_type
 } from './generic_resolution';

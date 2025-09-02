@@ -16,32 +16,14 @@
 // - Type flow within scope rules
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language } from '@ariadnejs/types';
+import { 
+  Language,
+  TypeFlow,
+  PropagationPath
+} from '@ariadnejs/types';
 
 /**
- * Type information that flows through the program
- */
-export interface TypeFlow {
-  source_type: string;
-  target_identifier: string;
-  flow_kind: 'assignment' | 'return' | 'parameter' | 'property' | 'narrowing';
-  confidence: 'explicit' | 'inferred' | 'assumed';
-  position: {
-    row: number;
-    column: number;
-  };
-}
-
-/**
- * A propagation path showing how types flow
- */
-export interface PropagationPath {
-  path: TypeFlow[];
-  confidence: 'explicit' | 'inferred' | 'assumed';
-}
-
-/**
- * Context for type propagation
+ * Context for type propagation (internal use only)
  */
 export interface TypePropagationContext {
   language: Language;
@@ -53,7 +35,7 @@ export interface TypePropagationContext {
 }
 
 /**
- * Result of type propagation analysis
+ * Result of type propagation analysis (internal use only)
  */
 export interface PropagationAnalysis {
   flows: TypeFlow[];

@@ -5,44 +5,21 @@
  * Handles type instantiation and substitution
  */
 
-import { TypeName, Location } from '@ariadnejs/types';
+import { 
+  TypeName, 
+  Location,
+  GenericParameter,
+  GenericInstance,
+  ResolvedGeneric
+} from '@ariadnejs/types';
 
 /**
- * Generic type parameter definition
- */
-export interface GenericParameter {
-  name: string;
-  constraint?: string; // e.g., "extends Comparable"
-  default?: string;    // Default type if not provided
-  variance?: 'covariant' | 'contravariant' | 'invariant';
-}
-
-/**
- * Generic type instance with concrete type arguments
- */
-export interface GenericInstance {
-  base_type: TypeName;           // e.g., "Array"
-  type_arguments: TypeName[];    // e.g., ["string"]
-  resolved_type: string;          // e.g., "Array<string>"
-}
-
-/**
- * Context for generic resolution
+ * Context for generic resolution (internal use only)
  */
 export interface GenericContext {
   type_parameters: Map<string, GenericParameter>;
   type_arguments: Map<string, TypeName>;
   parent_context?: GenericContext;
-}
-
-/**
- * Result of generic type resolution
- */
-export interface ResolvedGeneric {
-  original_type: string;
-  resolved_type: string;
-  type_substitutions: Map<string, string>;
-  confidence: 'exact' | 'partial' | 'inferred';
 }
 
 /**
