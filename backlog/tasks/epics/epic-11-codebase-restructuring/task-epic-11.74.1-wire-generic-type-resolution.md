@@ -266,10 +266,11 @@ This is one of the most critical missing pieces. The module is complete and test
 
 ### Type Migration Summary
 
-- ✅ All generic-related types now use @ariadnejs/types
+- ✅ Added GenericInstance and ResolvedGeneric to @ariadnejs/types (public API types)
+- ✅ Kept GenericContext as local type in generic_resolution module (internal context)
 - ✅ Removed duplicate definitions from local modules
 - ✅ Fixed type compatibility issues with Language enum
-- ✅ Added missing types to shared package
+- ✅ Followed new distinction: public API types in shared package, context types local
 
 ### Integration Points
 

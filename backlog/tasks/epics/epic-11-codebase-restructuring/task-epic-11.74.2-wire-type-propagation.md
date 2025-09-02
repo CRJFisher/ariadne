@@ -323,12 +323,13 @@ Type propagation is essential for modern type inference. Without it, we only hav
   - Explicit type annotations
 - Confidence levels properly assigned (explicit vs inferred)
 
-### Type Migration Summary
+### Type Migration Summary  
 
-- ✅ All type propagation types now use @ariadnejs/types
+- ✅ Added TypeFlow and PropagationPath to @ariadnejs/types (public API types)
+- ✅ Kept TypePropagationContext and PropagationAnalysis as local types (internal context)
 - ✅ Removed duplicate definitions from local modules
-- ✅ Added missing Language import to definitions.ts
 - ✅ TypeFlow interface properly uses readonly modifiers
+- ✅ Followed new distinction: public API types in shared package, context types local
 
 ### Integration Points
 
