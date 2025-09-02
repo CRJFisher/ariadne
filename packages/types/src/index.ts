@@ -25,6 +25,7 @@ export * from './classes';
 // Export types but exclude the deprecated ImportedClassInfo
 export {
   // ImportedClassInfo,  // Use ImportedTypeInfo from './import_export' instead
+  TypeKind,
   TypeInfo,
   VariableType,
   TypeDefinition,
