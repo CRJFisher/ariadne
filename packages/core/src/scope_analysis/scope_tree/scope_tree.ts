@@ -18,14 +18,15 @@
 import { SyntaxNode } from "tree-sitter";
 import {
   Language,
-  Def,
   Location,
   ScopeId,
-  SymbolId,
   ScopeSymbol,
   SymbolKind,
   ScopeTree,
   ScopeNode,
+  location_contains,
+  ScopeType,
+  FilePath,
 } from "@ariadnejs/types";
 import { node_to_location } from "../../ast/node_utils";
 
@@ -35,7 +36,7 @@ import { node_to_location } from "../../ast/node_utils";
 export interface ScopeTreeContext {
   language: Language;
   source_code: string;
-  file_path: string;
+  file_path: FilePath;
   current_scope_id?: ScopeId;
   scope_id_counter: number;
 }
@@ -44,8 +45,7 @@ export interface ScopeTreeContext {
  * Create an empty scope tree
  */
 export function create_scope_tree(
-  language: Language,
-  file_path: string,
+  file_path: FilePath,
   root_syntax_node: SyntaxNode
 ): ScopeTree {
   const root_id = "scope_0";
@@ -60,7 +60,6 @@ export function create_scope_tree(
   return {
     root_id,
     nodes: new Map([[root_id, root_node]]),
-    language,
     file_path,
   };
 }
@@ -72,9 +71,9 @@ export function build_scope_tree(
   root_node: SyntaxNode,
   source_code: string,
   language: Language,
-  file_path: string
+  file_path: FilePath
 ): ScopeTree {
-  const tree = create_scope_tree(language, file_path, root_node);
+  const tree = create_scope_tree(file_path, root_node);
 
   const context: ScopeTreeContext = {
     language,
@@ -653,7 +652,7 @@ function find_deepest_scope_containing(
   if (!scope) return undefined;
 
   // Check if position is within this scope
-  if (!is_position_within_range(position, scope.location)) {
+  if (!location_contains(position, scope.location)) {
     return undefined;
   }
 
@@ -667,31 +666,6 @@ function find_deepest_scope_containing(
 
   // This scope contains the position and no child does
   return scope;
-}
-
-/**
- * Check if position is within range
- */
-function is_position_within_range(
-  position: Location,
-  range: Location
-): boolean {
-  if (position.row < range.start.row || position.row > range.end.row) {
-    return false;
-  }
-
-  if (
-    position.row === range.start.row &&
-    position.column < range.start.column
-  ) {
-    return false;
-  }
-
-  if (position.row === range.end.row && position.column > range.end.column) {
-    return false;
-  }
-
-  return true;
 }
 
 /**

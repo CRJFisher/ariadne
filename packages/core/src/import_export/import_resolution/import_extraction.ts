@@ -10,6 +10,7 @@
 
 import { SyntaxNode } from 'tree-sitter';
 import { Language, ImportInfo, Location } from '@ariadnejs/types';
+import { node_to_location } from '../../ast/node_utils';
 
 /**
  * Extract all imports from AST
@@ -20,20 +21,20 @@ export function extract_imports(
   root_node: SyntaxNode,
   source_code: string,
   language: Language,
-  file_path?: string
+  file_path: string
 ): ImportInfo[] {
   switch (language) {
     case 'javascript':
-      return extract_javascript_imports(root_node, source_code);
+      return extract_javascript_imports(root_node, source_code, file_path);
     
     case 'typescript':
-      return extract_typescript_imports(root_node, source_code);
+      return extract_typescript_imports(root_node, source_code, file_path);
     
     case 'python':
-      return extract_python_imports(root_node, source_code);
+      return extract_python_imports(root_node, source_code, file_path);
     
     case 'rust':
-      return extract_rust_imports(root_node, source_code);
+      return extract_rust_imports(root_node, source_code, file_path);
     
     default:
       return [];
@@ -45,26 +46,27 @@ export function extract_imports(
  */
 export function extract_javascript_imports(
   root_node: SyntaxNode,
-  source_code: string
+  source_code: string,
+  file_path: string
 ): ImportInfo[] {
   const imports: ImportInfo[] = [];
   
   const visit = (node: SyntaxNode) => {
     // ES6 imports
     if (node.type === 'import_statement') {
-      const es6_imports = extract_es6_import(node, source_code);
+      const es6_imports = extract_es6_import(node, source_code, file_path);
       if (es6_imports) imports.push(...es6_imports);
     }
     
     // CommonJS require
     if (node.type === 'call_expression') {
-      const commonjs = extract_commonjs_require(node, source_code);
+      const commonjs = extract_commonjs_require(node, source_code, file_path);
       if (commonjs) imports.push(commonjs);
     }
     
     // Dynamic import()
     if (node.type === 'import' && node.parent?.type === 'call_expression') {
-      const dynamic = extract_dynamic_import(node.parent, source_code);
+      const dynamic = extract_dynamic_import(node.parent, source_code, file_path);
       if (dynamic) imports.push(dynamic);
     }
     
@@ -83,7 +85,8 @@ export function extract_javascript_imports(
  */
 export function extract_typescript_imports(
   root_node: SyntaxNode,
-  source_code: string
+  source_code: string,
+  file_path: string
 ): ImportInfo[] {
   const imports: ImportInfo[] = [];
   const processed_nodes = new Set<SyntaxNode>();
@@ -92,19 +95,19 @@ export function extract_typescript_imports(
     // Handle import statements
     if (node.type === 'import_statement' && !processed_nodes.has(node)) {
       processed_nodes.add(node);
-      const ts_imports = extract_typescript_import(node, source_code);
+      const ts_imports = extract_typescript_import(node, source_code, file_path);
       if (ts_imports) imports.push(...ts_imports);
     }
     
     // Handle CommonJS require (same as JavaScript)
     if (node.type === 'call_expression') {
-      const commonjs = extract_commonjs_require(node, source_code);
+      const commonjs = extract_commonjs_require(node, source_code, file_path);
       if (commonjs) imports.push(commonjs);
     }
     
     // Handle dynamic import()
     if (node.type === 'import' && node.parent?.type === 'call_expression') {
-      const dynamic = extract_dynamic_import(node.parent, source_code);
+      const dynamic = extract_dynamic_import(node.parent, source_code, file_path);
       if (dynamic) imports.push(dynamic);
     }
     
@@ -123,20 +126,21 @@ export function extract_typescript_imports(
  */
 export function extract_python_imports(
   root_node: SyntaxNode,
-  source_code: string
+  source_code: string,
+  file_path: string
 ): ImportInfo[] {
   const imports: ImportInfo[] = [];
   
   const visit = (node: SyntaxNode) => {
     // import foo, bar
     if (node.type === 'import_statement') {
-      const module_imports = extract_python_import(node, source_code);
+      const module_imports = extract_python_import(node, source_code, file_path);
       if (module_imports) imports.push(...module_imports);
     }
     
     // from foo import bar
     if (node.type === 'import_from_statement') {
-      const from_imports = extract_python_from_import(node, source_code);
+      const from_imports = extract_python_from_import(node, source_code, file_path);
       if (from_imports) imports.push(...from_imports);
     }
     
@@ -154,20 +158,21 @@ export function extract_python_imports(
  */
 export function extract_rust_imports(
   root_node: SyntaxNode,
-  source_code: string
+  source_code: string,
+  file_path: string
 ): ImportInfo[] {
   const imports: ImportInfo[] = [];
   
   const visit = (node: SyntaxNode) => {
     // use statements
     if (node.type === 'use_declaration') {
-      const use_imports = extract_rust_use(node, source_code);
+      const use_imports = extract_rust_use(node, source_code, file_path);
       if (use_imports) imports.push(...use_imports);
     }
     
     // extern crate
     if (node.type === 'extern_crate_declaration') {
-      const extern_import = extract_rust_extern_crate(node, source_code);
+      const extern_import = extract_rust_extern_crate(node, source_code, file_path);
       if (extern_import) imports.push(extern_import);
     }
     
@@ -184,7 +189,8 @@ export function extract_rust_imports(
 
 function extract_typescript_import(
   import_node: SyntaxNode,
-  source_code: string
+  source_code: string,
+  file_path: string
 ): ImportInfo[] {
   const imports: ImportInfo[] = [];
   const source_node = import_node.childForFieldName('source');
@@ -219,7 +225,7 @@ function extract_typescript_import(
       name: '<side-effect>',
       source: module_source,
       kind: 'dynamic',
-      location: node_to_location(import_node)
+      location: node_to_location(import_node, file_path)
     }];
   }
   
@@ -232,7 +238,7 @@ function extract_typescript_import(
         source: module_source,
         kind: 'default',
         is_type_only: statement_level_type,
-        location: node_to_location(child)
+        location: node_to_location(child, file_path)
       });
     } else if (child.type === 'namespace_import') {
       // Namespace import: import * as foo from './foo' or import type * as foo from './foo'
@@ -245,7 +251,7 @@ function extract_typescript_import(
           kind: 'namespace',
           namespace_name: identifier_node.text,
           is_type_only: statement_level_type,
-          location: node_to_location(child)
+          location: node_to_location(child, file_path)
         });
       }
     } else if (child.type === 'named_imports') {
@@ -258,7 +264,7 @@ function extract_typescript_import(
           alias: spec.alias,
           kind: 'named',
           is_type_only: spec.is_type_only,
-          location: node_to_location(child)
+          location: node_to_location(child, file_path)
         });
       }
     }
@@ -318,7 +324,8 @@ function extract_typescript_import_specifiers(
 
 function extract_es6_import(
   import_node: SyntaxNode,
-  source_code: string
+  source_code: string,
+  file_path: string
 ): ImportInfo[] {
   const imports: ImportInfo[] = [];
   const source_node = import_node.childForFieldName('source');
@@ -333,7 +340,7 @@ function extract_es6_import(
       name: '<side-effect>',
       source: module_source,
       kind: 'dynamic',
-      location: node_to_location(import_node)
+      location: node_to_location(import_node, file_path)
     }];
   }
   
@@ -345,7 +352,7 @@ function extract_es6_import(
         name: child.text,
         source: module_source,
         kind: 'default',
-        location: node_to_location(child)
+        location: node_to_location(child, file_path)
       });
     } else if (child.type === 'namespace_import') {
       // Namespace import: import * as foo from './foo'
@@ -356,19 +363,19 @@ function extract_es6_import(
           source: module_source,
           kind: 'namespace',
           namespace_name: alias_node.text,
-          location: node_to_location(child)
+          location: node_to_location(child, file_path)
         });
       }
     } else if (child.type === 'named_imports') {
       // Named imports: import { foo, bar as baz } from './foo'
-      const specs = extract_import_specifiers(child, source_code);
+      const specs = extract_import_specifiers(child, source_code, file_path);
       for (const spec of specs) {
         imports.push({
           name: spec.name,
           source: module_source,
           alias: spec.alias,
           kind: 'named',
-          location: node_to_location(child)
+          location: node_to_location(child, file_path)
         });
       }
     }
@@ -379,7 +386,8 @@ function extract_es6_import(
 
 function extract_commonjs_require(
   call_node: SyntaxNode,
-  source_code: string
+  source_code: string,
+  file_path: string
 ): ImportInfo | null {
   const func = call_node.childForFieldName('function');
   if (!func || func.text !== 'require') return null;
@@ -404,7 +412,7 @@ function extract_commonjs_require(
           name: name_node.text,
           source: module_source,
           kind: 'named',
-          location: node_to_location(call_node)
+          location: node_to_location(call_node, file_path)
         };
       } else if (name_node.type === 'object_pattern') {
         // Destructuring: const { foo, bar } = require('./module')
@@ -413,7 +421,7 @@ function extract_commonjs_require(
           name: `{${names.join(',')}}`,
           source: module_source,
           kind: 'named',
-          location: node_to_location(call_node)
+          location: node_to_location(call_node, file_path)
         };
       }
     }
@@ -423,13 +431,14 @@ function extract_commonjs_require(
     name: '<require>',
     source: module_source,
     kind: 'dynamic',
-    location: node_to_location(call_node)
+    location: node_to_location(call_node, file_path)
   };
 }
 
 function extract_dynamic_import(
   call_node: SyntaxNode,
-  source_code: string
+  source_code: string,
+  file_path: string
 ): ImportInfo | null {
   const args = call_node.childForFieldName('arguments');
   if (!args) return null;
@@ -443,7 +452,7 @@ function extract_dynamic_import(
     name: '<dynamic>',
     source: extract_string_literal(first_arg, source_code),
     kind: 'dynamic',
-    location: node_to_location(call_node)
+    location: node_to_location(call_node, file_path)
   };
 }
 
@@ -451,7 +460,8 @@ function extract_dynamic_import(
 
 function extract_python_import(
   import_node: SyntaxNode,
-  source_code: string
+  source_code: string,
+  file_path: string
 ): ImportInfo[] {
   const imports: ImportInfo[] = [];
   
@@ -468,7 +478,7 @@ function extract_python_import(
           source: name.text,
           kind: 'namespace',  // Python module imports are namespaces
           namespace_name: alias?.text || name.text,
-          location: node_to_location(child)
+          location: node_to_location(child, file_path)
         });
       }
     } else if (child.type === 'dotted_name' || child.type === 'identifier') {
@@ -478,7 +488,7 @@ function extract_python_import(
         source: child.text,
         kind: 'namespace',  // Python treats module imports as namespaces
         namespace_name: child.text,
-        location: node_to_location(child)
+        location: node_to_location(child, file_path)
       });
     }
   }
@@ -488,7 +498,8 @@ function extract_python_import(
 
 function extract_python_from_import(
   import_node: SyntaxNode,
-  source_code: string
+  source_code: string,
+  file_path: string
 ): ImportInfo[] {
   const imports: ImportInfo[] = [];
   const module = import_node.childForFieldName('module');
@@ -510,7 +521,7 @@ function extract_python_from_import(
               alias: alias ? name.text : undefined,
               source,
               kind: 'named',
-              location: node_to_location(spec)
+              location: node_to_location(spec, file_path)
             });
           }
         } else if (spec.type === 'identifier') {
@@ -518,7 +529,7 @@ function extract_python_from_import(
             name: spec.text,
             source,
             kind: 'named',
-            location: node_to_location(spec)
+            location: node_to_location(spec, file_path)
           });
         }
       }
@@ -529,7 +540,7 @@ function extract_python_from_import(
         source,
         kind: 'namespace',
         namespace_name: '*',
-        location: node_to_location(child)
+        location: node_to_location(child, file_path)
       });
     }
   }
@@ -541,7 +552,8 @@ function extract_python_from_import(
 
 function extract_rust_use(
   use_node: SyntaxNode,
-  source_code: string
+  source_code: string,
+  file_path: string
 ): ImportInfo[] {
   const imports: ImportInfo[] = [];
   const use_tree = use_node.childForFieldName('use_tree');
@@ -557,7 +569,7 @@ function extract_rust_use(
           name: name.text,
           source: full_path,
           kind: 'named',
-          location: node_to_location(tree)
+          location: node_to_location(tree, file_path)
         });
       }
     } else if (tree.type === 'use_list') {
@@ -580,7 +592,7 @@ function extract_rust_use(
           alias: alias ? name.text : undefined,
           source: prefix || name.text,
           kind: 'named',
-          location: node_to_location(tree)
+          location: node_to_location(tree, file_path)
         });
       }
     } else if (tree.type === 'use_wildcard') {
@@ -590,14 +602,14 @@ function extract_rust_use(
         source: prefix,
         kind: 'namespace',
         namespace_name: '*',
-        location: node_to_location(tree)
+        location: node_to_location(tree, file_path)
       });
     } else if (tree.type === 'identifier') {
       imports.push({
         name: tree.text,
         source: prefix || tree.text,
         kind: 'named',
-        location: node_to_location(tree)
+        location: node_to_location(tree, file_path)
       });
     }
   };
@@ -608,7 +620,8 @@ function extract_rust_use(
 
 function extract_rust_extern_crate(
   extern_node: SyntaxNode,
-  source_code: string
+  source_code: string,
+  file_path: string
 ): ImportInfo | null {
   const name = extern_node.childForFieldName('name');
   const alias = extern_node.childForFieldName('alias');
@@ -620,7 +633,7 @@ function extract_rust_extern_crate(
     alias: alias ? name.text : undefined,
     source: name.text,
     kind: 'named',
-    location: node_to_location(extern_node)
+    location: node_to_location(extern_node, file_path)
   };
 }
 
@@ -642,7 +655,8 @@ function extract_string_literal(node: SyntaxNode, source: string): string {
 
 function extract_import_specifiers(
   named_imports: SyntaxNode,
-  source: string
+  source: string,
+  file_path: string
 ): Array<{ name: string; alias?: string }> {
   const specifiers: Array<{ name: string; alias?: string }> = [];
   
@@ -683,11 +697,4 @@ function extract_destructured_names(
   
   visit(pattern);
   return names;
-}
-
-function node_to_location(node: SyntaxNode): Location {
-  return {
-    line: node.startPosition.row,
-    column: node.startPosition.column
-  };
 }

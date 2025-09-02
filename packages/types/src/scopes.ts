@@ -1,5 +1,4 @@
-import { Language } from "./index";
-import { SymbolName } from "./aliases";
+import { ScopeId, SymbolName } from "./aliases";
 import { Location } from "./common";
 
 /**
@@ -45,12 +44,12 @@ export interface ScopeSymbol {
  * A node in the scope tree
  */
 export interface ScopeNode {
-  readonly id: string;
+  readonly id: ScopeId;
   readonly type: ScopeType;
   readonly location: Location;
-  readonly parent_id?: string;
-  readonly child_ids: readonly string[];
-  readonly symbols: ReadonlyMap<string, ScopeSymbol>;
+  readonly parent_id?: ScopeId;
+  readonly child_ids: readonly ScopeId[];
+  readonly symbols: ReadonlyMap<SymbolName, ScopeSymbol>;
   readonly metadata?: {
     readonly name?: string; // Function/class/module name
     readonly is_async?: boolean; // For function scopes
@@ -63,8 +62,7 @@ export interface ScopeNode {
  * Scope tree structure
  */
 export interface ScopeTree {
-  readonly root_id: string;
-  readonly nodes: ReadonlyMap<string, ScopeNode>;
-  readonly language: Language;
+  readonly root_id: ScopeId;
+  readonly nodes: ReadonlyMap<ScopeId, ScopeNode>;
   readonly file_path?: string;
 }

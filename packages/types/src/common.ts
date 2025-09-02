@@ -1,4 +1,14 @@
-import { ParameterName, TypeString, FilePath, FunctionName, ClassName, MethodName, PropertyName, DocString, DecoratorName } from './aliases';
+import {
+  ParameterName,
+  TypeString,
+  FilePath,
+  FunctionName,
+  ClassName,
+  MethodName,
+  PropertyName,
+  DocString,
+  DecoratorName,
+} from "./aliases";
 
 // Language type
 export type Language = "javascript" | "typescript" | "python" | "rust";
@@ -9,6 +19,19 @@ export interface Location {
   readonly column: number;
   readonly end_line: number;
   readonly end_column: number;
+}
+
+export function location_contains(
+  location: Location,
+  other_location: Location
+): boolean {
+  return (
+    location.file_path === other_location.file_path &&
+    location.line <= other_location.line &&
+    location.column <= other_location.column &&
+    location.end_line >= other_location.end_line &&
+    location.end_column >= other_location.end_column
+  );
 }
 
 /**
@@ -84,7 +107,7 @@ export interface MethodInfo {
   readonly name: MethodName;
   readonly location: Location;
   readonly signature: FunctionSignature;
-  readonly visibility?: 'public' | 'private' | 'protected';
+  readonly visibility?: "public" | "private" | "protected";
   readonly is_static?: boolean;
   readonly is_abstract?: boolean;
   readonly is_override?: boolean;
@@ -96,7 +119,7 @@ export interface PropertyInfo {
   readonly name: PropertyName;
   readonly location: Location;
   readonly type?: TypeString;
-  readonly visibility?: 'public' | 'private' | 'protected';
+  readonly visibility?: "public" | "private" | "protected";
   readonly is_static?: boolean;
   readonly is_readonly?: boolean;
   readonly default_value?: string;

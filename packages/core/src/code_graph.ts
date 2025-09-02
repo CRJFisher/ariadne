@@ -5,7 +5,6 @@
  */
 
 import {
-  FunctionCallInfo,
   find_function_calls,
 } from "./call_graph/function_calls";
 import { MethodCallInfo, find_method_calls } from "./call_graph/method_calls";
@@ -110,6 +109,7 @@ import {
   ClassHierarchy,
   MethodNode,
   SymbolId,
+  FilePath,
 } from "@ariadnejs/types";
 import type { ClassDefinition as SharedClassDefinition, AnyDefinition } from '@ariadnejs/types/definitions';
 import { build_class_hierarchy, type ClassHierarchyContext } from './inheritance/class_hierarchy/class_hierarchy';
@@ -191,7 +191,7 @@ export async function generate_code_graph(
   const type_registry = await build_type_registry_from_analyses(analyses);
 
   // CLASS HIERARCHY - Build inheritance tree from all classes (needed for enrichment)
-  const class_hierarchy = await build_class_hierarchy_from_analyses(analyses);
+  const class_hierarchy = await build_class_hierarchy_from_analyses(analyses, file_name_to_tree);
 
   // TODO: LAYER 9 - Global Call Resolution
   // After class hierarchy and type registry are built (Layers 6-7),
@@ -866,9 +866,9 @@ function build_symbol_index(
   analyses: FileAnalysis[],
   global_symbols?: GlobalSymbolTable
 ): SymbolIndex {
-  const definitions = new Map<string, Definition>();
-  const usages = new Map<string, Usage[]>();
-  const resolution_cache = new Map<string, ResolvedSymbol>();
+  const definitions = new Map<SymbolId, Definition>();
+  const usages = new Map<SymbolId, Usage[]>();
+  const resolution_cache = new Map<SymbolId, ResolvedSymbol>();
 
   // If we have a global symbol table, use it to build definitions
   if (global_symbols) {
@@ -878,6 +878,8 @@ function build_symbol_index(
         location: def.location,
         kind: def.kind as any, // Type mismatch - needs mapping
         is_exported: def.is_exported,
+        file_path: def.file_path,
+        references: [],
       });
     }
   } else {
@@ -895,6 +897,8 @@ function build_symbol_index(
             location: func.location,
             kind: "function",
             is_exported: false, // TODO: Check if exported
+            file_path: analysis.file_path,
+            references: [],
           });
         }
       }
@@ -908,6 +912,8 @@ function build_symbol_index(
             location: cls.location,
             kind: "class",
             is_exported: false, // TODO: Check if exported
+            file_path: analysis.file_path,
+            references: [],
           });
         }
       }
@@ -970,7 +976,8 @@ async function build_type_registry_from_analyses(
  * method resolution and polymorphic call analysis.
  */
 async function build_class_hierarchy_from_analyses(
-  analyses: FileAnalysis[]
+  analyses: FileAnalysis[],
+  file_name_to_tree: Map<FilePath, SyntaxNode>
 ): Promise<ClassHierarchy> {
 
   // Convert ClassInfo to ClassDefinition format
@@ -980,7 +987,7 @@ async function build_class_hierarchy_from_analyses(
   for (const analysis of analyses) {
     // Create context for this file (without AST for now)
     contexts.set(analysis.file_path, {
-      tree: null as any, // AST not available in this context
+      tree: file_name_to_tree.get(analysis.file_path), // AST not available in this context
       source_code: '', // Source code not available here
       file_path: analysis.file_path,
       language: analysis.language,
@@ -999,11 +1006,9 @@ async function build_class_hierarchy_from_analyses(
   }
 
   // Build the hierarchy using the updated implementation
-  const hierarchy = build_class_hierarchy(class_definitions as any[], contexts);
-  
-  // Convert to the expected shared ClassHierarchy type if needed
-  // The build_class_hierarchy_new already returns the enhanced shared type
-  return hierarchy as ClassHierarchy;
+  const hierarchy = build_class_hierarchy(class_definitions, contexts);
+
+  return hierarchy;
 }
 
 /**

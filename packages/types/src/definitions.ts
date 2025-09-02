@@ -2,7 +2,7 @@
  * Type definitions for code element definitions
  */
 
-import { Language, Location } from './common';
+import { Location } from './common';
 
 /**
  * Common base interface for all definition types
@@ -12,18 +12,6 @@ export interface Definition {
   readonly name: string;
   readonly location: Location;
   readonly file_path: string;
-}
-
-/**
- * Legacy base definition interface - DEPRECATED
- * @deprecated Use specific definition types or Definition interface instead
- */
-export interface Def {
-  readonly name: string;
-  readonly kind: 'function' | 'class' | 'variable' | 'type' | 'method' | 'property';
-  readonly location: Location;
-  readonly file_path: string;
-  readonly language: Language;
 }
 
 /**
@@ -51,6 +39,9 @@ export interface ClassDefinition extends Definition {
   readonly implements?: readonly string[];
   readonly is_abstract?: boolean;
   readonly is_final?: boolean;
+  readonly is_interface?: boolean;
+  readonly is_trait?: boolean;
+  readonly is_mixin?: boolean;
   readonly generics?: readonly GenericParameter[];
   readonly methods: readonly MethodDefinition[];
   readonly properties: readonly PropertyDefinition[];
@@ -80,7 +71,11 @@ export interface MethodDefinition {
   readonly is_private: boolean;
   readonly is_protected: boolean;
   readonly is_constructor: boolean;
+  readonly is_override: boolean;
   readonly is_async: boolean;
+  readonly overrides?: string;
+  readonly overridden_by: readonly string[];
+  readonly visibility?: "public" | "private" | "protected";
   readonly parameters: readonly ParameterDefinition[];
   readonly return_type?: string;
   readonly generics?: readonly GenericParameter[];
@@ -98,6 +93,7 @@ export interface PropertyDefinition {
   readonly is_private: boolean;
   readonly is_protected: boolean;
   readonly is_readonly: boolean;
+  readonly visibility?: "public" | "private" | "protected";
   readonly initial_value?: string;
   readonly decorators?: readonly string[];
 }
@@ -237,34 +233,34 @@ export type AnyDefinition =
 
 // Type guards for runtime type checking
 
-export function isFunctionDefinition(def: Definition): def is FunctionDefinition {
+export function is_function_definition(def: Definition): def is FunctionDefinition {
   return 'parameters' in def && 'is_async' in def && 'is_generator' in def;
 }
 
-export function isClassDefinition(def: Definition): def is ClassDefinition {
+export function is_class_definition(def: Definition): def is ClassDefinition {
   return 'methods' in def && 'properties' in def && !('type_expression' in def);
 }
 
-export function isInterfaceDefinition(def: Definition): def is InterfaceDefinition {
+export function is_interface_definition(def: Definition): def is InterfaceDefinition {
   return 'methods' in def && 'properties' in def && !('is_abstract' in def);
 }
 
-export function isEnumDefinition(def: Definition): def is EnumDefinition {
+export function is_enum_definition(def: Definition): def is EnumDefinition {
   return 'members' in def && !('fields' in def);
 }
 
-export function isTypeAliasDefinition(def: Definition): def is TypeAliasDefinition {
+export function is_type_alias_definition(def: Definition): def is TypeAliasDefinition {
   return 'type_expression' in def;
 }
 
-export function isStructDefinition(def: Definition): def is StructDefinition {
+export function is_struct_definition(def: Definition): def is StructDefinition {
   return 'fields' in def && 'is_tuple_struct' in def;
 }
 
-export function isTraitDefinition(def: Definition): def is TraitDefinition {
+export function is_trait_definition(def: Definition): def is TraitDefinition {
   return 'methods' in def && 'supertraits' in def;
 }
 
-export function isProtocolDefinition(def: Definition): def is ProtocolDefinition {
+export function is_protocol_definition(def: Definition): def is ProtocolDefinition {
   return 'methods' in def && 'bases' in def;
 }

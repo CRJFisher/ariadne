@@ -117,18 +117,7 @@ export function resolve_method_in_hierarchy(
   
   // Helper to check if a class has a method
   function class_has_method(class_info: ClassNode): boolean {
-    // Check if the class has a methods map
-    if (class_info.methods) {
-      return class_info.methods.has(method_name);
-    }
-    
-    // Fallback: check definition for method-like properties
-    const def = class_info.definition;
-    if ((def as any).methods && Array.isArray((def as any).methods)) {
-      return (def as any).methods.some((m: any) => m.name === method_name);
-    }
-    
-    return false;
+    return class_info.methods.has(method_name);
   }
 
   // Recursive resolution

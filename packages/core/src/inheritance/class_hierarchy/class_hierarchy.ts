@@ -21,7 +21,6 @@ import type {
   MethodDefinition,
   PropertyDefinition
 } from '@ariadnejs/types';
-import type { Language } from '@ariadnejs/types';
 
 /**
  * Context for building class hierarchy
@@ -84,7 +83,7 @@ export function build_class_hierarchy(
         edges.push({
           from: def.name,
           to: base,
-          type: 'extends',
+          type: "extends",
           source_location: def.location,
         });
       }
@@ -95,7 +94,7 @@ export function build_class_hierarchy(
         edges.push({
           from: def.name,
           to: iface,
-          type: 'implements',
+          type: "implements",
           source_location: def.location,
         });
       }
@@ -106,14 +105,10 @@ export function build_class_hierarchy(
   compute_derived_classes(classes, edges);
   compute_enhanced_fields(classes, edges);
   
-  // Determine language from contexts
-  const language = contexts.values().next().value?.language || 'unknown';
-  
   return {
     classes: classes as ReadonlyMap<string, ClassNode>,
     inheritance_edges: edges,
     root_classes: roots as ReadonlySet<string>,
-    language: language as Language,
     metadata: {
       build_time: Date.now(),
       total_classes: classes.size,
@@ -125,7 +120,7 @@ export function build_class_hierarchy(
 /**
  * Build a Map of methods from definitions
  */
-function build_method_map(methods: MethodDefinition[]): ReadonlyMap<string, MethodNode> {
+function build_method_map(methods: readonly MethodDefinition[]): ReadonlyMap<string, MethodNode> {
   const map = new Map<string, MethodNode>();
   
   for (const method of methods) {
@@ -149,7 +144,7 @@ function build_method_map(methods: MethodDefinition[]): ReadonlyMap<string, Meth
 /**
  * Build a Map of properties from definitions
  */
-function build_property_map(properties: PropertyDefinition[]): ReadonlyMap<string, PropertyNode> {
+function build_property_map(properties: readonly PropertyDefinition[]): ReadonlyMap<string, PropertyNode> {
   const map = new Map<string, PropertyNode>();
   
   for (const property of properties) {
