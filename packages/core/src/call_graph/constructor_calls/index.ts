@@ -7,14 +7,13 @@
 import { ConstructorCallContext } from './constructor_calls';
 
 // Re-export types
-export { ConstructorCallContext } from './constructor_calls';
 export { ConstructorCallInfo } from '@ariadnejs/types';
 import { find_constructor_calls_javascript } from './constructor_calls.javascript';
 import { find_constructor_calls_typescript } from './constructor_calls.typescript';
 import { find_constructor_calls_python } from './constructor_calls.python';
 import { find_constructor_calls_rust } from './constructor_calls.rust';
 import { ConstructorCallInfo } from '@ariadnejs/types';
-import { ConstructorCallResult } from './constructor_type_extraction';
+import { ConstructorCallResult, extract_constructor_calls_and_types } from './constructor_type_extraction';
 
 // Export type validation functions for Global Assembly phase
 export {
@@ -22,8 +21,6 @@ export {
   validate_constructor,
   batch_validate_constructors,
   get_constructable_types,
-  ConstructorCallWithType,
-  ParameterInfo
 } from './constructor_type_resolver';
 
 // Export bidirectional flow functions
@@ -87,7 +84,6 @@ export function find_constructor_calls_with_types(
   context: ConstructorCallContext
 ): ConstructorCallResult {
   // Use the extraction function that handles both calls and types
-  const { extract_constructor_calls_and_types } = require('./constructor_type_extraction');
   
   return extract_constructor_calls_and_types(
     context.ast_root,

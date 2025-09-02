@@ -241,7 +241,7 @@ export function get_module_exports(
           const symbol: ExportedSymbol = {
             name: export_name,
             kind: 'variable', // Default kind
-            location: { line: 1, column: 1, file_path: target_file }
+            location: { line: 1, column: 1, file_path: target_file, end_line: 1, end_column: 1 }
           };
           exports.set(export_name, symbol);
         }

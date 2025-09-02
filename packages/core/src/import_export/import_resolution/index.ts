@@ -5,9 +5,10 @@
  * following the functional paradigm from Architecture.md
  */
 
-import { Language, ExportedSymbol, ImportedSymbol } from '@ariadnejs/types';
+import { Language, ExportedSymbol, ImportedSymbol, SymbolDefinition } from '@ariadnejs/types';
+import { ImportStatement } from '@ariadnejs/types';
 import {
-  ImportInfo,
+  ResolvedImport,
   ImportResolutionConfig,
   ImportResolutionContext,
   NamespaceExport,
@@ -58,10 +59,6 @@ import {
 
 // Re-export types and common functions
 export {
-  ImportInfo,
-  ImportResolutionConfig,
-  ImportResolutionContext,
-  NamespaceExport,
   is_namespace_import,
   is_default_import,
   is_named_import,
@@ -113,11 +110,11 @@ export {
  * Resolves an import statement to its definition
  */
 export function resolve_import_definition(
-  imp: Import,
+  imp: ImportStatement,
   file_path: string,
   language: Language,
   config: ImportResolutionConfig
-): Def | undefined {
+): SymbolDefinition | undefined {
   const context: ImportResolutionContext = {
     language,
     file_path,
@@ -160,7 +157,7 @@ export function get_imports_with_definitions(
   file_path: string,
   language: Language,
   config: ImportResolutionConfig
-): ImportInfo[] {
+): ResolvedImport[] {
   return resolve_all_imports(file_path, config, language);
 }
 

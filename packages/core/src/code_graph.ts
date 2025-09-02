@@ -265,9 +265,6 @@ export async function generate_code_graph(
   // CALL GRAPH - Build from enriched analyses using resolved symbols
   const calls = build_call_graph(enriched_analyses, resolution_results);
 
-  // Use the built class hierarchy instead of empty placeholder
-  const classes = class_hierarchy;
-
   // TYPE INDEX
   const types = build_type_index(enriched_analyses);
 
@@ -278,7 +275,7 @@ export async function generate_code_graph(
     files,
     modules,
     calls,
-    classes,
+    classes: class_hierarchy,
     types,
     symbols,
     metadata: {

@@ -28,7 +28,6 @@ import {
   ErrorCollector,
 } from "./error_collection/analysis_errors";
 import {
-  create_def_from_scope,
   find_function_node,
   get_enclosing_class_name,
 } from "./definition_extraction/def_factory";
@@ -63,7 +62,6 @@ import {
 } from "@ariadnejs/types";
 
 // Re-export types from shared modules
-import type { ImportInfo } from "./import_export/import_resolution";
 import type { FileTypeTracker } from "./type_analysis/type_tracking";
 import type { MethodCallInfo } from "./call_graph/method_calls";
 import type { ConstructorCallInfo } from "./call_graph/constructor_calls";
@@ -82,7 +80,7 @@ interface Layer1Results {
 }
 
 interface Layer2Results {
-  imports: ImportInfo[];
+  imports: ResolvedImport[];
   exports: ExportInfo[];
   class_definitions: ClassDefinition[];
 }
