@@ -3,11 +3,36 @@ export * from './immutable';
 export * from './aliases';
 export * from './common';
 export * from './codegraph';
-export * from './modules';
+
+// Export modules types but exclude the deprecated ImportInfo/ExportInfo
+export {
+  // Keep the deprecated types for backward compatibility but don't re-export
+  // ImportInfo,  // Use from './import_export' instead
+  // ExportInfo,  // Use from './import_export' instead
+  ModuleNode,
+  ImportedModule,
+  ImportedSymbol,
+  ExportedSymbol,
+  ModuleGraph
+} from './modules';
+
 export * from './calls';
 export * from './classes';
-export * from './types';
+
+// Export types but exclude the deprecated ImportedClassInfo
+export {
+  // ImportedClassInfo,  // Use ImportedTypeInfo from './import_export' instead
+  TypeInfo,
+  VariableType,
+  TypeDefinition,
+  TypeGraph,
+  TypeEdge,
+  TypeIndex
+} from './types';
+
 export * from './symbols';
 export * from './scopes';
 export * from './definitions';
+
+// Export all the new consolidated import/export types
 export * from './import_export';

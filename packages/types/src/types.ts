@@ -67,6 +67,10 @@ export interface TypeInfo {
 }
 
 /**
+ * @deprecated Use ImportedTypeInfo from './import_export' instead
+ * This type is preserved for backward compatibility but will be removed in the next major version.
+ * The new ImportedTypeInfo in import_export.ts provides better type categorization.
+ * 
  * Information about an imported class/type
  */
 export interface ImportedClassInfo {

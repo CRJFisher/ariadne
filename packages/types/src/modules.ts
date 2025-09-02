@@ -2,6 +2,10 @@ import { Location } from './common';
 import { FilePath, ModulePath, SymbolName, ImportName, ExportName, NamespaceName } from './aliases';
 
 /**
+ * @deprecated Use ImportInfo from './import_export' instead
+ * This type is preserved for backward compatibility but will be removed in the next major version.
+ * The new ImportInfo in import_export.ts is the single source of truth.
+ * 
  * Simplified import information for per-file analysis
  * Used during Layer 2 (Local Structure Detection)
  */
@@ -16,6 +20,10 @@ export interface ImportInfo {
 }
 
 /**
+ * @deprecated Use ExportInfo from './import_export' instead
+ * This type is preserved for backward compatibility but will be removed in the next major version.
+ * The new ExportInfo in import_export.ts is the single source of truth.
+ * 
  * Simplified export information for per-file analysis
  * Used during Layer 2 (Local Structure Detection)
  */
