@@ -35,3 +35,7 @@ export type ScopeName = string;       // Scope name (if named)
 // Documentation
 export type DocString = string;       // Documentation string
 export type DecoratorName = string;   // Decorator/annotation name
+
+// AST types
+export type ASTNodeType = string;     // AST node type (e.g., "member_expression", "attribute")
+export type FieldName = string;       // AST field name (e.g., "object", "property")

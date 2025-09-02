@@ -111,6 +111,7 @@ import {
   NamespaceExport,
   NamespaceResolutionContext
 } from "./import_export/namespace_resolution";
+import { find_member_access_expressions } from "./ast/member_access";
 import Parser from "tree-sitter";
 
 
@@ -170,7 +171,7 @@ async function resolve_namespaces_across_files(
     if (!tree) continue;
     
     // Find member access expressions in the AST
-    const member_accesses = findMemberAccessExpressions(analysis, tree.rootNode);
+    const member_accesses = find_member_access_expressions(analysis, tree.rootNode);
     
     for (const access of member_accesses) {
       const namespace_key = `${analysis.file_path}:${access.namespace}`;
@@ -301,141 +302,6 @@ function collectNamespaceExports(analysis: FileAnalysis): Map<string, NamespaceE
   }
   
   return exports;
-}
-
-// Interface for member access expression
-interface MemberAccessExpression {
-  namespace: string;
-  member: string;
-  location: Location;
-}
-
-// Helper function to find member access expressions
-function findMemberAccessExpressions(
-  analysis: FileAnalysis, 
-  rootNode: any
-): MemberAccessExpression[] {
-  const member_accesses: MemberAccessExpression[] = [];
-  
-  // Track which identifiers are namespace imports
-  const namespace_imports = new Set<string>();
-  for (const import_stmt of analysis.imports) {
-    if (import_stmt.is_namespace_import && import_stmt.namespace_name) {
-      namespace_imports.add(import_stmt.namespace_name);
-    }
-  }
-  
-  // Traverse AST to find member access patterns
-  traverseForMemberAccess(rootNode, analysis.language, namespace_imports, member_accesses, analysis.file_path);
-  
-  return member_accesses;
-}
-
-// Recursively traverse AST to find member access expressions
-function traverseForMemberAccess(
-  node: any,
-  language: Language,
-  namespace_imports: Set<string>,
-  accesses: MemberAccessExpression[],
-  file_path: string
-): void {
-  if (!node) return;
-  
-  // Language-specific member access patterns
-  switch (language) {
-    case 'javascript':
-    case 'typescript':
-      // Look for member_expression nodes
-      if (node.type === 'member_expression') {
-        const object_node = node.childForFieldName('object');
-        const property_node = node.childForFieldName('property');
-        
-        if (object_node && property_node) {
-          const object_name = object_node.text;
-          const property_name = property_node.text;
-          
-          // Check if the object is a known namespace import
-          if (namespace_imports.has(object_name)) {
-            accesses.push({
-              namespace: object_name,
-              member: property_name,
-              location: {
-                file_path,
-                line: node.startPosition.row + 1,
-                column: node.startPosition.column + 1,
-                end_line: node.endPosition.row + 1,
-                end_column: node.endPosition.column + 1
-              }
-            });
-          }
-        }
-      }
-      break;
-      
-    case 'python':
-      // Look for attribute nodes
-      if (node.type === 'attribute') {
-        const value_node = node.childForFieldName('object');
-        const attr_node = node.childForFieldName('attribute');
-        
-        if (value_node && attr_node) {
-          const object_name = value_node.text;
-          const attr_name = attr_node.text;
-          
-          // Check if the object is a known namespace import
-          if (namespace_imports.has(object_name)) {
-            accesses.push({
-              namespace: object_name,
-              member: attr_name,
-              location: {
-                file_path,
-                line: node.startPosition.row + 1,
-                column: node.startPosition.column + 1,
-                end_line: node.endPosition.row + 1,
-                end_column: node.endPosition.column + 1
-              }
-            });
-          }
-        }
-      }
-      break;
-      
-    case 'rust':
-      // Look for scoped_identifier nodes
-      if (node.type === 'scoped_identifier') {
-        const path_node = node.childForFieldName('path');
-        const name_node = node.childForFieldName('name');
-        
-        if (path_node && name_node) {
-          const path_name = path_node.text;
-          const item_name = name_node.text;
-          
-          // Check if the path is a known namespace import
-          if (namespace_imports.has(path_name)) {
-            accesses.push({
-              namespace: path_name,
-              member: item_name,
-              location: {
-                file_path,
-                line: node.startPosition.row + 1,
-                column: node.startPosition.column + 1,
-                end_line: node.endPosition.row + 1,
-                end_column: node.endPosition.column + 1
-              }
-            });
-          }
-        }
-      }
-      break;
-  }
-  
-  // Recursively traverse children
-  for (let i = 0; i < node.childCount; i++) {
-    const child = node.child(i);
-    if (child) {
-      traverseForMemberAccess(child, language, namespace_imports, accesses, file_path);
-    }
-  }
 }
 
 
