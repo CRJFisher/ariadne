@@ -10,19 +10,35 @@ import { ScopeTree } from '../scope_tree';
 import {
   ResolvedSymbol,
   ResolutionContext,
-  ImportInfo,
-  ExportInfo,
+  DefinitionResult,
+  create_resolution_context,
   resolve_symbol_at_position,
   resolve_symbol,
   find_symbol_references,
   find_symbol_definition,
   get_all_visible_symbols,
   is_symbol_exported,
-  resolve_symbol_with_type
+  resolve_symbol_with_type,
+  go_to_definition,
+  find_definition_at_position,
+  find_all_definitions,
+  find_definitions_by_kind,
+  find_exported_definitions,
+  is_definition_visible,
+  go_to_definition_from_ref,
+  find_definition_candidates
 } from './symbol_resolution';
 import {
   resolve_javascript_symbol,
-  JavaScriptResolutionContext
+  JavaScriptResolutionContext,
+  find_constructor_definition,
+  find_prototype_method,
+  find_object_property,
+  find_arrow_function,
+  find_all_functions,
+  find_all_classes,
+  is_hoisted_definition,
+  find_module_exports
 } from './symbol_resolution.javascript';
 import {
   resolve_typescript_symbol,
@@ -42,14 +58,22 @@ import {
 export {
   ResolvedSymbol,
   ResolutionContext,
-  ImportInfo,
-  ExportInfo,
+  DefinitionResult,
+  create_resolution_context,
   resolve_symbol_at_position,
   find_symbol_references,
   find_symbol_definition,
   get_all_visible_symbols,
   is_symbol_exported,
-  resolve_symbol_with_type
+  resolve_symbol_with_type,
+  go_to_definition,
+  find_definition_at_position,
+  find_all_definitions,
+  find_definitions_by_kind,
+  find_exported_definitions,
+  is_definition_visible,
+  go_to_definition_from_ref,
+  find_definition_candidates
 };
 
 // Re-export language-specific types
@@ -58,6 +82,18 @@ export {
   TypeScriptResolutionContext,
   PythonResolutionContext,
   RustResolutionContext
+};
+
+// Re-export JavaScript-specific functions (from definition_finder)
+export {
+  find_constructor_definition,
+  find_prototype_method,
+  find_object_property,
+  find_arrow_function,
+  find_all_functions,
+  find_all_classes,
+  is_hoisted_definition,
+  find_module_exports
 };
 
 /**
@@ -95,128 +131,7 @@ export function resolve_symbol_with_language(
 // Import/export extraction is now handled by import_resolution and export_detection modules
 // This maintains proper architectural layering - extraction happens in Per-File Analysis (Layers 1-2)
 
-/**
- * Create language-specific resolution context
- */
-export function create_resolution_context(
-  scope_tree: ScopeTree,
-  language: Language,
-  file_path?: string,
-  root_node?: SyntaxNode,
-  source_code?: string,
-  imports?: ImportInfo[], // From import_resolution - Layer 1
-  exports?: ExportInfo[] // From export_detection - Layer 2
-): ResolutionContext {
-  const base_context: ResolutionContext = {
-    scope_tree,
-    file_path
-  };
-  
-  // Add language-specific context
-  switch (language) {
-    case 'javascript':
-    case 'jsx': {
-      const js_context: JavaScriptResolutionContext = {
-        ...base_context,
-        hoisted_symbols: new Map(),
-        closure_scopes: new Map(),
-        prototype_chains: new Map(),
-        this_bindings: new Map()
-      };
-      
-      // Use imports/exports from Layer 1/2 instead of extracting
-      if (imports) {
-        js_context.imports = imports;
-      }
-      if (exports) {
-        js_context.exports = exports;
-      }
-      
-      return js_context;
-    }
-    
-    case 'typescript':
-    case 'tsx': {
-      const ts_context: TypeScriptResolutionContext = {
-        ...base_context,
-        hoisted_symbols: new Map(),
-        closure_scopes: new Map(),
-        prototype_chains: new Map(),
-        this_bindings: new Map(),
-        type_parameters: new Map(),
-        interfaces: new Map(),
-        type_aliases: new Map(),
-        namespaces: new Map()
-      };
-      
-      // Use imports/exports from Layer 1/2 instead of extracting
-      if (imports) {
-        ts_context.imports = imports;
-      }
-      if (exports) {
-        ts_context.exports = exports;
-      }
-      
-      return ts_context;
-    }
-    
-    case 'python': {
-      const py_context: PythonResolutionContext = {
-        ...base_context,
-        builtins: undefined,  // Will use default PYTHON_BUILTINS
-        global_declarations: new Map(),
-        nonlocal_declarations: new Map()
-      };
-      
-      // Use imports/exports from Layer 1/2 instead of extracting
-      if (imports) {
-        py_context.imports = imports;
-      }
-      if (exports) {
-        py_context.exports = exports;
-        
-        // Extract global/nonlocal declarations if AST is provided
-        if (root_node && source_code) {
-          const declarations = extract_python_declarations(root_node, source_code, scope_tree);
-          py_context.global_declarations = declarations.global_declarations;
-          py_context.nonlocal_declarations = declarations.nonlocal_declarations;
-        }
-      }
-      
-      return py_context;
-    }
-    
-    case 'rust': {
-      const rust_context: RustResolutionContext = {
-        ...base_context,
-        use_statements: [],
-        impl_blocks: [],
-        trait_impls: [],
-        visibility_modifiers: new Map()
-      };
-      
-      // Use imports/exports from Layer 1/2 instead of extracting
-      if (imports) {
-        // Convert ImportInfo to use statements for Rust
-        rust_context.use_statements = imports.map(imp => ({
-          path: imp.module_path.split('::'),
-          alias: imp.source_name,
-          is_glob: imp.is_namespace || false,
-          is_group: false,
-          range: imp.range
-        }));
-      }
-      if (exports) {
-        rust_context.exports = exports;
-      }
-      
-      return rust_context;
-    }
-    
-    default:
-      return base_context;
-  }
-}
+// Removed duplicate create_resolution_context - it's defined in symbol_resolution.ts
 
 /**
  * High-level API: Resolve symbol at cursor position
@@ -270,27 +185,4 @@ export function find_all_references(
   return find_symbol_references(symbol_name, context);
 }
 
-/**
- * High-level API: Go to definition
- */
-export function go_to_definition(
-  symbol_name: string,
-  scope_id: string,
-  scope_tree: ScopeTree,
-  language: Language,
-  file_path: string,
-  root_node?: SyntaxNode,
-  source_code?: string,
-  imports?: any[], // From import_resolution - Layer 1
-  module_graph?: any // From module_graph - Layer 4
-): Def | undefined {
-  const context = create_resolution_context(
-    scope_tree,
-    language,
-    file_path,
-    root_node,
-    source_code
-  );
-  
-  return find_symbol_definition(symbol_name, scope_id, context);
-}
+// Removed duplicate go_to_definition - it's defined in symbol_resolution.ts

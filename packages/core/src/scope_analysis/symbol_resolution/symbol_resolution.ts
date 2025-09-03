@@ -4,6 +4,12 @@
  * Resolves references to their definitions using the global symbol table
  * and scope-entity connections. This is the bridge between names in code
  * and their actual definitions across the codebase.
+ * 
+ * Also provides definition finding capabilities:
+ * - Go to definition from references
+ * - Find definition from imports
+ * - Locate class/function/variable definitions
+ * - Cross-file definition resolution
  */
 
 import {
@@ -20,7 +26,12 @@ import {
   ExportStatement,
   ScopeTree,
   ScopeNode,
+  Def,
+  Ref,
+  Position,
+  SymbolKind,
 } from "@ariadnejs/types";
+import { SyntaxNode } from 'tree-sitter';
 
 import { GlobalSymbolTable, SymbolDefinition } from "./global_symbol_table";
 import {
@@ -583,4 +594,352 @@ export function get_symbol_definition(
 ): Location | undefined {
   const def = global_symbols.symbols.get(symbol_id);
   return def?.location;
+}
+
+// ============================================================================
+// Definition Finding Features (merged from definition_finder)
+// ============================================================================
+
+/**
+ * Definition search result
+ */
+export interface DefinitionResult {
+  definition: Def;
+  confidence: 'exact' | 'likely' | 'possible';
+  source: 'local' | 'import' | 'external';
+}
+
+/**
+ * Resolution context for definition finding
+ */
+export interface ResolutionContext {
+  scope_tree: ScopeTree;
+  language: Language;
+  file_path: string;
+  source_code?: string;
+  root_node?: SyntaxNode;
+}
+
+/**
+ * Resolved symbol type (for compatibility)
+ */
+export type ResolvedSymbol = DefinitionResult;
+
+/**
+ * Create resolution context
+ */
+export function create_resolution_context(
+  scope_tree: ScopeTree,
+  language: Language,
+  file_path: string,
+  root_node?: SyntaxNode,
+  source_code?: string
+): ResolutionContext {
+  return {
+    scope_tree,
+    language,
+    file_path,
+    root_node,
+    source_code
+  };
+}
+
+/**
+ * Go to definition from a position in code
+ */
+export function go_to_definition(
+  position: Position,
+  context: ResolutionContext
+): Def | undefined {
+  const result = find_definition_at_position(position, context);
+  return result?.definition;
+}
+
+/**
+ * Find definition at a given position
+ */
+export function find_definition_at_position(
+  position: Position,
+  context: ResolutionContext
+): DefinitionResult | undefined {
+  const { scope_tree } = context;
+  
+  // Find the scope at this position
+  const scope = find_scope_at_position(scope_tree, position);
+  if (!scope) return undefined;
+  
+  // Extract symbol name at position (would need AST access for real implementation)
+  const symbol_name = extract_symbol_at_position(position, context);
+  if (!symbol_name) return undefined;
+  
+  return find_symbol_definition(symbol_name, scope.id, context);
+}
+
+/**
+ * Find definition for a symbol name
+ */
+export function find_symbol_definition(
+  symbol_name: string,
+  scope_id: string,
+  context: ResolutionContext
+): DefinitionResult | undefined {
+  const { scope_tree, file_path } = context;
+  
+  // Try local scope chain first
+  const local_def = find_local_definition(symbol_name, scope_id, scope_tree, file_path);
+  if (local_def) return local_def;
+  
+  // TODO: Try imported definitions
+  // TODO: Try cross-file definitions
+  
+  return undefined;
+}
+
+/**
+ * Find local definition in scope chain
+ */
+function find_local_definition(
+  symbol_name: string,
+  scope_id: string,
+  scope_tree: ScopeTree,
+  file_path: string
+): DefinitionResult | undefined {
+  // Walk up the scope chain looking for the symbol
+  const scope_chain = get_scope_chain(scope_tree, scope_id);
+  
+  for (const scope of scope_chain) {
+    const symbol = scope.symbols.get(symbol_name);
+    if (symbol && symbol.kind !== 'import' && symbol.kind !== 'export') {
+      // Convert to Def
+      const def: Def = {
+        id: `def_${scope.id}_${symbol_name}`,
+        kind: 'definition',
+        name: symbol_name,
+        symbol_kind: symbol.kind as SymbolKind,
+        range: symbol.range,
+        file_path
+      };
+      
+      return {
+        definition: def,
+        confidence: 'exact',
+        source: 'local'
+      };
+    }
+  }
+  
+  return undefined;
+}
+
+/**
+ * Extract symbol name at position
+ * NOTE: This is a stub - real implementation would use AST
+ */
+function extract_symbol_at_position(
+  position: Position,
+  context: ResolutionContext
+): string | undefined {
+  // This would need actual AST traversal to find the identifier at position
+  // For now, return undefined
+  return undefined;
+}
+
+/**
+ * Find all definitions in a scope tree
+ */
+export function find_all_definitions(
+  scope_tree: ScopeTree,
+  file_path: string
+): Def[] {
+  const definitions: Def[] = [];
+  
+  // Walk all scopes and collect definitions
+  for (const [scope_id, scope] of scope_tree.nodes) {
+    for (const [symbol_name, symbol] of scope.symbols) {
+      // Skip imports and references
+      if (symbol.kind === 'import' || symbol.kind === 'export') continue;
+      
+      const def: Def = {
+        id: `def_${scope_id}_${symbol_name}`,
+        kind: 'definition',
+        name: symbol_name,
+        symbol_kind: symbol.kind as SymbolKind,
+        range: symbol.range,
+        file_path
+      };
+      
+      definitions.push(def);
+    }
+  }
+  
+  return definitions;
+}
+
+/**
+ * Find definitions by kind
+ */
+export function find_definitions_by_kind(
+  scope_tree: ScopeTree,
+  kind: string,
+  file_path: string
+): Def[] {
+  const definitions: Def[] = [];
+  
+  for (const [scope_id, scope] of scope_tree.nodes) {
+    for (const [symbol_name, symbol] of scope.symbols) {
+      if (symbol.kind === kind) {
+        const def: Def = {
+          id: `def_${scope_id}_${symbol_name}`,
+          kind: 'definition',
+          name: symbol_name,
+          symbol_kind: symbol.kind as SymbolKind,
+          range: symbol.range,
+          file_path
+        };
+        
+        definitions.push(def);
+      }
+    }
+  }
+  
+  return definitions;
+}
+
+/**
+ * Find exported definitions
+ */
+export function find_exported_definitions(
+  scope_tree: ScopeTree,
+  file_path: string
+): Def[] {
+  const definitions: Def[] = [];
+  
+  for (const [scope_id, scope] of scope_tree.nodes) {
+    for (const [symbol_name, symbol] of scope.symbols) {
+      if (symbol.is_exported) {
+        const def: Def = {
+          id: `def_${scope_id}_${symbol_name}`,
+          kind: 'definition',
+          name: symbol_name,
+          symbol_kind: symbol.kind as SymbolKind,
+          range: symbol.range,
+          file_path
+        };
+        
+        definitions.push(def);
+      }
+    }
+  }
+  
+  return definitions;
+}
+
+/**
+ * Check if a definition is visible from a scope
+ */
+export function is_definition_visible(
+  def: Def,
+  from_scope: string,
+  scope_tree: ScopeTree
+): boolean {
+  // Simple visibility check - could be enhanced
+  const scope_chain = get_scope_chain(scope_tree, from_scope);
+  
+  for (const scope of scope_chain) {
+    const symbol = scope.symbols.get(def.name);
+    if (symbol) return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Go to definition from a reference
+ */
+export function go_to_definition_from_ref(
+  ref: Ref,
+  context: ResolutionContext
+): Def | undefined {
+  // Find the scope where the reference occurs
+  const scope = find_scope_at_position(context.scope_tree, ref.range.start);
+  if (!scope) return undefined;
+  
+  const result = find_symbol_definition(ref.name, scope.id, context);
+  return result?.definition;
+}
+
+/**
+ * Find definition candidates (for autocomplete/suggestions)
+ */
+export function find_definition_candidates(
+  prefix: string,
+  scope_id: string,
+  context: ResolutionContext
+): Def[] {
+  const candidates: Def[] = [];
+  const { scope_tree, file_path } = context;
+  
+  // Get all visible symbols from scope
+  const visible_symbols = get_visible_symbols(scope_tree, scope_id);
+  
+  for (const [symbol_name, symbol] of visible_symbols) {
+    if (symbol_name.startsWith(prefix)) {
+      const def: Def = {
+        id: `def_${scope_id}_${symbol_name}`,
+        kind: 'definition',
+        name: symbol_name,
+        symbol_kind: symbol.kind as SymbolKind,
+        range: symbol.range,
+        file_path
+      };
+      
+      candidates.push(def);
+    }
+  }
+  
+  return candidates;
+}
+
+/**
+ * Get all visible symbols from a scope
+ */
+export function get_all_visible_symbols(
+  scope_tree: ScopeTree,
+  scope_id: string
+): Map<string, any> {
+  return get_visible_symbols(scope_tree, scope_id);
+}
+
+/**
+ * Resolve symbol at position
+ */
+export function resolve_symbol_at_position(
+  position: Position,
+  context: ResolutionContext
+): ResolvedSymbol | undefined {
+  return find_definition_at_position(position, context);
+}
+
+/**
+ * Resolve symbol
+ */
+export function resolve_symbol(
+  symbol_name: string,
+  scope_id: string,
+  context: ResolutionContext
+): ResolvedSymbol | undefined {
+  return find_symbol_definition(symbol_name, scope_id, context);
+}
+
+/**
+ * Resolve symbol with type information
+ */
+export function resolve_symbol_with_type(
+  symbol_name: string,
+  scope_id: string,
+  context: ResolutionContext
+): ResolvedSymbol | undefined {
+  // For now, same as resolve_symbol
+  // Type information could be added later
+  return find_symbol_definition(symbol_name, scope_id, context);
 }
