@@ -35,11 +35,6 @@ export {
   type ParsedSymbol
 } from './symbol_construction';
 
-// Type converters
-export {
-  class_info_to_class_definition
-} from './type_converters';
-
 // Scope path utilities
 export {
   build_scope_path,

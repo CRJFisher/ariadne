@@ -12,9 +12,12 @@ import {
   Language,
   Location,
   FunctionInfo,
-  ClassInfo,
-  MethodInfo,
-  VariableDeclaration
+  VariableDeclaration,
+  FilePath,
+  ImportName,
+  ExportName,
+  ClassDefinition,
+  MethodDefinition
 } from '@ariadnejs/types';
 import { TypeRegistry } from '../../type_analysis/type_registry';
 
@@ -53,8 +56,8 @@ export interface SymbolDefinition {
  */
 export interface GlobalSymbolTable {
   symbols: Map<SymbolId, SymbolDefinition>;
-  exports: Map<string, Map<string, SymbolId>>;  // file → export name → symbol
-  imports: Map<string, Map<string, SymbolId>>;  // file → import name → symbol
+  exports: Map<FilePath, Map<ExportName, SymbolId>>;  // file → export name → symbol
+  imports: Map<FilePath, Map<ImportName, SymbolId>>;  // file → import name → symbol
   visibility: Map<SymbolId, SymbolVisibility>;
   references: Map<SymbolId, Location[]>;  // symbol → usage locations
 }
@@ -158,8 +161,6 @@ function add_function_to_table(
     name: func.name,
     kind: 'function',
     location: func.location,
-    file_path: analysis.file_path,
-    language: analysis.language,
     visibility: SymbolVisibility.PUBLIC, // TODO: Detect actual visibility
     is_exported: check_if_exported(func.name, analysis),
     metadata: {
@@ -179,7 +180,7 @@ function add_function_to_table(
  */
 function add_class_to_table(
   table: GlobalSymbolTable,
-  cls: ClassInfo,
+  cls: ClassDefinition,
   symbol_id: SymbolId,
   analysis: FileAnalysis
 ): void {
@@ -188,8 +189,6 @@ function add_class_to_table(
     name: cls.name,
     kind: 'class',
     location: cls.location,
-    file_path: analysis.file_path,
-    language: analysis.language,
     visibility: SymbolVisibility.PUBLIC, // TODO: Detect actual visibility
     is_exported: cls.is_exported || check_if_exported(cls.name, analysis),
     metadata: {
@@ -206,7 +205,7 @@ function add_class_to_table(
  */
 function add_method_to_table(
   table: GlobalSymbolTable,
-  method: MethodInfo,
+  method: MethodDefinition,
   symbol_id: SymbolId,
   class_name: string,
   analysis: FileAnalysis
@@ -216,8 +215,6 @@ function add_method_to_table(
     name: method.name,
     kind: 'method',
     location: method.location,
-    file_path: analysis.file_path,
-    language: analysis.language,
     visibility: parse_visibility(method.visibility),
     is_exported: false, // Methods are exported through their class
     metadata: {
@@ -247,8 +244,6 @@ function add_variable_to_table(
     name: variable.name,
     kind: 'variable',
     location: variable.location,
-    file_path: analysis.file_path,
-    language: analysis.language,
     visibility: SymbolVisibility.PUBLIC, // TODO: Detect actual visibility
     is_exported: check_if_exported(variable.name, analysis)
   };
@@ -268,7 +263,7 @@ function process_exports(
   
   for (const exp of analysis.exports) {
     // Find the symbol for this export
-    const symbol = find_symbol_by_name(exp.name, analysis);
+    const symbol = find_symbol_by_name(exp.export_name, analysis);
     if (symbol) {
       file_exports.set(exp.name, symbol);
       

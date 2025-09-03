@@ -4,24 +4,11 @@ import JavaScript from 'tree-sitter-javascript';
 import TypeScript from 'tree-sitter-typescript';
 import Python from 'tree-sitter-python';
 import Rust from 'tree-sitter-rust';
-import { Tree } from 'tree-sitter';
-import { Def } from '@ariadnejs/types';
 import {
-  ClassInfo,
-  ClassHierarchy,
   ClassHierarchyContext,
-  build_class_hierarchy_with_extraction,
-  is_class_like,
-  find_class_by_name,
-  get_parent_class,
-  get_subclasses,
-  get_implemented_interfaces,
-  implements_interface,
-  is_subclass_of,
-  get_inheritance_path,
-  get_all_ancestors,
-  get_all_descendants
+  build_class_hierarchy,
 } from './index';
+import type { ClassDefinition } from '@ariadnejs/types';
 
 describe('class_hierarchy', () => {
   let jsParser: Parser;
@@ -89,7 +76,7 @@ describe('class_hierarchy', () => {
         all_definitions: definitions
       });
       
-      const hierarchy = build_class_hierarchy_with_extraction(definitions, contexts);
+      const hierarchy = build_class_hierarchy(definitions, contexts);
       
       expect(hierarchy.classes.size).toBe(2);
       
@@ -174,7 +161,7 @@ describe('class_hierarchy', () => {
         all_definitions: definitions
       });
       
-      const hierarchy = build_class_hierarchy_with_extraction(definitions, contexts);
+      const hierarchy = build_class_hierarchy(definitions, contexts);
       
       const birdInfo = hierarchy.classes.get('bird');
       expect(birdInfo).toBeDefined();
@@ -251,7 +238,7 @@ class Dog(Mammal):
         all_definitions: definitions
       });
       
-      const hierarchy = build_class_hierarchy_with_extraction(definitions, contexts);
+      const hierarchy = build_class_hierarchy(definitions, contexts);
       
       const dogInfo = hierarchy.classes.get('dog');
       expect(dogInfo).toBeDefined();
@@ -328,7 +315,7 @@ class Duck(Flyable, Swimmable):
         all_definitions: definitions
       });
       
-      const hierarchy = build_class_hierarchy_with_extraction(definitions, contexts);
+      const hierarchy = build_class_hierarchy(definitions, contexts);
       
       const duckInfo = hierarchy.classes.get('duck');
       expect(duckInfo).toBeDefined();
@@ -389,7 +376,7 @@ impl Drawable for Circle {
         all_definitions: definitions
       });
       
-      const hierarchy = build_class_hierarchy_with_extraction(definitions, contexts);
+      const hierarchy = build_class_hierarchy(definitions, contexts);
       
       const circleInfo = hierarchy.classes.get('circle');
       expect(circleInfo).toBeDefined();
@@ -429,7 +416,7 @@ struct Point {
         all_definitions: definitions
       });
       
-      const hierarchy = build_class_hierarchy_with_extraction(definitions, contexts);
+      const hierarchy = build_class_hierarchy(definitions, contexts);
       
       const pointInfo = hierarchy.classes.get('point');
       expect(pointInfo).toBeDefined();
@@ -490,7 +477,7 @@ struct Point {
         all_definitions: definitions
       });
       
-      const hierarchy = build_class_hierarchy_with_extraction(definitions, contexts);
+      const hierarchy = build_class_hierarchy(definitions, contexts);
       
       // Check C's ancestors (should be B and A)
       const cInfo = hierarchy.classes.get('c')!;
@@ -556,7 +543,7 @@ struct Point {
         all_definitions: definitions
       });
       
-      const hierarchy = build_class_hierarchy_with_extraction(definitions, contexts);
+      const hierarchy = build_class_hierarchy(definitions, contexts);
       
       expect(hierarchy.roots.length).toBe(2);
       expect(hierarchy.roots.map(d => d.name).sort()).toEqual(['RootA', 'RootB']);

@@ -1,13 +1,21 @@
-import { Location } from './common';
-import { TypeName, FilePath, VariableName, TypeString, PropertyName, MethodName, QualifiedName } from './aliases';
-import { Language } from './index';
+import { Location } from "./common";
+import {
+  TypeName,
+  FilePath,
+  VariableName,
+  TypeString,
+  PropertyName,
+  MethodName,
+  QualifiedName,
+} from "./aliases";
+import { Language, ScopeType } from "./index";
 
 export enum TypeKind {
-  CLASS = 'class',
-  INTERFACE = 'interface',
-  TYPE = 'type',
-  ENUM = 'enum',
-  TRAIT = 'trait',
+  CLASS = "class",
+  INTERFACE = "interface",
+  TYPE = "type",
+  ENUM = "enum",
+  TRAIT = "trait",
 }
 
 export interface TypeDefinition {
@@ -24,7 +32,7 @@ export interface TypeDefinition {
 export interface TypeMember {
   readonly name: PropertyName | MethodName;
   readonly type?: TypeString;
-  readonly kind: 'property' | 'method' | 'constructor';
+  readonly kind: "property" | "method" | "constructor";
   readonly is_optional?: boolean;
   readonly is_readonly?: boolean;
 }
@@ -34,14 +42,14 @@ export interface VariableType {
   readonly type?: TypeString;
   readonly inferred_type?: TypeString;
   readonly location: Location;
-  readonly scope: 'global' | 'module' | 'function' | 'block';
+  readonly scope_kind: ScopeType;
   readonly is_reassigned?: boolean;
 }
 
 export interface TypeEdge {
   readonly from: TypeName;
   readonly to: TypeName;
-  readonly kind: 'extends' | 'implements' | 'uses' | 'returns';
+  readonly kind: "extends" | "implements" | "uses" | "returns";
   readonly location?: Location;
 }
 
@@ -64,21 +72,23 @@ export interface TypeIndex {
  * Type information for a variable at a specific position
  */
 export interface TypeInfo {
-  readonly type_name: string;           // The type name (e.g., "string", "MyClass")
-  readonly type_kind: 'primitive' | 'class' | 'interface' | 'function' | 'object' | 'array' | 'unknown';
-  readonly position: {
-    readonly row: number;
-    readonly column: number;
-  };
-  readonly confidence: 'explicit' | 'inferred' | 'assumed';
-  readonly source?: 'annotation' | 'assignment' | 'constructor' | 'return' | 'parameter';
+  readonly type_name: TypeName; // The type name (e.g., "string", "MyClass")
+  readonly type_kind: TypeKind;
+  readonly location: Location;
+  readonly confidence: "explicit" | "inferred" | "assumed";
+  readonly source?:
+    | "annotation"
+    | "assignment"
+    | "constructor"
+    | "return"
+    | "parameter";
 }
 
 /**
  * @deprecated Use ImportedTypeInfo from './import_export' instead
  * This type is preserved for backward compatibility but will be removed in the next major version.
  * The new ImportedTypeInfo in import_export.ts provides better type categorization.
- * 
+ *
  * Information about an imported class/type
  */
 export interface ImportedClassInfo {
@@ -86,5 +96,5 @@ export interface ImportedClassInfo {
   readonly source_module: string;
   readonly local_name: string;
   readonly is_default?: boolean;
-  readonly is_type_only?: boolean;  // TypeScript type-only import
+  readonly is_type_only?: boolean; // TypeScript type-only import
 }

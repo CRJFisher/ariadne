@@ -6,7 +6,6 @@
  */
 
 import { SyntaxNode, Tree } from 'tree-sitter';
-import { Def } from '@ariadnejs/types';
 import Parser from 'tree-sitter';
 import { ClassHierarchy } from '../class_hierarchy/class_hierarchy';
 import {

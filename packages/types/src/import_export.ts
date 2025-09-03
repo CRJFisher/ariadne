@@ -1,4 +1,4 @@
-import { ModulePath, SymbolName } from "./aliases";
+import { ExportName, ModulePath, SymbolName } from "./aliases";
 import { Location } from "./common";
 
 /**
@@ -102,7 +102,7 @@ export interface ExportStatement {
   /** Source module for re-exports */
   readonly source?: ModulePath;
   /** Export name if different from symbol_name */
-  readonly export_name?: string;
+  readonly export_name?: ExportName;
 }
 
 // =============================================================================

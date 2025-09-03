@@ -13,8 +13,8 @@ import {
   ScopeNode,
   FileAnalysis,
   FunctionInfo,
-  ClassInfo,
-  MethodInfo,
+  ClassDefinition,
+  MethodDefinition,
   VariableDeclaration,
   Location,
   Language
@@ -78,7 +78,7 @@ function create_empty_contents(): ScopeContents {
 export function build_scope_entity_connections(
   scope_tree: ScopeTree,
   functions: readonly FunctionInfo[],
-  classes: readonly ClassInfo[],
+  classes: readonly ClassDefinition[],
   variables: readonly VariableDeclaration[],
   symbol_registry: Map<any, SymbolId>,
   language: Language,
@@ -154,7 +154,7 @@ function process_functions(
  * Process class entities and their scope connections
  */
 function process_classes(
-  classes: readonly ClassInfo[],
+  classes: readonly ClassDefinition[],
   scope_tree: ScopeTree,
   symbol_registry: Map<any, SymbolId>,
   connections: ScopeEntityConnections

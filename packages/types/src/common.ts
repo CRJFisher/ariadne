@@ -77,6 +77,7 @@ export interface FunctionMetadata {
 
 /**
  * Base information for functions
+ * Enhanced with fields from FunctionDefinition for consolidation
  */
 export interface FunctionInfo {
   readonly name: FunctionName;
@@ -85,42 +86,10 @@ export interface FunctionInfo {
   readonly metadata?: FunctionMetadata;
   readonly docstring?: DocString;
   readonly decorators?: readonly DecoratorName[];
-}
-
-/**
- * Base information for classes
- */
-export interface ClassInfo {
-  readonly name: ClassName;
-  readonly location: Location;
-  readonly base_classes?: readonly ClassName[];
-  readonly interfaces?: readonly string[];
-  readonly is_abstract?: boolean;
+  // Additional fields from FunctionDefinition
   readonly is_exported?: boolean;
-  readonly docstring?: DocString;
-  readonly decorators?: readonly DecoratorName[];
-  readonly methods: readonly MethodInfo[];
-  readonly properties: readonly PropertyInfo[];
+  readonly is_arrow_function?: boolean; // For JS/TS
+  readonly is_anonymous?: boolean;
+  readonly closure_captures?: readonly string[]; // Variables from outer scope
 }
 
-export interface MethodInfo {
-  readonly name: MethodName;
-  readonly location: Location;
-  readonly signature: FunctionSignature;
-  readonly visibility?: "public" | "private" | "protected";
-  readonly is_static?: boolean;
-  readonly is_abstract?: boolean;
-  readonly is_override?: boolean;
-  readonly docstring?: DocString;
-  readonly decorators?: readonly DecoratorName[];
-}
-
-export interface PropertyInfo {
-  readonly name: PropertyName;
-  readonly location: Location;
-  readonly type?: TypeString;
-  readonly visibility?: "public" | "private" | "protected";
-  readonly is_static?: boolean;
-  readonly is_readonly?: boolean;
-  readonly default_value?: string;
-}

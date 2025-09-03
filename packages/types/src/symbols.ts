@@ -18,7 +18,6 @@ export interface SymbolDefinition {
     | "type"
     | "interface"
     | "enum";
-  readonly file_path: FilePath;
   readonly location: Location;
   readonly is_exported?: boolean;
   readonly docstring?: DocString;

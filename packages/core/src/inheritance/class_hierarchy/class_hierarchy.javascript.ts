@@ -12,17 +12,17 @@
 
 import { SyntaxNode } from "tree-sitter";
 import {
-  ClassInfo,
   ClassHierarchyContext,
   extract_class_relationships,
   find_node_at_location,
 } from "./class_hierarchy";
+import { ClassDefinition } from "@ariadnejs/types";
 
 /**
  * Extract JavaScript/TypeScript class relationships
  */
 export function extract_javascript_class_relationships(
-  info: ClassInfo,
+  info: ClassDefinition,
   context: ClassHierarchyContext
 ): void {
   const class_node = find_node_at_location(

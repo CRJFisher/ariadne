@@ -1,5 +1,6 @@
 import { Language } from "./index";
-import { FunctionInfo, ClassInfo, Location } from "./common";
+import { FunctionInfo, Location } from "./common";
+import { ClassDefinition } from "./definitions";
 import { ModuleGraph } from "./modules";
 import {
   CallGraph,
@@ -19,7 +20,7 @@ export interface FileAnalysis {
   readonly source_code: SourceCode;
   readonly language: Language;
   readonly functions: readonly FunctionInfo[];
-  readonly classes: readonly ClassInfo[];
+  readonly classes: readonly ClassDefinition[];
   readonly imports: readonly ImportStatement[];
   readonly exports: readonly ExportStatement[];
   readonly variables: readonly VariableDeclaration[];

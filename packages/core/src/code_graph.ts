@@ -25,9 +25,6 @@ import {
   // Common types
   Location,
   FunctionInfo,
-  ClassInfo,
-  MethodInfo,
-  PropertyInfo,
   FunctionSignature,
   ParameterType,
   TypeParameter,
@@ -61,7 +58,7 @@ import {
   MethodNode,
   SymbolId,
   FilePath,
-  TypeKind
+  TypeKind,
 } from "@ariadnejs/types";
 import type { ClassDefinition } from "@ariadnejs/types";
 import {
@@ -83,9 +80,8 @@ import {
 import {
   AnalysisCache,
   createAnalysisCache,
-  CacheOptions
+  CacheOptions,
 } from "./cache/analysis_cache";
-import { class_info_to_class_definition } from "./utils";
 import {
   scan_files,
   read_and_parse_file,
@@ -106,11 +102,11 @@ import {
   get_parent_scope_name,
   find_containing_class,
 } from "./utils";
-import { 
+import {
   enrich_all_calls,
   EnrichmentContext,
   EnrichmentOptions,
-  EnrichedFileAnalysis 
+  EnrichedFileAnalysis,
 } from "./call_graph/enrichment";
 import { build_call_chains } from "./call_graph/call_chain_analysis";
 import {
@@ -131,15 +127,14 @@ import {
   is_namespace_import,
   NamespaceImportInfo,
   NamespaceExport,
-  NamespaceResolutionContext
+  NamespaceResolutionContext,
 } from "./import_export/namespace_resolution";
 import { find_member_access_expressions } from "./ast/member_access";
 import Parser from "tree-sitter";
 
-
 /**
  * Resolve namespace imports and their members across all files
- * 
+ *
  * This function identifies namespace imports, resolves their exported members,
  * and tracks namespace member access patterns across the codebase.
  */
@@ -152,53 +147,58 @@ async function resolve_namespaces_across_files(
 ): Promise<Map<string, NamespaceInfo>> {
   const namespace_map = new Map<string, NamespaceInfo>();
   const resolved_members = new Map<Location, ResolvedNamespaceType>();
-  
+
   // Build namespace import map from all files
   for (const analysis of analyses) {
     for (const import_stmt of analysis.imports) {
       // Check if this is a namespace import
       if (import_stmt.is_namespace_import && import_stmt.namespace_name) {
         const namespace_key = `${analysis.file_path}:${import_stmt.namespace_name}`;
-        
+
         // Get the exported members from the source module
         const source_module_path = resolveModulePath(
           import_stmt.source,
           analysis.file_path,
           module_graph
         );
-        
+
         if (source_module_path) {
-          const source_analysis = analyses.find(a => a.file_path === source_module_path);
+          const source_analysis = analyses.find(
+            (a) => a.file_path === source_module_path
+          );
           if (source_analysis) {
             const namespace_exports = collectNamespaceExports(source_analysis);
-            
+
             namespace_map.set(namespace_key, {
               name: import_stmt.namespace_name,
               source: import_stmt.source,
               source_path: source_module_path,
               exports: namespace_exports,
               location: import_stmt.location,
-              file_path: analysis.file_path
+              file_path: analysis.file_path,
             });
           }
         }
       }
     }
   }
-  
+
   // Resolve namespace member accesses
   for (const analysis of analyses) {
     // Get the AST for this file
     const tree = file_name_to_tree.get(analysis.file_path);
     if (!tree) continue;
-    
+
     // Find member access expressions in the AST
-    const member_accesses = find_member_access_expressions(analysis, tree.rootNode);
-    
+    const member_accesses = find_member_access_expressions(
+      analysis,
+      tree.rootNode
+    );
+
     for (const access of member_accesses) {
       const namespace_key = `${analysis.file_path}:${access.namespace}`;
       const namespace_info = namespace_map.get(namespace_key);
-      
+
       if (namespace_info) {
         const resolved_member = namespace_info.exports.get(access.member);
         if (resolved_member) {
@@ -207,43 +207,47 @@ async function resolve_namespaces_across_files(
             qualified_name: `${access.namespace}.${access.member}`,
             source_module: namespace_info.source_path,
             kind: resolved_member.kind,
-            location: resolved_member.location
+            location: resolved_member.location,
           });
         }
       }
     }
   }
-  
+
   // Update type registry with namespace-qualified types
   for (const [_, resolved_type] of resolved_members) {
-    if (resolved_type.kind === 'type' || resolved_type.kind === 'interface' || resolved_type.kind === 'class') {
+    if (
+      resolved_type.kind === "type" ||
+      resolved_type.kind === "interface" ||
+      resolved_type.kind === "class"
+    ) {
       // Map string kind to TypeKind enum
       let typeKind: TypeKind;
       switch (resolved_type.kind) {
-        case 'class':
+        case "class":
           typeKind = TypeKind.CLASS;
           break;
-        case 'interface':
+        case "interface":
           typeKind = TypeKind.INTERFACE;
           break;
-        case 'type':
+        case "type":
           typeKind = TypeKind.TYPE;
           break;
         default:
           typeKind = TypeKind.TYPE; // Default to TYPE for unknown kinds
       }
-      
+
       // Register the type with its qualified name
       const type_def = {
         name: resolved_type.qualified_name,
         file_path: resolved_type.source_module,
         location: resolved_type.location,
-        kind: typeKind
+        kind: typeKind,
       };
       register_type(type_registry, type_def, true, resolved_type.name);
     }
   }
-  
+
   return namespace_map;
 }
 
@@ -254,78 +258,79 @@ function resolveModulePath(
   module_graph: ModuleGraph
 ): string | undefined {
   // Check if it's a relative import
-  if (source.startsWith('./') || source.startsWith('../')) {
+  if (source.startsWith("./") || source.startsWith("../")) {
     // Resolve relative to the importing file
-    const base_dir = from_file.substring(0, from_file.lastIndexOf('/'));
+    const base_dir = from_file.substring(0, from_file.lastIndexOf("/"));
     return normalizeModulePath(`${base_dir}/${source}`);
   }
-  
+
   // Check module graph for absolute imports
   for (const [path, module_info] of module_graph.modules) {
     if (module_info.path === source || path.endsWith(source)) {
       return path;
     }
   }
-  
+
   return undefined;
 }
 
 // Helper function to normalize module paths
 function normalizeModulePath(path: string): string {
   // Remove .ts, .js, .tsx, .jsx extensions
-  const normalized = path.replace(/\.(ts|js|tsx|jsx)$/, '');
-  
+  const normalized = path.replace(/\.(ts|js|tsx|jsx)$/, "");
+
   // Resolve .. and . in the path
-  const parts = normalized.split('/');
+  const parts = normalized.split("/");
   const resolved: string[] = [];
-  
+
   for (const part of parts) {
-    if (part === '..') {
+    if (part === "..") {
       resolved.pop();
-    } else if (part !== '.' && part !== '') {
+    } else if (part !== "." && part !== "") {
       resolved.push(part);
     }
   }
-  
-  return resolved.join('/');
+
+  return resolved.join("/");
 }
 
 // Helper function to collect namespace exports
-function collectNamespaceExports(analysis: FileAnalysis): Map<string, NamespaceExportInfo> {
+function collectNamespaceExports(
+  analysis: FileAnalysis
+): Map<string, NamespaceExportInfo> {
   const exports = new Map<string, NamespaceExportInfo>();
-  
+
   // Collect named exports
   for (const export_stmt of analysis.exports) {
     if (export_stmt.symbol_name && !export_stmt.is_default) {
       exports.set(export_stmt.symbol_name, {
         name: export_stmt.symbol_name,
-        kind: 'export',
-        location: export_stmt.location
+        kind: "export",
+        location: export_stmt.location,
       });
     }
   }
-  
+
   // Collect exported functions
   for (const func of analysis.functions) {
     exports.set(func.name, {
       name: func.name,
-      kind: 'function',
-      location: func.location
+      kind: "function",
+      location: func.location,
     });
   }
-  
+
   // Collect exported classes
   for (const cls of analysis.classes) {
     exports.set(cls.name, {
       name: cls.name,
-      kind: 'class',
-      location: cls.location
+      kind: "class",
+      location: cls.location,
     });
   }
-  
+
   return exports;
 }
-
 
 /**
  * Generate a comprehensive code graph from a codebase
@@ -353,7 +358,7 @@ export async function generate_code_graph(
   const cache = createAnalysisCache({
     enabled: options.cache?.enabled ?? false,
     ttl: options.cache?.ttl,
-    maxSize: options.cache?.maxSize
+    maxSize: options.cache?.maxSize,
   });
 
   // FILE SCAN
@@ -371,7 +376,7 @@ export async function generate_code_graph(
   // FILE ANALYSIS WITH CACHING
   const analysis_promises = file_paths.map(async (file_path) => {
     const file = await read_and_parse_file(file_path);
-    
+
     // Check cache first
     const cachedAnalysis = cache.getCachedAnalysis(file_path, file.source_code);
     if (cachedAnalysis) {
@@ -380,7 +385,7 @@ export async function generate_code_graph(
       const { tree } = await analyze_file(file); // Parse tree only
       return { analysis: cachedAnalysis, tree };
     }
-    
+
     // Analyze and cache result
     const result = await analyze_file(file);
     cache.cacheAnalysis(file_path, file.source_code, result.analysis);
@@ -403,7 +408,7 @@ export async function generate_code_graph(
   // CLASS HIERARCHY - Build inheritance tree from all classes (needed for enrichment)
   const class_hierarchy = await build_class_hierarchy_from_analyses(
     analyses,
-    file_name_to_tree,
+    file_name_to_tree
   );
 
   // TODO: LAYER 9 - Global Call Resolution
@@ -417,11 +422,6 @@ export async function generate_code_graph(
   //   type_registry
   // );
 
-  // CLASS HIERARCHY
-  // TODO: Wire up the existing class hierarchy builder once it's converted to new types
-  // The inheritance_analysis/class_hierarchy module exists and works but uses old Def types
-  // const { build_class_hierarchy } = await import('./inheritance/class_hierarchy');
-
   // METHOD HIERARCHY ENRICHMENT (task 11.62.5)
   // Enrich method calls with class hierarchy information
 
@@ -429,7 +429,7 @@ export async function generate_code_graph(
   // Validate and enrich constructor calls with type registry
 
   // Create imports map for cross-file resolution
-  const imports_by_file = new Map<string, ImportInfo[]>();
+  const imports_by_file = new Map<FilePath, ImportInfo[]>();
   for (const analysis of analyses) {
     // Note: analysis.imports are ImportStatement[], but we need ImportInfo[]
     // This is a type mismatch we need to handle - for now, skip the imports
@@ -441,7 +441,7 @@ export async function generate_code_graph(
   let enriched_analyses = analyses;
 
   // FILE ANALYSIS - Build files map from enriched analyses
-  const files = new Map<string, FileAnalysis>();
+  const files = new Map<FilePath, FileAnalysis>();
   const language_stats = new Map<Language, number>();
 
   for (const analysis of enriched_analyses) {
@@ -503,7 +503,7 @@ export async function generate_code_graph(
     class_hierarchy,
     module_graph: modules,
     resolved_generics,
-    propagated_types
+    propagated_types,
   };
 
   // Enrichment options for comprehensive analysis
@@ -513,12 +513,17 @@ export async function generate_code_graph(
     include_confidence: true,
     resolve_virtual_dispatch: true,
     validate_constructors: true,
-    track_inheritance: true
+    track_inheritance: true,
   };
 
   // Re-enrich analyses with full global context
-  enriched_analyses = analyses.map((analysis) => 
-    enrich_all_calls(analysis, enrichment_context, enrichment_options) as FileAnalysis
+  enriched_analyses = analyses.map(
+    (analysis) =>
+      enrich_all_calls(
+        analysis,
+        enrichment_context,
+        enrichment_options
+      ) as FileAnalysis
   );
 
   // Update the files map with enriched analyses
@@ -631,7 +636,12 @@ function build_call_graph(
           symbol,
           file_path: analysis.file_path,
           location: method.location,
-          signature: method.signature,
+          signature: {
+            parameters: method.parameters,
+            return_type: method.return_type,
+            type_parameters: method.generics,
+            is_async: method.is_async,
+          },
           calls: [],
           called_by: [],
           is_exported: false, // TODO: Check if class is exported
@@ -738,11 +748,15 @@ function build_type_index(analyses: FileAnalysis[]): TypeIndex {
     if (analysis.type_info) {
       for (const [var_name, type_info] of analysis.type_info.entries()) {
         const key = `${analysis.file_path}#${var_name}`;
+        const var_scope = analysis.scopes.nodes.get(var_name);
+        if (!var_scope) {
+          throw new Error(`Variable ${var_name} not found in scope tree`);
+        }
         variables.set(key, {
           name: var_name,
-          type: type_info.type_name || 'unknown',
-          scope: analysis.file_path, // TODO: Get actual scope
-          is_mutable: true, // TODO: Determine mutability
+          type: type_info.type_name || "unknown",
+          scope_kind: var_scope.type,
+          location: type_info.location,
         });
       }
     }
@@ -777,7 +791,6 @@ function build_symbol_index(
         location: def.location,
         kind: def.kind as any, // Type mismatch - needs mapping
         is_exported: def.is_exported,
-        file_path: def.file_path,
         references: [],
       });
     }
@@ -796,7 +809,6 @@ function build_symbol_index(
             location: func.location,
             kind: "function",
             is_exported: false, // TODO: Check if exported
-            file_path: analysis.file_path,
             references: [],
           });
         }
@@ -811,7 +823,6 @@ function build_symbol_index(
             location: cls.location,
             kind: "class",
             is_exported: false, // TODO: Check if exported
-            file_path: analysis.file_path,
             references: [],
           });
         }
@@ -850,11 +861,11 @@ async function build_type_registry_from_analyses(
         location: class_def.location,
         methods: class_def.methods,
         properties: class_def.properties,
-        extends: class_def.base_classes,
-        implements: class_def.interfaces,
+        extends: class_def.extends,
+        implements: class_def.implements,
         is_abstract: class_def.is_abstract,
         is_exported: class_def.is_exported,
-        generics: class_def.type_parameters,
+        generics: class_def.generics,
         docstring: class_def.docstring,
         decorators: class_def.decorators,
       });
@@ -869,7 +880,7 @@ async function build_type_registry_from_analyses(
 
 /**
  * Track and validate interface implementations for all classes
- * 
+ *
  * This function ensures that classes properly implement their declared interfaces
  * and tracks the implementation relationships.
  */
@@ -880,14 +891,16 @@ function track_interface_implementations(
   // The ClassNode already tracks interfaces via the interfaces field
   // This is populated from class_def.implements during hierarchy building
   // For now, we just validate that the data is present
-  
+
   for (const class_def of class_definitions) {
     if (class_def.implements && class_def.implements.length > 0) {
       const classNode = hierarchy.classes.get(class_def.name);
       if (classNode) {
         // Verify interfaces are properly tracked
         if (!classNode.interfaces || classNode.interfaces.length === 0) {
-          console.warn(`Class ${class_def.name} implements interfaces but they are not tracked in hierarchy`);
+          console.warn(
+            `Class ${class_def.name} implements interfaces but they are not tracked in hierarchy`
+          );
         }
       }
     }
@@ -896,7 +909,7 @@ function track_interface_implementations(
 
 /**
  * Detect and validate method override information
- * 
+ *
  * This function uses the method_override module to detect override relationships
  * and validate the hierarchy's override data.
  */
@@ -906,45 +919,50 @@ function detect_and_validate_method_overrides(
 ): MethodOverrideMap {
   // Build a map of class methods for override analysis
   const class_methods = new Map<string, any[]>();
-  
+
   for (const class_def of class_definitions) {
     if (class_def.methods && class_def.methods.length > 0) {
       // Convert methods to the format expected by analyze_overrides_with_hierarchy
-      const methods = class_def.methods.map(method => ({
+      const methods = class_def.methods.map((method) => ({
         name: method.name,
         file_path: class_def.file_path,
         location: method.location,
         is_override: method.is_override,
-        symbol_id: `${class_def.name}.${method.name}`
+        symbol_id: `${class_def.name}.${method.name}`,
       }));
       class_methods.set(class_def.name, methods);
     }
   }
-  
+
   // Analyze overrides using the hierarchy and methods
-  const override_map = analyze_overrides_with_hierarchy(hierarchy, class_methods);
-  
+  const override_map = analyze_overrides_with_hierarchy(
+    hierarchy,
+    class_methods
+  );
+
   // Validate that override information is consistent
   for (const [className, classNode] of hierarchy.classes) {
     if (classNode.methods) {
       for (const [methodName, methodNode] of classNode.methods) {
         const methodKey = `${className}.${methodName}`;
         const overrideInfo = override_map.overrides.get(methodKey);
-        
+
         if (overrideInfo) {
           // Log if there's a discrepancy
           const hasOverride = overrideInfo.overrides !== undefined;
           if (hasOverride !== methodNode.is_override) {
-            console.debug(`Override mismatch for ${className}.${methodName}: detected=${hasOverride}, tracked=${methodNode.is_override}`);
+            console.debug(
+              `Override mismatch for ${className}.${methodName}: detected=${hasOverride}, tracked=${methodNode.is_override}`
+            );
           }
-          
+
           // The override_map provides additional detail that can be used
           // by enrichment phases and call graph analysis
         }
       }
     }
   }
-  
+
   return override_map;
 }
 
@@ -965,7 +983,9 @@ async function build_class_hierarchy_from_analyses(
   for (const analysis of analyses) {
     const file_tree = file_name_to_tree.get(analysis.file_path);
     if (!file_tree) {
-      throw new Error(`Tree and source code not found for file: ${analysis.file_path}`);
+      throw new Error(
+        `Tree and source code not found for file: ${analysis.file_path}`
+      );
     }
     // Create context for this file (without AST for now)
     contexts.set(analysis.file_path, {
@@ -976,13 +996,8 @@ async function build_class_hierarchy_from_analyses(
       all_definitions: [], // Will be populated if needed
     });
 
-    // Convert each ClassInfo to ClassDefinition
-    for (const classInfo of analysis.classes) {
-      const classDef = class_info_to_class_definition(
-        classInfo,
-        analysis.file_path,
-        analysis.language
-      );
+    // Classes are already ClassDefinition in FileAnalysis
+    for (const classDef of analysis.classes) {
       class_definitions.push(classDef);
     }
   }
@@ -994,15 +1009,17 @@ async function build_class_hierarchy_from_analyses(
   // The hierarchy already contains interface data from ClassDefinitions
   // This ensures the data is properly tracked
   track_interface_implementations(class_definitions, hierarchy);
-  
+
   // Detect and validate method overrides
   // This provides additional override chain analysis beyond what the hierarchy tracks
-  const override_map = detect_and_validate_method_overrides(hierarchy, class_definitions);
-  
+  const override_map = detect_and_validate_method_overrides(
+    hierarchy,
+    class_definitions
+  );
+
   // Store the override map for later use in enrichment
   // Note: The override_map could be stored in metadata or passed to enrichment phases
   // For now, we're validating and logging any discrepancies
 
   return hierarchy;
 }
-

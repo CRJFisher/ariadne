@@ -67,8 +67,6 @@ import {
   ImportStatement,
   ExportStatement,
   FunctionInfo,
-  ClassInfo,
-  MethodInfo,
   Location,
   FunctionSignature,
   ScopeTree,
@@ -120,7 +118,7 @@ interface Layer4Results {
 
 interface Layer6Results {
   functions: FunctionInfo[];
-  classes: ClassInfo[];
+  classes: ClassDefinition[];
 }
 
 interface Layer7Results {
@@ -646,7 +644,7 @@ function extract_definitions(
   inferred_returns?: Map<string, ReturnTypeInfo>
 ): Layer6Results {
   const functions: FunctionInfo[] = [];
-  const classes: ClassInfo[] = [];
+  const classes: ClassDefinition[] = [];
   // Error collector should be passed from parent
   
   // Extract functions from scope tree
@@ -705,75 +703,9 @@ function extract_definitions(
   }
   
   // Extract classes from class definitions
+  // ClassDefinition already has methods and properties, so we just pass them through
   for (const class_def of class_definitions) {
-    const methods: MethodInfo[] = [];
-    
-    // Find methods within this class
-    for (const [method_id, method_scope] of scopes.nodes) {
-      // Check if this is a method in the current class
-      if (method_scope.type === "function" && method_scope.parent_id) {
-        const parent_scope = scopes.nodes.get(method_scope.parent_id);
-        if (parent_scope?.type === "class" && parent_scope.metadata?.name === class_def.name) {
-          // Get method name from metadata
-          const method_name = method_scope.metadata?.name || `method_${method_scope.id}`;
-          
-          // Get pre-computed return type
-          const return_type_info = inferred_returns?.get(method_name);
-          
-          // Merge inferred parameter types for methods
-          let enhanced_parameters: ParameterType[] = [];
-          if (inferred_parameters) {
-            const param_analysis = inferred_parameters.get(method_name);
-            if (param_analysis && param_analysis.parameters) {
-              // Use parameters from analysis and add inferred types
-              enhanced_parameters = param_analysis.parameters.map(param => {
-                const inferred_type_info = param_analysis.inferred_types.get(param.name);
-                const result: ParameterType = {
-                  name: param.name,
-                  type: inferred_type_info?.inferred_type || param.type_annotation,
-                  default_value: param.default_value,
-                  is_rest: param.is_rest,
-                  is_optional: param.is_optional
-                };
-                return result;
-              });
-            }
-          }
-          
-          const signature: FunctionSignature = {
-            parameters: enhanced_parameters,
-            return_type: return_type_info?.type_name || undefined,
-            is_async: method_scope.metadata?.is_async || false,
-            is_generator: method_scope.metadata?.is_generator || false,
-            type_parameters: [],
-          };
-          
-          methods.push({
-            name: method_name,
-            location: method_scope.location,
-            signature,
-            visibility: "public",
-            is_static: false,
-            is_abstract: false,
-            decorators: [],
-          });
-        }
-      }
-    }
-    
-    const class_info: ClassInfo = {
-      name: class_def.name,
-      location: class_def.location,
-      base_classes: class_def.extends,
-      interfaces: class_def.implements,
-      methods,
-      properties: [],
-      is_abstract: class_def.is_abstract,
-      is_exported: class_def.is_exported,
-      decorators: class_def.decorators,
-    };
-    
-    classes.push(class_info);
+    classes.push(class_def);
   }
   
   return { functions, classes };
@@ -784,7 +716,7 @@ function extract_definitions(
  */
 function build_symbol_registry(
   functions: FunctionInfo[],
-  classes: ClassInfo[]
+  classes: ClassDefinition[]
 ): SymbolRegistry {
   const registry: SymbolRegistry = new Map();
   
@@ -816,7 +748,7 @@ function register_symbols(
   file_path: string,
   language: Language,
   functions: FunctionInfo[],
-  classes: ClassInfo[],
+  classes: ClassDefinition[],
   scopes: ScopeTree
 ): Layer7Results {
   // Build symbol registry from functions and classes
@@ -847,7 +779,7 @@ function build_file_analysis(
   imports: ImportInfo[],
   exports: ExportInfo[],
   functions: FunctionInfo[],
-  classes: ClassInfo[],
+  classes: ClassDefinition[],
   function_calls: FunctionCallInfo[],
   method_calls: MethodCallInfo[],
   constructor_calls: ConstructorCallInfo[],
@@ -868,6 +800,7 @@ function build_file_analysis(
   
   return {
     file_path: file.file_path,
+    source_code: file.source_code,
     language: file.language,
     imports: import_statements,
     exports: export_statements,
