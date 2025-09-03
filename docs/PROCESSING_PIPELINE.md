@@ -41,16 +41,15 @@ Each file is analyzed independently to extract local information. This phase can
 
 **Modules:**
 
-- `/scope_analysis/scope_tree` - Hierarchical scope structure with symbol extraction
-- `/scope_analysis/definition_finder` - Symbol definitions
+- `/scope_analysis/scope_tree` - Hierarchical scope structure with symbol extraction and variable tracking
 - `/scope_analysis/usage_finder` - Symbol usages
 
-**Outputs:** 
+**Outputs:**
 
 - `ScopeTree` with nodes containing symbols
 - Scope metadata (names, types, locations)
 - Symbol definitions with scope context
-- Variable declarations
+- Variable declarations (extracted from scope tree)
 - Closure captures
 
 ### Layer 2: Local Structure Detection
@@ -116,7 +115,7 @@ Each file is analyzed independently to extract local information. This phase can
 - `/utils/symbol_construction` - Symbol ID creation
 - `/utils/scope_path_builder` - Scope path extraction for symbols
 
-**Outputs:** 
+**Outputs:**
 
 - Function calls, method calls, constructor calls with discovered types
 - **Symbol registry (Map<entity, SymbolId>)**
@@ -183,10 +182,12 @@ Combines per-file analyses to build global understanding. This phase runs sequen
 **Modules:**
 
 Type resolution is handled by:
-- `/type_analysis/type_registry` - Type storage and lookup
-- `/type_analysis/type_propagation` - Type flow analysis  
+
+- `/type_analysis/type_registry` - Type storage and lookup (absorbs type_resolution)
+- `/type_analysis/type_propagation` - Type flow analysis
 - `/type_analysis/generic_resolution` - Generic type instantiation
 - `/import_export/namespace_resolution` - Namespace member resolver
+- `/ast/member_access` - Member access expressions for namespace resolution
 
 **Outputs:** resolved types, generic instantiations, type compatibility matrix
 
@@ -211,7 +212,7 @@ Type resolution is handled by:
 - `/utils/symbol_construction` - Symbol ID creation utilities
 - `/utils/scope_path_builder` - Scope path extraction
 
-**Outputs:** 
+**Outputs:**
 
 - `GlobalSymbolTable` - Unified symbol definitions
 - Symbol-to-entity mappings
@@ -225,6 +226,8 @@ Type resolution is handled by:
 
 Uses global knowledge to enhance and validate per-file analysis results. This critical phase bridges the gap between local and global analysis.
 
+**Central Module:** `/call_graph/enrichment` - Standardized enrichment API (replaces call_resolution)
+
 ### Enrichment Pattern
 
 The enrichment phase operates on the principle of **progressive enhancement**:
@@ -232,6 +235,8 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 1. Per-file analysis extracts raw, unvalidated data
 2. Global assembly builds comprehensive registries
 3. Enrichment validates and enhances per-file data with global context
+
+**Function:** `enrich_all_calls(analysis, context, options)`
 
 ### Method Call Enrichment
 
@@ -290,6 +295,23 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 - Cross-file type validation
 - Improved type confidence scores
 
+### Function Call Enrichment
+
+**Processing:**
+
+- Validate function calls against symbol table
+- Resolve imported function references
+- Track return types and parameter types
+- Calculate confidence scores
+
+**Enhancements:**
+
+- `resolved_function` - Fully qualified function name
+- `return_type` - Resolved return type
+- `parameter_types` - Resolved parameter types
+- `is_imported` - Whether function is imported
+- `confidence_score` - Resolution confidence
+
 ### Call Graph Completion
 
 **Dependencies:** All enriched data
@@ -305,6 +327,7 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 **Modules:**
 
 - `/call_graph/call_chain_analysis` - Call chain tracer
+- `/call_graph/enrichment` - Unified enrichment coordination
 
 **Outputs:** complete call graph, validated call chains, execution flows
 
@@ -339,17 +362,20 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 │  4. Resolve types across files                           │
 │  5. Build global symbol table                            │
 │  6. Resolve symbols and references globally              │
+│  7. Resolve generics and propagate types                 │
+│  8. Resolve namespace members                            │
 └─────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────┐
 │                   Enrichment Phase                       │
 │                     (Sequential)                         │
 ├─────────────────────────────────────────────────────────┤
-│  1. Enrich method calls with hierarchy                   │
-│  2. Enrich constructor calls with types                  │
-│  3. Merge type discoveries                               │
-│  4. Complete call graph with validations                 │
-│  5. Trace execution flows                                │
+│  1. Enrich function calls with resolved symbols          │
+│  2. Enrich method calls with hierarchy                   │
+│  3. Enrich constructor calls with types                  │
+│  4. Merge type discoveries                               │
+│  5. Complete call graph with validations                 │
+│  6. Trace execution flows                                │
 └─────────────────────────────────────────────────────────┘
 ```
 
