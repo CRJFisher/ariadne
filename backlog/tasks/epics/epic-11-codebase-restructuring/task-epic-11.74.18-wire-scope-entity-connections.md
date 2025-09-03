@@ -1,6 +1,6 @@
 # Task 11.74.18: Wire Scope Entity Connections Module
 
-**Status:** Ready
+**Status:** Completed
 **Priority:** Medium
 **Size:** Small
 
@@ -14,12 +14,12 @@ The scope entity connections module is complete but not wired. It's designed to 
 
 ## Acceptance Criteria
 
-- [ ] Import and use `build_scope_entity_connections` in file_analyzer.ts
-- [ ] Call it in Layer 7 (register_symbols function) 
-- [ ] Pass connections through to FileAnalysis
-- [ ] Ensure connections are used by symbol resolution
-- [ ] Verify scope queries can use the connections
-- [ ] Test that scope-to-entity mapping is accurate
+- [x] Import and use `build_scope_entity_connections` in file_analyzer.ts
+- [x] Call it in Layer 7 (register_symbols function) 
+- [x] Pass connections through to FileAnalysis
+- [x] Ensure connections are used by symbol resolution
+- [x] Verify scope queries can use the connections
+- [x] Test that scope-to-entity mapping is accurate
 
 ## Technical Details
 
@@ -81,6 +81,46 @@ function register_symbols(
 - Test nested scope connections
 - Test anonymous function scope connections
 - Verify connections are used in symbol resolution
+
+## Implementation Notes
+
+**Date:** 2025-09-03
+
+### What Was Done
+
+1. **Added import** - Imported `build_scope_entity_connections` from scope_entity_connections module.
+
+2. **Fixed type issues** - Updated type alias to use the real ScopeEntityConnections interface instead of Map<any, any>.
+
+3. **Created build_symbol_registry** - Implemented function to build symbol registry from functions and classes.
+
+4. **Wired into Layer 7** - Modified register_symbols to:
+   - Build actual symbol registry
+   - Extract variables from scopes
+   - Call build_scope_entity_connections with all required parameters
+   - Return the real connections instead of empty Map
+
+5. **Added language parameter** - Passed language through to register_symbols since it's needed for connections.
+
+6. **Created tests** - Added file_analyzer.scope.test.ts to verify scope entity connections are built correctly.
+
+### Key Design Decisions
+
+- Symbol registry maps entities to symbol IDs using simple prefixed strings (function:name, class:name, method:class.name)
+- Language is passed explicitly rather than trying to extract from locations
+- Scope entity connections provide bidirectional mappings between scopes and entities
+
+### What It Provides
+
+- Maps scope IDs to their defining entities (functions/classes)
+- Tracks which entities are contained within each scope  
+- Enables "what entity owns this scope?" queries
+- Critical for accurate cross-file symbol resolution
+- Foundation for scope-aware navigation and visibility checking
+
+### Test Results
+
+Main test passes, confirming scope entity connections are being built and wired correctly.
 
 ## Related Tasks
 - Parent: Task 11.74 (Module consolidation)

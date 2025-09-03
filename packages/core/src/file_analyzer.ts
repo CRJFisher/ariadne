@@ -16,6 +16,10 @@ import {
   EnhancedScopeSymbol, 
   extract_variables_from_symbols 
 } from "./scope_analysis/scope_tree";
+import {
+  build_scope_entity_connections,
+  ScopeEntityConnections as RealScopeEntityConnections
+} from "./scope_analysis/scope_entity_connections";
 import { extract_imports } from "./import_export/import_resolution";
 import { extract_exports } from "./import_export/export_detection";
 import { find_class_definitions } from "./inheritance/class_detection";
@@ -77,9 +81,9 @@ import type { FileTypeTracker } from "./type_analysis/type_tracking";
 import type { MethodCallInfo } from "./call_graph/method_calls";
 import type { ConstructorCallInfo } from "./call_graph/constructor_calls";
 import { CodeFile } from "./project/file_scanner";
-// Symbol types - to be properly imported when symbol_analysis module is available
+// Symbol types
 type SymbolRegistry = Map<any, any>;
-type ScopeEntityConnections = Map<any, any>;
+type ScopeEntityConnections = RealScopeEntityConnections;
 
 interface ParseResult {
   tree: Parser.Tree;
@@ -380,6 +384,7 @@ export async function analyze_file(
   // Layer 7: Symbol Registration
   const layer7 = register_symbols(
     file.file_path,
+    file.language,
     layer6.functions,
     layer6.classes,
     layer1.scopes
@@ -771,18 +776,61 @@ function extract_definitions(
 }
 
 /**
+ * Build a symbol registry from functions and classes
+ */
+function build_symbol_registry(
+  functions: FunctionInfo[],
+  classes: ClassInfo[]
+): SymbolRegistry {
+  const registry: SymbolRegistry = new Map();
+  
+  // Register functions
+  for (const func of functions) {
+    const symbol_id = `function:${func.name}`;
+    registry.set(func, symbol_id);
+  }
+  
+  // Register classes and their methods
+  for (const cls of classes) {
+    const class_symbol_id = `class:${cls.name}`;
+    registry.set(cls, class_symbol_id);
+    
+    // Register methods
+    for (const method of cls.methods) {
+      const method_symbol_id = `method:${cls.name}.${method.name}`;
+      registry.set(method, method_symbol_id);
+    }
+  }
+  
+  return registry;
+}
+
+/**
  * Layer 7: Register symbols and create connections
  */
 function register_symbols(
   file_path: string,
+  language: Language,
   functions: FunctionInfo[],
   classes: ClassInfo[],
   scopes: ScopeTree
 ): Layer7Results {
-  // TODO: Implement actual symbol registration
-  // This is a placeholder that should be replaced with actual implementation
-  const symbol_registry: SymbolRegistry = new Map();
-  const scope_entity_connections: ScopeEntityConnections = new Map();
+  // Build symbol registry from functions and classes
+  const symbol_registry: SymbolRegistry = build_symbol_registry(functions, classes);
+  
+  // Extract variables from scopes for connections
+  const variables = extract_variables_from_scopes(scopes);
+  
+  // Build real scope entity connections using the actual implementation
+  const scope_entity_connections = build_scope_entity_connections(
+    scopes,
+    functions,
+    classes,
+    variables,
+    symbol_registry,
+    language,
+    file_path
+  );
   
   return { symbol_registry, scope_entity_connections };
 }
