@@ -74,6 +74,12 @@ import {
   build_interface_implementation_map,
   find_interface_implementations,
 } from "./inheritance/interface_implementation";
+import {
+  analyze_overrides_with_hierarchy,
+  MethodOverrideMap,
+  find_overriding_methods,
+  find_overridden_method,
+} from "./inheritance/method_override";
 import { class_info_to_class_definition } from "./utils";
 import {
   scan_files,
@@ -861,6 +867,60 @@ function track_interface_implementations(
 }
 
 /**
+ * Detect and validate method override information
+ * 
+ * This function uses the method_override module to detect override relationships
+ * and validate the hierarchy's override data.
+ */
+function detect_and_validate_method_overrides(
+  hierarchy: ClassHierarchy,
+  class_definitions: ClassDefinition[]
+): MethodOverrideMap {
+  // Build a map of class methods for override analysis
+  const class_methods = new Map<string, any[]>();
+  
+  for (const class_def of class_definitions) {
+    if (class_def.methods && class_def.methods.length > 0) {
+      // Convert methods to the format expected by analyze_overrides_with_hierarchy
+      const methods = class_def.methods.map(method => ({
+        name: method.name,
+        file_path: class_def.file_path,
+        location: method.location,
+        is_override: method.is_override,
+        symbol_id: `${class_def.name}.${method.name}`
+      }));
+      class_methods.set(class_def.name, methods);
+    }
+  }
+  
+  // Analyze overrides using the hierarchy and methods
+  const override_map = analyze_overrides_with_hierarchy(hierarchy, class_methods);
+  
+  // Validate that override information is consistent
+  for (const [className, classNode] of hierarchy.classes) {
+    if (classNode.methods) {
+      for (const [methodName, methodNode] of classNode.methods) {
+        const methodKey = `${className}.${methodName}`;
+        const overrideInfo = override_map.overrides.get(methodKey);
+        
+        if (overrideInfo) {
+          // Log if there's a discrepancy
+          const hasOverride = overrideInfo.overrides !== undefined;
+          if (hasOverride !== methodNode.is_override) {
+            console.debug(`Override mismatch for ${className}.${methodName}: detected=${hasOverride}, tracked=${methodNode.is_override}`);
+          }
+          
+          // The override_map provides additional detail that can be used
+          // by enrichment phases and call graph analysis
+        }
+      }
+    }
+  }
+  
+  return override_map;
+}
+
+/**
  * Build class hierarchy from all file analyses
  *
  * Creates an inheritance tree from all class definitions, enabling
@@ -902,6 +962,14 @@ async function build_class_hierarchy_from_analyses(
   // The hierarchy already contains interface data from ClassDefinitions
   // This ensures the data is properly tracked
   track_interface_implementations(class_definitions, hierarchy);
+  
+  // Detect and validate method overrides
+  // This provides additional override chain analysis beyond what the hierarchy tracks
+  const override_map = detect_and_validate_method_overrides(hierarchy, class_definitions);
+  
+  // Store the override map for later use in enrichment
+  // Note: The override_map could be stored in metadata or passed to enrichment phases
+  // For now, we're validating and logging any discrepancies
 
   return hierarchy;
 }
