@@ -318,19 +318,29 @@ export async function analyze_file(
   file: CodeFile
 ): Promise<{ analysis: FileAnalysis; tree: Parser.Tree }> {
   
+  // Create error collector for this file
+  const error_collector = create_error_collector(
+    file.file_path,
+    file.language,
+    'parsing'
+  );
+  
   // Parse the file
   const { tree, parser } = parse_file(file);
   const source_code = file.source_code || "";
   
   // Layer 1: Scope Analysis
-  const layer1 = analyze_scopes(tree, source_code, file.language, file.file_path);
+  error_collector.set_phase('scope_analysis');
+  const layer1 = analyze_scopes(tree, source_code, file.language, file.file_path, error_collector);
   
   // Layer 2: Local Structure Detection
+  error_collector.set_phase('class_detection');
   const layer2 = detect_local_structures(
     tree.rootNode,
     source_code,
     file.language,
-    file.file_path
+    file.file_path,
+    error_collector
   );
   
   // Layer 3: Local Type Analysis
@@ -388,7 +398,8 @@ export async function analyze_file(
     layer3.type_tracker,
     layer7.symbol_registry,
     layer7.scope_entity_connections,
-    layer1.scopes
+    layer1.scopes,
+    error_collector
   );
   
   return { analysis, tree };
@@ -428,7 +439,8 @@ function analyze_scopes(
   tree: Parser.Tree,
   source_code: string,
   language: Language,
-  file_path: string
+  file_path: string,
+  error_collector?: ErrorCollector
 ): Layer1Results {
   const scopes = build_scope_tree(
     tree.rootNode,
@@ -447,7 +459,8 @@ function detect_local_structures(
   root_node: SyntaxNode,
   source_code: string,
   language: Language,
-  file_path: string
+  file_path: string,
+  error_collector?: ErrorCollector
 ): Layer2Results {
   // Extract imports
   const imports = extract_imports(
@@ -625,7 +638,7 @@ function extract_definitions(
 ): Layer6Results {
   const functions: FunctionInfo[] = [];
   const classes: ClassInfo[] = [];
-  const error_collector = create_error_collector();
+  // Error collector should be passed from parent
   
   // Extract functions from scope tree
   for (const [scope_id, scope] of scopes.nodes) {
@@ -789,7 +802,8 @@ function build_file_analysis(
   type_tracker: FileTypeTracker,
   symbol_registry: SymbolRegistry,
   scope_entity_connections: ScopeEntityConnections,
-  scopes: ScopeTree
+  scopes: ScopeTree,
+  error_collector?: ErrorCollector
 ): FileAnalysis {
   // Convert to public API types
   const import_statements = convert_imports_to_statements(imports, file.file_path);
@@ -798,7 +812,7 @@ function build_file_analysis(
   
   // Extract variables from scope tree
   const variables = extract_variables_from_scopes(scopes);
-  const errors = create_empty_errors();
+  const errors = error_collector?.get_errors() || create_empty_errors();
   
   return {
     file_path: file.file_path,
