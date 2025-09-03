@@ -3,7 +3,7 @@
  */
 
 import { Location } from './common';
-import { TypeName } from './aliases';
+import { TypeName, FilePath } from './aliases';
 
 /**
  * Common base interface for all definition types
@@ -12,7 +12,7 @@ import { TypeName } from './aliases';
 export interface Definition {
   readonly name: string;
   readonly location: Location;
-  readonly file_path: string;
+  readonly file_path: FilePath;
 }
 
 /**
@@ -59,15 +59,6 @@ export interface GenericParameter {
   readonly constraint?: string;
   readonly default?: string;
   readonly variance?: 'in' | 'out' | 'invariant';
-}
-
-/**
- * Generic type instance with concrete type arguments
- */
-export interface GenericInstance {
-  readonly base_type: TypeName;           // e.g., "Array"
-  readonly type_arguments: readonly TypeName[];    // e.g., ["string"]
-  readonly resolved_type: string;          // e.g., "Array<string>"
 }
 
 /**

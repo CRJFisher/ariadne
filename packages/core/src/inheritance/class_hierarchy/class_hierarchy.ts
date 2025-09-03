@@ -14,22 +14,27 @@ import type {
   ClassHierarchy,
   InheritanceEdge,
   MethodNode,
-  PropertyNode
+  PropertyNode,
+  Language,
+  QualifiedName
 } from '@ariadnejs/types';
 import type { 
   ClassDefinition,
   MethodDefinition,
   PropertyDefinition
 } from '@ariadnejs/types';
+import { SourceCode } from '@ariadnejs/types';
+import { FilePath } from '@ariadnejs/types';
+import Parser from 'tree-sitter';
 
 /**
  * Context for building class hierarchy
  */
 export interface ClassHierarchyContext {
-  tree?: any; // Tree-sitter tree (optional)
-  source_code: string;
-  file_path: string;
-  language: string;
+  tree: Parser.Tree;
+  source_code: SourceCode;
+  file_path: FilePath;
+  language: Language;
   all_definitions?: any[]; // All class/interface definitions in project
 }
 
@@ -38,11 +43,11 @@ export interface ClassHierarchyContext {
  */
 export function build_class_hierarchy(
   definitions: ClassDefinition[],
-  contexts: Map<string, ClassHierarchyContext>
+  contexts: Map<FilePath, ClassHierarchyContext>
 ): ClassHierarchy {
-  const classes = new Map<string, ClassNode>();
+  const classes = new Map<QualifiedName, ClassNode>();
   const edges: InheritanceEdge[] = [];
-  const roots = new Set<string>();
+  const roots = new Set<FilePath>();
   
   // First pass: Create all ClassNodes
   for (const def of definitions) {
@@ -106,9 +111,9 @@ export function build_class_hierarchy(
   compute_enhanced_fields(classes, edges);
   
   return {
-    classes: classes as ReadonlyMap<string, ClassNode>,
+    classes: classes,
     inheritance_edges: edges,
-    root_classes: roots as ReadonlySet<string>,
+    root_classes: roots,
     metadata: {
       build_time: Date.now(),
       total_classes: classes.size,
@@ -167,7 +172,7 @@ function build_property_map(properties: readonly PropertyDefinition[]): Readonly
  * Populate derived_classes based on inheritance edges
  */
 function compute_derived_classes(
-  classes: Map<string, ClassNode>,
+  classes: Map<FilePath, ClassNode>,
   edges: InheritanceEdge[]
 ): void {
   for (const edge of edges) {
@@ -188,7 +193,7 @@ function compute_derived_classes(
  * Compute enhanced fields: all_ancestors, all_descendants, method_resolution_order
  */
 function compute_enhanced_fields(
-  classes: Map<string, ClassNode>,
+  classes: Map<FilePath, ClassNode>,
   edges: InheritanceEdge[]
 ): void {
   for (const [key, node] of classes) {
@@ -226,7 +231,7 @@ function compute_enhanced_fields(
  */
 function compute_all_ancestors(
   node: ClassNode,
-  classes: Map<string, ClassNode>,
+  classes: Map<FilePath, ClassNode>,
   edges: InheritanceEdge[]
 ): ClassNode[] {
   const ancestors: ClassNode[] = [];
@@ -259,7 +264,7 @@ function compute_all_ancestors(
  */
 function compute_all_descendants(
   node: ClassNode,
-  classes: Map<string, ClassNode>
+  classes: Map<FilePath, ClassNode>
 ): ClassNode[] {
   const descendants: ClassNode[] = [];
   const visited = new Set<string>();
@@ -291,7 +296,7 @@ function compute_all_descendants(
  */
 function compute_mro(
   node: ClassNode,
-  classes: Map<string, ClassNode>,
+  classes: Map<FilePath, ClassNode>,
   edges: InheritanceEdge[]
 ): ClassNode[] {
   const mro: ClassNode[] = [node];

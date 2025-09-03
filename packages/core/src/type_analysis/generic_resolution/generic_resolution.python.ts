@@ -14,6 +14,7 @@ import {
   parse_generic_type,
   resolve_generic_type
 } from './generic_resolution';
+import { TypeRegistry } from '../type_registry';
 
 /**
  * Extract Python generic parameters from AST node (PEP 484 style)
@@ -85,7 +86,7 @@ export function extract_python_generics(
 export function resolve_python_generic(
   type_ref: string,
   context: GenericContext,
-  type_registry?: Map<string, any>
+  type_registry: TypeRegistry
 ): ResolvedGeneric {
   // Handle Python typing module generics
   const typing_aliases: Record<string, string> = {

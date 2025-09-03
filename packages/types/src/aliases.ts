@@ -1,6 +1,7 @@
 // File and module identifiers
 export type FilePath = string;        // Absolute or relative file path
 export type ModulePath = string;      // Module import path (e.g., 'lodash', './utils')
+export type SourceCode = string;      // Source code
 
 // Symbol identifiers
 export type SymbolId = string;        // Unique symbol identifier (format: "file_path#symbol_name")

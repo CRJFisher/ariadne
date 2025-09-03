@@ -250,7 +250,7 @@ async function resolve_namespaces_across_files(
 // Helper function to resolve module paths
 function resolveModulePath(
   source: string,
-  from_file: string,
+  from_file: FilePath,
   module_graph: ModuleGraph
 ): string | undefined {
   // Check if it's a relative import
@@ -262,7 +262,7 @@ function resolveModulePath(
   
   // Check module graph for absolute imports
   for (const [path, module_info] of module_graph.modules) {
-    if (module_info.name === source || path.endsWith(source)) {
+    if (module_info.path === source || path.endsWith(source)) {
       return path;
     }
   }
@@ -403,7 +403,7 @@ export async function generate_code_graph(
   // CLASS HIERARCHY - Build inheritance tree from all classes (needed for enrichment)
   const class_hierarchy = await build_class_hierarchy_from_analyses(
     analyses,
-    file_name_to_tree
+    file_name_to_tree,
   );
 
   // TODO: LAYER 9 - Global Call Resolution
@@ -956,17 +956,21 @@ function detect_and_validate_method_overrides(
  */
 async function build_class_hierarchy_from_analyses(
   analyses: FileAnalysis[],
-  file_name_to_tree: Map<FilePath, SyntaxNode>
+  file_name_to_tree: Map<FilePath, Parser.Tree>
 ): Promise<ClassHierarchy> {
   // Convert ClassInfo to ClassDefinition format
   const class_definitions: ClassDefinition[] = [];
-  const contexts = new Map<string, ClassHierarchyContext>();
+  const contexts = new Map<FilePath, ClassHierarchyContext>();
 
   for (const analysis of analyses) {
+    const file_tree = file_name_to_tree.get(analysis.file_path);
+    if (!file_tree) {
+      throw new Error(`Tree and source code not found for file: ${analysis.file_path}`);
+    }
     // Create context for this file (without AST for now)
     contexts.set(analysis.file_path, {
-      tree: file_name_to_tree.get(analysis.file_path),
-      source_code: "", // Source code not available here
+      tree: file_tree,
+      source_code: analysis.source_code,
       file_path: analysis.file_path,
       language: analysis.language,
       all_definitions: [], // Will be populated if needed

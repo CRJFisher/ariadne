@@ -14,6 +14,7 @@ import {
   parse_generic_type,
   resolve_generic_type
 } from './generic_resolution';
+import { TypeRegistry } from '../type_registry';
 
 /**
  * Extract TypeScript generic parameters from AST node
@@ -53,7 +54,7 @@ export function extract_typescript_generics(
 export function resolve_typescript_generic(
   type_ref: string,
   context: GenericContext,
-  type_registry?: Map<string, any>
+  type_registry: TypeRegistry
 ): ResolvedGeneric {
   // Handle TypeScript utility types
   const utility_types: Record<string, (args: string[]) => string> = {

@@ -13,6 +13,7 @@ import {
   GenericContext,
   resolve_generic_type
 } from './generic_resolution';
+import { TypeRegistry } from '../type_registry';
 
 /**
  * Extract Rust generic parameters from AST node
@@ -70,7 +71,7 @@ export function extract_rust_generics(
 export function resolve_rust_generic(
   type_ref: string,
   context: GenericContext,
-  type_registry?: Map<string, any>
+  type_registry: TypeRegistry
 ): ResolvedGeneric {
   // Handle Rust-specific patterns like lifetimes
   let cleaned_ref = type_ref.replace(/'[a-z]+/g, ''); // Remove lifetime annotations

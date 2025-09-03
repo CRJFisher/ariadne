@@ -6,11 +6,11 @@
 
 import { 
   Language, 
-  TypeName,
   GenericParameter,
-  GenericInstance,
-  GenericContext,
-  ResolvedGeneric
+  ResolvedGeneric,
+  FileAnalysis,
+  FilePath,
+  ClassHierarchy
 } from '@ariadnejs/types';
 import { SyntaxNode } from 'tree-sitter';
 import {
@@ -20,7 +20,8 @@ import {
   parse_generic_type,
   satisfies_constraint,
   infer_type_arguments,
-  substitute_type_parameters
+  substitute_type_parameters,
+  GenericContext
 } from './generic_resolution';
 
 // Language-specific imports
@@ -41,11 +42,12 @@ import {
   resolve_python_generic,
   is_typing_generic
 } from './generic_resolution.python';
+import { ModuleGraphWithEdges } from '../../import_export/module_graph';
+import { TypeRegistry } from '../type_registry';
 
 // Re-export types from shared package for convenience
 export {
   GenericParameter,
-  GenericInstance,
   ResolvedGeneric
 } from '@ariadnejs/types';
 
@@ -99,7 +101,7 @@ export function resolve_language_generic(
   type_ref: string,
   language: Language,
   context: GenericContext,
-  type_registry?: Map<string, any>
+  type_registry: TypeRegistry
 ): ResolvedGeneric {
   switch (language) {
     case 'typescript':
@@ -155,11 +157,11 @@ export function is_generic_parameter(
  */
 export async function resolve_generics_across_files(
   analyses: FileAnalysis[],
-  type_registry: any, // TypeRegistry from type_registry module
-  class_hierarchy: any, // ClassHierarchy from class_hierarchy module  
-  modules: any // ModuleGraph from module_graph
-): Promise<Map<string, ResolvedGeneric[]>> {
-  const resolved_generics = new Map<string, ResolvedGeneric[]>();
+  type_registry: TypeRegistry, // TypeRegistry from type_registry module
+  class_hierarchy: ClassHierarchy, // ClassHierarchy from class_hierarchy module  
+  modules: ModuleGraphWithEdges // ModuleGraph from module_graph
+): Promise<Map<FilePath, ResolvedGeneric[]>> {
+  const resolved_generics = new Map<FilePath, ResolvedGeneric[]>();
   
   // Process each file's analysis
   for (const analysis of analyses) {

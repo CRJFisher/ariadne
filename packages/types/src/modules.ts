@@ -42,7 +42,6 @@ export interface ModuleNode {
   readonly imports: ReadonlyMap<ModulePath, ImportedModule>;
   readonly exports: ReadonlyMap<ExportName, ExportedSymbol>;
   readonly imported_by: ReadonlySet<FilePath>;
-  readonly language?: string;
 }
 
 export interface ImportedModule {

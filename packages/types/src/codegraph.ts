@@ -11,11 +11,12 @@ import { ClassHierarchy } from "./classes";
 import { TypeIndex, TypeInfo } from "./types";
 import { SymbolIndex } from "./symbols";
 import { ScopeTree } from "./scopes";
-import { FilePath, VariableName, TypeString } from "./aliases";
+import { FilePath, VariableName, TypeString, SourceCode } from "./aliases";
 import { ExportStatement, ImportStatement } from "./import_export";
 
 export interface FileAnalysis {
   readonly file_path: FilePath;
+  readonly source_code: SourceCode;
   readonly language: Language;
   readonly functions: readonly FunctionInfo[];
   readonly classes: readonly ClassInfo[];

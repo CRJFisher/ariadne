@@ -9,7 +9,6 @@ import {
   TypeName, 
   Location,
   GenericParameter,
-  GenericInstance,
   ResolvedGeneric
 } from '@ariadnejs/types';
 
