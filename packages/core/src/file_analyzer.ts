@@ -32,10 +32,6 @@ import {
   ErrorCollector,
 } from "./error_collection/analysis_errors";
 import {
-  find_function_node,
-  get_enclosing_class_name,
-} from "./definition_extraction/def_factory";
-import {
   convert_imports_to_statements,
   convert_exports_to_statements,
   convert_type_map_to_public,
@@ -124,24 +120,6 @@ interface Layer7Results {
   scope_entity_connections: ScopeEntityConnections;
 }
 
-/**
- * Convert Location to ScopeRange format for find_function_node
- * Note: Location uses 1-based line numbers, tree-sitter uses 0-based rows
- */
-function location_to_range(location: Location): any {
-  return {
-    start: {
-      row: location.line - 1,      // Convert 1-based to 0-based
-      column: location.column - 1,  // Convert 1-based to 0-based
-    },
-    end: {
-      row: (location.end_line || location.line) - 1,      // Convert 1-based to 0-based
-      column: (location.end_column || location.column) - 1,  // Convert 1-based to 0-based
-    },
-    start_byte: 0,  // Not used by find_function_node
-    end_byte: 0,    // Not used by find_function_node
-  };
-}
 
 /**
  * Helper function to infer return types for all functions in the file
@@ -657,59 +635,50 @@ function extract_definitions(
         continue;
       }
       
-      const func_node = find_function_node(root_node, location_to_range(scope.location));
-      if (func_node) {
-        const enclosing_class = get_enclosing_class_name(
-          scopes,
-          scope.location.line
-        );
-        
-        // Get function name from metadata
-        const func_name = scope.metadata?.name || `anonymous_${scope.id}`;
-        
-        // Get pre-computed return type
-        const return_type_info = inferred_returns?.get(func_name);
-        
-        // Merge inferred parameter types
-        let enhanced_parameters: ParameterType[] = [];
-        if (inferred_parameters) {
-          const param_analysis = inferred_parameters.get(func_name);
-          if (param_analysis && param_analysis.parameters) {
-            // Use parameters from analysis and add inferred types
-            enhanced_parameters = param_analysis.parameters.map(param => {
-              const inferred_type_info = param_analysis.inferred_types.get(param.name);
-              const result: ParameterType = {
-                name: param.name,
-                type: inferred_type_info?.inferred_type || param.type_annotation,
-                default_value: param.default_value,
-                is_rest: param.is_rest,
-                is_optional: param.is_optional
-              };
-              return result;
-            });
-          }
-        }
-        
-        const signature: FunctionSignature = {
-          parameters: enhanced_parameters,
-          return_type: return_type_info?.type_name || undefined,
-          is_async: scope.metadata?.is_async || false,
-          is_generator: scope.metadata?.is_generator || false,
-          type_parameters: [],
-        };
-        
-        const func_info: FunctionInfo = {
-          name: func_name,
-          location: scope.location,
-          signature,
-          docstring: undefined,
-          decorators: [],
-        };
-        
-        if (!enclosing_class) {
-          functions.push(func_info);
+      // Get function name from metadata
+      const func_name = scope.metadata?.name || `anonymous_${scope.id}`;
+      
+      // Get pre-computed return type
+      const return_type_info = inferred_returns?.get(func_name);
+      
+      // Merge inferred parameter types
+      let enhanced_parameters: ParameterType[] = [];
+      if (inferred_parameters) {
+        const param_analysis = inferred_parameters.get(func_name);
+        if (param_analysis && param_analysis.parameters) {
+          // Use parameters from analysis and add inferred types
+          enhanced_parameters = param_analysis.parameters.map(param => {
+            const inferred_type_info = param_analysis.inferred_types.get(param.name);
+            const result: ParameterType = {
+              name: param.name,
+              type: inferred_type_info?.inferred_type || param.type_annotation,
+              default_value: param.default_value,
+              is_rest: param.is_rest,
+              is_optional: param.is_optional
+            };
+            return result;
+          });
         }
       }
+      
+      const signature: FunctionSignature = {
+        parameters: enhanced_parameters,
+        return_type: return_type_info?.type_name || undefined,
+        is_async: scope.metadata?.is_async || false,
+        is_generator: scope.metadata?.is_generator || false,
+        type_parameters: [],
+      };
+      
+      const func_info: FunctionInfo = {
+        name: func_name,
+        location: scope.location,
+        signature,
+        docstring: undefined,
+        decorators: [],
+      };
+      
+      // Only add standalone functions (not methods inside classes)
+      functions.push(func_info);
     }
   }
   
@@ -723,52 +692,49 @@ function extract_definitions(
       if (method_scope.type === "function" && method_scope.parent_id) {
         const parent_scope = scopes.nodes.get(method_scope.parent_id);
         if (parent_scope?.type === "class" && parent_scope.metadata?.name === class_def.name) {
-          const func_node = find_function_node(root_node, location_to_range(method_scope.location));
-          if (func_node) {
-            // Get method name from metadata
-            const method_name = method_scope.metadata?.name || `method_${method_scope.id}`;
-            
-            // Get pre-computed return type
-            const return_type_info = inferred_returns?.get(method_name);
-            
-            // Merge inferred parameter types for methods
-            let enhanced_parameters: ParameterType[] = [];
-            if (inferred_parameters) {
-              const param_analysis = inferred_parameters.get(method_name);
-              if (param_analysis && param_analysis.parameters) {
-                // Use parameters from analysis and add inferred types
-                enhanced_parameters = param_analysis.parameters.map(param => {
-                  const inferred_type_info = param_analysis.inferred_types.get(param.name);
-                  const result: ParameterType = {
-                    name: param.name,
-                    type: inferred_type_info?.inferred_type || param.type_annotation,
-                    default_value: param.default_value,
-                    is_rest: param.is_rest,
-                    is_optional: param.is_optional
-                  };
-                  return result;
-                });
-              }
+          // Get method name from metadata
+          const method_name = method_scope.metadata?.name || `method_${method_scope.id}`;
+          
+          // Get pre-computed return type
+          const return_type_info = inferred_returns?.get(method_name);
+          
+          // Merge inferred parameter types for methods
+          let enhanced_parameters: ParameterType[] = [];
+          if (inferred_parameters) {
+            const param_analysis = inferred_parameters.get(method_name);
+            if (param_analysis && param_analysis.parameters) {
+              // Use parameters from analysis and add inferred types
+              enhanced_parameters = param_analysis.parameters.map(param => {
+                const inferred_type_info = param_analysis.inferred_types.get(param.name);
+                const result: ParameterType = {
+                  name: param.name,
+                  type: inferred_type_info?.inferred_type || param.type_annotation,
+                  default_value: param.default_value,
+                  is_rest: param.is_rest,
+                  is_optional: param.is_optional
+                };
+                return result;
+              });
             }
-            
-            const signature: FunctionSignature = {
-              parameters: enhanced_parameters,
-              return_type: return_type_info?.type_name || undefined,
-              is_async: method_scope.metadata?.is_async || false,
-              is_generator: method_scope.metadata?.is_generator || false,
-              type_parameters: [],
-            };
-            
-            methods.push({
-              name: method_name,
-              location: method_scope.location,
-              signature,
-              visibility: "public",
-              is_static: false,
-              is_abstract: false,
-              decorators: [],
-            });
           }
+          
+          const signature: FunctionSignature = {
+            parameters: enhanced_parameters,
+            return_type: return_type_info?.type_name || undefined,
+            is_async: method_scope.metadata?.is_async || false,
+            is_generator: method_scope.metadata?.is_generator || false,
+            type_parameters: [],
+          };
+          
+          methods.push({
+            name: method_name,
+            location: method_scope.location,
+            signature,
+            visibility: "public",
+            is_static: false,
+            is_abstract: false,
+            decorators: [],
+          });
         }
       }
     }
