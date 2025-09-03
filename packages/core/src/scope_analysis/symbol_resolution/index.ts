@@ -26,7 +26,8 @@ import {
   find_exported_definitions,
   is_definition_visible,
   go_to_definition_from_ref,
-  find_definition_candidates
+  find_definition_candidates,
+  resolve_all_symbols
 } from './symbol_resolution';
 import {
   resolve_javascript_symbol,
@@ -53,6 +54,10 @@ import {
   resolve_rust_symbol,
   RustResolutionContext
 } from './symbol_resolution.rust';
+import {
+  build_symbol_table,
+  GlobalSymbolTable
+} from './global_symbol_table';
 
 // Re-export core types and functions
 export {
@@ -73,7 +78,14 @@ export {
   find_exported_definitions,
   is_definition_visible,
   go_to_definition_from_ref,
-  find_definition_candidates
+  find_definition_candidates,
+  resolve_all_symbols
+};
+
+// Re-export global symbol table
+export {
+  GlobalSymbolTable,
+  build_symbol_table
 };
 
 // Re-export language-specific types

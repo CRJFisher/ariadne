@@ -37,6 +37,12 @@ export {
   get_visible_symbols,
 } from "./scope_tree";
 
+// Re-export enhanced symbols functionality
+export {
+  EnhancedScopeSymbol,
+  extract_variables_from_symbols
+} from "./enhanced_symbols";
+
 /**
  * Build language-specific scope tree
  */

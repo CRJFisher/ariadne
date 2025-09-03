@@ -15,7 +15,7 @@ import { build_scope_tree } from "./scope_analysis/scope_tree";
 import { 
   EnhancedScopeSymbol, 
   extract_variables_from_symbols 
-} from "./scope_analysis/scope_tree/enhanced_symbols";
+} from "./scope_analysis/scope_tree";
 import { extract_imports } from "./import_export/import_resolution";
 import { extract_exports } from "./import_export/export_detection";
 import { find_class_definitions } from "./inheritance/class_detection";

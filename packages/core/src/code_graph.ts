@@ -67,8 +67,8 @@ import type { ClassDefinition } from "@ariadnejs/types";
 import {
   build_class_hierarchy,
   type ClassHierarchyContext,
-} from "./inheritance/class_hierarchy/class_hierarchy";
-import { class_info_to_class_definition } from "./utils/type_converters";
+} from "./inheritance/class_hierarchy";
+import { class_info_to_class_definition } from "./utils";
 import {
   scan_files,
   read_and_parse_file,
@@ -81,29 +81,29 @@ import {
   construct_method_symbol,
   construct_variable_symbol,
   SPECIAL_SYMBOLS,
-} from "./utils/symbol_construction";
+} from "./utils";
 import {
   build_scope_path,
   build_full_scope_path,
   get_parent_scope_name,
   find_containing_class,
-} from "./utils/scope_path_builder";
+} from "./utils";
 import { 
   enrich_all_calls,
   EnrichmentContext,
   EnrichmentOptions,
   EnrichedFileAnalysis 
 } from "./call_graph/enrichment";
-import { build_call_chains } from "./call_graph/call_chain_analysis/call_chain_analysis";
+import { build_call_chains } from "./call_graph/call_chain_analysis";
 import {
   build_symbol_table,
   GlobalSymbolTable,
-} from "./scope_analysis/symbol_resolution/global_symbol_table";
+} from "./scope_analysis/symbol_resolution";
 import {
   build_scope_entity_connections,
   ScopeEntityConnections,
 } from "./scope_analysis/scope_entity_connections";
-import { resolve_all_symbols } from "./scope_analysis/symbol_resolution/symbol_resolution";
+import { resolve_all_symbols } from "./scope_analysis/symbol_resolution";
 import { resolve_generics_across_files } from "./type_analysis/generic_resolution";
 import { propagate_types_across_files } from "./type_analysis/type_propagation";
 import {
