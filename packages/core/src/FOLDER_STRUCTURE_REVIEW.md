@@ -24,7 +24,6 @@ This document reviews the current `packages/core/src/` folder structure against 
 - ⚠️ `/import_export/namespace_resolution` - Exists but not wired
 - ⚠️ `/scope_analysis/symbol_resolution` - Exists but not wired
 - ⚠️ `/call_graph/call_chain_analysis` - Exists but not wired
-- ⚠️ `/type_analysis/type_resolution` - Placeholder created, not implemented
 
 #### Supporting Infrastructure
 
@@ -100,12 +99,7 @@ This document reviews the current `packages/core/src/` folder structure against 
 
 These exist but need implementation or wiring:
 
-1. **Type Resolution** (`/type_analysis/type_resolution/`)
-
-   - Status: Placeholder created
-   - Task: epic-11.50
-
-2. **Class Detection** (`/inheritance/class_detection/`)
+1. **Class Detection** (`/inheritance/class_detection/`)
 
    - Status: Placeholder created
    - Task: epic-11.51
@@ -169,8 +163,7 @@ These modules exist but aren't mentioned in the architecture:
 
 ### Implementation Tasks
 
-1. Complete `/type_analysis/type_resolution/` (task epic-11.50)
-2. Implement class detection using existing inheritance_analysis code (task epic-11.51)
+1. Implement class detection using existing inheritance_analysis code (task epic-11.51)
 
 ## File Organization Issues
 
@@ -202,9 +195,8 @@ These modules exist but aren't mentioned in the architecture:
 
 ### 📋 Medium Priority (Plan For)
 
-1. Implement `/type_analysis/type_resolution/` (task epic-11.50)
-2. Integrate type inference modules for better accuracy
-3. Consider integrating storage layer for incremental updates
+1. Integrate type inference modules for better accuracy
+2. Consider integrating storage layer for incremental updates
 
 ## Summary
 

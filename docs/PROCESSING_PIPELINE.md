@@ -182,8 +182,10 @@ Combines per-file analyses to build global understanding. This phase runs sequen
 
 **Modules:**
 
-- `/type_analysis/type_resolution` - Cross-file type resolver
-- `/type_analysis/type_propagation` - Type flow analysis
+Type resolution is handled by:
+- `/type_analysis/type_registry` - Type storage and lookup
+- `/type_analysis/type_propagation` - Type flow analysis  
+- `/type_analysis/generic_resolution` - Generic type instantiation
 - `/import_export/namespace_resolution` - Namespace member resolver
 
 **Outputs:** resolved types, generic instantiations, type compatibility matrix
