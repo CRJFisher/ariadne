@@ -328,17 +328,7 @@ This document inventories all top-level modules in `packages/core/src` and their
 
 ---
 
-### 31. type_analysis/type_resolution ❌ NOT WIRED
-
-**Should Be**: Global Assembly Phase, Layer 7 - Cross-File Type Resolution
-**Purpose**: Global type resolution
-**Implementation**: STUB - TODO comments only
-**Duplication**: Functionality partially in type_registry
-**Next Steps**: IMPLEMENT or remove
-
----
-
-### 32. utils ❌ NOT WIRED (partially)
+### 31. utils ❌ NOT WIRED (partially)
 
 **Current Integration**: Some utilities imported directly
 **Purpose**: Shared utilities
@@ -408,8 +398,6 @@ This document inventories all top-level modules in `packages/core/src` and their
 
 3. **call_resolution vs enrichment functions**: Enrichment functions directly handle what call_resolution should do.
 
-4. **type_resolution (stub) vs type_registry**: Type registry handles much of what type_resolution should do.
-
 ### Missing Critical Wiring
 
 1. **Generic type resolution** - Complete but not wired
@@ -435,7 +423,6 @@ This document inventories all top-level modules in `packages/core/src` and their
 
    - `definition_extraction/` - covered by other modules
    - `scope_analysis/definition_finder` - duplicates symbol_resolution
-   - `type_analysis/type_resolution` - stub that duplicates type_registry
 
 2. **WIRE CRITICAL TYPE FEATURES**:
 
@@ -482,7 +469,6 @@ This document inventories all top-level modules in `packages/core/src` and their
 
 - definition_finder → symbol_resolution
 - variable_analysis → scope_tree
-- type_resolution → type_registry
 
 ### 📦 Infrastructure (Future)
 
@@ -493,4 +479,3 @@ This document inventories all top-level modules in `packages/core/src` and their
 ### ❌ Deprecated (Remove)
 
 - definition_extraction
-- type_resolution (stub)
