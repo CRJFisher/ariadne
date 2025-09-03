@@ -20,6 +20,10 @@ import {
   build_scope_entity_connections,
   ScopeEntityConnections as RealScopeEntityConnections
 } from "./scope_analysis/scope_entity_connections";
+import {
+  find_all_references,
+  Usage
+} from "./scope_analysis/usage_finder";
 import { extract_imports } from "./import_export/import_resolution";
 import { extract_exports } from "./import_export/export_detection";
 import { find_class_definitions } from "./inheritance/class_detection";
