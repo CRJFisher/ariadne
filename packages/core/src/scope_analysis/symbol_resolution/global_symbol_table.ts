@@ -1,6 +1,6 @@
 /**
  * Global Symbol Table
- * 
+ *
  * Builds and manages a unified symbol table from all file analyses.
  * This enables cross-file symbol resolution and reference tracking.
  */
@@ -11,24 +11,24 @@ import {
   ModuleGraph,
   Language,
   Location,
-  FunctionInfo,
+  FunctionDefinition,
   VariableDeclaration,
   FilePath,
   ImportName,
   ExportName,
   ClassDefinition,
-  MethodDefinition
-} from '@ariadnejs/types';
-import { TypeRegistry } from '../../type_analysis/type_registry';
+  MethodDefinition,
+} from "@ariadnejs/types";
+import { TypeRegistry } from "../../type_analysis/type_registry";
 
 /**
  * Symbol visibility levels
  */
 export enum SymbolVisibility {
-  PUBLIC = 'public',
-  PRIVATE = 'private',
-  PROTECTED = 'protected',
-  INTERNAL = 'internal',
+  PUBLIC = "public",
+  PRIVATE = "private",
+  PROTECTED = "protected",
+  INTERNAL = "internal",
 }
 
 /**
@@ -37,7 +37,7 @@ export enum SymbolVisibility {
 export interface SymbolDefinition {
   symbol_id: SymbolId;
   name: string;
-  kind: 'function' | 'class' | 'method' | 'variable' | 'type' | 'namespace';
+  kind: "function" | "class" | "method" | "variable" | "type" | "namespace";
   location: Location;
   visibility: SymbolVisibility;
   is_exported: boolean;
@@ -56,10 +56,10 @@ export interface SymbolDefinition {
  */
 export interface GlobalSymbolTable {
   symbols: Map<SymbolId, SymbolDefinition>;
-  exports: Map<FilePath, Map<ExportName, SymbolId>>;  // file → export name → symbol
-  imports: Map<FilePath, Map<ImportName, SymbolId>>;  // file → import name → symbol
+  exports: Map<FilePath, Map<ExportName, SymbolId>>; // file → export name → symbol
+  imports: Map<FilePath, Map<ImportName, SymbolId>>; // file → import name → symbol
   visibility: Map<SymbolId, SymbolVisibility>;
-  references: Map<SymbolId, Location[]>;  // symbol → usage locations
+  references: Map<SymbolId, Location[]>; // symbol → usage locations
 }
 
 /**
@@ -76,28 +76,30 @@ export interface SymbolTableOptions {
 /**
  * Build a global symbol table from all file analyses
  */
-export function build_symbol_table(options: SymbolTableOptions): GlobalSymbolTable {
+export function build_symbol_table(
+  options: SymbolTableOptions
+): GlobalSymbolTable {
   const {
     analyses,
     module_graph,
     resolve_imports = true,
-    track_visibility = true
+    track_visibility = true,
   } = options;
-  
+
   const table: GlobalSymbolTable = {
     symbols: new Map(),
     exports: new Map(),
     imports: new Map(),
     visibility: new Map(),
-    references: new Map()
+    references: new Map(),
   };
-  
+
   // Process each file analysis
   for (const analysis of analyses) {
     // Skip if no symbol registry (old analyses)
     const registry = (analysis as any).symbol_registry;
     if (!registry) continue;
-    
+
     // Process functions
     for (const func of analysis.functions) {
       const symbol_id = registry.get(func);
@@ -105,23 +107,29 @@ export function build_symbol_table(options: SymbolTableOptions): GlobalSymbolTab
         add_function_to_table(table, func, symbol_id, analysis);
       }
     }
-    
+
     // Process classes
     for (const cls of analysis.classes) {
       const symbol_id = registry.get(cls);
       if (symbol_id) {
         add_class_to_table(table, cls, symbol_id, analysis);
-        
+
         // Process methods within the class
         for (const method of cls.methods) {
           const method_symbol_id = registry.get(method);
           if (method_symbol_id) {
-            add_method_to_table(table, method, method_symbol_id, cls.name, analysis);
+            add_method_to_table(
+              table,
+              method,
+              method_symbol_id,
+              cls.name,
+              analysis
+            );
           }
         }
       }
     }
-    
+
     // Process variables
     for (const variable of analysis.variables) {
       const symbol_id = registry.get(variable);
@@ -129,21 +137,21 @@ export function build_symbol_table(options: SymbolTableOptions): GlobalSymbolTab
         add_variable_to_table(table, variable, symbol_id, analysis);
       }
     }
-    
+
     // Process exports
     process_exports(table, analysis);
-    
+
     // Process imports
     if (resolve_imports && module_graph) {
       process_imports(table, analysis, module_graph);
     }
   }
-  
+
   // Resolve import-export connections
   if (resolve_imports && module_graph) {
     resolve_import_export_connections(table, module_graph);
   }
-  
+
   return table;
 }
 
@@ -152,25 +160,25 @@ export function build_symbol_table(options: SymbolTableOptions): GlobalSymbolTab
  */
 function add_function_to_table(
   table: GlobalSymbolTable,
-  func: FunctionInfo,
+  func: FunctionDefinition,
   symbol_id: SymbolId,
   analysis: FileAnalysis
 ): void {
   const definition: SymbolDefinition = {
     symbol_id,
     name: func.name,
-    kind: 'function',
+    kind: "function",
     location: func.location,
     visibility: SymbolVisibility.PUBLIC, // TODO: Detect actual visibility
     is_exported: check_if_exported(func.name, analysis),
     metadata: {
       is_async: func.signature.is_async,
-      is_generator: func.signature.is_generator
-    }
+      is_generator: func.signature.is_generator,
+    },
   };
-  
+
   table.symbols.set(symbol_id, definition);
-  
+
   // Track visibility
   table.visibility.set(symbol_id, definition.visibility);
 }
@@ -187,15 +195,15 @@ function add_class_to_table(
   const definition: SymbolDefinition = {
     symbol_id,
     name: cls.name,
-    kind: 'class',
+    kind: "class",
     location: cls.location,
     visibility: SymbolVisibility.PUBLIC, // TODO: Detect actual visibility
     is_exported: cls.is_exported || check_if_exported(cls.name, analysis),
     metadata: {
-      is_abstract: cls.is_abstract
-    }
+      is_abstract: cls.is_abstract,
+    },
   };
-  
+
   table.symbols.set(symbol_id, definition);
   table.visibility.set(symbol_id, definition.visibility);
 }
@@ -213,7 +221,7 @@ function add_method_to_table(
   const definition: SymbolDefinition = {
     symbol_id,
     name: method.name,
-    kind: 'method',
+    kind: "method",
     location: method.location,
     visibility: parse_visibility(method.visibility),
     is_exported: false, // Methods are exported through their class
@@ -222,10 +230,10 @@ function add_method_to_table(
       is_static: method.is_static,
       is_async: method.signature.is_async,
       is_generator: method.signature.is_generator,
-      is_abstract: method.is_abstract
-    }
+      is_abstract: method.is_abstract,
+    },
   };
-  
+
   table.symbols.set(symbol_id, definition);
   table.visibility.set(symbol_id, definition.visibility);
 }
@@ -242,12 +250,12 @@ function add_variable_to_table(
   const definition: SymbolDefinition = {
     symbol_id,
     name: variable.name,
-    kind: 'variable',
+    kind: "variable",
     location: variable.location,
     visibility: SymbolVisibility.PUBLIC, // TODO: Detect actual visibility
-    is_exported: check_if_exported(variable.name, analysis)
+    is_exported: check_if_exported(variable.name, analysis),
   };
-  
+
   table.symbols.set(symbol_id, definition);
   table.visibility.set(symbol_id, definition.visibility);
 }
@@ -260,13 +268,13 @@ function process_exports(
   analysis: FileAnalysis
 ): void {
   const file_exports = new Map<string, SymbolId>();
-  
+
   for (const exp of analysis.exports) {
     // Find the symbol for this export
     const symbol = find_symbol_by_name(exp.export_name, analysis);
     if (symbol) {
       file_exports.set(exp.name, symbol);
-      
+
       // Mark symbol as exported
       const definition = table.symbols.get(symbol);
       if (definition) {
@@ -275,7 +283,7 @@ function process_exports(
       }
     }
   }
-  
+
   table.exports.set(analysis.file_path, file_exports);
 }
 
@@ -288,10 +296,14 @@ function process_imports(
   module_graph: ModuleGraph
 ): void {
   const file_imports = new Map<string, SymbolId>();
-  
+
   for (const imp of analysis.imports) {
     // Resolve the import path to actual file
-    const resolved_path = resolve_import_path(imp.module_path, analysis.file_path, module_graph);
+    const resolved_path = resolve_import_path(
+      imp.module_path,
+      analysis.file_path,
+      module_graph
+    );
     if (resolved_path) {
       // Find the exported symbol in the target file
       const target_exports = table.exports.get(resolved_path);
@@ -303,7 +315,7 @@ function process_imports(
       }
     }
   }
-  
+
   table.imports.set(analysis.file_path, file_imports);
 }
 
@@ -321,11 +333,8 @@ function resolve_import_export_connections(
 /**
  * Check if a symbol is exported
  */
-function check_if_exported(
-  name: string,
-  analysis: FileAnalysis
-): boolean {
-  return analysis.exports.some(exp => exp.name === name);
+function check_if_exported(name: string, analysis: FileAnalysis): boolean {
+  return analysis.exports.some((exp) => exp.name === name);
 }
 
 /**
@@ -337,28 +346,28 @@ function find_symbol_by_name(
 ): SymbolId | undefined {
   const registry = (analysis as any).symbol_registry;
   if (!registry) return undefined;
-  
+
   // Search functions
   for (const func of analysis.functions) {
     if (func.name === name) {
       return registry.get(func);
     }
   }
-  
+
   // Search classes
   for (const cls of analysis.classes) {
     if (cls.name === name) {
       return registry.get(cls);
     }
   }
-  
+
   // Search variables
   for (const variable of analysis.variables) {
     if (variable.name === name) {
       return registry.get(variable);
     }
   }
-  
+
   return undefined;
 }
 
@@ -367,11 +376,11 @@ function find_symbol_by_name(
  */
 function parse_visibility(visibility: string): SymbolVisibility {
   switch (visibility.toLowerCase()) {
-    case 'private':
+    case "private":
       return SymbolVisibility.PRIVATE;
-    case 'protected':
+    case "protected":
       return SymbolVisibility.PROTECTED;
-    case 'internal':
+    case "internal":
       return SymbolVisibility.INTERNAL;
     default:
       return SymbolVisibility.PUBLIC;
@@ -419,22 +428,22 @@ export function is_symbol_visible_from_file(
 ): boolean {
   const definition = table.symbols.get(symbol_id);
   if (!definition) return false;
-  
+
   // Same file - check visibility
   if (definition.file_path === from_file) {
     return true; // All symbols visible within same file
   }
-  
+
   // Different file - must be exported and imported
   if (!definition.is_exported) {
     return false;
   }
-  
+
   // Check if the file imports this symbol
   const file_imports = table.imports.get(from_file);
   if (file_imports) {
     return Array.from(file_imports.values()).includes(symbol_id);
   }
-  
+
   return false;
 }

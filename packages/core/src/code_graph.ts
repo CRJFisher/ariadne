@@ -24,7 +24,7 @@ import {
   ExportInfo,
   // Common types
   Location,
-  FunctionInfo,
+  FunctionDefinition,
   FunctionSignature,
   ParameterType,
   TypeParameter,

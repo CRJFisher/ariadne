@@ -1,5 +1,6 @@
 import { Language } from "./index";
-import { FunctionInfo, Location } from "./common";
+import { Location } from "./common";
+import { FunctionDefinition } from "./definitions";
 import { ClassDefinition } from "./definitions";
 import { ModuleGraph } from "./modules";
 import {
@@ -19,7 +20,7 @@ export interface FileAnalysis {
   readonly file_path: FilePath;
   readonly source_code: SourceCode;
   readonly language: Language;
-  readonly functions: readonly FunctionInfo[];
+  readonly functions: readonly FunctionDefinition[];
   readonly classes: readonly ClassDefinition[];
   readonly imports: readonly ImportStatement[];
   readonly exports: readonly ExportStatement[];

@@ -11,6 +11,7 @@ import {
   Location 
 } from '@ariadnejs/types';
 import { ClassDetectionContext } from './index';
+import { node_to_location } from '../../ast/node_utils';
 
 /**
  * Find all class definitions in JavaScript code
@@ -65,12 +66,10 @@ function extract_class_declaration(
   
   return {
     name: class_name,
-    location: node_to_location(node),
+    location: node_to_location(node, context.file_path),
     extends: extends_list,
     methods,
     properties,
-    language: 'javascript',
-    file_path: context.file_path
   };
 }
 
@@ -109,12 +108,10 @@ function extract_class_expression(
   
   return {
     name: class_name,
-    location: node_to_location(node),
+    location: node_to_location(node, context.file_path),
     extends: extends_list,
     methods,
     properties,
-    language: 'javascript',
-    file_path: context.file_path
   };
 }
 
@@ -192,14 +189,16 @@ function extract_method(
   
   return {
     name: method_name,
-    location: node_to_location(node),
+    location: node_to_location(node, context.file_path),
     is_static,
     is_abstract: false, // JavaScript doesn't have abstract
     is_private,
     is_protected: false, // JavaScript doesn't have protected
     is_constructor: method_name === 'constructor',
     is_async,
-    parameters
+    parameters,
+    is_override: false, // TODO - are these in js? 
+    overridden_by: [] // TODO - are these in js?
   };
 }
 
@@ -239,7 +238,7 @@ function extract_property(
   
   return {
     name: property_name,
-    location: node_to_location(node),
+    location: node_to_location(node, context.file_path),
     is_static,
     is_private,
     is_protected: false, // JavaScript doesn't have protected
@@ -308,16 +307,6 @@ function extract_parameters(
   }
   
   return parameters;
-}
-
-/**
- * Convert node position to Location
- */
-function node_to_location(node: SyntaxNode): Location {
-  return {
-    row: node.startPosition.row,
-    column: node.startPosition.column
-  };
 }
 
 /**

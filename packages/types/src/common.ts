@@ -2,12 +2,9 @@ import {
   ParameterName,
   TypeString,
   FilePath,
-  FunctionName,
   ClassName,
   MethodName,
   PropertyName,
-  DocString,
-  DecoratorName,
 } from "./aliases";
 
 // Language type
@@ -57,39 +54,5 @@ export interface TypeParameter {
   readonly name: string;
   readonly constraint?: TypeString;
   readonly default?: TypeString;
-}
-
-/**
- * Common metadata for functions
- */
-export interface FunctionMetadata {
-  readonly is_async?: boolean;
-  readonly is_generator?: boolean;
-  readonly is_exported?: boolean;
-  readonly is_test?: boolean;
-  readonly is_private?: boolean;
-  readonly complexity?: number;
-  readonly line_count: number;
-  readonly parameter_names?: readonly ParameterName[];
-  readonly has_decorator?: boolean;
-  readonly class_name?: ClassName;
-}
-
-/**
- * Base information for functions
- * Enhanced with fields from FunctionDefinition for consolidation
- */
-export interface FunctionInfo {
-  readonly name: FunctionName;
-  readonly location: Location;
-  readonly signature: FunctionSignature;
-  readonly metadata?: FunctionMetadata;
-  readonly docstring?: DocString;
-  readonly decorators?: readonly DecoratorName[];
-  // Additional fields from FunctionDefinition
-  readonly is_exported?: boolean;
-  readonly is_arrow_function?: boolean; // For JS/TS
-  readonly is_anonymous?: boolean;
-  readonly closure_captures?: readonly string[]; // Variables from outer scope
 }
 

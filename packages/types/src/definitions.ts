@@ -2,8 +2,16 @@
  * Type definitions for code element definitions
  */
 
-import { Location } from './common';
-import { TypeName, FilePath } from './aliases';
+import { FunctionMetadata, FunctionSignature, Location } from "./common";
+import {
+  TypeName,
+  FilePath,
+  DecoratorName,
+  DocString,
+  FunctionName,
+  ClassName,
+  ParameterName,
+} from "./aliases";
 
 /**
  * Common base interface for all definition types
@@ -12,21 +20,32 @@ import { TypeName, FilePath } from './aliases';
 export interface Definition {
   readonly name: string;
   readonly location: Location;
-  readonly file_path: FilePath;
 }
 
 /**
  * Standalone function definition
  */
-export interface FunctionDefinition extends Definition {
-  readonly parameters: readonly ParameterDefinition[];
-  readonly return_type?: string;
-  readonly is_async: boolean;
-  readonly is_generator: boolean;
-  readonly is_exported: boolean;
-  readonly generics?: readonly GenericParameter[];
-  readonly decorators?: readonly string[];
-  readonly docstring?: string;
+export interface FunctionMetadata {
+  readonly is_async?: boolean;
+  readonly is_generator?: boolean;
+  readonly is_exported?: boolean;
+  readonly is_test?: boolean;
+  readonly is_private?: boolean;
+  readonly complexity?: number;
+  readonly line_count: number;
+  readonly parameter_names?: readonly ParameterName[];
+  readonly has_decorator?: boolean;
+  readonly class_name?: ClassName;
+}
+
+export interface FunctionDefinition {
+  readonly name: FunctionName;
+  readonly location: Location;
+  readonly signature: FunctionSignature;
+  readonly metadata?: FunctionMetadata;
+  readonly docstring?: DocString;
+  readonly decorators?: readonly DecoratorName[];
+  readonly is_exported?: boolean;
   readonly is_arrow_function?: boolean; // For JS/TS
   readonly is_anonymous?: boolean;
   readonly closure_captures?: readonly string[]; // Variables from outer scope
@@ -58,7 +77,7 @@ export interface GenericParameter {
   readonly name: string;
   readonly constraint?: string;
   readonly default?: string;
-  readonly variance?: 'in' | 'out' | 'invariant';
+  readonly variance?: "in" | "out" | "invariant";
 }
 
 /**
@@ -68,7 +87,7 @@ export interface ResolvedGeneric {
   readonly original_type: string;
   readonly resolved_type: string;
   readonly type_substitutions: Map<string, string>;
-  readonly confidence: 'exact' | 'partial' | 'inferred';
+  readonly confidence: "exact" | "partial" | "inferred";
 }
 
 /**
@@ -231,36 +250,44 @@ export interface ProtocolDefinition extends Definition {
 
 // Type guards for runtime type checking
 
-export function is_function_definition(def: Definition): def is FunctionDefinition {
-  return 'parameters' in def && 'is_async' in def && 'is_generator' in def;
+export function is_function_definition(
+  def: Definition
+): def is FunctionDefinition {
+  return "parameters" in def && "is_async" in def && "is_generator" in def;
 }
 
 export function is_class_definition(def: Definition): def is ClassDefinition {
-  return 'methods' in def && 'properties' in def && !('type_expression' in def);
+  return "methods" in def && "properties" in def && !("type_expression" in def);
 }
 
-export function is_interface_definition(def: Definition): def is InterfaceDefinition {
-  return 'methods' in def && 'properties' in def && !('is_abstract' in def);
+export function is_interface_definition(
+  def: Definition
+): def is InterfaceDefinition {
+  return "methods" in def && "properties" in def && !("is_abstract" in def);
 }
 
 export function is_enum_definition(def: Definition): def is EnumDefinition {
-  return 'members' in def && !('fields' in def);
+  return "members" in def && !("fields" in def);
 }
 
-export function is_type_alias_definition(def: Definition): def is TypeAliasDefinition {
-  return 'type_expression' in def;
+export function is_type_alias_definition(
+  def: Definition
+): def is TypeAliasDefinition {
+  return "type_expression" in def;
 }
 
 export function is_struct_definition(def: Definition): def is StructDefinition {
-  return 'fields' in def && 'is_tuple_struct' in def;
+  return "fields" in def && "is_tuple_struct" in def;
 }
 
 export function is_trait_definition(def: Definition): def is TraitDefinition {
-  return 'methods' in def && 'supertraits' in def;
+  return "methods" in def && "supertraits" in def;
 }
 
-export function is_protocol_definition(def: Definition): def is ProtocolDefinition {
-  return 'methods' in def && 'bases' in def;
+export function is_protocol_definition(
+  def: Definition
+): def is ProtocolDefinition {
+  return "methods" in def && "bases" in def;
 }
 
 /**
@@ -269,8 +296,13 @@ export function is_protocol_definition(def: Definition): def is ProtocolDefiniti
 export interface TypeFlow {
   readonly source_type: string;
   readonly target_identifier: string;
-  readonly flow_kind: 'assignment' | 'return' | 'parameter' | 'property' | 'narrowing';
-  readonly confidence: 'explicit' | 'inferred' | 'assumed';
+  readonly flow_kind:
+    | "assignment"
+    | "return"
+    | "parameter"
+    | "property"
+    | "narrowing";
+  readonly confidence: "explicit" | "inferred" | "assumed";
   readonly position: {
     readonly row: number;
     readonly column: number;
@@ -282,5 +314,5 @@ export interface TypeFlow {
  */
 export interface PropagationPath {
   readonly path: readonly TypeFlow[];
-  readonly confidence: 'explicit' | 'inferred' | 'assumed';
+  readonly confidence: "explicit" | "inferred" | "assumed";
 }

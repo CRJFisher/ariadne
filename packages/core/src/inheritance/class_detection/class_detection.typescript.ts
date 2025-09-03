@@ -20,6 +20,7 @@ import {
 } from '@ariadnejs/types';
 import { ClassDetectionContext } from './index';
 import { find_class_definitions_javascript } from './class_detection.javascript';
+import { node_to_location } from '../../ast/node_utils';
 
 /**
  * Find all class definitions in TypeScript code
@@ -39,7 +40,7 @@ export function find_class_definitions_typescript(
       if (ts_class) {
         // Find corresponding JS class and merge
         const js_class = js_classes.find(c => 
-          c.location.row === ts_class.location.row &&
+          c.location.line === ts_class.location.line &&
           c.location.column === ts_class.location.column
         );
         
@@ -99,7 +100,7 @@ function extract_typescript_class(
   
   return {
     name: class_name,
-    location: node_to_location(node),
+    location: node_to_location(node, context.file_path),
     extends: extends_list,
     implements: implements_list,
     is_abstract,
@@ -107,8 +108,6 @@ function extract_typescript_class(
     methods,
     properties,
     decorators,
-    language: 'typescript',
-    file_path: context.file_path
   };
 }
 
@@ -153,8 +152,8 @@ function extract_heritage(
   }
   
   return {
-    extends: extends_list.length > 0 ? extends_list : undefined,
-    implements: implements_list.length > 0 ? implements_list : undefined
+    extends_list: extends_list.length > 0 ? extends_list : undefined,
+    implements_list: implements_list.length > 0 ? implements_list : undefined
   };
 }
 
@@ -234,12 +233,14 @@ function extract_typescript_method(
   
   return {
     name: method_name,
-    location: node_to_location(node),
+    location: node_to_location(node, context.file_path),
     is_static,
     is_abstract,
     is_private,
     is_protected,
     is_constructor: method_name === 'constructor',
+    is_override: false, // TODO
+    overridden_by: [],  // TODO
     is_async,
     parameters,
     return_type,
@@ -281,7 +282,7 @@ function extract_typescript_property(
   
   return {
     name: property_name,
-    location: node_to_location(node),
+    location: node_to_location(node, context.file_path),
     type,
     is_static,
     is_private,
@@ -496,15 +497,6 @@ function merge_properties(js_props: readonly PropertyDefinition[], ts_props: rea
   return Array.from(merged.values());
 }
 
-/**
- * Convert node to location
- */
-function node_to_location(node: SyntaxNode): Location {
-  return {
-    row: node.startPosition.row,
-    column: node.startPosition.column
-  };
-}
 
 /**
  * Walk the AST tree
