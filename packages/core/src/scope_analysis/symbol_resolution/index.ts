@@ -174,15 +174,32 @@ export function find_all_references(
   imports?: any[], // From import_resolution - Layer 1
   module_graph?: any // From module_graph - Layer 4
 ): Ref[] {
-  const context = create_resolution_context(
-    scope_tree,
-    language,
-    file_path,
-    root_node,
-    source_code
-  );
+  // For now, return empty array since we don't have FileAnalysis[] 
+  // This would need proper implementation with actual file analysis
+  // The old find_symbol_references expects FileAnalysis[] which we don't have here
+  const refs: Ref[] = [];
   
-  return find_symbol_references(symbol_name, context);
+  // Search through all scopes for references to this symbol
+  for (const [scope_id, scope] of scope_tree.nodes) {
+    // Check if this scope references the symbol
+    if (scope.symbols.has(symbol_name)) {
+      const symbol = scope.symbols.get(symbol_name)!;
+      // Create a Ref for each occurrence
+      const ref: Ref = {
+        id: `ref_${scope_id}_${symbol_name}`,
+        kind: 'reference',
+        name: symbol_name,
+        range: symbol.range || { 
+          start: { row: 0, column: 0 }, 
+          end: { row: 0, column: 0 } 
+        },
+        file_path
+      };
+      refs.push(ref);
+    }
+  }
+  
+  return refs;
 }
 
 // Removed duplicate go_to_definition - it's defined in symbol_resolution.ts

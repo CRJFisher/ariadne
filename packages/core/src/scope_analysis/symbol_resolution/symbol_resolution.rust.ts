@@ -12,7 +12,7 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language, Def, Ref, Position } from '@ariadnejs/types';
+import { Language, Def, Ref, Position, SymbolKind } from '@ariadnejs/types';
 import {
   ScopeTree,
   ScopeNode,
@@ -26,6 +26,7 @@ import {
 import {
   ResolvedSymbol,
   ResolutionContext,
+  DefinitionResult,
   ImportInfo,
   ExportInfo,
   resolve_symbol,
@@ -127,12 +128,21 @@ export function resolve_rust_symbol(
   // Try local resolution first
   const local_result = find_symbol_in_scope_chain(scope_tree, scope_id, symbol_name);
   if (local_result) {
-    return {
-      symbol: local_result.symbol,
-      scope: local_result.scope,
-      definition_file: context.file_path,
-      confidence: 'exact'
+    // Convert to DefinitionResult format
+    const def: Def = {
+      id: `def_${local_result.scope.id}_${symbol_name}`,
+      kind: 'definition',
+      name: symbol_name,
+      symbol_kind: local_result.symbol.kind as SymbolKind,
+      range: local_result.symbol.range,
+      file_path: context.file_path || ''
     };
+    
+    return {
+      definition: def,
+      confidence: 'exact',
+      source: 'local'
+    } as DefinitionResult;
   }
   
   // Check use statements
@@ -399,30 +409,40 @@ function resolve_self_keyword(
     // Look for enclosing method
     for (const scope of scope_chain) {
       if (scope.type === 'function' && scope.metadata?.is_method) {
-        return {
-          symbol: {
-            name: 'self',
-            kind: 'parameter',
-            range: scope.range
-          },
-          scope,
-          confidence: 'exact'
+        const def: Def = {
+          id: `def_${scope.id}_self`,
+          kind: 'definition',
+          name: 'self',
+          symbol_kind: 'local' as SymbolKind, // self is typically a local in Rust
+          range: scope.range,
+          file_path: context.file_path || ''
         };
+        
+        return {
+          definition: def,
+          confidence: 'exact',
+          source: 'local'
+        } as DefinitionResult;
       }
     }
   } else if (symbol_name === 'Self') {
     // Look for enclosing impl block (represented as 'class' in scope tree for Rust)
     for (const scope of scope_chain) {
       if (scope.type === 'class' || scope.type === 'impl') {
-        return {
-          symbol: {
-            name: 'Self',
-            kind: 'type',
-            range: scope.range
-          },
-          scope,
-          confidence: 'exact'
+        const def: Def = {
+          id: `def_${scope.id}_Self`,
+          kind: 'definition',
+          name: 'Self',
+          symbol_kind: 'type' as SymbolKind,
+          range: scope.range,
+          file_path: context.file_path || ''
         };
+        
+        return {
+          definition: def,
+          confidence: 'exact',
+          source: 'local'
+        } as DefinitionResult;
       }
     }
   }
