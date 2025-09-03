@@ -78,4 +78,9 @@ export interface CodeGraphOptions {
     readonly include_call_chains?: boolean;
     readonly max_call_depth?: number;
   };
+  readonly cache?: {
+    readonly enabled: boolean;
+    readonly ttl?: number;
+    readonly maxSize?: number;
+  };
 }

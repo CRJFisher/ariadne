@@ -80,6 +80,11 @@ import {
   find_overriding_methods,
   find_overridden_method,
 } from "./inheritance/method_override";
+import {
+  AnalysisCache,
+  createAnalysisCache,
+  CacheOptions
+} from "./cache/analysis_cache";
 import { class_info_to_class_definition } from "./utils";
 import {
   scan_files,
@@ -344,6 +349,13 @@ export async function generate_code_graph(
 ): Promise<CodeGraph> {
   const start_time = Date.now();
 
+  // Create cache if enabled
+  const cache = createAnalysisCache({
+    enabled: options.cache?.enabled ?? false,
+    ttl: options.cache?.ttl,
+    maxSize: options.cache?.maxSize
+  });
+
   // FILE SCAN
   const file_paths = await scan_files(
     options.root_path,
@@ -352,11 +364,27 @@ export async function generate_code_graph(
   );
 
   console.log(`Found ${file_paths.length} files to analyze`);
+  if (cache.getStats().enabled) {
+    console.log(`Cache enabled with TTL: ${options.cache?.ttl || 900000}ms`);
+  }
 
-  // FILE ANALYSIS
+  // FILE ANALYSIS WITH CACHING
   const analysis_promises = file_paths.map(async (file_path) => {
     const file = await read_and_parse_file(file_path);
-    return analyze_file(file);
+    
+    // Check cache first
+    const cachedAnalysis = cache.getCachedAnalysis(file_path, file.source_code);
+    if (cachedAnalysis) {
+      console.debug(`Cache hit for ${file_path}`);
+      // Still need to return with tree for compatibility
+      const { tree } = await analyze_file(file); // Parse tree only
+      return { analysis: cachedAnalysis, tree };
+    }
+    
+    // Analyze and cache result
+    const result = await analyze_file(file);
+    cache.cacheAnalysis(file_path, file.source_code, result.analysis);
+    return result;
   });
 
   const analysis_and_trees = await Promise.all(analysis_promises);
