@@ -88,8 +88,12 @@ import {
   get_parent_scope_name,
   find_containing_class,
 } from "./utils/scope_path_builder";
-import { enrich_constructor_calls_with_types } from "./call_graph/constructor_calls/constructor_type_resolver";
-import { enrich_method_calls_with_hierarchy } from "./call_graph/method_calls/method_hierarchy_resolver";
+import { 
+  enrich_all_calls,
+  EnrichmentContext,
+  EnrichmentOptions,
+  EnrichedFileAnalysis 
+} from "./call_graph/enrichment";
 import { build_call_chains } from "./call_graph/call_chain_analysis/call_chain_analysis";
 import {
   build_symbol_table,
@@ -392,30 +396,8 @@ export async function generate_code_graph(
     imports_by_file.set(analysis.file_path, []);
   }
 
-  // Convert shared hierarchy to local format for enrichment (temporary during migration)
-  // TODO: Update enrich_method_calls_with_hierarchy to use shared types directly
-  const local_hierarchy = convert_shared_to_local_hierarchy(class_hierarchy);
-
-  // Enrich analyses with method hierarchy and constructor types
-  // Create new analysis objects since properties are readonly
-  const enriched_analyses = analyses.map((analysis) => {
-    const enriched_method_calls = enrich_method_calls_with_hierarchy(
-      analysis.method_calls,
-      local_hierarchy
-    );
-
-    const enriched_constructor_calls = enrich_constructor_calls_with_types(
-      analysis.constructor_calls,
-      type_registry,
-      imports_by_file
-    );
-
-    return {
-      ...analysis,
-      method_calls: enriched_method_calls,
-      constructor_calls: enriched_constructor_calls,
-    };
-  });
+  // We'll enrich analyses after building the module graph and resolving types
+  let enriched_analyses = analyses;
 
   // FILE ANALYSIS - Build files map from enriched analyses
   const files = new Map<string, FileAnalysis>();
@@ -472,6 +454,36 @@ export async function generate_code_graph(
     propagated_types,
     file_name_to_tree
   );
+
+  // LAYER 7d - CALL ENRICHMENT - Enrich calls with all global context now available
+  // Create enrichment context with all global information
+  const enrichment_context: EnrichmentContext = {
+    type_registry,
+    class_hierarchy,
+    module_graph: modules,
+    resolved_generics,
+    propagated_types
+  };
+
+  // Enrichment options for comprehensive analysis
+  const enrichment_options: EnrichmentOptions = {
+    resolve_polymorphic: true,
+    track_interfaces: true,
+    include_confidence: true,
+    resolve_virtual_dispatch: true,
+    validate_constructors: true,
+    track_inheritance: true
+  };
+
+  // Re-enrich analyses with full global context
+  enriched_analyses = analyses.map((analysis) => 
+    enrich_all_calls(analysis, enrichment_context, enrichment_options) as FileAnalysis
+  );
+
+  // Update the files map with enriched analyses
+  for (const analysis of enriched_analyses) {
+    files.set(analysis.file_path, analysis);
+  }
 
   // LAYER 8: GLOBAL SYMBOL RESOLUTION - Build global symbol table and resolve references
   const global_symbols = build_symbol_table({
@@ -855,71 +867,3 @@ async function build_class_hierarchy_from_analyses(
   return hierarchy;
 }
 
-/**
- * Convert shared hierarchy to local format (temporary during migration)
- * @deprecated TODO: Remove once enrichment functions use shared types
- */
-function convert_shared_to_local_hierarchy(shared: ClassHierarchy): any {
-  // Create a stub local hierarchy that matches the old interface
-  const local = {
-    classes: new Map(),
-    edges: [],
-    roots: [],
-    language: (shared as any).language || "unknown",
-  };
-
-  // Convert classes
-  if ((shared as any).classes) {
-    for (const [key, node] of (shared as any).classes) {
-      local.classes.set(key, {
-        definition: {
-          name: node.name,
-          file_path: node.file_path,
-          location: node.location,
-        },
-        parent_class: node.base_classes?.[0],
-        parent_class_def: node.parent_class,
-        implemented_interfaces: node.interfaces || [],
-        interface_defs: [],
-        subclasses:
-          node.derived_classes?.map((name: string) => ({
-            name,
-            file_path: node.file_path,
-            location: node.location,
-          })) || [],
-        all_ancestors: node.all_ancestors || [],
-        all_descendants: node.all_descendants || [],
-        method_resolution_order: node.method_resolution_order || [],
-        methods: node.methods,
-        properties: node.properties,
-        base_classes: node.base_classes,
-        derived_classes: node.derived_classes,
-        interfaces: node.interfaces,
-        is_abstract: node.is_abstract,
-        is_interface: node.is_interface,
-        is_trait: node.is_trait,
-      });
-    }
-  }
-
-  // Convert edges
-  if ((shared as any).inheritance_edges) {
-    for (const edge of (shared as any).inheritance_edges) {
-      local.edges.push({
-        from: edge.from,
-        to: edge.to,
-        type: edge.type,
-        source_location: edge.source_location,
-      });
-    }
-  }
-
-  // Convert roots
-  if ((shared as any).root_classes) {
-    for (const root of (shared as any).root_classes) {
-      local.roots.push({ name: root });
-    }
-  }
-
-  return local;
-}

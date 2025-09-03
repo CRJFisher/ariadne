@@ -117,7 +117,7 @@ export function resolve_method_in_hierarchy(
   
   // Helper to check if a class has a method
   function class_has_method(class_info: ClassNode): boolean {
-    return class_info.methods.has(method_name);
+    return class_info.methods ? class_info.methods.has(method_name) : false;
   }
 
   // Recursive resolution
