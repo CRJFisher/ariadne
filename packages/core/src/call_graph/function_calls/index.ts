@@ -43,7 +43,6 @@ export function find_function_calls(
       return find_function_calls_rust(context);
     
     default:
-      // Return empty array for unsupported languages
-      return [];
+      throw new Error(`Unsupported language: ${context.language}`);
   }
 }

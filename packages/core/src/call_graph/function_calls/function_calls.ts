@@ -5,7 +5,7 @@
  */
 
 import { SyntaxNode } from "tree-sitter";
-import { Language } from "@ariadnejs/types";
+import { FilePath, Language, SourceCode } from "@ariadnejs/types";
 
 /**
  * Special constant for module-level calls (calls not within any function)
@@ -13,8 +13,8 @@ import { Language } from "@ariadnejs/types";
 export const MODULE_CONTEXT = "<module>";
 
 export interface FunctionCallContext {
-  source_code: string;
-  file_path: string;
+  source_code: SourceCode;
+  file_path: FilePath;
   language: Language;
   ast_root: SyntaxNode;
   // TODO: Integration points for cross-feature functionality
