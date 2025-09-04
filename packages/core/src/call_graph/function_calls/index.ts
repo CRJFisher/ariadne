@@ -1,26 +1,28 @@
 /**
  * Function call detection and analysis
  * 
- * Dispatcher for language-specific function call detection
+ * Uses configuration-driven generic processing with language-specific fallbacks
  */
 
 import { FunctionCallInfo } from '@ariadnejs/types';
 import { FunctionCallContext } from './function_calls';
+import { find_function_calls_generic } from './generic_processor';
 
 // Re-export types
 export { FunctionCallInfo } from '@ariadnejs/types';
 export { FunctionCallContext } from './function_calls';
 
-import { find_function_calls_javascript } from './function_calls.javascript';
-import { find_function_calls_typescript } from './function_calls.typescript';
-import { find_function_calls_python } from './function_calls.python';
-import { find_function_calls_rust } from './function_calls.rust';
+// Import language-specific implementations for bespoke features
+import { handle_typescript_decorators } from './function_calls.typescript';
+import { handle_rust_macros } from './function_calls.rust';
+import { handle_python_comprehensions } from './function_calls.python';
 
 /**
  * Find all function calls in code
  * 
- * Dispatches to language-specific implementations based on the language parameter.
- * Each implementation handles the unique syntax and patterns of its language.
+ * Uses generic processor with configuration-driven approach for 80% of functionality.
+ * Language-specific handlers are called for truly unique features that can't be
+ * expressed through configuration.
  * 
  * @param context The context containing source code, AST, and metadata
  * @returns Array of function call information
@@ -28,21 +30,72 @@ import { find_function_calls_rust } from './function_calls.rust';
 export function find_function_calls(
   context: FunctionCallContext
 ): FunctionCallInfo[] {
-  // TODO: verify there isn't any common function extraction logic that can be applied
+  // Use generic processor for all languages
+  const calls = find_function_calls_generic(context);
+  
+  // Apply language-specific enhancements for bespoke features
   switch (context.language) {
-    case 'javascript':
-      return find_function_calls_javascript(context);
-    
     case 'typescript':
-      return find_function_calls_typescript(context);
-    
-    case 'python':
-      return find_function_calls_python(context);
+      // TypeScript decorators require special handling
+      return enhance_with_typescript_features(calls, context);
     
     case 'rust':
-      return find_function_calls_rust(context);
+      // Rust macros have already been handled in generic processor
+      // but may need additional enhancement
+      return enhance_with_rust_features(calls, context);
+    
+    case 'python':
+      // Python comprehensions may contain function calls
+      return enhance_with_python_features(calls, context);
+    
+    case 'javascript':
+      // JavaScript is fully handled by generic processor
+      return calls;
     
     default:
-      throw new Error(`Unsupported language: ${context.language}`);
+      // For any unsupported language, return what we found
+      return calls;
   }
+}
+
+/**
+ * Enhance with TypeScript-specific features
+ */
+function enhance_with_typescript_features(
+  calls: FunctionCallInfo[],
+  context: FunctionCallContext
+): FunctionCallInfo[] {
+  // Check if we have the bespoke handler available
+  if (typeof handle_typescript_decorators === 'function') {
+    const decorator_calls = handle_typescript_decorators(context);
+    return [...calls, ...decorator_calls];
+  }
+  return calls;
+}
+
+/**
+ * Enhance with Rust-specific features
+ */
+function enhance_with_rust_features(
+  calls: FunctionCallInfo[],
+  context: FunctionCallContext
+): FunctionCallInfo[] {
+  // Macros are already handled in generic processor
+  // Add any additional Rust-specific enhancements here if needed
+  return calls;
+}
+
+/**
+ * Enhance with Python-specific features
+ */
+function enhance_with_python_features(
+  calls: FunctionCallInfo[],
+  context: FunctionCallContext
+): FunctionCallInfo[] {
+  // Check if we have the bespoke handler available
+  if (typeof handle_python_comprehensions === 'function') {
+    const comprehension_calls = handle_python_comprehensions(context);
+    return [...calls, ...comprehension_calls];
+  }
+  return calls;
 }

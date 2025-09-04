@@ -191,3 +191,41 @@ export function is_super_call(node: SyntaxNode, source: string): boolean {
   }
   return false;
 }
+
+/**
+ * Handle Python comprehensions (bespoke feature export for generic processor)
+ * 
+ * Comprehensions in Python can contain function calls that need to be extracted.
+ * This handles list, set, dictionary comprehensions and generator expressions.
+ */
+export function handle_python_comprehensions(
+  context: FunctionCallContext
+): FunctionCallInfo[] {
+  const calls: FunctionCallInfo[] = [];
+  
+  walk_tree(context.ast_root, (node) => {
+    // Check if this is a comprehension
+    if (
+      node.type === "list_comprehension" ||
+      node.type === "dictionary_comprehension" ||
+      node.type === "set_comprehension" ||
+      node.type === "generator_expression"
+    ) {
+      // Find all calls within the comprehension
+      walk_tree(node, (inner_node) => {
+        if (inner_node.type === "call" && inner_node !== node) {
+          const call_info = extract_python_call(inner_node, context, "python");
+          if (call_info) {
+            // Mark that this call is within a comprehension
+            calls.push({
+              ...call_info,
+              is_in_comprehension: true
+            });
+          }
+        }
+      });
+    }
+  });
+  
+  return calls;
+}

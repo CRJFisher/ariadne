@@ -157,3 +157,12 @@ export function has_type_arguments(node: SyntaxNode): boolean {
   return node.type === 'call_expression' && 
          node.childForFieldName('type_arguments') !== null;
 }
+
+/**
+ * Handle TypeScript decorators (bespoke feature export for generic processor)
+ */
+export function handle_typescript_decorators(
+  context: FunctionCallContext
+): FunctionCallInfo[] {
+  return find_typescript_specific_calls(context);
+}
