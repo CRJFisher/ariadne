@@ -11,27 +11,26 @@ Add import_resolver to FunctionCallContext to track calls to imported functions 
 
 ## Implementation Details
 
-### 1. Add Import Resolver to Context
+### 1. Add Import Data to Context
 ```typescript
 interface FunctionCallContext {
   // ... existing fields
-  import_resolver?: ImportResolver;
-}
-
-interface ImportResolver {
-  resolve(symbol_name: string): ImportInfo | undefined;
-  is_imported(symbol_name: string): boolean;
-  get_source_module(symbol_name: string): string | undefined;
+  imports?: ImportInfo[];  // Pre-resolved import data
 }
 ```
 
 ### 2. Track Imported Function Calls
 ```typescript
+// Direct lookup in import data, no function calls
 function enhance_call_with_import_info(
   call: FunctionCallInfo,
-  import_resolver: ImportResolver
+  imports: ImportInfo[]
 ): EnhancedFunctionCallInfo {
-  const import_info = import_resolver.resolve(call.callee_name);
+  // Direct array search, no dynamic dispatch
+  const import_info = imports.find(imp => 
+    imp.name === call.callee_name || 
+    imp.alias === call.callee_name
+  );
   
   if (import_info) {
     return {

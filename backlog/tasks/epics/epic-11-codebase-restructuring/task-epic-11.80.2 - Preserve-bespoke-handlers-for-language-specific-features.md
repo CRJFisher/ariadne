@@ -41,39 +41,50 @@ Focus on the ~14% of code that requires algorithmic differences between language
 
 ## Implementation Approach
 
-### 1. Create Bespoke Handler Interface
+### 1. Create Bespoke Processing Structure
 
 ```typescript
-interface BespokeHandlers {
-  preprocessNode?: (node: SyntaxNode, context: Context) => void;
-  postprocessCall?: (
-    call: FunctionCallInfo,
-    node: SyntaxNode
-  ) => FunctionCallInfo;
-  specialCases?: {
-    [nodeType: string]: (
-      node: SyntaxNode,
-      context: Context
-    ) => FunctionCallInfo | null;
-  };
+// Instead of function references, use explicit dispatch
+function process_bespoke_node(
+  node: SyntaxNode,
+  context: Context,
+  language: Language
+): FunctionCallInfo | null {
+  // Direct switch statements for static analysis
+  switch (language) {
+    case 'typescript':
+      if (node.type === 'decorator') {
+        return handle_typescript_decorator(node, context);
+      }
+      break;
+    case 'rust':
+      if (node.type === 'macro_invocation') {
+        return handle_rust_macro(node, context);
+      }
+      break;
+  }
+  return null;
 }
 ```
 
-### 2. Register Language Handlers
+### 2. Language-Specific Files
 
 ```typescript
-const BESPOKE_HANDLERS: Partial<Record<Language, BespokeHandlers>> = {
-  typescript: {
-    specialCases: {
-      decorator: handle_typescript_decorator,
-    },
-  },
-  rust: {
-    specialCases: {
-      macro_invocation: handle_rust_macro,
-    },
-  },
-};
+// function_calls.typescript.ts
+export function handle_typescript_decorator(
+  node: SyntaxNode,
+  context: Context
+): FunctionCallInfo | null {
+  // Implementation
+}
+
+// function_calls.rust.ts  
+export function handle_rust_macro(
+  node: SyntaxNode,
+  context: Context
+): FunctionCallInfo | null {
+  // Implementation
+}
 ```
 
 ## Acceptance Criteria

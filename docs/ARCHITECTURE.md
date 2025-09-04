@@ -117,7 +117,10 @@ Most features follow this pattern:
 ...
 ```
 
-**Note**: We should always prefer to add processing logic to the `[sub-feature].ts` file - the language-specific implementations are only used if there are special cases for that language.
+**Note**: Processing preference order:
+1. First, try to handle language differences through configuration in `[sub-feature].ts`
+2. Only create language-specific files (`[sub-feature].[language].ts`) when configuration cannot express the needed logic
+3. Language-specific implementations should handle truly unique processing that requires algorithmic differences
 
 **Note**: Language-specific features (e.g., Python decorators, Rust macros) follow the multi-language feature pattern but only implement files for their specific language. If complex multi-module processing is needed, use nested folders: `/src/[feature]/[sub-feature]/[sub-sub-feature]/`.
 
@@ -170,6 +173,37 @@ export function process_feature(
 - **Transformation**: Language-specific reshapes the output format (e.g., import path resolution rules)
 
 This flexibility allows consistent structure while enabling domain-appropriate processing for each feature.
+
+### Configuration-Driven Language Processing
+
+**Preferred approach**: When language differences are primarily identifier variations (node types, field names) rather than algorithmic differences, use configuration-driven processing as the primary pattern:
+
+```typescript
+// Language configuration defines identifiers
+const LANGUAGE_CONFIG = {
+  javascript: {
+    call_expression_types: ["call_expression"],
+    function_field: "function",
+    method_expression_types: ["member_expression"],
+  },
+  python: {
+    call_expression_types: ["call"],
+    function_field: "func",
+    method_expression_types: ["attribute"],
+  }
+};
+
+// Single generic processor uses configuration
+function process_calls(node: SyntaxNode, language: Language) {
+  const config = LANGUAGE_CONFIG[language];
+  if (config.call_expression_types.includes(node.type)) {
+    const func = node.childForFieldName(config.function_field);
+    // Process using configuration values
+  }
+}
+```
+
+This pattern should be the first choice when ~80% of logic is identical across languages. Language-specific files (`[feature].[language].ts`) remain appropriate for truly unique processing requirements (e.g., TypeScript decorators, Rust macros) that cannot be expressed through configuration.
 
 ## Type System
 

@@ -11,11 +11,11 @@ Add type_tracker to FunctionCallContext to improve method call detection by unde
 
 ## Implementation Details
 
-### 1. Add Type Tracker to Context
+### 1. Add Type Data to Context
 ```typescript
 interface FunctionCallContext {
   // ... existing fields
-  type_tracker?: TypeTracker;
+  type_map?: Map<string, TypeInfo>;  // Pre-computed type information
 }
 ```
 
@@ -23,23 +23,22 @@ interface FunctionCallContext {
 ```typescript
 function resolve_method_call(
   node: SyntaxNode,
-  type_tracker: TypeTracker,
+  type_map: Map<string, TypeInfo>,
   source_code: string
 ): MethodCallInfo | null {
   // Get the object being called on
   const object_node = node.childForFieldName('object');
   const object_name = extract_identifier(object_node, source_code);
   
-  // Look up the type of the object
-  const object_type = type_tracker.get_type_at_location(
-    object_name,
-    node_to_location(node)
-  );
+  // Direct map lookup, no method calls
+  const location_key = `${node.startPosition.row}:${node.startPosition.column}`;
+  const type_key = `${object_name}@${location_key}`;
+  const object_type = type_map.get(type_key);
   
   if (object_type) {
     return {
       object_type: object_type.name,
-      is_resolved: true,
+      is_resolved: true, 
       class_name: object_type.class_name,
       // ... other fields
     };
