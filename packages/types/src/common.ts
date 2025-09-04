@@ -2,9 +2,6 @@ import {
   ParameterName,
   TypeString,
   FilePath,
-  ClassName,
-  MethodName,
-  PropertyName,
 } from "./aliases";
 
 // Language type

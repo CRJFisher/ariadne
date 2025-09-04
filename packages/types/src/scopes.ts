@@ -1,4 +1,5 @@
-import { ScopeId, SymbolName } from "./aliases";
+import { ScopeId } from "./aliases";
+import { SymbolName } from "./symbols";
 import { Location } from "./common";
 
 /**

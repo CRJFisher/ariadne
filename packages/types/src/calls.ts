@@ -1,5 +1,6 @@
 import { Location, FunctionSignature } from "./common";
-import { SymbolId, FilePath, ClassName } from "./aliases";
+import { FilePath, ClassName } from "./aliases";
+import { SymbolId } from "./symbols";
 
 export interface FunctionNode {
   readonly symbol: SymbolId;
@@ -62,6 +63,8 @@ export interface CallGraphOptions {
 // ============================================================================
 // Raw Call Detection Types
 // ============================================================================
+
+// TODO: cread a parent CallInfo interface
 
 export interface FunctionCallInfo {
   readonly caller_name: string; // Use MODULE_CONTEXT for module-level calls

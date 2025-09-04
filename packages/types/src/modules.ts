@@ -1,40 +1,47 @@
-import { Location } from './common';
-import { FilePath, ModulePath, SymbolName, ImportName, ExportName, NamespaceName } from './aliases';
+import { Location } from "./common";
+import {
+  FilePath,
+  ModulePath,
+  ImportName,
+  ExportName,
+  NamespaceName,
+} from "./aliases";
+import { SymbolName } from "./symbols";
 
 /**
  * @deprecated Use ImportInfo from './import_export' instead
  * This type is preserved for backward compatibility but will be removed in the next major version.
  * The new ImportInfo in import_export.ts is the single source of truth.
- * 
+ *
  * Simplified import information for per-file analysis
  * Used during Layer 2 (Local Structure Detection)
  */
 export interface ImportInfo {
-  readonly name: string;              // The imported name
-  readonly source: string;            // The module path/source
-  readonly alias?: string;             // Local alias if renamed
-  readonly kind: 'named' | 'default' | 'namespace' | 'dynamic';
+  readonly name: string; // The imported name
+  readonly source: string; // The module path/source
+  readonly alias?: string; // Local alias if renamed
+  readonly kind: "named" | "default" | "namespace" | "dynamic";
   readonly location: Location;
-  readonly is_type_only?: boolean;    // TypeScript type-only import
-  readonly namespace_name?: string;   // For namespace imports (import * as X)
+  readonly is_type_only?: boolean; // TypeScript type-only import
+  readonly namespace_name?: string; // For namespace imports (import * as X)
 }
 
 /**
  * @deprecated Use ExportInfo from './import_export' instead
  * This type is preserved for backward compatibility but will be removed in the next major version.
  * The new ExportInfo in import_export.ts is the single source of truth.
- * 
+ *
  * Simplified export information for per-file analysis
  * Used during Layer 2 (Local Structure Detection)
  */
 export interface ExportInfo {
-  readonly name: string;              // The exported name
-  readonly kind: 'named' | 'default' | 'namespace';
+  readonly name: string; // The exported name
+  readonly kind: "named" | "default" | "namespace";
   readonly location: Location;
-  readonly local_name?: string;       // Internal name if different
-  readonly is_type_only?: boolean;    // TypeScript type-only export
-  readonly is_reexport?: boolean;     // If re-exporting from another module
-  readonly source?: string;           // Source module for re-exports
+  readonly local_name?: string; // Internal name if different
+  readonly is_type_only?: boolean; // TypeScript type-only export
+  readonly is_reexport?: boolean; // If re-exporting from another module
+  readonly source?: string; // Source module for re-exports
 }
 
 export interface ModuleNode {
@@ -61,7 +68,13 @@ export interface ImportedSymbol {
 
 export interface ExportedSymbol {
   readonly name: ExportName;
-  readonly kind: 'function' | 'class' | 'variable' | 'type' | 'interface' | 'enum';
+  readonly kind:
+    | "function"
+    | "class"
+    | "variable"
+    | "type"
+    | "interface"
+    | "enum";
   readonly location: Location;
   readonly is_default?: boolean;
   readonly is_re_export?: boolean;
@@ -92,7 +105,14 @@ export interface NamespaceInfo {
  */
 export interface NamespaceExportInfo {
   readonly name: string;
-  readonly kind: 'function' | 'class' | 'variable' | 'type' | 'interface' | 'enum' | 'export';
+  readonly kind:
+    | "function"
+    | "class"
+    | "variable"
+    | "type"
+    | "interface"
+    | "enum"
+    | "export";
   readonly location: Location;
 }
 

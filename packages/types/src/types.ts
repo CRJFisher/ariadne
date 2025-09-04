@@ -20,7 +20,6 @@ export enum TypeKind {
 
 export interface TypeDefinition {
   readonly name: TypeName;
-  readonly file_path: FilePath;
   readonly location: Location;
   readonly kind: TypeKind;
   readonly type_parameters?: readonly TypeName[];

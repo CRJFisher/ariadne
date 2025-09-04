@@ -1,12 +1,8 @@
 import { Location } from "./common";
-import {
-  SymbolId,
-  SymbolName,
-  FilePath,
-  FunctionName,
-  ScopeId,
-  DocString,
-} from "./aliases";
+import { FilePath, FunctionName, ScopeId, DocString } from "./aliases";
+
+export type SymbolName = string; // Simple name of a symbol (unqualified)// Symbol identifiers
+export type SymbolId = string; // Unique symbol identifier (format: "file_path#symbol_name")
 
 export interface SymbolDefinition {
   readonly symbol: SymbolName;
@@ -26,30 +22,30 @@ export interface SymbolDefinition {
 
 export interface Usage {
   readonly symbol: SymbolName;
-  readonly file_path: FilePath;
   readonly location: Location;
   readonly kind: "call" | "reference" | "import" | "type_reference";
-  readonly is_write?: boolean;
-  readonly in_function?: FunctionName;
+  readonly is_write: boolean;
+  readonly in_function: FunctionName;
 }
 
 export interface ResolvedSymbol {
   readonly symbol: SymbolName;
-  readonly definition?: SymbolDefinition;
+  readonly definition: SymbolDefinition;
   readonly confidence: "high" | "medium" | "low";
-  readonly resolution_path?: readonly FilePath[];
+  readonly resolution_path: readonly FilePath[];
 }
 
 export interface SymbolScope {
   readonly symbol: SymbolName;
   readonly scope: "global" | "module" | "class" | "function" | "block";
-  readonly parent_scope?: ScopeId;
-  readonly child_scopes?: readonly ScopeId[];
+  readonly parent_scope: ScopeId;
+  readonly child_scopes: readonly ScopeId[];
 }
 
 export interface SymbolIndex {
   readonly definitions: ReadonlyMap<SymbolId, SymbolDefinition>;
   readonly usages: ReadonlyMap<SymbolId, readonly Usage[]>;
-  readonly scopes?: ReadonlyMap<ScopeId, SymbolScope>;
-  readonly unresolved_symbols?: ReadonlySet<SymbolName>;
+  readonly scopes: ReadonlyMap<SymbolId, SymbolScope>;
+  readonly unresolved_symbols: ReadonlySet<SymbolName>;
 }
+

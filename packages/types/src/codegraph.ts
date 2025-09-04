@@ -15,6 +15,7 @@ import { SymbolIndex } from "./symbols";
 import { ScopeTree } from "./scopes";
 import { FilePath, VariableName, TypeString, SourceCode } from "./aliases";
 import { ExportStatement, ImportStatement } from "./import_export";
+import { AnalysisError } from "./errors";
 
 export interface FileAnalysis {
   readonly file_path: FilePath;
@@ -39,12 +40,6 @@ export interface VariableDeclaration {
   readonly type?: TypeString;
   readonly is_const?: boolean;
   readonly is_exported?: boolean;
-}
-
-export interface AnalysisError {
-  readonly message: string;
-  readonly location?: Location;
-  readonly severity: "error" | "warning" | "info";
 }
 
 export interface CodeGraph {

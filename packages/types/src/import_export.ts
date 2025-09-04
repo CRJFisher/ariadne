@@ -1,9 +1,10 @@
-import { ExportName, ModulePath, SymbolName } from "./aliases";
+import { ExportName, ModulePath } from "./aliases";
+import { SymbolName } from "./symbols";
 import { Location } from "./common";
 
 /**
  * Import/Export Types - Consolidated Single Source of Truth
- * 
+ *
  * This module defines all import and export types for the Ariadne codebase.
  * Types are organized by their use case:
  * - Info types: For extraction and detection during analysis
@@ -25,7 +26,7 @@ export interface ImportInfo {
   /** Module being imported from */
   readonly source: string;
   /** Type of import */
-  readonly kind: 'named' | 'default' | 'namespace' | 'dynamic';
+  readonly kind: "named" | "default" | "namespace" | "dynamic";
   /** Location in source code */
   readonly location: Location;
   /** Local name if renamed (e.g., import { foo as bar }) */
@@ -46,7 +47,7 @@ export interface ExportInfo {
   /** The exported symbol name */
   readonly name: string;
   /** Type of export */
-  readonly kind: 'named' | 'default' | 'namespace';
+  readonly kind: "named" | "default" | "namespace";
   /** Location in source code */
   readonly location: Location;
   /** Internal name if different from exported name */
@@ -92,59 +93,17 @@ export interface ImportStatement {
  */
 export interface ExportStatement {
   /** Single exported symbol (was symbol_names array) */
-  readonly symbol_name?: SymbolName;
+  readonly symbol_name: SymbolName;
   /** Location in source code */
   readonly location: Location;
   /** Whether this is a default export */
-  readonly is_default?: boolean;
+  readonly is_default: boolean;
   /** TypeScript type-only export */
-  readonly is_type_export?: boolean;
+  readonly is_type_export: boolean;
   /** Source module for re-exports */
-  readonly source?: ModulePath;
+  readonly source: ModulePath;
   /** Export name if different from symbol_name */
-  readonly export_name?: ExportName;
-}
-
-// =============================================================================
-// Type Tracking Specific
-// =============================================================================
-
-/**
- * Information about an imported type/class/interface
- * Used by the type tracking layer
- */
-export interface ImportedTypeInfo {
-  /** Name of the imported type */
-  readonly type_name: string;
-  /** Module the type is imported from */
-  readonly source_module: ModulePath;
-  /** Local name if renamed */
-  readonly local_name?: string;
-  /** Whether this is a default import */
-  readonly is_default?: boolean;
-  /** Whether this is a type-only import */
-  readonly is_type_only?: boolean;
-  /** Kind of type being imported */
-  readonly kind: 'class' | 'interface' | 'type' | 'enum' | 'unknown';
-}
-
-/**
- * Information about an exported type/class/interface
- * Used by the type tracking layer
- */
-export interface ExportedTypeInfo {
-  /** Name of the exported type */
-  readonly type_name: string;
-  /** Kind of type being exported */
-  readonly kind: 'class' | 'interface' | 'type' | 'enum' | 'unknown';
-  /** Location in source code */
-  readonly location: Location;
-  /** Whether this is a default export */
-  readonly is_default?: boolean;
-  /** Whether this is a type-only export */
-  readonly is_type_only?: boolean;
-  /** Source module for re-exports */
-  readonly source?: ModulePath;
+  readonly export_name: ExportName;
 }
 
 // =============================================================================
@@ -161,7 +120,7 @@ export interface ModuleImport {
   /** All imported symbols */
   readonly symbols: readonly string[];
   /** Static or dynamic import */
-  readonly kind: 'static' | 'dynamic';
+  readonly kind: "static" | "dynamic";
   /** Location of import statement */
   readonly location?: Location;
   /** Whether all imports are type-only */
@@ -180,7 +139,7 @@ export interface ModuleExport {
   /** All exported symbols */
   readonly symbols: readonly string[];
   /** Type of exports */
-  readonly kind: 'named' | 'default' | 'namespace';
+  readonly kind: "named" | "default" | "namespace";
   /** Location of export statement */
   readonly location?: Location;
   /** Whether all exports are type-only */
@@ -188,34 +147,5 @@ export interface ModuleExport {
   /** Whether these are re-exports */
   readonly is_reexport?: boolean;
   /** Source module for re-exports */
-  readonly source?: ModulePath;
-}
-
-// =============================================================================
-// Deprecated Types - For Backward Compatibility
-// =============================================================================
-
-/**
- * @deprecated Use ImportStatement with symbol_name instead
- * Old import statement with array of symbols
- */
-export interface LegacyImportStatement {
-  readonly source: ModulePath;
-  readonly symbol_names: readonly SymbolName[];
-  readonly location: Location;
-  readonly is_type_import?: boolean;
-  readonly is_namespace_import?: boolean;
-  readonly namespace_name?: string;
-}
-
-/**
- * @deprecated Use ExportStatement with symbol_name instead
- * Old export statement with array of symbols
- */
-export interface LegacyExportStatement {
-  readonly symbol_names: readonly SymbolName[];
-  readonly location: Location;
-  readonly is_default?: boolean;
-  readonly is_type_export?: boolean;
   readonly source?: ModulePath;
 }

@@ -2,7 +2,7 @@
  * Type definitions for code element definitions
  */
 
-import { FunctionMetadata, FunctionSignature, Location } from "./common";
+import { FunctionSignature, Location } from "./common";
 import {
   TypeName,
   FilePath,
