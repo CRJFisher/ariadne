@@ -9,74 +9,40 @@ Epic 11: Codebase Restructuring
 ## Description
 Refactor function_calls module to use configuration-driven language processing and integrate with enhanced data structures for improved call resolution.
 
-## Objectives
+**Note**: This is a parent task. See sub-tasks 11.80.1 through 11.80.5 for implementation details.
 
-### 1. Apply Configuration-Driven Pattern
-Transform the current language-specific implementations into a configuration-based approach where 86% of the code can be genericized.
+## Sub-Tasks
 
-### 2. Integrate Enhanced Data Structures
-Add the integration points outlined in the TODO comments (lines 20-24 of function_calls.ts):
-- `scope_graph?: ScopeGraph` - For symbol resolution  
-- `import_resolver?: (name: string) => ImportInfo | undefined` - For resolving imported functions
-- `export_detector?: (file: string) => ExportInfo[]` - For checking if functions are exported
-- `type_tracker?: TypeTracker` - For tracking variable types to resolve method calls
+### Configuration Pattern Implementation
+- **11.80.1** - Extract language configurations and create generic processor
+- **11.80.2** - Preserve bespoke handlers for language-specific features
 
-## Implementation Details
+### Enhanced Data Structure Integration
+- **11.80.3** - Integrate scope_tree for local symbol resolution
+- **11.80.4** - Integrate import_resolver for external function tracking  
+- **11.80.5** - Integrate type_tracker for method call resolution
 
-### Configuration Structure
-```typescript
-interface LanguageCallConfig {
-  call_expression_types: string[];
-  function_field: string;
-  arguments_field: string;
-  method_expression_types: string[];
-  method_object_field: string;
-  method_property_field: string;
-  function_definition_types: string[];
-  constructor_patterns: ConstructorConfig;
-}
-```
+### Pattern Propagation
+- **11.80.6** - Apply configuration pattern to method_calls module
+- **11.80.7** - Apply configuration pattern to constructor_calls module
 
-### Enhanced Context
-```typescript
-interface FunctionCallContext {
-  source_code: SourceCode;
-  file_path: FilePath;
-  language: Language;
-  ast_root: SyntaxNode;
-  
-  // New integration points
-  scope_tree: ScopeTree;
-  import_resolver: ImportResolver;
-  type_tracker: TypeTracker;
-  symbol_table: SymbolTable;
-}
-```
+## Overview
 
-### Benefits of Integration
+This parent task coordinates two major improvements to the call detection system:
 
-1. **With scope_tree**: Resolve local function definitions and understand scope context
-2. **With import_resolver**: Track calls to imported functions and resolve their sources
-3. **With type_tracker**: Better method call resolution through type information
-4. **With symbol_table**: Cross-file call resolution and definition linking
+1. **Configuration-Driven Refactoring**: Replace 86% of duplicated language-specific code with configuration-based processing
+2. **Enhanced Integration**: Add data structures from TODO comments for improved call resolution
 
-## Work Items
+## Implementation Strategy
 
-### Phase 1: Configuration Extraction
-- [ ] Create LANGUAGE_CONFIGS constant with configurations for all languages
-- [ ] Build generic processors for common patterns
-- [ ] Preserve bespoke handlers for truly language-specific features
+### Phase 1: Configuration Pattern
+Sub-tasks 11.80.1 and 11.80.2 establish the configuration-driven approach, extracting common patterns while preserving necessary language-specific logic.
 
-### Phase 2: Integration Enhancement
-- [ ] Update FunctionCallContext interface
-- [ ] Modify find_function_calls to use scope_tree for local resolution
-- [ ] Add import resolution to track external function calls
-- [ ] Use type_tracker for improved method call detection
+### Phase 2: Enhanced Integration  
+Sub-tasks 11.80.3, 11.80.4, and 11.80.5 integrate the data structures mentioned in the TODO comments for improved call resolution.
 
-### Phase 3: Testing and Migration
-- [ ] Ensure all existing tests pass
-- [ ] Add tests for enhanced resolution capabilities
-- [ ] Document the new capabilities
+### Phase 3: Pattern Propagation
+Sub-tasks 11.80.6 and 11.80.7 apply the proven pattern to related modules.
 
 ## Expected Outcomes
 
