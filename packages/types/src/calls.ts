@@ -74,6 +74,8 @@ export interface FunctionCallInfo {
   readonly is_method_call: boolean;
   readonly is_constructor_call: boolean;
   readonly arguments_count: number;
+  readonly is_macro_call?: boolean; // Rust macros
+  readonly is_in_comprehension?: boolean; // Python comprehensions
 }
 
 export interface MethodCallInfo {

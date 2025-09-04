@@ -10,6 +10,7 @@ import {
   get_enclosing_function_name,
   count_arguments
 } from './function_calls';
+import { node_to_location } from '../../ast/node_utils';
 
 /**
  * Find all function calls in Rust code
@@ -61,10 +62,7 @@ function extract_rust_call(
   return {
     caller_name,
     callee_name,
-    location: {
-      line: node.startPosition.row,
-      column: node.startPosition.column
-    },
+    location: node_to_location(node, context.file_path),
     is_method_call: is_method,
     is_constructor_call: is_constructor,
     arguments_count: count_arguments(node, language)
@@ -158,10 +156,7 @@ function extract_macro_call(
   return {
     caller_name,
     callee_name: macro_name + '!', // Add ! to indicate it's a macro
-    location: {
-      line: node.startPosition.row,
-      column: node.startPosition.column
-    },
+    location: node_to_location(node, context.file_path),
     is_method_call: false,
     is_constructor_call: false,
     arguments_count: args_count

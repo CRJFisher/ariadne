@@ -13,6 +13,7 @@ import {
   count_arguments,
   get_enclosing_function_name
 } from './function_calls';
+import { node_to_location } from '../../ast/node_utils';
 
 /**
  * Find all function calls in JavaScript code
@@ -34,10 +35,7 @@ export function find_function_calls_javascript(
       const call_info: FunctionCallInfo = {
         callee_name,
         caller_name,
-        location: {
-          line: node.startPosition.row,
-          column: node.startPosition.column
-        },
+        location: node_to_location(node, context.file_path),
         is_method_call: is_method_call(node, language),
         is_constructor_call: is_constructor_call_js(node, context.source_code),
         arguments_count: count_arguments(node, language)

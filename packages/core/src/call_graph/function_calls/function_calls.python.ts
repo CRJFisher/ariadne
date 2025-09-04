@@ -10,6 +10,7 @@ import {
   FunctionCallContext,
   get_enclosing_function_name,
 } from "./function_calls";
+import { node_to_location } from '../../ast/node_utils';
 
 /**
  * Find all function calls in Python code
@@ -61,10 +62,7 @@ function extract_python_call(
   return {
     caller_name,
     callee_name,
-    location: {
-      line: node.startPosition.row,
-      column: node.startPosition.column,
-    },
+    location: node_to_location(node, context.file_path),
     is_method_call: is_method,
     is_constructor_call: is_constructor,
     arguments_count: args_count,

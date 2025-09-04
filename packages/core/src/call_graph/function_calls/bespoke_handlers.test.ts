@@ -137,11 +137,11 @@ describe('Bespoke Handlers', () => {
     });
     
     it('should detect calls in set comprehensions', () => {
-      const source = `{transform(x) for x in data}`;
+      const source = `{transform(x) for x in data}` as SourceCode;
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source,
-        file_path: 'test.py',
+        file_path: 'test.py' as FilePath,
         language: 'python',
         ast_root: tree.rootNode
       };
@@ -153,11 +153,11 @@ describe('Bespoke Handlers', () => {
     });
     
     it('should detect calls in generator expressions', () => {
-      const source = `(process(x) for x in range(10))`;
+      const source = `(process(x) for x in range(10))` as SourceCode;
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source,
-        file_path: 'test.py',
+        file_path: 'test.py' as FilePath,
         language: 'python',
         ast_root: tree.rootNode
       };
@@ -170,11 +170,11 @@ describe('Bespoke Handlers', () => {
     });
     
     it('should handle nested comprehensions', () => {
-      const source = `[[inner(y) for y in outer(x)] for x in items]`;
+      const source = `[[inner(y) for y in outer(x)] for x in items]` as SourceCode;
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source,
-        file_path: 'test.py',
+        file_path: 'test.py' as FilePath,
         language: 'python',
         ast_root: tree.rootNode
       };
@@ -196,11 +196,11 @@ describe('Bespoke Handlers', () => {
           println!("Hello");
           vec![1, 2, 3];
         }
-      `;
+      ` as SourceCode;
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source,
-        file_path: 'test.rs',
+        file_path: 'test.rs' as FilePath,
         language: 'rust',
         ast_root: tree.rootNode
       };
@@ -224,11 +224,11 @@ describe('Bespoke Handlers', () => {
             regularCall();
           }
         }
-      `;
+      ` as SourceCode;
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source,
-        file_path: 'test.ts',
+        file_path: 'test.ts' as FilePath,
         language: 'typescript',
         ast_root: tree.rootNode
       };
@@ -245,11 +245,11 @@ describe('Bespoke Handlers', () => {
       const source = `
 result = [transform(x) for x in data]
 normal_call()
-      `;
+      ` as SourceCode;
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source,
-        file_path: 'test.py',
+        file_path: 'test.py' as FilePath,
         language: 'python',
         ast_root: tree.rootNode
       };
