@@ -1,36 +1,20 @@
 /**
- * TypeScript-specific function call detection
+ * TypeScript-specific bespoke features
+ * 
+ * Only contains features that cannot be expressed through configuration
  */
 
 import { SyntaxNode } from 'tree-sitter';
 import { FunctionCallContext } from './function_calls';
 import { FunctionCallInfo } from '@ariadnejs/types';
-import { find_function_calls_javascript } from './function_calls.javascript';
 
 /**
- * Find all function calls in TypeScript code
+ * Handle TypeScript decorators (bespoke feature export for generic processor)
  * 
- * TypeScript shares most logic with JavaScript but adds:
- * - Generic type arguments in calls
- * - Type assertions
- * - Decorator calls
+ * Decorators in TypeScript require special handling as they have unique
+ * syntax and semantics that can't be expressed through configuration.
  */
-export function find_function_calls_typescript(
-  context: FunctionCallContext
-): FunctionCallInfo[] {
-  // Start with JavaScript detection
-  const calls = find_function_calls_javascript(context);
-  
-  // Add TypeScript-specific calls
-  const ts_calls = find_typescript_specific_calls(context);
-  
-  return [...calls, ...ts_calls];
-}
-
-/**
- * Find TypeScript-specific call patterns
- */
-function find_typescript_specific_calls(
+export function handle_typescript_decorators(
   context: FunctionCallContext
 ): FunctionCallInfo[] {
   const calls: FunctionCallInfo[] = [];
@@ -41,15 +25,6 @@ function find_typescript_specific_calls(
       const decorator_call = extract_decorator_call(node, context);
       if (decorator_call) {
         calls.push(decorator_call);
-      }
-    }
-    
-    // Generic function calls with type arguments
-    if (node.type === 'call_expression') {
-      const type_args = node.childForFieldName('type_arguments');
-      if (type_args) {
-        // This is already handled by JavaScript detection,
-        // but we could add type argument info here if needed
       }
     }
   });
@@ -148,21 +123,4 @@ function walk_tree(node: SyntaxNode, callback: (node: SyntaxNode) => void): void
       walk_tree(child, callback);
     }
   }
-}
-
-/**
- * Check if a call has type arguments (TypeScript-specific)
- */
-export function has_type_arguments(node: SyntaxNode): boolean {
-  return node.type === 'call_expression' && 
-         node.childForFieldName('type_arguments') !== null;
-}
-
-/**
- * Handle TypeScript decorators (bespoke feature export for generic processor)
- */
-export function handle_typescript_decorators(
-  context: FunctionCallContext
-): FunctionCallInfo[] {
-  return find_typescript_specific_calls(context);
 }

@@ -1,194 +1,12 @@
 /**
- * Python-specific function call detection
+ * Python-specific bespoke features
+ * 
+ * Only contains features that cannot be expressed through configuration
  */
 
 import { SyntaxNode } from "tree-sitter";
-import { Language } from "@ariadnejs/types";
 import { FunctionCallInfo } from "@ariadnejs/types";
-import {
-  extract_callee_name,
-  FunctionCallContext,
-  get_enclosing_function_name,
-} from "./function_calls";
-import { node_to_location } from '../../ast/node_utils';
-
-/**
- * Find all function calls in Python code
- */
-export function find_function_calls_python(
-  context: FunctionCallContext
-): FunctionCallInfo[] {
-  const calls: FunctionCallInfo[] = [];
-  const language: Language = "python";
-
-  // Walk the AST to find all call nodes
-  walk_tree(context.ast_root, (node) => {
-    if (node.type === "call") {
-      const call_info = extract_python_call(node, context, language);
-      if (call_info) {
-        calls.push(call_info);
-      }
-    }
-  });
-
-  return calls;
-}
-
-/**
- * Extract Python call information
- */
-function extract_python_call(
-  node: SyntaxNode,
-  context: FunctionCallContext,
-  language: Language
-): FunctionCallInfo | null {
-  const callee_name = extract_callee_name(node, context.source_code, language);
-  if (!callee_name) return null;
-
-  const caller_name =
-    get_enclosing_function_name(node, context.source_code, language) ||
-    "<module>";
-
-  // Check if it's a method call
-  const func_node = node.childForFieldName("func");
-  const is_method = func_node?.type === "attribute";
-
-  // Check if it's a constructor call (class instantiation)
-  const is_constructor = is_class_instantiation(node, context.source_code);
-
-  // Count arguments
-  const args_count = count_python_arguments(node);
-
-  return {
-    caller_name,
-    callee_name,
-    location: node_to_location(node, context.file_path),
-    is_method_call: is_method,
-    is_constructor_call: is_constructor,
-    arguments_count: args_count,
-  };
-}
-
-/**
- * Check if a call is a class instantiation (constructor call)
- */
-function is_class_instantiation(node: SyntaxNode, source: string): boolean {
-  const func_node = node.childForFieldName("func");
-  if (!func_node) return false;
-
-  // If it's an identifier starting with capital letter, likely a class
-  if (func_node.type === "identifier") {
-    const name = source.substring(func_node.startIndex, func_node.endIndex);
-    return /^[A-Z]/.test(name);
-  }
-
-  // If it's an attribute access, check the last part
-  if (func_node.type === "attribute") {
-    const attr = func_node.childForFieldName("attr");
-    if (attr) {
-      const name = source.substring(attr.startIndex, attr.endIndex);
-      return /^[A-Z]/.test(name);
-    }
-  }
-
-  return false;
-}
-
-/**
- * Count Python arguments including positional and keyword arguments
- */
-function count_python_arguments(node: SyntaxNode): number {
-  const args_node = node.childForFieldName("arguments");
-  if (!args_node) return 0;
-
-  let count = 0;
-
-  for (let i = 0; i < args_node.childCount; i++) {
-    const child = args_node.child(i);
-    if (!child) continue;
-
-    // Count positional arguments
-    if (
-      child.type !== "(" &&
-      child.type !== ")" &&
-      child.type !== "," &&
-      child.type !== "comment" &&
-      child.type !== "keyword_argument"
-    ) {
-      count++;
-    }
-
-    // Count keyword arguments
-    if (child.type === "keyword_argument") {
-      count++;
-    }
-  }
-
-  return count;
-}
-
-/**
- * Walk the AST tree
- */
-function walk_tree(
-  node: SyntaxNode,
-  callback: (node: SyntaxNode) => void
-): void {
-  callback(node);
-  for (let i = 0; i < node.childCount; i++) {
-    const child = node.child(i);
-    if (child) {
-      walk_tree(child, callback);
-    }
-  }
-}
-
-/**
- * Python-specific: Check if a call is a decorator
- */
-export function is_decorator_call(node: SyntaxNode): boolean {
-  const parent = node.parent;
-  return parent?.type === "decorator";
-}
-
-/**
- * Python-specific: Check if it's a comprehension call
- */
-export function is_comprehension_call(node: SyntaxNode): boolean {
-  let parent = node.parent;
-  while (parent) {
-    if (
-      parent.type === "list_comprehension" ||
-      parent.type === "dictionary_comprehension" ||
-      parent.type === "set_comprehension" ||
-      parent.type === "generator_expression"
-    ) {
-      return true;
-    }
-    parent = parent.parent;
-  }
-  return false;
-}
-
-/**
- * Python-specific: Check for async calls
- */
-export function is_async_call_python(node: SyntaxNode): boolean {
-  const parent = node.parent;
-  return parent?.type === "await";
-}
-
-/**
- * Python-specific: Extract super() calls
- */
-export function is_super_call(node: SyntaxNode, source: string): boolean {
-  const func_node = node.childForFieldName("func");
-  if (func_node && func_node.type === "identifier") {
-    const name = source.substring(func_node.startIndex, func_node.endIndex);
-    return name === "super";
-  }
-  return false;
-}
+import { FunctionCallContext } from "./function_calls";
 
 /**
  * Handle Python comprehensions (bespoke feature export for generic processor)
@@ -212,7 +30,7 @@ export function handle_python_comprehensions(
       // Find all calls within the comprehension
       walk_tree(node, (inner_node) => {
         if (inner_node.type === "call" && inner_node !== node) {
-          const call_info = extract_python_call(inner_node, context, "python");
+          const call_info = extract_python_call(inner_node, context);
           if (call_info) {
             // Mark that this call is within a comprehension
             calls.push({
@@ -226,4 +44,77 @@ export function handle_python_comprehensions(
   });
   
   return calls;
+}
+
+/**
+ * Extract Python call information (simplified for comprehensions)
+ */
+function extract_python_call(
+  node: SyntaxNode,
+  context: FunctionCallContext
+): FunctionCallInfo | null {
+  // Get the function being called
+  const func_node = node.childForFieldName("function");
+  if (!func_node) return null;
+  
+  let callee_name: string | null = null;
+  let is_method = false;
+  
+  if (func_node.type === "identifier") {
+    callee_name = context.source_code.substring(func_node.startIndex, func_node.endIndex);
+  } else if (func_node.type === "attribute") {
+    const attr = func_node.childForFieldName("attribute");
+    if (attr) {
+      callee_name = context.source_code.substring(attr.startIndex, attr.endIndex);
+      is_method = true;
+    }
+  }
+  
+  if (!callee_name) return null;
+  
+  // For comprehensions, we don't track the enclosing function precisely
+  const caller_name = "<comprehension>";
+  
+  // Count arguments
+  const args_node = node.childForFieldName("arguments");
+  let args_count = 0;
+  if (args_node) {
+    for (let i = 0; i < args_node.childCount; i++) {
+      const child = args_node.child(i);
+      if (child && child.type !== "(" && child.type !== ")" && child.type !== ",") {
+        args_count++;
+      }
+    }
+  }
+  
+  return {
+    caller_name,
+    callee_name,
+    location: {
+      file_path: context.file_path,
+      line: node.startPosition.row + 1,
+      column: node.startPosition.column,
+      end_line: node.endPosition.row + 1,
+      end_column: node.endPosition.column
+    },
+    is_method_call: is_method,
+    is_constructor_call: /^[A-Z]/.test(callee_name),
+    arguments_count: args_count,
+  };
+}
+
+/**
+ * Walk the AST tree
+ */
+function walk_tree(
+  node: SyntaxNode,
+  callback: (node: SyntaxNode) => void
+): void {
+  callback(node);
+  for (let i = 0; i < node.childCount; i++) {
+    const child = node.child(i);
+    if (child) {
+      walk_tree(child, callback);
+    }
+  }
 }

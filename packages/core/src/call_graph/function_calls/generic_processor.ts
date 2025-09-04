@@ -9,6 +9,7 @@ import { SyntaxNode } from 'tree-sitter';
 import { FunctionCallInfo, Language } from '@ariadnejs/types';
 import { FunctionCallContext, MODULE_CONTEXT } from './function_calls';
 import { getLanguageConfig, LanguageCallConfig } from './language_configs';
+import { node_to_location } from '../../ast/node_utils';
 
 /**
  * Generic function to find all function calls using language configuration
@@ -67,10 +68,7 @@ function extract_call_generic(
   return {
     caller_name,
     callee_name,
-    location: {
-      line: node.startPosition.row + 1,  // Convert to 1-based
-      column: node.startPosition.column
-    },
+    location: node_to_location(node, context.file_path),
     is_method_call: is_method,
     is_constructor_call: is_constructor,
     arguments_count: args_count
@@ -262,10 +260,7 @@ function extract_macro_call_generic(
   return {
     caller_name,
     callee_name: macro_name,
-    location: {
-      line: node.startPosition.row + 1,
-      column: node.startPosition.column
-    },
+    location: node_to_location(node, context.file_path),
     is_method_call: false,
     is_constructor_call: false,
     is_macro_call: true,
