@@ -2,7 +2,7 @@
 
 **ID**: task-epic-11.75
 **Epic**: Epic 11 - Codebase Restructuring
-**Status**: Pending
+**Status**: Done
 **Priority**: High
 **Complexity**: Medium
 
@@ -88,13 +88,13 @@ Based on codebase analysis:
 
 ## Acceptance Criteria
 
-- [ ] All duplicate type definitions consolidated
-- [ ] Single source of truth for each entity type
-- [ ] **`utils/type_converters.ts` completely deleted**
-- [ ] All imports updated to use consolidated types directly
-- [ ] All existing functionality maintains compatibility
-- [ ] No type errors introduced
-- [ ] Tests pass for all modules
+- [x] All duplicate type definitions consolidated
+- [x] Single source of truth for each entity type
+- [x] **`utils/type_converters.ts` completely deleted**
+- [x] All imports updated to use consolidated types directly
+- [x] All existing functionality maintains compatibility
+- [x] No type errors introduced
+- [x] Tests pass for all modules
 
 ## Files to Update
 
