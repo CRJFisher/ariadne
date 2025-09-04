@@ -265,3 +265,4 @@ const is_accessible = is_entity_visible_from_scope(
 const method_scope = entity_scopes.get(method_symbol);
 const class_scope = scope_tree.nodes.get(method_scope)?.parent_id;
 ```
+

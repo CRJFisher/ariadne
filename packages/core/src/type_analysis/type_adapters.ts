@@ -9,16 +9,18 @@ import {
   ImportStatement,
   ExportStatement,
   Location,
-  AnalysisError,
   SymbolName,
   ModulePath,
-  FilePath,
   TypeInfo as PublicTypeInfo,
   VariableName,
   ImportInfo,
   ExportInfo,
 } from "@ariadnejs/types";
 import { TypeInfo } from "./type_tracking";
+import {
+  create_readonly_array,
+  create_readonly_map,
+} from "@ariadnejs/types/src/immutable";
 
 /**
  * Convert internal ImportInfo to public ImportStatement
@@ -28,9 +30,9 @@ export function convert_import_info_to_statement(
   file_path: string
 ): ImportStatement {
   // Get the single symbol name
-  const symbol_name: SymbolName | undefined = 
-    import_info.name && import_info.kind !== "namespace" 
-      ? import_info.name as SymbolName
+  const symbol_name: SymbolName | undefined =
+    import_info.name && import_info.kind !== "namespace"
+      ? (import_info.name as SymbolName)
       : undefined;
 
   // Handle namespace imports
@@ -42,7 +44,7 @@ export function convert_import_info_to_statement(
 
   return {
     source: import_info.source as ModulePath,
-    symbol_name,  // Changed from symbol_names array to single symbol_name
+    symbol_name, // Changed from symbol_names array to single symbol_name
     location,
     is_type_import: import_info.is_type_only,
     is_namespace_import,
@@ -57,16 +59,16 @@ export function convert_export_info_to_statement(
   export_info: ExportInfo
 ): ExportStatement {
   // Get the single symbol name
-  const symbol_name: SymbolName | undefined = 
+  const symbol_name: SymbolName | undefined =
     export_info.name && export_info.kind !== "default"
-      ? export_info.name as SymbolName
+      ? (export_info.name as SymbolName)
       : undefined;
 
   // Use the location from export info directly
   const location = export_info.location;
 
   return {
-    symbol_name,  // Changed from symbol_names array to single symbol_name
+    symbol_name, // Changed from symbol_names array to single symbol_name
     location,
     is_default: export_info.kind === "default",
     is_type_export: export_info.is_type_only,
@@ -109,21 +111,6 @@ export function convert_type_info_array_to_single(
     nullable: types.some((t) => t.nullable || false),
     is_collection: types.some((t) => t.is_collection || false),
   };
-}
-
-/**
- * Create a readonly map from a mutable map
- */
-export function create_readonly_map<K, V>(map: Map<K, V>): ReadonlyMap<K, V> {
-  // Maps are already compatible, just need type assertion
-  return map as ReadonlyMap<K, V>;
-}
-
-/**
- * Create a readonly array from a mutable array
- */
-export function create_readonly_array<T>(array: T[]): readonly T[] {
-  return Object.freeze(array);
 }
 
 /**

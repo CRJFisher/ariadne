@@ -39,9 +39,8 @@ import {
   convert_imports_to_statements,
   convert_exports_to_statements,
   convert_type_map_to_public,
-  create_readonly_array,
-  create_empty_errors,
 } from "./type_analysis/type_adapters";
+import { create_readonly_array } from "@ariadnejs/types/src/immutable";
 import {
   infer_function_return_type,
   ReturnTypeContext,
@@ -779,7 +778,7 @@ function build_file_analysis(
 
   // Extract variables from scope tree
   const variables = extract_variables_from_scopes(scopes);
-  const errors = error_collector?.get_errors() || create_empty_errors();
+  const errors = error_collector?.get_errors() || [];
 
   return {
     file_path: file.file_path,

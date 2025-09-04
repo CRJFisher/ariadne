@@ -79,3 +79,18 @@ export type DeepPartialReadonly<T> = {
     ? DeepPartialReadonly<T[P]>
     : T[P];
 };
+/**
+ * Create a readonly array from a mutable array
+ */
+
+export function create_readonly_array<T>(array: T[]): readonly T[] {
+  return Object.freeze(array);
+}
+/**
+ * Create a readonly map from a mutable map
+ */
+
+export function create_readonly_map<K, V>(map: Map<K, V>): ReadonlyMap<K, V> {
+  // Maps are already compatible, just need type assertion
+  return map as ReadonlyMap<K, V>;
+}

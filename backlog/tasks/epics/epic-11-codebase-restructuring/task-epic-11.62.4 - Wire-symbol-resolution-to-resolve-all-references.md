@@ -205,3 +205,4 @@ const to = resolution_results.resolved_calls.get(call.location) ||
 ## Notes
 
 The current `symbol_resolution.ts` has good logic for fuzzy matching, qualified names, and import resolution - we preserved this logic while updating the data structure integration.
+
