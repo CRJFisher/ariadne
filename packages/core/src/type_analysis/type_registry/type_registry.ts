@@ -1,6 +1,6 @@
 /**
  * Type Registry Implementation
- * 
+ *
  * Language-specific type registration and resolution logic.
  */
 
@@ -10,375 +10,358 @@ import {
   InterfaceDefinition,
   EnumDefinition,
   TypeAliasDefinition,
-  StructDefinition,
-  TraitDefinition,
-  ProtocolDefinition,
   TypeDefinition,
   FilePath,
   TypeName,
-  QualifiedName
-} from '@ariadnejs/types';
+  QualifiedName,
+  TypeKind,
+  FileAnalysis,
+} from "@ariadnejs/types";
 
-/**
- * Convert a ClassDefinition to a unified TypeDefinition
- */
-export function class_to_type_definition(
-  class_def: ClassDefinition,
-  language: Language
-): TypeDefinition {
-  const type_def: TypeDefinition = {
-    name: class_def.name as TypeName,
-    file_path: class_def.file_path as FilePath,
-    location: class_def.location,
-    kind: 'class',
-    type_parameters: class_def.generics?.map(g => g.name as TypeName),
-    extends: class_def.extends as TypeName[] | undefined,
-    implements: class_def.implements as TypeName[] | undefined,
-    members: new Map()
-  };
-  
-  // Convert methods to type members
-  if (class_def.methods) {
-    for (const method of class_def.methods) {
-      type_def.members?.set(method.name, {
-        name: method.name,
-        type: method.return_type,
-        kind: method.is_constructor ? 'constructor' : 'method'
-      });
-    }
-  }
-  
-  // Convert properties to type members
-  if (class_def.properties) {
-    for (const prop of class_def.properties) {
-      type_def.members?.set(prop.name, {
-        name: prop.name,
-        type: prop.type,
-        kind: 'property',
-        is_optional: false,
-        is_readonly: prop.is_readonly
-      });
-    }
-  }
-  
-  return type_def;
+export interface TypeRegistry {
+  // All registered types by fully qualified name (readonly)
+  readonly types: ReadonlyMap<QualifiedName, TypeDefinition>;
+
+  // Types organized by file (readonly)
+  readonly files: ReadonlyMap<FilePath, ReadonlySet<QualifiedName>>;
+
+  // Exported types by module path (readonly)
+  readonly exports: ReadonlyMap<FilePath, ReadonlyMap<string, QualifiedName>>; // module -> export_name -> type_name
+
+  // Type aliases mapping (readonly)
+  readonly aliases: ReadonlyMap<TypeName, QualifiedName>; // alias -> actual_type
+
+  // Built-in types per language (readonly)
+  readonly builtins: ReadonlyMap<Language, ReadonlySet<TypeName>>;
+
+  // Import resolution cache (readonly)
+  readonly import_cache: ReadonlyMap<string, QualifiedName>; // "file#import_name" -> resolved_type
 }
 
 /**
- * Convert an InterfaceDefinition to a unified TypeDefinition
+ * Build an immutable type registry from file analyses
+ *
+ * This is the main entry point for creating a type registry.
+ * It takes all file analyses and builds a complete, immutable registry
+ * in a single pass. No further modifications are allowed after creation.
+ *
+ * @param file_analyses Array of file analyses containing type information
+ * @returns An immutable type registry ready for querying
  */
-export function interface_to_type_definition(
-  interface_def: InterfaceDefinition,
-  language: Language
-): TypeDefinition {
-  const type_def: TypeDefinition = {
-    name: interface_def.name as TypeName,
-    file_path: interface_def.file_path as FilePath,
-    location: interface_def.location,
-    kind: 'interface',
-    type_parameters: interface_def.generics?.map(g => g.name as TypeName),
-    extends: interface_def.extends as TypeName[] | undefined,
-    members: new Map()
+
+export function build_type_registry(
+  file_analyses: FileAnalysis[]
+): TypeRegistry {
+  // Create mutable builder
+  const builder: MutableTypeRegistry = {
+    types: new Map(),
+    files: new Map(),
+    exports: new Map(),
+    aliases: new Map(),
+    builtins: new Map(),
+    import_cache: new Map(),
   };
-  
-  // Convert method signatures to type members
-  if (interface_def.methods) {
-    for (const method of interface_def.methods) {
-      type_def.members?.set(method.name, {
-        name: method.name,
-        type: method.return_type,
-        kind: 'method',
-        is_optional: method.is_optional
-      });
+
+  // Initialize built-in types
+  initialize_builtins(builder);
+
+  // Register all types from all files in a single pass
+  for (const analysis of file_analyses) {
+    // Register classes
+    if (analysis.classes) {
+      for (const class_def of analysis.classes) {
+        const is_exported =
+          analysis.exports?.some(
+            (e) =>
+              e.symbol_name === class_def.name ||
+              e.local_name === class_def.name
+          ) ?? false;
+        register_class(builder, class_def, is_exported);
+      }
+    }
+
+    // Register interfaces (if available in FileAnalysis)
+    const interfaces = (analysis as any).interfaces;
+    if (interfaces) {
+      for (const interface_def of interfaces) {
+        const is_exported =
+          analysis.exports?.some(
+            (e) =>
+              e.symbol_name === interface_def.name ||
+              e.local_name === interface_def.name
+          ) ?? false; 
+        register_interface(builder, interface_def, is_exported);
+      }
+    }
+
+    // Register enums (if available in FileAnalysis)
+    const enums = (analysis as any).enums;
+    if (enums) {
+      for (const enum_def of enums) {
+        const is_exported =
+          analysis.exports?.some(
+            (e) =>
+              e.symbol_name === enum_def.name || e.local_name === enum_def.name
+          ) ?? false;
+        register_enum(builder, enum_def, is_exported);
+      }
+    }
+
+    // Register type aliases (if available in FileAnalysis)
+    const type_aliases = (analysis as any).type_aliases;
+    if (type_aliases) {
+      for (const type_alias of type_aliases) {
+        const is_exported =
+          analysis.exports?.some(
+            (e) =>
+              e.symbol_name === type_alias.name ||
+              e.local_name === type_alias.name
+          ) ?? false;
+        register_type_alias(builder, type_alias, is_exported);
+      }
     }
   }
-  
-  // Convert property signatures to type members
-  if (interface_def.properties) {
-    for (const prop of interface_def.properties) {
-      type_def.members?.set(prop.name, {
-        name: prop.name,
-        type: prop.type,
-        kind: 'property',
-        is_optional: prop.is_optional,
-        is_readonly: prop.is_readonly
-      });
-    }
-  }
-  
-  return type_def;
+
+  // Freeze all collections to make them immutable
+  return Object.freeze({
+    types: builder.types as ReadonlyMap<QualifiedName, TypeDefinition>,
+    files: builder.files as ReadonlyMap<FilePath, ReadonlySet<QualifiedName>>,
+    exports: builder.exports as ReadonlyMap<
+      FilePath,
+      ReadonlyMap<string, QualifiedName>
+    >,
+    aliases: builder.aliases as ReadonlyMap<TypeName, QualifiedName>,
+    builtins: builder.builtins as ReadonlyMap<Language, ReadonlySet<TypeName>>,
+    import_cache: builder.import_cache as ReadonlyMap<string, QualifiedName>,
+  });
 }
 
 /**
- * Convert an EnumDefinition to a unified TypeDefinition
+ * @internal Register a type alias
  */
-export function enum_to_type_definition(
-  enum_def: EnumDefinition
-): TypeDefinition {
+export function register_type_alias(
+  registry: MutableTypeRegistry,
+  type_alias: TypeAliasDefinition,
+  exported: boolean = false,
+  export_name?: string
+): void {
+  const type_def: TypeDefinition = {
+    name: type_alias.name as TypeName,
+    location: type_alias.location,
+    kind: TypeKind.TYPE,
+    type_parameters: type_alias.generics?.map((g) => g.name as TypeName),
+    members: new Map(), // TODO: Add members
+  };
+
+  register_type(registry, type_def, exported, export_name);
+
+  // Also register as an alias if it's aliasing another type
+  if (type_alias.type_expression) {
+    const qualified_name = get_qualified_name(
+      type_alias.location.file_path,
+      type_alias.name as TypeName
+    );
+    registry.aliases.set(type_alias.name as TypeName, qualified_name);
+  }
+}
+
+/**
+ * @internal Register an enum definition as a type
+ */
+export function register_enum(
+  registry: MutableTypeRegistry,
+  enum_def: EnumDefinition,
+  exported: boolean = false,
+  export_name?: string
+): void {
   const type_def: TypeDefinition = {
     name: enum_def.name as TypeName,
-    file_path: enum_def.file_path as FilePath,
     location: enum_def.location,
-    kind: 'enum',
-    members: new Map()
+    kind: TypeKind.ENUM,
+    members: new Map(),
   };
-  
-  // Convert enum members
-  if (enum_def.members) {
-    for (const member of enum_def.members) {
-      type_def.members?.set(member.name, {
-        name: member.name,
-        type: typeof member.value === 'string' ? 'string' : 'number',
-        kind: 'property',
-        is_readonly: true
-      });
-    }
+
+  register_type(registry, type_def, exported, export_name);
+}
+
+/**
+ * @internal Get fully qualified name for a type
+ */
+
+export function get_qualified_name(
+  file_path: FilePath,
+  type_name: TypeName
+): QualifiedName {
+  return `${file_path}#${type_name}` as QualifiedName;
+}
+/**
+ * @internal Register a type definition
+ */
+
+export function register_type(
+  registry: MutableTypeRegistry,
+  type_def: TypeDefinition,
+  exported: boolean = false,
+  export_name?: string
+): void {
+  const qualified_name = get_qualified_name(type_def.file_path, type_def.name);
+
+  // Register in main types map
+  registry.types.set(qualified_name, type_def);
+
+  // Register by file
+  if (!registry.files.has(type_def.file_path)) {
+    registry.files.set(type_def.file_path, new Set());
   }
-  
-  return type_def;
-}
+  registry.files.get(type_def.file_path)!.add(qualified_name);
 
-/**
- * Convert a TypeAliasDefinition to a unified TypeDefinition
- */
-export function type_alias_to_type_definition(
-  alias_def: TypeAliasDefinition
-): TypeDefinition {
-  return {
-    name: alias_def.name as TypeName,
-    file_path: alias_def.file_path as FilePath,
-    location: alias_def.location,
-    kind: 'type',
-    type_parameters: alias_def.generics?.map(g => g.name as TypeName)
-  };
+  // Register exports
+  if (exported) {
+    if (!registry.exports.has(type_def.file_path)) {
+      registry.exports.set(type_def.file_path, new Map());
+    }
+    const exp_name = export_name || type_def.name;
+    registry.exports.get(type_def.file_path)!.set(exp_name, qualified_name);
+  }
 }
-
 /**
- * Convert a Rust StructDefinition to a unified TypeDefinition
+ * @internal Register an interface definition as a type
  */
-export function struct_to_type_definition(
-  struct_def: StructDefinition
-): TypeDefinition {
+
+export function register_interface(
+  registry: MutableTypeRegistry,
+  interface_def: InterfaceDefinition,
+  exported: boolean = false,
+  export_name?: string
+): void {
   const type_def: TypeDefinition = {
-    name: struct_def.name as TypeName,
-    file_path: struct_def.file_path as FilePath,
-    location: struct_def.location,
-    kind: 'class', // Structs are class-like
-    type_parameters: struct_def.generics?.map(g => g.name as TypeName),
-    members: new Map()
+    name: interface_def.name as TypeName,
+    location: interface_def.location,
+    kind: TypeKind.INTERFACE,
+    type_parameters: interface_def.generics?.map((g) => g.name as TypeName),
+    extends: interface_def.extends as TypeName[] | undefined,
+    members: new Map(),
   };
-  
-  // Convert fields to members
-  if (struct_def.fields) {
-    for (const field of struct_def.fields) {
-      if (field.name) {
-        type_def.members?.set(field.name, {
-          name: field.name,
-          type: field.type,
-          kind: 'property',
-          is_readonly: false
-        });
-      }
-    }
-  }
-  
-  return type_def;
-}
 
+  register_type(registry, type_def, exported, export_name);
+}
 /**
- * Convert a Rust TraitDefinition to a unified TypeDefinition
+ * @internal Register a class definition as a type
  */
-export function trait_to_type_definition(
-  trait_def: TraitDefinition
-): TypeDefinition {
+
+export function register_class(
+  registry: MutableTypeRegistry,
+  class_def: ClassDefinition,
+  exported: boolean = false,
+  export_name?: string
+): void {
   const type_def: TypeDefinition = {
-    name: trait_def.name as TypeName,
-    file_path: trait_def.file_path as FilePath,
-    location: trait_def.location,
-    kind: 'trait',
-    type_parameters: trait_def.generics?.map(g => g.name as TypeName),
-    extends: trait_def.supertraits as TypeName[] | undefined,
-    members: new Map()
+    name: class_def.name as TypeName,
+    location: class_def.location,
+    kind: TypeKind.CLASS,
+    type_parameters: class_def.generics?.map((g) => g.name as TypeName),
+    extends: class_def.extends as TypeName[] | undefined,
+    implements: class_def.implements as TypeName[] | undefined,
+    members: new Map(), // Convert methods/properties to members if needed
   };
-  
-  // Convert method signatures to members
-  if (trait_def.methods) {
-    for (const method of trait_def.methods) {
-      type_def.members?.set(method.name, {
-        name: method.name,
-        type: method.return_type,
-        kind: 'method',
-        is_optional: method.is_optional
-      });
-    }
-  }
-  
-  return type_def;
-}
 
-/**
- * Convert a Python ProtocolDefinition to a unified TypeDefinition
- */
-export function protocol_to_type_definition(
-  protocol_def: ProtocolDefinition
-): TypeDefinition {
-  const type_def: TypeDefinition = {
-    name: protocol_def.name as TypeName,
-    file_path: protocol_def.file_path as FilePath,
-    location: protocol_def.location,
-    kind: 'interface', // Protocols are interface-like
-    extends: protocol_def.bases as TypeName[] | undefined,
-    members: new Map()
-  };
-  
-  // Convert method signatures to members
-  if (protocol_def.methods) {
-    for (const method of protocol_def.methods) {
-      type_def.members?.set(method.name, {
-        name: method.name,
-        type: method.return_type,
-        kind: 'method',
-        is_optional: method.is_optional
-      });
-    }
-  }
-  
-  // Convert property signatures to members
-  if (protocol_def.properties) {
-    for (const prop of protocol_def.properties) {
-      type_def.members?.set(prop.name, {
-        name: prop.name,
-        type: prop.type,
-        kind: 'property',
-        is_optional: prop.is_optional,
-        is_readonly: prop.is_readonly
-      });
-    }
-  }
-  
-  return type_def;
+  register_type(registry, type_def, exported, export_name);
 }
-
 /**
- * Resolve type references through re-export chains
+ * @internal Initialize built-in types for each language
  */
-export function resolve_through_reexports(
-  type_name: TypeName,
-  module_path: FilePath,
-  exports_map: Map<FilePath, Map<string, QualifiedName>>
-): QualifiedName | undefined {
-  const module_exports = exports_map.get(module_path);
-  if (!module_exports) return undefined;
-  
-  // Check if this module exports the type
-  const qualified = module_exports.get(type_name);
-  if (qualified) return qualified;
-  
-  // Check for re-exports (export { foo } from './other')
-  // This would require tracking re-export information
-  // TODO: Implement re-export chain resolution
-  
-  return undefined;
+
+export function initialize_builtins(registry: MutableTypeRegistry): void {
+  // JavaScript/TypeScript built-ins
+  const js_builtins = new Set<TypeName>([
+    "string",
+    "number",
+    "boolean",
+    "object",
+    "undefined",
+    "null",
+    "symbol",
+    "bigint",
+    "Array",
+    "Object",
+    "Function",
+    "Date",
+    "RegExp",
+    "Map",
+    "Set",
+    "Promise",
+    "Error",
+    "TypeError",
+    "ReferenceError",
+    "SyntaxError",
+  ]);
+  registry.builtins.set("javascript", js_builtins);
+  registry.builtins.set(
+    "typescript",
+    new Set([...js_builtins, "any", "unknown", "never", "void"])
+  );
+
+  // Python built-ins
+  registry.builtins.set(
+    "python",
+    new Set([
+      "int",
+      "float",
+      "str",
+      "bool",
+      "None",
+      "list",
+      "dict",
+      "tuple",
+      "set",
+      "type",
+      "object",
+      "Exception",
+      "ValueError",
+      "TypeError",
+      "KeyError",
+    ])
+  );
+
+  // Rust built-ins
+  registry.builtins.set(
+    "rust",
+    new Set([
+      "i8",
+      "i16",
+      "i32",
+      "i64",
+      "i128",
+      "isize",
+      "u8",
+      "u16",
+      "u32",
+      "u64",
+      "u128",
+      "usize",
+      "f32",
+      "f64",
+      "bool",
+      "char",
+      "str",
+      "String",
+      "Vec",
+      "HashMap",
+      "HashSet",
+      "Option",
+      "Result",
+    ])
+  );
 }
-
 /**
- * Check if a type is a built-in for the given language
+ * @internal Create a mutable registry builder
  */
-export function is_builtin_type(
-  type_name: TypeName,
-  language: Language
-): boolean {
-  const builtins = get_language_builtins(language);
-  return builtins.has(type_name);
-}
 
-/**
- * Get built-in types for a language
- */
-function get_language_builtins(language: Language): Set<TypeName> {
-  switch (language) {
-    case 'javascript':
-      return new Set([
-        'string', 'number', 'boolean', 'object', 'undefined', 'null', 'symbol', 'bigint',
-        'Array', 'Object', 'Function', 'Date', 'RegExp', 'Map', 'Set', 'Promise',
-        'Error', 'TypeError', 'ReferenceError', 'SyntaxError'
-      ] as TypeName[]);
-      
-    case 'typescript':
-      return new Set([
-        'string', 'number', 'boolean', 'object', 'undefined', 'null', 'symbol', 'bigint',
-        'Array', 'Object', 'Function', 'Date', 'RegExp', 'Map', 'Set', 'Promise',
-        'Error', 'TypeError', 'ReferenceError', 'SyntaxError',
-        'any', 'unknown', 'never', 'void'
-      ] as TypeName[]);
-      
-    case 'python':
-      return new Set([
-        'int', 'float', 'str', 'bool', 'None', 'list', 'dict', 'tuple', 'set',
-        'type', 'object', 'Exception', 'ValueError', 'TypeError', 'KeyError'
-      ] as TypeName[]);
-      
-    case 'rust':
-      return new Set([
-        'i8', 'i16', 'i32', 'i64', 'i128', 'isize',
-        'u8', 'u16', 'u32', 'u64', 'u128', 'usize',
-        'f32', 'f64', 'bool', 'char', 'str',
-        'String', 'Vec', 'HashMap', 'HashSet', 'Option', 'Result'
-      ] as TypeName[]);
-      
-    default:
-      return new Set();
-  }
-}
-
-/**
- * Validate type consistency
- * Checks for conflicts like duplicate definitions, circular dependencies, etc.
- */
-export function validate_type_consistency(
-  registry_types: Map<QualifiedName, TypeDefinition>
-): { valid: boolean; errors: string[] } {
-  const errors: string[] = [];
-  
-  // Check for circular inheritance
-  const visited = new Set<QualifiedName>();
-  const recursion_stack = new Set<QualifiedName>();
-  
-  function check_circular_inheritance(
-    type_name: QualifiedName,
-    chain: QualifiedName[] = []
-  ): void {
-    if (recursion_stack.has(type_name)) {
-      errors.push(`Circular inheritance detected: ${chain.join(' -> ')} -> ${type_name}`);
-      return;
-    }
-    
-    if (visited.has(type_name)) return;
-    
-    visited.add(type_name);
-    recursion_stack.add(type_name);
-    
-    const type_def = registry_types.get(type_name);
-    if (type_def?.extends) {
-      for (const parent of type_def.extends) {
-        // Need to resolve parent to qualified name
-        // This is simplified - would need proper resolution
-        check_circular_inheritance(parent as QualifiedName, [...chain, type_name]);
-      }
-    }
-    
-    recursion_stack.delete(type_name);
-  }
-  
-  // Check all types for circular inheritance
-  for (const [type_name] of registry_types) {
-    if (!visited.has(type_name)) {
-      check_circular_inheritance(type_name);
-    }
-  }
-  
-  return {
-    valid: errors.length === 0,
-    errors
-  };
+export interface MutableTypeRegistry {
+  types: Map<QualifiedName, TypeDefinition>;
+  files: Map<FilePath, Set<QualifiedName>>;
+  exports: Map<FilePath, Map<string, QualifiedName>>;
+  aliases: Map<TypeName, QualifiedName>;
+  builtins: Map<Language, Set<TypeName>>;
+  import_cache: Map<string, QualifiedName>;
 }

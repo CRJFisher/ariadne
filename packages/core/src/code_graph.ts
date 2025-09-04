@@ -6,12 +6,8 @@
 
 import { analyze_file } from "./file_analyzer";
 import { build_module_graph } from "./import_export/module_graph";
-import {
-  create_type_registry,
-  register_class,
-  register_type,
-  TypeRegistry,
-} from "./type_analysis/type_registry";
+import { TypeRegistry } from "./type_analysis/type_registry";
+import { build_type_registry } from "./type_analysis/type_registry/type_registry";
 import {
   Language,
   // Main types
@@ -214,39 +210,8 @@ async function resolve_namespaces_across_files(
     }
   }
 
-  // Update type registry with namespace-qualified types
-  for (const [_, resolved_type] of resolved_members) {
-    if (
-      resolved_type.kind === "type" ||
-      resolved_type.kind === "interface" ||
-      resolved_type.kind === "class"
-    ) {
-      // Map string kind to TypeKind enum
-      let typeKind: TypeKind;
-      switch (resolved_type.kind) {
-        case "class":
-          typeKind = TypeKind.CLASS;
-          break;
-        case "interface":
-          typeKind = TypeKind.INTERFACE;
-          break;
-        case "type":
-          typeKind = TypeKind.TYPE;
-          break;
-        default:
-          typeKind = TypeKind.TYPE; // Default to TYPE for unknown kinds
-      }
-
-      // Register the type with its qualified name
-      const type_def = {
-        name: resolved_type.qualified_name,
-        file_path: resolved_type.source_module,
-        location: resolved_type.location,
-        kind: typeKind,
-      };
-      register_type(type_registry, type_def, true, resolved_type.name);
-    }
-  }
+  // Note: Type registry is now immutable, namespace-qualified types
+  // should be handled during the registry build phase if needed
 
   return namespace_map;
 }
@@ -403,7 +368,7 @@ export async function generate_code_graph(
   );
 
   // TYPE REGISTRY - Build unified type registry from all files (needed for enrichment)
-  const type_registry = await build_type_registry_from_analyses(analyses);
+  const type_registry = build_type_registry(analyses);
 
   // CLASS HIERARCHY - Build inheritance tree from all classes (needed for enrichment)
   const class_hierarchy = await build_class_hierarchy_from_analyses(
@@ -504,6 +469,7 @@ export async function generate_code_graph(
     module_graph: modules,
     resolved_generics,
     propagated_types,
+    namespace_resolutions,
   };
 
   // Enrichment options for comprehensive analysis
@@ -533,7 +499,7 @@ export async function generate_code_graph(
 
   // LAYER 8: GLOBAL SYMBOL RESOLUTION - Build global symbol table and resolve references
   const global_symbols = build_symbol_table({
-    analyses: enriched_analyses as any[], // Type cast needed due to extended FileAnalysis
+    analyses: enriched_analyses,
     module_graph: modules,
     type_registry,
     resolve_imports: true,
@@ -839,43 +805,6 @@ function build_symbol_index(
     exports,
     resolution_cache,
   };
-}
-
-/**
- * Build type registry from all file analyses
- *
- * Creates a unified type registry combining type information from all files.
- * This enables cross-file type resolution and validation.
- */
-async function build_type_registry_from_analyses(
-  analyses: FileAnalysis[]
-): Promise<TypeRegistry> {
-  const registry = create_type_registry();
-
-  // Register all classes from all files
-  for (const analysis of analyses) {
-    for (const class_def of analysis.classes) {
-      register_class(registry, {
-        name: class_def.name,
-        file_path: analysis.file_path,
-        location: class_def.location,
-        methods: class_def.methods,
-        properties: class_def.properties,
-        extends: class_def.extends,
-        implements: class_def.implements,
-        is_abstract: class_def.is_abstract,
-        is_exported: class_def.is_exported,
-        generics: class_def.generics,
-        docstring: class_def.docstring,
-        decorators: class_def.decorators,
-      });
-    }
-
-    // TODO: Register interfaces, enums, type aliases, etc.
-    // These need to be extracted during per-file analysis first
-  }
-
-  return registry;
 }
 
 /**

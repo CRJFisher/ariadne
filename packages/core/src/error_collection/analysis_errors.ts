@@ -8,7 +8,8 @@ import {
   AnalysisError,
   ErrorSeverity,
   Location,
-  Language
+  Language,
+  AnalysisPhase
 } from '@ariadnejs/types';
 
 /**
@@ -23,15 +24,7 @@ export interface ErrorContext {
 /**
  * Analysis phases where errors can occur
  */
-export type AnalysisPhase = 
-  | 'parsing'
-  | 'scope_analysis'
-  | 'import_resolution'
-  | 'export_detection'
-  | 'type_tracking'
-  | 'call_graph'
-  | 'class_detection'
-  | 'return_type_inference';
+
 
 /**
  * Error collector class

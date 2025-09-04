@@ -7,18 +7,18 @@
 import * as path from "path";
 import * as fs from "fs/promises";
 import { glob } from "glob";
-import { Language } from "@ariadnejs/types";
+import { Language, SourceCode, FilePath } from "@ariadnejs/types";
 
 export interface CodeFile {
-  file_path: string;
-  source_code: string;
+  file_path: FilePath;
+  source_code: SourceCode;
   language: Language;
 }
 
 /**
  * Detect the language of a file based on its extension
  */
-export function detect_language(file_path: string): Language {
+export function detect_language(file_path: FilePath): Language {
   const ext = path.extname(file_path).toLowerCase();
 
   const language_map: Record<string, Language> = {
@@ -34,9 +34,12 @@ export function detect_language(file_path: string): Language {
     ".pyi": "python",
     ".rs": "rust",
   };
-
-  // Default to javascript if unknown extension
-  return language_map[ext] || "javascript";
+  const language = language_map[ext];
+  if (!language) {
+    throw new Error(`Unknown file extension: ${ext} for file: ${file_path}`);
+  }
+  
+  return language;
 }
 
 /**
@@ -44,9 +47,9 @@ export function detect_language(file_path: string): Language {
  */
 export async function scan_files(
   root_path: string,
-  include_patterns?: readonly string[],
-  exclude_patterns?: readonly string[]
-): Promise<string[]> {
+  include_patterns?: readonly FilePath[],
+  exclude_patterns?: readonly FilePath[]
+): Promise<FilePath[]> {
   // Default patterns if not provided
   const includes = include_patterns || [
     "**/*.js",
@@ -70,15 +73,15 @@ export async function scan_files(
   ];
 
   // Find all matching files
-  const file_paths: string[] = [];
+  const file_paths: FilePath[] = [];
 
   for (const pattern of includes) {
     const matches = await glob(pattern, {
       cwd: root_path,
-      ignore: excludes,
+      ignore: excludes as string[],
       absolute: true,
     });
-    file_paths.push(...matches);
+    file_paths.push(...(matches as FilePath[]));
   }
 
   // Remove duplicates
@@ -89,9 +92,9 @@ export async function scan_files(
  * Read a file and create a CodeFile structure
  */
 export async function read_and_parse_file(
-  file_path: string
+  file_path: FilePath
 ): Promise<CodeFile> {
-  const source_code = await fs.readFile(file_path, "utf-8");
+  const source_code = (await fs.readFile(file_path, "utf-8")) as SourceCode;
   const language = detect_language(file_path);
 
   return {

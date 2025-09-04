@@ -67,10 +67,10 @@ export interface GlobalSymbolTable {
  */
 export interface SymbolTableOptions {
   analyses: FileAnalysis[];
-  module_graph?: ModuleGraph;
-  type_registry?: TypeRegistry;
-  resolve_imports?: boolean;
-  track_visibility?: boolean;
+  module_graph: ModuleGraph;
+  type_registry: TypeRegistry;
+  resolve_imports: boolean;
+  track_visibility: boolean;
 }
 
 /**

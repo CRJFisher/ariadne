@@ -5,6 +5,7 @@
 import type { SyntaxNode } from 'tree-sitter';
 import { FilePath, NamespaceName, ASTNodeType, FieldName } from '@ariadnejs/types';
 import { MemberAccessExpression } from './types';
+import { node_to_location } from '../node_utils';
 
 // AST node types for JavaScript/TypeScript
 const MEMBER_EXPRESSION: ASTNodeType = 'member_expression';
@@ -43,13 +44,7 @@ export function detect_javascript_member_access(
     return {
       namespace: object_name,
       member: property_name,
-      location: {
-        file_path,
-        line: node.startPosition.row + 1,
-        column: node.startPosition.column + 1,
-        end_line: node.endPosition.row + 1,
-        end_column: node.endPosition.column + 1
-      }
+      location: node_to_location(node, file_path)
     };
   }
   
@@ -73,13 +68,7 @@ export function detect_javascript_member_access(
     return {
       namespace: module_name,
       member: type_name,
-      location: {
-        file_path,
-        line: node.startPosition.row + 1,
-        column: node.startPosition.column + 1,
-        end_line: node.endPosition.row + 1,
-        end_column: node.endPosition.column + 1
-      }
+      location: node_to_location(node, file_path)
     };
   }
   

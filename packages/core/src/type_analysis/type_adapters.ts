@@ -9,7 +9,6 @@ import {
   ImportStatement,
   ExportStatement,
   Location,
-  VariableDeclaration,
   AnalysisError,
   SymbolName,
   ModulePath,
@@ -159,14 +158,6 @@ export function create_location_from_range(
     end_line: range.end.row,
     end_column: range.end.column,
   };
-}
-
-/**
- * Create empty variable declarations array
- * TODO: Implement actual extraction
- */
-export function create_empty_variables(): readonly VariableDeclaration[] {
-  return create_readonly_array<VariableDeclaration>([]);
 }
 
 /**

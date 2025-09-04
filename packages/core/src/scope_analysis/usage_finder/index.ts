@@ -5,8 +5,7 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Ref, Def, Language, Position } from '@ariadnejs/types';
-import { ScopeTree } from '../scope_tree';
+import { Language } from '@ariadnejs/types';
 import { 
   Usage,
   UsageFinderContext,
