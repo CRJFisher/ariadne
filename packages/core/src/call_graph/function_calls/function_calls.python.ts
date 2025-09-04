@@ -1,15 +1,14 @@
 /**
- * Python-specific bespoke features
- * 
- * Only contains features that cannot be expressed through configuration
+ * Python-specific bespoke features that cannot be expressed through configuration
  */
 
-import { SyntaxNode } from "tree-sitter";
-import { FunctionCallInfo } from "@ariadnejs/types";
-import { FunctionCallContext } from "./function_calls";
+import { SyntaxNode } from 'tree-sitter';
+import { FunctionCallContext } from './function_calls';
+import { FunctionCallInfo } from '@ariadnejs/types';
+import { node_to_location } from '../../ast/node_utils';
 
 /**
- * Handle Python comprehensions (bespoke feature export for generic processor)
+ * Handle Python comprehensions
  * 
  * Comprehensions in Python can contain function calls that need to be extracted.
  * This handles list, set, dictionary comprehensions and generator expressions.
@@ -20,19 +19,16 @@ export function handle_python_comprehensions(
   const calls: FunctionCallInfo[] = [];
   
   walk_tree(context.ast_root, (node) => {
-    // Check if this is a comprehension
     if (
       node.type === "list_comprehension" ||
       node.type === "dictionary_comprehension" ||
       node.type === "set_comprehension" ||
       node.type === "generator_expression"
     ) {
-      // Find all calls within the comprehension
       walk_tree(node, (inner_node) => {
         if (inner_node.type === "call" && inner_node !== node) {
           const call_info = extract_python_call(inner_node, context);
           if (call_info) {
-            // Mark that this call is within a comprehension
             calls.push({
               ...call_info,
               is_in_comprehension: true
@@ -53,7 +49,6 @@ function extract_python_call(
   node: SyntaxNode,
   context: FunctionCallContext
 ): FunctionCallInfo | null {
-  // Get the function being called
   const func_node = node.childForFieldName("function");
   if (!func_node) return null;
   
@@ -72,7 +67,6 @@ function extract_python_call(
   
   if (!callee_name) return null;
   
-  // For comprehensions, we don't track the enclosing function precisely
   const caller_name = "<comprehension>";
   
   // Count arguments
@@ -90,13 +84,7 @@ function extract_python_call(
   return {
     caller_name,
     callee_name,
-    location: {
-      file_path: context.file_path,
-      line: node.startPosition.row + 1,
-      column: node.startPosition.column,
-      end_line: node.endPosition.row + 1,
-      end_column: node.endPosition.column
-    },
+    location: node_to_location(node, context.file_path),
     is_method_call: is_method,
     is_constructor_call: /^[A-Z]/.test(callee_name),
     arguments_count: args_count,

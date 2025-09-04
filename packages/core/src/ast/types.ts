@@ -1,28 +1,3 @@
-
-/**
- * Position in source code with row and column
- */
-export interface Point {
-  readonly row: number;
-  readonly column: number;
-}
-
-/**
- * Range in source code with start and end positions
- */
-export interface Range {
-  readonly start: Point;
-  readonly end: Point;
-}
-
-/**
- * Mutable range for incremental updates
- */
-export interface MutableRange {
-  start: Point;
-  end: Point;
-}
-
 /**
  * Tree-sitter edit type for incremental parsing
  */

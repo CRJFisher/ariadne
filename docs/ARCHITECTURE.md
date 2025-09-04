@@ -107,56 +107,72 @@ Most features follow this pattern:
 
 ```txt
 /src/[feature]/[sub-feature]/
-├── index.ts                              # Dispatcher/marshaler
-├── [sub-feature].ts                      # Shared processing logic
-├── [sub-feature].test.ts                 # Common function tests as well as the test contract
-├── [sub-sub-feature].ts                  # An extra sub-processing module needed by `[sub-feature].ts`
-├── [sub-sub-feature].test.ts             # Tests for the sub-sub-feature
-├── [sub-feature].javascript.ts           # JS-specific implementation
-├── [sub-feature].javascript.test.ts      # JS test implementation
-...
+├── index.ts                              # Main API export, combines generic + bespoke
+├── [sub-feature].ts                      # Generic processor + configuration + context
+├── [sub-feature].test.ts                 # Tests for main API + generic processor
+├── language_configs.ts                   # Language configuration objects (if complex)
+├── language_configs.test.ts              # Tests for language configurations
+├── [sub-feature].javascript.ts           # JavaScript bespoke features only (if needed)
+├── [sub-feature].javascript.test.ts      # JavaScript bespoke tests
+├── [sub-feature].typescript.ts           # TypeScript bespoke features only (e.g., decorators)
+├── [sub-feature].typescript.test.ts      # TypeScript bespoke tests
+├── [sub-feature].python.ts               # Python bespoke features only (e.g., comprehensions)
+├── [sub-feature].python.test.ts          # Python bespoke tests
+├── [sub-feature].rust.ts                 # Rust bespoke features only (e.g., macros)
+├── [sub-feature].rust.test.ts            # Rust bespoke tests
 ```
 
-**Note**: Processing preference order:
-1. First, try to handle language differences through configuration in `[sub-feature].ts`
-2. Only create language-specific files (`[sub-feature].[language].ts`) when configuration cannot express the needed logic
-3. Language-specific implementations should handle truly unique processing that requires algorithmic differences
+**Processing Architecture**:
+1. **Configuration-driven processing**: Language differences that are identifier variations (node types, field names) are handled via configuration objects in the main `[sub-feature].ts` file
+2. **Bespoke processing**: Truly unique language features that require algorithmic differences go in `[sub-feature].[language].ts` files
+3. **Main module file** (`[sub-feature].ts`): Contains the generic processor, configuration dispatch, shared constants (e.g., `MODULE_CONTEXT`), and context interfaces
+4. **Language files** (`[sub-feature].[language].ts`): Only contain handlers for features that cannot be expressed through configuration
 
 **Note**: Language-specific features (e.g., Python decorators, Rust macros) follow the multi-language feature pattern but only implement files for their specific language. If complex multi-module processing is needed, use nested folders: `/src/[feature]/[sub-feature]/[sub-sub-feature]/`.
 
 **Important**: Only create folders when a module spills out into further sub-modules, either because of complex code requiring an extra conceptual layer or for language-specific processing files. If a feature has only one sub-functionality, keep it flat. For example, if `import_resolution` only contains namespace imports, all namespace import files should be directly in `import_resolution/`, not in a `namespace_imports/` subfolder.
 
-### Language-Specific Feature Dispatcher Pattern
+### Module Organization Pattern
 
-Every feature's `index.ts` dispatcher follows this functional pattern:
+#### index.ts - Minimal Export
+
+The index file should only export the public API:
 
 ```typescript
-// index.ts - Feature dispatcher (explicit dispatch preferred)
-import { process_javascript } from "./[feature].javascript";
-import { process_python } from "./[feature].python";
-import { process_rust } from "./[feature].rust";
-import { process_common } from "./common";
+// index.ts - Minimal, just exports
+export { ProcessContext, process_feature } from "./[feature]";
+export { FeatureInfo } from "@ariadnejs/types";
+```
 
-export function process_feature(
-  ast: ASTNode,
-  metadata: { language: Language; file_path: string }
-): Result {
-  // Common pre-processing
-  const prepared = process_common(ast, metadata);
+#### [feature].ts - Main Processing Logic
 
-  // Explicit dispatch to language-specific processor
-  switch (metadata.language) {
-    case "javascript":
+The main module file contains the generic processor and dispatches to bespoke handlers:
+
+```typescript
+// [feature].ts - Contains generic processor + dispatch
+import { getLanguageConfig } from "./language_configs";
+import { handle_typescript_decorators } from "./[feature].typescript";
+import { handle_python_comprehensions } from "./[feature].python";
+
+export function process_feature(context: ProcessContext): Result {
+  // Generic processing using configuration
+  const config = getLanguageConfig(context.language);
+  const results = process_generic(context, config);
+  
+  // Enhance with language-specific bespoke features
+  switch (context.language) {
     case "typescript":
-      return process_javascript(prepared, metadata);
+      return enhance_with_typescript(results, context);
     case "python":
-      return process_python(prepared, metadata);
-    case "rust":
-      return process_rust(prepared, metadata);
+      return enhance_with_python(results, context);
     default:
-      // Fallback to common-only processing
-      return prepared;
+      return results;
   }
+}
+
+function process_generic(context: ProcessContext, config: LanguageConfig): Result {
+  // Configuration-driven processing
+  // Uses config.node_types, config.field_names, etc.
 }
 ```
 
@@ -182,13 +198,13 @@ This flexibility allows consistent structure while enabling domain-appropriate p
 // Language configuration defines identifiers
 const LANGUAGE_CONFIG = {
   javascript: {
-    call_expression_types: ["call_expression"],
+    call_expression_types: ["call_expression", "new_expression"],
     function_field: "function",
     method_expression_types: ["member_expression"],
   },
   python: {
     call_expression_types: ["call"],
-    function_field: "func",
+    function_field: "function",  // Note: Python uses 'function' not 'func'
     method_expression_types: ["attribute"],
   }
 };
@@ -203,7 +219,13 @@ function process_calls(node: SyntaxNode, language: Language) {
 }
 ```
 
-This pattern should be the first choice when ~80% of logic is identical across languages. Language-specific files (`[feature].[language].ts`) remain appropriate for truly unique processing requirements (e.g., TypeScript decorators, Rust macros) that cannot be expressed through configuration.
+This pattern provides clear separation between configuration (what differs) and logic (how to process). Most language differences are identifier variations that configuration handles effectively.
+
+Language-specific files (`[feature].[language].ts`) are appropriate for truly unique processing requirements that cannot be expressed through configuration:
+- TypeScript decorators (`@Component()`)
+- Python comprehensions (`[x for x in list]`)
+- Rust macros (`println!()`)
+- Go goroutines (`go func()`)
 
 ## Type System
 

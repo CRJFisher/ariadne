@@ -145,30 +145,6 @@ export function convert_type_map_to_public(
 }
 
 /**
- * Create Location from ScopeRange
- */
-export function create_location_from_range(
-  range: ScopeRange,
-  file_path: string
-): Location {
-  return {
-    file_path: file_path as FilePath,
-    line: range.start.row,
-    column: range.start.column,
-    end_line: range.end.row,
-    end_column: range.end.column,
-  };
-}
-
-/**
- * Create empty analysis errors array
- * TODO: Implement actual error collection
- */
-export function create_empty_errors(): readonly AnalysisError[] {
-  return create_readonly_array<AnalysisError>([]);
-}
-
-/**
  * Convert imports array to import statements
  */
 export function convert_imports_to_statements(

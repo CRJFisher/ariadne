@@ -1,15 +1,14 @@
 /**
- * TypeScript-specific bespoke features
- * 
- * Only contains features that cannot be expressed through configuration
+ * TypeScript-specific bespoke features that cannot be expressed through configuration
  */
 
 import { SyntaxNode } from 'tree-sitter';
 import { FunctionCallContext } from './function_calls';
 import { FunctionCallInfo } from '@ariadnejs/types';
+import { node_to_location } from '../../ast/node_utils';
 
 /**
- * Handle TypeScript decorators (bespoke feature export for generic processor)
+ * Handle TypeScript decorators
  * 
  * Decorators in TypeScript require special handling as they have unique
  * syntax and semantics that can't be expressed through configuration.
@@ -20,7 +19,6 @@ export function handle_typescript_decorators(
   const calls: FunctionCallInfo[] = [];
   
   walk_tree(context.ast_root, (node) => {
-    // Decorator calls
     if (node.type === 'decorator') {
       const decorator_call = extract_decorator_call(node, context);
       if (decorator_call) {
@@ -39,7 +37,6 @@ function extract_decorator_call(
   node: SyntaxNode,
   context: FunctionCallContext
 ): FunctionCallInfo | null {
-  // Get the decorator expression
   const expr = node.child(1); // Skip @ symbol
   if (!expr) return null;
   
@@ -47,10 +44,8 @@ function extract_decorator_call(
   let is_call = false;
   
   if (expr.type === 'identifier') {
-    // Simple decorator: @decorator
     callee_name = context.source_code.substring(expr.startIndex, expr.endIndex);
   } else if (expr.type === 'call_expression') {
-    // Decorator with arguments: @decorator(args)
     is_call = true;
     const func = expr.childForFieldName('function');
     if (func) {
@@ -84,10 +79,7 @@ function extract_decorator_call(
   return {
     caller_name,
     callee_name,
-    location: {
-      line: node.startPosition.row,
-      column: node.startPosition.column
-    },
+    location: node_to_location(node, context.file_path),
     is_method_call: false,
     is_constructor_call: false,
     arguments_count: is_call ? count_decorator_arguments(expr) : 0
@@ -115,7 +107,10 @@ function count_decorator_arguments(node: SyntaxNode): number {
 /**
  * Walk the AST tree
  */
-function walk_tree(node: SyntaxNode, callback: (node: SyntaxNode) => void): void {
+function walk_tree(
+  node: SyntaxNode,
+  callback: (node: SyntaxNode) => void
+): void {
   callback(node);
   for (let i = 0; i < node.childCount; i++) {
     const child = node.child(i);

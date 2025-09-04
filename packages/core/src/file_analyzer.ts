@@ -27,7 +27,7 @@ import {
   process_file_for_types,
   TypeTrackingContext,
 } from "./type_analysis/type_tracking";
-import { find_function_calls } from "./call_graph/function_calls";
+import { find_function_calls } from "./call_graph/function_calls/function_calls";
 import { find_method_calls } from "./call_graph/method_calls";
 import { find_constructor_calls } from "./call_graph/constructor_calls";
 // Variable extraction now done through scope_tree
@@ -41,7 +41,6 @@ import {
   convert_type_map_to_public,
   create_readonly_array,
   create_empty_errors,
-  create_location_from_range,
 } from "./type_analysis/type_adapters";
 import {
   infer_function_return_type,
@@ -319,14 +318,15 @@ export async function analyze_file(
   );
 
   // Analyze local types
-  const { type_tracker, inferred_parameters, inferred_returns } = analyze_local_types(
-    source_code,
-    tree.rootNode,
-    file,
-    scopes,
-    imports,
-    class_definitions
-  );
+  const { type_tracker, inferred_parameters, inferred_returns } =
+    analyze_local_types(
+      source_code,
+      tree.rootNode,
+      file,
+      scopes,
+      imports,
+      class_definitions
+    );
 
   // Analyze calls
   const { function_calls, method_calls, constructor_calls } = analyze_calls(
@@ -415,12 +415,7 @@ function analyze_scopes(
   file_path: FilePath,
   _error_collector?: ErrorCollector
 ): ScopeTree {
-  return build_scope_tree(
-    tree.rootNode,
-    source_code,
-    language,
-    file_path
-  );
+  return build_scope_tree(tree.rootNode, source_code, language, file_path);
 }
 
 /**
@@ -646,7 +641,8 @@ function extract_definitions(
           );
           const result: ParameterType = {
             name: param.name as ParameterName,
-            type: (inferred_type_info?.inferred_type || param.type_annotation) as TypeString | undefined,
+            type: (inferred_type_info?.inferred_type ||
+              param.type_annotation) as TypeString | undefined,
             default_value: param.default_value,
             is_rest: param.is_rest,
             is_optional: param.is_optional,
@@ -657,7 +653,9 @@ function extract_definitions(
 
       const signature: FunctionSignature = {
         parameters: enhanced_parameters,
-        return_type: (return_type_info?.type_name || undefined) as TypeString | undefined,
+        return_type: (return_type_info?.type_name || undefined) as
+          | TypeString
+          | undefined,
         is_async: scope.metadata?.is_async || false,
         is_generator: scope.metadata?.is_generator || false,
         type_parameters: [],
