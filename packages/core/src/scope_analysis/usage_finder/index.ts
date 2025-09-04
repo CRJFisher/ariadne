@@ -5,7 +5,7 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language } from '@ariadnejs/types';
+import { Language, ScopeTree } from '@ariadnejs/types';
 import { 
   Usage,
   UsageFinderContext,
@@ -264,41 +264,6 @@ function find_node_at_position(
   // This node is the best match
   return node;
 }
-
-/**
- * Check if a position is contained in a range
- */
-function contains_position(
-  range: { start: Position; end: Position },
-  position: Position
-): boolean {
-  if (position.row < range.start.row || position.row > range.end.row) {
-    return false;
-  }
-  
-  if (position.row === range.start.row && position.column < range.start.column) {
-    return false;
-  }
-  
-  if (position.row === range.end.row && position.column > range.end.column) {
-    return false;
-  }
-  
-  return true;
-}
-
-/**
- * Check if a usage already exists
- */
-function usage_exists(usage: Usage, usages: Usage[]): boolean {
-  return usages.some(u => 
-    u.reference.range.start.row === usage.reference.range.start.row &&
-    u.reference.range.start.column === usage.reference.range.start.column &&
-    u.reference.range.end.row === usage.reference.range.end.row &&
-    u.reference.range.end.column === usage.reference.range.end.column
-  );
-}
-
 /**
  * Find all function/method calls
  */
