@@ -11,17 +11,99 @@ import {
   Language,
   SourceCode,
   FunctionCallInfo,
+  ScopeTree,
+  ScopeNode,
+  Location,
 } from "@ariadnejs/types";
 import { getLanguageConfig, LanguageCallConfig } from "./language_configs";
 import { node_to_location } from "../../ast/node_utils";
 import { handle_typescript_decorators } from "./function_calls.typescript";
 import { handle_rust_macros } from "./function_calls.rust";
 import { handle_python_comprehensions } from "./function_calls.python";
+import {
+  find_symbol_in_scope_chain,
+} from "../../scope_analysis/scope_tree";
 
 /**
  * Special constant for module-level calls (calls not within any function)
  */
 export const MODULE_CONTEXT = "<module>";
+
+/**
+ * Check if a point is within a location range
+ */
+function point_in_range(point: Location, range: Location): boolean {
+  // Check file path
+  if (point.file_path !== range.file_path) return false;
+  
+  // Check if point is after range start
+  if (point.line < range.line) return false;
+  if (point.line === range.line && point.column < range.column) return false;
+  
+  // Check if point is before range end
+  if (point.line > range.end_line) return false;
+  if (point.line === range.end_line && point.column > range.end_column) return false;
+  
+  return true;
+}
+
+/**
+ * Find the deepest scope containing a location
+ */
+function find_scope_for_location(
+  tree: ScopeTree,
+  location: Location
+): ScopeNode | null {
+  let deepestScope: ScopeNode | null = null;
+  let deepestDepth = -1;
+  
+  // Check all scopes to find the deepest one containing the location
+  for (const scope of tree.nodes.values()) {
+    if (point_in_range(location, scope.location)) {
+      // Count depth by counting parents
+      let depth = 0;
+      let currentId = scope.parent_id;
+      while (currentId) {
+        depth++;
+        const parent = tree.nodes.get(currentId);
+        currentId = parent?.parent_id;
+      }
+      
+      if (depth > deepestDepth) {
+        deepestDepth = depth;
+        deepestScope = scope;
+      }
+    }
+  }
+  
+  return deepestScope;
+}
+
+/**
+ * Resolve a local function using the scope tree
+ */
+function resolve_local_function(
+  callee_name: string,
+  call_location: Location,
+  scope_tree: ScopeTree
+): { symbol_id: string; definition_location: Location; is_local: boolean } | null {
+  // Find the scope containing the call
+  const scope = find_scope_for_location(scope_tree, call_location);
+  if (!scope) return null;
+
+  // Walk up scope chain looking for function definition
+  const result = find_symbol_in_scope_chain(scope_tree, scope.id, callee_name);
+  
+  if (result && result.symbol.kind === "function") {
+    return {
+      symbol_id: `${result.scope.id}:${callee_name}`,
+      definition_location: result.symbol.location,
+      is_local: true,
+    };
+  }
+
+  return null;
+}
 
 /**
  * Context passed to all function call detection functions
@@ -31,11 +113,22 @@ export interface FunctionCallContext {
   file_path: FilePath;
   language: Language;
   ast_root: SyntaxNode;
-  // TODO: Integration points for cross-feature functionality
-  // scope_tree?: ScopeTree;  // For symbol resolution
+  // Integration points for cross-feature functionality
+  scope_tree?: ScopeTree;  // For symbol resolution
   // imports?: ImportInfo[];  // Already-resolved imports for this file
   // exports?: ExportInfo[];  // Already-detected exports for this file
   // type_map?: Map<string, TypeInfo>;  // Pre-computed type information
+}
+
+/**
+ * Enhanced function call info with resolved target
+ */
+export interface EnhancedFunctionCallInfo extends FunctionCallInfo {
+  resolved_target?: {
+    symbol_id: string;
+    definition_location: Location;
+    is_local: boolean;
+  };
 }
 
 /**
@@ -137,7 +230,7 @@ function extract_call_generic(
   );
   const args_count = count_arguments_generic(node, config);
 
-  return {
+  const call_info: EnhancedFunctionCallInfo = {
     caller_name,
     callee_name,
     location: node_to_location(node, context.file_path),
@@ -145,6 +238,20 @@ function extract_call_generic(
     is_constructor_call: is_constructor,
     arguments_count: args_count,
   };
+
+  // If scope tree is available, try to resolve the local function
+  if (context.scope_tree && !is_method && !is_constructor) {
+    const resolved = resolve_local_function(
+      callee_name,
+      call_info.location,
+      context.scope_tree
+    );
+    if (resolved) {
+      call_info.resolved_target = resolved;
+    }
+  }
+
+  return call_info;
 }
 
 /**

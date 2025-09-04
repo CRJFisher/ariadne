@@ -2,7 +2,7 @@
 
 ## Status
 
-Pending
+Completed
 
 ## Parent Task
 
@@ -63,11 +63,11 @@ interface EnhancedFunctionCallInfo extends FunctionCallInfo {
 
 ## Acceptance Criteria
 
-- [ ] Scope tree is available in context
-- [ ] Local functions are correctly resolved
-- [ ] Call info includes resolved target when available
-- [ ] Backward compatibility maintained
-- [ ] Tests verify resolution accuracy
+- [x] Scope tree is available in context
+- [x] Local functions are correctly resolved
+- [x] Call info includes resolved target when available
+- [x] Backward compatibility maintained
+- [x] Tests verify resolution accuracy
 
 ## Dependencies
 
@@ -80,3 +80,30 @@ interface EnhancedFunctionCallInfo extends FunctionCallInfo {
 ## Important Note
 
 This task should only be started after comprehensive testing (11.80.3) is complete. Adding enhancements without a solid test baseline will lead to regressions.
+
+## Implementation Notes
+
+Completed implementation with the following changes:
+
+1. **Added scope_tree to FunctionCallContext** - Made it an optional field for backward compatibility
+2. **Created EnhancedFunctionCallInfo interface** - Extends FunctionCallInfo with optional resolved_target field
+3. **Implemented resolve_local_function** - Resolves function calls to local definitions using scope tree
+4. **Fixed scope tree bugs**:
+   - Fixed reversed parameters in location_contains call in scope_tree.ts
+   - Fixed location field (was using 'range') in JavaScript scope tree builder
+5. **Implemented proper point-in-range checking** - Created helper functions to check if a call location is within a scope
+6. **Added comprehensive test** - Test verifies that local functions are resolved while unknown functions are not
+
+### Key Technical Decisions
+
+- Used the start position of calls for scope lookup (not the entire call range) to handle multi-column expressions
+- Created custom point_in_range and find_scope_for_location functions for more accurate scope finding
+- Maintained backward compatibility by making scope_tree optional in context
+
+### Files Modified
+
+- `/packages/core/src/call_graph/function_calls/function_calls.ts` - Main implementation
+- `/packages/core/src/call_graph/function_calls/index.ts` - Export EnhancedFunctionCallInfo
+- `/packages/core/src/call_graph/function_calls/function_calls.test.ts` - Added integration test
+- `/packages/core/src/scope_analysis/scope_tree/scope_tree.ts` - Fixed location_contains bug
+- `/packages/core/src/scope_analysis/scope_tree/scope_tree.javascript.ts` - Fixed location field

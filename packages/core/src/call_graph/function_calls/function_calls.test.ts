@@ -12,8 +12,10 @@ import { Language, SourceCode, FilePath } from "@ariadnejs/types";
 import { find_function_calls } from "./function_calls";
 import {
   FunctionCallContext,
+  EnhancedFunctionCallInfo,
   find_function_calls_generic,
 } from "./function_calls";
+import { build_language_scope_tree } from "../../scope_analysis/scope_tree";
 
 describe("Function Call Detection", () => {
   describe("JavaScript", () => {
@@ -88,6 +90,52 @@ describe("Function Call Detection", () => {
       expect(calls[0].is_method_call).toBe(true);
       expect(calls[1].callee_name).toBe("push");
       expect(calls[1].is_method_call).toBe(true);
+    });
+
+    it("should resolve local functions when scope tree is provided", () => {
+      const source = `function helper() {
+  return 42;
+}
+
+function main() {
+  helper();
+  unknown();
+}
+
+main();`;
+
+      const tree = parser.parse(source);
+      const scope_tree = build_language_scope_tree(tree.rootNode, source, "javascript", "test.js");
+      
+      const context: FunctionCallContext = {
+        source_code: source,
+        file_path: "test.js",
+        language: "javascript",
+        ast_root: tree.rootNode,
+        scope_tree: scope_tree,
+      };
+
+      const calls = find_function_calls(context) as EnhancedFunctionCallInfo[];
+
+      // Should find helper(), unknown(), and main()
+      expect(calls).toHaveLength(3);
+      
+      // Check that helper() call is resolved
+      const helperCall = calls.find(c => c.callee_name === "helper");
+      expect(helperCall).toBeDefined();
+      expect(helperCall?.resolved_target).toBeDefined();
+      expect(helperCall?.resolved_target?.is_local).toBe(true);
+      
+      // Check that unknown() call is NOT resolved
+      const unknownCall = calls.find(c => c.callee_name === "unknown");
+      expect(unknownCall).toBeDefined();
+      expect(unknownCall?.resolved_target).toBeUndefined();
+      
+      // Check that main() call is resolved
+      const mainCall = calls.find(c => c.callee_name === "main");
+      expect(mainCall).toBeDefined();
+      expect(mainCall?.resolved_target).toBeDefined();
+      expect(mainCall?.resolved_target?.is_local).toBe(true);
     });
   });
 

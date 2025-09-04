@@ -96,15 +96,12 @@ function traverse_javascript_ast(
     const new_scope: ScopeNode = {
       id: scope_id,
       type: scope_type,
-      range: {
-        start: {
-          row: node.startPosition.row,
-          column: node.startPosition.column
-        },
-        end: {
-          row: node.endPosition.row,
-          column: node.endPosition.column
-        }
+      location: {
+        file_path: context.file_path || 'javascript',
+        line: node.startPosition.row + 1,
+        column: node.startPosition.column + 1,
+        end_line: node.endPosition.row + 1,
+        end_column: node.endPosition.column + 1
       },
       parent_id: context.current_scope_id,
       child_ids: [],

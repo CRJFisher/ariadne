@@ -671,7 +671,7 @@ function find_deepest_scope_containing(
   if (!scope) return undefined;
 
   // Check if position is within this scope
-  if (!location_contains(position, scope.location)) {
+  if (!location_contains(scope.location, position)) {
     return undefined;
   }
 
