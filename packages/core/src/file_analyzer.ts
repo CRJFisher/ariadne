@@ -50,7 +50,6 @@ import {
   ReturnTypeInfo,
   analyze_return_type,
   is_async_function,
-  is_generator_function,
 } from "./type_analysis/return_type_inference";
 import {
   ParameterAnalysis,
@@ -61,10 +60,7 @@ import {
 import {
   Language,
   FileAnalysis,
-  ImportStatement,
-  ExportStatement,
   FunctionDefinition,
-  Location,
   FunctionSignature,
   ScopeTree,
   ExportInfo,
@@ -74,6 +70,11 @@ import {
   ParameterType,
   VariableDeclaration,
   SourceCode,
+  FilePath,
+  VariableName,
+  TypeString,
+  ParameterName,
+  FunctionName,
 } from "@ariadnejs/types";
 
 // Re-export types from shared modules
@@ -85,45 +86,6 @@ import { CodeFile } from "./project/file_scanner";
 type SymbolRegistry = Map<any, any>;
 type ScopeEntityConnections = RealScopeEntityConnections;
 
-interface ParseResult {
-  tree: Parser.Tree;
-  parser: Parser;
-}
-
-interface Layer1Results {
-  scopes: ScopeTree;
-}
-
-interface Layer2Results {
-  imports: ImportInfo[];
-  exports: ExportInfo[];
-  class_definitions: ClassDefinition[];
-}
-
-interface Layer3Results {
-  type_tracker: FileTypeTracker;
-  inferred_parameters: Map<string, ParameterAnalysis>;
-  inferred_returns: Map<string, ReturnTypeInfo>;
-}
-
-interface Layer4Results {
-  function_calls: FunctionCallInfo[];
-  method_calls: MethodCallInfo[];
-  constructor_calls: ConstructorCallInfo[];
-}
-
-// Layer 5 removed - variables extracted from scope tree
-
-interface Layer6Results {
-  functions: FunctionDefinition[];
-  classes: ClassDefinition[];
-}
-
-interface Layer7Results {
-  symbol_registry: SymbolRegistry;
-  scope_entity_connections: ScopeEntityConnections;
-}
-
 /**
  * Helper function to infer return types for all functions in the file
  */
@@ -131,9 +93,9 @@ function infer_all_return_types(
   root_node: SyntaxNode,
   source_code: string,
   language: Language,
-  scopes: ScopeTree,
-  type_tracker: FileTypeTracker,
-  inferred_parameters: Map<string, ParameterAnalysis>
+  _scopes: ScopeTree,
+  _type_tracker: FileTypeTracker,
+  _inferred_parameters: Map<string, ParameterAnalysis>
 ): Map<string, ReturnTypeInfo> {
   const result = new Map<string, ReturnTypeInfo>();
   const context: ReturnTypeContext = {
@@ -159,9 +121,8 @@ function infer_all_return_types(
         ? source_code.substring(name_node.startIndex, name_node.endIndex)
         : `anonymous_${node.startIndex}`;
 
-      // Check if function is async or generator
+      // Check if function is async
       const is_async = is_async_function(node, context);
-      const is_generator = is_generator_function(node, context);
 
       // Create a minimal Def object for the inference function
       const func_def = {
@@ -208,8 +169,8 @@ function infer_all_parameter_types(
   root_node: SyntaxNode,
   source_code: string,
   language: Language,
-  scopes: ScopeTree,
-  type_tracker: FileTypeTracker
+  _scopes: ScopeTree,
+  _type_tracker: FileTypeTracker
 ): Map<string, ParameterAnalysis> {
   const result = new Map<string, ParameterAnalysis>();
   const context: ParameterInferenceContext = {
@@ -335,12 +296,12 @@ export async function analyze_file(
   );
 
   // Parse the file
-  const { tree, parser } = parse_file(file);
-  const source_code = file.source_code || "";
+  const tree = parse_file(file);
+  const source_code = file.source_code;
 
-  // Layer 1: Scope Analysis
+  // Analyze scopes
   error_collector.set_phase("scope_analysis");
-  const layer1 = analyze_scopes(
+  const scopes = analyze_scopes(
     tree,
     source_code,
     file.language,
@@ -348,9 +309,9 @@ export async function analyze_file(
     error_collector
   );
 
-  // Layer 2: Local Structure Detection
+  // Detect local structures (imports, exports, classes)
   error_collector.set_phase("class_detection");
-  const layer2 = detect_local_structures(
+  const { imports, exports, class_definitions } = detect_local_structures(
     tree.rootNode,
     source_code,
     file.language,
@@ -358,63 +319,60 @@ export async function analyze_file(
     error_collector
   );
 
-  // Layer 3: Local Type Analysis
-  const layer3 = analyze_local_types(
+  // Analyze local types
+  const { type_tracker, inferred_parameters, inferred_returns } = analyze_local_types(
     source_code,
     tree.rootNode,
     file,
-    layer1.scopes,
-    layer2.imports,
-    layer2.class_definitions
+    scopes,
+    imports,
+    class_definitions
   );
 
-  // Layer 4: Call Analysis
-  const layer4 = analyze_calls(
+  // Analyze calls
+  const { function_calls, method_calls, constructor_calls } = analyze_calls(
     tree.rootNode,
     source_code,
     file.language,
-    layer3.type_tracker,
-    layer1.scopes,
+    type_tracker,
+    scopes,
     file.file_path
   );
 
-  // Variables are now extracted from scope tree (Layer 1)
-  // No separate Layer 5 needed
-
-  // Layer 6: Definition Extraction
-  const layer6 = extract_definitions(
+  // Extract definitions
+  const { functions, classes } = extract_definitions(
     tree.rootNode,
     source_code,
     file,
-    layer1.scopes,
-    layer2.class_definitions,
-    layer3.inferred_parameters,
-    layer3.inferred_returns
+    scopes,
+    class_definitions,
+    inferred_parameters,
+    inferred_returns
   );
 
-  // Layer 7: Symbol Registration
-  const layer7 = register_symbols(
+  // Register symbols
+  const { symbol_registry, scope_entity_connections } = register_symbols(
     file.file_path,
     file.language,
-    layer6.functions,
-    layer6.classes,
-    layer1.scopes
+    functions,
+    classes,
+    scopes
   );
 
   // Build final analysis
   const analysis = build_file_analysis(
     file,
-    layer2.imports,
-    layer2.exports,
-    layer6.functions,
-    layer6.classes,
-    layer4.function_calls,
-    layer4.method_calls,
-    layer4.constructor_calls,
-    layer3.type_tracker,
-    layer7.symbol_registry,
-    layer7.scope_entity_connections,
-    layer1.scopes,
+    imports,
+    exports,
+    functions,
+    classes,
+    function_calls,
+    method_calls,
+    constructor_calls,
+    type_tracker,
+    symbol_registry,
+    scope_entity_connections,
+    scopes,
     error_collector
   );
 
@@ -424,7 +382,7 @@ export async function analyze_file(
 /**
  * Parse a file using the appropriate language parser
  */
-function parse_file(file: CodeFile): ParseResult {
+function parse_file(file: CodeFile): Parser.Tree {
   const parser = new Parser();
 
   switch (file.language) {
@@ -445,39 +403,41 @@ function parse_file(file: CodeFile): ParseResult {
   }
 
   const tree = parser.parse(file.source_code);
-  return { tree, parser };
+  return tree;
 }
 
 /**
- * Layer 1: Analyze scopes in the file
+ * Analyze scopes in the file
  */
 function analyze_scopes(
   tree: Parser.Tree,
-  source_code: string,
+  source_code: SourceCode,
   language: Language,
-  file_path: string,
-  error_collector?: ErrorCollector
-): Layer1Results {
-  const scopes = build_scope_tree(
+  file_path: FilePath,
+  _error_collector?: ErrorCollector
+): ScopeTree {
+  return build_scope_tree(
     tree.rootNode,
     source_code,
     language,
     file_path
   );
-
-  return { scopes };
 }
 
 /**
- * Layer 2: Detect local structures (imports, exports, classes)
+ * Detect local structures (imports, exports, classes)
  */
 function detect_local_structures(
   root_node: SyntaxNode,
-  source_code: string,
+  source_code: SourceCode,
   language: Language,
-  file_path: string,
-  error_collector?: ErrorCollector
-): Layer2Results {
+  file_path: FilePath,
+  _error_collector?: ErrorCollector
+): {
+  imports: ImportInfo[];
+  exports: ExportInfo[];
+  class_definitions: ClassDefinition[];
+} {
   // Extract imports
   const imports = extract_imports(root_node, source_code, language, file_path);
 
@@ -497,16 +457,20 @@ function detect_local_structures(
 }
 
 /**
- * Layer 3: Analyze local types
+ * Analyze local types
  */
 function analyze_local_types(
-  source_code: string,
+  source_code: SourceCode,
   root_node: SyntaxNode,
   file: CodeFile,
   scopes: ScopeTree,
-  imports: ImportInfo[],
-  class_definitions: ClassDefinition[]
-): Layer3Results {
+  _imports: ImportInfo[],
+  _class_definitions: ClassDefinition[]
+): {
+  type_tracker: FileTypeTracker;
+  inferred_parameters: Map<string, ParameterAnalysis>;
+  inferred_returns: Map<string, ReturnTypeInfo>;
+} {
   const type_tracking_context: TypeTrackingContext = {
     language: file.language,
     file_path: file.file_path,
@@ -546,16 +510,20 @@ function analyze_local_types(
 }
 
 /**
- * Layer 4: Analyze function, method, and constructor calls
+ * Analyze function, method, and constructor calls
  */
 function analyze_calls(
   root_node: SyntaxNode,
-  source_code: string,
+  source_code: SourceCode,
   language: Language,
-  type_tracker: FileTypeTracker,
-  scopes: ScopeTree,
-  file_path: string
-): Layer4Results {
+  _type_tracker: FileTypeTracker,
+  _scopes: ScopeTree,
+  file_path: FilePath
+): {
+  function_calls: FunctionCallInfo[];
+  method_calls: MethodCallInfo[];
+  constructor_calls: ConstructorCallInfo[];
+} {
   // Create context for function calls
   const function_call_context = {
     source_code,
@@ -592,10 +560,7 @@ function analyze_calls(
   return { function_calls, method_calls, constructor_calls };
 }
 
-/**
- * Layer 5: Extract variable declarations
- */
-// Variable extraction is now done through scope_tree in Layer 1
+// Variable extraction is done through scope_tree
 
 /**
  * Extract variables from scope tree
@@ -621,9 +586,9 @@ function extract_variables_from_scopes(
 
         // Convert scope symbol to VariableDeclaration
         const variable: VariableDeclaration = {
-          name,
+          name: name as VariableName,
           location: symbol.location,
-          type: symbol.type_info,
+          type: symbol.type_info as TypeString | undefined,
           is_const: enhancedSymbol.declaration_type === "const",
           is_exported: symbol.is_exported,
         };
@@ -636,23 +601,26 @@ function extract_variables_from_scopes(
 }
 
 /**
- * Layer 6: Extract function and class definitions
+ * Extract function and class definitions
  */
 function extract_definitions(
-  root_node: SyntaxNode,
-  source_code: SourceCode,
-  file: CodeFile,
+  _root_node: SyntaxNode,
+  _source_code: SourceCode,
+  _file: CodeFile,
   scopes: ScopeTree,
   class_definitions: ClassDefinition[],
   inferred_parameters: Map<string, ParameterAnalysis>,
   inferred_returns: Map<string, ReturnTypeInfo>
-): Layer6Results {
+): {
+  functions: FunctionDefinition[];
+  classes: ClassDefinition[];
+} {
   const functions: FunctionDefinition[] = [];
   const classes: ClassDefinition[] = [];
   // Error collector should be passed from parent
 
   // Extract functions from scope tree
-  for (const [scope_id, scope] of scopes.nodes) {
+  for (const [_, scope] of scopes.nodes) {
     if (scope.type === "function") {
       // Skip methods here - they'll be handled in the class section
       if (
@@ -678,8 +646,8 @@ function extract_definitions(
             param.name
           );
           const result: ParameterType = {
-            name: param.name,
-            type: inferred_type_info?.inferred_type || param.type_annotation,
+            name: param.name as ParameterName,
+            type: (inferred_type_info?.inferred_type || param.type_annotation) as TypeString | undefined,
             default_value: param.default_value,
             is_rest: param.is_rest,
             is_optional: param.is_optional,
@@ -690,14 +658,14 @@ function extract_definitions(
 
       const signature: FunctionSignature = {
         parameters: enhanced_parameters,
-        return_type: return_type_info?.type_name || undefined,
+        return_type: (return_type_info?.type_name || undefined) as TypeString | undefined,
         is_async: scope.metadata?.is_async || false,
         is_generator: scope.metadata?.is_generator || false,
         type_parameters: [],
       };
 
       const func_info: FunctionDefinition = {
-        name: func_name,
+        name: func_name as FunctionName,
         location: scope.location,
         signature,
         docstring: undefined,
@@ -749,15 +717,18 @@ function build_symbol_registry(
 }
 
 /**
- * Layer 7: Register symbols and create connections
+ * Register symbols and create connections
  */
 function register_symbols(
-  file_path: string,
+  file_path: FilePath,
   language: Language,
   functions: FunctionDefinition[],
   classes: ClassDefinition[],
   scopes: ScopeTree
-): Layer7Results {
+): {
+  symbol_registry: SymbolRegistry;
+  scope_entity_connections: ScopeEntityConnections;
+} {
   // Build symbol registry from functions and classes
   const symbol_registry: SymbolRegistry = build_symbol_registry(
     functions,
@@ -794,8 +765,8 @@ function build_file_analysis(
   method_calls: MethodCallInfo[],
   constructor_calls: ConstructorCallInfo[],
   type_tracker: FileTypeTracker,
-  symbol_registry: SymbolRegistry,
-  scope_entity_connections: ScopeEntityConnections,
+  _symbol_registry: SymbolRegistry,
+  _scope_entity_connections: ScopeEntityConnections,
   scopes: ScopeTree,
   error_collector?: ErrorCollector
 ): FileAnalysis {
