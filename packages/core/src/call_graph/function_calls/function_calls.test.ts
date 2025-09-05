@@ -16,6 +16,7 @@ import {
   find_function_calls_generic,
 } from "./function_calls";
 import { build_language_scope_tree } from "../../scope_analysis/scope_tree";
+import { TypeInfo } from "../../type_analysis/type_tracking";
 
 describe("Function Call Detection", () => {
   describe("JavaScript", () => {
@@ -206,6 +207,60 @@ localFunc();`;
       const localCall = calls.find(c => c.callee_name === "localFunc");
       expect(localCall).toBeDefined();
       expect(localCall?.is_imported).toBeUndefined();
+    });
+
+    it("should resolve method calls using type information when available", () => {
+      const source = `class User {
+  getName() { return this.name; }
+}
+
+const user = new User();
+user.getName();
+const name = user.name;
+unknownObj.doSomething();`;
+
+      const tree = parser.parse(source);
+      
+      // Create type map with known types
+      const type_map = new Map<string, TypeInfo>([
+        ['user', {
+          type_name: 'User',
+          type_kind: 'class',
+          position: { row: 4, column: 6 },
+          confidence: 'explicit',
+          source: 'constructor'
+        } as TypeInfo],
+        ['name', {
+          type_name: 'string',
+          type_kind: 'primitive',
+          position: { row: 6, column: 6 },
+          confidence: 'inferred'
+        } as TypeInfo]
+      ]);
+      
+      const context: FunctionCallContext = {
+        source_code: source,
+        file_path: "test.js",
+        language: "javascript",
+        ast_root: tree.rootNode,
+        type_map: type_map,
+      };
+
+      const calls = find_function_calls(context) as EnhancedFunctionCallInfo[];
+      
+      // Find the user.getName() call
+      const getNameCall = calls.find(c => c.callee_name === "getName" && c.is_method_call);
+      expect(getNameCall).toBeDefined();
+      expect(getNameCall?.resolved_type).toBeDefined();
+      expect(getNameCall?.resolved_type?.object_type).toBe('User');
+      expect(getNameCall?.resolved_type?.type_kind).toBe('class');
+      expect(getNameCall?.resolved_type?.confidence).toBe('explicit');
+      expect(getNameCall?.resolved_type?.class_name).toBe('User');
+      
+      // unknownObj.doSomething() should not have type resolution
+      const unknownCall = calls.find(c => c.callee_name === "doSomething");
+      expect(unknownCall).toBeDefined();
+      expect(unknownCall?.resolved_type).toBeUndefined();
     });
   });
 

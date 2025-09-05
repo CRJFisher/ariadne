@@ -24,6 +24,7 @@ import { handle_python_comprehensions } from "./function_calls.python";
 import {
   find_symbol_in_scope_chain,
 } from "../../scope_analysis/scope_tree";
+import { TypeInfo } from "../../type_analysis/type_tracking";
 
 /**
  * Special constant for module-level calls (calls not within any function)
@@ -78,6 +79,60 @@ function find_scope_for_location(
   }
   
   return deepestScope;
+}
+
+/**
+ * Resolve method call using type information
+ */
+function resolve_method_with_types(
+  node: SyntaxNode,
+  type_map: Map<string, TypeInfo>,
+  source_code: string,
+  config: LanguageCallConfig
+): { object_type: string; type_kind: TypeInfo['type_kind']; confidence: TypeInfo['confidence']; class_name?: string } | null {
+  // Get the object being called on
+  const object_node = node.childForFieldName(config.function_field);
+  if (!object_node) return null;
+  
+  // For method calls, the object is usually the first child of the callee
+  let object_name: string | null = null;
+  
+  if (object_node.type === "member_expression" || object_node.type === "member_access_expression") {
+    const obj = object_node.childForFieldName("object");
+    if (obj) {
+      object_name = source_code.substring(obj.startIndex, obj.endIndex);
+    }
+  } else if (object_node.type === "field_expression") {
+    // Rust style
+    const obj = object_node.childForFieldName("value");
+    if (obj) {
+      object_name = source_code.substring(obj.startIndex, obj.endIndex);
+    }
+  } else if (object_node.type === "attribute") {
+    // Python style
+    const obj = object_node.childForFieldName("object");
+    if (obj) {
+      object_name = source_code.substring(obj.startIndex, obj.endIndex);
+    }
+  }
+  
+  if (!object_name) return null;
+  
+  // Look up the type in the type map
+  // Create a location-based key for the lookup
+  const location_key = `${object_name}@${node.startPosition.row}:${node.startPosition.column}`;
+  const type_info = type_map.get(location_key) || type_map.get(object_name);
+  
+  if (type_info) {
+    return {
+      object_type: type_info.type_name,
+      type_kind: type_info.type_kind,
+      confidence: type_info.confidence,
+      class_name: type_info.type_kind === 'class' ? type_info.type_name : undefined,
+    };
+  }
+  
+  return null;
 }
 
 /**
@@ -162,7 +217,7 @@ export interface FunctionCallContext {
   scope_tree?: ScopeTree;  // For symbol resolution
   imports?: ImportInfo[];  // Already-resolved imports for this file
   // exports?: ExportInfo[];  // Already-detected exports for this file
-  // type_map?: Map<string, TypeInfo>;  // Pre-computed type information
+  type_map?: Map<string, TypeInfo>;  // Pre-computed type information
 }
 
 /**
@@ -179,6 +234,13 @@ export interface EnhancedFunctionCallInfo extends FunctionCallInfo {
   source_module?: string;
   import_alias?: string;
   original_name?: string;
+  // Type-based resolution for method calls
+  resolved_type?: {
+    object_type: string;
+    type_kind: TypeInfo['type_kind'];
+    confidence: TypeInfo['confidence'];
+    class_name?: string;
+  };
 }
 
 /**
@@ -309,6 +371,19 @@ function extract_call_generic(
       call_info.source_module = import_info.source_module;
       call_info.import_alias = import_info.import_alias;
       call_info.original_name = import_info.original_name;
+    }
+  }
+
+  // If type map is available and this is a method call, try to resolve the type
+  if (context.type_map && is_method) {
+    const type_resolution = resolve_method_with_types(
+      node, 
+      context.type_map, 
+      context.source_code, 
+      config
+    );
+    if (type_resolution) {
+      call_info.resolved_type = type_resolution;
     }
   }
 
