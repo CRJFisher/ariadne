@@ -42,7 +42,8 @@ Refactor function_calls module to use configuration-driven language processing a
 
 ### Pipeline Integration
 
-- **11.80.9** - Expose and integrate EnhancedFunctionCallInfo throughout pipeline
+- **11.80.9** - ~~Expose and integrate EnhancedFunctionCallInfo~~ Merge enhanced fields into base type
+- **11.80.10** - Simplify enrichment phase after early enrichment implementation
 
 ## Overview
 
