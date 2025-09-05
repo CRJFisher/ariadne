@@ -76,6 +76,27 @@ export interface FunctionCallInfo {
   readonly arguments_count: number;
   readonly is_macro_call?: boolean; // Rust macros
   readonly is_in_comprehension?: boolean; // Python comprehensions
+  
+  // Enhanced resolution fields (populated when context is available)
+  readonly resolved_target?: {
+    readonly symbol_id: string;
+    readonly definition_location: Location;
+    readonly is_local: boolean;
+  };
+  
+  // Import tracking
+  readonly is_imported?: boolean;
+  readonly source_module?: string;
+  readonly import_alias?: string;
+  readonly original_name?: string;
+  
+  // Type-based resolution for method calls
+  readonly resolved_type?: {
+    readonly object_type: string;
+    readonly type_kind: "class" | "interface" | "type" | "enum" | "trait";
+    readonly confidence: "explicit" | "inferred" | "assumed";
+    readonly class_name?: string;
+  };
 }
 
 export interface MethodCallInfo {

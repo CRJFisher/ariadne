@@ -3,7 +3,8 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { FunctionCallContext, MODULE_CONTEXT, EnhancedFunctionCallInfo } from './function_calls';
+import { FunctionCallContext, MODULE_CONTEXT } from './function_calls';
+import { FunctionCallInfo } from '@ariadnejs/types';
 import { node_to_location } from '../../ast/node_utils';
 
 /**
@@ -13,8 +14,8 @@ import { node_to_location } from '../../ast/node_utils';
  */
 export function handle_rust_macros(
   context: FunctionCallContext
-): EnhancedFunctionCallInfo[] {
-  const calls: EnhancedFunctionCallInfo[] = [];
+): FunctionCallInfo[] {
+  const calls: FunctionCallInfo[] = [];
   
   walk_tree(context.ast_root, (node) => {
     if (node.type === 'macro_invocation') {
@@ -34,7 +35,7 @@ export function handle_rust_macros(
 function extract_macro_call(
   node: SyntaxNode,
   context: FunctionCallContext
-): EnhancedFunctionCallInfo | null {
+): FunctionCallInfo | null {
   // Get the macro name - Rust uses 'macro' field
   const name_node = node.childForFieldName('macro');
   if (!name_node) return null;

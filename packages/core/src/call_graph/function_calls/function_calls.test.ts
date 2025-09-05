@@ -12,7 +12,6 @@ import { Language, SourceCode, FilePath, ImportInfo } from "@ariadnejs/types";
 import { find_function_calls } from "./function_calls";
 import {
   FunctionCallContext,
-  EnhancedFunctionCallInfo,
   find_function_calls_generic,
 } from "./function_calls";
 import { build_language_scope_tree } from "../../scope_analysis/scope_tree";
@@ -116,7 +115,7 @@ main();`;
         scope_tree: scope_tree,
       };
 
-      const calls = find_function_calls(context) as EnhancedFunctionCallInfo[];
+      const calls = find_function_calls(context);
 
       // Should find helper(), unknown(), and main()
       expect(calls).toHaveLength(3);
@@ -182,7 +181,7 @@ localFunc();`;
         imports: imports,
       };
 
-      const calls = find_function_calls(context) as EnhancedFunctionCallInfo[];
+      const calls = find_function_calls(context);
 
       // Should find all function calls
       expect(calls).toHaveLength(4);
@@ -246,7 +245,7 @@ unknownObj.doSomething();`;
         type_map: type_map,
       };
 
-      const calls = find_function_calls(context) as EnhancedFunctionCallInfo[];
+      const calls = find_function_calls(context);
       
       // Find the user.getName() call
       const getNameCall = calls.find(c => c.callee_name === "getName" && c.is_method_call);

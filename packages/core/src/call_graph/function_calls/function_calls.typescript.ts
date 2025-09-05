@@ -3,7 +3,8 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { FunctionCallContext, EnhancedFunctionCallInfo } from './function_calls';
+import { FunctionCallContext } from './function_calls';
+import { FunctionCallInfo } from '@ariadnejs/types';
 import { node_to_location } from '../../ast/node_utils';
 
 /**
@@ -14,8 +15,8 @@ import { node_to_location } from '../../ast/node_utils';
  */
 export function handle_typescript_decorators(
   context: FunctionCallContext
-): EnhancedFunctionCallInfo[] {
-  const calls: EnhancedFunctionCallInfo[] = [];
+): FunctionCallInfo[] {
+  const calls: FunctionCallInfo[] = [];
   
   walk_tree(context.ast_root, (node) => {
     if (node.type === 'decorator') {
@@ -35,7 +36,7 @@ export function handle_typescript_decorators(
 function extract_decorator_call(
   node: SyntaxNode,
   context: FunctionCallContext
-): EnhancedFunctionCallInfo | null {
+): FunctionCallInfo | null {
   const expr = node.child(1); // Skip @ symbol
   if (!expr) return null;
   

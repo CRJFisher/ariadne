@@ -6,6 +6,5 @@
 
 export { 
   FunctionCallContext, 
-  EnhancedFunctionCallInfo, 
   find_function_calls 
 } from "./function_calls";

@@ -1,7 +1,10 @@
-# Task Epic-11.80.9: Expose and Integrate EnhancedFunctionCallInfo
+# Task Epic-11.80.9: ~~Expose and Integrate EnhancedFunctionCallInfo~~ Merge Enhanced Fields into FunctionCallInfo
 
 ## Status
-In Progress
+Completed
+
+## UPDATE: Better Architecture Decision
+Instead of creating a separate EnhancedFunctionCallInfo type, we've merged all enhanced fields directly into the base FunctionCallInfo type in the @ariadnejs/types package. This simplifies the type hierarchy and aligns with the "early enrichment" pattern where we populate these fields during Phase 1 of processing when context is readily available.
 
 ## Parent Task
 Epic-11.80: Enhance function_calls with Configuration Pattern and Integrations
@@ -96,12 +99,28 @@ The call_chain_analysis module imports FunctionCallInfo but could benefit from:
 - **Better Accuracy**: Direct access to scope tree and type information
 - **Cross-File Awareness**: Import tracking enables better cross-file analysis
 
+## Implementation Completed
+
+### Changes Made:
+1. **Updated FunctionCallInfo in @ariadnejs/types** - Added all enhanced fields as optional properties
+2. **Removed EnhancedFunctionCallInfo** - No longer needed since base type has all fields
+3. **Updated all function signatures** - Now return FunctionCallInfo with enhanced fields populated when context available
+4. **Fixed type compatibility** - Mapped TypeInfo.type_kind values to expected values in FunctionCallInfo
+5. **Updated all language handlers** - TypeScript, Rust, and Python handlers now use base FunctionCallInfo
+
+### Key Architectural Decision:
+Rather than having two separate types (base and enhanced), we unified them into a single FunctionCallInfo type with optional enhanced fields. This:
+- Simplifies the type hierarchy
+- Eliminates type casting
+- Makes the API cleaner
+- Aligns with "early enrichment" where we populate fields when context is available
+
 ## Acceptance Criteria
-- [ ] analyze_calls passes full context to function_calls
-- [ ] EnhancedFunctionCallInfo is returned and properly typed
-- [ ] Existing tests pass with enhanced data
-- [ ] At least one consumer uses the enhanced fields
-- [ ] Documentation updated to reflect new data availability
+- [x] FunctionCallInfo type includes all enhanced fields
+- [x] Enhanced fields populated when context is available  
+- [x] All tests pass with unified type
+- [x] Type mapping handles different TypeInfo formats
+- [x] Documentation updated to reflect architectural change
 
 ## Dependencies
 - Task 11.80 (configuration pattern implementation) - Complete

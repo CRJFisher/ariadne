@@ -46,28 +46,6 @@ export interface FunctionCallContext {
   type_map?: Map<string, TypeInfo>;  // Pre-computed type information
 }
 
-/**
- * Enhanced function call info with resolved target
- */
-export interface EnhancedFunctionCallInfo extends FunctionCallInfo {
-  resolved_target?: {
-    symbol_id: string;
-    definition_location: Location;
-    is_local: boolean;
-  };
-  // Import tracking
-  is_imported?: boolean;
-  source_module?: string;
-  import_alias?: string;
-  original_name?: string;
-  // Type-based resolution for method calls
-  resolved_type?: {
-    object_type: string;
-    type_kind: TypeInfo['type_kind'];
-    confidence: TypeInfo['confidence'];
-    class_name?: string;
-  };
-}
 
 /**
  * Find all function calls in code
@@ -81,7 +59,7 @@ export interface EnhancedFunctionCallInfo extends FunctionCallInfo {
  */
 export function find_function_calls(
   context: FunctionCallContext
-): EnhancedFunctionCallInfo[] {
+): FunctionCallInfo[] {
   // Use generic processor for all languages
   const calls = find_function_calls_generic(context);
 
@@ -177,7 +155,7 @@ function resolve_method_with_types(
   type_map: Map<string, TypeInfo>,
   source_code: string,
   config: LanguageCallConfig
-): { object_type: string; type_kind: TypeInfo['type_kind']; confidence: TypeInfo['confidence']; class_name?: string } | null {
+): { object_type: string; type_kind: "class" | "interface" | "type" | "enum" | "trait"; confidence: TypeInfo['confidence']; class_name?: string } | null {
   // Get the object being called on
   const object_node = node.childForFieldName(config.function_field);
   if (!object_node) return null;
@@ -212,9 +190,29 @@ function resolve_method_with_types(
   const type_info = type_map.get(location_key) || type_map.get(object_name);
   
   if (type_info) {
+    // Map type_kind to the values expected by FunctionCallInfo
+    let mapped_kind: "class" | "interface" | "type" | "enum" | "trait";
+    switch (type_info.type_kind) {
+      case 'class':
+        mapped_kind = 'class';
+        break;
+      case 'interface':
+        mapped_kind = 'interface';
+        break;
+      case 'object':
+      case 'function':
+      case 'array':
+      case 'primitive':
+      case 'unknown':
+      default:
+        // Default to 'type' for types that don't have a direct mapping
+        mapped_kind = 'type';
+        break;
+    }
+    
     return {
       object_type: type_info.type_name,
-      type_kind: type_info.type_kind,
+      type_kind: mapped_kind,
       confidence: type_info.confidence,
       class_name: type_info.type_kind === 'class' ? type_info.type_name : undefined,
     };
@@ -299,9 +297,9 @@ function resolve_local_function(
  */
 export function find_function_calls_generic(
   context: FunctionCallContext
-): EnhancedFunctionCallInfo[] {
+): FunctionCallInfo[] {
   const config = getLanguageConfig(context.language);
-  const calls: EnhancedFunctionCallInfo[] = [];
+  const calls: FunctionCallInfo[] = [];
 
   // Walk the AST to find all call expressions
   walk_tree(context.ast_root, (node) => {
@@ -333,7 +331,7 @@ function extract_call_generic(
   node: SyntaxNode,
   context: FunctionCallContext,
   config: LanguageCallConfig
-): EnhancedFunctionCallInfo | null {
+): FunctionCallInfo | null {
   const callee_name = extract_callee_name_generic(
     node,
     context.source_code,
@@ -351,51 +349,62 @@ function extract_call_generic(
     config
   );
   const args_count = count_arguments_generic(node, config);
+  const location = node_to_location(node, context.file_path);
 
-  const call_info: EnhancedFunctionCallInfo = {
-    caller_name,
-    callee_name,
-    location: node_to_location(node, context.file_path),
-    is_method_call: is_method,
-    is_constructor_call: is_constructor,
-    arguments_count: args_count,
-  };
+  // Collect enhanced resolution fields
+  let resolved_target = undefined;
+  let is_imported = undefined;
+  let source_module = undefined;
+  let import_alias = undefined;
+  let original_name = undefined;
+  let resolved_type = undefined;
 
   // If scope tree is available, try to resolve the local function
   if (context.scope_tree && !is_method && !is_constructor) {
-    const resolved = resolve_local_function(
+    resolved_target = resolve_local_function(
       callee_name,
-      call_info.location,
+      location,
       context.scope_tree
-    );
-    if (resolved) {
-      call_info.resolved_target = resolved;
-    }
+    ) || undefined;
   }
 
   // If imports are available and the call wasn't resolved locally, check imports
-  if (context.imports && !call_info.resolved_target && !is_constructor) {
+  if (context.imports && !resolved_target && !is_constructor) {
     const import_info = enhance_with_import_info(callee_name, context.imports);
     if (import_info) {
-      call_info.is_imported = import_info.is_imported;
-      call_info.source_module = import_info.source_module;
-      call_info.import_alias = import_info.import_alias;
-      call_info.original_name = import_info.original_name;
+      is_imported = import_info.is_imported;
+      source_module = import_info.source_module;
+      import_alias = import_info.import_alias;
+      original_name = import_info.original_name;
     }
   }
 
   // If type map is available and this is a method call, try to resolve the type
   if (context.type_map && is_method) {
-    const type_resolution = resolve_method_with_types(
+    resolved_type = resolve_method_with_types(
       node, 
       context.type_map, 
       context.source_code, 
       config
-    );
-    if (type_resolution) {
-      call_info.resolved_type = type_resolution;
-    }
+    ) || undefined;
   }
+
+  // Create the complete call_info object with all fields
+  const call_info: FunctionCallInfo = {
+    caller_name,
+    callee_name,
+    location,
+    is_method_call: is_method,
+    is_constructor_call: is_constructor,
+    arguments_count: args_count,
+    // Enhanced fields
+    resolved_target,
+    is_imported,
+    source_module,
+    import_alias,
+    original_name,
+    resolved_type,
+  };
 
   return call_info;
 }
@@ -596,9 +605,9 @@ function walk_tree(
  * Enhance with TypeScript-specific features
  */
 export function enhance_with_typescript_features(
-  calls: EnhancedFunctionCallInfo[],
+  calls: FunctionCallInfo[],
   context: FunctionCallContext
-): EnhancedFunctionCallInfo[] {
+): FunctionCallInfo[] {
   const decorator_calls = handle_typescript_decorators(context);
   return [...calls, ...decorator_calls];
 }
@@ -607,9 +616,9 @@ export function enhance_with_typescript_features(
  */
 
 export function enhance_with_rust_features(
-  calls: EnhancedFunctionCallInfo[],
+  calls: FunctionCallInfo[],
   context: FunctionCallContext
-): EnhancedFunctionCallInfo[] {
+): FunctionCallInfo[] {
   const macro_calls = handle_rust_macros(context);
   return [...calls, ...macro_calls];
 }
@@ -618,9 +627,9 @@ export function enhance_with_rust_features(
  */
 
 export function enhance_with_python_features(
-  calls: EnhancedFunctionCallInfo[],
+  calls: FunctionCallInfo[],
   context: FunctionCallContext
-): EnhancedFunctionCallInfo[] {
+): FunctionCallInfo[] {
   const comprehension_calls = handle_python_comprehensions(context);
   return [...calls, ...comprehension_calls];
 }
