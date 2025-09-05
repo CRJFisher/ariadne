@@ -3,8 +3,7 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { FunctionCallContext } from './function_calls';
-import { FunctionCallInfo } from '@ariadnejs/types';
+import { FunctionCallContext, EnhancedFunctionCallInfo } from './function_calls';
 import { node_to_location } from '../../ast/node_utils';
 
 /**
@@ -15,8 +14,8 @@ import { node_to_location } from '../../ast/node_utils';
  */
 export function handle_python_comprehensions(
   context: FunctionCallContext
-): FunctionCallInfo[] {
-  const calls: FunctionCallInfo[] = [];
+): EnhancedFunctionCallInfo[] {
+  const calls: EnhancedFunctionCallInfo[] = [];
   
   walk_tree(context.ast_root, (node) => {
     if (
@@ -48,7 +47,7 @@ export function handle_python_comprehensions(
 function extract_python_call(
   node: SyntaxNode,
   context: FunctionCallContext
-): FunctionCallInfo | null {
+): EnhancedFunctionCallInfo | null {
   const func_node = node.childForFieldName("function");
   if (!func_node) return null;
   

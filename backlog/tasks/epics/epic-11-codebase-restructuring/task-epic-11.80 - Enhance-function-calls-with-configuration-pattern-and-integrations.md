@@ -40,6 +40,10 @@ Refactor function_calls module to use configuration-driven language processing a
 - **11.80.7** - Apply configuration pattern to method_calls module
 - **11.80.8** - Apply configuration pattern to constructor_calls module
 
+### Pipeline Integration
+
+- **11.80.9** - Expose and integrate EnhancedFunctionCallInfo throughout pipeline
+
 ## Overview
 
 This parent task coordinates two major improvements to the call detection system:

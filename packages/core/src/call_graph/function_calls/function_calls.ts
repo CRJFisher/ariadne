@@ -31,22 +31,83 @@ import { TypeInfo } from "../../type_analysis/type_tracking";
  */
 export const MODULE_CONTEXT = "<module>";
 
+
 /**
- * Check if a point is within a location range
+ * Context passed to all function call detection functions
  */
-function point_in_range(point: Location, range: Location): boolean {
-  // Check file path
-  if (point.file_path !== range.file_path) return false;
-  
-  // Check if point is after range start
-  if (point.line < range.line) return false;
-  if (point.line === range.line && point.column < range.column) return false;
-  
-  // Check if point is before range end
-  if (point.line > range.end_line) return false;
-  if (point.line === range.end_line && point.column > range.end_column) return false;
-  
-  return true;
+export interface FunctionCallContext {
+  source_code: SourceCode;
+  file_path: FilePath;
+  language: Language;
+  ast_root: SyntaxNode;
+  // Integration points for cross-feature functionality
+  scope_tree?: ScopeTree;  // For symbol resolution
+  imports?: ImportInfo[];  // Already-resolved imports for this file
+  type_map?: Map<string, TypeInfo>;  // Pre-computed type information
+}
+
+/**
+ * Enhanced function call info with resolved target
+ */
+export interface EnhancedFunctionCallInfo extends FunctionCallInfo {
+  resolved_target?: {
+    symbol_id: string;
+    definition_location: Location;
+    is_local: boolean;
+  };
+  // Import tracking
+  is_imported?: boolean;
+  source_module?: string;
+  import_alias?: string;
+  original_name?: string;
+  // Type-based resolution for method calls
+  resolved_type?: {
+    object_type: string;
+    type_kind: TypeInfo['type_kind'];
+    confidence: TypeInfo['confidence'];
+    class_name?: string;
+  };
+}
+
+/**
+ * Find all function calls in code
+ *
+ * Uses generic processor with configuration-driven approach for 86% of functionality.
+ * Language-specific handlers are called for truly unique features that can't be
+ * expressed through configuration.
+ *
+ * @param context The context containing source code, AST, and metadata
+ * @returns Array of function call information
+ */
+export function find_function_calls(
+  context: FunctionCallContext
+): EnhancedFunctionCallInfo[] {
+  // Use generic processor for all languages
+  const calls = find_function_calls_generic(context);
+
+  // Apply language-specific enhancements for bespoke features
+  switch (context.language) {
+    case "typescript":
+      // TypeScript decorators require special handling
+      return enhance_with_typescript_features(calls, context);
+
+    case "rust":
+      // Rust macros are already handled in generic processor
+      // but may need additional enhancement
+      return enhance_with_rust_features(calls, context);
+
+    case "python":
+      // Python comprehensions may contain function calls
+      return enhance_with_python_features(calls, context);
+
+    case "javascript":
+      // JavaScript is fully handled by generic processor
+      return calls;
+
+    default:
+      // For any unsupported language, return what we found
+      return calls;
+  }
 }
 
 /**
@@ -61,7 +122,34 @@ function find_scope_for_location(
   
   // Check all scopes to find the deepest one containing the location
   for (const scope of tree.nodes.values()) {
-    if (point_in_range(location, scope.location)) {
+    // Check if the call's starting point is within the scope
+    if (scope.location.file_path !== location.file_path) continue;
+    
+    // Check if the point (start of the call) is within the scope's range
+    const pointLine = location.line;
+    const pointCol = location.column;
+    const scopeStartLine = scope.location.line;
+    const scopeStartCol = scope.location.column;
+    const scopeEndLine = scope.location.end_line;
+    const scopeEndCol = scope.location.end_column;
+    
+    let isInScope = false;
+    
+    if (pointLine > scopeStartLine && pointLine < scopeEndLine) {
+      // Point is on a middle line - definitely inside
+      isInScope = true;
+    } else if (pointLine === scopeStartLine && pointLine === scopeEndLine) {
+      // Scope is on a single line
+      isInScope = pointCol >= scopeStartCol && pointCol <= scopeEndCol;
+    } else if (pointLine === scopeStartLine) {
+      // Point is on the start line
+      isInScope = pointCol >= scopeStartCol;
+    } else if (pointLine === scopeEndLine) {
+      // Point is on the end line
+      isInScope = pointCol <= scopeEndCol;
+    }
+    
+    if (isInScope) {
       // Count depth by counting parents
       let depth = 0;
       let currentId = scope.parent_id;
@@ -205,93 +293,15 @@ function resolve_local_function(
   return null;
 }
 
-/**
- * Context passed to all function call detection functions
- */
-export interface FunctionCallContext {
-  source_code: SourceCode;
-  file_path: FilePath;
-  language: Language;
-  ast_root: SyntaxNode;
-  // Integration points for cross-feature functionality
-  scope_tree?: ScopeTree;  // For symbol resolution
-  imports?: ImportInfo[];  // Already-resolved imports for this file
-  // exports?: ExportInfo[];  // Already-detected exports for this file
-  type_map?: Map<string, TypeInfo>;  // Pre-computed type information
-}
-
-/**
- * Enhanced function call info with resolved target
- */
-export interface EnhancedFunctionCallInfo extends FunctionCallInfo {
-  resolved_target?: {
-    symbol_id: string;
-    definition_location: Location;
-    is_local: boolean;
-  };
-  // Import tracking
-  is_imported?: boolean;
-  source_module?: string;
-  import_alias?: string;
-  original_name?: string;
-  // Type-based resolution for method calls
-  resolved_type?: {
-    object_type: string;
-    type_kind: TypeInfo['type_kind'];
-    confidence: TypeInfo['confidence'];
-    class_name?: string;
-  };
-}
-
-/**
- * Find all function calls in code
- *
- * Uses generic processor with configuration-driven approach for 86% of functionality.
- * Language-specific handlers are called for truly unique features that can't be
- * expressed through configuration.
- *
- * @param context The context containing source code, AST, and metadata
- * @returns Array of function call information
- */
-export function find_function_calls(
-  context: FunctionCallContext
-): FunctionCallInfo[] {
-  // Use generic processor for all languages
-  const calls = find_function_calls_generic(context);
-
-  // Apply language-specific enhancements for bespoke features
-  switch (context.language) {
-    case "typescript":
-      // TypeScript decorators require special handling
-      return enhance_with_typescript_features(calls, context);
-
-    case "rust":
-      // Rust macros are already handled in generic processor
-      // but may need additional enhancement
-      return enhance_with_rust_features(calls, context);
-
-    case "python":
-      // Python comprehensions may contain function calls
-      return enhance_with_python_features(calls, context);
-
-    case "javascript":
-      // JavaScript is fully handled by generic processor
-      return calls;
-
-    default:
-      // For any unsupported language, return what we found
-      return calls;
-  }
-}
 
 /**
  * Find all function calls using language configuration
  */
 export function find_function_calls_generic(
   context: FunctionCallContext
-): FunctionCallInfo[] {
+): EnhancedFunctionCallInfo[] {
   const config = getLanguageConfig(context.language);
-  const calls: FunctionCallInfo[] = [];
+  const calls: EnhancedFunctionCallInfo[] = [];
 
   // Walk the AST to find all call expressions
   walk_tree(context.ast_root, (node) => {
@@ -323,7 +333,7 @@ function extract_call_generic(
   node: SyntaxNode,
   context: FunctionCallContext,
   config: LanguageCallConfig
-): FunctionCallInfo | null {
+): EnhancedFunctionCallInfo | null {
   const callee_name = extract_callee_name_generic(
     node,
     context.source_code,
@@ -586,9 +596,9 @@ function walk_tree(
  * Enhance with TypeScript-specific features
  */
 export function enhance_with_typescript_features(
-  calls: FunctionCallInfo[],
+  calls: EnhancedFunctionCallInfo[],
   context: FunctionCallContext
-): FunctionCallInfo[] {
+): EnhancedFunctionCallInfo[] {
   const decorator_calls = handle_typescript_decorators(context);
   return [...calls, ...decorator_calls];
 }
@@ -597,9 +607,9 @@ export function enhance_with_typescript_features(
  */
 
 export function enhance_with_rust_features(
-  calls: FunctionCallInfo[],
+  calls: EnhancedFunctionCallInfo[],
   context: FunctionCallContext
-): FunctionCallInfo[] {
+): EnhancedFunctionCallInfo[] {
   const macro_calls = handle_rust_macros(context);
   return [...calls, ...macro_calls];
 }
@@ -608,9 +618,9 @@ export function enhance_with_rust_features(
  */
 
 export function enhance_with_python_features(
-  calls: FunctionCallInfo[],
+  calls: EnhancedFunctionCallInfo[],
   context: FunctionCallContext
-): FunctionCallInfo[] {
+): EnhancedFunctionCallInfo[] {
   const comprehension_calls = handle_python_comprehensions(context);
   return [...calls, ...comprehension_calls];
 }
