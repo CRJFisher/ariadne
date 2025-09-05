@@ -84,14 +84,15 @@ export interface EnrichedConstructorCall extends ConstructorCallWithType {
 }
 
 /**
- * Enhanced function call with type information
+ * Enhanced function call with additional global context information
+ * Note: FunctionCallInfo now includes resolved_target, is_imported, source_module etc.
+ * This interface adds fields that require global context from Phase 2.
  */
 export interface EnrichedFunctionCall extends FunctionCallInfo {
-  resolved_function: string;          // Fully qualified function name
-  return_type: string;                // Resolved return type
-  parameter_types: string[];          // Resolved parameter types
-  is_imported: boolean;               // Whether function is imported
-  confidence_score: number;           // Resolution confidence
+  return_type?: string;                // Resolved return type (from global type flow)
+  parameter_types?: string[];          // Resolved parameter types (from global type flow)
+  confidence_score?: number;           // Resolution confidence
+  cross_file_resolved?: boolean;      // Whether resolution used cross-file information
 }
 
 /**
@@ -176,51 +177,51 @@ export function enrich_function_calls(
   return calls.map(call => {
     const enriched: EnrichedFunctionCall = { ...call };
 
+    // Skip if already resolved locally in Phase 1
+    if (call.resolved_target) {
+      // Already resolved locally, just add confidence
+      if (options.include_confidence) {
+        enriched.confidence_score = 1.0; // High confidence for local resolution
+      }
+      return enriched;
+    }
+
     // Check if this is a namespace member call (e.g., namespace.function)
-    if (call.function_name.includes('.')) {
-      const [namespace, member] = call.function_name.split('.', 2);
-      const namespace_key = `${call.location.file_path}:${namespace}`;
+    if (call.callee_name.includes('.')) {
+      const [namespace, member] = call.callee_name.split('.', 2);
+      const namespace_key = `${call.location.file_path}:${namespace}` as FilePath;
       const namespace_info = context.namespace_resolutions.get(namespace_key);
       
       if (namespace_info) {
         const member_export = namespace_info.exports.get(member);
         if (member_export && member_export.kind === 'function') {
-          enriched.is_imported = true;
-          enriched.resolved_function = `${namespace_info.source_path}#${member}`;
+          // Don't overwrite is_imported if already set in Phase 1
+          enriched.cross_file_resolved = true;
         }
       }
     }
 
-    // Try to resolve the function through module graph
-    const module_info = call.location.file_path ? 
-      context.module_graph.modules.get(call.location.file_path) : undefined;
-    
-    if (module_info && !enriched.resolved_function) {
-      // Check if function is imported
-      const imported = module_info.imports?.find(
-        imp => imp.name === call.function_name
-      );
+    // Only check module graph if not already marked as imported in Phase 1
+    if (!call.is_imported && call.location.file_path) {
+      const module_info = context.module_graph.modules.get(call.location.file_path);
       
-      if (imported) {
-        enriched.is_imported = true;
-        enriched.resolved_function = `${imported.source}#${call.function_name}`;
-      } else {
-        // Local function
-        enriched.resolved_function = `${call.file_path}#${call.function_name}`;
+      if (module_info && module_info.imports) {
+        // Module imports are a different type, need to handle carefully
+        // For now, mark as cross-file resolved if we can find it
+        enriched.cross_file_resolved = true;
       }
     }
 
-    // Try to resolve types if propagated types are available
-    if (context.propagated_types && call.file_path) {
-      // propagated_types is Map<FilePath, TypeFlow[]>
-      const type_flows = context.propagated_types.get(call.file_path);
+    // Try to resolve return types from global type flow
+    if (context.propagated_types && call.location.file_path) {
+      const type_flows = context.propagated_types.get(call.location.file_path);
       if (type_flows && type_flows.length > 0) {
         // Try to find type flow for this function
         const matching_flow = type_flows.find((flow: any) => 
-          flow.symbol === call.function_name
+          flow.symbol === call.callee_name
         );
         if (matching_flow) {
-          enriched.return_type = matching_flow.type_name || matching_flow.inferred_type;
+          enriched.return_type = (matching_flow as any).type_name || (matching_flow as any).inferred_type;
         }
       }
     }
@@ -258,12 +259,12 @@ export function enrich_method_calls(
     const enriched: EnrichedMethodCall = { ...call };
 
     // Check if this is a namespace member method call (e.g., namespace.Class.method)
-    if (context.namespace_resolutions && call.receiver_type && call.receiver_type.includes('.')) {
-      const parts = call.receiver_type.split('.');
+    if (context.namespace_resolutions && enriched.receiver_type && enriched.receiver_type.includes('.')) {
+      const parts = enriched.receiver_type.split('.');
       if (parts.length >= 2) {
         const namespace = parts[0];
         const className = parts[1];
-        const namespace_key = `${call.file_path}:${namespace}`;
+        const namespace_key = `${call.location.file_path}:${namespace}` as FilePath;
         const namespace_info = context.namespace_resolutions.get(namespace_key);
         
         if (namespace_info) {
@@ -277,9 +278,9 @@ export function enrich_method_calls(
     }
 
     // Add polymorphic resolution
-    if (options.resolve_polymorphic && call.receiver_type) {
+    if (options.resolve_polymorphic && enriched.receiver_type) {
       const targets = resolve_polymorphic_targets(
-        call,
+        enriched,
         context.class_hierarchy
       );
       
@@ -290,9 +291,9 @@ export function enrich_method_calls(
     }
 
     // Track interface implementations
-    if (options.track_interfaces && call.receiver_type) {
+    if (options.track_interfaces && enriched.receiver_type) {
       enriched.interface_implementations = find_interface_implementations(
-        call,
+        enriched,
         context.class_hierarchy
       );
     }
@@ -342,9 +343,9 @@ export function enrich_constructor_calls(
     const enriched: EnrichedConstructorCall = { ...call };
 
     // Check if this is a namespace member constructor (e.g., namespace.Class)
-    if (context.namespace_resolutions && call.class_name.includes('.')) {
-      const [namespace, member] = call.class_name.split('.', 2);
-      const namespace_key = `${call.file_path}:${namespace}`;
+    if (context.namespace_resolutions && call.constructor_name.includes('.')) {
+      const [namespace, member] = call.constructor_name.split('.', 2);
+      const namespace_key = `${call.location.file_path}:${namespace}` as FilePath;
       const namespace_info = context.namespace_resolutions.get(namespace_key);
       
       if (namespace_info) {
@@ -357,8 +358,8 @@ export function enrich_constructor_calls(
     }
 
     // Check if trying to instantiate abstract class
-    if (options.validate_constructors && call.class_name) {
-      const class_info = context.class_hierarchy.classes.get(call.class_name);
+    if (options.validate_constructors && call.constructor_name) {
+      const class_info = context.class_hierarchy.classes.get(call.constructor_name as any);
       if (class_info?.is_abstract) {
         enriched.is_abstract = true;
         enriched.is_valid = false;
@@ -367,7 +368,7 @@ export function enrich_constructor_calls(
 
     // Resolve generic type parameters if available
     if (context.resolved_generics && call.location) {
-      const generic_key = `${call.file_path}#${call.class_name}`;
+      const generic_key = `${call.location.file_path}#${call.constructor_name}` as FilePath;
       const resolved_array = context.resolved_generics.get(generic_key);
       if (resolved_array && resolved_array.length > 0) {
         // Use the first resolved generic or combine type arguments from all
@@ -383,7 +384,7 @@ export function enrich_constructor_calls(
  * Resolve polymorphic targets for a method call
  */
 function resolve_polymorphic_targets(
-  call: MethodCallInfo,
+  call: MethodCallWithHierarchy,
   hierarchy: ClassHierarchy
 ): ResolvedTarget[] {
   const targets: ResolvedTarget[] = [];
@@ -392,13 +393,13 @@ function resolve_polymorphic_targets(
     return targets;
   }
 
-  const base_class = hierarchy.classes.get(call.receiver_type);
+  const base_class = hierarchy.classes.get(call.receiver_type as any);
   if (!base_class) {
     return targets;
   }
 
   // Check if base class has the method
-  if (base_class.methods && base_class.methods.has(call.method_name)) {
+  if (base_class.methods && base_class.methods.has(call.method_name as any)) {
     targets.push({
       class: call.receiver_type,
       method: call.method_name,
@@ -410,7 +411,7 @@ function resolve_polymorphic_targets(
   // Check all derived classes for overrides
   for (const [class_name, class_info] of hierarchy.classes) {
     if (class_info.base_classes?.includes(call.receiver_type)) {
-      if (class_info.methods && class_info.methods.has(call.method_name)) {
+      if (class_info.methods && class_info.methods.has(call.method_name as any)) {
         targets.push({
           class: class_name,
           method: call.method_name,
@@ -451,7 +452,7 @@ function determine_dispatch_type(
  * Find interface implementations for a method
  */
 function find_interface_implementations(
-  call: MethodCallInfo,
+  call: MethodCallWithHierarchy,
   hierarchy: ClassHierarchy
 ): string[] {
   const implementations: string[] = [];
@@ -460,7 +461,7 @@ function find_interface_implementations(
     return implementations;
   }
 
-  const class_info = hierarchy.classes.get(call.receiver_type);
+  const class_info = hierarchy.classes.get(call.receiver_type as any);
   if (!class_info?.interface_nodes) {
     return implementations;
   }
@@ -470,7 +471,7 @@ function find_interface_implementations(
     const interface_key = `${interface_node.file_path}#${interface_node.name}`;
     const interface_info = hierarchy.classes.get(interface_key);
     
-    if (interface_info?.methods?.has(call.method_name)) {
+    if (interface_info?.methods?.has(call.method_name as any)) {
       implementations.push(interface_key);
     }
   }
@@ -536,8 +537,8 @@ function calculate_function_confidence(
 ): number {
   let score = 0.0;
 
-  // Function resolved
-  if (call.resolved_function) {
+  // Function resolved locally (highest confidence)
+  if (call.resolved_target) {
     score += 0.5;
   }
 
@@ -548,7 +549,12 @@ function calculate_function_confidence(
 
   // Type information available
   if (call.return_type) {
-    score += 0.2;
+    score += 0.1;
+  }
+
+  // Cross-file resolution
+  if (call.cross_file_resolved) {
+    score += 0.1;
   }
 
   return Math.min(1.0, score);
@@ -565,9 +571,20 @@ function calculate_function_confidence(
 export function batch_enrich_analyses(
   analyses: FileAnalysis[],
   context: EnrichmentContext,
-  options: EnrichmentOptions = {}
+  options: Partial<EnrichmentOptions> = {}
 ): EnrichedFileAnalysis[] {
+  // Provide default values for all required options
+  const fullOptions: EnrichmentOptions = {
+    resolve_polymorphic: false,
+    track_interfaces: false,
+    include_confidence: false,
+    resolve_virtual_dispatch: false,
+    validate_constructors: false,
+    track_inheritance: false,
+    ...options
+  };
+  
   return analyses.map(analysis => 
-    enrich_all_calls(analysis, context, options)
+    enrich_all_calls(analysis, context, fullOptions)
   );
 }

@@ -92,14 +92,16 @@ Each file is analyzed independently to extract local information. This phase can
 
 **Outputs:** variable type maps, inferred types, type annotations, type guards
 
-### Layer 4: Local Call Analysis & Symbol Creation
+### Layer 4: Local Call Analysis & Early Enrichment
 
 **Dependencies:** Local Type Analysis, Scope Analysis
 
 **Processing:**
 
 - Find function calls and their arguments
-- Find method calls with receiver types (when available locally)
+- **EARLY ENRICHMENT:** Resolve local functions using scope tree
+- **EARLY ENRICHMENT:** Track imported functions using import information
+- **EARLY ENRICHMENT:** Resolve method receiver types when available locally
 - Find constructor calls
 - Extract types from constructor calls (bidirectional flow)
 - **Create globally unique SymbolIds for all entities**
@@ -109,7 +111,7 @@ Each file is analyzed independently to extract local information. This phase can
 
 **Modules:**
 
-- `/call_graph/function_calls` - Function call detection
+- `/call_graph/function_calls` - Function call detection with early enrichment
 - `/call_graph/method_calls` - Method call detection
 - `/call_graph/constructor_calls` - Constructor call detection with type extraction
 - `/utils/symbol_construction` - Symbol ID creation
@@ -117,7 +119,11 @@ Each file is analyzed independently to extract local information. This phase can
 
 **Outputs:**
 
-- Function calls, method calls, constructor calls with discovered types
+- Function calls with:
+  - `resolved_target` for local functions
+  - `is_imported`, `source_module`, etc. for imported functions
+  - `resolved_type` for method receiver types
+- Method calls, constructor calls with discovered types
 - **Symbol registry (Map<entity, SymbolId>)**
 - **Symbols for all functions, classes, methods, variables**
 
@@ -224,17 +230,19 @@ Type resolution is handled by:
 
 ## Phase 3: Enrichment (Sequential)
 
-Uses global knowledge to enhance and validate per-file analysis results. This critical phase bridges the gap between local and global analysis.
+Uses global knowledge to enhance and validate per-file analysis results. This phase focuses on enrichments that require global context from Phase 2.
 
-**Central Module:** `/call_graph/enrichment` - Standardized enrichment API (replaces call_resolution)
+**Note:** As of the configuration-driven refactoring (Epic 11.80), much of the function call enrichment now happens during Phase 1 ("early enrichment") when local context is readily available.
+
+**Central Module:** `/call_graph/enrichment` - Global enrichment for cross-file resolution
 
 ### Enrichment Pattern
 
-The enrichment phase operates on the principle of **progressive enhancement**:
+The enrichment phase now follows a **simplified progressive enhancement** model:
 
-1. Per-file analysis extracts raw, unvalidated data
-2. Global assembly builds comprehensive registries
-3. Enrichment validates and enhances per-file data with global context
+1. Per-file analysis extracts and enriches data with local context (Phase 1)
+2. Global assembly builds comprehensive registries (Phase 2)
+3. Enrichment adds cross-file resolution and validation (Phase 3)
 
 **Function:** `enrich_all_calls(analysis, context, options)`
 
@@ -295,22 +303,28 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 - Cross-file type validation
 - Improved type confidence scores
 
-### Function Call Enrichment
+### Function Call Enrichment (Simplified)
 
 **Processing:**
 
-- Validate function calls against symbol table
-- Resolve imported function references
-- Track return types and parameter types
+- Skip calls already resolved in Phase 1 (local functions with `resolved_target`)
+- Resolve cross-file namespace member calls (e.g., `namespace.function`)
+- Add return types and parameter types from global type flow
 - Calculate confidence scores
 
-**Enhancements:**
+**Enhancements (Phase 3 only):**
 
-- `resolved_function` - Fully qualified function name
-- `return_type` - Resolved return type
-- `parameter_types` - Resolved parameter types
-- `is_imported` - Whether function is imported
+- `return_type` - Resolved return type from global type flow
+- `parameter_types` - Resolved parameter types from global type flow
 - `confidence_score` - Resolution confidence
+- `cross_file_resolved` - Whether resolution used cross-file information
+
+**Already enriched in Phase 1:**
+
+- `resolved_target` - Local function resolution (scope tree)
+- `is_imported` - Import status (import analysis)
+- `source_module`, `import_alias` - Import details
+- `resolved_type` - Method receiver type (local type tracking)
 
 ### Call Graph Completion
 
@@ -349,7 +363,11 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 │    4. Extract imports/exports                            │
 │    5. Detect classes/interfaces/types                    │
 │    6. Track local types                                  │
-│    7. Find calls and create SymbolIds                    │
+│    7. Find calls with EARLY ENRICHMENT:                  │
+│       - Resolve local functions via scope tree           │
+│       - Track imports and their sources                  │
+│       - Resolve method receiver types                    │
+│    8. Create SymbolIds                                   │
 └─────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────┐
@@ -370,10 +388,10 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 │                   Enrichment Phase                       │
 │                     (Sequential)                         │
 ├─────────────────────────────────────────────────────────┤
-│  1. Enrich function calls with resolved symbols          │
+│  1. Add cross-file resolution for unresolved calls       │
 │  2. Enrich method calls with hierarchy                   │
 │  3. Enrich constructor calls with types                  │
-│  4. Merge type discoveries                               │
+│  4. Add return types from global type flow               │
 │  5. Complete call graph with validations                 │
 │  6. Trace execution flows                                │
 └─────────────────────────────────────────────────────────┘
@@ -383,7 +401,8 @@ The enrichment phase operates on the principle of **progressive enhancement**:
 
 - **Forward Flow**: Per-file → Global Assembly → Enrichment
 - **Bidirectional Flow**: Constructor calls ↔ Type tracking (within per-file)
-- **Enrichment Flow**: Global registries → Per-file enhancements
+- **Early Enrichment**: Scope tree + imports + types → Function calls (during per-file)
+- **Late Enrichment**: Global registries → Cross-file resolutions (during enrichment)
 
 ---
 

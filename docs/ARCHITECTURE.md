@@ -37,7 +37,7 @@ Each file is analyzed independently (in parallel) to extract local information:
 **File Analysis Modules** (detect/extract/find/track pattern):
 
 - [`/scope_analysis/scope_tree`](/packages/core/src/scope_analysis/scope_tree) - Builds scope tree with symbol extraction
-- [`/call_graph/function_calls`](/packages/core/src/call_graph/function_calls) - Finds function calls within file
+- [`/call_graph/function_calls`](/packages/core/src/call_graph/function_calls) - Finds function calls with early enrichment (local resolution, import tracking)
 - [`/call_graph/method_calls`](/packages/core/src/call_graph/method_calls) - Finds method calls within file
 - [`/import_export/import_resolution`](/packages/core/src/import_export/import_resolution) - Extracts import declarations
 - [`/import_export/export_detection`](/packages/core/src/import_export/export_detection) - Detects export statements
@@ -77,15 +77,17 @@ CodeGraph {
 
 ##### Enrichment
 
-Enhances per-file data with global knowledge to validate and resolve cross-file relationships:
+Enhances data using global knowledge. Note: As of Epic 11.80, function calls receive "early enrichment" during per-file analysis.
 
-**Enrichment Functions** (enrich/validate/merge pattern):
+**Early Enrichment** (during per-file analysis):
+- Function calls enriched with local resolution, import tracking, and type info
 
+**Late Enrichment** (using global knowledge):
 - `enrich_method_calls_with_hierarchy()` - Validates methods against inheritance
 - `enrich_constructor_calls_with_types()` - Validates constructors against registry
-- `merge_constructor_types()` - Merges discovered types bidirectionally
+- Cross-file namespace and type flow resolution
 
-Result: Enhanced `FileAnalysis` with validated calls, resolved inheritance, and cross-file type flow
+Result: Enhanced `FileAnalysis` with both local and cross-file resolutions
 
 ##### Analytical Queries
 
