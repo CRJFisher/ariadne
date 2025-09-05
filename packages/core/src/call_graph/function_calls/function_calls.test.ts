@@ -8,7 +8,7 @@ import JavaScript from "tree-sitter-javascript";
 import TypeScript from "tree-sitter-typescript";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
-import { Language, SourceCode, FilePath } from "@ariadnejs/types";
+import { Language, SourceCode, FilePath, ImportInfo } from "@ariadnejs/types";
 import { find_function_calls } from "./function_calls";
 import {
   FunctionCallContext,
@@ -136,6 +136,76 @@ main();`;
       expect(mainCall).toBeDefined();
       expect(mainCall?.resolved_target).toBeDefined();
       expect(mainCall?.resolved_target?.is_local).toBe(true);
+    });
+
+    it("should identify imported functions when imports are provided", () => {
+      const source = `import { readFile } from "fs";
+import lodash from "lodash";
+import * as path from "path";
+
+readFile("test.txt");
+lodash.debounce(fn, 100);
+path.join("/", "test");
+localFunc();`;
+
+      const tree = parser.parse(source);
+      
+      const imports: ImportInfo[] = [
+        { 
+          name: "readFile", 
+          source: "fs", 
+          kind: "named",
+          location: { file_path: "test.js", line: 1, column: 1, end_line: 1, end_column: 30 }
+        },
+        { 
+          name: "default", 
+          source: "lodash",
+          alias: "lodash",
+          kind: "default",
+          location: { file_path: "test.js", line: 2, column: 1, end_line: 2, end_column: 26 }
+        },
+        { 
+          name: "*",
+          source: "path",
+          kind: "namespace",
+          namespace_name: "path",
+          location: { file_path: "test.js", line: 3, column: 1, end_line: 3, end_column: 26 }
+        }
+      ];
+      
+      const context: FunctionCallContext = {
+        source_code: source,
+        file_path: "test.js",
+        language: "javascript",
+        ast_root: tree.rootNode,
+        imports: imports,
+      };
+
+      const calls = find_function_calls(context) as EnhancedFunctionCallInfo[];
+
+      // Should find all function calls
+      expect(calls).toHaveLength(4);
+      
+      // Check readFile is identified as imported
+      const readFileCall = calls.find(c => c.callee_name === "readFile");
+      expect(readFileCall).toBeDefined();
+      expect(readFileCall?.is_imported).toBe(true);
+      expect(readFileCall?.source_module).toBe("fs");
+      
+      // Check default import (lodash.debounce)
+      const debounceCall = calls.find(c => c.callee_name === "debounce");
+      expect(debounceCall).toBeDefined();
+      expect(debounceCall?.is_method_call).toBe(true);
+      
+      // Check namespace import (path.join)
+      const joinCall = calls.find(c => c.callee_name === "join");
+      expect(joinCall).toBeDefined();
+      expect(joinCall?.is_method_call).toBe(true);
+      
+      // Check that localFunc is NOT marked as imported
+      const localCall = calls.find(c => c.callee_name === "localFunc");
+      expect(localCall).toBeDefined();
+      expect(localCall?.is_imported).toBeUndefined();
     });
   });
 

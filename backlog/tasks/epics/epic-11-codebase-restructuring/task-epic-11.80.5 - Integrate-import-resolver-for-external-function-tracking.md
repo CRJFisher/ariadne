@@ -2,7 +2,7 @@
 
 ## Status
 
-Pending
+Completed
 
 ## Parent Task
 
@@ -66,11 +66,11 @@ function enhance_call_with_import_info(
 
 ## Acceptance Criteria
 
-- [ ] Import resolver integrated into context
-- [ ] Imported functions correctly identified
-- [ ] Source module tracked for imported calls
-- [ ] All import types handled correctly
-- [ ] Tests verify import resolution
+- [x] Import resolver integrated into context
+- [x] Imported functions correctly identified
+- [x] Source module tracked for imported calls
+- [x] All import types handled correctly
+- [x] Tests verify import resolution
 
 ## Dependencies
 
@@ -80,3 +80,29 @@ function enhance_call_with_import_info(
 ## Estimated Effort
 
 4 hours
+
+## Implementation Notes
+
+Successfully implemented import resolver integration with the following changes:
+
+1. **Added imports field to FunctionCallContext** - Optional ImportInfo[] field for backward compatibility
+2. **Extended EnhancedFunctionCallInfo** - Added fields for import tracking (is_imported, source_module, import_alias, original_name)
+3. **Created enhance_with_import_info function** - Resolves calls against imports with support for:
+   - Named imports
+   - Default imports
+   - Namespace imports (e.g., ns.function)
+4. **Integrated into extract_call_generic** - Checks imports after local resolution fails
+5. **Added comprehensive test** - Verifies all import types are correctly identified
+
+### Key Features
+
+- Direct import detection (named and default)
+- Namespace import support with member access
+- Alias tracking for renamed imports
+- Only checks imports if local resolution fails
+- Maintains backward compatibility with optional fields
+
+### Files Modified
+
+- `/packages/core/src/call_graph/function_calls/function_calls.ts` - Main implementation
+- `/packages/core/src/call_graph/function_calls/function_calls.test.ts` - Added comprehensive test

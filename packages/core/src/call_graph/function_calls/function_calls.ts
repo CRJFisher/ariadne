@@ -14,6 +14,7 @@ import {
   ScopeTree,
   ScopeNode,
   Location,
+  ImportInfo,
 } from "@ariadnejs/types";
 import { getLanguageConfig, LanguageCallConfig } from "./language_configs";
 import { node_to_location } from "../../ast/node_utils";
@@ -80,6 +81,50 @@ function find_scope_for_location(
 }
 
 /**
+ * Enhance call with import information
+ */
+function enhance_with_import_info(
+  callee_name: string,
+  imports: ImportInfo[]
+): { is_imported: boolean; source_module?: string; import_alias?: string; original_name?: string } | null {
+  // Check for direct import (named or default)
+  const direct_import = imports.find(imp => {
+    if (imp.alias) {
+      return imp.alias === callee_name;
+    }
+    return imp.name === callee_name;
+  });
+
+  if (direct_import) {
+    return {
+      is_imported: true,
+      source_module: direct_import.source,
+      import_alias: direct_import.alias,
+      original_name: direct_import.alias ? direct_import.name : undefined,
+    };
+  }
+
+  // Check for namespace imports (e.g., ns.function where ns is imported)
+  const namespaceParts = callee_name.split('.');
+  if (namespaceParts.length > 1) {
+    const namespace = namespaceParts[0];
+    const namespace_import = imports.find(imp => 
+      imp.kind === 'namespace' && imp.namespace_name === namespace
+    );
+    if (namespace_import) {
+      return {
+        is_imported: true,
+        source_module: namespace_import.source,
+        import_alias: callee_name,
+        original_name: namespaceParts.slice(1).join('.'),
+      };
+    }
+  }
+
+  return null;
+}
+
+/**
  * Resolve a local function using the scope tree
  */
 function resolve_local_function(
@@ -115,7 +160,7 @@ export interface FunctionCallContext {
   ast_root: SyntaxNode;
   // Integration points for cross-feature functionality
   scope_tree?: ScopeTree;  // For symbol resolution
-  // imports?: ImportInfo[];  // Already-resolved imports for this file
+  imports?: ImportInfo[];  // Already-resolved imports for this file
   // exports?: ExportInfo[];  // Already-detected exports for this file
   // type_map?: Map<string, TypeInfo>;  // Pre-computed type information
 }
@@ -129,6 +174,11 @@ export interface EnhancedFunctionCallInfo extends FunctionCallInfo {
     definition_location: Location;
     is_local: boolean;
   };
+  // Import tracking
+  is_imported?: boolean;
+  source_module?: string;
+  import_alias?: string;
+  original_name?: string;
 }
 
 /**
@@ -248,6 +298,17 @@ function extract_call_generic(
     );
     if (resolved) {
       call_info.resolved_target = resolved;
+    }
+  }
+
+  // If imports are available and the call wasn't resolved locally, check imports
+  if (context.imports && !call_info.resolved_target && !is_constructor) {
+    const import_info = enhance_with_import_info(callee_name, context.imports);
+    if (import_info) {
+      call_info.is_imported = import_info.is_imported;
+      call_info.source_module = import_info.source_module;
+      call_info.import_alias = import_info.import_alias;
+      call_info.original_name = import_info.original_name;
     }
   }
 
