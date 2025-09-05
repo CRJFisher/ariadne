@@ -77,7 +77,7 @@ CodeGraph {
 
 ##### Enrichment
 
-Enhances data using global knowledge. Note: As of Epic 11.80, function calls receive "early enrichment" during per-file analysis.
+Enhances data using both local and global knowledge in two stages:
 
 **Early Enrichment** (during per-file analysis):
 - Function calls enriched with local resolution, import tracking, and type info

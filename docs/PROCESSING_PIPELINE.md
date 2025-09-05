@@ -230,9 +230,7 @@ Type resolution is handled by:
 
 ## Phase 3: Enrichment (Sequential)
 
-Uses global knowledge to enhance and validate per-file analysis results. This phase focuses on enrichments that require global context from Phase 2.
-
-**Note:** As of the configuration-driven refactoring (Epic 11.80), much of the function call enrichment now happens during Phase 1 ("early enrichment") when local context is readily available.
+Uses global knowledge to enhance and validate per-file analysis results. This phase focuses on enrichments that require global context from Phase 2, while Phase 1 performs early enrichment using local context.
 
 **Central Module:** `/call_graph/enrichment` - Global enrichment for cross-file resolution
 
