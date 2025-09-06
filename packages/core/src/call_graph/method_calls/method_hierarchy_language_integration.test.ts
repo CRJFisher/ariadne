@@ -52,8 +52,12 @@ dog.wagTail();`;
       // Create mock hierarchy
       const hierarchy = create_js_hierarchy();
       
+      // Create type info mapping 'dog' to 'Dog'
+      const type_info = new Map<string, string>();
+      type_info.set('dog', 'Dog');
+      
       // Enrich with hierarchy
-      const enriched = enrich_method_calls_with_hierarchy(method_calls, hierarchy);
+      const enriched = enrich_method_calls_with_hierarchy(method_calls, hierarchy, type_info);
       
       // Verify enrichment
       const speak_call = enriched.find(c => c.method_name === 'speak');
@@ -191,8 +195,12 @@ logger.log("test");`;
       // Create mock hierarchy with interface
       const hierarchy = create_ts_hierarchy();
       
+      // Create type info
+      const type_info = new Map<string, string>();
+      type_info.set('logger', 'ConsoleLogger');
+      
       // Enrich with hierarchy
-      const enriched = enrich_method_calls_with_hierarchy(method_calls, hierarchy);
+      const enriched = enrich_method_calls_with_hierarchy(method_calls, hierarchy, type_info);
       
       // Verify interface method detection
       const log_call = enriched.find(c => c.method_name === 'log' && c.receiver_name === 'logger');
@@ -316,8 +324,12 @@ d.helper()`;
       // Create Python hierarchy with multiple inheritance
       const hierarchy = create_python_hierarchy();
       
+      // Create type info
+      const type_info = new Map<string, string>();
+      type_info.set('d', 'Derived');
+      
       // Enrich with hierarchy
-      const enriched = enrich_method_calls_with_hierarchy(method_calls, hierarchy);
+      const enriched = enrich_method_calls_with_hierarchy(method_calls, hierarchy, type_info);
       
       // Verify multiple inheritance resolution
       const helper_call = enriched.find(c => 
@@ -484,8 +496,12 @@ p.distance();`;
       // Create Rust hierarchy with trait
       const hierarchy = create_rust_hierarchy();
       
+      // Create type info
+      const type_info = new Map<string, string>();
+      type_info.set('p', 'Point');
+      
       // Enrich with hierarchy
-      const enriched = enrich_method_calls_with_hierarchy(method_calls, hierarchy);
+      const enriched = enrich_method_calls_with_hierarchy(method_calls, hierarchy, type_info);
       
       // Verify trait method resolution
       const fmt_call = enriched.find(c => c.method_name === 'fmt');

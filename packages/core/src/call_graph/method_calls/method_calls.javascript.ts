@@ -1,216 +1,264 @@
 /**
- * JavaScript-specific method call detection
+ * JavaScript bespoke method call features
+ * 
+ * Handles JavaScript-specific patterns that can't be expressed through configuration:
+ * - Prototype method calls (ClassName.prototype.methodName)
+ * - Indirect method calls (call, apply, bind)
+ * - Optional chaining (obj?.method())
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language, MethodCallInfo } from '@ariadnejs/types';
-import {
-  MethodCallContext,
-  is_method_call_node,
-  extract_receiver_name,
-  extract_method_name,
-  is_static_method_call,
-  is_chained_method_call,
-  count_method_arguments,
-  get_enclosing_class
-} from './method_calls';
-import { TypeInfo } from '../../type_analysis/type_tracking';
-import { 
-  resolve_receiver_type,
-  MethodCallWithType,
-  infer_defining_class
-} from './receiver_type_resolver';
+import { MethodCallInfo } from '@ariadnejs/types';
 
 /**
- * Find all method calls in JavaScript code
+ * Detect prototype method calls (ClassName.prototype.methodName)
  */
-export function find_method_calls_javascript(
-  context: MethodCallContext,
-  type_map?: Map<string, TypeInfo[]>
-): MethodCallInfo[] {
-  const calls: MethodCallInfo[] = [];
-  const language: Language = 'javascript';
-  
-  // Walk the AST to find all call expressions
-  walk_tree(context.ast_root, (node) => {
-    if (is_method_call_node(node, language)) {
-      const method_info = extract_javascript_method_call(node, context, language, type_map);
-      if (method_info) {
-        calls.push(method_info as MethodCallInfo);
-      }
-    }
-  });
-  
-  return calls;
-}
-
-/**
- * Extract JavaScript method call information with type resolution
- */
-function extract_javascript_method_call(
+export function detect_prototype_method_call(
   node: SyntaxNode,
-  context: MethodCallContext,
-  language: Language,
-  type_map?: Map<string, TypeInfo[]>
-): MethodCallWithType | null {
-  const receiver_name = extract_receiver_name(node, context.source_code, language);
-  const method_name = extract_method_name(node, context.source_code, language);
+  source: string
+): MethodCallInfo | null {
+  if (node.type !== 'call_expression') return null;
   
-  if (!receiver_name || !method_name) {
+  const func = node.childForFieldName('function');
+  if (!func || func.type !== 'member_expression') {
     return null;
   }
   
-  // Determine the caller (enclosing function or class)
-  const caller_name = get_caller_context(node, context.source_code, language) || '<module>';
-  
-  // Try to resolve the receiver type
-  let receiver_type: string | undefined;
-  let defining_class: string | undefined;
-  
-  // Get the receiver node to resolve its type
-  const member = node.type === 'call_expression' ? 
-    node.childForFieldName('function') : node;
-  if (member?.type === 'member_expression') {
-    const receiver_node = member.childForFieldName('object');
-    if (receiver_node) {
-      receiver_type = resolve_receiver_type(receiver_node, type_map, context.source_code, language);
-      if (receiver_type) {
-        defining_class = infer_defining_class(method_name, receiver_type);
+  // Handle ClassName.prototype.methodName.call/apply pattern
+  const property = func.childForFieldName('property');
+  if (property) {
+    const prop_text = source.substring(property.startIndex, property.endIndex);
+    if (prop_text === 'call' || prop_text === 'apply') {
+      // Check if object is ClassName.prototype.methodName
+      const object = func.childForFieldName('object');
+      if (object && object.type === 'member_expression') {
+        const obj_obj = object.childForFieldName('object');
+        if (obj_obj && obj_obj.type === 'member_expression') {
+          // Check for prototype pattern
+          const proto_prop = obj_obj.childForFieldName('property');
+          if (proto_prop) {
+            const proto_text = source.substring(proto_prop.startIndex, proto_prop.endIndex);
+            if (proto_text === 'prototype') {
+              const class_obj = obj_obj.childForFieldName('object');
+              const method_prop = object.childForFieldName('property');
+              
+              if (class_obj && method_prop) {
+                const class_name = source.substring(class_obj.startIndex, class_obj.endIndex);
+                const method_name = source.substring(method_prop.startIndex, method_prop.endIndex);
+                
+                return {
+                  caller_name: '<module>',
+                  method_name,
+                  receiver_name: `${class_name}.prototype`,
+                  location: {
+                    line: node.startPosition.row,
+                    column: node.startPosition.column
+                  },
+                  is_static_method: true,
+                  is_chained_call: false,
+                  arguments_count: count_arguments(node)
+                };
+              }
+            }
+          }
+        }
       }
     }
   }
   
-  return {
-    caller_name,
-    method_name,
-    receiver_name,
-    receiver_type,
-    defining_class,
-    location: {
-      line: node.startPosition.row,
-      column: node.startPosition.column
-    },
-    is_static_method: is_static_method_call(node, context.source_code, language),
-    is_chained_call: is_chained_method_call(node, language),
-    arguments_count: count_method_arguments(node, language)
-  };
-}
-
-/**
- * Get the context (function/method) where the call is made
- */
-function get_caller_context(
-  node: SyntaxNode,
-  source: string,
-  language: Language
-): string | null {
-  let current = node.parent;
+  // Handle direct ClassName.prototype.methodName() pattern
+  const object = func.childForFieldName('object');
+  if (!object || object.type !== 'member_expression') {
+    return null;
+  }
   
-  while (current) {
-    // Check for function/method definitions
-    if (current.type === 'function_declaration' ||
-        current.type === 'function_expression' ||
-        current.type === 'arrow_function') {
-      const name = current.childForFieldName('name');
-      if (name) {
-        return source.substring(name.startIndex, name.endIndex);
-      }
-      // For anonymous functions
-      return '<anonymous>';
-    }
-    
-    // Check for method definitions
-    if (current.type === 'method_definition') {
-      const key = current.childForFieldName('key');
-      if (key) {
-        const method_name = source.substring(key.startIndex, key.endIndex);
+  // Check if it's ClassName.prototype.methodName pattern
+  const obj_property = object.childForFieldName('property');
+  if (obj_property) {
+    const prop_text = source.substring(obj_property.startIndex, obj_property.endIndex);
+    if (prop_text === 'prototype') {
+      // Extract the class name (object of the prototype access)
+      const class_obj = object.childForFieldName('object');
+      const method = func.childForFieldName('property');
+      
+      if (class_obj && method) {
+        const class_name = source.substring(class_obj.startIndex, class_obj.endIndex);
+        const method_name = source.substring(method.startIndex, method.endIndex);
         
-        // Try to get the class name
-        const class_name = get_enclosing_class(current, source, language);
-        if (class_name) {
-          return `${class_name}.${method_name}`;
-        }
-        return method_name;
+        return {
+          caller_name: '<module>',
+          method_name,
+          receiver_name: `${class_name}.prototype`,
+          location: {
+            line: node.startPosition.row,
+            column: node.startPosition.column
+          },
+          is_static_method: true,
+          is_chained_call: false,
+          arguments_count: count_arguments(node)
+        };
       }
     }
-    
-    current = current.parent;
   }
   
   return null;
 }
 
 /**
- * Walk the AST tree
+ * Detect indirect method calls (call, apply, bind)
+ * These are methods that manipulate the 'this' context
  */
-function walk_tree(node: SyntaxNode, callback: (node: SyntaxNode) => void): void {
-  callback(node);
-  for (let i = 0; i < node.childCount; i++) {
-    const child = node.child(i);
-    if (child) {
-      walk_tree(child, callback);
-    }
-  }
-}
-
-/**
- * JavaScript-specific: Detect prototype method calls
- */
-export function is_prototype_method_call(
+export function detect_indirect_method_call(
   node: SyntaxNode,
   source: string
-): boolean {
+): MethodCallInfo | null {
+  if (node.type !== 'call_expression') return null;
+  
   const func = node.childForFieldName('function');
   if (!func || func.type !== 'member_expression') {
-    return false;
-  }
-  
-  const object = func.childForFieldName('object');
-  if (!object || object.type !== 'member_expression') {
-    return false;
-  }
-  
-  // Check if it's ClassName.prototype.methodName pattern
-  const property = object.childForFieldName('property');
-  if (property) {
-    const prop_text = source.substring(property.startIndex, property.endIndex);
-    return prop_text === 'prototype';
-  }
-  
-  return false;
-}
-
-/**
- * JavaScript-specific: Detect call/apply/bind invocations
- */
-export function is_indirect_method_call(
-  node: SyntaxNode,
-  source: string
-): boolean {
-  const func = node.childForFieldName('function');
-  if (!func || func.type !== 'member_expression') {
-    return false;
+    return null;
   }
   
   const property = func.childForFieldName('property');
-  if (property) {
+  const object = func.childForFieldName('object');
+  
+  if (property && object) {
     const method_name = source.substring(property.startIndex, property.endIndex);
-    return ['call', 'apply', 'bind'].includes(method_name);
+    
+    if (['call', 'apply', 'bind'].includes(method_name)) {
+      // This is calling a method indirectly
+      // The actual method being called is the object part
+      let actual_method = '<unknown>';
+      let receiver = '<unknown>';
+      
+      if (object.type === 'member_expression') {
+        const obj_property = object.childForFieldName('property');
+        const obj_object = object.childForFieldName('object');
+        if (obj_property) {
+          actual_method = source.substring(obj_property.startIndex, obj_property.endIndex);
+        }
+        if (obj_object) {
+          receiver = source.substring(obj_object.startIndex, obj_object.endIndex);
+        }
+      } else {
+        actual_method = source.substring(object.startIndex, object.endIndex);
+      }
+      
+      return {
+        caller_name: '<module>',
+        method_name: `${actual_method}.${method_name}`,  // e.g., "someMethod.call"
+        receiver_name: receiver,
+        location: {
+          line: node.startPosition.row,
+          column: node.startPosition.column
+        },
+        is_static_method: false,
+        is_chained_call: false,
+        arguments_count: count_arguments(node)
+      };
+    }
   }
   
-  return false;
+  return null;
 }
 
 /**
- * JavaScript-specific: Detect optional chaining method calls (obj?.method())
+ * Detect optional chaining method calls (obj?.method())
  */
-export function is_optional_chaining_call(
+export function detect_optional_chaining_call(
   node: SyntaxNode,
   source: string
-): boolean {
-  const func = node.childForFieldName('function');
-  if (!func) return false;
+): MethodCallInfo | null {
+  if (node.type !== 'call_expression') return null;
   
-  // Check for optional_member_expression
-  return func.type === 'optional_member_expression';
+  const func = node.childForFieldName('function');
+  if (!func || func.type !== 'member_expression') {
+    return null;
+  }
+  
+  // Check if it contains optional chaining token
+  let hasOptionalChain = false;
+  for (let i = 0; i < func.childCount; i++) {
+    const child = func.child(i);
+    if (child && child.type === 'optional_chain') {
+      hasOptionalChain = true;
+      break;
+    }
+  }
+  
+  if (!hasOptionalChain) {
+    return null;
+  }
+  
+  // Extract method call details from member expression with optional chain
+  const object = func.childForFieldName('object');
+  const property = func.childForFieldName('property');
+  
+  if (object && property) {
+    const method_name = source.substring(property.startIndex, property.endIndex);
+    
+    // For chained calls, extract just the previous method name
+    let receiver_name = source.substring(object.startIndex, object.endIndex);
+    if (object.type === 'call_expression') {
+      // It's a chained call - extract the method name from the previous call
+      const prevFunc = object.childForFieldName('function');
+      if (prevFunc && prevFunc.type === 'member_expression') {
+        const prevProp = prevFunc.childForFieldName('property');
+        if (prevProp) {
+          receiver_name = source.substring(prevProp.startIndex, prevProp.endIndex) + '()';
+        }
+      }
+    }
+    
+    return {
+      caller_name: '<module>',
+      method_name,
+      receiver_name,
+      location: {
+        line: node.startPosition.row,
+        column: node.startPosition.column
+      },
+      is_static_method: false,
+      is_chained_call: object.type === 'call_expression',
+      arguments_count: count_arguments(node),
+      is_optional: true  // Mark as optional chaining
+    };
+  }
+  
+  return null;
+}
+
+/**
+ * Helper to count arguments
+ */
+function count_arguments(node: SyntaxNode): number {
+  const args = node.childForFieldName('arguments');
+  if (!args) return 0;
+  
+  let count = 0;
+  for (let i = 0; i < args.childCount; i++) {
+    const child = args.child(i);
+    if (child && 
+        child.type !== '(' && 
+        child.type !== ')' && 
+        child.type !== ',' && 
+        child.type !== 'comment') {
+      count++;
+    }
+  }
+  
+  return count;
+}
+
+/**
+ * Find JavaScript bespoke method calls
+ */
+export function find_javascript_bespoke_method_calls(
+  node: SyntaxNode,
+  source: string
+): MethodCallInfo | null {
+  // Try each bespoke pattern
+  return detect_prototype_method_call(node, source) ||
+         detect_indirect_method_call(node, source) ||
+         detect_optional_chaining_call(node, source);
 }

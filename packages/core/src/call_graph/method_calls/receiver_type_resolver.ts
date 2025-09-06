@@ -39,11 +39,47 @@ export interface MethodCallWithType {
  * @returns The resolved type name or undefined
  */
 export function resolve_receiver_type(
-  receiver: SyntaxNode,
+  receiver: SyntaxNode | undefined,
   type_map: Map<string, TypeInfo[]> | undefined,
   source_code: string,
   language: Language
 ): string | undefined {
+  if (!receiver) {
+    return undefined;
+  }
+
+  // Check for literal types first (these don't need type_map)
+  if (language === 'javascript' || language === 'typescript') {
+    if (receiver.type === 'string') {
+      return 'string';
+    }
+    if (receiver.type === 'number') {
+      return 'number';
+    }
+    if (receiver.type === 'array') {
+      return 'Array';
+    }
+    if (receiver.type === 'object') {
+      return 'Object';
+    }
+  }
+  
+  // Check for Python literal types (also don't need type_map)
+  if (language === 'python') {
+    if (receiver.type === 'string') {
+      return 'str';
+    }
+    if (receiver.type === 'list') {
+      return 'list';
+    }
+    if (receiver.type === 'dictionary') {
+      return 'dict';
+    }
+    if (receiver.type === 'integer' || receiver.type === 'float') {
+      return 'number';
+    }
+  }
+
   if (!type_map) {
     return undefined;
   }

@@ -1,110 +1,19 @@
 /**
- * TypeScript-specific method call detection
+ * TypeScript bespoke method call features
+ * 
+ * Handles TypeScript-specific patterns:
+ * - Generic method calls with type arguments
+ * - Type assertions in method calls
+ * 
+ * Note: Abstract and interface method detection would require full type information,
+ * which is not available in per-file analysis.
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { find_method_calls_javascript } from './method_calls.javascript';
-import { MethodCallContext } from './method_calls';
 import { MethodCallInfo } from '@ariadnejs/types';
-import { TypeInfo } from '../../type_analysis/type_tracking';
 
 /**
- * Find all method calls in TypeScript code
- * 
- * TypeScript shares most logic with JavaScript but adds:
- * - Generic method calls
- * - Interface method calls
- * - Abstract method calls
- */
-export function find_method_calls_typescript(
-  context: MethodCallContext,
-  type_map?: Map<string, TypeInfo[]>
-): MethodCallInfo[] {
-  // Start with JavaScript detection, passing through type_map
-  const calls = find_method_calls_javascript(context, type_map);
-  
-  // Add TypeScript-specific method calls
-  const ts_calls = find_typescript_specific_method_calls(context, type_map);
-  
-  return [...calls, ...ts_calls];
-}
-
-/**
- * Find TypeScript-specific method call patterns
- */
-function find_typescript_specific_method_calls(
-  context: MethodCallContext,
-  type_map?: Map<string, TypeInfo[]>
-): MethodCallInfo[] {
-  const calls: MethodCallInfo[] = [];
-  
-  walk_tree(context.ast_root, (node) => {
-    // Check for method calls with type arguments
-    if (node.type === 'call_expression') {
-      const type_args = node.childForFieldName('type_arguments');
-      if (type_args) {
-        // This is a generic method call
-        // The basic structure is already handled by JavaScript detection
-        // We just note that it has type arguments
-      }
-    }
-  });
-  
-  return calls;
-}
-
-/**
- * Walk the AST tree
- */
-function walk_tree(node: SyntaxNode, callback: (node: SyntaxNode) => void): void {
-  callback(node);
-  for (let i = 0; i < node.childCount; i++) {
-    const child = node.child(i);
-    if (child) {
-      walk_tree(child, callback);
-    }
-  }
-}
-
-/**
- * TypeScript-specific: Check if a method call has type arguments
- */
-export function has_type_arguments_method(
-  node: SyntaxNode
-): boolean {
-  if (node.type !== 'call_expression') {
-    return false;
-  }
-  
-  return node.childForFieldName('type_arguments') !== null;
-}
-
-/**
- * TypeScript-specific: Check if calling an abstract method
- */
-export function is_abstract_method_call(
-  node: SyntaxNode,
-  source: string
-): boolean {
-  // This would require type information to determine if the method is abstract
-  // For now, we can't determine this from just the AST
-  return false;
-}
-
-/**
- * TypeScript-specific: Check if calling through an interface
- */
-export function is_interface_method_call(
-  node: SyntaxNode,
-  source: string
-): boolean {
-  // This would require type information to determine if the receiver is an interface
-  // For now, we can't determine this from just the AST
-  return false;
-}
-
-/**
- * TypeScript-specific: Extract type arguments from a generic method call
+ * Extract type arguments from a generic method call
  */
 export function extract_type_arguments(
   node: SyntaxNode,
@@ -126,4 +35,54 @@ export function extract_type_arguments(
   }
   
   return types;
+}
+
+/**
+ * Check if a method call has type arguments
+ */
+export function has_type_arguments(
+  node: SyntaxNode
+): boolean {
+  if (node.type !== 'call_expression') {
+    return false;
+  }
+  
+  return node.childForFieldName('type_arguments') !== null;
+}
+
+/**
+ * Enhance method call info with TypeScript-specific features
+ */
+export function enhance_typescript_method_call(
+  base_info: MethodCallInfo,
+  node: SyntaxNode,
+  source: string
+): MethodCallInfo {
+  // Add type arguments if present
+  if (has_type_arguments(node)) {
+    const type_args = extract_type_arguments(node, source);
+    return {
+      ...base_info,
+      type_arguments: type_args
+    };
+  }
+  
+  return base_info;
+}
+
+/**
+ * Find TypeScript bespoke method calls
+ * 
+ * Currently, TypeScript doesn't have many truly unique patterns that
+ * can't be handled by the generic processor. Type arguments are added
+ * as enrichment rather than requiring separate detection.
+ */
+export function find_typescript_bespoke_method_calls(
+  node: SyntaxNode,
+  source: string
+): MethodCallInfo | null {
+  // TypeScript-specific patterns would go here
+  // Currently, most TypeScript features are enhancements to existing calls
+  // rather than completely different patterns
+  return null;
 }

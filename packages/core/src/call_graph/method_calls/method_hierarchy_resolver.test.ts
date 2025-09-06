@@ -203,7 +203,7 @@ describe('method_hierarchy_resolver', () => {
       
       expect(resolution).toBeDefined();
       expect(resolution?.defining_class).toBe('Derived');
-      expect(resolution?.is_override).toBe(false); // First class in chain
+      expect(resolution?.is_override).toBe(true); // method2 is defined in both Derived and Base (parent)
       expect(resolution?.override_chain).toContain('Derived');
     });
 

@@ -28,9 +28,9 @@ describe('receiver_type_resolver', () => {
       }]);
       
       // Find the receiver node (myObject)
-      const call = tree.rootNode.firstChild!;
-      const memberExpr = call.childForFieldName('function')!;
-      const receiver = memberExpr.childForFieldName('object')!;
+      const call = tree.rootNode.descendantsOfType('call_expression')[0];
+      const memberExpr = call.childForFieldName('function');
+      const receiver = memberExpr?.childForFieldName('object');
       
       const resolved = resolve_receiver_type(receiver, type_map, source, 'javascript');
       expect(resolved).toBe('MyClass');
@@ -49,9 +49,9 @@ describe('receiver_type_resolver', () => {
         location: { line: 0, column: 0 }
       }]);
       
-      const call = tree.rootNode.firstChild!;
-      const memberExpr = call.childForFieldName('function')!;
-      const receiver = memberExpr.childForFieldName('object')!;
+      const call = tree.rootNode.descendantsOfType('call_expression')[0];
+      const memberExpr = call.childForFieldName('function');
+      const receiver = memberExpr?.childForFieldName('object');
       
       const resolved = resolve_receiver_type(receiver, type_map, source, 'typescript');
       expect(resolved).toBe('CurrentClass');
@@ -70,9 +70,9 @@ describe('receiver_type_resolver', () => {
         location: { line: 0, column: 0 }
       }]);
       
-      const call = tree.rootNode.firstChild!.firstChild!; // module -> expression_statement -> call
-      const attribute = call.childForFieldName('function')!;
-      const receiver = attribute.childForFieldName('object')!;
+      const call = tree.rootNode.descendantsOfType('call')[0];
+      const attribute = call.childForFieldName('function');
+      const receiver = attribute?.childForFieldName('object');
       
       const resolved = resolve_receiver_type(receiver, type_map, source, 'python');
       expect(resolved).toBe('MyClass');
@@ -92,10 +92,9 @@ describe('receiver_type_resolver', () => {
       }]);
       
       // Navigate to the receiver node
-      const exprStmt = tree.rootNode.firstChild!;
-      const call = exprStmt.firstChild!;
-      const fieldExpr = call.childForFieldName('function')!;
-      const receiver = fieldExpr.childForFieldName('value')!;
+      const call = tree.rootNode.descendantsOfType('call_expression')[0];
+      const fieldExpr = call.childForFieldName('function');
+      const receiver = fieldExpr?.childForFieldName('value');
       
       const resolved = resolve_receiver_type(receiver, type_map, source, 'rust');
       expect(resolved).toBe('MyStruct');
@@ -107,9 +106,9 @@ describe('receiver_type_resolver', () => {
       const source = '"hello".toUpperCase()';
       const tree = parser.parse(source);
       
-      const call = tree.rootNode.firstChild!;
-      const memberExpr = call.childForFieldName('function')!;
-      const receiver = memberExpr.childForFieldName('object')!;
+      const call = tree.rootNode.descendantsOfType('call_expression')[0];
+      const memberExpr = call.childForFieldName('function');
+      const receiver = memberExpr?.childForFieldName('object');
       
       const resolved = resolve_receiver_type(receiver, undefined, source, 'javascript');
       expect(resolved).toBe('string');
@@ -121,9 +120,9 @@ describe('receiver_type_resolver', () => {
       const source = '[1, 2, 3].map(x => x * 2)';
       const tree = parser.parse(source);
       
-      const call = tree.rootNode.firstChild!;
-      const memberExpr = call.childForFieldName('function')!;
-      const receiver = memberExpr.childForFieldName('object')!;
+      const call = tree.rootNode.descendantsOfType('call_expression')[0];
+      const memberExpr = call.childForFieldName('function');
+      const receiver = memberExpr?.childForFieldName('object');
       
       const resolved = resolve_receiver_type(receiver, undefined, source, 'javascript');
       expect(resolved).toBe('Array');
@@ -135,9 +134,9 @@ describe('receiver_type_resolver', () => {
       const source = 'unknownVar.method()';
       const tree = parser.parse(source);
       
-      const call = tree.rootNode.firstChild!;
-      const memberExpr = call.childForFieldName('function')!;
-      const receiver = memberExpr.childForFieldName('object')!;
+      const call = tree.rootNode.descendantsOfType('call_expression')[0];
+      const memberExpr = call.childForFieldName('function');
+      const receiver = memberExpr?.childForFieldName('object');
       
       const resolved = resolve_receiver_type(receiver, undefined, source, 'javascript');
       expect(resolved).toBeUndefined();
@@ -163,9 +162,9 @@ describe('receiver_type_resolver', () => {
         }
       ]);
       
-      const call = tree.rootNode.firstChild!;
-      const memberExpr = call.childForFieldName('function')!;
-      const receiver = memberExpr.childForFieldName('object')!;
+      const call = tree.rootNode.descendantsOfType('call_expression')[0];
+      const memberExpr = call.childForFieldName('function');
+      const receiver = memberExpr?.childForFieldName('object');
       
       const resolved = resolve_receiver_type(receiver, type_map, source, 'javascript');
       expect(resolved).toBe('NewType');
