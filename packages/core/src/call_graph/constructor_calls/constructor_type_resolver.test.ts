@@ -10,75 +10,153 @@ import {
   get_constructable_types,
   ConstructorCallWithType
 } from './constructor_type_resolver';
-import { ConstructorCallInfo } from '@ariadnejs/types';
-import { TypeRegistry, create_type_registry } from '../../type_analysis/type_registry';
+import { ConstructorCallInfo, FileAnalysis, ClassDefinition } from '@ariadnejs/types';
+import { TypeRegistry, build_type_registry } from '../../type_analysis/type_registry';
 
 describe('constructor_type_resolver', () => {
   let registry: TypeRegistry;
 
   beforeEach(() => {
-    registry = create_type_registry();
-    
-    // Add some test types to the registry
-    registry.types.set('MyClass', {
-      name: 'MyClass',
+    // Create test FileAnalysis objects with proper type definitions
+    const testFileAnalysis: FileAnalysis = {
       file_path: 'test.ts',
-      location: { line: 1, column: 0 },
-      kind: 'class',
-      members: new Map([
-        ['constructor', {
-          name: 'constructor',
-          kind: 'constructor',
-          parameters: [
-            { name: 'name', type: 'string', is_optional: false },
-            { name: 'age', type: 'number', is_optional: true }
-          ]
-        }]
-      ])
-    });
+      source_code: '',
+      language: 'typescript',
+      functions: [],
+      classes: [
+        {
+          name: 'MyClass',
+          location: { line: 1, column: 0 },
+          methods: [
+            {
+              name: 'constructor',
+              location: { line: 2, column: 2 },
+              parameters: [
+                { name: 'name', type: 'string', is_optional: false },
+                { name: 'age', type: 'number', is_optional: true }
+              ],
+              returns: undefined,
+              body: { start: 0, end: 0 },
+              is_exported: false,
+              is_async: false,
+              decorators: [],
+              visibility: 'public'
+            }
+          ],
+          properties: [],
+          decorators: [],
+          extends: undefined,
+          implements: [],
+          is_exported: true
+        }
+      ],
+      imports: [],
+      exports: [],
+      variables: [],
+      errors: [],
+      scopes: { type: 'global', start: 0, end: 0, children: [] },
+      interfaces: [],
+      enums: [],
+      type_aliases: [
+        {
+          name: 'ClassAlias',
+          location: { line: 50, column: 0 },
+          type: 'MyClass',
+          is_exported: false
+        }
+      ],
+      structs: []
+    };
 
-    registry.types.set('ImportedClass', {
-      name: 'ImportedClass',
+    const libFileAnalysis: FileAnalysis = {
       file_path: 'lib/classes.ts',
-      location: { line: 10, column: 0 },
-      kind: 'class',
-      members: new Map([
-        ['constructor', {
-          name: 'constructor',
-          kind: 'constructor',
-          parameters: []
-        }]
-      ])
-    });
+      source_code: '',
+      language: 'typescript',
+      functions: [],
+      classes: [
+        {
+          name: 'ImportedClass',
+          location: { line: 10, column: 0 },
+          methods: [
+            {
+              name: 'constructor',
+              location: { line: 11, column: 2 },
+              parameters: [],
+              returns: undefined,
+              body: { start: 0, end: 0 },
+              is_exported: false,
+              is_async: false,
+              decorators: [],
+              visibility: 'public'
+            }
+          ],
+          properties: [],
+          decorators: [],
+          extends: undefined,
+          implements: [],
+          is_exported: true
+        }
+      ],
+      imports: [],
+      exports: [
+        {
+          symbol_name: 'ImportedClass',
+          location: { line: 30, column: 0 },
+          is_default: false,
+          is_type_export: false,
+          source: undefined,
+          local_name: 'ImportedClass'
+        }
+      ],
+      variables: [],
+      errors: [],
+      scopes: { type: 'global', start: 0, end: 0, children: [] },
+      interfaces: [],
+      enums: [],
+      type_aliases: [],
+      structs: []
+    };
 
-    registry.types.set('MyStruct', {
-      name: 'MyStruct',
+    const rustFileAnalysis: FileAnalysis = {
       file_path: 'test.rs',
-      location: { line: 5, column: 0 },
-      kind: 'struct',
-      members: new Map([
-        ['new', {
-          name: 'new',
-          kind: 'constructor',
-          parameters: [
-            { name: 'value', type: 'i32', is_optional: false }
-          ]
-        }]
-      ])
-    });
+      source_code: '',
+      language: 'rust',
+      functions: [],
+      classes: [],
+      imports: [],
+      exports: [],
+      variables: [],
+      errors: [],
+      scopes: { type: 'global', start: 0, end: 0, children: [] },
+      interfaces: [],
+      enums: [],
+      type_aliases: [],
+      structs: [
+        {
+          name: 'MyStruct',
+          location: { line: 5, column: 0 },
+          fields: [],
+          methods: [
+            {
+              name: 'new',
+              location: { line: 6, column: 2 },
+              parameters: [
+                { name: 'value', type: 'i32', is_optional: false }
+              ],
+              returns: 'Self',
+              body: { start: 0, end: 0 },
+              is_exported: false,
+              is_async: false,
+              decorators: [],
+              visibility: 'public'
+            }
+          ],
+          is_exported: false
+        }
+      ]
+    };
 
-    // Set up file associations
-    registry.files.set('test.ts', new Set(['MyClass']));
-    registry.files.set('lib/classes.ts', new Set(['ImportedClass']));
-    registry.files.set('test.rs', new Set(['MyStruct']));
-
-    // Set up exports
-    registry.exports.set('lib/classes.ts', new Map([
-      ['ImportedClass', 'ImportedClass']
-    ]));
-
-    // Add a type alias
-    registry.aliases.set('ClassAlias', 'MyClass');
+    registry = build_type_registry([testFileAnalysis, libFileAnalysis, rustFileAnalysis]);
   });
 
   describe('enrich_constructor_calls_with_types', () => {
@@ -99,7 +177,7 @@ describe('constructor_type_resolver', () => {
 
       expect(enriched).toHaveLength(1);
       expect(enriched[0].is_valid).toBe(true);
-      expect(enriched[0].resolved_type).toBe('MyClass');
+      expect(enriched[0].resolved_type).toBe('test.ts#MyClass');
       expect(enriched[0].expected_params).toHaveLength(2);
       expect(enriched[0].param_mismatch).toBe(false);
     });
@@ -182,7 +260,7 @@ describe('constructor_type_resolver', () => {
 
       expect(validation).toBeDefined();
       expect(validation?.is_valid).toBe(true);
-      expect(validation?.resolved_type).toBe('MyClass');
+      expect(validation?.resolved_type).toBe('test.ts#MyClass');
       expect(validation?.expected_params).toHaveLength(2);
     });
 
@@ -204,7 +282,7 @@ describe('constructor_type_resolver', () => {
       expect(validation).toBeDefined();
       expect(validation?.is_valid).toBe(true);
       expect(validation?.is_imported).toBe(true);
-      expect(validation?.resolved_type).toBe('ImportedClass');
+      expect(validation?.resolved_type).toBe('lib/classes.ts#ImportedClass');
     });
 
     it('should validate aliased types', () => {
@@ -216,7 +294,7 @@ describe('constructor_type_resolver', () => {
 
       expect(validation).toBeDefined();
       expect(validation?.is_valid).toBe(true);
-      expect(validation?.resolved_type).toBe('MyClass');
+      expect(validation?.resolved_type).toBe('test.ts#MyClass');
     });
 
     it('should handle imported aliases', () => {
@@ -249,7 +327,7 @@ describe('constructor_type_resolver', () => {
 
       expect(validation).toBeDefined();
       expect(validation?.is_valid).toBe(true);
-      expect(validation?.type_kind).toBe('struct');
+      expect(validation?.type_kind).toBe('class'); // Structs are treated as classes
       expect(validation?.expected_params).toHaveLength(1);
     });
 
@@ -315,21 +393,21 @@ describe('constructor_type_resolver', () => {
     it('should return all constructable types', () => {
       const types = get_constructable_types(registry);
 
-      expect(types).toContain('MyClass');
-      expect(types).toContain('MyStruct');
+      expect(types).toContain('test.ts#MyClass');
+      expect(types).toContain('test.rs#MyStruct');
       expect(types).not.toContain('MyInterface');
     });
 
     it('should filter by language', () => {
       const tsTypes = get_constructable_types(registry, 'typescript');
-      expect(tsTypes).toContain('MyClass');
+      expect(tsTypes).toContain('test.ts#MyClass');
       expect(tsTypes).toContain('Array'); // Built-in
-      expect(tsTypes).not.toContain('MyStruct');
+      expect(tsTypes).not.toContain('test.rs#MyStruct');
 
       const rustTypes = get_constructable_types(registry, 'rust');
-      expect(rustTypes).toContain('MyStruct');
+      expect(rustTypes).toContain('test.rs#MyStruct');
       expect(rustTypes).toContain('Vec'); // Built-in
-      expect(rustTypes).not.toContain('MyClass');
+      expect(rustTypes).not.toContain('test.ts#MyClass');
     });
   });
 

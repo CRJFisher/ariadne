@@ -244,8 +244,8 @@ function resolve_imported_type(
     if (qualified_name) {
       const type_def = registry.types.get(qualified_name);
       if (type_def && is_constructable(type_def.kind)) {
-        // Cache the resolution
-        registry.import_cache.set(cache_key, qualified_name);
+        // Note: Cannot cache in readonly import_cache
+        // In a real implementation, caching would be handled at registry build time
         
         return {
           qualified_name,
@@ -272,7 +272,8 @@ function find_local_type(
   if (file_types) {
     for (const qualified_name of file_types) {
       // Check if the qualified name ends with the type name
-      if (qualified_name.endsWith(`::${type_name}`) || 
+      if (qualified_name.endsWith(`#${type_name}`) ||
+          qualified_name.endsWith(`::${type_name}`) || 
           qualified_name.endsWith(`.${type_name}`) ||
           qualified_name === type_name) {
         const type_def = registry.types.get(qualified_name);
@@ -448,7 +449,13 @@ export function get_constructable_types(
   
   for (const [name, type_def] of registry.types) {
     if (is_constructable(type_def.kind)) {
-      if (!language || detect_language(type_def.file_path) === language) {
+      if (language) {
+        // Extract file path from qualified name (format: file_path#type_name)
+        const file_path = name.substring(0, name.lastIndexOf('#'));
+        if (file_path && detect_language(file_path) === language) {
+          types.push(name);
+        }
+      } else {
         types.push(name);
       }
     }

@@ -1,64 +1,294 @@
 /**
- * Rust-specific constructor call detection
+ * Rust-specific bespoke constructor call features
+ * 
+ * This module handles Rust-specific constructor patterns that
+ * cannot be expressed through configuration alone.
  */
 
 import { SyntaxNode } from 'tree-sitter';
 import { ConstructorCallInfo } from '@ariadnejs/types';
-import {
-  ConstructorCallContext,
-  is_constructor_call_node,
-  extract_constructor_name,
-  find_assignment_target,
-  count_constructor_arguments,
-  is_factory_method_pattern
-} from './constructor_calls';
+import { ConstructorCallContext } from './constructor_calls';
 
 /**
- * Find all constructor calls in Rust code
+ * Handle Rust enum variant construction
+ * 
+ * Rust enums can have variants that act like constructors:
+ * - Option::Some(value)
+ * - Result::Ok(value)
+ * - MyEnum::Variant { field: value }
  */
-export function find_constructor_calls_rust(
+export function handle_enum_variant_construction(
+  node: SyntaxNode,
   context: ConstructorCallContext
-): ConstructorCallInfo[] {
-  const calls: ConstructorCallInfo[] = [];
-  const language: Language = 'rust';
+): ConstructorCallInfo | null {
+  // Handle tuple enum variants: Enum::Variant(args)
+  if (node.type === 'call_expression') {
+    const func = node.childForFieldName('function');
+    if (!func) return null;
+    
+    // Check for scoped identifier (Enum::Variant)
+    if (func.type === 'scoped_identifier') {
+      const path = func.childForFieldName('path');
+      const name = func.childForFieldName('name');
+      
+      if (!path || !name) return null;
+      
+      const enum_name = context.source_code.substring(path.startIndex, path.endIndex);
+      const variant_name = context.source_code.substring(name.startIndex, name.endIndex);
+      
+      // Check if variant name starts with uppercase (Rust convention)
+      if (!/^[A-Z]/.test(variant_name)) return null;
+      
+      // Count arguments
+      const args = node.childForFieldName('arguments');
+      let arg_count = 0;
+      if (args) {
+        for (let i = 0; i < args.childCount; i++) {
+          const child = args.child(i);
+          if (child && 
+              child.type !== '(' && 
+              child.type !== ')' && 
+              child.type !== ',' &&
+              child.type !== 'comment') {
+            arg_count++;
+          }
+        }
+      }
+      
+      // Find assignment target
+      let assigned_to: string | undefined;
+      let current = node.parent;
+      while (current) {
+        if (current.type === 'let_declaration') {
+          const pattern = current.childForFieldName('pattern');
+          if (pattern) {
+            if (pattern.type === 'identifier') {
+              assigned_to = context.source_code.substring(pattern.startIndex, pattern.endIndex);
+              break;
+            } else if (pattern.type === 'mutable_specifier') {
+              const ident = pattern.nextSibling;
+              if (ident && ident.type === 'identifier') {
+                assigned_to = context.source_code.substring(ident.startIndex, ident.endIndex);
+                break;
+              }
+            }
+          }
+        }
+        if (current.type === 'expression_statement') break;
+        current = current.parent;
+      }
+      
+      return {
+        constructor_name: `${enum_name}::${variant_name}`,
+        location: {
+          line: node.startPosition.row,
+          column: node.startPosition.column
+        },
+        arguments_count: arg_count,
+        assigned_to,
+        is_new_expression: false,
+        is_factory_method: false
+      };
+    }
+  }
   
-  // Walk the AST to find constructor patterns
-  walk_tree(context.ast_root, (node) => {
-    // Check for Type::new() pattern
-    if (is_constructor_call_node(node, language)) {
-      const call_info = extract_rust_constructor_call(node, context, language);
-      if (call_info) {
-        calls.push(call_info);
+  // Handle struct-like enum variants: Enum::Variant { field: value }
+  if (node.type === 'struct_expression') {
+    const name = node.childForFieldName('name');
+    if (!name || name.type !== 'scoped_identifier') return null;
+    
+    const path = name.childForFieldName('path');
+    const variant = name.childForFieldName('name');
+    
+    if (!path || !variant) return null;
+    
+    const enum_name = context.source_code.substring(path.startIndex, path.endIndex);
+    const variant_name = context.source_code.substring(variant.startIndex, variant.endIndex);
+    
+    // Count field initializers
+    const body = node.childForFieldName('body');
+    let field_count = 0;
+    if (body) {
+      for (let i = 0; i < body.childCount; i++) {
+        const child = body.child(i);
+        if (child && 
+            (child.type === 'field_initializer' || 
+             child.type === 'shorthand_field_initializer')) {
+          field_count++;
+        }
       }
     }
     
-    // Check for struct literal: StructName { field: value }
-    if (node.type === 'struct_expression') {
-      const call_info = extract_rust_struct_literal(node, context);
-      if (call_info) {
-        calls.push(call_info);
+    // Find assignment target
+    let assigned_to: string | undefined;
+    let current = node.parent;
+    while (current) {
+      if (current.type === 'let_declaration') {
+        const pattern = current.childForFieldName('pattern');
+        if (pattern && pattern.type === 'identifier') {
+          assigned_to = context.source_code.substring(pattern.startIndex, pattern.endIndex);
+          break;
+        }
       }
+      if (current.type === 'expression_statement') break;
+      current = current.parent;
     }
     
-    // Check for enum variant construction
-    if (is_enum_variant_construction(node, context.source_code)) {
-      const call_info = extract_rust_enum_construction(node, context);
-      if (call_info) {
-        calls.push(call_info);
-      }
-    }
-  });
+    return {
+      constructor_name: `${enum_name}::${variant_name}`,
+      location: {
+        line: node.startPosition.row,
+        column: node.startPosition.column
+      },
+      arguments_count: field_count,
+      assigned_to,
+      is_new_expression: false,
+      is_factory_method: false
+    };
+  }
   
-  return calls;
+  return null;
 }
 
 /**
- * Extract Rust constructor call information (Type::new() pattern)
+ * Handle Rust tuple struct construction
+ * 
+ * Rust tuple structs can be constructed like functions:
+ * Point(x, y)
  */
-function extract_rust_constructor_call(
+export function handle_tuple_struct_construction(
   node: SyntaxNode,
-  context: ConstructorCallContext,
-  language: Language
+  context: ConstructorCallContext
+): ConstructorCallInfo | null {
+  if (node.type !== 'call_expression') return null;
+  
+  const func = node.childForFieldName('function');
+  if (!func || func.type !== 'identifier') return null;
+  
+  const struct_name = context.source_code.substring(func.startIndex, func.endIndex);
+  
+  // Check if it's a capitalized name (Rust convention for types)
+  if (!/^[A-Z]/.test(struct_name)) return null;
+  
+  // Count arguments
+  const args = node.childForFieldName('arguments');
+  let arg_count = 0;
+  if (args) {
+    for (let i = 0; i < args.childCount; i++) {
+      const child = args.child(i);
+      if (child && 
+          child.type !== '(' && 
+          child.type !== ')' && 
+          child.type !== ',' &&
+          child.type !== 'comment') {
+        arg_count++;
+      }
+    }
+  }
+  
+  // Find assignment target
+  let assigned_to: string | undefined;
+  let current = node.parent;
+  while (current) {
+    if (current.type === 'let_declaration') {
+      const pattern = current.childForFieldName('pattern');
+      if (pattern && pattern.type === 'identifier') {
+        assigned_to = context.source_code.substring(pattern.startIndex, pattern.endIndex);
+        break;
+      }
+    }
+    if (current.type === 'expression_statement') break;
+    current = current.parent;
+  }
+  
+  return {
+    constructor_name: struct_name,
+    location: {
+      line: node.startPosition.row,
+      column: node.startPosition.column
+    },
+    arguments_count: arg_count,
+    assigned_to,
+    is_new_expression: false,
+    is_factory_method: false
+  };
+}
+
+/**
+ * Handle Rust macro-based construction patterns
+ * 
+ * Rust macros like vec![], hashmap!{}, etc. are constructor-like.
+ */
+export function handle_macro_construction(
+  node: SyntaxNode,
+  context: ConstructorCallContext
+): ConstructorCallInfo | null {
+  if (node.type !== 'macro_invocation') return null;
+  
+  const macro = node.childForFieldName('macro');
+  if (!macro) return null;
+  
+  const macro_name = context.source_code.substring(macro.startIndex, macro.endIndex);
+  
+  // Common constructor-like macros
+  const constructor_macros = ['vec', 'hashmap', 'btreemap', 'hashset', 'btreeset', 'format'];
+  if (!constructor_macros.includes(macro_name)) return null;
+  
+  // Try to count elements in the macro (approximation)
+  const token_tree = node.childForFieldName('token_tree');
+  let element_count = 0;
+  if (token_tree) {
+    // Count commas as a rough approximation of elements
+    const content = context.source_code.substring(token_tree.startIndex, token_tree.endIndex);
+    element_count = (content.match(/,/g) || []).length + 1;
+  }
+  
+  // Find assignment target
+  let assigned_to: string | undefined;
+  let current = node.parent;
+  while (current) {
+    if (current.type === 'let_declaration') {
+      const pattern = current.childForFieldName('pattern');
+      if (pattern && pattern.type === 'identifier') {
+        assigned_to = context.source_code.substring(pattern.startIndex, pattern.endIndex);
+        break;
+      }
+    }
+    if (current.type === 'expression_statement') break;
+    current = current.parent;
+  }
+  
+  // Map macro names to their constructed types
+  const type_map: Record<string, string> = {
+    'vec': 'Vec',
+    'hashmap': 'HashMap',
+    'btreemap': 'BTreeMap',
+    'hashset': 'HashSet',
+    'btreeset': 'BTreeSet',
+    'format': 'String'
+  };
+  
+  return {
+    constructor_name: type_map[macro_name] || macro_name,
+    location: {
+      line: node.startPosition.row,
+      column: node.startPosition.column
+    },
+    arguments_count: element_count,
+    assigned_to,
+    is_new_expression: false,
+    is_factory_method: true // Macros are factory-like
+  };
+}
+
+/**
+ * Handle Rust Box::new() and other smart pointer construction
+ * 
+ * Smart pointers in Rust have special construction patterns.
+ */
+export function handle_smart_pointer_construction(
+  node: SyntaxNode,
+  context: ConstructorCallContext
 ): ConstructorCallInfo | null {
   if (node.type !== 'call_expression') return null;
   
@@ -70,234 +300,120 @@ function extract_rust_constructor_call(
   
   if (!path || !name) return null;
   
+  const type_name = context.source_code.substring(path.startIndex, path.endIndex);
   const method_name = context.source_code.substring(name.startIndex, name.endIndex);
   
-  // Check if it's a factory method (new, create, from, etc.)
-  if (!['new', 'create', 'from', 'build', 'default', 'with_capacity'].includes(method_name)) {
+  // Check for smart pointer types
+  const smart_pointers = ['Box', 'Rc', 'Arc', 'Cell', 'RefCell', 'Mutex', 'RwLock'];
+  if (!smart_pointers.includes(type_name) || method_name !== 'new') {
     return null;
   }
   
-  const type_name = context.source_code.substring(path.startIndex, path.endIndex);
-  const assigned_to = find_assignment_target(node, context.source_code, language);
+  // Count arguments (usually 1 for smart pointers)
+  const args = node.childForFieldName('arguments');
+  let arg_count = 0;
+  if (args) {
+    for (let i = 0; i < args.childCount; i++) {
+      const child = args.child(i);
+      if (child && 
+          child.type !== '(' && 
+          child.type !== ')' && 
+          child.type !== ',' &&
+          child.type !== 'comment') {
+        arg_count++;
+      }
+    }
+  }
+  
+  // Find assignment target
+  let assigned_to: string | undefined;
+  let current = node.parent;
+  while (current) {
+    if (current.type === 'let_declaration') {
+      const pattern = current.childForFieldName('pattern');
+      if (pattern && pattern.type === 'identifier') {
+        assigned_to = context.source_code.substring(pattern.startIndex, pattern.endIndex);
+        break;
+      }
+    }
+    if (current.type === 'expression_statement') break;
+    current = current.parent;
+  }
   
   return {
     constructor_name: type_name,
     location: {
-      row: node.startPosition.row,
+      line: node.startPosition.row,
       column: node.startPosition.column
     },
-    file_path: context.file_path,
-    arguments_count: count_constructor_arguments(node, language),
-    assigned_to: assigned_to || undefined,
+    arguments_count: arg_count,
+    assigned_to,
     is_new_expression: false,
     is_factory_method: true
   };
 }
 
 /**
- * Extract struct literal construction
+ * Detect Default::default() pattern
+ * 
+ * Rust's Default trait provides a default constructor.
  */
-function extract_rust_struct_literal(
-  node: SyntaxNode,
-  context: ConstructorCallContext
-): ConstructorCallInfo | null {
-  const name_node = node.childForFieldName('name');
-  if (!name_node) return null;
-  
-  const struct_name = context.source_code.substring(name_node.startIndex, name_node.endIndex);
-  const assigned_to = find_assignment_target(node, context.source_code, 'rust');
-  
-  // Count field initializers
-  const body = node.childForFieldName('body');
-  let field_count = 0;
-  if (body) {
-    for (let i = 0; i < body.childCount; i++) {
-      const child = body.child(i);
-      if (child && (child.type === 'field_initializer' || child.type === 'shorthand_field_initializer')) {
-        field_count++;
-      }
-    }
-  }
-  
-  return {
-    constructor_name: struct_name,
-    location: {
-      row: node.startPosition.row,
-      column: node.startPosition.column
-    },
-    file_path: context.file_path,
-    arguments_count: field_count,
-    assigned_to: assigned_to || undefined,
-    is_new_expression: false,
-    is_factory_method: false
-  };
-}
-
-/**
- * Extract enum variant construction
- */
-function extract_rust_enum_construction(
+export function handle_default_construction(
   node: SyntaxNode,
   context: ConstructorCallContext
 ): ConstructorCallInfo | null {
   if (node.type !== 'call_expression') return null;
   
   const func = node.childForFieldName('function');
-  if (!func) return null;
+  if (!func || func.type !== 'scoped_identifier') return null;
   
-  let enum_variant_name: string | null = null;
+  const path = func.childForFieldName('path');
+  const name = func.childForFieldName('name');
   
-  // Simple enum variant: Variant(...)
-  if (func.type === 'identifier') {
-    const name = context.source_code.substring(func.startIndex, func.endIndex);
-    if (/^[A-Z]/.test(name)) {
-      enum_variant_name = name;
-    }
+  if (!path || !name) return null;
+  
+  const trait_name = context.source_code.substring(path.startIndex, path.endIndex);
+  const method_name = context.source_code.substring(name.startIndex, name.endIndex);
+  
+  if (trait_name !== 'Default' || method_name !== 'default') {
+    return null;
   }
-  // Qualified enum variant: Enum::Variant(...)
-  else if (func.type === 'scoped_identifier') {
-    const name = func.childForFieldName('name');
-    if (name) {
-      const variant = context.source_code.substring(name.startIndex, name.endIndex);
-      if (/^[A-Z]/.test(variant)) {
-        const path = func.childForFieldName('path');
-        if (path) {
-          const enum_name = context.source_code.substring(path.startIndex, path.endIndex);
-          enum_variant_name = `${enum_name}::${variant}`;
-        }
+  
+  // For Default::default(), we need to infer the type from context
+  // This is a simplified version - full type inference would be more complex
+  let inferred_type = 'Unknown';
+  
+  // Try to infer from assignment
+  let assigned_to: string | undefined;
+  let current = node.parent;
+  while (current) {
+    if (current.type === 'let_declaration') {
+      const pattern = current.childForFieldName('pattern');
+      const type_node = current.childForFieldName('type');
+      
+      if (pattern && pattern.type === 'identifier') {
+        assigned_to = context.source_code.substring(pattern.startIndex, pattern.endIndex);
       }
+      
+      // Try to extract the type annotation
+      if (type_node) {
+        inferred_type = context.source_code.substring(type_node.startIndex, type_node.endIndex);
+      }
+      break;
     }
+    if (current.type === 'expression_statement') break;
+    current = current.parent;
   }
-  
-  if (!enum_variant_name) return null;
-  
-  const assigned_to = find_assignment_target(node, context.source_code, 'rust');
   
   return {
-    constructor_name: enum_variant_name,
+    constructor_name: inferred_type,
     location: {
-      row: node.startPosition.row,
+      line: node.startPosition.row,
       column: node.startPosition.column
     },
-    file_path: context.file_path,
-    arguments_count: count_constructor_arguments(node, 'rust'),
-    assigned_to: assigned_to || undefined,
+    arguments_count: 0, // Default::default() takes no arguments
+    assigned_to,
     is_new_expression: false,
-    is_factory_method: false
+    is_factory_method: true
   };
-}
-
-/**
- * Check if it's an enum variant construction
- */
-function is_enum_variant_construction(
-  node: SyntaxNode,
-  source: string
-): boolean {
-  if (node.type !== 'call_expression') return false;
-  
-  const func = node.childForFieldName('function');
-  if (!func) return false;
-  
-  // Check for capitalized identifier (enum variant convention)
-  if (func.type === 'identifier') {
-    const name = source.substring(func.startIndex, func.endIndex);
-    return /^[A-Z]/.test(name) && name !== name.toUpperCase(); // Not a constant
-  }
-  
-  // Check for Enum::Variant pattern
-  if (func.type === 'scoped_identifier') {
-    const name = func.childForFieldName('name');
-    if (name) {
-      const variant = source.substring(name.startIndex, name.endIndex);
-      return /^[A-Z]/.test(variant) && variant !== variant.toUpperCase();
-    }
-  }
-  
-  return false;
-}
-
-/**
- * Walk the AST tree
- */
-function walk_tree(node: SyntaxNode, callback: (node: SyntaxNode) => void): void {
-  callback(node);
-  for (let i = 0; i < node.childCount; i++) {
-    const child = node.child(i);
-    if (child) {
-      walk_tree(child, callback);
-    }
-  }
-}
-
-/**
- * Rust-specific: Check for Box::new() pattern
- */
-export function is_box_new_pattern(
-  node: SyntaxNode,
-  source: string
-): boolean {
-  if (node.type !== 'call_expression') return false;
-  
-  const func = node.childForFieldName('function');
-  if (func && func.type === 'scoped_identifier') {
-    const path = func.childForFieldName('path');
-    const name = func.childForFieldName('name');
-    
-    if (path && name) {
-      const type_name = source.substring(path.startIndex, path.endIndex);
-      const method_name = source.substring(name.startIndex, name.endIndex);
-      return type_name === 'Box' && method_name === 'new';
-    }
-  }
-  
-  return false;
-}
-
-/**
- * Rust-specific: Check for Rc/Arc creation
- */
-export function is_smart_pointer_creation(
-  node: SyntaxNode,
-  source: string
-): boolean {
-  if (node.type !== 'call_expression') return false;
-  
-  const func = node.childForFieldName('function');
-  if (func && func.type === 'scoped_identifier') {
-    const path = func.childForFieldName('path');
-    const name = func.childForFieldName('name');
-    
-    if (path && name) {
-      const type_name = source.substring(path.startIndex, path.endIndex);
-      const method_name = source.substring(name.startIndex, name.endIndex);
-      return ['Rc', 'Arc', 'RefCell', 'Mutex', 'RwLock'].includes(type_name) && 
-             method_name === 'new';
-    }
-  }
-  
-  return false;
-}
-
-/**
- * Rust-specific: Check for derive macro usage
- */
-export function has_derive_default(
-  node: SyntaxNode
-): boolean {
-  if (node.type !== 'struct_item' && node.type !== 'enum_item') {
-    return false;
-  }
-  
-  // Look for #[derive(Default)] attribute
-  let current = node.previousSibling;
-  while (current && current.type === 'attribute_item') {
-    const meta = current.childForFieldName('meta');
-    if (meta && meta.text?.includes('derive') && meta.text.includes('Default')) {
-      return true;
-    }
-    current = current.previousSibling;
-  }
-  
-  return false;
 }

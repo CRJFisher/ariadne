@@ -76,7 +76,7 @@ export function build_type_registry(
               e.symbol_name === class_def.name ||
               e.local_name === class_def.name
           ) ?? false;
-        register_class(builder, class_def, is_exported);
+        register_class(builder, class_def, analysis.file_path, is_exported);
       }
     }
 
@@ -90,7 +90,7 @@ export function build_type_registry(
               e.symbol_name === interface_def.name ||
               e.local_name === interface_def.name
           ) ?? false; 
-        register_interface(builder, interface_def, is_exported);
+        register_interface(builder, interface_def, analysis.file_path, is_exported);
       }
     }
 
@@ -103,7 +103,7 @@ export function build_type_registry(
             (e) =>
               e.symbol_name === enum_def.name || e.local_name === enum_def.name
           ) ?? false;
-        register_enum(builder, enum_def, is_exported);
+        register_enum(builder, enum_def, analysis.file_path, is_exported);
       }
     }
 
@@ -117,7 +117,21 @@ export function build_type_registry(
               e.symbol_name === type_alias.name ||
               e.local_name === type_alias.name
           ) ?? false;
-        register_type_alias(builder, type_alias, is_exported);
+        register_type_alias(builder, type_alias, analysis.file_path, is_exported);
+      }
+    }
+
+    // Register structs (if available in FileAnalysis - mainly for Rust)
+    const structs = (analysis as any).structs;
+    if (structs) {
+      for (const struct_def of structs) {
+        const is_exported =
+          analysis.exports?.some(
+            (e) =>
+              e.symbol_name === struct_def.name ||
+              e.local_name === struct_def.name
+          ) ?? false;
+        register_struct(builder, struct_def, analysis.file_path, is_exported);
       }
     }
   }
@@ -137,11 +151,45 @@ export function build_type_registry(
 }
 
 /**
+ * @internal Register a struct definition as a type
+ */
+export function register_struct(
+  registry: MutableTypeRegistry,
+  struct_def: any, // TODO: Add proper StructDefinition type
+  file_path: FilePath,
+  exported: boolean = false,
+  export_name?: string
+): void {
+  const type_def: TypeDefinition = {
+    name: struct_def.name as TypeName,
+    location: struct_def.location,
+    kind: TypeKind.CLASS, // Structs are treated as classes for type checking
+    members: new Map(), // Convert methods/fields to members if needed
+  };
+
+  // Add constructor/new method to members if it exists
+  if (struct_def.methods) {
+    for (const method of struct_def.methods) {
+      if (method.name === 'new' || method.name === 'constructor') {
+        type_def.members?.set(method.name, {
+          name: method.name,
+          kind: 'constructor',
+          parameters: method.parameters
+        } as any);
+      }
+    }
+  }
+
+  register_type(registry, type_def, file_path, exported, export_name);
+}
+
+/**
  * @internal Register a type alias
  */
 export function register_type_alias(
   registry: MutableTypeRegistry,
   type_alias: TypeAliasDefinition,
+  file_path: FilePath,
   exported: boolean = false,
   export_name?: string
 ): void {
@@ -153,15 +201,20 @@ export function register_type_alias(
     members: new Map(), // TODO: Add members
   };
 
-  register_type(registry, type_def, exported, export_name);
+  register_type(registry, type_def, file_path, exported, export_name);
 
   // Also register as an alias if it's aliasing another type
-  if (type_alias.type_expression) {
-    const qualified_name = get_qualified_name(
-      type_alias.location.file_path,
-      type_alias.name as TypeName
-    );
-    registry.aliases.set(type_alias.name as TypeName, qualified_name);
+  // The type field or type_expression should indicate what it's aliasing
+  const aliased_type = (type_alias as any).type || type_alias.type_expression;
+  if (aliased_type && typeof aliased_type === 'string') {
+    // Check if the aliased type is local to this file
+    const aliased_qualified = get_qualified_name(file_path, aliased_type as TypeName);
+    if (registry.types.has(aliased_qualified)) {
+      registry.aliases.set(type_alias.name as TypeName, aliased_qualified);
+    } else {
+      // Might be a built-in or imported type - just use the type name
+      registry.aliases.set(type_alias.name as TypeName, aliased_type as QualifiedName);
+    }
   }
 }
 
@@ -171,6 +224,7 @@ export function register_type_alias(
 export function register_enum(
   registry: MutableTypeRegistry,
   enum_def: EnumDefinition,
+  file_path: FilePath,
   exported: boolean = false,
   export_name?: string
 ): void {
@@ -181,7 +235,7 @@ export function register_enum(
     members: new Map(),
   };
 
-  register_type(registry, type_def, exported, export_name);
+  register_type(registry, type_def, file_path, exported, export_name);
 }
 
 /**
@@ -201,27 +255,28 @@ export function get_qualified_name(
 export function register_type(
   registry: MutableTypeRegistry,
   type_def: TypeDefinition,
+  file_path: FilePath,
   exported: boolean = false,
   export_name?: string
 ): void {
-  const qualified_name = get_qualified_name(type_def.file_path, type_def.name);
+  const qualified_name = get_qualified_name(file_path, type_def.name);
 
   // Register in main types map
   registry.types.set(qualified_name, type_def);
 
   // Register by file
-  if (!registry.files.has(type_def.file_path)) {
-    registry.files.set(type_def.file_path, new Set());
+  if (!registry.files.has(file_path)) {
+    registry.files.set(file_path, new Set());
   }
-  registry.files.get(type_def.file_path)!.add(qualified_name);
+  registry.files.get(file_path)!.add(qualified_name);
 
   // Register exports
   if (exported) {
-    if (!registry.exports.has(type_def.file_path)) {
-      registry.exports.set(type_def.file_path, new Map());
+    if (!registry.exports.has(file_path)) {
+      registry.exports.set(file_path, new Map());
     }
     const exp_name = export_name || type_def.name;
-    registry.exports.get(type_def.file_path)!.set(exp_name, qualified_name);
+    registry.exports.get(file_path)!.set(exp_name, qualified_name);
   }
 }
 /**
@@ -231,6 +286,7 @@ export function register_type(
 export function register_interface(
   registry: MutableTypeRegistry,
   interface_def: InterfaceDefinition,
+  file_path: FilePath,
   exported: boolean = false,
   export_name?: string
 ): void {
@@ -243,7 +299,7 @@ export function register_interface(
     members: new Map(),
   };
 
-  register_type(registry, type_def, exported, export_name);
+  register_type(registry, type_def, file_path, exported, export_name);
 }
 /**
  * @internal Register a class definition as a type
@@ -252,9 +308,42 @@ export function register_interface(
 export function register_class(
   registry: MutableTypeRegistry,
   class_def: ClassDefinition,
+  file_path: FilePath,
   exported: boolean = false,
   export_name?: string
 ): void {
+  const members = new Map();
+  
+  // Convert methods to members
+  if (class_def.methods) {
+    for (const method of class_def.methods) {
+      // Identify constructor methods
+      const isConstructor = method.name === 'constructor' || 
+                          method.name === '__init__' || 
+                          method.name === 'new';
+      
+      members.set(method.name, {
+        name: method.name,
+        kind: isConstructor ? 'constructor' : 'method',
+        parameters: method.parameters,
+        type: method.returns
+      } as any);
+    }
+  }
+  
+  // Convert properties to members
+  if (class_def.properties) {
+    for (const prop of class_def.properties) {
+      members.set(prop.name, {
+        name: prop.name,
+        kind: 'property',
+        type: prop.type,
+        is_optional: prop.is_optional,
+        is_readonly: prop.is_readonly
+      } as any);
+    }
+  }
+  
   const type_def: TypeDefinition = {
     name: class_def.name as TypeName,
     location: class_def.location,
@@ -262,10 +351,10 @@ export function register_class(
     type_parameters: class_def.generics?.map((g) => g.name as TypeName),
     extends: class_def.extends as TypeName[] | undefined,
     implements: class_def.implements as TypeName[] | undefined,
-    members: new Map(), // Convert methods/properties to members if needed
+    members: members,
   };
 
-  register_type(registry, type_def, exported, export_name);
+  register_type(registry, type_def, file_path, exported, export_name);
 }
 /**
  * @internal Initialize built-in types for each language

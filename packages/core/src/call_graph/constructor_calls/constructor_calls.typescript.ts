@@ -1,170 +1,220 @@
 /**
- * TypeScript-specific constructor call detection
+ * TypeScript-specific bespoke constructor call features
+ * 
+ * This module handles TypeScript-specific constructor patterns that
+ * cannot be expressed through configuration alone.
  */
 
 import { SyntaxNode } from 'tree-sitter';
 import { ConstructorCallInfo } from '@ariadnejs/types';
-import { 
-  find_constructor_calls_javascript
-} from './constructor_calls.javascript';
 import { ConstructorCallContext } from './constructor_calls';
 
 /**
- * Find all constructor calls in TypeScript code
+ * Handle TypeScript generic type parameters in constructor calls
  * 
- * TypeScript shares most logic with JavaScript but adds:
- * - Generic type arguments in constructor calls
- * - Abstract class handling
- * - Interface implementations
+ * TypeScript allows generic type parameters in constructor calls like:
+ * new Container<string>('hello')
  */
-export function find_constructor_calls_typescript(
+export function handle_generic_constructor(
+  node: SyntaxNode,
   context: ConstructorCallContext
-): ConstructorCallInfo[] {
-  // Start with JavaScript detection
-  const calls = find_constructor_calls_javascript(context);
+): ConstructorCallInfo | null {
+  if (node.type !== 'new_expression') return null;
   
-  // Add TypeScript-specific constructor patterns
-  const ts_calls = find_typescript_specific_constructors(context);
+  const constructor = node.childForFieldName('constructor');
+  if (!constructor) return null;
   
-  return [...calls, ...ts_calls];
-}
-
-/**
- * Find TypeScript-specific constructor patterns
- */
-function find_typescript_specific_constructors(
-  context: ConstructorCallContext
-): ConstructorCallInfo[] {
-  const calls: ConstructorCallInfo[] = [];
-  
-  walk_tree(context.ast_root, (node) => {
-    // Check for generic constructor calls: new ClassName<Type>()
-    if (node.type === 'new_expression') {
-      const type_args = node.childForFieldName('type_arguments');
-      if (type_args) {
-        // TODO: record the type arguments in ConstructorCallInfo
-        // This is a generic constructor call
-        // The basic structure is already handled by JavaScript detection
-        // We just note that it has type arguments
+  // Check if constructor is a generic type (has type arguments)
+  if (constructor.type === 'generic_type' || constructor.type === 'instantiation_expression') {
+    const name = constructor.childForFieldName('name') || constructor.childForFieldName('function');
+    const type_args = constructor.childForFieldName('type_arguments');
+    
+    if (!name) return null;
+    
+    // Extract the base constructor name
+    let constructor_name: string;
+    if (name.type === 'identifier') {
+      constructor_name = context.source_code.substring(name.startIndex, name.endIndex);
+    } else if (name.type === 'member_expression') {
+      const property = name.childForFieldName('property');
+      if (property) {
+        constructor_name = context.source_code.substring(property.startIndex, property.endIndex);
+      } else {
+        return null;
       }
+    } else {
+      return null;
     }
-  });
-  
-  return calls;
-}
-
-
-/**
- * Walk the AST tree
- */
-function walk_tree(node: SyntaxNode, callback: (node: SyntaxNode) => void): void {
-  callback(node);
-  for (let i = 0; i < node.childCount; i++) {
-    const child = node.child(i);
-    if (child) {
-      walk_tree(child, callback);
+    
+    // Find assignment target
+    let assigned_to: string | undefined;
+    let current = node.parent;
+    while (current) {
+      if (current.type === 'variable_declarator') {
+        const var_name = current.childForFieldName('name');
+        if (var_name && var_name.type === 'identifier') {
+          assigned_to = context.source_code.substring(var_name.startIndex, var_name.endIndex);
+          break;
+        }
+      }
+      if (current.type === 'expression_statement') break;
+      current = current.parent;
     }
-  }
-}
-
-/**
- * TypeScript-specific: Check if constructor has type arguments
- */
-export function has_type_arguments_constructor(
-  node: SyntaxNode
-): boolean {
-  if (node.type !== 'new_expression') {
-    return false;
-  }
-  
-  return node.childForFieldName('type_arguments') !== null;
-}
-
-/**
- * TypeScript-specific: Extract type arguments from constructor
- */
-export function extract_constructor_type_arguments(
-  node: SyntaxNode,
-  source: string
-): string[] {
-  if (node.type !== 'new_expression') {
-    return [];
-  }
-  
-  const type_args_node = node.childForFieldName('type_arguments');
-  if (!type_args_node) return [];
-  
-  const types: string[] = [];
-  
-  for (let i = 0; i < type_args_node.childCount; i++) {
-    const child = type_args_node.child(i);
-    if (child && 
-        child.type !== '<' && 
-        child.type !== '>' && 
-        child.type !== ',') {
-      types.push(source.substring(child.startIndex, child.endIndex));
-    }
-  }
-  
-  return types;
-}
-
-/**
- * TypeScript-specific: Check if class is abstract
- */
-export function is_abstract_class(
-  node: SyntaxNode
-): boolean {
-  if (node.type !== 'class_declaration' && node.type !== 'class') {
-    return false;
-  }
-  
-  // Check for abstract modifier
-  const firstChild = node.child(0);
-  return firstChild?.type === 'abstract';
-}
-
-/**
- * TypeScript-specific: Check if class implements interfaces
- */
-export function get_implemented_interfaces(
-  node: SyntaxNode,
-  source: string
-): string[] {
-  if (node.type !== 'class_declaration' && node.type !== 'class') {
-    return [];
-  }
-  
-  const interfaces: string[] = [];
-  
-  // Look for implements clause
-  for (let i = 0; i < node.childCount; i++) {
-    const child = node.child(i);
-    if (child && child.type === 'implements_clause') {
-      // Extract interface names
-      for (let j = 0; j < child.childCount; j++) {
-        const interface_node = child.child(j);
-        if (interface_node && interface_node.type === 'type_identifier') {
-          interfaces.push(source.substring(interface_node.startIndex, interface_node.endIndex));
+    
+    // Count arguments
+    const args = node.childForFieldName('arguments');
+    let arg_count = 0;
+    if (args) {
+      for (let i = 0; i < args.childCount; i++) {
+        const child = args.child(i);
+        if (child && child.type !== '(' && child.type !== ')' && child.type !== ',') {
+          arg_count++;
         }
       }
     }
+    
+    return {
+      constructor_name,
+      location: {
+        line: node.startPosition.row,
+        column: node.startPosition.column
+      },
+      arguments_count: arg_count,
+      assigned_to,
+      is_new_expression: true,
+      is_factory_method: false
+    };
   }
   
-  return interfaces;
+  return null;
 }
 
 /**
- * TypeScript-specific: Check for satisfies constraint in constructor
+ * Handle TypeScript interface constructor signatures
+ * 
+ * TypeScript interfaces can define constructor signatures that
+ * describe how objects should be constructed.
  */
-export function has_satisfies_constraint(
-  node: SyntaxNode
-): boolean {
-  if (node.type !== 'new_expression') {
-    return false;
+export function extract_interface_constructor_signature(
+  node: SyntaxNode,
+  context: ConstructorCallContext
+): { interface_name: string; constructor_params: number } | null {
+  if (node.type !== 'interface_declaration') return null;
+  
+  const name = node.childForFieldName('name');
+  if (!name) return null;
+  
+  const interface_name = context.source_code.substring(name.startIndex, name.endIndex);
+  
+  // Look for constructor signatures in the interface body
+  const body = node.childForFieldName('body');
+  if (!body) return null;
+  
+  for (let i = 0; i < body.childCount; i++) {
+    const member = body.child(i);
+    if (member && member.type === 'construct_signature') {
+      // Count parameters
+      const params = member.childForFieldName('parameters');
+      let param_count = 0;
+      if (params) {
+        for (let j = 0; j < params.childCount; j++) {
+          const param = params.child(j);
+          if (param && param.type === 'required_parameter' || param?.type === 'optional_parameter') {
+            param_count++;
+          }
+        }
+      }
+      
+      return { interface_name, constructor_params: param_count };
+    }
   }
   
-  // Check if parent is a satisfies expression
-  const parent = node.parent;
-  return parent?.type === 'satisfies_expression';
+  return null;
+}
+
+/**
+ * Handle TypeScript abstract class instantiation detection
+ * 
+ * TypeScript prevents instantiation of abstract classes.
+ * This function helps identify attempts to instantiate abstract classes.
+ */
+export function detect_abstract_class_instantiation(
+  node: SyntaxNode,
+  context: ConstructorCallContext
+): { class_name: string; is_error: boolean } | null {
+  if (node.type !== 'new_expression') return null;
+  
+  const constructor = node.childForFieldName('constructor');
+  if (!constructor) return null;
+  
+  let class_name: string;
+  if (constructor.type === 'identifier') {
+    class_name = context.source_code.substring(constructor.startIndex, constructor.endIndex);
+  } else {
+    return null;
+  }
+  
+  // To properly detect if a class is abstract, we'd need to look up
+  // its declaration. This is a placeholder that could be enhanced
+  // with type information from the broader context.
+  
+  // For now, return the class name for potential validation
+  return { class_name, is_error: false };
+}
+
+/**
+ * Handle TypeScript type assertions in constructor calls
+ * 
+ * TypeScript allows type assertions with constructor calls:
+ * const obj = new MyClass() as MyInterface
+ */
+export function handle_constructor_with_type_assertion(
+  node: SyntaxNode,
+  context: ConstructorCallContext
+): { constructor_info: ConstructorCallInfo; asserted_type: string } | null {
+  if (node.type !== 'as_expression' && node.type !== 'type_assertion') return null;
+  
+  const expression = node.childForFieldName('expression') || node.childForFieldName('value');
+  const type = node.childForFieldName('type');
+  
+  if (!expression || !type || expression.type !== 'new_expression') return null;
+  
+  // Extract constructor information from the new expression
+  const constructor = expression.childForFieldName('constructor');
+  if (!constructor) return null;
+  
+  let constructor_name: string;
+  if (constructor.type === 'identifier') {
+    constructor_name = context.source_code.substring(constructor.startIndex, constructor.endIndex);
+  } else {
+    return null;
+  }
+  
+  // Extract the asserted type
+  const asserted_type = context.source_code.substring(type.startIndex, type.endIndex);
+  
+  // Count arguments
+  const args = expression.childForFieldName('arguments');
+  let arg_count = 0;
+  if (args) {
+    for (let i = 0; i < args.childCount; i++) {
+      const child = args.child(i);
+      if (child && child.type !== '(' && child.type !== ')' && child.type !== ',') {
+        arg_count++;
+      }
+    }
+  }
+  
+  const constructor_info: ConstructorCallInfo = {
+    constructor_name,
+    location: {
+      line: expression.startPosition.row,
+      column: expression.startPosition.column
+    },
+    arguments_count: arg_count,
+    is_new_expression: true,
+    is_factory_method: false
+  };
+  
+  return { constructor_info, asserted_type };
 }

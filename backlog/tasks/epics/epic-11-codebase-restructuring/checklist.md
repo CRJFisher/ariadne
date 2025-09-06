@@ -10,6 +10,8 @@
   - Move to immutable object creation
   - Remove optional fields where possible (lots are marked as optional but are actually always present)
   - Snake case module, function, variable names. Some pascal case has crept in.
+- Testing
+  - Make sure all tests use the standard `.scm` files in `packages/core/src/scope_queries` so that we're checking 
 - Types
   - For constructed string types (e.g. symbols etc) use 'branded' types e.g. `type Symbol = string & { __brand: 'Symbol' }` and include creator and parser functions for the type
 
