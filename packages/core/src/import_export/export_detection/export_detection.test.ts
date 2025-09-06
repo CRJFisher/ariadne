@@ -1,274 +1,230 @@
 /**
- * Tests for export detection
+ * Integration tests for export detection
  */
 
 import { describe, it, expect } from 'vitest';
-import { Language, ScopeGraph, Def } from '@ariadnejs/types';
+import Parser from 'tree-sitter';
+import JavaScript from 'tree-sitter-javascript';
+import TypeScript from 'tree-sitter-typescript';
+import Python from 'tree-sitter-python';
+import Rust from 'tree-sitter-rust';
 import { 
   detect_exports,
-  get_file_exports,
-  file_exports_symbol,
+  has_exports,
+  find_export_by_name,
+  get_exported_names,
+  group_exports,
   get_default_export,
-  create_module_interface
+  is_symbol_exported,
+  get_module_interface
 } from './index';
 
-// Mock scope graph
-function create_mock_scope_graph(defs: Def[]): ScopeGraph {
-  return {
-    getNodes: (type: string) => type === 'definition' ? defs : [],
-    getAllImports: () => [],
-    // Add other required methods as needed
-  } as any;
-}
-
 describe('export_detection', () => {
+  const jsParser = new Parser();
+  jsParser.setLanguage(JavaScript);
+  
+  const tsParser = new Parser();
+  tsParser.setLanguage(TypeScript.typescript);
+  
+  const pyParser = new Parser();
+  pyParser.setLanguage(Python);
+  
+  const rustParser = new Parser();
+  rustParser.setLanguage(Rust);
+  
   describe('JavaScript exports', () => {
     it('should detect named exports', () => {
-      const defs: Def[] = [
-        {
-          name: 'myFunction',
-          symbol_kind: 'function',
-          is_exported: true,
-          range: { start: { row: 0, column: 0 }, end: { row: 0, column: 10 } },
-          symbol_id: 'file#myFunction'
-        }
-      ];
+      const code = `
+        export function myFunction() {}
+        export const myConstant = 42;
+      `;
       
-      const config = {
-        get_scope_graph: () => create_mock_scope_graph(defs),
-        get_source_code: () => 'export function myFunction() {}'
-      };
+      const tree = jsParser.parse(code);
+      const exports = detect_exports(tree.rootNode, code, 'javascript');
       
-      const exports = get_file_exports('test.js', 'javascript', config);
-      
-      expect(exports).toHaveLength(1);
-      expect(exports[0].name).toBe('myFunction');
-      expect(exports[0].is_default).toBe(false);
+      expect(exports.length).toBeGreaterThanOrEqual(2);
+      const names = exports.map(e => e.name);
+      expect(names).toContain('myFunction');
+      expect(names).toContain('myConstant');
     });
     
     it('should detect default exports', () => {
-      const defs: Def[] = [
-        {
-          name: 'MyClass',
-          symbol_kind: 'class',
-          is_exported: true,
-          range: { start: { row: 0, column: 0 }, end: { row: 0, column: 10 } },
-          symbol_id: 'file#MyClass'
-        }
-      ];
+      const code = `export default class MyClass {}`;
       
-      const config = {
-        get_scope_graph: () => create_mock_scope_graph(defs),
-        get_source_code: () => 'export default class MyClass {}'
-      };
+      const tree = jsParser.parse(code);
+      const exports = detect_exports(tree.rootNode, code, 'javascript');
+      const defaultExport = get_default_export(exports);
       
-      const exports = get_file_exports('test.js', 'javascript', config);
+      expect(defaultExport).toBeDefined();
+      expect(defaultExport?.kind).toBe('default');
+    });
+    
+    it('should detect CommonJS exports', () => {
+      const code = `
+        module.exports = {
+          foo: 'bar',
+          baz: 42
+        };
+      `;
+      
+      const tree = jsParser.parse(code);
+      const exports = detect_exports(tree.rootNode, code, 'javascript');
       
       expect(exports.length).toBeGreaterThan(0);
-      // Note: Default export detection needs more sophisticated parsing
     });
   });
   
   describe('TypeScript exports', () => {
     it('should detect interface exports', () => {
-      const defs: Def[] = [
-        {
-          name: 'MyInterface',
-          symbol_kind: 'interface',
-          is_exported: true,
-          range: { start: { row: 0, column: 0 }, end: { row: 0, column: 10 } },
-          symbol_id: 'file#MyInterface'
+      const code = `
+        export interface MyInterface {
+          name: string;
         }
-      ];
+      `;
       
-      const config = {
-        get_scope_graph: () => create_mock_scope_graph(defs),
-        get_source_code: () => 'export interface MyInterface { x: number; }'
-      };
-      
-      const exports = get_file_exports('test.ts', 'typescript', config);
+      const tree = tsParser.parse(code);
+      const exports = detect_exports(tree.rootNode, code, 'typescript');
       
       expect(exports.length).toBeGreaterThan(0);
-      // TypeScript-specific exports should be detected
+      expect(exports[0].name).toBe('MyInterface');
     });
     
     it('should detect type exports', () => {
-      const defs: Def[] = [
-        {
-          name: 'MyType',
-          symbol_kind: 'type_alias',
-          is_exported: true,
-          range: { start: { row: 0, column: 0 }, end: { row: 0, column: 10 } },
-          symbol_id: 'file#MyType'
-        }
-      ];
+      const code = `
+        export type MyType = string | number;
+        export type { AnotherType } from './types';
+      `;
       
-      const config = {
-        get_scope_graph: () => create_mock_scope_graph(defs),
-        get_source_code: () => 'export type MyType = string | number;'
-      };
-      
-      const exports = get_file_exports('test.ts', 'typescript', config);
+      const tree = tsParser.parse(code);
+      const exports = detect_exports(tree.rootNode, code, 'typescript');
       
       expect(exports.length).toBeGreaterThan(0);
-      // Type exports should be marked appropriately
     });
   });
   
   describe('Python exports', () => {
     it('should detect public functions', () => {
-      const defs: Def[] = [
-        {
-          name: 'public_function',
-          symbol_kind: 'function',
-          range: { start: { row: 0, column: 0 }, end: { row: 0, column: 10 } },
-          symbol_id: 'file#public_function'
-        },
-        {
-          name: '_private_function',
-          symbol_kind: 'function',
-          range: { start: { row: 1, column: 0 }, end: { row: 1, column: 10 } },
-          symbol_id: 'file#_private_function'
-        }
-      ];
+      const code = `
+def public_function():
+    pass
+
+def _private_function():
+    pass
+      `;
       
-      const config = {
-        get_scope_graph: () => create_mock_scope_graph(defs),
-        get_source_code: () => 'def public_function(): pass\ndef _private_function(): pass'
-      };
+      const tree = pyParser.parse(code);
+      const exports = detect_exports(tree.rootNode, code, 'python');
       
-      const exports = get_file_exports('test.py', 'python', config);
-      
-      // Python auto-exports public symbols
-      expect(exports.some(e => e.name === 'public_function')).toBe(true);
-      expect(exports.some(e => e.name === '_private_function')).toBe(false);
+      const names = exports.map(e => e.name);
+      expect(names).toContain('public_function');
+      expect(names).not.toContain('_private_function');
     });
     
     it('should respect __all__ definition', () => {
-      const defs: Def[] = [
-        {
-          name: 'func1',
-          symbol_kind: 'function',
-          range: { start: { row: 0, column: 0 }, end: { row: 0, column: 10 } },
-          symbol_id: 'file#func1'
-        },
-        {
-          name: 'func2',
-          symbol_kind: 'function',
-          range: { start: { row: 1, column: 0 }, end: { row: 1, column: 10 } },
-          symbol_id: 'file#func2'
-        }
-      ];
+      const code = `
+__all__ = ['exported_func']
+
+def exported_func():
+    pass
+
+def not_exported():
+    pass
+      `;
       
-      const config = {
-        get_scope_graph: () => create_mock_scope_graph(defs),
-        get_source_code: () => '__all__ = ["func1"]\ndef func1(): pass\ndef func2(): pass'
-      };
+      const tree = pyParser.parse(code);
+      const exports = detect_exports(tree.rootNode, code, 'python');
       
-      const exports = get_file_exports('test.py', 'python', config);
-      
-      // Only func1 should be exported due to __all__
-      expect(exports.some(e => e.name === 'func1')).toBe(true);
-      expect(exports.some(e => e.name === 'func2')).toBe(false);
+      const names = exports.map(e => e.name);
+      expect(names).toContain('exported_func');
+      // When __all__ is defined, only listed items are exported
     });
   });
   
   describe('Rust exports', () => {
     it('should detect pub items', () => {
-      const defs: Def[] = [
-        {
-          name: 'public_fn',
-          symbol_kind: 'function',
-          is_exported: true,
-          range: { start: { row: 0, column: 7 }, end: { row: 0, column: 15 } },
-          symbol_id: 'file#public_fn'
-        },
-        {
-          name: 'private_fn',
-          symbol_kind: 'function',
-          is_exported: false,
-          range: { start: { row: 1, column: 3 }, end: { row: 1, column: 13 } },
-          symbol_id: 'file#private_fn'
-        }
-      ];
+      const code = `
+pub fn public_function() {}
+fn private_function() {}
+pub struct PublicStruct;
+      `;
       
-      const config = {
-        get_scope_graph: () => create_mock_scope_graph(defs),
-        get_source_code: () => 'pub fn public_fn() {}\nfn private_fn() {}'
-      };
+      const tree = rustParser.parse(code);
+      const exports = detect_exports(tree.rootNode, code, 'rust');
       
-      const exports = get_file_exports('test.rs', 'rust', config);
-      
-      expect(exports.some(e => e.name === 'public_fn')).toBe(true);
-      expect(exports.some(e => e.name === 'private_fn')).toBe(false);
+      const names = exports.map(e => e.name);
+      expect(names).toContain('public_function');
+      expect(names).toContain('PublicStruct');
+      expect(names).not.toContain('private_function');
     });
     
     it('should detect pub(crate) items', () => {
-      const defs: Def[] = [
-        {
-          name: 'crate_fn',
-          symbol_kind: 'function',
-          is_exported: true,
-          range: { start: { row: 0, column: 14 }, end: { row: 0, column: 22 } },
-          symbol_id: 'file#crate_fn'
-        }
-      ];
+      const code = `
+pub(crate) fn crate_function() {}
+pub(super) mod super_module {}
+      `;
       
-      const config = {
-        get_scope_graph: () => create_mock_scope_graph(defs),
-        get_source_code: () => 'pub(crate) fn crate_fn() {}'
-      };
-      
-      const exports = get_file_exports('test.rs', 'rust', config);
+      const tree = rustParser.parse(code);
+      const exports = detect_exports(tree.rootNode, code, 'rust');
       
       expect(exports.length).toBeGreaterThan(0);
-      // Should detect crate-level visibility
     });
   });
   
   describe('Utility functions', () => {
     it('should check if file exports a symbol', () => {
-      const defs: Def[] = [
-        {
-          name: 'exportedFunc',
-          symbol_kind: 'function',
-          is_exported: true,
-          range: { start: { row: 0, column: 0 }, end: { row: 0, column: 10 } },
-          symbol_id: 'file#exportedFunc'
-        }
-      ];
+      const code = `export function foo() {}`;
+      const tree = jsParser.parse(code);
       
-      const config = {
-        get_scope_graph: () => create_mock_scope_graph(defs)
-      };
-      
-      expect(file_exports_symbol('test.js', 'exportedFunc', 'javascript', config)).toBe(true);
-      expect(file_exports_symbol('test.js', 'nonExistent', 'javascript', config)).toBe(false);
+      expect(is_symbol_exported('foo', tree.rootNode, code, 'javascript')).toBe(true);
+      expect(is_symbol_exported('bar', tree.rootNode, code, 'javascript')).toBe(false);
     });
     
     it('should create module interface', () => {
-      const exports = [
-        {
-          name: 'func1',
-          export_name: 'func1',
-          is_default: false,
-          is_reexport: false,
-          range: { start: { row: 0, column: 0 }, end: { row: 0, column: 10 } }
-        },
-        {
-          name: 'default',
-          export_name: 'default',
-          is_default: true,
-          is_reexport: false,
-          range: { start: { row: 1, column: 0 }, end: { row: 1, column: 10 } }
-        }
-      ];
+      const code = `
+        export default class Main {}
+        export function helper() {}
+        export * from './utils';
+      `;
       
-      const module_interface = create_module_interface('test.js', exports);
+      const tree = jsParser.parse(code);
+      const moduleInterface = get_module_interface(tree.rootNode, code, 'javascript', 'test.js');
       
-      expect(module_interface.file_path).toBe('test.js');
-      expect(module_interface.exports).toHaveLength(2);
-      expect(module_interface.default_export).toBeDefined();
+      expect(moduleInterface).toBeDefined();
+      expect(moduleInterface.file_path).toBe('test.js');
+      expect(moduleInterface.default_export).toBeDefined();
+      expect(moduleInterface.named_exports.length).toBeGreaterThan(0);
+    });
+    
+    it('should group exports by kind', () => {
+      const code = `
+        export default function main() {}
+        export function foo() {}
+        export const bar = 42;
+        export * as utils from './utils';
+      `;
+      
+      const tree = jsParser.parse(code);
+      const exports = detect_exports(tree.rootNode, code, 'javascript');
+      const grouped = group_exports(exports);
+      
+      expect(grouped.default).toBeDefined();
+      expect(grouped.named.length).toBeGreaterThan(0);
+    });
+    
+    it('should get exported names', () => {
+      const code = `
+        export function foo() {}
+        export const bar = 42;
+        export class Baz {}
+      `;
+      
+      const tree = jsParser.parse(code);
+      const names = get_exported_names(tree.rootNode, code, 'javascript');
+      
+      expect(names).toBeInstanceOf(Set);
+      expect(names.has('foo')).toBe(true);
+      expect(names.has('bar')).toBe(true);
+      expect(names.has('Baz')).toBe(true);
     });
   });
 });

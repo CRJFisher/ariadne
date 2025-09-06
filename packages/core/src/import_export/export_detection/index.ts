@@ -1,31 +1,50 @@
 /**
- * Export detection dispatcher
+ * Export detection module
  * 
- * Routes export detection to language-specific implementations
+ * Provides unified export detection across all supported languages
+ * using a combination of configuration-driven generic processing
+ * and language-specific bespoke handlers.
+ * 
+ * Architecture:
+ * - 85% generic: Configuration-driven processing in export_detection.generic.ts
+ * - 15% bespoke: Language-specific handlers for unique patterns
  */
 
-import { Language } from '@ariadnejs/types';
+import { Language, ExportInfo } from '@ariadnejs/types';
+import { SyntaxNode } from 'tree-sitter';
+
+// Import main detection functions
 import {
-  ExportInfo,
-  ExportDetectionContext,
-  detect_exports as detect_common_exports,
-  get_exported_names,
-  find_export_by_name,
-  group_exports,
+  detect_exports,
   has_exports,
-  exports_name,
-  GroupedExports,
-  ExportRegistry,
-  ScopeGraphProvider,
-  ModuleInterface
+  find_export_by_name,
+  get_exported_names,
+  group_exports,
+  is_reexport,
+  get_export_source,
+  filter_exports_by_kind,
+  get_default_export,
+  get_export_stats,
+  MODULE_CONTEXT,
+  GroupedExports
 } from './export_detection';
 
-import { detect_javascript_exports } from './export_detection.javascript';
-import { detect_typescript_exports } from './export_detection.typescript';
-import { detect_python_exports } from './export_detection.python';
-import { detect_rust_exports, RustExportInfo, RustVisibility } from './export_detection.rust';
+// Import configuration utilities
+import {
+  get_export_config,
+  is_export_node,
+  is_exportable_definition,
+  matches_export_pattern,
+  is_private_symbol,
+  get_export_list_identifier,
+  has_implicit_exports,
+  supports_commonjs,
+  supports_type_exports,
+  has_visibility_modifiers,
+  ExportLanguageConfig
+} from './language_configs';
 
-// Import export extraction functionality (moved from symbol_resolution)
+// Import export extraction (AST-based, Layer 2)
 import {
   extract_exports,
   extract_javascript_exports,
@@ -36,28 +55,40 @@ import {
   extract_commonjs_exports
 } from './export_extraction';
 
-// Re-export common types and utilities
+// Export main detection function
+export { detect_exports };
+
+// Export utility functions
 export {
-  ExportInfo,
-  ExportDetectionContext,
-  GroupedExports,
-  ExportRegistry,
-  ScopeGraphProvider,
-  ModuleInterface,
-  get_exported_names,
-  find_export_by_name,
-  group_exports,
   has_exports,
-  exports_name
+  find_export_by_name,
+  get_exported_names,
+  group_exports,
+  is_reexport,
+  get_export_source,
+  filter_exports_by_kind,
+  get_default_export,
+  get_export_stats
 };
 
-// Re-export language-specific types
+// Export types
+export { GroupedExports, ExportLanguageConfig };
+
+// Export configuration utilities
 export {
-  RustExportInfo,
-  RustVisibility
+  get_export_config,
+  is_export_node,
+  is_exportable_definition,
+  matches_export_pattern,
+  is_private_symbol,
+  get_export_list_identifier,
+  has_implicit_exports,
+  supports_commonjs,
+  supports_type_exports,
+  has_visibility_modifiers
 };
 
-// Re-export export extraction (moved from symbol_resolution - Layer 8 functionality)
+// Export extraction functions (for backward compatibility)
 export {
   extract_exports,
   extract_javascript_exports,
@@ -68,122 +99,105 @@ export {
   extract_commonjs_exports
 };
 
+// Export module context
+export { MODULE_CONTEXT };
+
 /**
- * Main entry point for export detection
+ * High-level API for export detection from file
  * 
- * Dispatches to language-specific implementations
+ * This is the main entry point for most use cases
  */
-export function detect_exports(
-  context: ExportDetectionContext
+export interface ExportDetectionOptions {
+  debug?: boolean;
+  skip_bespoke?: boolean;
+}
+
+export function detect_file_exports(
+  root_node: SyntaxNode,
+  source_code: string,
+  language: Language,
+  file_path?: string,
+  options?: ExportDetectionOptions
 ): ExportInfo[] {
-  // Get common exports first
-  const common_exports = detect_common_exports(context);
-  
-  // Dispatch to language-specific detection
-  switch (context.language) {
-    case 'javascript':
-      return detect_javascript_exports(context, common_exports);
-      
-    case 'typescript':
-      return detect_typescript_exports(context, common_exports);
-      
-    case 'python':
-      return detect_python_exports(context, common_exports);
-      
-    case 'rust':
-      return detect_rust_exports(context, common_exports);
-      
-    default:
-      // Fallback to common detection
-      return common_exports;
-  }
+  return detect_exports(root_node, source_code, language, options);
 }
 
 /**
- * Get all exported symbols from a file
+ * Get module interface from exports
  * 
- * Convenience function that handles language dispatch
+ * Useful for module graph construction
  */
-export function get_file_exports(
-  file_path: string,
-  language: Language,
-  config: {
-    get_scope_graph: (file_path: string) => any;
-    get_source_code?: (file_path: string) => string | undefined;
-    debug?: boolean;
-  }
-): ExportInfo[] {
-  const context: ExportDetectionContext = {
-    file_path,
-    language,
-    config
-  };
-  
-  return detect_exports(context);
+export interface ModuleInterface {
+  file_path?: string;
+  exports: ExportInfo[];
+  default_export?: ExportInfo;
+  named_exports: ExportInfo[];
+  namespace_exports: ExportInfo[];
+  statistics: ReturnType<typeof get_export_stats>;
 }
 
-/**
- * Check if a file exports a specific symbol
- * 
- * Convenience function for quick checks
- */
-export function file_exports_symbol(
-  file_path: string,
-  symbol_name: string,
+export function get_module_interface(
+  root_node: SyntaxNode,
+  source_code: string,
   language: Language,
-  config: {
-    get_scope_graph: (file_path: string) => any;
-    get_source_code?: (file_path: string) => string | undefined;
-  }
-): boolean {
-  const exports = get_file_exports(file_path, language, config);
-  return exports.some(exp => exp.export_name === symbol_name);
-}
-
-/**
- * Get the default export from a file
- */
-export function get_default_export(
-  file_path: string,
-  language: Language,
-  config: {
-    get_scope_graph: (file_path: string) => any;
-    get_source_code?: (file_path: string) => string | undefined;
-  }
-): ExportInfo | undefined {
-  const exports = get_file_exports(file_path, language, config);
-  return exports.find(exp => exp.is_default);
-}
-
-/**
- * Create a module interface from exports
- * 
- * Utility for integration with module graph
- */
-export function create_module_interface(
-  file_path: string,
-  exports: ExportInfo[]
+  file_path?: string
 ): ModuleInterface {
+  const exports = detect_exports(root_node, source_code, language);
   const grouped = group_exports(exports);
   
   return {
     file_path,
     exports,
-    default_export: grouped.default_export
+    default_export: grouped.default,
+    named_exports: grouped.named,
+    namespace_exports: grouped.namespace,
+    statistics: get_export_stats(exports)
   };
 }
 
 /**
- * Register exports in a registry
- * 
- * Utility for integration with import resolution
+ * Check if a symbol is exported
  */
-export function register_file_exports(
-  file_path: string,
-  exports: ExportInfo[],
-  registry: ExportRegistry
-): void {
+export function is_symbol_exported(
+  symbol_name: string,
+  root_node: SyntaxNode,
+  source_code: string,
+  language: Language
+): boolean {
+  const exported_names = get_exported_names(root_node, source_code, language);
+  return exported_names.has(symbol_name);
+}
+
+/**
+ * Get all re-exports from a file
+ */
+export function get_reexports(
+  root_node: SyntaxNode,
+  source_code: string,
+  language: Language
+): ExportInfo[] {
+  const exports = detect_exports(root_node, source_code, language);
+  return exports.filter(is_reexport);
+}
+
+/**
+ * Get exports by source module
+ */
+export function get_exports_by_source(
+  root_node: SyntaxNode,
+  source_code: string,
+  language: Language
+): Map<string, ExportInfo[]> {
+  const exports = detect_exports(root_node, source_code, language);
+  const by_source = new Map<string, ExportInfo[]>();
+  
   for (const exp of exports) {
-    registry.register_export(file_path, exp);
+    const source = get_export_source(exp);
+    if (!by_source.has(source)) {
+      by_source.set(source, []);
+    }
+    by_source.get(source)!.push(exp);
   }
+  
+  return by_source;
 }

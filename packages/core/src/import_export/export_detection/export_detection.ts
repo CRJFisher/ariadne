@@ -1,334 +1,270 @@
 /**
- * Common export detection logic
+ * Main export detection module
  * 
- * Provides functionality for detecting and analyzing export statements
- * in source code files across different languages.
- * 
- * This module consolidates export detection from:
- * - src_old/call_graph/import_export_detector.ts
+ * Combines configuration-driven generic processing (~85% of logic)
+ * with language-specific bespoke handlers (~15% of logic)
  */
 
-// TODO: Integration with import_resolution
-// - Exports should be registered in a shared registry
-// - Import resolver needs to query this registry
+import { Language, ExportInfo } from '@ariadnejs/types';
+import { SyntaxNode } from 'tree-sitter';
 
-// TODO: Integration with scope_analysis
-// - Need scope graph to resolve definition references
-// - Exported symbols must exist in scope
+// Import generic processor
+import {
+  detect_exports_generic,
+  merge_exports,
+  needs_bespoke_processing,
+  MODULE_CONTEXT,
+  get_export_stats
+} from './export_detection.generic';
 
-// TODO: Integration with type_analysis
-// - Type exports need different handling than value exports
-// - Track whether export is type-only (TypeScript)
+// Import bespoke handlers
+import {
+  handle_commonjs_exports,
+  handle_complex_reexports,
+  handle_dynamic_exports
+} from './export_detection.javascript.bespoke';
 
-import { Language, Location, Definition } from '@ariadnejs/types';
-// Import the canonical ExportInfo from the consolidated types
-export { ExportInfo } from '@ariadnejs/types';
+import {
+  handle_type_exports,
+  handle_namespace_exports,
+  handle_declaration_merging,
+  get_typescript_bespoke_exports
+} from './export_detection.typescript.bespoke';
 
-// InternalExportInfo has been removed - use ExportInfo from @ariadnejs/types
+import {
+  handle_all_exports,
+  handle_conditional_exports,
+  handle_star_import_exports,
+  handle_decorated_exports
+} from './export_detection.python.bespoke';
 
-// TODO: Add these stub interfaces for future integration
+import {
+  handle_visibility_modifiers,
+  handle_pub_use_reexports,
+  handle_macro_exports,
+  handle_trait_impl_exports,
+  handle_module_exports
+} from './export_detection.rust.bespoke';
 
-// Integration with import resolution
-export interface ExportRegistry {
-  register_export(file: string, export_info: ExportInfo): void;
-  get_exports(file: string): ExportInfo[];
-  has_export(file: string, name: string): boolean;
-}
+// Export module context
+export { MODULE_CONTEXT };
 
-// Integration with scope graph (future)
-export interface ScopeGraphProvider {
-  get_scope_graph(file: string): ScopeGraph | undefined;
-}
+// Re-export types and utilities from generic
+export { get_export_stats };
 
-// Integration with module graph
-export interface ModuleInterface {
-  file_path: string;
-  exports: ExportInfo[];
-  default_export?: ExportInfo;
+/**
+ * Main export detection entry point
+ * 
+ * Combines generic and bespoke processing based on language
+ */
+export function detect_exports(
+  root_node: SyntaxNode,
+  source_code: string,
+  language: Language,
+  options?: {
+    debug?: boolean;
+    skip_bespoke?: boolean;
+  }
+): ExportInfo[] {
+  // Start with generic processing
+  const generic_result = detect_exports_generic(root_node, source_code, language);
+  let exports = [...generic_result.exports];
+  
+  // Skip bespoke if requested (for testing) or not needed
+  if (options?.skip_bespoke || !generic_result.requires_bespoke) {
+    if (options?.debug) {
+      console.log(`[export_detection] Generic only - found ${exports.length} exports`);
+    }
+    return exports;
+  }
+  
+  // Apply language-specific bespoke processing
+  const bespoke_exports = get_bespoke_exports(
+    root_node,
+    source_code,
+    language,
+    generic_result.bespoke_hints
+  );
+  
+  // Merge results, avoiding duplicates
+  exports = merge_exports(exports, bespoke_exports);
+  
+  if (options?.debug) {
+    const stats = get_export_stats(exports);
+    console.log(`[export_detection] Found ${stats.total} exports:`, stats);
+  }
+  
+  return exports;
 }
 
 /**
- * Configuration for export detection
+ * Get bespoke exports based on language and hints
  */
-export interface ExportDetectionConfig {
-  get_scope_graph: (file_path: string) => ScopeGraph | undefined;
-  get_source_code?: (file_path: string) => string | undefined;
-  debug?: boolean;
-  // TODO: Integration with other features
-  // export_registry?: ExportRegistry;  // Register exports globally
-  // type_tracker?: TypeTracker;  // Track type exports
+function get_bespoke_exports(
+  root_node: SyntaxNode,
+  source_code: string,
+  language: Language,
+  hints?: {
+    has_commonjs?: boolean;
+    has_type_exports?: boolean;
+    has_visibility_modifiers?: boolean;
+    has_export_list?: boolean;
+  }
+): ExportInfo[] {
+  const exports: ExportInfo[] = [];
+  
+  switch (language) {
+    case 'javascript':
+      // JavaScript bespoke patterns
+      if (hints?.has_commonjs) {
+        exports.push(...handle_commonjs_exports(root_node, source_code));
+      }
+      exports.push(...handle_complex_reexports(root_node, source_code));
+      exports.push(...handle_dynamic_exports(root_node, source_code));
+      break;
+      
+    case 'typescript':
+      // TypeScript includes all JavaScript patterns plus its own
+      exports.push(...get_typescript_bespoke_exports(root_node, source_code));
+      break;
+      
+    case 'python':
+      // Python bespoke patterns
+      if (hints?.has_export_list) {
+        exports.push(...handle_all_exports(root_node, source_code));
+      }
+      exports.push(...handle_conditional_exports(root_node, source_code));
+      exports.push(...handle_star_import_exports(root_node, source_code));
+      exports.push(...handle_decorated_exports(root_node, source_code));
+      break;
+      
+    case 'rust':
+      // Rust bespoke patterns
+      if (hints?.has_visibility_modifiers) {
+        exports.push(...handle_visibility_modifiers(root_node, source_code));
+      }
+      exports.push(...handle_pub_use_reexports(root_node, source_code));
+      exports.push(...handle_macro_exports(root_node, source_code));
+      exports.push(...handle_trait_impl_exports(root_node, source_code));
+      exports.push(...handle_module_exports(root_node, source_code));
+      break;
+  }
+  
+  return exports;
 }
 
 /**
- * Context for export detection
+ * Quick check if a file has exports
  */
-export interface ExportDetectionContext {
-  language: Language;
-  file_path: string;
-  config: ExportDetectionConfig;
-}
-
-/**
- * Check if a definition should be exported by default
- * 
- * Some languages export all public definitions by default
- */
-export function is_auto_exported(
-  def: Def,
+export function has_exports(
+  root_node: SyntaxNode,
+  source_code: string,
   language: Language
 ): boolean {
-  // Python exports all top-level non-private definitions
-  if (language === 'python') {
-    return (def.symbol_kind === 'class' || def.symbol_kind === 'function') &&
-           !def.name.startsWith('_') &&
-           def.is_exported !== false;
+  // Quick check using generic processing only
+  const generic_result = detect_exports_generic(root_node, source_code, language);
+  
+  if (generic_result.exports.length > 0) {
+    return true;
   }
   
-  // Rust requires explicit 'pub' keyword
-  if (language === 'rust') {
-    return def.is_exported === true;
+  // If generic found nothing but bespoke is needed, do full check
+  if (generic_result.requires_bespoke) {
+    const all_exports = detect_exports(root_node, source_code, language);
+    return all_exports.length > 0;
   }
   
-  // JavaScript/TypeScript require explicit export
   return false;
 }
 
 /**
- * Check if an export is a default export
- */
-export function is_default_export(
-  export_info: ExportInfo
-): boolean {
-  return export_info.is_default || export_info.export_name === 'default';
-}
-
-/**
- * Check if an export is a namespace re-export
- */
-export function is_namespace_reexport(
-  export_info: ExportInfo
-): boolean {
-  return export_info.is_reexport && export_info.name === '*';
-}
-
-/**
- * Detect exports from definitions
- * 
- * Common logic for finding exported definitions
- */
-export function detect_exported_definitions(
-  defs: Def[],
-  language: Language
-): ExportInfo[] {
-  const exports: ExportInfo[] = [];
-  
-  for (const def of defs) {
-    if (is_auto_exported(def, language) || def.is_exported === true) {
-      exports.push({
-        name: def.name,
-        export_name: def.name,
-        definition: def,
-        is_default: false,
-        is_reexport: false,
-        range: def.range
-      });
-    }
-  }
-  
-  return exports;
-}
-
-/**
- * Detect re-exports from imports
- * 
- * Find imports that are re-exported
- */
-export function detect_reexports(
-  graph: ScopeGraph,
-  language: Language,
-  source_code?: string
-): ExportInfo[] {
-  const exports: ExportInfo[] = [];
-  const imports = graph.getAllImports();
-  const refs = graph.getNodes<Ref>('reference');
-  
-  if (!source_code) {
-    return exports;
-  }
-  
-  const source_lines = source_code.split('\n');
-  
-  // Look for references that appear in export context
-  for (const ref of refs) {
-    const line = source_lines[ref.range.start.row];
-    if (!line) continue;
-    
-    const before_ref = line.substring(0, ref.range.start.column);
-    
-    // Check if this reference is in an export statement
-    if (is_in_export_context(before_ref, language)) {
-      // Check if this reference is an imported namespace
-      const namespace_import = imports.find(imp => 
-        imp.name === ref.name && imp.source_name === '*'
-      );
-      
-      if (namespace_import) {
-        // This is a re-exported namespace
-        exports.push({
-          name: ref.name,
-          export_name: ref.name,
-          definition: undefined,
-          is_default: before_ref.includes('default'),
-          is_reexport: true,
-          source_module: namespace_import.source_module,
-          range: ref.range
-        });
-      }
-    }
-  }
-  
-  return exports;
-}
-
-/**
- * Check if a code fragment indicates export context
- */
-function is_in_export_context(
-  code_before: string,
-  language: Language
-): boolean {
-  switch (language) {
-    case 'javascript':
-    case 'typescript':
-      // ES6 export syntax
-      return /export\s*(default\s*)?$/.test(code_before);
-      
-    case 'python':
-      // Python doesn't have explicit export syntax in the same way
-      // Could check for __all__ assignment
-      return false;
-      
-    case 'rust':
-      // Rust pub keyword
-      return /pub\s+(use\s+)?$/.test(code_before);
-      
-    default:
-      return false;
-  }
-}
-
-/**
- * Detect all exports in a file
- * 
- * Main entry point for export detection
- */
-export function detect_exports(
-  context: ExportDetectionContext
-): ExportInfo[] {
-  const { language, file_path, config } = context;
-  
-  const graph = config.get_scope_graph(file_path);
-  if (!graph) {
-    if (config.debug) {
-      console.log(`No scope graph found for ${file_path}`);
-    }
-    return [];
-  }
-  
-  const source_code = config.get_source_code?.(file_path);
-  
-  // Get exported definitions
-  const defs = graph.getNodes<Def>('definition');
-  const definition_exports = detect_exported_definitions(defs, language);
-  
-  // Get re-exports
-  const reexports = detect_reexports(graph, language, source_code);
-  
-  // Combine and deduplicate
-  const all_exports = [...definition_exports, ...reexports];
-  
-  // Remove duplicates (same name and range)
-  const unique_exports = all_exports.filter((exp, index) => 
-    all_exports.findIndex(e => 
-      e.name === exp.name && 
-      e.range.start.row === exp.range.start.row &&
-      e.range.start.column === exp.range.start.column
-    ) === index
-  );
-  
-  return unique_exports;
-}
-
-/**
- * Get exported names from a file
- * 
- * Simple utility to get just the export names
- */
-export function get_exported_names(
-  context: ExportDetectionContext
-): Set<string> {
-  const exports = detect_exports(context);
-  return new Set(exports.map(exp => exp.export_name));
-}
-
-/**
- * Find an exported definition by name
+ * Get export by name
  */
 export function find_export_by_name(
-  export_name: string,
-  context: ExportDetectionContext
+  name: string,
+  root_node: SyntaxNode,
+  source_code: string,
+  language: Language
 ): ExportInfo | undefined {
-  const exports = detect_exports(context);
-  return exports.find(exp => exp.export_name === export_name);
+  const exports = detect_exports(root_node, source_code, language);
+  return exports.find(exp => exp.name === name);
 }
 
 /**
- * Group exports by type
+ * Get all exported names
  */
-export interface GroupedExports {
-  default_export?: ExportInfo;
-  named_exports: ExportInfo[];
-  namespace_reexports: ExportInfo[];
+export function get_exported_names(
+  root_node: SyntaxNode,
+  source_code: string,
+  language: Language
+): Set<string> {
+  const exports = detect_exports(root_node, source_code, language);
+  return new Set(exports.map(exp => exp.name));
 }
 
-export function group_exports(
-  exports: ExportInfo[]
-): GroupedExports {
-  const result: GroupedExports = {
-    named_exports: [],
-    namespace_reexports: []
+/**
+ * Group exports by kind
+ */
+export interface GroupedExports {
+  default?: ExportInfo;
+  named: ExportInfo[];
+  namespace: ExportInfo[];
+  type_only: ExportInfo[];
+  dynamic: ExportInfo[];
+}
+
+export function group_exports(exports: ExportInfo[]): GroupedExports {
+  const grouped: GroupedExports = {
+    named: [],
+    namespace: [],
+    type_only: [],
+    dynamic: []
   };
   
   for (const exp of exports) {
-    if (is_default_export(exp)) {
-      result.default_export = exp;
-    } else if (is_namespace_reexport(exp)) {
-      result.namespace_reexports.push(exp);
+    if (exp.kind === 'default') {
+      grouped.default = exp;
+    } else if (exp.kind === 'namespace') {
+      grouped.namespace.push(exp);
+    } else if (exp.kind === 'type') {
+      grouped.type_only.push(exp);
+    } else if (exp.is_dynamic) {
+      grouped.dynamic.push(exp);
     } else {
-      result.named_exports.push(exp);
+      grouped.named.push(exp);
     }
   }
   
-  return result;
+  return grouped;
 }
 
 /**
- * Check if a file has any exports
+ * Check if export is a re-export
  */
-export function has_exports(
-  context: ExportDetectionContext
-): boolean {
-  const exports = detect_exports(context);
-  return exports.length > 0;
+export function is_reexport(exp: ExportInfo): boolean {
+  return exp.source !== 'local';
 }
 
 /**
- * Check if a file exports a specific name
+ * Get export source module
  */
-export function exports_name(
-  name: string,
-  context: ExportDetectionContext
-): boolean {
-  const exported_names = get_exported_names(context);
-  return exported_names.has(name);
+export function get_export_source(exp: ExportInfo): string {
+  return exp.source || 'local';
+}
+
+/**
+ * Filter exports by kind
+ */
+export function filter_exports_by_kind(
+  exports: ExportInfo[],
+  kind: string
+): ExportInfo[] {
+  return exports.filter(exp => exp.kind === kind);
+}
+
+/**
+ * Get default export if exists
+ */
+export function get_default_export(exports: ExportInfo[]): ExportInfo | undefined {
+  return exports.find(exp => exp.kind === 'default');
 }
