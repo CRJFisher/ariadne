@@ -21,17 +21,17 @@ export function handle_super_init_call(
 ): ConstructorCallInfo | null {
   if (node.type !== 'call') return null;
   
-  const func = node.childForFieldName('func');
+  const func = node.childForFieldName('function');
   if (!func || func.type !== 'attribute') return null;
   
   const object = func.childForFieldName('object');
-  const attr = func.childForFieldName('attr');
+  const attr = func.childForFieldName('attribute');
   
   if (!object || !attr) return null;
   
   // Check if it's super().__init__()
   if (object.type === 'call') {
-    const super_func = object.childForFieldName('func');
+    const super_func = object.childForFieldName('function');
     if (super_func && super_func.type === 'identifier') {
       const func_name = context.source_code.substring(super_func.startIndex, super_func.endIndex);
       const method_name = context.source_code.substring(attr.startIndex, attr.endIndex);
@@ -61,8 +61,9 @@ export function handle_super_init_call(
           },
           arguments_count: arg_count,
           is_new_expression: false,
-          is_factory_method: false
-        };
+          is_factory_method: false,
+          is_super_call: true
+        } as ConstructorCallInfo & { is_super_call: boolean };
       }
     }
   }
@@ -82,7 +83,7 @@ export function detect_dataclass_instantiation(
 ): ConstructorCallInfo | null {
   if (node.type !== 'call') return null;
   
-  const func = node.childForFieldName('func');
+  const func = node.childForFieldName('function');
   if (!func || func.type !== 'identifier') return null;
   
   const class_name = context.source_code.substring(func.startIndex, func.endIndex);
@@ -190,10 +191,10 @@ export function detect_new_method_call(
 ): ConstructorCallInfo | null {
   if (node.type !== 'call') return null;
   
-  const func = node.childForFieldName('func');
+  const func = node.childForFieldName('function');
   if (!func || func.type !== 'attribute') return null;
   
-  const attr = func.childForFieldName('attr');
+  const attr = func.childForFieldName('attribute');
   if (!attr) return null;
   
   const method_name = context.source_code.substring(attr.startIndex, attr.endIndex);
@@ -249,11 +250,11 @@ export function detect_classmethod_factory(
 ): ConstructorCallInfo | null {
   if (node.type !== 'call') return null;
   
-  const func = node.childForFieldName('func');
+  const func = node.childForFieldName('function');
   if (!func || func.type !== 'attribute') return null;
   
   const object = func.childForFieldName('object');
-  const attr = func.childForFieldName('attr');
+  const attr = func.childForFieldName('attribute');
   
   if (!object || !attr) return null;
   

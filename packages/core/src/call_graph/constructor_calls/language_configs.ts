@@ -116,7 +116,7 @@ const PYTHON_CONFIG: ConstructorConfig = {
   name_extraction_fields: {
     call: {
       primary_field: 'function',
-      nested_path: ['identifier', 'attribute.attr']
+      nested_path: ['identifier', 'attribute']
     }
   },
   

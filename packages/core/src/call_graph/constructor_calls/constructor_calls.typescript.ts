@@ -21,72 +21,91 @@ export function handle_generic_constructor(
 ): ConstructorCallInfo | null {
   if (node.type !== 'new_expression') return null;
   
-  const constructor = node.childForFieldName('constructor');
-  if (!constructor) return null;
+  // Check if it has type arguments (generic constructor)
+  let type_args_node: SyntaxNode | null = null;
+  let constructor_node: SyntaxNode | null = null;
   
-  // Check if constructor is a generic type (has type arguments)
-  if (constructor.type === 'generic_type' || constructor.type === 'instantiation_expression') {
-    const name = constructor.childForFieldName('name') || constructor.childForFieldName('function');
-    const type_args = constructor.childForFieldName('type_arguments');
-    
-    if (!name) return null;
-    
-    // Extract the base constructor name
-    let constructor_name: string;
-    if (name.type === 'identifier') {
-      constructor_name = context.source_code.substring(name.startIndex, name.endIndex);
-    } else if (name.type === 'member_expression') {
-      const property = name.childForFieldName('property');
-      if (property) {
-        constructor_name = context.source_code.substring(property.startIndex, property.endIndex);
-      } else {
-        return null;
+  // Find the identifier/constructor and type_arguments in children
+  for (let i = 0; i < node.childCount; i++) {
+    const child = node.child(i);
+    if (child) {
+      if (child.type === 'type_arguments') {
+        type_args_node = child;
+      } else if (child.type === 'identifier' || child.type === 'member_expression') {
+        constructor_node = child;
       }
+    }
+  }
+  
+  // If no type arguments, it's not a generic constructor
+  if (!type_args_node) return null;
+  if (!constructor_node) return null;
+  
+  // Extract the constructor name
+  let constructor_name: string;
+  if (constructor_node.type === 'identifier') {
+    constructor_name = context.source_code.substring(constructor_node.startIndex, constructor_node.endIndex);
+  } else if (constructor_node.type === 'member_expression') {
+    const property = constructor_node.childForFieldName('property');
+    if (property) {
+      constructor_name = context.source_code.substring(property.startIndex, property.endIndex);
     } else {
       return null;
     }
-    
-    // Find assignment target
-    let assigned_to: string | undefined;
-    let current = node.parent;
-    while (current) {
-      if (current.type === 'variable_declarator') {
-        const var_name = current.childForFieldName('name');
-        if (var_name && var_name.type === 'identifier') {
-          assigned_to = context.source_code.substring(var_name.startIndex, var_name.endIndex);
-          break;
-        }
-      }
-      if (current.type === 'expression_statement') break;
-      current = current.parent;
-    }
-    
-    // Count arguments
-    const args = node.childForFieldName('arguments');
-    let arg_count = 0;
-    if (args) {
-      for (let i = 0; i < args.childCount; i++) {
-        const child = args.child(i);
-        if (child && child.type !== '(' && child.type !== ')' && child.type !== ',') {
-          arg_count++;
-        }
-      }
-    }
-    
-    return {
-      constructor_name,
-      location: {
-        line: node.startPosition.row,
-        column: node.startPosition.column
-      },
-      arguments_count: arg_count,
-      assigned_to,
-      is_new_expression: true,
-      is_factory_method: false
-    };
+  } else {
+    return null;
   }
   
-  return null;
+  // Extract type parameters
+  const type_parameters: string[] = [];
+  if (type_args_node) {
+    for (let i = 0; i < type_args_node.childCount; i++) {
+      const child = type_args_node.child(i);
+      if (child && child.type !== '<' && child.type !== '>' && child.type !== ',') {
+        type_parameters.push(context.source_code.substring(child.startIndex, child.endIndex));
+      }
+    }
+  }
+  
+  // Find assignment target
+  let assigned_to: string | undefined;
+  let current = node.parent;
+  while (current) {
+    if (current.type === 'variable_declarator') {
+      const var_name = current.childForFieldName('name');
+      if (var_name && var_name.type === 'identifier') {
+        assigned_to = context.source_code.substring(var_name.startIndex, var_name.endIndex);
+        break;
+      }
+    }
+    if (current.type === 'expression_statement') break;
+    current = current.parent;
+  }
+  
+  // Count arguments
+  const args = node.childForFieldName('arguments');
+  let arg_count = 0;
+  if (args) {
+    for (let i = 0; i < args.childCount; i++) {
+      const child = args.child(i);
+      if (child && child.type !== '(' && child.type !== ')' && child.type !== ',') {
+        arg_count++;
+      }
+    }
+  }
+  
+  return {
+    constructor_name,
+    location: {
+      line: node.startPosition.row,
+      column: node.startPosition.column
+    },
+    arguments_count: arg_count,
+    assigned_to,
+    is_new_expression: true,
+    is_factory_method: false,
+    type_parameters
+  } as ConstructorCallInfo & { type_parameters: string[] };
 }
 
 /**

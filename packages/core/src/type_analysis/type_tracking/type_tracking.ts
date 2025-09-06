@@ -20,14 +20,21 @@ import { Language } from '@ariadnejs/types';
  * Type information for a variable at a specific position
  */
 export interface TypeInfo {
+  variable_name?: string;      // The variable name (for tracking assignments)
   type_name: string;           // The type name (e.g., "string", "MyClass")
-  type_kind: 'primitive' | 'class' | 'interface' | 'function' | 'object' | 'array' | 'unknown';
-  position: {
+  type_kind?: 'primitive' | 'class' | 'interface' | 'function' | 'object' | 'array' | 'unknown';
+  position?: {
     row: number;
     column: number;
   };
-  confidence: 'explicit' | 'inferred' | 'assumed';
+  location?: {                 // Alternative location format
+    line: number;
+    column: number;
+  };
+  confidence?: 'explicit' | 'inferred' | 'assumed' | number;
   source?: 'annotation' | 'assignment' | 'constructor' | 'return' | 'parameter';
+  is_return_value?: boolean;    // Whether this type is from a return statement
+  is_property_assignment?: boolean;  // Whether this is a property assignment (this.prop, self.prop)
 }
 
 /**

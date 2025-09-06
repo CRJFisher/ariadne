@@ -6,7 +6,7 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language, ConstructorCallInfo } from '@ariadnejs/types';
+import { Language, ConstructorCallInfo, FilePath } from '@ariadnejs/types';
 import { 
   get_language_config,
   is_constructor_node_type,
@@ -15,10 +15,11 @@ import {
   is_factory_method_name,
   get_arguments_field_name
 } from './language_configs';
+import { node_to_location } from '../../ast/node_utils';
 
 export interface ConstructorCallContext {
   source_code: string;
-  file_path: string;
+  file_path: FilePath;
   language: Language;
   ast_root: SyntaxNode;
 }
@@ -137,6 +138,14 @@ function extract_name_from_node(node: SyntaxNode, language: Language): string | 
           if (nested) return nested.text;
         }
       } else if (field.type === path) {
+        // Special handling for Python attribute nodes (module.Class pattern)
+        if (path === 'attribute' && language === 'python') {
+          // Get the last child which is the class name
+          const lastChild = field.child(field.childCount - 1);
+          if (lastChild && lastChild.type === 'identifier') {
+            return lastChild.text;
+          }
+        }
         return field.text;
       }
     }
@@ -178,10 +187,7 @@ function extract_constructor_info(
   
   return {
     constructor_name,
-    location: {
-      line: node.startPosition.row,
-      column: node.startPosition.column
-    },
+    location: node_to_location(node, context.file_path),
     arguments_count,
     assigned_to: assigned_to || undefined,
     is_new_expression: is_new,
@@ -224,7 +230,17 @@ function extract_potential_constructor_info(
           }
         }
       } else if (field.type === path) {
-        name = context.source_code.substring(field.startIndex, field.endIndex);
+        // Special handling for Python attribute nodes (module.Class pattern)
+        if (path === 'attribute' && context.language === 'python') {
+          // Get the last child which is the class name
+          const lastChild = field.child(field.childCount - 1);
+          if (lastChild && lastChild.type === 'identifier') {
+            name = context.source_code.substring(lastChild.startIndex, lastChild.endIndex);
+            break;
+          }
+        } else {
+          name = context.source_code.substring(field.startIndex, field.endIndex);
+        }
         break;
       }
     }
@@ -249,10 +265,7 @@ function extract_potential_constructor_info(
   
   return {
     constructor_name: name,
-    location: {
-      line: node.startPosition.row,
-      column: node.startPosition.column
-    },
+    location: node_to_location(node, context.file_path),
     arguments_count: count_constructor_arguments(node, context.language),
     assigned_to: assigned_to || undefined,
     is_new_expression: false,
@@ -310,6 +323,14 @@ export function extract_constructor_name(
           }
         }
       } else if (field.type === path) {
+        // Special handling for Python attribute nodes (module.Class pattern)
+        if (path === 'attribute' && language === 'python') {
+          // Get the last child which is the class name
+          const lastChild = field.child(field.childCount - 1);
+          if (lastChild && lastChild.type === 'identifier') {
+            return source.substring(lastChild.startIndex, lastChild.endIndex);
+          }
+        }
         return source.substring(field.startIndex, field.endIndex);
       }
     }
@@ -365,8 +386,15 @@ export function find_assignment_target(
     // Universal assignment expression handling
     if (current.type === 'assignment_expression' || current.type === 'assignment') {
       const left = current.childForFieldName('left') || current.child(0);
-      if (left && left.type === 'identifier') {
-        return source.substring(left.startIndex, left.endIndex);
+      if (left) {
+        // Handle simple identifier
+        if (left.type === 'identifier') {
+          return source.substring(left.startIndex, left.endIndex);
+        }
+        // Handle member expressions (this.prop, self.prop)
+        if (left.type === 'member_expression' || left.type === 'attribute') {
+          return source.substring(left.startIndex, left.endIndex);
+        }
       }
     }
     

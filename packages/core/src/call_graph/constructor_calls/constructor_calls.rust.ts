@@ -87,8 +87,9 @@ export function handle_enum_variant_construction(
         arguments_count: arg_count,
         assigned_to,
         is_new_expression: false,
-        is_factory_method: false
-      };
+        is_factory_method: false,
+        is_enum_variant: true
+      } as ConstructorCallInfo & { is_enum_variant: boolean };
     }
   }
   
@@ -210,8 +211,9 @@ export function handle_tuple_struct_construction(
     arguments_count: arg_count,
     assigned_to,
     is_new_expression: false,
-    is_factory_method: false
-  };
+    is_factory_method: false,
+    is_tuple_struct: true
+  } as ConstructorCallInfo & { is_tuple_struct: boolean };
 }
 
 /**
@@ -269,7 +271,7 @@ export function handle_macro_construction(
   };
   
   return {
-    constructor_name: type_map[macro_name] || macro_name,
+    constructor_name: macro_name, // Use the macro name, not the type name
     location: {
       line: node.startPosition.row,
       column: node.startPosition.column
@@ -277,8 +279,9 @@ export function handle_macro_construction(
     arguments_count: element_count,
     assigned_to,
     is_new_expression: false,
-    is_factory_method: true // Macros are factory-like
-  };
+    is_factory_method: true, // Macros are factory-like
+    is_macro_invocation: true
+  } as ConstructorCallInfo & { is_macro_invocation: boolean };
 }
 
 /**
@@ -349,8 +352,9 @@ export function handle_smart_pointer_construction(
     arguments_count: arg_count,
     assigned_to,
     is_new_expression: false,
-    is_factory_method: true
-  };
+    is_factory_method: true,
+    is_smart_pointer: true
+  } as ConstructorCallInfo & { is_smart_pointer: boolean };
 }
 
 /**
@@ -372,32 +376,33 @@ export function handle_default_construction(
   
   if (!path || !name) return null;
   
-  const trait_name = context.source_code.substring(path.startIndex, path.endIndex);
+  const type_or_trait = context.source_code.substring(path.startIndex, path.endIndex);
   const method_name = context.source_code.substring(name.startIndex, name.endIndex);
   
-  if (trait_name !== 'Default' || method_name !== 'default') {
+  // Check if it's calling the 'default' method
+  if (method_name !== 'default') {
     return null;
   }
   
-  // For Default::default(), we need to infer the type from context
-  // This is a simplified version - full type inference would be more complex
-  let inferred_type = 'Unknown';
+  // Determine the constructor name
+  let constructor_name: string;
+  if (type_or_trait === 'Default') {
+    // For Default::default(), we use 'Default' as the constructor name
+    constructor_name = 'Default';
+  } else {
+    // For Type::default() (like Config::default()), use the type name
+    constructor_name = type_or_trait;
+  }
   
-  // Try to infer from assignment
+  // Try to find assignment target
   let assigned_to: string | undefined;
   let current = node.parent;
   while (current) {
     if (current.type === 'let_declaration') {
       const pattern = current.childForFieldName('pattern');
-      const type_node = current.childForFieldName('type');
       
       if (pattern && pattern.type === 'identifier') {
         assigned_to = context.source_code.substring(pattern.startIndex, pattern.endIndex);
-      }
-      
-      // Try to extract the type annotation
-      if (type_node) {
-        inferred_type = context.source_code.substring(type_node.startIndex, type_node.endIndex);
       }
       break;
     }
@@ -406,7 +411,7 @@ export function handle_default_construction(
   }
   
   return {
-    constructor_name: inferred_type,
+    constructor_name,
     location: {
       line: node.startPosition.row,
       column: node.startPosition.column
@@ -414,6 +419,7 @@ export function handle_default_construction(
     arguments_count: 0, // Default::default() takes no arguments
     assigned_to,
     is_new_expression: false,
-    is_factory_method: true
-  };
+    is_factory_method: true,
+    is_default_construction: true
+  } as ConstructorCallInfo & { is_default_construction: boolean };
 }

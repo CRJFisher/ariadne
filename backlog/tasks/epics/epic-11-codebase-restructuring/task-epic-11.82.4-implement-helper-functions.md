@@ -48,14 +48,14 @@ The TypeInfo interface needs an `is_return_value` field as used by tests
 **Required**: Add `is_return_value?: boolean` field
 
 ## Acceptance Criteria
-- [ ] Export `walk_tree` function from constructor_calls.ts
-- [ ] Implement `is_property_assignment()` in constructor_type_extraction.ts
-- [ ] Implement `is_return_value()` in constructor_type_extraction.ts
-- [ ] Add `is_return_value` field to TypeInfo interface
-- [ ] Add `is_property_assignment` field to TypeInfo interface
-- [ ] All helper functions have appropriate type signatures
-- [ ] Functions handle all supported languages (JS, TS, Python, Rust)
-- [ ] Related tests pass
+- [x] Export `walk_tree` function from constructor_calls.ts
+- [x] Implement `is_property_assignment()` in constructor_type_extraction.ts
+- [x] Implement `is_return_value()` in constructor_type_extraction.ts
+- [x] Add `is_return_value` field to TypeInfo interface
+- [x] Add `is_property_assignment` field to TypeInfo interface
+- [x] All helper functions have appropriate type signatures
+- [x] Functions handle all supported languages (JS, TS, Python, Rust)
+- [x] Related tests pass
 
 ## Implementation Details
 
@@ -77,3 +77,16 @@ The TypeInfo interface needs an `is_return_value` field as used by tests
 
 ## Priority
 HIGH - Blocking test failures in constructor_type_extraction
+
+## Implementation Notes
+COMPLETE (100%):
+1. **walk_tree function**: Already exported from constructor_calls.ts, imported in constructor_type_extraction.ts
+2. **is_property_assignment function**: Already implemented in constructor_type_extraction.ts, checks for `this.` and `self.` patterns
+3. **is_return_value function**: Already implemented in constructor_type_extraction.ts, walks up AST to find return_statement
+4. **TypeInfo interface**: Extended with optional `is_return_value` and `is_property_assignment` fields
+5. **find_assignment_target enhancement**: Modified to handle member expressions and attribute nodes for property assignments
+6. **Python module.Class pattern fix**: Added special handling for Python attribute nodes to extract the class name from `module.Class()` patterns
+7. **extract_constructor_name fix**: Added same special handling for Python attribute nodes
+
+Result: All 19 tests in constructor_type_extraction.test.ts now pass
+Overall: All 86 tests in constructor_calls module now pass!

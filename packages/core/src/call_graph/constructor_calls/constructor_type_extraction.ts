@@ -15,7 +15,8 @@ import { TypeInfo } from '../../type_analysis/type_tracking';
 import { 
   find_assignment_target,
   extract_constructor_name,
-  is_constructor_call_node
+  is_constructor_call_node,
+  walk_tree
 } from './constructor_calls';
 
 /**
@@ -140,7 +141,9 @@ function add_type_assignment(
     type_name: assignment.type_name,
     location: assignment.location,
     source: 'constructor',
-    confidence: 1.0
+    confidence: 1.0,
+    is_return_value: assignment.is_return_value,
+    is_property_assignment: assignment.is_property_assignment
   };
   
   const existing = type_map.get(assignment.variable_name) || [];
@@ -211,18 +214,6 @@ function is_statement_boundary(node: SyntaxNode): boolean {
   return boundary_types.includes(node.type);
 }
 
-/**
- * Walk the AST tree
- */
-function walk_tree(node: SyntaxNode, callback: (node: SyntaxNode) => void): void {
-  callback(node);
-  for (let i = 0; i < node.childCount; i++) {
-    const child = node.child(i);
-    if (child) {
-      walk_tree(child, callback);
-    }
-  }
-}
 
 /**
  * Merge constructor-discovered types into an existing type map

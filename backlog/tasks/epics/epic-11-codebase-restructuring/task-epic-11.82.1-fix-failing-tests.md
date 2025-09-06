@@ -26,14 +26,14 @@ Fix 22 failing tests in the constructor_calls module. Most failures are pre-exis
 
 ## Acceptance Criteria
 - [x] Fix import for type_registry functions
-- [ ] Implement missing helper functions:
-  - [ ] `is_property_assignment()`
-  - [ ] `is_return_value()` 
-  - [ ] `walk_tree()` export
-- [ ] Fix property assignment detection for JS/TS
-- [ ] Fix self property detection for Python
-- [ ] Fix module.Class pattern for Python
-- [ ] All 86 tests passing (82/86 passing - 4 need helper functions from task 11.82.4)
+- [x] Implement missing helper functions:
+  - [x] `is_property_assignment()`
+  - [x] `is_return_value()` 
+  - [x] `walk_tree()` export
+- [x] Fix property assignment detection for JS/TS
+- [x] Fix self property detection for Python
+- [x] Fix module.Class pattern for Python
+- [x] All 86 tests passing (86/86 passing - 100% complete)
 
 ## Technical Notes
 - These tests were already broken before refactoring
@@ -44,7 +44,9 @@ Fix 22 failing tests in the constructor_calls module. Most failures are pre-exis
 CRITICAL - Tests must pass for refactoring to be complete
 
 ## Implementation Notes
-PARTIALLY COMPLETE (82/86 tests passing):
+COMPLETE (86/86 tests passing - 100%):
+
+**Phase 1 - Type Registry Integration (Tasks 11.82.1 & 11.82.2):**
 - Fixed import issue: Changed `create_type_registry` to `build_type_registry`
 - Fixed type registry to properly pass file_path parameter to register functions
 - Added support for structs in type registry (treated as classes)
@@ -54,8 +56,15 @@ PARTIALLY COMPLETE (82/86 tests passing):
 - Fixed export statement format in tests to match interface
 - Fixed get_constructable_types to extract file_path from qualified name
 
-Remaining 4 tests require helper functions from task 11.82.4:
-- Property assignment detection (this.myProp)
-- Return value detection
-- Python self property detection
-- Python module.Class pattern detection
+**Phase 2 - Helper Functions (Task 11.82.4):**
+- Extended TypeInfo interface with `is_return_value` and `is_property_assignment` fields
+- Enhanced `find_assignment_target` to handle member expressions (this.prop, self.prop)
+- Fixed Python module.Class pattern recognition by adding special handling for attribute nodes
+- Updated both `extract_name_from_node` and `extract_constructor_name` functions
+- Imported `walk_tree` from constructor_calls.ts (already exported)
+
+**Result:**
+- All 86 tests now passing (100% success rate)
+- All helper functions properly implemented
+- Full support for property assignments and return values
+- Python module.Class pattern now working correctly
