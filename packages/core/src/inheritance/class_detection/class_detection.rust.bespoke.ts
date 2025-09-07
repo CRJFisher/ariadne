@@ -1,32 +1,47 @@
 /**
- * Rust struct detection
+ * Rust-specific class detection features
  * 
- * Rust doesn't have classes, but has structs with impl blocks
- * that serve a similar purpose.
+ * This module handles Rust features that cannot be expressed
+ * through configuration alone (~20% of the logic for Rust).
+ * Rust is unique because structs and their implementations are separate.
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { 
+import {
   ClassDefinition,
   MethodDefinition,
   PropertyDefinition,
-  GenericParameter,
-  Location
+  GenericParameter
 } from '@ariadnejs/types';
 import { ClassDetectionContext } from './index';
+import { node_to_location } from '../../ast/node_utils';
+import { walk_tree } from './class_detection.generic';
+
+interface ImplBlock {
+  struct_name: string;
+  trait_name?: string;
+  methods: MethodDefinition[];
+  location: Location;
+}
+
+interface Location {
+  row: number;
+  column: number;
+}
 
 /**
- * Find all struct definitions in Rust code
+ * Process Rust structs with impl blocks (two-pass approach)
  * 
- * Maps Rust structs to ClassDefinition for consistency
+ * Rust requires special handling because struct definitions and
+ * their method implementations are in separate blocks.
  */
-export function find_struct_definitions_rust(
+export function process_rust_structs(
   context: ClassDetectionContext
 ): ClassDefinition[] {
   const structs = new Map<string, ClassDefinition>();
   const impl_blocks: ImplBlock[] = [];
   
-  // First pass: collect struct definitions
+  // First pass: collect struct definitions and impl blocks
   walk_tree(context.ast_root, (node) => {
     if (node.type === 'struct_item') {
       const struct_def = extract_struct_definition(node, context);
@@ -35,7 +50,6 @@ export function find_struct_definitions_rust(
       }
     }
     
-    // Collect impl blocks for second pass
     if (node.type === 'impl_item') {
       const impl_block = extract_impl_block(node, context);
       if (impl_block) {
@@ -49,7 +63,7 @@ export function find_struct_definitions_rust(
     const struct_def = structs.get(impl_block.struct_name);
     if (struct_def) {
       // Merge methods from impl block
-      const merged_methods = [...struct_def.methods, ...impl_block.methods];
+      const merged_methods = [...(struct_def.methods || []), ...impl_block.methods];
       structs.set(impl_block.struct_name, {
         ...struct_def,
         methods: merged_methods,
@@ -57,18 +71,14 @@ export function find_struct_definitions_rust(
           ? [...(struct_def.implements || []), impl_block.trait_name]
           : struct_def.implements
       });
-    } else if (impl_block.trait_name) {
-      // Trait implementation for external type, skip
-    } else {
+    } else if (!impl_block.trait_name) {
       // Impl block for a type we haven't seen (maybe from another file)
       // Create a partial definition
       structs.set(impl_block.struct_name, {
         name: impl_block.struct_name,
         location: impl_block.location,
         methods: impl_block.methods,
-        properties: [],
-        language: 'rust',
-        file_path: context.file_path
+        properties: []
       });
     }
   }
@@ -76,15 +86,8 @@ export function find_struct_definitions_rust(
   return Array.from(structs.values());
 }
 
-interface ImplBlock {
-  struct_name: string;
-  trait_name?: string;
-  methods: MethodDefinition[];
-  location: Location;
-}
-
 /**
- * Extract struct definition
+ * Extract Rust struct definition
  */
 function extract_struct_definition(
   node: SyntaxNode,
@@ -97,7 +100,7 @@ function extract_struct_definition(
   
   // Extract generic parameters
   const type_params_node = node.childForFieldName('type_parameters');
-  const generics = extract_generic_parameters(type_params_node, context);
+  const generics = type_params_node ? extract_rust_generics(type_params_node, context) : undefined;
   
   // Extract fields (properties)
   const body_node = node.childForFieldName('body');
@@ -108,18 +111,16 @@ function extract_struct_definition(
   
   return {
     name: struct_name,
-    location: node_to_location(node),
+    location: node_to_location(node, context.file_path),
     properties,
     methods: [], // Will be populated from impl blocks
     generics,
-    decorators,
-    language: 'rust',
-    file_path: context.file_path
+    decorators
   };
 }
 
 /**
- * Extract struct fields
+ * Extract struct fields with special handling for tuple structs
  */
 function extract_struct_fields(
   body_node: SyntaxNode | null,
@@ -144,21 +145,23 @@ function extract_struct_fields(
     }
   }
   // Tuple struct: struct Foo(Type1, Type2)
-  else if (body_node.type === 'tuple_struct_pattern') {
+  else if (body_node.type === 'tuple_struct_pattern' || body_node.type === 'ordered_field_declaration_list') {
+    let field_index = 0;
     for (let i = 0; i < body_node.childCount; i++) {
       const child = body_node.child(i);
       if (!child) continue;
       
       if (child.type !== '(' && child.type !== ')' && child.type !== ',') {
         properties.push({
-          name: `field_${i}`, // Tuple fields don't have names
+          name: `${field_index}`, // Tuple fields are accessed by index
           type: context.source_code.substring(child.startIndex, child.endIndex),
-          location: node_to_location(child),
+          location: node_to_location(child, context.file_path),
           is_static: false,
           is_private: false,
           is_protected: false,
-          is_readonly: false // Rust fields are mutable by default
+          is_readonly: false
         });
+        field_index++;
       }
     }
   }
@@ -167,7 +170,7 @@ function extract_struct_fields(
 }
 
 /**
- * Extract single field
+ * Extract single field with visibility modifiers
  */
 function extract_field(
   node: SyntaxNode,
@@ -193,11 +196,11 @@ function extract_field(
   return {
     name: field_name,
     type: field_type,
-    location: node_to_location(node),
+    location: node_to_location(node, context.file_path),
     is_static: false,
     is_private: !is_public,
     is_protected: false, // Rust doesn't have protected
-    is_readonly: false
+    is_readonly: false // Could check for mutability patterns
   };
 }
 
@@ -229,12 +232,12 @@ function extract_impl_block(
     struct_name,
     trait_name,
     methods,
-    location: node_to_location(node)
+    location: node_to_location(node, context.file_path)
   };
 }
 
 /**
- * Extract methods from impl block
+ * Extract methods from impl block with Rust-specific handling
  */
 function extract_impl_methods(
   body_node: SyntaxNode | null,
@@ -249,15 +252,15 @@ function extract_impl_methods(
     if (!child) continue;
     
     if (child.type === 'function_item') {
-      const method = extract_method(child, context);
+      const method = extract_rust_method(child, context);
       if (method) {
         methods.push(method);
       }
     }
     
-    // Associated constants
+    // Associated constants could be treated as static properties
     if (child.type === 'const_item') {
-      // Could treat as static property if needed
+      // Could extract as a static property if needed
     }
     
     // Associated types
@@ -270,9 +273,9 @@ function extract_impl_methods(
 }
 
 /**
- * Extract method definition
+ * Extract Rust method with self parameter handling
  */
-function extract_method(
+function extract_rust_method(
   node: SyntaxNode,
   context: ClassDetectionContext
 ): MethodDefinition | null {
@@ -293,7 +296,7 @@ function extract_method(
   
   // Extract parameters
   const params_node = node.childForFieldName('parameters');
-  const parameters = extract_parameters(params_node, context);
+  const parameters = extract_rust_parameters(params_node, context);
   
   // Check if it's a static method (no self parameter)
   const is_static = !parameters.some(p => 
@@ -313,11 +316,13 @@ function extract_method(
   
   // Extract generic parameters
   const type_params_node = node.childForFieldName('type_parameters');
-  const generics = extract_generic_parameters(type_params_node, context);
+  const generics = type_params_node
+    ? extract_rust_generics(type_params_node, context)
+    : undefined;
   
   return {
     name: method_name,
-    location: node_to_location(node),
+    location: node_to_location(node, context.file_path),
     is_static,
     is_abstract: false, // Rust doesn't have abstract methods
     is_private: !is_public,
@@ -326,14 +331,16 @@ function extract_method(
     is_async,
     parameters: filtered_params,
     return_type,
-    generics
+    generics,
+    is_override: false,
+    overridden_by: []
   };
 }
 
 /**
- * Extract function parameters
+ * Extract Rust parameters with self handling
  */
-function extract_parameters(
+function extract_rust_parameters(
   params_node: SyntaxNode | null,
   context: ClassDetectionContext
 ): ParameterDefinition[] {
@@ -386,21 +393,28 @@ function extract_parameters(
 }
 
 /**
- * Extract generic parameters
+ * Extract Rust generic parameters with lifetime support
  */
-function extract_generic_parameters(
-  type_params_node: SyntaxNode | null,
+function extract_rust_generics(
+  type_params_node: SyntaxNode,
   context: ClassDetectionContext
 ): GenericParameter[] | undefined {
-  if (!type_params_node) return undefined;
-  
   const generics: GenericParameter[] = [];
   
   for (let i = 0; i < type_params_node.childCount; i++) {
     const child = type_params_node.child(i);
     if (!child) continue;
     
-    if (child.type === 'type_parameter' || child.type === 'lifetime_parameter') {
+    // Skip angle brackets
+    if (child.type === '<' || child.type === '>') continue;
+    
+    // Direct type identifier (simple generic like <T>)
+    if (child.type === 'type_identifier') {
+      generics.push({
+        name: context.source_code.substring(child.startIndex, child.endIndex),
+        constraint: undefined
+      });
+    } else if (child.type === 'type_parameter' || child.type === 'lifetime_parameter') {
       const name = child.childForFieldName('name');
       const bounds = child.childForFieldName('bounds');
       
@@ -448,7 +462,7 @@ function extract_return_type(
 }
 
 /**
- * Extract type name from type node
+ * Extract type name from various type nodes
  */
 function extract_type_name(
   type_node: SyntaxNode,
@@ -489,40 +503,22 @@ function extract_derive_macros(
   // Look for #[derive(...)] attributes
   let sibling = node.previousSibling;
   while (sibling && sibling.type === 'attribute_item') {
-    const meta = sibling.childForFieldName('meta');
-    if (meta && meta.text?.includes('derive')) {
-      // Extract the derived traits
-      const args = meta.text.match(/derive\((.*?)\)/);
-      if (args && args[1]) {
-        const traits = args[1].split(',').map(t => t.trim());
-        derives.push(...traits);
+    // Look for the attribute child (not meta field)
+    for (let i = 0; i < sibling.childCount; i++) {
+      const child = sibling.child(i);
+      if (child && child.type === 'attribute') {
+        if (child.text?.includes('derive')) {
+          // Extract the derived traits
+          const args = child.text.match(/derive\((.*?)\)/);
+          if (args && args[1]) {
+            const traits = args[1].split(',').map(t => t.trim());
+            derives.push(...traits);
+          }
+        }
       }
     }
     sibling = sibling.previousSibling;
   }
   
   return derives.length > 0 ? derives : undefined;
-}
-
-/**
- * Convert node to location
- */
-function node_to_location(node: SyntaxNode): Location {
-  return {
-    row: node.startPosition.row,
-    column: node.startPosition.column
-  };
-}
-
-/**
- * Walk the AST tree
- */
-function walk_tree(node: SyntaxNode, callback: (node: SyntaxNode) => void): void {
-  callback(node);
-  for (let i = 0; i < node.childCount; i++) {
-    const child = node.child(i);
-    if (child) {
-      walk_tree(child, callback);
-    }
-  }
 }
