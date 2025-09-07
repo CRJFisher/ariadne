@@ -96,21 +96,22 @@ const JAVASCRIPT_CONFIG: ExportLanguageConfig = {
   
   patterns: {
     default_export: [
-      /export\s+default\s+/,
-      /module\.exports\s*=\s*(?!{)/  // CommonJS default
+      /^export\s+default\s+/m,
+      /^module\.exports\s*=\s*(?!\{)/m  // CommonJS default
     ],
     named_export: [
-      /export\s+(?:const|let|var|function|class)\s+/,
-      /export\s*\{/,
-      /exports\.(\w+)\s*=/  // CommonJS named
+      /^export\s+(?:const|let|var|function|class|async\s+function)\s+/m,
+      /^export\s*\{/m,
+      /^exports\.(\w+)\s*=/m,  // CommonJS named
+      /^Object\.defineProperty\(exports,\s*['"]\w+['"]\s*,/m  // CommonJS defineProperty
     ],
     reexport: [
-      /export\s*\{[^}]*\}\s*from/,
-      /export\s*\*\s*from/,
-      /export\s*\*\s*as\s+\w+\s+from/
+      /^export\s*\{[^}]*\}\s*from\s*['"`]/m,
+      /^export\s*\*\s*from\s*['"`]/m,
+      /^export\s*\*\s*as\s+\w+\s*from\s*['"`]/m
     ],
     namespace_export: [
-      /export\s*\*\s*as\s+\w+/
+      /^export\s*\*\s*as\s+\w+(?:\s+from)?/m
     ],
     custom: {
       commonjs_object: [/module\.exports\s*=\s*\{/]
@@ -146,20 +147,24 @@ const TYPESCRIPT_CONFIG: ExportLanguageConfig = {
     'interface_declaration',
     'type_alias_declaration',
     'enum_declaration',
-    'namespace_declaration'
+    'namespace_declaration',
+    'ambient_declaration'
   ],
   
   patterns: {
     ...JAVASCRIPT_CONFIG.patterns,
     named_export: [
       ...JAVASCRIPT_CONFIG.patterns.named_export,
-      /export\s+(?:type|interface|enum|namespace)\s+/
+      /^export\s+(?:type|interface|enum|namespace|declare\s+(?:const|let|var|function|class))\s+/m,
+      /^export\s+abstract\s+class\s+/m,
+      /^export\s+declare\s+(?:const|let|var|function|class|interface|type|enum|namespace)\s+/m
     ],
     custom: {
       ...JAVASCRIPT_CONFIG.patterns.custom,
       type_export: [
-        /export\s+type\s+\{/,
-        /export\s+type\s+\w+/
+        /^export\s+type\s+\{[^}]*\}/m,
+        /^export\s+type\s+\w+/m,
+        /^export\s+(?:type|interface)\s+\w+\s*(?:<[^>]+>)?\s*=/m
       ]
     }
   },
@@ -195,10 +200,12 @@ const PYTHON_CONFIG: ExportLanguageConfig = {
   patterns: {
     default_export: [],  // Python doesn't have default exports
     named_export: [
-      /__all__\s*=\s*\[/  // Explicit export list
+      /^__all__\s*=\s*\[/m,  // Explicit export list
+      /^__all__\s*\+?=/m  // __all__ assignment or augmentation
     ],
     reexport: [
-      /from\s+\S+\s+import\s+/  // Can be re-exported via __all__
+      /^from\s+[\w.]+\s+import\s+/m,  // Can be re-exported via __all__
+      /^import\s+\w+\s+as\s+\w+$/m  // Import with alias at module level
     ],
     namespace_export: []
   },
@@ -248,19 +255,20 @@ const RUST_CONFIG: ExportLanguageConfig = {
   patterns: {
     default_export: [],  // Rust doesn't have default exports
     named_export: [
-      /pub\s+(?:fn|struct|enum|trait|mod|type|const|static)\s+/
+      /^\s*pub(?:\([^)]+\))?\s+(?:fn|struct|enum|trait|mod|type|const|static|unsafe\s+fn|async\s+fn)\s+/m
     ],
     reexport: [
-      /pub\s+use\s+/
+      /^\s*pub(?:\([^)]+\))?\s+use\s+/m
     ],
     namespace_export: [
-      /pub\s+use\s+\S+::\*/
+      /^\s*pub(?:\([^)]+\))?\s+use\s+[^;]+::\*(?:\s+as\s+\w+)?/m
     ],
     custom: {
       visibility: [
-        /pub\s*\(\s*crate\s*\)/,
-        /pub\s*\(\s*super\s*\)/,
-        /pub\s*\(\s*in\s+\S+\s*\)/
+        /^\s*pub\s*\(\s*crate\s*\)/m,
+        /^\s*pub\s*\(\s*super\s*\)/m,
+        /^\s*pub\s*\(\s*in\s+[^)]+\s*\)/m,
+        /^\s*pub\s*\(\s*self\s*\)/m
       ]
     }
   },
@@ -410,4 +418,63 @@ export function supports_type_exports(language: Language): boolean {
 export function has_visibility_modifiers(language: Language): boolean {
   const config = get_export_config(language);
   return config.features.visibility_modifiers;
+}
+
+/**
+ * Check if a pattern is a barrel export pattern
+ */
+export function is_barrel_export(source_path: string): boolean {
+  // Barrel exports typically export from sibling modules
+  return source_path.startsWith('./') && 
+         !source_path.includes('..') && 
+         !source_path.includes('.json') &&
+         !source_path.includes('.css');
+}
+
+/**
+ * Get all export keywords for a language
+ */
+export function get_export_keywords(language: Language): string[] {
+  const config = get_export_config(language);
+  return config.export_keywords;
+}
+
+/**
+ * Check if text contains any export keyword
+ */
+export function contains_export_keyword(
+  text: string,
+  language: Language
+): boolean {
+  const keywords = get_export_keywords(language);
+  return keywords.some(keyword => text.includes(keyword));
+}
+
+/**
+ * Normalize export kind based on language conventions
+ */
+export function normalize_export_kind(
+  kind: string,
+  language: Language
+): string {
+  // Normalize kind based on language
+  if (language === 'rust') {
+    // Rust uses more specific kinds
+    const rust_kinds: Record<string, string> = {
+      'function': 'fn',
+      'class': 'struct',
+      'interface': 'trait',
+      'module': 'mod'
+    };
+    return rust_kinds[kind] || kind;
+  }
+  
+  if (language === 'python') {
+    // Python doesn't distinguish as much
+    if (kind === 'interface' || kind === 'trait') {
+      return 'class';
+    }
+  }
+  
+  return kind;
 }

@@ -6,7 +6,14 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { ExportInfo, Location } from '@ariadnejs/types';
+import { ExportInfo } from '@ariadnejs/types';
+import {
+  node_to_location,
+  clean_source,
+  extract_name,
+  find_child_of_type,
+  get_function_modifiers
+} from './bespoke_utils';
 
 /**
  * Handle CommonJS exports (module.exports and exports.x patterns)
@@ -33,10 +40,10 @@ export function handle_commonjs_exports(
           // module.exports = { foo, bar }
           for (const prop of right.children) {
             if (prop.type === 'pair' || prop.type === 'shorthand_property_identifier') {
-              const key = prop.childForFieldName('key') || prop;
-              if (key) {
+              const name = extract_name(prop);
+              if (name) {
                 exports.push({
-                  name: key.text,
+                  name,
                   source: 'local',
                   kind: 'named',
                   location: node_to_location(prop)
@@ -153,15 +160,54 @@ export function handle_dynamic_exports(
         const object = left.childForFieldName('object');
         const index = left.childForFieldName('index');
         
-        if (object?.text === 'exports' && index) {
-          // Mark as dynamic export
+        if ((object?.text === 'exports' || object?.text === 'module.exports') && index) {
+          // Try to extract the index if it's a string literal
+          let export_name = '<dynamic>';
+          if (index.type === 'string') {
+            export_name = clean_source(index.text);
+          }
+          
           exports.push({
-            name: '<dynamic>',
+            name: export_name,
             source: 'local',
             kind: 'named',
             location: node_to_location(node),
-            is_dynamic: true
+            is_dynamic: export_name === '<dynamic>'
           });
+        }
+      }
+    }
+    
+    // Object.defineProperty(exports, ...) pattern
+    if (node.type === 'call_expression') {
+      const function_node = node.childForFieldName('function');
+      const arguments_node = node.childForFieldName('arguments');
+      
+      if (function_node) {
+        const func_text = function_node.text;
+        if (func_text === 'Object.defineProperty' && arguments_node) {
+          const args = arguments_node.children.filter(
+            c => c.type !== ',' && c.type !== '(' && c.type !== ')'
+          );
+          
+          if (args.length >= 2) {
+            const target = args[0];
+            const property = args[1];
+            
+            if (target && (target.text === 'exports' || target.text === 'module.exports')) {
+              const prop_name = property.type === 'string' ? 
+                clean_source(property.text) : '<dynamic>';
+              
+              exports.push({
+                name: prop_name,
+                source: 'local',
+                kind: 'named',
+                location: node_to_location(node),
+                is_defineProperty: true,
+                is_dynamic: prop_name === '<dynamic>'
+              });
+            }
+          }
         }
       }
     }
@@ -176,19 +222,3 @@ export function handle_dynamic_exports(
   return exports;
 }
 
-function node_to_location(node: SyntaxNode): Location {
-  return {
-    start: {
-      line: node.startPosition.row + 1,
-      column: node.startPosition.column + 1
-    },
-    end: {
-      line: node.endPosition.row + 1,
-      column: node.endPosition.column + 1
-    }
-  };
-}
-
-function clean_source(source: string): string {
-  return source.replace(/^['"`]|['"`]$/g, '');
-}

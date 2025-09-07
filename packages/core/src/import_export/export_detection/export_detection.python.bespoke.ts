@@ -7,6 +7,13 @@
 
 import { SyntaxNode } from 'tree-sitter';
 import { ExportInfo } from '@ariadnejs/types';
+import {
+  node_to_location,
+  clean_string,
+  parse_all_list,
+  has_decorator,
+  is_inside_node_type
+} from './bespoke_utils';
 
 /**
  * Handle __all__ list exports
@@ -239,52 +246,3 @@ export function handle_decorated_exports(
   return exports;
 }
 
-/**
- * Parse __all__ list including complex patterns
- */
-function parse_all_list(list_node: SyntaxNode): string[] {
-  const names: string[] = [];
-  
-  const visit = (node: SyntaxNode) => {
-    if (node.type === 'string') {
-      names.push(clean_string(node.text));
-    } else if (node.type === 'concatenated_string') {
-      // Handle string concatenation in __all__
-      for (const child of node.children) {
-        if (child.type === 'string') {
-          names.push(clean_string(child.text));
-        }
-      }
-    } else if (node.type === 'list_comprehension') {
-      // __all__ = [name for name in dir() if not name.startswith('_')]
-      // Mark as dynamic - can't determine statically
-      names.push('<dynamic>');
-      return; // Don't traverse children of list comprehension
-    }
-    
-    // Continue traversal
-    for (const child of node.children) {
-      visit(child);
-    }
-  };
-  
-  visit(list_node);
-  return names;
-}
-
-function clean_string(str: string): string {
-  return str.replace(/^['"`]|['"`]$/g, '');
-}
-
-function node_to_location(node: SyntaxNode): any {
-  return {
-    start: {
-      line: node.startPosition.row + 1,
-      column: node.startPosition.column + 1
-    },
-    end: {
-      line: node.endPosition.row + 1,
-      column: node.endPosition.column + 1
-    }
-  };
-}

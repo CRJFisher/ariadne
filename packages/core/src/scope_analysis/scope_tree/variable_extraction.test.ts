@@ -8,7 +8,7 @@ import JavaScript from 'tree-sitter-javascript';
 import TypeScript from 'tree-sitter-typescript';
 import Python from 'tree-sitter-python';
 import Rust from 'tree-sitter-rust';
-import { build_scope_tree } from './scope_tree';
+import { build_scope_tree } from './index';
 import { extract_variables_from_symbols } from './enhanced_symbols';
 
 describe('Variable Extraction from Scope Tree', () => {

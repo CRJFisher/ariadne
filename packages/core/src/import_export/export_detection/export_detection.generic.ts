@@ -57,8 +57,11 @@ export function detect_exports_generic(
   // Track processed nodes to avoid duplicates
   const processed_nodes = new Set<SyntaxNode>();
   
+  // Track export names to detect duplicates and overrides
+  const export_names = new Map<string, ExportInfo>();
+  
   // Visit all nodes in the AST
-  const visit = (node: SyntaxNode, depth: number = 0) => {
+  const visit = (node: SyntaxNode, depth: number = 0, parent?: SyntaxNode) => {
     if (processed_nodes.has(node)) return;
     
     // Check if this is an export node (for languages with explicit export statements)
@@ -96,10 +99,29 @@ export function detect_exports_generic(
       }
     }
     
-    // Check for special patterns that need bespoke handling
-    const node_text = node.text.substring(0, 100); // Check first 100 chars
+    // Check for barrel exports pattern (index files)
+    if (node.type === 'export_statement' && !node.childForFieldName('declaration')) {
+      const source = node.childForFieldName('source');
+      if (source && source.text.includes('./') && !source.text.includes('..')) {
+        // This might be a barrel export from a sibling module
+        const barrel_export = {
+          name: '*',
+          source: clean_module_source(source.text),
+          kind: 'barrel' as const,
+          location: node_to_location(node)
+        };
+        exports.push(barrel_export);
+      }
+    }
     
-    if (config.features.commonjs_support && node_text.includes('module.exports')) {
+    // Check for special patterns that need bespoke handling
+    const node_text = node.text.substring(0, 200); // Check first 200 chars for better detection
+    
+    if (config.features.commonjs_support && 
+        (node_text.includes('module.exports') || 
+         node_text.includes('exports.') ||
+         node_text.includes('exports[') ||
+         node_text.includes('Object.defineProperty'))) {
       bespoke_hints.has_commonjs = true;
       requires_bespoke = true;
     }
@@ -122,7 +144,7 @@ export function detect_exports_generic(
     
     // Continue traversal
     for (const child of node.children) {
-      visit(child, depth + 1);
+      visit(child, depth + 1, node);
     }
   };
   
@@ -147,10 +169,24 @@ function process_export_node(
   const exports: ExportInfo[] = [];
   const node_text = node.text;
   
+  // Handle export = syntax (TypeScript module.exports equivalent)
+  if (language === 'typescript' && node_text.startsWith('export =')) {
+    exports.push({
+      name: 'default',
+      source: 'local',
+      kind: 'default',
+      location: node_to_location(node),
+      is_export_equals: true
+    });
+    return exports;
+  }
+  
   // Determine export type from patterns
   const is_default = matches_export_pattern(node_text, 'default_export', language);
   const is_reexport = matches_export_pattern(node_text, 'reexport', language);
   const is_namespace = matches_export_pattern(node_text, 'namespace_export', language);
+  const is_type_export = language === 'typescript' && 
+    (node_text.startsWith('export type ') || matches_export_pattern(node_text, 'custom', language));
   
   // Extract declaration or specifiers
   const declaration = node.childForFieldName(config.field_names.declaration || 'declaration');
@@ -159,7 +195,24 @@ function process_export_node(
   
   // Also check for export_clause as a direct child (common in re-exports)
   if (!specifiers) {
-    specifiers = node.children.find(c => c.type === 'export_clause');
+    specifiers = node.children.find(c => c.type === 'export_clause' || c.type === 'named_exports');
+  }
+  
+  // Handle async/generator functions
+  if (declaration && (declaration.type === 'generator_function_declaration' || 
+                     node_text.includes('async function'))) {
+    const name_node = declaration.childForFieldName('name');
+    if (name_node) {
+      exports.push({
+        name: name_node.text,
+        source: 'local',
+        kind: is_default ? 'default' : 'named',
+        location: node_to_location(node),
+        is_async: node_text.includes('async'),
+        is_generator: declaration.type === 'generator_function_declaration'
+      });
+      return exports;
+    }
   }
   
   if (declaration) {
@@ -183,10 +236,18 @@ function process_export_node(
       // For function/class declarations, get name directly
       const name_node = declaration.childForFieldName(config.field_names.name || 'name');
       if (name_node) {
+        // Determine the correct kind
+        let kind = 'named';
+        if (is_default) {
+          kind = 'default';
+        } else if (is_type_export || declaration.type === 'type_alias_declaration') {
+          kind = 'type';
+        }
+        
         exports.push({
           name: name_node.text,
           source: 'local',
-          kind: is_default ? 'default' : 'named',
+          kind,
           location: node_to_location(node)
         });
       } else if (is_default) {
@@ -268,8 +329,8 @@ function process_export_specifiers(
 ): ExportInfo[] {
   const exports: ExportInfo[] = [];
   
-  // Handle export_clause directly (export { foo, bar })
-  if (specifiers_node.type === 'export_clause') {
+  // Handle export_clause or named_exports directly (export { foo, bar })
+  if (specifiers_node.type === 'export_clause' || specifiers_node.type === 'named_exports') {
     for (const child of specifiers_node.children) {
       if (child.type === 'export_specifier') {
         const name = child.childForFieldName('name');
@@ -327,10 +388,37 @@ function process_implicit_export(
     return null;
   }
   
+  // Skip dunder methods except special ones
+  if (name.startsWith('__') && name.endsWith('__')) {
+    const special_dunders = ['__init__', '__call__', '__str__', '__repr__', '__enter__', '__exit__'];
+    if (!special_dunders.includes(name)) {
+      return null;
+    }
+  }
+  
+  // Determine export kind based on node type
+  let kind: string = 'named';
+  if (node.type === 'class_definition') {
+    kind = 'class';
+  } else if (node.type === 'function_definition') {
+    kind = 'function';
+    // Check if it's async
+    const async_keyword = node.children.find(c => c.type === 'async');
+    if (async_keyword) {
+      return {
+        name,
+        source: 'local',
+        kind,
+        location: node_to_location(node),
+        is_async: true
+      };
+    }
+  }
+  
   return {
     name,
     source: 'local',
-    kind: 'named',
+    kind,
     location: node_to_location(node)
   };
 }
@@ -396,7 +484,11 @@ export function needs_bespoke_processing(
   const config = get_export_config(language);
   
   // Quick checks for patterns that need bespoke handling
-  if (config.features.commonjs_support && source_code.includes('module.exports')) {
+  if (config.features.commonjs_support && 
+      (source_code.includes('module.exports') ||
+       source_code.includes('exports.') ||
+       source_code.includes('exports[') ||
+       source_code.includes('Object.defineProperty'))) {
     return true;
   }
   

@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterAll } from 'vitest';
 import { get_language_parser } from '../../scope_queries/loader';
-import { build_language_scope_tree, find_scope_at_position, get_visible_symbols } from './index';
+import { build_scope_tree, find_scope_at_position, get_visible_symbols } from './index';
 
 describe('Scope Tree', () => {
   const clean_files: string[] = [];
@@ -29,7 +29,7 @@ describe('Scope Tree', () => {
       `;
       
       const tree = parser.parse(code);
-      const scope_tree = build_language_scope_tree(tree.rootNode, code, 'javascript');
+      const scope_tree = build_scope_tree(tree.rootNode, code, 'javascript', 'test.js');
       
       expect(scope_tree).toBeDefined();
       expect(scope_tree.nodes.size).toBeGreaterThan(1);
@@ -49,7 +49,7 @@ describe('Scope Tree', () => {
       `;
       
       const tree = parser.parse(code);
-      const scope_tree = build_language_scope_tree(tree.rootNode, code, 'javascript');
+      const scope_tree = build_scope_tree(tree.rootNode, code, 'javascript', 'test.js');
       
       // Find function scope
       let function_scope = null;
@@ -76,7 +76,7 @@ describe('Scope Tree', () => {
       `;
       
       const tree = parser.parse(code);
-      const scope_tree = build_language_scope_tree(tree.rootNode, code, 'javascript');
+      const scope_tree = build_scope_tree(tree.rootNode, code, 'javascript', 'test.js');
       
       // Should have global and block scope
       expect(scope_tree.nodes.size).toBe(2);
@@ -95,7 +95,7 @@ describe('Scope Tree', () => {
       `;
       
       const tree = parser.parse(code);
-      const scope_tree = build_language_scope_tree(tree.rootNode, code, 'javascript');
+      const scope_tree = build_scope_tree(tree.rootNode, code, 'javascript', 'test.js');
       
       // Position inside function
       const scope = find_scope_at_position(scope_tree, { row: 2, column: 10 });
@@ -115,7 +115,7 @@ describe('Scope Tree', () => {
       `;
       
       const tree = parser.parse(code);
-      const scope_tree = build_language_scope_tree(tree.rootNode, code, 'javascript');
+      const scope_tree = build_scope_tree(tree.rootNode, code, 'javascript', 'test.js');
       
       // Find function scope
       let function_scope_id = '';
@@ -155,7 +155,7 @@ describe('Scope Tree', () => {
       `;
       
       const tree = parser.parse(code);
-      const scope_tree = build_language_scope_tree(tree.rootNode, code, 'typescript');
+      const scope_tree = build_scope_tree(tree.rootNode, code, 'typescript', 'test.ts');
       
       // Should have scopes for namespace and class
       let namespace_count = 0;
@@ -181,7 +181,7 @@ describe('Scope Tree', () => {
       `;
       
       const tree = parser.parse(code);
-      const scope_tree = build_language_scope_tree(tree.rootNode, code, 'typescript');
+      const scope_tree = build_scope_tree(tree.rootNode, code, 'typescript', 'test.ts');
       
       // Find function scope
       let function_scope = null;
@@ -216,7 +216,7 @@ def function():
       `;
       
       const tree = parser.parse(code);
-      const scope_tree = build_language_scope_tree(tree.rootNode, code, 'python');
+      const scope_tree = build_scope_tree(tree.rootNode, code, 'python', 'test.py');
       
       // Should have class and function scopes
       let class_count = 0;
@@ -241,15 +241,15 @@ gen = (x for x in items)
       `;
       
       const tree = parser.parse(code);
-      const scope_tree = build_language_scope_tree(tree.rootNode, code, 'python');
+      const scope_tree = build_scope_tree(tree.rootNode, code, 'python', 'test.py');
       
-      // Should have local scopes for comprehensions
-      let local_count = 0;
+      // Should have block scopes for comprehensions
+      let block_count = 0;
       for (const [id, node] of scope_tree.nodes) {
-        if (node.type === 'local') local_count++;
+        if (node.type === 'block') block_count++;
       }
       
-      expect(local_count).toBeGreaterThan(0);
+      expect(block_count).toBeGreaterThan(0);
     });
     
     it('should handle global and nonlocal', () => {
@@ -269,7 +269,7 @@ def outer():
       `;
       
       const tree = parser.parse(code);
-      const scope_tree = build_language_scope_tree(tree.rootNode, code, 'python');
+      const scope_tree = build_scope_tree(tree.rootNode, code, 'python', 'test.py');
       
       // Global var should be in root scope
       const root_scope = scope_tree.nodes.get(scope_tree.root_id);
@@ -305,7 +305,7 @@ fn main() {
       `;
       
       const tree = parser.parse(code);
-      const scope_tree = build_language_scope_tree(tree.rootNode, code, 'rust');
+      const scope_tree = build_scope_tree(tree.rootNode, code, 'rust', 'test.rs');
       
       // Should have module, impl, function, and block scopes
       let module_count = 0;
@@ -344,7 +344,7 @@ fn test(opt: Option<i32>) {
       `;
       
       const tree = parser.parse(code);
-      const scope_tree = build_language_scope_tree(tree.rootNode, code, 'rust');
+      const scope_tree = build_scope_tree(tree.rootNode, code, 'rust', 'test.rs');
       
       // Should create scopes for match and if let
       let block_count = 0;
@@ -370,7 +370,7 @@ fn main() {
       `;
       
       const tree = parser.parse(code);
-      const scope_tree = build_language_scope_tree(tree.rootNode, code, 'rust');
+      const scope_tree = build_scope_tree(tree.rootNode, code, 'rust', 'test.rs');
       
       // Should have scope for closure
       let function_count = 0;

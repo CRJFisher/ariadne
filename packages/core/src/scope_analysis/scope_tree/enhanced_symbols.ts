@@ -31,7 +31,16 @@ export function extract_variables_from_symbols(
   
   for (const [_, symbol] of symbols) {
     if (symbol.kind === 'variable' || symbol.kind === 'parameter') {
-      variables.push(symbol);
+      // Extract metadata fields to top level for EnhancedScopeSymbol
+      const enhanced: EnhancedScopeSymbol = {
+        ...symbol,
+        declaration_type: symbol.metadata?.declaration_type as DeclarationType,
+        is_mutable: symbol.metadata?.is_mutable,
+        initial_value: symbol.metadata?.initial_value,
+        is_destructured: symbol.metadata?.is_destructured,
+        destructured_from: symbol.metadata?.destructured_from,
+      };
+      variables.push(enhanced);
     }
   }
   

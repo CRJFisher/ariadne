@@ -34,12 +34,19 @@ export function handle_visibility_modifiers(
       if (item) {
         const name = item.childForFieldName('name');
         if (name) {
+          // Extract simplified visibility level for the export
+          let visibilityLevel = visibility;
+          if (visibility === 'pub(crate)') visibilityLevel = 'crate';
+          else if (visibility === 'pub(super)') visibilityLevel = 'super';
+          else if (visibility === 'pub(self)') visibilityLevel = 'self';
+          else if (visibility.startsWith('pub(in ')) visibilityLevel = visibility.substring(4);
+          
           exports.push({
             name: name.text,
             source: 'local',
             kind: get_item_kind(item),
             location: node_to_location(item),
-            visibility,
+            visibility: visibilityLevel,
             restricted: visibility !== 'pub'
           });
         }
@@ -76,13 +83,20 @@ export function handle_pub_use_reexports(
         const use_list = parse_use_declaration(node);
         
         for (const use_item of use_list) {
+          // Extract simplified visibility level
+          let visibilityLevel = visibility;
+          if (visibility === 'pub(crate)') visibilityLevel = 'crate';
+          else if (visibility === 'pub(super)') visibilityLevel = 'super';
+          else if (visibility === 'pub(self)') visibilityLevel = 'self';
+          else if (visibility.startsWith('pub(in ')) visibilityLevel = visibility.substring(4);
+          
           exports.push({
             name: use_item.alias || use_item.name,
             source: use_item.path,
             kind: use_item.is_glob ? 'namespace' : 'named',
             location: node_to_location(node),
             original_name: use_item.alias ? use_item.name : undefined,
-            visibility,
+            visibility: visibilityLevel,
             is_reexport: true
           });
         }
@@ -279,6 +293,8 @@ function extract_visibility(node: SyntaxNode): RustVisibility | null {
     return 'pub(crate)';
   } else if (visibility_text === 'pub(super)') {
     return 'pub(super)';
+  } else if (visibility_text === 'pub(self)') {
+    return 'pub(self)';
   } else if (visibility_text.startsWith('pub(in ')) {
     return 'pub(in path)';
   }
