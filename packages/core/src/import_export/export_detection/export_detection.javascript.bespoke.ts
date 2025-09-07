@@ -56,12 +56,12 @@ export function handle_commonjs_exports(
         }
       }
       
-      // exports.name = value pattern
+      // exports.name = value or module.exports.name = value pattern
       if (left?.type === 'member_expression') {
         const object = left.childForFieldName('object');
         const property = left.childForFieldName('property');
         
-        if (object?.text === 'exports' && property) {
+        if ((object?.text === 'exports' || object?.text === 'module.exports') && property) {
           exports.push({
             name: property.text,
             source: 'local',

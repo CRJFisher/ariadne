@@ -138,8 +138,8 @@ export function handle_conditional_exports(
       }
     }
     
-    // Continue traversal
-    if (!in_conditional) {
+    // Continue traversal for all non-if_statement nodes
+    if (node.type !== 'if_statement') {
       for (const child of node.children) {
         visit(child, in_conditional);
       }
@@ -259,6 +259,7 @@ function parse_all_list(list_node: SyntaxNode): string[] {
       // __all__ = [name for name in dir() if not name.startswith('_')]
       // Mark as dynamic - can't determine statically
       names.push('<dynamic>');
+      return; // Don't traverse children of list comprehension
     }
     
     // Continue traversal

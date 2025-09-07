@@ -78,35 +78,19 @@ export function detect_exports_generic(
       }
     }
     
-    // For Rust, check for pub keyword on items (Rust uses visibility modifiers, not export statements)
-    if (language === 'rust' && is_exportable_definition(node.type, language) && !processed_nodes.has(node)) {
-      // Check for visibility modifier as first child or previous sibling
-      let has_pub = false;
-      
-      // Check first child for visibility_modifier
-      const first_child = node.children[0];
-      if (first_child && first_child.type === 'visibility_modifier') {
-        const vis_text = first_child.text;
-        if (vis_text === 'pub' || vis_text.startsWith('pub ')) {
-          has_pub = true;
-        }
-      }
-      
-      // Also check the node text itself
-      const node_text = node.text;
-      if (!has_pub && node_text.startsWith('pub ') && !node_text.startsWith('pub(')) {
-        has_pub = true;
-      }
-      
-      if (has_pub) {
+    // For languages with visibility modifiers on items (e.g., Rust)
+    if (config.features.visibility_on_item && is_exportable_definition(node.type, language) && !processed_nodes.has(node)) {
+      const visibility_result = check_item_visibility(node, config);
+      if (visibility_result.is_public) {
         const name_node = node.childForFieldName('name');
         if (name_node && !processed_nodes.has(node)) {
           processed_nodes.add(node);
           exports.push({
             name: name_node.text,
             source: 'local',
-            kind: 'named',
-            location: node_to_location(node)
+            kind: get_item_export_kind(node),
+            location: node_to_location(node),
+            visibility: visibility_result.visibility_level
           });
         }
       }
@@ -432,6 +416,73 @@ export function needs_bespoke_processing(
   }
   
   return false;
+}
+
+/**
+ * Check item visibility for languages that use visibility modifiers
+ */
+function check_item_visibility(
+  node: SyntaxNode,
+  config: ExportLanguageConfig
+): { is_public: boolean; visibility_level?: string } {
+  if (!config.features.visibility_modifiers) {
+    return { is_public: false };
+  }
+  
+  // Check for visibility modifier as first child
+  const first_child = node.children[0];
+  if (first_child && first_child.type === 'visibility_modifier') {
+    const vis_text = first_child.text;
+    // Check if it's any form of public visibility
+    if (vis_text === 'pub' || vis_text.startsWith('pub ')) {
+      return { is_public: true, visibility_level: vis_text };
+    }
+  }
+  
+  // Check if node text starts with visibility keyword
+  const node_text = node.text.substring(0, 50); // Check first 50 chars
+  if (config.visibility_keywords) {
+    for (const keyword of config.visibility_keywords) {
+      if (node_text.startsWith(keyword + ' ')) {
+        return { is_public: true, visibility_level: keyword };
+      }
+    }
+  }
+  
+  return { is_public: false };
+}
+
+/**
+ * Get the export kind for an item based on its type
+ */
+function get_item_export_kind(node: SyntaxNode): string {
+  switch (node.type) {
+    case 'function_item':
+    case 'function_declaration':
+    case 'function_definition':
+      return 'function';
+    case 'struct_item':
+    case 'class_declaration':
+    case 'class_definition':
+      return 'class';
+    case 'enum_item':
+    case 'enum_declaration':
+      return 'enum';
+    case 'trait_item':
+    case 'interface_declaration':
+      return 'interface';
+    case 'type_item':
+    case 'type_alias_declaration':
+      return 'type';
+    case 'const_item':
+    case 'static_item':
+      return 'const';
+    case 'mod_item':
+    case 'module_declaration':
+      return 'module';
+    default:
+      return 'named';
+  }
 }
 
 /**

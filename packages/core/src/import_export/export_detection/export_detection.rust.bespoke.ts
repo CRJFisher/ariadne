@@ -325,58 +325,136 @@ function parse_use_declaration(use_node: SyntaxNode): Array<{
   is_glob: boolean;
 }> {
   const items: Array<{ name: string; path: string; alias?: string; is_glob: boolean }> = [];
+  
+  // Try different node types that can appear in use declarations
   const use_tree = use_node.childForFieldName('argument');
+  const scoped_use_list = use_node.children.find(c => c.type === 'scoped_use_list');
+  const use_tree_child = use_node.children.find(c => c.type === 'use_tree');
   
-  if (!use_tree) return items;
-  
-  const parse_use_tree = (tree: SyntaxNode, path_prefix: string = '') => {
-    if (tree.type === 'scoped_identifier') {
-      const parts: string[] = [];
-      let current = tree;
-      
-      while (current.type === 'scoped_identifier') {
-        const name = current.childForFieldName('name');
-        if (name) parts.unshift(name.text);
-        current = current.childForFieldName('path')!;
-      }
-      
-      if (current.type === 'identifier') {
-        parts.unshift(current.text);
-      }
-      
-      const full_path = path_prefix + parts.join('::');
-      items.push({
-        name: parts[parts.length - 1],
-        path: full_path,
-        is_glob: false
-      });
-    } else if (tree.type === 'use_wildcard') {
-      items.push({
-        name: '*',
-        path: path_prefix.slice(0, -2), // Remove trailing ::
-        is_glob: true
-      });
-    } else if (tree.type === 'use_list') {
-      for (const child of tree.children) {
-        if (child.type === 'use_as_clause') {
-          const path = child.childForFieldName('path');
-          const alias = child.childForFieldName('alias');
-          if (path && alias) {
-            items.push({
-              name: path.text,
-              path: path_prefix + path.text,
-              alias: alias.text,
-              is_glob: false
-            });
-          }
-        } else if (child.type !== ',' && child.type !== '{' && child.type !== '}') {
-          parse_use_tree(child, path_prefix);
+  if (scoped_use_list) {
+    // Handle scoped use list like "crate::module::{Item1, Item2}"
+    const scope = scoped_use_list.children.find(c => c.type === 'scoped_identifier');
+    const list = scoped_use_list.children.find(c => c.type === 'use_list');
+    const wildcard = scoped_use_list.children.find(c => c.type === 'use_wildcard');
+    
+    const base_path = scope ? scope.text + '::' : '';
+    
+    if (list) {
+      // Process each item in the list
+      for (const child of list.children) {
+        if (child.type === 'identifier') {
+          items.push({
+            name: child.text,
+            path: base_path + child.text,
+            is_glob: false
+          });
+        } else if (child.type === 'use_as_clause') {
+          const sub_items = parse_use_tree_recursive(child, base_path);
+          items.push(...sub_items);
         }
       }
+    } else if (wildcard) {
+      items.push({
+        name: '*',
+        path: base_path.replace(/::$/, ''),
+        is_glob: true
+      });
     }
-  };
+  } else if (use_tree) {
+    return parse_use_tree_recursive(use_tree);
+  } else if (use_tree_child) {
+    return parse_use_tree_recursive(use_tree_child);
+  }
   
-  parse_use_tree(use_tree);
+  return items;
+}
+
+function parse_use_tree_recursive(tree: SyntaxNode, path_prefix: string = ''): Array<{
+  name: string;
+  path: string;
+  alias?: string;
+  is_glob: boolean;
+}> {
+  const items: Array<{ name: string; path: string; alias?: string; is_glob: boolean }> = [];
+  
+  if (tree.type === 'use_as_clause') {
+    // Handle "item as alias" pattern
+    const path = tree.childForFieldName('path');
+    const alias = tree.childForFieldName('alias');
+    
+    if (!path && !alias) {
+      // Try alternative parsing for "item as alias" without field names
+      const children = tree.children.filter(c => c.type === 'identifier' || c.type === 'scoped_identifier');
+      if (children.length >= 2) {
+        // First child is the original name, last is the alias (after 'as' keyword)
+        const original_path = children[0].text;
+        const original_parts = original_path.split('::');
+        const original_name = original_parts[original_parts.length - 1];
+        const alias_name = children[children.length - 1].text;
+        items.push({
+          name: original_name,
+          path: path_prefix + original_path,
+          alias: alias_name,
+          is_glob: false
+        });
+      }
+    } else if (path && alias) {
+      const path_text = path.text;
+      const path_parts = path_text.split('::');
+      const original_name = path_parts[path_parts.length - 1];
+      items.push({
+        name: original_name,  // Original name (just the identifier)
+        path: path_prefix + path_text,
+        alias: alias.text,  // Alias name
+        is_glob: false
+      });
+    }
+  } else if (tree.type === 'scoped_identifier' || tree.type === 'identifier') {
+    // Simple identifier or scoped path
+    const text = tree.text;
+    const parts = text.split('::');
+    items.push({
+      name: parts[parts.length - 1],
+      path: path_prefix + text,
+      is_glob: false
+    });
+  } else if (tree.type === 'use_wildcard') {
+    // Glob import
+    items.push({
+      name: '*',
+      path: path_prefix.replace(/::$/, ''),
+      is_glob: true
+    });
+  } else if (tree.type === 'use_list') {
+    // List of imports { item1, item2, ... }
+    for (const child of tree.children) {
+      if (child.type !== ',' && child.type !== '{' && child.type !== '}') {
+        const subItems = parse_use_tree_recursive(child, path_prefix);
+        items.push(...subItems);
+      }
+    }
+  } else if (tree.type === 'use_tree') {
+    // Nested use tree
+    for (const child of tree.children) {
+      if (child.type === 'scoped_identifier') {
+        // Update path prefix
+        const newPrefix = child.text + '::';
+        const nextChild = tree.children[tree.children.indexOf(child) + 1];
+        if (nextChild && (nextChild.type === 'use_list' || nextChild.type === 'use_wildcard')) {
+          const subItems = parse_use_tree_recursive(nextChild, newPrefix);
+          items.push(...subItems);
+          break;
+        } else {
+          const subItems = parse_use_tree_recursive(child, path_prefix);
+          items.push(...subItems);
+        }
+      } else if (child.type === 'use_as_clause' || child.type === 'use_list' || child.type === 'use_wildcard') {
+        const subItems = parse_use_tree_recursive(child, path_prefix);
+        items.push(...subItems);
+      }
+    }
+  }
+  
   return items;
 }
 

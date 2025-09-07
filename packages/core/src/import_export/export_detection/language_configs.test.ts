@@ -157,6 +157,13 @@ describe('Language Configurations', () => {
         'reexport',
         'javascript'
       )).toBe(true);
+      
+      // CommonJS object export
+      expect(matches_export_pattern(
+        'module.exports = { foo, bar }',
+        'custom',
+        'javascript'
+      )).toBe(true);
     });
     
     it('should match Rust visibility patterns', () => {
@@ -168,6 +175,170 @@ describe('Language Configurations', () => {
         expect(patterns[1].test('pub(super)')).toBe(true);
         expect(patterns[2].test('pub(in crate::module)')).toBe(true);
       }
+    });
+    
+    it('should not match invalid patterns', () => {
+      expect(matches_export_pattern(
+        'const foo = bar',
+        'named_export',
+        'javascript'
+      )).toBe(false);
+      
+      expect(matches_export_pattern(
+        'import { foo } from "./mod"',
+        'reexport',
+        'javascript'
+      )).toBe(false);
+    });
+  });
+  
+  describe('Field Names Configuration', () => {
+    it('should have proper field names for JavaScript', () => {
+      const config = get_export_config('javascript');
+      expect(config.field_names.declaration).toBe('declaration');
+      expect(config.field_names.specifiers).toBe('specifiers');
+      expect(config.field_names.source).toBe('source');
+      expect(config.field_names.name).toBe('name');
+    });
+    
+    it('should have proper field names for Python', () => {
+      const config = get_export_config('python');
+      expect(config.field_names.left).toBe('left');
+      expect(config.field_names.right).toBe('right');
+      expect(config.field_names.name).toBe('name');
+    });
+    
+    it('should have proper field names for Rust', () => {
+      const config = get_export_config('rust');
+      expect(config.field_names.name).toBe('name');
+      expect(config.field_names.value).toBe('value');
+      expect(config.field_names.declaration).toBe('declaration');
+    });
+  });
+  
+  describe('Feature Flags', () => {
+    it('should have correct feature flags for each language', () => {
+      // JavaScript
+      const jsConfig = get_export_config('javascript');
+      expect(jsConfig.features.implicit_exports).toBe(false);
+      expect(jsConfig.features.commonjs_support).toBe(true);
+      expect(jsConfig.features.type_exports).toBe(false);
+      expect(jsConfig.features.visibility_modifiers).toBe(false);
+      expect(jsConfig.features.visibility_on_item).toBeUndefined();
+      
+      // TypeScript
+      const tsConfig = get_export_config('typescript');
+      expect(tsConfig.features.type_exports).toBe(true);
+      expect(tsConfig.features.commonjs_support).toBe(true);
+      expect(tsConfig.features.visibility_on_item).toBeUndefined();
+      
+      // Python
+      const pyConfig = get_export_config('python');
+      expect(pyConfig.features.implicit_exports).toBe(true);
+      expect(pyConfig.features.export_list_identifier).toBe('__all__');
+      expect(pyConfig.features.private_prefix).toBe('_');
+      expect(pyConfig.features.visibility_on_item).toBeUndefined();
+      
+      // Rust
+      const rustConfig = get_export_config('rust');
+      expect(rustConfig.features.visibility_modifiers).toBe(true);
+      expect(rustConfig.features.visibility_on_item).toBe(true);
+      expect(rustConfig.features.implicit_exports).toBe(false);
+    });
+  });
+  
+  describe('Export Node Types', () => {
+    it('should have proper export node types for JavaScript/TypeScript', () => {
+      const jsConfig = get_export_config('javascript');
+      expect(jsConfig.export_node_types).toContain('export_statement');
+      expect(jsConfig.export_node_types).toContain('export_clause');
+      expect(jsConfig.export_node_types).toContain('export_specifier');
+    });
+    
+    it('should have proper export node types for Python', () => {
+      const pyConfig = get_export_config('python');
+      expect(pyConfig.export_node_types).toContain('assignment');
+      expect(pyConfig.export_node_types).toContain('function_definition');
+      expect(pyConfig.export_node_types).toContain('class_definition');
+    });
+    
+    it('should have use_declaration for Rust', () => {
+      const rustConfig = get_export_config('rust');
+      expect(rustConfig.export_node_types).toContain('use_declaration');
+    });
+  });
+  
+  describe('Exportable Definition Types', () => {
+    it('should include all JavaScript exportable types', () => {
+      const jsConfig = get_export_config('javascript');
+      expect(jsConfig.exportable_definition_types).toContain('function_declaration');
+      expect(jsConfig.exportable_definition_types).toContain('class_declaration');
+      expect(jsConfig.exportable_definition_types).toContain('variable_declaration');
+      expect(jsConfig.exportable_definition_types).toContain('lexical_declaration');
+    });
+    
+    it('should include TypeScript-specific types', () => {
+      const tsConfig = get_export_config('typescript');
+      expect(tsConfig.exportable_definition_types).toContain('interface_declaration');
+      expect(tsConfig.exportable_definition_types).toContain('type_alias_declaration');
+      expect(tsConfig.exportable_definition_types).toContain('enum_declaration');
+      expect(tsConfig.exportable_definition_types).toContain('namespace_declaration');
+    });
+    
+    it('should include Rust-specific types', () => {
+      const rustConfig = get_export_config('rust');
+      expect(rustConfig.exportable_definition_types).toContain('function_item');
+      expect(rustConfig.exportable_definition_types).toContain('struct_item');
+      expect(rustConfig.exportable_definition_types).toContain('enum_item');
+      expect(rustConfig.exportable_definition_types).toContain('trait_item');
+      expect(rustConfig.exportable_definition_types).toContain('impl_item');
+      expect(rustConfig.exportable_definition_types).toContain('mod_item');
+      expect(rustConfig.exportable_definition_types).toContain('type_item');
+      expect(rustConfig.exportable_definition_types).toContain('const_item');
+      expect(rustConfig.exportable_definition_types).toContain('static_item');
+      expect(rustConfig.exportable_definition_types).toContain('macro_definition');
+    });
+  });
+  
+  describe('Edge Cases', () => {
+    it('should handle namespace export patterns', () => {
+      expect(matches_export_pattern(
+        'export * as Utils',
+        'namespace_export',
+        'javascript'
+      )).toBe(true);
+      
+      expect(matches_export_pattern(
+        'pub use module::*',
+        'namespace_export',
+        'rust'
+      )).toBe(true);
+    });
+    
+    it('should handle empty custom patterns gracefully', () => {
+      // Python has no custom patterns
+      const pyConfig = get_export_config('python');
+      expect(matches_export_pattern(
+        'anything',
+        'custom',
+        'python'
+      )).toBe(false);
+    });
+    
+    it('should handle re-export patterns', () => {
+      // Python re-exports through imports
+      expect(matches_export_pattern(
+        'from module import something',
+        'reexport',
+        'python'
+      )).toBe(true);
+      
+      // Rust pub use
+      expect(matches_export_pattern(
+        'pub use crate::module::Type',
+        'reexport',
+        'rust'
+      )).toBe(true);
     });
   });
 });

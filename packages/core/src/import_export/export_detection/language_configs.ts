@@ -60,6 +60,9 @@ export interface ExportLanguageConfig {
     // Whether the language uses visibility modifiers
     visibility_modifiers: boolean;
     
+    // Whether visibility is checked on the item itself (e.g., Rust)
+    visibility_on_item?: boolean;
+    
     // Whether to look for special export lists (e.g., __all__ in Python)
     export_list_identifier?: string;
     
@@ -226,6 +229,7 @@ const RUST_CONFIG: ExportLanguageConfig = {
   export_node_types: [
     // Rust doesn't have export statements - visibility is part of the item
     // We'll handle these as exportable_definition_types instead
+    'use_declaration'  // pub use statements are exports
   ],
   
   exportable_definition_types: [
@@ -237,7 +241,8 @@ const RUST_CONFIG: ExportLanguageConfig = {
     'mod_item',
     'type_item',
     'const_item',
-    'static_item'
+    'static_item',
+    'macro_definition'
   ],
   
   patterns: {
@@ -270,7 +275,9 @@ const RUST_CONFIG: ExportLanguageConfig = {
     implicit_exports: false,
     commonjs_support: false,
     type_exports: false,
-    visibility_modifiers: true
+    visibility_modifiers: true,
+    // Rust checks visibility on the item itself, not through separate export statements
+    visibility_on_item: true
   },
   
   export_keywords: ['pub'],
