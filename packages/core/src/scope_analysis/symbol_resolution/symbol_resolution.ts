@@ -20,9 +20,6 @@ import {
   ExportStatement,
   ScopeTree,
   ScopeNode,
-  Def,
-  Ref,
-  Position,
   SymbolKind,
 } from "@ariadnejs/types";
 import { SyntaxNode } from 'tree-sitter';

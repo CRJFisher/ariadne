@@ -8,6 +8,7 @@
 import { SyntaxNode } from 'tree-sitter';
 import { ConstructorCallInfo } from '@ariadnejs/types';
 import { ConstructorCallContext } from './constructor_calls';
+import { node_to_location } from '../../ast/node_utils';
 
 /**
  * Handle Rust enum variant construction
@@ -80,10 +81,7 @@ export function handle_enum_variant_construction(
       
       return {
         constructor_name: `${enum_name}::${variant_name}`,
-        location: {
-          line: node.startPosition.row,
-          column: node.startPosition.column
-        },
+        location: node_to_location(node, context.file_path),
         arguments_count: arg_count,
         assigned_to,
         is_new_expression: false,

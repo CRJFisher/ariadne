@@ -9,6 +9,7 @@ import {
   process_constructor_calls_generic,
   walk_tree
 } from './constructor_calls';
+import { node_to_location } from '../../ast/node_utils';
 
 // Re-export types
 export { ConstructorCallInfo } from '@ariadnejs/types';
@@ -94,10 +95,7 @@ export function find_constructor_calls(
               c.location.column === node.startPosition.column)) {
               bespoke_calls.push({
                 constructor_name: name,
-                location: {
-                  line: node.startPosition.row,
-                  column: node.startPosition.column
-                },
+                location: node_to_location(node, context.file_path),
                 arguments_count: 0, // Will be counted properly if needed
                 is_new_expression: false,
                 is_factory_method: true

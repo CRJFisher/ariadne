@@ -25,7 +25,6 @@ import {
   ParameterType,
   TypeParameter,
   VariableDeclaration,
-  AnalysisError,
   // Module types
   ModuleGraph,
   NamespaceInfo,
@@ -59,7 +58,7 @@ import {
   // Scope types
   ScopeType,
 } from "@ariadnejs/types";
-import type { ClassDefinition } from "@ariadnejs/types";
+import type { ClassDefinition, ModulePath } from "@ariadnejs/types";
 import {
   build_class_hierarchy,
   type ClassHierarchyContext,
@@ -122,7 +121,6 @@ import { propagate_types_across_files } from "./type_analysis/type_propagation";
 import {
   resolve_namespace_exports,
   resolve_namespace_member,
-  analyze_namespace,
   is_namespace_import,
   NamespaceImportInfo,
   NamespaceExport,
@@ -221,21 +219,21 @@ async function resolve_namespaces_across_files(
 
 // Helper function to resolve module paths
 function resolveModulePath(
-  source: string,
+  source: ModulePath,
   from_file: FilePath,
   module_graph: ModuleGraph
-): string | undefined {
+): ModulePath | undefined {
   // Check if it's a relative import
   if (source.startsWith("./") || source.startsWith("../")) {
     // Resolve relative to the importing file
     const base_dir = from_file.substring(0, from_file.lastIndexOf("/"));
-    return normalizeModulePath(`${base_dir}/${source}`);
+    return normalizeModulePath(`${base_dir}/${source}` as ModulePath);
   }
 
   // Check module graph for absolute imports
   for (const [path, module_info] of module_graph.modules) {
     if (module_info.path === source || path.endsWith(source)) {
-      return path;
+      return path as ModulePath;
     }
   }
 
@@ -243,7 +241,7 @@ function resolveModulePath(
 }
 
 // Helper function to normalize module paths
-function normalizeModulePath(path: string): string {
+function normalizeModulePath(path: ModulePath): ModulePath {
   // Remove .ts, .js, .tsx, .jsx extensions
   const normalized = path.replace(/\.(ts|js|tsx|jsx)$/, "");
 
@@ -259,7 +257,7 @@ function normalizeModulePath(path: string): string {
     }
   }
 
-  return resolved.join("/");
+  return resolved.join("/") as ModulePath;
 }
 
 // Helper function to collect namespace exports

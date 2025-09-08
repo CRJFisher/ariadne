@@ -8,6 +8,7 @@
 import { SyntaxNode } from 'tree-sitter';
 import { ConstructorCallInfo } from '@ariadnejs/types';
 import { ConstructorCallContext } from './constructor_calls';
+import { node_to_location } from '../../ast/node_utils';
 
 /**
  * Handle Python's super().__init__() pattern
@@ -55,10 +56,7 @@ export function handle_super_init_call(
         
         return {
           constructor_name: 'super',
-          location: {
-            line: node.startPosition.row,
-            column: node.startPosition.column
-          },
+          location: node_to_location(node, context.file_path),
           arguments_count: arg_count,
           is_new_expression: false,
           is_factory_method: false,
@@ -129,10 +127,7 @@ export function detect_dataclass_instantiation(
   
   return {
     constructor_name: class_name,
-    location: {
-      line: node.startPosition.row,
-      column: node.startPosition.column
-    },
+    location: node_to_location(node, context.file_path),
     arguments_count: arg_count,
     assigned_to,
     is_new_expression: false,
@@ -228,10 +223,7 @@ export function detect_new_method_call(
   
   return {
     constructor_name: class_name,
-    location: {
-      line: node.startPosition.row,
-      column: node.startPosition.column
-    },
+    location: node_to_location(node, context.file_path),
     arguments_count: arg_count,
     is_new_expression: false,
     is_factory_method: false
@@ -300,10 +292,7 @@ export function detect_classmethod_factory(
       
       return {
         constructor_name: class_name,
-        location: {
-          line: node.startPosition.row,
-          column: node.startPosition.column
-        },
+        location: node_to_location(node, context.file_path),
         arguments_count: arg_count,
         assigned_to,
         is_new_expression: false,

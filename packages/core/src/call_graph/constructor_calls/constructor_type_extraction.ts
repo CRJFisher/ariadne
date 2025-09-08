@@ -10,7 +10,7 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language, ConstructorCallInfo, Location } from '@ariadnejs/types';
+import { Language, ConstructorCallInfo, Location, FilePath, SourceCode } from '@ariadnejs/types';
 import { TypeInfo } from '../../type_analysis/type_tracking';
 import { 
   find_assignment_target,
@@ -18,6 +18,7 @@ import {
   is_constructor_call_node,
   walk_tree
 } from './constructor_calls';
+import { node_to_location } from '../../ast/node_utils';
 
 /**
  * Result containing both constructor calls and discovered type assignments
@@ -52,8 +53,8 @@ export interface ConstructorTypeAssignment {
  */
 export function extract_constructor_calls_and_types(
   ast_root: SyntaxNode,
-  source_code: string,
-  file_path: string,
+  source_code: SourceCode,
+  file_path: FilePath,
   language: Language
 ): ConstructorCallResult {
   const calls: ConstructorCallInfo[] = [];
@@ -68,17 +69,16 @@ export function extract_constructor_calls_and_types(
       
       // Create constructor call info
       const call_info: ConstructorCallInfo = {
-        class_name,
-        location: {
-          line: node.startPosition.row,
-          column: node.startPosition.column
-        },
-        file_path
+        constructor_name: class_name,
+        location: node_to_location(node, file_path),
+        arguments_count: 0,
+        is_new_expression: false,
+        is_factory_method: false
       };
       calls.push(call_info);
       
       // Extract type assignment if present
-      const assignment = extract_type_assignment(node, class_name, source_code, language);
+      const assignment = extract_type_assignment(node, class_name, source_code, file_path, language);
       if (assignment) {
         add_type_assignment(type_assignments, assignment);
       }
@@ -94,7 +94,8 @@ export function extract_constructor_calls_and_types(
 function extract_type_assignment(
   node: SyntaxNode,
   class_name: string,
-  source_code: string,
+  source_code: SourceCode,
+  file_path: FilePath,
   language: Language
 ): ConstructorTypeAssignment | null {
   // Find what variable this constructor is assigned to
@@ -105,10 +106,7 @@ function extract_type_assignment(
       return {
         variable_name: '<return>',
         type_name: class_name,
-        location: {
-          line: node.startPosition.row,
-          column: node.startPosition.column
-        },
+        location: node_to_location(node, file_path),
         is_return_value: true
       };
     }
@@ -121,10 +119,7 @@ function extract_type_assignment(
   return {
     variable_name: target,
     type_name: class_name,
-    location: {
-      line: node.startPosition.row,
-      column: node.startPosition.column
-    },
+    location: node_to_location(node, file_path),
     is_property_assignment: is_property
   };
 }
@@ -238,8 +233,8 @@ export function merge_constructor_types(
     for (const new_type of types) {
       const duplicate = existing.some(t => 
         t.type_name === new_type.type_name &&
-        t.location.line === new_type.location.line &&
-        t.location.column === new_type.location.column
+        t.location?.line === new_type.location?.line &&
+        t.location?.column === new_type.location?.column
       );
       
       if (!duplicate) {
@@ -263,7 +258,8 @@ export function merge_constructor_types(
  */
 export function extract_nested_assignments(
   node: SyntaxNode,
-  source_code: string,
+  source_code: SourceCode,
+  file_path: FilePath,
   language: Language
 ): ConstructorTypeAssignment[] {
   const assignments: ConstructorTypeAssignment[] = [];
@@ -284,10 +280,7 @@ export function extract_nested_assignments(
             assignments.push({
               variable_name: property_name,
               type_name: class_name,
-              location: {
-                line: value.startPosition.row,
-                column: value.startPosition.column
-              }
+              location: node_to_location(value, file_path)
             });
           }
         }

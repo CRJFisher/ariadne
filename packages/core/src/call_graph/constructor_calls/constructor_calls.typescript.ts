@@ -8,6 +8,7 @@
 import { SyntaxNode } from 'tree-sitter';
 import { ConstructorCallInfo } from '@ariadnejs/types';
 import { ConstructorCallContext } from './constructor_calls';
+import { node_to_location } from '../../ast/node_utils';
 
 /**
  * Handle TypeScript generic type parameters in constructor calls
@@ -96,10 +97,7 @@ export function handle_generic_constructor(
   
   return {
     constructor_name,
-    location: {
-      line: node.startPosition.row,
-      column: node.startPosition.column
-    },
+    location: node_to_location(node, context.file_path),
     arguments_count: arg_count,
     assigned_to,
     is_new_expression: true,
