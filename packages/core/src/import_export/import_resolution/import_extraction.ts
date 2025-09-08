@@ -502,9 +502,23 @@ function extract_python_from_import(
   file_path: string
 ): ImportInfo[] {
   const imports: ImportInfo[] = [];
-  const module = import_node.childForFieldName('module');
-  if (!module) return imports;
   
+  // Find the module name - it's the dotted_name or identifier child
+  // that comes after 'from' and before 'import'
+  let module = null;
+  let foundFrom = false;
+  for (const child of import_node.children) {
+    if (child.type === 'from') {
+      foundFrom = true;
+    } else if (foundFrom && (child.type === 'dotted_name' || child.type === 'identifier')) {
+      module = child;
+      break;
+    } else if (child.type === 'import') {
+      break;
+    }
+  }
+  
+  if (!module) return imports;
   const source = module.text;
   
   // Find what's being imported
@@ -556,7 +570,21 @@ function extract_rust_use(
   file_path: string
 ): ImportInfo[] {
   const imports: ImportInfo[] = [];
-  const use_tree = use_node.childForFieldName('use_tree');
+  
+  // Find the use tree - it's a direct child, not a field
+  let use_tree = null;
+  for (const child of use_node.children) {
+    if (child.type === 'use_wildcard' || 
+        child.type === 'scoped_identifier' || 
+        child.type === 'use_list' ||
+        child.type === 'scoped_use_list' ||
+        child.type === 'use_as_clause' ||
+        child.type === 'identifier') {
+      use_tree = child;
+      break;
+    }
+  }
+  
   if (!use_tree) return imports;
   
   const extract_from_tree = (tree: SyntaxNode, prefix: string = ''): void => {
@@ -571,6 +599,42 @@ function extract_rust_use(
           kind: 'named',
           location: node_to_location(tree, file_path)
         });
+      }
+    } else if (tree.type === 'scoped_use_list') {
+      // use utils::{self, Config}
+      // First child is the module path, second is :: third is use_list
+      let module_path = '';
+      let use_list = null;
+      
+      for (const child of tree.children) {
+        if (child.type === 'identifier') {
+          module_path = child.text;
+        } else if (child.type === 'use_list') {
+          use_list = child;
+        }
+      }
+      
+      if (use_list) {
+        // Process each item in the list
+        for (const item of use_list.children) {
+          if (item.type === 'self') {
+            // Self import - imports the module itself
+            imports.push({
+              name: module_path,
+              source: module_path,
+              kind: 'named',
+              location: node_to_location(item, file_path)
+            });
+          } else if (item.type === 'identifier') {
+            // Named import from the module
+            imports.push({
+              name: item.text,
+              source: module_path,
+              kind: 'named',
+              location: node_to_location(item, file_path)
+            });
+          }
+        }
       }
     } else if (tree.type === 'use_list') {
       // use std::{io, fs}
@@ -596,10 +660,17 @@ function extract_rust_use(
         });
       }
     } else if (tree.type === 'use_wildcard') {
-      // use foo::*
+      // use foo::* - extract the path from the scoped_identifier child
+      let path = prefix;
+      for (const child of tree.children) {
+        if (child.type === 'scoped_identifier') {
+          path = child.text;
+          break;
+        }
+      }
       imports.push({
         name: '*',
-        source: prefix,
+        source: path,
         kind: 'namespace',
         namespace_name: '*',
         location: node_to_location(tree, file_path)

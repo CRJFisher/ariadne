@@ -43,6 +43,7 @@ import {
   TypeDefinition,
   TypeGraph,
   TypeEdge,
+  TypeString,
   // Symbol types
   SymbolIndex,
   SymbolDefinition,
@@ -55,6 +56,8 @@ import {
   SymbolId,
   FilePath,
   TypeKind,
+  // Scope types
+  ScopeType,
 } from "@ariadnejs/types";
 import type { ClassDefinition } from "@ariadnejs/types";
 import {
@@ -713,15 +716,37 @@ function build_type_index(analyses: FileAnalysis[]): TypeIndex {
   for (const analysis of analyses) {
     if (analysis.type_info) {
       for (const [var_name, type_info] of analysis.type_info.entries()) {
-        const key = `${analysis.file_path}#${var_name}`;
-        const var_scope = analysis.scopes.nodes.get(var_name);
-        if (!var_scope) {
-          throw new Error(`Variable ${var_name} not found in scope tree`);
+        // Skip entries that are not variables (e.g., Python instance attributes like self.count)
+        // These are tracked in type_info for type analysis but aren't standalone variables
+        if (var_name.includes('.')) {
+          continue;
         }
+        
+        const key = `${analysis.file_path}#${var_name}`;
+        
+        // Find the scope containing this variable
+        let var_scope = null;
+        let scope_type = "unknown";
+        
+        for (const [scope_id, scope] of analysis.scopes.nodes) {
+          if (scope.symbols.has(var_name)) {
+            var_scope = scope;
+            scope_type = scope.type;
+            break;
+          }
+        }
+        
+        if (!var_scope) {
+          // Some type_info entries might not be in the scope tree (e.g., builtin types)
+          // Skip them instead of throwing an error
+          console.warn(`Variable ${var_name} has type info but not found in scope tree`);
+          continue;
+        }
+        
         variables.set(key, {
           name: var_name,
-          type: type_info.type_name || "unknown",
-          scope_kind: var_scope.type,
+          type: (type_info.type_name || "unknown") as TypeString,
+          scope_kind: scope_type as ScopeType,
           location: type_info.location,
         });
       }
