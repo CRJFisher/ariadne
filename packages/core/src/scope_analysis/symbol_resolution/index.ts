@@ -1,149 +1,375 @@
 /**
- * Symbol resolution feature - Dispatcher
+ * Symbol resolution feature - Configuration-driven dispatcher
  * 
- * Routes symbol resolution requests to language-specific implementations
+ * Routes symbol resolution requests using configuration patterns
+ * and language-specific bespoke handlers when needed.
  */
 
-import { Language, Def, Ref, Position } from '@ariadnejs/types';
+import { Language, Def, Ref, Position, SymbolId, FunctionCallInfo, MethodCallInfo, ConstructorCallInfo } from '@ariadnejs/types';
 import { SyntaxNode } from 'tree-sitter';
 import { ScopeTree } from '../scope_tree';
+
+// Core generic processor and types
 import {
+  MODULE_CONTEXT,
   ResolvedSymbol,
   ResolutionContext,
   DefinitionResult,
+  FileResolutionContext,
+  ImportInfo,
+  ExportInfo,
   create_resolution_context,
   resolve_symbol_at_position,
   resolve_symbol,
   find_symbol_references,
   find_symbol_definition,
-  get_all_visible_symbols,
-  is_symbol_exported,
-  resolve_symbol_with_type,
   go_to_definition,
-  find_definition_at_position,
-  find_all_definitions,
-  find_definitions_by_kind,
-  find_exported_definitions,
-  is_definition_visible,
-  go_to_definition_from_ref,
-  find_definition_candidates,
-  resolve_all_symbols
+  is_symbol_exported,
+  get_all_visible_symbols,
+  resolve_all_symbols,
+  resolve_function_call,
+  resolve_method_call,
+  resolve_constructor_call,
 } from './symbol_resolution';
+
+// Language configurations
 import {
-  resolve_javascript_symbol,
-  JavaScriptResolutionContext,
-  find_constructor_definition,
-  find_prototype_method,
-  find_object_property,
-  find_arrow_function,
-  find_all_functions,
-  find_all_classes,
-  is_hoisted_definition,
-  find_module_exports
-} from './symbol_resolution.javascript';
+  get_symbol_resolution_config,
+  requires_bespoke_handling,
+  get_bespoke_handler,
+} from './language_configs';
+
+// Global symbol table
 import {
-  resolve_typescript_symbol,
-  TypeScriptResolutionContext
-} from './symbol_resolution.typescript';
-import {
-  resolve_python_symbol,
-  extract_python_declarations,
-  PythonResolutionContext
-} from './symbol_resolution.python';
-import {
-  resolve_rust_symbol,
-  RustResolutionContext
-} from './symbol_resolution.rust';
-import {
+  GlobalSymbolTable,
   build_symbol_table,
-  GlobalSymbolTable
 } from './global_symbol_table';
+
+// JavaScript bespoke handlers
+import {
+  handle_javascript_hoisting,
+  handle_prototype_chain,
+  handle_this_binding,
+  handle_super_binding,
+  handle_var_hoisting,
+} from './symbol_resolution.javascript.bespoke';
+
+// TypeScript bespoke handlers (includes JavaScript handlers)
+import {
+  handle_type_only_imports,
+  handle_interface_merging,
+  handle_namespaces,
+  handle_decorators as handle_typescript_decorators,
+  handle_ambient_declarations,
+  handle_generic_parameters,
+  handle_enum_members,
+  handle_type_aliases,
+} from './symbol_resolution.typescript.bespoke';
+
+// Python bespoke handlers
+import {
+  handle_python_legb,
+  handle_global_nonlocal,
+  handle_all_exports,
+  handle_comprehension_scope,
+  handle_python_decorators,
+} from './symbol_resolution.python.bespoke';
+
+// Rust bespoke handlers
+import {
+  handle_module_paths,
+  handle_use_statements,
+  handle_impl_blocks,
+  handle_trait_impls,
+  handle_rust_macros,
+  check_rust_visibility,
+  handle_lifetime_parameters,
+} from './symbol_resolution.rust.bespoke';
 
 // Re-export core types and functions
 export {
+  MODULE_CONTEXT,
   ResolvedSymbol,
   ResolutionContext,
   DefinitionResult,
+  FileResolutionContext,
+  ImportInfo,
+  ExportInfo,
   create_resolution_context,
   resolve_symbol_at_position,
   find_symbol_references,
   find_symbol_definition,
-  get_all_visible_symbols,
-  is_symbol_exported,
-  resolve_symbol_with_type,
   go_to_definition,
-  find_definition_at_position,
-  find_all_definitions,
-  find_definitions_by_kind,
-  find_exported_definitions,
-  is_definition_visible,
-  go_to_definition_from_ref,
-  find_definition_candidates,
-  resolve_all_symbols
+  is_symbol_exported,
+  get_all_visible_symbols,
+  resolve_all_symbols,
 };
 
 // Re-export global symbol table
 export {
   GlobalSymbolTable,
-  build_symbol_table
-};
-
-// Re-export language-specific types
-export {
-  JavaScriptResolutionContext,
-  TypeScriptResolutionContext,
-  PythonResolutionContext,
-  RustResolutionContext
-};
-
-// Re-export JavaScript-specific functions (from definition_finder)
-export {
-  find_constructor_definition,
-  find_prototype_method,
-  find_object_property,
-  find_arrow_function,
-  find_all_functions,
-  find_all_classes,
-  is_hoisted_definition,
-  find_module_exports
+  build_symbol_table,
 };
 
 /**
- * Resolve symbol with language-specific handling
+ * Main entry point for symbol resolution with language-specific dispatch
  */
 export function resolve_symbol_with_language(
   symbol_name: string,
   scope_id: string,
-  context: ResolutionContext,
-  language: Language,
-  imports?: any[], // From import_resolution - Layer 1
-  module_graph?: any // From module_graph - Layer 4
+  context: ResolutionContext
 ): ResolvedSymbol | undefined {
+  const { language } = context;
+  const config = get_symbol_resolution_config(language);
+  
+  // Try generic resolution first
+  let result = resolve_symbol(symbol_name, scope_id, context);
+  
+  // If not found and bespoke handling is configured, try language-specific resolution
+  if (!result) {
+    result = resolve_with_bespoke_handlers(symbol_name, scope_id, context, language);
+  }
+  
+  return result;
+}
+
+/**
+ * Resolve using language-specific bespoke handlers
+ */
+function resolve_with_bespoke_handlers(
+  symbol_name: string,
+  scope_id: string,
+  context: ResolutionContext,
+  language: Language
+): ResolvedSymbol | undefined {
+  // Create file resolution context for bespoke handlers
+  const file_context: FileResolutionContext = {
+    file_analysis: {
+      file_path: context.file_path,
+      language: context.language,
+      scopes: context.scope_tree,
+      definitions: [],
+      references: [],
+      function_calls: [],
+      method_calls: [],
+      constructor_calls: [],
+      imports: [],
+      exports: [],
+      call_chain_heads: [],
+    },
+    global_symbols: new Map(),
+    imports_by_file: new Map(),
+    exports_by_file: new Map(),
+    language,
+    config: context.config,
+  };
+  
   switch (language) {
     case 'javascript':
     case 'jsx':
-      return resolve_javascript_symbol(symbol_name, scope_id, context as JavaScriptResolutionContext);
+      return resolve_javascript_bespoke(symbol_name, scope_id, file_context);
     
     case 'typescript':
     case 'tsx':
-      return resolve_typescript_symbol(symbol_name, scope_id, context as TypeScriptResolutionContext);
+      return resolve_typescript_bespoke(symbol_name, scope_id, file_context);
     
     case 'python':
-      return resolve_python_symbol(symbol_name, scope_id, context as PythonResolutionContext);
+      return resolve_python_bespoke(symbol_name, scope_id, file_context);
     
     case 'rust':
-      return resolve_rust_symbol(symbol_name, scope_id, context as RustResolutionContext);
+      return resolve_rust_bespoke(symbol_name, scope_id, file_context);
     
     default:
-      // Fall back to generic resolution
-      return resolve_symbol(symbol_name, scope_id, context);
+      return undefined;
   }
 }
 
-// Import/export extraction is now handled by import_resolution and export_detection modules
-// This maintains proper architectural layering - extraction happens in Per-File Analysis (Layers 1-2)
+/**
+ * JavaScript bespoke resolution
+ */
+function resolve_javascript_bespoke(
+  symbol_name: string,
+  scope_id: string,
+  context: FileResolutionContext
+): ResolvedSymbol | undefined {
+  // Handle 'this' keyword
+  if (symbol_name === 'this') {
+    return handle_this_binding(scope_id, context);
+  }
+  
+  // Handle 'super' keyword
+  if (symbol_name === 'super') {
+    return handle_super_binding(scope_id, context);
+  }
+  
+  // Try hoisting resolution
+  let symbol_id = handle_javascript_hoisting(symbol_name, scope_id, context);
+  if (symbol_id) {
+    return { symbol_id, kind: 'function' };
+  }
+  
+  // Try var hoisting
+  symbol_id = handle_var_hoisting(symbol_name, scope_id, context);
+  if (symbol_id) {
+    return { symbol_id, kind: 'variable' };
+  }
+  
+  return undefined;
+}
 
-// Removed duplicate create_resolution_context - it's defined in symbol_resolution.ts
+/**
+ * TypeScript bespoke resolution
+ */
+function resolve_typescript_bespoke(
+  symbol_name: string,
+  scope_id: string,
+  context: FileResolutionContext
+): ResolvedSymbol | undefined {
+  // First try JavaScript resolution (TypeScript is a superset)
+  let result = resolve_javascript_bespoke(symbol_name, scope_id, context);
+  if (result) return result;
+  
+  // Try type-only imports
+  let symbol_id = handle_type_only_imports(symbol_name, context);
+  if (symbol_id) {
+    return { symbol_id, kind: 'type' };
+  }
+  
+  // Try type aliases
+  symbol_id = handle_type_aliases(symbol_name, context);
+  if (symbol_id) {
+    return { symbol_id, kind: 'type' };
+  }
+  
+  // Handle interface merging
+  const merged = handle_interface_merging(symbol_name, context);
+  if (merged.length > 0) {
+    return merged[0]; // Return first merged interface
+  }
+  
+  return undefined;
+}
+
+/**
+ * Python bespoke resolution
+ */
+function resolve_python_bespoke(
+  symbol_name: string,
+  scope_id: string,
+  context: FileResolutionContext
+): ResolvedSymbol | undefined {
+  // Use LEGB rule for Python
+  const symbol_id = handle_python_legb(symbol_name, scope_id, context);
+  if (symbol_id) {
+    return { symbol_id, kind: 'variable' };
+  }
+  
+  return undefined;
+}
+
+/**
+ * Rust bespoke resolution
+ */
+function resolve_rust_bespoke(
+  symbol_name: string,
+  scope_id: string,
+  context: FileResolutionContext
+): ResolvedSymbol | undefined {
+  // Try use statement resolution
+  let symbol_id = handle_use_statements(symbol_name, scope_id, context);
+  if (symbol_id) {
+    return { symbol_id, kind: 'variable' };
+  }
+  
+  // Try macro resolution
+  symbol_id = handle_rust_macros(symbol_name, context);
+  if (symbol_id) {
+    return { symbol_id, kind: 'macro' };
+  }
+  
+  // Parse module paths if symbol contains ::
+  if (symbol_name.includes('::')) {
+    const path = symbol_name.split('::');
+    symbol_id = handle_module_paths(path, context);
+    if (symbol_id) {
+      return { symbol_id, kind: 'module' };
+    }
+  }
+  
+  return undefined;
+}
+
+/**
+ * Enhanced function call resolution with bespoke handling
+ */
+export function resolve_function_call_enhanced(
+  call: FunctionCallInfo,
+  context: FileResolutionContext
+): SymbolId | undefined {
+  // Try generic resolution
+  let result = resolve_function_call(call, context);
+  if (result) return result;
+  
+  // Try bespoke handling based on language
+  const { language } = context;
+  
+  if (language === 'javascript' || language === 'jsx' || 
+      language === 'typescript' || language === 'tsx') {
+    // Check for hoisted functions
+    result = handle_javascript_hoisting(call.callee_name, 'module', context);
+    if (result) return result;
+  }
+  
+  if (language === 'python') {
+    // Use LEGB rule
+    result = handle_python_legb(call.callee_name, 'module', context);
+    if (result) return result;
+  }
+  
+  if (language === 'rust') {
+    // Check for macro calls
+    if (call.callee_name.endsWith('!')) {
+      result = handle_rust_macros(call.callee_name, context);
+      if (result) return result;
+    }
+  }
+  
+  return undefined;
+}
+
+/**
+ * Enhanced method call resolution with bespoke handling
+ */
+export function resolve_method_call_enhanced(
+  call: MethodCallInfo,
+  context: FileResolutionContext
+): SymbolId | undefined {
+  // Try generic resolution
+  let result = resolve_method_call(call, context);
+  if (result) return result;
+  
+  // Try bespoke handling based on language
+  const { language } = context;
+  
+  if (language === 'javascript' || language === 'jsx' || 
+      language === 'typescript' || language === 'tsx') {
+    // Check prototype chain
+    if (call.object_name) {
+      result = handle_prototype_chain(call.object_name, call.method_name, 'module', context);
+      if (result) return result;
+    }
+  }
+  
+  if (language === 'rust') {
+    // Check impl blocks
+    if (call.object_name) {
+      result = handle_impl_blocks(call.object_name, call.method_name, context);
+      if (result) return result;
+    }
+  }
+  
+  return undefined;
+}
 
 /**
  * High-level API: Resolve symbol at cursor position
@@ -155,9 +381,9 @@ export function resolve_at_cursor(
   file_path: string,
   root_node?: SyntaxNode,
   source_code?: string,
-  imports?: ImportInfo[], // From import_resolution - Layer 1
-  exports?: ExportInfo[], // From export_detection - Layer 2
-  module_graph?: any // From module_graph - Layer 4
+  imports?: ImportInfo[],
+  exports?: ExportInfo[],
+  module_graph?: any
 ): ResolvedSymbol | undefined {
   const context = create_resolution_context(
     scope_tree,
@@ -183,12 +409,9 @@ export function find_all_references(
   file_path: string,
   root_node?: SyntaxNode,
   source_code?: string,
-  imports?: any[], // From import_resolution - Layer 1
-  module_graph?: any // From module_graph - Layer 4
+  imports?: ImportInfo[],
+  module_graph?: any
 ): Ref[] {
-  // For now, return empty array since we don't have FileAnalysis[] 
-  // This would need proper implementation with actual file analysis
-  // The old find_symbol_references expects FileAnalysis[] which we don't have here
   const refs: Ref[] = [];
   
   // Search through all scopes for references to this symbol
@@ -214,4 +437,16 @@ export function find_all_references(
   return refs;
 }
 
-// Removed duplicate go_to_definition - it's defined in symbol_resolution.ts
+/**
+ * Check if a feature requires bespoke handling
+ */
+export function needs_bespoke_handler(feature: string, language: Language): boolean {
+  return requires_bespoke_handling(feature, language);
+}
+
+/**
+ * Get the appropriate bespoke handler for a feature
+ */
+export function get_handler_for_feature(feature: string, language: Language): string | undefined {
+  return get_bespoke_handler(feature, language);
+}
