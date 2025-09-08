@@ -174,8 +174,8 @@ function is_member_visible_generic(
     }
   }
   
-  // Default visibility
-  return config.visibility_rules.default_public;
+  // If not private, it's visible
+  return true;
 }
 
 /**

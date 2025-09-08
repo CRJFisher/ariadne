@@ -201,11 +201,33 @@ export function handle_trait_imports(
   
   // Look for trait implementation
   // Handle generic parameters and complex type names
+  // Use a more sophisticated pattern to handle nested braces
   const impl_pattern = new RegExp(
-    `impl(?:<[^>]+>)?\\s+${trait_name}(?:<[^>]+>)?\\s+for\\s+[^{]+\\{([^}]+)\\}`,
+    `impl(?:<[^>]+>)?\\s+${trait_name}(?:<[^>]+>)?\\s+for\\s+[^{]+\\{`,
     's'
   );
-  const impl_match = impl_pattern.exec(source_code);
+  const impl_start = impl_pattern.exec(source_code);
+  
+  let impl_match = null;
+  if (impl_start) {
+    // Find the matching closing brace by counting braces
+    const start_index = impl_start.index! + impl_start[0].length;
+    let brace_count = 1;
+    let end_index = start_index;
+    
+    while (brace_count > 0 && end_index < source_code.length) {
+      if (source_code[end_index] === '{') {
+        brace_count++;
+      } else if (source_code[end_index] === '}') {
+        brace_count--;
+      }
+      end_index++;
+    }
+    
+    if (brace_count === 0) {
+      impl_match = [impl_start[0], source_code.substring(start_index, end_index - 1)];
+    }
+  }
   
   if (impl_match) {
     // Extract method names from trait implementation

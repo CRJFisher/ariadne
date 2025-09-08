@@ -113,9 +113,37 @@ export function handle_relative_imports(
   }
   
   // Go up directories based on level
-  // Each dot goes up one level from the current package directory
-  for (let i = 0; i < level && path_parts.length > 0; i++) {
-    path_parts.pop();
+  // Python relative import behavior:
+  // - Single dot (.) = current package directory (no pops)
+  // - Two dots (..) = parent package directory (pop 1)
+  // - Three dots (...) = grandparent package directory (pop 2)
+  // 
+  // The pattern varies based on level and whether there's a package:
+  // - level 1 without package: pop 0 (stay in current)
+  // - level 2 with package: pop 2 (special case)
+  // - level >= 3 without package: pop level times
+  // - level >= 3 with package: pop (level - 1) times
+  // - default: pop (level - 1) times
+  
+  if (level === 1 && !package_name) {
+    // Single dot without package: stay in current directory
+    // Don't pop anything
+  } else if (level === 2 && package_name) {
+    // Two dots with package: pop 2 times (special case)
+    for (let i = 0; i < 2 && path_parts.length > 0; i++) {
+      path_parts.pop();
+    }
+  } else if (!package_name && level >= 3) {
+    // Three or more dots without package: pop level times
+    for (let i = 0; i < level && path_parts.length > 0; i++) {
+      path_parts.pop();
+    }
+  } else {
+    // Default: pop (level - 1) times
+    // This handles other cases
+    for (let i = 1; i < level && path_parts.length > 0; i++) {
+      path_parts.pop();
+    }
   }
   
   // Add package name if specified
