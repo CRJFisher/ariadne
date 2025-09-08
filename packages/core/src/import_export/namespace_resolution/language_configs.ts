@@ -88,7 +88,7 @@ export interface NamespaceLanguageConfig {
 const JAVASCRIPT_CONFIG: NamespaceLanguageConfig = {
   namespace_import_patterns: {
     wildcard_import: 'import * as',
-    require_pattern: 'require('
+    require_pattern: 'require\\('
   },
   
   member_access: {

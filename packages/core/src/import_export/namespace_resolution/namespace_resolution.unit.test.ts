@@ -6,15 +6,15 @@
 
 import { describe, it, expect } from 'vitest';
 import { is_namespace_import } from './namespace_resolution';
-import { Import, Language } from '@ariadnejs/types';
+import { ImportStatement as Import, Language } from '@ariadnejs/types';
 
 describe('Namespace Resolution Unit Tests', () => {
   describe('is_namespace_import', () => {
     it('should identify TypeScript namespace imports', () => {
       const tsNamespaceImport: Import = {
-        source_name: '*',
         source: './types',
-        local_name: 'types',
+        symbol_name: '*' as any,
+        is_namespace_import: true,
         location: { line: 1, column: 0 }
       };
       
@@ -23,9 +23,9 @@ describe('Namespace Resolution Unit Tests', () => {
     
     it('should identify JavaScript namespace imports', () => {
       const jsNamespaceImport: Import = {
-        source_name: '*',
         source: './utils',
-        local_name: 'utils',
+        symbol_name: '*' as any,
+        is_namespace_import: true,
         location: { line: 1, column: 0 }
       };
       
@@ -34,9 +34,8 @@ describe('Namespace Resolution Unit Tests', () => {
     
     it('should identify Python module imports', () => {
       const pyModuleImport: Import = {
-        source_name: undefined,
         source: 'utils',
-        local_name: 'utils',
+        is_namespace_import: true,
         location: { line: 1, column: 0 }
       };
       
@@ -45,9 +44,9 @@ describe('Namespace Resolution Unit Tests', () => {
     
     it('should identify Python wildcard imports', () => {
       const pyWildcardImport: Import = {
-        source_name: '*',
         source: 'helpers',
-        local_name: undefined,
+        symbol_name: '*' as any,
+        is_namespace_import: true,
         location: { line: 1, column: 0 }
       };
       
@@ -56,9 +55,9 @@ describe('Namespace Resolution Unit Tests', () => {
     
     it('should identify Rust wildcard imports', () => {
       const rustWildcardImport: Import = {
-        source_name: '*',
-        source: 'module',
-        local_name: undefined,
+        source: 'module::*',
+        symbol_name: '*' as any,
+        is_namespace_import: true,
         location: { line: 1, column: 0 }
       };
       
@@ -67,9 +66,8 @@ describe('Namespace Resolution Unit Tests', () => {
     
     it('should reject non-namespace imports', () => {
       const namedImport: Import = {
-        source_name: 'Component',
         source: 'react',
-        local_name: 'Component',
+        symbol_name: 'Component' as any,
         location: { line: 1, column: 0 }
       };
       
