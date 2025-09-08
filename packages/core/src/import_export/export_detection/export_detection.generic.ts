@@ -67,6 +67,15 @@ export function detect_exports_generic(
     // Check if this is an export node (for languages with explicit export statements)
     if (is_export_node(node.type, language)) {
       processed_nodes.add(node);
+      
+      // Check if this export has an ambient declaration (TypeScript specific)
+      if (language === 'typescript') {
+        const declaration = node.childForFieldName('declaration');
+        if (declaration && declaration.type === 'ambient_declaration') {
+          requires_bespoke = true;
+        }
+      }
+      
       const node_exports = process_export_node(node, source_code, config, language);
       exports.push(...node_exports);
     }
@@ -131,7 +140,8 @@ export function detect_exports_generic(
       requires_bespoke = true;
     }
     
-    if (config.features.visibility_modifiers && node_text.includes('pub(')) {
+    if (config.features.visibility_modifiers && 
+        (node_text.includes('pub(') || node_text.includes('pub use'))) {
       bespoke_hints.has_visibility_modifiers = true;
       requires_bespoke = true;
     }
@@ -448,27 +458,30 @@ function clean_module_source(source: string): string {
 
 /**
  * Merge generic and bespoke exports, removing duplicates
+ * Prefers bespoke exports over generic when there are duplicates
  */
 export function merge_exports(
   generic_exports: ExportInfo[],
   bespoke_exports: ExportInfo[]
 ): ExportInfo[] {
-  const merged: ExportInfo[] = [...generic_exports];
-  const seen = new Set<string>();
+  const merged: ExportInfo[] = [];
+  const seen = new Map<string, ExportInfo>();
   
-  // Track existing exports by name and location
+  // First add generic exports
   for (const exp of generic_exports) {
     const key = `${exp.name}:${exp.location.start.line}:${exp.location.start.column}`;
-    seen.add(key);
+    seen.set(key, exp);
   }
   
-  // Add bespoke exports that aren't duplicates
+  // Override with bespoke exports (they take precedence)
   for (const exp of bespoke_exports) {
     const key = `${exp.name}:${exp.location.start.line}:${exp.location.start.column}`;
-    if (!seen.has(key)) {
-      merged.push(exp);
-      seen.add(key);
-    }
+    seen.set(key, exp); // This will override generic if duplicate
+  }
+  
+  // Add all exports to result
+  for (const exp of seen.values()) {
+    merged.push(exp);
   }
   
   return merged;
@@ -496,8 +509,20 @@ export function needs_bespoke_processing(
     return true;
   }
   
-  if (config.features.visibility_modifiers && /pub\s*\(/.test(source_code)) {
+  // Check for TypeScript ambient declarations
+  if (language === 'typescript' && source_code.includes('export declare')) {
     return true;
+  }
+  
+  if (config.features.visibility_modifiers) {
+    // Check for pub(crate), pub(super), etc.
+    if (/pub\s*\(/.test(source_code)) {
+      return true;
+    }
+    // Check for pub use (re-exports)
+    if (/pub\s+use\s+/.test(source_code)) {
+      return true;
+    }
   }
   
   if (config.features.export_list_identifier) {
@@ -526,7 +551,11 @@ function check_item_visibility(
   if (first_child && first_child.type === 'visibility_modifier') {
     const vis_text = first_child.text;
     // Check if it's any form of public visibility
-    if (vis_text === 'pub' || vis_text.startsWith('pub ')) {
+    if (vis_text === 'pub' || vis_text.startsWith('pub(')) {
+      // Skip pub(self) as it's not really public
+      if (vis_text === 'pub(self)') {
+        return { is_public: false };
+      }
       return { is_public: true, visibility_level: vis_text };
     }
   }

@@ -11,7 +11,7 @@ import { ExportInfo } from '@ariadnejs/types';
 /**
  * Rust visibility levels
  */
-export type RustVisibility = 'pub' | 'pub(crate)' | 'pub(super)' | 'pub(in path)' | 'private';
+export type RustVisibility = 'pub' | 'pub(crate)' | 'pub(super)' | 'pub(self)' | `pub(in ${string})` | 'private';
 
 /**
  * Handle complex visibility modifiers
@@ -34,19 +34,12 @@ export function handle_visibility_modifiers(
       if (item) {
         const name = item.childForFieldName('name');
         if (name) {
-          // Extract simplified visibility level for the export
-          let visibilityLevel = visibility;
-          if (visibility === 'pub(crate)') visibilityLevel = 'crate';
-          else if (visibility === 'pub(super)') visibilityLevel = 'super';
-          else if (visibility === 'pub(self)') visibilityLevel = 'self';
-          else if (visibility.startsWith('pub(in ')) visibilityLevel = visibility.substring(4);
-          
           exports.push({
             name: name.text,
             source: 'local',
             kind: get_item_kind(item),
             location: node_to_location(item),
-            visibility: visibilityLevel,
+            visibility: get_simplified_visibility(visibility),
             restricted: visibility !== 'pub'
           });
         }
@@ -83,20 +76,13 @@ export function handle_pub_use_reexports(
         const use_list = parse_use_declaration(node);
         
         for (const use_item of use_list) {
-          // Extract simplified visibility level
-          let visibilityLevel = visibility;
-          if (visibility === 'pub(crate)') visibilityLevel = 'crate';
-          else if (visibility === 'pub(super)') visibilityLevel = 'super';
-          else if (visibility === 'pub(self)') visibilityLevel = 'self';
-          else if (visibility.startsWith('pub(in ')) visibilityLevel = visibility.substring(4);
-          
           exports.push({
             name: use_item.alias || use_item.name,
             source: use_item.path,
             kind: use_item.is_glob ? 'namespace' : 'named',
             location: node_to_location(node),
             original_name: use_item.alias ? use_item.name : undefined,
-            visibility: visibilityLevel,
+            visibility: get_simplified_visibility(visibility),
             is_reexport: true
           });
         }
@@ -176,7 +162,7 @@ export function handle_trait_impl_exports(
             source: 'local',
             kind: 'trait',
             location: node_to_location(node),
-            visibility
+            visibility: get_simplified_visibility(visibility)
           });
         }
       }
@@ -201,7 +187,7 @@ export function handle_trait_impl_exports(
                   source: 'local',
                   kind: 'method',
                   location: node_to_location(item),
-                  visibility,
+                  visibility: get_simplified_visibility(visibility),
                   impl_for: type_node?.text,
                   trait_impl: trait_node?.text
                 });
@@ -246,7 +232,7 @@ export function handle_module_exports(
           source: 'local',
           kind: 'module',
           location: node_to_location(node),
-          visibility,
+          visibility: get_simplified_visibility(visibility),
           module_path: current_path.join('::')
         });
         
@@ -287,19 +273,28 @@ function extract_visibility(node: SyntaxNode): RustVisibility | null {
   
   const visibility_text = visibility_node.text;
   
-  if (visibility_text === 'pub') {
+  // Return the full text, including pub(in path) with actual path
+  return visibility_text as RustVisibility;
+}
+
+/**
+ * Extract simplified visibility level for export info
+ */
+function get_simplified_visibility(visibility: RustVisibility): string {
+  if (visibility === 'pub') {
     return 'pub';
-  } else if (visibility_text === 'pub(crate)') {
-    return 'pub(crate)';
-  } else if (visibility_text === 'pub(super)') {
-    return 'pub(super)';
-  } else if (visibility_text === 'pub(self)') {
-    return 'pub(self)';
-  } else if (visibility_text.startsWith('pub(in ')) {
-    return 'pub(in path)';
+  } else if (visibility === 'pub(crate)') {
+    return 'crate';
+  } else if (visibility === 'pub(super)') {
+    return 'super';
+  } else if (visibility === 'pub(self)') {
+    return 'self';
+  } else if (typeof visibility === 'string' && visibility.startsWith('pub(in ')) {
+    // Extract the path from pub(in path)
+    const match = visibility.match(/pub\(in\s+(.+)\)/);
+    return match ? match[1] : visibility;
   }
-  
-  return 'private';
+  return visibility;
 }
 
 /**
@@ -346,8 +341,35 @@ function parse_use_declaration(use_node: SyntaxNode): Array<{
   const use_tree = use_node.childForFieldName('argument');
   const scoped_use_list = use_node.children.find(c => c.type === 'scoped_use_list');
   const use_tree_child = use_node.children.find(c => c.type === 'use_tree');
+  const use_wildcard = use_node.children.find(c => c.type === 'use_wildcard');
+  const scoped_identifier = use_node.children.find(c => c.type === 'scoped_identifier');
   
-  if (scoped_use_list) {
+  if (use_wildcard) {
+    // Handle direct wildcard like "pub use crate::utils::*"
+    const scoped_id = use_wildcard.children.find(c => c.type === 'scoped_identifier');
+    const path = scoped_id ? scoped_id.text : use_wildcard.text.replace(/::?\*$/, '');
+    
+    items.push({
+      name: '*',
+      path: path,
+      is_glob: true
+    });
+  } else if (scoped_identifier && scoped_identifier.text.includes('::*')) {
+    // Handle glob imports that may have errors in parsing
+    // Like "std::collections::* as collections"
+    const text = scoped_identifier.text;
+    const glob_match = text.match(/^(.+)::\*(?:\s+as\s+(\w+))?$/);
+    if (glob_match) {
+      const path = glob_match[1];
+      const alias = glob_match[2];
+      items.push({
+        name: alias || '*',
+        path: path,
+        alias: alias,
+        is_glob: true
+      });
+    }
+  } else if (scoped_use_list) {
     // Handle scoped use list like "crate::module::{Item1, Item2}"
     const scope = scoped_use_list.children.find(c => c.type === 'scoped_identifier');
     const list = scoped_use_list.children.find(c => c.type === 'use_list');

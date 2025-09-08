@@ -29,7 +29,7 @@ pub(crate) struct CrateStruct;
       expect(exports).toHaveLength(2);
       expect(exports.map(e => e.name)).toContain('crate_function');
       expect(exports.map(e => e.name)).toContain('CrateStruct');
-      expect(exports.every(e => e.visibility === 'pub(crate)')).toBe(true);
+      expect(exports.every(e => e.visibility === 'crate')).toBe(true);
       expect(exports.every(e => e.restricted)).toBe(true);
     });
     
@@ -44,7 +44,7 @@ pub(super) enum SuperEnum { A, B }
       expect(exports).toHaveLength(2);
       expect(exports.map(e => e.name)).toContain('super_function');
       expect(exports.map(e => e.name)).toContain('SuperEnum');
-      expect(exports.every(e => e.visibility === 'pub(super)')).toBe(true);
+      expect(exports.every(e => e.visibility === 'super')).toBe(true);
     });
     
     it('should detect pub(in path) visibility', () => {
@@ -56,7 +56,8 @@ pub(in super::parent) struct RestrictedStruct;
       const exports = handle_visibility_modifiers(tree.rootNode, code);
       
       expect(exports).toHaveLength(2);
-      expect(exports.every(e => e.visibility === 'pub(in path)')).toBe(true);
+      expect(exports[0].visibility).toBe('crate::module');
+      expect(exports[1].visibility).toBe('super::parent');
       expect(exports.every(e => e.restricted)).toBe(true);
     });
     
@@ -151,8 +152,8 @@ pub(super) use parent::Util;
       const exports = handle_pub_use_reexports(tree.rootNode, code);
       
       expect(exports).toHaveLength(2);
-      expect(exports.find(e => e.name === 'Helper')?.visibility).toBe('pub(crate)');
-      expect(exports.find(e => e.name === 'Util')?.visibility).toBe('pub(super)');
+      expect(exports.find(e => e.name === 'Helper')?.visibility).toBe('crate');
+      expect(exports.find(e => e.name === 'Util')?.visibility).toBe('super');
     });
   });
   
@@ -265,7 +266,7 @@ pub(crate) trait InternalTrait {
       
       expect(exports).toHaveLength(1);
       expect(exports[0].name).toBe('InternalTrait');
-      expect(exports[0].visibility).toBe('pub(crate)');
+      expect(exports[0].visibility).toBe('crate');
     });
   });
   

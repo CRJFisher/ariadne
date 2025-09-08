@@ -306,6 +306,82 @@ export function handle_declaration_merging(
 }
 
 /**
+ * Handle ambient declarations (export declare)
+ * 
+ * TypeScript-specific pattern for exporting ambient declarations
+ */
+export function handle_ambient_declarations(
+  root_node: SyntaxNode,
+  source_code: string
+): ExportInfo[] {
+  const exports: ExportInfo[] = [];
+  
+  const visit = (node: SyntaxNode) => {
+    // Check for export statements with ambient declarations
+    if (node.type === 'export_statement') {
+      const ambient = node.children.find(c => c.type === 'ambient_declaration');
+      
+      if (ambient) {
+        // Look inside the ambient declaration for the actual declaration
+        for (const child of ambient.children) {
+          if (child.type === 'lexical_declaration' ||
+              child.type === 'variable_declaration') {
+            // Handle const/let/var declarations
+            for (const declarator of child.children) {
+              if (declarator.type === 'variable_declarator') {
+                const name = declarator.childForFieldName('name');
+                if (name) {
+                  exports.push({
+                    name: name.text,
+                    source: 'local',
+                    kind: 'named',
+                    location: node_to_location(node),
+                    is_ambient: true
+                  });
+                }
+              }
+            }
+          } else if (child.type === 'function_signature' ||
+                    child.type === 'function_declaration') {
+            // Handle function declarations
+            const name = child.childForFieldName('name');
+            if (name) {
+              exports.push({
+                name: name.text,
+                source: 'local',
+                kind: 'function',
+                location: node_to_location(node),
+                is_ambient: true
+              });
+            }
+          } else if (child.type === 'class_declaration') {
+            // Handle class declarations
+            const name = child.childForFieldName('name');
+            if (name) {
+              exports.push({
+                name: name.text,
+                source: 'local',
+                kind: 'class',
+                location: node_to_location(node),
+                is_ambient: true
+              });
+            }
+          }
+        }
+      }
+    }
+    
+    // Continue traversal
+    for (const child of node.children) {
+      visit(child);
+    }
+  };
+  
+  visit(root_node);
+  return exports;
+}
+
+/**
  * Get all TypeScript bespoke exports
  */
 export function get_typescript_bespoke_exports(
@@ -323,6 +399,7 @@ export function get_typescript_bespoke_exports(
   exports.push(...handle_type_exports(root_node, source_code));
   exports.push(...handle_namespace_exports(root_node, source_code));
   exports.push(...handle_declaration_merging(root_node, source_code));
+  exports.push(...handle_ambient_declarations(root_node, source_code));
   
   return exports;
 }

@@ -28,6 +28,7 @@ import {
   handle_type_exports,
   handle_namespace_exports,
   handle_declaration_merging,
+  handle_ambient_declarations,
   get_typescript_bespoke_exports
 } from './export_detection.typescript.bespoke';
 
