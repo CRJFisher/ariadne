@@ -135,10 +135,7 @@ export function handle_enum_variant_construction(
     
     return {
       constructor_name: `${enum_name}::${variant_name}`,
-      location: {
-        line: node.startPosition.row,
-        column: node.startPosition.column
-      },
+      location: node_to_location(node, context.file_path),
       arguments_count: field_count,
       assigned_to,
       is_new_expression: false,
@@ -202,10 +199,7 @@ export function handle_tuple_struct_construction(
   
   return {
     constructor_name: struct_name,
-    location: {
-      line: node.startPosition.row,
-      column: node.startPosition.column
-    },
+    location: node_to_location(node, context.file_path),
     arguments_count: arg_count,
     assigned_to,
     is_new_expression: false,
@@ -270,10 +264,7 @@ export function handle_macro_construction(
   
   return {
     constructor_name: macro_name, // Use the macro name, not the type name
-    location: {
-      line: node.startPosition.row,
-      column: node.startPosition.column
-    },
+    location: node_to_location(node, context.file_path),
     arguments_count: element_count,
     assigned_to,
     is_new_expression: false,
@@ -343,10 +334,7 @@ export function handle_smart_pointer_construction(
   
   return {
     constructor_name: type_name,
-    location: {
-      line: node.startPosition.row,
-      column: node.startPosition.column
-    },
+    location: node_to_location(node, context.file_path),
     arguments_count: arg_count,
     assigned_to,
     is_new_expression: false,
@@ -410,10 +398,7 @@ export function handle_default_construction(
   
   return {
     constructor_name,
-    location: {
-      line: node.startPosition.row,
-      column: node.startPosition.column
-    },
+    location: node_to_location(node, context.file_path),
     arguments_count: 0, // Default::default() takes no arguments
     assigned_to,
     is_new_expression: false,

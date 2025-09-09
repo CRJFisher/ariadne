@@ -62,13 +62,13 @@ export function enrich_constructor_calls_with_types(
     const enriched: ConstructorCallWithType = { ...call };
     
     // Get the file's imports if available
-    const file_imports = call.file_path ? imports?.get(call.file_path) : undefined;
+    const file_imports = call.location.file_path ? imports?.get(call.location.file_path) : undefined;
 
     // Try to validate the constructor
     const validation = validate_constructor(
-      call.class_name,
+      call.constructor_name,
       type_registry,
-      call.file_path || '',
+      call.location.file_path,
       file_imports
     );
 

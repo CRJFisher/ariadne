@@ -467,6 +467,7 @@ function analyze_local_types(
   const type_tracking_context: TypeTrackingContext = {
     language: file.language,
     file_path: file.file_path,
+    source_code: source_code,
     debug: false,
   };
 

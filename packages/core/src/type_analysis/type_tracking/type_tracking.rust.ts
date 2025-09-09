@@ -12,7 +12,6 @@
 // TODO: Return Type Inference - Update type map with inferred types
 
 import { SyntaxNode } from 'tree-sitter';
-import { Def } from '@ariadnejs/types';
 import {
   TypeInfo,
   FileTypeTracker,
@@ -21,6 +20,7 @@ import {
   set_imported_class,
   infer_type_kind
 } from './type_tracking';
+import { node_to_location } from '../../ast/node_utils';
 
 /**
  * Track Rust variable assignments with type annotations
@@ -112,10 +112,7 @@ export function extract_rust_type(
   source_code: string,
   context: TypeTrackingContext
 ): TypeInfo | undefined {
-  const position = {
-    row: type_node.startPosition.row,
-    column: type_node.startPosition.column
-  };
+  const location = node_to_location(type_node, context.file_path);
   
   // Primitive types
   if (type_node.type === 'primitive_type') {
@@ -123,7 +120,7 @@ export function extract_rust_type(
     return {
       type_name,
       type_kind: 'primitive',
-      position,
+      location,
       confidence: 'explicit',
       source: 'annotation'
     };
@@ -135,7 +132,7 @@ export function extract_rust_type(
     return {
       type_name,
       type_kind: determine_rust_type_kind(type_name),
-      position,
+      location,
       confidence: 'explicit',
       source: 'annotation'
     };
@@ -151,7 +148,7 @@ export function extract_rust_type(
         return {
           type_name: `&${is_mutable ? 'mut ' : ''}${base_type.type_name}`,
           type_kind: base_type.type_kind,
-          position,
+          location,
           confidence: 'explicit',
           source: 'annotation'
         };
@@ -172,7 +169,7 @@ export function extract_rust_type(
         return {
           type_name: `[${base_type.type_name}; ${length}]`,
           type_kind: 'array',
-          position,
+          location,
           confidence: 'explicit',
           source: 'annotation'
         };
@@ -189,7 +186,7 @@ export function extract_rust_type(
         return {
           type_name: `[${base_type.type_name}]`,
           type_kind: 'array',
-          position,
+          location,
           confidence: 'explicit',
           source: 'annotation'
         };
@@ -213,7 +210,7 @@ export function extract_rust_type(
     return {
       type_name: `(${types.join(', ')})`,
       type_kind: 'unknown',
-      position,
+      location,
       confidence: 'explicit',
       source: 'annotation'
     };
@@ -232,7 +229,7 @@ export function extract_rust_type(
         return {
           type_name: `${base_name}${args_text}`,
           type_kind: base_name === 'Vec' ? 'array' : 'class',
-          position,
+          location,
           confidence: 'explicit',
           source: 'annotation'
         };
@@ -241,7 +238,7 @@ export function extract_rust_type(
       return {
         type_name: base_name,
         type_kind: 'class',
-        position,
+        location,
         confidence: 'explicit',
         source: 'annotation'
       };
@@ -253,7 +250,7 @@ export function extract_rust_type(
     return {
       type_name: 'fn',
       type_kind: 'function',
-      position,
+      location,
       confidence: 'explicit',
       source: 'annotation'
     };
@@ -269,7 +266,7 @@ export function extract_rust_type(
         return {
           type_name: `*${is_mutable ? 'mut' : 'const'} ${base_type.type_name}`,
           type_kind: base_type.type_kind,
-          position,
+          location,
           confidence: 'explicit',
           source: 'annotation'
         };
@@ -288,17 +285,14 @@ export function infer_rust_type(
   source_code: string,
   context: TypeTrackingContext
 ): TypeInfo | undefined {
-  const position = {
-    row: node.startPosition.row,
-    column: node.startPosition.column
-  };
+  const location = node_to_location(node, context.file_path);
   
   // String literals
   if (node.type === 'string_literal') {
     return {
       type_name: '&str',
       type_kind: 'primitive',
-      position,
+      location,
       confidence: 'explicit',
       source: 'assignment'
     };
@@ -313,7 +307,7 @@ export function infer_rust_type(
       return {
         type_name: suffix_match[0],
         type_kind: 'primitive',
-        position,
+        location,
         confidence: 'explicit',
         source: 'assignment'
       };
@@ -322,7 +316,7 @@ export function infer_rust_type(
     return {
       type_name: 'i32',
       type_kind: 'primitive',
-      position,
+      location,
       confidence: 'inferred',
       source: 'assignment'
     };
@@ -337,7 +331,7 @@ export function infer_rust_type(
       return {
         type_name: suffix_match[0],
         type_kind: 'primitive',
-        position,
+        location,
         confidence: 'explicit',
         source: 'assignment'
       };
@@ -346,7 +340,7 @@ export function infer_rust_type(
     return {
       type_name: 'f64',
       type_kind: 'primitive',
-      position,
+      location,
       confidence: 'inferred',
       source: 'assignment'
     };
@@ -357,7 +351,7 @@ export function infer_rust_type(
     return {
       type_name: 'bool',
       type_kind: 'primitive',
-      position,
+      location,
       confidence: 'explicit',
       source: 'assignment'
     };
@@ -368,7 +362,7 @@ export function infer_rust_type(
     return {
       type_name: 'array',
       type_kind: 'array',
-      position,
+      location,
       confidence: 'inferred',
       source: 'assignment'
     };
@@ -379,7 +373,7 @@ export function infer_rust_type(
     return {
       type_name: 'tuple',
       type_kind: 'unknown',
-      position,
+      location,
       confidence: 'inferred',
       source: 'assignment'
     };
@@ -393,7 +387,7 @@ export function infer_rust_type(
       return {
         type_name: struct_name,
         type_kind: 'class',
-        position,
+        location,
         confidence: 'explicit',
         source: 'constructor'
       };
@@ -412,7 +406,7 @@ export function infer_rust_type(
         return {
           type_name,
           type_kind: 'class',
-          position,
+          location,
           confidence: 'inferred',
           source: 'constructor'
         };
@@ -423,7 +417,7 @@ export function infer_rust_type(
         return {
           type_name: 'Vec',
           type_kind: 'array',
-          position,
+          location,
           confidence: 'inferred',
           source: 'constructor'
         };
@@ -545,146 +539,6 @@ function track_use_list(
   }
   
   return updated_tracker;
-}
-
-/**
- * Track Rust struct definitions
- */
-export function track_rust_struct(
-  tracker: FileTypeTracker,
-  struct_def: Def,
-  source_code: string,
-  context: TypeTrackingContext
-): FileTypeTracker {
-  // Register the struct as a type
-  const type_info: TypeInfo = {
-    type_name: struct_def.name,
-    type_kind: 'class',
-    position: {
-      row: struct_def.range.start.row,
-      column: struct_def.range.start.column
-    },
-    confidence: 'explicit',
-    source: 'annotation'
-  };
-  
-  return set_variable_type(tracker, struct_def.name, type_info);
-}
-
-/**
- * Track Rust enum definitions
- */
-export function track_rust_enum(
-  tracker: FileTypeTracker,
-  enum_def: Def,
-  source_code: string,
-  context: TypeTrackingContext
-): FileTypeTracker {
-  // Register the enum as a type
-  const type_info: TypeInfo = {
-    type_name: enum_def.name,
-    type_kind: 'unknown', // Enums are special in Rust
-    position: {
-      row: enum_def.range.start.row,
-      column: enum_def.range.start.column
-    },
-    confidence: 'explicit',
-    source: 'annotation'
-  };
-  
-  return set_variable_type(tracker, enum_def.name, type_info);
-}
-
-/**
- * Track Rust trait definitions
- */
-export function track_rust_trait(
-  tracker: FileTypeTracker,
-  trait_def: Def,
-  source_code: string,
-  context: TypeTrackingContext
-): FileTypeTracker {
-  // Register the trait as a type (similar to interface)
-  const type_info: TypeInfo = {
-    type_name: trait_def.name,
-    type_kind: 'interface',
-    position: {
-      row: trait_def.range.start.row,
-      column: trait_def.range.start.column
-    },
-    confidence: 'explicit',
-    source: 'annotation'
-  };
-  
-  return set_variable_type(tracker, trait_def.name, type_info);
-}
-
-/**
- * Track Rust function parameters
- */
-export function track_rust_parameters(
-  tracker: FileTypeTracker,
-  func_node: SyntaxNode,
-  source_code: string,
-  context: TypeTrackingContext
-): FileTypeTracker {
-  let updated_tracker = tracker;
-  const params_node = func_node.childForFieldName('parameters');
-  
-  if (params_node) {
-    for (let i = 0; i < params_node.childCount; i++) {
-      const param = params_node.child(i);
-      if (param && param.type === 'parameter') {
-        const pattern_node = param.childForFieldName('pattern');
-        const type_node = param.childForFieldName('type');
-        
-        if (pattern_node && type_node) {
-          const param_name = extract_pattern_name(pattern_node, source_code);
-          const type_info = extract_rust_type(type_node, source_code, context);
-          
-          if (param_name && type_info) {
-            updated_tracker = set_variable_type(updated_tracker, param_name, type_info);
-          }
-        }
-      }
-    }
-  }
-  
-  return updated_tracker;
-}
-
-/**
- * Infer return type from Rust function
- */
-export function infer_rust_return_type(
-  func_node: SyntaxNode,
-  source_code: string,
-  tracker: FileTypeTracker,
-  context: TypeTrackingContext
-): TypeInfo | undefined {
-  // Check for explicit return type annotation
-  const return_type_node = func_node.childForFieldName('return_type');
-  if (return_type_node) {
-    // Skip the arrow (->)
-    for (let i = 0; i < return_type_node.childCount; i++) {
-      const child = return_type_node.child(i);
-      if (child && child.type !== '->') {
-        return extract_rust_type(child, source_code, context);
-      }
-    }
-  }
-  
-  // No explicit return type means () (unit type) in Rust
-  return {
-    type_name: '()',
-    type_kind: 'primitive',
-    position: {
-      row: func_node.startPosition.row,
-      column: func_node.startPosition.column
-    },
-    confidence: 'inferred',
-    source: 'return'
-  };
 }
 
 /**

@@ -141,8 +141,8 @@ async function resolve_namespaces_across_files(
   type_registry: TypeRegistry,
   propagated_types: any,
   file_name_to_tree: Map<FilePath, Parser.Tree>
-): Promise<Map<string, NamespaceInfo>> {
-  const namespace_map = new Map<string, NamespaceInfo>();
+): Promise<Map<FilePath, NamespaceInfo>> {
+  const namespace_map = new Map<FilePath, NamespaceInfo>();
   const resolved_members = new Map<Location, ResolvedNamespaceType>();
 
   // Build namespace import map from all files
@@ -153,7 +153,7 @@ async function resolve_namespaces_across_files(
         const namespace_key = `${analysis.file_path}:${import_stmt.namespace_name}`;
 
         // Get the exported members from the source module
-        const source_module_path = resolveModulePath(
+        const source_module_path = resolve_module_path(
           import_stmt.source,
           analysis.file_path,
           module_graph
@@ -164,7 +164,7 @@ async function resolve_namespaces_across_files(
             (a) => a.file_path === source_module_path
           );
           if (source_analysis) {
-            const namespace_exports = collectNamespaceExports(source_analysis);
+            const namespace_exports = collect_namespace_exports(source_analysis);
 
             namespace_map.set(namespace_key, {
               name: import_stmt.namespace_name,
@@ -218,7 +218,7 @@ async function resolve_namespaces_across_files(
 }
 
 // Helper function to resolve module paths
-function resolveModulePath(
+function resolve_module_path(
   source: ModulePath,
   from_file: FilePath,
   module_graph: ModuleGraph
@@ -261,7 +261,7 @@ function normalizeModulePath(path: ModulePath): ModulePath {
 }
 
 // Helper function to collect namespace exports
-function collectNamespaceExports(
+function collect_namespace_exports(
   analysis: FileAnalysis
 ): Map<string, NamespaceExportInfo> {
   const exports = new Map<string, NamespaceExportInfo>();

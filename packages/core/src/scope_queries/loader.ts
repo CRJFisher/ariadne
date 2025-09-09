@@ -92,7 +92,7 @@ function create_rust_parser(): Parser {
   return parser;
 }
 
-export function get_language_parser(language: Language): Parser | null {
+export function get_language_parser(language: Language): Parser {
   const parsers = {
     javascript: create_javascript_parser,
     typescript: create_typescript_parser,
@@ -101,7 +101,10 @@ export function get_language_parser(language: Language): Parser | null {
   };
   
   const create_parser = parsers[language];
-  return create_parser ? create_parser() : null;
+  if (!create_parser) {
+    throw new Error(`Unsupported language: ${language}`);
+  }
+  return create_parser();
 }
 
 // Export supported languages

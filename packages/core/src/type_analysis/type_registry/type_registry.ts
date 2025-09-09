@@ -362,7 +362,7 @@ export function register_class(
 
 export function initialize_builtins(registry: MutableTypeRegistry): void {
   // JavaScript/TypeScript built-ins
-  const js_builtins = new Set<TypeName>([
+  const js_builtins = new Set<string>([
     "string",
     "number",
     "boolean",
@@ -383,11 +383,11 @@ export function initialize_builtins(registry: MutableTypeRegistry): void {
     "TypeError",
     "ReferenceError",
     "SyntaxError",
-  ]);
+  ]) as Set<TypeName>;
   registry.builtins.set("javascript", js_builtins);
   registry.builtins.set(
     "typescript",
-    new Set([...js_builtins, "any", "unknown", "never", "void"])
+    new Set([...js_builtins, "any", "unknown", "never", "void"]) as Set<TypeName>
   );
 
   // Python built-ins
@@ -409,7 +409,7 @@ export function initialize_builtins(registry: MutableTypeRegistry): void {
       "ValueError",
       "TypeError",
       "KeyError",
-    ])
+    ]) as Set<TypeName>
   );
 
   // Rust built-ins
@@ -439,7 +439,7 @@ export function initialize_builtins(registry: MutableTypeRegistry): void {
       "HashSet",
       "Option",
       "Result",
-    ])
+    ]) as Set<TypeName>
   );
 }
 /**

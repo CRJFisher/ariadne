@@ -8,6 +8,7 @@
 import { SyntaxNode } from 'tree-sitter';
 import { ConstructorCallInfo } from '@ariadnejs/types';
 import { ConstructorCallContext } from './constructor_calls';
+import { node_to_location } from '../../ast/node_utils';
 
 /**
  * Handle JavaScript's Object.create() pattern
@@ -79,10 +80,7 @@ export function handle_object_create_pattern(
   
   return {
     constructor_name,
-    location: {
-      line: node.startPosition.row,
-      column: node.startPosition.column
-    },
+    location: node_to_location(node, context.file_path),
     arguments_count: 1, // Object.create typically takes 1-2 arguments
     assigned_to,
     is_new_expression: false,

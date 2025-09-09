@@ -1,157 +1,343 @@
 /**
- * Type tracking dispatcher
- * 
- * Routes type tracking operations to language-specific implementations
+ * Type tracking module
+ *
+ * Provides functionality for tracking variable types, imported classes,
+ * and type information across codebases.
+ *
+ * Uses configuration-driven generic processing with language-specific
+ * bespoke handlers for unique features.
  */
 
-import { SyntaxNode } from 'tree-sitter';
-import { Language, Def, ImportInfo } from '@ariadnejs/types';
-import { merge_imported_types } from './import_type_resolver';
-import {
+import { SyntaxNode } from "tree-sitter";
+import { Language, ImportInfo } from "@ariadnejs/types";
+
+// Re-export public API types and functions
+export {
+  // Core Types
   TypeInfo,
-  FileTypeTracker,
-  LocalTypeTracker,
-  ProjectTypeRegistry,
-  TypeTrackingContext,
   ImportedClassInfo,
-  ExportedTypeInfo,
-  // Core functions
+  TypeTrackingContext,
+  FileTypeTracker,
+
+  // Core tracker operations
   create_file_type_tracker,
-  create_local_type_tracker,
-  create_project_type_registry,
   set_variable_type,
-  get_variable_type,
-  set_imported_class,
   get_imported_class,
+  set_imported_class,
+  
+  // Export tracking
   mark_as_exported,
   is_exported,
-  get_exported_definitions,
-  clear_file_type_tracker,
-  set_local_variable_type,
-  get_local_variable_type,
-  get_local_imported_class,
-  register_export,
-  get_imported_type,
-  clear_file_exports,
-  set_variable_types,
-  set_imported_classes,
-  mark_as_exported_batch,
-  register_exports,
+
+  // Type utilities
   infer_type_kind,
-  is_type_assignable
-} from './type_tracking';
+} from "./type_tracking";
 
-// Language-specific imports
-import {
-  track_javascript_assignment,
-  track_javascript_imports,
-  track_javascript_parameters,
-  infer_javascript_return_type,
-  infer_javascript_type,
-  is_constructor_function
-} from './type_tracking.javascript';
+// Re-export configuration system
+export {
+  TypeTrackingLanguageConfig,
+  get_type_tracking_config as getTypeTrackingConfig,
+  is_assignment_node as isAssignmentNode,
+  get_literal_type as getLiteralType,
+  get_collection_type as getCollectionType,
+} from "./language_configs";
 
+// Import bespoke handlers
 import {
-  track_typescript_assignment,
-  track_typescript_imports,
   track_typescript_interface,
   track_typescript_type_alias,
+  extract_typescript_complex_generics,
   track_typescript_enum,
-  infer_typescript_return_type,
-  extract_typescript_type,
-  is_generic_parameter as is_typescript_generic,
-  extract_generic_constraint
-} from './type_tracking.typescript';
+  extract_decorator_type_metadata,
+  extract_typescript_conditional_type,
+  extract_typescript_mapped_type,
+  track_typescript_namespace,
+} from "./type_tracking.typescript.bespoke";
 
 import {
-  track_python_assignment,
-  track_python_imports,
-  track_python_class,
-  track_python_function,
-  infer_python_return_type,
-  infer_python_type,
-  is_builtin_type as is_python_builtin
-} from './type_tracking.python';
+  track_javascript_constructor_function,
+  track_javascript_prototype_assignment,
+  track_javascript_require,
+  track_javascript_dynamic_property,
+  infer_javascript_instanceof,
+  track_javascript_object_create,
+} from "./type_tracking.javascript.bespoke";
 
 import {
-  track_rust_assignment,
-  track_rust_struct,
-  track_rust_enum,
+  extract_python_union_type,
+  track_python_dataclass,
+  track_python_property,
+  track_python_context_manager,
+  track_python_comprehension,
+  track_python_multiple_inheritance,
+  track_python_typing_imports,
+} from "./type_tracking.python.bespoke";
+
+import {
+  track_rust_ownership,
+  track_rust_lifetimes,
   track_rust_trait,
-  track_rust_parameters,
-  infer_rust_return_type,
-  extract_rust_type,
-  is_generic_parameter as is_rust_generic,
-  extract_lifetime_parameters
-} from './type_tracking.rust';
+  track_rust_impl,
+  track_rust_pattern_match,
+  track_rust_associated_type,
+  track_rust_enum,
+  track_rust_if_let,
+  track_rust_macro_types,
+  infer_rust_typed_literal,
+} from "./type_tracking.rust.bespoke";
 
-// Re-export core types and functions
-export {
-  // Types
-  TypeInfo,
+// Import generic functions and types
+import {
   FileTypeTracker,
-  LocalTypeTracker,
-  ProjectTypeRegistry,
   TypeTrackingContext,
-  ImportedClassInfo,
-  ExportedTypeInfo,
-  // Core functions
+  TypeInfo,
+  track_assignment_generic,
+  track_imports_generic,
+  track_exports_generic,
+  infer_type_generic,
+  extract_type_annotation_generic,
   create_file_type_tracker,
-  create_local_type_tracker,
-  create_project_type_registry,
   set_variable_type,
-  get_variable_type,
-  set_imported_class,
-  get_imported_class,
-  mark_as_exported,
-  is_exported,
-  get_exported_definitions,
-  clear_file_type_tracker,
-  set_local_variable_type,
-  get_local_variable_type,
-  get_local_imported_class,
-  register_export,
-  get_imported_type,
-  clear_file_exports,
-  set_variable_types,
-  set_imported_classes,
-  mark_as_exported_batch,
-  register_exports,
-  infer_type_kind,
-  is_type_assignable
-};
+} from "./type_tracking";
+
+import { get_type_tracking_config } from "./language_configs";
+import { merge_imported_types } from "./import_type_resolver";
 
 /**
- * Track variable assignment based on language
+ * Main entry point for tracking type assignments
+ * Combines generic processing with language-specific bespoke handlers
  */
 export function track_assignment(
   tracker: FileTypeTracker,
   node: SyntaxNode,
-  source_code: string,
-  context: TypeTrackingContext,
-  scope_tree?: any, // From scope_tree - Layer 2
-  imports?: any[] // From import_resolution - Layer 1
+  context: TypeTrackingContext
 ): FileTypeTracker {
-  switch (context.language) {
-    case 'javascript':
-      return track_javascript_assignment(tracker, node, source_code, context);
-    case 'typescript':
-      return track_typescript_assignment(tracker, node, source_code, context);
-    case 'python':
-      return track_python_assignment(tracker, node, source_code, context);
-    case 'rust':
-      return track_rust_assignment(tracker, node, source_code, context);
-    default:
-      if (context.debug) {
-        console.warn(`Type tracking not implemented for language: ${context.language}`);
+  const source_code = context.source_code;
+  // For Rust, we need custom assignment handling to use proper type inference
+  if (context.language === "rust") {
+    const config = get_type_tracking_config(context.language);
+
+    // Handle Rust let declarations with typed literals
+    if (node.type === config.assignment_nodes.variable_declaration) {
+      const name_node = node.childForFieldName(config.field_names.name);
+      const value_node = node.childForFieldName(config.field_names.value);
+      const type_node = node.childForFieldName(config.field_names.type || "");
+
+      if (name_node) {
+        const var_name = source_code.substring(
+          name_node.startIndex,
+          name_node.endIndex
+        );
+        let handled = false;
+
+        // First check for explicit type annotation
+        if (type_node) {
+          const type_info = extract_type_annotation_generic(type_node, context);
+          if (type_info) {
+            tracker = set_variable_type(tracker, var_name, {
+              ...type_info,
+              variable_name: var_name,
+            });
+            handled = true;
+          }
+        }
+        // Otherwise infer from value using full infer_type (including bespoke)
+        if (!handled && value_node) {
+          const type_info = infer_type(value_node, context);
+          if (type_info) {
+            tracker = set_variable_type(tracker, var_name, {
+              ...type_info,
+              variable_name: var_name,
+            });
+            handled = true;
+          }
+        }
+
+        // If we handled it, apply Rust bespoke handlers and return
+        if (handled) {
+          tracker = track_rust_trait(tracker, node, context);
+          tracker = track_rust_impl(tracker, node, context);
+          tracker = track_rust_enum(tracker, node, context);
+          tracker = track_rust_pattern_match(
+            tracker,
+            node,
+            context
+          );
+          tracker = track_rust_if_let(tracker, node, context);
+          tracker = track_rust_associated_type(
+            tracker,
+            node,
+            context
+          );
+          tracker = track_rust_macro_types(tracker, node, context);
+          return tracker;
+        }
       }
-      return tracker;
+    }
   }
+
+  // Apply generic processing for other cases
+  let updated_tracker = track_assignment_generic(
+    tracker,
+    node,
+    context
+  );
+
+  // Then apply language-specific bespoke processing
+  switch (context.language) {
+    case "typescript":
+      updated_tracker = track_typescript_interface(
+        updated_tracker,
+        node,
+        context
+      );
+      updated_tracker = track_typescript_type_alias(
+        updated_tracker,
+        node,
+        context
+      );
+      updated_tracker = track_typescript_enum(
+        updated_tracker,
+        node,
+        context
+      );
+      updated_tracker = track_typescript_namespace(
+        updated_tracker,
+        node,
+        context
+      );
+      break;
+
+    case "javascript":
+      updated_tracker = track_javascript_constructor_function(
+        updated_tracker,
+        node,
+        context
+      );
+      updated_tracker = track_javascript_prototype_assignment(
+        updated_tracker,
+        node,
+        context
+      );
+      updated_tracker = track_javascript_require(
+        updated_tracker,
+        node,
+        context
+      );
+      updated_tracker = track_javascript_dynamic_property(
+        updated_tracker,
+        node,
+        context
+      );
+      break;
+
+    case "python":
+      updated_tracker = track_python_dataclass(
+        updated_tracker,
+        node,
+        context
+      );
+      updated_tracker = track_python_context_manager(
+        updated_tracker,
+        node,
+        context
+      );
+      updated_tracker = track_python_multiple_inheritance(
+        updated_tracker,
+        node,
+        context
+      );
+      updated_tracker = track_python_typing_imports(
+        updated_tracker,
+        node,
+        context
+      );
+      break;
+
+    case "rust":
+      updated_tracker = track_rust_trait(
+        updated_tracker,
+        node,
+        context
+      );
+      updated_tracker = track_rust_impl(
+        updated_tracker,
+        node,
+        context
+      );
+      updated_tracker = track_rust_enum(
+        updated_tracker,
+        node,
+        context
+      );
+      updated_tracker = track_rust_pattern_match(
+        updated_tracker,
+        node,
+        context
+      );
+      updated_tracker = track_rust_if_let(
+        updated_tracker,
+        node,
+        context
+      );
+      updated_tracker = track_rust_associated_type(
+        updated_tracker,
+        node,
+        context
+      );
+      updated_tracker = track_rust_macro_types(
+        updated_tracker,
+        node,
+        context
+      );
+      break;
+  }
+
+  return updated_tracker;
+}
+
+/**
+ * Main entry point for tracking imports
+ */
+export function track_imports(
+  tracker: FileTypeTracker,
+  node: SyntaxNode,
+  context: TypeTrackingContext
+): FileTypeTracker {
+  // Apply generic import tracking
+  let updated_tracker = track_imports_generic(
+    tracker,
+    node,
+    context
+  );
+
+  // Apply language-specific import handling
+  switch (context.language) {
+    case "javascript":
+      // CommonJS require() is handled in bespoke
+      updated_tracker = track_javascript_require(
+        updated_tracker,
+        node,
+        context
+      );
+      break;
+
+    case "python":
+      // typing module imports get special handling
+      updated_tracker = track_python_typing_imports(
+        updated_tracker,
+        node,
+        context
+      );
+      break;
+  }
+
+  return updated_tracker;
 }
 
 /**
  * Process imports from import_resolution layer
- * 
+ *
  * Instead of extracting imports from AST (which was duplicate work),
  * this now uses the ImportInfo[] already extracted by import_resolution.
  */
@@ -166,30 +352,14 @@ export function process_imports_for_types(
 }
 
 /**
- * Infer return type based on language
+ * Main entry point for tracking exports
  */
-export function infer_return_type(
-  func_node: SyntaxNode,
-  source_code: string,
+export function track_exports(
   tracker: FileTypeTracker,
-  context: TypeTrackingContext,
-  scope_tree?: any // From scope_tree - Layer 2
-): TypeInfo | undefined {
-  switch (context.language) {
-    case 'javascript':
-      return infer_javascript_return_type(func_node, source_code, tracker, context);
-    case 'typescript':
-      return infer_typescript_return_type(func_node, source_code, tracker, context);
-    case 'python':
-      return infer_python_return_type(func_node, source_code, tracker, context);
-    case 'rust':
-      return infer_rust_return_type(func_node, source_code, tracker, context);
-    default:
-      if (context.debug) {
-        console.warn(`Return type inference not implemented for language: ${context.language}`);
-      }
-      return undefined;
-  }
+  node: SyntaxNode,
+  context: TypeTrackingContext
+): FileTypeTracker {
+  return track_exports_generic(tracker, node, context);
 }
 
 /**
@@ -197,171 +367,107 @@ export function infer_return_type(
  */
 export function infer_type(
   node: SyntaxNode,
-  source_code: string,
   context: TypeTrackingContext
 ): TypeInfo | undefined {
+  // For Rust, check typed literals first (before generic inference)
+  if (context.language === "rust") {
+    const rust_typed_literal = infer_rust_typed_literal(
+      node,
+      context
+    );
+    if (rust_typed_literal) return rust_typed_literal;
+  }
+
+  // Try generic inference
+  const generic_type = infer_type_generic(node, context);
+  if (generic_type) {
+    return generic_type;
+  }
+
+  // Try language-specific bespoke inference
   switch (context.language) {
-    case 'javascript':
-      return infer_javascript_type(node, source_code, context);
-    case 'typescript':
-      // TypeScript can fall back to JavaScript inference
-      return extract_typescript_type(node, source_code, context) || 
-             infer_javascript_type(node, source_code, context);
-    case 'python':
-      return infer_python_type(node, source_code, context);
-    case 'rust':
-      return extract_rust_type(node, source_code, context);
-    default:
-      if (context.debug) {
-        console.warn(`Type inference not implemented for language: ${context.language}`);
-      }
-      return undefined;
-  }
-}
+    case "javascript":
+      const js_instanceof = infer_javascript_instanceof(
+        node,
+        context
+      );
+      if (js_instanceof) return js_instanceof;
 
-/**
- * Track type definition based on language
- */
-export function track_type_definition(
-  tracker: FileTypeTracker,
-  def: Def,
-  source_code: string,
-  context: TypeTrackingContext
-): FileTypeTracker {
-  switch (context.language) {
-    case 'typescript':
-      if (def.kind === 'type') {
-        // For TypeScript type definitions, we'd need more specific type info
-        // This is a simplified approach - real implementation would need more context
-        return tracker;
-      }
+      const js_object_create = track_javascript_object_create(
+        node,
+        context
+      );
+      if (js_object_create) return js_object_create;
       break;
-    case 'python':
-      if (def.kind === 'class') {
-        return track_python_class(tracker, def, source_code, context);
-      } else if (def.kind === 'function') {
-        return track_python_function(tracker, def, source_code, context);
-      }
+
+    case "typescript":
+      const ts_conditional = extract_typescript_conditional_type(
+        node,
+        context
+      );
+      if (ts_conditional) return ts_conditional;
+
+      const ts_mapped = extract_typescript_mapped_type(
+        node,
+        context
+      );
+      if (ts_mapped) return ts_mapped;
+
+      const ts_decorator = extract_decorator_type_metadata(
+        node,
+        context
+      );
+      if (ts_decorator) return ts_decorator;
       break;
-    case 'rust':
-      if (def.kind === 'type') {
-        // For Rust type definitions, we'd need more specific type info
-        // This is a simplified approach - real implementation would need more context
-        return tracker;
-      }
+
+    case "python":
+      const py_union = extract_python_union_type(node, context);
+      if (py_union) return py_union;
+
+      const py_property = track_python_property(node, context);
+      if (py_property) return py_property;
+
+      const py_comprehension = track_python_comprehension(
+        node,
+        context
+      );
+      if (py_comprehension) return py_comprehension;
+      break;
+
+    case "rust":
+      const rust_ownership = track_rust_ownership(node, context);
+      if (rust_ownership) return rust_ownership;
+
+      const rust_lifetime = track_rust_lifetimes(node, context);
+      if (rust_lifetime) return rust_lifetime;
       break;
   }
-  
-  return tracker;
-}
 
-/**
- * Check if a name is a generic type parameter
- */
-export function is_generic_parameter(
-  type_name: string,
-  language: Language
-): boolean {
-  switch (language) {
-    case 'typescript':
-      return is_typescript_generic(type_name);
-    case 'rust':
-      return is_rust_generic(type_name);
-    default:
-      // JavaScript and Python don't have static generics
-      return false;
-  }
-}
-
-/**
- * Check if a type is a built-in type
- */
-export function is_builtin_type(
-  type_name: string,
-  language: Language
-): boolean {
-  switch (language) {
-    case 'javascript':
-    case 'typescript':
-      const js_builtins = [
-        'string', 'number', 'boolean', 'null', 'undefined', 'void', 'any', 'unknown',
-        'String', 'Number', 'Boolean', 'Object', 'Array', 'Function', 'Symbol',
-        'Date', 'RegExp', 'Error', 'Map', 'Set', 'WeakMap', 'WeakSet',
-        'Promise', 'Proxy', 'Reflect'
-      ];
-      return js_builtins.includes(type_name);
-    case 'python':
-      return is_python_builtin(type_name);
-    case 'rust':
-      const rust_builtins = [
-        'i8', 'i16', 'i32', 'i64', 'i128', 'isize',
-        'u8', 'u16', 'u32', 'u64', 'u128', 'usize',
-        'f32', 'f64', 'bool', 'char', 'str', '()',
-        'Vec', 'String', 'Option', 'Result', 'Box', 'Rc', 'Arc'
-      ];
-      return rust_builtins.includes(type_name);
-    default:
-      return false;
-  }
-}
-
-/**
- * Check if a variable is a constructor/class
- */
-export function is_constructor(
-  var_name: string,
-  tracker: FileTypeTracker,
-  language: Language
-): boolean {
-  switch (language) {
-    case 'javascript':
-    case 'typescript':
-      return is_constructor_function(var_name, tracker);
-    case 'python':
-      // In Python, classes are just regular variables
-      const type_info = get_variable_type(tracker, var_name);
-      return type_info?.type_kind === 'class';
-    case 'rust':
-      // In Rust, structs/enums can be used as constructors
-      const rust_type = get_variable_type(tracker, var_name);
-      return rust_type?.type_kind === 'class';
-    default:
-      return false;
-  }
+  return undefined;
 }
 
 /**
  * Process an entire file for type tracking
  */
 export function process_file_for_types(
-  source_code: string,
   tree: SyntaxNode,
   context: TypeTrackingContext,
-  scope_tree?: any, // From scope_tree - Layer 2
-  imports?: ImportInfo[], // From import_resolution - Layer 1
-  classes?: any[] // From class_detection - Layer 5
+  imports?: ImportInfo[]
 ): FileTypeTracker {
   let tracker = create_file_type_tracker();
-  
-  // Process imports from Layer 1 (import_resolution)
+
+  // Process imports from import_resolution layer
   if (imports && imports.length > 0) {
     tracker = process_imports_for_types(tracker, imports, context);
   }
-  
+
   // Walk the tree and track types
   function visit(node: SyntaxNode) {
-    // Track assignments
-    if (is_assignment_node(node, context.language)) {
-      tracker = track_assignment(tracker, node, source_code, context);
-    }
-    
-    // Track function declarations (for parameter types)
-    if (is_function_node(node, context.language)) {
-      tracker = track_assignment(tracker, node, source_code, context);
-    }
-    
-    // NOTE: Import tracking removed - now using imports from Layer 1
-    
+    // Track assignments and type definitions
+    tracker = track_assignment(tracker, node, context);
+    tracker = track_imports(tracker, node, context);
+    tracker = track_exports(tracker, node, context);
+
     // Recurse
     for (let i = 0; i < node.childCount; i++) {
       const child = node.child(i);
@@ -370,68 +476,7 @@ export function process_file_for_types(
       }
     }
   }
-  
+
   visit(tree);
   return tracker;
 }
-
-/**
- * Check if a node is a type definition
- */
-function is_type_definition_node(node: SyntaxNode, language: Language): boolean {
-  switch (language) {
-    case 'typescript':
-      return node.type === 'interface_declaration' || 
-             node.type === 'type_alias_declaration' ||
-             node.type === 'enum_declaration';
-    case 'python':
-      return node.type === 'class_definition';
-    case 'rust':
-      return node.type === 'struct_item' || 
-             node.type === 'enum_item' ||
-             node.type === 'trait_item';
-    default:
-      return false;
-  }
-}
-
-/**
- * Check if a node is an assignment
- */
-function is_assignment_node(node: SyntaxNode, language: Language): boolean {
-  switch (language) {
-    case 'javascript':
-    case 'typescript':
-      return node.type === 'variable_declarator' || 
-             node.type === 'assignment_expression';
-    case 'python':
-      return node.type === 'assignment';
-    case 'rust':
-      return node.type === 'let_declaration' || 
-             node.type === 'const_item' || 
-             node.type === 'static_item';
-    default:
-      return false;
-  }
-}
-
-/**
- * Check if a node is a function (for parameter tracking)
- */
-function is_function_node(node: SyntaxNode, language: Language): boolean {
-  switch (language) {
-    case 'javascript':
-    case 'typescript':
-      return node.type === 'function_declaration' || 
-             node.type === 'method_definition' ||
-             node.type === 'arrow_function' ||
-             node.type === 'function_expression';
-    case 'python':
-      return node.type === 'function_definition';
-    case 'rust':
-      return node.type === 'function_item';
-    default:
-      return false;
-  }
-}
-

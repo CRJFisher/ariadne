@@ -2,16 +2,19 @@
  * Tests for Type Registry Module (Immutable Pattern)
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { TypeRegistry } from "./index";
 import { build_type_registry } from "./type_registry";
 import {
   FileAnalysis,
-  ImportInfo,
   FilePath,
-  TypeName,
   QualifiedName,
   Language,
+  SourceCode,
+  ModulePath,
+  ExportName,
+  ScopeTree,
+  ScopeId,
 } from "@ariadnejs/types";
 
 describe("Type Registry (Immutable)", () => {
@@ -21,21 +24,23 @@ describe("Type Registry (Immutable)", () => {
         {
           file_path: "/src/file1.ts" as FilePath,
           language: "typescript" as Language,
-          source_code: "",
+          source_code: "" as SourceCode,
           imports: [],
           exports: [
             {
               symbol_name: "Class1",
-              kind: "named" as const,
-              location: { start: 60, end: 80 },
+              location: { line: 60, column: 80, file_path: "/src/file1.ts" as FilePath, end_line: 80, end_column: 0 },
               is_default: false,
+              is_type_export: false,
+              source: "/src/file1.ts" as ModulePath,
+              export_name: "Class1" as ExportName,
             },
           ],
           functions: [],
           classes: [
             {
               name: "Class1",
-              location: { start: 0, end: 50 },
+              location: { line: 0, column: 50, file_path: "/src/file1.ts" as FilePath, end_line: 50, end_column: 0 },
               methods: [],
               properties: [],
               is_exported: true,
@@ -45,20 +50,21 @@ describe("Type Registry (Immutable)", () => {
           function_calls: [],
           method_calls: [],
           constructor_calls: [],
-          scopes: { nodes: new Map(), edges: [] },
+          scopes: { root_id: "root" as ScopeId, nodes: new Map(), edges: [] } as ScopeTree,
+          type_info: new Map(),
           errors: [],
         },
         {
           file_path: "/src/file2.ts" as FilePath,
           language: "typescript" as Language,
-          source_code: "",
+          source_code: "" as SourceCode,
           imports: [],
           exports: [],
           functions: [],
           classes: [
             {
               name: "Class2",
-              location: { start: 0, end: 40 },
+              location: { line: 0, column: 40, file_path: "/src/file2.ts" as FilePath, end_line: 40, end_column: 0 },
               methods: [],
               properties: [],
               is_exported: false,
@@ -70,7 +76,8 @@ describe("Type Registry (Immutable)", () => {
           function_calls: [],
           method_calls: [],
           constructor_calls: [],
-          scopes: { nodes: new Map(), edges: [] },
+          scopes: { root_id: "root" as ScopeId, nodes: new Map(), edges: [] } as ScopeTree,
+          type_info: new Map(),
           errors: [],
         },
       ];
@@ -106,7 +113,7 @@ describe("Type Registry (Immutable)", () => {
         {
           file_path: "/src/test.ts" as FilePath,
           language: "typescript" as Language,
-          source_code: "",
+          source_code: "" as SourceCode,
           imports: [],
           exports: [],
           functions: [],
@@ -115,7 +122,8 @@ describe("Type Registry (Immutable)", () => {
           function_calls: [],
           method_calls: [],
           constructor_calls: [],
-          scopes: { nodes: new Map(), edges: [] },
+          scopes: { root_id: "root" as ScopeId, nodes: new Map(), edges: [] } as ScopeTree,
+          type_info: new Map(),
           errors: [],
         },
       ];
@@ -145,34 +153,38 @@ describe("Type Registry (Immutable)", () => {
         {
           file_path: "/src/source.ts" as FilePath,
           language: "typescript" as Language,
-          source_code: "",
+          source_code: "" as SourceCode,
           imports: [],
           exports: [
             {
               symbol_name: "ExportedClass",
-              kind: "named" as const,
-              location: { start: 0, end: 30 },
+              location: { line: 0, column: 30, file_path: "/src/source.ts" as FilePath, end_line: 30, end_column: 0 },
               is_default: false,
+              is_type_export: false,
+              source: "/src/source.ts" as ModulePath,
+              export_name: "ExportedClass" as ExportName,
             },
             {
               symbol_name: "OriginalName",
-              kind: "named" as const,
-              location: { start: 40, end: 60 },
+              location: { line: 40, column: 60, file_path: "/src/source.ts" as FilePath, end_line: 60, end_column: 0 },
               is_default: false,
+              is_type_export: false,
+              source: "/src/source.ts" as ModulePath,
+              export_name: "OriginalName" as ExportName,
             },
           ],
           functions: [],
           classes: [
             {
               name: "ExportedClass",
-              location: { start: 0, end: 50 },
+              location: { line: 0, column: 50, file_path: "/src/source.ts" as FilePath, end_line: 50, end_column: 0 },
               methods: [],
               properties: [],
               is_exported: true,
             },
             {
               name: "OriginalName",
-              location: { start: 60, end: 110 },
+              location: { line: 60, column: 110, file_path: "/src/source.ts" as FilePath, end_line: 110, end_column: 0 },
               methods: [],
               properties: [],
               is_exported: true,
@@ -182,7 +194,8 @@ describe("Type Registry (Immutable)", () => {
           function_calls: [],
           method_calls: [],
           constructor_calls: [],
-          scopes: { nodes: new Map(), edges: [] },
+          scopes: { root_id: "root" as ScopeId, nodes: new Map(), edges: [] } as ScopeTree,
+          type_info: new Map(),
           errors: [],
         },
       ];

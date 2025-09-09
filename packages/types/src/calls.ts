@@ -65,6 +65,7 @@ export interface CallGraphOptions {
 // ============================================================================
 
 // TODO: cread a parent CallInfo interface
+// TODO: add call arguments
 
 export interface FunctionCallInfo {
   readonly caller_name: string; // Use MODULE_CONTEXT for module-level calls

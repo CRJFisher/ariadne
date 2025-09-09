@@ -63,8 +63,8 @@ export interface CodeGraphMetadata {
 
 export interface CodeGraphOptions {
   readonly root_path: FilePath;
-  readonly include_patterns?: readonly string[];
-  readonly exclude_patterns?: readonly string[];
+  readonly include_patterns?: readonly FilePath[];
+  readonly exclude_patterns?: readonly FilePath[];
   readonly languages?: readonly Language[];
   readonly max_file_size?: number;
   readonly follow_symlinks?: boolean;

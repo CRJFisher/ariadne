@@ -224,10 +224,7 @@ export function handle_constructor_with_type_assertion(
   
   const constructor_info: ConstructorCallInfo = {
     constructor_name,
-    location: {
-      line: expression.startPosition.row,
-      column: expression.startPosition.column
-    },
+    location: node_to_location(expression, context.file_path),
     arguments_count: arg_count,
     is_new_expression: true,
     is_factory_method: false

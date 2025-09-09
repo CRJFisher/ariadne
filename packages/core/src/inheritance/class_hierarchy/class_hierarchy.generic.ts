@@ -19,7 +19,11 @@ import {
   MethodDefinition,
   PropertyDefinition,
   FilePath,
-  SourceCode
+  SourceCode,
+  ClassName,
+  InterfaceName,
+  MethodName,
+  PropertyName
 } from '@ariadnejs/types';
 import {
   get_class_hierarchy_config,
@@ -103,13 +107,13 @@ export function build_generic_class_hierarchy(
 ): ClassHierarchy {
   const classes = new Map<QualifiedName, ClassNode>();
   const edges: InheritanceEdge[] = [];
-  const roots = new Set<string>();
+  const roots = new Set<ClassName>();
   
   // First pass: Create all ClassNodes
   for (const def of definitions) {
     // Use symbol_id if available (for tests), otherwise use qualified name
-    const key = (def as any).symbol_id || `${def.file_path}#${def.name}`;
-    const context = contexts.get(def.file_path);
+    const key = (def as any).symbol_id || `${def.location.file_path}#${def.name}`;
+    const context = contexts.get(def.location.file_path);
     
     if (!context) continue;
     
@@ -117,8 +121,8 @@ export function build_generic_class_hierarchy(
     const relationships = extract_relationships_generic(def, context, handlers.get(context.language));
     
     const node: ClassNode = {
-      name: def.name,
-      file_path: def.file_path,
+      name: def.name as ClassName,
+      file_path: def.location.file_path,
       location: def.location,
       base_classes: relationships.base_classes,
       derived_classes: [],
@@ -148,14 +152,14 @@ export function build_generic_class_hierarchy(
     
     // Track root classes
     if (!relationships.base_classes || relationships.base_classes.length === 0) {
-      roots.add(def.name);
+      roots.add(def.name as ClassName);
     }
     
     // Build inheritance edges
     for (const base of relationships.base_classes) {
       edges.push({
-        from: def.name,
-        to: base,
+        from: def.name as QualifiedName,
+        to: base as QualifiedName,
         type: 'extends',
         source_location: def.location,
       });
@@ -163,8 +167,8 @@ export function build_generic_class_hierarchy(
     
     for (const iface of relationships.interfaces) {
       edges.push({
-        from: def.name,
-        to: iface,
+        from: def.name as QualifiedName,
+        to: iface as QualifiedName,
         type: 'implements',
         source_location: def.location,
       });
@@ -195,13 +199,13 @@ function extract_relationships_generic(
   context: ClassHierarchyContext,
   handlers?: BespokeHandlers
 ): {
-  base_classes: string[];
-  interfaces: string[];
+  base_classes: ClassName[];
+  interfaces: InterfaceName[];
   is_abstract: boolean;
 } {
   const config = get_class_hierarchy_config(context.language);
-  const base_classes: string[] = [];
-  const interfaces: string[] = [];
+  const base_classes: ClassName[] = [];
+  const interfaces: InterfaceName[] = [];
   let is_abstract = false;
   
   // Find the AST node for this definition
@@ -291,8 +295,8 @@ function extract_by_pattern(
   pattern: { node_type?: string; field_name?: string; keyword?: string },
   context: ClassHierarchyContext,
   config: ClassHierarchyConfig
-): string[] {
-  const results: string[] = [];
+  ): ClassName[] {
+  const results: ClassName[] = [];
   
   // Find the pattern node
   let pattern_node: SyntaxNode | null = null;
@@ -316,7 +320,7 @@ function extract_by_pattern(
     // Extract type reference
     if (is_type_reference_node(child.type, context.language)) {
       const name = extract_type_name(child, context.source_code, config);
-      if (name) results.push(name);
+      if (name) results.push(name as ClassName);
     }
   }
   
@@ -332,7 +336,7 @@ function extract_multiple_inheritance(
   context: ClassHierarchyContext,
   config: ClassHierarchyConfig
 ): string[] {
-  const results: string[] = [];
+  const results: ClassName[] = [];
   
   // Find the container node
   let container: SyntaxNode | null = null;
@@ -360,7 +364,7 @@ function extract_multiple_inheritance(
     
     // Extract base class name
     const name = extract_type_name(child, context.source_code, config);
-    if (name) results.push(name);
+    if (name) results.push(name as ClassName);
   }
   
   return results;
@@ -373,8 +377,8 @@ function extract_derive_attributes(
   node: SyntaxNode,
   config: ClassHierarchyConfig,
   context: ClassHierarchyContext
-): string[] {
-  const results: string[] = [];
+): ClassName[] {
+  const results: ClassName[] = [];
   
   if (!config.attribute_patterns?.derive_pattern) return results;
   
@@ -393,7 +397,7 @@ function extract_derive_attributes(
           const container = find_child_by_type(attr, derive.traits_container);
           if (container) {
             const traits = extract_derive_traits(container, context.source_code);
-            results.push(...traits);
+            results.push(...traits as ClassName[]);
           }
         }
       }
@@ -535,12 +539,12 @@ function find_node_at_location(
 /**
  * Build a Map of methods from definitions
  */
-function build_method_map(methods: readonly MethodDefinition[]): ReadonlyMap<string, MethodNode> {
-  const map = new Map<string, MethodNode>();
+function build_method_map(methods: readonly MethodDefinition[]): ReadonlyMap<MethodName, MethodNode> {
+  const map = new Map<MethodName, MethodNode>();
   
   for (const method of methods) {
     const node: MethodNode = {
-      name: method.name,
+      name: method.name as MethodName,
       location: method.location,
       is_override: method.is_override || false,
       overrides: method.overrides,
@@ -550,7 +554,7 @@ function build_method_map(methods: readonly MethodDefinition[]): ReadonlyMap<str
       is_abstract: method.is_abstract,
     };
     
-    map.set(method.name, node);
+    map.set(method.name as MethodName, node);
   }
   
   return map;
@@ -559,12 +563,12 @@ function build_method_map(methods: readonly MethodDefinition[]): ReadonlyMap<str
 /**
  * Build a Map of properties from definitions
  */
-function build_property_map(properties: readonly PropertyDefinition[]): ReadonlyMap<string, PropertyNode> {
-  const map = new Map<string, PropertyNode>();
+function build_property_map(properties: readonly PropertyDefinition[]): ReadonlyMap<PropertyName, PropertyNode> {
+  const map = new Map<PropertyName, PropertyNode>();
   
   for (const property of properties) {
     const node: PropertyNode = {
-      name: property.name,
+    name: property.name as PropertyName,
       location: property.location,
       type: property.type,
       visibility: property.visibility,
@@ -572,7 +576,7 @@ function build_property_map(properties: readonly PropertyDefinition[]): Readonly
       is_readonly: property.is_readonly,
     };
     
-    map.set(property.name, node);
+    map.set(property.name as PropertyName, node);
   }
   
   return map;
@@ -582,14 +586,14 @@ function build_property_map(properties: readonly PropertyDefinition[]): Readonly
  * Populate derived_classes based on inheritance edges
  */
 function compute_derived_classes(
-  classes: Map<string, ClassNode>,
+  classes: Map<QualifiedName, ClassNode>,
   edges: InheritanceEdge[]
 ): void {
   for (const edge of edges) {
     if (edge.type === 'extends') {
       // Find the base class and add this as a derived class
       for (const [key, node] of classes) {
-        if (node.name === edge.to) {
+        if (node.name === edge.to as ClassName) {
           // Safe mutation during building phase
           (node as any).derived_classes = [...(node.derived_classes || []), edge.from];
           break;
@@ -603,7 +607,7 @@ function compute_derived_classes(
  * Compute enhanced fields
  */
 function compute_enhanced_fields(
-  classes: Map<string, ClassNode>,
+  classes: Map<QualifiedName, ClassNode>,
   edges: InheritanceEdge[]
 ): void {
   for (const [key, node] of classes) {
@@ -627,7 +631,7 @@ function compute_enhanced_fields(
     if (node.base_classes && node.base_classes.length > 0) {
       const parent_name = node.base_classes[0];
       for (const [pkey, parent] of classes) {
-        if (parent.name === parent_name) {
+        if (parent.name === parent_name as ClassName) {
           (node as any).parent_class = parent;
           break;
         }
@@ -641,22 +645,22 @@ function compute_enhanced_fields(
  */
 function compute_all_ancestors(
   node: ClassNode,
-  classes: Map<string, ClassNode>,
+  classes: Map<QualifiedName, ClassNode>,
   edges: InheritanceEdge[]
 ): ClassNode[] {
   const ancestors: ClassNode[] = [];
-  const visited = new Set<string>();
+  const visited = new Set<ClassName>();
   
   function visit(current: ClassNode): void {
     if (!current.base_classes) return;
     
     for (const base_name of current.base_classes) {
-      if (visited.has(base_name)) continue;
+      if (visited.has(base_name as ClassName)) continue;
       visited.add(base_name);
       
       // Find the base class node
       for (const [key, base_node] of classes) {
-        if (base_node.name === base_name) {
+        if (base_node.name === base_name as ClassName) {
           ancestors.push(base_node);
           visit(base_node);
           break;
@@ -706,7 +710,7 @@ function compute_all_descendants(
  */
 function compute_mro(
   node: ClassNode,
-  classes: Map<string, ClassNode>,
+  classes: Map<QualifiedName, ClassNode>,
   edges: InheritanceEdge[]
 ): ClassNode[] {
   const mro: ClassNode[] = [node];
