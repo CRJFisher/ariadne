@@ -9,7 +9,9 @@ export {
   // Types needed by file_analyzer.ts
   ParameterAnalysis,
   ParameterInferenceContext,
-  // Function used by file_analyzer.ts
+  // Main API function that should be used by file_analyzer.ts
+  infer_parameter_types,
+  // Also keep extract_parameters for backward compatibility
   extract_parameters,
 } from './parameter_type_inference';
 

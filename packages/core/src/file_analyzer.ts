@@ -51,7 +51,7 @@ import {
 import {
   ParameterAnalysis,
   ParameterInferenceContext,
-  extract_parameters,
+  infer_parameter_types,
 } from "./type_analysis/parameter_type_inference";
 
 import {
@@ -193,44 +193,26 @@ function infer_all_parameter_types(
         ? source_code.substring(name_node.startIndex, name_node.endIndex)
         : `anonymous_${node.startIndex}`;
 
-      // Extract parameters
-      const parameters = extract_parameters(node, context);
-
-      // For now, create a basic analysis without call site inference
-      // This can be enhanced later to analyze call sites
-      const analysis: ParameterAnalysis = {
-        function_name: func_name,
-        parameters,
-        inferred_types: new Map(),
-      };
-
-      // Basic type inference from default values
-      for (const param of parameters) {
-        if (param.type_annotation) {
-          // Use explicit type annotation
-          analysis.inferred_types.set(param.name, {
-            param_name: param.name,
-            inferred_type: param.type_annotation,
-            confidence: "explicit",
-            source: "annotation",
-          });
-        } else if (param.default_value) {
-          // Infer from default value
-          const inferred_type = infer_type_from_literal(
-            param.default_value,
-            language
-          );
-          if (inferred_type) {
-            analysis.inferred_types.set(param.name, {
-              param_name: param.name,
-              inferred_type,
-              confidence: "inferred",
-              source: "default",
-            });
+      // Create a FunctionDefinition for the inference function
+      const func_def: FunctionDefinition = {
+        name: func_name as FunctionName,
+        location: {
+          file_path: file_path as FilePath,
+          start: {
+            row: node.startPosition.row,
+            column: node.startPosition.column
+          },
+          end: {
+            row: node.endPosition.row,
+            column: node.endPosition.column
           }
-        }
-      }
-
+        },
+        signature: source_code.substring(node.startIndex, node.endIndex).split('\n')[0] as unknown as FunctionSignature,
+        is_exported: false // This would need to be determined from context
+      };
+      
+      // Use the comprehensive type inference function instead of manual inference
+      const analysis = infer_parameter_types(func_def, node, context);
       result.set(func_name, analysis);
     }
 
@@ -247,37 +229,6 @@ function infer_all_parameter_types(
   return result;
 }
 
-/**
- * Helper to infer type from a literal value
- */
-function infer_type_from_literal(
-  value: string,
-  language: Language
-): string | undefined {
-  // Basic type inference from literals
-  if (value === "true" || value === "false") return "boolean";
-  if (value === "null") return "null";
-  if (value === "undefined") return "undefined";
-  if (value.startsWith('"') || value.startsWith("'") || value.startsWith("`"))
-    return "string";
-  if (/^\d+(\.\d+)?$/.test(value)) return "number";
-  if (value.startsWith("[")) return "array";
-  if (value.startsWith("{")) return "object";
-
-  // Language-specific defaults
-  switch (language) {
-    case "python":
-      if (value === "None") return "None";
-      if (value === "True" || value === "False") return "bool";
-      break;
-    case "rust":
-      if (value.startsWith("Some(")) return "Option";
-      if (value.startsWith("Ok(")) return "Result";
-      break;
-  }
-
-  return undefined;
-}
 
 /**
  * Main entry point for analyzing a single file
@@ -472,7 +423,6 @@ function analyze_local_types(
   };
 
   const type_tracker = process_file_for_types(
-    source_code,
     root_node,
     type_tracking_context
   );

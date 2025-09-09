@@ -674,10 +674,12 @@ function apply_bespoke_handlers(
   return bespoke_types;
 }
 
+// Export the main API function that file_analyzer should actually use
+export { infer_parameter_types };
+
 // Export internal functions for testing only
 // These should not be imported by external modules
 export {
-  infer_parameter_types,
   infer_type_from_default,
   check_parameter_patterns,
 };
