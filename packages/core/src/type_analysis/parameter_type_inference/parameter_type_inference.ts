@@ -1,22 +1,41 @@
 /**
  * Core parameter type inference functionality
  * 
- * Infers types for function parameters from:
- * - Type annotations (explicit)
- * - Default values
- * - Call site arguments
- * - Usage within function body
+ * Configuration-driven generic parameter extraction and type inference
  */
 
-// TODO: Integration with Function Calls
-// - Analyze argument types at call sites
-// TODO: Integration with Type Tracking
-// - Update type context with parameters
-// TODO: Integration with Method Calls
-// - Consider receiver type for context
-
 import { SyntaxNode } from 'tree-sitter';
-import { Def, Language } from '@ariadnejs/types';
+import { FunctionDefinition, Language } from '@ariadnejs/types';
+import {
+  getLanguageConfig,
+  isParameterNode,
+  isTypedParameterNode,
+  isRestParameterNode,
+  getSpecialParameterType,
+  getDefaultTypes
+} from './language_configs';
+
+// Bespoke JavaScript handlers
+import {
+  extract_jsdoc_parameter_types,
+  analyze_javascript_parameter_usage,
+} from './parameter_type_inference.javascript';
+
+// Bespoke TypeScript handlers
+import {
+  resolve_overload_parameters,
+} from './parameter_type_inference.typescript';
+
+// Bespoke Python handlers
+import {
+  extract_docstring_type,
+  normalize_python_type,
+} from './parameter_type_inference.python';
+
+// Bespoke Rust handlers
+import {
+  handle_pattern_parameters,
+} from './parameter_type_inference.rust';
 
 /**
  * Information about a function parameter
@@ -94,30 +113,11 @@ export function extract_parameters(
  * Check if a node represents a parameter
  */
 function is_parameter_node(node: SyntaxNode, language: Language): boolean {
-  switch (language) {
-    case 'javascript':
-    case 'typescript':
-      return node.type === 'identifier' || 
-             node.type === 'required_parameter' ||
-             node.type === 'optional_parameter' ||
-             node.type === 'rest_pattern' ||
-             node.type === 'assignment_pattern';  // Parameters with defaults
-    case 'python':
-      return node.type === 'identifier' ||
-             node.type === 'typed_parameter' ||
-             node.type === 'default_parameter' ||
-             node.type === 'dictionary_splat_pattern' ||
-             node.type === 'list_splat_pattern';
-    case 'rust':
-      return node.type === 'parameter' ||
-             node.type === 'self_parameter';
-    default:
-      return false;
-  }
+  return isParameterNode(node.type, language);
 }
 
 /**
- * Extract information from a parameter node
+ * Extract information from a parameter node using configuration
  */
 function extract_parameter_info(
   param_node: SyntaxNode,
@@ -125,188 +125,169 @@ function extract_parameter_info(
   context: ParameterInferenceContext
 ): ParameterInfo | undefined {
   const { language, source_code } = context;
+  const config = getLanguageConfig(language);
   
-  switch (language) {
-    case 'javascript':
-    case 'typescript':
-      return extract_js_ts_parameter(param_node, position, source_code);
-    case 'python':
-      return extract_python_parameter(param_node, position, source_code);
-    case 'rust':
-      return extract_rust_parameter(param_node, position, source_code);
-    default:
-      return undefined;
-  }
-}
-
-/**
- * Extract JavaScript/TypeScript parameter info
- */
-function extract_js_ts_parameter(
-  param_node: SyntaxNode,
-  position: number,
-  source_code: string
-): ParameterInfo {
   const info: ParameterInfo = {
     name: '',
     position
   };
   
-  // Handle different parameter types
+  // Extract name based on node type and field mappings
+  const extractName = (node: SyntaxNode): string => {
+    return source_code.substring(node.startIndex, node.endIndex);
+  };
+  
+  // Handle different parameter types using configuration
   if (param_node.type === 'identifier') {
-    info.name = source_code.substring(param_node.startIndex, param_node.endIndex);
-  } else if (param_node.type === 'assignment_pattern') {
-    // JavaScript parameter with default value
-    const left = param_node.childForFieldName('left');
-    const right = param_node.childForFieldName('right');
+    info.name = extractName(param_node);
+  } else if (isRestParameterNode(param_node.type, language)) {
+    // Rest parameters
+    info.is_rest = true;
     
-    if (left) {
-      info.name = source_code.substring(left.startIndex, left.endIndex);
+    // Skip prefix characters to get the identifier
+    const child = param_node.child(1);  // Usually the identifier after prefix
+    if (child) {
+      info.name = extractName(child);
     }
-    if (right) {
-      info.default_value = source_code.substring(right.startIndex, right.endIndex);
-    }
-  } else if (param_node.type === 'required_parameter' || param_node.type === 'optional_parameter') {
-    // TypeScript parameters
-    const pattern = param_node.childForFieldName('pattern');
-    const type = param_node.childForFieldName('type');
-    const value = param_node.childForFieldName('value');
     
-    if (pattern) {
-      info.name = source_code.substring(pattern.startIndex, pattern.endIndex);
+    // Check for keyword-only rest (Python **kwargs)
+    if (param_node.type === 'dictionary_splat_pattern') {
+      info.is_keyword_only = true;
     }
-    if (type) {
-      // Remove leading colon and whitespace
-      const type_text = source_code.substring(type.startIndex, type.endIndex);
-      info.type_annotation = type_text.replace(/^:\s*/, '');
+  } else if (isTypedParameterNode(param_node.type, language)) {
+    // Typed parameters
+    const fields = config.field_mappings;
+    
+    // Handle Python typed_parameter specially
+    if (language === 'python' && param_node.type === 'typed_parameter') {
+      // In Python, typed_parameter has children: identifier, ':', type
+      const identifier = param_node.child(0);  // First child is the identifier
+      const typeNode = param_node.childForFieldName('type');
+      
+      if (identifier && identifier.type === 'identifier') {
+        info.name = extractName(identifier);
+      }
+      if (typeNode) {
+        info.type_annotation = extractName(typeNode);
+      }
+    } else {
+      // Try different field names for the identifier
+      const nameNode = fields.pattern ? param_node.childForFieldName(fields.pattern) :
+                       fields.identifier ? param_node.childForFieldName(fields.identifier) :
+                       fields.name ? param_node.childForFieldName(fields.name) :
+                       param_node.child(0);  // Fallback to first child
+      
+      if (nameNode) {
+        info.name = extractName(nameNode);
+      }
+      
+      // Extract type annotation
+      if (fields.type) {
+        const typeNode = param_node.childForFieldName(fields.type);
+        if (typeNode) {
+          // Remove leading colon and whitespace for TypeScript
+          let type_text = extractName(typeNode);
+          if (language === 'typescript' && type_text.startsWith(':')) {
+            type_text = type_text.substring(1).trim();
+          }
+          info.type_annotation = type_text;
+        }
+      }
     }
-    if (value) {
-      info.default_value = source_code.substring(value.startIndex, value.endIndex);
+    
+    // Extract default value
+    if (fields.value) {
+      const valueNode = param_node.childForFieldName(fields.value);
+      if (valueNode) {
+        info.default_value = extractName(valueNode);
+      }
     }
+    
+    // Check if optional (TypeScript)
     if (param_node.type === 'optional_parameter') {
       info.is_optional = true;
     }
-  } else if (param_node.type === 'rest_pattern') {
-    const pattern = param_node.child(1); // Skip '...'
-    if (pattern) {
-      info.name = source_code.substring(pattern.startIndex, pattern.endIndex);
-    }
-    info.is_rest = true;
-  }
-  
-  return info;
-}
-
-/**
- * Extract Python parameter info
- */
-function extract_python_parameter(
-  param_node: SyntaxNode,
-  position: number,
-  source_code: string
-): ParameterInfo {
-  const info: ParameterInfo = {
-    name: '',
-    position
-  };
-  
-  if (param_node.type === 'identifier') {
-    info.name = source_code.substring(param_node.startIndex, param_node.endIndex);
-  } else if (param_node.type === 'typed_parameter') {
-    // In Python, typed_parameter has children: identifier, ':', type
-    const identifier = param_node.child(0);  // First child is the identifier
-    const type = param_node.childForFieldName('type');
+  } else if (config.default_parameter_node_types.includes(param_node.type)) {
+    // Parameters with default values
+    const fields = config.field_mappings;
     
-    if (identifier && identifier.type === 'identifier') {
-      info.name = source_code.substring(identifier.startIndex, identifier.endIndex);
-    }
-    if (type) {
-      info.type_annotation = source_code.substring(type.startIndex, type.endIndex);
-    }
-  } else if (param_node.type === 'default_parameter') {
-    const name = param_node.childForFieldName('name');
-    const value = param_node.childForFieldName('value');
-    
-    if (name) {
-      // Handle typed default parameters
-      if (name.type === 'typed_parameter') {
-        const identifier = name.childForFieldName('identifier');
-        const type = name.childForFieldName('type');
-        if (identifier) {
-          info.name = source_code.substring(identifier.startIndex, identifier.endIndex);
+    // Extract name and value based on field mappings
+    if (fields.left && fields.right) {
+      // JavaScript/TypeScript assignment pattern
+      const leftNode = param_node.childForFieldName(fields.left);
+      const rightNode = param_node.childForFieldName(fields.right);
+      
+      if (leftNode) {
+        info.name = extractName(leftNode);
+      }
+      if (rightNode) {
+        info.default_value = extractName(rightNode);
+      }
+    } else if (fields.name && fields.value) {
+      // Python default parameter
+      const nameNode = param_node.childForFieldName(fields.name);
+      const valueNode = param_node.childForFieldName(fields.value);
+      
+      if (nameNode) {
+        // Handle typed default parameters
+        if (isTypedParameterNode(nameNode.type, language)) {
+          const identNode = nameNode.childForFieldName(fields.identifier || 'identifier');
+          const typeNode = nameNode.childForFieldName(fields.type || 'type');
+          
+          if (identNode) {
+            info.name = extractName(identNode);
+          }
+          if (typeNode) {
+            info.type_annotation = extractName(typeNode);
+          }
+        } else {
+          info.name = extractName(nameNode);
         }
-        if (type) {
-          info.type_annotation = source_code.substring(type.startIndex, type.endIndex);
-        }
-      } else {
-        info.name = source_code.substring(name.startIndex, name.endIndex);
+      }
+      if (valueNode) {
+        info.default_value = extractName(valueNode);
       }
     }
-    if (value) {
-      info.default_value = source_code.substring(value.startIndex, value.endIndex);
-    }
-  } else if (param_node.type === 'dictionary_splat_pattern') {
-    const identifier = param_node.child(1); // Skip '**'
-    if (identifier) {
-      info.name = source_code.substring(identifier.startIndex, identifier.endIndex);
-    }
-    info.is_rest = true;
-    info.is_keyword_only = true;
-  } else if (param_node.type === 'list_splat_pattern') {
-    const identifier = param_node.child(1); // Skip '*'
-    if (identifier) {
-      info.name = source_code.substring(identifier.startIndex, identifier.endIndex);
-    }
-    info.is_rest = true;
-  }
-  
-  return info;
-}
-
-/**
- * Extract Rust parameter info
- */
-function extract_rust_parameter(
-  param_node: SyntaxNode,
-  position: number,
-  source_code: string
-): ParameterInfo {
-  const info: ParameterInfo = {
-    name: '',
-    position
-  };
-  
-  if (param_node.type === 'self_parameter') {
+  } else if (param_node.type === 'self_parameter') {
+    // Rust self parameter
     info.name = 'self';
-    // Check for &self, &mut self, etc.
-    const text = source_code.substring(param_node.startIndex, param_node.endIndex);
+    const text = extractName(param_node);
     if (text.includes('&')) {
       info.type_annotation = text.includes('mut') ? '&mut Self' : '&Self';
     } else {
       info.type_annotation = 'Self';
     }
   } else if (param_node.type === 'parameter') {
-    const pattern = param_node.childForFieldName('pattern');
-    const type = param_node.childForFieldName('type');
+    // Rust regular parameter
+    const fields = config.field_mappings;
     
-    if (pattern) {
-      info.name = source_code.substring(pattern.startIndex, pattern.endIndex);
+    if (fields.pattern) {
+      const patternNode = param_node.childForFieldName(fields.pattern);
+      if (patternNode) {
+        info.name = extractName(patternNode);
+      }
     }
-    if (type) {
-      info.type_annotation = source_code.substring(type.startIndex, type.endIndex);
+    if (fields.type) {
+      const typeNode = param_node.childForFieldName(fields.type);
+      if (typeNode) {
+        info.type_annotation = extractName(typeNode);
+      }
     }
   }
   
-  return info;
+  return info.name ? info : undefined;
 }
 
+
 /**
- * Infer type from default value
+ * Infer type from default value using configuration
  */
-export function infer_type_from_default(
+function infer_type_from_default(
   default_value: string,
   language: Language
 ): ParameterTypeInfo | undefined {
+  const defaults = getDefaultTypes(language);
+  
   // Simple literal detection
   if (default_value === 'true' || default_value === 'false' || 
       default_value === 'True' || default_value === 'False') {
@@ -318,10 +299,11 @@ export function infer_type_from_default(
     };
   }
   
-  if (default_value === 'null' || default_value === 'None') {
+  if (default_value === 'null' || default_value === 'None' || default_value === 'undefined') {
     return {
       param_name: '',
-      inferred_type: language === 'python' ? 'None' : 'null',
+      inferred_type: default_value === 'None' ? 'None' : 
+                      default_value === 'undefined' ? defaults.void_type : 'null',
       confidence: 'inferred',
       source: 'default'
     };
@@ -361,7 +343,7 @@ export function infer_type_from_default(
   if (default_value.startsWith('[') && default_value.endsWith(']')) {
     return {
       param_name: '',
-      inferred_type: language === 'python' ? 'list' : 'Array',
+      inferred_type: language === 'python' ? 'list' : defaults.array_type,
       confidence: 'inferred',
       source: 'default'
     };
@@ -372,7 +354,7 @@ export function infer_type_from_default(
       (language === 'python' && default_value === '{}')) {
     return {
       param_name: '',
-      inferred_type: language === 'python' ? 'dict' : 'Object',
+      inferred_type: language === 'python' ? 'dict' : defaults.object_type,
       confidence: 'inferred',
       source: 'default'
     };
@@ -382,20 +364,32 @@ export function infer_type_from_default(
 }
 
 /**
- * Check for common parameter patterns
+ * Check for common parameter patterns using configuration
  */
-export function check_parameter_patterns(
+function check_parameter_patterns(
   param: ParameterInfo,
   context: ParameterInferenceContext
 ): ParameterTypeInfo | undefined {
   const { name } = param;
-  const { language } = context;
+  const { language, class_name } = context;
+  const defaults = getDefaultTypes(language);
+  
+  // Check for special parameters first (self, cls)
+  const special_type = getSpecialParameterType(name, language, class_name);
+  if (special_type) {
+    return {
+      param_name: name,
+      inferred_type: special_type,
+      confidence: 'explicit',
+      source: 'pattern'
+    };
+  }
   
   // Callback pattern
   if (name === 'callback' || name === 'cb' || name.endsWith('Callback')) {
     return {
       param_name: name,
-      inferred_type: 'Function',
+      inferred_type: defaults.function_type,
       confidence: 'assumed',
       source: 'pattern'
     };
@@ -415,7 +409,7 @@ export function check_parameter_patterns(
   if (name === 'options' || name === 'opts' || name === 'config') {
     return {
       param_name: name,
-      inferred_type: language === 'python' ? 'dict' : 'Object',
+      inferred_type: defaults.object_type,
       confidence: 'assumed',
       source: 'pattern'
     };
@@ -425,7 +419,7 @@ export function check_parameter_patterns(
   if (name === 'items' || name === 'elements' || name.endsWith('List') || name.endsWith('Array')) {
     return {
       param_name: name,
-      inferred_type: language === 'python' ? 'list' : 'Array',
+      inferred_type: defaults.array_type,
       confidence: 'assumed',
       source: 'pattern'
     };
@@ -468,57 +462,222 @@ export function check_parameter_patterns(
 }
 
 /**
- * Get void/None type for language
+ * Infer parameter types for a function definition
  */
-export function get_void_type(language: Language): string {
-  switch (language) {
-    case 'python':
-      return 'None';
-    case 'rust':
-      return '()';
-    default:
-      return 'void';
-  }
+function infer_parameter_types(
+  func_def: FunctionDefinition,
+  func_node: SyntaxNode,
+  context: ParameterInferenceContext
+): ParameterAnalysis {
+  // Extract parameters using configuration
+  const parameters = extract_parameters(func_node, context);
+  
+  // Infer types using configuration + bespoke handlers
+  const inferred_types = infer_parameter_types_by_language(
+    func_def,
+    func_node,
+    parameters,
+    context
+  );
+  
+  return {
+    function_name: func_def.name,
+    parameters,
+    inferred_types
+  };
 }
 
 /**
- * Get any/unknown type for language
+ * Infer parameter types using configuration and bespoke handlers
  */
-export function get_any_type(language: Language): string {
-  switch (language) {
-    case 'python':
-      return 'Any';
+function infer_parameter_types_by_language(
+  func_def: FunctionDefinition,
+  func_node: SyntaxNode,
+  parameters: ParameterInfo[],
+  context: ParameterInferenceContext
+): Map<string, ParameterTypeInfo> {
+  const inferred_types = new Map<string, ParameterTypeInfo>();
+  const defaults = getDefaultTypes(context.language);
+  
+  // Generic configuration-driven inference (85% of logic)
+  for (const param of parameters) {
+    // Explicit type annotations take precedence
+    if (param.type_annotation) {
+      inferred_types.set(param.name, {
+        param_name: param.name,
+        inferred_type: param.type_annotation,
+        confidence: 'explicit',
+        source: 'annotation'
+      });
+      continue;
+    }
+    
+    // Check default values
+    if (param.default_value) {
+      const type_from_default = infer_type_from_default(param.default_value, context.language);
+      if (type_from_default) {
+        type_from_default.param_name = param.name;
+        inferred_types.set(param.name, type_from_default);
+        continue;
+      }
+    }
+    
+    // Check common patterns
+    const pattern_type = check_parameter_patterns(param, context);
+    if (pattern_type) {
+      inferred_types.set(param.name, pattern_type);
+      continue;
+    }
+    
+    // Rest parameters
+    if (param.is_rest) {
+      const config = getLanguageConfig(context.language);
+      const rest_type = param.is_keyword_only ? 
+        config.rest_patterns.keyword_type || config.rest_patterns.default_type :
+        config.rest_patterns.default_type;
+      
+      inferred_types.set(param.name, {
+        param_name: param.name,
+        inferred_type: rest_type,
+        confidence: 'inferred',
+        source: 'pattern'
+      });
+      continue;
+    }
+    
+    // Optional parameters (TypeScript)
+    if (param.is_optional && context.language === 'typescript') {
+      inferred_types.set(param.name, {
+        param_name: param.name,
+        inferred_type: `${defaults.any_type} | undefined`,
+        confidence: 'inferred',
+        source: 'pattern'
+      });
+      continue;
+    }
+  }
+  
+  // Apply language-specific bespoke handlers
+  const bespoke_types = apply_bespoke_handlers(
+    func_def,
+    func_node,
+    parameters,
+    context
+  );
+  
+  // Merge bespoke results, preferring them over generic inference
+  for (const [name, type_info] of bespoke_types) {
+    if (!inferred_types.has(name) || inferred_types.get(name)!.confidence === 'assumed') {
+      inferred_types.set(name, type_info);
+    }
+  }
+  
+  // Set default type for any remaining untyped parameters
+  for (const param of parameters) {
+    if (!inferred_types.has(param.name)) {
+      inferred_types.set(param.name, {
+        param_name: param.name,
+        inferred_type: defaults.any_type,
+        confidence: 'assumed',
+        source: 'pattern'
+      });
+    }
+  }
+  
+  return inferred_types;
+}
+
+/**
+ * Apply language-specific bespoke handlers
+ */
+function apply_bespoke_handlers(
+  func_def: FunctionDefinition,
+  func_node: SyntaxNode,
+  parameters: ParameterInfo[],
+  context: ParameterInferenceContext
+): Map<string, ParameterTypeInfo> {
+  const bespoke_types = new Map<string, ParameterTypeInfo>();
+  
+  switch (context.language) {
+    case 'javascript':
+      // Extract JSDoc types
+      const jsdoc_types = extract_jsdoc_parameter_types(func_node, parameters, context);
+      for (const [name, type_info] of jsdoc_types) {
+        bespoke_types.set(name, type_info);
+      }
+      
+      // Analyze usage for untyped parameters
+      for (const param of parameters) {
+        if (!bespoke_types.has(param.name) && !param.type_annotation) {
+          const usage_type = analyze_javascript_parameter_usage(param.name, func_node, context);
+          if (usage_type) {
+            bespoke_types.set(param.name, usage_type);
+          }
+        }
+      }
+      break;
+      
     case 'typescript':
-      return 'any';
+      // Handle overloads
+      const resolved_params = resolve_overload_parameters(func_def, func_node, parameters, context);
+      for (const param of resolved_params) {
+        if (param.type_annotation && param.type_annotation !== parameters.find(p => p.name === param.name)?.type_annotation) {
+          bespoke_types.set(param.name, {
+            param_name: param.name,
+            inferred_type: param.type_annotation,
+            confidence: 'explicit',
+            source: 'annotation'
+          });
+        }
+      }
+      break;
+      
+    case 'python':
+      // Extract docstring types
+      for (const param of parameters) {
+        if (!param.type_annotation) {
+          const docstring_type = extract_docstring_type(param.name, func_node, context);
+          if (docstring_type) {
+            bespoke_types.set(param.name, {
+              param_name: param.name,
+              inferred_type: normalize_python_type(docstring_type),
+              confidence: 'explicit',
+              source: 'annotation'
+            });
+          }
+        }
+      }
+      break;
+      
     case 'rust':
-      return 'dyn Any';
-    default:
-      return 'any';
-  }
-}
-
-/**
- * Check if a parameter has explicit type annotation
- */
-export function has_explicit_type(param: ParameterInfo): boolean {
-  return param.type_annotation !== undefined;
-}
-
-/**
- * Get the most specific type from multiple inferred types
- */
-export function resolve_parameter_type(
-  inferred_types: ParameterTypeInfo[]
-): ParameterTypeInfo | undefined {
-  if (inferred_types.length === 0) {
-    return undefined;
+      // Handle pattern parameters
+      for (const param of parameters) {
+        // Pattern parameters require special handling
+        const param_node = func_node.childForFieldName('parameters')?.child(param.position);
+        if (param_node) {
+          const pattern_params = handle_pattern_parameters(param_node, context);
+          for (const pp of pattern_params) {
+            if (pp.type_annotation) {
+              bespoke_types.set(pp.name, {
+                param_name: pp.name,
+                inferred_type: pp.type_annotation,
+                confidence: 'explicit',
+                source: 'annotation'
+              });
+            }
+          }
+        }
+      }
+      break;
   }
   
-  // Prefer explicit > inferred > assumed
-  const sorted = inferred_types.sort((a, b) => {
-    const confidence_order = { 'explicit': 0, 'inferred': 1, 'assumed': 2 };
-    return confidence_order[a.confidence] - confidence_order[b.confidence];
-  });
-  
-  return sorted[0];
+  return bespoke_types;
 }
+
+// Export internal functions for testing only
+// These should not be imported by external modules
+export {
+  infer_parameter_types,
+  infer_type_from_default,
+  check_parameter_patterns,
+};

@@ -47,9 +47,10 @@ This file references all the rules files that are relevant for different types o
 
 **📁 `rules/folder-structure-migration.md`** - Feature-based organization
 
-- When: Adding new features or refactoring existing ones
-- Structure: Organize by feature category → feature → language tests
-- Support: Test file existence = language support (no registry needed)
+- When: Refactoring modules to configuration-driven pattern
+- Structure: `index.ts` (exports only), `module.ts` (generic), `module.language.ts` (bespoke)
+- Naming: NO `.bespoke`/`.generic` suffixes - use exact pattern `module.javascript.ts`
+- Key: 80% generic configuration, 20% language-specific bespoke code
 
 ### Release Process
 
@@ -73,3 +74,4 @@ This file references all the rules files that are relevant for different types o
 - **Keep files small and focused** - tree-sitter has 32KB parsing limit
 - **Add tests for all supported languages** before marking tasks complete
 - **Document test gaps** in Implementation Notes when closing tasks
+- **NEVER create "extra" functions** - All functions must be ultimately called by a top-level module (code_graph.ts, file_analyzer.ts, etc.). Do not create functions that "might be useful someday" - this creates technical debt. Only export what is actually used by external modules.

@@ -29,8 +29,3 @@
 - The file naming is a bit off - `.bespoke` and `.generic` suffixes are being used but should be dropped
 - So many redundant functions. These need to be removed.
   - We could first get the tool working again and then use the tool to help with these refactorings.
-
-## Points to resolve
-
-- There are a lot of strings that are constructed in certain, specific ways. We could have type aliases for these but the type linkage seems weak. Is there some way to strengthen the typing e.g. make it a class with the necessary fields and have a methods to construct and parse them? E.g. `const namespace_key = "${call.location.file_path}:${namespace}";` happens deep in the code. It's meaning is then lost on the downstream code.
-  - Use branded types

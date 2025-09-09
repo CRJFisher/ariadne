@@ -1,77 +1,62 @@
 /**
- * JavaScript-specific parameter type inference
+ * JavaScript-specific bespoke parameter type inference
  * 
- * Handles JavaScript parameter patterns including:
- * - Default values
- * - Rest parameters
- * - Destructuring
- * - Function usage analysis
+ * Handles unique JavaScript features that cannot be expressed through configuration:
+ * - JSDoc type extraction
+ * - Usage-based type inference
  */
 
-// TODO: Type Propagation - Flow types into function body
-
 import { SyntaxNode } from 'tree-sitter';
-import { Def } from '@ariadnejs/types';
 import {
   ParameterInfo,
   ParameterTypeInfo,
-  ParameterInferenceContext,
-  infer_type_from_default,
-  check_parameter_patterns
+  ParameterInferenceContext
 } from './parameter_type_inference';
 
 /**
- * Infer JavaScript parameter types from function definition
+ * Extract JSDoc type annotations for parameters
  */
-export function infer_javascript_parameter_types(
-  func_def: Def,
+export function extract_jsdoc_parameter_types(
   func_node: SyntaxNode,
   parameters: ParameterInfo[],
   context: ParameterInferenceContext
 ): Map<string, ParameterTypeInfo> {
-  const inferred_types = new Map<string, ParameterTypeInfo>();
+  const types = new Map<string, ParameterTypeInfo>();
   
-  for (const param of parameters) {
-    // Check default values
-    if (param.default_value) {
-      const type_from_default = infer_type_from_default(param.default_value, 'javascript');
-      if (type_from_default) {
-        type_from_default.param_name = param.name;
-        inferred_types.set(param.name, type_from_default);
-        continue;
-      }
-    }
-    
-    // Check common patterns
-    const pattern_type = check_parameter_patterns(param, context);
-    if (pattern_type) {
-      inferred_types.set(param.name, pattern_type);
-      continue;
-    }
-    
-    // Analyze usage in function body
-    const usage_type = analyze_parameter_usage(param.name, func_node, context);
-    if (usage_type) {
-      inferred_types.set(param.name, usage_type);
-      continue;
-    }
-    
-    // Default to any for untyped parameters
-    inferred_types.set(param.name, {
-      param_name: param.name,
-      inferred_type: 'any',
-      confidence: 'assumed',
-      source: 'pattern'
-    });
+  // Look for JSDoc comment above function
+  const prev_sibling = func_node.previousSibling;
+  if (!prev_sibling || prev_sibling.type !== 'comment') {
+    return types;
   }
   
-  return inferred_types;
+  const comment_text = context.source_code.substring(
+    prev_sibling.startIndex,
+    prev_sibling.endIndex
+  );
+  
+  // Parse JSDoc @param tags
+  const param_regex = /@param\s+(?:\{([^}]+)\}\s+)?(\w+)/g;
+  let match;
+  
+  while ((match = param_regex.exec(comment_text)) !== null) {
+    const [, type, name] = match;
+    if (type && parameters.some(p => p.name === name)) {
+      types.set(name, {
+        param_name: name,
+        inferred_type: type,
+        confidence: 'explicit',
+        source: 'annotation'
+      });
+    }
+  }
+  
+  return types;
 }
 
 /**
- * Analyze how a parameter is used in the function body
+ * Analyze parameter usage in function body for type inference
  */
-function analyze_parameter_usage(
+export function analyze_javascript_parameter_usage(
   param_name: string,
   func_node: SyntaxNode,
   context: ParameterInferenceContext
@@ -84,7 +69,7 @@ function analyze_parameter_usage(
   const usage_hints: string[] = [];
   analyze_node_for_usage(body, param_name, usage_hints, context);
   
-  // Determine type from usage patterns
+  // Infer type from usage patterns
   if (usage_hints.includes('array_access')) {
     return {
       param_name,
@@ -103,7 +88,7 @@ function analyze_parameter_usage(
     };
   }
   
-  if (usage_hints.includes('called_as_function')) {
+  if (usage_hints.includes('function_call')) {
     return {
       param_name,
       inferred_type: 'Function',
@@ -130,20 +115,11 @@ function analyze_parameter_usage(
     };
   }
   
-  if (usage_hints.includes('boolean_context')) {
-    return {
-      param_name,
-      inferred_type: 'boolean',
-      confidence: 'inferred',
-      source: 'usage'
-    };
-  }
-  
   return undefined;
 }
 
 /**
- * Recursively analyze nodes for parameter usage
+ * Recursively analyze AST nodes for parameter usage
  */
 function analyze_node_for_usage(
   node: SyntaxNode,
@@ -153,102 +129,54 @@ function analyze_node_for_usage(
 ): void {
   const { source_code } = context;
   
-  // Check if this node references the parameter
-  if (node.type === 'identifier' && 
-      source_code.substring(node.startIndex, node.endIndex) === param_name) {
-    const parent = node.parent;
-    if (parent) {
-      // Array access: param[index]
-      if (parent.type === 'subscript_expression' && 
-          parent.childForFieldName('object') === node) {
+  // Check for array access: param[...]
+  if (node.type === 'subscript_expression' || node.type === 'member_expression') {
+    const object = node.childForFieldName('object');
+    if (object && source_code.substring(object.startIndex, object.endIndex) === param_name) {
+      if (node.type === 'subscript_expression') {
         usage_hints.push('array_access');
-      }
-      
-      // Property access: param.property
-      if (parent.type === 'member_expression' && 
-          parent.childForFieldName('object') === node) {
-        const property = parent.childForFieldName('property');
+      } else {
+        const property = node.childForFieldName('property');
         if (property) {
           const prop_name = source_code.substring(property.startIndex, property.endIndex);
-          
-          // String methods
-          if (['charAt', 'substring', 'indexOf', 'slice', 'toLowerCase', 'toUpperCase',
-               'trim', 'split', 'replace', 'match'].includes(prop_name)) {
-            usage_hints.push('string_method');
-          }
-          // Array methods
-          else if (['push', 'pop', 'shift', 'unshift', 'map', 'filter', 'reduce',
-                    'forEach', 'length', 'join', 'sort'].includes(prop_name)) {
+          // Check for array methods
+          if (['push', 'pop', 'shift', 'unshift', 'map', 'filter', 'reduce'].includes(prop_name)) {
             usage_hints.push('array_access');
-          }
-          // Object indication
-          else {
+          } else if (['charAt', 'substring', 'toLowerCase', 'toUpperCase'].includes(prop_name)) {
+            usage_hints.push('string_method');
+          } else {
             usage_hints.push('property_access');
           }
         }
       }
-      
-      // Function call: param()
-      if (parent.type === 'call_expression' && 
-          parent.childForFieldName('function') === node) {
-        usage_hints.push('called_as_function');
-      }
-      
-      // Binary operations
-      if (parent.type === 'binary_expression') {
-        const operator = parent.childForFieldName('operator');
-        if (operator) {
-          const op = source_code.substring(operator.startIndex, operator.endIndex);
-          // Arithmetic operations
-          if (['+', '-', '*', '/', '%', '**'].includes(op)) {
-            // + could be string concatenation, but we'll assume number
-            usage_hints.push('number_operation');
-          }
-          // Comparison operations
-          else if (['<', '>', '<=', '>='].includes(op)) {
-            usage_hints.push('number_operation');
-          }
-          // Logical operations
-          else if (['&&', '||'].includes(op)) {
-            usage_hints.push('boolean_context');
-          }
+    }
+  }
+  
+  // Check for function call: param()
+  if (node.type === 'call_expression') {
+    const function_node = node.childForFieldName('function');
+    if (function_node && source_code.substring(function_node.startIndex, function_node.endIndex) === param_name) {
+      usage_hints.push('function_call');
+    }
+  }
+  
+  // Check for numeric operations
+  if (node.type === 'binary_expression') {
+    const operator = node.childForFieldName('operator');
+    if (operator) {
+      const op = source_code.substring(operator.startIndex, operator.endIndex);
+      if (['+', '-', '*', '/', '%', '**'].includes(op)) {
+        const left = node.childForFieldName('left');
+        const right = node.childForFieldName('right');
+        if ((left && source_code.substring(left.startIndex, left.endIndex) === param_name) ||
+            (right && source_code.substring(right.startIndex, right.endIndex) === param_name)) {
+          usage_hints.push('number_operation');
         }
-      }
-      
-      // Unary operations
-      if (parent.type === 'unary_expression') {
-        const operator = parent.childForFieldName('operator');
-        if (operator) {
-          const op = source_code.substring(operator.startIndex, operator.endIndex);
-          if (op === '!') {
-            usage_hints.push('boolean_context');
-          } else if (op === '+' || op === '-' || op === '~') {
-            usage_hints.push('number_operation');
-          }
-        }
-      }
-      
-      // Conditional test
-      if (parent.type === 'if_statement' && 
-          parent.childForFieldName('condition') === node) {
-        usage_hints.push('boolean_context');
-      }
-      
-      // Ternary condition
-      if (parent.type === 'ternary_expression' && 
-          parent.childForFieldName('condition') === node) {
-        usage_hints.push('boolean_context');
-      }
-      
-      // for...of loop
-      if (parent.type === 'for_of_statement' && 
-          parent.childForFieldName('right') === node) {
-        usage_hints.push('array_access');
       }
     }
   }
   
-  // Recurse to children
+  // Recurse into child nodes
   for (let i = 0; i < node.childCount; i++) {
     const child = node.child(i);
     if (child) {
@@ -258,7 +186,7 @@ function analyze_node_for_usage(
 }
 
 /**
- * Infer parameter types from call sites
+ * Infer parameter types from JavaScript call sites
  */
 export function infer_from_javascript_call_sites(
   func_name: string,
@@ -268,27 +196,30 @@ export function infer_from_javascript_call_sites(
 ): Map<string, ParameterTypeInfo[]> {
   const call_site_types = new Map<string, ParameterTypeInfo[]>();
   
-  for (const param of parameters) {
-    call_site_types.set(param.name, []);
-  }
-  
-  for (const call of call_sites) {
-    const args = extract_call_arguments(call, context);
+  for (const call_site of call_sites) {
+    const args = call_site.childForFieldName('arguments');
+    if (!args) continue;
     
-    // Match arguments to parameters
-    for (let i = 0; i < Math.min(args.length, parameters.length); i++) {
-      const param = parameters[i];
-      const arg_type = infer_argument_type(args[i], context);
-      
-      if (arg_type) {
-        const types = call_site_types.get(param.name) || [];
-        types.push({
-          param_name: param.name,
-          inferred_type: arg_type,
-          confidence: 'inferred',
-          source: 'call_site'
-        });
-        call_site_types.set(param.name, types);
+    let arg_index = 0;
+    for (let i = 0; i < args.childCount; i++) {
+      const arg = args.child(i);
+      if (arg && arg.type !== ',' && arg.type !== '(' && arg.type !== ')') {
+        const param = parameters[arg_index];
+        if (param) {
+          const arg_type = infer_argument_type(arg, context);
+          if (arg_type) {
+            if (!call_site_types.has(param.name)) {
+              call_site_types.set(param.name, []);
+            }
+            call_site_types.get(param.name)!.push({
+              param_name: param.name,
+              inferred_type: arg_type,
+              confidence: 'inferred',
+              source: 'call_site'
+            });
+          }
+        }
+        arg_index++;
       }
     }
   }
@@ -297,29 +228,7 @@ export function infer_from_javascript_call_sites(
 }
 
 /**
- * Extract arguments from a call expression
- */
-function extract_call_arguments(
-  call_node: SyntaxNode,
-  context: ParameterInferenceContext
-): SyntaxNode[] {
-  const args: SyntaxNode[] = [];
-  const args_node = call_node.childForFieldName('arguments');
-  
-  if (args_node) {
-    for (let i = 0; i < args_node.childCount; i++) {
-      const child = args_node.child(i);
-      if (child && child.type !== '(' && child.type !== ')' && child.type !== ',') {
-        args.push(child);
-      }
-    }
-  }
-  
-  return args;
-}
-
-/**
- * Infer type from an argument expression
+ * Infer type of an argument expression
  */
 function infer_argument_type(
   arg_node: SyntaxNode,
@@ -331,47 +240,22 @@ function infer_argument_type(
     case 'string':
     case 'template_string':
       return 'string';
-    
     case 'number':
       return 'number';
-    
     case 'true':
     case 'false':
       return 'boolean';
-    
     case 'null':
       return 'null';
-    
     case 'undefined':
       return 'undefined';
-    
     case 'array':
       return 'Array';
-    
     case 'object':
       return 'Object';
-    
-    case 'function':
     case 'arrow_function':
+    case 'function_expression':
       return 'Function';
-    
-    case 'new_expression':
-      const constructor = arg_node.childForFieldName('constructor');
-      if (constructor) {
-        return source_code.substring(constructor.startIndex, constructor.endIndex);
-      }
-      return 'Object';
-    
-    case 'identifier':
-      // Could check variable tracking here
-      const name = source_code.substring(arg_node.startIndex, arg_node.endIndex);
-      // Common global constructors
-      if (['Array', 'Object', 'String', 'Number', 'Boolean', 'Date', 'RegExp',
-           'Map', 'Set', 'Promise', 'Error'].includes(name)) {
-        return name;
-      }
-      return undefined;
-    
     default:
       return undefined;
   }

@@ -2,18 +2,18 @@
 
 ## Overview
 
-This recipe describes how to refactor language-specific modules to use a combination of configuration-driven generic processing and bespoke language-specific handlers.
+This recipe describes how to refactor language-specific modules to use a combination of configuration-driven generic processing and language-specific handlers.
 
 ## Step-by-Step Process
 
 ### 1. Research & Analysis Phase
 
-**Objective:** Understand what can be genericized vs what requires bespoke logic
+**Objective:** Understand what can be genericized vs what requires language-specific logic
 
 - Analyze all language-specific implementations
 - Identify common patterns (usually 80-90% of code)
 - Document truly unique language features that cannot be expressed through configuration
-- Calculate percentage split (e.g., 86% generic, 14% bespoke)
+- Calculate percentage split (e.g., 86% generic, 14% language-specific)
 
 **Key Questions:**
 
@@ -42,8 +42,8 @@ interface LanguageConfig {
 
 ```txt
 module_name/
-├── index.ts                    # Main export, combines generic + bespoke
-├── module_name.ts              # Generic processor + MODULE_CONTEXT
+├── index.ts                    # Just contains exports for functions and types used *outside* of this module
+├── module_name.ts              # Generic processor
 ├── language_configs.ts        # Configuration objects for all languages
 ├── module_name.typescript.ts  # TypeScript bespoke features only
 ├── module_name.python.ts      # Python bespoke features only
@@ -54,6 +54,13 @@ module_name/
 ├── module_name.python.test.ts      # Python bespoke tests
 └── module_name.rust.test.ts        # Rust bespoke tests
 ```
+
+**⚠️ CRITICAL NAMING CONVENTION ⚠️**
+- **NO `.bespoke` suffix** - Files are named `module_name.language.ts` NOT `module_name.language.bespoke.ts`
+- **NO `.generic` suffix** - The main file is `module_name.ts` NOT `module_name.generic.ts`
+- **Language files use exact language names**: `.javascript.ts`, `.typescript.ts`, `.python.ts`, `.rust.ts`
+- **Test files follow same pattern**: `module_name.language.test.ts`
+- **This naming is EXACT and REQUIRED** - no variations or suffixes
 
 ### 4. Implementation Order
 
@@ -69,21 +76,23 @@ module_name/
 - Create generic processing functions in `module_name.ts`
 - Use configuration objects to drive behavior
 - Export processing context interface
-- Include shared constants (e.g., MODULE_CONTEXT)
+- Include shared constants
 
 #### 4.3 Implement Bespoke Handlers
 
-- Create `module_name.language.ts` files
+- Create `module_name.language.ts` files (NOT `.bespoke.ts`)
 - Each file handles ONLY truly unique features
 - Export specific handler functions (e.g., `handle_typescript_decorators`)
 - Keep bespoke code minimal and focused
+- **Remember: NO `.bespoke` suffix in filenames!**
 
 #### 4.4 Wire Everything in index.ts
 
-- Import generic processor from `module_name.ts`
-- Import bespoke handlers from language files
-- Combine results using explicit dispatch (switch statement)
-- Export main API function and types
+- **IMPORTANT**: index.ts should ONLY contain exports, no implementation logic
+- Export types and functions from `module_name.ts`
+- Export configuration functions from `language_configs.ts`
+- Export bespoke functions from language files (for testing)
+- NO implementation code in index.ts - it's purely an export aggregator
 
 ### 5. Test Organization
 
@@ -124,6 +133,10 @@ module_name/
 
 4. **DON'T** duplicate logic between generic and bespoke
    - If it can be configured, it goes in generic
+
+5. **DON'T** use `.bespoke` or `.generic` suffixes
+   - Bad: `module_name.javascript.bespoke.ts`
+   - Good: `module_name.javascript.ts`
 
 ## Success Criteria
 

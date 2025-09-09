@@ -1,28 +1,30 @@
 import { describe, it, expect } from 'vitest';
 import { 
-  infer_parameter_types,
   extract_parameters,
-  infer_type_from_default,
-  check_parameter_patterns,
-  format_parameter_signature,
-  are_parameters_typed,
+  ParameterAnalysis,
   ParameterInferenceContext
 } from './index';
+// Import internal functions directly for testing
+import {
+  infer_parameter_types,
+  infer_type_from_default,
+  check_parameter_patterns,
+} from './parameter_type_inference';
 import { get_language_parser } from '../../scope_queries/loader';
-import { Language, Def } from '@ariadnejs/types';
+import { Language, FunctionDefinition, Location } from '@ariadnejs/types';
 
-function create_mock_def(name: string, kind: string): Def {
-  return {
-    kind: 'definition',
-    name,
-    symbol_kind: kind,
+function create_mock_def(name: string, kind: string): FunctionDefinition {
+  const location: Location = {
     file_path: 'test.ts',
-    symbol_id: `${name}_${kind}`,
-    range: {
-      start: { row: 0, column: 0 },
-      end: { row: 1, column: 0 }
-    },
-    id: `def_${name}`
+    start: { row: 0, column: 0 },
+    end: { row: 1, column: 0 }
+  };
+  
+  return {
+    name,
+    location,
+    signature: `function ${name}()`,
+    is_exported: false
   };
 }
 
@@ -67,7 +69,7 @@ describe('parameter_type_inference', () => {
       const func_node = find_function_by_name(tree.rootNode, 'test');
       expect(func_node).toBeDefined();
       if (func_node) {
-        const def: Def = create_mock_def('test', 'function');
+        const def = create_mock_def('test', 'function');
         const analysis = infer_parameter_types(def, func_node, context);
         
         expect(analysis.parameters).toHaveLength(5);
@@ -99,7 +101,7 @@ describe('parameter_type_inference', () => {
       
       const func_node = find_function_by_name(tree.rootNode, 'test');
       if (func_node) {
-        const def: Def = create_mock_def('test', 'function');
+        const def = create_mock_def('test', 'function');
         const analysis = infer_parameter_types(def, func_node, context);
         
         expect(analysis.inferred_types.get('callback')?.inferred_type).toBe('Function');
@@ -130,7 +132,7 @@ describe('parameter_type_inference', () => {
       
       const func_node = find_function_by_name(tree.rootNode, 'test');
       if (func_node) {
-        const def: Def = create_mock_def('test', 'function');
+        const def = create_mock_def('test', 'function');
         const analysis = infer_parameter_types(def, func_node, context);
         
         expect(analysis.inferred_types.get('arr')?.inferred_type).toBe('Array');
@@ -184,7 +186,7 @@ describe('parameter_type_inference', () => {
       
       const func_node = find_function_by_name(tree.rootNode, 'test');
       if (func_node) {
-        const def: Def = create_mock_def('test', 'function');
+        const def = create_mock_def('test', 'function');
         const analysis = infer_parameter_types(def, func_node, context);
         
         expect(analysis.inferred_types.get('str')?.inferred_type).toBe('string');
@@ -221,31 +223,6 @@ describe('parameter_type_inference', () => {
       }
     });
 
-    it('should format TypeScript parameter signatures', () => {
-      const code = `
-        function test(
-          name: string,
-          age?: number,
-          ...tags: string[]
-        ) {}
-      `;
-      
-      const parser = get_language_parser('typescript' as Language);
-      const tree = parser!.parse(code);
-      const context: ParameterInferenceContext = {
-        language: 'typescript',
-        source_code: code
-      };
-      
-      const func_node = find_function_by_name(tree.rootNode, 'test');
-      if (func_node) {
-        const def: Def = create_mock_def('test', 'function');
-        const analysis = infer_parameter_types(def, func_node, context);
-        const signature = format_parameter_signature(analysis, 'typescript');
-        expect(signature).toBe('(name: string, age?: number, ...tags: string[])');
-      }
-    });
-  });
 
   describe('Python parameter type inference', () => {
     it('should extract type hints', () => {
@@ -268,7 +245,7 @@ def test(
       
       const func_node = find_function_by_name(tree.rootNode, 'test');
       if (func_node) {
-        const def: Def = create_mock_def('test', 'function');
+        const def = create_mock_def('test', 'function');
         const analysis = infer_parameter_types(def, func_node, context);
         
         expect(analysis.inferred_types.get('name')?.inferred_type).toBe('str');
@@ -316,14 +293,14 @@ class TestClass:
       
       func_node = findMethod(tree.rootNode, 'instance_method');
       if (func_node) {
-        const def: Def = create_mock_def('instance_method', 'method');
+        const def = create_mock_def('instance_method', 'method');
         const analysis = infer_parameter_types(def, func_node, context);
         expect(analysis.inferred_types.get('self')?.inferred_type).toBe('TestClass');
       }
       
       func_node = findMethod(tree.rootNode, 'class_method');
       if (func_node) {
-        const def: Def = create_mock_def('class_method', 'method');
+        const def = create_mock_def('class_method', 'method');
         const analysis = infer_parameter_types(def, func_node, context);
         expect(analysis.inferred_types.get('cls')?.inferred_type).toBe('Type[TestClass]');
       }
@@ -344,7 +321,7 @@ def test(regular, *args, **kwargs):
       
       const func_node = find_function_by_name(tree.rootNode, 'test');
       if (func_node) {
-        const def: Def = create_mock_def('test', 'function');
+        const def = create_mock_def('test', 'function');
         const analysis = infer_parameter_types(def, func_node, context);
         
         expect(analysis.inferred_types.get('args')?.inferred_type).toBe('tuple');
@@ -373,7 +350,7 @@ def test(
       
       const func_node = find_function_by_name(tree.rootNode, 'test');
       if (func_node) {
-        const def: Def = create_mock_def('test', 'function');
+        const def = create_mock_def('test', 'function');
         const analysis = infer_parameter_types(def, func_node, context);
         
         expect(analysis.inferred_types.get('name')?.inferred_type).toBe('str');
@@ -405,7 +382,7 @@ fn test(
       
       const func_node = find_function_by_name(tree.rootNode, 'test');
       if (func_node) {
-        const def: Def = create_mock_def('test', 'function');
+        const def = create_mock_def('test', 'function');
         const analysis = infer_parameter_types(def, func_node, context);
         
         expect(analysis.inferred_types.get('name')?.inferred_type).toBe('String');
@@ -449,21 +426,21 @@ impl TestStruct {
       
       let func_node = findMethod(tree.rootNode, 'by_ref');
       if (func_node) {
-        const def: Def = create_mock_def('by_ref', 'method');
+        const def = create_mock_def('by_ref', 'method');
         const analysis = infer_parameter_types(def, func_node, context);
         expect(analysis.inferred_types.get('self')?.inferred_type).toBe('&Self');
       }
       
       func_node = findMethod(tree.rootNode, 'by_mut_ref');
       if (func_node) {
-        const def: Def = create_mock_def('by_mut_ref', 'method');
+        const def = create_mock_def('by_mut_ref', 'method');
         const analysis = infer_parameter_types(def, func_node, context);
         expect(analysis.inferred_types.get('self')?.inferred_type).toBe('&mut Self');
       }
       
       func_node = findMethod(tree.rootNode, 'by_value');
       if (func_node) {
-        const def: Def = create_mock_def('by_value', 'method');
+        const def = create_mock_def('by_value', 'method');
         const analysis = infer_parameter_types(def, func_node, context);
         expect(analysis.inferred_types.get('self')?.inferred_type).toBe('Self');
       }
@@ -487,7 +464,7 @@ fn test(
       
       const func_node = find_function_by_name(tree.rootNode, 'test');
       if (func_node) {
-        const def: Def = create_mock_def('test', 'function');
+        const def = create_mock_def('test', 'function');
         const analysis = infer_parameter_types(def, func_node, context);
         
         expect(analysis.inferred_types.get('string_ref')?.inferred_type).toBe('&str');
@@ -528,30 +505,6 @@ fn test(
         .toBe('Array');
     });
 
-    it('should check if all parameters are typed', () => {
-      const analysis = {
-        function_name: 'test',
-        parameters: [
-          { name: 'a', position: 0 },
-          { name: 'b', position: 1 }
-        ],
-        inferred_types: new Map([
-          ['a', { param_name: 'a', inferred_type: 'string', confidence: 'explicit' as const, source: 'annotation' as const }],
-          ['b', { param_name: 'b', inferred_type: 'number', confidence: 'inferred' as const, source: 'default' as const }]
-        ])
-      };
-      
-      expect(are_parameters_typed(analysis)).toBe(true);
-      
-      // Add untyped parameter
-      analysis.inferred_types.set('b', {
-        param_name: 'b',
-        inferred_type: 'any',
-        confidence: 'assumed',
-        source: 'pattern'
-      });
-      
-      expect(are_parameters_typed(analysis)).toBe(false);
-    });
+  });
   });
 });
