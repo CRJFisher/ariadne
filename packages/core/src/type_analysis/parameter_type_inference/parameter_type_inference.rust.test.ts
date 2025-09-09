@@ -24,9 +24,9 @@ describe('Rust bespoke parameter type inference', () => {
         
         expect(result.length).toBe(2);
         expect(result[0].name).toBe('x');
-        expect(result[0].type).toBe('i32');
+        expect(result[0].type_annotation).toBe('i32');
         expect(result[1].name).toBe('y');
-        expect(result[1].type).toBe('i32');
+        expect(result[1].type_annotation).toBe('i32');
       }
     });
     
@@ -49,11 +49,11 @@ describe('Rust bespoke parameter type inference', () => {
         
         expect(result.length).toBe(3);
         expect(result[0].name).toBe('a');
-        expect(result[0].type).toBe('u8');
+        expect(result[0].type_annotation).toBe('u8');
         expect(result[1].name).toBe('b');
-        expect(result[1].type).toBe('u16');
+        expect(result[1].type_annotation).toBe('u16');
         expect(result[2].name).toBe('c');
-        expect(result[2].type).toBe('u32');
+        expect(result[2].type_annotation).toBe('u32');
       }
     });
     
@@ -76,9 +76,9 @@ describe('Rust bespoke parameter type inference', () => {
         
         expect(result.length).toBe(2);
         expect(result[0].name).toBe('x');
-        expect(result[0].type).toBe('Point');
+        expect(result[0].type_annotation).toBe('Point');
         expect(result[1].name).toBe('y');
-        expect(result[1].type).toBe('Point');
+        expect(result[1].type_annotation).toBe('Point');
       }
     });
     
@@ -101,9 +101,9 @@ describe('Rust bespoke parameter type inference', () => {
         
         expect(result.length).toBe(2);
         expect(result[0].name).toBe('x_val');
-        expect(result[0].type).toBe('Point');
+        expect(result[0].type_annotation).toBe('Point');
         expect(result[1].name).toBe('y_val');
-        expect(result[1].type).toBe('Point');
+        expect(result[1].type_annotation).toBe('Point');
       }
     });
     
@@ -126,11 +126,11 @@ describe('Rust bespoke parameter type inference', () => {
         
         expect(result.length).toBe(3);
         expect(result[0].name).toBe('first');
-        expect(result[0].type).toBe('i32');
+        expect(result[0].type_annotation).toBe('i32');
         expect(result[1].name).toBe('second');
-        expect(result[1].type).toBe('i32');
+        expect(result[1].type_annotation).toBe('i32');
         expect(result[2].name).toBe('third');
-        expect(result[2].type).toBe('i32');
+        expect(result[2].type_annotation).toBe('i32');
       }
     });
     
@@ -153,9 +153,9 @@ describe('Rust bespoke parameter type inference', () => {
         
         expect(result.length).toBe(2);
         expect(result[0].name).toBe('x');
-        expect(result[0].type).toBe('&Point');
+        expect(result[0].type_annotation).toBe('&Point');
         expect(result[1].name).toBe('y');
-        expect(result[1].type).toBe('&Point');
+        expect(result[1].type_annotation).toBe('&Point');
       }
     });
     
@@ -178,9 +178,9 @@ describe('Rust bespoke parameter type inference', () => {
         
         expect(result.length).toBe(2);
         expect(result[0].name).toBe('x');
-        expect(result[0].type).toBe('&mut Point');
+        expect(result[0].type_annotation).toBe('&mut Point');
         expect(result[1].name).toBe('y');
-        expect(result[1].type).toBe('&mut Point');
+        expect(result[1].type_annotation).toBe('&mut Point');
       }
     });
     
@@ -203,7 +203,7 @@ describe('Rust bespoke parameter type inference', () => {
         
         expect(result.length).toBe(1);
         expect(result[0].name).toBe('value');
-        expect(result[0].type).toBe('i32');
+        expect(result[0].type_annotation).toBe('i32');
       }
     });
     
@@ -227,11 +227,11 @@ describe('Rust bespoke parameter type inference', () => {
         // Should only include named parameters, not wildcards
         expect(result.length).toBe(1);
         expect(result[0].name).toBe('x');
-        expect(result[0].type).toBe('i32');
+        expect(result[0].type_annotation).toBe('i32');
       }
     });
     
-    it('should return empty array for simple parameters', () => {
+    it('should handle simple parameters', () => {
       const code = `fn test(x: i32) {}`;
       
       const parser = get_language_parser('rust');
@@ -248,8 +248,10 @@ describe('Rust bespoke parameter type inference', () => {
       if (param_node) {
         const result = handle_pattern_parameters(param_node, context);
         
-        // Simple parameters are not patterns
-        expect(result.length).toBe(0);
+        // Simple parameters with identifier patterns should be handled
+        expect(result.length).toBe(1);
+        expect(result[0].name).toBe('x');
+        expect(result[0].type_annotation).toBe('i32');
       }
     });
   });

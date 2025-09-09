@@ -98,13 +98,21 @@ function extract_numpy_style_type(
  * Example:
  * :param param_name: Description
  * :type param_name: type
+ * or
+ * :param type param_name: Description
  */
 function extract_sphinx_style_type(
   param_name: string,
   docstring: string
 ): string | undefined {
-  const regex = new RegExp(`:type\\s+${param_name}:\\s*([^\\n]+)`, "m");
-  const match = docstring.match(regex);
+  // Try :type param_name: format first
+  let regex = new RegExp(`:type\\s+${param_name}:\\s*([^\\n]+)`, "m");
+  let match = docstring.match(regex);
+  if (match) return match[1].trim();
+  
+  // Try :param type param_name: format
+  regex = new RegExp(`:param\\s+(\\w+)\\s+${param_name}:`, "m");
+  match = docstring.match(regex);
   return match ? match[1].trim() : undefined;
 }
 
@@ -112,39 +120,74 @@ function extract_sphinx_style_type(
  * Normalize Python type annotations
  */
 export function normalize_python_type(type_str: string): string {
+  // Remove typing module prefix
+  let normalized = type_str.replace(/^typing\./, '');
+  
   // Handle optional types
-  if (type_str.startsWith("Optional[") && type_str.endsWith("]")) {
-    const inner = type_str.slice(9, -1);
+  if (normalized.startsWith("Optional[") && normalized.endsWith("]")) {
+    const inner = normalized.slice(9, -1);
     return `${normalize_python_type(inner)} | None`;
   }
 
-  // Handle union types
-  if (type_str.includes("Union[")) {
-    return type_str.replace(/Union\[([^\]]+)\]/, (_, types) => {
-      return types
-        .split(",")
-        .map((t: string) => normalize_python_type(t.trim()))
-        .join(" | ");
-    });
+  // Handle union types - need to handle nested brackets properly
+  if (normalized.includes("Union[")) {
+    // Find the matching closing bracket for Union
+    const start = normalized.indexOf("Union[");
+    let depth = 0;
+    let end = start + 6; // Start after "Union["
+    for (let i = end; i < normalized.length; i++) {
+      if (normalized[i] === '[') depth++;
+      if (normalized[i] === ']') {
+        if (depth === 0) {
+          end = i;
+          break;
+        }
+        depth--;
+      }
+    }
+    
+    const unionContent = normalized.substring(start + 6, end);
+    const types = [];
+    let current = '';
+    let bracketDepth = 0;
+    
+    for (let i = 0; i < unionContent.length; i++) {
+      const char = unionContent[i];
+      if (char === '[') bracketDepth++;
+      if (char === ']') bracketDepth--;
+      if (char === ',' && bracketDepth === 0) {
+        types.push(normalize_python_type(current.trim()));
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    if (current.trim()) {
+      types.push(normalize_python_type(current.trim()));
+    }
+    
+    const before = normalized.substring(0, start);
+    const after = normalized.substring(end + 1);
+    return before + types.join(' | ') + after;
   }
 
-  // Handle generic types
+  // Handle generic types - but preserve Callable with capital C
   const generic_mappings: { [key: string]: string } = {
     List: "list",
     Dict: "dict",
     Set: "set",
     Tuple: "tuple",
-    Callable: "callable",
     Iterable: "iterable",
     Iterator: "iterator",
     Generator: "generator",
   };
 
+  // Apply generic mappings recursively for nested types
   for (const [old_name, new_name] of Object.entries(generic_mappings)) {
-    if (type_str.startsWith(old_name)) {
-      return type_str.replace(old_name, new_name);
-    }
+    // Use a regex that handles nested generics
+    const regex = new RegExp(`\\b${old_name}\\b`, 'g');
+    normalized = normalized.replace(regex, new_name);
   }
 
-  return type_str;
+  return normalized;
 }
