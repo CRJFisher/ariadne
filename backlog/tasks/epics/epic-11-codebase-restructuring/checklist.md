@@ -29,3 +29,41 @@
 - The file naming is a bit off - `.bespoke` and `.generic` suffixes are being used but should be dropped
 - So many redundant functions. These need to be removed.
   - We could first get the tool working again and then use the tool to help with these refactorings.
+
+
+```
+please now work on task 11.94 - perform the refactoring as per                     │
+│   @backlog/tasks/epics/epic-11-codebase-restructuring/refactoring-recipe.md.\        │
+│   ensure comprehensive test coverage and that by the end, all tests pass for this    │
+│   module -- ultrathink
+
+please now verify:\                                                                │
+│   - the tsx compilation shows everything is working in all the files in this         │
+│   module\                                                                            │
+│   - there aren't any extra functions that we don't need. every function should be    │
+│   ultimately being used by a top-level module (code_graph.ts or file_analyzer.ts or  │
+│   another module).\                                                                  │
+│   - for the remaining, used functions, there should be comprehensive testing and     │
+│   the tests should pass 100%\                                                        │
+│   ultrathink 
+
+the file namings are wrong - please check this spec and make sure they conform to  │
+│   it - there should be no `.bespoke` or `.generic` -- ultrathink
+don't create that naming convention file. instead create a file at                 │
+│   rules/folder-structure-migration.md that describes this folder structure and also  │
+│   add a summary to @CLAUDE.md by where it mentions                                   │
+│   rules/folder-structure-migration.md 
+
+this file is full of functions that aren't actually used outside of the module -   │
+│   why did you create all these unnecessary functions? they are a big nuisance and    │
+│   add a lot of technical debt. please fix this and then add a section to @CLAUDE.md  │
+│   to remind you to never create "extra" functions that _might_ be useful one day -   │
+│   all functions should be ultimately be called by a top-level function/module --     │
+│   ultrathink
+
+please double check all the language-specific tests are comprehensive and passing  │
+│   100% 
+
+please continue to work on fixing the code/tests until *all* tests are passing --  │
+│   ultrathink
+```
