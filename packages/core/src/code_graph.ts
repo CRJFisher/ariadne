@@ -164,7 +164,8 @@ async function resolve_namespaces_across_files(
             (a) => a.file_path === source_module_path
           );
           if (source_analysis) {
-            const namespace_exports = collect_namespace_exports(source_analysis);
+            const namespace_exports =
+              collect_namespace_exports(source_analysis);
 
             namespace_map.set(namespace_key, {
               name: import_stmt.namespace_name,
@@ -716,16 +717,16 @@ function build_type_index(analyses: FileAnalysis[]): TypeIndex {
       for (const [var_name, type_info] of analysis.type_info.entries()) {
         // Skip entries that are not variables (e.g., Python instance attributes like self.count)
         // These are tracked in type_info for type analysis but aren't standalone variables
-        if (var_name.includes('.')) {
+        if (var_name.includes(".")) {
           continue;
         }
-        
+
         const key = `${analysis.file_path}#${var_name}`;
-        
+
         // Find the scope containing this variable
         let var_scope = null;
         let scope_type = "unknown";
-        
+
         for (const [scope_id, scope] of analysis.scopes.nodes) {
           if (scope.symbols.has(var_name)) {
             var_scope = scope;
@@ -733,14 +734,16 @@ function build_type_index(analyses: FileAnalysis[]): TypeIndex {
             break;
           }
         }
-        
+
         if (!var_scope) {
           // Some type_info entries might not be in the scope tree (e.g., builtin types)
           // Skip them instead of throwing an error
-          console.warn(`Variable ${var_name} has type info but not found in scope tree`);
+          console.warn(
+            `Variable ${var_name} has type info but not found in scope tree`
+          );
           continue;
         }
-        
+
         variables.set(key, {
           name: var_name,
           type: (type_info.type_name || "unknown") as TypeString,
