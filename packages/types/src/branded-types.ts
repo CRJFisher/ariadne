@@ -328,3 +328,197 @@ export function parseQualifiedName(name: QualifiedName): {
 
 // Re-export QualifiedName from aliases
 export { QualifiedName } from "./aliases";
+
+// ============================================================================
+// Additional Compound Type Builders for Complex Types
+// ============================================================================
+
+import { ModulePath } from "./aliases";
+
+/**
+ * Build a ModulePath from components
+ */
+export function buildModulePath(
+  source: string,
+  isRelative: boolean = false
+): ModulePath {
+  let path = source;
+  
+  // Normalize path separators
+  path = path.replace(/\\/g, '/');
+  
+  // Add relative prefix if needed
+  if (isRelative && !path.startsWith('.')) {
+    path = './' + path;
+  }
+  
+  // Remove .js/.ts extensions for cleaner paths
+  path = path.replace(/\.(js|jsx|ts|tsx|mjs|cjs|mts|cts)$/, '');
+  
+  return path as ModulePath;
+}
+
+/**
+ * Parse a ModulePath into components
+ */
+export function parseModulePath(path: ModulePath): {
+  segments: string[];
+  isRelative: boolean;
+  isScoped: boolean;
+  packageName?: string;
+  subpath?: string;
+} {
+  const isRelative = path.startsWith('./') || path.startsWith('../');
+  const isScoped = path.startsWith('@');
+  const segments = path.split('/').filter(s => s.length > 0);
+  
+  let packageName: string | undefined;
+  let subpath: string | undefined;
+  
+  if (!isRelative) {
+    if (isScoped && segments.length >= 2) {
+      // Scoped package like @types/node
+      packageName = segments.slice(0, 2).join('/');
+      subpath = segments.slice(2).join('/');
+    } else if (segments.length > 0) {
+      // Regular package like lodash
+      packageName = segments[0];
+      subpath = segments.slice(1).join('/');
+    }
+  }
+  
+  return {
+    segments,
+    isRelative,
+    isScoped,
+    packageName,
+    subpath: subpath || undefined
+  };
+}
+
+/**
+ * Build a TypeExpression from components
+ */
+export function buildTypeExpression(
+  base: string,
+  generics?: string[],
+  modifiers?: TypeModifier[]
+): TypeExpression {
+  let expr = base;
+  
+  // Add generic parameters
+  if (generics && generics.length > 0) {
+    expr += `<${generics.join(', ')}>`;
+  }
+  
+  // Apply modifiers
+  if (modifiers) {
+    for (const modifier of modifiers) {
+      switch (modifier) {
+        case 'array':
+          expr += '[]';
+          break;
+        case 'nullable':
+          expr += ' | null';
+          break;
+        case 'optional':
+          expr += ' | undefined';
+          break;
+        case 'promise':
+          expr = `Promise<${expr}>`;
+          break;
+        case 'readonly':
+          expr = `readonly ${expr}`;
+          break;
+      }
+    }
+  }
+  
+  return toTypeExpression(expr);
+}
+
+export type TypeModifier = 'array' | 'nullable' | 'optional' | 'promise' | 'readonly';
+
+/**
+ * Parse a TypeExpression into components
+ */
+export function parseTypeExpression(expr: TypeExpression): {
+  base: string;
+  generics?: string[];
+  isArray: boolean;
+  isNullable: boolean;
+  isOptional: boolean;
+  isPromise: boolean;
+  isUnion: boolean;
+  unionTypes?: string[];
+} {
+  const str = expr as string;
+  
+  // Check for union types
+  const isUnion = str.includes(' | ');
+  const unionTypes = isUnion ? str.split(' | ').map(s => s.trim()) : undefined;
+  
+  // Check for Promise
+  const isPromise = str.startsWith('Promise<');
+  
+  // Check for array
+  const isArray = str.endsWith('[]');
+  
+  // Check for nullable/optional
+  const isNullable = str.includes(' | null');
+  const isOptional = str.includes(' | undefined');
+  
+  // Extract base type and generics
+  let base = str;
+  let generics: string[] | undefined;
+  
+  // Simple generic extraction (doesn't handle nested generics perfectly)
+  const genericMatch = /^([^<]+)<([^>]+)>/.exec(str);
+  if (genericMatch) {
+    base = genericMatch[1];
+    generics = genericMatch[2].split(',').map(s => s.trim());
+  } else if (isArray) {
+    base = str.replace(/\[\]$/, '');
+  }
+  
+  return {
+    base,
+    generics,
+    isArray,
+    isNullable,
+    isOptional,
+    isPromise,
+    isUnion,
+    unionTypes
+  };
+}
+
+/**
+ * Build a ResolutionPath from file paths
+ */
+export function buildResolutionPath(paths: FilePath[]): ResolutionPath {
+  return paths.join(' -> ') as ResolutionPath;
+}
+
+/**
+ * Parse a ResolutionPath into file paths
+ */
+export function parseResolutionPath(path: ResolutionPath): FilePath[] {
+  return path.split(' -> ').map(p => p.trim() as FilePath);
+}
+
+/**
+ * Build a compound identifier (e.g., "module:class:method")
+ */
+export function buildCompoundIdentifier(
+  ...parts: string[]
+): string {
+  return parts.filter(p => p.length > 0).join(':');
+}
+
+/**
+ * Parse a compound identifier
+ */
+export function parseCompoundIdentifier(id: string): string[] {
+  return id.split(':').filter(p => p.length > 0);
+}
