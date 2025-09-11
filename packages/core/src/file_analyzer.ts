@@ -35,11 +35,7 @@ import {
   create_error_collector,
   ErrorCollector,
 } from "./error_collection/analysis_errors";
-import {
-  convert_imports_to_statements,
-  convert_exports_to_statements,
-  convert_type_map_to_public,
-} from "./type_analysis/type_adapters";
+// Type adapters no longer needed - using unified types directly
 import { create_readonly_array } from "@ariadnejs/types";
 import {
   infer_function_return_type,
@@ -721,15 +717,10 @@ function build_file_analysis(
   scopes: ScopeTree,
   error_collector?: ErrorCollector
 ): FileAnalysis {
-  // Convert to public API types
-  const import_statements = convert_imports_to_statements(
-    imports,
-    file.file_path
-  );
-  const export_statements = convert_exports_to_statements(exports);
-  const public_type_info = convert_type_map_to_public(
-    type_tracker.variable_types
-  );
+  // Use unified types directly (no conversion needed)
+  const import_statements = imports;
+  const export_statements = exports;
+  const public_type_info = type_tracker.variable_types;
 
   // Extract variables from scope tree
   const variables = extract_variables_from_scopes(scopes);
