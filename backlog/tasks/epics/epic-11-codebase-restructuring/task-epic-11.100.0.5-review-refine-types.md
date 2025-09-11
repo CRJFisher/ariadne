@@ -316,3 +316,73 @@ This task must be completed AFTER 11.100.0 (documentation) and BEFORE any refact
 - Quality here prevents major rework during refactoring
 - Focus on getting types right rather than fast
 - Consider this the last chance to fix type architecture before massive changes
+
+## Implementation Notes
+
+### Investigation Completed: 2025-09-11
+
+Conducted comprehensive analysis of current type system across all AST modules. Key findings:
+
+1. **Significant Redundancy**: Found ~40% of types are duplicates or near-duplicates
+2. **Inconsistent Patterns**: Each module implements similar concepts differently
+3. **Missing Base Types**: No common foundation for query results or AST nodes
+4. **Complexity Issues**: Too many optional fields, deep nesting, missing discriminated unions
+
+### CRITICAL UPDATE: String Type Safety Crisis
+
+After deeper investigation requested by user, discovered **100+ raw string types** that completely undermine type safety:
+- Call graph modules use `string` for caller_name, method_name, etc.
+- Import/export modules use `string` for module paths and symbols
+- Type system uses `string` for type annotations and constraints
+- **Zero type safety** for compound strings like QualifiedName, SymbolId
+
+This is MORE CRITICAL than originally identified issues. See detailed analysis in:
+- `task-epic-11.100.0.5-string-types-analysis.md`
+
+### Subtask Structure Created
+
+Based on investigation, created **13 focused subtasks** organized by **concern**:
+
+#### 🚨 CRITICAL - String Type Safety (NEW)
+9. **task-epic-11.100.0.5.9**: Create Branded Type Infrastructure
+10. **task-epic-11.100.0.5.10**: Implement Compound Type Builders/Parsers
+11. **task-epic-11.100.0.5.11**: Migrate Call Graph to Branded Types
+12. **task-epic-11.100.0.5.12**: Migrate Import/Export to Branded Types
+13. **task-epic-11.100.0.5.13**: Migrate Type System to Branded Types
+
+#### Original Type Improvements
+1. **task-epic-11.100.0.5.1**: Design Core Base Types
+2. **task-epic-11.100.0.5.2**: Unify Call Graph Types
+3. **task-epic-11.100.0.5.3**: Simplify Scope and Symbol Types
+4. **task-epic-11.100.0.5.4**: Consolidate Import/Export Types
+5. **task-epic-11.100.0.5.5**: Streamline Type Analysis Types
+6. **task-epic-11.100.0.5.6**: Refactor Inheritance Types
+7. **task-epic-11.100.0.5.7**: Create Query Integration Types
+8. **task-epic-11.100.0.5.8**: Implement Type Validation Layer
+
+### Benefits of This Approach
+
+- **Addresses cross-cutting concerns** systematically
+- **Enables parallel development** (tasks 2-6 and 11-13 can run simultaneously)
+- **Updated time estimate**: 8-10 days (was 5-6 days, but includes critical string type safety)
+- **Ensures consistency** across all 19 modules
+- **Prevents massive tech debt** from raw string types
+
+### Detailed Plan
+
+See `task-epic-11.100.0.5-type-simplification-plan.md` for:
+- Complete investigation findings
+- Proposed type simplifications with examples
+- Implementation strategy
+- Success metrics
+
+### Next Steps (UPDATED PRIORITY)
+
+1. **🚨 START with Task 9** (Branded Type Infrastructure) - CRITICAL, blocks everything
+2. **Then Task 10** (Compound Type Builders) - needed by all modules
+3. **Parallel Tasks 11-13** (Migrate to branded types)
+4. **Then Task 1** (Core Base Types) using branded types as foundation
+5. **Parallel Tasks 2-6** (Module-specific improvements)
+6. **Finally Tasks 7-8** (Integration and validation)
+
+**WARNING**: Starting any task before Task 9 will result in major rework!
