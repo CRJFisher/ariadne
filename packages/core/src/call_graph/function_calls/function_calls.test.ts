@@ -28,12 +28,12 @@ describe("Function Call Detection", () => {
           console.log('Hello');
         }
         greet();
-      `;
+      ` as SourceCode;
 
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source,
-        file_path: "test.js",
+        file_path: "test.js" as FilePath,
         language: "javascript",
         ast_root: tree.rootNode,
       };
@@ -51,12 +51,12 @@ describe("Function Call Detection", () => {
       const source = `
         class Person {}
         const p = new Person();
-      `;
+      ` as SourceCode;
 
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source,
-        file_path: "test.js",
+        file_path: "test.js" as FilePath,
         language: "javascript",
         ast_root: tree.rootNode,
       };
@@ -73,12 +73,12 @@ describe("Function Call Detection", () => {
         const obj = { method: () => {} };
         obj.method();
         array.push(1);
-      `;
+      ` as SourceCode;
 
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source,
-        file_path: "test.js",
+        file_path: "test.js" as FilePath,
         language: "javascript",
         ast_root: tree.rootNode,
       };
@@ -102,14 +102,14 @@ function main() {
   unknown();
 }
 
-main();`;
+main();` as SourceCode;
 
       const tree = parser.parse(source);
       const scope_tree = build_language_scope_tree(tree.rootNode, source, "javascript", "test.js");
       
       const context: FunctionCallContext = {
         source_code: source,
-        file_path: "test.js",
+        file_path: "test.js" as FilePath,
         language: "javascript",
         ast_root: tree.rootNode,
         scope_tree: scope_tree,
@@ -146,7 +146,7 @@ import * as path from "path";
 readFile("test.txt");
 lodash.debounce(fn, 100);
 path.join("/", "test");
-localFunc();`;
+localFunc();` as SourceCode;
 
       const tree = parser.parse(source);
       
@@ -155,27 +155,27 @@ localFunc();`;
           name: "readFile", 
           source: "fs", 
           kind: "named",
-          location: { file_path: "test.js", line: 1, column: 1, end_line: 1, end_column: 30 }
+          location: { file_path: "test.js" as FilePath, line: 1, column: 1, end_line: 1, end_column: 30 }
         },
         { 
           name: "default", 
           source: "lodash",
           alias: "lodash",
           kind: "default",
-          location: { file_path: "test.js", line: 2, column: 1, end_line: 2, end_column: 26 }
+          location: { file_path: "test.js" as FilePath, line: 2, column: 1, end_line: 2, end_column: 26 }
         },
         { 
           name: "*",
           source: "path",
           kind: "namespace",
           namespace_name: "path",
-          location: { file_path: "test.js", line: 3, column: 1, end_line: 3, end_column: 26 }
+          location: { file_path: "test.js" as FilePath, line: 3, column: 1, end_line: 3, end_column: 26 }
         }
       ];
       
       const context: FunctionCallContext = {
         source_code: source,
-        file_path: "test.js",
+        file_path: "test.js" as FilePath,
         language: "javascript",
         ast_root: tree.rootNode,
         imports: imports,
@@ -216,7 +216,7 @@ localFunc();`;
 const user = new User();
 user.getName();
 const name = user.name;
-unknownObj.doSomething();`;
+unknownObj.doSomething();` as SourceCode;
 
       const tree = parser.parse(source);
       
@@ -239,7 +239,7 @@ unknownObj.doSomething();`;
       
       const context: FunctionCallContext = {
         source_code: source,
-        file_path: "test.js",
+        file_path: "test.js" as FilePath,
         language: "javascript",
         ast_root: tree.rootNode,
         type_map: type_map,
@@ -273,12 +273,12 @@ unknownObj.doSomething();`;
         class MyComponent {
           @Input() value: string;
         }
-      `;
+      ` as SourceCode;
 
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source,
-        file_path: "test.ts",
+        file_path: "test.ts" as FilePath,
         language: "typescript",
         ast_root: tree.rootNode,
       };
@@ -296,12 +296,12 @@ unknownObj.doSomething();`;
       const source = `
         function identity<T>(x: T): T { return x; }
         const result = identity<string>('hello');
-      `;
+      ` as SourceCode;
 
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source,
-        file_path: "test.ts",
+        file_path: "test.ts" as FilePath,
         language: "typescript",
         ast_root: tree.rootNode,
       };
@@ -324,12 +324,12 @@ def greet():
 
 greet()
 obj.method()
-      `;
+      ` as SourceCode;
 
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source,
-        file_path: "test.py",
+        file_path: "test.py" as FilePath,
         language: "python",
         ast_root: tree.rootNode,
       };
@@ -349,12 +349,12 @@ class Person:
     pass
 
 p = Person()
-      `;
+      ` as SourceCode;
 
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source,
-        file_path: "test.py",
+        file_path: "test.py" as FilePath,
         language: "python",
         ast_root: tree.rootNode,
       };
@@ -378,12 +378,12 @@ fn main() {
     let s = String::new();
     s.len();
 }
-      `;
+      ` as SourceCode;
 
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source,
-        file_path: "test.rs",
+        file_path: "test.rs" as FilePath,
         language: "rust",
         ast_root: tree.rootNode,
       };
@@ -410,12 +410,12 @@ fn main() {
     vec![1, 2, 3];
     dbg!(42);
 }
-      `;
+      ` as SourceCode;
 
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source,
-        file_path: "test.rs",
+        file_path: "test.rs" as FilePath,
         language: "rust",
         ast_root: tree.rootNode,
       };
@@ -439,8 +439,8 @@ fn main() {
 
       for (const lang of languages) {
         const context: FunctionCallContext = {
-          source_code: "",
-          file_path: `test.${lang}`,
+          source_code: "" as SourceCode,
+          file_path: `test.${lang}` as SourceCode,
           language: lang,
           ast_root: {} as any, // Mock empty AST
         };
@@ -460,7 +460,7 @@ describe("Generic Function Call Processor", () => {
     parser.setLanguage(JavaScript);
 
     it("should detect simple function calls using config", () => {
-      const source = `console.log("test");`;
+      const source = `console.log("test");` as SourceCode;
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source as SourceCode,
@@ -476,7 +476,7 @@ describe("Generic Function Call Processor", () => {
     });
 
     it("should detect new expressions using config", () => {
-      const source = `const obj = new MyClass();`;
+      const source = `const obj = new MyClass();` as SourceCode;
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source as SourceCode,
@@ -492,7 +492,7 @@ describe("Generic Function Call Processor", () => {
     });
 
     it("should count arguments correctly", () => {
-      const source = `func(1, 2, 3);`;
+      const source = `func(1, 2, 3);` as SourceCode;
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source as SourceCode,
@@ -512,7 +512,7 @@ describe("Generic Function Call Processor", () => {
     parser.setLanguage(TypeScript.typescript);
 
     it("should handle generic type arguments", () => {
-      const source = `const result = identity<string>('test');`;
+      const source = `const result = identity<string>('test');` as SourceCode;
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source as SourceCode,
@@ -530,7 +530,7 @@ describe("Generic Function Call Processor", () => {
       const source = `
         @Component()
         class MyClass {}
-      `;
+      ` as SourceCode;
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source as SourceCode,
@@ -550,7 +550,7 @@ describe("Generic Function Call Processor", () => {
     parser.setLanguage(Python);
 
     it("should detect Python calls using config", () => {
-      const source = `print("hello")`;
+      const source = `print("hello")` as SourceCode;
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source as SourceCode,
@@ -565,7 +565,7 @@ describe("Generic Function Call Processor", () => {
     });
 
     it("should detect method calls using attribute syntax", () => {
-      const source = `obj.method()`;
+      const source = `obj.method()` as SourceCode;
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source as SourceCode,
@@ -581,7 +581,7 @@ describe("Generic Function Call Processor", () => {
     });
 
     it("should detect constructor by capitalization", () => {
-      const source = `person = Person("John")`;
+      const source = `person = Person("John")` as SourceCode;
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source as SourceCode,
@@ -601,7 +601,7 @@ describe("Generic Function Call Processor", () => {
     parser.setLanguage(Rust);
 
     it("should not detect macros (handled by bespoke)", () => {
-      const source = `fn main() { println!("hello"); }`;
+      const source = `fn main() { println!("hello"); }` as SourceCode;
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source as SourceCode,
@@ -616,7 +616,7 @@ describe("Generic Function Call Processor", () => {
     });
 
     it("should detect method calls via field expression", () => {
-      const source = `let len = s.len();`;
+      const source = `let len = s.len();` as SourceCode;
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source as SourceCode,
@@ -632,7 +632,7 @@ describe("Generic Function Call Processor", () => {
     });
 
     it("should detect associated functions", () => {
-      const source = `let s = String::new();`;
+      const source = `let s = String::new();` as SourceCode;
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source as SourceCode,
@@ -652,7 +652,7 @@ describe("Generic Function Call Processor", () => {
     parser.setLanguage(JavaScript);
 
     it("should handle nested calls", () => {
-      const source = `outer(inner(42));`;
+      const source = `outer(inner(42));` as SourceCode;
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source as SourceCode,
@@ -670,7 +670,7 @@ describe("Generic Function Call Processor", () => {
     });
 
     it("should handle empty argument lists", () => {
-      const source = `func();`;
+      const source = `func();` as SourceCode;
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source as SourceCode,
@@ -687,7 +687,7 @@ describe("Generic Function Call Processor", () => {
       const source = `
         // Line 1
         func(); // Line 2
-      `;
+      ` as SourceCode;
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source as SourceCode,
@@ -710,7 +710,7 @@ describe("Generic Function Call Processor", () => {
         function outer() {
           inner();
         }
-      `;
+      ` as SourceCode;
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source as SourceCode,
@@ -724,7 +724,7 @@ describe("Generic Function Call Processor", () => {
     });
 
     it("should use <module> for top-level calls", () => {
-      const source = `console.log('top level');`;
+      const source = `console.log('top level');` as SourceCode;
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source as SourceCode,
@@ -742,7 +742,7 @@ describe("Generic Function Call Processor", () => {
         const fn = () => {
           test();
         };
-      `;
+      ` as SourceCode;
       const tree = parser.parse(source);
       const context: FunctionCallContext = {
         source_code: source as SourceCode,

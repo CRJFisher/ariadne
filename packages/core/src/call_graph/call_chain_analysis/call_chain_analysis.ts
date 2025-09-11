@@ -16,6 +16,8 @@ import {
   FunctionCallInfo,
   MethodCallInfo,
   ConstructorCallInfo,
+  Location,
+  FilePath,
 } from "@ariadnejs/types";
 
 /**
@@ -41,12 +43,22 @@ export interface CallChainContext {
 }
 
 /**
+ * Result of call chain analysis
+ */
+export interface CallChainAnalysisResult {
+  readonly chains: readonly CallChain[];
+  readonly recursive_chains: readonly CallChain[];
+  readonly max_chain_depth: number;
+  readonly call_graph: Map<SymbolId, Set<SymbolId>>;
+}
+
+/**
  * Build call chains from function calls
  */
 export function build_call_chains(
   calls: readonly (FunctionCallInfo | MethodCallInfo | ConstructorCallInfo)[],
   context: CallChainContext
-): readonly CallChain[] {
+): CallChainAnalysisResult {
   const max_depth = context.max_depth || 10;
   const call_graph = build_call_graph(calls);
   const chains: CallChain[] = [];
@@ -95,10 +107,10 @@ export function build_call_chains(
   }
 
   return {
-    chains,
-    recursive_chains,
-    max_chain_depth,
-    call_graph,
+    chains: chains,
+    recursive_chains: recursive_chains,
+    max_chain_depth: max_chain_depth,
+    call_graph: call_graph,
   };
 }
 
@@ -172,8 +184,8 @@ function traverse_chain(
   graph: Map<SymbolId, Set<SymbolId>>,
   visited: Set<SymbolId>,
   path: CallChainNode[],
-  chains: readonly CallChain[],
-  recursive_chains: readonly CallChain[],
+  chains: CallChain[],
+  recursive_chains: CallChain[],
   max_depth: number,
   depth: number,
   original_calls: readonly (
@@ -241,7 +253,7 @@ function traverse_chain(
  */
 function save_chain(
   path: CallChainNode[],
-  chains: readonly CallChain[],
+  chains: CallChain[],
   recursive_chains: CallChain[]
 ): void {
   if (path.length > 0) {
@@ -325,8 +337,8 @@ export function detect_recursion(chains: readonly CallChain[]): CallChain[] {
     for (const node of chain.nodes) {
       if (seen.has(node.callee)) {
         // Found recursion
-        chain.is_recursive = true;
-        chain.cycle_point = node.callee;
+        (chain as any).is_recursive = true;
+        (chain as any).cycle_point = node.callee;
         found_recursion = true;
         break;
       }
@@ -372,8 +384,8 @@ export function find_paths_between(
         const node: CallChainNode = {
           caller: current,
           callee,
-          location: { row: 0, column: 0 },
-          file_path: "",
+          location: { start_line: 0, start_column: 0, end_line: 0, end_column: 0 } as Location,
+          file_path: "" as FilePath,
           call_type: "function",
           depth,
         };

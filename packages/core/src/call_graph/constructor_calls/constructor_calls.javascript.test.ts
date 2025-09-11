@@ -10,6 +10,7 @@ import {
   extract_class_inheritance,
   detect_advanced_factory_pattern
 } from "./constructor_calls.javascript";
+import { FilePath } from "@ariadnejs/types";
 import { ConstructorCallContext } from "./constructor_calls";
 
 describe("JavaScript Bespoke Handlers", () => {
@@ -22,7 +23,7 @@ describe("JavaScript Bespoke Handlers", () => {
       const tree = parser.parse(source);
       const context: ConstructorCallContext = {
         source_code: source,
-        file_path: "test.js",
+        file_path: "test.js" as FilePath,
         language: "javascript",
         ast_root: tree.rootNode,
       };
@@ -56,7 +57,7 @@ describe("JavaScript Bespoke Handlers", () => {
       const tree = parser.parse(source);
       const context: ConstructorCallContext = {
         source_code: source,
-        file_path: "test.js",
+        file_path: "test.js" as FilePath,
         language: "javascript",
         ast_root: tree.rootNode,
       };
@@ -88,7 +89,7 @@ describe("JavaScript Bespoke Handlers", () => {
       const tree = parser.parse(source);
       const context: ConstructorCallContext = {
         source_code: source,
-        file_path: "test.js",
+        file_path: "test.js" as FilePath,
         language: "javascript",
         ast_root: tree.rootNode,
       };
@@ -121,7 +122,7 @@ describe("JavaScript Bespoke Handlers", () => {
       const tree = parser.parse(source);
       const context: ConstructorCallContext = {
         source_code: source,
-        file_path: "test.js",
+        file_path: "test.js" as FilePath,
         language: "javascript",
         ast_root: tree.rootNode,
       };
@@ -153,7 +154,7 @@ describe("JavaScript Bespoke Handlers", () => {
       const tree = parser.parse(source);
       const context: ConstructorCallContext = {
         source_code: source,
-        file_path: "test.js",
+        file_path: "test.js" as FilePath,
         language: "javascript",
         ast_root: tree.rootNode,
       };
@@ -183,7 +184,7 @@ describe("JavaScript Bespoke Handlers", () => {
       const tree = parser.parse(source);
       const context: ConstructorCallContext = {
         source_code: source,
-        file_path: "test.js",
+        file_path: "test.js" as FilePath,
         language: "javascript",
         ast_root: tree.rootNode,
       };
@@ -213,7 +214,7 @@ describe("JavaScript Bespoke Handlers", () => {
       const tree = parser.parse(source);
       const context: ConstructorCallContext = {
         source_code: source,
-        file_path: "test.js",
+        file_path: "test.js" as FilePath,
         language: "javascript",
         ast_root: tree.rootNode,
       };

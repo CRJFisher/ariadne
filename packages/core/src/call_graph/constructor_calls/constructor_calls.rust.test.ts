@@ -12,6 +12,7 @@ import {
   handle_smart_pointer_construction,
   handle_default_construction
 } from "./constructor_calls.rust";
+import { FilePath } from "@ariadnejs/types";
 import { ConstructorCallContext } from "./constructor_calls";
 
 describe("Rust Bespoke Handlers", () => {

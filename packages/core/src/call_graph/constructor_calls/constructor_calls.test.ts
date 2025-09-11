@@ -18,6 +18,7 @@ import {
   is_factory_method_pattern,
   walk_tree
 } from "./constructor_calls";
+import { FilePath } from "@ariadnejs/types";
 
 describe("Generic Constructor Call Processor", () => {
   describe("process_constructor_calls_generic", () => {
@@ -28,7 +29,7 @@ describe("Generic Constructor Call Processor", () => {
       const tree = parser.parse(source);
       const context: ConstructorCallContext = {
         source_code: source,
-        file_path: "test.js",
+        file_path: "test.js" as FilePath,
         language: "javascript",
         ast_root: tree.rootNode,
       };
@@ -48,7 +49,7 @@ describe("Generic Constructor Call Processor", () => {
       const tree = parser.parse(source);
       const context: ConstructorCallContext = {
         source_code: source,
-        file_path: "test.py",
+        file_path: "test.py" as FilePath,
         language: "python",
         ast_root: tree.rootNode,
       };
@@ -68,7 +69,7 @@ describe("Generic Constructor Call Processor", () => {
       const tree = parser.parse(source);
       const context: ConstructorCallContext = {
         source_code: source,
-        file_path: "test.rs",
+        file_path: "test.rs" as FilePath,
         language: "rust",
         ast_root: tree.rootNode,
       };

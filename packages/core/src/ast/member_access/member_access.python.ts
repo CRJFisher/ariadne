@@ -63,8 +63,8 @@ export function handle_python_getattr(
     // Remove quotes from string literal
     attr_name = attr_arg.text.slice(1, -1);
   } else {
-    // For dynamic expressions, use the raw text
-    attr_name = `getattr(${attr_arg.text})`;
+    // For dynamic expressions, use the raw text (the variable name)
+    attr_name = attr_arg.text;
   }
   
   return {

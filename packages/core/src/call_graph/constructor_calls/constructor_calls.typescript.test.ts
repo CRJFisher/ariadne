@@ -8,6 +8,7 @@ import TypeScript from 'tree-sitter-typescript';
 import {
   handle_generic_constructor
 } from "./constructor_calls.typescript";
+import { FilePath } from "@ariadnejs/types";
 import { ConstructorCallContext } from "./constructor_calls";
 
 describe("TypeScript Bespoke Handlers", () => {

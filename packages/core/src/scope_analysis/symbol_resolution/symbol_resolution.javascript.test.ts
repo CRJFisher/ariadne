@@ -14,7 +14,7 @@ import {
 } from "./symbol_resolution.javascript";
 import { create_resolution_context } from "./symbol_resolution";
 import { get_symbol_resolution_config } from "./language_configs";
-import { Language } from "@ariadnejs/types";
+import { Language , FilePath} from "@ariadnejs/types";
 
 describe("JavaScript Bespoke Symbol Resolution", () => {
   const language: Language = "javascript";
@@ -36,7 +36,7 @@ describe("JavaScript Bespoke Symbol Resolution", () => {
 
       const file_context = {
         file_analysis: {
-          file_path: "test.js",
+          file_path: "test.js" as FilePath,
           language,
           scopes: scope_tree,
           definitions: [
@@ -45,7 +45,7 @@ describe("JavaScript Bespoke Symbol Resolution", () => {
               name: "myFunc",
               kind: "function" as const,
               range: { start: { row: 3, column: 8 }, end: { row: 3, column: 14 } },
-              file_path: "test.js",
+              file_path: "test.js" as FilePath,
             },
           ],
           references: [],
@@ -94,7 +94,7 @@ describe("JavaScript Bespoke Symbol Resolution", () => {
 
       const file_context = {
         file_analysis: {
-          file_path: "test.js",
+          file_path: "test.js" as FilePath,
           language,
           scopes: scope_tree,
           definitions: [],
@@ -140,7 +140,7 @@ describe("JavaScript Bespoke Symbol Resolution", () => {
       if (method_scope) {
         const file_context = {
           file_analysis: {
-            file_path: "test.js",
+            file_path: "test.js" as FilePath,
             language,
             scopes: scope_tree,
             definitions: [],
@@ -181,7 +181,7 @@ describe("JavaScript Bespoke Symbol Resolution", () => {
 
       const file_context = {
         file_analysis: {
-          file_path: "test.js",
+          file_path: "test.js" as FilePath,
           language,
           scopes: scope_tree,
           definitions: [
@@ -190,7 +190,7 @@ describe("JavaScript Bespoke Symbol Resolution", () => {
               name: "x",
               kind: "variable" as const,
               range: { start: { row: 3, column: 10 }, end: { row: 3, column: 11 } },
-              file_path: "test.js",
+              file_path: "test.js" as FilePath,
             },
           ],
           references: [],

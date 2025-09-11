@@ -607,6 +607,18 @@ function get_item_export_kind(node: SyntaxNode): string {
 }
 
 /**
+ * Main export detection API (wrapper for generic function)
+ */
+export function detect_exports(
+  root_node: SyntaxNode,
+  source_code: string,
+  language: Language
+): ExportInfo[] {
+  const result = detect_exports_generic(root_node, source_code, language);
+  return result.exports;
+}
+
+/**
  * Get export statistics for debugging
  */
 export function get_export_stats(exports: ExportInfo[]): {

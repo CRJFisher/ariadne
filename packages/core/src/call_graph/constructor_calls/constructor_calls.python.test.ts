@@ -9,6 +9,7 @@ import {
   handle_super_init_call,
   detect_classmethod_factory
 } from "./constructor_calls.python";
+import { FilePath } from "@ariadnejs/types";
 import { ConstructorCallContext } from "./constructor_calls";
 
 describe("Python Bespoke Handlers", () => {

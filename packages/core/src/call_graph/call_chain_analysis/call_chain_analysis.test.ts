@@ -158,7 +158,7 @@ describe('call_chain_analysis', () => {
       const result = build_call_chains(calls, context);
       
       // Check that chains respect max depth
-      const maxDepth = Math.max(...result.map(chain => chain.max_depth));
+      const maxDepth = Math.max(...result.chains.map(chain => chain.max_depth));
       expect(maxDepth).toBeLessThanOrEqual(2);
     });
 

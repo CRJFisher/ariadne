@@ -29,7 +29,7 @@ export function handle_javascript_optional_chaining(
   }
   
   // Check if it has the optional operator
-  const optional_operator = node.childForFieldName('optional');
+  const optional_operator = node.childForFieldName('optional_chain');
   if (!optional_operator || optional_operator.text !== '?.') {
     return null;
   }

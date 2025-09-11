@@ -109,7 +109,7 @@ describe("type_tracking", () => {
       let tracker = create_file_type_tracker();
 
       tracker = set_imported_class(tracker, "MyClass", {
-        class_name: "MyClass",
+        class_name: "MyClass" as ClassName,
         source_module: "./my-module",
         local_name: "MyClass",
         is_default: false,

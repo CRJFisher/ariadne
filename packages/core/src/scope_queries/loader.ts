@@ -51,18 +51,6 @@ export function load_scope_query(language: Language): string {
   throw new Error(`Could not find scope query for language: ${language}`);
 }
 
-export function load_language_metadata(language: Language): any {
-  const meta_path = path.join(__dirname, `${language}.meta.json`);
-  
-  // For now, return default metadata since we haven't created the meta files yet
-  // TODO: Create and load actual metadata files
-  return {
-    language,
-    symbolKinds: [],
-    captureNames: []
-  };
-}
-
 function create_javascript_parser(): Parser {
   const parser = new Parser();
   parser.setLanguage(JavaScript as any);

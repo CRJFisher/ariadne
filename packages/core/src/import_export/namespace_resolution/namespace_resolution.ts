@@ -11,11 +11,54 @@ import {
   NamespaceLanguageConfig,
   get_namespace_config
 } from './language_configs';
-import {
-  NamespaceImportInfo,
-  NamespaceExport,
-  NamespaceResolutionContext
-} from './namespace_resolution';
+
+/**
+ * Information about a namespace import
+ */
+export interface NamespaceImportInfo {
+  namespace_name: string;
+  source_module: string;
+  is_namespace: boolean;
+  members?: string[];
+}
+
+/**
+ * Information about a namespace export
+ */
+export interface NamespaceExport {
+  name: string;
+  is_exported: boolean;
+  is_namespace_reexport?: boolean;
+  target_module?: string;
+  visibility?: 'public' | 'private' | 'protected';
+}
+
+/**
+ * Context for namespace resolution operations
+ */
+export interface NamespaceResolutionContext {
+  source_code: string;
+  language: Language;
+  file_path: string;
+  imports?: Import[];
+  exports?: Def[];
+}
+
+/**
+ * Namespace resolver interface
+ */
+export interface NamespaceResolver {
+  detect_imports(imports: Import[]): NamespaceImportInfo[];
+  resolve_member(namespace: string, member: string): any;
+}
+
+/**
+ * Qualified name resolver interface  
+ */
+export interface QualifiedNameResolver {
+  parse(qualified_name: string): { namespace: string; members: string[] };
+  resolve(qualified_name: string): any;
+}
 
 /**
  * Module context shared across resolution
@@ -346,6 +389,89 @@ export function merge_namespace_results(
   }
   
   return merged;
+}
+
+/**
+ * Detect namespace imports (main API wrapper)
+ */
+export function detect_namespace_imports(
+  imports: Import[],
+  language: Language
+): NamespaceImportInfo[] {
+  const result = detect_namespace_imports_generic(imports, language);
+  return result.imports;
+}
+
+/**
+ * Check if an import creates a namespace (public API)
+ * 
+ * @param imp - The import statement to check
+ * @param language - The programming language
+ * @returns true if this import creates a namespace
+ */
+export function is_namespace_import(
+  imp: Import,
+  language: Language
+): boolean {
+  const config = get_namespace_config(language);
+  return is_namespace_import_generic(imp, config, language);
+}
+
+/**
+ * Resolve namespace exports (placeholder)
+ */
+export function resolve_namespace_exports(
+  namespace: string,
+  context: NamespaceResolutionContext
+): Map<string, NamespaceExport> {
+  return get_namespace_exports_generic(namespace, context);
+}
+
+/**
+ * Resolve namespace member (main API wrapper)
+ */
+export function resolve_namespace_member(
+  namespace: string,
+  member: string,
+  context: NamespaceResolutionContext,
+  exports: Map<string, NamespaceExport>
+): any {
+  return resolve_namespace_member_generic(namespace, member, context, exports);
+}
+
+/**
+ * Resolve nested namespace (placeholder)
+ */
+export function resolve_nested_namespace(
+  qualified_name: string,
+  context: NamespaceResolutionContext
+): any {
+  const config = get_namespace_config(context.language);
+  const parsed = parse_qualified_access_generic(qualified_name, config);
+  return parsed;
+}
+
+/**
+ * Get namespace members (placeholder)
+ */
+export function get_namespace_members(
+  namespace: string,
+  context: NamespaceResolutionContext
+): string[] {
+  const exports = get_namespace_exports_generic(namespace, context);
+  return Array.from(exports.keys());
+}
+
+/**
+ * Check if namespace has member (placeholder)
+ */
+export function namespace_has_member(
+  namespace: string,
+  member: string,
+  context: NamespaceResolutionContext
+): boolean {
+  const exports = get_namespace_exports_generic(namespace, context);
+  return exports.has(member);
 }
 
 /**

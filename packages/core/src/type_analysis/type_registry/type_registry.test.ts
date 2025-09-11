@@ -14,7 +14,7 @@ import {
   ModulePath,
   ExportName,
   ScopeTree,
-  ScopeId,
+  ScopeId
 } from "@ariadnejs/types";
 
 describe("Type Registry (Immutable)", () => {
@@ -24,7 +24,7 @@ describe("Type Registry (Immutable)", () => {
         {
           file_path: "/src/file1.ts" as FilePath,
           language: "typescript" as Language,
-          source_code: "" as SourceCode,
+          source_code: "" as SourceCode as SourceCode,
           imports: [],
           exports: [
             {
@@ -57,7 +57,7 @@ describe("Type Registry (Immutable)", () => {
         {
           file_path: "/src/file2.ts" as FilePath,
           language: "typescript" as Language,
-          source_code: "" as SourceCode,
+          source_code: "" as SourceCode as SourceCode,
           imports: [],
           exports: [],
           functions: [],
@@ -113,7 +113,7 @@ describe("Type Registry (Immutable)", () => {
         {
           file_path: "/src/test.ts" as FilePath,
           language: "typescript" as Language,
-          source_code: "" as SourceCode,
+          source_code: "" as SourceCode as SourceCode,
           imports: [],
           exports: [],
           functions: [],
@@ -153,7 +153,7 @@ describe("Type Registry (Immutable)", () => {
         {
           file_path: "/src/source.ts" as FilePath,
           language: "typescript" as Language,
-          source_code: "" as SourceCode,
+          source_code: "" as SourceCode as SourceCode,
           imports: [],
           exports: [
             {
