@@ -3,6 +3,20 @@
 ## Parent Task
 11.100 - Transform Entire Codebase to Tree-sitter Query System
 
+## Required Subtasks
+
+**CRITICAL**: These subtasks must be completed before implementation begins:
+
+- [ ] **Task 11.100.3.1** - Test Overhaul for this module
+  - Achieve 100% test coverage
+  - Ensure all tests pass before transformation
+  - Validate query-based implementation matches manual implementation
+
+- [ ] **Task 11.100.3.2** - TypeScript Compliance for this module
+  - Achieve zero TypeScript compilation errors
+  - Ensure strict type safety throughout transformation
+  - Maintain IntelliSense support
+
 ## Module Overview
 **Location**: `src/import_export/export_detection/`
 **Files**: 7+ files (~1,500 lines)
@@ -135,6 +149,11 @@ export function extract_exports_with_queries(
 - [ ] TypeScript export types
 
 ### 2. Create Export Queries
+- [ ] **Create language-specific .scm files**:
+  - `queries/export_detection.javascript.scm` - ES6 exports, CommonJS patterns
+  - `queries/export_detection.typescript.scm` - TS export types, interfaces, namespaces
+  - `queries/export_detection.python.scm` - Python __all__, module-level exports
+  - `queries/export_detection.rust.scm` - Rust pub visibility, use re-exports
 - [ ] Cover all export variations
 - [ ] Handle edge cases (export * from)
 - [ ] Capture metadata (async, const, etc.)
@@ -157,7 +176,21 @@ export function extract_exports_with_queries(
 - Handles all CommonJS variations
 
 ## Success Criteria
+
+### Functional Requirements
 - [ ] All export types detected
 - [ ] Re-exports properly tracked
 - [ ] CommonJS/ES6 both work
 - [ ] 90% code reduction
+
+### Quality Gates (MANDATORY)
+
+**All quality gates are defined in the required subtasks:**
+
+- [ ] **100% test coverage achieved** (Task 11.100.X.1)
+- [ ] **All tests passing** (Task 11.100.X.1)  
+- [ ] **Zero TypeScript compilation errors** (Task 11.100.X.2)
+- [ ] **Zero TypeScript warnings** (Task 11.100.X.2)
+- [ ] **Performance improvement validated** (queries faster than manual)
+- [ ] **Real-world accuracy confirmed** (corpus/ validation passes)
+- [ ] **All language-specific .scm files created and tested**

@@ -3,6 +3,20 @@
 ## Parent Task
 11.100 - Transform Entire Codebase to Tree-sitter Query System
 
+## Required Subtasks
+
+**CRITICAL**: These subtasks must be completed before implementation begins:
+
+- [ ] **Task 11.100.6.1** - Test Overhaul for this module
+  - Achieve 100% test coverage
+  - Ensure all tests pass before transformation
+  - Validate query-based implementation matches manual implementation
+
+- [ ] **Task 11.100.6.2** - TypeScript Compliance for this module
+  - Achieve zero TypeScript compilation errors
+  - Ensure strict type safety throughout transformation
+  - Maintain IntelliSense support
+
 ## Module Overview
 **Location**: `src/call_graph/method_calls/`
 **Files**: 6+ files (~1,800 lines)
@@ -137,6 +151,11 @@ export function find_method_calls_with_queries(
 - [ ] Trait methods (Rust)
 
 ### 2. Create Method Queries
+- [ ] **Create language-specific .scm files**:
+  - `queries/method_calls.javascript.scm` - JS method calls, chaining, optional chaining
+  - `queries/method_calls.typescript.scm` - TS typed methods, generics, decorators
+  - `queries/method_calls.python.scm` - Python methods, dunder methods, self/cls
+  - `queries/method_calls.rust.scm` - Rust methods, trait calls, associated functions
 - [ ] Distinguish from function calls
 - [ ] Capture receiver information
 - [ ] Track chaining
@@ -165,7 +184,21 @@ export function find_method_calls_with_queries(
 - Handles all optional chaining
 
 ## Success Criteria
+
+### Functional Requirements
 - [ ] All method calls detected
 - [ ] Receivers properly identified
 - [ ] Chaining tracked correctly
 - [ ] 85%+ code reduction
+
+### Quality Gates (MANDATORY)
+
+**All quality gates are defined in the required subtasks:**
+
+- [ ] **100% test coverage achieved** (Task 11.100.X.1)
+- [ ] **All tests passing** (Task 11.100.X.1)  
+- [ ] **Zero TypeScript compilation errors** (Task 11.100.X.2)
+- [ ] **Zero TypeScript warnings** (Task 11.100.X.2)
+- [ ] **Performance improvement validated** (queries faster than manual)
+- [ ] **Real-world accuracy confirmed** (corpus/ validation passes)
+- [ ] **All language-specific .scm files created and tested**

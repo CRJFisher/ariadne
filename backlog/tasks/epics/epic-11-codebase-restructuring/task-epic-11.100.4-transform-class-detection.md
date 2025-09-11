@@ -3,6 +3,20 @@
 ## Parent Task
 11.100 - Transform Entire Codebase to Tree-sitter Query System
 
+## Required Subtasks
+
+**CRITICAL**: These subtasks must be completed before implementation begins:
+
+- [ ] **Task 11.100.4.1** - Test Overhaul for this module
+  - Achieve 100% test coverage
+  - Ensure all tests pass before transformation
+  - Validate query-based implementation matches manual implementation
+
+- [ ] **Task 11.100.4.2** - TypeScript Compliance for this module
+  - Achieve zero TypeScript compilation errors
+  - Ensure strict type safety throughout transformation
+  - Maintain IntelliSense support
+
 ## Module Overview
 **Location**: `src/inheritance/class_detection/`
 **Files**: 6+ files (~1,000 lines)
@@ -129,6 +143,11 @@ export function find_classes_with_queries(
 - [ ] Static members
 
 ### 2. Create Class Queries
+- [ ] **Create language-specific .scm files**:
+  - `queries/class_detection.javascript.scm` - ES6 classes, prototype patterns
+  - `queries/class_detection.typescript.scm` - TS classes, interfaces, abstract classes
+  - `queries/class_detection.python.scm` - Python classes, metaclasses, dataclasses
+  - `queries/class_detection.rust.scm` - Rust structs, enums, impl blocks, traits
 - [ ] JavaScript ES6 classes
 - [ ] TypeScript classes/interfaces
 - [ ] Python classes with metaclasses
@@ -152,7 +171,21 @@ export function find_classes_with_queries(
 - Handles edge cases (anonymous classes, etc.)
 
 ## Success Criteria
+
+### Functional Requirements
 - [ ] All classes detected
 - [ ] Methods and properties captured
 - [ ] Inheritance tracked
 - [ ] 90% code reduction
+
+### Quality Gates (MANDATORY)
+
+**All quality gates are defined in the required subtasks:**
+
+- [ ] **100% test coverage achieved** (Task 11.100.X.1)
+- [ ] **All tests passing** (Task 11.100.X.1)  
+- [ ] **Zero TypeScript compilation errors** (Task 11.100.X.2)
+- [ ] **Zero TypeScript warnings** (Task 11.100.X.2)
+- [ ] **Performance improvement validated** (queries faster than manual)
+- [ ] **Real-world accuracy confirmed** (corpus/ validation passes)
+- [ ] **All language-specific .scm files created and tested**

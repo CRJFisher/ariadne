@@ -3,6 +3,20 @@
 ## Parent Task
 11.100 - Transform Entire Codebase to Tree-sitter Query System
 
+## Required Subtasks
+
+**CRITICAL**: These subtasks must be completed before implementation begins:
+
+- [ ] **Task 11.100.7.1** - Test Overhaul for this module
+  - Achieve 100% test coverage
+  - Ensure all tests pass before transformation
+  - Validate query-based implementation matches manual implementation
+
+- [ ] **Task 11.100.7.2** - TypeScript Compliance for this module
+  - Achieve zero TypeScript compilation errors
+  - Ensure strict type safety throughout transformation
+  - Maintain IntelliSense support
+
 ## Module Overview
 **Location**: `src/type_analysis/type_tracking/`
 **Files**: 7+ files (~3,000 lines)
@@ -141,6 +155,11 @@ export function track_types_with_queries(
 - [ ] Parameter types
 
 ### 2. Create Type Queries
+- [ ] **Create language-specific .scm files**:
+  - `queries/type_tracking.javascript.scm` - JSDoc types, inferred types, literal types
+  - `queries/type_tracking.typescript.scm` - TS type system, generics, utility types
+  - `queries/type_tracking.python.scm` - Python type hints, typing module, generics
+  - `queries/type_tracking.rust.scm` - Rust type system, lifetimes, trait bounds
 - [ ] TypeScript full type system
 - [ ] Python type hints (PEP 484)
 - [ ] Rust type annotations
@@ -164,7 +183,21 @@ export function track_types_with_queries(
 - Handles complex generic types
 
 ## Success Criteria
+
+### Functional Requirements
 - [ ] All type annotations captured
 - [ ] Generic parameters tracked
 - [ ] Type aliases resolved
 - [ ] 90% code reduction
+
+### Quality Gates (MANDATORY)
+
+**All quality gates are defined in the required subtasks:**
+
+- [ ] **100% test coverage achieved** (Task 11.100.X.1)
+- [ ] **All tests passing** (Task 11.100.X.1)  
+- [ ] **Zero TypeScript compilation errors** (Task 11.100.X.2)
+- [ ] **Zero TypeScript warnings** (Task 11.100.X.2)
+- [ ] **Performance improvement validated** (queries faster than manual)
+- [ ] **Real-world accuracy confirmed** (corpus/ validation passes)
+- [ ] **All language-specific .scm files created and tested**
