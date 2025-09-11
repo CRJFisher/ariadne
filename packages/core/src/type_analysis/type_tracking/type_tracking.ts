@@ -14,15 +14,32 @@
 // TODO: Integration with Import Resolution
 // - Add import type tracking
 
-import { FilePath, Language, Location, SourceCode } from "@ariadnejs/types";
+import { 
+  FilePath, 
+  Language, 
+  Location, 
+  SourceCode,
+  TrackedType,
+  SymbolId,
+  SymbolName,
+  UnifiedType,
+  TypeExpression,
+  TypeFlowSource,
+  Resolution,
+  ResolutionConfidence,
+  toSymbolId,
+  toSymbolName,
+  toTypeExpression
+} from "@ariadnejs/types";
 import { node_to_location } from "../../ast/node_utils";
 
 /**
- * Type information for a variable at a specific position
+ * Legacy type information interface for backward compatibility
+ * @deprecated Use TrackedType instead
  */
 export interface TypeInfo {
-  variable_name?: string; // The variable name (for tracking assignments)
-  type_name: string; // The type name (e.g., "string", "MyClass")
+  variable_name?: string;
+  type_name: string;
   type_kind?:
     | "primitive"
     | "class"
@@ -34,8 +51,8 @@ export interface TypeInfo {
   location: Location;
   confidence?: "explicit" | "inferred" | "assumed" | number;
   source?: "annotation" | "assignment" | "constructor" | "return" | "parameter";
-  is_return_value?: boolean; // Whether this type is from a return statement
-  is_property_assignment?: boolean; // Whether this is a property assignment (this.prop, self.prop)
+  is_return_value?: boolean;
+  is_property_assignment?: boolean;
 }
 
 /**
@@ -63,9 +80,11 @@ export interface TypeTrackingContext {
  * File-level type tracking data
  */
 export interface FileTypeTracker {
-  variable_types: Map<string, TypeInfo[]>; // Variable name -> type history
-  imported_classes: Map<string, ImportedClassInfo>; // Local name -> import info
+  variable_types: Map<SymbolId, TrackedType>; // Symbol ID -> tracked type
+  imported_classes: Map<string, ImportedClassInfo>; // Local name -> import info (legacy)
   exported_definitions: Set<string>; // Names of exported definitions
+  // Legacy compatibility
+  legacy_types?: Map<string, TypeInfo[]>; // Variable name -> type history
 }
 
 /**
@@ -80,22 +99,59 @@ export function create_file_type_tracker(): FileTypeTracker {
 }
 
 /**
- * Set the type of a variable at a specific position
+ * Set the type of a variable using TrackedType
  */
 export function set_variable_type(
   tracker: FileTypeTracker,
   var_name: string,
-  type_info: TypeInfo
+  type_info: TypeInfo | TrackedType
 ): FileTypeTracker {
-  const existing_types = tracker.variable_types.get(var_name) || [];
-
-  // Add new type and sort by position
-  const new_types = [...existing_types, type_info].sort((a, b) => {
-    if (a.location.line !== b.location.line) {
-      return a.location.line - b.location.line;
-    }
-    return a.location.column - b.location.column;
-  });
+  // Convert to TrackedType if needed
+  let tracked: TrackedType;
+  
+  if ('symbol_id' in type_info) {
+    // Already a TrackedType
+    tracked = type_info;
+  } else {
+    // Convert TypeInfo to TrackedType
+    const symbol_id = toSymbolId(`${var_name}_${type_info.location.line}_${type_info.location.column}`);
+    const flow_source: TypeFlowSource = 
+      type_info.source === 'annotation' ? 'declaration' :
+      type_info.source === 'assignment' ? 'assignment' :
+      type_info.source === 'return' ? 'return' :
+      type_info.source === 'parameter' ? 'parameter' :
+      'initialization';
+    
+    tracked = {
+      symbol_id,
+      tracked_type: {
+        status: 'resolved',
+        data: {
+          id: symbol_id,
+          name: toSymbolName(type_info.type_name),
+          kind: type_info.type_kind || 'unknown',
+          location: type_info.location,
+          language: 'javascript',
+          node_type: 'identifier'
+        } as UnifiedType
+      },
+      flow_source,
+      location: type_info.location,
+      language: 'javascript',
+      node_type: 'identifier'
+    };
+  }
+  
+  // Store in new TrackedType map
+  const new_types = new Map(tracker.variable_types);
+  new_types.set(tracked.symbol_id, tracked);
+  
+  // Also maintain legacy types if needed
+  const legacy_types = tracker.legacy_types || new Map();
+  if (type_info && !('symbol_id' in type_info)) {
+    const existing = legacy_types.get(var_name) || [];
+    legacy_types.set(var_name, [...existing, type_info]);
+  }
 
   // Create new tracker with updated types
   const new_variable_types = new Map(tracker.variable_types);
