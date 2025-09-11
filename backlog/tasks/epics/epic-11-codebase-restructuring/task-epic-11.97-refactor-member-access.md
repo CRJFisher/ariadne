@@ -94,3 +94,17 @@ Successfully refactored the member_access module to use configuration-driven pat
 - Special pattern flags (optional chaining, computed access)
 
 The refactoring successfully separated configuration (names/patterns) from logic (algorithms), achieving proper module organization per the refactoring recipe. While the 60% code reduction target was not fully met (actual ~30% reduction), the code is now properly organized, maintainable, and follows the configuration-driven pattern.
+
+### Post-Refactoring Audit (2025-09-11)
+
+Audited module exports and removed unnecessary public APIs:
+1. **Removed from index.ts exports:**
+   - `traverse_for_member_access` - Internal function only used by find_member_access_expressions
+   - All bespoke handlers (`handle_javascript_*`, `handle_python_*`, `handle_rust_*`) - Only used internally
+   
+2. **Kept exports:**
+   - `find_member_access_expressions` - Used by code_graph.ts (top-level)
+   - Configuration functions - Used by type_propagation module
+   - Type definitions - Used externally
+
+This cleanup reduces the public API surface and ensures only necessary functions are exposed.

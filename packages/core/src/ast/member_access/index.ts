@@ -13,32 +13,15 @@ export {
   MemberAccessContext
 } from './types';
 
-// Export main functions from member_access.ts
+// Export main function - used by code_graph.ts
 export {
-  find_member_access_expressions,
-  traverse_for_member_access
+  find_member_access_expressions
 } from './member_access';
 
-// Export configuration functions from language_configs.ts
+// Export configuration functions - used by type_propagation module
 export {
   getMemberAccessConfig,
   isMemberAccessNode,
   getMemberAccessFields,
   shouldSkipNode
 } from './language_configs';
-
-// Export JavaScript/TypeScript bespoke handlers (for testing)
-export {
-  handle_javascript_optional_chaining,
-  handle_javascript_computed_access
-} from './member_access.javascript';
-
-// Export Python bespoke handlers (for testing)
-export {
-  handle_python_getattr
-} from './member_access.python';
-
-// Export Rust bespoke handlers (for testing)
-export {
-  handle_rust_field_expression
-} from './member_access.rust';

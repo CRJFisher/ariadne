@@ -67,7 +67,7 @@ export function find_member_access_expressions(
 /**
  * Traverse AST to find all member access expressions
  */
-export function traverse_for_member_access(
+function traverse_for_member_access(
   node: SyntaxNode,
   language: Language,
   context: MemberAccessContext,
