@@ -125,12 +125,61 @@ The entire scope analysis system is **manually traversing the AST** instead of u
    - Predicates, alternations, anchoring
    - Field matching and captures
 
-### Affected Systems
+### Affected Systems - WIDESPREAD IMPACT
 
-- **All scope analysis**: `scope_tree`, `symbol_resolution`, `definition_finder`
-- **Type analysis**: Relies on accurate scope information
-- **Code graph**: Built on top of scope analysis
-- **Call graph**: Depends on symbol resolution
+#### Direct Dependencies (10 modules outside scope_analysis):
+1. **file_analyzer.ts** - Core file analysis entry point
+2. **call_graph/function_calls** - Function call tracking
+3. **symbol_resolution** (5 files) - All symbol resolution logic  
+4. **usage_finder** - Finding symbol usages
+5. **type_propagation** - Type flow analysis
+6. **utils/scope_path_builder** - Scope path utilities
+
+#### Indirect Dependencies (via file_analyzer):
+- **code_graph.ts** - Main graph builder (calls file_analyzer)
+- **All export modules** - Depend on accurate scopes
+- **All import modules** - Need proper symbol resolution
+- **Method calls** - Require scope context
+- **Constructor calls** - Need class scope info
+- **Inheritance modules** - Depend on class hierarchy in scopes
+
+#### Test Impact:
+- **47+ non-test references** to ScopeTree outside scope_analysis
+- **21 test files** directly import scope_tree functions
+- Hundreds of tests depend on scope analysis accuracy
+
+### Ramification Analysis
+
+**THIS IS NOT ISOLATED** - The scope tree is the foundation of the entire codebase analysis:
+
+1. **Central Bottleneck**: `build_scope_tree()` is called by `file_analyzer.ts`, which is the entry point for ALL file analysis
+
+2. **Cascading Performance Impact**: Since file_analyzer processes every file, the 10-100x performance improvement would affect:
+   - Initial parsing time
+   - Incremental analysis 
+   - Memory usage
+   - Response time for all queries
+
+3. **Accuracy Ripple Effects**: Better scope analysis would improve:
+   - Symbol resolution accuracy
+   - Type inference precision
+   - Call graph completeness
+   - Dead code detection
+   - Refactoring safety
+
+4. **API Stability Required**: The ScopeTree interface is used everywhere, so:
+   - Must maintain backward compatibility
+   - Can't change the data structure
+   - Need adapter layer between queries and current API
+
+## Migration Strategy Recommendation
+
+Given the widespread impact, recommend:
+
+1. **DO NOT attempt big-bang replacement** - Too risky with this many dependencies
+2. **Create parallel implementation** - New query-based system alongside current one
+3. **Gradual migration** - Switch one module at a time with feature flags
+4. **Maintain compatibility layer** - Ensure ScopeTree API remains stable
 
 ## Implementation Plan
 
