@@ -148,38 +148,45 @@ The entire scope analysis system is **manually traversing the AST** instead of u
 - **21 test files** directly import scope_tree functions
 - Hundreds of tests depend on scope analysis accuracy
 
-### Ramification Analysis
+### Ramification Analysis - CORRECTION
 
-**THIS IS NOT ISOLATED** - The scope tree is the foundation of the entire codebase analysis:
+**Actually, this COULD be isolated!** The key insight:
 
-1. **Central Bottleneck**: `build_scope_tree()` is called by `file_analyzer.ts`, which is the entry point for ALL file analysis
+1. **Stable Output Interface**: The ScopeTree structure is well-defined in `@ariadnejs/types`:
+   - Just a tree of nodes with IDs, types, locations, and symbol maps
+   - This structure wouldn't change, only HOW we populate it
 
-2. **Cascading Performance Impact**: Since file_analyzer processes every file, the 10-100x performance improvement would affect:
-   - Initial parsing time
-   - Incremental analysis 
-   - Memory usage
-   - Response time for all queries
+2. **Internal Implementation Change**: We're changing:
+   - FROM: Manual AST traversal with `node.type === 'function_declaration'` checks
+   - TO: Tree-sitter queries like `(function_declaration) @scope`
+   - BUT: Both produce the SAME ScopeTree structure
 
-3. **Accuracy Ripple Effects**: Better scope analysis would improve:
-   - Symbol resolution accuracy
-   - Type inference precision
-   - Call graph completeness
-   - Dead code detection
-   - Refactoring safety
+3. **Why the "10 modules" don't matter**: They depend on the OUTPUT (ScopeTree), not the implementation:
+   - `build_scope_tree()` signature stays the same
+   - Returns the same ScopeTree interface
+   - Consuming modules wouldn't know anything changed
 
-4. **API Stability Required**: The ScopeTree interface is used everywhere, so:
-   - Must maintain backward compatibility
-   - Can't change the data structure
-   - Need adapter layer between queries and current API
+4. **True Isolation Possible**: 
+   - The change is entirely within `scope_analysis/scope_tree/` module
+   - No external API changes needed
+   - No compatibility layer required if we're careful
 
-## Migration Strategy Recommendation
+### Where Complexity Might Arise
 
-Given the widespread impact, recommend:
+1. **Edge Case Differences**: If queries find scopes/symbols the manual traversal missed (or vice versa)
+2. **Symbol Metadata**: Ensuring all the same metadata is captured
+3. **Performance Characteristics**: Different memory/CPU profiles might affect some use cases
+4. **Test Expectations**: Tests might expect specific scope IDs or ordering
 
-1. **DO NOT attempt big-bang replacement** - Too risky with this many dependencies
-2. **Create parallel implementation** - New query-based system alongside current one
-3. **Gradual migration** - Switch one module at a time with feature flags
-4. **Maintain compatibility layer** - Ensure ScopeTree API remains stable
+## Migration Strategy Recommendation - REVISED
+
+Given that this COULD be isolated:
+
+1. **Create drop-in replacement**: Build query-based `build_scope_tree` that returns identical output
+2. **Extensive testing**: Compare outputs between old and new on thousands of files
+3. **Shadow mode**: Run both implementations in parallel, log differences
+4. **Single switch**: Once confident, swap implementation in one atomic change
+5. **No API changes needed**: External modules never know anything changed
 
 ## Implementation Plan
 
