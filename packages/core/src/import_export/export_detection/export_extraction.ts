@@ -9,7 +9,22 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language, ExportInfo, Location } from '@ariadnejs/types';
+import { 
+  Language, 
+  Location,
+  UnifiedExport,
+  NamedExport,
+  DefaultExport,
+  NamespaceExport,
+  ReExport,
+  NamedExportItem,
+  ReExportItem,
+  SymbolName,
+  ModulePath,
+  NamespaceName,
+  toSymbolName,
+  buildModulePath
+} from '@ariadnejs/types';
 
 /**
  * Extract all exports from AST
@@ -21,7 +36,7 @@ export function extract_exports(
   source_code: string,
   language: Language,
   file_path?: string
-): ExportInfo[] {
+): UnifiedExport[] {
   switch (language) {
     case 'javascript':
       return extract_javascript_exports(root_node, source_code);
@@ -46,8 +61,8 @@ export function extract_exports(
 export function extract_javascript_exports(
   root_node: SyntaxNode,
   source_code: string
-): ExportInfo[] {
-  const exports: ExportInfo[] = [];
+): UnifiedExport[] {
+  const exports: UnifiedExport[] = [];
   exports.push(...extract_es6_exports(root_node, source_code));
   exports.push(...extract_commonjs_exports(root_node, source_code));
   return exports;
@@ -59,8 +74,8 @@ export function extract_javascript_exports(
 export function extract_typescript_exports(
   root_node: SyntaxNode,
   source_code: string
-): ExportInfo[] {
-  const exports: ExportInfo[] = [];
+): UnifiedExport[] {
+  const exports: UnifiedExport[] = [];
   const processed_nodes = new Set<SyntaxNode>();
   
   const visit = (node: SyntaxNode) => {
@@ -92,8 +107,8 @@ export function extract_typescript_exports(
 export function extract_python_exports(
   root_node: SyntaxNode,
   source_code: string
-): ExportInfo[] {
-  const exports: ExportInfo[] = [];
+): UnifiedExport[] {
+  const exports: UnifiedExport[] = [];
   
   const visit = (node: SyntaxNode) => {
     // Python __all__ definition
@@ -103,13 +118,17 @@ export function extract_python_exports(
       
       if (left?.text === '__all__' && right) {
         const all_exports = extract_python_all_exports(right, source_code);
-        for (const name of all_exports) {
-          exports.push({
-            name,
-            source: 'local',
+        if (all_exports.length > 0) {
+          const namedExport: NamedExport = {
             kind: 'named',
-            location: node_to_location(node)
-          });
+            exports: all_exports.map(name => ({
+              local_name: toSymbolName(name)
+            })),
+            location: node_to_location(node),
+            language: 'python',
+            node_type: 'assignment'
+          };
+          exports.push(namedExport);
         }
       }
     }
@@ -119,12 +138,16 @@ export function extract_python_exports(
       if (node.type === 'function_definition' || node.type === 'class_definition') {
         const name_node = node.childForFieldName('name');
         if (name_node && !name_node.text.startsWith('_')) {
-          exports.push({
-            name: name_node.text,
-            source: 'local',
+          const namedExport: NamedExport = {
             kind: 'named',
-            location: node_to_location(node)
-          });
+            exports: [{
+              local_name: toSymbolName(name_node.text)
+            }],
+            location: node_to_location(node),
+            language: 'python',
+            node_type: node.type
+          };
+          exports.push(namedExport);
         }
       }
     }
@@ -144,8 +167,8 @@ export function extract_python_exports(
 export function extract_rust_exports(
   root_node: SyntaxNode,
   source_code: string
-): ExportInfo[] {
-  const exports: ExportInfo[] = [];
+): UnifiedExport[] {
+  const exports: UnifiedExport[] = [];
   
   const visit = (node: SyntaxNode) => {
     // Public items with 'pub' visibility
@@ -154,12 +177,16 @@ export function extract_rust_exports(
       if (parent) {
         const name = extract_rust_item_name(parent);
         if (name) {
-          exports.push({
-            name,
-            source: 'local',
+          const namedExport: NamedExport = {
             kind: 'named',
-            location: node_to_location(parent)
-          });
+            exports: [{
+              local_name: toSymbolName(name)
+            }],
+            location: node_to_location(parent),
+            language: 'rust',
+            node_type: parent.type
+          };
+          exports.push(namedExport);
         }
       }
     }
@@ -189,8 +216,8 @@ export function extract_rust_exports(
 function extract_typescript_export(
   export_node: SyntaxNode,
   source_code: string
-): ExportInfo[] {
-  const exports: ExportInfo[] = [];
+): UnifiedExport[] {
+  const exports: UnifiedExport[] = [];
   
   // Check if this is a type-only export at the statement level
   // Pattern: export type { ... } from '...' or export type * from '...'
@@ -220,12 +247,7 @@ function extract_typescript_export(
   if (declaration) {
     // export const/let/var/function/class
     const exported = extract_declaration_exports(declaration, source_code);
-    for (const exp of exported) {
-      exports.push({
-        ...exp,
-        is_type_only: statement_level_type
-      });
-    }
+    exports.push(...exported);
   }
   
   // Check for export clause (named exports)
@@ -259,14 +281,36 @@ function extract_typescript_export(
         actual_alias_node = child.childForFieldName('alias');
         
         if (actual_name_node) {
-          exports.push({
-            name: actual_alias_node?.text || actual_name_node.text,
-            source,
-            alias: actual_alias_node ? actual_name_node.text : undefined,
-            kind: 'named',
-            is_type_only: statement_level_type || inline_type,
-            location: node_to_location(child)
-          });
+          if (source === 'local') {
+            // Local named export
+            const namedExport: NamedExport = {
+              kind: 'named',
+              exports: [{
+                local_name: toSymbolName(actual_name_node.text),
+                export_name: actual_alias_node ? toSymbolName(actual_alias_node.text) : undefined,
+                is_type_only: statement_level_type || inline_type
+              }],
+              location: node_to_location(child),
+              language: 'typescript',
+              node_type: 'export_specifier'
+            };
+            exports.push(namedExport);
+          } else {
+            // Re-export from another module
+            const reExport: ReExport = {
+              kind: 'reexport',
+              source: buildModulePath(source),
+              exports: [{
+                source_name: toSymbolName(actual_name_node.text),
+                export_name: actual_alias_node ? toSymbolName(actual_alias_node.text) : undefined,
+                is_type_only: statement_level_type || inline_type
+              }],
+              location: node_to_location(child),
+              language: 'typescript',
+              node_type: 'export_specifier'
+            };
+            exports.push(reExport);
+          }
         }
       }
     }
@@ -280,13 +324,14 @@ function extract_typescript_export(
   if (has_star) {
     const source_node = export_node.childForFieldName('source');
     if (source_node) {
-      exports.push({
-        name: '*',
-        source: extract_string_literal(source_node, source_code),
+      const namespaceExport: NamespaceExport = {
         kind: 'namespace',
-        is_type_only: statement_level_type,
-        location: node_to_location(export_node)
-      });
+        source: buildModulePath(extract_string_literal(source_node, source_code)),
+        location: node_to_location(export_node),
+        language: 'typescript',
+        node_type: 'export_statement'
+      };
+      exports.push(namespaceExport);
     }
   }
   
@@ -298,8 +343,8 @@ function extract_typescript_export(
 export function extract_es6_exports(
   root_node: SyntaxNode,
   source_code: string
-): ExportInfo[] {
-  const exports: ExportInfo[] = [];
+): UnifiedExport[] {
+  const exports: UnifiedExport[] = [];
   
   const visit = (node: SyntaxNode) => {
     if (node.type === 'export_statement') {
@@ -320,13 +365,16 @@ export function extract_es6_exports(
           }
         }
         
-        exports.push({
-          name,
-          source: 'local',
+        const defaultExport: DefaultExport = {
           kind: 'default',
-          is_default: true,
-          location: node_to_location(node)
-        });
+          symbol: name !== 'default' ? toSymbolName(name) : undefined,
+          is_declaration: value_node?.type === 'function_declaration' || 
+                          value_node?.type === 'class_declaration',
+          location: node_to_location(node),
+          language: 'javascript',
+          node_type: 'export_statement'
+        };
+        exports.push(defaultExport);
       }
       
       // Check for named exports
@@ -348,13 +396,34 @@ export function extract_es6_exports(
             const alias = child.childForFieldName('alias');
             
             if (name) {
-              exports.push({
-                name: alias?.text || name.text,
-                source,
-                alias: alias ? name.text : undefined,
-                kind: 'named',
-                location: node_to_location(child)
-              });
+              if (source === 'local') {
+                // Local named export
+                const namedExport: NamedExport = {
+                  kind: 'named',
+                  exports: [{
+                    local_name: toSymbolName(name.text),
+                    export_name: alias ? toSymbolName(alias.text) : undefined
+                  }],
+                  location: node_to_location(child),
+                  language: 'javascript',
+                  node_type: 'export_specifier'
+                };
+                exports.push(namedExport);
+              } else {
+                // Re-export from another module
+                const reExport: ReExport = {
+                  kind: 'reexport',
+                  source: buildModulePath(source),
+                  exports: [{
+                    source_name: toSymbolName(name.text),
+                    export_name: alias ? toSymbolName(alias.text) : undefined
+                  }],
+                  location: node_to_location(child),
+                  language: 'javascript',
+                  node_type: 'export_specifier'
+                };
+                exports.push(reExport);
+              }
             }
           }
         }
@@ -364,12 +433,14 @@ export function extract_es6_exports(
       if (node.children.some(c => c.type === '*')) {
         const source_node = node.childForFieldName('source');
         if (source_node) {
-          exports.push({
-            name: '*',
-            source: extract_string_literal(source_node, source_code),
+          const namespaceExport: NamespaceExport = {
             kind: 'namespace',
-            location: node_to_location(node)
-          });
+            source: buildModulePath(extract_string_literal(source_node, source_code)),
+            location: node_to_location(node),
+            language: 'javascript',
+            node_type: 'export_statement'
+          };
+          exports.push(namespaceExport);
         }
       }
     }
@@ -386,8 +457,8 @@ export function extract_es6_exports(
 export function extract_commonjs_exports(
   root_node: SyntaxNode,
   source_code: string
-): ExportInfo[] {
-  const exports: ExportInfo[] = [];
+): UnifiedExport[] {
+  const exports: UnifiedExport[] = [];
   
   const visit = (node: SyntaxNode) => {
     // module.exports = ...
@@ -402,17 +473,14 @@ export function extract_commonjs_exports(
           exports.push(...obj_exports);
         } else {
           // module.exports = something
-          let name = 'default';
-          if (right.type === 'identifier') {
-            name = right.text;
-          }
-          exports.push({
-            name,
-            source: 'local',
+          const defaultExport: DefaultExport = {
             kind: 'default',
-            is_default: true,
-            location: node_to_location(node)
-          });
+            symbol: right.type === 'identifier' ? toSymbolName(right.text) : undefined,
+            location: node_to_location(node),
+            language: 'javascript',
+            node_type: 'assignment_expression'
+          };
+          exports.push(defaultExport);
         }
       }
       
@@ -422,12 +490,16 @@ export function extract_commonjs_exports(
         const property = left.childForFieldName('property');
         
         if (object?.text === 'exports' && property) {
-          exports.push({
-            name: property.text,
-            source: 'local',
+          const namedExport: NamedExport = {
             kind: 'named',
-            location: node_to_location(node)
-          });
+            exports: [{
+              local_name: toSymbolName(property.text)
+            }],
+            location: node_to_location(node),
+            language: 'javascript',
+            node_type: 'assignment_expression'
+          };
+          exports.push(namedExport);
         }
       }
     }
@@ -446,8 +518,8 @@ export function extract_commonjs_exports(
 function extract_declaration_exports(
   declaration: SyntaxNode,
   source_code: string
-): ExportInfo[] {
-  const exports: ExportInfo[] = [];
+): UnifiedExport[] {
+  const exports: UnifiedExport[] = [];
   
   if (declaration.type === 'variable_declaration' || 
       declaration.type === 'lexical_declaration') {
@@ -457,22 +529,30 @@ function extract_declaration_exports(
         const name = child.childForFieldName('name');
         if (name) {
           if (name.type === 'identifier') {
-            exports.push({
-              name: name.text,
-              source: 'local',
+            const namedExport: NamedExport = {
               kind: 'named',
-              location: node_to_location(name)
-            });
+              exports: [{
+                local_name: toSymbolName(name.text)
+              }],
+              location: node_to_location(name),
+              language: 'javascript',
+              node_type: declaration.type
+            };
+            exports.push(namedExport);
           } else if (name.type === 'object_pattern' || name.type === 'array_pattern') {
             // Destructuring
             const names = extract_destructured_names(name, source_code);
-            for (const n of names) {
-              exports.push({
-                name: n,
-                source: 'local',
+            if (names.length > 0) {
+              const namedExport: NamedExport = {
                 kind: 'named',
-                location: node_to_location(name)
-              });
+                exports: names.map(n => ({
+                  local_name: toSymbolName(n)
+                })),
+                location: node_to_location(name),
+                language: 'javascript',
+                node_type: declaration.type
+              };
+              exports.push(namedExport);
             }
           }
         }
@@ -482,12 +562,16 @@ function extract_declaration_exports(
              declaration.type === 'class_declaration') {
     const name = declaration.childForFieldName('name');
     if (name) {
-      exports.push({
-        name: name.text,
-        source: 'local',
+      const namedExport: NamedExport = {
         kind: 'named',
-        location: node_to_location(declaration)
-      });
+        exports: [{
+          local_name: toSymbolName(name.text)
+        }],
+        location: node_to_location(declaration),
+        language: 'javascript',
+        node_type: declaration.type
+      };
+      exports.push(namedExport);
     }
   }
   
@@ -497,28 +581,34 @@ function extract_declaration_exports(
 function extract_object_exports(
   object_node: SyntaxNode,
   source_code: string
-): ExportInfo[] {
-  const exports: ExportInfo[] = [];
+): UnifiedExport[] {
+  const exports: UnifiedExport[] = [];
+  const namedExports: NamedExportItem[] = [];
   
   for (const child of object_node.children) {
     if (child.type === 'pair') {
       const key = child.childForFieldName('key');
       if (key) {
-        exports.push({
-          name: key.text.replace(/['"]/g, ''),
-          source: 'local',
-          kind: 'named',
-          location: node_to_location(child)
+        namedExports.push({
+          local_name: toSymbolName(key.text.replace(/['"]/g, ''))
         });
       }
     } else if (child.type === 'shorthand_property_identifier') {
-      exports.push({
-        name: child.text,
-        source: 'local',
-        kind: 'named',
-        location: node_to_location(child)
+      namedExports.push({
+        local_name: toSymbolName(child.text)
       });
     }
+  }
+  
+  if (namedExports.length > 0) {
+    const namedExport: NamedExport = {
+      kind: 'named',
+      exports: namedExports,
+      location: node_to_location(object_node),
+      language: 'javascript',
+      node_type: 'object'
+    };
+    exports.push(namedExport);
   }
   
   return exports;
@@ -567,8 +657,10 @@ function extract_rust_item_name(item_node: SyntaxNode): string | null {
 function extract_rust_use_exports(
   use_node: SyntaxNode,
   source_code: string
-): ExportInfo[] {
-  const exports: ExportInfo[] = [];
+): UnifiedExport[] {
+  const exports: UnifiedExport[] = [];
+  const reExportItems: ReExportItem[] = [];
+  let modulePath: string | null = null;
   
   // Find the main identifier or use_list
   let use_target: SyntaxNode | null = null;
@@ -597,22 +689,18 @@ function extract_rust_use_exports(
       }
       
       if (lastIdentifier) {
-        exports.push({
-          name: lastIdentifier.text,
-          source: node.text,
-          kind: 'named',
-          is_reexport: true,
-          location: node_to_location(node)
+        modulePath = modulePath || node.text;
+        reExportItems.push({
+          source_name: toSymbolName(lastIdentifier.text),
+          export_name: toSymbolName(lastIdentifier.text)
         });
       }
     } else if (node.type === 'identifier') {
       // Simple identifier
-      exports.push({
-        name: node.text,
-        source: 'local',
-        kind: 'named',
-        is_reexport: true,
-        location: node_to_location(node)
+      modulePath = modulePath || node.text;
+      reExportItems.push({
+        source_name: toSymbolName(node.text),
+        export_name: toSymbolName(node.text)
       });
     } else if (node.type === 'use_list') {
       // Multiple imports: use module::{Item1, Item2}
@@ -623,29 +711,43 @@ function extract_rust_use_exports(
       }
     } else if (node.type === 'use_as_clause') {
       // Aliased import: use module::Item as Alias
+      const name = node.childForFieldName('name');
       const alias = node.childForFieldName('alias');
-      if (alias) {
-        exports.push({
-          name: alias.text,
-          source: node.text,
-          kind: 'named',
-          is_reexport: true,
-          location: node_to_location(node)
+      if (name && alias) {
+        modulePath = modulePath || node.text;
+        reExportItems.push({
+          source_name: toSymbolName(name.text),
+          export_name: toSymbolName(alias.text)
         });
       }
     } else if (node.type === 'use_wildcard') {
       // Wildcard import: use module::*
-      exports.push({
-        name: '*',
-        source: node.parent?.text || '',
+      const namespaceExport: NamespaceExport = {
         kind: 'namespace',
-        is_reexport: true,
-        location: node_to_location(node)
-      });
+        source: buildModulePath(node.parent?.text || ''),
+        location: node_to_location(node),
+        language: 'rust',
+        node_type: 'use_wildcard'
+      };
+      exports.push(namespaceExport);
     }
   };
   
   extract_from_node(use_target);
+  
+  // Create ReExport for collected items
+  if (reExportItems.length > 0 && modulePath) {
+    const reExport: ReExport = {
+      kind: 'reexport',
+      source: buildModulePath(modulePath),
+      exports: reExportItems,
+      location: node_to_location(use_node),
+      language: 'rust',
+      node_type: 'use_declaration'
+    };
+    exports.push(reExport);
+  }
+  
   return exports;
 }
 
