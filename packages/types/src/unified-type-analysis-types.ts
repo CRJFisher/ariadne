@@ -1,0 +1,335 @@
+/**
+ * Unified type analysis types that streamline type tracking,
+ * inference, and propagation across all type analysis modules
+ */
+
+import { Location, Language } from "./common";
+import { FilePath } from "./aliases";
+import { 
+  SymbolName, 
+  SymbolId,
+  TypeExpression,
+  ResolvedTypeKind
+} from "./branded-types";
+import { SemanticNode, Resolution, ResolutionConfidence } from "./base-query-types";
+
+// ============================================================================
+// Unified Type Definition
+// ============================================================================
+
+/**
+ * Unified type definition that replaces TypeDefinition, TypeInfo, etc.
+ * Extends SemanticNode for consistency with other unified types
+ */
+export interface UnifiedType extends SemanticNode {
+  readonly id: SymbolId;
+  readonly name: SymbolName;
+  readonly kind: ResolvedTypeKind;        // From branded types
+  readonly type_expression?: TypeExpression;  // Full type expression
+  
+  // Type parameters and constraints
+  readonly type_parameters?: readonly TypeParameter[];
+  readonly constraints?: readonly TypeConstraint[];
+  
+  // Inheritance and composition
+  readonly extends?: readonly SymbolId[];     // Base types
+  readonly implements?: readonly SymbolId[];  // Interfaces
+  readonly mixins?: readonly SymbolId[];      // Mixins/traits
+  
+  // Members (unified for all type kinds)
+  readonly members?: ReadonlyMap<SymbolName, TypeMember>;
+  
+  // Type metadata
+  readonly is_generic?: boolean;
+  readonly is_abstract?: boolean;
+  readonly is_final?: boolean;
+  readonly is_nullable?: boolean;
+  readonly is_optional?: boolean;
+}
+
+/**
+ * Type parameter with variance
+ */
+export interface TypeParameter {
+  readonly name: string;
+  readonly constraint?: TypeExpression;
+  readonly default?: TypeExpression;
+  readonly variance?: "covariant" | "contravariant" | "invariant";
+}
+
+/**
+ * Type constraint
+ */
+export interface TypeConstraint {
+  readonly kind: "extends" | "super" | "equals";
+  readonly type: TypeExpression;
+}
+
+/**
+ * Unified type member (property, method, etc.)
+ */
+export interface TypeMember extends SemanticNode {
+  readonly name: SymbolName;
+  readonly member_kind: "property" | "method" | "getter" | "setter" | "constructor";
+  readonly type?: TypeExpression;
+  readonly is_optional?: boolean;
+  readonly is_readonly?: boolean;
+  readonly is_static?: boolean;
+  readonly is_abstract?: boolean;
+  readonly accessibility?: "public" | "private" | "protected";
+}
+
+// ============================================================================
+// Type Tracking and Flow
+// ============================================================================
+
+/**
+ * Tracked type information at a specific location
+ * Replaces VariableType and similar types
+ */
+export interface TrackedType extends SemanticNode {
+  readonly symbol_id: SymbolId;
+  readonly tracked_type: Resolution<UnifiedType>;
+  readonly flow_source: TypeFlowSource;
+  readonly narrowed_from?: SymbolId;     // Original type before narrowing
+}
+
+/**
+ * Source of type information
+ */
+export type TypeFlowSource = 
+  | "declaration"      // Explicit type annotation
+  | "initialization"   // Inferred from initializer
+  | "assignment"       // Inferred from assignment
+  | "return"          // Inferred from return type
+  | "parameter"       // Function parameter type
+  | "property"        // Object property type
+  | "element"         // Array/tuple element
+  | "cast"           // Type assertion/cast
+  | "guard"          // Type guard narrowing
+  | "inference";     // Generic type inference
+
+/**
+ * Type flow through the program
+ */
+export interface TypeFlow {
+  readonly from: TrackedType;
+  readonly to: TrackedType;
+  readonly flow_kind: TypeFlowKind;
+  readonly confidence: ResolutionConfidence;
+}
+
+export type TypeFlowKind =
+  | "assignment"      // Variable assignment
+  | "parameter"       // Function parameter passing
+  | "return"         // Function return
+  | "property"       // Property access
+  | "narrowing"      // Type narrowing
+  | "widening"       // Type widening
+  | "instantiation"  // Generic instantiation
+  | "propagation";   // Type propagation
+
+// ============================================================================
+// Type Inference and Resolution
+// ============================================================================
+
+/**
+ * Inferred type information
+ */
+export interface InferredType {
+  readonly symbol_id: SymbolId;
+  readonly inferred: UnifiedType;
+  readonly inference_source: InferenceSource;
+  readonly confidence: ResolutionConfidence;
+  readonly alternatives?: readonly UnifiedType[];  // Other possible types
+}
+
+/**
+ * Source of type inference
+ */
+export type InferenceSource =
+  | "usage_pattern"      // Inferred from how it's used
+  | "context"           // Contextual typing
+  | "control_flow"      // Control flow analysis
+  | "generic_constraint" // Generic type constraint
+  | "return_flow"       // Return type flow
+  | "parameter_flow"    // Parameter type flow
+  | "literal"          // Literal type
+  | "structural";      // Structural typing
+
+/**
+ * Type resolution result
+ */
+export interface ResolvedType {
+  readonly requested: TypeExpression;
+  readonly resolved: Resolution<UnifiedType>;
+  readonly substitutions?: ReadonlyMap<string, UnifiedType>;  // Generic substitutions
+}
+
+// ============================================================================
+// Type Relationships
+// ============================================================================
+
+/**
+ * Relationship between types
+ */
+export interface TypeRelation {
+  readonly from_type: SymbolId;
+  readonly to_type: SymbolId;
+  readonly relation: TypeRelationKind;
+  readonly location?: Location;
+}
+
+export type TypeRelationKind =
+  | "extends"          // Inheritance
+  | "implements"       // Interface implementation
+  | "satisfies"        // Type satisfaction
+  | "assignable_to"    // Assignment compatibility
+  | "convertible_to"   // Type conversion
+  | "subtype_of"       // Subtyping
+  | "instance_of"      // Instance relationship
+  | "generic_argument"; // Generic type argument
+
+// ============================================================================
+// Type Guards
+// ============================================================================
+
+export function isUnifiedType(value: unknown): value is UnifiedType {
+  if (typeof value !== "object" || value === null) return false;
+  const type = value as any;
+  return (
+    "id" in type &&
+    "name" in type &&
+    "kind" in type &&
+    "location" in type &&
+    "language" in type
+  );
+}
+
+export function isTypeMember(value: unknown): value is TypeMember {
+  if (typeof value !== "object" || value === null) return false;
+  const member = value as any;
+  return (
+    "name" in member &&
+    "member_kind" in member &&
+    "location" in member
+  );
+}
+
+export function isTrackedType(value: unknown): value is TrackedType {
+  if (typeof value !== "object" || value === null) return false;
+  const tracked = value as any;
+  return (
+    "symbol_id" in tracked &&
+    "tracked_type" in tracked &&
+    "flow_source" in tracked
+  );
+}
+
+export function isInferredType(value: unknown): value is InferredType {
+  if (typeof value !== "object" || value === null) return false;
+  const inferred = value as any;
+  return (
+    "symbol_id" in inferred &&
+    "inferred" in inferred &&
+    "inference_source" in inferred &&
+    "confidence" in inferred
+  );
+}
+
+// ============================================================================
+// Utility Functions
+// ============================================================================
+
+/**
+ * Check if a type is primitive
+ */
+export function isPrimitiveType(type: UnifiedType): boolean {
+  return type.kind === "primitive";
+}
+
+/**
+ * Check if a type is generic
+ */
+export function isGenericType(type: UnifiedType): boolean {
+  return type.is_generic === true || (type.type_parameters?.length ?? 0) > 0;
+}
+
+/**
+ * Check if a type is nullable
+ */
+export function isNullableType(type: UnifiedType): boolean {
+  return type.is_nullable === true || type.is_optional === true;
+}
+
+/**
+ * Get all base types (extends + implements)
+ */
+export function getBaseTypes(type: UnifiedType): SymbolId[] {
+  return [
+    ...(type.extends || []),
+    ...(type.implements || [])
+  ];
+}
+
+/**
+ * Create a simple type
+ */
+export function createUnifiedType(
+  id: SymbolId,
+  name: SymbolName,
+  kind: ResolvedTypeKind,
+  location: Location,
+  language: Language,
+  options?: Partial<UnifiedType>
+): UnifiedType {
+  return {
+    id,
+    name,
+    kind,
+    location,
+    language,
+    node_type: getNodeTypeForTypeKind(kind),
+    ...options
+  };
+}
+
+/**
+ * Get tree-sitter node type for type kind
+ */
+function getNodeTypeForTypeKind(kind: ResolvedTypeKind): string {
+  switch (kind) {
+    case "class": return "class_declaration";
+    case "interface": return "interface_declaration";
+    case "type": return "type_alias";
+    case "enum": return "enum_declaration";
+    case "trait": return "trait_declaration";
+    case "primitive": return "primitive_type";
+    case "unknown": return "unknown_type";
+  }
+}
+
+/**
+ * Create tracked type information
+ */
+export function createTrackedType(
+  symbol_id: SymbolId,
+  type: UnifiedType,
+  source: TypeFlowSource,
+  location: Location,
+  language: Language,
+  confidence: ResolutionConfidence = "high"
+): TrackedType {
+  return {
+    symbol_id,
+    tracked_type: {
+      resolved: type,
+      confidence,
+      reason: "direct_match"
+    },
+    flow_source: source,
+    location,
+    language,
+    node_type: "type_annotation"
+  };
+}

@@ -1,0 +1,364 @@
+/**
+ * Unified inheritance types that simplify class detection and hierarchy
+ * with unified handling of interfaces, traits, and mixins
+ */
+
+import { Location, Language } from "./common";
+import { FilePath } from "./aliases";
+import { 
+  SymbolName, 
+  SymbolId,
+  Visibility
+} from "./branded-types";
+import { SemanticNode, Resolution } from "./base-query-types";
+import { UnifiedType, TypeMember } from "./unified-type-analysis-types";
+
+// ============================================================================
+// Unified Class/Interface/Trait Types
+// ============================================================================
+
+/**
+ * Unified type entity that represents classes, interfaces, traits, mixins
+ * Replaces ClassNode, InterfaceDefinition, TraitDefinition
+ */
+export interface UnifiedTypeEntity extends SemanticNode {
+  readonly id: SymbolId;
+  readonly name: SymbolName;
+  readonly entity_kind: TypeEntityKind;
+  
+  // Inheritance relationships (unified)
+  readonly extends?: readonly SymbolId[];      // Base classes/interfaces
+  readonly implements?: readonly SymbolId[];   // Implemented interfaces
+  readonly uses?: readonly SymbolId[];         // Traits/mixins
+  
+  // Members
+  readonly members: ReadonlyMap<SymbolName, UnifiedMember>;
+  
+  // Type characteristics
+  readonly modifiers?: readonly TypeModifier[];
+  readonly type_parameters?: readonly string[];  // Generic parameters
+  
+  // Computed hierarchy information
+  readonly ancestors?: readonly SymbolId[];     // All ancestors in order
+  readonly descendants?: readonly SymbolId[];   // All descendants
+  readonly mro?: readonly SymbolId[];          // Method resolution order
+}
+
+/**
+ * Kind of type entity
+ */
+export type TypeEntityKind = 
+  | "class"          // Regular class
+  | "abstract_class" // Abstract class
+  | "interface"      // Interface/protocol
+  | "trait"         // Trait (Rust/PHP)
+  | "mixin"         // Mixin (Python/Ruby)
+  | "struct"        // Struct (Rust/C)
+  | "enum";         // Enum class
+
+/**
+ * Type modifiers
+ */
+export type TypeModifier = 
+  | "abstract"
+  | "final"
+  | "sealed"
+  | "static"
+  | "partial"      // C# partial classes
+  | "data"         // Kotlin data classes
+  | "value";       // Value types
+
+/**
+ * Unified member (method, property, etc.)
+ * Replaces MethodNode, PropertyNode
+ */
+export interface UnifiedMember extends SemanticNode {
+  readonly id: SymbolId;
+  readonly name: SymbolName;
+  readonly member_type: MemberType;
+  readonly visibility?: Visibility;
+  readonly modifiers?: readonly MemberModifier[];
+  
+  // Type information
+  readonly type?: UnifiedType;
+  readonly signature?: MemberSignature;
+  
+  // Override information
+  readonly overrides?: SymbolId;           // Member being overridden
+  readonly overridden_by?: readonly SymbolId[];  // Members that override this
+  readonly implements?: SymbolId;          // Interface member being implemented
+}
+
+export type MemberType = 
+  | "field"          // Instance field/property
+  | "method"         // Instance method
+  | "constructor"    // Constructor
+  | "destructor"     // Destructor
+  | "getter"         // Property getter
+  | "setter"         // Property setter
+  | "static_field"   // Static field
+  | "static_method"; // Static method
+
+export type MemberModifier = 
+  | "abstract"
+  | "override"
+  | "virtual"
+  | "final"
+  | "static"
+  | "readonly"
+  | "async"
+  | "const";
+
+/**
+ * Member signature for methods
+ */
+export interface MemberSignature {
+  readonly parameters?: readonly Parameter[];
+  readonly return_type?: UnifiedType;
+  readonly type_parameters?: readonly string[];
+  readonly throws?: readonly UnifiedType[];  // Exceptions
+}
+
+export interface Parameter {
+  readonly name: SymbolName;
+  readonly type?: UnifiedType;
+  readonly is_optional?: boolean;
+  readonly is_rest?: boolean;
+  readonly default_value?: string;
+}
+
+// ============================================================================
+// Inheritance Relationships
+// ============================================================================
+
+/**
+ * Unified inheritance relationship
+ * Replaces InheritanceEdge
+ */
+export interface InheritanceRelation {
+  readonly from: SymbolId;             // Child type
+  readonly to: SymbolId;               // Parent type
+  readonly relation_type: InheritanceType;
+  readonly location: Location;         // Where declared
+  readonly is_direct: boolean;         // Direct vs transitive
+}
+
+export type InheritanceType = 
+  | "extends"        // Class inheritance
+  | "implements"     // Interface implementation
+  | "uses"          // Trait/mixin usage
+  | "conforms"      // Protocol conformance
+  | "derives";      // Rust derive
+
+/**
+ * Complete inheritance hierarchy
+ */
+export interface InheritanceHierarchy {
+  readonly entities: ReadonlyMap<SymbolId, UnifiedTypeEntity>;
+  readonly relations: readonly InheritanceRelation[];
+  readonly roots: ReadonlySet<SymbolId>;     // Types with no parents
+  readonly leaves: ReadonlySet<SymbolId>;    // Types with no children
+  
+  // Computed analysis
+  readonly cycles?: readonly SymbolId[][];   // Circular inheritance
+  readonly depth_map?: ReadonlyMap<SymbolId, number>;  // Inheritance depth
+  readonly diamond_problems?: readonly DiamondProblem[];
+}
+
+/**
+ * Diamond inheritance problem detection
+ */
+export interface DiamondProblem {
+  readonly base: SymbolId;             // Common ancestor
+  readonly paths: readonly SymbolId[][]; // Multiple inheritance paths
+  readonly conflicting_members?: readonly SymbolName[];
+}
+
+// ============================================================================
+// Method Override Analysis
+// ============================================================================
+
+/**
+ * Method override chain
+ */
+export interface OverrideChain {
+  readonly method_name: SymbolName;
+  readonly chain: readonly OverrideStep[];
+  readonly has_conflict?: boolean;
+}
+
+export interface OverrideStep {
+  readonly type_id: SymbolId;
+  readonly member_id: SymbolId;
+  readonly implementation: "abstract" | "concrete" | "default";
+}
+
+// ============================================================================
+// Type Guards
+// ============================================================================
+
+export function isUnifiedTypeEntity(value: unknown): value is UnifiedTypeEntity {
+  if (typeof value !== "object" || value === null) return false;
+  const entity = value as any;
+  return (
+    "id" in entity &&
+    "name" in entity &&
+    "entity_kind" in entity &&
+    "members" in entity &&
+    entity.members instanceof Map
+  );
+}
+
+export function isUnifiedMember(value: unknown): value is UnifiedMember {
+  if (typeof value !== "object" || value === null) return false;
+  const member = value as any;
+  return (
+    "id" in member &&
+    "name" in member &&
+    "member_type" in member &&
+    "location" in member
+  );
+}
+
+export function isInheritanceRelation(value: unknown): value is InheritanceRelation {
+  if (typeof value !== "object" || value === null) return false;
+  const relation = value as any;
+  return (
+    "from" in relation &&
+    "to" in relation &&
+    "relation_type" in relation &&
+    "is_direct" in relation
+  );
+}
+
+// ============================================================================
+// Utility Functions
+// ============================================================================
+
+/**
+ * Check if entity is abstract
+ */
+export function isAbstract(entity: UnifiedTypeEntity): boolean {
+  return entity.entity_kind === "abstract_class" ||
+         entity.entity_kind === "interface" ||
+         entity.entity_kind === "trait" ||
+         entity.modifiers?.includes("abstract") === true;
+}
+
+/**
+ * Check if entity can be instantiated
+ */
+export function isInstantiable(entity: UnifiedTypeEntity): boolean {
+  return !isAbstract(entity) && 
+         entity.entity_kind !== "interface" &&
+         entity.entity_kind !== "trait";
+}
+
+/**
+ * Check if member is overridable
+ */
+export function isOverridable(member: UnifiedMember): boolean {
+  return !member.modifiers?.includes("final") &&
+         !member.modifiers?.includes("static") &&
+         (member.modifiers?.includes("virtual") || 
+          member.modifiers?.includes("abstract") ||
+          member.visibility !== "private");
+}
+
+/**
+ * Get all base types (extends + implements + uses)
+ */
+export function getAllBaseTypes(entity: UnifiedTypeEntity): SymbolId[] {
+  return [
+    ...(entity.extends || []),
+    ...(entity.implements || []),
+    ...(entity.uses || [])
+  ];
+}
+
+/**
+ * Create a class entity
+ */
+export function createClassEntity(
+  id: SymbolId,
+  name: SymbolName,
+  location: Location,
+  language: Language,
+  options?: Partial<UnifiedTypeEntity>
+): UnifiedTypeEntity {
+  return {
+    id,
+    name,
+    entity_kind: "class",
+    members: new Map(),
+    location,
+    language,
+    node_type: "class_declaration",
+    ...options
+  };
+}
+
+/**
+ * Create an interface entity
+ */
+export function createInterfaceEntity(
+  id: SymbolId,
+  name: SymbolName,
+  location: Location,
+  language: Language,
+  options?: Partial<UnifiedTypeEntity>
+): UnifiedTypeEntity {
+  return {
+    id,
+    name,
+    entity_kind: "interface",
+    members: new Map(),
+    location,
+    language,
+    node_type: "interface_declaration",
+    ...options
+  };
+}
+
+/**
+ * Check for diamond inheritance
+ */
+export function findDiamondProblems(
+  hierarchy: InheritanceHierarchy
+): DiamondProblem[] {
+  const problems: DiamondProblem[] = [];
+  
+  // For each entity, find if it has multiple paths to any ancestor
+  for (const [entityId, entity] of hierarchy.entities) {
+    const pathsToAncestors = new Map<SymbolId, SymbolId[][]>();
+    
+    // Track all paths to each ancestor
+    const visited = new Set<SymbolId>();
+    const findPaths = (current: SymbolId, path: SymbolId[]) => {
+      if (visited.has(current)) return;
+      visited.add(current);
+      
+      const bases = getAllBaseTypes(hierarchy.entities.get(current)!);
+      for (const base of bases) {
+        const newPath = [...path, base];
+        const existing = pathsToAncestors.get(base) || [];
+        pathsToAncestors.set(base, [...existing, newPath]);
+        findPaths(base, newPath);
+      }
+    };
+    
+    findPaths(entityId, [entityId]);
+    
+    // Check for multiple paths
+    for (const [ancestor, paths] of pathsToAncestors) {
+      if (paths.length > 1) {
+        problems.push({
+          base: ancestor,
+          paths
+        });
+      }
+    }
+  }
+  
+  return problems;
+}

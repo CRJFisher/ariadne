@@ -76,8 +76,10 @@ export interface CallGraphOptions {
 // Raw Call Detection Types
 // ============================================================================
 
-// TODO: cread a parent CallInfo interface
-// TODO: add call arguments
+// DEPRECATED: Use UnifiedCallInfo from './unified-call-types' instead
+// These types are kept for backward compatibility but should be migrated
+// to the new unified types that provide better type safety and less duplication.
+// TODO: Migrate all usages to UnifiedCallInfo and remove these types
 
 export interface FunctionCallInfo {
   readonly caller_name: CallerContext; // Use MODULE_CONTEXT for module-level calls
