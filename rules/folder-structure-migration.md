@@ -1,133 +1,189 @@
-# Folder Structure Migration Rules
+# Folder Structure Rules
 
 ## Overview
 
-This document defines the standard folder structure for refactored modules following the configuration-driven pattern.
+This document defines the standard folder structure for modules that leverage tree-sitter queries.
 
 ## Standard Module Structure
 
-Every refactored module must follow this exact structure:
+Every module follows this exact structure:
 
 ```
 module_name/
-├── index.ts                    # ONLY exports - no implementation. Should not re-export any types or functions.
-├── module_name.ts              # Generic processor with main logic
-├── language_configs.ts        # Configuration objects for all languages
-├── module_name.javascript.ts  # JavaScript-specific bespoke features
-├── module_name.typescript.ts  # TypeScript-specific bespoke features
-├── module_name.python.ts      # Python-specific bespoke features
-├── module_name.rust.ts        # Rust-specific bespoke features
-├── module_name.test.ts        # Tests for main API + generic processor
-├── language_configs.test.ts   # Tests for configurations
-├── module_name.javascript.test.ts  # JavaScript bespoke tests
-├── module_name.typescript.test.ts  # TypeScript bespoke tests
-├── module_name.python.test.ts      # Python bespoke tests
-└── module_name.rust.test.ts        # Rust bespoke tests
+├── index.ts                    # Main export aggregating functionality
+├── module_name.ts              # Core logic integrating queries
+├── queries/                    # Tree-sitter query patterns
+│   ├── javascript.scm         # JavaScript-specific queries
+│   ├── typescript.scm         # TypeScript-specific queries
+│   ├── python.scm             # Python-specific queries
+│   └── rust.scm               # Rust-specific queries
+├── module_name.test.ts        # Tests for main functionality
+└── fixtures/                   # Test fixtures (if needed)
+    ├── javascript/
+    ├── typescript/
+    ├── python/
+    └── rust/
 ```
-
-## Critical Naming Rules
-
-### ✅ CORRECT Naming
-
-- `module_name.javascript.ts` - JavaScript bespoke features
-- `module_name.typescript.ts` - TypeScript bespoke features
-- `module_name.python.ts` - Python bespoke features
-- `module_name.rust.ts` - Rust bespoke features
-
-### ❌ INCORRECT Naming (DO NOT USE)
-
-- `module_name.javascript.bespoke.ts` - NO `.bespoke` suffix
-- `module_name.generic.ts` - NO `.generic` suffix
-- `module_name.js.ts` - Use full language name `javascript`
-- `module_name.ts.ts` - Use `typescript` not `ts`
-- `bespoke_handlers.ts` - Each language gets its own file
 
 ## File Responsibilities
 
 ### index.ts
 
-- **ONLY contains exports**
-- No implementation logic whatsoever
-- Aggregates and re-exports from other files
-- Makes the module's public API clear
+- Aggregates and exports the module's public API
+- Combines functionality from core logic
+- Makes the module's interface clear
 
 ### module_name.ts
 
-- Contains the main generic implementation
-- Handles 80-90% of functionality through configuration
-- Coordinates between configuration and bespoke handlers
-- Includes the main entry point functions
+- Contains the core processing logic
+- Loads and executes tree-sitter queries
+- Coordinates query results processing
+- Handles language-specific variations through query patterns
 
-### language_configs.ts
+### queries/ Directory
 
-- Defines configuration interfaces
-- Contains configuration objects for each language
-- Exports helper functions for accessing configurations
-- No implementation logic, only data
+- Contains `.scm` files with tree-sitter query patterns
+- Each language has its own query file
+- Query files define patterns for extracting information from ASTs
+- Queries handle language-specific syntax variations
 
-### module_name.language.ts
+### Query File Structure (*.scm)
 
-- Contains ONLY language-specific features that cannot be configured
-- Typically 10-20% of total functionality
-- Exports specific handler functions
-- Should be small and focused (usually <200 lines)
+Query files use tree-sitter's S-expression query syntax:
+
+```scheme
+; javascript.scm example
+; Function declarations
+(function_declaration
+  name: (identifier) @function.name
+  parameters: (formal_parameters) @function.params
+  body: (statement_block) @function.body)
+
+; Method definitions
+(method_definition
+  name: (property_identifier) @method.name
+  parameters: (formal_parameters) @method.params)
+```
+
+## Query Development Guidelines
+
+### Query Patterns
+
+- Keep queries focused on specific extraction tasks
+- Use capture names that clearly indicate purpose (@function.name, @class.body)
+- Comment complex patterns to explain their purpose
+- Test queries against real code samples
+
+### Language Coverage
+
+- Start with common patterns shared across languages
+- Add language-specific patterns as separate captures
+- Document which patterns are language-specific
+
+### Query Organization
+
+```text
+queries/
+├── javascript.scm    # ES6+ patterns
+├── typescript.scm    # Includes JS patterns + TS-specific
+├── python.scm        # Python 3.x patterns
+└── rust.scm          # Rust 2021 edition patterns
+```
 
 ## Test File Organization
 
 ### Test Coverage Requirements
 
-- Every code file must have a corresponding test file
-- Tests live next to the code they test
-- No separate test directories
+- Every module must have comprehensive tests
+- Test files verify query accuracy across languages
+- Fixtures provide real code samples for testing
 
-### Test File Mapping
+### Test Structure
 
-- `module_name.ts` → `module_name.test.ts`
-- `language_configs.ts` → `language_configs.test.ts`
-- `module_name.javascript.ts` → `module_name.javascript.test.ts`
-- etc.
+```text
+module_name.test.ts
+- Tests main API functionality
+- Verifies query execution
+- Validates cross-language behavior
+- Uses fixtures for realistic test cases
+```
 
 ## Language Support Detection
 
-The presence of a test file indicates language support:
+The presence of a query file indicates language support:
 
-- If `module_name.python.test.ts` exists → Python is supported
-- If `module_name.rust.test.ts` exists → Rust is supported
-- No need for a registry or configuration
+- If `queries/python.scm` exists → Python is supported
+- If `queries/rust.scm` exists → Rust is supported
+- Module gracefully handles missing query files
 
-## Migration Checklist
+## Module Creation Checklist
 
-When refactoring a module to this structure:
+When creating a new query-based module:
 
-1. [ ] Create `language_configs.ts` with configuration objects
-2. [ ] Move generic logic to `module_name.ts`
-3. [ ] Extract language-specific features to `module_name.language.ts` files
-4. [ ] Create `index.ts` with exports only
-5. [ ] Organize tests to match code structure
-6. [ ] Delete old language-specific implementations
-7. [ ] Verify all tests pass
-8. [ ] Ensure file naming follows convention exactly
+1. [ ] Create module directory structure
+2. [ ] Write core logic in `module_name.ts`
+3. [ ] Define query patterns in `queries/*.scm`
+4. [ ] Create `index.ts` with exports
+5. [ ] Write comprehensive tests
+6. [ ] Add language-specific fixtures
+7. [ ] Verify query patterns with real code
+8. [ ] Test all supported languages
 
-## Example: parameter_type_inference
+## Example: function_calls Module
 
+```text
+function_calls/
+├── index.ts                         # Exports findFunctionCalls()
+├── function_calls.ts                # Query execution and processing
+├── queries/
+│   ├── javascript.scm              # JS call patterns
+│   ├── typescript.scm              # TS call patterns + generics
+│   ├── python.scm                  # Python call patterns
+│   └── rust.scm                    # Rust call patterns + macros
+├── function_calls.test.ts          # Comprehensive tests
+└── fixtures/
+    ├── javascript/
+    │   └── complex_calls.js
+    ├── typescript/
+    │   └── generic_calls.ts
+    ├── python/
+    │   └── decorated_calls.py
+    └── rust/
+        └── macro_calls.rs
 ```
-parameter_type_inference/
-├── index.ts                                # Exports only
-├── parameter_type_inference.ts            # Generic parameter processing
-├── language_configs.ts                    # Parameter configurations
-├── parameter_type_inference.javascript.ts # JSDoc, usage analysis
-├── parameter_type_inference.typescript.ts # Generics, overloads
-├── parameter_type_inference.python.ts     # Docstrings, type hints
-├── parameter_type_inference.rust.ts       # Lifetimes, patterns
-├── parameter_type_inference.test.ts       # Main tests
-├── language_configs.test.ts               # Config tests
-└── parameter_type_inference.javascript.test.ts # JS-specific tests
+
+## Query File Examples
+
+### JavaScript Query Pattern
+
+```scheme
+; queries/javascript.scm
+(call_expression
+  function: [
+    (identifier) @function.direct
+    (member_expression
+      property: (property_identifier) @function.method)
+  ]
+  arguments: (arguments) @function.args)
+```
+
+### Python Query Pattern
+
+```scheme
+; queries/python.scm
+(call
+  function: [
+    (identifier) @function.direct
+    (attribute
+      attribute: (identifier) @function.method)
+  ]
+  arguments: (argument_list) @function.args)
 ```
 
 ## Benefits
 
-- **Consistency**: Every module follows the same structure
-- **Discoverability**: Easy to find language-specific code
-- **Maintainability**: Clear separation of concerns
-- **Testability**: Test files mirror code structure
-- **Scalability**: Easy to add new languages
+- **Declarative**: Queries express what to find, not how
+- **Maintainable**: Language differences isolated in query files
+- **Performant**: Tree-sitter queries are highly optimized
+- **Consistent**: Same module structure across all features
+- **Extensible**: Easy to add new language support
