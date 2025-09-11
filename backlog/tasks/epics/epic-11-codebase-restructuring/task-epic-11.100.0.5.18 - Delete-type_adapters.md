@@ -12,7 +12,7 @@ priority: medium
 
 ## Description
 
-Delete the type_adapters.ts file and its test file, completing the elimination of the adapter layer.
+Delete the type_adapters.ts file and its test file, completing the elimination of the adapter layer. Also delete any no-longer-needed types. This will require thorugh investigation of the codebase, especially the types package.
 
 ## Background
 
