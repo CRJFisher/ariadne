@@ -1,190 +1,157 @@
-# Task 11.100: Integrate Tree-sitter Query System for Scope Analysis
+# Task 11.100: Transform Entire Codebase to Tree-sitter Query System
 
 ## Executive Summary
 
-Tree-sitter query files (`.scm`) containing sophisticated scope analysis patterns exist but are completely unused. The entire scope analysis system uses manual AST traversal instead. This represents a massive missed opportunity for 10-100x performance improvement with no external API changes required.
+Complete architectural transformation from manual AST traversal to Tree-sitter queries across ALL analysis modules. This will reduce codebase by ~85% (from ~22,000 to ~3,000 lines), improve performance 10-100x, and fundamentally simplify the entire system.
 
-## The Discovery
+## Strategic Decision: Option B - Full System Transformation
 
-On 2025-09-11, user discovered that:
-- 4 query files totaling ~44KB of sophisticated patterns exist in `src/scope_queries/`
-- `load_scope_query()` function exists but is never called
-- `query_executor.ts` has a complete Query API implementation that's never imported
-- Entire scope analysis manually traverses AST instead of using optimized queries
+After analysis, we're pursuing the most ambitious but highest-reward approach:
+- Replace ALL manual AST traversal with Tree-sitter queries
+- Single unified query system for all extraction
+- One-pass analysis instead of multiple tree walks
+- Dramatic simplification of entire codebase
 
-## Current State
+## Current State: Massive Duplication
 
-### Unused Assets
-1. **Query Files** (`src/scope_queries/`):
-   - `javascript.scm` (13,630 bytes)
-   - `typescript.scm` (12,351 bytes)
-   - `python.scm` (6,754 bytes)
-   - `rust.scm` (11,265 bytes)
+### The Problem
+- **22,000+ lines** of manual AST traversal code
+- **14+ separate modules** each walking the tree independently
+- **Parser called once**, tree walked 14+ times
+- Each module reinvents node type checking
+- Massive code duplication across modules
 
-2. **Orphaned Code**:
-   - `load_scope_query()` - Never called
-   - `query_executor.ts` - Complete implementation, never imported
+### Unused Infrastructure
+- 44KB of sophisticated `.scm` query files sitting unused
+- Complete `query_executor.ts` implementation never imported
+- `load_scope_query()` function never called
+- Years of Tree-sitter query development ignored
 
-3. **Manual Implementation** (`scope_analysis/scope_tree/`):
-   - ~2000+ lines of manual AST traversal
-   - Language-specific files with hardcoded patterns
-   - Configuration-driven but still manual node checking
+## Future State: Unified Query Architecture
 
-### Example: What We're Missing
-
-The `.scm` files handle sophisticated edge cases like:
-
-```scheme
-;; Handles assignments inside sequence expressions
-;; const a = 2; throw f = 1, f, a;
-(sequence_expression) @local.scope
-```
-
-Our manual traversal almost certainly doesn't catch this level of nuance.
-
-## Why This Can Be Isolated
-
-**Key Insight**: The ScopeTree output interface is stable and well-defined in `@ariadnejs/types`. We're only changing HOW we build it, not WHAT it contains.
-
-### The Interface Contract
-
+### The Vision
 ```typescript
-interface ScopeTree {
-  readonly root_id: ScopeId;
-  readonly nodes: ReadonlyMap<ScopeId, ScopeNode>;
-  readonly file_path?: string;
-}
+// Single analysis function replaces 14 modules
+const analysis = await analyzeWithQueries(file);
+// Returns EVERYTHING: scopes, imports, exports, classes, calls, types...
 ```
 
-This structure remains identical regardless of implementation.
-
-### What Changes vs What Doesn't
-
-**Changes (Internal Only)**:
-- FROM: `if (node.type === 'function_declaration')` checks
-- TO: `(function_declaration) @scope` queries
-- Implementation files in `scope_tree/` module
-
-**Doesn't Change**:
-- `build_scope_tree()` function signature
-- ScopeTree output structure
-- All consuming modules (10+ direct dependencies)
-- Any external APIs
+### How It Works
+1. **Parse once**: Create AST
+2. **Query once**: Execute unified query capturing all patterns
+3. **Build once**: Transform captures into structures
+4. **Done**: No recursive traversal, no repeated walks
 
 ## Implementation Strategy
 
-### Phase 1: Build Query-Based Implementation
+### Phase 1: Build Unified Query System
+1. Create comprehensive `.scm` files combining all patterns
+2. Build single `QueryAnalyzer` class
+3. Implement capture-to-structure transformers
+4. Run in shadow mode alongside current system
 
-1. Create `scope_tree_query.ts` as drop-in replacement
-2. Load `.scm` files using existing `load_scope_query()`
-3. Use `query_executor.ts` utilities (already exist!)
-4. Build ScopeTree from query captures:
+### Phase 2: Module-by-Module Migration
+Each module gets a subtask (see below) for transformation:
+- Document current patterns extracted
+- Convert to Tree-sitter query patterns
+- Build transformer for captures
+- Validate output matches current
 
-```typescript
-const querySource = load_scope_query(language);
-const query = new Parser.Query(language, querySource);
-const captures = query.captures(tree.rootNode);
+### Phase 3: Integration & Cutover
+1. Replace `file_analyzer.ts` internals
+2. Remove old manual traversal modules
+3. Delete configuration files
+4. Update all tests
 
-for (const {name, node} of captures) {
-  switch(name) {
-    case 'local.scope': createScope(node);
-    case 'definition.function': addSymbol(node);
-    // etc.
-  }
-}
-```
+## Modules to Transform (Subtasks Below)
 
-### Phase 2: Validation
+1. **scope_analysis/scope_tree** → 11.100.1
+2. **import_export/import_resolution** → 11.100.2
+3. **import_export/export_detection** → 11.100.3
+4. **inheritance/class_detection** → 11.100.4
+5. **call_graph/function_calls** → 11.100.5
+6. **call_graph/method_calls** → 11.100.6
+7. **call_graph/constructor_calls** → 11.100.7
+8. **scope_analysis/symbol_resolution** → 11.100.8
+9. **type_analysis/type_tracking** → 11.100.9
+10. **type_analysis/return_type_inference** → 11.100.10
+11. **type_analysis/parameter_type_inference** → 11.100.11
+12. **inheritance/class_hierarchy** → 11.100.12
+13. **inheritance/method_override** → 11.100.13
+14. **ast/member_access** → 11.100.14
 
-1. **Shadow Mode**: Run both implementations in parallel
-2. **Differential Testing**: Compare outputs on real codebases
-3. **Performance Benchmarking**: Measure speed improvement
-4. **Edge Case Testing**: Verify sophisticated patterns work
+## Expected Outcomes
 
-### Phase 3: Migration
+### Metrics
+- **Code reduction**: 85% (22,000 → 3,000 lines)
+- **Performance**: 10-100x faster
+- **Memory**: 50% reduction (no recursive call stacks)
+- **Maintenance**: 90% fewer files to modify
 
-1. **Feature Flag**: Add switch between implementations
-2. **Gradual Rollout**: Test in production gradually
-3. **Single Switch**: Once validated, make one-line change
-4. **Cleanup**: Remove manual implementation
+### Benefits
+1. **Single source of truth**: All patterns in `.scm` files
+2. **Consistency**: Same extraction logic everywhere
+3. **Performance**: C++ query engine vs JavaScript
+4. **Simplicity**: Declarative patterns vs imperative code
+5. **Extensibility**: Add patterns without code changes
 
-## Expected Benefits
+## Risk Mitigation
 
-### Performance
-- **10-100x faster**: C++ query engine vs JavaScript traversal
-- **Lower memory**: No recursive JavaScript call stacks
-- **Better caching**: Query results can be memoized
+### Semantic Compatibility
+- Run both systems in parallel initially
+- Extensive differential testing
+- Log all differences for analysis
+- Gradual semantic improvements
 
-### Accuracy
-- **Edge cases handled**: Queries catch patterns we miss
-- **Battle-tested patterns**: Tree-sitter queries are widely used
-- **Consistent behavior**: Declarative patterns reduce bugs
-
-### Maintainability
-- **Code reduction**: ~50-70% less code
-- **Declarative patterns**: Easier to understand and modify
-- **Single source of truth**: Patterns in `.scm` files only
-
-## Risk Assessment
-
-### Low Risk Because:
-1. **No API changes**: Pure internal implementation swap
-2. **Existing code works**: Can fallback anytime
-3. **Gradual migration**: Can validate extensively
-4. **Well-defined interface**: ScopeTree structure is stable
-
-### Potential Challenges:
-1. **Scope ID stability**: Tests might expect specific IDs
-2. **Discovery differences**: Queries might find more/fewer scopes
-3. **Metadata completeness**: Ensuring all fields populated
-4. **Performance characteristics**: Different memory patterns
+### Migration Safety
+- Module-by-module transformation
+- Each module can fallback independently
+- Comprehensive test coverage required
+- Performance benchmarks at each step
 
 ## Success Criteria
 
-- [ ] Query-based implementation returns identical ScopeTree structure
-- [ ] All existing tests pass without modification
-- [ ] Performance improves by at least 5x
-- [ ] No changes required in consuming modules
-- [ ] Edge cases from `.scm` files are properly handled
+- [ ] All 14 modules transformed to queries
+- [ ] 85% code reduction achieved
+- [ ] 10x performance improvement minimum
+- [ ] All existing tests pass
+- [ ] No semantic regressions in analysis
 
-## Priority
+## Timeline
 
-**HIGH** - This is low-risk, high-reward:
-- Massive performance improvement
-- No breaking changes
-- Implementation already partially exists
-- Can be done in isolation
-
-## Estimated Effort
-
-- Investigation: ✅ Complete
-- Implementation: 3-5 days
-- Testing/Validation: 3-5 days
-- Migration: 1-2 days
-- **Total: 1-2 weeks**
-
-## Files Involved
-
-### To Use (Currently Orphaned):
-- `/src/scope_queries/*.scm` - Query patterns
-- `/src/scope_queries/loader.ts` - Query loader
-- `/src/ast/query_executor.ts` - Query execution utilities
-
-### To Replace (Eventually):
-- `/src/scope_analysis/scope_tree/scope_tree.ts` - Manual traversal
-- `/src/scope_analysis/scope_tree/scope_tree.*.ts` - Language-specific
-- `/src/scope_analysis/scope_tree/language_configs.ts` - Hardcoded patterns
-
-### Entry Point (No Changes):
-- `/src/scope_analysis/scope_tree/index.ts` - Public API
+- Week 1-2: Build unified query system
+- Week 3-4: Transform core modules (scope, imports, exports)
+- Week 5-6: Transform analysis modules (calls, types)
+- Week 7-8: Integration and optimization
+- Week 9-10: Testing and cutover
 
 ## Conclusion
 
-This is a rare opportunity for massive performance improvement with zero breaking changes. The implementation is straightforward because:
+This is not an incremental improvement - it's a fundamental architectural transformation that will:
+1. Eliminate 85% of the codebase
+2. Improve performance by orders of magnitude
+3. Make the system dramatically simpler
+4. Align with Tree-sitter's intended architecture
 
-1. Query files already exist
-2. Query executor already exists
-3. Output interface is stable
-4. Can be done in complete isolation
+The infrastructure already exists. We just need to use it.
 
-The fact that this sophisticated infrastructure exists but is unused represents technical debt that, when resolved, will benefit the entire codebase's performance without any external changes required.
+---
+
+## Subtasks
+
+See individual subtask files for detailed transformation plans:
+
+- [11.100.1 - Transform scope_tree to queries](./task-epic-11.100.1-transform-scope-tree.md)
+- [11.100.2 - Transform import_resolution to queries](./task-epic-11.100.2-transform-import-resolution.md)
+- [11.100.3 - Transform export_detection to queries](./task-epic-11.100.3-transform-export-detection.md)
+- [11.100.4 - Transform class_detection to queries](./task-epic-11.100.4-transform-class-detection.md)
+- [11.100.5 - Transform function_calls to queries](./task-epic-11.100.5-transform-function-calls.md)
+- [11.100.6 - Transform method_calls to queries](./task-epic-11.100.6-transform-method-calls.md)
+- [11.100.7 - Transform constructor_calls to queries](./task-epic-11.100.7-transform-constructor-calls.md)
+- [11.100.8 - Transform symbol_resolution to queries](./task-epic-11.100.8-transform-symbol-resolution.md)
+- [11.100.9 - Transform type_tracking to queries](./task-epic-11.100.9-transform-type-tracking.md)
+- [11.100.10 - Transform return_type_inference to queries](./task-epic-11.100.10-transform-return-type-inference.md)
+- [11.100.11 - Transform parameter_type_inference to queries](./task-epic-11.100.11-transform-parameter-type-inference.md)
+- [11.100.12 - Transform class_hierarchy to queries](./task-epic-11.100.12-transform-class-hierarchy.md)
+- [11.100.13 - Transform method_override to queries](./task-epic-11.100.13-transform-method-override.md)
+- [11.100.14 - Transform member_access to queries](./task-epic-11.100.14-transform-member-access.md)
