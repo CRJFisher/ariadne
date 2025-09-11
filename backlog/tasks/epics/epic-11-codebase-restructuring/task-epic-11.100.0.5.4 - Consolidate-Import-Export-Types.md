@@ -1,7 +1,7 @@
 ---
 id: task-epic-11.100.0.5.4
 title: Consolidate Import Export Types
-status: To Do
+status: Complete
 assignee: []
 created_date: '2025-09-11 17:51'
 labels: []
