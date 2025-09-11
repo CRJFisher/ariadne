@@ -1,290 +1,459 @@
 /**
- * Method Override Detection and Analysis
+ * Generic Method Override Detection
  * 
- * This module provides functionality to detect and track method override relationships
- * in object-oriented code across multiple languages.
+ * Configuration-driven processor that handles ~85% of override detection logic
  */
 
+import { Parser, Query, SyntaxNode } from 'tree-sitter';
 import { Def } from '@ariadnejs/types';
-import { ClassHierarchy, ClassInfo } from '../class_hierarchy/class_hierarchy';
+import { 
+  ClassHierarchy,
+  ClassInfo
+} from '../class_hierarchy/class_hierarchy';
+import {
+  MethodOverride,
+  OverrideInfo,
+  MethodOverrideMap,
+  MethodSignature,
+  extract_method_signature,
+  signatures_match
+} from './method_override';
+import {
+  MethodOverrideConfig,
+  get_language_config,
+  has_override_marker,
+  has_abstract_marker,
+  is_static_method,
+  should_skip_method
+} from './language_configs';
 
 /**
- * Represents a method override relationship
+ * Module context for sharing between generic and bespoke handlers
  */
-export interface MethodOverride {
-  /** The overriding method */
-  method: Def;
-  /** The method being overridden */
-  base_method: Def;
-  /** Full chain from method to root */
-  override_chain: Def[];
-  /** If base method is abstract */
-  is_abstract: boolean;
-  /** If base method is virtual (C++/C#) */
-  is_virtual: boolean;
-  /** If override is explicit (has override keyword/decorator) */
-  is_explicit: boolean;
-  /** Language of the override */
-  language: string;
-}
-
-/**
- * Information about a method's override relationships
- */
-export interface OverrideInfo {
-  /** The method definition */
-  method_def: Def;
-  /** Method this overrides (if any) */
-  overrides?: Def;
-  /** Methods that override this one */
-  overridden_by: Def[];
-  /** Full inheritance chain */
-  override_chain: Def[];
-  /** Whether this method is abstract */
-  is_abstract: boolean;
-  /** Whether this method is final/sealed */
-  is_final: boolean;
-}
-
-/**
- * Complete override information for a codebase
- */
-export interface MethodOverrideMap {
-  /** Map from method signature to override info */
+export interface MethodOverrideContext {
+  config: MethodOverrideConfig;
+  hierarchy: ClassHierarchy;
+  all_methods: Map<string, Def[]>;
   overrides: Map<string, OverrideInfo>;
-  /** All override relationships */
   override_edges: MethodOverride[];
-  /** Methods that are never overridden */
   leaf_methods: Def[];
-  /** Abstract methods that must be implemented */
   abstract_methods: Def[];
-  /** Language of the analysis */
-  language: string;
 }
 
-/**
- * Method signature for comparison
- */
-export interface MethodSignature {
-  name: string;
-  parameter_count?: number;
-  parameter_types?: string[];
-  return_type?: string;
-}
+export const MODULE_CONTEXT = 'method_override';
 
 /**
- * Extract method signature from a definition
+ * Extract methods from a class using configuration
  */
-export function extract_method_signature(method: Def): MethodSignature {
-  return {
-    name: method.name,
-    // TODO: Extract parameter count and types when type system is ready
-    parameter_count: undefined,
-    parameter_types: undefined,
-    return_type: undefined
-  };
-}
-
-/**
- * Check if two method signatures match (for override detection)
- */
-export function signatures_match(sig1: MethodSignature, sig2: MethodSignature): boolean {
-  // Basic name matching
-  if (sig1.name !== sig2.name) {
-    return false;
+export function extract_class_methods_generic(
+  class_node: SyntaxNode,
+  class_def: Def,
+  file_path: string,
+  config: MethodOverrideConfig
+): Def[] {
+  const methods: Def[] = [];
+  
+  // Find class body
+  const body = class_node.childForFieldName(config.class_body_field);
+  if (!body) return methods;
+  
+  // Iterate through class members
+  for (let i = 0; i < body.childCount; i++) {
+    const child = body.child(i);
+    if (!child) continue;
+    
+    // Check for method definitions
+    if (config.method_types.includes(child.type)) {
+      const name_node = child.childForFieldName(config.method_name_field);
+      if (!name_node) continue;
+      
+      const method_name = name_node.text;
+      
+      // Check skip patterns
+      if (should_skip_method(method_name, config)) {
+        continue;
+      }
+      
+      // Skip static methods for override analysis
+      if (is_static_method(child, config)) {
+        continue;
+      }
+      
+      const method: Def = {
+        name: method_name,
+        kind: 'method',
+        file_path,
+        start_line: child.startPosition.row + 1,
+        start_column: child.startPosition.column,
+        end_line: child.endPosition.row + 1,
+        end_column: child.endPosition.column,
+        extent_start_line: child.startPosition.row + 1,
+        extent_start_column: child.startPosition.column,
+        extent_end_line: child.endPosition.row + 1,
+        extent_end_column: child.endPosition.column
+      };
+      
+      methods.push(method);
+    }
   }
-
-  // TODO: Add parameter and return type matching when type system is ready
-  // For now, just match by name
-  return true;
+  
+  return methods;
 }
 
 /**
- * Find the base method that a given method overrides
+ * Find methods in parent classes that match a given method signature
  */
-export function find_base_method(
+export function find_parent_method_generic(
   method: Def,
   class_info: ClassInfo,
-  hierarchy: ClassHierarchy
+  hierarchy: ClassHierarchy,
+  all_methods: Map<string, Def[]>,
+  config: MethodOverrideConfig
 ): Def | undefined {
   const method_sig = extract_method_signature(method);
   
-  // Walk up the inheritance chain
-  for (const ancestor of class_info.all_ancestors) {
-    const ancestor_info = hierarchy.classes.get(ancestor.name);
-    if (!ancestor_info) continue;
-
-    // Look for matching method in ancestor
-    // TODO: Integration with symbol resolution to find methods in class
-    // For now, we'll need language-specific implementations to provide this
+  // Use MRO if available (for Python), otherwise use all_ancestors
+  const ancestors = config.features.has_multiple_inheritance && 
+                    class_info.method_resolution_order.length > 0
+    ? class_info.method_resolution_order
+    : class_info.all_ancestors;
+  
+  // Check each ancestor class
+  for (const ancestor of ancestors) {
+    const ancestor_methods = all_methods.get(ancestor.name) || [];
+    
+    for (const ancestor_method of ancestor_methods) {
+      const ancestor_sig = extract_method_signature(ancestor_method);
+      
+      if (signatures_match(method_sig, ancestor_sig)) {
+        return ancestor_method;
+      }
+    }
   }
-
+  
   return undefined;
 }
 
 /**
- * Find all methods that override a given method
+ * Find methods in child classes that override a given method
  */
-export function find_overriding_methods(
+export function find_child_overrides_generic(
   method: Def,
   class_info: ClassInfo,
-  hierarchy: ClassHierarchy
+  hierarchy: ClassHierarchy,
+  all_methods: Map<string, Def[]>
 ): Def[] {
   const overrides: Def[] = [];
   const method_sig = extract_method_signature(method);
-
-  // Check all descendants
+  
+  // Check each descendant class
   for (const descendant of class_info.all_descendants) {
-    const descendant_info = hierarchy.classes.get(descendant.name);
-    if (!descendant_info) continue;
-
-    // TODO: Integration with symbol resolution to find methods in class
-    // For now, we'll need language-specific implementations to provide this
+    const descendant_methods = all_methods.get(descendant.name) || [];
+    
+    for (const descendant_method of descendant_methods) {
+      const descendant_sig = extract_method_signature(descendant_method);
+      
+      if (signatures_match(method_sig, descendant_sig)) {
+        overrides.push(descendant_method);
+      }
+    }
   }
-
+  
   return overrides;
 }
 
 /**
- * Build a complete override chain for a method
+ * Build a simple class hierarchy using configuration
  */
-export function build_override_chain(
-  method: Def,
-  class_info: ClassInfo,
-  hierarchy: ClassHierarchy
-): Def[] {
-  const chain: Def[] = [method];
+export function build_hierarchy_generic(
+  ast: SyntaxNode,
+  file_path: string,
+  parser: Parser,
+  config: MethodOverrideConfig
+): ClassHierarchy {
+  const hierarchy: ClassHierarchy = {
+    classes: new Map(),
+    edges: [],
+    roots: [],
+    language: parser.getLanguage().name
+  };
   
-  // Walk up to find base methods
-  let current = method;
-  let current_class = class_info;
-  
-  while (current_class) {
-    const base = find_base_method(current, current_class, hierarchy);
-    if (!base) break;
-    
-    chain.unshift(base);
-    current = base;
-    
-    // Find the class containing the base method
-    const base_class_name = base.name.split('.')[0]; // Simplified, need better parsing
-    current_class = hierarchy.classes.get(base_class_name) || null;
+  if (!config.queries.class_hierarchy) {
+    return hierarchy;
   }
-
-  return chain;
+  
+  // Use configured query to extract class hierarchy
+  const hierarchy_query = new Query(
+    parser.getLanguage(),
+    config.queries.class_hierarchy
+  );
+  
+  const matches = hierarchy_query.matches(ast);
+  const class_map = new Map<string, { def: Def; parent?: string }>();
+  
+  for (const match of matches) {
+    const class_node = match.captures.find(c => c.name === 'class')?.node;
+    const name_node = match.captures.find(c => c.name === 'class_name')?.node;
+    const parent_node = match.captures.find(c => c.name === 'parent_name')?.node;
+    
+    if (!class_node || !name_node) continue;
+    
+    const class_name = name_node.text;
+    const parent_name = parent_node?.text;
+    
+    const class_def: Def = {
+      name: class_name,
+      kind: 'class',
+      file_path,
+      start_line: class_node.startPosition.row + 1,
+      start_column: class_node.startPosition.column,
+      end_line: class_node.endPosition.row + 1,
+      end_column: class_node.endPosition.column,
+      extent_start_line: class_node.startPosition.row + 1,
+      extent_start_column: class_node.startPosition.column,
+      extent_end_line: class_node.endPosition.row + 1,
+      extent_end_column: class_node.endPosition.column
+    };
+    
+    class_map.set(class_name, { def: class_def, parent: parent_name });
+  }
+  
+  // Build class info and hierarchy
+  for (const [class_name, { def, parent }] of class_map) {
+    const class_info: ClassInfo = {
+      definition: def,
+      parent_class: parent,
+      parent_class_def: parent ? class_map.get(parent)?.def : undefined,
+      implemented_interfaces: [],
+      interface_defs: [],
+      subclasses: [],
+      all_ancestors: [],
+      all_descendants: [],
+      method_resolution_order: []
+    };
+    
+    // Find ancestors
+    let current_parent = parent;
+    while (current_parent) {
+      const parent_info = class_map.get(current_parent);
+      if (parent_info?.def) {
+        class_info.all_ancestors.push(parent_info.def);
+      }
+      current_parent = parent_info?.parent;
+    }
+    
+    hierarchy.classes.set(class_name, class_info);
+  }
+  
+  // Find descendants
+  for (const [class_name, class_info] of hierarchy.classes) {
+    for (const [other_name, other_info] of hierarchy.classes) {
+      if (other_info.parent_class === class_name) {
+        class_info.subclasses.push(other_info.definition);
+        class_info.all_descendants.push(other_info.definition);
+      }
+    }
+  }
+  
+  // Find roots
+  for (const [class_name, class_info] of hierarchy.classes) {
+    if (!class_info.parent_class) {
+      hierarchy.roots.push(class_info.definition);
+    }
+  }
+  
+  return hierarchy;
 }
 
 /**
- * Analyze all method override relationships in a class hierarchy
+ * Generic method override detection
  */
-export function analyze_method_overrides(
-  hierarchy: ClassHierarchy,
-  class_methods: Map<string, Def[]>
+export function detect_overrides_generic(
+  ast: SyntaxNode,
+  file_path: string,
+  parser: Parser,
+  language: string,
+  bespoke_handler?: (context: MethodOverrideContext) => void
 ): MethodOverrideMap {
-  const overrides = new Map<string, OverrideInfo>();
-  const override_edges: MethodOverride[] = [];
-  const leaf_methods: Def[] = [];
-  const abstract_methods: Def[] = [];
-
-  // Process each class in the hierarchy
+  const config = get_language_config(language);
+  
+  if (!config) {
+    return {
+      overrides: new Map(),
+      override_edges: [],
+      leaf_methods: [],
+      abstract_methods: [],
+      language
+    };
+  }
+  
+  // Build class hierarchy
+  const hierarchy = build_hierarchy_generic(ast, file_path, parser, config);
+  
+  // Extract all methods from all classes
+  const all_methods = new Map<string, Def[]>();
+  const all_classes: Array<{ node: SyntaxNode; def: Def }> = [];
+  
+  // Query for all class declarations
+  let class_query_text: string;
+  
+  if (language === 'typescript' || language === 'javascript') {
+    class_query_text = `(class_declaration name: (_) @class_name) @class`;
+  } else if (language === 'python') {
+    class_query_text = `(class_definition name: (identifier) @class_name) @class`;
+  } else if (language === 'rust') {
+    // For Rust, we need to handle impl blocks differently
+    class_query_text = `
+      (impl_item type: (_) @class_name) @class
+      (struct_item name: (type_identifier) @class_name) @class
+    `;
+  } else {
+    // Default fallback
+    class_query_text = config.class_types
+      .map(type => `(${type} name: (_) @class_name) @class`)
+      .join('\n');
+  }
+  
+  const class_query = new Query(parser.getLanguage(), class_query_text);
+  const class_matches = class_query.matches(ast);
+  
+  for (const match of class_matches) {
+    const class_node = match.captures.find(c => c.name === 'class')?.node;
+    const name_node = match.captures.find(c => c.name === 'class_name')?.node;
+    
+    if (!class_node || !name_node) continue;
+    
+    const class_name = name_node.text;
+    const class_def: Def = {
+      name: class_name,
+      kind: 'class',
+      file_path,
+      start_line: class_node.startPosition.row + 1,
+      start_column: class_node.startPosition.column,
+      end_line: class_node.endPosition.row + 1,
+      end_column: class_node.endPosition.column,
+      extent_start_line: class_node.startPosition.row + 1,
+      extent_start_column: class_node.startPosition.column,
+      extent_end_line: class_node.endPosition.row + 1,
+      extent_end_column: class_node.endPosition.column
+    };
+    
+    all_classes.push({ node: class_node, def: class_def });
+    
+    // Extract methods from this class
+    const methods = extract_class_methods_generic(class_node, class_def, file_path, config);
+    all_methods.set(class_name, methods);
+  }
+  
+  // Initialize context
+  const context: MethodOverrideContext = {
+    config,
+    hierarchy,
+    all_methods,
+    overrides: new Map(),
+    override_edges: [],
+    leaf_methods: [],
+    abstract_methods: []
+  };
+  
+  // Process each class and its methods
   for (const [class_name, class_info] of hierarchy.classes) {
-    const methods = class_methods.get(class_name) || [];
+    const methods = all_methods.get(class_name) || [];
     
     for (const method of methods) {
       const method_key = `${class_name}.${method.name}`;
       
-      // Find base method if this is an override
-      const base_method = find_base_method(method, class_info, hierarchy);
+      // Find parent method if this overrides
+      const parent_method = find_parent_method_generic(
+        method, 
+        class_info, 
+        hierarchy, 
+        all_methods, 
+        config
+      );
       
-      // Find methods that override this one
-      const overriding = find_overriding_methods(method, class_info, hierarchy);
+      // Find child overrides
+      const child_overrides = find_child_overrides_generic(
+        method, 
+        class_info, 
+        hierarchy, 
+        all_methods
+      );
       
       // Build override chain
-      const chain = build_override_chain(method, class_info, hierarchy);
+      const chain: Def[] = [method];
+      if (parent_method) {
+        // Walk up to find all ancestors
+        let current = parent_method;
+        const ancestors = [current];
+        
+        // Find parent class of current method
+        for (const [ancestor_name, ancestor_info] of hierarchy.classes) {
+          const ancestor_methods = all_methods.get(ancestor_name) || [];
+          if (ancestor_methods.includes(current)) {
+            const ancestor_parent = find_parent_method_generic(
+              current, 
+              ancestor_info, 
+              hierarchy, 
+              all_methods,
+              config
+            );
+            if (ancestor_parent) {
+              ancestors.unshift(ancestor_parent);
+              current = ancestor_parent;
+            }
+          }
+        }
+        
+        chain.unshift(...ancestors);
+      }
+      
+      // Check for abstract/override markers
+      const is_abstract = false; // Will be set by bespoke handler if needed
+      const is_explicit = false; // Will be set by bespoke handler if needed
       
       // Create override info
       const info: OverrideInfo = {
         method_def: method,
-        overrides: base_method,
-        overridden_by: overriding,
+        overrides: parent_method,
+        overridden_by: child_overrides,
         override_chain: chain,
-        is_abstract: false, // TODO: Detect from language-specific markers
-        is_final: false    // TODO: Detect from language-specific markers
+        is_abstract,
+        is_final: false // JavaScript/Python don't have final methods
       };
       
-      overrides.set(method_key, info);
+      context.overrides.set(method_key, info);
       
-      // Track leaf methods (not overridden)
-      if (overriding.length === 0) {
-        leaf_methods.push(method);
+      // Track leaf methods
+      if (child_overrides.length === 0) {
+        context.leaf_methods.push(method);
       }
       
       // Create override edge if this overrides something
-      if (base_method) {
-        override_edges.push({
+      if (parent_method) {
+        context.override_edges.push({
           method,
-          base_method,
+          base_method: parent_method,
           override_chain: chain,
-          is_abstract: false, // TODO: Detect from base method
-          is_virtual: false,  // TODO: Detect from base method
-          is_explicit: false, // TODO: Detect from override markers
-          language: hierarchy.language
+          is_abstract: false,
+          is_virtual: true, // Most methods are virtual by default
+          is_explicit: false,
+          language
         });
       }
     }
   }
-
+  
+  // Call bespoke handler for language-specific logic
+  if (bespoke_handler) {
+    bespoke_handler(context);
+  }
+  
   return {
-    overrides,
-    override_edges,
-    leaf_methods,
-    abstract_methods,
-    language: hierarchy.language
+    overrides: context.overrides,
+    override_edges: context.override_edges,
+    leaf_methods: context.leaf_methods,
+    abstract_methods: context.abstract_methods,
+    language
   };
 }
-
-/**
- * Check if a method is overridden in any subclass
- */
-export function is_overridden(
-  method: Def,
-  override_map: MethodOverrideMap
-): boolean {
-  const key = `${method.file_path}.${method.name}`;
-  const info = override_map.overrides.get(key);
-  return info ? info.overridden_by.length > 0 : false;
-}
-
-/**
- * Check if a method overrides a base method
- */
-export function is_override(
-  method: Def,
-  override_map: MethodOverrideMap
-): boolean {
-  const key = `${method.file_path}.${method.name}`;
-  const info = override_map.overrides.get(key);
-  return info ? info.overrides !== undefined : false;
-}
-
-/**
- * Get the root method in an override chain
- */
-export function get_root_method(
-  method: Def,
-  override_map: MethodOverrideMap
-): Def {
-  const key = `${method.file_path}.${method.name}`;
-  const info = override_map.overrides.get(key);
-  if (!info || info.override_chain.length === 0) {
-    return method;
-  }
-  return info.override_chain[0];
-}
-
-// TODO: Integration with Class Hierarchy
-// - Walk hierarchy for base methods
-// TODO: Integration with Method Calls
-// - Dynamic dispatch resolution
-// TODO: Integration with Type Tracking
-// - Ensure type compatibility

@@ -1,140 +1,98 @@
 /**
- * Namespace resolution orchestrator
+ * Generic namespace resolution processor
  * 
- * Coordinates generic configuration-driven resolution (~85%) with
- * language-specific bespoke handlers (~15%) for comprehensive
- * namespace import and member resolution.
- * 
- * Pattern: Generic processor handles common patterns, bespoke
- * handlers augment with language-specific edge cases.
+ * Configuration-driven namespace resolution that handles ~80% of namespace
+ * resolution logic across all languages using language configurations.
  */
 
-import { Def, ImportStatement as Import, Ref, ScopeGraph, Language } from '@ariadnejs/types';
+import { Language, ImportStatement as Import, Def } from '@ariadnejs/types';
 import { SyntaxNode } from 'tree-sitter';
-
-// Generic processor (handles ~85% of logic)
 import {
-  detect_namespace_imports_generic,
-  resolve_namespace_member_generic,
-  get_namespace_exports_generic,
-  needs_bespoke_processing,
-  merge_namespace_results,
-  parse_qualified_access_generic
-} from './namespace_resolution.generic';
-
-// Language-specific bespoke handlers (~15% of logic)
-import * as JavaScriptBespoke from './namespace_resolution.javascript.bespoke';
-import * as TypeScriptBespoke from './namespace_resolution.typescript.bespoke';
-import * as PythonBespoke from './namespace_resolution.python.bespoke';
-import * as RustBespoke from './namespace_resolution.rust.bespoke';
-
-// Language configurations
-import { get_namespace_config } from './language_configs';
+  NamespaceLanguageConfig,
+  get_namespace_config
+} from './language_configs';
+import {
+  NamespaceImportInfo,
+  NamespaceExport,
+  NamespaceResolutionContext
+} from './namespace_resolution';
 
 /**
- * Resolution configuration for namespace imports
+ * Module context shared across resolution
  */
-export interface NamespaceResolutionConfig {
-  get_file_graph?: (file_path: string) => ScopeGraph | undefined;
-  get_imports_with_definitions: (file_path: string) => Array<{
-    local_name: string;
-    import_statement: Import;
-    imported_function: Def;
-  }>;
-  debug?: boolean;
-  // TODO: Integration with other features
-  // get_module_exports?: (file: string) => ExportInfo[];  // From export_detection
-  // symbol_resolver?: SymbolResolver;  // From symbol_resolution
-  // type_tracker?: TypeTracker;  // From type_tracking
+export const MODULE_CONTEXT = {
+  name: 'namespace_resolution',
+  version: '2.0.0',
+  layer: 2
+} as const;
+
+/**
+ * Namespace resolution result
+ */
+export interface NamespaceResolutionResult {
+  imports: NamespaceImportInfo[];
+  requires_bespoke: boolean;
+  bespoke_hints?: {
+    has_commonjs?: boolean;
+    has_dynamic_imports?: boolean;
+    has_packages?: boolean;
+    has_namespace_declarations?: boolean;
+  };
 }
 
 /**
- * Context for namespace resolution
+ * Generic namespace import detector using configuration
  */
-export interface NamespaceResolutionContext {
-  language: Language;
-  file_path: string;
-  config: NamespaceResolutionConfig;
-}
-
-/**
- * Namespace export result type
- */
-export type NamespaceExport = 
-  | Def 
-  | { is_namespace_reexport: true; target_module: string };
-
-/**
- * Information about a namespace import
- */
-export interface NamespaceImportInfo {
-  namespace_name: string;  // Local name of the namespace
-  source_module: string;   // Module it's imported from
-  is_namespace: boolean;   // Always true for namespace imports
-  members?: string[];      // Cached list of available members
-}
-
-// TODO: Add these stub interfaces for future integration
-
-// Integration with import resolution
-export interface NamespaceResolver {
-  is_namespace_import(imp: Import): boolean;
-  resolve_namespace_member(ns: string, member: string): Def | undefined;
-  get_namespace_exports(ns: string): Map<string, NamespaceExport>;
-}
-
-// Integration with symbol resolution (future)
-export interface QualifiedNameResolver {
-  resolve_qualified_name(parts: string[]): Def | undefined;
-}
-
-/**
- * Detect namespace imports using orchestrator pattern
- */
-export function detect_namespace_imports(
+export function detect_namespace_imports_generic(
   imports: Import[],
-  language: Language,
-  source_code?: string,
-  root_node?: SyntaxNode
-): NamespaceImportInfo[] {
-  // Step 1: Generic detection (handles ~85%)
-  const generic_result = detect_namespace_imports_generic(imports, language);
+  language: Language
+): NamespaceResolutionResult {
+  const config = get_namespace_config(language);
+  const namespace_imports: NamespaceImportInfo[] = [];
+  const bespoke_hints: NamespaceResolutionResult['bespoke_hints'] = {};
+  let requires_bespoke = false;
   
-  // Step 2: Check if bespoke processing is needed
-  // If source_code is provided, check for patterns that need bespoke handling
-  let requires_bespoke = generic_result.requires_bespoke;
-  if (source_code && !requires_bespoke) {
-    requires_bespoke = needs_bespoke_processing(source_code, language);
+  for (const imp of imports) {
+    // Check if this is a namespace import based on configuration
+    if (is_namespace_import_generic(imp, config, language)) {
+      namespace_imports.push({
+        namespace_name: get_namespace_name(imp, config),
+        source_module: imp.source,
+        is_namespace: true,
+        members: undefined // Will be populated on demand
+      });
+    }
+    
+    // Check for patterns that need bespoke handling
+    // Since we don't have import_statement, we can't detect CommonJS or dynamic imports
+    // We can only check the source for __init__ patterns
+    if (config.features.has_packages && imp.source?.includes('__init__')) {
+      bespoke_hints.has_packages = true;
+      requires_bespoke = true;
+    }
   }
   
-  if (!requires_bespoke || !source_code) {
-    return generic_result.imports;
-  }
-  
-  // Step 3: Apply language-specific bespoke handlers
-  const bespoke_imports = get_bespoke_namespace_imports(
-    language,
-    source_code,
-    root_node
-  );
-  
-  // Step 4: Merge results (bespoke takes precedence)
-  return merge_namespace_results(generic_result.imports, bespoke_imports);
+  return {
+    imports: namespace_imports,
+    requires_bespoke,
+    bespoke_hints: requires_bespoke ? bespoke_hints : undefined
+  };
 }
 
 /**
- * Check if an import is a namespace import (backward compatibility)
+ * Check if an import creates a namespace using configuration
  */
-export function is_namespace_import(
+function is_namespace_import_generic(
   imp: Import,
+  config: NamespaceLanguageConfig,
   language: Language
 ): boolean {
-  // Check explicit namespace flag first
+  // Check if import has is_namespace_import flag set
   if (imp.is_namespace_import === true) {
     return true;
   }
   
-  // Check wildcard imports (import * as name)
+  // Check for wildcard imports (symbol_name === '*')
   if (imp.symbol_name === '*') {
     return true;
   }
@@ -142,13 +100,11 @@ export function is_namespace_import(
   // Language-specific checks
   switch (language) {
     case 'python':
-      // In Python, bare imports (import module) create namespaces
-      // This is when symbol_name is undefined
+      // In Python, imports without symbol_name create namespaces
       if (!imp.symbol_name) {
         return true;
       }
       break;
-      
     case 'rust':
       // In Rust, check if source ends with ::*
       if (imp.source.endsWith('::*')) {
@@ -161,146 +117,201 @@ export function is_namespace_import(
 }
 
 /**
- * Get bespoke namespace imports for a language
+ * Extract namespace name from import
  */
-function get_bespoke_namespace_imports(
-  language: Language,
-  source_code: string,
-  root_node?: SyntaxNode
-): NamespaceImportInfo[] {
-  const bespoke_imports: NamespaceImportInfo[] = [];
+function get_namespace_name(imp: Import, config: NamespaceLanguageConfig): string {
+  // For namespace imports, use the last part of the source as the name
+  // e.g., './utils' -> 'utils', 'std::collections' -> 'collections'
+  const parts = imp.source.split(/[\/:]/);
+  const lastPart = parts[parts.length - 1];
   
-  // Create a dummy node if not provided
-  const node = root_node || ({} as SyntaxNode);
-  
-  switch (language) {
-    case 'javascript':
-      // Handle CommonJS and dynamic imports
-      bespoke_imports.push(
-        ...JavaScriptBespoke.handle_commonjs_require(node, source_code),
-        ...JavaScriptBespoke.handle_dynamic_imports(node, source_code)
-      );
-      break;
-      
-    case 'typescript':
-      // Handle namespace declarations and export =
-      bespoke_imports.push(
-        ...TypeScriptBespoke.handle_namespace_declarations(node, source_code)
-      );
-      
-      // Handle ambient modules
-      const ambient_modules = TypeScriptBespoke.handle_ambient_modules(node, source_code);
-      // Convert ambient modules to namespace imports
-      for (const [module_name] of ambient_modules) {
-        bespoke_imports.push({
-          namespace_name: module_name,
-          source_module: module_name,
-          is_namespace: true,
-          members: undefined
-        });
-      }
-      break;
-      
-    case 'python':
-      // Handle package imports
-      const file_system = {
-        exists: (path: string) => {
-          // Simple check - would need real file system access
-          return false;
-        }
-      };
-      bespoke_imports.push(
-        ...PythonBespoke.handle_package_imports(source_code, file_system)
-      );
-      break;
-      
-    case 'rust':
-      // Handle extern crate and complex use statements
-      bespoke_imports.push(
-        ...RustBespoke.handle_extern_crate(source_code),
-        ...RustBespoke.handle_complex_use_statements(source_code)
-      );
-      break;
-  }
-  
-  return bespoke_imports;
+  // Remove file extensions if present
+  return lastPart.replace(/\.(js|ts|py|rs)$/, '');
 }
 
 /**
- * Resolve all exports from a namespace
+ * Generic namespace member resolver using configuration
  */
-export function resolve_namespace_exports(
-  target_file: string,
+export function resolve_namespace_member_generic(
+  namespace: string,
+  member: string,
   context: NamespaceResolutionContext,
-  source_code?: string
-): Map<string, NamespaceExport> {
-  // Step 1: Get generic exports (~85%)
-  const generic_exports = get_namespace_exports_generic(target_file, context);
+  exports: Map<string, NamespaceExport>
+): Def | undefined {
+  const config = get_namespace_config(context.language);
   
-  // Step 2: Check if bespoke processing is needed
-  if (!source_code || !needs_bespoke_processing(source_code, context.language)) {
-    return generic_exports;
+  // Check if member exists in exports
+  const export_entry = exports.get(member);
+  if (!export_entry) {
+    return undefined;
   }
   
-  // Step 3: Apply bespoke handlers
-  apply_bespoke_export_handlers(
-    generic_exports,
-    context.language,
-    source_code
-  );
+  // Check visibility rules
+  if (!is_member_visible_generic(member, config)) {
+    return undefined;
+  }
   
-  return generic_exports;
+  // Handle re-export
+  if (is_reexport(export_entry)) {
+    return resolve_reexport_generic(export_entry, context, config);
+  }
+  
+  // Return the definition
+  return export_entry as Def;
 }
 
 /**
- * Apply bespoke export handlers to augment exports
+ * Check if a member is visible based on configuration
  */
-function apply_bespoke_export_handlers(
-  exports: Map<string, NamespaceExport>,
-  language: Language,
-  source_code: string
-): void {
-  switch (language) {
-    case 'javascript':
-      // Handle module.exports spreading
-      JavaScriptBespoke.handle_module_exports_spreading(exports, source_code);
-      break;
-      
-    case 'typescript':
-      // Handle export = syntax
-      TypeScriptBespoke.handle_export_equals(exports, source_code);
-      break;
-      
-    case 'python':
-      // Handle __all__ export list
-      PythonBespoke.handle_all_exports(exports, source_code);
-      break;
-      
-    case 'rust':
-      // Rust visibility is handled in generic processor
-      // Additional handling could go here
-      break;
-  }
-}
-
-/**
- * Check if a definition is exported (now uses config)
- */
-function is_exported_definition(def: Def, language: Language): boolean {
-  const config = get_namespace_config(language);
-  
-  // Explicit export
-  if (def.is_exported === true) {
-    return true;
-  }
-  
-  // Check visibility rules from configuration
-  if (config.visibility_rules.default_public) {
-    // Check for private prefix
-    if (config.visibility_rules.private_prefix && 
-        def.name.startsWith(config.visibility_rules.private_prefix)) {
+function is_member_visible_generic(
+  member: string,
+  config: NamespaceLanguageConfig
+): boolean {
+  // Check private prefix
+  if (config.visibility_rules.private_prefix) {
+    if (member.startsWith(config.visibility_rules.private_prefix)) {
       return false;
     }
+  }
+  
+  // If not private, it's visible
+  return true;
+}
+
+/**
+ * Check if an export is a re-export
+ */
+function is_reexport(exp: NamespaceExport): exp is { is_namespace_reexport: true; target_module: string } {
+  return 'is_namespace_reexport' in exp && exp.is_namespace_reexport === true;
+}
+
+/**
+ * Resolve a re-exported member
+ */
+function resolve_reexport_generic(
+  reexport: { is_namespace_reexport: true; target_module: string },
+  context: NamespaceResolutionContext,
+  config: NamespaceLanguageConfig
+): Def | undefined {
+  if (!config.reexport_patterns.follow_chains) {
+    return undefined;
+  }
+  
+  // TODO: Implement re-export chain following
+  // This would require loading the target module and resolving from there
+  return undefined;
+}
+
+/**
+ * Get namespace exports using configuration
+ */
+export function get_namespace_exports_generic(
+  target_file: string,
+  context: NamespaceResolutionContext
+): Map<string, NamespaceExport> {
+  const exports = new Map<string, NamespaceExport>();
+  const config = get_namespace_config(context.language);
+  
+  // Get file analysis
+  const file_graph = context.config.get_file_graph?.(target_file);
+  if (!file_graph) {
+    return exports;
+  }
+  
+  // Process definitions that are exported
+  for (const def of file_graph.defs) {
+    // Check if this definition is exported (simplified check)
+    if (is_exported_definition(def, config)) {
+      exports.set(def.name, def);
+    }
+  }
+  
+  // TODO: Handle re-exports
+  // TODO: Handle export lists (__all__ in Python)
+  
+  return exports;
+}
+
+/**
+ * Check if a definition is exported
+ */
+function is_exported_definition(
+  def: Def,
+  config: NamespaceLanguageConfig
+): boolean {
+  // Check for private prefix first (applies to all languages that have it)
+  if (config.visibility_rules.private_prefix && 
+      def.name.startsWith(config.visibility_rules.private_prefix)) {
+    return false;
+  }
+  
+  // Explicit export flag always takes precedence
+  if (def.is_exported !== undefined) {
+    return def.is_exported;
+  }
+  
+  // In languages with default public visibility, all non-private top-level defs are exported
+  if (config.visibility_rules.default_public) {
+    return true;
+  }
+  
+  // For languages with explicit exports, default to false
+  return false;
+}
+
+/**
+ * Parse qualified member access (e.g., ns.member.submember)
+ */
+export function parse_qualified_access_generic(
+  qualified_name: string,
+  config: NamespaceLanguageConfig
+): { namespace: string; members: string[] } {
+  const separators = [config.member_access.separator];
+  if (config.member_access.alt_separators) {
+    separators.push(...config.member_access.alt_separators);
+  }
+  
+  // Create regex pattern for any separator
+  const sep_pattern = separators.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+  const parts = qualified_name.split(new RegExp(sep_pattern));
+  
+  if (parts.length < 2) {
+    return { namespace: qualified_name, members: [] };
+  }
+  
+  return {
+    namespace: parts[0],
+    members: parts.slice(1)
+  };
+}
+
+/**
+ * Check if processing needs bespoke handler
+ */
+export function needs_bespoke_processing(
+  source_code: string,
+  language: Language
+): boolean {
+  const config = get_namespace_config(language);
+  
+  // Quick checks for patterns that need bespoke handling
+  if (config.features.has_commonjs && 
+      (source_code.includes('module.exports') ||
+       source_code.includes('exports.') ||
+       source_code.includes('require('))) {
+    return true;
+  }
+  
+  if (config.features.has_dynamic_imports && source_code.includes('import(')) {
+    return true;
+  }
+  
+  if (config.features.has_namespace_declarations && 
+      (source_code.includes('namespace ') || source_code.includes('module '))) {
+    return true;
+  }
+  
+  if (config.features.has_packages && source_code.includes('__init__')) {
     return true;
   }
   
@@ -308,271 +319,51 @@ function is_exported_definition(def: Def, language: Language): boolean {
 }
 
 /**
- * Find re-exported namespaces in the target file
+ * Merge generic and bespoke namespace results
  */
-function find_reexported_namespaces(
-  target_graph: ScopeGraph,
-  exports: Map<string, NamespaceExport>,
-  context: NamespaceResolutionContext
-): void {
-  const imports = target_graph.getAllImports();
-  const refs = target_graph.getNodes<Ref>('reference');
+export function merge_namespace_results(
+  generic_results: NamespaceImportInfo[],
+  bespoke_results: NamespaceImportInfo[]
+): NamespaceImportInfo[] {
+  const merged: NamespaceImportInfo[] = [];
+  const seen = new Map<string, NamespaceImportInfo>();
+  
+  // First add generic results
+  for (const result of generic_results) {
+    const key = `${result.namespace_name}:${result.source_module}`;
+    seen.set(key, result);
+  }
+  
+  // Override with bespoke results (they take precedence)
+  for (const result of bespoke_results) {
+    const key = `${result.namespace_name}:${result.source_module}`;
+    seen.set(key, result); // This will override generic if duplicate
+  }
+  
+  // Add all results to merged array
+  for (const result of seen.values()) {
+    merged.push(result);
+  }
+  
+  return merged;
+}
+
+/**
+ * Get statistics about namespace resolution
+ */
+export function get_namespace_stats(imports: NamespaceImportInfo[]): {
+  total: number;
+  by_source: Map<string, number>;
+} {
+  const stats = {
+    total: imports.length,
+    by_source: new Map<string, number>()
+  };
   
   for (const imp of imports) {
-    if (is_namespace_import(imp, context.language)) {
-      // Check if this namespace is re-exported
-      const export_ref = refs.find(ref => 
-        ref.name === imp.name &&
-        is_in_export_context(ref, target_graph)
-      );
-      
-      if (export_ref) {
-        exports.set((imp as any).name, {
-          is_namespace_reexport: true,
-          target_module: imp.source || ''
-        });
-      }
-    }
-  }
-}
-
-/**
- * Check if a reference is in an export context
- */
-function is_in_export_context(ref: Ref, graph: ScopeGraph): boolean {
-  // TODO: Integration with export_detection
-  // This requires analyzing the AST to check if the reference is in an export statement
-  // For now, return false as placeholder
-  return false;
-}
-
-/**
- * Resolve a namespace member reference using orchestrator pattern
- */
-export function resolve_namespace_member(
-  namespace_name: string,
-  member_name: string,
-  context_def: Def,
-  context: NamespaceResolutionContext,
-  source_code?: string
-): Def | undefined {
-  const { config } = context;
-  
-  // Find the namespace import in the current file
-  const imports = config.get_imports_with_definitions(context_def.file_path);
-  const namespace_import = imports.find(i => 
-    i.local_name === namespace_name && 
-    is_namespace_import(i.import_statement as any, context.language)
-  );
-  
-  if (!namespace_import) {
-    if (config.debug) {
-      console.log(`No namespace import found for ${namespace_name}`);
-    }
-    return undefined;
-  }
-
-  // Get exports from the target module
-  const target_file = namespace_import.import_statement.source;
-  if (!target_file) {
-    if (config.debug) {
-      console.log(`No target file found for ${namespace_name}`);
-    }
-    return undefined;
-  }
-
-  const exports = resolve_namespace_exports(
-    target_file,
-    { ...context, file_path: target_file },
-    source_code
-  );
-  
-  // Step 1: Try generic resolution (~85%)
-  const generic_result = resolve_namespace_member_generic(
-    namespace_name,
-    member_name,
-    context,
-    exports
-  );
-  
-  if (generic_result) {
-    return generic_result;
+    const count = stats.by_source.get(imp.source_module) || 0;
+    stats.by_source.set(imp.source_module, count + 1);
   }
   
-  // Step 2: Apply bespoke resolution if needed
-  if (source_code && needs_bespoke_processing(source_code, context.language)) {
-    return resolve_namespace_member_bespoke(
-      namespace_name,
-      member_name,
-      context_def,
-      context,
-      source_code
-    );
-  }
-  
-  return undefined;
-}
-
-/**
- * Resolve namespace member using bespoke handlers
- */
-function resolve_namespace_member_bespoke(
-  namespace_name: string,
-  member_name: string,
-  context_def: Def,
-  context: NamespaceResolutionContext,
-  source_code: string
-): Def | undefined {
-  switch (context.language) {
-    case 'javascript':
-      // Check for prototype extensions
-      const proto_members = JavaScriptBespoke.handle_prototype_extensions(
-        namespace_name,
-        source_code
-      );
-      if (proto_members.includes(member_name)) {
-        // Create a synthetic definition for the prototype member
-        return {
-          name: member_name,
-          file_path: context_def.file_path,
-          line: 0,
-          column: 0,
-          symbol_kind: 'function'
-        } as Def;
-      }
-      break;
-      
-    case 'typescript':
-      // Check for namespace/value merging
-      const merge_info = TypeScriptBespoke.handle_namespace_value_merging(
-        namespace_name,
-        source_code
-      );
-      if (merge_info.is_merged) {
-        // Additional resolution logic for merged namespaces
-        // This would need more implementation
-      }
-      break;
-      
-    case 'python':
-      // Check for dynamic attribute access
-      const dynamic_members = PythonBespoke.handle_dynamic_attribute_access(
-        namespace_name,
-        source_code
-      );
-      if (dynamic_members.includes(member_name)) {
-        // Create a synthetic definition for the dynamic member
-        return {
-          name: member_name,
-          file_path: context_def.file_path,
-          line: 0,
-          column: 0,
-          symbol_kind: 'variable'
-        } as Def;
-      }
-      break;
-      
-    case 'rust':
-      // Handle path keywords resolution
-      const resolved_path = RustBespoke.handle_path_keywords(
-        `${namespace_name}::${member_name}`,
-        context_def.file_path
-      );
-      // Would need additional logic to resolve the path
-      break;
-  }
-  
-  return undefined;
-}
-
-/**
- * Resolve nested namespace path (e.g., ns1.ns2.member)
- */
-export function resolve_nested_namespace(
-  namespace_path: string[],
-  member_name: string,
-  context_def: Def,
-  context: NamespaceResolutionContext
-): Def | undefined {
-  if (namespace_path.length === 0) {
-    return undefined;
-  }
-  
-  // TODO: Integration with symbol_resolution for qualified names
-  // When available, use:
-  // return context.config.symbol_resolver?.resolve_qualified_name([...namespace_path, member_name]);
-  
-  // For now, implement step-by-step resolution
-  let current_def: Def | undefined = context_def;
-  let current_namespace = namespace_path[0];
-  
-  // Navigate through nested namespaces
-  for (let i = 1; i < namespace_path.length && current_def; i++) {
-    current_def = resolve_namespace_member(
-      current_namespace,
-      namespace_path[i],
-      current_def,
-      context
-    );
-    current_namespace = namespace_path[i];
-  }
-  
-  // Finally resolve the actual member
-  if (current_def) {
-    return resolve_namespace_member(
-      current_namespace,
-      member_name,
-      current_def,
-      context
-    );
-  }
-  
-  return undefined;
-}
-
-/**
- * Get all available members in a namespace
- */
-export function get_namespace_members(
-  namespace_name: string,
-  context_def: Def,
-  context: NamespaceResolutionContext
-): string[] {
-  const { config } = context;
-  
-  // Find the namespace import
-  const imports = config.get_imports_with_definitions(context_def.file_path);
-  const namespace_import = imports.find(i => 
-    i.local_name === namespace_name && 
-    is_namespace_import(i.import_statement as any, context.language)
-  );
-  
-  if (!namespace_import) {
-    return [];
-  }
-  
-  const target_file = namespace_import.import_statement.source;
-  if (!target_file) {
-    return [];
-  }
-  
-  const exports = resolve_namespace_exports(
-    target_file,
-    { ...context, file_path: target_file }
-  );
-  
-  return Array.from(exports.keys());
-}
-
-/**
- * Check if a namespace has a specific member
- */
-export function namespace_has_member(
-  namespace_name: string,
-  member_name: string,
-  context_def: Def,
-  context: NamespaceResolutionContext
-): boolean {
-  const members = get_namespace_members(namespace_name, context_def, context);
-  return members.includes(member_name);
+  return stats;
 }

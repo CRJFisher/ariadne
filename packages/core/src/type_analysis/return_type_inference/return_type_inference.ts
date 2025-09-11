@@ -6,7 +6,7 @@
  * bespoke handlers.
  */
 
-import { Def, Language } from '@ariadnejs/types';
+import { Definition, Language } from '@ariadnejs/types';
 import { SyntaxNode } from 'tree-sitter';
 import { 
   get_return_type_config, 
@@ -37,6 +37,17 @@ export interface ReturnTypeInfo {
 }
 
 /**
+ * Internal extended definition for return type analysis
+ */
+export interface ExtendedDefinition extends Definition {
+  symbol_kind?: string;
+  range?: {
+    start: { row: number; column: number };
+    end: { row: number; column: number };
+  };
+}
+
+/**
  * Analysis of return statements in a function
  */
 export interface ReturnAnalysis {
@@ -62,7 +73,7 @@ export interface ReturnTypeContext {
  * Analyze a function definition to infer its return type (generic processor)
  */
 export function analyze_return_type_generic(
-  def: Def,
+  def: ExtendedDefinition,
   func_node: SyntaxNode,
   context: ReturnTypeContext
 ): ReturnTypeInfo | undefined {
@@ -74,7 +85,7 @@ export function analyze_return_type_generic(
   const config = get_return_type_config(context.language);
 
   if (context.debug) {
-    console.log(`\n[${RETURN_TYPE_CONTEXT.module}] Analyzing ${def.name} at ${def.range.start.row}:${def.range.start.column}`);
+    console.log(`\n[${RETURN_TYPE_CONTEXT.module}] Analyzing ${def.name} at ${def.range?.start.row || 0}:${def.range?.start.column || 0}`);
   }
 
   // Check for explicit return type annotation using config
@@ -283,7 +294,7 @@ function infer_expression_type_generic(
  * Check for special patterns using configuration (generic)
  */
 function check_special_patterns_generic(
-  def: Def,
+  def: Definition,
   func_node: SyntaxNode,
   context: ReturnTypeContext,
   config: ReturnTypeLanguageConfig
@@ -324,7 +335,7 @@ function check_special_patterns_generic(
  * Get default return type using configuration (generic)
  */
 function get_default_return_type_generic(
-  def: Def,
+  def: Definition,
   func_node: SyntaxNode,
   context: ReturnTypeContext,
   config: ReturnTypeLanguageConfig
@@ -568,4 +579,44 @@ export function is_constructor_name(name: string): boolean {
 export function get_void_type(language: Language): string {
   const config = get_return_type_config(language);
   return config.defaults.void_type;
+}
+
+/**
+ * Get a descriptive string for a return type
+ */
+export function get_return_type_description(returnType: ReturnTypeInfo, language: Language): string {
+  let description = returnType.type_name;
+  
+  if (returnType.confidence !== 'explicit') {
+    description += ' (inferred)';
+  }
+  
+  return description;
+}
+
+/**
+ * Check if a return type represents an async/Promise type
+ */
+export function is_async_return_type(returnType: ReturnTypeInfo, language: Language): boolean {
+  const typeName = returnType.type_name.toLowerCase();
+  
+  // Common async patterns across languages
+  return typeName.includes('promise') || 
+         typeName.includes('future') || 
+         typeName.includes('coroutine') ||
+         typeName.includes('async') ||
+         typeName.includes('awaitable');
+}
+
+/**
+ * Check if a return type represents a generator type
+ */
+export function is_generator_return_type(returnType: ReturnTypeInfo, language: Language): boolean {
+  const typeName = returnType.type_name.toLowerCase();
+  
+  // Common generator patterns across languages
+  return typeName.includes('generator') || 
+         typeName.includes('iterator') || 
+         typeName.includes('iterable') ||
+         typeName.startsWith('iter<');
 }

@@ -19,7 +19,7 @@ import {
   extract_method_generic,
   extract_property_generic,
   walk_tree
-} from './class_detection.generic';
+} from './class_detection';
 
 // Language configurations
 import { get_language_config } from './language_configs';
@@ -30,22 +30,22 @@ import {
   enhance_javascript_class,
   enhance_javascript_method,
   enhance_javascript_property
-} from './class_detection.javascript.bespoke';
+} from './class_detection.javascript';
 
 import { 
   enhance_typescript_class,
   enhance_typescript_method,
   enhance_typescript_property
-} from './class_detection.typescript.bespoke';
+} from './class_detection.typescript';
 
 import { 
   enhance_python_class,
   enhance_python_method,
   enhance_python_property,
   handle_decorated_definition
-} from './class_detection.python.bespoke';
+} from './class_detection.python';
 
-import { process_rust_structs } from './class_detection.rust.bespoke';
+import { process_rust_structs } from './class_detection.rust';
 
 export interface ClassDetectionContext {
   source_code: string;

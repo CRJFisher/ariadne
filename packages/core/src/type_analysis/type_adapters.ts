@@ -15,12 +15,13 @@ import {
   VariableName,
   ImportInfo,
   ExportInfo,
+  TypeKind,
 } from "@ariadnejs/types";
 import { TypeInfo } from "./type_tracking";
 import {
   create_readonly_array,
   create_readonly_map,
-} from "@ariadnejs/types/src/immutable";
+} from "@ariadnejs/types";
 
 /**
  * Convert internal ImportInfo to public ImportStatement
@@ -68,12 +69,32 @@ export function convert_export_info_to_statement(
   const location = export_info.location;
 
   return {
-    symbol_name, // Changed from symbol_names array to single symbol_name
+    symbol_name: symbol_name || ("" as SymbolName), // Provide default empty string
     location,
-    is_default: export_info.kind === "default",
-    is_type_export: export_info.is_type_only,
+    is_default: export_info.kind === "default" || false,
+    is_type_export: export_info.is_type_only || false,
     source: export_info.source as ModulePath,
+    export_name: export_info.name as any || "",
   };
+}
+
+/**
+ * Map internal type_kind to public TypeKind enum
+ */
+function map_type_kind(type_kind?: string): TypeKind {
+  switch (type_kind) {
+    case "class":
+      return TypeKind.CLASS;
+    case "interface":
+      return TypeKind.INTERFACE;
+    case "enum":
+      return TypeKind.ENUM;
+    case "trait":
+      return TypeKind.TRAIT;
+    default:
+      // For primitive, object, function, array, unknown, or undefined
+      return TypeKind.TYPE;
+  }
 }
 
 /**
@@ -84,9 +105,16 @@ export function convert_type_info_array_to_single(
 ): PublicTypeInfo {
   if (types.length === 0) {
     return {
-      type: "unknown",
-      nullable: false,
-      is_collection: false,
+      type_name: "unknown" as any,
+      type_kind: TypeKind.TYPE,
+      location: {
+        file_path: "" as any,
+        line: 0,
+        column: 0,
+        end_line: 0,
+        end_column: 0,
+      },
+      confidence: "assumed",
     };
   }
 
@@ -94,22 +122,28 @@ export function convert_type_info_array_to_single(
   if (types.length === 1) {
     const type = types[0];
     return {
-      type: type.type || "unknown",
-      nullable: type.nullable || false,
-      is_collection: type.is_collection || false,
-      element_type: type.element_type,
-      type_parameters: type.type_parameters,
+      type_name: (type.type_name || "unknown") as any,
+      type_kind: map_type_kind(type.type_kind),
+      location: type.location,
+      confidence: type.confidence === "explicit" || type.confidence === "inferred" || type.confidence === "assumed" 
+        ? type.confidence 
+        : "assumed",
+      source: type.source,
     };
   }
 
   // Multiple types - create union
-  const unique_types = [...new Set(types.map((t) => t.type || "unknown"))];
+  const unique_types = [...new Set(types.map((t) => t.type_name || "unknown"))];
   const union_type = unique_types.join(" | ");
 
+  // Use first type's location as representative
+  const first_type = types[0];
+
   return {
-    type: union_type,
-    nullable: types.some((t) => t.nullable || false),
-    is_collection: types.some((t) => t.is_collection || false),
+    type_name: union_type as any,
+    type_kind: TypeKind.TYPE,
+    location: first_type.location,
+    confidence: "inferred",
   };
 }
 

@@ -1,110 +1,141 @@
 /**
- * TypeScript-specific generic type resolution
+ * TypeScript-specific bespoke generic features
  * 
- * Handles TypeScript generics, utility types, and type parameter extraction
+ * Handles TypeScript utility types and mapped types that cannot be genericized
  */
 
-import { SyntaxNode } from 'tree-sitter';
-import {
-  GenericParameter,
-  ResolvedGeneric
-} from '@ariadnejs/types';
-import {
-  GenericContext,
-  parse_generic_type,
-  resolve_generic_type
-} from './generic_resolution';
-import { TypeRegistry } from '../type_registry';
+import { ResolvedGeneric } from '@ariadnejs/types';
+import { GenericContext, resolve_generic_type, parse_generic_type } from './generic_resolution';
 
 /**
- * Extract TypeScript generic parameters from AST node
+ * TypeScript utility type handlers
+ * These use the resolved arguments to create proper utility type syntax
  */
-export function extract_typescript_generics(
-  node: SyntaxNode,
-  source_code: string
-): GenericParameter[] {
-  const params: GenericParameter[] = [];
-  
-  // Look for type_parameters node
-  const type_params = node.childForFieldName('type_parameters');
-  if (!type_params) return params;
-  
-  // Iterate through type parameters
-  for (let i = 0; i < type_params.childCount; i++) {
-    const param = type_params.child(i);
-    if (param?.type === 'type_parameter') {
-      const name = param.childForFieldName('name');
-      const constraint = param.childForFieldName('constraint');
-      const default_type = param.childForFieldName('default');
-      
-      params.push({
-        name: name ? source_code.substring(name.startIndex, name.endIndex) : '',
-        constraint: constraint ? source_code.substring(constraint.startIndex, constraint.endIndex) : undefined,
-        default: default_type ? source_code.substring(default_type.startIndex, default_type.endIndex) : undefined
-      });
-    }
-  }
-  
-  return params;
-}
+const utility_type_handlers: Record<string, (args: string[]) => string> = {
+  'Partial': (args) => `Partial<${args.join(', ')}>`,
+  'Required': (args) => `Required<${args.join(', ')}>`,
+  'Readonly': (args) => `Readonly<${args.join(', ')}>`,
+  'Pick': (args) => `Pick<${args.join(', ')}>`,
+  'Omit': (args) => `Omit<${args.join(', ')}>`,
+  'Record': (args) => `Record<${args.join(', ')}>`,
+  'ReturnType': (args) => `ReturnType<${args.join(', ')}>`,
+  'InstanceType': (args) => `InstanceType<${args.join(', ')}>`,
+  'NonNullable': (args) => `NonNullable<${args.join(', ')}>`,
+  'Extract': (args) => `Extract<${args.join(', ')}>`,
+  'Exclude': (args) => `Exclude<${args.join(', ')}>`,
+  'Parameters': (args) => `Parameters<${args.join(', ')}>`,
+  'ConstructorParameters': (args) => `ConstructorParameters<${args.join(', ')}>`,
+  'ThisParameterType': (args) => `ThisParameterType<${args.join(', ')}>`,
+  'OmitThisParameter': (args) => `OmitThisParameter<${args.join(', ')}>`,
+  'ThisType': (args) => `ThisType<${args.join(', ')}>`
+};
 
 /**
- * TypeScript-specific generic resolution with utility types
+ * Resolve TypeScript-specific utility types
+ * Returns null if not a utility type
  */
-export function resolve_typescript_generic(
+export function resolve_typescript_utility_type(
   type_ref: string,
-  context: GenericContext,
-  type_registry: TypeRegistry
-): ResolvedGeneric {
-  // Handle TypeScript utility types
-  const utility_types: Record<string, (args: string[]) => string> = {
-    'Partial': (args) => `{ [K in keyof ${args[0]}]?: ${args[0]}[K] }`,
-    'Required': (args) => `{ [K in keyof ${args[0]}]-?: ${args[0]}[K] }`,
-    'Readonly': (args) => `{ readonly [K in keyof ${args[0]}]: ${args[0]}[K] }`,
-    'Pick': (args) => `{ [K in ${args[1]}]: ${args[0]}[K] }`,
-    'Omit': (args) => `{ [K in Exclude<keyof ${args[0]}, ${args[1]}>]: ${args[0]}[K] }`,
-    'Record': (args) => `{ [K in ${args[0]}]: ${args[1]} }`,
-    'ReturnType': (args) => `ReturnType<${args[0]}>`,
-    'InstanceType': (args) => `InstanceType<${args[0]}>`,
-    'NonNullable': (args) => `${args[0]} & {}`
-  };
-  
+  context: GenericContext
+): ResolvedGeneric | null {
   const parsed = parse_generic_type(type_ref);
-  if (parsed && utility_types[parsed.base_type]) {
-    const resolved_args = parsed.type_arguments.map(arg => {
-      const resolved = resolve_generic_type(arg, context);
-      return resolved.resolved_type;
-    });
-    
-    const resolved_type = utility_types[parsed.base_type](resolved_args);
-    
-    return {
-      original_type: type_ref,
-      resolved_type,
-      type_substitutions: new Map(),
-      confidence: 'exact'
-    };
-  }
+  if (!parsed) return null;
   
-  // Fall back to standard resolution
-  return resolve_generic_type(type_ref, context);
+  const handler = utility_type_handlers[parsed.base_type];
+  if (!handler) return null;
+  
+  // Resolve arguments first
+  const type_substitutions = new Map<string, string>();
+  let all_resolved = true;
+  
+  const resolved_args = parsed.type_arguments.map(arg => {
+    const resolved = resolve_generic_type(arg, context);
+    // Merge substitutions
+    resolved.type_substitutions.forEach((value, key) => {
+      type_substitutions.set(key, value);
+    });
+    // Check if this argument was fully resolved
+    if (resolved.confidence === 'partial') {
+      all_resolved = false;
+    }
+    return resolved.resolved_type;
+  });
+  
+  const resolved_type = handler(resolved_args);
+  
+  return {
+    original_type: type_ref,
+    resolved_type,
+    type_substitutions,
+    confidence: all_resolved ? 'exact' : 'partial'
+  };
 }
 
 /**
- * Check if a type name is a TypeScript generic parameter
+ * Handle TypeScript conditional types
+ * e.g., T extends U ? X : Y
  */
-export function is_typescript_generic(type_name: string): boolean {
-  // Single uppercase letters are typically generic parameters
-  if (/^[A-Z]$/.test(type_name)) return true;
+export function resolve_typescript_conditional(
+  type_ref: string,
+  context: GenericContext
+): ResolvedGeneric | null {
+  const conditional_match = type_ref.match(/^(.+)\s+extends\s+(.+)\s+\?\s+(.+)\s+:\s+(.+)$/);
+  if (!conditional_match) return null;
   
-  // Common generic parameter patterns
-  const generic_patterns = [
-    /^T[A-Z]?.*$/,  // T, TKey, TValue, etc.
-    /^K$/,          // K for key
-    /^V$/,          // V for value
-    /^E$/,          // E for element
-    /^R$/,          // R for return
-  ];
+  const [_, check_type, extends_type, true_type, false_type] = conditional_match;
   
-  return generic_patterns.some(pattern => pattern.test(type_name));
+  // For now, return a simplified representation
+  // Full conditional type evaluation would require runtime type information
+  return {
+    original_type: type_ref,
+    resolved_type: `(${check_type} extends ${extends_type} ? ${true_type} : ${false_type})`,
+    type_substitutions: new Map(),
+    confidence: 'partial'
+  };
+}
+
+/**
+ * Handle TypeScript mapped types
+ * e.g., { [K in keyof T]: T[K] }
+ */
+export function resolve_typescript_mapped_type(
+  type_ref: string,
+  context: GenericContext
+): ResolvedGeneric | null {
+  const mapped_match = type_ref.match(/^\{\s*\[(\w+)\s+in\s+(.+)\](\?)?:\s+(.+)\s*\}$/);
+  if (!mapped_match) return null;
+  
+  const [_, key_name, key_constraint, optional, value_type] = mapped_match;
+  
+  return {
+    original_type: type_ref,
+    resolved_type: type_ref, // Keep as-is, it's already a mapped type expression
+    type_substitutions: new Map(),
+    confidence: 'exact'
+  };
+}
+
+/**
+ * Handle TypeScript template literal types
+ * e.g., `prefix-${T}`
+ */
+export function resolve_typescript_template_literal(
+  type_ref: string,
+  context: GenericContext
+): ResolvedGeneric | null {
+  if (!type_ref.startsWith('`') || !type_ref.endsWith('`')) return null;
+  
+  // Extract template parts
+  const template_content = type_ref.slice(1, -1);
+  const resolved = template_content.replace(/\$\{([^}]+)\}/g, (match, type) => {
+    const resolved_type = resolve_generic_type(type, context);
+    return `\${${resolved_type.resolved_type}}`;
+  });
+  
+  return {
+    original_type: type_ref,
+    resolved_type: `\`${resolved}\``,
+    type_substitutions: new Map(),
+    confidence: 'exact'
+  };
 }

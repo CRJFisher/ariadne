@@ -12,7 +12,9 @@
   "scripts": {
     "build": "tsc && npm run copy-scm-files",
     "copy-scm-files": "cp src/languages/javascript/scopes.scm dist/languages/javascript/ && cp src/languages/typescript/scopes.scm dist/languages/typescript/ && cp src/languages/python/scopes.scm dist/languages/python/ && cp src/languages/rust/scopes.scm dist/languages/rust/",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:with-types": "npm run typecheck && npm test",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "clean": "rm -rf dist",

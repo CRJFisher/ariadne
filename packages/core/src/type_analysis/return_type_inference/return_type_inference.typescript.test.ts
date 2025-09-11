@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { get_language_parser } from '../../scope_queries/loader';
-import { Language, Def } from '@ariadnejs/types';
+import { Language } from '@ariadnejs/types';
 import { 
   infer_function_return_type,
   ReturnTypeContext 
 } from './index';
+import { ExtendedDefinition } from './return_type_inference';
 import { SyntaxNode } from 'tree-sitter';
 
 describe('TypeScript Bespoke Return Type Handlers', () => {
@@ -281,15 +282,20 @@ function findFunction(root: SyntaxNode, name: string): SyntaxNode | undefined {
   return traverse(root);
 }
 
-function createDef(name: string, kind: 'function' | 'method'): Def {
+function createDef(name: string, kind: 'function' | 'method'): ExtendedDefinition {
   return {
     name,
+    location: {
+      file_path: 'test.ts' as any,
+      line: 0,
+      column: 0,
+      end_line: 10,
+      end_column: 0
+    },
     symbol_kind: kind,
     range: {
       start: { row: 0, column: 0 },
       end: { row: 10, column: 0 }
-    },
-    parent_name: undefined,
-    parent_kind: undefined
+    }
   };
 }

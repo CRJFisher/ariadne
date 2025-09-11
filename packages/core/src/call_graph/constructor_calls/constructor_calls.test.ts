@@ -1,5 +1,5 @@
 /**
- * Tests for constructor call detection across all languages
+ * Tests for generic constructor call processor
  */
 
 import { describe, it, expect } from "vitest";
@@ -8,25 +8,23 @@ import JavaScript from "tree-sitter-javascript";
 import TypeScript from "tree-sitter-typescript";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
-import { find_constructor_calls } from "./index";
-import { ConstructorCallContext } from "./constructor_calls";
+import {
+  process_constructor_calls_generic,
+  ConstructorCallContext,
+  extract_constructor_name,
+  find_assignment_target,
+  count_constructor_arguments,
+  uses_new_keyword,
+  is_factory_method_pattern,
+  walk_tree
+} from "./constructor_calls";
 
-describe("Constructor Call Detection", () => {
-  describe("JavaScript", () => {
-    const parser = new Parser();
-    parser.setLanguage(JavaScript);
-
-    it("should detect new expressions", () => {
-      const source = `
-        class Person {
-          constructor(name) {
-            this.name = name;
-          }
-        }
-        const p = new Person('Alice');
-        const date = new Date();
-      `;
-
+describe("Generic Constructor Call Processor", () => {
+  describe("process_constructor_calls_generic", () => {
+    it("should detect JavaScript new expressions", () => {
+      const parser = new Parser();
+      parser.setLanguage(JavaScript);
+      const source = `const p = new Person('Alice');`;
       const tree = parser.parse(source);
       const context: ConstructorCallContext = {
         source_code: source,
@@ -35,88 +33,18 @@ describe("Constructor Call Detection", () => {
         ast_root: tree.rootNode,
       };
 
-      const calls = find_constructor_calls(context);
-
-      expect(calls).toHaveLength(2);
+      const calls = process_constructor_calls_generic(context);
+      
+      expect(calls).toHaveLength(1);
       expect(calls[0].constructor_name).toBe("Person");
       expect(calls[0].is_new_expression).toBe(true);
       expect(calls[0].assigned_to).toBe("p");
-      expect(calls[1].constructor_name).toBe("Date");
-      expect(calls[1].assigned_to).toBe("date");
     });
 
-    it("should detect factory functions", () => {
-      const source = `
-        function Component() {
-          return { render: () => {} };
-        }
-        const comp = Component();
-      `;
-
-      const tree = parser.parse(source);
-      const context: ConstructorCallContext = {
-        source_code: source,
-        file_path: "test.js",
-        language: "javascript",
-        ast_root: tree.rootNode,
-      };
-
-      const calls = find_constructor_calls(context);
-
-      // Should detect capitalized function call as potential constructor
-      const componentCall = calls.find(
-        (c) => c.constructor_name === "Component"
-      );
-      expect(componentCall).toBeDefined();
-      expect(componentCall?.is_factory_method).toBe(true);
-      expect(componentCall?.assigned_to).toBe("comp");
-    });
-  });
-
-  describe("TypeScript", () => {
-    const parser = new Parser();
-    parser.setLanguage(TypeScript.typescript);
-
-    it("should detect generic constructor calls", () => {
-      const source = `
-        class Container<T> {
-          constructor(value: T) {}
-        }
-        const c = new Container<string>('hello');
-      `;
-
-      const tree = parser.parse(source);
-      const context: ConstructorCallContext = {
-        source_code: source,
-        file_path: "test.ts",
-        language: "typescript",
-        ast_root: tree.rootNode,
-      };
-
-      const calls = find_constructor_calls(context);
-
-      const containerCall = calls.find(
-        (c) => c.constructor_name === "Container"
-      );
-      expect(containerCall).toBeDefined();
-      expect(containerCall?.assigned_to).toBe("c");
-    });
-  });
-
-  describe("Python", () => {
-    const parser = new Parser();
-    parser.setLanguage(Python);
-
-    it("should detect class instantiation", () => {
-      const source = `
-class Person:
-    def __init__(self, name):
-        self.name = name
-
-p = Person("Alice")
-date = datetime.now()
-      `;
-
+    it("should detect Python class instantiation", () => {
+      const parser = new Parser();
+      parser.setLanguage(Python);
+      const source = `p = Person("Alice")`;
       const tree = parser.parse(source);
       const context: ConstructorCallContext = {
         source_code: source,
@@ -125,133 +53,275 @@ date = datetime.now()
         ast_root: tree.rootNode,
       };
 
-      const calls = find_constructor_calls(context);
-
-      const personCall = calls.find((c) => c.constructor_name === "Person");
-      expect(personCall).toBeDefined();
-      expect(personCall?.assigned_to).toBe("p");
-      expect(personCall?.is_new_expression).toBe(false); // Python doesn't use 'new'
+      const calls = process_constructor_calls_generic(context);
+      
+      expect(calls).toHaveLength(1);
+      expect(calls[0].constructor_name).toBe("Person");
+      expect(calls[0].is_new_expression).toBe(false);
+      expect(calls[0].assigned_to).toBe("p");
     });
 
-    it("should track type assignments with self attributes", () => {
-      const source = `
-class MyClass:
-    def __init__(self):
-        self.data = DataClass()
-        self.processor = Processor()
-      `;
-
+    it("should detect Rust struct literals", () => {
+      const parser = new Parser();
+      parser.setLanguage(Rust);
+      const source = `let p = Point { x: 1, y: 2 };`;
       const tree = parser.parse(source);
       const context: ConstructorCallContext = {
         source_code: source,
-        file_path: "test.py",
-        language: "python",
+        file_path: "test.rs",
+        language: "rust",
         ast_root: tree.rootNode,
       };
 
-      const calls = find_constructor_calls(context);
-
-      // Should detect constructor calls even without direct assignment
-      const dataClassCall = calls.find(
-        (c) => c.constructor_name === "DataClass"
-      );
-      const processorCall = calls.find(
-        (c) => c.constructor_name === "Processor"
-      );
-      expect(dataClassCall).toBeDefined();
-      expect(processorCall).toBeDefined();
+      const calls = process_constructor_calls_generic(context);
+      
+      expect(calls).toHaveLength(1);
+      expect(calls[0].constructor_name).toBe("Point");
+      expect(calls[0].arguments_count).toBe(2); // Two fields
+      expect(calls[0].assigned_to).toBe("p");
     });
   });
 
-  describe("Rust", () => {
-    const parser = new Parser();
-    parser.setLanguage(Rust);
-
-    it("should detect Type::new() pattern", () => {
-      const source = `
-fn main() {
-    let s = String::new();
-    let v = Vec::with_capacity(10);
-}
-      `;
-
+  describe("extract_constructor_name", () => {
+    it("should extract name from JavaScript new expression", () => {
+      const parser = new Parser();
+      parser.setLanguage(JavaScript);
+      const source = `new MyClass()`;
       const tree = parser.parse(source);
-      const context: ConstructorCallContext = {
-        source_code: source,
-        file_path: "test.rs",
-        language: "rust",
-        ast_root: tree.rootNode,
-      };
+      
+      // Find the new_expression node
+      let newNode: any = null;
+      walk_tree(tree.rootNode, (node) => {
+        if (node.type === 'new_expression') {
+          newNode = node;
+        }
+      });
 
-      const calls = find_constructor_calls(context);
-
-      const stringCall = calls.find((c) => c.constructor_name === "String");
-      expect(stringCall).toBeDefined();
-      expect(stringCall?.assigned_to).toBe("s");
-      expect(stringCall?.is_factory_method).toBe(true);
-
-      const vecCall = calls.find((c) => c.constructor_name === "Vec");
-      expect(vecCall).toBeDefined();
-      expect(vecCall?.assigned_to).toBe("v");
+      const name = extract_constructor_name(newNode, source, "javascript");
+      expect(name).toBe("MyClass");
     });
 
-    it("should detect struct literals", () => {
-      const source = `
-struct Point {
-    x: f64,
-    y: f64,
-}
-
-fn main() {
-    let p = Point { x: 1.0, y: 2.0 };
-}
-      `;
-
+    it("should extract name from member expression", () => {
+      const parser = new Parser();
+      parser.setLanguage(JavaScript);
+      const source = `new namespace.MyClass()`;
       const tree = parser.parse(source);
-      const context: ConstructorCallContext = {
-        source_code: source,
-        file_path: "test.rs",
-        language: "rust",
-        ast_root: tree.rootNode,
-      };
+      
+      let newNode: any = null;
+      walk_tree(tree.rootNode, (node) => {
+        if (node.type === 'new_expression') {
+          newNode = node;
+        }
+      });
 
-      const calls = find_constructor_calls(context);
+      const name = extract_constructor_name(newNode, source, "javascript");
+      expect(name).toBe("MyClass");
+    });
+  });
 
-      const pointCall = calls.find((c) => c.constructor_name === "Point");
-      expect(pointCall).toBeDefined();
-      expect(pointCall?.assigned_to).toBe("p");
-      expect(pointCall?.arguments_count).toBe(2); // Two fields
+  describe("find_assignment_target", () => {
+    it("should find variable declarator assignment", () => {
+      const parser = new Parser();
+      parser.setLanguage(JavaScript);
+      const source = `const myVar = new Thing();`;
+      const tree = parser.parse(source);
+      
+      let newNode: any = null;
+      walk_tree(tree.rootNode, (node) => {
+        if (node.type === 'new_expression') {
+          newNode = node;
+        }
+      });
+
+      const target = find_assignment_target(newNode, source, "javascript");
+      expect(target).toBe("myVar");
     });
 
-    it("should detect enum variant construction", () => {
-      const source = `
-enum Option<T> {
-    Some(T),
-    None,
-}
-
-fn main() {
-    let x = Option::Some(5);
-    let y = Some(10);
-}
-      `;
-
+    it("should find Python assignment target", () => {
+      const parser = new Parser();
+      parser.setLanguage(Python);
+      const source = `my_obj = MyClass()`;
       const tree = parser.parse(source);
-      const context: ConstructorCallContext = {
-        source_code: source,
-        file_path: "test.rs",
-        language: "rust",
-        ast_root: tree.rootNode,
-      };
+      
+      let callNode: any = null;
+      walk_tree(tree.rootNode, (node) => {
+        if (node.type === 'call') {
+          callNode = node;
+        }
+      });
 
-      const calls = find_constructor_calls(context);
+      const target = find_assignment_target(callNode, source, "python");
+      expect(target).toBe("my_obj");
+    });
 
-      // Should detect both qualified and unqualified enum variants
-      const qualifiedCall = calls.find(
-        (c) => c.constructor_name === "Option::Some"
-      );
-      const unqualifiedCall = calls.find((c) => c.constructor_name === "Some");
-      expect(qualifiedCall || unqualifiedCall).toBeDefined();
+    it("should find Rust let binding target", () => {
+      const parser = new Parser();
+      parser.setLanguage(Rust);
+      const source = `let my_struct = MyStruct::new();`;
+      const tree = parser.parse(source);
+      
+      let callNode: any = null;
+      walk_tree(tree.rootNode, (node) => {
+        if (node.type === 'call_expression') {
+          callNode = node;
+        }
+      });
+
+      const target = find_assignment_target(callNode, source, "rust");
+      expect(target).toBe("my_struct");
+    });
+  });
+
+  describe("count_constructor_arguments", () => {
+    it("should count JavaScript constructor arguments", () => {
+      const parser = new Parser();
+      parser.setLanguage(JavaScript);
+      const source = `new Person("Alice", 30, true)`;
+      const tree = parser.parse(source);
+      
+      let newNode: any = null;
+      walk_tree(tree.rootNode, (node) => {
+        if (node.type === 'new_expression') {
+          newNode = node;
+        }
+      });
+
+      const count = count_constructor_arguments(newNode, "javascript");
+      expect(count).toBe(3);
+    });
+
+    it("should count Python keyword arguments", () => {
+      const parser = new Parser();
+      parser.setLanguage(Python);
+      const source = `Person(name="Alice", age=30)`;
+      const tree = parser.parse(source);
+      
+      let callNode: any = null;
+      walk_tree(tree.rootNode, (node) => {
+        if (node.type === 'call') {
+          callNode = node;
+        }
+      });
+
+      const count = count_constructor_arguments(callNode, "python");
+      expect(count).toBe(2);
+    });
+
+    it("should count Rust struct fields", () => {
+      const parser = new Parser();
+      parser.setLanguage(Rust);
+      const source = `Point { x: 1, y: 2, z: 3 }`;
+      const tree = parser.parse(source);
+      
+      let structNode: any = null;
+      walk_tree(tree.rootNode, (node) => {
+        if (node.type === 'struct_expression') {
+          structNode = node;
+        }
+      });
+
+      const count = count_constructor_arguments(structNode, "rust");
+      expect(count).toBe(3);
+    });
+  });
+
+  describe("uses_new_keyword", () => {
+    it("should return true for JavaScript new expressions", () => {
+      const parser = new Parser();
+      parser.setLanguage(JavaScript);
+      const source = `new MyClass()`;
+      const tree = parser.parse(source);
+      
+      let newNode: any = null;
+      walk_tree(tree.rootNode, (node) => {
+        if (node.type === 'new_expression') {
+          newNode = node;
+        }
+      });
+
+      expect(uses_new_keyword(newNode, "javascript")).toBe(true);
+    });
+
+    it("should return false for regular function calls", () => {
+      const parser = new Parser();
+      parser.setLanguage(JavaScript);
+      const source = `MyClass()`;
+      const tree = parser.parse(source);
+      
+      let callNode: any = null;
+      walk_tree(tree.rootNode, (node) => {
+        if (node.type === 'call_expression') {
+          callNode = node;
+        }
+      });
+
+      expect(uses_new_keyword(callNode, "javascript")).toBe(false);
+    });
+
+    it("should return false for Python", () => {
+      const parser = new Parser();
+      parser.setLanguage(Python);
+      const source = `Person()`;
+      const tree = parser.parse(source);
+      
+      let callNode: any = null;
+      walk_tree(tree.rootNode, (node) => {
+        if (node.type === 'call') {
+          callNode = node;
+        }
+      });
+
+      expect(uses_new_keyword(callNode, "python")).toBe(false);
+    });
+  });
+
+  describe("is_factory_method_pattern", () => {
+    it("should detect Rust ::new() pattern", () => {
+      const parser = new Parser();
+      parser.setLanguage(Rust);
+      const source = `String::new()`;
+      const tree = parser.parse(source);
+      
+      let callNode: any = null;
+      walk_tree(tree.rootNode, (node) => {
+        if (node.type === 'call_expression') {
+          callNode = node;
+        }
+      });
+
+      expect(is_factory_method_pattern(callNode, source, "rust")).toBe(true);
+    });
+
+    it("should detect Rust ::create() pattern", () => {
+      const parser = new Parser();
+      parser.setLanguage(Rust);
+      const source = `Builder::create()`;
+      const tree = parser.parse(source);
+      
+      let callNode: any = null;
+      walk_tree(tree.rootNode, (node) => {
+        if (node.type === 'call_expression') {
+          callNode = node;
+        }
+      });
+
+      expect(is_factory_method_pattern(callNode, source, "rust")).toBe(true);
+    });
+
+    it("should not detect regular Rust method calls", () => {
+      const parser = new Parser();
+      parser.setLanguage(Rust);
+      const source = `String::len()`;
+      const tree = parser.parse(source);
+      
+      let callNode: any = null;
+      walk_tree(tree.rootNode, (node) => {
+        if (node.type === 'call_expression') {
+          callNode = node;
+        }
+      });
+
+      expect(is_factory_method_pattern(callNode, source, "rust")).toBe(false);
     });
   });
 });

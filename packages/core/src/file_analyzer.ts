@@ -40,7 +40,7 @@ import {
   convert_exports_to_statements,
   convert_type_map_to_public,
 } from "./type_analysis/type_adapters";
-import { create_readonly_array } from "@ariadnejs/types/src/immutable";
+import { create_readonly_array } from "@ariadnejs/types";
 import {
   infer_function_return_type,
   ReturnTypeContext,
@@ -90,6 +90,7 @@ function infer_all_return_types(
   root_node: SyntaxNode,
   source_code: string,
   language: Language,
+  file_path: FilePath,
   _scopes: ScopeTree,
   _type_tracker: FileTypeTracker,
   _inferred_parameters: Map<string, ParameterAnalysis>
@@ -125,12 +126,12 @@ function infer_all_return_types(
       const func_def = {
         name: func_name,
         location: {
-          file_path: "",
+          file_path: file_path,
           line: node.startPosition.row + 1,
           column: node.startPosition.column,
         },
         kind: "function" as const,
-        file_path: "",
+        file_path: file_path,
       };
 
       // Infer return type
@@ -166,6 +167,7 @@ function infer_all_parameter_types(
   root_node: SyntaxNode,
   source_code: string,
   language: Language,
+  file_path: FilePath,
   _scopes: ScopeTree,
   _type_tracker: FileTypeTracker
 ): Map<string, ParameterAnalysis> {
@@ -432,6 +434,7 @@ function analyze_local_types(
     root_node,
     source_code,
     file.language,
+    file.file_path,
     scopes,
     type_tracker
   );
@@ -441,6 +444,7 @@ function analyze_local_types(
     root_node,
     source_code,
     file.language,
+    file.file_path,
     scopes,
     type_tracker,
     inferred_parameters

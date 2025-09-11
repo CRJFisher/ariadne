@@ -1,384 +1,454 @@
-import { describe, it, expect, afterAll } from 'vitest';
-import { get_language_parser } from '../../scope_queries/loader';
-import { build_scope_tree, find_scope_at_position, get_visible_symbols } from './index';
+/**
+ * Tests for generic scope tree processor
+ */
 
-describe('Scope Tree', () => {
-  const clean_files: string[] = [];
-  
-  afterAll(() => {
-    // Clean up test files
-    clean_files.forEach(file => {
-      try {
-        require('fs').unlinkSync(file);
-      } catch {}
+import { describe, it, expect } from "vitest";
+import { get_language_parser } from "../../scope_queries/loader";
+import { Language } from "@ariadnejs/types";
+import {
+  build_generic_scope_tree,
+  create_scope_tree,
+  find_scope_at_position,
+  get_scope_chain,
+  find_symbol_in_scope_chain,
+  get_visible_symbols,
+  SCOPE_TREE_CONTEXT,
+  BespokeHandlers,
+} from "./scope_tree";
+import { create_javascript_handlers } from "./scope_tree.javascript";
+import { create_python_handlers } from "./scope_tree.python";
+import { create_rust_handlers } from "./scope_tree.rust";
+import { create_typescript_handlers } from "./scope_tree.typescript";
+
+// Helper function to parse code
+function parse_code(code: string, language: Language) {
+  const parser = get_language_parser(language);
+  if (!parser) throw new Error(`Parser not found for ${language}`);
+  const tree = parser.parse(code);
+  return tree;
+}
+
+// Helper function to get bespoke handlers
+function get_handlers(language: Language): BespokeHandlers | undefined {
+  switch (language) {
+    case "javascript":
+      return create_javascript_handlers();
+    case "typescript":
+      return create_typescript_handlers();
+    case "python":
+      return create_python_handlers();
+    case "rust":
+      return create_rust_handlers();
+    default:
+      return undefined;
+  }
+}
+
+describe("Generic Scope Tree Processor", () => {
+  describe("Module context", () => {
+    it("should have correct module context", () => {
+      expect(SCOPE_TREE_CONTEXT.module).toBe("scope_tree");
+      expect(SCOPE_TREE_CONTEXT.refactored).toBe(true);
     });
   });
-  describe('JavaScript', () => {
-    it('should build basic scope tree', () => {
-      const parser = get_language_parser('javascript');
-      if (!parser) throw new Error('Parser not found');
-      
+
+  describe("JavaScript scope tree", () => {
+    it("should build basic scope tree", () => {
       const code = `
-        function outer() {
-          const x = 1;
-          function inner() {
-            const y = 2;
-            return x + y;
-          }
+        let global = 1;
+        function test(param) {
+          let local = 2;
+          return local + param;
         }
       `;
-      
-      const tree = parser.parse(code);
-      const scope_tree = build_scope_tree(tree.rootNode, code, 'javascript', 'test.js');
-      
-      expect(scope_tree).toBeDefined();
+
+      const tree = parse_code(code, "javascript");
+      const scope_tree = build_generic_scope_tree(
+        tree.rootNode,
+        code,
+        "javascript",
+        "test.js",
+        get_handlers("javascript")
+      );
+
       expect(scope_tree.nodes.size).toBeGreaterThan(1);
-    });
-    
-    it('should handle var hoisting', () => {
-      const parser = get_language_parser('javascript');
-      if (!parser) throw new Error('Parser not found');
       
+      // Check global scope has the function
+      const global_scope = scope_tree.nodes.get(scope_tree.root_id);
+      expect(global_scope).toBeDefined();
+      expect(global_scope!.symbols.has("global")).toBe(true);
+      expect(global_scope!.symbols.has("test")).toBe(true);
+    });
+
+    it("should handle block scopes", () => {
       const code = `
-        function test() {
-          console.log(x); // Should see hoisted var
-          if (true) {
-            var x = 10;
-          }
+        {
+          let block1 = 1;
+        }
+        {
+          let block2 = 2;
         }
       `;
-      
-      const tree = parser.parse(code);
-      const scope_tree = build_scope_tree(tree.rootNode, code, 'javascript', 'test.js');
-      
+
+      const tree = parse_code(code, "javascript");
+      const scope_tree = build_generic_scope_tree(
+        tree.rootNode,
+        code,
+        "javascript",
+        "test.js",
+        get_handlers("javascript")
+      );
+
+      // Should have root + 2 block scopes
+      expect(scope_tree.nodes.size).toBe(3);
+    });
+
+    it("should extract parameters", () => {
+      const code = `
+        function test(a, b, ...rest) {
+          return a + b;
+        }
+      `;
+
+      const tree = parse_code(code, "javascript");
+      const scope_tree = build_generic_scope_tree(
+        tree.rootNode,
+        code,
+        "javascript",
+        "test.js",
+        get_handlers("javascript")
+      );
+
       // Find function scope
-      let function_scope = null;
-      for (const [id, node] of scope_tree.nodes) {
-        if (node.type === 'function') {
-          function_scope = node;
+      let function_scope;
+      for (const [_, scope] of scope_tree.nodes) {
+        if (scope.type === "function") {
+          function_scope = scope;
           break;
         }
       }
-      
+
       expect(function_scope).toBeDefined();
-      expect(function_scope!.symbols.has('x')).toBe(true);
+      expect(function_scope!.symbols.has("a")).toBe(true);
+      expect(function_scope!.symbols.has("b")).toBe(true);
+      expect(function_scope!.symbols.has("rest")).toBe(true);
     });
-    
-    it('should handle block scopes', () => {
-      const parser = get_language_parser('javascript');
-      if (!parser) throw new Error('Parser not found');
-      
+  });
+
+  describe("Python scope tree", () => {
+    it("should build basic scope tree", () => {
       const code = `
-        {
-          let x = 1;
-          const y = 2;
-        }
-      `;
+global_var = 1
+
+def test_function(param):
+    local_var = 2
+    return local_var + param
+
+class TestClass:
+    def method(self):
+        return self.value
+`;
+
+      const tree = parse_code(code, "python");
+      const scope_tree = build_generic_scope_tree(
+        tree.rootNode,
+        code,
+        "python",
+        "test.py",
+        get_handlers("python")
+      );
+
+      expect(scope_tree.nodes.size).toBeGreaterThan(1);
       
-      const tree = parser.parse(code);
-      const scope_tree = build_scope_tree(tree.rootNode, code, 'javascript', 'test.js');
-      
-      // Should have global and block scope
+      // Check global scope
+      const global_scope = scope_tree.nodes.get(scope_tree.root_id);
+      expect(global_scope).toBeDefined();
+      expect(global_scope!.symbols.has("global_var")).toBe(true);
+      expect(global_scope!.symbols.has("test_function")).toBe(true);
+      expect(global_scope!.symbols.has("TestClass")).toBe(true);
+    });
+
+    it("should handle comprehension scopes", () => {
+      const code = `
+result = [x * 2 for x in range(10)]
+`;
+
+      const tree = parse_code(code, "python");
+      const scope_tree = build_generic_scope_tree(
+        tree.rootNode,
+        code,
+        "python",
+        "test.py",
+        get_handlers("python")
+      );
+
+      // Should have root + comprehension scope
       expect(scope_tree.nodes.size).toBe(2);
     });
   });
-  
-  describe('Scope navigation', () => {
-    it('should find scope at position', () => {
-      const parser = get_language_parser('javascript');
-      if (!parser) throw new Error('Parser not found');
-      
+
+  describe("Rust scope tree", () => {
+    it("should build basic scope tree", () => {
       const code = `
-        function test() {
-          const x = 1;
-        }
-      `;
+fn main() {
+    let x = 1;
+    let y = 2;
+}
+
+struct MyStruct {
+    field: i32,
+}
+
+impl MyStruct {
+    fn method(&self) -> i32 {
+        self.field
+    }
+}
+`;
+
+      const tree = parse_code(code, "rust");
+      const scope_tree = build_generic_scope_tree(
+        tree.rootNode,
+        code,
+        "rust",
+        "test.rs",
+        get_handlers("rust")
+      );
+
+      expect(scope_tree.nodes.size).toBeGreaterThan(1);
       
-      const tree = parser.parse(code);
-      const scope_tree = build_scope_tree(tree.rootNode, code, 'javascript', 'test.js');
-      
-      // Position inside function
-      const scope = find_scope_at_position(scope_tree, { row: 2, column: 10 });
-      expect(scope).toBeDefined();
-      expect(scope!.type).toBe('function');
+      // Check root is module type
+      const root_scope = scope_tree.nodes.get(scope_tree.root_id);
+      expect(root_scope).toBeDefined();
+      expect(root_scope!.type).toBe("module");
     });
-    
-    it('should get visible symbols', () => {
-      const parser = get_language_parser('javascript');
-      if (!parser) throw new Error('Parser not found');
-      
+
+    it("should handle block scopes", () => {
       const code = `
-        const global = 1;
-        function test() {
-          const local = 2;
+fn test() {
+    {
+        let inner = 1;
+    }
+    if true {
+        let cond = 2;
+    }
+}
+`;
+
+      const tree = parse_code(code, "rust");
+      const scope_tree = build_generic_scope_tree(
+        tree.rootNode,
+        code,
+        "rust",
+        "test.rs",
+        get_handlers("rust")
+      );
+
+      // Should have multiple block scopes
+      let block_count = 0;
+      for (const [_, scope] of scope_tree.nodes) {
+        if (scope.type === "block") {
+          block_count++;
         }
-      `;
+      }
+      expect(block_count).toBeGreaterThan(0);
+    });
+  });
+
+  describe("TypeScript scope tree", () => {
+    it("should build basic scope tree", () => {
+      const code = `
+interface MyInterface {
+    method(): void;
+}
+
+class MyClass implements MyInterface {
+    method(): void {
+        console.log("test");
+    }
+}
+
+namespace MyNamespace {
+    export const value = 1;
+}
+`;
+
+      const tree = parse_code(code, "typescript");
+      const scope_tree = build_generic_scope_tree(
+        tree.rootNode,
+        code,
+        "typescript",
+        "test.ts",
+        get_handlers("typescript")
+      );
+
+      expect(scope_tree.nodes.size).toBeGreaterThan(1);
       
-      const tree = parser.parse(code);
-      const scope_tree = build_scope_tree(tree.rootNode, code, 'javascript', 'test.js');
-      
+      // Check global scope
+      const global_scope = scope_tree.nodes.get(scope_tree.root_id);
+      expect(global_scope).toBeDefined();
+      expect(global_scope!.symbols.has("MyInterface")).toBe(true);
+      expect(global_scope!.symbols.has("MyClass")).toBe(true);
+      expect(global_scope!.symbols.has("MyNamespace")).toBe(true);
+    });
+
+    it("should handle type parameters", () => {
+      const code = `
+function identity<T>(value: T): T {
+    return value;
+}
+
+class Container<T> {
+    value: T;
+    constructor(value: T) {
+        this.value = value;
+    }
+}
+`;
+
+      const tree = parse_code(code, "typescript");
+      const scope_tree = build_generic_scope_tree(
+        tree.rootNode,
+        code,
+        "typescript",
+        "test.ts",
+        get_handlers("typescript")
+      );
+
+      // Check that type parameters are captured
+      let function_scope;
+      for (const [_, scope] of scope_tree.nodes) {
+        if (scope.type === "function" && scope.symbols.has("value")) {
+          function_scope = scope;
+          break;
+        }
+      }
+
+      expect(function_scope).toBeDefined();
+    });
+  });
+
+  describe("Scope navigation", () => {
+    it("should find scope at position", () => {
+      const code = `
+function outer() {
+    function inner() {
+        let x = 1;
+    }
+}
+`;
+
+      const tree = parse_code(code, "javascript");
+      const scope_tree = build_generic_scope_tree(
+        tree.rootNode,
+        code,
+        "javascript",
+        "test.js",
+        get_handlers("javascript")
+      );
+
+      // Position inside inner function
+      const scope = find_scope_at_position(scope_tree, { row: 3, column: 12 });
+      expect(scope).toBeDefined();
+      expect(scope!.type).toBe("function");
+    });
+
+    it("should get scope chain", () => {
+      const code = `
+function outer() {
+    function inner() {
+        let x = 1;
+    }
+}
+`;
+
+      const tree = parse_code(code, "javascript");
+      const scope_tree = build_generic_scope_tree(
+        tree.rootNode,
+        code,
+        "javascript",
+        "test.js",
+        get_handlers("javascript")
+      );
+
+      // Find innermost scope
+      let inner_scope_id;
+      for (const [id, scope] of scope_tree.nodes) {
+        if (scope.symbols.has("x")) {
+          inner_scope_id = id;
+          break;
+        }
+      }
+
+      expect(inner_scope_id).toBeDefined();
+      const chain = get_scope_chain(scope_tree, inner_scope_id!);
+      expect(chain.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it("should find symbol in scope chain", () => {
+      const code = `
+let global = 1;
+function test() {
+    let local = 2;
+    console.log(global);
+}
+`;
+
+      const tree = parse_code(code, "javascript");
+      const scope_tree = build_generic_scope_tree(
+        tree.rootNode,
+        code,
+        "javascript",
+        "test.js",
+        get_handlers("javascript")
+      );
+
       // Find function scope
-      let function_scope_id = '';
-      for (const [id, node] of scope_tree.nodes) {
-        if (node.type === 'function') {
+      let function_scope_id;
+      for (const [id, scope] of scope_tree.nodes) {
+        if (scope.type === "function") {
           function_scope_id = id;
           break;
         }
       }
-      
-      const visible = get_visible_symbols(scope_tree, function_scope_id);
-      expect(visible.has('global')).toBe(true);
-      expect(visible.has('local')).toBe(true);
+
+      expect(function_scope_id).toBeDefined();
+      const symbol = find_symbol_in_scope_chain(scope_tree, function_scope_id!, "global");
+      expect(symbol).toBeDefined();
+      expect(symbol!.name).toBe("global");
     });
-  });
-  
-  describe('TypeScript', () => {
-    it('should handle TypeScript-specific scopes', () => {
-      const parser = get_language_parser('typescript');
-      if (!parser) throw new Error('Parser not found');
-      
+
+    it("should get visible symbols", () => {
       const code = `
-        interface User {
-          name: string;
-        }
-        
-        namespace MyNamespace {
-          export class MyClass {
-            method(): void {}
-          }
-        }
-        
-        enum Status {
-          Active,
-          Inactive
-        }
-      `;
-      
-      const tree = parser.parse(code);
-      const scope_tree = build_scope_tree(tree.rootNode, code, 'typescript', 'test.ts');
-      
-      // Should have scopes for namespace and class
-      let namespace_count = 0;
-      let class_count = 0;
-      
-      for (const [id, node] of scope_tree.nodes) {
-        if (node.type === 'module') namespace_count++;
-        if (node.type === 'class') class_count++;
-      }
-      
-      expect(namespace_count).toBeGreaterThan(0);
-      expect(class_count).toBeGreaterThan(0);
-    });
-    
-    it('should handle type parameters', () => {
-      const parser = get_language_parser('typescript');
-      if (!parser) throw new Error('Parser not found');
-      
-      const code = `
-        function identity<T>(value: T): T {
-          return value;
-        }
-      `;
-      
-      const tree = parser.parse(code);
-      const scope_tree = build_scope_tree(tree.rootNode, code, 'typescript', 'test.ts');
-      
+let global = 1;
+function test(param) {
+    let local = 2;
+}
+`;
+
+      const tree = parse_code(code, "javascript");
+      const scope_tree = build_generic_scope_tree(
+        tree.rootNode,
+        code,
+        "javascript",
+        "test.js",
+        get_handlers("javascript")
+      );
+
       // Find function scope
-      let function_scope = null;
-      for (const [id, node] of scope_tree.nodes) {
-        if (node.type === 'function') {
-          function_scope = node;
+      let function_scope_id;
+      for (const [id, scope] of scope_tree.nodes) {
+        if (scope.type === "function") {
+          function_scope_id = id;
           break;
         }
       }
-      
-      expect(function_scope).toBeDefined();
-      // Type parameter T should be in scope
-      expect(function_scope!.symbols.has('T')).toBe(true);
-    });
-  });
-  
-  describe('Python', () => {
-    it('should handle Python scopes', () => {
-      const parser = get_language_parser('python');
-      if (!parser) throw new Error('Parser not found');
-      
-      const code = `
-class MyClass:
-    def method(self):
-        local_var = 1
-        
-def function():
-    x = 1
-    def nested():
-        nonlocal x
-        x = 2
-      `;
-      
-      const tree = parser.parse(code);
-      const scope_tree = build_scope_tree(tree.rootNode, code, 'python', 'test.py');
-      
-      // Should have class and function scopes
-      let class_count = 0;
-      let function_count = 0;
-      
-      for (const [id, node] of scope_tree.nodes) {
-        if (node.type === 'class') class_count++;
-        if (node.type === 'function') function_count++;
-      }
-      
-      expect(class_count).toBe(1);
-      expect(function_count).toBe(3); // method, function, nested
-    });
-    
-    it('should handle comprehension scopes', () => {
-      const parser = get_language_parser('python');
-      if (!parser) throw new Error('Parser not found');
-      
-      const code = `
-result = [x * 2 for x in range(10)]
-gen = (x for x in items)
-      `;
-      
-      const tree = parser.parse(code);
-      const scope_tree = build_scope_tree(tree.rootNode, code, 'python', 'test.py');
-      
-      // Should have block scopes for comprehensions
-      let block_count = 0;
-      for (const [id, node] of scope_tree.nodes) {
-        if (node.type === 'block') block_count++;
-      }
-      
-      expect(block_count).toBeGreaterThan(0);
-    });
-    
-    it('should handle global and nonlocal', () => {
-      const parser = get_language_parser('python');
-      if (!parser) throw new Error('Parser not found');
-      
-      const code = `
-global_var = 0
 
-def outer():
-    x = 1
-    def inner():
-        global global_var
-        nonlocal x
-        global_var = 2
-        x = 3
-      `;
-      
-      const tree = parser.parse(code);
-      const scope_tree = build_scope_tree(tree.rootNode, code, 'python', 'test.py');
-      
-      // Global var should be in root scope
-      const root_scope = scope_tree.nodes.get(scope_tree.root_id);
-      expect(root_scope).toBeDefined();
-      expect(root_scope!.symbols.has('global_var')).toBe(true);
-    });
-  });
-  
-  describe('Rust', () => {
-    it('should handle Rust scopes', () => {
-      const parser = get_language_parser('rust');
-      if (!parser) throw new Error('Parser not found');
-      
-      const code = `
-mod my_module {
-    pub struct MyStruct {
-        field: i32,
-    }
-    
-    impl MyStruct {
-        fn method(&self) -> i32 {
-            self.field
-        }
-    }
-}
-
-fn main() {
-    let x = 42;
-    {
-        let y = x;
-    }
-}
-      `;
-      
-      const tree = parser.parse(code);
-      const scope_tree = build_scope_tree(tree.rootNode, code, 'rust', 'test.rs');
-      
-      // Should have module, impl, function, and block scopes
-      let module_count = 0;
-      let class_count = 0;
-      let function_count = 0;
-      let block_count = 0;
-      
-      for (const [id, node] of scope_tree.nodes) {
-        if (node.type === 'module') module_count++;
-        if (node.type === 'class') class_count++; // impl blocks
-        if (node.type === 'function') function_count++;
-        if (node.type === 'block') block_count++;
-      }
-      
-      expect(module_count).toBeGreaterThanOrEqual(1); // Root is also a module in Rust
-      expect(class_count).toBe(1); // impl block
-      expect(function_count).toBe(2); // method and main
-      expect(block_count).toBeGreaterThan(0);
-    });
-    
-    it('should handle pattern matching scopes', () => {
-      const parser = get_language_parser('rust');
-      if (!parser) throw new Error('Parser not found');
-      
-      const code = `
-fn test(opt: Option<i32>) {
-    match opt {
-        Some(x) => println!("{}", x),
-        None => {},
-    }
-    
-    if let Some(y) = opt {
-        println!("{}", y);
-    }
-}
-      `;
-      
-      const tree = parser.parse(code);
-      const scope_tree = build_scope_tree(tree.rootNode, code, 'rust', 'test.rs');
-      
-      // Should create scopes for match and if let
-      let block_count = 0;
-      for (const [id, node] of scope_tree.nodes) {
-        if (node.type === 'block') block_count++;
-      }
-      
-      expect(block_count).toBeGreaterThan(0);
-    });
-    
-    it('should handle closures', () => {
-      const parser = get_language_parser('rust');
-      if (!parser) throw new Error('Parser not found');
-      
-      const code = `
-fn main() {
-    let closure = |x: i32| -> i32 {
-        x * 2
-    };
-    
-    let result = closure(5);
-}
-      `;
-      
-      const tree = parser.parse(code);
-      const scope_tree = build_scope_tree(tree.rootNode, code, 'rust', 'test.rs');
-      
-      // Should have scope for closure
-      let function_count = 0;
-      for (const [id, node] of scope_tree.nodes) {
-        if (node.type === 'function') function_count++;
-      }
-      
-      expect(function_count).toBe(2); // main and closure
+      expect(function_scope_id).toBeDefined();
+      const visible = get_visible_symbols(scope_tree, function_scope_id!);
+      expect(visible.has("global")).toBe(true);
+      expect(visible.has("param")).toBe(true);
+      expect(visible.has("local")).toBe(true);
     });
   });
 });

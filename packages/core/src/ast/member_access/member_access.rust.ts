@@ -1,61 +1,53 @@
 /**
- * Rust member access detection
+ * Rust bespoke member access handlers
+ * 
+ * Handles language-specific features that cannot be expressed through configuration:
+ * - Field expressions (struct.field) that are not namespace accesses
  */
 
 import type { SyntaxNode } from 'tree-sitter';
-import { FilePath, NamespaceName, ASTNodeType, FieldName } from '@ariadnejs/types';
-import { MemberAccessExpression } from './types';
-
-// AST node types for Rust
-const SCOPED_IDENTIFIER: ASTNodeType = 'scoped_identifier';
-const PATH_FIELD: FieldName = 'path';
-const NAME_FIELD: FieldName = 'name';
+import { MemberAccessExpression, MemberAccessContext } from './types';
+import { node_to_location } from '../node_utils';
+import { NamespaceName } from '@ariadnejs/types';
 
 /**
- * Detect Rust member access expressions
- * Handles patterns like: module::item, crate::module::Type
+ * Handle Rust field expressions (struct.field)
+ * 
+ * Note: This only handles field access on namespace imports.
+ * Regular struct field access is not a namespace member access.
+ * 
+ * @example
+ * // module.struct_instance.field  (if module is a namespace)
+ * // crate::module.function()       (handled by config via scoped_identifier)
  */
-export function detect_rust_member_access(
+export function handle_rust_field_expression(
   node: SyntaxNode,
-  namespace_imports: ReadonlySet<NamespaceName>,
-  file_path: FilePath
+  context: MemberAccessContext
 ): MemberAccessExpression | null {
-  if (node.type !== SCOPED_IDENTIFIER) {
+  // Check for field expression
+  if (node.type !== 'field_expression') {
     return null;
   }
-
-  const path_node = node.childForFieldName(PATH_FIELD);
-  const name_node = node.childForFieldName(NAME_FIELD);
   
-  if (!path_node || !name_node) {
-    return null;
-  }
-
-  const path_name = path_node.text;
-  const item_name = name_node.text;
+  const value_node = node.childForFieldName('value');
+  const field_node = node.childForFieldName('field');
   
-  // Check if the path is a known namespace import
-  if (!namespace_imports.has(path_name)) {
+  if (!value_node || !field_node) {
     return null;
   }
-
+  
+  const value_name = value_node.text;
+  const field_name = field_node.text;
+  
+  // Check if the value is a known namespace import
+  // This is rare in Rust but possible with certain module patterns
+  if (!context.namespace_imports.has(value_name as NamespaceName)) {
+    return null;
+  }
+  
   return {
-    namespace: path_name,
-    member: item_name,
-    location: {
-      file_path,
-      line: node.startPosition.row + 1,
-      column: node.startPosition.column + 1,
-      end_line: node.endPosition.row + 1,
-      end_column: node.endPosition.column + 1
-    }
+    namespace: value_name as NamespaceName,
+    member: field_name,
+    location: node_to_location(node, context.file_path)
   };
-}
-
-/**
- * Check if a node could contain member access expressions
- */
-export function can_contain_member_access_rust(node: SyntaxNode): boolean {
-  // Scoped identifiers can appear in many contexts
-  return node.type !== 'comment' && node.type !== 'string_literal';
 }

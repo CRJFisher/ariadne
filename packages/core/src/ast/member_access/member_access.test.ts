@@ -9,7 +9,7 @@ import JavaScript from 'tree-sitter-javascript';
 import TypeScript from 'tree-sitter-typescript';
 import Python from 'tree-sitter-python';
 import Rust from 'tree-sitter-rust';
-import { FileAnalysis, Language } from '@ariadnejs/types';
+import { FileAnalysis, Language, FilePath } from '@ariadnejs/types';
 
 // Helper to create a test file analysis
 function create_test_analysis(
@@ -18,7 +18,8 @@ function create_test_analysis(
   file_path: string = '/test/file.ts'
 ): FileAnalysis {
   return {
-    file_path,
+    file_path: file_path as FilePath,
+    source_code: '' as any,  // Not needed for these tests
     language,
     imports,
     exports: [],
@@ -27,11 +28,11 @@ function create_test_analysis(
     variables: [],
     type_info: new Map(),
     errors: [],
-    dependencies: [],
-    method_calls: [],
+    scopes: { type: 'module', children: [] } as any,  // Minimal scope tree
     function_calls: [],
+    method_calls: [],
     constructor_calls: []
-  } as FileAnalysis;
+  };
 }
 
 // Helper to parse code and get AST
@@ -40,11 +41,9 @@ function parse_code(code: string, language: Language): any {
   
   switch (language) {
     case 'javascript':
-    case 'jsx':
       parser.setLanguage(JavaScript);
       break;
     case 'typescript':
-    case 'tsx':
       parser.setLanguage(TypeScript.typescript);
       break;
     case 'python':

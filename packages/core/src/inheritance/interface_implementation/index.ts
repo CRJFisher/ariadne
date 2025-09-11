@@ -21,7 +21,7 @@ import {
   extract_interfaces_generic,
   find_implementations_generic,
   InterfaceProcessingContext
-} from './interface_implementation.generic';
+} from './interface_implementation';
 
 // Bespoke handlers
 import {
@@ -30,7 +30,7 @@ import {
   extract_heritage_clauses,
   extract_index_signatures,
   extract_construct_signatures
-} from './interface_implementation.typescript.bespoke';
+} from './interface_implementation.typescript';
 import {
   is_runtime_checkable_protocol,
   extract_abc_registrations,
@@ -38,7 +38,7 @@ import {
   extract_special_methods,
   has_subclasshook,
   extract_protocol_generics
-} from './interface_implementation.python.bespoke';
+} from './interface_implementation.python';
 import {
   extract_associated_types,
   extract_associated_constants,
@@ -47,7 +47,7 @@ import {
   extract_supertraits,
   is_unsafe_trait,
   extract_where_clause
-} from './interface_implementation.rust.bespoke';
+} from './interface_implementation.rust';
 
 // Re-export types
 export * from './types';

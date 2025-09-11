@@ -1,15 +1,14 @@
 /**
- * Rust-specific type tracking
+ * Rust-specific bespoke type tracking features
  * 
- * Handles Rust type tracking patterns including:
- * - Type annotations
- * - Structs and enums
- * - Traits and impls
- * - Generics and lifetimes
- * - Module imports
+ * Handles Rust features that cannot be expressed through configuration:
+ * - Ownership and borrowing
+ * - Lifetimes
+ * - Traits and trait implementations
+ * - Associated types
+ * - Pattern matching with type extraction
+ * - Macro-generated types
  */
-
-// TODO: Return Type Inference - Update type map with inferred types
 
 import { SyntaxNode } from 'tree-sitter';
 import {
@@ -17,73 +16,185 @@ import {
   FileTypeTracker,
   TypeTrackingContext,
   set_variable_type,
-  set_imported_class,
-  infer_type_kind
+  mark_as_exported
 } from './type_tracking';
 import { node_to_location } from '../../ast/node_utils';
 
 /**
- * Track Rust variable assignments with type annotations
+ * Track Rust ownership and borrowing
+ * &T, &mut T, Box<T>, Rc<T>, Arc<T>
  */
-export function track_rust_assignment(
+export function track_rust_ownership(
+  node: SyntaxNode,
+  context: TypeTrackingContext
+): TypeInfo | undefined {
+  if (node.type === 'reference_type' || node.type === 'mutable_reference_type') {
+    const type_node = node.childForFieldName('type');
+    if (!type_node) return undefined;
+    
+    const base_type = context.source_code.substring(type_node.startIndex, type_node.endIndex);
+    const is_mutable = node.type === 'mutable_reference_type';
+    
+    return {
+      type_name: is_mutable ? `&mut ${base_type}` : `&${base_type}`,
+      type_kind: 'unknown',
+      location: node_to_location(node, context.file_path),
+      confidence: 'explicit',
+      source: 'annotation'
+    };
+  }
+  
+  // Smart pointers
+  if (node.type === 'generic_type') {
+    const name_node = node.childForFieldName('type');
+    const args_node = node.childForFieldName('type_arguments');
+    
+    if (name_node && args_node) {
+      const type_name = context.source_code.substring(name_node.startIndex, name_node.endIndex);
+      
+      if (['Box', 'Rc', 'Arc', 'RefCell', 'Mutex'].includes(type_name)) {
+        return {
+          type_name,
+          type_kind: 'class',
+          location: node_to_location(node, context.file_path),
+          confidence: 'explicit',
+          source: 'annotation'
+        };
+      }
+    }
+  }
+  
+  return undefined;
+}
+
+/**
+ * Track Rust lifetime parameters
+ * fn foo<'a>(x: &'a str) -> &'a str
+ */
+export function track_rust_lifetimes(
+  node: SyntaxNode,
+  context: TypeTrackingContext
+): TypeInfo | undefined {
+  if (node.type === 'lifetime') {
+    const lifetime_name = context.source_code.substring(node.startIndex, node.endIndex);
+    
+    return {
+      type_name: `lifetime:${lifetime_name}`,
+      type_kind: 'unknown',
+      location: node_to_location(node, context.file_path),
+      confidence: 'explicit',
+      source: 'annotation'
+    };
+  }
+  
+  return undefined;
+}
+
+/**
+ * Track Rust trait definitions and implementations
+ * trait Display { ... }
+ * impl Display for MyType { ... }
+ */
+export function track_rust_trait(
   tracker: FileTypeTracker,
   node: SyntaxNode,
-  source_code: string,
   context: TypeTrackingContext
 ): FileTypeTracker {
-  // Handle let bindings: let x: Type = value
-  if (node.type === 'let_declaration') {
-    const pattern_node = node.childForFieldName('pattern');
-    const type_node = node.childForFieldName('type');
-    const value_node = node.childForFieldName('value');
+  if (node.type === 'trait_item') {
+    const name_node = node.childForFieldName('name');
+    if (!name_node) return tracker;
     
-    if (pattern_node) {
-      const var_name = extract_pattern_name(pattern_node, source_code);
-      
-      // First check for explicit type annotation
-      if (type_node) {
-        const type_info = extract_rust_type(type_node, source_code, context);
-        if (type_info && var_name) {
-          return set_variable_type(tracker, var_name, type_info);
-        }
-      }
-      
-      // Otherwise infer from value
-      if (value_node && var_name) {
-        const type_info = infer_rust_type(value_node, source_code, context);
-        if (type_info) {
-          return set_variable_type(tracker, var_name, type_info);
-        }
-      }
-    }
+    const trait_name = context.source_code.substring(name_node.startIndex, name_node.endIndex);
+    
+    const type_info: TypeInfo = {
+      type_name: `trait:${trait_name}`,
+      type_kind: 'interface',
+      location: node_to_location(node, context.file_path),
+      confidence: 'explicit',
+      source: 'annotation'
+    };
+    
+    return set_variable_type(tracker, `trait:${trait_name}`, type_info);
   }
   
-  // Handle constant declarations: const X: Type = value
-  if (node.type === 'const_item') {
-    const name_node = node.childForFieldName('name');
-    const type_node = node.childForFieldName('type');
-    
-    if (name_node && type_node) {
-      const var_name = source_code.substring(name_node.startIndex, name_node.endIndex);
-      const type_info = extract_rust_type(type_node, source_code, context);
-      
-      if (type_info) {
-        return set_variable_type(tracker, var_name, type_info);
-      }
-    }
+  return tracker;
+}
+
+/**
+ * Track trait implementations
+ * impl Trait for Type { ... }
+ */
+export function track_rust_impl(
+  tracker: FileTypeTracker,
+  node: SyntaxNode,
+  context: TypeTrackingContext
+): FileTypeTracker {
+  if (node.type !== 'impl_item') {
+    return tracker;
   }
   
-  // Handle static declarations: static X: Type = value
-  if (node.type === 'static_item') {
-    const name_node = node.childForFieldName('name');
-    const type_node = node.childForFieldName('type');
+  const trait_node = node.childForFieldName('trait');
+  const type_node = node.childForFieldName('type');
+  
+  if (trait_node && type_node) {
+    const trait_name = context.source_code.substring(trait_node.startIndex, trait_node.endIndex);
+    const type_name = context.source_code.substring(type_node.startIndex, type_node.endIndex);
     
-    if (name_node && type_node) {
-      const var_name = source_code.substring(name_node.startIndex, name_node.endIndex);
-      const type_info = extract_rust_type(type_node, source_code, context);
+    const type_info: TypeInfo = {
+      type_name: `${type_name}+${trait_name}`,
+      type_kind: 'class',
+      location: node_to_location(node, context.file_path),
+      confidence: 'explicit',
+      source: 'annotation'
+    };
+    
+    return set_variable_type(tracker, `impl:${type_name}:${trait_name}`, type_info);
+  }
+  
+  // Self implementations (impl Type { ... })
+  if (type_node && !trait_node) {
+    const type_name = context.source_code.substring(type_node.startIndex, type_node.endIndex);
+    
+    const type_info: TypeInfo = {
+      type_name,
+      type_kind: 'class',
+      location: node_to_location(node, context.file_path),
+      confidence: 'explicit',
+      source: 'annotation'
+    };
+    
+    return set_variable_type(tracker, `impl:${type_name}`, type_info);
+  }
+  
+  return tracker;
+}
+
+/**
+ * Track Rust pattern matching with type extraction
+ * match value { Some(x) => ..., None => ... }
+ */
+export function track_rust_pattern_match(
+  tracker: FileTypeTracker,
+  node: SyntaxNode,
+  context: TypeTrackingContext
+): FileTypeTracker {
+  if (node.type !== 'match_expression') {
+    return tracker;
+  }
+  
+  const value_node = node.childForFieldName('value');
+  const body_node = node.childForFieldName('body');
+  
+  if (!body_node) return tracker;
+  
+  // Process each match arm
+  for (let i = 0; i < body_node.childCount; i++) {
+    const arm = body_node.child(i);
+    if (arm && arm.type === 'match_arm') {
+      const pattern = arm.childForFieldName('pattern');
       
-      if (type_info) {
-        return set_variable_type(tracker, var_name, type_info);
+      if (pattern) {
+        tracker = extract_pattern_bindings(tracker, pattern, context);
       }
     }
   }
@@ -92,265 +203,136 @@ export function track_rust_assignment(
 }
 
 /**
- * Extract variable name from pattern
+ * Track Rust associated types
+ * type Item = String;
  */
-function extract_pattern_name(pattern_node: SyntaxNode, source_code: string): string | undefined {
-  if (pattern_node.type === 'identifier') {
-    return source_code.substring(pattern_node.startIndex, pattern_node.endIndex);
+export function track_rust_associated_type(
+  tracker: FileTypeTracker,
+  node: SyntaxNode,
+  context: TypeTrackingContext
+): FileTypeTracker {
+  if (node.type !== 'associated_type') {
+    return tracker;
   }
   
-  // Handle tuple patterns, struct patterns, etc.
-  // For now, just return undefined for complex patterns
-  return undefined;
+  const name_node = node.childForFieldName('name');
+  const type_node = node.childForFieldName('type');
+  
+  if (name_node && type_node) {
+    const assoc_name = context.source_code.substring(name_node.startIndex, name_node.endIndex);
+    const type_name = context.source_code.substring(type_node.startIndex, type_node.endIndex);
+    
+    const type_info: TypeInfo = {
+      type_name,
+      type_kind: 'unknown',
+      location: node_to_location(node, context.file_path),
+      confidence: 'explicit',
+      source: 'annotation'
+    };
+    
+    return set_variable_type(tracker, `assoc:${assoc_name}`, type_info);
+  }
+  
+  return tracker;
 }
 
 /**
- * Extract Rust type from type annotation
+ * Track Rust enum variants
+ * enum Result<T, E> { Ok(T), Err(E) }
  */
-export function extract_rust_type(
-  type_node: SyntaxNode,
-  source_code: string,
+export function track_rust_enum(
+  tracker: FileTypeTracker,
+  node: SyntaxNode,
   context: TypeTrackingContext
-): TypeInfo | undefined {
-  const location = node_to_location(type_node, context.file_path);
-  
-  // Primitive types
-  if (type_node.type === 'primitive_type') {
-    const type_name = source_code.substring(type_node.startIndex, type_node.endIndex);
-    return {
-      type_name,
-      type_kind: 'primitive',
-      location,
-      confidence: 'explicit',
-      source: 'annotation'
-    };
+): FileTypeTracker {
+  if (node.type !== 'enum_item') {
+    return tracker;
   }
   
-  // Type identifiers (custom types, structs, enums)
-  if (type_node.type === 'type_identifier') {
-    const type_name = source_code.substring(type_node.startIndex, type_node.endIndex);
-    return {
-      type_name,
-      type_kind: determine_rust_type_kind(type_name),
-      location,
-      confidence: 'explicit',
-      source: 'annotation'
-    };
-  }
+  const name_node = node.childForFieldName('name');
+  if (!name_node) return tracker;
   
-  // Reference types (&Type, &mut Type)
-  if (type_node.type === 'reference_type') {
-    const inner_type = type_node.childForFieldName('type');
-    if (inner_type) {
-      const base_type = extract_rust_type(inner_type, source_code, context);
-      if (base_type) {
-        const is_mutable = source_code.substring(type_node.startIndex, inner_type.startIndex).includes('mut');
-        return {
-          type_name: `&${is_mutable ? 'mut ' : ''}${base_type.type_name}`,
-          type_kind: base_type.type_kind,
-          location,
-          confidence: 'explicit',
-          source: 'annotation'
-        };
-      }
-    }
-  }
+  const enum_name = context.source_code.substring(name_node.startIndex, name_node.endIndex);
   
-  // Array types ([Type; N])
-  if (type_node.type === 'array_type') {
-    const element_type = type_node.childForFieldName('element');
-    if (element_type) {
-      const base_type = extract_rust_type(element_type, source_code, context);
-      if (base_type) {
-        const length_node = type_node.childForFieldName('length');
-        const length = length_node 
-          ? source_code.substring(length_node.startIndex, length_node.endIndex)
-          : '_';
-        return {
-          type_name: `[${base_type.type_name}; ${length}]`,
-          type_kind: 'array',
-          location,
-          confidence: 'explicit',
-          source: 'annotation'
-        };
-      }
-    }
-  }
+  const type_info: TypeInfo = {
+    type_name: enum_name,
+    type_kind: 'class', // Enums are like classes with variants
+    location: node_to_location(node, context.file_path),
+    confidence: 'explicit',
+    source: 'annotation'
+  };
   
-  // Slice types ([Type])
-  if (type_node.type === 'slice_type') {
-    const element_type = type_node.childForFieldName('element');
-    if (element_type) {
-      const base_type = extract_rust_type(element_type, source_code, context);
-      if (base_type) {
-        return {
-          type_name: `[${base_type.type_name}]`,
-          type_kind: 'array',
-          location,
-          confidence: 'explicit',
-          source: 'annotation'
-        };
-      }
-    }
-  }
+  tracker = set_variable_type(tracker, enum_name, type_info);
   
-  // Tuple types ((Type1, Type2))
-  if (type_node.type === 'tuple_type') {
-    const types: string[] = [];
-    for (let i = 0; i < type_node.childCount; i++) {
-      const child = type_node.child(i);
-      if (child && child.type !== ',' && child.type !== '(' && child.type !== ')') {
-        const child_type = extract_rust_type(child, source_code, context);
-        if (child_type) {
-          types.push(child_type.type_name);
+  // Track enum variants
+  const body = node.childForFieldName('body');
+  if (body) {
+    for (let i = 0; i < body.childCount; i++) {
+      const variant = body.child(i);
+      if (variant && variant.type === 'enum_variant') {
+        const variant_name_node = variant.childForFieldName('name');
+        if (variant_name_node) {
+          const variant_name = context.source_code.substring(
+            variant_name_node.startIndex,
+            variant_name_node.endIndex
+          );
+          
+          const variant_info: TypeInfo = {
+            type_name: `${enum_name}::${variant_name}`,
+            type_kind: 'class',
+            location: node_to_location(variant, context.file_path),
+            confidence: 'explicit',
+            source: 'annotation'
+          };
+          
+          tracker = set_variable_type(tracker, `${enum_name}::${variant_name}`, variant_info);
         }
       }
     }
-    
-    return {
-      type_name: `(${types.join(', ')})`,
-      type_kind: 'unknown',
-      location,
-      confidence: 'explicit',
-      source: 'annotation'
-    };
   }
   
-  // Generic types (Vec<T>, Option<T>, etc.)
-  if (type_node.type === 'generic_type') {
-    const type_ident = type_node.childForFieldName('type');
-    const type_args = type_node.childForFieldName('type_arguments');
-    
-    if (type_ident) {
-      const base_name = source_code.substring(type_ident.startIndex, type_ident.endIndex);
-      
-      if (type_args) {
-        const args_text = source_code.substring(type_args.startIndex, type_args.endIndex);
-        return {
-          type_name: `${base_name}${args_text}`,
-          type_kind: base_name === 'Vec' ? 'array' : 'class',
-          location,
-          confidence: 'explicit',
-          source: 'annotation'
-        };
-      }
-      
-      return {
-        type_name: base_name,
-        type_kind: 'class',
-        location,
-        confidence: 'explicit',
-        source: 'annotation'
-      };
-    }
-  }
-  
-  // Function pointer types (fn(...) -> Type)
-  if (type_node.type === 'function_type') {
-    return {
-      type_name: 'fn',
-      type_kind: 'function',
-      location,
-      confidence: 'explicit',
-      source: 'annotation'
-    };
-  }
-  
-  // Pointer types (*const Type, *mut Type)
-  if (type_node.type === 'pointer_type') {
-    const inner_type = type_node.childForFieldName('type');
-    if (inner_type) {
-      const base_type = extract_rust_type(inner_type, source_code, context);
-      if (base_type) {
-        const is_mutable = source_code.substring(type_node.startIndex, inner_type.startIndex).includes('mut');
-        return {
-          type_name: `*${is_mutable ? 'mut' : 'const'} ${base_type.type_name}`,
-          type_kind: base_type.type_kind,
-          location,
-          confidence: 'explicit',
-          source: 'annotation'
-        };
-      }
-    }
-  }
-  
-  return undefined;
+  return tracker;
 }
 
 /**
- * Infer type from a Rust expression
+ * Track types from if-let expressions
+ * if let Some(x) = option { ... }
  */
-export function infer_rust_type(
+export function track_rust_if_let(
+  tracker: FileTypeTracker,
   node: SyntaxNode,
-  source_code: string,
+  context: TypeTrackingContext
+): FileTypeTracker {
+  if (node.type !== 'if_let_expression') {
+    return tracker;
+  }
+  
+  const pattern = node.childForFieldName('pattern');
+  
+  if (pattern) {
+    tracker = extract_pattern_bindings(tracker, pattern, context);
+  }
+  
+  return tracker;
+}
+
+/**
+ * Infer types from Rust typed literals
+ * Examples: 42i64, 3.14f32, b"bytes", tuples, arrays
+ */
+export function infer_rust_typed_literal(
+  node: SyntaxNode,
   context: TypeTrackingContext
 ): TypeInfo | undefined {
   const location = node_to_location(node, context.file_path);
   
-  // String literals
-  if (node.type === 'string_literal') {
+  // Tuple expressions
+  if (node.type === 'tuple_expression') {
+    // For now, just return 'tuple' as the type name
+    // A more complete implementation would track element types
     return {
-      type_name: '&str',
-      type_kind: 'primitive',
-      location,
-      confidence: 'explicit',
-      source: 'assignment'
-    };
-  }
-  
-  // Integer literals
-  if (node.type === 'integer_literal') {
-    const text = source_code.substring(node.startIndex, node.endIndex);
-    // Check for type suffix (e.g., 42i32, 100u64)
-    const suffix_match = text.match(/[iu](8|16|32|64|128|size)$/);
-    if (suffix_match) {
-      return {
-        type_name: suffix_match[0],
-        type_kind: 'primitive',
-        location,
-        confidence: 'explicit',
-        source: 'assignment'
-      };
-    }
-    // Default to i32
-    return {
-      type_name: 'i32',
-      type_kind: 'primitive',
-      location,
-      confidence: 'inferred',
-      source: 'assignment'
-    };
-  }
-  
-  // Float literals
-  if (node.type === 'float_literal') {
-    const text = source_code.substring(node.startIndex, node.endIndex);
-    // Check for type suffix (e.g., 3.14f32, 2.71f64)
-    const suffix_match = text.match(/f(32|64)$/);
-    if (suffix_match) {
-      return {
-        type_name: suffix_match[0],
-        type_kind: 'primitive',
-        location,
-        confidence: 'explicit',
-        source: 'assignment'
-      };
-    }
-    // Default to f64
-    return {
-      type_name: 'f64',
-      type_kind: 'primitive',
-      location,
-      confidence: 'inferred',
-      source: 'assignment'
-    };
-  }
-  
-  // Boolean literals
-  if (node.type === 'boolean_literal') {
-    return {
-      type_name: 'bool',
-      type_kind: 'primitive',
+      type_name: 'tuple',
+      type_kind: 'unknown', // Tuples are their own type kind
       location,
       confidence: 'explicit',
       source: 'assignment'
@@ -363,247 +345,176 @@ export function infer_rust_type(
       type_name: 'array',
       type_kind: 'array',
       location,
-      confidence: 'inferred',
+      confidence: 'explicit',
       source: 'assignment'
     };
   }
   
-  // Tuple expressions
-  if (node.type === 'tuple_expression') {
+  // Integer literals with type suffix
+  if (node.type === 'integer_literal') {
+    const text = context.source_code.substring(node.startIndex, node.endIndex);
+    
+    // Check for type suffix
+    const suffixMatch = text.match(/^[0-9_]+(i8|i16|i32|i64|i128|isize|u8|u16|u32|u64|u128|usize)$/);
+    if (suffixMatch) {
+      return {
+        type_name: suffixMatch[1],
+        type_kind: 'primitive',
+        location,
+        confidence: 'explicit',
+        source: 'assignment'
+      };
+    }
+    
+    // Default to i32 for untyped integers
     return {
-      type_name: 'tuple',
-      type_kind: 'unknown',
+      type_name: 'i32',
+      type_kind: 'primitive',
       location,
       confidence: 'inferred',
       source: 'assignment'
     };
   }
   
-  // Struct expressions
-  if (node.type === 'struct_expression') {
-    const type_node = node.childForFieldName('name');
-    if (type_node) {
-      const struct_name = source_code.substring(type_node.startIndex, type_node.endIndex);
+  // Float literals with type suffix
+  if (node.type === 'float_literal') {
+    const text = context.source_code.substring(node.startIndex, node.endIndex);
+    
+    // Check for type suffix
+    const suffixMatch = text.match(/^[0-9_.]+[eE]?[+-]?[0-9]*(f32|f64)$/);
+    if (suffixMatch) {
       return {
-        type_name: struct_name,
-        type_kind: 'class',
+        type_name: suffixMatch[1],
+        type_kind: 'primitive',
         location,
         confidence: 'explicit',
-        source: 'constructor'
+        source: 'assignment'
       };
     }
+    
+    // Default to f64 for untyped floats
+    return {
+      type_name: 'f64',
+      type_kind: 'primitive',
+      location,
+      confidence: 'inferred',
+      source: 'assignment'
+    };
   }
   
-  // Call expressions - check for known constructors
-  if (node.type === 'call_expression') {
-    const function_node = node.childForFieldName('function');
-    if (function_node) {
-      const func_text = source_code.substring(function_node.startIndex, function_node.endIndex);
-      
-      // Common constructors
-      if (func_text.endsWith('::new')) {
-        const type_name = func_text.replace('::new', '');
-        return {
-          type_name,
-          type_kind: 'class',
-          location,
-          confidence: 'inferred',
-          source: 'constructor'
-        };
-      }
-      
-      // Vec! macro
-      if (func_text === 'vec!') {
-        return {
-          type_name: 'Vec',
-          type_kind: 'array',
-          location,
-          confidence: 'inferred',
-          source: 'constructor'
-        };
-      }
+  // Byte string literals
+  if (node.type === 'string_literal') {
+    const text = context.source_code.substring(node.startIndex, node.endIndex);
+    
+    if (text.startsWith('b"') || text.startsWith("b'")) {
+      return {
+        type_name: '&[u8]',
+        type_kind: 'primitive',
+        location,
+        confidence: 'explicit',
+        source: 'assignment'
+      };
     }
+    
+    // Regular string literal
+    return {
+      type_name: '&str',
+      type_kind: 'primitive',
+      location,
+      confidence: 'explicit',
+      source: 'assignment'
+    };
   }
   
   return undefined;
 }
 
 /**
- * Track Rust imports (use statements)
+ * Track macro-generated types
+ * derive macros, procedural macros
  */
-export function track_rust_imports(
+export function track_rust_macro_types(
   tracker: FileTypeTracker,
   node: SyntaxNode,
-  source_code: string,
   context: TypeTrackingContext
 ): FileTypeTracker {
-  if (node.type === 'use_declaration') {
-    const use_list = node.childForFieldName('argument');
-    if (use_list) {
-      return track_use_list(tracker, use_list, source_code, context, '');
+  if (node.type === 'attribute_item') {
+    const attr = node.child(1); // Skip the #
+    if (attr && attr.type === 'meta_item') {
+      const name_node = attr.childForFieldName('name');
+      if (name_node) {
+        const attr_name = context.source_code.substring(name_node.startIndex, name_node.endIndex);
+        
+        // Common derive macros that affect types
+        if (attr_name === 'derive') {
+          const args = attr.childForFieldName('arguments');
+          if (args) {
+            // Track derived traits
+            for (let i = 0; i < args.childCount; i++) {
+              const arg = args.child(i);
+              if (arg && arg.type === 'identifier') {
+                const trait_name = context.source_code.substring(arg.startIndex, arg.endIndex);
+                
+                // These traits affect type behavior
+                if (['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash'].includes(trait_name)) {
+                  // Mark that this type implements these traits
+                  // This would be used for type compatibility checking
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
   
   return tracker;
 }
 
-/**
- * Track items from a use list
- */
-function track_use_list(
+// Helper functions
+
+function extract_pattern_bindings(
   tracker: FileTypeTracker,
-  node: SyntaxNode,
-  source_code: string,
-  context: TypeTrackingContext,
-  base_path: string
+  pattern: SyntaxNode,
+  context: TypeTrackingContext
 ): FileTypeTracker {
-  let updated_tracker = tracker;
-  
-  // Handle simple identifier
-  if (node.type === 'identifier') {
-    const name = source_code.substring(node.startIndex, node.endIndex);
-    const full_path = base_path ? `${base_path}::${name}` : name;
+  // Extract variable bindings from patterns
+  if (pattern.type === 'identifier_pattern') {
+    const var_name = context.source_code.substring(pattern.startIndex, pattern.endIndex);
     
-    updated_tracker = set_imported_class(updated_tracker, name, {
-      class_name: name,
-      source_module: full_path,
-      local_name: name,
-      is_default: false
-    });
+    const type_info: TypeInfo = {
+      type_name: 'unknown', // Type will be inferred from context
+      type_kind: 'unknown',
+      location: node_to_location(pattern, context.file_path),
+      confidence: 'inferred',
+      source: 'assignment'
+    };
+    
+    return set_variable_type(tracker, var_name, type_info);
   }
   
-  // Handle scoped identifier (module::Type)
-  if (node.type === 'scoped_identifier') {
-    const path_parts: string[] = [];
-    let current = node;
-    
-    while (current.type === 'scoped_identifier') {
-      const name_node = current.childForFieldName('name');
-      if (name_node) {
-        path_parts.unshift(source_code.substring(name_node.startIndex, name_node.endIndex));
-      }
-      const path_node = current.childForFieldName('path');
-      if (path_node && path_node.type === 'scoped_identifier') {
-        current = path_node;
-      } else if (path_node) {
-        path_parts.unshift(source_code.substring(path_node.startIndex, path_node.endIndex));
-        break;
-      } else {
-        break;
-      }
-    }
-    
-    const full_path = path_parts.join('::');
-    const local_name = path_parts[path_parts.length - 1];
-    
-    updated_tracker = set_imported_class(updated_tracker, local_name, {
-      class_name: local_name,
-      source_module: full_path,
-      local_name,
-      is_default: false
-    });
-  }
-  
-  // Handle use list (use mod::{Type1, Type2})
-  if (node.type === 'use_list') {
-    for (let i = 0; i < node.childCount; i++) {
-      const child = node.child(i);
-      if (child && child.type !== '{' && child.type !== '}' && child.type !== ',') {
-        updated_tracker = track_use_list(updated_tracker, child, source_code, context, base_path);
+  // Tuple patterns
+  if (pattern.type === 'tuple_pattern') {
+    for (let i = 0; i < pattern.childCount; i++) {
+      const child = pattern.child(i);
+      if (child && child.type !== '(' && child.type !== ')' && child.type !== ',') {
+        tracker = extract_pattern_bindings(tracker, child, context);
       }
     }
   }
   
-  // Handle use as (use mod::Type as Alias)
-  if (node.type === 'use_as_clause') {
-    const path_node = node.childForFieldName('path');
-    const alias_node = node.childForFieldName('alias');
-    
-    if (path_node && alias_node) {
-      const path = source_code.substring(path_node.startIndex, path_node.endIndex);
-      const alias = source_code.substring(alias_node.startIndex, alias_node.endIndex);
-      
-      updated_tracker = set_imported_class(updated_tracker, alias, {
-        class_name: path.split('::').pop() || path,
-        source_module: path,
-        local_name: alias,
-        is_default: false
-      });
-    }
-  }
-  
-  // Handle glob imports (use mod::*)
-  if (node.type === 'use_wildcard') {
-    // We can't track specific types from glob imports
-    // Just mark that we have a glob import from this module
-  }
-  
-  return updated_tracker;
-}
-
-/**
- * Determine the kind of a Rust type
- */
-function determine_rust_type_kind(type_name: string): TypeInfo['type_kind'] {
-  // Common Rust collections
-  const collections = ['Vec', 'HashMap', 'HashSet', 'BTreeMap', 'BTreeSet', 'VecDeque'];
-  if (collections.includes(type_name)) {
-    return 'array';
-  }
-  
-  // Common smart pointers and wrappers
-  const wrappers = ['Box', 'Rc', 'Arc', 'RefCell', 'Mutex', 'RwLock', 'Option', 'Result'];
-  if (wrappers.includes(type_name)) {
-    return 'class';
-  }
-  
-  // Check for common patterns
-  if (type_name[0] === type_name[0].toUpperCase()) {
-    // Likely a struct or enum
-    return 'class';
-  }
-  
-  return 'unknown';
-}
-
-/**
- * Check if a type is a generic type parameter
- */
-export function is_generic_parameter(type_name: string): boolean {
-  // Common generic parameter names in Rust
-  const generic_names = ['T', 'U', 'V', 'K', 'E', 'R'];
-  
-  // Single uppercase letter is likely generic
-  if (type_name.length === 1 && type_name[0] === type_name[0].toUpperCase()) {
-    return true;
-  }
-  
-  return generic_names.includes(type_name);
-}
-
-/**
- * Extract lifetime parameters from a type
- */
-export function extract_lifetime_parameters(
-  type_node: SyntaxNode,
-  source_code: string
-): string[] {
-  const lifetimes: string[] = [];
-  
-  function traverse(node: SyntaxNode) {
-    if (node.type === 'lifetime') {
-      const lifetime = source_code.substring(node.startIndex, node.endIndex);
-      lifetimes.push(lifetime);
-    }
-    
-    for (let i = 0; i < node.childCount; i++) {
-      const child = node.child(i);
-      if (child) {
-        traverse(child);
+  // Struct patterns
+  if (pattern.type === 'struct_pattern') {
+    const fields = pattern.childForFieldName('fields');
+    if (fields) {
+      for (let i = 0; i < fields.childCount; i++) {
+        const field = fields.child(i);
+        if (field) {
+          tracker = extract_pattern_bindings(tracker, field, context);
+        }
       }
     }
   }
   
-  traverse(type_node);
-  return lifetimes;
+  return tracker;
 }

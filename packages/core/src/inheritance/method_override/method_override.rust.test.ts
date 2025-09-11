@@ -5,8 +5,8 @@
 import { describe, it, expect } from 'vitest';
 import Parser from 'tree-sitter';
 import Rust from 'tree-sitter-rust';
-import { handle_rust_trait_implementations } from './method_override.rust.bespoke';
-import { MethodOverrideContext } from './method_override.generic';
+import { handle_rust_trait_implementations } from './method_override.rust';
+import { MethodOverrideContext } from './method_override';
 import { get_language_config } from './language_configs';
 
 describe('Rust Method Override Bespoke Handler', () => {

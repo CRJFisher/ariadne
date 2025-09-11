@@ -30,7 +30,6 @@
 - So many redundant functions. These need to be removed.
   - We could first get the tool working again and then use the tool to help with these refactorings.
 
-
 ```
 please now work on task 11.94 - perform the refactoring as per                     │
 │   @backlog/tasks/epics/epic-11-codebase-restructuring/refactoring-recipe.md.\        │
@@ -45,14 +44,14 @@ please now verify:\                                                             
 │   another module).\                                                                  │
 │   - for the remaining, used functions, there should be comprehensive testing and     │
 │   the tests should pass 100%\                                                        │
-│   ultrathink 
+│   ultrathink
 
 the file namings are wrong - please check this spec and make sure they conform to  │
 │   it - there should be no `.bespoke` or `.generic` -- ultrathink
 don't create that naming convention file. instead create a file at                 │
 │   rules/folder-structure-migration.md that describes this folder structure and also  │
 │   add a summary to @CLAUDE.md by where it mentions                                   │
-│   rules/folder-structure-migration.md 
+│   rules/folder-structure-migration.md
 
 this file is full of functions that aren't actually used outside of the module -   │
 │   why did you create all these unnecessary functions? they are a big nuisance and    │
@@ -62,7 +61,7 @@ this file is full of functions that aren't actually used outside of the module -
 │   ultrathink
 
 please double check all the language-specific tests are comprehensive and passing  │
-│   100% 
+│   100%
 
 please continue to work on fixing the code/tests until *all* tests are passing --  │
 │   ultrathink

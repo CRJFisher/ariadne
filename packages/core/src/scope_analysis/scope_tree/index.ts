@@ -17,13 +17,13 @@ import {
   find_symbol_in_scope_chain,
   get_visible_symbols,
   SCOPE_TREE_CONTEXT,
-} from "./scope_tree.generic";
+} from "./scope_tree";
 
 // Import bespoke handlers
-import { create_javascript_handlers } from "./scope_tree.javascript.bespoke";
-import { create_typescript_handlers } from "./scope_tree.typescript.bespoke";
-import { create_python_handlers, resolve_python_symbol } from "./scope_tree.python.bespoke";
-import { create_rust_handlers, resolve_rust_symbol } from "./scope_tree.rust.bespoke";
+import { create_javascript_handlers } from "./scope_tree.javascript";
+import { create_typescript_handlers } from "./scope_tree.typescript";
+import { create_python_handlers, resolve_python_symbol } from "./scope_tree.python";
+import { create_rust_handlers, resolve_rust_symbol } from "./scope_tree.rust";
 
 // Re-export core types and functions
 export {
@@ -33,7 +33,7 @@ export {
   find_symbol_in_scope_chain,
   get_visible_symbols,
   SCOPE_TREE_CONTEXT,
-} from "./scope_tree.generic";
+} from "./scope_tree";
 
 // Re-export enhanced symbols functionality
 export {
@@ -129,23 +129,5 @@ export function resolve_language_symbol(
 /**
  * JavaScript-specific exports for compatibility
  */
-export { check_closure_capture } from "./scope_tree.javascript.bespoke";
-export { find_enclosing_module_scope } from "./scope_tree.typescript.bespoke";
-
-/**
- * Export module statistics
- */
-export function get_module_stats() {
-  return {
-    context: SCOPE_TREE_CONTEXT,
-    refactored: true,
-    generic_percentage: 82,
-    bespoke_percentage: 18,
-    languages_supported: ["javascript", "typescript", "python", "rust"],
-    total_lines: {
-      before_refactor: 4599,
-      after_refactor: 2100, // Estimated
-      reduction: "54%",
-    },
-  };
-}
+export { check_closure_capture } from "./scope_tree.javascript";
+export { find_enclosing_module_scope } from "./scope_tree.typescript";

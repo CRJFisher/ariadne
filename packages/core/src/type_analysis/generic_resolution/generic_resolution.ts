@@ -7,7 +7,6 @@
 
 import { 
   TypeName, 
-  Location,
   GenericParameter,
   ResolvedGeneric,
   Language,

@@ -22,7 +22,10 @@ import {
   get_enclosing_class_name,
   is_async_function,
   is_constructor_name,
-  get_void_type
+  get_void_type,
+  get_return_type_description,
+  is_async_return_type,
+  is_generator_return_type
 } from './return_type_inference';
 
 // Import configuration
@@ -34,7 +37,7 @@ import {
   handle_typescript_complex_generics,
   handle_typescript_utility_types,
   handle_typescript_composite_types
-} from './return_type_inference.typescript.bespoke';
+} from './return_type_inference.typescript';
 
 import {
   handle_javascript_jsdoc,
@@ -42,14 +45,14 @@ import {
   handle_javascript_commonjs_patterns,
   handle_javascript_class_factories,
   handle_javascript_promise_patterns
-} from './return_type_inference.javascript.bespoke';
+} from './return_type_inference.javascript';
 
 import {
   handle_python_docstring_types,
   handle_python_special_methods,
   handle_python_comprehensions,
   handle_python_typing_special_forms
-} from './return_type_inference.python.bespoke';
+} from './return_type_inference.python';
 
 import {
   handle_rust_impl_trait,
@@ -58,7 +61,7 @@ import {
   handle_rust_associated_types,
   handle_rust_macro_types,
   handle_rust_trait_methods
-} from './return_type_inference.rust.bespoke';
+} from './return_type_inference.rust';
 
 // Re-export core types
 export {
@@ -71,7 +74,10 @@ export {
   get_enclosing_class_name,
   is_async_function,
   is_constructor_name,
-  get_void_type
+  get_void_type,
+  get_return_type_description,
+  is_async_return_type,
+  is_generator_return_type
 };
 
 /**
@@ -343,152 +349,8 @@ function extract_impl_trait(func_node: SyntaxNode): string | undefined {
   return undefined;
 }
 
-/**
- * Process an entire file for return type inference
- */
-export function process_file_for_return_types(
-  defs: Def[],
-  tree: SyntaxNode,
-  source_code: string,
-  language: Language,
-  debug: boolean = false
-): Map<string, ReturnTypeInfo> {
-  const return_types = new Map<string, ReturnTypeInfo>();
-  const context: ReturnTypeContext = {
-    language,
-    source_code,
-    debug
-  };
-
-  for (const def of defs) {
-    if (def.symbol_kind === 'function' || def.symbol_kind === 'method') {
-      // Find the AST node for this definition
-      const func_node = find_function_node_at_position(def, tree);
-      if (func_node) {
-        // Add class context for methods
-        if (def.symbol_kind === 'method') {
-          context.class_name = get_enclosing_class_name(func_node);
-        }
-
-        const return_type = infer_function_return_type(def, func_node, context);
-        if (return_type) {
-          // Create a unique key for the function
-          const key = `${def.name}:${def.range.start.row}:${def.range.start.column}`;
-          return_types.set(key, return_type);
-        }
-      }
-    }
-  }
-
-  return return_types;
-}
-
-/**
- * Find the AST node for a function definition
- */
-function find_function_node_at_position(def: Def, tree: SyntaxNode): SyntaxNode | undefined {
-  // Navigate to the position in the tree
-  let current = tree;
-  
-  while (current) {
-    // Check if this node matches the definition position
-    if (current.startPosition.row === def.range.start.row &&
-        current.startPosition.column <= def.range.start.column &&
-        current.endPosition.row >= def.range.end.row &&
-        is_function_node(current)) {
-      return current;
-    }
-
-    // Find child that contains the position
-    let found_child = false;
-    for (let i = 0; i < current.childCount; i++) {
-      const child = current.child(i);
-      if (child &&
-          child.startPosition.row <= def.range.start.row &&
-          child.endPosition.row >= def.range.start.row) {
-        current = child;
-        found_child = true;
-        break;
-      }
-    }
-
-    if (!found_child) {
-      break;
-    }
-  }
-
-  return undefined;
-}
-
-/**
- * Get a descriptive name for a return type
- */
-export function get_return_type_description(
-  return_type: ReturnTypeInfo,
-  language: Language
-): string {
-  const { type_name, confidence, source } = return_type;
-  
-  // Add confidence indicator if not explicit
-  if (confidence !== 'explicit') {
-    return `${type_name} (${confidence})`;
-  }
-  
-  return type_name;
-}
-
-/**
- * Check if a return type is a promise/future type
- */
-export function is_async_return_type(
-  return_type: ReturnTypeInfo,
-  language: Language
-): boolean {
-  const type_name = return_type.type_name;
-  
-  switch (language) {
-    case 'javascript':
-    case 'typescript':
-      return type_name.startsWith('Promise<') || type_name === 'Promise';
-    case 'python':
-      return type_name.startsWith('Awaitable') || 
-             type_name.startsWith('Coroutine') ||
-             type_name.startsWith('Future');
-    case 'rust':
-      return type_name.includes('Future') || type_name.includes('async');
-    default:
-      return false;
-  }
-}
-
-/**
- * Check if a return type is a generator/iterator type
- */
-export function is_generator_return_type(
-  return_type: ReturnTypeInfo,
-  language: Language
-): boolean {
-  const type_name = return_type.type_name;
-  
-  switch (language) {
-    case 'javascript':
-    case 'typescript':
-      return type_name === 'Generator' || type_name.startsWith('Generator<');
-    case 'python':
-      return type_name === 'Generator' || 
-             type_name === 'Iterator' ||
-             type_name.startsWith('Generator[') ||
-             type_name.startsWith('Iterator[');
-    case 'rust':
-      return type_name.includes('Iterator') || 
-             type_name.includes('impl Iterator');
-    default:
-      return false;
-  }
-}
 
 // Legacy exports for backward compatibility
 export {
-  infer_function_return_type as analyze_return_type,
-  process_file_for_return_types as analyze_file_return_types
+  infer_function_return_type as analyze_return_type
 };

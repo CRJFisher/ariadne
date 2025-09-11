@@ -15,10 +15,10 @@ import {
   is_override,
   get_root_method
 } from './method_override';
-import { detect_overrides_generic, MethodOverrideContext } from './method_override.generic';
-import { handle_typescript_overrides } from './method_override.typescript.bespoke';
-import { handle_python_overrides } from './method_override.python.bespoke';
-import { handle_rust_trait_implementations } from './method_override.rust.bespoke';
+import { detect_overrides_generic, MethodOverrideContext } from './method_override';
+import { handle_typescript_overrides } from './method_override.typescript';
+import { handle_python_overrides } from './method_override.python';
+import { handle_rust_trait_implementations } from './method_override.rust';
 import { ClassHierarchy } from '../class_hierarchy/class_hierarchy';
 
 // Re-export core types

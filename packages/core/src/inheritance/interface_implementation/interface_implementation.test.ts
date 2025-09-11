@@ -1,22 +1,19 @@
 /**
- * Integration tests for interface implementation module
- * 
- * Tests the main API functions across different languages
+ * Tests for Generic Interface Implementation Processor
  */
 
 import { describe, it, expect } from 'vitest';
 import { get_language_parser } from '../../scope_queries/loader';
 import {
-  InterfaceDefinition,
-  InterfaceImplementation,
-  build_interface_implementation_map,
-  extract_interface_definitions,
-  find_interface_implementations
-} from './index';
+  extract_interfaces_generic,
+  find_implementations_generic,
+  InterfaceProcessingContext
+} from './interface_implementation';
+import { get_interface_config } from './language_configs';
 
-describe('interface_implementation integration', () => {
-  describe('TypeScript interfaces', () => {
-    it('should extract interface definitions', () => {
+describe('Generic Interface Implementation Processor', () => {
+  describe('TypeScript Interface Extraction', () => {
+    it('should extract basic interface definition', () => {
       const code = `
         interface User {
           id: number;
@@ -27,21 +24,60 @@ describe('interface_implementation integration', () => {
       
       const parser = get_language_parser('typescript');
       const tree = parser.parse(code);
+      const config = get_interface_config('typescript')!;
       
-      const interfaces = extract_interface_definitions(
-        tree.rootNode,
-        'typescript',
-        'test.ts',
-        code
-      );
+      const context: InterfaceProcessingContext = {
+        language: 'typescript',
+        file_path: 'test.ts',
+        source_code: code,
+        config
+      };
+      
+      const interfaces = extract_interfaces_generic(tree.rootNode, context);
       
       expect(interfaces).toHaveLength(1);
       expect(interfaces[0].name).toBe('User');
       expect(interfaces[0].required_methods).toHaveLength(1);
+      expect(interfaces[0].required_methods[0].name).toBe('isActive');
       expect(interfaces[0].required_properties).toHaveLength(2);
+      expect(interfaces[0].required_properties![0].name).toBe('id');
+      expect(interfaces[0].required_properties![1].name).toBe('name');
     });
     
-    it('should find interface implementations', () => {
+    it('should extract interface with extends', () => {
+      const code = `
+        interface Animal {
+          name: string;
+        }
+        
+        interface Dog extends Animal {
+          breed: string;
+          bark(): void;
+        }
+      `;
+      
+      const parser = get_language_parser('typescript');
+      const tree = parser.parse(code);
+      const config = get_interface_config('typescript')!;
+      
+      const context: InterfaceProcessingContext = {
+        language: 'typescript',
+        file_path: 'test.ts',
+        source_code: code,
+        config
+      };
+      
+      const interfaces = extract_interfaces_generic(tree.rootNode, context);
+      
+      expect(interfaces).toHaveLength(2);
+      const dogInterface = interfaces.find(i => i.name === 'Dog');
+      expect(dogInterface).toBeDefined();
+      expect(dogInterface?.extends_interfaces).toContain('Animal');
+    });
+  });
+  
+  describe('TypeScript Implementation Detection', () => {
+    it('should find class implementing interface', () => {
       const code = `
         interface Flyable {
           fly(): void;
@@ -56,81 +92,391 @@ describe('interface_implementation integration', () => {
       
       const parser = get_language_parser('typescript');
       const tree = parser.parse(code);
+      const config = get_interface_config('typescript')!;
       
-      const interfaces = extract_interface_definitions(
-        tree.rootNode,
-        'typescript',
-        'test.ts',
-        code
-      );
+      const context: InterfaceProcessingContext = {
+        language: 'typescript',
+        file_path: 'test.ts',
+        source_code: code,
+        config
+      };
       
-      const implementations = find_interface_implementations(
-        tree.rootNode,
-        'typescript',
-        'test.ts',
-        code,
-        interfaces
-      );
+      const interfaces = extract_interfaces_generic(tree.rootNode, context);
+      const implementations = find_implementations_generic(tree.rootNode, interfaces, context);
       
       expect(implementations).toHaveLength(1);
       expect(implementations[0].implementor_name).toBe('Bird');
       expect(implementations[0].interface_name).toBe('Flyable');
       expect(implementations[0].is_complete).toBe(true);
+      expect(implementations[0].missing_members).toHaveLength(0);
+    });
+    
+    it('should detect incomplete implementation', () => {
+      const code = `
+        interface Shape {
+          area(): number;
+          perimeter(): number;
+        }
+        
+        class Circle implements Shape {
+          area(): number {
+            return Math.PI * 10 * 10;
+          }
+          // Missing perimeter method
+        }
+      `;
+      
+      const parser = get_language_parser('typescript');
+      const tree = parser.parse(code);
+      const config = get_interface_config('typescript')!;
+      
+      const context: InterfaceProcessingContext = {
+        language: 'typescript',
+        file_path: 'test.ts',
+        source_code: code,
+        config
+      };
+      
+      const interfaces = extract_interfaces_generic(tree.rootNode, context);
+      const implementations = find_implementations_generic(tree.rootNode, interfaces, context);
+      
+      expect(implementations).toHaveLength(1);
+      expect(implementations[0].is_complete).toBe(false);
+      expect(implementations[0].missing_members).toContain('method: perimeter');
     });
   });
   
-  describe('build_interface_implementation_map', () => {
-    it('should build complete map for mixed language codebase', () => {
-      const tsCode = `
-interface Shape {
-  area(): number;
-}
-
-class Circle implements Shape {
-  area(): number {
-    return Math.PI * 10 * 10;
-  }
-}`;
-
-      const pyCode = `
+  describe('Python Protocol Extraction', () => {
+    it('should extract Protocol definition', () => {
+      const code = `
 from typing import Protocol
 
 class Drawable(Protocol):
     def draw(self) -> None:
         ...
-
-class Picture:
-    def draw(self) -> None:
-        print("Drawing picture")
+    
+    def get_color(self) -> str:
+        ...
 `;
       
-      const files = [
-        {
-          root_node: get_language_parser('typescript').parse(tsCode).rootNode,
-          language: 'typescript' as const,
-          file_path: 'shapes.ts',
-          source_code: tsCode
-        },
-        {
-          root_node: get_language_parser('python').parse(pyCode).rootNode,
-          language: 'python' as const,
-          file_path: 'drawing.py',
-          source_code: pyCode
+      const parser = get_language_parser('python');
+      const tree = parser.parse(code);
+      const config = get_interface_config('python')!;
+      
+      const context: InterfaceProcessingContext = {
+        language: 'python',
+        file_path: 'test.py',
+        source_code: code,
+        config
+      };
+      
+      const interfaces = extract_interfaces_generic(tree.rootNode, context);
+      
+      expect(interfaces).toHaveLength(1);
+      expect(interfaces[0].name).toBe('Drawable');
+      expect(interfaces[0].required_methods).toHaveLength(2);
+      expect(interfaces[0].required_methods[0].name).toBe('draw');
+      expect(interfaces[0].required_methods[1].name).toBe('get_color');
+    });
+    
+    it('should extract ABC definition', () => {
+      const code = `
+from abc import ABC, abstractmethod
+
+class Vehicle(ABC):
+    @abstractmethod
+    def start(self):
+        pass
+    
+    @abstractmethod
+    def stop(self):
+        pass
+`;
+      
+      const parser = get_language_parser('python');
+      const tree = parser.parse(code);
+      const config = get_interface_config('python')!;
+      
+      const context: InterfaceProcessingContext = {
+        language: 'python',
+        file_path: 'test.py',
+        source_code: code,
+        config
+      };
+      
+      const interfaces = extract_interfaces_generic(tree.rootNode, context);
+      
+      expect(interfaces).toHaveLength(1);
+      expect(interfaces[0].name).toBe('Vehicle');
+      expect(interfaces[0].required_methods).toHaveLength(2);
+      expect(interfaces[0].required_methods.some(m => m.name === 'start' && m.is_abstract)).toBe(true);
+      expect(interfaces[0].required_methods.some(m => m.name === 'stop' && m.is_abstract)).toBe(true);
+    });
+  });
+  
+  describe('Python Implementation Detection', () => {
+    it('should find class implementing Protocol', () => {
+      const code = `
+from typing import Protocol
+
+class Printable(Protocol):
+    def print(self) -> None:
+        ...
+
+class Document(Printable):
+    def print(self) -> None:
+        print("Printing document")
+`;
+      
+      const parser = get_language_parser('python');
+      const tree = parser.parse(code);
+      const config = get_interface_config('python')!;
+      
+      const context: InterfaceProcessingContext = {
+        language: 'python',
+        file_path: 'test.py',
+        source_code: code,
+        config
+      };
+      
+      const interfaces = extract_interfaces_generic(tree.rootNode, context);
+      const implementations = find_implementations_generic(tree.rootNode, interfaces, context);
+      
+      expect(implementations).toHaveLength(1);
+      expect(implementations[0].implementor_name).toBe('Document');
+      expect(implementations[0].interface_name).toBe('Printable');
+      expect(implementations[0].is_complete).toBe(true);
+    });
+  });
+  
+  describe('Rust Trait Extraction', () => {
+    it('should extract trait definition', () => {
+      const code = `
+trait Display {
+    fn fmt(&self) -> String;
+}
+
+trait Debug {
+    fn debug(&self);
+}
+`;
+      
+      const parser = get_language_parser('rust');
+      const tree = parser.parse(code);
+      const config = get_interface_config('rust')!;
+      
+      const context: InterfaceProcessingContext = {
+        language: 'rust',
+        file_path: 'test.rs',
+        source_code: code,
+        config
+      };
+      
+      const interfaces = extract_interfaces_generic(tree.rootNode, context);
+      
+      expect(interfaces).toHaveLength(2);
+      expect(interfaces[0].name).toBe('Display');
+      expect(interfaces[0].required_methods).toHaveLength(1);
+      expect(interfaces[0].required_methods[0].name).toBe('fmt');
+      expect(interfaces[1].name).toBe('Debug');
+    });
+    
+    it('should extract trait with supertrait', () => {
+      const code = `
+trait Animal {
+    fn name(&self) -> &str;
+}
+
+trait Dog: Animal {
+    fn bark(&self);
+}
+`;
+      
+      const parser = get_language_parser('rust');
+      const tree = parser.parse(code);
+      const config = get_interface_config('rust')!;
+      
+      const context: InterfaceProcessingContext = {
+        language: 'rust',
+        file_path: 'test.rs',
+        source_code: code,
+        config
+      };
+      
+      const interfaces = extract_interfaces_generic(tree.rootNode, context);
+      
+      const dogTrait = interfaces.find(i => i.name === 'Dog');
+      expect(dogTrait).toBeDefined();
+      expect(dogTrait?.extends_interfaces).toContain('Animal');
+    });
+  });
+  
+  describe('Rust Implementation Detection', () => {
+    it('should find impl blocks for traits', () => {
+      const code = `
+trait Greet {
+    fn hello(&self);
+}
+
+struct Person {
+    name: String,
+}
+
+impl Greet for Person {
+    fn hello(&self) {
+        println!("Hello, {}", self.name);
+    }
+}
+`;
+      
+      const parser = get_language_parser('rust');
+      const tree = parser.parse(code);
+      const config = get_interface_config('rust')!;
+      
+      const context: InterfaceProcessingContext = {
+        language: 'rust',
+        file_path: 'test.rs',
+        source_code: code,
+        config
+      };
+      
+      const interfaces = extract_interfaces_generic(tree.rootNode, context);
+      const implementations = find_implementations_generic(tree.rootNode, interfaces, context);
+      
+      expect(implementations).toHaveLength(1);
+      expect(implementations[0].implementor_name).toBe('Person');
+      expect(implementations[0].interface_name).toBe('Greet');
+      expect(implementations[0].is_complete).toBe(true);
+    });
+    
+    it('should detect incomplete trait implementation', () => {
+      const code = `
+trait Calculator {
+    fn add(&self, a: i32, b: i32) -> i32;
+    fn subtract(&self, a: i32, b: i32) -> i32;
+}
+
+struct SimpleCalc;
+
+impl Calculator for SimpleCalc {
+    fn add(&self, a: i32, b: i32) -> i32 {
+        a + b
+    }
+    // Missing subtract method
+}
+`;
+      
+      const parser = get_language_parser('rust');
+      const tree = parser.parse(code);
+      const config = get_interface_config('rust')!;
+      
+      const context: InterfaceProcessingContext = {
+        language: 'rust',
+        file_path: 'test.rs',
+        source_code: code,
+        config
+      };
+      
+      const interfaces = extract_interfaces_generic(tree.rootNode, context);
+      const implementations = find_implementations_generic(tree.rootNode, interfaces, context);
+      
+      expect(implementations).toHaveLength(1);
+      expect(implementations[0].is_complete).toBe(false);
+      expect(implementations[0].missing_members).toContain('method: subtract');
+    });
+  });
+  
+  describe('Edge Cases', () => {
+    it('should handle empty interface', () => {
+      const code = `interface Empty {}`;
+      
+      const parser = get_language_parser('typescript');
+      const tree = parser.parse(code);
+      const config = get_interface_config('typescript')!;
+      
+      const context: InterfaceProcessingContext = {
+        language: 'typescript',
+        file_path: 'test.ts',
+        source_code: code,
+        config
+      };
+      
+      const interfaces = extract_interfaces_generic(tree.rootNode, context);
+      
+      expect(interfaces).toHaveLength(1);
+      expect(interfaces[0].name).toBe('Empty');
+      expect(interfaces[0].required_methods).toHaveLength(0);
+      expect(interfaces[0].required_properties).toBeUndefined();
+    });
+    
+    it('should handle multiple implementations', () => {
+      const code = `
+        interface Movable {
+          move(): void;
         }
-      ];
+        
+        class Car implements Movable {
+          move(): void {}
+        }
+        
+        class Person implements Movable {
+          move(): void {}
+        }
+      `;
       
-      const result = build_interface_implementation_map(files);
+      const parser = get_language_parser('typescript');
+      const tree = parser.parse(code);
+      const config = get_interface_config('typescript')!;
       
-      expect(result.statistics.total_interfaces).toBe(2);
-      expect(result.statistics.total_implementations).toBe(1); // Only TypeScript has explicit implementation
-      expect(result.statistics.complete_implementations).toBe(1);
-      expect(result.statistics.incomplete_implementations).toBe(0);
-      expect(result.statistics.coverage_percentage).toBe(100);
+      const context: InterfaceProcessingContext = {
+        language: 'typescript',
+        file_path: 'test.ts',
+        source_code: code,
+        config
+      };
       
-      expect(result.map.interfaces.has('Shape')).toBe(true);
-      expect(result.map.interfaces.has('Drawable')).toBe(true);
-      expect(result.map.implementations.get('Shape')).toHaveLength(1);
-      expect(result.map.implementations.get('Drawable')).toHaveLength(0); // Python uses structural typing
+      const interfaces = extract_interfaces_generic(tree.rootNode, context);
+      const implementations = find_implementations_generic(tree.rootNode, interfaces, context);
+      
+      expect(implementations).toHaveLength(2);
+      expect(implementations.map(i => i.implementor_name).sort()).toEqual(['Car', 'Person']);
+      expect(implementations.every(i => i.interface_name === 'Movable')).toBe(true);
+    });
+    
+    it('should handle class implementing multiple interfaces', () => {
+      const code = `
+        interface Readable {
+          read(): string;
+        }
+        
+        interface Writable {
+          write(data: string): void;
+        }
+        
+        class File implements Readable, Writable {
+          read(): string { return ""; }
+          write(data: string): void {}
+        }
+      `;
+      
+      const parser = get_language_parser('typescript');
+      const tree = parser.parse(code);
+      const config = get_interface_config('typescript')!;
+      
+      const context: InterfaceProcessingContext = {
+        language: 'typescript',
+        file_path: 'test.ts',
+        source_code: code,
+        config
+      };
+      
+      const interfaces = extract_interfaces_generic(tree.rootNode, context);
+      const implementations = find_implementations_generic(tree.rootNode, interfaces, context);
+      
+      expect(implementations).toHaveLength(2);
+      expect(implementations.every(i => i.implementor_name === 'File')).toBe(true);
+      const interfaceNames = implementations.map(i => i.interface_name).sort();
+      expect(interfaceNames).toEqual(['Readable', 'Writable']);
     });
   });
 });

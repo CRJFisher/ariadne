@@ -11,7 +11,7 @@ import {
   handle_this_binding,
   handle_super_binding,
   handle_var_hoisting,
-} from "./symbol_resolution.javascript.bespoke";
+} from "./symbol_resolution.javascript";
 import { create_resolution_context } from "./symbol_resolution";
 import { get_symbol_resolution_config } from "./language_configs";
 import { Language } from "@ariadnejs/types";

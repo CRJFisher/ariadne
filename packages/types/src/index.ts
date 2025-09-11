@@ -37,6 +37,7 @@ export {
 export * from './symbols';
 export * from './scopes';
 export * from './definitions';
+export * from './errors';
 
 // Export all the new consolidated import/export types
 export * from './import_export';

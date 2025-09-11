@@ -73,8 +73,7 @@ export function build_type_registry(
         const is_exported =
           analysis.exports?.some(
             (e) =>
-              e.symbol_name === class_def.name ||
-              e.local_name === class_def.name
+              e.symbol_name === class_def.name
           ) ?? false;
         register_class(builder, class_def, analysis.file_path, is_exported);
       }
@@ -87,8 +86,7 @@ export function build_type_registry(
         const is_exported =
           analysis.exports?.some(
             (e) =>
-              e.symbol_name === interface_def.name ||
-              e.local_name === interface_def.name
+              e.symbol_name === interface_def.name
           ) ?? false; 
         register_interface(builder, interface_def, analysis.file_path, is_exported);
       }
@@ -101,7 +99,7 @@ export function build_type_registry(
         const is_exported =
           analysis.exports?.some(
             (e) =>
-              e.symbol_name === enum_def.name || e.local_name === enum_def.name
+              e.symbol_name === enum_def.name
           ) ?? false;
         register_enum(builder, enum_def, analysis.file_path, is_exported);
       }
@@ -114,8 +112,7 @@ export function build_type_registry(
         const is_exported =
           analysis.exports?.some(
             (e) =>
-              e.symbol_name === type_alias.name ||
-              e.local_name === type_alias.name
+              e.symbol_name === type_alias.name
           ) ?? false;
         register_type_alias(builder, type_alias, analysis.file_path, is_exported);
       }
@@ -128,8 +125,7 @@ export function build_type_registry(
         const is_exported =
           analysis.exports?.some(
             (e) =>
-              e.symbol_name === struct_def.name ||
-              e.local_name === struct_def.name
+              e.symbol_name === struct_def.name
           ) ?? false;
         register_struct(builder, struct_def, analysis.file_path, is_exported);
       }
@@ -160,18 +156,14 @@ export function register_struct(
   exported: boolean = false,
   export_name?: string
 ): void {
-  const type_def: TypeDefinition = {
-    name: struct_def.name as TypeName,
-    location: struct_def.location,
-    kind: TypeKind.CLASS, // Structs are treated as classes for type checking
-    members: new Map(), // Convert methods/fields to members if needed
-  };
-
+  // Build members map first
+  const members = new Map();
+  
   // Add constructor/new method to members if it exists
   if (struct_def.methods) {
     for (const method of struct_def.methods) {
       if (method.name === 'new' || method.name === 'constructor') {
-        type_def.members?.set(method.name, {
+        members.set(method.name, {
           name: method.name,
           kind: 'constructor',
           parameters: method.parameters
@@ -179,6 +171,13 @@ export function register_struct(
       }
     }
   }
+
+  const type_def: TypeDefinition = {
+    name: struct_def.name as TypeName,
+    location: struct_def.location,
+    kind: TypeKind.CLASS, // Structs are treated as classes for type checking
+    members: members.size > 0 ? members : undefined,
+  };
 
   register_type(registry, type_def, file_path, exported, export_name);
 }
@@ -326,7 +325,7 @@ export function register_class(
         name: method.name,
         kind: isConstructor ? 'constructor' : 'method',
         parameters: method.parameters,
-        type: method.returns
+        type: method.return_type
       } as any);
     }
   }
@@ -338,7 +337,7 @@ export function register_class(
         name: prop.name,
         kind: 'property',
         type: prop.type,
-        is_optional: prop.is_optional,
+        is_optional: false,
         is_readonly: prop.is_readonly
       } as any);
     }

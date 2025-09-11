@@ -1,84 +1,105 @@
 /**
- * JavaScript/TypeScript member access detection
+ * JavaScript/TypeScript bespoke member access handlers
+ * 
+ * Handles language-specific features that cannot be expressed through configuration:
+ * - Optional chaining (?.)
+ * - Computed property access ([])
  */
 
 import type { SyntaxNode } from 'tree-sitter';
-import { FilePath, NamespaceName, ASTNodeType, FieldName } from '@ariadnejs/types';
-import { MemberAccessExpression } from './types';
+import { MemberAccessExpression, MemberAccessContext } from './types';
 import { node_to_location } from '../node_utils';
-
-// AST node types for JavaScript/TypeScript
-const MEMBER_EXPRESSION: ASTNodeType = 'member_expression';
-const NESTED_TYPE_IDENTIFIER: ASTNodeType = 'nested_type_identifier';
-const OBJECT_FIELD: FieldName = 'object';
-const PROPERTY_FIELD: FieldName = 'property';
-const MODULE_FIELD: FieldName = 'module';
-const NAME_FIELD: FieldName = 'name';
+import { NamespaceName } from '@ariadnejs/types';
 
 /**
- * Detect JavaScript/TypeScript member access expressions
- * Handles patterns like: namespace.member, object.property, and type annotations like namespace.Type
+ * Handle JavaScript optional chaining (?.property)
+ * 
+ * @example
+ * // obj?.property
+ * // array?.[0]
+ * // func?.()
  */
-export function detect_javascript_member_access(
+export function handle_javascript_optional_chaining(
   node: SyntaxNode,
-  namespace_imports: ReadonlySet<NamespaceName>,
-  file_path: FilePath
+  context: MemberAccessContext
 ): MemberAccessExpression | null {
-  // Handle runtime member access (e.g., namespace.function())
-  if (node.type === MEMBER_EXPRESSION) {
-    const object_node = node.childForFieldName(OBJECT_FIELD);
-    const property_node = node.childForFieldName(PROPERTY_FIELD);
-    
-    if (!object_node || !property_node) {
-      return null;
-    }
-
-    const object_name = object_node.text;
-    const property_name = property_node.text;
-    
-    // Check if the object is a known namespace import
-    if (!namespace_imports.has(object_name)) {
-      return null;
-    }
-
-    return {
-      namespace: object_name,
-      member: property_name,
-      location: node_to_location(node, file_path)
-    };
+  // Check for optional member expression
+  if (node.type !== 'member_expression') {
+    return null;
   }
   
-  // Handle TypeScript type annotations (e.g., namespace.Type)
-  if (node.type === NESTED_TYPE_IDENTIFIER) {
-    const module_node = node.childForFieldName(MODULE_FIELD);
-    const name_node = node.childForFieldName(NAME_FIELD);
-    
-    if (!module_node || !name_node) {
-      return null;
-    }
-
-    const module_name = module_node.text;
-    const type_name = name_node.text;
-    
-    // Check if the module is a known namespace import
-    if (!namespace_imports.has(module_name)) {
-      return null;
-    }
-
-    return {
-      namespace: module_name,
-      member: type_name,
-      location: node_to_location(node, file_path)
-    };
+  // Check if it has the optional operator
+  const optional_operator = node.childForFieldName('optional');
+  if (!optional_operator || optional_operator.text !== '?.') {
+    return null;
   }
   
-  return null;
+  const object_node = node.childForFieldName('object');
+  const property_node = node.childForFieldName('property');
+  
+  if (!object_node || !property_node) {
+    return null;
+  }
+  
+  const object_name = object_node.text;
+  const property_name = property_node.text;
+  
+  // Check if the object is a known namespace import
+  if (!context.namespace_imports.has(object_name as NamespaceName)) {
+    return null;
+  }
+  
+  return {
+    namespace: object_name as NamespaceName,
+    member: property_name,
+    location: node_to_location(node, context.file_path)
+  };
 }
 
 /**
- * Check if a node could contain member access expressions
+ * Handle JavaScript computed property access (obj[prop])
+ * 
+ * @example
+ * // obj['property']
+ * // obj[variable]
+ * // obj[0]
  */
-export function can_contain_member_access_javascript(node: SyntaxNode): boolean {
-  // Member expressions can appear in many contexts
-  return node.type !== 'comment' && node.type !== 'string' && node.type !== 'template_string';
+export function handle_javascript_computed_access(
+  node: SyntaxNode,
+  context: MemberAccessContext
+): MemberAccessExpression | null {
+  // Check for subscript expression
+  if (node.type !== 'subscript_expression') {
+    return null;
+  }
+  
+  const object_node = node.childForFieldName('object');
+  const index_node = node.childForFieldName('index');
+  
+  if (!object_node || !index_node) {
+    return null;
+  }
+  
+  const object_name = object_node.text;
+  
+  // Check if the object is a known namespace import
+  if (!context.namespace_imports.has(object_name as NamespaceName)) {
+    return null;
+  }
+  
+  // For computed access, try to extract the member name if it's a string literal
+  let member_name: string;
+  if (index_node.type === 'string') {
+    // Remove quotes from string literal
+    member_name = index_node.text.slice(1, -1);
+  } else {
+    // For dynamic expressions, use the raw text
+    member_name = `[${index_node.text}]`;
+  }
+  
+  return {
+    namespace: object_name as NamespaceName,
+    member: member_name,
+    location: node_to_location(node, context.file_path)
+  };
 }

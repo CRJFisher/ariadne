@@ -38,4 +38,28 @@ export {
   type ParsedSymbol
 } from './utils';
 
+// Project management
+export {
+  ProjectManager,
+  create_project_context,
+  type ProjectManagerContext,
+  type ProjectConfig,
+  type ProjectStats,
+  type FileChangeEvent,
+  type FileChangeType
+} from './project/project_manager';
+
+// Re-export common types from @ariadnejs/types for convenience
+export type {
+  CallGraph,
+  FunctionNode as CallGraphNode,
+  CallEdge as CallGraphEdge
+} from '@ariadnejs/types';
+
+// Import for Project alias
+import { ProjectManager } from './project/project_manager';
+
+// Alias for backward compatibility  
+export const Project = ProjectManager;
+
 // That's it! Everything else is internal implementation details.

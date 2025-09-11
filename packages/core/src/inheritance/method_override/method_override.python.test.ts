@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { handle_python_overrides } from './method_override.python.bespoke';
-import { MethodOverrideContext } from './method_override.generic';
+import { handle_python_overrides } from './method_override.python';
+import { MethodOverrideContext } from './method_override';
 import { get_language_config } from './language_configs';
 
 describe('Python Method Override Bespoke Handler', () => {

@@ -212,31 +212,5 @@ export function find_constructor_calls(
   return unique_calls;
 }
 
-/**
- * Find constructor calls and extract type assignments (Bidirectional Flow)
- * 
- * This enhanced version returns both constructor calls and type assignments
- * discovered from those calls. This enables bidirectional flow between
- * constructor_calls and type_tracking.
- * 
- * When we see `const foo = new Bar()`, we return:
- * - Constructor call: Bar was constructed
- * - Type assignment: foo is of type Bar
- * 
- * @param context The context containing source code, AST, and metadata
- * @returns Constructor calls and type assignments
- */
-export function find_constructor_calls_with_types(
-  context: ConstructorCallContext
-): ConstructorCallResult {
-  // Use the extraction function that handles both calls and types
-  
-  return extract_constructor_calls_and_types(
-    context.ast_root,
-    context.source_code,
-    context.file_path,
-    context.language
-  );
-}
 
 

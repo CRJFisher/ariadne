@@ -30,7 +30,8 @@ describe.skip('Return Type Inference Integration', () => {
       language: 'typescript'
     };
     
-    const analysis = await analyze_file(file);
+    const result = await analyze_file(file);
+    const analysis = result.analysis;
     
     expect(analysis.functions).toHaveLength(2);
     
@@ -43,7 +44,7 @@ describe.skip('Return Type Inference Integration', () => {
   
   it('should infer return types from return statements', async () => {
     const file: CodeFile = {
-      file_path: 'test.js',
+      file_path: 'test.js' as any,
       source_code: `
         function getStringLiteral() {
           return "hello";
@@ -56,11 +57,12 @@ describe.skip('Return Type Inference Integration', () => {
         function getBooleanLiteral() {
           return true;
         }
-      `,
+      ` as any,
       language: 'javascript'
     };
     
-    const analysis = await analyze_file(file);
+    const result = await analyze_file(file);
+    const analysis = result.analysis;
     
     expect(analysis.functions).toHaveLength(3);
     
@@ -89,7 +91,8 @@ describe.skip('Return Type Inference Integration', () => {
       language: 'typescript'
     };
     
-    const analysis = await analyze_file(file);
+    const result = await analyze_file(file);
+    const analysis = result.analysis;
     
     expect(analysis.functions).toHaveLength(2);
     
@@ -104,18 +107,19 @@ describe.skip('Return Type Inference Integration', () => {
   
   it('should handle generator functions', async () => {
     const file: CodeFile = {
-      file_path: 'test.js',
+      file_path: 'test.js' as any,
       source_code: `
         function* generateNumbers() {
           yield 1;
           yield 2;
           yield 3;
         }
-      `,
+      ` as any,
       language: 'javascript'
     };
     
-    const analysis = await analyze_file(file);
+    const result = await analyze_file(file);
+    const analysis = result.analysis;
     
     expect(analysis.functions).toHaveLength(1);
     
@@ -140,20 +144,21 @@ describe.skip('Return Type Inference Integration', () => {
       language: 'typescript'
     };
     
-    const analysis = await analyze_file(file);
+    const result = await analyze_file(file);
+    const analysis = result.analysis;
     
     expect(analysis.functions).toHaveLength(2);
     
-    const doNothing = analysis.functions.find(f => f.name === 'doNothing');
+    const doNothing = analysis.functions.find((f: any) => f.name === 'doNothing');
     expect(doNothing?.signature.return_type).toBe('void');
     
-    const implicitVoid = analysis.functions.find(f => f.name === 'implicitVoid');
+    const implicitVoid = analysis.functions.find((f: any) => f.name === 'implicitVoid');
     expect(implicitVoid?.signature.return_type).toBe('void');
   });
   
   it('should handle multiple return paths', async () => {
     const file: CodeFile = {
-      file_path: 'test.js',
+      file_path: 'test.js' as any,
       source_code: `
         function getStringOrNumber(flag) {
           if (flag) {
@@ -161,11 +166,12 @@ describe.skip('Return Type Inference Integration', () => {
           }
           return 100;
         }
-      `,
+      ` as any,
       language: 'javascript'
     };
     
-    const analysis = await analyze_file(file);
+    const result = await analyze_file(file);
+    const analysis = result.analysis;
     
     expect(analysis.functions).toHaveLength(1);
     

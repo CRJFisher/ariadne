@@ -10,7 +10,7 @@ Every refactored module must follow this exact structure:
 
 ```
 module_name/
-├── index.ts                    # ONLY exports - no implementation
+├── index.ts                    # ONLY exports - no implementation. Should not re-export any types or functions.
 ├── module_name.ts              # Generic processor with main logic
 ├── language_configs.ts        # Configuration objects for all languages
 ├── module_name.javascript.ts  # JavaScript-specific bespoke features

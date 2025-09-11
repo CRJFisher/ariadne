@@ -55,7 +55,7 @@ describe('Symbol Construction', () => {
         file_path: 'src/utils.ts',
         name: 'anonymous',
         is_anonymous: true,
-        location: { line: 12, column: 5 }
+        location: { file_path: 'src/utils.ts' as any, line: 12, column: 5, end_line: 12, end_column: 5 }
       });
       expect(symbol).toBe('src/utils.ts#<anonymous>:12:5');
     });
@@ -298,13 +298,13 @@ describe('Symbol Construction', () => {
         file_path: 'src/utils.ts',
         name: 'anonymous',
         is_anonymous: true,
-        location: { line: 10, column: 5 }
+        location: { file_path: 'src/utils.ts' as any, line: 10, column: 5, end_line: 10, end_column: 5 }
       });
       const symbol2 = construct_symbol({
         file_path: 'src/utils.ts',
         name: 'anonymous',
         is_anonymous: true,
-        location: { line: 20, column: 10 }
+        location: { file_path: 'src/utils.ts' as any, line: 20, column: 10, end_line: 20, end_column: 10 }
       });
       
       expect(symbol1).not.toBe(symbol2);

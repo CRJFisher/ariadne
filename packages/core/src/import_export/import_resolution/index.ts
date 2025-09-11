@@ -42,7 +42,7 @@ import {
   set_debug_mode,
   set_cache_mode,
   clear_resolution_cache
-} from './import_resolution.generic';
+} from './import_resolution';
 
 // Import extraction functionality (moved from symbol_resolution)
 import {
@@ -60,7 +60,7 @@ import {
   resolve_reexport_pattern,
   is_commonjs_file,
   resolve_module_exports
-} from './import_resolution.javascript.bespoke';
+} from './import_resolution.javascript';
 
 // Bespoke TypeScript handlers
 import {
@@ -69,7 +69,7 @@ import {
   resolve_type_namespace_import,
   resolve_ambient_module,
   is_type_only_import
-} from './import_resolution.typescript.bespoke';
+} from './import_resolution.typescript';
 
 // Bespoke Python handlers
 import {
@@ -79,7 +79,7 @@ import {
   resolve_builtin_member,
   is_python_builtin,
   resolve_wildcard_import
-} from './import_resolution.python.bespoke';
+} from './import_resolution.python';
 
 // Bespoke Rust handlers
 import {
@@ -90,7 +90,7 @@ import {
   is_public_item,
   resolve_macro_import,
   resolve_std_import as resolve_rust_std_import
-} from './import_resolution.rust.bespoke';
+} from './import_resolution.rust';
 
 // Re-export types and common functions
 export {
@@ -118,7 +118,7 @@ export {
   set_debug_mode,
   set_cache_mode,
   clear_resolution_cache
-} from './import_resolution.generic';
+} from './import_resolution';
 
 // Re-export import extraction (moved from symbol_resolution - Layer 2 functionality)
 export {

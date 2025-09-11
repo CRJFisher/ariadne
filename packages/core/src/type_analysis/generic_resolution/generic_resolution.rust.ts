@@ -1,115 +1,169 @@
 /**
- * Rust-specific generic type resolution
+ * Rust-specific bespoke generic features
  * 
- * Handles Rust generics, lifetimes, trait bounds, and associated types
+ * Handles Rust lifetime parameters, associated types, and trait bounds
  */
 
-import { SyntaxNode } from 'tree-sitter';
-import {
-  GenericParameter,
-  ResolvedGeneric
-} from '@ariadnejs/types';
-import {
-  GenericContext,
-  resolve_generic_type
-} from './generic_resolution';
-import { TypeRegistry } from '../type_registry';
+import { ResolvedGeneric } from '@ariadnejs/types';
+import { GenericContext, resolve_generic_type } from './generic_resolution';
+
+// =============================================================================
+// PUBLIC API FUNCTIONS (in order of usage by main module)
+// =============================================================================
 
 /**
- * Extract Rust generic parameters from AST node
+ * Resolve Rust associated types
+ * e.g., T::Item, Self::Output
  */
-export function extract_rust_generics(
-  node: SyntaxNode,
-  source_code: string
-): GenericParameter[] {
-  const params: GenericParameter[] = [];
-  
-  // Look for type_parameters or generic_parameters
-  const type_params = node.childForFieldName('type_parameters') || 
-                     node.childForFieldName('generic_parameters');
-  if (!type_params) return params;
-  
-  // Iterate through parameters
-  for (let i = 0; i < type_params.childCount; i++) {
-    const param = type_params.child(i);
-    
-    if (param?.type === 'type_identifier' || param?.type === 'generic_type') {
-      const name = source_code.substring(param.startIndex, param.endIndex);
-      
-      // Look for bounds (e.g., T: Clone + Debug)
-      const next = type_params.child(i + 1);
-      let constraint: string | undefined;
-      
-      if (next?.type === ':') {
-        let bound_end = i + 2;
-        const bounds: string[] = [];
-        
-        while (bound_end < type_params.childCount) {
-          const bound = type_params.child(bound_end);
-          if (bound?.type === ',') break;
-          if (bound?.type === 'type_identifier' || bound?.type === 'trait_bound') {
-            bounds.push(source_code.substring(bound.startIndex, bound.endIndex));
-          }
-          bound_end++;
-        }
-        
-        if (bounds.length > 0) {
-          constraint = bounds.join(' + ');
-        }
-      }
-      
-      params.push({ name, constraint });
-    }
-  }
-  
-  return params;
-}
-
-/**
- * Rust-specific generic resolution with lifetime and trait handling
- */
-export function resolve_rust_generic(
+export function resolve_rust_associated_type(
   type_ref: string,
-  context: GenericContext,
-  type_registry: TypeRegistry
-): ResolvedGeneric {
-  // Handle Rust-specific patterns like lifetimes
-  let cleaned_ref = type_ref.replace(/'[a-z]+/g, ''); // Remove lifetime annotations
+  context: GenericContext
+): ResolvedGeneric | null {
+  if (!type_ref.includes('::')) return null;
   
-  // Handle associated types (e.g., T::Item)
-  if (cleaned_ref.includes('::')) {
-    const parts = cleaned_ref.split('::');
-    const base = parts[0];
-    
-    // Resolve the base type first
-    const base_resolved = resolve_generic_type(base, context);
-    if (base_resolved.resolved_type !== base) {
-      cleaned_ref = cleaned_ref.replace(base, base_resolved.resolved_type);
-    }
-  }
+  const parts = type_ref.split('::');
+  if (parts.length < 2) return null;
   
-  return resolve_generic_type(cleaned_ref, context);
+  const base_type = parts[0];
+  const associated = parts.slice(1).join('::');
+  
+  // Resolve the base type first
+  const base_resolved = resolve_generic_type(base_type, context);
+  
+  // Build the resolved associated type
+  const resolved_type = base_resolved.resolved_type !== base_type
+    ? `${base_resolved.resolved_type}::${associated}`
+    : type_ref;
+  
+  return {
+    original_type: type_ref,
+    resolved_type,
+    type_substitutions: base_resolved.type_substitutions,
+    confidence: base_resolved.confidence
+  };
 }
 
 /**
- * Check if a type name is a Rust generic parameter
+ * Handle Rust impl Trait syntax
+ * This is Rust's way of specifying anonymous types with trait bounds
  */
-export function is_rust_generic(type_name: string): boolean {
-  // Single uppercase letters are typically generic parameters
-  if (/^[A-Z]$/.test(type_name)) return true;
+export function resolve_rust_impl_trait(
+  type_ref: string,
+  context: GenericContext
+): ResolvedGeneric | null {
+  const impl_match = type_ref.match(/^impl\s+(.+)$/);
+  if (!impl_match) return null;
   
-  // Common Rust generic parameter patterns
-  const generic_patterns = [
-    /^T[A-Z]?.*$/,     // T, TKey, TValue, etc.
-    /^'[a-z]+$/,       // Lifetime parameters like 'a, 'static
-    /^impl\s+/,        // impl Trait syntax
-  ];
+  const trait_bounds = impl_match[1];
+  const resolved_bounds = resolve_rust_trait_bounds(trait_bounds);
   
-  return generic_patterns.some(pattern => pattern.test(type_name));
+  return {
+    original_type: type_ref,
+    resolved_type: `impl ${resolved_bounds}`,
+    type_substitutions: new Map(),
+    confidence: 'partial'
+  };
 }
+
+/**
+ * Handle Rust dyn Trait syntax
+ * Dynamic dispatch through trait objects
+ */
+export function resolve_rust_dyn_trait(
+  type_ref: string,
+  context: GenericContext
+): ResolvedGeneric | null {
+  const dyn_match = type_ref.match(/^dyn\s+(.+)$/);
+  if (!dyn_match) return null;
+  
+  const trait_bounds = dyn_match[1];
+  const resolved_bounds = resolve_rust_trait_bounds(trait_bounds);
+  
+  return {
+    original_type: type_ref,
+    resolved_type: `dyn ${resolved_bounds}`,
+    type_substitutions: new Map(),
+    confidence: 'exact'
+  };
+}
+
+/**
+ * Handle Rust references with lifetimes
+ * e.g., &'a str, &'static mut T
+ */
+export function resolve_rust_reference(
+  type_ref: string,
+  context: GenericContext
+): ResolvedGeneric | null {
+  const ref_match = type_ref.match(/^&('?\w*\s+)?(mut\s+)?(.+)$/);
+  if (!ref_match) return null;
+  
+  const [_, lifetime, mutability, inner_type] = ref_match;
+  
+  // Resolve the inner type
+  const inner_resolved = resolve_generic_type(inner_type, context);
+  
+  // Reconstruct the reference
+  const lifetime_str = lifetime ? lifetime.trim() + ' ' : '';
+  const mut_str = mutability ? 'mut ' : '';
+  const resolved_type = `&${lifetime_str}${mut_str}${inner_resolved.resolved_type}`;
+  
+  return {
+    original_type: type_ref,
+    resolved_type,
+    type_substitutions: inner_resolved.type_substitutions,
+    confidence: inner_resolved.confidence
+  };
+}
+
+/**
+ * Handle Rust tuple types
+ * e.g., (T, U), (i32, String, bool)
+ */
+export function resolve_rust_tuple(
+  type_ref: string,
+  context: GenericContext
+): ResolvedGeneric | null {
+  const tuple_match = type_ref.match(/^\((.+)\)$/);
+  if (!tuple_match) return null;
+  
+  const elements = tuple_match[1].split(',').map(e => e.trim());
+  const resolved_elements = elements.map(elem => {
+    const resolved = resolve_generic_type(elem, context);
+    return resolved.resolved_type;
+  });
+  
+  return {
+    original_type: type_ref,
+    resolved_type: `(${resolved_elements.join(', ')})`,
+    type_substitutions: new Map(),
+    confidence: 'exact'
+  };
+}
+
+/**
+ * Check if a Rust type has lifetime parameters
+ */
+export function has_lifetime_parameters(type_ref: string): boolean {
+  return /'[a-z]+/.test(type_ref);
+}
+
+/**
+ * Strip lifetime parameters from a Rust type
+ * Used when lifetimes don't affect type resolution
+ */
+export function strip_rust_lifetimes(type_ref: string): string {
+  // Remove lifetime annotations like 'a, 'static, etc.
+  return type_ref.replace(/'[a-z]+/g, '').replace(/\s+/g, ' ').trim();
+}
+
+// =============================================================================
+// UTILITY FUNCTIONS (helper functions and not used by main module)
+// =============================================================================
 
 /**
  * Extract lifetime parameters from Rust type
+ * Lifetimes are unique to Rust's ownership system
  */
 export function extract_rust_lifetimes(type_ref: string): string[] {
   const lifetimes: string[] = [];
@@ -123,9 +177,3 @@ export function extract_rust_lifetimes(type_ref: string): string[] {
   return lifetimes;
 }
 
-/**
- * Check if a Rust type has lifetime parameters
- */
-export function has_lifetime_parameters(type_ref: string): boolean {
-  return /'[a-z]+/.test(type_ref);
-}

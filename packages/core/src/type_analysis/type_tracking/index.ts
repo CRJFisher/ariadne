@@ -52,7 +52,7 @@ import {
   extract_typescript_conditional_type,
   extract_typescript_mapped_type,
   track_typescript_namespace,
-} from "./type_tracking.typescript.bespoke";
+} from "./type_tracking.typescript";
 
 import {
   track_javascript_constructor_function,
@@ -61,7 +61,7 @@ import {
   track_javascript_dynamic_property,
   infer_javascript_instanceof,
   track_javascript_object_create,
-} from "./type_tracking.javascript.bespoke";
+} from "./type_tracking.javascript";
 
 import {
   extract_python_union_type,
@@ -71,7 +71,7 @@ import {
   track_python_comprehension,
   track_python_multiple_inheritance,
   track_python_typing_imports,
-} from "./type_tracking.python.bespoke";
+} from "./type_tracking.python";
 
 import {
   track_rust_ownership,
@@ -84,7 +84,7 @@ import {
   track_rust_if_let,
   track_rust_macro_types,
   infer_rust_typed_literal,
-} from "./type_tracking.rust.bespoke";
+} from "./type_tracking.rust";
 
 // Import generic functions and types
 import {

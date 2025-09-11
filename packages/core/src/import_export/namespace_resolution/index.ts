@@ -57,4 +57,4 @@ export {
   merge_namespace_results,
   parse_qualified_access_generic,
   get_namespace_stats
-} from './namespace_resolution.generic';
+} from './namespace_resolution';

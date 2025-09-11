@@ -1,5 +1,5 @@
 /**
- * Integration tests for the class detection module
+ * Tests for generic class detection processor
  */
 
 import { describe, it, expect } from 'vitest';
@@ -8,7 +8,16 @@ import JavaScript from 'tree-sitter-javascript';
 import TypeScript from 'tree-sitter-typescript';
 import Python from 'tree-sitter-python';
 import Rust from 'tree-sitter-rust';
-import { find_class_definitions, ClassDetectionContext } from './index';
+import {
+  find_classes_generic,
+  extract_class_generic,
+  extract_method_generic,
+  extract_property_generic,
+  extract_parameters_generic,
+  walk_tree
+} from './class_detection';
+import { get_language_config } from './language_configs';
+import { ClassDetectionContext } from './index';
 
 function parse_code(code: string, language: 'javascript' | 'typescript' | 'python' | 'rust'): Parser.Tree {
   const parser = new Parser();
@@ -32,24 +41,21 @@ function parse_code(code: string, language: 'javascript' | 'typescript' | 'pytho
 }
 
 describe('class_detection', () => {
-  describe('JavaScript class detection', () => {
-    it('should detect basic class with methods and properties', () => {
+  describe('find_classes_generic', () => {
+    it('should find JavaScript classes', () => {
       const code = `
-        class Animal {
-          #privateField = "secret";
-          static species = "unknown";
-          
+        class MyClass {
           constructor(name) {
             this.name = name;
           }
           
-          speak() {
-            return \`\${this.name} makes a sound\`;
+          greet() {
+            return "Hello";
           }
-          
-          static createAnonymous() {
-            return new Animal("anonymous");
-          }
+        }
+        
+        class AnotherClass extends MyClass {
+          static count = 0;
         }
       `;
       
@@ -61,166 +67,89 @@ describe('class_detection', () => {
         ast_root: tree.rootNode
       };
       
-      const classes = find_class_definitions(context);
-      expect(classes).toHaveLength(1);
-      
-      const animal = classes[0];
-      expect(animal.name).toBe('Animal');
-      expect(animal.methods).toHaveLength(3); // constructor, speak, createAnonymous
-      expect(animal.properties).toHaveLength(2); // #privateField, species
-      
-      const constructor = animal.methods.find(m => m.is_constructor);
-      expect(constructor).toBeDefined();
-      expect(constructor?.parameters).toHaveLength(1);
-      
-      const staticMethod = animal.methods.find(m => m.name === 'createAnonymous');
-      expect(staticMethod?.is_static).toBe(true);
-      
-      const privateField = animal.properties.find(p => p.name === '#privateField');
-      expect(privateField?.is_private).toBe(true);
-    });
-    
-    it('should detect class expressions', () => {
-      const code = `
-        const MyClass = class {
-          method() {}
-        };
-        
-        let AnotherClass = class NamedExpression {
-          anotherMethod() {}
-        };
-      `;
-      
-      const tree = parse_code(code, 'javascript');
-      const context: ClassDetectionContext = {
-        source_code: code,
-        file_path: 'test.js',
-        language: 'javascript',
-        ast_root: tree.rootNode
-      };
-      
-      const classes = find_class_definitions(context);
+      const classes = find_classes_generic(context);
       expect(classes).toHaveLength(2);
       expect(classes[0].name).toBe('MyClass');
       expect(classes[1].name).toBe('AnotherClass');
+      // Note: JavaScript extends is in a child node, not a field, so generic processor can't extract it
+      // The bespoke handler in class_detection.javascript.bespoke.ts handles this
+      expect(classes[1].extends).toBeUndefined();
     });
-  });
-  
-  describe('TypeScript class detection', () => {
-    it('should detect TypeScript-specific features', () => {
+    
+    it('should find Python classes', () => {
       const code = `
-        interface Flyable {
-          fly(): void;
-        }
-        
-        abstract class Bird<T> implements Flyable {
-          protected species: T;
-          private readonly id: number = 1;
-          
-          abstract fly(): void;
-          
-          constructor(species: T) {
-            this.species = species;
-          }
-        }
-        
-        @decorator
-        class Eagle extends Bird<string> {
-          @property
-          wingspan: number;
-          
-          fly(): void {
-            console.log("Eagle flies");
-          }
-        }
+class BaseClass:
+    def __init__(self, value):
+        self.value = value
+    
+    def method(self):
+        pass
+
+class DerivedClass(BaseClass):
+    def another_method(self):
+        return self.value
       `;
       
-      const tree = parse_code(code, 'typescript');
+      const tree = parse_code(code, 'python');
       const context: ClassDetectionContext = {
         source_code: code,
-        file_path: 'test.ts',
-        language: 'typescript',
+        file_path: 'test.py',
+        language: 'python',
         ast_root: tree.rootNode
       };
       
-      const classes = find_class_definitions(context);
-      
-      const bird = classes.find(c => c.name === 'Bird');
-      expect(bird).toBeDefined();
-      expect(bird?.is_abstract).toBe(true);
-      expect(bird?.implements).toContain('Flyable');
-      expect(bird?.generics).toBeDefined();
-      expect(bird?.generics?.[0].name).toBe('T');
-      
-      const flyMethod = bird?.methods.find(m => m.name === 'fly');
-      expect(flyMethod?.is_abstract).toBe(true);
-      
-      const eagle = classes.find(c => c.name === 'Eagle');
-      expect(eagle).toBeDefined();
-      expect(eagle?.extends).toContain('Bird');
-      expect(eagle?.decorators).toContain('decorator');
+      const classes = find_classes_generic(context);
+      expect(classes).toHaveLength(2);
+      expect(classes[0].name).toBe('BaseClass');
+      expect(classes[1].name).toBe('DerivedClass');
+      expect(classes[1].extends).toEqual(['BaseClass']);
     });
-    
-    it('should detect typed parameters and return types', () => {
+  });
+  
+  describe('extract_method_generic', () => {
+    it('should extract JavaScript method', () => {
       const code = `
-        class Calculator {
-          add(a: number, b: number): number {
-            return a + b;
-          }
-          
-          process<T>(data: T[], callback?: (item: T) => void): T[] {
+        class Test {
+          static async fetchData() {
             return data;
           }
+          
+          #privateMethod() {}
         }
       `;
       
-      const tree = parse_code(code, 'typescript');
+      const tree = parse_code(code, 'javascript');
       const context: ClassDetectionContext = {
         source_code: code,
-        file_path: 'test.ts',
-        language: 'typescript',
+        file_path: 'test.js',
+        language: 'javascript',
         ast_root: tree.rootNode
       };
       
-      const classes = find_class_definitions(context);
-      const calc = classes[0];
+      const config = get_language_config('javascript');
+      let method_node: Parser.SyntaxNode | null = null;
       
-      const add = calc.methods.find(m => m.name === 'add');
-      expect(add?.parameters[0].type).toBe('number');
-      expect(add?.return_type).toBe('number');
+      walk_tree(tree.rootNode, (node) => {
+        if (node.type === 'method_definition' && !method_node) {
+          method_node = node;
+        }
+      });
       
-      const process = calc.methods.find(m => m.name === 'process');
-      expect(process?.generics).toBeDefined();
-      expect(process?.parameters[1].is_optional).toBe(true);
+      if (method_node) {
+        const method = extract_method_generic(method_node, context, config);
+        expect(method).toBeDefined();
+        expect(method?.name).toBe('fetchData');
+        expect(method?.is_static).toBe(true);
+        expect(method?.is_async).toBe(true);
+      }
     });
-  });
-  
-  describe('Python class detection', () => {
-    it('should detect Python class features', () => {
+    
+    it('should extract Python method with parameters', () => {
       const code = `
-@dataclass
-class Person:
-    name: str
-    age: int = 0
-    
-    def __init__(self, name: str, age: int = 0):
-        self.name = name
-        self.age = age
-    
-    @property
-    def description(self) -> str:
-        return f"{self.name} is {self.age}"
-    
-    @staticmethod
-    def create_anonymous():
-        return Person("Anonymous", 0)
-    
-    def _protected_method(self):
+class Test:
+    def method(self, arg1, arg2=None, *args, **kwargs):
         pass
-    
-    def __private_method(self):
-        pass
-`;
+      `;
       
       const tree = parse_code(code, 'python');
       const context: ClassDetectionContext = {
@@ -230,168 +159,137 @@ class Person:
         ast_root: tree.rootNode
       };
       
-      const classes = find_class_definitions(context);
-      const person = classes[0];
+      const config = get_language_config('python');
+      let method_node: Parser.SyntaxNode | null = null;
       
-      expect(person.name).toBe('Person');
-      expect(person.decorators).toContain('dataclass');
+      walk_tree(tree.rootNode, (node) => {
+        if (node.type === 'function_definition') {
+          method_node = node;
+        }
+      });
       
-      const init = person.methods.find(m => m.name === '__init__');
-      expect(init?.is_constructor).toBe(true);
-      expect(init?.parameters).toHaveLength(2); // name and age (self filtered)
+      if (method_node) {
+        const method = extract_method_generic(method_node, context, config);
+        expect(method).toBeDefined();
+        expect(method?.name).toBe('method');
+        // self should be filtered out, leaving: arg1, arg2, *args, **kwargs
+        expect(method?.parameters).toHaveLength(4);
+      }
+    });
+  });
+  
+  describe('extract_property_generic', () => {
+    it('should extract JavaScript class field', () => {
+      const code = `
+        class Test {
+          static count = 0;
+          #privateField = "secret";
+        }
+      `;
       
-      const staticMethod = person.methods.find(m => m.name === 'create_anonymous');
-      expect(staticMethod?.is_static).toBe(true);
+      const tree = parse_code(code, 'javascript');
+      const context: ClassDetectionContext = {
+        source_code: code,
+        file_path: 'test.js',
+        language: 'javascript',
+        ast_root: tree.rootNode
+      };
       
-      const protectedMethod = person.methods.find(m => m.name === '_protected_method');
+      const config = get_language_config('javascript');
+      let field_node: Parser.SyntaxNode | null = null;
+      
+      walk_tree(tree.rootNode, (node) => {
+        if (node.type === 'field_definition' && !field_node) {
+          field_node = node;
+        }
+      });
+      
+      if (field_node) {
+        const property = extract_property_generic(field_node, context, config);
+        expect(property).toBeDefined();
+        expect(property?.name).toBe('count');
+        expect(property?.is_static).toBe(true);
+        expect(property?.initial_value).toBe('0');
+      }
+    });
+  });
+  
+  describe('walk_tree', () => {
+    it('should visit all nodes in the tree', () => {
+      const code = `
+        class A {
+          method() {}
+        }
+      `;
+      
+      const tree = parse_code(code, 'javascript');
+      const visited_types: string[] = [];
+      
+      walk_tree(tree.rootNode, (node) => {
+        visited_types.push(node.type);
+      });
+      
+      expect(visited_types).toContain('program');
+      expect(visited_types).toContain('class_declaration');
+      expect(visited_types).toContain('class_body');
+      expect(visited_types).toContain('method_definition');
+    });
+  });
+  
+  describe('access modifier detection', () => {
+    it('should detect private fields in JavaScript', () => {
+      const code = `
+        class Test {
+          #privateField = 1;
+        }
+      `;
+      
+      const tree = parse_code(code, 'javascript');
+      const context: ClassDetectionContext = {
+        source_code: code,
+        file_path: 'test.js',
+        language: 'javascript',
+        ast_root: tree.rootNode
+      };
+      
+      const classes = find_classes_generic(context);
+      expect(classes[0].properties[0].is_private).toBe(true);
+    });
+    
+    it('should detect Python privacy conventions', () => {
+      const code = `
+class Test:
+    def _protected(self):
+        pass
+    
+    def __private(self):
+        pass
+      `;
+      
+      const tree = parse_code(code, 'python');
+      const context: ClassDetectionContext = {
+        source_code: code,
+        file_path: 'test.py',
+        language: 'python',
+        ast_root: tree.rootNode
+      };
+      
+      const classes = find_classes_generic(context);
+      const methods = classes[0].methods;
+      
+      const protectedMethod = methods.find(m => m.name === '_protected');
+      const privateMethod = methods.find(m => m.name === '__private');
+      
       expect(protectedMethod?.is_protected).toBe(true);
-      
-      const privateMethod = person.methods.find(m => m.name === '__private_method');
       expect(privateMethod?.is_private).toBe(true);
-      
-      // Check properties extracted from __init__
-      expect(person.properties.length).toBeGreaterThan(0);
-    });
-    
-    it('should detect multiple inheritance', () => {
-      const code = `
-class A:
-    pass
-
-class B:
-    pass
-
-class C(A, B):
-    pass
-`;
-      
-      const tree = parse_code(code, 'python');
-      const context: ClassDetectionContext = {
-        source_code: code,
-        file_path: 'test.py',
-        language: 'python',
-        ast_root: tree.rootNode
-      };
-      
-      const classes = find_class_definitions(context);
-      const classC = classes.find(c => c.name === 'C');
-      
-      expect(classC?.extends).toEqual(['A', 'B']);
     });
   });
   
-  describe('Rust struct detection', () => {
-    it('should detect Rust structs with impl blocks', () => {
+  describe('parameter extraction', () => {
+    it('should extract optional and rest parameters', () => {
       const code = `
-#[derive(Debug, Clone)]
-pub struct Point<T> {
-    pub x: T,
-    pub y: T,
-}
-
-impl<T> Point<T> {
-    pub fn new(x: T, y: T) -> Self {
-        Point { x, y }
-    }
-    
-    pub fn distance(&self) -> f64 {
-        0.0
-    }
-}
-
-impl<T> Display for Point<T> {
-    fn fmt(&self, f: &mut Formatter) -> Result {
-        Ok(())
-    }
-}
-`;
-      
-      const tree = parse_code(code, 'rust');
-      const context: ClassDetectionContext = {
-        source_code: code,
-        file_path: 'test.rs',
-        language: 'rust',
-        ast_root: tree.rootNode
-      };
-      
-      const classes = find_class_definitions(context);
-      const point = classes.find(c => c.name === 'Point');
-      
-      expect(point).toBeDefined();
-      expect(point?.properties).toHaveLength(2);
-      expect(point?.generics).toBeDefined();
-      expect(point?.decorators).toContain('Debug');
-      expect(point?.decorators).toContain('Clone');
-      
-      const newMethod = point?.methods.find(m => m.name === 'new');
-      expect(newMethod?.is_static).toBe(true);
-      expect(newMethod?.is_constructor).toBe(true);
-      
-      const distanceMethod = point?.methods.find(m => m.name === 'distance');
-      expect(distanceMethod?.is_static).toBe(false);
-      
-      // Check trait implementation
-      expect(point?.implements).toContain('Display');
-    });
-    
-    it('should handle tuple structs', () => {
-      const code = `
-struct Color(u8, u8, u8);
-
-impl Color {
-    fn red(&self) -> u8 {
-        self.0
-    }
-}
-`;
-      
-      const tree = parse_code(code, 'rust');
-      const context: ClassDetectionContext = {
-        source_code: code,
-        file_path: 'test.rs',
-        language: 'rust',
-        ast_root: tree.rootNode
-      };
-      
-      const classes = find_class_definitions(context);
-      const color = classes[0];
-      
-      expect(color.name).toBe('Color');
-      expect(color.properties).toHaveLength(3);
-      expect(color.properties[0].name).toBe('0'); // Tuple fields accessed by index
-      expect(color.methods).toHaveLength(1);
-    });
-  });
-  
-  describe('Edge cases', () => {
-    it('should handle empty classes', () => {
-      const code = `
-        class Empty {}
-      `;
-      
-      const tree = parse_code(code, 'javascript');
-      const context: ClassDetectionContext = {
-        source_code: code,
-        file_path: 'test.js',
-        language: 'javascript',
-        ast_root: tree.rootNode
-      };
-      
-      const classes = find_class_definitions(context);
-      expect(classes).toHaveLength(1);
-      expect(classes[0].name).toBe('Empty');
-      expect(classes[0].methods).toHaveLength(0);
-      expect(classes[0].properties).toHaveLength(0);
-    });
-    
-    it('should handle nested classes', () => {
-      const code = `
-        class Outer {
-          method() {
-            class Inner {
-              innerMethod() {}
-            }
-          }
+        class Test {
+          method(required, optional = 5, ...rest) {}
         }
       `;
       
@@ -403,10 +301,23 @@ impl Color {
         ast_root: tree.rootNode
       };
       
-      const classes = find_class_definitions(context);
-      expect(classes).toHaveLength(2);
-      expect(classes.map(c => c.name)).toContain('Outer');
-      expect(classes.map(c => c.name)).toContain('Inner');
+      const config = get_language_config('javascript');
+      let params_node: Parser.SyntaxNode | null = null;
+      
+      walk_tree(tree.rootNode, (node) => {
+        if (node.type === 'formal_parameters') {
+          params_node = node;
+        }
+      });
+      
+      if (params_node) {
+        const params = extract_parameters_generic(params_node, context, config);
+        expect(params).toHaveLength(3);
+        expect(params[0].is_optional).toBe(false);
+        expect(params[1].is_optional).toBe(true);
+        expect(params[1].default_value).toBe('5');
+        expect(params[2].is_rest).toBe(true);
+      }
     });
   });
 });

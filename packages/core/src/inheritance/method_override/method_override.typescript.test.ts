@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { handle_typescript_overrides } from './method_override.typescript.bespoke';
-import { MethodOverrideContext } from './method_override.generic';
+import { handle_typescript_overrides } from './method_override.typescript';
+import { MethodOverrideContext } from './method_override';
 import { get_language_config } from './language_configs';
 
 describe('TypeScript Method Override Bespoke Handler', () => {

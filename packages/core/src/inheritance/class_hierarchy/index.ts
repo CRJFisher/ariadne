@@ -16,10 +16,10 @@ import {
   ClassHierarchyContext,
   BespokeHandlers,
   CLASS_HIERARCHY_CONTEXT
-} from './class_hierarchy.generic';
-import { create_javascript_handlers, create_typescript_handlers } from './class_hierarchy.javascript.bespoke';
-import { create_python_handlers } from './class_hierarchy.python.bespoke';
-import { create_rust_handlers } from './class_hierarchy.rust.bespoke';
+} from './class_hierarchy';
+import { create_javascript_handlers, create_typescript_handlers } from './class_hierarchy.javascript';
+import { create_python_handlers } from './class_hierarchy.python';
+import { create_rust_handlers } from './class_hierarchy.rust';
 
 /**
  * Build class hierarchy using configuration-driven processing
@@ -56,6 +56,6 @@ export function build_class_hierarchy(
 }
 
 // Re-export types and context
-export { ClassHierarchyContext } from './class_hierarchy.generic';
+export { ClassHierarchyContext } from './class_hierarchy';
 export { CLASS_HIERARCHY_CONTEXT };
 export type { ClassNode, ClassHierarchy, InheritanceEdge } from '@ariadnejs/types';

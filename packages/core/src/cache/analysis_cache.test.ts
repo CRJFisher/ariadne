@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createAnalysisCache } from './analysis_cache';
-import { FileAnalysis, Language } from '@ariadnejs/types';
+import { FileAnalysis, Language, FilePath, SourceCode } from '@ariadnejs/types';
 
 describe('AnalysisCache', () => {
   let cache: ReturnType<typeof createAnalysisCache>;
@@ -16,7 +16,8 @@ describe('AnalysisCache', () => {
   describe('Basic caching', () => {
     it('should cache and retrieve analysis', () => {
       const mockAnalysis = {
-        file_path: '/test/file.js',
+        file_path: '/test/file.js' as FilePath,
+        source_code: 'const x = 1;' as SourceCode,
         language: 'javascript' as Language,
         functions: [],
         classes: [],
@@ -28,7 +29,7 @@ describe('AnalysisCache', () => {
         method_calls: [],
         constructor_calls: [],
         type_info: new Map(),
-        scopes: { nodes: new Map(), root_id: 'root', language: 'javascript' as Language }
+        scopes: { nodes: new Map(), root_id: 'root' as any, language: 'javascript' as Language }
       } as FileAnalysis;
 
       const content = 'const x = 1;';
@@ -44,7 +45,8 @@ describe('AnalysisCache', () => {
 
     it('should invalidate cache on content change', () => {
       const mockAnalysis = {
-        file_path: '/test/file.js',
+        file_path: '/test/file.js' as FilePath,
+        source_code: 'const x = 1;' as SourceCode,
         language: 'javascript' as Language,
         functions: [],
         classes: [],
@@ -56,7 +58,7 @@ describe('AnalysisCache', () => {
         method_calls: [],
         constructor_calls: [],
         type_info: new Map(),
-        scopes: { nodes: new Map(), root_id: 'root', language: 'javascript' as Language }
+        scopes: { nodes: new Map(), root_id: 'root' as any, language: 'javascript' as Language }
       } as FileAnalysis;
 
       const content1 = 'const x = 1;';
@@ -72,7 +74,8 @@ describe('AnalysisCache', () => {
 
     it('should respect TTL', async () => {
       const mockAnalysis = {
-        file_path: '/test/file.js',
+        file_path: '/test/file.js' as FilePath,
+        source_code: 'const x = 1;' as SourceCode,
         language: 'javascript' as Language,
         functions: [],
         classes: [],
@@ -84,7 +87,7 @@ describe('AnalysisCache', () => {
         method_calls: [],
         constructor_calls: [],
         type_info: new Map(),
-        scopes: { nodes: new Map(), root_id: 'root', language: 'javascript' as Language }
+        scopes: { nodes: new Map(), root_id: 'root' as any, language: 'javascript' as Language }
       } as FileAnalysis;
 
       const content = 'const x = 1;';
@@ -110,7 +113,8 @@ describe('AnalysisCache', () => {
       // Fill cache to max size
       for (let i = 1; i <= 3; i++) {
         const mockAnalysis = {
-          file_path: `/test/file${i}.js`,
+          file_path: `/test/file${i}.js` as FilePath,
+          source_code: 'const x = 1;' as SourceCode,
           language: 'javascript' as Language,
           functions: [],
           classes: [],
@@ -122,7 +126,7 @@ describe('AnalysisCache', () => {
           method_calls: [],
           constructor_calls: [],
           type_info: new Map(),
-          scopes: { nodes: new Map(), root_id: 'root', language: 'javascript' as Language }
+          scopes: { nodes: new Map(), root_id: 'root' as any, language: 'javascript' as Language }
         } as FileAnalysis;
         
         cache.cacheAnalysis(`/test/file${i}.js`, content, mockAnalysis);
@@ -135,7 +139,8 @@ describe('AnalysisCache', () => {
       
       // Add one more - should evict first
       const mockAnalysis4 = {
-        file_path: '/test/file4.js',
+        file_path: '/test/file4.js' as FilePath,
+        source_code: 'const x = 1;' as SourceCode,
         language: 'javascript' as Language,
         functions: [],
         classes: [],
@@ -147,7 +152,7 @@ describe('AnalysisCache', () => {
         method_calls: [],
         constructor_calls: [],
         type_info: new Map(),
-        scopes: { nodes: new Map(), root_id: 'root', language: 'javascript' as Language }
+        scopes: { nodes: new Map(), root_id: 'root' as any, language: 'javascript' as Language }
       } as FileAnalysis;
       
       cache.cacheAnalysis('/test/file4.js', content, mockAnalysis4);
@@ -169,7 +174,8 @@ describe('AnalysisCache', () => {
       
       // Add some cached items
       const mockAnalysis = {
-        file_path: '/test/file.js',
+        file_path: '/test/file.js' as FilePath,
+        source_code: 'const x = 1;' as SourceCode,
         language: 'javascript' as Language,
         functions: [],
         classes: [],
@@ -181,7 +187,7 @@ describe('AnalysisCache', () => {
         method_calls: [],
         constructor_calls: [],
         type_info: new Map(),
-        scopes: { nodes: new Map(), root_id: 'root', language: 'javascript' as Language }
+        scopes: { nodes: new Map(), root_id: 'root' as any, language: 'javascript' as Language }
       } as FileAnalysis;
       
       cache.cacheAnalysis('/test/file.js', 'const x = 1;', mockAnalysis);
@@ -198,7 +204,8 @@ describe('AnalysisCache', () => {
       });
       
       const mockAnalysis = {
-        file_path: '/test/file.js',
+        file_path: '/test/file.js' as FilePath,
+        source_code: 'const x = 1;' as SourceCode,
         language: 'javascript' as Language,
         functions: [],
         classes: [],
@@ -210,7 +217,7 @@ describe('AnalysisCache', () => {
         method_calls: [],
         constructor_calls: [],
         type_info: new Map(),
-        scopes: { nodes: new Map(), root_id: 'root', language: 'javascript' as Language }
+        scopes: { nodes: new Map(), root_id: 'root' as any, language: 'javascript' as Language }
       } as FileAnalysis;
       
       const content = 'const x = 1;';

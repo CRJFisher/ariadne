@@ -18,7 +18,6 @@ import {
   MethodCallInfo,
   ConstructorCallInfo,
   ClassHierarchy,
-  TypeRegistry,
   FileAnalysis,
   ModuleGraph,
   ResolvedGeneric,
@@ -28,6 +27,8 @@ import {
   TypeFlow,
   FilePath
 } from '@ariadnejs/types';
+
+import { TypeRegistry } from '../../type_analysis/type_registry';
 
 import { 
   enrich_method_calls_with_hierarchy,

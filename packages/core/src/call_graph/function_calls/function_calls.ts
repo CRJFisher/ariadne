@@ -278,12 +278,12 @@ function resolve_local_function(
   if (!scope) return null;
 
   // Walk up scope chain looking for function definition
-  const result = find_symbol_in_scope_chain(scope_tree, scope.id, callee_name);
+  const symbol = find_symbol_in_scope_chain(scope_tree, scope.id, callee_name);
   
-  if (result && result.symbol.kind === "function") {
+  if (symbol && symbol.kind === "function") {
     return {
-      symbol_id: `${result.scope.id}:${callee_name}`,
-      definition_location: result.symbol.location,
+      symbol_id: `${scope.id}:${callee_name}`,
+      definition_location: symbol.location,
       is_local: true,
     };
   }
