@@ -1,8 +1,10 @@
 import { Location } from "./common";
 import { FilePath, FunctionName, ScopeId, DocString } from "./aliases";
+import { SymbolName, SymbolId } from "./branded-types";
 
-export type SymbolName = string; // Simple name of a symbol (unqualified)// Symbol identifiers
-export type SymbolId = string; // Unique symbol identifier (format: "file_path#symbol_name")
+// Symbol types are now imported from branded-types.ts for type safety
+// Re-export for backward compatibility
+export { SymbolName, SymbolId } from "./branded-types";
 
 export interface SymbolDefinition {
   readonly symbol: SymbolName;

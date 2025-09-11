@@ -1,6 +1,18 @@
 import { Location, FunctionSignature } from "./common";
-import { FilePath, ClassName } from "./aliases";
-import { SymbolId } from "./symbols";
+import { FilePath, ClassName, ModulePath } from "./aliases";
+import { 
+  SymbolId, 
+  CallerName, 
+  CalleeName, 
+  ReceiverName,
+  SymbolName,
+  MODULE_CONTEXT,
+  ModuleContext,
+  CallerContext,
+  CallType,
+  ResolutionReason,
+  ResolvedTypeKind
+} from "./branded-types";
 
 export interface FunctionNode {
   readonly symbol: SymbolId;
@@ -17,7 +29,7 @@ export interface CallEdge {
   readonly from: SymbolId;
   readonly to: SymbolId;
   readonly location: Location;
-  readonly call_type: "direct" | "method" | "constructor" | "dynamic";
+  readonly call_type: CallType;
   readonly is_async?: boolean;
   readonly argument_count?: number;
 }
@@ -26,7 +38,7 @@ export interface ResolvedCall {
   readonly symbol: SymbolId;
   readonly resolved_path?: FilePath;
   readonly confidence: "high" | "medium" | "low";
-  readonly resolution_reason?: string;
+  readonly resolution_reason?: ResolutionReason;
 }
 
 export interface CallChain {
@@ -42,7 +54,7 @@ export interface CallChainNode {
   readonly callee: SymbolId; // Function/method being called
   readonly location: Location;
   readonly file_path: FilePath;
-  readonly call_type: "function" | "method" | "constructor";
+  readonly call_type: CallType;
   readonly depth: number; // Depth in the call chain
 }
 
@@ -68,8 +80,8 @@ export interface CallGraphOptions {
 // TODO: add call arguments
 
 export interface FunctionCallInfo {
-  readonly caller_name: string; // Use MODULE_CONTEXT for module-level calls
-  readonly callee_name: string;
+  readonly caller_name: CallerContext; // Use MODULE_CONTEXT for module-level calls
+  readonly callee_name: CalleeName;
   readonly location: Location;
   readonly is_async?: boolean; // Whether the call is async
   readonly is_method_call: boolean;
@@ -80,30 +92,30 @@ export interface FunctionCallInfo {
   
   // Enhanced resolution fields (populated when context is available)
   readonly resolved_target?: {
-    readonly symbol_id: string;
+    readonly symbol_id: SymbolId;
     readonly definition_location: Location;
     readonly is_local: boolean;
   };
   
   // Import tracking
   readonly is_imported?: boolean;
-  readonly source_module?: string;
-  readonly import_alias?: string;
-  readonly original_name?: string;
+  readonly source_module?: ModulePath;
+  readonly import_alias?: SymbolName;
+  readonly original_name?: SymbolName;
   
   // Type-based resolution for method calls
   readonly resolved_type?: {
-    readonly object_type: string;
-    readonly type_kind: "class" | "interface" | "type" | "enum" | "trait";
+    readonly object_type: ClassName;
+    readonly type_kind: ResolvedTypeKind;
     readonly confidence: "explicit" | "inferred" | "assumed";
-    readonly class_name?: string;
+    readonly class_name?: ClassName;
   };
 }
 
 export interface MethodCallInfo {
-  readonly caller_name: string;
-  readonly method_name: string;
-  readonly receiver_name: string; // The object/instance the method is called on
+  readonly caller_name: CallerContext;
+  readonly method_name: CalleeName;
+  readonly receiver_name: ReceiverName; // The object/instance the method is called on
   readonly location: Location;
   readonly is_static_method: boolean; // Static/class method vs instance method
   readonly is_chained_call: boolean; // Part of a method chain
@@ -111,10 +123,10 @@ export interface MethodCallInfo {
 }
 
 export interface ConstructorCallInfo {
-  readonly constructor_name: string; // Name of the class/type being instantiated
+  readonly constructor_name: ClassName; // Name of the class/type being instantiated
   readonly location: Location;
   readonly arguments_count: number;
-  readonly assigned_to?: string; // Variable name if constructor result is assigned
+  readonly assigned_to?: SymbolName; // Variable name if constructor result is assigned
   readonly is_new_expression: boolean; // Uses 'new' keyword (JS/TS)
   readonly is_factory_method: boolean; // Factory method pattern (e.g., Type::new())
 }

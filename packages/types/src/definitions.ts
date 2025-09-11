@@ -11,14 +11,29 @@ import {
   FunctionName,
   ClassName,
   ParameterName,
+  VariableName,
+  MethodName,
+  PropertyName,
+  InterfaceName,
+  TypeString,
+  QualifiedName,
 } from "./aliases";
+import {
+  SymbolName,
+  TypeConstraint,
+  DefaultValue,
+  Expression,
+  InitialValue,
+  TypeExpression,
+  Visibility,
+} from "./branded-types";
 
 /**
  * Common base interface for all definition types
  * All entity-specific definition types should extend this
  */
 export interface Definition {
-  readonly name: string;
+  readonly name: string; // Generic name - subtypes use specific branded types
   readonly location: Location;
 }
 

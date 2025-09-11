@@ -1,5 +1,5 @@
-import { ExportName, ModulePath } from "./aliases";
-import { SymbolName } from "./symbols";
+import { ExportName, ModulePath, ImportName, NamespaceName } from "./aliases";
+import { SymbolName } from "./branded-types";
 import { Location } from "./common";
 
 /**
@@ -22,19 +22,19 @@ import { Location } from "./common";
  */
 export interface ImportInfo {
   /** The imported symbol name */
-  readonly name: string;
+  readonly name: SymbolName;
   /** Module being imported from */
-  readonly source: string;
+  readonly source: ModulePath;
   /** Type of import */
   readonly kind: "named" | "default" | "namespace" | "dynamic";
   /** Location in source code */
   readonly location: Location;
   /** Local name if renamed (e.g., import { foo as bar }) */
-  readonly alias?: string;
+  readonly alias?: ImportName;
   /** TypeScript type-only import */
   readonly is_type_only?: boolean;
   /** For namespace imports (import * as X) */
-  readonly namespace_name?: string;
+  readonly namespace_name?: NamespaceName;
   /** For side-effect only imports (import 'module') */
   readonly is_side_effect_only?: boolean;
 }
@@ -45,21 +45,21 @@ export interface ImportInfo {
  */
 export interface ExportInfo {
   /** The exported symbol name */
-  readonly name: string;
+  readonly name: SymbolName;
   /** Type of export */
   readonly kind: "named" | "default" | "namespace";
   /** Location in source code */
   readonly location: Location;
   /** Internal name if different from exported name */
-  readonly local_name?: string;
+  readonly local_name?: SymbolName;
   /** TypeScript type-only export */
   readonly is_type_only?: boolean;
   /** Whether this is re-exported from another module */
   readonly is_reexport?: boolean;
   /** Source module for re-exports */
-  readonly source?: string;
+  readonly source?: ModulePath;
   /** Export name if different from local name */
-  readonly export_name?: string;
+  readonly export_name?: ExportName;
 }
 
 // =============================================================================
@@ -82,7 +82,7 @@ export interface ImportStatement {
   /** Whether this is a namespace import (import * as X) */
   readonly is_namespace_import?: boolean;
   /** Namespace name for namespace imports */
-  readonly namespace_name?: string;
+  readonly namespace_name?: NamespaceName;
   /** Side-effect only import (import 'module') */
   readonly is_side_effect_only?: boolean;
 }
@@ -118,7 +118,7 @@ export interface ModuleImport {
   /** Module being imported from */
   readonly source: ModulePath;
   /** All imported symbols */
-  readonly symbols: readonly string[];
+  readonly symbols: readonly SymbolName[];
   /** Static or dynamic import */
   readonly kind: "static" | "dynamic";
   /** Location of import statement */
@@ -128,7 +128,7 @@ export interface ModuleImport {
   /** Whether this is a namespace import */
   readonly is_namespace?: boolean;
   /** Namespace name if applicable */
-  readonly namespace_name?: string;
+  readonly namespace_name?: NamespaceName;
 }
 
 /**
@@ -137,7 +137,7 @@ export interface ModuleImport {
  */
 export interface ModuleExport {
   /** All exported symbols */
-  readonly symbols: readonly string[];
+  readonly symbols: readonly SymbolName[];
   /** Type of exports */
   readonly kind: "named" | "default" | "namespace";
   /** Location of export statement */

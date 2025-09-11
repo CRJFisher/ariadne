@@ -1,6 +1,7 @@
 // Export new CodeGraph architecture types
 export * from './immutable';
 export * from './aliases';
+export * from './branded-types';  // Export all branded types and utilities
 export * from './common';
 export * from './codegraph';
 
