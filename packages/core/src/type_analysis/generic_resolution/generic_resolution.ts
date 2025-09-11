@@ -182,75 +182,88 @@ export function resolve_language_generic(
   context: GenericContext,
   type_registry: TypeRegistry
 ): ResolvedGeneric {
-  // Handle language-specific bespoke features first
+  // First, perform type parameter substitution
+  const substituted_type = substitute_type_parameters(type_ref, context.type_arguments);
+  
+  // Handle language-specific bespoke features on substituted type
   switch (language) {
     case 'typescript':
       // Try TypeScript utility types
-      const ts_utility = resolve_typescript_utility_type(type_ref, context);
+      const ts_utility = resolve_typescript_utility_type(substituted_type, context);
       if (ts_utility) return ts_utility;
       
       // Try conditional types
-      const ts_conditional = resolve_typescript_conditional(type_ref, context);
+      const ts_conditional = resolve_typescript_conditional(substituted_type, context);
       if (ts_conditional) return ts_conditional;
       
       // Try mapped types
-      const ts_mapped = resolve_typescript_mapped_type(type_ref, context);
+      const ts_mapped = resolve_typescript_mapped_type(substituted_type, context);
       if (ts_mapped) return ts_mapped;
       
       // Try template literal types
-      const ts_template = resolve_typescript_template_literal(type_ref, context);
+      const ts_template = resolve_typescript_template_literal(substituted_type, context);
       if (ts_template) return ts_template;
       break;
       
     case 'python':
       // Try Python Optional
-      const py_optional = resolve_python_optional(type_ref, context);
+      const py_optional = resolve_python_optional(substituted_type, context);
       if (py_optional) return py_optional;
       
       // Try Python Union
-      const py_union = resolve_python_union(type_ref, context);
+      const py_union = resolve_python_union(substituted_type, context);
       if (py_union) return py_union;
       
       // Try Python Protocol
-      const py_protocol = resolve_python_protocol(type_ref, context);
+      const py_protocol = resolve_python_protocol(substituted_type, context);
       if (py_protocol) return py_protocol;
       
       // Try Python TypedDict
-      const py_typeddict = resolve_python_typeddict(type_ref, context);
+      const py_typeddict = resolve_python_typeddict(substituted_type, context);
       if (py_typeddict) return py_typeddict;
       break;
       
     case 'rust':
       // Try Rust associated types
-      const rust_assoc = resolve_rust_associated_type(type_ref, context);
+      const rust_assoc = resolve_rust_associated_type(substituted_type, context);
       if (rust_assoc) return rust_assoc;
       
       // Try impl Trait
-      const rust_impl = resolve_rust_impl_trait(type_ref, context);
+      const rust_impl = resolve_rust_impl_trait(substituted_type, context);
       if (rust_impl) return rust_impl;
       
       // Try dyn Trait
-      const rust_dyn = resolve_rust_dyn_trait(type_ref, context);
+      const rust_dyn = resolve_rust_dyn_trait(substituted_type, context);
       if (rust_dyn) return rust_dyn;
       
       // Try references with lifetimes
-      const rust_ref = resolve_rust_reference(type_ref, context);
+      const rust_ref = resolve_rust_reference(substituted_type, context);
       if (rust_ref) return rust_ref;
       
       // Try tuple types
-      const rust_tuple = resolve_rust_tuple(type_ref, context);
+      const rust_tuple = resolve_rust_tuple(substituted_type, context);
       if (rust_tuple) return rust_tuple;
       
       // Strip lifetimes for other types
-      if (has_lifetime_parameters(type_ref)) {
-        const stripped = strip_rust_lifetimes(type_ref);
+      if (has_lifetime_parameters(substituted_type)) {
+        const stripped = strip_rust_lifetimes(substituted_type);
         return resolve_generic_with_config(stripped, context, language);
       }
       break;
   }
   
+  // If substitution occurred and no bespoke handler matched, return substituted result
+  if (substituted_type !== type_ref) {
+    return {
+      original_type: type_ref,
+      resolved_type: substituted_type,
+      type_substitutions: context.type_arguments,
+      confidence: 'exact'
+    };
+  }
+  
   // Fall back to configuration-driven resolution
-  return resolve_generic_with_config(type_ref, context, language);
+  return resolve_generic_with_config(substituted_type, context, language);
 }
 
 /**
@@ -397,6 +410,11 @@ function resolve_type_argument(
  * Parse comma-separated type arguments
  */
 function parse_type_arguments(args_str: string, open_bracket: string, close_bracket: string): string[] {
+  // Handle empty args string
+  if (!args_str.trim()) {
+    return [];
+  }
+  
   const args: string[] = [];
   let current = '';
   let depth = 0;
