@@ -8,6 +8,7 @@ import Parser from 'tree-sitter';
 import TypeScript from 'tree-sitter-typescript/typescript';
 import Python from 'tree-sitter-python';
 import Rust from 'tree-sitter-rust';
+import { TypeName } from '@ariadnejs/types';
 import {
   resolve_language_generic,
   create_generic_context,
@@ -37,7 +38,7 @@ describe('Generic Resolution Integration Tests', () => {
 
       const tree = parser.parse(sourceCode);
       const context = create_generic_context([{ name: 'User' }]);
-      context.type_arguments.set('User', 'User');
+      context.type_arguments.set('User', 'User' as TypeName);
 
       // Test Partial<User>
       const partialResult = resolve_language_generic('Partial<User>', 'typescript', context, mockTypeRegistry);
@@ -62,7 +63,7 @@ describe('Generic Resolution Integration Tests', () => {
 
       const tree = parser.parse(sourceCode);
       const context = create_generic_context([{ name: 'T' }]);
-      context.type_arguments.set('T', 'string');
+      context.type_arguments.set('T', 'string' as TypeName);
 
       const result = resolve_language_generic('T extends string ? true : false', 'typescript', context, mockTypeRegistry);
       expect(result.resolved_type).toBe('string extends string ? true : false');
@@ -81,7 +82,7 @@ describe('Generic Resolution Integration Tests', () => {
 
       const tree = parser.parse(sourceCode);
       const context = create_generic_context([{ name: 'T' }]);
-      context.type_arguments.set('T', 'User');
+      context.type_arguments.set('T', 'User' as TypeName);
 
       const readonlyResult = resolve_language_generic('{ readonly [K in keyof T]: T[K] }', 'typescript', context, mockTypeRegistry);
       expect(readonlyResult.resolved_type).toBe('{ readonly [K in keyof User]: User[K] }');
@@ -99,7 +100,7 @@ describe('Generic Resolution Integration Tests', () => {
 
       const tree = parser.parse(sourceCode);
       const context = create_generic_context([{ name: 'T' }]);
-      context.type_arguments.set('T', 'click');
+      context.type_arguments.set('T', 'click' as TypeName);
 
       const result = resolve_language_generic('`on${Capitalize<T>}`', 'typescript', context, mockTypeRegistry);
       expect(result.resolved_type).toBe('`on${Capitalize<click>}`');
@@ -125,7 +126,7 @@ describe('Generic Resolution Integration Tests', () => {
 
       const tree = parser.parse(sourceCode);
       const context = create_generic_context([{ name: 'T' }]);
-      context.type_arguments.set('T', 'str');
+      context.type_arguments.set('T', 'str' as TypeName);
 
       const result = resolve_language_generic('Generic[T]', 'python', context, mockTypeRegistry);
       expect(result.resolved_type).toBe('Generic[str]');
@@ -144,7 +145,7 @@ describe('Generic Resolution Integration Tests', () => {
 
       const tree = parser.parse(sourceCode);
       const context = create_generic_context([{ name: 'T' }]);
-      context.type_arguments.set('T', 'User');
+      context.type_arguments.set('T', 'User' as TypeName);
 
       const optionalResult = resolve_language_generic('Optional[T]', 'python', context, mockTypeRegistry);
       expect(optionalResult.resolved_type).toBe('Optional[User]');
@@ -165,8 +166,8 @@ describe('Generic Resolution Integration Tests', () => {
 
       const tree = parser.parse(sourceCode);
       const context = create_generic_context([{ name: 'T' }, { name: 'U' }]);
-      context.type_arguments.set('T', 'str');
-      context.type_arguments.set('U', 'int');
+      context.type_arguments.set('T', 'str' as TypeName);
+      context.type_arguments.set('U', 'int' as TypeName);
 
       const unionResult = resolve_language_generic('Union[T, U]', 'python', context, mockTypeRegistry);
       expect(unionResult.resolved_type).toBe('Union[str, int]');
@@ -191,7 +192,7 @@ describe('Generic Resolution Integration Tests', () => {
 
       const tree = parser.parse(sourceCode);
       const context = create_generic_context([{ name: 'T' }]);
-      context.type_arguments.set('T', 'Drawable');
+      context.type_arguments.set('T', 'Drawable' as TypeName);
 
       const protocolResult = resolve_language_generic('Protocol[T]', 'python', context, mockTypeRegistry);
       expect(protocolResult.resolved_type).toBe('Protocol[Drawable]');
@@ -219,7 +220,7 @@ describe('Generic Resolution Integration Tests', () => {
 
       const tree = parser.parse(sourceCode);
       const context = create_generic_context([{ name: 'T' }]);
-      context.type_arguments.set('T', 'Vec<i32>');
+      context.type_arguments.set('T', 'Vec<i32>' as TypeName);
 
       const result = resolve_language_generic('T::Item', 'rust', context, mockTypeRegistry);
       expect(result.resolved_type).toBe('Vec<i32>::Item');
@@ -243,7 +244,7 @@ describe('Generic Resolution Integration Tests', () => {
 
       const tree = parser.parse(sourceCode);
       const context = create_generic_context([{ name: 'T' }]);
-      context.type_arguments.set('T', 'Display + Clone');
+      context.type_arguments.set('T', 'Display + Clone' as TypeName);
 
       const implResult = resolve_language_generic('impl T', 'rust', context, mockTypeRegistry);
       expect(implResult.resolved_type).toBe('impl Display + Clone');
@@ -270,7 +271,7 @@ describe('Generic Resolution Integration Tests', () => {
 
       const tree = parser.parse(sourceCode);
       const context = create_generic_context([{ name: 'T' }]);
-      context.type_arguments.set('T', 'Draw');
+      context.type_arguments.set('T', 'Draw' as TypeName);
 
       const dynResult = resolve_language_generic('Box<dyn T>', 'rust', context, mockTypeRegistry);
       expect(dynResult.resolved_type).toBe('Box<dyn Draw>');
@@ -295,7 +296,7 @@ describe('Generic Resolution Integration Tests', () => {
 
       const tree = parser.parse(sourceCode);
       const context = create_generic_context([{ name: 'T' }]);
-      context.type_arguments.set('T', 'str');
+      context.type_arguments.set('T', 'str' as TypeName);
 
       const refResult = resolve_language_generic("&'a T", 'rust', context, mockTypeRegistry);
       expect(refResult.resolved_type).toBe("&'a str");
@@ -320,8 +321,8 @@ describe('Generic Resolution Integration Tests', () => {
 
       const tree = parser.parse(sourceCode);
       const context = create_generic_context([{ name: 'T' }, { name: 'U' }]);
-      context.type_arguments.set('T', 'i32');
-      context.type_arguments.set('U', 'String');
+      context.type_arguments.set('T', 'i32' as TypeName);
+      context.type_arguments.set('U', 'String' as TypeName);
 
       const tupleResult = resolve_language_generic('(T, U)', 'rust', context, mockTypeRegistry);
       expect(tupleResult.resolved_type).toBe('(i32, String)');
@@ -346,7 +347,7 @@ describe('Generic Resolution Integration Tests', () => {
 
       const tree = parser.parse(sourceCode);
       const context = create_generic_context([{ name: 'T' }]);
-      context.type_arguments.set('T', 'MyStruct');
+      context.type_arguments.set('T', 'MyStruct' as TypeName);
 
       const boundsResult = resolve_language_generic("T: Clone + Send + Sync + 'static", 'rust', context, mockTypeRegistry);
       expect(boundsResult.resolved_type).toBe("MyStruct: Clone + Send + Sync + 'static");
@@ -356,8 +357,8 @@ describe('Generic Resolution Integration Tests', () => {
   describe('Cross-Language Integration', () => {
     it('should handle similar generic patterns across languages', () => {
       const context = create_generic_context([{ name: 'T' }, { name: 'U' }]);
-      context.type_arguments.set('T', 'String');
-      context.type_arguments.set('U', 'Number');
+      context.type_arguments.set('T', 'String' as TypeName);
+      context.type_arguments.set('U', 'Number' as TypeName);
 
       // TypeScript
       const tsResult = resolve_language_generic('Map<T, U>', 'typescript', context, mockTypeRegistry);
@@ -374,9 +375,9 @@ describe('Generic Resolution Integration Tests', () => {
 
     it('should maintain type parameter consistency across language boundaries', () => {
       const context = create_generic_context([{ name: 'T' }, { name: 'K' }, { name: 'V' }]);
-      context.type_arguments.set('T', 'User');
-      context.type_arguments.set('K', 'string');
-      context.type_arguments.set('V', 'UserData');
+      context.type_arguments.set('T', 'User' as TypeName);
+      context.type_arguments.set('K', 'string' as TypeName);
+      context.type_arguments.set('V', 'UserData' as TypeName);
 
       const languages = ['typescript', 'python', 'rust'] as const;
       const typePatterns = ['Container<T>', 'Container[T]', 'Container<T>'];
@@ -406,7 +407,7 @@ describe('Generic Resolution Integration Tests', () => {
 
       const tree = parser.parse(malformedCode);
       const context = create_generic_context([{ name: 'User' }]);
-      context.type_arguments.set('User', 'User');
+      context.type_arguments.set('User', 'User' as TypeName);
 
       // Even with parse errors, generic resolution should work
       const result = resolve_language_generic('Partial<User>', 'typescript', context, mockTypeRegistry);
@@ -415,7 +416,7 @@ describe('Generic Resolution Integration Tests', () => {
 
     it('should handle incomplete generic expressions', () => {
       const context = create_generic_context([{ name: 'T' }]);
-      context.type_arguments.set('T', 'string');
+      context.type_arguments.set('T', 'string' as TypeName);
 
       // Test various incomplete expressions
       expect(parse_generic_type('Array<')).toBeNull();

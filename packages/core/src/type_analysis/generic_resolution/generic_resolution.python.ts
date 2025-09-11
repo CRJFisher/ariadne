@@ -20,17 +20,19 @@ export function resolve_python_optional(
   type_ref: string,
   context: GenericContext
 ): ResolvedGeneric | null {
-  const optional_match = type_ref.match(/^Optional\[(.+)\]$/);
+  // Handle both Optional[T] and typing.Optional[T] patterns
+  const optional_match = type_ref.match(/^(?:(typing\.)?Optional)\[(.+)\]$/);
   if (!optional_match) return null;
   
-  const inner_type = optional_match[1];
+  const module_prefix = optional_match[1] || '';
+  const inner_type = optional_match[2];
   const resolved = resolve_generic_type(inner_type, context);
   
   return {
     original_type: type_ref,
-    resolved_type: `${resolved.resolved_type} | None`,
+    resolved_type: `${module_prefix}Optional[${resolved.resolved_type}]`,
     type_substitutions: resolved.type_substitutions,
-    confidence: 'exact'
+    confidence: resolved.confidence
   };
 }
 
@@ -42,21 +44,61 @@ export function resolve_python_union(
   type_ref: string,
   context: GenericContext
 ): ResolvedGeneric | null {
-  const union_match = type_ref.match(/^Union\[(.+)\]$/);
+  // Handle Python 3.10+ pipe syntax first (T | U)
+  if (type_ref.includes(' | ')) {
+    const members = type_ref.split(' | ').map(m => m.trim());
+    const type_substitutions = new Map<string, string>();
+    let any_partial = false;
+    
+    const resolved_members = members.map(member => {
+      const resolved = resolve_generic_type(member, context);
+      // Merge substitutions
+      resolved.type_substitutions.forEach((value, key) => {
+        type_substitutions.set(key, value);
+      });
+      // Check if any member was partially resolved
+      if (resolved.confidence === 'partial') {
+        any_partial = true;
+      }
+      return resolved.resolved_type;
+    });
+    
+    return {
+      original_type: type_ref,
+      resolved_type: resolved_members.join(' | '),
+      type_substitutions,
+      confidence: any_partial ? 'partial' : 'exact'
+    };
+  }
+  
+  // Handle both Union[T] and typing.Union[T] patterns
+  const union_match = type_ref.match(/^(?:(typing\.)?Union)\[(.+)\]$/);
   if (!union_match) return null;
   
+  const module_prefix = union_match[1] || '';
   // Parse union members
-  const members = union_match[1].split(',').map(m => m.trim());
+  const members = union_match[2].split(',').map(m => m.trim());
+  const type_substitutions = new Map<string, string>();
+  let any_partial = false;
+  
   const resolved_members = members.map(member => {
     const resolved = resolve_generic_type(member, context);
+    // Merge substitutions
+    resolved.type_substitutions.forEach((value, key) => {
+      type_substitutions.set(key, value);
+    });
+    // Check if any member was partially resolved
+    if (resolved.confidence === 'partial') {
+      any_partial = true;
+    }
     return resolved.resolved_type;
   });
   
   return {
     original_type: type_ref,
-    resolved_type: resolved_members.join(' | '),
-    type_substitutions: new Map(),
-    confidence: 'exact'
+    resolved_type: `${module_prefix}Union[${resolved_members.join(', ')}]`,
+    type_substitutions,
+    confidence: any_partial ? 'partial' : 'exact'
   };
 }
 
@@ -68,14 +110,19 @@ export function resolve_python_protocol(
   type_ref: string,
   context: GenericContext
 ): ResolvedGeneric | null {
-  if (!type_ref.includes('Protocol')) return null;
+  // Handle both Protocol[T] and typing.Protocol[T] patterns
+  const protocol_match = type_ref.match(/^(?:(typing\.|typing_extensions\.)?Protocol)\[(.+)\]$/);
+  if (!protocol_match) return null;
   
-  // Protocols are kept as-is since they define structural types
+  const module_prefix = protocol_match[1] || '';
+  const inner_type = protocol_match[2];
+  const resolved = resolve_generic_type(inner_type, context);
+  
   return {
     original_type: type_ref,
-    resolved_type: type_ref,
-    type_substitutions: new Map(),
-    confidence: 'exact'
+    resolved_type: `${module_prefix}Protocol[${resolved.resolved_type}]`,
+    type_substitutions: resolved.type_substitutions,
+    confidence: resolved.confidence
   };
 }
 
@@ -87,14 +134,19 @@ export function resolve_python_typeddict(
   type_ref: string,
   context: GenericContext
 ): ResolvedGeneric | null {
-  if (!type_ref.includes('TypedDict')) return null;
+  // Handle both TypedDict[T] and typing.TypedDict[T] patterns
+  const typeddict_match = type_ref.match(/^(?:(typing\.|typing_extensions\.)?TypedDict)\[(.+)\]$/);
+  if (!typeddict_match) return null;
   
-  // TypedDict definitions are kept as-is
+  const module_prefix = typeddict_match[1] || '';
+  const inner_type = typeddict_match[2];
+  const resolved = resolve_generic_type(inner_type, context);
+  
   return {
     original_type: type_ref,
-    resolved_type: type_ref,
-    type_substitutions: new Map(),
-    confidence: 'exact'
+    resolved_type: `${module_prefix}TypedDict[${resolved.resolved_type}]`,
+    type_substitutions: resolved.type_substitutions,
+    confidence: resolved.confidence
   };
 }
 

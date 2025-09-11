@@ -7,6 +7,23 @@
 import { ResolvedGeneric } from '@ariadnejs/types';
 import { GenericContext, resolve_generic_type } from './generic_resolution';
 
+/**
+ * Resolve type parameters in Rust trait bounds
+ * e.g., "T" -> "Display", "T + U" -> "Clone + Send"
+ */
+function resolve_rust_trait_bounds(trait_bounds: string, context?: GenericContext): string {
+  if (!context) return trait_bounds;
+  
+  let resolved = trait_bounds;
+  context.type_arguments.forEach((replacement, param) => {
+    // Use word boundaries to ensure we only replace complete type parameters
+    const regex = new RegExp(`\\b${param}\\b`, 'g');
+    resolved = resolved.replace(regex, replacement);
+  });
+  
+  return resolved;
+}
+
 // =============================================================================
 // PUBLIC API FUNCTIONS (in order of usage by main module)
 // =============================================================================
@@ -55,7 +72,7 @@ export function resolve_rust_impl_trait(
   if (!impl_match) return null;
   
   const trait_bounds = impl_match[1];
-  const resolved_bounds = resolve_rust_trait_bounds(trait_bounds);
+  const resolved_bounds = resolve_rust_trait_bounds(trait_bounds, context);
   
   return {
     original_type: type_ref,
@@ -77,7 +94,7 @@ export function resolve_rust_dyn_trait(
   if (!dyn_match) return null;
   
   const trait_bounds = dyn_match[1];
-  const resolved_bounds = resolve_rust_trait_bounds(trait_bounds);
+  const resolved_bounds = resolve_rust_trait_bounds(trait_bounds, context);
   
   return {
     original_type: type_ref,

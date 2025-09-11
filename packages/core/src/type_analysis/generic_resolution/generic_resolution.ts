@@ -286,14 +286,29 @@ export function resolve_generic_type(
 ): ResolvedGeneric {
   const substitutions = new Map<string, string>();
   
+  // Check for TypeScript conditional types first (since they don't have brackets)
+  if (type_ref.includes(' extends ') && type_ref.includes('?') && type_ref.includes(':')) {
+    const conditionalResult = resolve_typescript_conditional(type_ref, context);
+    if (conditionalResult) return conditionalResult;
+  }
+  
+  // Check for Python 3.10+ union syntax (T | U)
+  if (type_ref.includes(' | ')) {
+    const unionResult = resolve_python_union(type_ref, context);
+    if (unionResult) return unionResult;
+  }
+  
   // Parse type reference (e.g., "Array<T>", "Map<K, V>")
   const parsed = parse_generic_type(type_ref);
   if (!parsed) {
+    // Check if this is a simple type parameter (e.g., "T", "U")
+    const resolved_param = resolve_type_argument(type_ref, context, substitutions);
+    const confidence = resolved_param !== type_ref ? 'exact' : 'partial';
     return {
       original_type: type_ref,
-      resolved_type: type_ref,
+      resolved_type: resolved_param,
       type_substitutions: substitutions,
-      confidence: 'exact'
+      confidence
     };
   }
   
