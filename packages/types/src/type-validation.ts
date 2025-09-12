@@ -4,35 +4,35 @@
  */
 
 import { Language, Location } from "./common";
-import { 
-  isSymbolName, 
-  isSymbolId, 
+import {
+  isSymbolName,
+  isSymbolId,
   isCallerName,
   isCalleeName,
   isReceiverName,
   isModuleContext,
   isCallerContext,
   isVisibility,
-  isResolutionReason
+  isResolutionReason,
 } from "./branded-types";
-import { 
+import {
   isASTNode,
   isSemanticNode,
   isQueryCapture,
   isQueryResult,
   isResolution,
-  isQueryError 
+  isQueryError,
 } from "./base-query-types";
 import {
-  isFunctionCall,
-  isMethodCall,
-  isConstructorCall,
-  isUnifiedCallInfo
+  is_function_call,
+  is_method_call,
+  is_constructor_call,
+  is_call_info,
 } from "./unified-call-types";
 import {
   isUnifiedSymbol,
   isUnifiedScope,
-  isSymbolUsage
+  isSymbolUsage,
 } from "./unified-symbol-scope-types";
 import {
   isNamedImport,
@@ -42,23 +42,23 @@ import {
   isNamedExport,
   isDefaultExport,
   isNamespaceExport,
-  isReExport
+  isReExport,
 } from "./unified-import-export-types";
 import {
-  isUnifiedType,
-  isTypeMember,
-  isTrackedType,
-  isInferredType
+  is_type_definition,
+  is_type_member,
+  is_tracked_type,
+  is_inferred_type,
 } from "./unified-type-analysis-types";
 import {
   isUnifiedTypeEntity,
   isUnifiedMember,
-  isInheritanceRelation
+  isInheritanceRelation,
 } from "./unified-inheritance-types";
 import {
   isTypedQueryCapture,
   isQueryProcessor,
-  isLanguageConfiguration
+  isLanguageConfiguration,
 } from "./query-integration-types";
 
 // ============================================================================
@@ -79,10 +79,10 @@ export interface ValidationResult<T> {
  * Validation error
  */
 export interface ValidationError {
-  readonly path: string;           // Path to invalid field
-  readonly expected: string;        // Expected type/value
-  readonly actual: unknown;         // Actual value
-  readonly message: string;        // Error message
+  readonly path: string; // Path to invalid field
+  readonly expected: string; // Expected type/value
+  readonly actual: unknown; // Actual value
+  readonly message: string; // Error message
 }
 
 /**
@@ -101,31 +101,34 @@ export interface ValidationWarning {
 /**
  * Deep validation for Location
  */
-export function validateLocation(value: unknown, path = "location"): ValidationResult<Location> {
+export function validateLocation(
+  value: unknown,
+  path = "location"
+): ValidationResult<Location> {
   const errors: ValidationError[] = [];
-  
+
   if (typeof value !== "object" || value === null) {
     errors.push({
       path,
       expected: "Location object",
       actual: value,
-      message: "Location must be an object"
+      message: "Location must be an object",
     });
     return { valid: false, errors, warnings: [] };
   }
-  
+
   const loc = value as any;
-  
+
   // Validate required fields
   if (typeof loc.file_path !== "string") {
     errors.push({
       path: `${path}.file_path`,
       expected: "string",
       actual: loc.file_path,
-      message: "file_path must be a string"
+      message: "file_path must be a string",
     });
   }
-  
+
   const numFields = ["line", "column", "end_line", "end_column"];
   for (const field of numFields) {
     if (typeof loc[field] !== "number" || loc[field] < 0) {
@@ -133,151 +136,171 @@ export function validateLocation(value: unknown, path = "location"): ValidationR
         path: `${path}.${field}`,
         expected: "positive number",
         actual: loc[field],
-        message: `${field} must be a positive number`
+        message: `${field} must be a positive number`,
       });
     }
   }
-  
+
   // Validate logical consistency
   if (errors.length === 0) {
-    if (loc.end_line < loc.line || 
-        (loc.end_line === loc.line && loc.end_column < loc.column)) {
+    if (
+      loc.end_line < loc.line ||
+      (loc.end_line === loc.line && loc.end_column < loc.column)
+    ) {
       errors.push({
         path,
         expected: "end position after start",
         actual: loc,
-        message: "End position must be after start position"
+        message: "End position must be after start position",
       });
     }
   }
-  
+
   return {
     valid: errors.length === 0,
-    value: errors.length === 0 ? loc as Location : undefined,
+    value: errors.length === 0 ? (loc as Location) : undefined,
     errors,
-    warnings: []
+    warnings: [],
   };
 }
 
 /**
  * Deep validation for Language
  */
-export function validateLanguage(value: unknown, path = "language"): ValidationResult<Language> {
+export function validateLanguage(
+  value: unknown,
+  path = "language"
+): ValidationResult<Language> {
   const errors: ValidationError[] = [];
   const validLanguages = ["javascript", "typescript", "python", "rust"];
-  
+
   if (!validLanguages.includes(value as string)) {
     errors.push({
       path,
       expected: validLanguages.join(" | "),
       actual: value,
-      message: `Language must be one of: ${validLanguages.join(", ")}`
+      message: `Language must be one of: ${validLanguages.join(", ")}`,
     });
   }
-  
+
   return {
     valid: errors.length === 0,
-    value: errors.length === 0 ? value as Language : undefined,
+    value: errors.length === 0 ? (value as Language) : undefined,
     errors,
-    warnings: []
+    warnings: [],
   };
 }
 
 /**
  * Deep validation for ASTNode
  */
-export function validateASTNode(value: unknown, path = "node"): ValidationResult<any> {
+export function validateASTNode(
+  value: unknown,
+  path = "node"
+): ValidationResult<any> {
   const errors: ValidationError[] = [];
   const warnings: ValidationWarning[] = [];
-  
+
   if (!isASTNode(value)) {
     errors.push({
       path,
       expected: "ASTNode",
       actual: value,
-      message: "Value is not a valid ASTNode"
+      message: "Value is not a valid ASTNode",
     });
     return { valid: false, errors, warnings };
   }
-  
+
   // Validate nested Location
-  const locResult = validateLocation((value as any).location, `${path}.location`);
+  const locResult = validateLocation(
+    (value as any).location,
+    `${path}.location`
+  );
   errors.push(...locResult.errors);
-  
+
   // Validate Language
-  const langResult = validateLanguage((value as any).language, `${path}.language`);
+  const langResult = validateLanguage(
+    (value as any).language,
+    `${path}.language`
+  );
   errors.push(...langResult.errors);
-  
+
   // Check node_type
-  if (typeof (value as any).node_type !== "string" || (value as any).node_type.length === 0) {
+  if (
+    typeof (value as any).node_type !== "string" ||
+    (value as any).node_type.length === 0
+  ) {
     errors.push({
       path: `${path}.node_type`,
       expected: "non-empty string",
       actual: (value as any).node_type,
-      message: "node_type must be a non-empty string"
+      message: "node_type must be a non-empty string",
     });
   }
-  
+
   return { valid: errors.length === 0, value, errors, warnings };
 }
 
 /**
  * Deep validation for UnifiedCallInfo
  */
-export function validateUnifiedCallInfo(value: unknown, path = "call"): ValidationResult<any> {
+export function validateUnifiedCallInfo(
+  value: unknown,
+  path = "call"
+): ValidationResult<any> {
   const errors: ValidationError[] = [];
   const warnings: ValidationWarning[] = [];
-  
-  if (!isUnifiedCallInfo(value)) {
+
+  if (!is_call_info(value)) {
     errors.push({
       path,
       expected: "UnifiedCallInfo",
       actual: value,
-      message: "Value is not a valid UnifiedCallInfo"
+      message: "Value is not a valid UnifiedCallInfo",
     });
     return { valid: false, errors, warnings };
   }
-  
+
   const call = value as any;
-  
+
   // Validate base fields
   if (!isCallerContext(call.caller)) {
     errors.push({
       path: `${path}.caller`,
       expected: "CallerContext",
       actual: call.caller,
-      message: "Invalid caller context"
+      message: "Invalid caller context",
     });
   }
-  
+
   const locResult = validateLocation(call.location, `${path}.location`);
   errors.push(...locResult.errors);
-  
+
   if (typeof call.arguments_count !== "number" || call.arguments_count < 0) {
     warnings.push({
       path: `${path}.arguments_count`,
       message: "arguments_count should be a non-negative number",
-      suggestion: "Set to 0 if unknown"
+      suggestion: "Set to 0 if unknown",
     });
   }
-  
+
   // Validate specific call type fields
-  if (isFunctionCall(value)) {
+  if (is_function_call(value)) {
     if (!isCalleeName(value.callee)) {
       errors.push({
         path: `${path}.callee`,
         expected: "CalleeName",
         actual: value.callee,
-        message: "Invalid callee name"
+        message: "Invalid callee name",
       });
     }
-  } else if (isMethodCall(value)) {
+  } else if (is_method_call(value)) {
     if (!isCalleeName(value.method_name)) {
       errors.push({
         path: `${path}.method_name`,
         expected: "CalleeName",
         actual: value.method_name,
-        message: "Invalid method name"
+        message: "Invalid method name",
       });
     }
     if (!isReceiverName(value.receiver)) {
@@ -285,75 +308,78 @@ export function validateUnifiedCallInfo(value: unknown, path = "call"): Validati
         path: `${path}.receiver`,
         expected: "ReceiverName",
         actual: value.receiver,
-        message: "Invalid receiver name"
+        message: "Invalid receiver name",
       });
     }
-  } else if (isConstructorCall(value)) {
+  } else if (is_constructor_call(value)) {
     if (typeof value.class_name !== "string" || value.class_name.length === 0) {
       errors.push({
         path: `${path}.class_name`,
         expected: "non-empty string",
         actual: value.class_name,
-        message: "class_name must be a non-empty string"
+        message: "class_name must be a non-empty string",
       });
     }
   }
-  
+
   return { valid: errors.length === 0, value, errors, warnings };
 }
 
 /**
  * Deep validation for UnifiedSymbol
  */
-export function validateUnifiedSymbol(value: unknown, path = "symbol"): ValidationResult<any> {
+export function validateUnifiedSymbol(
+  value: unknown,
+  path = "symbol"
+): ValidationResult<any> {
   const errors: ValidationError[] = [];
   const warnings: ValidationWarning[] = [];
-  
+
   if (!isUnifiedSymbol(value)) {
     errors.push({
       path,
       expected: "UnifiedSymbol",
       actual: value,
-      message: "Value is not a valid UnifiedSymbol"
+      message: "Value is not a valid UnifiedSymbol",
     });
     return { valid: false, errors, warnings };
   }
-  
+
   const symbol = value as any;
-  
+
   // Validate branded types
   if (!isSymbolId(symbol.id)) {
     errors.push({
       path: `${path}.id`,
       expected: "SymbolId",
       actual: symbol.id,
-      message: "Invalid symbol ID format"
+      message: "Invalid symbol ID format",
     });
   }
-  
+
   if (!isSymbolName(symbol.name)) {
     errors.push({
       path: `${path}.name`,
       expected: "SymbolName",
       actual: symbol.name,
-      message: "Invalid symbol name"
+      message: "Invalid symbol name",
     });
   }
-  
+
   // Validate visibility if present
   if (symbol.visibility !== undefined && !isVisibility(symbol.visibility)) {
     errors.push({
       path: `${path}.visibility`,
       expected: "Visibility",
       actual: symbol.visibility,
-      message: "Invalid visibility modifier"
+      message: "Invalid visibility modifier",
     });
   }
-  
+
   // Validate nested ASTNode fields
   const astResult = validateASTNode(symbol, path);
   errors.push(...astResult.errors);
-  
+
   return { valid: errors.length === 0, value, errors, warnings };
 }
 
@@ -365,10 +391,10 @@ export function validateUnifiedSymbol(value: unknown, path = "symbol"): Validati
  * Options for strict validation
  */
 export interface StrictValidationOptions {
-  readonly allow_extra_fields?: boolean;   // Allow unknown fields
-  readonly require_all_fields?: boolean;   // Require all optional fields
-  readonly check_references?: boolean;     // Validate ID references
-  readonly max_depth?: number;            // Maximum validation depth
+  readonly allow_extra_fields?: boolean; // Allow unknown fields
+  readonly require_all_fields?: boolean; // Require all optional fields
+  readonly check_references?: boolean; // Validate ID references
+  readonly max_depth?: number; // Maximum validation depth
 }
 
 /**
@@ -382,40 +408,44 @@ export function strictValidate<T>(
 ): ValidationResult<T> {
   const errors: ValidationError[] = [];
   const warnings: ValidationWarning[] = [];
-  
+
   // First, use type guard
   if (!validator(value)) {
     errors.push({
       path: "",
       expected: "Valid type",
       actual: value,
-      message: "Type guard validation failed"
+      message: "Type guard validation failed",
     });
     return { valid: false, errors, warnings };
   }
-  
+
   // Then perform deep validation if provided
   if (deepValidator) {
     const deepResult = deepValidator(value);
     errors.push(...deepResult.errors);
     warnings.push(...deepResult.warnings);
   }
-  
+
   // Check for extra fields if strict
-  if (!options.allow_extra_fields && typeof value === "object" && value !== null) {
+  if (
+    !options.allow_extra_fields &&
+    typeof value === "object" &&
+    value !== null
+  ) {
     // This would require knowing expected fields - implementation depends on type
     // For now, we'll add a warning
     warnings.push({
       path: "",
-      message: "Extra field checking not implemented for this type"
+      message: "Extra field checking not implemented for this type",
     });
   }
-  
+
   return {
     valid: errors.length === 0,
     value: errors.length === 0 ? value : undefined,
     errors,
-    warnings
+    warnings,
   };
 }
 
@@ -433,19 +463,19 @@ export function validateArray<T>(
 ): ValidationResult<T[]> {
   const errors: ValidationError[] = [];
   const warnings: ValidationWarning[] = [];
-  
+
   if (!Array.isArray(values)) {
     errors.push({
       path,
       expected: "array",
       actual: values,
-      message: "Value must be an array"
+      message: "Value must be an array",
     });
     return { valid: false, errors, warnings };
   }
-  
+
   const validItems: T[] = [];
-  
+
   for (let i = 0; i < values.length; i++) {
     const itemResult = itemValidator(values[i], `${path}[${i}]`);
     if (itemResult.valid && itemResult.value) {
@@ -454,12 +484,12 @@ export function validateArray<T>(
     errors.push(...itemResult.errors);
     warnings.push(...itemResult.warnings);
   }
-  
+
   return {
     valid: errors.length === 0,
     value: errors.length === 0 ? validItems : undefined,
     errors,
-    warnings
+    warnings,
   };
 }
 
@@ -474,30 +504,30 @@ export function validateMap<K, V>(
 ): ValidationResult<Map<K, V>> {
   const errors: ValidationError[] = [];
   const warnings: ValidationWarning[] = [];
-  
+
   if (!(value instanceof Map)) {
     errors.push({
       path,
       expected: "Map",
       actual: value,
-      message: "Value must be a Map"
+      message: "Value must be a Map",
     });
     return { valid: false, errors, warnings };
   }
-  
+
   const validMap = new Map<K, V>();
-  
+
   for (const [key, val] of value.entries()) {
     if (!keyValidator(key)) {
       errors.push({
         path: `${path}.keys`,
         expected: "valid key",
         actual: key,
-        message: "Invalid map key"
+        message: "Invalid map key",
       });
       continue;
     }
-    
+
     const valResult = valueValidator(val, `${path}[${String(key)}]`);
     if (valResult.valid && valResult.value) {
       validMap.set(key, valResult.value);
@@ -505,12 +535,12 @@ export function validateMap<K, V>(
     errors.push(...valResult.errors);
     warnings.push(...valResult.warnings);
   }
-  
+
   return {
     valid: errors.length === 0,
     value: errors.length === 0 ? validMap : undefined,
     errors,
-    warnings
+    warnings,
   };
 }
 
@@ -525,7 +555,7 @@ export function combineValidators<T>(
   ...validators: Array<(v: unknown) => v is T>
 ): (v: unknown) => v is T {
   return (value: unknown): value is T => {
-    return validators.every(validator => validator(value));
+    return validators.every((validator) => validator(value));
   };
 }
 
@@ -576,7 +606,7 @@ export function assertValid<T>(
   message?: string
 ): asserts result is ValidationResult<T> & { valid: true; value: T } {
   if (!result.valid) {
-    const errorMessages = result.errors.map(e => e.message).join(", ");
+    const errorMessages = result.errors.map((e) => e.message).join(", ");
     throw new TypeError(message || `Validation failed: ${errorMessages}`);
   }
 }
@@ -596,7 +626,7 @@ export const TypeGuards = {
   isCallerContext,
   isVisibility,
   isResolutionReason,
-  
+
   // Base query types
   isASTNode,
   isSemanticNode,
@@ -604,18 +634,18 @@ export const TypeGuards = {
   isQueryResult,
   isResolution,
   isQueryError,
-  
+
   // Unified call types
   isFunctionCall,
   isMethodCall,
   isConstructorCall,
-  isUnifiedCallInfo,
-  
+  is_unified_call_info,
+
   // Unified symbol/scope types
   isUnifiedSymbol,
   isUnifiedScope,
   isSymbolUsage,
-  
+
   // Unified import/export types
   isNamedImport,
   isDefaultImport,
@@ -625,18 +655,17 @@ export const TypeGuards = {
   isDefaultExport,
   isNamespaceExport,
   isReExport,
-  
+
   // Unified type analysis types
-  isUnifiedType,
+  isTypeDefinition,
   isTypeMember,
   isTrackedType,
-  isInferredType,
-  
+
   // Unified inheritance types
   isUnifiedTypeEntity,
   isUnifiedMember,
   isInheritanceRelation,
-  
+
   // Query integration types
   isTypedQueryCapture,
   isQueryProcessor,

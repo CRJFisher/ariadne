@@ -176,7 +176,7 @@ export type UsageType =
 // Type Guards
 // ============================================================================
 
-export function isUnifiedSymbol(value: unknown): value is UnifiedSymbol {
+export function isSymbolDefinition(value: unknown): value is SymbolDefinition {
   if (typeof value !== "object" || value === null) return false;
   const sym = value as any;
   return (
@@ -189,7 +189,7 @@ export function isUnifiedSymbol(value: unknown): value is UnifiedSymbol {
   );
 }
 
-export function isUnifiedScope(value: unknown): value is UnifiedScope {
+export function isScopeDefinition(value: unknown): value is ScopeDefinition {
   if (typeof value !== "object" || value === null) return false;
   const scope = value as any;
   return (
@@ -218,15 +218,15 @@ export function isSymbolUsage(value: unknown): value is SymbolUsage {
 /**
  * Create a unified symbol
  */
-export function createUnifiedSymbol(
+export function createSymbolDefinition(
   id: SymbolId,
   name: SymbolName,
-  kind: UnifiedSymbolKind,
+  kind: SymbolKind,
   location: Location,
   language: Language,
   scope_path: ScopePath,
-  options?: Partial<UnifiedSymbol>
-): UnifiedSymbol {
+  options?: Partial<SymbolDefinition>
+): SymbolDefinition {
   return {
     id,
     name,
@@ -242,7 +242,7 @@ export function createUnifiedSymbol(
 /**
  * Get tree-sitter node type for symbol kind
  */
-function getNodeTypeForKind(kind: UnifiedSymbolKind): string {
+function getNodeTypeForKind(kind: SymbolKind): string {
   switch (kind) {
     case "function": return "function_declaration";
     case "class": return "class_declaration";

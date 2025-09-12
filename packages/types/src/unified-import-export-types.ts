@@ -1,6 +1,5 @@
 /**
- * Unified import/export types that consolidate ImportInfo/ImportStatement
- * and ExportInfo/ExportStatement into single representations
+ * Import and export types for module dependencies and APIs
  */
 
 import { Location, Language } from "./common";
@@ -9,7 +8,7 @@ import { SymbolName, SymbolId } from "./branded-types";
 import { SemanticNode, Resolution } from "./base-query-types";
 
 // ============================================================================
-// Unified Import Types
+// Import Types
 // ============================================================================
 
 /**
@@ -23,10 +22,9 @@ interface BaseImport extends SemanticNode {
 }
 
 /**
- * Unified import representation using discriminated union
- * Replaces ImportInfo and ImportStatement
+ * Import representation using discriminated union
  */
-export type UnifiedImport = 
+export type Import = 
   | NamedImport
   | DefaultImport  
   | NamespaceImport
@@ -83,10 +81,9 @@ interface BaseExport extends SemanticNode {
 }
 
 /**
- * Unified export representation using discriminated union
- * Replaces ExportInfo and ExportStatement
+ * Export representation using discriminated union
  */
-export type UnifiedExport =
+export type Export =
   | NamedExport
   | DefaultExport
   | NamespaceExport
@@ -152,8 +149,8 @@ export interface ResolvedModule {
   readonly is_external?: boolean;       // Node module vs local
   readonly is_builtin?: boolean;        // Node builtin module
   readonly package_name?: string;       // NPM package name
-  readonly exports: readonly UnifiedExport[];
-  readonly imports: readonly UnifiedImport[];
+  readonly exports: readonly Export[];
+  readonly imports: readonly Import[];
 }
 
 /**
@@ -162,7 +159,7 @@ export interface ResolvedModule {
 export interface ModuleDependency {
   readonly from: ModulePath;
   readonly to: ModulePath;
-  readonly imports: readonly UnifiedImport[];
+  readonly imports: readonly Import[];
   readonly is_circular?: boolean;       // Circular dependency detected
   readonly is_dev_only?: boolean;       // Dev dependency only
 }
@@ -196,35 +193,35 @@ export interface ExportChainStep {
 // Type Guards
 // ============================================================================
 
-export function isNamedImport(imp: UnifiedImport): imp is NamedImport {
+export function isNamedImport(imp: Import): imp is NamedImport {
   return imp.kind === "named";
 }
 
-export function isDefaultImport(imp: UnifiedImport): imp is DefaultImport {
+export function isDefaultImport(imp: Import): imp is DefaultImport {
   return imp.kind === "default";
 }
 
-export function isNamespaceImport(imp: UnifiedImport): imp is NamespaceImport {
+export function isNamespaceImport(imp: Import): imp is NamespaceImport {
   return imp.kind === "namespace";
 }
 
-export function isSideEffectImport(imp: UnifiedImport): imp is SideEffectImport {
+export function isSideEffectImport(imp: Import): imp is SideEffectImport {
   return imp.kind === "side_effect";
 }
 
-export function isNamedExport(exp: UnifiedExport): exp is NamedExport {
+export function isNamedExport(exp: Export): exp is NamedExport {
   return exp.kind === "named";
 }
 
-export function isDefaultExport(exp: UnifiedExport): exp is DefaultExport {
+export function isDefaultExport(exp: Export): exp is DefaultExport {
   return exp.kind === "default";
 }
 
-export function isNamespaceExport(exp: UnifiedExport): exp is NamespaceExport {
+export function isNamespaceExport(exp: Export): exp is NamespaceExport {
   return exp.kind === "namespace";
 }
 
-export function isReExport(exp: UnifiedExport): exp is ReExport {
+export function isReExport(exp: Export): exp is ReExport {
   return exp.kind === "reexport";
 }
 
@@ -235,7 +232,7 @@ export function isReExport(exp: UnifiedExport): exp is ReExport {
 /**
  * Get all imported symbols from an import
  */
-export function getImportedSymbols(imp: UnifiedImport): SymbolName[] {
+export function getImportedSymbols(imp: Import): SymbolName[] {
   switch (imp.kind) {
     case "named":
       return imp.imports.map(i => i.alias || i.name);
@@ -251,7 +248,7 @@ export function getImportedSymbols(imp: UnifiedImport): SymbolName[] {
 /**
  * Get all exported symbols from an export
  */
-export function getExportedSymbols(exp: UnifiedExport): SymbolName[] {
+export function getExportedSymbols(exp: Export): SymbolName[] {
   switch (exp.kind) {
     case "named":
       return exp.exports.map(e => e.export_name || e.local_name);

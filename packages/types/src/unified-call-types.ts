@@ -1,6 +1,6 @@
 /**
- * Unified call graph types that replace separate Function/Method/Constructor call types
- * Uses discriminated unions for type safety while reducing duplication
+ * Call graph types for function, method, and constructor invocations
+ * Uses discriminated unions for type safety
  */
 
 import { Location } from "./common";
@@ -16,7 +16,7 @@ import {
 import { SemanticNode, Resolution } from "./base-query-types";
 
 // ============================================================================
-// Unified Call Information
+// Call Information
 // ============================================================================
 
 /**
@@ -45,10 +45,9 @@ export interface ResolvedTarget {
 }
 
 /**
- * Unified call information using discriminated union
- * Replaces FunctionCallInfo, MethodCallInfo, ConstructorCallInfo
+ * Call information using discriminated union
  */
-export type UnifiedCallInfo = 
+export type CallInfo = 
   | FunctionCall
   | MethodCall
   | ConstructorCall;
@@ -102,7 +101,7 @@ export interface ConstructorCall extends BaseCallInfo {
 export interface UnifiedCallEdge {
   readonly from: SymbolId;
   readonly to: SymbolId;
-  readonly call: UnifiedCallInfo;
+  readonly call: CallInfo;
   readonly index: number;  // Order of call within the caller
 }
 
@@ -111,7 +110,7 @@ export interface UnifiedCallEdge {
  */
 export interface CallPattern {
   readonly pattern_type: CallPatternType;
-  readonly calls: readonly UnifiedCallInfo[];
+  readonly calls: readonly CallInfo[];
   readonly description: string;
   readonly severity?: "info" | "warning" | "error";
 }
@@ -132,19 +131,19 @@ export type CallPatternType =
 // Type Guards
 // ============================================================================
 
-export function isFunctionCall(call: UnifiedCallInfo): call is FunctionCall {
+export function is_function_call(call: CallInfo): call is FunctionCall {
   return call.kind === "function";
 }
 
-export function isMethodCall(call: UnifiedCallInfo): call is MethodCall {
+export function is_method_call(call: CallInfo): call is MethodCall {
   return call.kind === "method";
 }
 
-export function isConstructorCall(call: UnifiedCallInfo): call is ConstructorCall {
+export function is_constructor_call(call: CallInfo): call is ConstructorCall {
   return call.kind === "constructor";
 }
 
-export function isUnifiedCallInfo(value: unknown): value is UnifiedCallInfo {
+export function is_call_info(value: unknown): value is CallInfo {
   if (typeof value !== "object" || value === null) return false;
   const call = value as any;
   
@@ -171,7 +170,7 @@ export function isUnifiedCallInfo(value: unknown): value is UnifiedCallInfo {
 /**
  * Get the target name from any call type
  */
-export function getCallTarget(call: UnifiedCallInfo): string {
+export function get_call_target(call: CallInfo): string {
   switch (call.kind) {
     case "function":
       return call.callee;
@@ -185,28 +184,28 @@ export function getCallTarget(call: UnifiedCallInfo): string {
 /**
  * Check if a call is resolved with high confidence
  */
-export function isHighConfidenceCall(call: UnifiedCallInfo): boolean {
+export function is_high_confidence_call(call: CallInfo): boolean {
   return call.resolved?.confidence === "high";
 }
 
 /**
  * Get the resolved symbol ID if available
  */
-export function getResolvedSymbolId(call: UnifiedCallInfo): SymbolId | undefined {
+export function get_resolved_symbol_id(call: CallInfo): SymbolId | undefined {
   return call.resolved?.resolved?.symbol_id;
 }
 
 /**
  * Check if a call is to an imported symbol
  */
-export function isImportedCall(call: UnifiedCallInfo): boolean {
+export function is_imported_call(call: CallInfo): boolean {
   return call.resolved?.resolved?.is_imported ?? false;
 }
 
 /**
  * Create a function call
  */
-export function createFunctionCall(
+export function create_function_call(
   caller: CallerContext,
   callee: CalleeName,
   location: Location,
@@ -228,7 +227,7 @@ export function createFunctionCall(
 /**
  * Create a method call
  */
-export function createMethodCall(
+export function create_method_call(
   caller: CallerContext,
   receiver: ReceiverName,
   method_name: CalleeName,
@@ -254,7 +253,7 @@ export function createMethodCall(
 /**
  * Create a constructor call
  */
-export function createConstructorCall(
+export function create_constructor_call(
   caller: CallerContext,
   class_name: ClassName,
   location: Location,
