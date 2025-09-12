@@ -8,6 +8,7 @@ import {
   MethodName,
   QualifiedName,
 } from "./aliases";
+import { SymbolId } from "./symbols";
 import { Language, ScopeType } from "./index";
 
 export enum TypeKind {
@@ -28,7 +29,7 @@ export interface TypeDefinition {
   readonly location: Location;
   readonly kind: TypeKind;
   readonly type_parameters?: readonly TypeName[];
-  readonly members?: ReadonlyMap<PropertyName | MethodName, TypeMember>;
+  readonly members?: ReadonlyMap<SymbolId, TypeMember>;
   readonly extends?: readonly TypeName[];
   readonly implements?: readonly TypeName[];
 }
@@ -37,8 +38,8 @@ export interface TypeMember {
   readonly name: PropertyName | MethodName;
   readonly type?: TypeString;
   readonly kind: "property" | "method" | "constructor";
-  readonly is_optional?: boolean;
-  readonly is_readonly?: boolean;
+  readonly is_optional: boolean;
+  readonly is_readonly: boolean;
 }
 
 export interface VariableType {
@@ -47,7 +48,7 @@ export interface VariableType {
   readonly inferred_type?: TypeString;
   readonly location: Location;
   readonly scope_kind: ScopeType;
-  readonly is_reassigned?: boolean;
+  readonly is_reassigned: boolean;
 }
 
 export interface TypeEdge {
@@ -58,12 +59,12 @@ export interface TypeEdge {
 }
 
 export interface TypeGraph {
-  readonly nodes: ReadonlyMap<TypeName, TypeDefinition>;
+  readonly nodes: ReadonlyMap<SymbolId, TypeDefinition>;
   readonly edges: readonly TypeEdge[];
 }
 
 export interface TypeIndex {
-  readonly types: ReadonlyMap<TypeName, TypeDefinition>;
+  readonly types: ReadonlyMap<SymbolId, TypeDefinition>;
   readonly variables: ReadonlyMap<QualifiedName, VariableType>;
   readonly type_graph?: TypeGraph;
 }

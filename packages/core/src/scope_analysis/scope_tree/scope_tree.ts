@@ -19,6 +19,8 @@ import {
   VariableDeclaration,
   VariableName,
   TypeString,
+  SymbolId,
+  variable_symbol,
 } from "@ariadnejs/types";
 import { node_to_location } from "../../ast/node_utils";
 import {
@@ -27,6 +29,17 @@ import {
   get_scope_type,
   ScopeConfiguration,
 } from "./language_configs";
+
+/**
+ * Get a scope node that must exist in the tree, throwing an error if not found
+ */
+function get_required_scope(tree: ScopeTree, scope_id: ScopeId): ScopeNode {
+  const scope = tree.nodes.get(scope_id);
+  if (!scope) {
+    throw new Error(`Scope ${scope_id} not found in tree`);
+  }
+  return scope;
+}
 
 /**
  * Module context for scope tree operations
@@ -202,9 +215,8 @@ function traverse_and_build(
     tree.nodes.set(scope_id, new_scope);
 
     // Link to parent
-    const parent_scope = tree.nodes.get(context.current_scope_id);
-    if (parent_scope) {
-      parent_scope.child_ids.push(scope_id);
+    const parent_scope = get_required_scope(tree, context.current_scope_id);
+    parent_scope.child_ids.push(scope_id);
 
       // If this node adds its name to parent scope
       if (scope_config.adds_to_parent && scope_config.name_field) {
@@ -596,15 +608,17 @@ export function find_symbol_in_scope_chain(
 export function get_visible_symbols(
   tree: ScopeTree,
   scope_id: ScopeId
-): Map<string, ScopeSymbol> {
-  const visible = new Map<string, ScopeSymbol>();
+): Map<SymbolId, ScopeSymbol> {
+  const visible = new Map<SymbolId, ScopeSymbol>();
   const chain = get_scope_chain(tree, scope_id);
   
   // Add symbols from scope chain (reverse order so closer scopes override)
   for (let i = chain.length - 1; i >= 0; i--) {
     const scope = chain[i];
     for (const [name, symbol] of scope.symbols) {
-      visible.set(name, symbol);
+      // Create SymbolId from the symbol name and location
+      const symbol_id = variable_symbol(name, scope.location.file_path, symbol.location);
+      visible.set(symbol_id, symbol);
     }
   }
   
@@ -622,13 +636,13 @@ export function extract_variables_from_scopes(
   // Iterate through all scopes and extract variable symbols
   for (const [_, scope] of scopes.nodes) {
     // Check if scope is a parameter scope - parameters are variables in parameter scopes
-    const isParameterScope = scope.type === "parameter";
+    const is_parameter_scope = scope.type === "parameter";
 
     for (const [name, symbol] of scope.symbols) {
       // Variables can be marked as 'variable' kind or found in parameter scopes
       if (
         symbol.kind === "variable" ||
-        (isParameterScope && symbol.kind === "local")
+        (is_parameter_scope && symbol.kind === "local")
       ) {
         // Enhanced symbol type for accessing variable-specific fields
         interface EnhancedScopeSymbol extends ScopeSymbol {
@@ -638,14 +652,14 @@ export function extract_variables_from_scopes(
         }
         
         // Cast to EnhancedScopeSymbol to access variable-specific fields
-        const enhancedSymbol = symbol as EnhancedScopeSymbol;
+        const enhanced_symbol = symbol as EnhancedScopeSymbol;
 
         // Convert scope symbol to VariableDeclaration
         const variable: VariableDeclaration = {
           name: name as VariableName,
           location: symbol.location,
           type: symbol.type_info as TypeString | undefined,
-          is_const: enhancedSymbol.declaration_type === "const",
+          is_const: enhanced_symbol.declaration_type === "const",
           is_exported: symbol.is_exported,
         };
         variables.push(variable);

@@ -16,6 +16,7 @@ import {
   QualifiedName,
   TypeKind,
   FileAnalysis,
+  SymbolId,
 } from "@ariadnejs/types";
 
 export interface TypeRegistry {
@@ -29,7 +30,7 @@ export interface TypeRegistry {
   readonly exports: ReadonlyMap<FilePath, ReadonlyMap<string, QualifiedName>>; // module -> export_name -> type_name
 
   // Type aliases mapping (readonly)
-  readonly aliases: ReadonlyMap<TypeName, QualifiedName>; // alias -> actual_type
+  readonly aliases: ReadonlyMap<SymbolId, QualifiedName>; // alias -> actual_type
 
   // Built-in types per language (readonly)
   readonly builtins: ReadonlyMap<Language, ReadonlySet<TypeName>>;
@@ -140,7 +141,7 @@ export function build_type_registry(
       FilePath,
       ReadonlyMap<string, QualifiedName>
     >,
-    aliases: builder.aliases as ReadonlyMap<TypeName, QualifiedName>,
+    aliases: builder.aliases as ReadonlyMap<SymbolId, QualifiedName>,
     builtins: builder.builtins as ReadonlyMap<Language, ReadonlySet<TypeName>>,
     import_cache: builder.import_cache as ReadonlyMap<string, QualifiedName>,
   });
@@ -317,13 +318,13 @@ export function register_class(
   if (class_def.methods) {
     for (const method of class_def.methods) {
       // Identify constructor methods
-      const isConstructor = method.name === 'constructor' || 
+      const is_constructor = method.name === 'constructor' || 
                           method.name === '__init__' || 
                           method.name === 'new';
       
       members.set(method.name, {
         name: method.name,
-        kind: isConstructor ? 'constructor' : 'method',
+        kind: is_constructor ? 'constructor' : 'method',
         parameters: method.parameters,
         type: method.return_type
       } as any);
@@ -449,7 +450,7 @@ export interface MutableTypeRegistry {
   types: Map<QualifiedName, TypeDefinition>;
   files: Map<FilePath, Set<QualifiedName>>;
   exports: Map<FilePath, Map<string, QualifiedName>>;
-  aliases: Map<TypeName, QualifiedName>;
+  aliases: Map<SymbolId, QualifiedName>;
   builtins: Map<Language, Set<TypeName>>;
   import_cache: Map<string, QualifiedName>;
 }

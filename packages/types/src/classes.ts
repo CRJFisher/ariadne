@@ -7,6 +7,7 @@ import {
   QualifiedName,
   InterfaceName,
 } from "./aliases";
+import { SymbolId } from "./symbols";
 
 /**
  * Enhanced ClassNode with computed fields for hierarchy processing
@@ -26,14 +27,14 @@ export interface ClassNode {
   readonly interfaces?: readonly InterfaceName[];
 
   // Type characteristics
-  readonly is_abstract?: boolean;
-  readonly is_interface?: boolean;
-  readonly is_trait?: boolean;
-  readonly is_mixin?: boolean; // Added for Python mixins
+  readonly is_abstract: boolean;
+  readonly is_interface: boolean;
+  readonly is_trait: boolean;
+  readonly is_mixin: boolean; // Added for Python mixins
 
   // Members
-  readonly methods: ReadonlyMap<MethodName, MethodNode>;
-  readonly properties: ReadonlyMap<PropertyName, PropertyNode>;
+  readonly methods: ReadonlyMap<SymbolId, MethodNode>;
+  readonly properties: ReadonlyMap<SymbolId, PropertyNode>;
 
   // Enhanced computed fields from local types
   readonly all_ancestors?: readonly ClassNode[]; // Complete inheritance chain
@@ -51,18 +52,18 @@ export interface MethodNode {
   readonly is_override: boolean;
   readonly overrides?: QualifiedName;
   readonly overridden_by: readonly QualifiedName[];
-  readonly visibility?: "public" | "private" | "protected";
-  readonly is_static?: boolean;
-  readonly is_abstract?: boolean;
+  readonly visibility: "public" | "private" | "protected";
+  readonly is_static: boolean;
+  readonly is_abstract: boolean;
 }
 
 export interface PropertyNode {
   readonly name: PropertyName;
   readonly location: Location;
   readonly type?: string;
-  readonly visibility?: "public" | "private" | "protected";
-  readonly is_static?: boolean;
-  readonly is_readonly?: boolean;
+  readonly visibility: "public" | "private" | "protected";
+  readonly is_static: boolean;
+  readonly is_readonly: boolean;
 }
 
 /**

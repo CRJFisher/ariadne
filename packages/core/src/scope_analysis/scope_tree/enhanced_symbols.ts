@@ -2,7 +2,7 @@
  * Enhanced symbol types for variable-specific features
  */
 
-import { ScopeSymbol, Location, FilePath } from '@ariadnejs/types';
+import { ScopeSymbol, Location, FilePath, SymbolId } from '@ariadnejs/types';
 
 /**
  * Declaration type for JavaScript/TypeScript variables
@@ -25,7 +25,7 @@ export interface EnhancedScopeSymbol extends ScopeSymbol {
  * Extract variables from scope symbols
  */
 export function extract_variables_from_symbols(
-  symbols: Map<string, EnhancedScopeSymbol>
+  symbols: Map<SymbolId, EnhancedScopeSymbol>
 ): EnhancedScopeSymbol[] {
   const variables: EnhancedScopeSymbol[] = [];
   

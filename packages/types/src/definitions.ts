@@ -120,7 +120,7 @@ export interface MethodDefinition {
   readonly is_async: boolean;
   readonly overrides?: string;
   readonly overridden_by: readonly string[];
-  readonly visibility?: "public" | "private" | "protected";
+  readonly visibility: "public" | "private" | "protected";
   readonly parameters: readonly ParameterDefinition[];
   readonly return_type?: string;
   readonly generics?: readonly GenericParameter[];
@@ -138,7 +138,7 @@ export interface PropertyDefinition {
   readonly is_private: boolean;
   readonly is_protected: boolean;
   readonly is_readonly: boolean;
-  readonly visibility?: "public" | "private" | "protected";
+  readonly visibility: "public" | "private" | "protected";
   readonly initial_value?: string;
   readonly decorators?: readonly string[];
 }

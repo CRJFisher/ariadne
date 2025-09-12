@@ -23,7 +23,11 @@ import {
   ClassName,
   InterfaceName,
   MethodName,
-  PropertyName
+  PropertyName,
+  SymbolId,
+  method_symbol,
+  property_symbol,
+  Location
 } from '@ariadnejs/types';
 import {
   get_class_hierarchy_config,
@@ -105,7 +109,7 @@ export function build_generic_class_hierarchy(
   contexts: Map<FilePath, ClassHierarchyContext>,
   handlers: Map<Language, BespokeHandlers> = new Map()
 ): ClassHierarchy {
-  const classes = new Map<QualifiedName, ClassNode>();
+  const classes = new Map<SymbolId, ClassNode>();
   const edges: InheritanceEdge[] = [];
   const roots = new Set<ClassName>();
   
@@ -127,12 +131,12 @@ export function build_generic_class_hierarchy(
       base_classes: relationships.base_classes,
       derived_classes: [],
       interfaces: relationships.interfaces,
-      is_abstract: def.is_abstract || relationships.is_abstract,
-      is_interface: def.is_interface,
-      is_trait: def.is_trait,
-      is_mixin: def.is_mixin,
-      methods: build_method_map(def.methods || []),
-      properties: build_property_map(def.properties || []),
+      is_abstract: def.is_abstract ?? relationships.is_abstract ?? false,
+      is_interface: def.is_interface ?? false,
+      is_trait: def.is_trait ?? false,
+      is_mixin: def.is_mixin ?? false,
+      methods: build_method_map(def.methods || [], def.name as ClassName, def.location),
+      properties: build_property_map(def.properties || [], def.name as ClassName, def.location),
       
       // Enhanced fields - computed later
       all_ancestors: undefined,
@@ -480,21 +484,21 @@ function find_node_at_location(
   location: any
 ): SyntaxNode | null {
   // Handle both location formats - single point and range
-  let targetRow: number;
-  let targetColumn: number;
+  let target_row: number;
+  let target_column: number;
   
   if (location.line !== undefined) {
     // Format: { line: number, column: number }
-    targetRow = location.line - 1;  // Convert to 0-based
-    targetColumn = location.column - 1;
+    target_row = location.line - 1;  // Convert to 0-based
+    target_column = location.column - 1;
   } else if (location.start !== undefined) {
     // Format: { start: { row, column }, end: { row, column } }
-    targetRow = location.start.row;
-    targetColumn = location.start.column;
+    target_row = location.start.row;
+    target_column = location.start.column;
   } else if (location.row !== undefined) {
     // Format: { row: number, column: number }
-    targetRow = location.row;
-    targetColumn = location.column;
+    target_row = location.row;
+    target_column = location.column;
   } else {
     return null;
   }
@@ -505,7 +509,7 @@ function find_node_at_location(
     const end = node.endPosition;
     
     // Check if location is within this node
-    if (targetRow >= start.row && targetRow <= end.row) {
+    if (target_row >= start.row && target_row <= end.row) {
       // If this is a class/interface/struct definition node, return it
       if (node.type === 'class_declaration' ||
           node.type === 'abstract_class_declaration' ||
@@ -539,8 +543,12 @@ function find_node_at_location(
 /**
  * Build a Map of methods from definitions
  */
-function build_method_map(methods: readonly MethodDefinition[]): ReadonlyMap<MethodName, MethodNode> {
-  const map = new Map<MethodName, MethodNode>();
+function build_method_map(
+  methods: readonly MethodDefinition[],
+  class_name: ClassName,
+  class_location: Location
+): ReadonlyMap<SymbolId, MethodNode> {
+  const map = new Map<SymbolId, MethodNode>();
   
   for (const method of methods) {
     const node: MethodNode = {
@@ -549,12 +557,13 @@ function build_method_map(methods: readonly MethodDefinition[]): ReadonlyMap<Met
       is_override: method.is_override || false,
       overrides: method.overrides,
       overridden_by: method.overridden_by || [],
-      visibility: method.visibility,
+      visibility: method.visibility ?? (method.is_private ? "private" : method.is_protected ? "protected" : "public"),
       is_static: method.is_static,
       is_abstract: method.is_abstract,
     };
     
-    map.set(method.name as MethodName, node);
+    const symbol_id = method_symbol(method.name, class_name, class_location);
+    map.set(symbol_id, node);
   }
   
   return map;
@@ -563,20 +572,25 @@ function build_method_map(methods: readonly MethodDefinition[]): ReadonlyMap<Met
 /**
  * Build a Map of properties from definitions
  */
-function build_property_map(properties: readonly PropertyDefinition[]): ReadonlyMap<PropertyName, PropertyNode> {
-  const map = new Map<PropertyName, PropertyNode>();
+function build_property_map(
+  properties: readonly PropertyDefinition[],
+  class_name: ClassName,
+  class_location: Location
+): ReadonlyMap<SymbolId, PropertyNode> {
+  const map = new Map<SymbolId, PropertyNode>();
   
   for (const property of properties) {
     const node: PropertyNode = {
     name: property.name as PropertyName,
       location: property.location,
       type: property.type,
-      visibility: property.visibility,
+      visibility: property.visibility ?? (property.is_private ? "private" : property.is_protected ? "protected" : "public"),
       is_static: property.is_static,
       is_readonly: property.is_readonly,
     };
     
-    map.set(property.name as PropertyName, node);
+    const symbol_id = property_symbol(property.name, class_name, class_location);
+    map.set(symbol_id, node);
   }
   
   return map;
@@ -586,7 +600,7 @@ function build_property_map(properties: readonly PropertyDefinition[]): Readonly
  * Populate derived_classes based on inheritance edges
  */
 function compute_derived_classes(
-  classes: Map<QualifiedName, ClassNode>,
+  classes: Map<SymbolId, ClassNode>,
   edges: InheritanceEdge[]
 ): void {
   for (const edge of edges) {
@@ -607,7 +621,7 @@ function compute_derived_classes(
  * Compute enhanced fields
  */
 function compute_enhanced_fields(
-  classes: Map<QualifiedName, ClassNode>,
+  classes: Map<SymbolId, ClassNode>,
   edges: InheritanceEdge[]
 ): void {
   for (const [key, node] of classes) {
@@ -645,7 +659,7 @@ function compute_enhanced_fields(
  */
 function compute_all_ancestors(
   node: ClassNode,
-  classes: Map<QualifiedName, ClassNode>,
+  classes: Map<SymbolId, ClassNode>,
   edges: InheritanceEdge[]
 ): ClassNode[] {
   const ancestors: ClassNode[] = [];
@@ -678,7 +692,7 @@ function compute_all_ancestors(
  */
 function compute_all_descendants(
   node: ClassNode,
-  classes: Map<string, ClassNode>
+  classes: Map<SymbolId, ClassNode>
 ): ClassNode[] {
   const descendants: ClassNode[] = [];
   const visited = new Set<string>();
@@ -710,7 +724,7 @@ function compute_all_descendants(
  */
 function compute_mro(
   node: ClassNode,
-  classes: Map<QualifiedName, ClassNode>,
+  classes: Map<SymbolId, ClassNode>,
   edges: InheritanceEdge[]
 ): ClassNode[] {
   const mro: ClassNode[] = [node];
@@ -730,7 +744,7 @@ function compute_mro(
  * Compute the maximum depth of the class hierarchy
  */
 function compute_max_depth(
-  classes: Map<string, ClassNode>,
+  classes: Map<SymbolId, ClassNode>,
   roots: Set<string>
 ): number {
   let max_depth = 0;
