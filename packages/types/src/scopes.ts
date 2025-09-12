@@ -1,5 +1,5 @@
 import { ScopeId } from "./aliases";
-import { SymbolName } from "./symbols";
+import { SymbolName, SymbolId } from "./symbol_utils";
 import { Location } from "./common";
 
 /**
@@ -32,12 +32,12 @@ export type SymbolKind =
  * Symbol information within a scope
  */
 export interface ScopeSymbol {
-  readonly name: SymbolName;
+  readonly name: SymbolId;
   readonly kind: SymbolKind; // variable, function, class, etc.
   readonly location: Location;
-  readonly is_hoisted?: boolean; // var in JS, function declarations
-  readonly is_imported?: boolean; // Imported from another module
-  readonly is_exported?: boolean; // Exported from this module
+  readonly is_hoisted: boolean; // var in JS, function declarations
+  readonly is_imported: boolean; // Imported from another module
+  readonly is_exported: boolean; // Exported from this module
   readonly type_info?: string; // Type annotation if available
 }
 
@@ -50,9 +50,9 @@ export interface ScopeNode {
   readonly location: Location;
   readonly parent_id?: ScopeId;
   readonly child_ids: readonly ScopeId[];
-  readonly symbols: ReadonlyMap<SymbolName, ScopeSymbol>;
+  readonly symbols: ReadonlyMap<SymbolId, ScopeSymbol>;
   readonly metadata?: {
-    readonly name?: string; // Function/class/module name
+    readonly name?: SymbolId; // Function/class/module name
     readonly is_async?: boolean; // For function scopes
     readonly is_generator?: boolean; // For function scopes
     readonly visibility?: string; // public/private/protected

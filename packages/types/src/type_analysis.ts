@@ -37,18 +37,18 @@ export interface TypeDefinition extends SemanticNode {
   readonly members?: ReadonlyMap<SymbolName, TypeMember>;
 
   // Type metadata
-  readonly is_generic?: boolean;
-  readonly is_abstract?: boolean;
-  readonly is_final?: boolean;
-  readonly is_nullable?: boolean;
-  readonly is_optional?: boolean;
+  readonly is_generic: boolean;
+  readonly is_abstract: boolean;
+  readonly is_final: boolean;
+  readonly is_nullable: boolean;
+  readonly is_optional: boolean;
 }
 
 /**
  * Type parameter with variance
  */
 export interface TypeParameter {
-  readonly name: string;
+  readonly name: SymbolId;
   readonly constraint?: TypeExpression;
   readonly default?: TypeExpression;
   readonly variance?: "covariant" | "contravariant" | "invariant";
@@ -74,10 +74,10 @@ export interface TypeMember extends SemanticNode {
     | "setter"
     | "constructor";
   readonly type?: TypeExpression;
-  readonly is_optional?: boolean;
-  readonly is_readonly?: boolean;
-  readonly is_static?: boolean;
-  readonly is_abstract?: boolean;
+  readonly is_optional: boolean;
+  readonly is_readonly: boolean;
+  readonly is_static: boolean;
+  readonly is_abstract: boolean;
   readonly accessibility?: "public" | "private" | "protected";
 }
 
@@ -250,14 +250,14 @@ export function is_primitive_type(type: TypeDefinition): boolean {
  * Check if a type is generic
  */
 export function is_generic_type(type: TypeDefinition): boolean {
-  return type.is_generic === true || (type.type_parameters?.length ?? 0) > 0;
+  return type.is_generic || (type.type_parameters?.length ?? 0) > 0;
 }
 
 /**
  * Check if a type is nullable
  */
 export function is_nullable_type(type: TypeDefinition): boolean {
-  return type.is_nullable === true || type.is_optional === true;
+  return type.is_nullable || type.is_optional;
 }
 
 /**
@@ -285,6 +285,12 @@ export function create_type_definition(
     location,
     language,
     node_type: get_node_type_for_type_kind(kind),
+    // Provide defaults for required boolean properties
+    is_generic: false,
+    is_abstract: false,
+    is_final: false,
+    is_nullable: false,
+    is_optional: false,
     ...options,
   };
 }

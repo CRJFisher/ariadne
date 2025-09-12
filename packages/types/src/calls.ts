@@ -10,7 +10,7 @@ import {
   CalleeName,
   ReceiverName,
   ResolvedTypeKind,
-} from "./branded-types";
+} from "./branded_types";
 import { SymbolName } from "./symbol_utils";
 import { SymbolId } from "./symbol_utils";
 import { SemanticNode, Resolution } from "./query";
@@ -26,8 +26,8 @@ interface BaseCallInfo extends SemanticNode {
   readonly caller: CallerContext; // Who is making the call (function or MODULE_CONTEXT)
   readonly location: Location; // Where the call occurs
   readonly arguments_count: number; // Number of arguments passed
-  readonly is_async?: boolean; // Whether the call is async/await
-  readonly is_dynamic?: boolean; // Runtime-resolved call
+  readonly is_async: boolean; // Whether the call is async/await
+  readonly is_dynamic: boolean; // Runtime-resolved call
 }
 
 /**
@@ -38,10 +38,10 @@ export interface ResolvedTarget {
   readonly definition_location: Location;
   readonly file_path: FilePath;
   readonly is_local: boolean;
-  readonly is_imported?: boolean;
+  readonly is_imported: boolean;
   readonly source_module?: ModulePath;
-  readonly import_alias?: SymbolName;
-  readonly original_name?: SymbolName;
+  readonly import_alias?: SymbolId;
+  readonly original_name?: SymbolId;
 }
 
 /**
@@ -54,9 +54,9 @@ export type CallInfo = FunctionCall | MethodCall | ConstructorCall;
  */
 export interface FunctionCall extends BaseCallInfo {
   readonly kind: "function";
-  readonly callee: CalleeName; // Function being called
-  readonly is_macro_call?: boolean; // Rust macros
-  readonly is_in_comprehension?: boolean; // Python comprehensions
+  readonly callee: SymbolId; // Function being called
+  readonly is_macro_call: boolean; // Rust macros
+  readonly is_in_comprehension: boolean; // Python comprehensions
   readonly resolved?: Resolution<ResolvedTarget>;
 }
 
@@ -65,8 +65,8 @@ export interface FunctionCall extends BaseCallInfo {
  */
 export interface MethodCall extends BaseCallInfo {
   readonly kind: "method";
-  readonly method_name: CalleeName; // Method being called
-  readonly receiver: ReceiverName; // Object receiving the call
+  readonly method_name: SymbolId; // Method being called
+  readonly receiver: SymbolId; // Object receiving the call
   readonly is_static: boolean; // Static vs instance method
   readonly is_chained: boolean; // Part of method chain
   readonly receiver_type?: Resolution<{
@@ -84,7 +84,7 @@ export interface ConstructorCall extends BaseCallInfo {
   readonly class_name: ClassName; // Class being instantiated
   readonly is_new_expression: boolean; // Uses 'new' keyword
   readonly is_factory: boolean; // Factory pattern
-  readonly assigned_to?: SymbolName; // Variable receiving instance
+  readonly assigned_to?: SymbolId; // Variable receiving instance
   readonly resolved?: Resolution<ResolvedTarget>;
 }
 
@@ -196,7 +196,7 @@ export function get_resolved_symbol_id(call: CallInfo): SymbolId | undefined {
  * Check if a call is to an imported symbol
  */
 export function is_imported_call(call: CallInfo): boolean {
-  return call.resolved?.resolved?.is_imported ?? false;
+  return call.resolved?.resolved?.is_imported === true;
 }
 
 /**
@@ -204,7 +204,7 @@ export function is_imported_call(call: CallInfo): boolean {
  */
 export function create_function_call(
   caller: CallerContext,
-  callee: CalleeName,
+  callee: SymbolId,
   location: Location,
   language: "javascript" | "typescript" | "python" | "rust",
   options?: Partial<FunctionCall>
@@ -217,6 +217,10 @@ export function create_function_call(
     language,
     node_type: "call_expression",
     arguments_count: 0,
+    is_async: false,
+    is_dynamic: false,
+    is_macro_call: false,
+    is_in_comprehension: false,
     ...options,
   };
 }
@@ -226,8 +230,8 @@ export function create_function_call(
  */
 export function create_method_call(
   caller: CallerContext,
-  receiver: ReceiverName,
-  method_name: CalleeName,
+  receiver: SymbolId,
+  method_name: SymbolId,
   location: Location,
   language: "javascript" | "typescript" | "python" | "rust",
   options?: Partial<MethodCall>
@@ -243,6 +247,8 @@ export function create_method_call(
     arguments_count: 0,
     is_static: false,
     is_chained: false,
+    is_async: false,
+    is_dynamic: false,
     ...options,
   };
 }
@@ -267,6 +273,8 @@ export function create_constructor_call(
     arguments_count: 0,
     is_new_expression: language === "javascript" || language === "typescript",
     is_factory: false,
+    is_async: false,
+    is_dynamic: false,
     ...options,
   };
 }

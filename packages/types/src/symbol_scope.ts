@@ -43,13 +43,13 @@ export interface Symbol extends SemanticNode {
 
   // Common metadata
   readonly visibility?: Visibility;
-  readonly is_exported?: boolean;
-  readonly is_imported?: boolean;
-  readonly is_hoisted?: boolean; // JS hoisting
-  readonly is_static?: boolean; // Static members
-  readonly is_abstract?: boolean; // Abstract classes/methods
-  readonly is_readonly?: boolean; // Readonly properties
-  readonly is_optional?: boolean; // Optional parameters/properties
+  readonly is_exported: boolean;
+  readonly is_imported: boolean;
+  readonly is_hoisted: boolean; // JS hoisting
+  readonly is_static: boolean; // Static members
+  readonly is_abstract: boolean; // Abstract classes/methods
+  readonly is_readonly: boolean; // Readonly properties
+  readonly is_optional: boolean; // Optional parameters/properties
 
   // Type information
   readonly type?: TypeExpression; // Type annotation/inference
@@ -96,7 +96,7 @@ export interface Scope extends SemanticNode {
   readonly child_paths: readonly ScopePath[]; // Child scope paths
 
   // Symbols defined in this scope
-  readonly symbols: ReadonlyMap<SymbolName, SymbolId>;
+  readonly symbols: ReadonlyMap<SymbolId, SymbolId>;
 
   // Scope metadata
   readonly owner_symbol?: SymbolId; // Symbol that owns this scope (function/class)
@@ -155,8 +155,8 @@ export interface SymbolUsage extends SemanticNode {
   readonly symbol_id: SymbolId;
   readonly usage_type: UsageType;
   readonly in_scope: ScopePath;
-  readonly is_write?: boolean; // Assignment/mutation
-  readonly is_type_reference?: boolean; // Used as type annotation
+  readonly is_write: boolean; // Assignment/mutation
+  readonly is_type_reference: boolean; // Used as type annotation
 }
 
 export type UsageType =
@@ -196,7 +196,7 @@ export function is_unified_scope(value: unknown): value is Scope {
   );
 }
 
-export function isSymbolUsage(value: unknown): value is SymbolUsage {
+export function is_symbol_usage(value: unknown): value is SymbolUsage {
   if (typeof value !== "object" || value === null) return false;
   const usage = value as any;
   return (
@@ -231,6 +231,14 @@ export function create_symbol_definition(
     language,
     scope_path,
     node_type: get_node_type_for_kind(kind),
+    // Provide defaults for required boolean properties
+    is_exported: false,
+    is_imported: false,
+    is_hoisted: false,
+    is_static: false,
+    is_abstract: false,
+    is_readonly: false,
+    is_optional: false,
     ...options,
   };
 }
@@ -273,7 +281,7 @@ function get_node_type_for_kind(kind: SymbolKind): string {
 export function is_public_symbol(symbol: Symbol): boolean {
   return (
     symbol.visibility === "public" ||
-    (!symbol.visibility && symbol.is_exported === true)
+    (!symbol.visibility && symbol.is_exported)
   );
 }
 

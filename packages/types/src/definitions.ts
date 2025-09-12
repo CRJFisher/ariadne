@@ -26,14 +26,14 @@ import {
   TypeExpression,
   Visibility,
 } from "./branded-types";
-import { SymbolName } from "./symbol_utils";
+import { SymbolName, SymbolId } from "./symbol_utils";
 
 /**
  * Common base interface for all definition types
  * All entity-specific definition types should extend this
  */
 export interface Definition {
-  readonly name: string; // Generic name - subtypes use specific branded types
+  readonly name: SymbolId; // Symbol identifier - replaces generic string
   readonly location: Location;
 }
 
@@ -41,28 +41,28 @@ export interface Definition {
  * Standalone function definition
  */
 export interface FunctionMetadata {
-  readonly is_async?: boolean;
-  readonly is_generator?: boolean;
-  readonly is_exported?: boolean;
-  readonly is_test?: boolean;
-  readonly is_private?: boolean;
+  readonly is_async: boolean;
+  readonly is_generator: boolean;
+  readonly is_exported: boolean;
+  readonly is_test: boolean;
+  readonly is_private: boolean;
   readonly complexity?: number;
   readonly line_count: number;
-  readonly parameter_names?: readonly ParameterName[];
-  readonly has_decorator?: boolean;
+  readonly parameter_names: readonly SymbolId[];
+  readonly has_decorator: boolean;
   readonly class_name?: ClassName;
 }
 
 export interface FunctionDefinition {
-  readonly name: FunctionName;
+  readonly name: SymbolId;
   readonly location: Location;
   readonly signature: FunctionSignature;
   readonly metadata?: FunctionMetadata;
   readonly docstring?: DocString;
   readonly decorators?: readonly DecoratorName[];
-  readonly is_exported?: boolean;
-  readonly is_arrow_function?: boolean; // For JS/TS
-  readonly is_anonymous?: boolean;
+  readonly is_exported: boolean;
+  readonly is_arrow_function: boolean; // For JS/TS
+  readonly is_anonymous: boolean;
   readonly closure_captures?: readonly string[]; // Variables from outer scope
 }
 
@@ -72,24 +72,24 @@ export interface FunctionDefinition {
 export interface ClassDefinition extends Definition {
   readonly extends?: readonly string[];
   readonly implements?: readonly string[];
-  readonly is_abstract?: boolean;
-  readonly is_final?: boolean;
-  readonly is_interface?: boolean;
-  readonly is_trait?: boolean;
-  readonly is_mixin?: boolean;
+  readonly is_abstract: boolean;
+  readonly is_final: boolean;
+  readonly is_interface: boolean;
+  readonly is_trait: boolean;
+  readonly is_mixin: boolean;
   readonly generics?: readonly GenericParameter[];
   readonly methods: readonly MethodDefinition[];
   readonly properties: readonly PropertyDefinition[];
   readonly decorators?: readonly string[];
   readonly docstring?: string;
-  readonly is_exported?: boolean;
+  readonly is_exported: boolean;
 }
 
 /**
  * Generic type parameter
  */
 export interface GenericParameter {
-  readonly name: string;
+  readonly name: SymbolId;
   readonly constraint?: string;
   readonly default?: string;
   readonly variance?: "in" | "out" | "invariant";
@@ -109,7 +109,7 @@ export interface ResolvedGeneric {
  * Method definition within a class
  */
 export interface MethodDefinition {
-  readonly name: string;
+  readonly name: SymbolId;
   readonly location: Location;
   readonly is_static: boolean;
   readonly is_abstract: boolean;
@@ -131,7 +131,7 @@ export interface MethodDefinition {
  * Property/field definition within a class
  */
 export interface PropertyDefinition {
-  readonly name: string;
+  readonly name: SymbolId;
   readonly location: Location;
   readonly type?: string;
   readonly is_static: boolean;
@@ -147,7 +147,7 @@ export interface PropertyDefinition {
  * Function/method parameter definition
  */
 export interface ParameterDefinition {
-  readonly name: string;
+  readonly name: SymbolId;
   readonly type?: string;
   readonly is_optional: boolean;
   readonly is_rest: boolean;
@@ -169,7 +169,7 @@ export interface InterfaceDefinition extends Definition {
  * Method signature in an interface
  */
 export interface MethodSignature {
-  readonly name: string;
+  readonly name: SymbolId;
   readonly parameters: readonly ParameterDefinition[];
   readonly return_type?: string;
   readonly generics?: readonly GenericParameter[];
@@ -180,7 +180,7 @@ export interface MethodSignature {
  * Property signature in an interface
  */
 export interface PropertySignature {
-  readonly name: string;
+  readonly name: SymbolId;
   readonly type?: string;
   readonly is_optional: boolean;
   readonly is_readonly: boolean;
@@ -199,7 +199,7 @@ export interface EnumDefinition extends Definition {
  * Enum member
  */
 export interface EnumMember {
-  readonly name: string;
+  readonly name: SymbolId;
   readonly value?: string | number;
   readonly location: Location;
 }
@@ -228,7 +228,7 @@ export interface StructDefinition extends Definition {
  * Rust struct field
  */
 export interface FieldDefinition {
-  readonly name?: string; // Optional for tuple structs
+  readonly name?: SymbolId; // Optional for tuple structs
   readonly type: string;
   readonly is_public: boolean;
   readonly location: Location;
@@ -249,7 +249,7 @@ export interface TraitDefinition extends Definition {
  * Rust associated type
  */
 export interface AssociatedType {
-  readonly name: string;
+  readonly name: SymbolId;
   readonly constraint?: string;
   readonly default?: string;
 }

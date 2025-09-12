@@ -3,6 +3,7 @@ import {
   TypeString,
   FilePath,
 } from "./aliases";
+import { SymbolId } from "./symbol_utils";
 
 // Language type
 export type Language = "javascript" | "typescript" | "python" | "rust";
@@ -35,20 +36,20 @@ export interface FunctionSignature {
   readonly parameters: readonly ParameterType[];
   readonly return_type?: TypeString;
   readonly type_parameters?: readonly TypeParameter[];
-  readonly is_async?: boolean;
-  readonly is_generator?: boolean;
+  readonly is_async: boolean;
+  readonly is_generator: boolean;
 }
 
 export interface ParameterType {
   readonly name: ParameterName;
   readonly type?: TypeString;
   readonly default_value?: string;
-  readonly is_rest?: boolean;
-  readonly is_optional?: boolean;
+  readonly is_rest: boolean;
+  readonly is_optional: boolean;
 }
 
 export interface TypeParameter {
-  readonly name: string;
+  readonly name: SymbolId;
   readonly constraint?: TypeString;
   readonly default?: TypeString;
 }
