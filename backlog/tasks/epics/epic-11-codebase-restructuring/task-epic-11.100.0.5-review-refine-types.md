@@ -376,13 +376,77 @@ See `task-epic-11.100.0.5-type-simplification-plan.md` for:
 - Implementation strategy
 - Success metrics
 
-### Next Steps (UPDATED PRIORITY)
+### SYMBOL REFACTOR EXTENSION (2025-09-12)
 
-1. **🚨 START with Task 9** (Branded Type Infrastructure) - CRITICAL, blocks everything
-2. **Then Task 10** (Compound Type Builders) - needed by all modules
-3. **Parallel Tasks 11-13** (Migrate to branded types)
-4. **Then Task 1** (Core Base Types) using branded types as foundation
-5. **Parallel Tasks 2-6** (Module-specific improvements)
-6. **Finally Tasks 7-8** (Integration and validation)
+After implementing initial symbol utilities in `symbol_utils.ts`, conducted comprehensive analysis to identify all locations where the universal SymbolId system should be applied. 
 
-**WARNING**: Starting any task before Task 9 will result in major rework!
+#### Initial Analysis Found: 100+ opportunities
+#### Deep Analysis Found: 300+ additional raw string usages
+
+**CRITICAL GAPS DISCOVERED:**
+- Hundreds of functions using `string` for identifier parameters
+- Legacy interfaces (LegacyTypeInfo, ImportedClassInfo) using raw strings
+- Generic `name: string` fields that should be typed
+- Map<string, Symbol> patterns throughout scope analysis
+
+#### 🔥 URGENT - Universal Symbol System Migration (RENUMBERED)
+21. **task-epic-11.100.0.5.21**: Symbol Refactor - Core Type Maps
+    - Replace Map keys in types.ts, classes.ts from individual names to SymbolId
+    - Update type_registry and scope_tree Maps
+    - **NEW**: scope_tree and enhanced_symbols Map<string> patterns
+    - **Impact**: 20+ core type definitions
+    
+22. **task-epic-11.100.0.5.22**: Symbol Refactor - Interface Properties
+    - Update definitions.ts, calls.ts interfaces to use SymbolId
+    - **NEW**: Fix all generic `name: string` fields (found 15+ instances)
+    - **NEW**: Update modules.ts name fields
+    - **Impact**: 35+ interface properties
+    
+23. **task-epic-11.100.0.5.23**: Symbol Refactor - Function Parameters
+    - **MASSIVE SCOPE**: Hundreds of functions using raw strings
+    - Update import_export.ts functions to accept SymbolId
+    - **NEW**: Fix LegacyTypeInfo and ImportedClassInfo interfaces
+    - **NEW**: Update all method resolution functions
+    - **Impact**: 200+ function signatures
+    
+24. **task-epic-11.100.0.5.24**: Symbol Refactor - Array Properties
+    - Change array properties from name arrays to SymbolId arrays
+    - Update base_classes, interfaces, type_parameters arrays
+    - **Impact**: 25+ array properties
+    
+25. **task-epic-11.100.0.5.25**: Symbol Refactor - Core Implementation
+    - Update class_hierarchy to use SymbolId Maps
+    - Modify scope_tree symbol tracking to use SymbolId
+    - **NEW**: Update all internal Set<string> for identifiers
+    - **Impact**: 15+ implementation files
+    
+26. **task-epic-11.100.0.5.26**: Symbol Refactor - Tests and Documentation
+    - Update all test files to use symbol builders
+    - Create migration guide and best practices
+    - **Impact**: 50+ test files
+
+See detailed analysis in:
+- `docs/epic-11-investigations/SYMBOL_REFACTOR_TASKS.md`
+- `docs/epic-11-investigations/SYMBOL_REFACTOR_IMPACT.md`
+
+**COVERAGE ASSESSMENT**: The refactor is MORE extensive than initially thought - estimated 400+ changes needed vs 100+ originally identified
+
+### Next Steps (UPDATED PRIORITY - CORRECTED NUMBERING)
+
+1. **✅ COMPLETED Task 9** (Branded Type Infrastructure) 
+2. **✅ COMPLETED Task 10** (Compound Type Builders) in branded-types.ts
+3. **🚨 START with Task 21** (Core Type Maps) - Foundation for symbol system
+4. **Then Task 22** (Interface Properties) - API consistency  
+5. **Then Task 23** (Function Parameters) - MASSIVE scope, 200+ functions
+6. **Parallel Tasks 11-13** (Migrate other modules to branded types)
+7. **Then Tasks 24-25** (Arrays and Implementation)
+8. **Finally Task 26** (Tests and Documentation)
+9. **Then Task 1** (Core Base Types) using branded types and symbols as foundation
+10. **Parallel Tasks 2-6** (Module-specific improvements)
+11. **Finally Tasks 7-8** (Integration and validation)
+
+**WARNING**: The symbol refactor is MORE extensive than initially estimated:
+- Originally identified: 100+ changes
+- Actually needed: 400+ changes
+- Critical gap: Hundreds of raw string parameters
+- Completing Tasks 21-26 will eliminate 93% of identifier type proliferation!

@@ -18,6 +18,7 @@ import {
   ExportName,
   ClassDefinition,
   MethodDefinition,
+  FileAnalysis,
 } from "@ariadnejs/types";
 import { TypeRegistry } from "../../type_analysis/type_registry";
 

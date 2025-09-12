@@ -11,8 +11,9 @@ import TypeScript from "tree-sitter-typescript";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
 
-import { build_scope_tree } from "./scope_analysis/scope_tree";
-import {
+import { 
+  build_scope_tree,
+  extract_variables_from_scopes,
   EnhancedScopeSymbol,
   extract_variables_from_symbols,
 } from "./scope_analysis/scope_tree";
@@ -20,6 +21,10 @@ import {
   build_scope_entity_connections,
   ScopeEntityConnections as RealScopeEntityConnections,
 } from "./scope_analysis/scope_entity_connections";
+import {
+  SymbolRegistry,
+  build_symbol_registry,
+} from "./scope_analysis/symbol_resolution";
 import { extract_imports } from "./import_export/import_resolution";
 import { extract_exports } from "./import_export/export_detection";
 import { find_class_definitions } from "./inheritance/class_detection";
@@ -36,18 +41,14 @@ import {
   ErrorCollector,
 } from "./error_collection/analysis_errors";
 // Type adapters no longer needed - using unified types directly
-import { create_readonly_array } from "@ariadnejs/types";
+import { ConstructorCall, create_readonly_array, Export, FunctionCall, Import, MethodCall } from "@ariadnejs/types";
 import {
-  infer_function_return_type,
-  ReturnTypeContext,
   ReturnTypeInfo,
-  analyze_return_type,
-  is_async_function,
+  infer_all_return_types,
 } from "./type_analysis/return_type_inference";
 import {
   ParameterAnalysis,
-  ParameterInferenceContext,
-  infer_parameter_types,
+  infer_all_parameter_types,
 } from "./type_analysis/parameter_type_inference";
 
 import {
@@ -56,15 +57,10 @@ import {
   FunctionDefinition,
   FunctionSignature,
   ScopeTree,
-  ExportInfo,
   ClassDefinition,
-  FunctionCallInfo,
-  ImportInfo,
   ParameterType,
-  VariableDeclaration,
   SourceCode,
   FilePath,
-  VariableName,
   TypeString,
   ParameterName,
   FunctionName,
@@ -72,160 +68,11 @@ import {
 
 // Re-export types from shared modules
 import type { FileTypeTracker } from "./type_analysis/type_tracking";
-import type { MethodCallInfo } from "./call_graph/method_calls";
-import type { ConstructorCallInfo } from "./call_graph/constructor_calls";
 import { CodeFile } from "./project/file_scanner";
 // Symbol types
-type SymbolRegistry = Map<any, any>;
 type ScopeEntityConnections = RealScopeEntityConnections;
 
-/**
- * Helper function to infer return types for all functions in the file
- */
-function infer_all_return_types(
-  root_node: SyntaxNode,
-  source_code: string,
-  language: Language,
-  file_path: FilePath,
-  _scopes: ScopeTree,
-  _type_tracker: FileTypeTracker,
-  _inferred_parameters: Map<string, ParameterAnalysis>
-): Map<string, ReturnTypeInfo> {
-  const result = new Map<string, ReturnTypeInfo>();
-  const context: ReturnTypeContext = {
-    language,
-    source_code,
-    debug: false,
-  };
 
-  // Find all function nodes in the tree
-  const find_functions = (node: SyntaxNode): void => {
-    // Check if this is a function definition node
-    if (
-      node.type === "function_declaration" ||
-      node.type === "function_definition" ||
-      node.type === "arrow_function" ||
-      node.type === "method_definition" ||
-      node.type === "function_item" || // Rust
-      node.type === "method_declaration"
-    ) {
-      // Extract function name
-      const name_node = node.childForFieldName("name");
-      const func_name = name_node
-        ? source_code.substring(name_node.startIndex, name_node.endIndex)
-        : `anonymous_${node.startIndex}`;
-
-      // Check if function is async
-      const is_async = is_async_function(node, context);
-
-      // Create a minimal Def object for the inference function
-      const func_def = {
-        name: func_name,
-        location: {
-          file_path: file_path,
-          line: node.startPosition.row + 1,
-          column: node.startPosition.column,
-        },
-        kind: "function" as const,
-        file_path: file_path,
-      };
-
-      // Infer return type
-      const return_info = infer_function_return_type(func_def, node, context);
-
-      if (return_info) {
-        // Store with enhanced metadata
-        result.set(func_name, {
-          ...return_info,
-          // Override async/generator if we detected it
-          ...(is_async && { source: "pattern" as const }),
-        });
-      }
-    }
-
-    // Recursively process children
-    for (let i = 0; i < node.childCount; i++) {
-      const child = node.child(i);
-      if (child) {
-        find_functions(child);
-      }
-    }
-  };
-
-  find_functions(root_node);
-  return result;
-}
-
-/**
- * Helper function to infer parameter types for all functions in the file
- */
-function infer_all_parameter_types(
-  root_node: SyntaxNode,
-  source_code: string,
-  language: Language,
-  file_path: FilePath,
-  _scopes: ScopeTree,
-  _type_tracker: FileTypeTracker
-): Map<string, ParameterAnalysis> {
-  const result = new Map<string, ParameterAnalysis>();
-  const context: ParameterInferenceContext = {
-    language,
-    source_code,
-    debug: false,
-  };
-
-  // Find all function nodes in the tree
-  const find_functions = (node: SyntaxNode): void => {
-    // Check if this is a function definition node
-    if (
-      node.type === "function_declaration" ||
-      node.type === "function_definition" ||
-      node.type === "arrow_function" ||
-      node.type === "method_definition" ||
-      node.type === "function_item" || // Rust
-      node.type === "method_declaration"
-    ) {
-      // Extract function name
-      const name_node = node.childForFieldName("name");
-      const func_name = name_node
-        ? source_code.substring(name_node.startIndex, name_node.endIndex)
-        : `anonymous_${node.startIndex}`;
-
-      // Create a FunctionDefinition for the inference function
-      const func_def: FunctionDefinition = {
-        name: func_name as FunctionName,
-        location: {
-          file_path: file_path as FilePath,
-          start: {
-            row: node.startPosition.row,
-            column: node.startPosition.column
-          },
-          end: {
-            row: node.endPosition.row,
-            column: node.endPosition.column
-          }
-        },
-        signature: source_code.substring(node.startIndex, node.endIndex).split('\n')[0] as unknown as FunctionSignature,
-        is_exported: false // This would need to be determined from context
-      };
-      
-      // Use the comprehensive type inference function instead of manual inference
-      const analysis = infer_parameter_types(func_def, node, context);
-      result.set(func_name, analysis);
-    }
-
-    // Recursively process children
-    for (let i = 0; i < node.childCount; i++) {
-      const child = node.child(i);
-      if (child) {
-        find_functions(child);
-      }
-    }
-  };
-
-  find_functions(root_node);
-  return result;
-}
 
 
 /**
@@ -376,8 +223,8 @@ function detect_local_structures(
   file_path: FilePath,
   _error_collector?: ErrorCollector
 ): {
-  imports: ImportInfo[];
-  exports: ExportInfo[];
+  imports: Import[];
+  exports: Export[];
   class_definitions: ClassDefinition[];
 } {
   // Extract imports
@@ -406,7 +253,7 @@ function analyze_local_types(
   root_node: SyntaxNode,
   file: CodeFile,
   scopes: ScopeTree,
-  _imports: ImportInfo[],
+  _imports: Import[],
   _class_definitions: ClassDefinition[]
 ): {
   type_tracker: FileTypeTracker;
@@ -431,8 +278,6 @@ function analyze_local_types(
     source_code,
     file.language,
     file.file_path,
-    scopes,
-    type_tracker
   );
 
   // Infer return types for all functions
@@ -440,10 +285,7 @@ function analyze_local_types(
     root_node,
     source_code,
     file.language,
-    file.file_path,
-    scopes,
-    type_tracker,
-    inferred_parameters
+    file.file_path
   );
 
   return {
@@ -464,9 +306,9 @@ function analyze_calls(
   _scopes: ScopeTree,
   file_path: FilePath
 ): {
-  function_calls: FunctionCallInfo[];
-  method_calls: MethodCallInfo[];
-  constructor_calls: ConstructorCallInfo[];
+  function_calls: FunctionCall[];
+  method_calls: MethodCall[];
+  constructor_calls: ConstructorCall[];
 } {
   // Create context for function calls
   const function_call_context = {
@@ -505,44 +347,6 @@ function analyze_calls(
 }
 
 // Variable extraction is done through scope_tree
-
-/**
- * Extract variables from scope tree
- */
-function extract_variables_from_scopes(
-  scopes: ScopeTree
-): VariableDeclaration[] {
-  const variables: VariableDeclaration[] = [];
-
-  // Iterate through all scopes and extract variable symbols
-  for (const [_, scope] of scopes.nodes) {
-    // Check if scope is a parameter scope - parameters are variables in parameter scopes
-    const isParameterScope = scope.type === "parameter";
-
-    for (const [name, symbol] of scope.symbols) {
-      // Variables can be marked as 'variable' kind or found in parameter scopes
-      if (
-        symbol.kind === "variable" ||
-        (isParameterScope && symbol.kind === "local")
-      ) {
-        // Cast to EnhancedScopeSymbol to access variable-specific fields
-        const enhancedSymbol = symbol as EnhancedScopeSymbol;
-
-        // Convert scope symbol to VariableDeclaration
-        const variable: VariableDeclaration = {
-          name: name as VariableName,
-          location: symbol.location,
-          type: symbol.type_info as TypeString | undefined,
-          is_const: enhancedSymbol.declaration_type === "const",
-          is_exported: symbol.is_exported,
-        };
-        variables.push(variable);
-      }
-    }
-  }
-
-  return variables;
-}
 
 /**
  * Extract function and class definitions
@@ -634,36 +438,6 @@ function extract_definitions(
 }
 
 /**
- * Build a symbol registry from functions and classes
- */
-function build_symbol_registry(
-  functions: FunctionDefinition[],
-  classes: ClassDefinition[]
-): SymbolRegistry {
-  const registry: SymbolRegistry = new Map();
-
-  // Register functions
-  for (const func of functions) {
-    const symbol_id = `function:${func.name}`;
-    registry.set(func, symbol_id);
-  }
-
-  // Register classes and their methods
-  for (const cls of classes) {
-    const class_symbol_id = `class:${cls.name}`;
-    registry.set(cls, class_symbol_id);
-
-    // Register methods
-    for (const method of cls.methods) {
-      const method_symbol_id = `method:${cls.name}.${method.name}`;
-      registry.set(method, method_symbol_id);
-    }
-  }
-
-  return registry;
-}
-
-/**
  * Register symbols and create connections
  */
 function register_symbols(
@@ -704,13 +478,13 @@ function register_symbols(
  */
 function build_file_analysis(
   file: CodeFile,
-  imports: ImportInfo[],
-  exports: ExportInfo[],
+  imports: Import[],
+  exports: Export[],
   functions: FunctionDefinition[],
   classes: ClassDefinition[],
-  function_calls: FunctionCallInfo[],
-  method_calls: MethodCallInfo[],
-  constructor_calls: ConstructorCallInfo[],
+  function_calls: FunctionCall[],
+  method_calls: MethodCall[],
+  constructor_calls: ConstructorCall[],
   type_tracker: FileTypeTracker,
   _symbol_registry: SymbolRegistry,
   _scope_entity_connections: ScopeEntityConnections,
@@ -720,6 +494,8 @@ function build_file_analysis(
   // Use unified types directly (no conversion needed)
   const import_statements = imports;
   const export_statements = exports;
+  
+  // TypeInfo is now output directly from type_tracker
   const public_type_info = type_tracker.variable_types;
 
   // Extract variables from scope tree

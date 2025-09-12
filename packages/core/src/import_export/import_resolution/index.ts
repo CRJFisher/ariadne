@@ -21,6 +21,7 @@ import {
   resolve_import,
   resolve_all_imports,
   resolve_module_path,
+  normalizeModulePath,
   find_exported_symbol,
   create_module_export,
   get_module_exports

@@ -266,6 +266,16 @@ function buildInheritanceChains(hierarchy: ClassHierarchy): void {
 
 ## Transformation Steps
 
+### 0. Migrate Functions from code_graph.ts [COMPLETED]
+
+**STATUS**: ✅ The function `build_class_hierarchy_from_analyses` has been successfully moved to `class_hierarchy/index.ts`.
+
+**Type Cleanup Requirements**:
+- Only the output type `ClassHierarchy` needs to remain public in `packages/types`
+- All internal AST processing types should be DELETED from the types package (not deprecated)
+- Types like `ClassHierarchyContext` that are only used internally for AST traversal should be made local to the module or removed with query-based approach
+- Delete intermediate types like `ClassInfo` that are redundant with the query approach
+
 ### 1. Document Hierarchy Patterns
 
 - [ ] Single inheritance

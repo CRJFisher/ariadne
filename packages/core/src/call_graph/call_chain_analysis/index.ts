@@ -11,7 +11,8 @@ import {
   detect_recursion,
   find_paths_between,
   get_longest_chain,
-  get_recursive_functions
+  get_recursive_functions,
+  create_call_graph
 } from './call_chain_analysis';
 
 // Re-export types and functions from common module
@@ -23,6 +24,7 @@ export {
   detect_recursion,
   find_paths_between,
   get_longest_chain,
-  get_recursive_functions
+  get_recursive_functions,
+  create_call_graph
 };
 

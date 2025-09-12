@@ -52,6 +52,7 @@ import {
 // Re-export types
 export * from './types';
 export { INTERFACE_IMPLEMENTATION_CONTEXT } from './language_configs';
+export { track_interface_implementations } from './interface_implementation';
 
 /**
  * Extract all interface definitions from a file

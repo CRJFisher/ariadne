@@ -118,6 +118,15 @@ export function build_scope_tree_with_queries(
 
 ## Transformation Steps
 
+### 0. Migrate Functions from file_analyzer.ts
+
+**IMPORTANT**: The function `extract_variables_from_scopes` (lines 512-545 in file_analyzer.ts) should be moved to `scope_tree.ts` as part of this transformation. This function:
+- Iterates through all scopes in the scope tree
+- Extracts variable symbols from each scope
+- Converts scope symbols to VariableDeclaration format
+
+This should become an exported helper function from the module after conversion to queries.
+
 ### 1. Extract Patterns
 
 - [ ] Document all node types that create scopes

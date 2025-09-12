@@ -12,10 +12,11 @@ export {
   type CodeGraphOptions,
 } from './code_graph';
 
-export {
-  get_call_graphs,
-  type CallGraphInfo,
-} from './graph_queries';
+// TODO: graph_queries module is missing
+// export {
+//   get_call_graphs,
+//   type CallGraphInfo,
+// } from './graph_queries';
 
 // Call resolution functions (global phase)
 export {

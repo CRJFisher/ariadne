@@ -27,8 +27,9 @@ export {
   MethodOverrideMap,
   is_overridden,
   is_override,
-  get_root_method
-};
+  get_root_method,
+  detect_and_validate_method_overrides
+} from './method_override';
 
 /**
  * Alias for backwards compatibility

@@ -12,19 +12,22 @@ import {
   Location,
   Language,
   FileAnalysis,
-  FunctionCallInfo,
-  MethodCallInfo,
-  ConstructorCallInfo,
-  VariableDeclaration,
-  ImportStatement,
-  ExportStatement,
   ScopeTree,
   ScopeNode,
   SymbolKind,
+  FunctionDefinition,
+  ClassDefinition,
+  SymbolIndex,
+  SymbolDefinition,
+  Usage,
+  Definition,
+  Import,
+  Export,
+  FunctionCall,
 } from "@ariadnejs/types";
 import { SyntaxNode } from 'tree-sitter';
 
-import { GlobalSymbolTable, SymbolDefinition } from "./global_symbol_table";
+import { GlobalSymbolTable } from "./global_symbol_table";
 import {
   ScopeEntityConnections,
   is_entity_visible_from_scope,
@@ -79,8 +82,8 @@ export interface FileResolutionContext {
     scope_entity_connections?: ScopeEntityConnections;
   };
   global_symbols: GlobalSymbolTable;
-  imports_by_file: Map<string, readonly ImportStatement[]>;
-  exports_by_file: Map<string, readonly ExportStatement[]>;
+  imports_by_file: Map<string, readonly Import[]>;
+  exports_by_file: Map<string, readonly Export[]>;
   language: Language;
   config: SymbolResolutionConfig;
 }
@@ -90,7 +93,7 @@ export interface FileResolutionContext {
  */
 export interface DefinitionResult {
   symbol_id?: SymbolId;
-  definition?: Def;
+  definition?: Definition;
   location?: Location;
   kind?: SymbolKind;
   file_path?: string;
@@ -133,7 +136,13 @@ export interface ExportInfo {
   source?: string;
 }
 
-export type ResolvedSymbol = DefinitionResult;
+export interface ResolutionResult {
+  resolved_calls: Map<Location, ResolvedReference>;
+  resolved_methods: Map<Location, ResolvedReference>;
+  resolved_constructors: Map<Location, ResolvedReference>;
+  resolved_variables: Map<Location, ResolvedReference>;
+  unresolved: Location[];
+}
 
 /**
  * Resolve all symbols in the provided file analyses using configuration-driven patterns
@@ -141,13 +150,7 @@ export type ResolvedSymbol = DefinitionResult;
 export function resolve_all_symbols(
   analyses: readonly FileAnalysis[],
   global_symbols: GlobalSymbolTable
-): {
-  resolved_calls: Map<Location, ResolvedReference>;
-  resolved_methods: Map<Location, ResolvedReference>;
-  resolved_constructors: Map<Location, ResolvedReference>;
-  resolved_variables: Map<Location, ResolvedReference>;
-  unresolved: Location[];
-} {
+): ResolutionResult {
   const resolved_calls = new Map<Location, ResolvedReference>();
   const resolved_methods = new Map<Location, ResolvedReference>();
   const resolved_constructors = new Map<Location, ResolvedReference>();
@@ -155,8 +158,8 @@ export function resolve_all_symbols(
   const unresolved: Location[] = [];
 
   // Build import/export maps for cross-file resolution
-  const imports_by_file = new Map<string, readonly ImportStatement[]>();
-  const exports_by_file = new Map<string, readonly ExportStatement[]>();
+  const imports_by_file = new Map<string, readonly Import[]>();
+  const exports_by_file = new Map<string, readonly Export[]>();
 
   for (const analysis of analyses) {
     imports_by_file.set(analysis.file_path, analysis.imports);
@@ -226,7 +229,7 @@ export function resolve_all_symbols(
  * Resolve a function call to its definition using configuration-driven patterns
  */
 export function resolve_function_call(
-  call: FunctionCallInfo,
+  call: FunctionCall,
   context: FileResolutionContext
 ): SymbolId | undefined {
   const { file_analysis, global_symbols, config, language } = context;
@@ -744,4 +747,108 @@ export function get_all_visible_symbols(
   }
 
   return symbols;
+}
+
+/**
+ * Symbol registry type for mapping definitions to IDs
+ */
+export type SymbolRegistry = Map<any, SymbolId>;
+
+/**
+ * Build symbol registry from functions and classes
+ */
+export function build_symbol_registry(
+  functions: FunctionDefinition[],
+  classes: ClassDefinition[]
+): SymbolRegistry {
+  const registry: SymbolRegistry = new Map();
+
+  // Register functions
+  for (const func of functions) {
+    const symbol_id = `function:${func.name}`;
+    registry.set(func, symbol_id);
+  }
+
+  // Register classes and their methods
+  for (const cls of classes) {
+    const class_symbol_id = `class:${cls.name}`;
+    registry.set(cls, class_symbol_id);
+
+    // Register methods
+    for (const method of cls.methods) {
+      const method_symbol_id = `method:${cls.name}.${method.name}`;
+      registry.set(method, method_symbol_id);
+    }
+  }
+
+  return registry;
+}
+
+/**
+ * Build symbol index from file analyses and global symbol table
+ */
+export function build_symbol_index(
+  analyses: FileAnalysis[],
+  global_symbols?: GlobalSymbolTable
+): SymbolIndex {
+  const definitions = new Map<SymbolId, SymbolDefinition>();
+  const usages = new Map<SymbolId, Usage[]>();
+  const resolution_cache = new Map<SymbolId, ResolvedSymbol>();
+
+  // If we have a global symbol table, use it to build definitions
+  if (global_symbols) {
+    for (const [symbol_id, def] of global_symbols.symbols) {
+      definitions.set(symbol_id, {
+        symbol: def.name,
+        location: def.location,
+        kind: def.kind as any, // Type mismatch - needs mapping
+        is_exported: def.is_exported,
+        references: [],
+      });
+    }
+  } else {
+    // Fallback to old method if no global symbols
+    for (const analysis of analyses) {
+      const registry = (analysis as any).symbol_registry;
+      if (!registry) continue;
+
+      // Add function definitions
+      for (const func of analysis.functions) {
+        const symbol_id = registry.get(func);
+        if (symbol_id) {
+          definitions.set(symbol_id, {
+            symbol: func.name,
+            location: func.location,
+            kind: "function",
+            is_exported: false, // TODO: Check if exported
+            references: [],
+          });
+        }
+      }
+
+      // Add class definitions
+      for (const cls of analysis.classes) {
+        const symbol_id = registry.get(cls);
+        if (symbol_id) {
+          definitions.set(symbol_id, {
+            symbol: cls.name,
+            location: cls.location,
+            kind: "class",
+            is_exported: false, // TODO: Check if exported
+            references: [],
+          });
+        }
+      }
+    }
+  }
+
+  // Build exports from global symbol table or analyses
+  const exports = global_symbols ? global_symbols.exports : new Map();
+
+  return {
+    definitions,
+    usages,
+    exports,
+    resolution_cache,
+  };
 }

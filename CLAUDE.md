@@ -1,5 +1,48 @@
 # Guidelines
 
+- *never* create "extra" functions/functionality that *might* be used one day. Only create functions that will be wired-in to the top-level functionality.
+- outside of an index.ts file, never re-export types from other modules
+
+## Universal Symbol System
+
+### Always Use SymbolId for Identifiers
+
+When working with any identifier (variable, function, class, method, property, etc.), use the universal `SymbolId` type instead of individual name types or raw strings:
+
+```typescript
+// ❌ BAD - Don't use individual name types or raw strings
+function find_function(name: FunctionName): Function;
+function resolve_method(class_name: string, method_name: string): Method;
+const symbols = new Map<string, Symbol>();
+
+// ✅ GOOD - Use SymbolId
+function find_function(symbol: SymbolId): Function;
+function resolve_method(class_symbol: SymbolId, method_symbol: SymbolId): Method;
+const symbols = new Map<SymbolId, Symbol>();
+```
+
+### Creating SymbolIds
+
+Use the factory functions from `symbol_utils.ts`:
+
+```typescript
+import { function_symbol, class_symbol, method_symbol } from '@ariadnejs/types';
+
+// Create symbols with proper context
+const funcId = function_symbol('processData', 'src/utils.ts', location);
+const classId = class_symbol('MyClass', 'src/classes.ts', location);  
+const methodId = method_symbol('getValue', 'MyClass', 'src/classes.ts', location);
+```
+
+### Why SymbolId?
+
+- **Eliminates ambiguity**: "getValue" could be a function, method, or property - SymbolId encodes the kind
+- **Provides context**: Includes file scope and qualification
+- **Type safety**: Branded types prevent mixing different identifier types
+- **Consistency**: One type for all identifiers instead of 15+ different types
+
+**Always prefer SymbolId over raw strings or individual name types when dealing with identifiers.**
+
 ## Tree-sitter Query Development
 
 ### Query File Structure

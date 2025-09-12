@@ -5,7 +5,7 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { FunctionDefinition, Language } from '@ariadnejs/types';
+import { FunctionDefinition, Language, SourceCode, FilePath } from '@ariadnejs/types';
 import {
   getLanguageConfig,
   isParameterNode,
@@ -14,6 +14,7 @@ import {
   getSpecialParameterType,
   getDefaultTypes
 } from './language_configs';
+import { node_to_location } from '../../ast/node_utils';
 
 // Bespoke JavaScript handlers
 import {
@@ -683,3 +684,63 @@ export {
   infer_type_from_default,
   check_parameter_patterns,
 };
+
+/**
+ * Infer parameter types for all functions in the file
+ * (Migrated from file_analyzer.ts)
+ */
+export function infer_all_parameter_types(
+  root_node: SyntaxNode,
+  source_code: SourceCode,
+  language: Language,
+  file_path: FilePath
+): Map<string, ParameterAnalysis> {
+  const result = new Map<string, ParameterAnalysis>();
+  const context: ParameterInferenceContext = {
+    language,
+    source_code,
+    debug: false,
+  };
+
+  // Find all function nodes in the tree
+  const find_functions = (node: SyntaxNode): void => {
+    // Check if this is a function definition node
+    if (
+      node.type === "function_declaration" ||
+      node.type === "function_definition" ||
+      node.type === "arrow_function" ||
+      node.type === "method_definition" ||
+      node.type === "function_item" || // Rust
+      node.type === "method_declaration"
+    ) {
+      // Extract function name
+      const name_node = node.childForFieldName("name");
+      const func_name = name_node
+        ? source_code.substring(name_node.startIndex, name_node.endIndex)
+        : `anonymous_${node.startIndex}`;
+
+      // Create a FunctionDefinition for the inference function
+      const func_def: FunctionDefinition = {
+        name: func_name as any,
+        location: node_to_location(node, file_path),
+        signature: source_code.substring(node.startIndex, node.endIndex).split('\n')[0] as any,
+        is_exported: false // This would need to be determined from context
+      };
+      
+      // Use the comprehensive type inference function
+      const analysis = infer_parameter_types(func_def, node, context);
+      result.set(func_name, analysis);
+    }
+
+    // Recursively process children
+    for (let i = 0; i < node.childCount; i++) {
+      const child = node.child(i);
+      if (child) {
+        find_functions(child);
+      }
+    }
+  };
+
+  find_functions(root_node);
+  return result;
+}

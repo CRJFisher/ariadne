@@ -5,9 +5,8 @@
  */
 
 import { Parser, Query, SyntaxNode } from 'tree-sitter';
-import { Def } from '@ariadnejs/types';
+import { Def, ClassDefinition, ClassHierarchy, MethodOverrideMap } from '@ariadnejs/types';
 import { 
-  ClassHierarchy,
   ClassInfo
 } from '../class_hierarchy/class_hierarchy';
 import {
@@ -456,4 +455,63 @@ export function detect_overrides_generic(
     abstract_methods: context.abstract_methods,
     language
   };
+}
+
+/**
+ * Detect and validate method override information
+ *
+ * This function uses the method_override module to detect override relationships
+ * and validate the hierarchy's override data.
+ */
+export function detect_and_validate_method_overrides(
+  hierarchy: ClassHierarchy,
+  class_definitions: ClassDefinition[]
+): MethodOverrideMap {
+  // Build a map of class methods for override analysis
+  const class_methods = new Map<string, any[]>();
+
+  for (const class_def of class_definitions) {
+    if (class_def.methods && class_def.methods.length > 0) {
+      // Convert methods to the format expected by analyze_overrides_with_hierarchy
+      const methods = class_def.methods.map((method) => ({
+        name: method.name,
+        file_path: class_def.file_path,
+        location: method.location,
+        is_override: method.is_override,
+        symbol_id: `${class_def.name}.${method.name}`,
+      }));
+      class_methods.set(class_def.name, methods);
+    }
+  }
+
+  // Analyze overrides using the hierarchy and methods
+  const override_map = analyze_overrides_with_hierarchy(
+    hierarchy,
+    class_methods
+  );
+
+  // Validate that override information is consistent
+  for (const [className, classNode] of hierarchy.classes) {
+    if (classNode.methods) {
+      for (const [methodName, methodNode] of classNode.methods) {
+        const methodKey = `${className}.${methodName}`;
+        const overrideInfo = override_map.overrides.get(methodKey);
+
+        if (overrideInfo) {
+          // Log if there's a discrepancy
+          const hasOverride = overrideInfo.overrides !== undefined;
+          if (hasOverride !== methodNode.is_override) {
+            console.debug(
+              `Override mismatch for ${className}.${methodName}: detected=${hasOverride}, tracked=${methodNode.is_override}`
+            );
+          }
+
+          // The override_map provides additional detail that can be used
+          // by enrichment phases and call graph analysis
+        }
+      }
+    }
+  }
+
+  return override_map;
 }

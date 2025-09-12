@@ -32,6 +32,7 @@ export {
   get_scope_chain,
   find_symbol_in_scope_chain,
   get_visible_symbols,
+  extract_variables_from_scopes,
   SCOPE_TREE_CONTEXT,
 } from "./scope_tree";
 

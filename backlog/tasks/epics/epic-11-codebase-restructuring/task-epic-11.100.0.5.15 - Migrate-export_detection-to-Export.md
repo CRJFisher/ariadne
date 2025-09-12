@@ -1,6 +1,6 @@
 ---
 id: task-epic-11.100.0.5.15
-title: Migrate export_detection to UnifiedExport
+title: Migrate export_detection to Export
 status: To Do
 assignee: []
 created_date: '2025-09-12'
@@ -12,7 +12,7 @@ priority: high
 
 ## Description
 
-Update the export_detection module to directly produce UnifiedExport types from AST traversal, eliminating the need for the ExportInfo → ExportStatement adapter.
+Update the export_detection module to directly produce Export types from AST traversal, eliminating the need for the ExportInfo → ExportStatement adapter.
 
 ## Background
 
@@ -25,12 +25,12 @@ This duplication serves no purpose and adds complexity.
 
 ## Acceptance Criteria
 
-- [ ] export_detection module returns `UnifiedExport[]` instead of `ExportInfo[]`
+- [ ] export_detection module returns `Export[]` instead of `ExportInfo[]`
 - [ ] Module uses discriminated unions (NamedExport, DefaultExport, etc.)
 - [ ] All branded types used (ModulePath, SymbolName)
 - [ ] Handles re-exports correctly with ReExport type
 - [ ] No intermediate ExportInfo type needed
-- [ ] Tests updated to verify UnifiedExport output
+- [ ] Tests updated to verify Export output
 - [ ] File size remains under 32KB limit
 
 ## Implementation Strategy
@@ -45,12 +45,12 @@ export function extract_exports(
   // Creates ExportInfo objects
 }
 
-// AFTER: Returns UnifiedExport[] directly
+// AFTER: Returns Export[] directly
 export function extract_exports(
   node: SyntaxNode,
   source_code: string,
   language: Language
-): UnifiedExport[] {
+): Export[] {
   // Directly creates NamedExport, DefaultExport, etc.
   // Using createNamedExport() helper from unified-import-export-types
 }

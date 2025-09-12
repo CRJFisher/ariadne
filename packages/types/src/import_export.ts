@@ -1,151 +1,335 @@
-import { ExportName, ModulePath, ImportName, NamespaceName } from "./aliases";
-import { SymbolName } from "./branded-types";
-import { Location } from "./common";
-
 /**
- * Import/Export Types - Consolidated Single Source of Truth
- *
- * This module defines all import and export types for the Ariadne codebase.
- * Types are organized by their use case:
- * - Info types: For extraction and detection during analysis
- * - Statement types: For the public FileAnalysis API
- * - Type-specific: For type tracking and module graph
+ * Import and export types for module dependencies and APIs
  */
 
-// =============================================================================
-// Core Import/Export Info - Used by extraction and detection
-// =============================================================================
+import { Location, Language } from "./common";
+import { ModulePath, NamespaceName } from "./aliases";
+import { SymbolName } from "./symbol_utils";
+import { SymbolId } from "./symbol_utils";
+import { SemanticNode, Resolution } from "./query";
+
+// ============================================================================
+// Import Types
+// ============================================================================
 
 /**
- * Information about an import extracted from source code
- * Used during Layer 2 (Local Structure Detection)
+ * Base import information
  */
-export interface ImportInfo {
-  /** The imported symbol name */
-  readonly name: SymbolName;
-  /** Module being imported from */
+interface BaseImport extends SemanticNode {
+  readonly source: ModulePath; // Module being imported from
+  readonly is_type_only?: boolean; // TypeScript type-only import
+  readonly is_dynamic?: boolean; // Dynamic import()
+}
+
+/**
+ * Import representation using discriminated union
+ */
+export type Import =
+  | NamedImport
+  | DefaultImport
+  | NamespaceImport
+  | SideEffectImport;
+
+/**
+ * Named import: import { foo, bar as baz } from 'module'
+ */
+export interface NamedImport extends BaseImport {
+  readonly kind: "named";
+  readonly imports: readonly NamedImportItem[];
+}
+
+export interface NamedImportItem {
+  readonly name: SymbolName; // Original name in module
+  readonly alias?: SymbolName; // Local alias if renamed
+  readonly is_type_only?: boolean; // Individual type-only marker
+}
+
+/**
+ * Default import: import foo from 'module'
+ */
+export interface DefaultImport extends BaseImport {
+  readonly kind: "default";
+  readonly name: SymbolName; // Local name for default export
+}
+
+/**
+ * Namespace import: import * as foo from 'module'
+ */
+export interface NamespaceImport extends BaseImport {
+  readonly kind: "namespace";
+  readonly namespace_name: NamespaceName; // Namespace alias (renamed to avoid conflict)
+}
+
+/**
+ * Side-effect import: import 'module'
+ */
+export interface SideEffectImport extends BaseImport {
+  readonly kind: "side_effect";
+  // No symbols imported
+}
+
+// ============================================================================
+// Unified Export Types
+// ============================================================================
+
+/**
+ * Base export information
+ */
+interface BaseExport extends SemanticNode {
+  readonly is_type_only?: boolean; // TypeScript type-only export
+}
+
+/**
+ * Export representation using discriminated union
+ */
+export type Export = NamedExport | DefaultExport | NamespaceExport | ReExport;
+
+/**
+ * Named export: export { foo, bar as baz }
+ */
+export interface NamedExport extends BaseExport {
+  readonly kind: "named";
+  readonly exports: readonly NamedExportItem[];
+}
+
+export interface NamedExportItem {
+  readonly local_name: SymbolName; // Internal name
+  readonly export_name?: SymbolName; // Exported as (if different)
+  readonly is_type_only?: boolean; // Individual type-only marker
+}
+
+/**
+ * Default export: export default foo
+ */
+export interface DefaultExport extends BaseExport {
+  readonly kind: "default";
+  readonly symbol?: SymbolName; // Symbol being exported (if not anonymous)
+  readonly is_declaration?: boolean; // export default class {} vs export default foo
+}
+
+/**
+ * Namespace export: export * from 'module'
+ */
+export interface NamespaceExport extends BaseExport {
+  readonly kind: "namespace";
+  readonly source: ModulePath; // Re-export source
+  readonly as_name?: NamespaceName; // export * as foo from 'module'
+}
+
+/**
+ * Re-export: export { foo } from 'module'
+ */
+export interface ReExport extends BaseExport {
+  readonly kind: "reexport";
   readonly source: ModulePath;
-  /** Type of import */
-  readonly kind: "named" | "default" | "namespace" | "dynamic";
-  /** Location in source code */
-  readonly location: Location;
-  /** Local name if renamed (e.g., import { foo as bar }) */
-  readonly alias?: ImportName;
-  /** TypeScript type-only import */
+  readonly exports: readonly ReExportItem[];
+}
+
+export interface ReExportItem {
+  readonly source_name: SymbolName; // Name in source module
+  readonly export_name?: SymbolName; // Exported as (if different)
   readonly is_type_only?: boolean;
-  /** For namespace imports (import * as X) */
-  readonly namespace_name?: NamespaceName;
-  /** For side-effect only imports (import 'module') */
-  readonly is_side_effect_only?: boolean;
+}
+
+// ============================================================================
+// Module Resolution Types
+// ============================================================================
+
+/**
+ * Resolved module information
+ */
+export interface ResolvedModule {
+  readonly module_path: ModulePath;
+  readonly file_path?: string; // Resolved file path
+  readonly is_external?: boolean; // Node module vs local
+  readonly is_builtin?: boolean; // Node builtin module
+  readonly package_name?: string; // NPM package name
+  readonly exports: readonly Export[];
+  readonly imports: readonly Import[];
 }
 
 /**
- * Information about an export extracted from source code
- * Used during Layer 2 (Local Structure Detection)
+ * Module dependency edge
  */
-export interface ExportInfo {
-  /** The exported symbol name */
-  readonly name: SymbolName;
-  /** Type of export */
-  readonly kind: "named" | "default" | "namespace";
-  /** Location in source code */
-  readonly location: Location;
-  /** Internal name if different from exported name */
-  readonly local_name?: SymbolName;
-  /** TypeScript type-only export */
-  readonly is_type_only?: boolean;
-  /** Whether this is re-exported from another module */
-  readonly is_reexport?: boolean;
-  /** Source module for re-exports */
-  readonly source?: ModulePath;
-  /** Export name if different from local name */
-  readonly export_name?: ExportName;
-}
-
-// =============================================================================
-// Public API Types - Used in FileAnalysis
-// =============================================================================
-
-/**
- * Import statement in the public FileAnalysis API
- * Simplified view with single symbol per statement
- */
-export interface ImportStatement {
-  /** Module being imported from */
-  readonly source: ModulePath;
-  /** Single imported symbol (was symbol_names array) */
-  readonly symbol_name?: SymbolName;
-  /** Location in source code */
-  readonly location: Location;
-  /** TypeScript type-only import */
-  readonly is_type_import?: boolean;
-  /** Whether this is a namespace import (import * as X) */
-  readonly is_namespace_import?: boolean;
-  /** Namespace name for namespace imports */
-  readonly namespace_name?: NamespaceName;
-  /** Side-effect only import (import 'module') */
-  readonly is_side_effect_only?: boolean;
+export interface ModuleDependency {
+  readonly from: ModulePath;
+  readonly to: ModulePath;
+  readonly imports: readonly Import[];
+  readonly is_circular?: boolean; // Circular dependency detected
+  readonly is_dev_only?: boolean; // Dev dependency only
 }
 
 /**
- * Export statement in the public FileAnalysis API
- * Simplified view with single symbol per statement
+ * Symbol resolution across modules
  */
-export interface ExportStatement {
-  /** Single exported symbol (was symbol_names array) */
-  readonly symbol_name: SymbolName;
-  /** Location in source code */
-  readonly location: Location;
-  /** Whether this is a default export */
-  readonly is_default: boolean;
-  /** TypeScript type-only export */
-  readonly is_type_export: boolean;
-  /** Source module for re-exports */
-  readonly source: ModulePath;
-  /** Export name if different from symbol_name */
-  readonly export_name: ExportName;
-}
-
-// =============================================================================
-// Module Graph Specific
-// =============================================================================
-
-/**
- * Import information for module dependency graph
- * Aggregates all imports from one module to another
- */
-export interface ModuleImport {
-  /** Module being imported from */
-  readonly source: ModulePath;
-  /** All imported symbols */
-  readonly symbols: readonly SymbolName[];
-  /** Static or dynamic import */
-  readonly kind: "static" | "dynamic";
-  /** Location of import statement */
-  readonly location?: Location;
-  /** Whether all imports are type-only */
-  readonly is_type_only?: boolean;
-  /** Whether this is a namespace import */
-  readonly is_namespace?: boolean;
-  /** Namespace name if applicable */
-  readonly namespace_name?: NamespaceName;
+export interface CrossModuleResolution {
+  readonly symbol: SymbolName;
+  readonly from_module: ModulePath;
+  readonly to_module: ModulePath;
+  readonly resolution: Resolution<{
+    readonly symbol_id: SymbolId;
+    readonly export_chain: readonly ExportChainStep[];
+  }>;
 }
 
 /**
- * Export information for module dependency graph
- * Aggregates all exports from a module
+ * Step in export/re-export chain
  */
-export interface ModuleExport {
-  /** All exported symbols */
-  readonly symbols: readonly SymbolName[];
-  /** Type of exports */
-  readonly kind: "named" | "default" | "namespace";
-  /** Location of export statement */
-  readonly location?: Location;
-  /** Whether all exports are type-only */
-  readonly is_type_only?: boolean;
-  /** Whether these are re-exports */
-  readonly is_reexport?: boolean;
-  /** Source module for re-exports */
-  readonly source?: ModulePath;
+export interface ExportChainStep {
+  readonly module: ModulePath;
+  readonly export_type: "direct" | "reexport" | "namespace";
+  readonly name_transformation?: {
+    readonly from: SymbolName;
+    readonly to: SymbolName;
+  };
+}
+
+// ============================================================================
+// Type Guards
+// ============================================================================
+
+export function is_named_import(imp: Import): imp is NamedImport {
+  return imp.kind === "named";
+}
+
+export function is_default_import(imp: Import): imp is DefaultImport {
+  return imp.kind === "default";
+}
+
+export function is_namespace_import(imp: Import): imp is NamespaceImport {
+  return imp.kind === "namespace";
+}
+
+export function is_side_effect_import(imp: Import): imp is SideEffectImport {
+  return imp.kind === "side_effect";
+}
+
+export function is_named_export(exp: Export): exp is NamedExport {
+  return exp.kind === "named";
+}
+
+export function is_default_export(exp: Export): exp is DefaultExport {
+  return exp.kind === "default";
+}
+
+export function is_namespace_export(exp: Export): exp is NamespaceExport {
+  return exp.kind === "namespace";
+}
+
+export function is_re_export(exp: Export): exp is ReExport {
+  return exp.kind === "reexport";
+}
+
+// ============================================================================
+// Utility Functions
+// ============================================================================
+
+/**
+ * Get all imported symbols from an import
+ */
+export function get_imported_symbols(imp: Import): SymbolName[] {
+  switch (imp.kind) {
+    case "named":
+      return imp.imports.map((i) => i.alias || i.name);
+    case "default":
+      return [imp.name];
+    case "namespace":
+      return []; // Namespace imports don't import specific symbols
+    case "side_effect":
+      return [];
+  }
+}
+
+/**
+ * Get all exported symbols from an export
+ */
+export function get_exported_symbols(exp: Export): SymbolName[] {
+  switch (exp.kind) {
+    case "named":
+      return exp.exports.map((e) => e.export_name || e.local_name);
+    case "default":
+      return [exp.symbol || ("default" as SymbolName)];
+    case "namespace":
+      return []; // Namespace exports don't have specific symbols
+    case "reexport":
+      return exp.exports.map((e) => e.export_name || e.source_name);
+  }
+}
+
+/**
+ * Check if an import imports a specific symbol
+ */
+export function imports_symbol(imp: Import, symbol: SymbolName): boolean {
+  switch (imp.kind) {
+    case "named":
+      return imp.imports.some((i) => i.name === symbol || i.alias === symbol);
+    case "default":
+      return imp.name === symbol;
+    case "namespace":
+      return false; // Namespace imports all symbols
+    case "side_effect":
+      return false;
+  }
+}
+
+/**
+ * Check if an export exports a specific symbol
+ */
+export function exports_symbol(exp: Export, symbol: SymbolName): boolean {
+  switch (exp.kind) {
+    case "named":
+      return exp.exports.some(
+        (e) => e.local_name === symbol || e.export_name === symbol
+      );
+    case "default":
+      return exp.symbol === symbol || symbol === ("default" as SymbolName);
+    case "namespace":
+      return true; // Namespace exports all symbols
+    case "reexport":
+      return exp.exports.some(
+        (e) => e.source_name === symbol || e.export_name === symbol
+      );
+  }
+}
+
+/**
+ * Create a simple named import
+ */
+export function create_named_import(
+  source: ModulePath,
+  imports: Array<{ name: SymbolName; alias?: SymbolName }>,
+  location: Location,
+  language: Language
+): NamedImport {
+  return {
+    kind: "named",
+    source,
+    imports: imports.map((i) => ({
+      name: i.name,
+      alias: i.alias,
+    })),
+    location,
+    language,
+    node_type: "import_statement",
+  };
+}
+
+/**
+ * Create a simple named export
+ */
+export function create_named_export(
+  exports: Array<{ local_name: SymbolName; export_name?: SymbolName }>,
+  location: Location,
+  language: Language
+): NamedExport {
+  return {
+    kind: "named",
+    exports: exports.map((e) => ({
+      local_name: e.local_name,
+      export_name: e.export_name,
+    })),
+    location,
+    language,
+    node_type: "export_statement",
+  };
 }

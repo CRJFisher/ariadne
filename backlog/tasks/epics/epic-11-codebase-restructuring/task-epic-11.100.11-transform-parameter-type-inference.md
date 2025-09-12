@@ -283,6 +283,15 @@ function inferParameterType(group: QueryCapture[]): string {
 
 ## Transformation Steps
 
+### 0. Migrate Functions from file_analyzer.ts [COMPLETED]
+
+**STATUS**: ✅ The function `infer_all_parameter_types` has been successfully moved to `parameter_type_inference.ts`.
+
+**Type Cleanup Requirements**:
+- Only the output type `ParameterAnalysis` needs to remain public in `packages/types`
+- All internal AST processing types should be DELETED from the types package (not deprecated)
+- Types like `ParameterInfo` that are only used internally for AST traversal should be made local to the module or removed with query-based approach
+
 ### 1. Document Parameter Patterns
 
 - [ ] Simple parameters

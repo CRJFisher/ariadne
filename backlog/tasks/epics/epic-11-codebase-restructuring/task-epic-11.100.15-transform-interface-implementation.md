@@ -267,6 +267,15 @@ function verifyImplementation(
 
 ## Transformation Steps
 
+### 0. Migrate Functions from code_graph.ts [COMPLETED]
+
+**STATUS**: ✅ The function `track_interface_implementations` has been successfully moved to `interface_implementation/interface_implementation.ts`.
+
+**Type Cleanup Requirements**:
+- Only the output type `InterfaceImplementationMap` needs to remain public in `packages/types`
+- All internal AST processing types should be DELETED from the types package (not deprecated)
+- Types like `InterfaceProcessingContext` that are only used internally for AST traversal should be made local to the module or removed with query-based approach
+
 ### 1. Document Interface Patterns
 
 - [ ] Interface declarations

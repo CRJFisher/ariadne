@@ -26,6 +26,8 @@ import {
   is_symbol_exported,
   get_all_visible_symbols,
   resolve_all_symbols,
+  SymbolRegistry,
+  build_symbol_registry,
 } from './symbol_resolution';
 
 // Language configurations
@@ -99,6 +101,9 @@ export {
   is_symbol_exported,
   get_all_visible_symbols,
   resolve_all_symbols,
+  SymbolRegistry,
+  build_symbol_registry,
+  build_symbol_index,
 };
 
 // Re-export global symbol table

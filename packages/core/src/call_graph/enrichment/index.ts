@@ -1,10 +1,10 @@
 /**
  * Standardized Call Graph Enrichment
- * 
+ *
  * Provides a unified API for enriching call information with global context
  * during the Global Assembly phase. This module standardizes the enrichment
  * pattern and incorporates features from the deprecated call_resolution module.
- * 
+ *
  * Key responsibilities:
  * - Enrich function calls with type information
  * - Enrich method calls with class hierarchy and polymorphic resolution
@@ -25,20 +25,20 @@ import {
   Location,
   NamespaceInfo,
   TypeFlow,
-  FilePath
-} from '@ariadnejs/types';
+  FilePath,
+} from "@ariadnejs/types";
 
-import { TypeRegistry } from '../../type_analysis/type_registry';
+import { TypeRegistry } from "../../type_analysis/type_registry";
 
-import { 
+import {
   enrich_method_calls_with_hierarchy,
-  MethodCallWithHierarchy 
-} from '../method_calls/method_hierarchy_resolver';
+  MethodCallWithHierarchy,
+} from "../method_calls/method_hierarchy_resolver";
 
-import { 
+import {
   enrich_constructor_calls_with_types,
-  ConstructorCallWithType 
-} from '../constructor_calls/constructor_type_resolver';
+  ConstructorCallWithType,
+} from "../constructor_calls/constructor_type_resolver";
 
 /**
  * Context for enrichment operations containing global information
@@ -47,21 +47,21 @@ export interface EnrichmentContext {
   type_registry: TypeRegistry;
   class_hierarchy: ClassHierarchy;
   module_graph: ModuleGraph;
-  resolved_generics: Map<FilePath, ResolvedGeneric[]>;  // Arrays of resolved generics per type
-  propagated_types: Map<FilePath, TypeFlow[]>;  // Type flows or other type info by file path
-  namespace_resolutions: Map<FilePath, NamespaceInfo>;  // Namespace imports and their exported members
+  resolved_generics: Map<FilePath, ResolvedGeneric[]>; // Arrays of resolved generics per type
+  propagated_types: Map<FilePath, TypeFlow[]>; // Type flows or other type info by file path
+  namespace_resolutions: Map<FilePath, NamespaceInfo>; // Namespace imports and their exported members
 }
 
 /**
  * Options to control enrichment behavior
  */
 export interface EnrichmentOptions {
-  resolve_polymorphic: boolean;     // Resolve polymorphic method calls
-  track_interfaces: boolean;        // Track interface implementations
-  include_confidence: boolean;      // Include confidence scoring
+  resolve_polymorphic: boolean; // Resolve polymorphic method calls
+  track_interfaces: boolean; // Track interface implementations
+  include_confidence: boolean; // Include confidence scoring
   resolve_virtual_dispatch: boolean; // Analyze virtual method dispatch
-  validate_constructors: boolean;   // Validate constructor calls
-  track_inheritance: boolean;       // Track inheritance chains
+  validate_constructors: boolean; // Validate constructor calls
+  track_inheritance: boolean; // Track inheritance chains
 }
 
 /**
@@ -69,9 +69,9 @@ export interface EnrichmentOptions {
  */
 export interface EnrichedMethodCall extends MethodCallWithHierarchy {
   // From call_resolution module
-  possible_targets: ResolvedTarget[];  // Polymorphic dispatch targets
-  dispatch_type: DispatchType;        // Type of dispatch (static, virtual, interface)
-  confidence_score: number;           // Resolution confidence (0-1)
+  possible_targets: ResolvedTarget[]; // Polymorphic dispatch targets
+  dispatch_type: DispatchType; // Type of dispatch (static, virtual, interface)
+  confidence_score: number; // Resolution confidence (0-1)
   interface_implementations: string[]; // Interfaces this method implements
 }
 
@@ -80,8 +80,8 @@ export interface EnrichedMethodCall extends MethodCallWithHierarchy {
  */
 export interface EnrichedConstructorCall extends ConstructorCallWithType {
   // Additional validation from call_resolution
-  type_parameters: string[];          // Resolved generic type parameters
-  is_abstract: boolean;               // Whether trying to instantiate abstract class
+  type_parameters: string[]; // Resolved generic type parameters
+  is_abstract: boolean; // Whether trying to instantiate abstract class
 }
 
 /**
@@ -90,10 +90,10 @@ export interface EnrichedConstructorCall extends ConstructorCallWithType {
  * This interface adds fields that require global context from Phase 2.
  */
 export interface EnrichedFunctionCall extends FunctionCallInfo {
-  return_type?: string;                // Resolved return type (from global type flow)
-  parameter_types?: string[];          // Resolved parameter types (from global type flow)
-  confidence_score?: number;           // Resolution confidence
-  cross_file_resolved?: boolean;      // Whether resolution used cross-file information
+  return_type?: string; // Resolved return type (from global type flow)
+  parameter_types?: string[]; // Resolved parameter types (from global type flow)
+  confidence_score?: number; // Resolution confidence
+  cross_file_resolved?: boolean; // Whether resolution used cross-file information
 }
 
 /**
@@ -110,27 +110,18 @@ export interface ResolvedTarget {
  * Type of method dispatch
  */
 export enum DispatchType {
-  STATIC = 'static',       // Compile-time resolution
-  VIRTUAL = 'virtual',     // Runtime dispatch through vtable
-  INTERFACE = 'interface', // Interface method dispatch
-  DYNAMIC = 'dynamic'      // Dynamic dispatch (duck typing)
-}
-
-/**
- * Result of enrichment operations
- */
-export interface EnrichedFileAnalysis extends Omit<FileAnalysis, 'function_calls' | 'method_calls' | 'constructor_calls'> {
-  function_calls: EnrichedFunctionCall[];
-  method_calls: EnrichedMethodCall[];
-  constructor_calls: EnrichedConstructorCall[];
+  STATIC = "static", // Compile-time resolution
+  VIRTUAL = "virtual", // Runtime dispatch through vtable
+  INTERFACE = "interface", // Interface method dispatch
+  DYNAMIC = "dynamic", // Dynamic dispatch (duck typing)
 }
 
 /**
  * Enrich all call types in a file analysis with global context
- * 
+ *
  * This is the main entry point for call enrichment during Global Assembly.
  * It applies all available enrichments based on the provided context and options.
- * 
+ *
  * @param analysis File analysis containing calls to enrich
  * @param context Global context for enrichment
  * @param options Options to control enrichment behavior
@@ -140,8 +131,7 @@ export function enrich_all_calls(
   analysis: FileAnalysis,
   context: EnrichmentContext,
   options: EnrichmentOptions
-): EnrichedFileAnalysis {
-
+): FileAnalysis {
   return {
     ...analysis,
     function_calls: enrich_function_calls(
@@ -149,22 +139,18 @@ export function enrich_all_calls(
       context,
       options
     ),
-    method_calls: enrich_method_calls(
-      analysis.method_calls,
-      context,
-      options
-    ),
+    method_calls: enrich_method_calls(analysis.method_calls, context, options),
     constructor_calls: enrich_constructor_calls(
       analysis.constructor_calls,
       context,
       options
-    )
+    ),
   };
 }
 
 /**
  * Enrich function calls with type and module information
- * 
+ *
  * @param calls Function calls to enrich
  * @param context Enrichment context
  * @param options Enrichment options
@@ -175,7 +161,7 @@ export function enrich_function_calls(
   context: EnrichmentContext,
   options: Required<EnrichmentOptions>
 ): EnrichedFunctionCall[] {
-  return calls.map(call => {
+  return calls.map((call) => {
     const enriched: EnrichedFunctionCall = { ...call };
 
     // Skip if already resolved locally in Phase 1
@@ -188,14 +174,15 @@ export function enrich_function_calls(
     }
 
     // Check if this is a namespace member call (e.g., namespace.function)
-    if (call.callee_name.includes('.')) {
-      const [namespace, member] = call.callee_name.split('.', 2);
-      const namespace_key = `${call.location.file_path}:${namespace}` as FilePath;
+    if (call.callee_name.includes(".")) {
+      const [namespace, member] = call.callee_name.split(".", 2);
+      const namespace_key =
+        `${call.location.file_path}:${namespace}` as FilePath;
       const namespace_info = context.namespace_resolutions.get(namespace_key);
-      
+
       if (namespace_info) {
         const member_export = namespace_info.exports.get(member);
-        if (member_export && member_export.kind === 'function') {
+        if (member_export && member_export.kind === "function") {
           // Don't overwrite is_imported if already set in Phase 1
           enriched.cross_file_resolved = true;
         }
@@ -204,8 +191,10 @@ export function enrich_function_calls(
 
     // Only check module graph if not already marked as imported in Phase 1
     if (!call.is_imported && call.location.file_path) {
-      const module_info = context.module_graph.modules.get(call.location.file_path);
-      
+      const module_info = context.module_graph.modules.get(
+        call.location.file_path
+      );
+
       if (module_info && module_info.imports) {
         // Module imports are a different type, need to handle carefully
         // For now, mark as cross-file resolved if we can find it
@@ -218,11 +207,13 @@ export function enrich_function_calls(
       const type_flows = context.propagated_types.get(call.location.file_path);
       if (type_flows && type_flows.length > 0) {
         // Try to find type flow for this function
-        const matching_flow = type_flows.find((flow: any) => 
-          flow.symbol === call.callee_name
+        const matching_flow = type_flows.find(
+          (flow: any) => flow.symbol === call.callee_name
         );
         if (matching_flow) {
-          enriched.return_type = (matching_flow as any).type_name || (matching_flow as any).inferred_type;
+          enriched.return_type =
+            (matching_flow as any).type_name ||
+            (matching_flow as any).inferred_type;
         }
       }
     }
@@ -238,7 +229,7 @@ export function enrich_function_calls(
 
 /**
  * Enrich method calls with hierarchy and polymorphic resolution
- * 
+ *
  * @param calls Method calls to enrich
  * @param context Enrichment context
  * @param options Enrichment options
@@ -256,21 +247,26 @@ export function enrich_method_calls(
   );
 
   // Then add advanced features from call_resolution
-  return hierarchy_enriched.map(call => {
+  return hierarchy_enriched.map((call) => {
     const enriched: EnrichedMethodCall = { ...call };
 
     // Check if this is a namespace member method call (e.g., namespace.Class.method)
-    if (context.namespace_resolutions && enriched.receiver_type && enriched.receiver_type.includes('.')) {
-      const parts = enriched.receiver_type.split('.');
+    if (
+      context.namespace_resolutions &&
+      enriched.receiver_type &&
+      enriched.receiver_type.includes(".")
+    ) {
+      const parts = enriched.receiver_type.split(".");
       if (parts.length >= 2) {
         const namespace = parts[0];
         const className = parts[1];
-        const namespace_key = `${call.location.file_path}:${namespace}` as FilePath;
+        const namespace_key =
+          `${call.location.file_path}:${namespace}` as FilePath;
         const namespace_info = context.namespace_resolutions.get(namespace_key);
-        
+
         if (namespace_info) {
           const member_export = namespace_info.exports.get(className);
-          if (member_export && member_export.kind === 'class') {
+          if (member_export && member_export.kind === "class") {
             enriched.receiver_type = className;
             enriched.defining_class_resolved = `${namespace_info.source_path}#${className}`;
           }
@@ -284,7 +280,7 @@ export function enrich_method_calls(
         enriched,
         context.class_hierarchy
       );
-      
+
       if (targets.length > 0) {
         enriched.possible_targets = targets;
         enriched.dispatch_type = determine_dispatch_type(call, targets);
@@ -313,7 +309,7 @@ export function enrich_method_calls(
 
 /**
  * Enrich constructor calls with type validation and resolution
- * 
+ *
  * @param calls Constructor calls to enrich
  * @param context Enrichment context
  * @param options Enrichment options
@@ -340,18 +336,22 @@ export function enrich_constructor_calls(
   );
 
   // Then add advanced features
-  return type_enriched.map(call => {
+  return type_enriched.map((call) => {
     const enriched: EnrichedConstructorCall = { ...call };
 
     // Check if this is a namespace member constructor (e.g., namespace.Class)
-    if (context.namespace_resolutions && call.constructor_name.includes('.')) {
-      const [namespace, member] = call.constructor_name.split('.', 2);
-      const namespace_key = `${call.location.file_path}:${namespace}` as FilePath;
+    if (context.namespace_resolutions && call.constructor_name.includes(".")) {
+      const [namespace, member] = call.constructor_name.split(".", 2);
+      const namespace_key =
+        `${call.location.file_path}:${namespace}` as FilePath;
       const namespace_info = context.namespace_resolutions.get(namespace_key);
-      
+
       if (namespace_info) {
         const member_export = namespace_info.exports.get(member);
-        if (member_export && (member_export.kind === 'class' || member_export.kind === 'type')) {
+        if (
+          member_export &&
+          (member_export.kind === "class" || member_export.kind === "type")
+        ) {
           enriched.resolved_type = `${namespace_info.source_path}#${member}`;
           enriched.is_imported = true;
         }
@@ -360,7 +360,9 @@ export function enrich_constructor_calls(
 
     // Check if trying to instantiate abstract class
     if (options.validate_constructors && call.constructor_name) {
-      const class_info = context.class_hierarchy.classes.get(call.constructor_name as any);
+      const class_info = context.class_hierarchy.classes.get(
+        call.constructor_name as any
+      );
       if (class_info?.is_abstract) {
         enriched.is_abstract = true;
         enriched.is_valid = false;
@@ -369,7 +371,8 @@ export function enrich_constructor_calls(
 
     // Resolve generic type parameters if available
     if (context.resolved_generics && call.location) {
-      const generic_key = `${call.location.file_path}#${call.constructor_name}` as FilePath;
+      const generic_key =
+        `${call.location.file_path}#${call.constructor_name}` as FilePath;
       const resolved_array = context.resolved_generics.get(generic_key);
       if (resolved_array && resolved_array.length > 0) {
         // Use the first resolved generic or combine type arguments from all
@@ -389,7 +392,7 @@ function resolve_polymorphic_targets(
   hierarchy: ClassHierarchy
 ): ResolvedTarget[] {
   const targets: ResolvedTarget[] = [];
-  
+
   if (!call.receiver_type) {
     return targets;
   }
@@ -405,19 +408,22 @@ function resolve_polymorphic_targets(
       class: call.receiver_type,
       method: call.method_name,
       is_override: false,
-      confidence: 1.0
+      confidence: 1.0,
     });
   }
 
   // Check all derived classes for overrides
   for (const [class_name, class_info] of hierarchy.classes) {
     if (class_info.base_classes?.includes(call.receiver_type)) {
-      if (class_info.methods && class_info.methods.has(call.method_name as any)) {
+      if (
+        class_info.methods &&
+        class_info.methods.has(call.method_name as any)
+      ) {
         targets.push({
           class: class_name,
           method: call.method_name,
           is_override: true,
-          confidence: calculate_dispatch_probability(call, class_info)
+          confidence: calculate_dispatch_probability(call, class_info),
         });
       }
     }
@@ -436,16 +442,16 @@ function determine_dispatch_type(
   if (targets.length === 0) {
     return DispatchType.DYNAMIC;
   }
-  
+
   if (targets.length === 1) {
     return DispatchType.STATIC;
   }
 
   // Multiple targets indicate virtual dispatch
-  const has_interface = targets.some(t => 
-    t.class.includes('interface') || t.class.includes('trait')
+  const has_interface = targets.some(
+    (t) => t.class.includes("interface") || t.class.includes("trait")
   );
-  
+
   return has_interface ? DispatchType.INTERFACE : DispatchType.VIRTUAL;
 }
 
@@ -457,7 +463,7 @@ function find_interface_implementations(
   hierarchy: ClassHierarchy
 ): string[] {
   const implementations: string[] = [];
-  
+
   if (!call.receiver_type) {
     return implementations;
   }
@@ -471,7 +477,7 @@ function find_interface_implementations(
   for (const interface_node of class_info.interface_nodes) {
     const interface_key = `${interface_node.file_path}#${interface_node.name}`;
     const interface_info = hierarchy.classes.get(interface_key);
-    
+
     if (interface_info?.methods?.has(call.method_name as any)) {
       implementations.push(interface_key);
     }
@@ -492,10 +498,10 @@ function calculate_dispatch_probability(
   // - Call site analysis
   // - Type flow analysis
   // - Historical profiling data
-  
+
   // For now, use a simple depth-based heuristic
   const depth = target_class.base_classes?.length || 0;
-  return Math.max(0.1, 1.0 - (depth * 0.2));
+  return Math.max(0.1, 1.0 - depth * 0.2);
 }
 
 /**
@@ -510,7 +516,7 @@ function calculate_method_confidence(
   // Base score from receiver type resolution
   if (call.receiver_type) {
     score += 0.3;
-    
+
     // Higher confidence if class exists in hierarchy
     if (hierarchy.classes.has(call.receiver_type)) {
       score += 0.3;
@@ -533,9 +539,7 @@ function calculate_method_confidence(
 /**
  * Calculate confidence score for function resolution
  */
-function calculate_function_confidence(
-  call: EnrichedFunctionCall
-): number {
+function calculate_function_confidence(call: EnrichedFunctionCall): number {
   let score = 0.0;
 
   // Function resolved locally (highest confidence)
@@ -563,7 +567,7 @@ function calculate_function_confidence(
 
 /**
  * Batch enrich multiple file analyses
- * 
+ *
  * @param analyses File analyses to enrich
  * @param context Enrichment context
  * @param options Enrichment options
@@ -573,7 +577,7 @@ export function batch_enrich_analyses(
   analyses: FileAnalysis[],
   context: EnrichmentContext,
   options: Partial<EnrichmentOptions> = {}
-): EnrichedFileAnalysis[] {
+): FileAnalysis[] {
   // Provide default values for all required options
   const fullOptions: EnrichmentOptions = {
     resolve_polymorphic: false,
@@ -582,10 +586,10 @@ export function batch_enrich_analyses(
     resolve_virtual_dispatch: false,
     validate_constructors: false,
     track_inheritance: false,
-    ...options
+    ...options,
   };
-  
-  return analyses.map(analysis => 
+
+  return analyses.map((analysis) =>
     enrich_all_calls(analysis, context, fullOptions)
   );
 }

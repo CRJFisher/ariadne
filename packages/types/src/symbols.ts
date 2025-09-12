@@ -1,6 +1,7 @@
 import { Location } from "./common";
 import { FilePath, FunctionName, ScopeId, DocString } from "./aliases";
-import { SymbolName, SymbolId } from "./branded-types";
+import { SymbolName } from "./symbol_utils";
+import { SymbolId } from "./symbol_utils";
 
 // Symbol types are now imported from branded-types.ts for type safety
 // Re-export for backward compatibility
@@ -50,4 +51,3 @@ export interface SymbolIndex {
   readonly scopes: ReadonlyMap<SymbolId, SymbolScope>;
   readonly unresolved_symbols: ReadonlySet<SymbolName>;
 }
-

@@ -204,6 +204,50 @@ export interface CodeGraph {
 }
 ```
 
+### Universal Symbol System
+
+The codebase uses a universal `SymbolId` system for all identifiers, replacing individual name types (VariableName, FunctionName, ClassName, etc.):
+
+#### SymbolId Format
+```typescript
+// Format: "kind:scope:name[:qualifier]"
+type SymbolId = string & { __brand: 'SymbolId' };
+
+// Examples:
+"variable:src/utils.ts:processData"
+"method:src/classes.ts:MyClass:getValue"
+"function:src/helpers.ts:calculateTotal"
+```
+
+#### Benefits
+- **Unique Identification**: Every symbol has a globally unique identifier
+- **Context Preservation**: Encodes kind, scope, and qualification in the ID
+- **Type Safety**: Branded types prevent string mixing
+- **Consistent API**: All Maps and functions use the same identifier type
+
+#### Usage
+```typescript
+import { SymbolId, symbol_string, symbol_from_string } from '@ariadnejs/types';
+
+// Create a symbol
+const funcId = symbol_string({
+  kind: 'function',
+  scope: 'src/utils.ts',
+  name: 'processData',
+  location: { file_path: 'src/utils.ts', line: 10, column: 0 }
+});
+
+// Parse a symbol
+const symbol = symbol_from_string(funcId);
+console.log(symbol.name); // "processData"
+
+// All Maps use SymbolId as keys
+const symbols = new Map<SymbolId, SymbolDefinition>();
+symbols.set(funcId, definition);
+```
+
+See `packages/types/src/symbol_utils.ts` for the complete API.
+
 ### Coordinate Systems
 
 - **Location**: 1-based line/column (editor convention)

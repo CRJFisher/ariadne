@@ -16,6 +16,11 @@ export enum TypeKind {
   TYPE = "type",
   ENUM = "enum",
   TRAIT = "trait",
+  PRIMITIVE = "primitive",
+  ARRAY = "array",
+  FUNCTION = "function",
+  OBJECT = "object",
+  UNKNOWN = "unknown",
 }
 
 export interface TypeDefinition {

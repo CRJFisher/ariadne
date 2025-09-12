@@ -240,6 +240,17 @@ function resolveInScope(
 
 ## Transformation Steps
 
+### 0. Migrate Functions from file_analyzer.ts and code_graph.ts [COMPLETED]
+
+**STATUS**: ✅ The following functions have been successfully migrated:
+- `build_symbol_registry` - Moved from file_analyzer.ts to symbol_resolution.ts
+- `build_symbol_index` - Moved from code_graph.ts to symbol_resolution.ts
+
+**Type Cleanup Requirements**:
+- Only the output types `SymbolRegistry` and `SymbolIndex` need to remain public in `packages/types`
+- All internal AST processing types should be DELETED from the types package (not deprecated)
+- Types that are only used internally for AST traversal (like intermediate symbol resolution types) should be made local to the module or removed with query-based approach
+
 ### 1. Document Symbol Patterns
 
 - [ ] Local variables (all declaration forms)

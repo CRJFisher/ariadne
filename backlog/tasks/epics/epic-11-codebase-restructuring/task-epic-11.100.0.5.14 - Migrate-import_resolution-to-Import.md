@@ -1,6 +1,6 @@
 ---
 id: task-epic-11.100.0.5.14
-title: Migrate import_resolution to UnifiedImport
+title: Migrate import_resolution to Import
 status: To Do
 assignee: []
 created_date: '2025-09-12'
@@ -12,7 +12,7 @@ priority: high
 
 ## Description
 
-Update the import_resolution module to directly produce UnifiedImport types from AST traversal, eliminating the need for the ImportInfo → ImportStatement adapter.
+Update the import_resolution module to directly produce Import types from AST traversal, eliminating the need for the ImportInfo → ImportStatement adapter.
 
 ## Background
 
@@ -25,11 +25,11 @@ This creates unnecessary complexity and maintenance burden.
 
 ## Acceptance Criteria
 
-- [ ] import_resolution module returns `UnifiedImport[]` instead of `ImportInfo[]`
+- [ ] import_resolution module returns `Import[]` instead of `ImportInfo[]`
 - [ ] Module uses discriminated unions (NamedImport, DefaultImport, etc.)
 - [ ] All branded types used (ModulePath, SymbolName, NamespaceName)
 - [ ] No intermediate ImportInfo type needed
-- [ ] Tests updated to verify UnifiedImport output
+- [ ] Tests updated to verify Import output
 - [ ] File size remains under 32KB limit
 
 ## Implementation Strategy
@@ -44,12 +44,12 @@ export function extract_imports(
   // Creates ImportInfo objects
 }
 
-// AFTER: Returns UnifiedImport[] directly
+// AFTER: Returns Import[] directly
 export function extract_imports(
   node: SyntaxNode,
   source_code: string,
   language: Language
-): UnifiedImport[] {
+): Import[] {
   // Directly creates NamedImport, DefaultImport, etc.
   // Using createNamedImport() helper from unified-import-export-types
 }

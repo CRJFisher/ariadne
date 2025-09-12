@@ -1,13 +1,13 @@
 /**
  * Core base types for tree-sitter query-based architecture
- * 
+ *
  * These foundational types are used by all query-based modules
  * to provide consistency and type safety across the codebase.
  */
 
 import { Location, Language } from "./common";
 import { FilePath } from "./aliases";
-import { SymbolName } from "./branded-types";
+import { SymbolName } from "./symbol_utils";
 
 // ============================================================================
 // Core AST Types
@@ -20,7 +20,7 @@ import { SymbolName } from "./branded-types";
 export interface ASTNode {
   readonly location: Location;
   readonly language: Language;
-  readonly node_type: string;  // Tree-sitter node type (e.g., "function_declaration")
+  readonly node_type: string; // Tree-sitter node type (e.g., "function_declaration")
 }
 
 /**
@@ -29,7 +29,7 @@ export interface ASTNode {
 export interface SemanticNode extends ASTNode {
   readonly name?: SymbolName;
   readonly visibility?: "public" | "private" | "protected" | "internal";
-  readonly modifiers?: readonly string[];  // e.g., ["async", "static", "readonly"]
+  readonly modifiers?: readonly string[]; // e.g., ["async", "static", "readonly"]
 }
 
 // ============================================================================
@@ -40,9 +40,9 @@ export interface SemanticNode extends ASTNode {
  * Represents a capture from a tree-sitter query
  */
 export interface QueryCapture {
-  readonly name: string;        // Capture name from .scm file (e.g., "@function.name")
+  readonly name: string; // Capture name from .scm file (e.g., "@function.name")
   readonly node: ASTNode;
-  readonly text: string;         // Source text of the captured node
+  readonly text: string; // Source text of the captured node
 }
 
 /**
@@ -84,22 +84,22 @@ export interface Resolution<T> {
   readonly resolved: T | undefined;
   readonly confidence: ResolutionConfidence;
   readonly reason: ResolutionReason;
-  readonly resolution_path?: readonly FilePath[];  // Files traversed during resolution
+  readonly resolution_path?: readonly FilePath[]; // Files traversed during resolution
 }
 
 /**
  * Reasons for resolution outcomes
  */
 export type ResolutionReason =
-  | "direct_match"        // Exact match found
-  | "imported"           // Resolved through import
-  | "inherited"          // Resolved through inheritance
-  | "inferred"          // Type inference or heuristics
-  | "partial_match"     // Partially resolved
-  | "builtin"          // Built-in type/symbol
-  | "external"         // External library
-  | "not_found"        // Could not resolve
-  | "ambiguous";       // Multiple possible resolutions
+  | "direct_match" // Exact match found
+  | "imported" // Resolved through import
+  | "inherited" // Resolved through inheritance
+  | "inferred" // Type inference or heuristics
+  | "partial_match" // Partially resolved
+  | "builtin" // Built-in type/symbol
+  | "external" // External library
+  | "not_found" // Could not resolve
+  | "ambiguous"; // Multiple possible resolutions
 
 // ============================================================================
 // Error Types
@@ -117,12 +117,12 @@ export interface QueryError {
 }
 
 export type QueryErrorKind =
-  | "parse_error"       // Tree-sitter parse error
-  | "query_syntax"      // Invalid .scm query syntax
-  | "missing_capture"   // Expected capture not found
-  | "type_error"        // Type validation failed
-  | "resolution_error"  // Symbol/type resolution failed
-  | "language_error";   // Language-specific error
+  | "parse_error" // Tree-sitter parse error
+  | "query_syntax" // Invalid .scm query syntax
+  | "missing_capture" // Expected capture not found
+  | "type_error" // Type validation failed
+  | "resolution_error" // Symbol/type resolution failed
+  | "language_error"; // Language-specific error
 
 // ============================================================================
 // Collection Types
@@ -152,7 +152,7 @@ export interface GroupedResult<K extends string | number, V> {
 // Type Guards
 // ============================================================================
 
-export function isASTNode(value: unknown): value is ASTNode {
+export function is_ast_node(value: unknown): value is ASTNode {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -162,13 +162,14 @@ export function isASTNode(value: unknown): value is ASTNode {
   );
 }
 
-export function isSemanticNode(value: unknown): value is SemanticNode {
-  return isASTNode(value) && (
-    !("name" in value) || typeof (value as any).name === "string"
+export function is_semantic_node(value: unknown): value is SemanticNode {
+  return (
+    is_ast_node(value) &&
+    (!("name" in value) || typeof (value as any).name === "string")
   );
 }
 
-export function isQueryCapture(value: unknown): value is QueryCapture {
+export function is_query_capture(value: unknown): value is QueryCapture {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -177,11 +178,11 @@ export function isQueryCapture(value: unknown): value is QueryCapture {
     "text" in value &&
     typeof (value as any).name === "string" &&
     typeof (value as any).text === "string" &&
-    isASTNode((value as any).node)
+    is_ast_node((value as any).node)
   );
 }
 
-export function isQueryResult<T>(value: unknown): value is QueryResult<T> {
+export function is_query_result<T>(value: unknown): value is QueryResult<T> {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -192,7 +193,7 @@ export function isQueryResult<T>(value: unknown): value is QueryResult<T> {
   );
 }
 
-export function isResolution<T>(value: unknown): value is Resolution<T> {
+export function is_resolution<T>(value: unknown): value is Resolution<T> {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -202,7 +203,7 @@ export function isResolution<T>(value: unknown): value is Resolution<T> {
   );
 }
 
-export function isQueryError(value: unknown): value is QueryError {
+export function is_query_error(value: unknown): value is QueryError {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -212,7 +213,7 @@ export function isQueryError(value: unknown): value is QueryError {
   );
 }
 
-export function isPagedResult<T>(value: unknown): value is PagedResult<T> {
+export function is_paged_result<T>(value: unknown): value is PagedResult<T> {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -232,7 +233,7 @@ export function isPagedResult<T>(value: unknown): value is PagedResult<T> {
 /**
  * Create a high-confidence resolution
  */
-export function resolveHigh<T>(
+export function resolve_high<T>(
   resolved: T,
   reason: ResolutionReason = "direct_match"
 ): Resolution<T> {
@@ -246,7 +247,7 @@ export function resolveHigh<T>(
 /**
  * Create a medium-confidence resolution
  */
-export function resolveMedium<T>(
+export function resolve_medium<T>(
   resolved: T,
   reason: ResolutionReason
 ): Resolution<T> {
@@ -260,7 +261,7 @@ export function resolveMedium<T>(
 /**
  * Create a low-confidence resolution
  */
-export function resolveLow<T>(
+export function resolve_low<T>(
   resolved: T,
   reason: ResolutionReason
 ): Resolution<T> {
@@ -274,7 +275,7 @@ export function resolveLow<T>(
 /**
  * Create a failed resolution
  */
-export function resolveFailed<T>(
+export function resolve_failed<T>(
   reason: ResolutionReason = "not_found"
 ): Resolution<T> {
   return {
@@ -287,7 +288,7 @@ export function resolveFailed<T>(
 /**
  * Create a query error
  */
-export function createQueryError(
+export function create_query_error(
   kind: QueryErrorKind,
   message: string,
   details?: {

@@ -11,11 +11,6 @@ import {
 } from './constructor_calls';
 import { node_to_location } from '../../ast/node_utils';
 
-// Re-export types
-export { ConstructorCallInfo } from '@ariadnejs/types';
-import { ConstructorCallInfo } from '@ariadnejs/types';
-import { ConstructorCallResult, extract_constructor_calls_and_types } from './constructor_type_extraction';
-
 // Import bespoke handlers
 import { 
   handle_object_create_pattern,

@@ -257,6 +257,15 @@ function signaturesMatch(
 
 ## Transformation Steps
 
+### 0. Migrate Functions from code_graph.ts [COMPLETED]
+
+**STATUS**: ✅ The function `detect_and_validate_method_overrides` has been successfully moved to `method_override/method_override.ts`.
+
+**Type Cleanup Requirements**:
+- Only the output type `MethodOverrideMap` needs to remain public in `packages/types`
+- All internal AST processing types should be DELETED from the types package (not deprecated)
+- Types like `MethodOverrideContext` that are only used internally for AST traversal should be made local to the module or removed with query-based approach
+
 ### 1. Document Override Patterns
 
 - [ ] Explicit override keywords

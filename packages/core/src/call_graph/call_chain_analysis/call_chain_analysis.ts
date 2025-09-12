@@ -18,7 +18,18 @@ import {
   ConstructorCallInfo,
   Location,
   FilePath,
+  CallGraph,
+  FunctionNode,
+  CallEdge,
+  FileAnalysis,
+  FunctionSignature,
 } from "@ariadnejs/types";
+import {
+  construct_function_symbol,
+  construct_method_symbol,
+  SPECIAL_SYMBOLS,
+} from "../../utils/symbol_construction";
+import { ResolutionResult } from "../../scope_analysis/symbol_resolution/symbol_resolution";
 
 /**
  * A single call in a chain
@@ -443,4 +454,145 @@ export function get_recursive_functions(
   }
 
   return recursive_funcs;
+}
+
+/**
+ * Create a comprehensive call graph from file analyses
+ */
+export function create_call_graph(
+  analyses: FileAnalysis[],
+  resolution_results: ResolutionResult
+): CallGraph {
+  const functions = new Map<SymbolId, FunctionNode>();
+  const edges: CallEdge[] = [];
+
+  // Build function nodes from all functions and methods
+  for (const analysis of analyses) {
+    // Add function nodes
+    for (const func of analysis.functions) {
+      const symbol =
+        resolution_results.resolved_calls.get(func.location) ||
+        construct_function_symbol(analysis.file_path, func.name);
+
+      functions.set(symbol, {
+        symbol,
+        file_path: analysis.file_path,
+        location: func.location,
+        signature: func.signature,
+        calls: [],
+        called_by: [],
+        is_exported: false, // TODO: Check exports
+        is_entry_point: false,
+      });
+    }
+
+    // Add method nodes
+    for (const cls of analysis.classes) {
+      for (const method of cls.methods) {
+        const symbol =
+          resolution_results.resolved_methods.get(method.location) ||
+          construct_method_symbol(
+            analysis.file_path,
+            cls.name,
+            method.name,
+            method.is_static
+          );
+
+        functions.set(symbol, {
+          symbol,
+          file_path: analysis.file_path,
+          location: method.location,
+          signature: {
+            parameters: method.parameters,
+            return_type: method.return_type,
+            type_parameters: method.generics,
+            is_async: method.is_async,
+          },
+          calls: [],
+          called_by: [],
+          is_exported: false, // TODO: Check if class is exported
+          is_entry_point: false,
+        });
+      }
+    }
+  }
+
+  // Build call edges using resolved symbols where available
+  for (const analysis of analyses) {
+    // Function calls
+    for (const call of analysis.function_calls) {
+      const from = construct_function_symbol(
+        analysis.file_path,
+        call.caller_name || SPECIAL_SYMBOLS.MODULE
+      );
+
+      // Use resolved symbol if available, otherwise use unresolved name
+      const to =
+        resolution_results.resolved_calls.get(call.location) ||
+        construct_function_symbol(analysis.file_path, call.callee_name);
+
+      edges.push({
+        from,
+        to,
+        location: call.location,
+        call_type: "direct",
+      });
+    }
+
+    // Method calls
+    for (const call of analysis.method_calls) {
+      const from = construct_function_symbol(
+        analysis.file_path,
+        call.caller_name || SPECIAL_SYMBOLS.MODULE
+      );
+
+      // Use resolved symbol if available
+      const to =
+        resolution_results.resolved_methods.get(call.location) ||
+        construct_method_symbol(
+          analysis.file_path,
+          call.receiver_name,
+          call.method_name,
+          call.is_static_method
+        );
+
+      edges.push({
+        from,
+        to,
+        location: call.location,
+        call_type: "method",
+      });
+    }
+  }
+
+  // Build call chains
+  const all_calls = [
+    ...analyses.flatMap((analysis) => analysis.function_calls),
+    ...analyses.flatMap((analysis) => analysis.method_calls),
+    ...analyses.flatMap((analysis) => analysis.constructor_calls),
+  ];
+  const call_chains = build_call_chains(all_calls, {
+    language: analyses[0].language, // TODO: improve multi-language support
+    track_recursion: true,
+  });
+
+  // Find entry points (functions that are not called by anything)
+  const called_functions = new Set<SymbolId>();
+  for (const edge of edges) {
+    called_functions.add(edge.to);
+  }
+
+  const entry_points = new Set<SymbolId>();
+  for (const [symbol, node] of functions) {
+    if (!called_functions.has(symbol)) {
+      entry_points.add(symbol);
+    }
+  }
+
+  return {
+    functions,
+    edges,
+    entry_points,
+    call_chains,
+  };
 }

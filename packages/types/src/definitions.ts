@@ -19,7 +19,6 @@ import {
   QualifiedName,
 } from "./aliases";
 import {
-  SymbolName,
   TypeConstraint,
   DefaultValue,
   Expression,
@@ -27,6 +26,7 @@ import {
   TypeExpression,
   Visibility,
 } from "./branded-types";
+import { SymbolName } from "./symbol_utils";
 
 /**
  * Common base interface for all definition types

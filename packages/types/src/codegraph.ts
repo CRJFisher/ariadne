@@ -3,19 +3,15 @@ import { Location } from "./common";
 import { FunctionDefinition } from "./definitions";
 import { ClassDefinition } from "./definitions";
 import { ModuleGraph } from "./modules";
-import {
-  CallGraph,
-  FunctionCallInfo,
-  MethodCallInfo,
-  ConstructorCallInfo,
-} from "./calls";
+import { FunctionCall, MethodCall, ConstructorCall, CallInfo } from "./calls";
 import { ClassHierarchy } from "./classes";
 import { TypeIndex, TypeInfo } from "./types";
 import { SymbolIndex } from "./symbols";
 import { ScopeTree } from "./scopes";
 import { FilePath, VariableName, TypeString, SourceCode } from "./aliases";
-import { ExportStatement, ImportStatement } from "./import_export";
+import { Export, Import } from "./import_export";
 import { AnalysisError } from "./errors";
+import { SymbolId } from "./symbol_utils";
 
 export interface FileAnalysis {
   readonly file_path: FilePath;
@@ -23,15 +19,15 @@ export interface FileAnalysis {
   readonly language: Language;
   readonly functions: readonly FunctionDefinition[];
   readonly classes: readonly ClassDefinition[];
-  readonly imports: readonly ImportStatement[];
-  readonly exports: readonly ExportStatement[];
+  readonly imports: readonly Import[];
+  readonly exports: readonly Export[];
   readonly variables: readonly VariableDeclaration[];
   readonly errors: readonly AnalysisError[];
   readonly scopes: ScopeTree;
-  readonly function_calls: readonly FunctionCallInfo[];
-  readonly method_calls: readonly MethodCallInfo[];
-  readonly constructor_calls: readonly ConstructorCallInfo[];
-  readonly type_info: ReadonlyMap<VariableName, TypeInfo>;
+  readonly function_calls: readonly FunctionCall[];
+  readonly method_calls: readonly MethodCall[];
+  readonly constructor_calls: readonly ConstructorCall[];
+  readonly type_info: ReadonlyMap<SymbolId, TypeInfo>;
 }
 
 export interface VariableDeclaration {
@@ -45,7 +41,7 @@ export interface VariableDeclaration {
 export interface CodeGraph {
   readonly files: ReadonlyMap<FilePath, FileAnalysis>;
   readonly modules: ModuleGraph;
-  readonly calls: CallGraph;
+  readonly calls: CallInfo[];
   readonly classes: ClassHierarchy;
   readonly types: TypeIndex;
   readonly symbols: SymbolIndex;

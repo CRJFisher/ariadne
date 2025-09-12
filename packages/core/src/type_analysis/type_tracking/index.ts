@@ -31,6 +31,9 @@ export {
 
   // Type utilities
   infer_type_kind,
+  
+  // Type index building
+  build_type_index,
 } from "./type_tracking";
 
 // Re-export configuration system

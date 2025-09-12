@@ -5,8 +5,9 @@
 
 import { Location, Language } from "./common";
 import { FilePath } from "./aliases";
-import { SymbolName, SymbolId } from "./branded-types";
-import { ASTNode, QueryCapture, QueryResult, QueryMetadata } from "./base-query-types";
+import { SymbolName } from "./symbol_utils";
+import { SymbolId } from "./symbol_utils";
+import { ASTNode, QueryCapture, QueryResult, QueryMetadata } from "./query";
 
 // ============================================================================
 // Typed Query Captures
@@ -17,27 +18,27 @@ import { ASTNode, QueryCapture, QueryResult, QueryMetadata } from "./base-query-
  */
 export interface TypedQueryCapture<T = unknown> extends QueryCapture {
   readonly capture_type: CaptureType;
-  readonly semantic_value?: T;          // Parsed semantic value
-  readonly parent_capture?: string;     // Parent capture name
-  readonly child_captures?: readonly string[];  // Child capture names
+  readonly semantic_value?: T; // Parsed semantic value
+  readonly parent_capture?: string; // Parent capture name
+  readonly child_captures?: readonly string[]; // Child capture names
 }
 
 /**
  * Types of captures based on semantic meaning
  */
-export type CaptureType = 
-  | "definition"     // Symbol definition
-  | "reference"      // Symbol reference/usage
-  | "type"          // Type annotation
-  | "call"          // Function/method call
-  | "import"        // Import statement
-  | "export"        // Export statement
-  | "declaration"   // Declaration without definition
-  | "expression"    // Expression
-  | "statement"     // Statement
-  | "modifier"      // Modifier (public, static, etc.)
-  | "identifier"    // Identifier/name
-  | "literal";      // Literal value
+export type CaptureType =
+  | "definition" // Symbol definition
+  | "reference" // Symbol reference/usage
+  | "type" // Type annotation
+  | "call" // Function/method call
+  | "import" // Import statement
+  | "export" // Export statement
+  | "declaration" // Declaration without definition
+  | "expression" // Expression
+  | "statement" // Statement
+  | "modifier" // Modifier (public, static, etc.)
+  | "identifier" // Identifier/name
+  | "literal"; // Literal value
 
 // ============================================================================
 // Query Processor Interface
@@ -49,19 +50,19 @@ export type CaptureType =
 export interface QueryProcessor<TInput = QueryCapture[], TOutput = unknown> {
   readonly name: string;
   readonly supported_languages: readonly Language[];
-  readonly required_captures: readonly string[];  // Required capture names
+  readonly required_captures: readonly string[]; // Required capture names
   readonly optional_captures?: readonly string[]; // Optional capture names
-  
+
   /**
    * Process raw captures into structured output
    */
   process(captures: TInput, context: ProcessorContext): TOutput;
-  
+
   /**
    * Validate captures before processing
    */
   validate?(captures: TInput): ValidationResult;
-  
+
   /**
    * Post-process output for language-specific adjustments
    */
@@ -76,7 +77,7 @@ export interface ProcessorContext {
   readonly language: Language;
   readonly source_text: string;
   readonly metadata?: QueryMetadata;
-  readonly parent_context?: ProcessorContext;  // For nested processing
+  readonly parent_context?: ProcessorContext; // For nested processing
 }
 
 /**
@@ -112,17 +113,17 @@ export interface ValidationWarning {
 export interface LanguageConfiguration {
   readonly language: Language;
   readonly file_extensions: readonly string[];
-  readonly query_dir: FilePath;          // Directory containing .scm files
-  
+  readonly query_dir: FilePath; // Directory containing .scm files
+
   // Query files for different aspects
   readonly queries: QueryConfiguration;
-  
+
   // Language-specific processors
   readonly processors?: ReadonlyMap<string, QueryProcessor>;
-  
+
   // Language-specific transformations
   readonly transformations?: LanguageTransformations;
-  
+
   // Feature support flags
   readonly features: LanguageFeatures;
 }
@@ -131,14 +132,14 @@ export interface LanguageConfiguration {
  * Query file configuration
  */
 export interface QueryConfiguration {
-  readonly symbols?: FilePath;          // symbols.scm
-  readonly calls?: FilePath;           // calls.scm  
-  readonly types?: FilePath;           // types.scm
-  readonly imports?: FilePath;         // imports.scm
-  readonly exports?: FilePath;         // exports.scm
-  readonly classes?: FilePath;         // classes.scm
-  readonly scopes?: FilePath;          // scopes.scm
-  readonly custom?: ReadonlyMap<string, FilePath>;  // Custom queries
+  readonly symbols?: FilePath; // symbols.scm
+  readonly calls?: FilePath; // calls.scm
+  readonly types?: FilePath; // types.scm
+  readonly imports?: FilePath; // imports.scm
+  readonly exports?: FilePath; // exports.scm
+  readonly classes?: FilePath; // classes.scm
+  readonly scopes?: FilePath; // scopes.scm
+  readonly custom?: ReadonlyMap<string, FilePath>; // Custom queries
 }
 
 /**
@@ -149,17 +150,17 @@ export interface LanguageTransformations {
    * Transform identifier to standard form
    */
   normalizeIdentifier?(id: string): string;
-  
+
   /**
    * Transform type expression to standard form
    */
   normalizeType?(type: string): string;
-  
+
   /**
    * Extract namespace from qualified name
    */
   extractNamespace?(qualified: string): [string, string];
-  
+
   /**
    * Resolve import path to module
    */
@@ -197,7 +198,7 @@ export interface QueryRequest {
   readonly query_name: string;
   readonly file_path: FilePath;
   readonly language: Language;
-  readonly source_text?: string;        // Optional if file exists
+  readonly source_text?: string; // Optional if file exists
   readonly options?: QueryOptions;
 }
 
@@ -205,12 +206,12 @@ export interface QueryRequest {
  * Query execution options
  */
 export interface QueryOptions {
-  readonly timeout_ms?: number;         // Execution timeout
-  readonly max_captures?: number;       // Maximum captures to return
-  readonly include_comments?: boolean;  // Include comment nodes
+  readonly timeout_ms?: number; // Execution timeout
+  readonly max_captures?: number; // Maximum captures to return
+  readonly include_comments?: boolean; // Include comment nodes
   readonly include_whitespace?: boolean; // Include whitespace nodes
-  readonly start_point?: [number, number];  // Start position
-  readonly end_point?: [number, number];    // End position
+  readonly start_point?: [number, number]; // Start position
+  readonly end_point?: [number, number]; // End position
 }
 
 /**
@@ -233,7 +234,7 @@ export interface QueryExecutionError {
   readonly stack?: string;
 }
 
-export type QueryErrorCode = 
+export type QueryErrorCode =
   | "QUERY_NOT_FOUND"
   | "PARSE_ERROR"
   | "TIMEOUT"
@@ -269,25 +270,27 @@ export interface CompositeQuery {
  */
 export interface QueryStep {
   readonly query_name: string;
-  readonly processor?: string;           // Processor name
-  readonly required?: boolean;          // Is this step required
+  readonly processor?: string; // Processor name
+  readonly required?: boolean; // Is this step required
   readonly depends_on?: readonly string[]; // Dependencies on other steps
 }
 
 /**
  * Strategy for merging results from multiple queries
  */
-export type MergeStrategy = 
-  | "concat"        // Concatenate results
-  | "merge"         // Merge by ID
-  | "override"      // Later overrides earlier
-  | "custom";       // Custom merge function
+export type MergeStrategy =
+  | "concat" // Concatenate results
+  | "merge" // Merge by ID
+  | "override" // Later overrides earlier
+  | "custom"; // Custom merge function
 
 // ============================================================================
 // Type Guards
 // ============================================================================
 
-export function isTypedQueryCapture(value: unknown): value is TypedQueryCapture {
+export function is_typed_query_capture(
+  value: unknown
+): value is TypedQueryCapture {
   if (typeof value !== "object" || value === null) return false;
   const capture = value as any;
   return (
@@ -298,7 +301,7 @@ export function isTypedQueryCapture(value: unknown): value is TypedQueryCapture 
   );
 }
 
-export function isQueryProcessor(value: unknown): value is QueryProcessor {
+export function is_query_processor(value: unknown): value is QueryProcessor {
   if (typeof value !== "object" || value === null) return false;
   const processor = value as any;
   return (
@@ -309,7 +312,9 @@ export function isQueryProcessor(value: unknown): value is QueryProcessor {
   );
 }
 
-export function isLanguageConfiguration(value: unknown): value is LanguageConfiguration {
+export function is_language_configuration(
+  value: unknown
+): value is LanguageConfiguration {
   if (typeof value !== "object" || value === null) return false;
   const config = value as any;
   return (
@@ -328,14 +333,14 @@ export function isLanguageConfiguration(value: unknown): value is LanguageConfig
 /**
  * Create a language configuration
  */
-export function createLanguageConfiguration(
+export function create_language_configuration(
   language: Language,
   query_dir: FilePath,
   features: Partial<LanguageFeatures> = {}
 ): LanguageConfiguration {
   return {
     language,
-    file_extensions: getFileExtensions(language),
+    file_extensions: get_file_extensions(language),
     query_dir,
     queries: {},
     features: {
@@ -353,26 +358,33 @@ export function createLanguageConfiguration(
       has_structural_typing: features.has_structural_typing ?? false,
       has_union_types: features.has_union_types ?? false,
       has_intersection_types: features.has_intersection_types ?? false,
-    }
+    },
   };
 }
 
 /**
  * Get file extensions for a language
  */
-function getFileExtensions(language: Language): string[] {
+function get_file_extensions(language: Language): string[] {
   switch (language) {
-    case "javascript": return [".js", ".jsx", ".mjs", ".cjs"];
-    case "typescript": return [".ts", ".tsx", ".mts", ".cts"];
-    case "python": return [".py", ".pyi"];
-    case "rust": return [".rs"];
+    case "javascript":
+      return [".js", ".jsx", ".mjs", ".cjs"];
+    case "typescript":
+      return [".ts", ".tsx", ".mts", ".cts"];
+    case "python":
+      return [".py", ".pyi"];
+    case "rust":
+      return [".rs"];
   }
 }
 
 /**
  * Create a simple query processor
  */
-export function createQueryProcessor<TInput = QueryCapture[], TOutput = unknown>(
+export function create_query_processor<
+  TInput = QueryCapture[],
+  TOutput = unknown
+>(
   name: string,
   languages: Language[],
   required_captures: string[],
@@ -382,6 +394,6 @@ export function createQueryProcessor<TInput = QueryCapture[], TOutput = unknown>
     name,
     supported_languages: languages,
     required_captures,
-    process: process_fn
+    process: process_fn,
   };
 }

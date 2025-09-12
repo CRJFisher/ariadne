@@ -1,6 +1,7 @@
 # Task 11.74.8: Standardize Enrichment Pattern vs Call Resolution
 
 ## Status: Completed
+
 **Priority**: HIGH
 **Parent**: Task 11.74 - Wire and Consolidate Unwired Modules
 **Type**: Module Consolidation
@@ -12,10 +13,12 @@ Standardize on the enrichment pattern used in `code_graph.ts` and remove/integra
 ## Context
 
 We have two approaches to the same problem:
+
 - **Enrichment functions** (wired): `enrich_method_calls_with_hierarchy()`, `enrich_constructor_calls_with_types()`
 - **Call resolution module** (not wired): `resolve_method_calls()`, `resolve_constructor_calls()`
 
 The enrichment pattern is superior because:
+
 1. It's already integrated and working
 2. It follows a clear pattern (raw data → global context → enriched data)
 3. It's more maintainable and testable
@@ -23,6 +26,7 @@ The enrichment pattern is superior because:
 ## Problem Statement
 
 Having two approaches causes:
+
 ```typescript
 // Current duplication:
 // Enrichment (used):
@@ -57,6 +61,7 @@ Both do the same thing - use global context to enhance call information.
 ### Implementation Steps
 
 1. **Analyze call_resolution features**:
+
 ```typescript
 // Unique features to preserve:
 - Polymorphic call resolution
@@ -66,33 +71,37 @@ Both do the same thing - use global context to enhance call information.
 ```
 
 2. **Enhance enrichment functions**:
+
 ```typescript
 // In call_graph/method_calls/method_hierarchy_resolver.ts
 
 export function enrich_method_calls_with_hierarchy(
   calls: MethodCallInfo[],
   hierarchy: ClassHierarchy,
-  options?: EnrichmentOptions  // NEW
+  options?: EnrichmentOptions // NEW
 ): EnrichedMethodCall[] {
   const enriched = [];
-  
+
   for (const call of calls) {
     const enriched_call = {
       ...call,
       // Existing enrichments
       defining_class_resolved: find_defining_class(call, hierarchy),
       is_override: is_overridden_method(call, hierarchy),
-      
+
       // NEW: From call_resolution
       possible_targets: resolve_polymorphic_targets(call, hierarchy),
       dispatch_type: determine_dispatch_type(call, hierarchy),
       confidence_score: calculate_resolution_confidence(call, hierarchy),
-      interface_implementations: find_interface_implementations(call, hierarchy)
+      interface_implementations: find_interface_implementations(
+        call,
+        hierarchy
+      ),
     };
-    
+
     enriched.push(enriched_call);
   }
-  
+
   return enriched;
 }
 
@@ -104,10 +113,10 @@ function resolve_polymorphic_targets(
   // Implementation from call_resolution module
   const receiver_type = call.receiver_type;
   const method_name = call.method_name;
-  
+
   // Find all possible classes this could dispatch to
   const targets = [];
-  
+
   // Check the declared class and all subclasses
   const base_class = hierarchy.classes.get(receiver_type);
   if (base_class) {
@@ -117,10 +126,10 @@ function resolve_polymorphic_targets(
         class: base_class.name,
         method: method_name,
         is_override: false,
-        confidence: 1.0
+        confidence: 1.0,
       });
     }
-    
+
     // Check all subclasses for overrides
     for (const subclass of base_class.all_descendants) {
       if (has_method(subclass, method_name)) {
@@ -128,17 +137,18 @@ function resolve_polymorphic_targets(
           class: subclass.name,
           method: method_name,
           is_override: true,
-          confidence: calculate_dispatch_probability(call, subclass)
+          confidence: calculate_dispatch_probability(call, subclass),
         });
       }
     }
   }
-  
+
   return targets;
 }
 ```
 
 3. **Create standardized enrichment module**:
+
 ```typescript
 // NEW: call_graph/enrichment/index.ts
 
@@ -161,7 +171,7 @@ export function enrich_all_calls(
   analysis: FileAnalysis,
   context: EnrichmentContext,
   options?: EnrichmentOptions
-): EnrichedFileAnalysis {
+): FileAnalysis {
   return {
     ...analysis,
     function_calls: enrich_function_calls(
@@ -169,48 +179,43 @@ export function enrich_all_calls(
       context,
       options
     ),
-    method_calls: enrich_method_calls(
-      analysis.method_calls,
-      context,
-      options
-    ),
+    method_calls: enrich_method_calls(analysis.method_calls, context, options),
     constructor_calls: enrich_constructor_calls(
       analysis.constructor_calls,
       context,
       options
-    )
+    ),
   };
 }
 ```
 
 4. **Update code_graph.ts to use standardized API**:
+
 ```typescript
 // In code_graph.ts
 
-import { 
-  enrich_all_calls,
-  EnrichmentContext
-} from "./call_graph/enrichment";
+import { enrich_all_calls, EnrichmentContext } from "./call_graph/enrichment";
 
 // Replace individual enrichment calls
 const enrichment_context: EnrichmentContext = {
   type_registry,
   class_hierarchy: local_hierarchy,
   module_graph: modules,
-  resolved_generics,  // from 11.74.1
-  propagated_types    // from 11.74.2
+  resolved_generics, // from 11.74.1
+  propagated_types, // from 11.74.2
 };
 
-const enriched_analyses = analyses.map(analysis => 
+const enriched_analyses = analyses.map((analysis) =>
   enrich_all_calls(analysis, enrichment_context, {
     resolve_polymorphic: true,
     track_interfaces: true,
-    include_confidence: true
+    include_confidence: true,
   })
 );
 ```
 
 5. **Integrate or remove call_resolution**:
+
 ```typescript
 // Option A: Repurpose as internal implementation
 // Move to call_graph/enrichment/resolution.ts
@@ -226,17 +231,20 @@ const enriched_analyses = analyses.map(analysis =>
 During standardization, review ALL type definitions to ensure:
 
 1. **Use shared types** from `@ariadnejs/types` package:
+
    - `MethodCallInfo`, `FunctionCallInfo`, `ConstructorCallInfo`
    - `EnrichedMethodCall`, `ResolvedCall`, `CallTarget`
    - `ClassHierarchy`, `TypeRegistry`, `ModuleGraph`
    - Any other types that exist in the shared package
 
 2. **Remove duplicate definitions**:
+
    - Both enrichment and call_resolution have overlapping types
    - Standardize on shared types for the unified approach
    - Delete all redundant type definitions
 
 3. **Type migration checklist**:
+
    - [ ] Audit enrichment function types - use `@ariadnejs/types` where possible
    - [ ] Audit call_resolution types before integration/deletion
    - [ ] Ensure `EnrichmentContext` uses shared base types
@@ -257,7 +265,7 @@ During standardization, review ALL type definitions to ensure:
 // call_resolution: interface ResolvedMethodCall { ... }
 
 // AFTER: Use shared type
-import { EnrichedMethodCall, ResolvedCall } from '@ariadnejs/types';
+import { EnrichedMethodCall, ResolvedCall } from "@ariadnejs/types";
 // Or extend shared base types
 interface EnrichedMethodCall extends MethodCallInfo {
   // Additional enriched fields
@@ -273,21 +281,24 @@ interface EnrichedMethodCall extends MethodCallInfo {
 ## Testing Requirements
 
 ### Standardization Tests
+
 ```typescript
 test("enrichment handles polymorphic calls", () => {
-  const calls = [/* method calls */];
+  const calls = [
+    /* method calls */
+  ];
   const enriched = enrich_all_calls(analysis, context);
-  
+
   expect(enriched.method_calls[0].possible_targets).toHaveLength(3);
-  expect(enriched.method_calls[0].dispatch_type).toBe('virtual');
+  expect(enriched.method_calls[0].dispatch_type).toBe("virtual");
 });
 
 test("enrichment preserves all call_resolution features", () => {
   // Test that all features from call_resolution work
   const enriched = enrich_method_calls(calls, hierarchy, {
-    resolve_polymorphic: true
+    resolve_polymorphic: true,
   });
-  
+
   expect(enriched[0].interface_implementations).toBeDefined();
   expect(enriched[0].confidence_score).toBeGreaterThan(0);
 });
@@ -311,6 +322,7 @@ test("enrichment preserves all call_resolution features", () => {
 ### Features to Port
 
 From call_resolution:
+
 - Polymorphic target resolution
 - Virtual dispatch analysis
 - Interface method tracking
@@ -345,12 +357,14 @@ Successfully standardized on the enrichment pattern and removed the redundant ca
 ### Completed Work:
 
 1. **Created standardized enrichment API** (`/src/call_graph/enrichment/index.ts`):
+
    - Unified `enrich_all_calls()` function for all call types
    - `EnrichmentContext` interface with all global information
    - `EnrichmentOptions` for controlling enrichment behavior
    - Batch enrichment support for multiple files
 
 2. **Ported unique features from call_resolution**:
+
    - Polymorphic target resolution (`resolve_polymorphic_targets()`)
    - Virtual dispatch analysis (`determine_dispatch_type()`)
    - Interface implementation tracking (`find_interface_implementations()`)
@@ -358,6 +372,7 @@ Successfully standardized on the enrichment pattern and removed the redundant ca
    - Constructor validation including abstract class checks
 
 3. **Enhanced enrichment types**:
+
    - `EnrichedMethodCall` with polymorphic targets and dispatch type
    - `EnrichedConstructorCall` with type parameter resolution
    - `EnrichedFunctionCall` with module resolution
@@ -365,6 +380,7 @@ Successfully standardized on the enrichment pattern and removed the redundant ca
    - `ResolvedTarget` interface for polymorphic dispatch
 
 4. **Updated code_graph.ts**:
+
    - Replaced individual enrichment calls with unified API
    - Enrichment now happens after all global context is available
    - Includes resolved generics and propagated types in context
@@ -390,8 +406,9 @@ Some existing tests need updates to match the new ClassNode structure from @aria
 ### Architecture Impact:
 
 This establishes a clear pattern for the Global Assembly phase:
+
 1. Per-file analysis produces raw data
-2. Global assembly builds registries and hierarchies  
+2. Global assembly builds registries and hierarchies
 3. Enrichment enhances raw data with global context
 4. All enhancement happens through the standardized enrichment API
 

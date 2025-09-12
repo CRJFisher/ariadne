@@ -16,6 +16,9 @@ import {
   ScopeId,
   FilePath,
   SymbolKind,
+  VariableDeclaration,
+  VariableName,
+  TypeString,
 } from "@ariadnejs/types";
 import { node_to_location } from "../../ast/node_utils";
 import {
@@ -606,4 +609,49 @@ export function get_visible_symbols(
   }
   
   return visible;
+}
+
+/**
+ * Extract variable declarations from scope tree
+ */
+export function extract_variables_from_scopes(
+  scopes: ScopeTree
+): VariableDeclaration[] {
+  const variables: VariableDeclaration[] = [];
+
+  // Iterate through all scopes and extract variable symbols
+  for (const [_, scope] of scopes.nodes) {
+    // Check if scope is a parameter scope - parameters are variables in parameter scopes
+    const isParameterScope = scope.type === "parameter";
+
+    for (const [name, symbol] of scope.symbols) {
+      // Variables can be marked as 'variable' kind or found in parameter scopes
+      if (
+        symbol.kind === "variable" ||
+        (isParameterScope && symbol.kind === "local")
+      ) {
+        // Enhanced symbol type for accessing variable-specific fields
+        interface EnhancedScopeSymbol extends ScopeSymbol {
+          declaration_type?: "const" | "let" | "var";
+          is_exported?: boolean;
+          type_info?: string;
+        }
+        
+        // Cast to EnhancedScopeSymbol to access variable-specific fields
+        const enhancedSymbol = symbol as EnhancedScopeSymbol;
+
+        // Convert scope symbol to VariableDeclaration
+        const variable: VariableDeclaration = {
+          name: name as VariableName,
+          location: symbol.location,
+          type: symbol.type_info as TypeString | undefined,
+          is_const: enhancedSymbol.declaration_type === "const",
+          is_exported: symbol.is_exported,
+        };
+        variables.push(variable);
+      }
+    }
+  }
+
+  return variables;
 }

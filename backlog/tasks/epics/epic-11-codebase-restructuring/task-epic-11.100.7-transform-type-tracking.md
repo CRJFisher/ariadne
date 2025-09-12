@@ -146,6 +146,15 @@ export function track_types_with_queries(
 
 ## Transformation Steps
 
+### 0. Migrate Functions from code_graph.ts [COMPLETED]
+
+**STATUS**: ✅ The function `build_type_index` has been successfully moved to `type_tracking/type_tracking.ts`.
+
+**Type Cleanup Requirements**:
+- Only the output type `TypeIndex` needs to remain public in `packages/types`
+- All internal AST processing types should be DELETED from the types package (not deprecated)
+- Types like `TypeTrackingContext`, `FileTypeTracker`, and `TrackedType` that are only used internally for AST traversal should be made local to the module or removed with query-based approach
+
 ### 1. Document Type Patterns
 - [ ] Type annotations (all forms)
 - [ ] Type assertions/casts

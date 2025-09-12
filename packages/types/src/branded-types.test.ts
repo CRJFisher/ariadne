@@ -3,11 +3,6 @@
  */
 
 import {
-  SymbolName,
-  SymbolId,
-  CallerName,
-  CalleeName,
-  ReceiverName,
   MODULE_CONTEXT,
   CallerContext,
   to_symbol_name,
@@ -25,7 +20,6 @@ import {
 } from "./branded-types";
 import { FilePath, ClassName, MethodName, FunctionName } from "./aliases";
 import { describe, expect, it } from "vitest";
-import { buildScopePath } from "./unified-symbol-scope-types";
 
 describe("Branded Types", () => {
   describe("Type Creation", () => {

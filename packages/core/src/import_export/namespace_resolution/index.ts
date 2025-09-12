@@ -29,7 +29,9 @@ export {
   resolve_namespace_member,
   resolve_nested_namespace,
   get_namespace_members,
-  namespace_has_member
+  namespace_has_member,
+  collect_namespace_exports,
+  resolve_namespaces_across_files
 } from './namespace_resolution';
 
 // Export configuration utilities

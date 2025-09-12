@@ -5,17 +5,10 @@
 
 import { Location, Language } from "./common";
 import { FilePath } from "./aliases";
-import {
-  SymbolName,
-  SymbolId,
-  TypeExpression,
-  ResolvedTypeKind,
-} from "./branded-types";
-import {
-  SemanticNode,
-  Resolution,
-  ResolutionConfidence,
-} from "./base-query-types";
+import { TypeExpression, ResolvedTypeKind } from "./branded-types";
+import { SymbolName } from "./symbol_utils";
+import { SymbolId } from "./symbol_utils";
+import { SemanticNode, Resolution, ResolutionConfidence } from "./query";
 
 // ============================================================================
 // Core Type Definition

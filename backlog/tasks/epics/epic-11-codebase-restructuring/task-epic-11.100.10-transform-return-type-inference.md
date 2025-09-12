@@ -257,6 +257,15 @@ function unifyReturnTypes(types: string[]): string {
 
 ## Transformation Steps
 
+### 0. Migrate Functions from file_analyzer.ts [COMPLETED]
+
+**STATUS**: ✅ The function `infer_all_return_types` has been successfully moved to `return_type_inference.ts`. 
+
+**Type Cleanup Requirements**:
+- Only the output type `ReturnTypeInfo` needs to remain public in `packages/types`
+- All internal AST processing types should be DELETED from the types package (not deprecated)
+- Internal types used only for AST traversal can now be local to the module or removed entirely with query-based approach
+
 ### 1. Document Return Patterns
 
 - [ ] Explicit return type annotations

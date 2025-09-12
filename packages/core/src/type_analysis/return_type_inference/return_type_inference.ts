@@ -6,7 +6,7 @@
  * bespoke handlers.
  */
 
-import { Definition, Language } from '@ariadnejs/types';
+import { Definition, Language, Location, FilePath } from '@ariadnejs/types';
 import { SyntaxNode } from 'tree-sitter';
 import { 
   get_return_type_config, 
@@ -14,6 +14,7 @@ import {
   is_type_node,
   get_expression_category 
 } from './language_configs';
+import { node_to_location } from '../../ast/node_utils';
 
 /**
  * MODULE_CONTEXT for return type inference
@@ -30,21 +31,7 @@ export interface ReturnTypeInfo {
   type_name: string;
   confidence: 'explicit' | 'inferred' | 'heuristic';
   source: 'annotation' | 'return_statement' | 'docstring' | 'pattern';
-  position?: {
-    row: number;
-    column: number;
-  };
-}
-
-/**
- * Internal extended definition for return type analysis
- */
-export interface ExtendedDefinition extends Definition {
-  symbol_kind?: string;
-  range?: {
-    start: { row: number; column: number };
-    end: { row: number; column: number };
-  };
+  location?: Location;
 }
 
 /**
@@ -619,4 +606,75 @@ export function is_generator_return_type(returnType: ReturnTypeInfo, language: L
          typeName.includes('iterator') || 
          typeName.includes('iterable') ||
          typeName.startsWith('iter<');
+}
+
+/**
+ * Infer return types for all functions in the file
+ * (Migrated from file_analyzer.ts)
+ */
+export function infer_all_return_types(
+  root_node: SyntaxNode,
+  source_code: string,
+  language: Language,
+  file_path: FilePath
+): Map<string, ReturnTypeInfo> {
+  const result = new Map<string, ReturnTypeInfo>();
+  const context: ReturnTypeContext = {
+    language,
+    source_code,
+    debug: false,
+  };
+
+  // Find all function nodes in the tree
+  const find_functions = (node: SyntaxNode): void => {
+    // Check if this is a function definition node
+    if (
+      node.type === "function_declaration" ||
+      node.type === "function_definition" ||
+      node.type === "arrow_function" ||
+      node.type === "method_definition" ||
+      node.type === "function_item" || // Rust
+      node.type === "method_declaration"
+    ) {
+      // Extract function name
+      const name_node = node.childForFieldName("name");
+      const func_name = name_node
+        ? source_code.substring(name_node.startIndex, name_node.endIndex)
+        : `anonymous_${node.startIndex}`;
+
+      // Check if function is async
+      const is_async = is_async_function(node);
+
+      // Create a minimal Def object for the inference function
+      const func_def = {
+        name: func_name,
+        location: node_to_location(node, file_path),
+        kind: "function" as const,
+        file_path: file_path,
+      };
+
+      // Infer return type
+      const return_info = analyze_return_type_generic(func_def, node, context);
+
+      if (return_info) {
+        // Store with enhanced metadata
+        result.set(func_name, {
+          ...return_info,
+          // Override async/generator if we detected it
+          ...(is_async && { source: "pattern" as const }),
+        });
+      }
+    }
+
+    // Recursively process children
+    for (let i = 0; i < node.childCount; i++) {
+      const child = node.child(i);
+      if (child) {
+        find_functions(child);
+      }
+    }
+  };
+
+  find_functions(root_node);
+  return result;
 }

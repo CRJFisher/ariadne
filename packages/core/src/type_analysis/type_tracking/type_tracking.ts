@@ -19,25 +19,26 @@ import {
   Language, 
   Location, 
   SourceCode,
-  TrackedType,
+  TypeInfo,
   SymbolId,
-  SymbolName,
-  UnifiedType,
-  TypeExpression,
-  TypeFlowSource,
-  Resolution,
-  ResolutionConfidence,
-  toSymbolId,
-  toSymbolName,
-  toTypeExpression
+  TypeName,
+  TypeKind,
+  FileAnalysis,
+  TypeIndex,
+  VariableType,
+  FunctionSignature,
+  TypeDefinition,
+  TypeGraph,
+  TypeString,
+  ScopeType,
 } from "@ariadnejs/types";
 import { node_to_location } from "../../ast/node_utils";
 
 /**
- * Legacy type information interface for backward compatibility
- * @deprecated Use TrackedType instead
+ * Legacy type information interface - for internal use only
+ * The actual TypeInfo type is imported from @ariadnejs/types
  */
-export interface TypeInfo {
+interface LegacyTypeInfo {
   variable_name?: string;
   type_name: string;
   type_kind?:
@@ -80,11 +81,12 @@ export interface TypeTrackingContext {
  * File-level type tracking data
  */
 export interface FileTypeTracker {
-  variable_types: Map<SymbolId, TrackedType>; // Symbol ID -> tracked type
+  variable_types: Map<SymbolId, TypeInfo>; // Symbol ID -> type info
   imported_classes: Map<string, ImportedClassInfo>; // Local name -> import info (legacy)
   exported_definitions: Set<string>; // Names of exported definitions
+  file_path?: FilePath; // File path for creating SymbolIds
   // Legacy compatibility
-  legacy_types?: Map<string, TypeInfo[]>; // Variable name -> type history
+  legacy_types?: Map<string, LegacyTypeInfo[]>; // Variable name -> type history
 }
 
 /**
@@ -99,68 +101,51 @@ export function create_file_type_tracker(): FileTypeTracker {
 }
 
 /**
- * Set the type of a variable using TrackedType
+ * Set the type of a variable using TypeInfo
  */
 export function set_variable_type(
   tracker: FileTypeTracker,
   var_name: string,
-  type_info: TypeInfo | TrackedType
+  type_info: LegacyTypeInfo
 ): FileTypeTracker {
-  // Convert to TrackedType if needed
-  let tracked: TrackedType;
+  // Convert to SymbolId
+  const symbol_id = `variable:${tracker.file_path || 'unknown'}:${var_name}` as SymbolId;
   
-  if ('symbol_id' in type_info) {
-    // Already a TrackedType
-    tracked = type_info;
-  } else {
-    // Convert TypeInfo to TrackedType
-    const symbol_id = toSymbolId(`${var_name}_${type_info.location.line}_${type_info.location.column}`);
-    const flow_source: TypeFlowSource = 
-      type_info.source === 'annotation' ? 'declaration' :
-      type_info.source === 'assignment' ? 'assignment' :
-      type_info.source === 'return' ? 'return' :
-      type_info.source === 'parameter' ? 'parameter' :
-      'initialization';
-    
-    tracked = {
-      symbol_id,
-      tracked_type: {
-        status: 'resolved',
-        data: {
-          id: symbol_id,
-          name: toSymbolName(type_info.type_name),
-          kind: type_info.type_kind || 'unknown',
-          location: type_info.location,
-          language: 'javascript',
-          node_type: 'identifier'
-        } as UnifiedType
-      },
-      flow_source,
-      location: type_info.location,
-      language: 'javascript',
-      node_type: 'identifier'
-    };
-  }
+  // Convert to TypeInfo from packages/types
+  const api_type_info: TypeInfo = {
+    type_name: (type_info.type_name || 'unknown') as TypeName,
+    type_kind: (type_info.type_kind || 'unknown') as TypeKind,
+    location: type_info.location,
+    confidence: normalize_confidence(type_info.confidence),
+    source: type_info.source
+  };
   
-  // Store in new TrackedType map
-  const new_types = new Map(tracker.variable_types);
-  new_types.set(tracked.symbol_id, tracked);
+  // Store in variable_types map
+  const new_variable_types = new Map(tracker.variable_types);
+  new_variable_types.set(symbol_id, api_type_info);
   
   // Also maintain legacy types if needed
   const legacy_types = tracker.legacy_types || new Map();
-  if (type_info && !('symbol_id' in type_info)) {
-    const existing = legacy_types.get(var_name) || [];
-    legacy_types.set(var_name, [...existing, type_info]);
-  }
-
-  // Create new tracker with updated types
-  const new_variable_types = new Map(tracker.variable_types);
-  new_variable_types.set(var_name, new_types);
+  const existing = legacy_types.get(var_name) || [];
+  legacy_types.set(var_name, [...existing, type_info]);
 
   return {
     ...tracker,
     variable_types: new_variable_types,
+    legacy_types,
   };
+}
+
+/**
+ * Normalize confidence value to TypeInfo's expected format
+ */
+function normalize_confidence(
+  confidence?: "explicit" | "inferred" | "assumed" | number
+): "explicit" | "inferred" | "assumed" {
+  if (typeof confidence === 'number') {
+    return confidence >= 0.8 ? "explicit" : confidence >= 0.5 ? "inferred" : "assumed";
+  }
+  return confidence || "assumed";
 }
 
 /**
@@ -223,7 +208,7 @@ export function is_exported(
 export function infer_type_kind(
   type_name: string,
   language: Language
-): TypeInfo["type_kind"] {
+): TypeKind {
   // Primitive types
   const primitives = [
     "string",
@@ -236,36 +221,36 @@ export function infer_type_kind(
     "unknown",
   ];
   if (primitives.includes(type_name.toLowerCase())) {
-    return "primitive";
+    return TypeKind.PRIMITIVE;
   }
 
   // Array types
   if (type_name.includes("[]") || type_name.startsWith("Array<")) {
-    return "array";
+    return TypeKind.ARRAY;
   }
 
   // Function types
   if (type_name.includes("=>") || type_name.includes("Function")) {
-    return "function";
+    return TypeKind.FUNCTION;
   }
 
   // Interface (TypeScript)
   if (language === "typescript" && type_name.startsWith("I")) {
     // Convention: interfaces often start with I
-    return "interface";
+    return TypeKind.INTERFACE;
   }
 
   // Object literals
   if (type_name.includes("{") || type_name === "object") {
-    return "object";
+    return TypeKind.OBJECT;
   }
 
   // Assume class for capitalized names
   if (type_name[0] === type_name[0].toUpperCase()) {
-    return "class";
+    return TypeKind.CLASS;
   }
 
-  return "unknown";
+  return TypeKind.UNKNOWN;
 }
 
 // =============================================================================
@@ -403,7 +388,7 @@ export function track_assignment_generic(
 export function infer_type_generic(
   node: SyntaxNode,
   context: TypeTrackingContext
-): TypeInfo | undefined {
+): LegacyTypeInfo | undefined {
   const config = get_type_tracking_config(context.language);
   const location = node_to_location(node, context.file_path);
 
@@ -422,7 +407,7 @@ export function infer_type_generic(
       const type_name = text.includes(".") ? "float" : "int";
       return {
         type_name,
-        type_kind: "primitive",
+        type_kind: "primitive" as LegacyTypeInfo["type_kind"],
         location,
         confidence: "explicit",
         source: "assignment",
@@ -458,7 +443,7 @@ export function infer_type_generic(
   ) {
     return {
       type_name: "function",
-      type_kind: "function",
+      type_kind: "function" as LegacyTypeInfo["type_kind"],
       location,
       confidence: "inferred",
       source: "assignment",
@@ -475,7 +460,7 @@ export function infer_type_generic(
       );
       return {
         type_name: class_name,
-        type_kind: "class",
+        type_kind: "class" as LegacyTypeInfo["type_kind"],
         location,
         confidence: "explicit",
         source: "constructor",
@@ -495,7 +480,7 @@ export function infer_type_generic(
       if (func_name[0] === func_name[0].toUpperCase()) {
         return {
           type_name: func_name,
-          type_kind: "class",
+          type_kind: "class" as LegacyTypeInfo["type_kind"],
           location,
           confidence: "inferred",
           source: "constructor",
@@ -513,7 +498,7 @@ export function infer_type_generic(
 export function extract_type_annotation_generic(
   type_node: SyntaxNode,
   context: TypeTrackingContext
-): TypeInfo | undefined {
+): LegacyTypeInfo | undefined {
   const location = node_to_location(type_node, context.file_path);
   const config = get_type_tracking_config(context.language);
 
@@ -548,11 +533,11 @@ export function extract_type_annotation_generic(
           return {
             type_name: full_type,
             type_kind:
-              full_type.startsWith("List") || full_type.startsWith("list")
+              (full_type.startsWith("List") || full_type.startsWith("list")
                 ? "array"
                 : full_type.startsWith("Dict") || full_type.startsWith("dict")
                 ? "object"
-                : "unknown",
+                : "unknown") as LegacyTypeInfo["type_kind"],
             location,
             confidence: "explicit",
             source: "annotation",
@@ -575,7 +560,7 @@ export function extract_type_annotation_generic(
     );
     return {
       type_name,
-      type_kind: "primitive",
+      type_kind: "primitive" as LegacyTypeInfo["type_kind"],
       location,
       confidence: "explicit",
       source: "annotation",
@@ -593,7 +578,7 @@ export function extract_type_annotation_generic(
     );
     return {
       type_name,
-      type_kind: infer_type_kind(type_name, context.language),
+      type_kind: infer_type_kind(type_name, context.language) as LegacyTypeInfo["type_kind"],
       location,
       confidence: "explicit",
       source: "annotation",
@@ -612,7 +597,7 @@ export function extract_type_annotation_generic(
     );
     return {
       type_name: full_type,
-      type_kind: "array",
+      type_kind: "array" as LegacyTypeInfo["type_kind"],
       location,
       confidence: "explicit",
       source: "annotation",
@@ -632,11 +617,11 @@ export function extract_type_annotation_generic(
     return {
       type_name: full_type,
       type_kind:
-        full_type.toLowerCase().includes("array") ||
+        (full_type.toLowerCase().includes("array") ||
         full_type.toLowerCase().includes("list") ||
         full_type.toLowerCase().includes("vec")
           ? "array"
-          : "class",
+          : "class") as LegacyTypeInfo["type_kind"],
       location,
       confidence: "explicit",
       source: "annotation",
@@ -654,7 +639,7 @@ export function extract_type_annotation_generic(
     );
     return {
       type_name: full_type,
-      type_kind: "unknown",
+      type_kind: "unknown" as LegacyTypeInfo["type_kind"],
       location,
       confidence: "explicit",
       source: "annotation",
@@ -674,7 +659,7 @@ export function extract_type_annotation_generic(
       : full_type;
     return {
       type_name: formatted_type,
-      type_kind: "array",
+      type_kind: "array" as LegacyTypeInfo["type_kind"],
       location,
       confidence: "explicit",
       source: "annotation",
@@ -1077,4 +1062,69 @@ export function track_exports_generic(
   }
 
   return tracker;
+}
+
+/**
+ * Build type index from file analyses
+ */
+export function build_type_index(analyses: FileAnalysis[]): TypeIndex {
+  const variables = new Map<string, VariableType>();
+  const functions = new Map<string, FunctionSignature>();
+  const definitions = new Map<string, TypeDefinition>();
+  const type_graph: TypeGraph = {
+    nodes: new Map(),
+    edges: [],
+  };
+
+  // Build variable types
+  for (const analysis of analyses) {
+    if (analysis.type_info) {
+      for (const [var_name, type_info] of analysis.type_info.entries()) {
+        // Skip entries that are not variables (e.g., Python instance attributes like self.count)
+        // These are tracked in type_info for type analysis but aren't standalone variables
+        if (var_name.includes(".")) {
+          continue;
+        }
+
+        const key = `${analysis.file_path}#${var_name}`;
+
+        // Find the scope containing this variable
+        let var_scope = null;
+        let scope_type = "unknown";
+
+        for (const [scope_id, scope] of analysis.scopes.nodes) {
+          if (scope.symbols.has(var_name)) {
+            var_scope = scope;
+            scope_type = scope.type;
+            break;
+          }
+        }
+
+        if (!var_scope) {
+          // Some type_info entries might not be in the scope tree (e.g., builtin types)
+          // Skip them instead of throwing an error
+          console.warn(
+            `Variable ${var_name} has type info but not found in scope tree`
+          );
+          continue;
+        }
+
+        variables.set(key, {
+          name: var_name,
+          type: (type_info.type_name || "unknown") as TypeString,
+          scope_kind: scope_type as ScopeType,
+          location: type_info.location,
+        });
+      }
+    }
+  }
+
+  // TODO: Build function signatures, type definitions, and type graph
+
+  return {
+    variables,
+    functions,
+    definitions,
+    type_graph,
+  };
 }

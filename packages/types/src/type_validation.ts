@@ -5,61 +5,57 @@
 
 import { Language, Location } from "./common";
 import {
-  isSymbolName,
-  isSymbolId,
-  isCallerName,
-  isCalleeName,
-  isReceiverName,
-  isModuleContext,
-  isCallerContext,
-  isVisibility,
-  isResolutionReason,
+  is_symbol_name,
+  is_symbol_id,
+  is_caller_name,
+  is_callee_name,
+  is_receiver_name,
+  is_module_context,
+  is_caller_context,
+  is_visibility,
+  is_resolution_reason,
 } from "./branded-types";
 import {
-  isASTNode,
-  isSemanticNode,
-  isQueryCapture,
-  isQueryResult,
-  isResolution,
-  isQueryError,
-} from "./base-query-types";
+  is_ast_node,
+  is_semantic_node,
+  is_query_capture,
+  is_query_result,
+  is_resolution,
+  is_query_error,
+} from "./query";
 import {
   is_function_call,
   is_method_call,
   is_constructor_call,
   is_call_info,
-} from "./unified-call-types";
+} from "./calls";
+import { is_symbol, is_unified_scope, isSymbolUsage } from "./symbol_scope";
 import {
-  is_unified_symbol,
-  is_unified_scope,
-  isSymbolUsage,
-} from "./unified-symbol-scope-types";
-import {
-  isNamedImport,
-  isDefaultImport,
-  isNamespaceImport,
-  isSideEffectImport,
-  isNamedExport,
-  isDefaultExport,
-  isNamespaceExport,
-  isReExport,
-} from "./unified-import-export-types";
+  is_named_import,
+  is_default_import,
+  is_namespace_import,
+  is_side_effect_import,
+  is_named_export,
+  is_default_export,
+  is_namespace_export,
+  is_re_export,
+} from "./import_export";
 import {
   is_type_definition,
   is_type_member,
   is_tracked_type,
   is_inferred_type,
-} from "./unified-type-analysis-types";
+} from "./type_analysis";
 import {
   is_unified_type_entity,
   is_unified_member,
-  isInheritanceRelation,
-} from "./unified-inheritance-types";
+  is_inheritance_relation,
+} from "./inheritance";
 import {
-  isTypedQueryCapture,
-  isQueryProcessor,
-  isLanguageConfiguration,
-} from "./query_integration_types";
+  is_typed_query_capture,
+  is_query_processor,
+  is_language_configuration,
+} from "./query_integration";
 
 // ============================================================================
 // Validation Result Types
@@ -201,7 +197,7 @@ export function validateASTNode(
   const errors: ValidationError[] = [];
   const warnings: ValidationWarning[] = [];
 
-  if (!isASTNode(value)) {
+  if (!is_ast_node(value)) {
     errors.push({
       path,
       expected: "ASTNode",
@@ -264,7 +260,7 @@ export function validate_call_info(
   const call = value as any;
 
   // Validate base fields
-  if (!isCallerContext(call.caller)) {
+  if (!is_caller_context(call.caller)) {
     errors.push({
       path: `${path}.caller`,
       expected: "CallerContext",
@@ -286,7 +282,7 @@ export function validate_call_info(
 
   // Validate specific call type fields
   if (is_function_call(value)) {
-    if (!isCalleeName(value.callee)) {
+    if (!is_callee_name(value.callee)) {
       errors.push({
         path: `${path}.callee`,
         expected: "CalleeName",
@@ -295,7 +291,7 @@ export function validate_call_info(
       });
     }
   } else if (is_method_call(value)) {
-    if (!isCalleeName(value.method_name)) {
+    if (!is_callee_name(value.method_name)) {
       errors.push({
         path: `${path}.method_name`,
         expected: "CalleeName",
@@ -303,7 +299,7 @@ export function validate_call_info(
         message: "Invalid method name",
       });
     }
-    if (!isReceiverName(value.receiver)) {
+    if (!is_receiver_name(value.receiver)) {
       errors.push({
         path: `${path}.receiver`,
         expected: "ReceiverName",
@@ -335,7 +331,7 @@ export function validate_unified_symbol(
   const errors: ValidationError[] = [];
   const warnings: ValidationWarning[] = [];
 
-  if (!is_unified_symbol(value)) {
+  if (!is_symbol(value)) {
     errors.push({
       path,
       expected: "Symbol",
@@ -348,7 +344,7 @@ export function validate_unified_symbol(
   const symbol = value as any;
 
   // Validate branded types
-  if (!isSymbolId(symbol.id)) {
+  if (!is_symbol_id(symbol.id)) {
     errors.push({
       path: `${path}.id`,
       expected: "SymbolId",
@@ -357,7 +353,7 @@ export function validate_unified_symbol(
     });
   }
 
-  if (!isSymbolName(symbol.name)) {
+  if (!is_symbol_name(symbol.name)) {
     errors.push({
       path: `${path}.name`,
       expected: "SymbolName",
@@ -367,7 +363,7 @@ export function validate_unified_symbol(
   }
 
   // Validate visibility if present
-  if (symbol.visibility !== undefined && !isVisibility(symbol.visibility)) {
+  if (symbol.visibility !== undefined && !is_visibility(symbol.visibility)) {
     errors.push({
       path: `${path}.visibility`,
       expected: "Visibility",
@@ -617,23 +613,23 @@ export function assertValid<T>(
 
 export const TypeGuards = {
   // Branded types
-  isSymbolName,
-  isSymbolId,
-  isCallerName,
-  isCalleeName,
-  isReceiverName,
-  isModuleContext,
-  isCallerContext,
-  isVisibility,
-  isResolutionReason,
+  is_symbol_name,
+  is_symbol_id,
+  is_caller_name,
+  is_callee_name,
+  is_receiver_name,
+  is_module_context,
+  is_caller_context,
+  is_visibility,
+  is_resolution_reason,
 
   // Base query types
-  isASTNode,
-  isSemanticNode,
-  isQueryCapture,
-  isQueryResult,
-  isResolution,
-  isQueryError,
+  isASTNode: is_ast_node,
+  isSemanticNode: is_semantic_node,
+  isQueryCapture: is_query_capture,
+  isQueryResult: is_query_result,
+  isResolution: is_resolution,
+  isQueryError: is_query_error,
 
   // Unified call types
   is_function_call,
@@ -642,19 +638,19 @@ export const TypeGuards = {
   is_call_info,
 
   // Unified symbol/scope types
-  is_unified_symbol,
+  is_symbol,
   is_unified_scope,
   isSymbolUsage,
 
   // Unified import/export types
-  isNamedImport,
-  isDefaultImport,
-  isNamespaceImport,
-  isSideEffectImport,
-  isNamedExport,
-  isDefaultExport,
-  isNamespaceExport,
-  isReExport,
+  is_named_import,
+  is_default_import,
+  is_namespace_import,
+  is_side_effect_import,
+  is_named_export,
+  is_default_export,
+  is_namespace_export,
+  is_re_export,
 
   // Unified type analysis types
   is_type_definition,
@@ -664,10 +660,10 @@ export const TypeGuards = {
   // Unified inheritance types
   is_unified_type_entity,
   is_unified_member,
-  isInheritanceRelation,
+  is_inheritance_relation,
 
   // Query integration types
-  isTypedQueryCapture,
-  isQueryProcessor,
-  isLanguageConfiguration,
+  is_typed_query_capture,
+  is_query_processor,
+  is_language_configuration,
 } as const;

@@ -5,7 +5,15 @@
  * across all languages using the language configurations
  */
 
-import { Language, ImportedSymbol, ExportedSymbol, ModuleNode } from '@ariadnejs/types';
+import { 
+  Language, 
+  ImportedSymbol, 
+  ExportedSymbol, 
+  ModuleNode,
+  ModulePath,
+  FilePath,
+  ModuleGraph,
+} from '@ariadnejs/types';
 import * as path from 'path';
 import {
   ImportPatternConfig,
@@ -274,4 +282,51 @@ export function set_cache_mode(enabled: boolean): void {
   if (!enabled) {
     clear_resolution_cache();
   }
+}
+
+/**
+ * Resolve module path from import statement
+ */
+export function resolve_module_path(
+  source: ModulePath,
+  from_file: FilePath,
+  module_graph: ModuleGraph
+): ModulePath | undefined {
+  // Check if it's a relative import
+  if (source.startsWith("./") || source.startsWith("../")) {
+    // Resolve relative to the importing file
+    const base_dir = from_file.substring(0, from_file.lastIndexOf("/"));
+    return normalizeModulePath(`${base_dir}/${source}` as ModulePath);
+  }
+
+  // Check module graph for absolute imports
+  for (const [path, module_info] of module_graph.modules) {
+    if (module_info.path === source || path.endsWith(source)) {
+      return path as ModulePath;
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * Normalize module path by removing extensions and resolving relative paths
+ */
+export function normalizeModulePath(path: ModulePath): ModulePath {
+  // Remove .ts, .js, .tsx, .jsx extensions
+  const normalized = path.replace(/\.(ts|js|tsx|jsx)$/, "");
+
+  // Resolve .. and . in the path
+  const parts = normalized.split("/");
+  const resolved: string[] = [];
+
+  for (const part of parts) {
+    if (part === "..") {
+      resolved.pop();
+    } else if (part !== "." && part !== "") {
+      resolved.push(part);
+    }
+  }
+
+  return resolved.join("/") as ModulePath;
 }

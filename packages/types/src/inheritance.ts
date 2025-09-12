@@ -5,13 +5,11 @@
 
 import { Location, Language } from "./common";
 import { FilePath } from "./aliases";
-import { 
-  SymbolName, 
-  SymbolId,
-  Visibility
-} from "./branded-types";
-import { SemanticNode, Resolution } from "./base-query-types";
-import { UnifiedType, TypeMember } from "./unified-type-analysis-types";
+import { Visibility } from "./branded-types";
+import { SymbolName } from "./symbol_utils";
+import { SymbolId } from "./symbol_utils";
+import { SemanticNode, Resolution } from "./query";
+import { TypeDefinition, TypeMember } from "./type_analysis";
 
 // ============================================================================
 // Unified Class/Interface/Trait Types
@@ -25,81 +23,81 @@ export interface UnifiedTypeEntity extends SemanticNode {
   readonly id: SymbolId;
   readonly name: SymbolName;
   readonly entity_kind: TypeEntityKind;
-  
+
   // Inheritance relationships (unified)
-  readonly extends?: readonly SymbolId[];      // Base classes/interfaces
-  readonly implements?: readonly SymbolId[];   // Implemented interfaces
-  readonly uses?: readonly SymbolId[];         // Traits/mixins
-  
+  readonly extends?: readonly SymbolId[]; // Base classes/interfaces
+  readonly implements?: readonly SymbolId[]; // Implemented interfaces
+  readonly uses?: readonly SymbolId[]; // Traits/mixins
+
   // Members
-  readonly members: ReadonlyMap<SymbolName, UnifiedMember>;
-  
+  readonly members: ReadonlyMap<SymbolName, Member>;
+
   // Type characteristics
   readonly modifiers?: readonly TypeModifier[];
-  readonly type_parameters?: readonly string[];  // Generic parameters
-  
+  readonly type_parameters?: readonly string[]; // Generic parameters
+
   // Computed hierarchy information
-  readonly ancestors?: readonly SymbolId[];     // All ancestors in order
-  readonly descendants?: readonly SymbolId[];   // All descendants
-  readonly mro?: readonly SymbolId[];          // Method resolution order
+  readonly ancestors?: readonly SymbolId[]; // All ancestors in order
+  readonly descendants?: readonly SymbolId[]; // All descendants
+  readonly mro?: readonly SymbolId[]; // Method resolution order
 }
 
 /**
  * Kind of type entity
  */
-export type TypeEntityKind = 
-  | "class"          // Regular class
+export type TypeEntityKind =
+  | "class" // Regular class
   | "abstract_class" // Abstract class
-  | "interface"      // Interface/protocol
-  | "trait"         // Trait (Rust/PHP)
-  | "mixin"         // Mixin (Python/Ruby)
-  | "struct"        // Struct (Rust/C)
-  | "enum";         // Enum class
+  | "interface" // Interface/protocol
+  | "trait" // Trait (Rust/PHP)
+  | "mixin" // Mixin (Python/Ruby)
+  | "struct" // Struct (Rust/C)
+  | "enum"; // Enum class
 
 /**
  * Type modifiers
  */
-export type TypeModifier = 
+export type TypeModifier =
   | "abstract"
   | "final"
   | "sealed"
   | "static"
-  | "partial"      // C# partial classes
-  | "data"         // Kotlin data classes
-  | "value";       // Value types
+  | "partial" // C# partial classes
+  | "data" // Kotlin data classes
+  | "value"; // Value types
 
 /**
  * Unified member (method, property, etc.)
  * Replaces MethodNode, PropertyNode
  */
-export interface UnifiedMember extends SemanticNode {
+export interface Member extends SemanticNode {
   readonly id: SymbolId;
   readonly name: SymbolName;
   readonly member_type: MemberType;
   readonly visibility?: Visibility;
   readonly modifiers?: readonly MemberModifier[];
-  
+
   // Type information
-  readonly type?: UnifiedType;
+  readonly type?: TypeDefinition;
   readonly signature?: MemberSignature;
-  
+
   // Override information
-  readonly overrides?: SymbolId;           // Member being overridden
-  readonly overridden_by?: readonly SymbolId[];  // Members that override this
-  readonly implements?: SymbolId;          // Interface member being implemented
+  readonly overrides?: SymbolId; // Member being overridden
+  readonly overridden_by?: readonly SymbolId[]; // Members that override this
+  readonly implements?: SymbolId; // Interface member being implemented
 }
 
-export type MemberType = 
-  | "field"          // Instance field/property
-  | "method"         // Instance method
-  | "constructor"    // Constructor
-  | "destructor"     // Destructor
-  | "getter"         // Property getter
-  | "setter"         // Property setter
-  | "static_field"   // Static field
+export type MemberType =
+  | "field" // Instance field/property
+  | "method" // Instance method
+  | "constructor" // Constructor
+  | "destructor" // Destructor
+  | "getter" // Property getter
+  | "setter" // Property setter
+  | "static_field" // Static field
   | "static_method"; // Static method
 
-export type MemberModifier = 
+export type MemberModifier =
   | "abstract"
   | "override"
   | "virtual"
@@ -114,14 +112,14 @@ export type MemberModifier =
  */
 export interface MemberSignature {
   readonly parameters?: readonly Parameter[];
-  readonly return_type?: UnifiedType;
+  readonly return_type?: TypeDefinition;
   readonly type_parameters?: readonly string[];
-  readonly throws?: readonly UnifiedType[];  // Exceptions
+  readonly throws?: readonly TypeDefinition[]; // Exceptions
 }
 
 export interface Parameter {
   readonly name: SymbolName;
-  readonly type?: UnifiedType;
+  readonly type?: TypeDefinition;
   readonly is_optional?: boolean;
   readonly is_rest?: boolean;
   readonly default_value?: string;
@@ -136,19 +134,19 @@ export interface Parameter {
  * Replaces InheritanceEdge
  */
 export interface InheritanceRelation {
-  readonly from: SymbolId;             // Child type
-  readonly to: SymbolId;               // Parent type
+  readonly from: SymbolId; // Child type
+  readonly to: SymbolId; // Parent type
   readonly relation_type: InheritanceType;
-  readonly location: Location;         // Where declared
-  readonly is_direct: boolean;         // Direct vs transitive
+  readonly location: Location; // Where declared
+  readonly is_direct: boolean; // Direct vs transitive
 }
 
-export type InheritanceType = 
-  | "extends"        // Class inheritance
-  | "implements"     // Interface implementation
-  | "uses"          // Trait/mixin usage
-  | "conforms"      // Protocol conformance
-  | "derives";      // Rust derive
+export type InheritanceType =
+  | "extends" // Class inheritance
+  | "implements" // Interface implementation
+  | "uses" // Trait/mixin usage
+  | "conforms" // Protocol conformance
+  | "derives"; // Rust derive
 
 /**
  * Complete inheritance hierarchy
@@ -156,12 +154,12 @@ export type InheritanceType =
 export interface InheritanceHierarchy {
   readonly entities: ReadonlyMap<SymbolId, UnifiedTypeEntity>;
   readonly relations: readonly InheritanceRelation[];
-  readonly roots: ReadonlySet<SymbolId>;     // Types with no parents
-  readonly leaves: ReadonlySet<SymbolId>;    // Types with no children
-  
+  readonly roots: ReadonlySet<SymbolId>; // Types with no parents
+  readonly leaves: ReadonlySet<SymbolId>; // Types with no children
+
   // Computed analysis
-  readonly cycles?: readonly SymbolId[][];   // Circular inheritance
-  readonly depth_map?: ReadonlyMap<SymbolId, number>;  // Inheritance depth
+  readonly cycles?: readonly SymbolId[][]; // Circular inheritance
+  readonly depth_map?: ReadonlyMap<SymbolId, number>; // Inheritance depth
   readonly diamond_problems?: readonly DiamondProblem[];
 }
 
@@ -169,7 +167,7 @@ export interface InheritanceHierarchy {
  * Diamond inheritance problem detection
  */
 export interface DiamondProblem {
-  readonly base: SymbolId;             // Common ancestor
+  readonly base: SymbolId; // Common ancestor
   readonly paths: readonly SymbolId[][]; // Multiple inheritance paths
   readonly conflicting_members?: readonly SymbolName[];
 }
@@ -197,7 +195,9 @@ export interface OverrideStep {
 // Type Guards
 // ============================================================================
 
-export function isUnifiedTypeEntity(value: unknown): value is UnifiedTypeEntity {
+export function is_unified_type_entity(
+  value: unknown
+): value is UnifiedTypeEntity {
   if (typeof value !== "object" || value === null) return false;
   const entity = value as any;
   return (
@@ -209,7 +209,7 @@ export function isUnifiedTypeEntity(value: unknown): value is UnifiedTypeEntity 
   );
 }
 
-export function isUnifiedMember(value: unknown): value is UnifiedMember {
+export function is_unified_member(value: unknown): value is Member {
   if (typeof value !== "object" || value === null) return false;
   const member = value as any;
   return (
@@ -220,7 +220,9 @@ export function isUnifiedMember(value: unknown): value is UnifiedMember {
   );
 }
 
-export function isInheritanceRelation(value: unknown): value is InheritanceRelation {
+export function is_inheritance_relation(
+  value: unknown
+): value is InheritanceRelation {
   if (typeof value !== "object" || value === null) return false;
   const relation = value as any;
   return (
@@ -238,48 +240,54 @@ export function isInheritanceRelation(value: unknown): value is InheritanceRelat
 /**
  * Check if entity is abstract
  */
-export function isAbstract(entity: UnifiedTypeEntity): boolean {
-  return entity.entity_kind === "abstract_class" ||
-         entity.entity_kind === "interface" ||
-         entity.entity_kind === "trait" ||
-         entity.modifiers?.includes("abstract") === true;
+export function is_abstract(entity: UnifiedTypeEntity): boolean {
+  return (
+    entity.entity_kind === "abstract_class" ||
+    entity.entity_kind === "interface" ||
+    entity.entity_kind === "trait" ||
+    entity.modifiers?.includes("abstract") === true
+  );
 }
 
 /**
  * Check if entity can be instantiated
  */
-export function isInstantiable(entity: UnifiedTypeEntity): boolean {
-  return !isAbstract(entity) && 
-         entity.entity_kind !== "interface" &&
-         entity.entity_kind !== "trait";
+export function is_instantiable(entity: UnifiedTypeEntity): boolean {
+  return (
+    !is_abstract(entity) &&
+    entity.entity_kind !== "interface" &&
+    entity.entity_kind !== "trait"
+  );
 }
 
 /**
  * Check if member is overridable
  */
-export function isOverridable(member: UnifiedMember): boolean {
-  return !member.modifiers?.includes("final") &&
-         !member.modifiers?.includes("static") &&
-         (member.modifiers?.includes("virtual") || 
-          member.modifiers?.includes("abstract") ||
-          member.visibility !== "private");
+export function is_overridable(member: Member): boolean {
+  return (
+    !member.modifiers?.includes("final") &&
+    !member.modifiers?.includes("static") &&
+    (member.modifiers?.includes("virtual") ||
+      member.modifiers?.includes("abstract") ||
+      member.visibility !== "private")
+  );
 }
 
 /**
  * Get all base types (extends + implements + uses)
  */
-export function getAllBaseTypes(entity: UnifiedTypeEntity): SymbolId[] {
+export function get_all_base_types(entity: UnifiedTypeEntity): SymbolId[] {
   return [
     ...(entity.extends || []),
     ...(entity.implements || []),
-    ...(entity.uses || [])
+    ...(entity.uses || []),
   ];
 }
 
 /**
  * Create a class entity
  */
-export function createClassEntity(
+export function create_class_entity(
   id: SymbolId,
   name: SymbolName,
   location: Location,
@@ -294,14 +302,14 @@ export function createClassEntity(
     location,
     language,
     node_type: "class_declaration",
-    ...options
+    ...options,
   };
 }
 
 /**
  * Create an interface entity
  */
-export function createInterfaceEntity(
+export function create_interface_entity(
   id: SymbolId,
   name: SymbolName,
   location: Location,
@@ -316,29 +324,29 @@ export function createInterfaceEntity(
     location,
     language,
     node_type: "interface_declaration",
-    ...options
+    ...options,
   };
 }
 
 /**
  * Check for diamond inheritance
  */
-export function findDiamondProblems(
+export function find_diamond_problems(
   hierarchy: InheritanceHierarchy
 ): DiamondProblem[] {
   const problems: DiamondProblem[] = [];
-  
+
   // For each entity, find if it has multiple paths to any ancestor
   for (const [entityId, entity] of hierarchy.entities) {
     const pathsToAncestors = new Map<SymbolId, SymbolId[][]>();
-    
+
     // Track all paths to each ancestor
     const visited = new Set<SymbolId>();
     const findPaths = (current: SymbolId, path: SymbolId[]) => {
       if (visited.has(current)) return;
       visited.add(current);
-      
-      const bases = getAllBaseTypes(hierarchy.entities.get(current)!);
+
+      const bases = get_all_base_types(hierarchy.entities.get(current)!);
       for (const base of bases) {
         const newPath = [...path, base];
         const existing = pathsToAncestors.get(base) || [];
@@ -346,19 +354,19 @@ export function findDiamondProblems(
         findPaths(base, newPath);
       }
     };
-    
+
     findPaths(entityId, [entityId]);
-    
+
     // Check for multiple paths
     for (const [ancestor, paths] of pathsToAncestors) {
       if (paths.length > 1) {
         problems.push({
           base: ancestor,
-          paths
+          paths,
         });
       }
     }
   }
-  
+
   return problems;
 }

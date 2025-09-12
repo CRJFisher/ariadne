@@ -11,6 +11,7 @@ export {
   ParameterInferenceContext,
   // Main API function that should be used by file_analyzer.ts
   infer_parameter_types,
+  infer_all_parameter_types,
   // Also keep extract_parameters for backward compatibility
   extract_parameters,
 } from './parameter_type_inference';

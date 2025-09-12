@@ -123,6 +123,15 @@ export function find_function_calls_with_queries(
 
 ## Transformation Steps
 
+### 0. Migrate Functions from code_graph.ts [COMPLETED]
+
+**STATUS**: ✅ The function `create_call_graph` (previously `build_call_graph`) has been successfully moved to `call_chain_analysis/call_chain_analysis.ts`.
+
+**Type Cleanup Requirements**:
+- Only the output type `CallGraph` needs to remain public in `packages/types`
+- All internal AST processing types should be DELETED from the types package (not deprecated)
+- Types that are only used internally for AST traversal (like intermediate call tracking types) should be made local to the module or removed with query-based approach
+
 ### 1. Document Call Patterns
 - [ ] Simple function calls
 - [ ] Qualified calls (module.function)
