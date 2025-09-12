@@ -218,7 +218,7 @@ export function isSymbolUsage(value: unknown): value is SymbolUsage {
 /**
  * Create a unified symbol
  */
-export function createSymbolDefinition(
+export function create_symbol_definition(
   id: SymbolId,
   name: SymbolName,
   kind: SymbolKind,
@@ -234,7 +234,7 @@ export function createSymbolDefinition(
     location,
     language,
     scope_path,
-    node_type: getNodeTypeForKind(kind),
+    node_type: get_node_type_for_kind(kind),
     ...options
   };
 }
@@ -242,7 +242,7 @@ export function createSymbolDefinition(
 /**
  * Get tree-sitter node type for symbol kind
  */
-function getNodeTypeForKind(kind: SymbolKind): string {
+function get_node_type_for_kind(kind: SymbolKind): string {
   switch (kind) {
     case "function": return "function_declaration";
     case "class": return "class_declaration";
@@ -262,7 +262,7 @@ function getNodeTypeForKind(kind: SymbolKind): string {
 /**
  * Check if a symbol is public
  */
-export function isPublicSymbol(symbol: UnifiedSymbol): boolean {
+export function is_public_symbol(symbol: UnifiedSymbol): boolean {
   return symbol.visibility === "public" || 
          (!symbol.visibility && symbol.is_exported === true);
 }
@@ -270,7 +270,7 @@ export function isPublicSymbol(symbol: UnifiedSymbol): boolean {
 /**
  * Check if a symbol is accessible from a given scope
  */
-export function isSymbolAccessible(
+export function is_symbol_accessible(
   symbol: UnifiedSymbol,
   from_scope: ScopePath
 ): boolean {
@@ -302,14 +302,14 @@ export function isSymbolAccessible(
 /**
  * Build a scope path from components
  */
-export function buildScopePath(components: string[]): ScopePath {
+export function build_scope_path(components: string[]): ScopePath {
   return components.join('.') as ScopePath;
 }
 
 /**
  * Get parent scope path
  */
-export function getParentScope(scope_path: ScopePath): ScopePath | undefined {
+export function get_parent_scope(scope_path: ScopePath): ScopePath | undefined {
   const components = scope_path.split('.');
   if (components.length <= 1) return undefined;
   return components.slice(0, -1).join('.') as ScopePath;

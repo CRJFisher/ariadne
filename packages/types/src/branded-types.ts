@@ -107,56 +107,56 @@ export type CallType =
 // Type Guards
 // ============================================================================
 
-export function isSymbolName(value: unknown): value is SymbolName {
+export function is_symbol_name(value: unknown): value is SymbolName {
   return typeof value === 'string' && value.length > 0;
 }
 
-export function isSymbolId(value: unknown): value is SymbolId {
+export function is_symbol_id(value: unknown): value is SymbolId {
   return typeof value === 'string' && value.includes(':');
 }
 
-export function isCallerName(value: unknown): value is CallerName {
+export function is_caller_name(value: unknown): value is CallerName {
   return typeof value === 'string' && value.length > 0;
 }
 
-export function isCalleeName(value: unknown): value is CalleeName {
+export function is_callee_name(value: unknown): value is CalleeName {
   return typeof value === 'string' && value.length > 0;
 }
 
-export function isReceiverName(value: unknown): value is ReceiverName {
+export function is_receiver_name(value: unknown): value is ReceiverName {
   return typeof value === 'string' && value.length > 0;
 }
 
-export function isModuleContext(value: unknown): value is ModuleContext {
+export function is_module_context(value: unknown): value is ModuleContext {
   return value === MODULE_CONTEXT;
 }
 
-export function isCallerContext(value: unknown): value is CallerContext {
-  return isCallerName(value) || isModuleContext(value);
+export function is_caller_context(value: unknown): value is CallerContext {
+  return is_caller_name(value) || is_module_context(value);
 }
 
-export function isTypeConstraint(value: unknown): value is TypeConstraint {
+export function is_type_constraint(value: unknown): value is TypeConstraint {
   return typeof value === 'string' && value.length > 0;
 }
 
-export function isDefaultValue(value: unknown): value is DefaultValue {
+export function is_default_value(value: unknown): value is DefaultValue {
   return typeof value === 'string';
 }
 
-export function isExpression(value: unknown): value is Expression {
+export function is_expression(value: unknown): value is Expression {
   return typeof value === 'string';
 }
 
-export function isScopePath(value: unknown): value is ScopePath {
+export function is_scope_path(value: unknown): value is ScopePath {
   return typeof value === 'string' && value.includes('.');
 }
 
-export function isVisibility(value: unknown): value is Visibility {
+export function is_visibility(value: unknown): value is Visibility {
   return value === "public" || value === "private" || 
          value === "protected" || value === "internal";
 }
 
-export function isResolutionReason(value: unknown): value is ResolutionReason {
+export function is_resolution_reason(value: unknown): value is ResolutionReason {
   return value === "imported" || value === "local_definition" ||
          value === "class_member" || value === "inherited" ||
          value === "builtin" || value === "global" || value === "unknown";
@@ -166,68 +166,68 @@ export function isResolutionReason(value: unknown): value is ResolutionReason {
 // Branded Type Creators (cast functions with validation)
 // ============================================================================
 
-export function toSymbolName(value: string): SymbolName {
+export function to_symbol_name(value: string): SymbolName {
   if (!value || value.length === 0) {
     throw new Error(`Invalid SymbolName: "${value}"`);
   }
   return value as SymbolName;
 }
 
-export function toSymbolId(value: string): SymbolId {
+export function to_symbol_id(value: string): SymbolId {
   if (!value || !value.includes(':')) {
     throw new Error(`Invalid SymbolId format: "${value}". Expected format: "file:line:column:name"`);
   }
   return value as SymbolId;
 }
 
-export function toCallerName(value: string): CallerName {
+export function to_caller_name(value: string): CallerName {
   if (!value || value.length === 0) {
     throw new Error(`Invalid CallerName: "${value}"`);
   }
   return value as CallerName;
 }
 
-export function toCalleeName(value: string): CalleeName {
+export function to_callee_name(value: string): CalleeName {
   if (!value || value.length === 0) {
     throw new Error(`Invalid CalleeName: "${value}"`);
   }
   return value as CalleeName;
 }
 
-export function toReceiverName(value: string): ReceiverName {
+export function to_receiver_name(value: string): ReceiverName {
   if (!value || value.length === 0) {
     throw new Error(`Invalid ReceiverName: "${value}"`);
   }
   return value as ReceiverName;
 }
 
-export function toTypeConstraint(value: string): TypeConstraint {
+export function to_type_constraint(value: string): TypeConstraint {
   if (!value || value.length === 0) {
     throw new Error(`Invalid TypeConstraint: "${value}"`);
   }
   return value as TypeConstraint;
 }
 
-export function toDefaultValue(value: string): DefaultValue {
+export function to_default_value(value: string): DefaultValue {
   return value as DefaultValue;
 }
 
-export function toExpression(value: string): Expression {
+export function to_expression(value: string): Expression {
   return value as Expression;
 }
 
-export function toInitialValue(value: string): InitialValue {
+export function to_initial_value(value: string): InitialValue {
   return value as InitialValue;
 }
 
-export function toTypeExpression(value: string): TypeExpression {
+export function to_type_expression(value: string): TypeExpression {
   if (!value || value.length === 0) {
     throw new Error(`Invalid TypeExpression: "${value}"`);
   }
   return value as TypeExpression;
 }
 
-export function toScopePath(value: string): ScopePath {
+export function to_scope_path(value: string): ScopePath {
   if (!value || !value.includes('.')) {
     throw new Error(`Invalid ScopePath format: "${value}". Expected format: "scope1.scope2.scope3"`);
   }
@@ -244,7 +244,7 @@ import { Location } from "./common";
 /**
  * Build a SymbolId from components
  */
-export function buildSymbolId(
+export function build_symbol_id(
   filePath: FilePath,
   line: number,
   column: number,
@@ -256,7 +256,7 @@ export function buildSymbolId(
 /**
  * Parse a SymbolId into components
  */
-export function parseSymbolId(id: SymbolId): {
+export function parse_symbol_id(id: SymbolId): {
   filePath: FilePath;
   line: number;
   column: number;
@@ -284,7 +284,7 @@ export function parseSymbolId(id: SymbolId): {
 /**
  * Build a ScopePath from scope names
  */
-export function buildScopePath(scopes: string[]): ScopePath {
+export function build_scope_path(scopes: string[]): ScopePath {
   if (scopes.length === 0) {
     throw new Error("ScopePath requires at least one scope");
   }
@@ -294,14 +294,14 @@ export function buildScopePath(scopes: string[]): ScopePath {
 /**
  * Parse a ScopePath into scope names
  */
-export function parseScopePath(path: ScopePath): string[] {
+export function parse_scope_path(path: ScopePath): string[] {
   return path.split('.');
 }
 
 /**
  * Build a QualifiedName from components
  */
-export function buildQualifiedName(
+export function build_qualified_name(
   className: ClassName,
   memberName: MethodName | FunctionName
 ): QualifiedName {
@@ -311,7 +311,7 @@ export function buildQualifiedName(
 /**
  * Parse a QualifiedName into components
  */
-export function parseQualifiedName(name: QualifiedName): {
+export function parse_qualified_name(name: QualifiedName): {
   className: ClassName;
   memberName: string;
 } {
@@ -338,7 +338,7 @@ import { ModulePath } from "./aliases";
 /**
  * Build a ModulePath from components
  */
-export function buildModulePath(
+export function build_module_path(
   source: string,
   isRelative: boolean = false
 ): ModulePath {
@@ -361,7 +361,7 @@ export function buildModulePath(
 /**
  * Parse a ModulePath into components
  */
-export function parseModulePath(path: ModulePath): {
+export function parse_module_path(path: ModulePath): {
   segments: string[];
   isRelative: boolean;
   isScoped: boolean;
@@ -399,7 +399,7 @@ export function parseModulePath(path: ModulePath): {
 /**
  * Build a TypeExpression from components
  */
-export function buildTypeExpression(
+export function build_type_expression(
   base: string,
   generics?: string[],
   modifiers?: TypeModifier[]
@@ -434,7 +434,7 @@ export function buildTypeExpression(
     }
   }
   
-  return toTypeExpression(expr);
+  return to_type_expression(expr);
 }
 
 export type TypeModifier = 'array' | 'nullable' | 'optional' | 'promise' | 'readonly';
@@ -442,7 +442,7 @@ export type TypeModifier = 'array' | 'nullable' | 'optional' | 'promise' | 'read
 /**
  * Parse a TypeExpression into components
  */
-export function parseTypeExpression(expr: TypeExpression): {
+export function parse_type_expression(expr: TypeExpression): {
   base: string;
   generics?: string[];
   isArray: boolean;
@@ -496,29 +496,29 @@ export function parseTypeExpression(expr: TypeExpression): {
 /**
  * Build a ResolutionPath from file paths
  */
-export function buildResolutionPath(paths: FilePath[]): ResolutionPath {
+export function build_resolution_path(paths: FilePath[]): ResolutionPath {
   return paths.join(' -> ') as ResolutionPath;
 }
 
 /**
  * Parse a ResolutionPath into file paths
  */
-export function parseResolutionPath(path: ResolutionPath): FilePath[] {
+export function parse_resolution_path(path: ResolutionPath): FilePath[] {
   return path.split(' -> ').map(p => p.trim() as FilePath);
 }
 
 /**
  * Build a compound identifier (e.g., "module:class:method")
  */
-export function buildCompoundIdentifier(
+export function build_compound_identifier(
   ...parts: string[]
 ): string {
   return parts.filter(p => p.length > 0).join(':');
 }
 
 /**
- * Parse a compound identifier
+ * Parse a compound identifier  
  */
-export function parseCompoundIdentifier(id: string): string[] {
+export function parse_compound_identifier(id: string): string[] {
   return id.split(':').filter(p => p.length > 0);
 }

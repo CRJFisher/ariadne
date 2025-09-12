@@ -16,7 +16,6 @@ import { SemanticNode, Resolution } from "./base-query-types";
  */
 interface BaseImport extends SemanticNode {
   readonly source: ModulePath;           // Module being imported from
-  readonly location: Location;           // Location in source
   readonly is_type_only?: boolean;       // TypeScript type-only import
   readonly is_dynamic?: boolean;         // Dynamic import()
 }
@@ -76,7 +75,6 @@ export interface SideEffectImport extends BaseImport {
  * Base export information
  */
 interface BaseExport extends SemanticNode {
-  readonly location: Location;
   readonly is_type_only?: boolean;      // TypeScript type-only export
 }
 

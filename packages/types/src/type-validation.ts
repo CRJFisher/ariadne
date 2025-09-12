@@ -30,8 +30,8 @@ import {
   is_call_info,
 } from "./unified-call-types";
 import {
-  isUnifiedSymbol,
-  isUnifiedScope,
+  is_unified_symbol,
+  is_unified_scope,
   isSymbolUsage,
 } from "./unified-symbol-scope-types";
 import {
@@ -51,15 +51,15 @@ import {
   is_inferred_type,
 } from "./unified-type-analysis-types";
 import {
-  isUnifiedTypeEntity,
-  isUnifiedMember,
+  is_unified_type_entity,
+  is_unified_member,
   isInheritanceRelation,
 } from "./unified-inheritance-types";
 import {
   isTypedQueryCapture,
   isQueryProcessor,
   isLanguageConfiguration,
-} from "./query-integration-types";
+} from "./query_integration_types";
 
 // ============================================================================
 // Validation Result Types
@@ -244,7 +244,7 @@ export function validateASTNode(
 /**
  * Deep validation for UnifiedCallInfo
  */
-export function validateUnifiedCallInfo(
+export function validate_call_info(
   value: unknown,
   path = "call"
 ): ValidationResult<any> {
@@ -254,9 +254,9 @@ export function validateUnifiedCallInfo(
   if (!is_call_info(value)) {
     errors.push({
       path,
-      expected: "UnifiedCallInfo",
+      expected: "CallInfo",
       actual: value,
-      message: "Value is not a valid UnifiedCallInfo",
+      message: "Value is not a valid CallInfo",
     });
     return { valid: false, errors, warnings };
   }
@@ -326,21 +326,21 @@ export function validateUnifiedCallInfo(
 }
 
 /**
- * Deep validation for UnifiedSymbol
+ * Deep validation for Symbol
  */
-export function validateUnifiedSymbol(
+export function validate_unified_symbol(
   value: unknown,
   path = "symbol"
 ): ValidationResult<any> {
   const errors: ValidationError[] = [];
   const warnings: ValidationWarning[] = [];
 
-  if (!isUnifiedSymbol(value)) {
+  if (!is_unified_symbol(value)) {
     errors.push({
       path,
-      expected: "UnifiedSymbol",
+      expected: "Symbol",
       actual: value,
-      message: "Value is not a valid UnifiedSymbol",
+      message: "Value is not a valid Symbol",
     });
     return { valid: false, errors, warnings };
   }
@@ -636,14 +636,14 @@ export const TypeGuards = {
   isQueryError,
 
   // Unified call types
-  isFunctionCall,
-  isMethodCall,
-  isConstructorCall,
-  is_unified_call_info,
+  is_function_call,
+  is_method_call,
+  is_constructor_call,
+  is_call_info,
 
   // Unified symbol/scope types
-  isUnifiedSymbol,
-  isUnifiedScope,
+  is_unified_symbol,
+  is_unified_scope,
   isSymbolUsage,
 
   // Unified import/export types
@@ -657,13 +657,13 @@ export const TypeGuards = {
   isReExport,
 
   // Unified type analysis types
-  isTypeDefinition,
-  isTypeMember,
-  isTrackedType,
+  is_type_definition,
+  is_type_member,
+  is_tracked_type,
 
   // Unified inheritance types
-  isUnifiedTypeEntity,
-  isUnifiedMember,
+  is_unified_type_entity,
+  is_unified_member,
   isInheritanceRelation,
 
   // Query integration types

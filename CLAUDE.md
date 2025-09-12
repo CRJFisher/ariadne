@@ -33,21 +33,6 @@ Use S-expression syntax to match AST patterns:
     property: (property_identifier) @method.name))
 ```
 
-### Query Guidelines
-
-- **Capture Names**: Use dot notation for hierarchy (`@function.name`, `@class.body`)
-- **Comments**: Document complex patterns with `;` comments
-- **Testing**: Test queries against fixtures in all supported languages
-- **Performance**: Keep queries focused and specific
-- **Language Parity**: Ensure equivalent features across languages
-
-### Query Development Process
-
-1. **Explore AST**: Use `tree-sitter parse` to understand node structure
-2. **Write Patterns**: Create .scm files with capture patterns
-3. **Test Queries**: Verify against fixtures
-4. **Process Results**: Transform captures into structured data
-
 ## Code Style Guidelines
 
 ### Naming Conventions
@@ -60,7 +45,6 @@ Use S-expression syntax to match AST patterns:
 
 ### Code Structure
 
-- **File Size**: Keep files under 32KB (tree-sitter parsing limit)
 - **Functional Style**: Prefer pure functions over stateful classes
 - **Exports**: Only export what is actually used by external modules
 - **Dependencies**: Check existing libraries before adding new ones
@@ -124,55 +108,9 @@ module_name/
 - **Test real scenarios** - Use realistic code samples
 - **Document gaps** - Note any untested edge cases
 
-## Module Organization
+## Documentation
 
-### Standard Structure
-
-Every module follows this pattern:
-
-```text
-src/[category]/[feature]/
-├── index.ts              # Exports only
-├── [feature].ts          # Core logic with queries
-├── queries/              # Language-specific patterns
-│   ├── javascript.scm
-│   ├── typescript.scm
-│   ├── python.scm
-│   └── rust.scm
-└── [feature].test.ts     # Comprehensive tests
-```
-
-### Query Integration
-
-```typescript
-// Load and execute queries
-const queryText = readFileSync(`queries/${language}.scm`);
-const query = new Query(getLanguage(language), queryText);
-const matches = query.matches(ast.rootNode);
-
-// Process results
-const results = processMatches(matches);
-```
-
-## Development Best Practices
-
-### Query Development
-
-- Start with common patterns across languages
-- Add language-specific patterns as needed
-- Test queries incrementally
-- Cache compiled queries for performance
-
-### Code Quality
-
-- Keep modules focused on single responsibility
-- Write self-documenting code
-- Add tests before marking tasks complete
-- Review changes for consistency with architecture
-
-### Documentation
-
-- Write comments etc in a 'timeless' way i.e. don't make reference to the change process / new architecture / old way of doing thing in any way. The documentation is for how to build things going forward, not as a record of what changes have been made.
+- Write comments etc in a 'timeless' way i.e. don't make reference to the change process / new architecture / old way of doing thing in any way. The documentation is for how to build things going forward, not as a record of what changes have been made. The namings are focussed on the concepts they describe and shouldn't include any sense of the change being made.
 
 ## Critical Reminders
 
