@@ -321,10 +321,27 @@ export function resolve_constructor_call(
  * Generic symbol resolution using configuration
  */
 function resolve_symbol_generic(
+  symbol: SymbolId,
+  scope_id: string,
+  context: FileResolutionContext
+): SymbolId | undefined;
+
+// Legacy overload for migration compatibility
+function resolve_symbol_generic(
   symbol_name: string,
   scope_id: string,
   context: FileResolutionContext
+): SymbolId | undefined;
+
+function resolve_symbol_generic(
+  symbol_or_name: SymbolId | string,
+  scope_id: string,
+  context: FileResolutionContext
 ): SymbolId | undefined {
+  // Extract symbol name for lookup
+  const symbol_name = typeof symbol_or_name === 'string' && !symbol_or_name.includes(':')
+    ? symbol_or_name
+    : symbol_or_name.split(':').pop() || '';
   const { file_analysis, global_symbols, config, language } = context;
 
   // Check if it's a special symbol
@@ -383,10 +400,26 @@ function resolve_symbol_generic(
  * Resolve symbol in local scope
  */
 function resolve_in_local_scope(
+  symbol: SymbolId,
+  scope_id: string,
+  file_analysis: FileAnalysis
+): SymbolId | undefined;
+
+// Legacy overload
+function resolve_in_local_scope(
   symbol_name: string,
   scope_id: string,
   file_analysis: FileAnalysis
+): SymbolId | undefined;
+
+function resolve_in_local_scope(
+  symbol_or_name: SymbolId | string,
+  scope_id: string,
+  file_analysis: FileAnalysis
 ): SymbolId | undefined {
+  const symbol_name = typeof symbol_or_name === 'string' && !symbol_or_name.includes(':')
+    ? symbol_or_name
+    : symbol_or_name.split(':').pop() || '';
   const scope = file_analysis.scopes.nodes.get(scope_id);
   if (!scope) return undefined;
 
@@ -409,11 +442,28 @@ function resolve_in_local_scope(
  * Resolve symbol in parent scopes
  */
 function resolve_in_parent_scopes(
+  symbol: SymbolId,
+  scope_id: string,
+  file_analysis: FileAnalysis,
+  config: SymbolResolutionConfig
+): SymbolId | undefined;
+
+function resolve_in_parent_scopes(
   symbol_name: string,
   scope_id: string,
   file_analysis: FileAnalysis,
   config: SymbolResolutionConfig
+): SymbolId | undefined;
+
+function resolve_in_parent_scopes(
+  symbol_or_name: SymbolId | string,
+  scope_id: string,
+  file_analysis: FileAnalysis,
+  config: SymbolResolutionConfig
 ): SymbolId | undefined {
+  const symbol_name = typeof symbol_or_name === 'string' && !symbol_or_name.includes(':')
+    ? symbol_or_name
+    : symbol_or_name.split(':').pop() || '';
   const scope_chain = get_scope_chain(file_analysis.scopes, scope_id);
 
   // Skip the current scope (already checked)

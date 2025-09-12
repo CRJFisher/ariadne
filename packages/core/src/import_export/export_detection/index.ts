@@ -10,7 +10,7 @@
  * - 15% bespoke: Language-specific handlers for unique patterns
  */
 
-import { Language, ExportInfo } from '@ariadnejs/types';
+import { Language, ExportInfo, SymbolId } from '@ariadnejs/types';
 import { SyntaxNode } from 'tree-sitter';
 
 // Import main detection functions
@@ -159,11 +159,29 @@ export function get_module_interface(
  * Check if a symbol is exported
  */
 export function is_symbol_exported(
+  symbol: SymbolId,
+  root_node: SyntaxNode,
+  source_code: string,
+  language: Language
+): boolean;
+
+// Legacy overload
+export function is_symbol_exported(
   symbol_name: string,
   root_node: SyntaxNode,
   source_code: string,
   language: Language
+): boolean;
+
+export function is_symbol_exported(
+  symbol_or_name: SymbolId | string,
+  root_node: SyntaxNode,
+  source_code: string,
+  language: Language
 ): boolean {
+  const symbol_name = typeof symbol_or_name === 'string' && !symbol_or_name.includes(':')
+    ? symbol_or_name
+    : symbol_or_name.split(':').pop() || '';
   const exported_names = get_exported_names(root_node, source_code, language);
   return exported_names.has(symbol_name);
 }

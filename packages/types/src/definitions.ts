@@ -25,7 +25,7 @@ import {
   InitialValue,
   TypeExpression,
   Visibility,
-} from "./branded-types";
+} from "./branded_types";
 import { SymbolName, SymbolId } from "./symbol_utils";
 
 /**
@@ -59,7 +59,7 @@ export interface FunctionDefinition {
   readonly signature: FunctionSignature;
   readonly metadata?: FunctionMetadata;
   readonly docstring?: DocString;
-  readonly decorators?: readonly DecoratorName[];
+  readonly decorators: readonly DecoratorName[]; // Always present, defaults to empty array
   readonly is_exported: boolean;
   readonly is_arrow_function: boolean; // For JS/TS
   readonly is_anonymous: boolean;
@@ -70,17 +70,17 @@ export interface FunctionDefinition {
  * Class definition with all metadata
  */
 export interface ClassDefinition extends Definition {
-  readonly extends?: readonly string[];
-  readonly implements?: readonly string[];
+  readonly extends: readonly string[]; // Always present, defaults to empty array
+  readonly implements: readonly string[]; // Always present, defaults to empty array
   readonly is_abstract: boolean;
   readonly is_final: boolean;
   readonly is_interface: boolean;
   readonly is_trait: boolean;
   readonly is_mixin: boolean;
-  readonly generics?: readonly GenericParameter[];
+  readonly generics: readonly GenericParameter[]; // Always present, defaults to empty array
   readonly methods: readonly MethodDefinition[];
   readonly properties: readonly PropertyDefinition[];
-  readonly decorators?: readonly string[];
+  readonly decorators: readonly string[]; // Always present, defaults to empty array
   readonly docstring?: string;
   readonly is_exported: boolean;
 }

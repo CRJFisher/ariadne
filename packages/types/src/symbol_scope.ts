@@ -5,7 +5,7 @@
 
 import { Location, Language } from "./common";
 import { FilePath, DocString } from "./aliases";
-import { ScopePath, Visibility, TypeExpression } from "./branded-types";
+import { ScopePath, Visibility, TypeExpression } from "./branded_types";
 import { SymbolName } from "./symbol_utils";
 import { SymbolId } from "./symbol_utils";
 import { SemanticNode, Resolution } from "./query";

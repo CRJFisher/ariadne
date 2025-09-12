@@ -11,7 +11,7 @@
  * - Handle interface/trait method implementations
  */
 
-import { MethodCallInfo } from '@ariadnejs/types';
+import { MethodCallInfo, SymbolId } from '@ariadnejs/types';
 import type { ClassHierarchy, ClassNode } from '@ariadnejs/types';
 
 /**
@@ -109,10 +109,30 @@ interface MethodResolution {
  * @returns Resolution information or undefined if not found
  */
 export function resolve_method_in_hierarchy(
+  class_symbol: SymbolId,
+  method_symbol: SymbolId,
+  hierarchy: ClassHierarchy
+): MethodResolution | undefined;
+
+// Legacy overload
+export function resolve_method_in_hierarchy(
   class_name: string,
   method_name: string,
   hierarchy: ClassHierarchy
+): MethodResolution | undefined;
+
+export function resolve_method_in_hierarchy(
+  class_name_or_symbol: string | SymbolId,
+  method_name_or_symbol: string | SymbolId,
+  hierarchy: ClassHierarchy
 ): MethodResolution | undefined {
+  // Extract names for lookup
+  const class_name = typeof class_name_or_symbol === 'string' && !class_name_or_symbol.includes(':')
+    ? class_name_or_symbol
+    : class_name_or_symbol.split(':').pop() || '';
+  const method_name = typeof method_name_or_symbol === 'string' && !method_name_or_symbol.includes(':')
+    ? method_name_or_symbol
+    : method_name_or_symbol.split(':').pop() || '';
   const visited = new Set<string>();
   const override_chain: string[] = [];
   

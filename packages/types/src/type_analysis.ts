@@ -5,7 +5,7 @@
 
 import { Location, Language } from "./common";
 import { FilePath } from "./aliases";
-import { TypeExpression, ResolvedTypeKind } from "./branded-types";
+import { TypeExpression, ResolvedTypeKind } from "./branded_types";
 import { SymbolName } from "./symbol_utils";
 import { SymbolId } from "./symbol_utils";
 import { SemanticNode, Resolution, ResolutionConfidence } from "./query";
