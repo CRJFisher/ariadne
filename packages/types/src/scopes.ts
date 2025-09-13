@@ -1,5 +1,5 @@
 import { ScopeId } from "./aliases";
-import { SymbolName, SymbolId } from "./symbol_utils";
+import { SymbolName, SymbolId, SymbolKind } from "./symbol_utils";
 import { Location } from "./common";
 
 /**
@@ -14,19 +14,7 @@ export type ScopeType =
   | "parameter" // Function parameter scope
   | "local"; // Local/let/const scope
 
-export type SymbolKind =
-  | "variable"
-  | "function"
-  | "class"
-  | "module"
-  | "interface"
-  | "enum"
-  | "type"
-  | "alias"
-  | "namespace"
-  | "import"
-  | "export"
-  | "local";
+// SymbolKind type moved to symbol_utils.ts
 
 /**
  * Symbol information within a scope
@@ -38,7 +26,7 @@ export interface ScopeSymbol {
   readonly is_hoisted: boolean; // var in JS, function declarations
   readonly is_imported: boolean; // Imported from another module
   readonly is_exported: boolean; // Exported from this module
-  readonly type_info?: string; // Type annotation if available
+  readonly type_info: string; // Defaults to "unknown" when type unavailable
 }
 
 /**

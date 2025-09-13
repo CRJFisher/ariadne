@@ -8,6 +8,7 @@ import { FilePath } from "./aliases";
 import { SymbolName } from "./symbol_utils";
 import { SymbolId } from "./symbol_utils";
 import { ASTNode, QueryCapture, QueryResult, QueryMetadata } from "./query";
+import { ValidationError, ValidationWarning } from "./type_validation";
 
 // ============================================================================
 // Typed Query Captures
@@ -89,19 +90,7 @@ export interface ValidationResult {
   readonly warnings?: readonly ValidationWarning[];
 }
 
-export interface ValidationError {
-  readonly code: string;
-  readonly message: string;
-  readonly capture?: string;
-  readonly location?: Location;
-}
-
-export interface ValidationWarning {
-  readonly code: string;
-  readonly message: string;
-  readonly capture?: string;
-  readonly suggestion?: string;
-}
+// ValidationError and ValidationWarning moved to type_validation.ts
 
 // ============================================================================
 // Language Configuration Types

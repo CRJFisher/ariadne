@@ -3,7 +3,7 @@
  * across all type analysis modules
  */
 
-import { Location, Language } from "./common";
+import { Location, Language, TypeParameter } from "./common";
 import { FilePath } from "./aliases";
 import { TypeExpression, ResolvedTypeKind } from "./branded_types";
 import { SymbolName } from "./symbol_utils";
@@ -44,15 +44,8 @@ export interface TypeDefinition extends SemanticNode {
   readonly is_optional: boolean;
 }
 
-/**
- * Type parameter with variance
- */
-export interface TypeParameter {
-  readonly name: SymbolId;
-  readonly constraint?: TypeExpression;
-  readonly default?: TypeExpression;
-  readonly variance?: "covariant" | "contravariant" | "invariant";
-}
+// TypeParameter interface moved to common.ts
+// Note: This version had 'variance' property - consider adding to common.ts if needed
 
 /**
  * Type constraint

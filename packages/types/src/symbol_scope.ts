@@ -3,33 +3,18 @@
  * symbol representation and scope hierarchy across all modules
  */
 
-import { Location, Language } from "./common";
+import { Location, Language, TypeParameter } from "./common";
 import { FilePath, DocString } from "./aliases";
 import { ScopePath, Visibility, TypeExpression } from "./branded_types";
-import { SymbolName } from "./symbol_utils";
-import { SymbolId } from "./symbol_utils";
+import { SymbolName, SymbolId, SymbolKind } from "./symbol_utils";
 import { SemanticNode, Resolution } from "./query";
+import { ScopeType } from "./scopes";
 
 // ============================================================================
 // Symbol Types
 // ============================================================================
 
-/**
- * Core symbol kinds - simplified from multiple overlapping enums
- */
-export type SymbolKind =
-  | "variable" // let, const, var
-  | "function" // Function declarations/expressions
-  | "class" // Classes
-  | "interface" // Interfaces/protocols
-  | "type" // Type aliases
-  | "enum" // Enumerations
-  | "namespace" // Namespaces/modules
-  | "parameter" // Function parameters
-  | "property" // Class/object properties
-  | "method" // Class methods
-  | "import" // Import statements
-  | "export"; // Export statements
+// SymbolKind type moved to symbol_utils.ts
 
 /**
  * Symbol definition that extends SemanticNode
@@ -63,28 +48,13 @@ export interface Symbol extends SemanticNode {
   readonly child_symbols: readonly SymbolId[]; // Nested symbols - always present, defaults to empty array
 }
 
-/**
- * Simplified type parameter
- */
-export interface TypeParameter {
-  readonly name: SymbolId;
-  readonly constraint?: TypeExpression;
-  readonly default?: TypeExpression;
-}
+// TypeParameter interface moved to common.ts
 
 // ============================================================================
 // Unified Scope Types
 // ============================================================================
 
-/**
- * Simplified scope types
- */
-export type ScopeType =
-  | "global" // File/module level
-  | "class" // Class/interface/trait body
-  | "function" // Function/method body
-  | "block" // Block scope (if/for/while)
-  | "namespace"; // Namespace/module scope
+// ScopeType moved to scopes.ts
 
 /**
  * Unified scope node
@@ -108,17 +78,7 @@ export interface Scope extends SemanticNode {
 // Symbol Resolution Types
 // ============================================================================
 
-/**
- * Result of symbol resolution
- */
-export interface ResolvedSymbol {
-  readonly symbol: Symbol;
-  readonly resolution: Resolution<{
-    readonly definition_location: Location;
-    readonly definition_file: FilePath;
-    readonly import_chain?: readonly ImportStep[];
-  }>;
-}
+// ResolvedSymbol interface moved to symbols.ts
 
 /**
  * Step in an import resolution chain
@@ -134,15 +94,7 @@ export interface ImportStep {
 // Symbol Index Types
 // ============================================================================
 
-/**
- * Symbol index for a file or project
- */
-export interface SymbolIndex {
-  readonly symbols: ReadonlyMap<SymbolId, Symbol>;
-  readonly scopes: ReadonlyMap<ScopePath, Scope>;
-  readonly file_symbols: ReadonlyMap<FilePath, readonly SymbolId[]>;
-  readonly unresolved: ReadonlySet<SymbolName>;
-}
+// SymbolIndex interface moved to symbols.ts
 
 // ============================================================================
 // Usage and Reference Types
@@ -275,6 +227,8 @@ function get_node_type_for_kind(kind: SymbolKind): string {
       return "import_statement";
     case "export":
       return "export_statement";
+    default:
+      return "unknown";
   }
 }
 
