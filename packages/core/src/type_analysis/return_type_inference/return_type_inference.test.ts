@@ -49,8 +49,8 @@ function getUndefined() {
         const def = createDef('getString', 'function');
         const result = infer_function_return_type(def, stringFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('string');
-        expect(result?.confidence).toBe('inferred');
+        expect(result!.type_name).toBe('string');
+        expect(result!.confidence).toBe('inferred');
       }
 
       // Test number literal
@@ -59,8 +59,8 @@ function getUndefined() {
         const def = createDef('getNumber', 'function');
         const result = infer_function_return_type(def, numberFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('number');
-        expect(result?.confidence).toBe('inferred');
+        expect(result!.type_name).toBe('number');
+        expect(result!.confidence).toBe('inferred');
       }
 
       // Test boolean literal
@@ -69,8 +69,8 @@ function getUndefined() {
         const def = createDef('getBoolean', 'function');
         const result = infer_function_return_type(def, boolFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('boolean');
-        expect(result?.confidence).toBe('inferred');
+        expect(result!.type_name).toBe('boolean');
+        expect(result!.confidence).toBe('inferred');
       }
 
       // Test null literal
@@ -79,8 +79,8 @@ function getUndefined() {
         const def = createDef('getNull', 'function');
         const result = infer_function_return_type(def, nullFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('null');
-        expect(result?.confidence).toBe('inferred');
+        expect(result!.type_name).toBe('null');
+        expect(result!.confidence).toBe('inferred');
       }
 
       // Test undefined literal
@@ -89,8 +89,8 @@ function getUndefined() {
         const def = createDef('getUndefined', 'function');
         const result = infer_function_return_type(def, undefFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('undefined');
-        expect(result?.confidence).toBe('inferred');
+        expect(result!.type_name).toBe('undefined');
+        expect(result!.confidence).toBe('inferred');
       }
     });
 
@@ -116,7 +116,7 @@ function getObject() {
         const def = createDef('getArray', 'function');
         const result = infer_function_return_type(def, arrayFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('Array');
+        expect(result!.type_name).toBe('Array');
       }
 
       const objectFunc = findFunction(tree.rootNode, 'getObject');
@@ -124,7 +124,7 @@ function getObject() {
         const def = createDef('getObject', 'function');
         const result = infer_function_return_type(def, objectFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('Object');
+        expect(result!.type_name).toBe('Object');
       }
     });
 
@@ -150,8 +150,8 @@ function createCustom() {
         const def = createDef('createDate', 'function');
         const result = infer_function_return_type(def, dateFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('Date');
-        expect(result?.confidence).toBe('inferred');
+        expect(result!.type_name).toBe('Date');
+        expect(result!.confidence).toBe('inferred');
       }
 
       const customFunc = findFunction(tree.rootNode, 'createCustom');
@@ -159,7 +159,7 @@ function createCustom() {
         const def = createDef('createCustom', 'function');
         const result = infer_function_return_type(def, customFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('MyClass');
+        expect(result!.type_name).toBe('MyClass');
       }
     });
 
@@ -185,8 +185,8 @@ function emptyReturn() {
         const def = createDef('noReturn', 'function');
         const result = infer_function_return_type(def, noReturnFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('undefined');
-        expect(result?.confidence).toBe('heuristic');
+        expect(result!.type_name).toBe('undefined');
+        expect(result!.confidence).toBe('heuristic');
       }
 
       const emptyReturnFunc = findFunction(tree.rootNode, 'emptyReturn');
@@ -194,8 +194,8 @@ function emptyReturn() {
         const def = createDef('emptyReturn', 'function');
         const result = infer_function_return_type(def, emptyReturnFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('undefined');
-        expect(result?.confidence).toBe('explicit');  // Empty return is explicit undefined
+        expect(result!.type_name).toBe('undefined');
+        expect(result!.confidence).toBe('explicit');  // Empty return is explicit undefined
       }
     });
 
@@ -217,7 +217,7 @@ async function fetchData() {
         const def = createDef('fetchData', 'function');
         const result = infer_function_return_type(def, asyncFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toContain('Promise');
+        expect(result!.type_name).toContain('Promise');
         expect(is_async_return_type(result!, 'javascript')).toBe(true);
       }
     });
@@ -242,7 +242,7 @@ function* generateNumbers() {
         const def = createDef('generateNumbers', 'function');
         const result = infer_function_return_type(def, genFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('Generator');
+        expect(result!.type_name).toBe('Generator');
         expect(is_generator_return_type(result!, 'javascript')).toBe(true);
       }
     });
@@ -275,8 +275,8 @@ function getVoid(): void {
         const def = createDef('getString', 'function');
         const result = infer_function_return_type(def, stringFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('string');
-        expect(result?.confidence).toBe('explicit');
+        expect(result!.type_name).toBe('string');
+        expect(result!.confidence).toBe('explicit');
       }
 
       const numberFunc = findFunction(tree.rootNode, 'getNumber');
@@ -284,8 +284,8 @@ function getVoid(): void {
         const def = createDef('getNumber', 'function');
         const result = infer_function_return_type(def, numberFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('number');
-        expect(result?.confidence).toBe('explicit');
+        expect(result!.type_name).toBe('number');
+        expect(result!.confidence).toBe('explicit');
       }
 
       const voidFunc = findFunction(tree.rootNode, 'getVoid');
@@ -293,8 +293,8 @@ function getVoid(): void {
         const def = createDef('getVoid', 'function');
         const result = infer_function_return_type(def, voidFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('void');
-        expect(result?.confidence).toBe('explicit');
+        expect(result!.type_name).toBe('void');
+        expect(result!.confidence).toBe('explicit');
       }
     });
 
@@ -320,8 +320,8 @@ function getPromise<T>(): Promise<T> {
         const def = createDef('getArray', 'function');
         const result = infer_function_return_type(def, arrayFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('T[]');
-        expect(result?.confidence).toBe('explicit');
+        expect(result!.type_name).toBe('T[]');
+        expect(result!.confidence).toBe('explicit');
       }
 
       const promiseFunc = findFunction(tree.rootNode, 'getPromise');
@@ -329,8 +329,8 @@ function getPromise<T>(): Promise<T> {
         const def = createDef('getPromise', 'function');
         const result = infer_function_return_type(def, promiseFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('Promise<T>');
-        expect(result?.confidence).toBe('explicit');
+        expect(result!.type_name).toBe('Promise<T>');
+        expect(result!.confidence).toBe('explicit');
       }
     });
   });
@@ -359,8 +359,8 @@ def get_none() -> None:
         const def = createDef('get_string', 'function');
         const result = infer_function_return_type(def, stringFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('str');
-        expect(result?.confidence).toBe('explicit');
+        expect(result!.type_name).toBe('str');
+        expect(result!.confidence).toBe('explicit');
       }
 
       const intFunc = findFunction(tree.rootNode, 'get_int');
@@ -368,8 +368,8 @@ def get_none() -> None:
         const def = createDef('get_int', 'function');
         const result = infer_function_return_type(def, intFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('int');
-        expect(result?.confidence).toBe('explicit');
+        expect(result!.type_name).toBe('int');
+        expect(result!.confidence).toBe('explicit');
       }
 
       const noneFunc = findFunction(tree.rootNode, 'get_none');
@@ -377,8 +377,8 @@ def get_none() -> None:
         const def = createDef('get_none', 'function');
         const result = infer_function_return_type(def, noneFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('None');
-        expect(result?.confidence).toBe('explicit');
+        expect(result!.type_name).toBe('None');
+        expect(result!.confidence).toBe('explicit');
       }
     });
 
@@ -405,8 +405,8 @@ def get_list():
         const def = createDef('get_string', 'function');
         const result = infer_function_return_type(def, stringFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('string');
-        expect(result?.confidence).toBe('inferred');
+        expect(result!.type_name).toBe('string');
+        expect(result!.confidence).toBe('inferred');
       }
 
       const intFunc = findFunction(tree.rootNode, 'get_int');
@@ -414,8 +414,8 @@ def get_list():
         const def = createDef('get_int', 'function');
         const result = infer_function_return_type(def, intFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('number');
-        expect(result?.confidence).toBe('inferred');
+        expect(result!.type_name).toBe('number');
+        expect(result!.confidence).toBe('inferred');
       }
 
       const listFunc = findFunction(tree.rootNode, 'get_list');
@@ -423,8 +423,8 @@ def get_list():
         const def = createDef('get_list', 'function');
         const result = infer_function_return_type(def, listFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('Array');
-        expect(result?.confidence).toBe('inferred');
+        expect(result!.type_name).toBe('Array');
+        expect(result!.confidence).toBe('inferred');
       }
     });
 
@@ -454,8 +454,8 @@ class MyClass:
         const def = createDef('__init__', 'method');
         const result = infer_function_return_type(def, initMethod, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('None');
-        expect(result?.confidence).toBe('explicit');
+        expect(result!.type_name).toBe('None');
+        expect(result!.confidence).toBe('explicit');
       }
 
       // Find __str__ method
@@ -464,8 +464,8 @@ class MyClass:
         const def = createDef('__str__', 'method');
         const result = infer_function_return_type(def, strMethod, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('str');
-        expect(result?.confidence).toBe('explicit');
+        expect(result!.type_name).toBe('str');
+        expect(result!.confidence).toBe('explicit');
       }
 
       // Find __len__ method
@@ -474,8 +474,8 @@ class MyClass:
         const def = createDef('__len__', 'method');
         const result = infer_function_return_type(def, lenMethod, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('int');
-        expect(result?.confidence).toBe('explicit');
+        expect(result!.type_name).toBe('int');
+        expect(result!.confidence).toBe('explicit');
       }
     });
   });
@@ -507,8 +507,8 @@ fn get_unit() -> () {
         const def = createDef('get_string', 'function');
         const result = infer_function_return_type(def, stringFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('String');
-        expect(result?.confidence).toBe('explicit');
+        expect(result!.type_name).toBe('String');
+        expect(result!.confidence).toBe('explicit');
       }
 
       const i32Func = findFunction(tree.rootNode, 'get_i32');
@@ -516,8 +516,8 @@ fn get_unit() -> () {
         const def = createDef('get_i32', 'function');
         const result = infer_function_return_type(def, i32Func, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('i32');
-        expect(result?.confidence).toBe('explicit');
+        expect(result!.type_name).toBe('i32');
+        expect(result!.confidence).toBe('explicit');
       }
 
       const unitFunc = findFunction(tree.rootNode, 'get_unit');
@@ -525,8 +525,8 @@ fn get_unit() -> () {
         const def = createDef('get_unit', 'function');
         const result = infer_function_return_type(def, unitFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('()');
-        expect(result?.confidence).toBe('explicit');
+        expect(result!.type_name).toBe('()');
+        expect(result!.confidence).toBe('explicit');
       }
     });
 
@@ -552,8 +552,8 @@ fn get_option() -> Option<i32> {
         const def = createDef('get_result', 'function');
         const result = infer_function_return_type(def, resultFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('Result<String, Error>');
-        expect(result?.confidence).toBe('explicit');
+        expect(result!.type_name).toBe('Result<String, Error>');
+        expect(result!.confidence).toBe('explicit');
       }
 
       const optionFunc = findFunction(tree.rootNode, 'get_option');
@@ -561,8 +561,8 @@ fn get_option() -> Option<i32> {
         const def = createDef('get_option', 'function');
         const result = infer_function_return_type(def, optionFunc, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('Option<i32>');
-        expect(result?.confidence).toBe('explicit');
+        expect(result!.type_name).toBe('Option<i32>');
+        expect(result!.confidence).toBe('explicit');
       }
     });
 
@@ -591,8 +591,8 @@ impl MyStruct {
         const def = createDef('new', 'method');
         const result = infer_function_return_type(def, newMethod, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('Self');
-        expect(result?.confidence).toBe('explicit');
+        expect(result!.type_name).toBe('Self');
+        expect(result!.confidence).toBe('explicit');
       }
 
       const cloneMethod = findMethod(tree.rootNode, 'clone');
@@ -600,8 +600,8 @@ impl MyStruct {
         const def = createDef('clone', 'method');
         const result = infer_function_return_type(def, cloneMethod, context);
         expect(result).toBeDefined();
-        expect(result?.type_name).toBe('Self');
-        expect(result?.confidence).toBe('explicit');
+        expect(result!.type_name).toBe('Self');
+        expect(result!.confidence).toBe('explicit');
       }
     });
   });

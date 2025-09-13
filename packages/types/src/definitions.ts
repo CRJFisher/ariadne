@@ -45,7 +45,7 @@ export interface FunctionMetadata {
   readonly is_exported: boolean;
   readonly is_test: boolean;
   readonly is_private: boolean;
-  readonly complexity?: number;
+  readonly complexity: number; // Defaults to 0
   readonly line_count: number;
   readonly parameter_names: readonly SymbolId[];
   readonly has_decorator: boolean;
@@ -56,7 +56,7 @@ export interface FunctionDefinition {
   readonly name: SymbolId;
   readonly location: Location;
   readonly signature: FunctionSignature;
-  readonly metadata?: FunctionMetadata;
+  readonly metadata: FunctionMetadata; // Always present with sensible defaults
   readonly docstring?: DocString;
   readonly decorators: readonly SymbolId[]; // Always present, defaults to empty array
   readonly is_exported: boolean;
@@ -121,7 +121,7 @@ export interface MethodDefinition {
   readonly overridden_by: readonly SymbolId[];
   readonly visibility: "public" | "private" | "protected";
   readonly parameters: readonly ParameterDefinition[];
-  readonly return_type?: string;
+  readonly return_type: string; // Required - use "unknown" when type cannot be inferred
   readonly generics: readonly GenericParameter[]; // Always present, defaults to empty array
   readonly decorators: readonly SymbolId[]; // Always present, defaults to empty array
 }
@@ -132,7 +132,7 @@ export interface MethodDefinition {
 export interface PropertyDefinition {
   readonly name: SymbolId;
   readonly location: Location;
-  readonly type?: string;
+  readonly type: string; // Required - use "unknown" when type cannot be inferred
   readonly is_static: boolean;
   readonly is_private: boolean;
   readonly is_protected: boolean;
@@ -147,10 +147,10 @@ export interface PropertyDefinition {
  */
 export interface ParameterDefinition {
   readonly name: SymbolId;
-  readonly type?: string;
+  readonly type: string; // Required - use "unknown" when type cannot be inferred
   readonly is_optional: boolean;
   readonly is_rest: boolean;
-  readonly default_value?: string;
+  readonly default_value: string; // Required - use empty string when no default
 }
 
 /**
@@ -170,7 +170,7 @@ export interface InterfaceDefinition extends Definition {
 export interface MethodSignature {
   readonly name: SymbolId;
   readonly parameters: readonly ParameterDefinition[];
-  readonly return_type?: string;
+  readonly return_type: string; // Required - use "unknown" when type cannot be inferred
   readonly generics: readonly GenericParameter[]; // Always present, defaults to empty array
   readonly is_optional: boolean; // Defaults to false
 }
@@ -180,7 +180,7 @@ export interface MethodSignature {
  */
 export interface PropertySignature {
   readonly name: SymbolId;
-  readonly type?: string;
+  readonly type: string; // Required - use "unknown" when type cannot be inferred
   readonly is_optional: boolean;
   readonly is_readonly: boolean;
 }

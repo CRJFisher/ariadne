@@ -54,16 +54,16 @@ export async function fetchData(url: string): Promise<Response> {
       // Check for exported functions
       const parseFileSymbol = result.symbols.find(s => s.name === 'parseFile');
       expect(parseFileSymbol).toBeDefined();
-      expect(parseFileSymbol?.type).toBe('function');
-      expect(parseFileSymbol?.line).toBe(1);
-      expect(parseFileSymbol?.signature).toContain('parseFile');
-      expect(parseFileSymbol?.signature).toContain('ParseOptions');
-      expect(parseFileSymbol?.exported).toBe(true);
+      expect(parseFileSymbol!.type).toBe('function');
+      expect(parseFileSymbol!.line).toBe(1);
+      expect(parseFileSymbol!.signature).toContain('parseFile');
+      expect(parseFileSymbol!.signature).toContain('ParseOptions');
+      expect(parseFileSymbol!.exported).toBe(true);
       
       // Check for private functions
       const privateHelper = result.symbols.find(s => s.name === 'privateHelper');
       expect(privateHelper).toBeDefined();
-      expect(privateHelper?.exported).toBe(false);
+      expect(privateHelper!.exported).toBe(false);
       
       // Check exports list
       expect(result.exports).toContain('parseFile');
@@ -112,26 +112,26 @@ export type ServerOptions = Config & {
       // Check interface
       const configInterface = result.symbols.find(s => s.name === 'Config');
       expect(configInterface).toBeDefined();
-      expect(configInterface?.type).toBe('interface');
-      expect(configInterface?.exported).toBe(true);
+      expect(configInterface!.type).toBe('interface');
+      expect(configInterface!.exported).toBe(true);
       
       // Check class
       const serverClass = result.symbols.find(s => s.name === 'Server');
       expect(serverClass).toBeDefined();
-      expect(serverClass?.type).toBe('class');
-      expect(serverClass?.exported).toBe(true);
-      expect(serverClass?.signature).toContain('Server');
+      expect(serverClass!.type).toBe('class');
+      expect(serverClass!.exported).toBe(true);
+      expect(serverClass!.signature).toContain('Server');
       
       // Check type aliases
       const connectionStatus = result.symbols.find(s => s.name === 'ConnectionStatus');
       expect(connectionStatus).toBeDefined();
-      expect(connectionStatus?.type).toBe('type');
-      expect(connectionStatus?.exported).toBe(false);
+      expect(connectionStatus!.type).toBe('type');
+      expect(connectionStatus!.exported).toBe(false);
       
       const serverOptions = result.symbols.find(s => s.name === 'ServerOptions');
       expect(serverOptions).toBeDefined();
-      expect(serverOptions?.type).toBe('type');
-      expect(serverOptions?.exported).toBe(true);
+      expect(serverOptions!.type).toBe('type');
+      expect(serverOptions!.exported).toBe(true);
     });
 
     it('should extract import statements', async () => {
@@ -205,13 +205,13 @@ module.exports.legacy = function() {
       
       const calculate = result.symbols.find(s => s.name === 'calculate');
       expect(calculate).toBeDefined();
-      expect(calculate?.type).toBe('function');
-      expect(calculate?.exported).toBe(true);
+      expect(calculate!.type).toBe('function');
+      expect(calculate!.exported).toBe(true);
       
       const calculator = result.symbols.find(s => s.name === 'Calculator');
       expect(calculator).toBeDefined();
-      expect(calculator?.type).toBe('class');
-      expect(calculator?.exported).toBe(true);
+      expect(calculator!.type).toBe('class');
+      expect(calculator!.exported).toBe(true);
     });
   });
 
@@ -264,18 +264,18 @@ PUBLIC_CONSTANT = 42
       // Check class
       const configClass = result.symbols.find(s => s.name === 'Config');
       expect(configClass).toBeDefined();
-      expect(configClass?.type).toBe('class');
+      expect(configClass!.type).toBe('class');
       
       // Check functions
       const parseConfig = result.symbols.find(s => s.name === 'parse_config');
       expect(parseConfig).toBeDefined();
-      expect(parseConfig?.type).toBe('function');
-      expect(parseConfig?.signature).toContain('parse_config');
-      expect(parseConfig?.signature).toContain('Config');
+      expect(parseConfig!.type).toBe('function');
+      expect(parseConfig!.signature).toContain('parse_config');
+      expect(parseConfig!.signature).toContain('Config');
       
       const fetchData = result.symbols.find(s => s.name === 'fetch_data');
       expect(fetchData).toBeDefined();
-      expect(fetchData?.signature).toContain('async');
+      expect(fetchData!.signature).toContain('async');
     });
   });
 
@@ -338,7 +338,7 @@ pub trait Server {
       // Check functions
       const parseConfig = result.symbols.find(s => s.name === 'parse_config');
       expect(parseConfig).toBeDefined();
-      expect(parseConfig?.type).toBe('function');
+      expect(parseConfig!.type).toBe('function');
       
       // Check methods
       const newMethod = result.symbols.find(s => s.name === 'new');
@@ -477,10 +477,10 @@ export const arrowFunc = (x: number): number => {
       
       // Check specific signatures
       const simpleFunc = result.symbols.find(s => s.name === 'simpleFunc');
-      expect(simpleFunc?.signature).toBe('export function simpleFunc()');
+      expect(simpleFunc!.signature).toBe('export function simpleFunc()');
       
       const withParams = result.symbols.find(s => s.name === 'withParams');
-      expect(withParams?.signature).toContain('withParams(a: string, b: number): void');
+      expect(withParams!.signature).toContain('withParams(a: string, b: number): void');
     });
   });
 });
