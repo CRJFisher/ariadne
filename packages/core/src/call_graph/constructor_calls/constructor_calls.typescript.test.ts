@@ -30,8 +30,8 @@ describe("TypeScript Bespoke Handlers", () => {
         return null;
       }
       
-      const newExpr = findNode(tree.rootNode, 'new_expression');
-      expect(newExpr).toBeDefined();
+      const new_expr = findNode(tree.rootNode, 'new_expression');
+      expect(new_expr).toBeDefined();
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -40,7 +40,7 @@ describe("TypeScript Bespoke Handlers", () => {
         language: 'typescript'
       };
       
-      const result = handle_generic_constructor(newExpr, context);
+      const result = handle_generic_constructor(new_expr, context);
       expect(result).toBeDefined();
       expect(result?.constructor_name).toBe('Array');
       expect(result?.type_parameters).toEqual(['string']);
@@ -59,8 +59,8 @@ describe("TypeScript Bespoke Handlers", () => {
         return null;
       }
       
-      const newExpr = findNode(tree.rootNode, 'new_expression');
-      expect(newExpr).toBeDefined();
+      const new_expr = findNode(tree.rootNode, 'new_expression');
+      expect(new_expr).toBeDefined();
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -69,7 +69,7 @@ describe("TypeScript Bespoke Handlers", () => {
         language: 'typescript'
       };
       
-      const result = handle_generic_constructor(newExpr, context);
+      const result = handle_generic_constructor(new_expr, context);
       expect(result).toBeDefined();
       expect(result?.constructor_name).toBe('Map');
       expect(result?.type_parameters).toEqual(['string', 'number']);
@@ -88,8 +88,8 @@ describe("TypeScript Bespoke Handlers", () => {
         return null;
       }
       
-      const newExpr = findNode(tree.rootNode, 'new_expression');
-      expect(newExpr).toBeDefined();
+      const new_expr = findNode(tree.rootNode, 'new_expression');
+      expect(new_expr).toBeDefined();
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -98,7 +98,7 @@ describe("TypeScript Bespoke Handlers", () => {
         language: 'typescript'
       };
       
-      const result = handle_generic_constructor(newExpr, context);
+      const result = handle_generic_constructor(new_expr, context);
       expect(result).toBeNull();
     });
 
@@ -115,8 +115,8 @@ describe("TypeScript Bespoke Handlers", () => {
         return null;
       }
       
-      const newExpr = findNode(tree.rootNode, 'new_expression');
-      expect(newExpr).toBeDefined();
+      const new_expr = findNode(tree.rootNode, 'new_expression');
+      expect(new_expr).toBeDefined();
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -125,7 +125,7 @@ describe("TypeScript Bespoke Handlers", () => {
         language: 'typescript'
       };
       
-      const result = handle_generic_constructor(newExpr, context);
+      const result = handle_generic_constructor(new_expr, context);
       expect(result).toBeDefined();
       expect(result?.constructor_name).toBe('Container');
       expect(result?.type_parameters).toEqual(['Array<string>']);
@@ -144,7 +144,7 @@ describe("TypeScript Bespoke Handlers", () => {
         return null;
       }
       
-      const newExpr = findNode(tree.rootNode, 'new_expression');
+      const new_expr = findNode(tree.rootNode, 'new_expression');
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -154,8 +154,8 @@ describe("TypeScript Bespoke Handlers", () => {
       };
       
       // Even if the syntax is complex, we should still detect it as a generic constructor
-      if (newExpr) {
-        const result = handle_generic_constructor(newExpr, context);
+      if (new_expr) {
+        const result = handle_generic_constructor(new_expr, context);
         // The function might not handle this complex case perfectly, but it should try
         expect(result === null || result?.constructor_name === 'BoundedContainer').toBe(true);
       }

@@ -41,12 +41,12 @@ describe("Language Configurations", () => {
 
   describe("TypeScript Configuration", () => {
     it("should extend JavaScript configuration", () => {
-      const jsConfig = get_language_config("javascript");
-      const tsConfig = get_language_config("typescript");
-      
+      const js_config = get_language_config("javascript");
+      const ts_config = get_language_config("typescript");
+
       // Should have same constructor node types
-      expect(tsConfig.constructor_node_types).toEqual(jsConfig.constructor_node_types);
-      expect(tsConfig.potential_constructor_node_types).toEqual(jsConfig.potential_constructor_node_types);
+      expect(ts_config.constructor_node_types).toEqual(js_config.constructor_node_types);
+      expect(ts_config.potential_constructor_node_types).toEqual(js_config.potential_constructor_node_types);
     });
 
     it("should handle generic type parameters", () => {
@@ -123,20 +123,20 @@ describe("Language Configurations", () => {
 
     it("should have different constructor detection strategies", () => {
       // JavaScript/TypeScript use 'new' keyword
-      const jsConfig = get_language_config("javascript");
-      const tsConfig = get_language_config("typescript");
-      expect(jsConfig.constructor_node_types).toContain("new_expression");
-      expect(tsConfig.constructor_node_types).toContain("new_expression");
-      
+      const js_config = get_language_config("javascript");
+      const ts_config = get_language_config("typescript");
+      expect(js_config.constructor_node_types).toContain("new_expression");
+      expect(ts_config.constructor_node_types).toContain("new_expression");
+
       // Python uses capitalization convention
-      const pyConfig = get_language_config("python");
-      expect(pyConfig.constructor_node_types).toEqual([]);
-      expect(pyConfig.identification_rules.capitalization_pattern).toBeDefined();
-      
+      const py_config = get_language_config("python");
+      expect(py_config.constructor_node_types).toEqual([]);
+      expect(py_config.identification_rules.capitalization_pattern).toBeDefined();
+
       // Rust uses struct literals and factory methods
-      const rustConfig = get_language_config("rust");
-      expect(rustConfig.constructor_node_types).toContain("struct_expression");
-      expect(rustConfig.identification_rules.factory_method_names).toBeDefined();
+      const rust_config = get_language_config("rust");
+      expect(rust_config.constructor_node_types).toContain("struct_expression");
+      expect(rust_config.identification_rules.factory_method_names).toBeDefined();
     });
   });
 

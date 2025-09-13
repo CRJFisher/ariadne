@@ -43,8 +43,8 @@ describe("JavaScript Bespoke Handlers", () => {
         return null;
       }
 
-      const callNode = findCallNode(tree.rootNode);
-      const result = handle_object_create_pattern(callNode, context);
+      const call_node = findCallNode(tree.rootNode);
+      const result = handle_object_create_pattern(call_node, context);
 
       expect(result).toBeDefined();
       expect(result?.constructor_name).toBe("Person");
@@ -76,8 +76,8 @@ describe("JavaScript Bespoke Handlers", () => {
         return null;
       }
 
-      const callNode = findCallNode(tree.rootNode);
-      const result = handle_object_create_pattern(callNode, context);
+      const call_node = findCallNode(tree.rootNode);
+      const result = handle_object_create_pattern(call_node, context);
 
       expect(result).toBeNull();
     });
@@ -109,8 +109,8 @@ describe("JavaScript Bespoke Handlers", () => {
         return null;
       }
 
-      const classNode = findClassNode(tree.rootNode);
-      const result = extract_class_inheritance(classNode, context);
+      const class_node = findClassNode(tree.rootNode);
+      const result = extract_class_inheritance(class_node, context);
 
       expect(result).toBeDefined();
       expect(result?.child_class).toBe("Dog");
@@ -141,8 +141,8 @@ describe("JavaScript Bespoke Handlers", () => {
         return null;
       }
 
-      const classNode = findClassNode(tree.rootNode);
-      const result = extract_class_inheritance(classNode, context);
+      const class_node = findClassNode(tree.rootNode);
+      const result = extract_class_inheritance(class_node, context);
 
       expect(result).toBeNull();
     });
@@ -173,8 +173,8 @@ describe("JavaScript Bespoke Handlers", () => {
         return null;
       }
 
-      const callNode = findCallNode(tree.rootNode);
-      const result = detect_advanced_factory_pattern(callNode, context);
+      const call_node = findCallNode(tree.rootNode);
+      const result = detect_advanced_factory_pattern(call_node, context);
 
       expect(result).toBe(true);
     });
@@ -203,8 +203,8 @@ describe("JavaScript Bespoke Handlers", () => {
         return null;
       }
 
-      const callNode = findCallNode(tree.rootNode);
-      const result = detect_advanced_factory_pattern(callNode, context);
+      const call_node = findCallNode(tree.rootNode);
+      const result = detect_advanced_factory_pattern(call_node, context);
 
       expect(result).toBe(true);
     });
@@ -233,8 +233,8 @@ describe("JavaScript Bespoke Handlers", () => {
         return null;
       }
 
-      const callNode = findCallNode(tree.rootNode);
-      const result = detect_advanced_factory_pattern(callNode, context);
+      const call_node = findCallNode(tree.rootNode);
+      const result = detect_advanced_factory_pattern(call_node, context);
 
       expect(result).toBe(false);
     });

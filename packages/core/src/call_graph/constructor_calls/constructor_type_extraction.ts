@@ -10,7 +10,7 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language, ConstructorCallInfo, Location, FilePath, SourceCode } from '@ariadnejs/types';
+import { Language, ConstructorCallInfo, Location, FilePath, SourceCode, get_map_array_or_empty } from '@ariadnejs/types';
 import { TypeInfo } from '../../type_analysis/type_tracking';
 import { 
   find_assignment_target,
@@ -141,7 +141,7 @@ function add_type_assignment(
     is_property_assignment: assignment.is_property_assignment
   };
   
-  const existing = type_map.get(assignment.variable_name) || [];
+  const existing = get_map_array_or_empty(type_map, assignment.variable_name);
   existing.push(type_info);
   type_map.set(assignment.variable_name, existing);
 }
@@ -227,8 +227,8 @@ export function merge_constructor_types(
   const merged = new Map(existing_types);
   
   for (const [variable, types] of constructor_types) {
-    const existing = merged.get(variable) || [];
-    
+    const existing = get_map_array_or_empty(merged, variable);
+
     // Add constructor-discovered types, avoiding duplicates
     for (const new_type of types) {
       const duplicate = existing.some(t => 

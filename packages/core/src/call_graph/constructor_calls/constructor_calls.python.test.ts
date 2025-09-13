@@ -31,8 +31,8 @@ describe("Python Bespoke Handlers", () => {
         return null;
       }
       
-      const callNode = findNode(tree.rootNode, 'call');
-      expect(callNode).toBeDefined();
+      const call_node = findNode(tree.rootNode, 'call');
+      expect(call_node).toBeDefined();
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -41,7 +41,7 @@ describe("Python Bespoke Handlers", () => {
         language: 'python'
       };
       
-      const result = handle_super_init_call(callNode, context);
+      const result = handle_super_init_call(call_node, context);
       expect(result).toBeDefined();
       expect(result?.constructor_name).toBe('super');
       expect(result?.is_super_call).toBe(true);
@@ -60,7 +60,7 @@ describe("Python Bespoke Handlers", () => {
         return null;
       }
       
-      const callNode = findNode(tree.rootNode, 'call');
+      const call_node = findNode(tree.rootNode, 'call');
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -70,8 +70,8 @@ describe("Python Bespoke Handlers", () => {
       };
       
       // Should return null for non-__init__ super calls
-      if (callNode) {
-        const result = handle_super_init_call(callNode, context);
+      if (call_node) {
+        const result = handle_super_init_call(call_node, context);
         expect(result).toBeNull();
       }
     });
@@ -89,7 +89,7 @@ describe("Python Bespoke Handlers", () => {
         return null;
       }
       
-      const callNode = findNode(tree.rootNode, 'call');
+      const call_node = findNode(tree.rootNode, 'call');
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -98,8 +98,8 @@ describe("Python Bespoke Handlers", () => {
         language: 'python'
       };
       
-      if (callNode) {
-        const result = handle_super_init_call(callNode, context);
+      if (call_node) {
+        const result = handle_super_init_call(call_node, context);
         // Should only detect actual super() calls
         expect(result === null || result.constructor_name !== 'super').toBe(true);
       }
@@ -120,8 +120,8 @@ describe("Python Bespoke Handlers", () => {
         return null;
       }
       
-      const callNode = findNode(tree.rootNode, 'call');
-      expect(callNode).toBeDefined();
+      const call_node = findNode(tree.rootNode, 'call');
+      expect(call_node).toBeDefined();
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -130,7 +130,7 @@ describe("Python Bespoke Handlers", () => {
         language: 'python'
       };
       
-      const result = detect_classmethod_factory(callNode, context);
+      const result = detect_classmethod_factory(call_node, context);
       expect(result).toBeDefined();
       expect(result?.constructor_name).toBe('MyClass');
       expect(result?.is_factory_method).toBe(true);
@@ -149,7 +149,7 @@ describe("Python Bespoke Handlers", () => {
         return null;
       }
       
-      const callNode = findNode(tree.rootNode, 'call');
+      const call_node = findNode(tree.rootNode, 'call');
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -158,7 +158,7 @@ describe("Python Bespoke Handlers", () => {
         language: 'python'
       };
       
-      const result = detect_classmethod_factory(callNode, context);
+      const result = detect_classmethod_factory(call_node, context);
       expect(result).toBeDefined();
       expect(result?.constructor_name).toBe('User');
       expect(result?.is_factory_method).toBe(true);
@@ -177,7 +177,7 @@ describe("Python Bespoke Handlers", () => {
         return null;
       }
       
-      const callNode = findNode(tree.rootNode, 'call');
+      const call_node = findNode(tree.rootNode, 'call');
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -186,7 +186,7 @@ describe("Python Bespoke Handlers", () => {
         language: 'python'
       };
       
-      const result = detect_classmethod_factory(callNode, context);
+      const result = detect_classmethod_factory(call_node, context);
       expect(result).toBeDefined();
       expect(result?.constructor_name).toBe('Connection');
     });
@@ -204,7 +204,7 @@ describe("Python Bespoke Handlers", () => {
         return null;
       }
       
-      const callNode = findNode(tree.rootNode, 'call');
+      const call_node = findNode(tree.rootNode, 'call');
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -213,8 +213,8 @@ describe("Python Bespoke Handlers", () => {
         language: 'python'
       };
       
-      if (callNode) {
-        const result = detect_classmethod_factory(callNode, context);
+      if (call_node) {
+        const result = detect_classmethod_factory(call_node, context);
         expect(result).toBeNull();
       }
     });
@@ -232,7 +232,7 @@ describe("Python Bespoke Handlers", () => {
         return null;
       }
       
-      const callNode = findNode(tree.rootNode, 'call');
+      const call_node = findNode(tree.rootNode, 'call');
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -241,7 +241,7 @@ describe("Python Bespoke Handlers", () => {
         language: 'python'
       };
       
-      const result = detect_classmethod_factory(callNode, context);
+      const result = detect_classmethod_factory(call_node, context);
       expect(result).toBeDefined();
       expect(result?.constructor_name).toBe('Model');
       expect(result?.is_factory_method).toBe(true);

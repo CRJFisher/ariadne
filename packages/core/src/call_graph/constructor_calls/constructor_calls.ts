@@ -141,9 +141,9 @@ function extract_name_from_node(node: SyntaxNode, language: Language): string | 
         // Special handling for Python attribute nodes (module.Class pattern)
         if (path === 'attribute' && language === 'python') {
           // Get the last child which is the class name
-          const lastChild = field.child(field.childCount - 1);
-          if (lastChild && lastChild.type === 'identifier') {
-            return lastChild.text;
+          const last_child = field.child(field.childCount - 1);
+          if (last_child && last_child.type === 'identifier') {
+            return last_child.text;
           }
         }
         return field.text;
@@ -233,9 +233,9 @@ function extract_potential_constructor_info(
         // Special handling for Python attribute nodes (module.Class pattern)
         if (path === 'attribute' && context.language === 'python') {
           // Get the last child which is the class name
-          const lastChild = field.child(field.childCount - 1);
-          if (lastChild && lastChild.type === 'identifier') {
-            name = context.source_code.substring(lastChild.startIndex, lastChild.endIndex);
+          const last_child = field.child(field.childCount - 1);
+          if (last_child && last_child.type === 'identifier') {
+            name = context.source_code.substring(last_child.startIndex, last_child.endIndex);
             break;
           }
         } else {
@@ -326,9 +326,9 @@ export function extract_constructor_name(
         // Special handling for Python attribute nodes (module.Class pattern)
         if (path === 'attribute' && language === 'python') {
           // Get the last child which is the class name
-          const lastChild = field.child(field.childCount - 1);
-          if (lastChild && lastChild.type === 'identifier') {
-            return source.substring(lastChild.startIndex, lastChild.endIndex);
+          const last_child = field.child(field.childCount - 1);
+          if (last_child && last_child.type === 'identifier') {
+            return source.substring(last_child.startIndex, last_child.endIndex);
           }
         }
         return source.substring(field.startIndex, field.endIndex);

@@ -91,14 +91,14 @@ describe("Generic Constructor Call Processor", () => {
       const tree = parser.parse(source);
       
       // Find the new_expression node
-      let newNode: any = null;
+      let new_node: any = null;
       walk_tree(tree.rootNode, (node) => {
         if (node.type === 'new_expression') {
-          newNode = node;
+          new_node = node;
         }
       });
 
-      const name = extract_constructor_name(newNode, source, "javascript");
+      const name = extract_constructor_name(new_node, source, "javascript");
       expect(name).toBe("MyClass");
     });
 
@@ -108,14 +108,14 @@ describe("Generic Constructor Call Processor", () => {
       const source = `new namespace.MyClass()`;
       const tree = parser.parse(source);
       
-      let newNode: any = null;
+      let new_node: any = null;
       walk_tree(tree.rootNode, (node) => {
         if (node.type === 'new_expression') {
-          newNode = node;
+          new_node = node;
         }
       });
 
-      const name = extract_constructor_name(newNode, source, "javascript");
+      const name = extract_constructor_name(new_node, source, "javascript");
       expect(name).toBe("MyClass");
     });
   });
@@ -124,18 +124,18 @@ describe("Generic Constructor Call Processor", () => {
     it("should find variable declarator assignment", () => {
       const parser = new Parser();
       parser.setLanguage(JavaScript);
-      const source = `const myVar = new Thing();`;
+      const source = `const my_var = new Thing();`;
       const tree = parser.parse(source);
       
-      let newNode: any = null;
+      let new_node: any = null;
       walk_tree(tree.rootNode, (node) => {
         if (node.type === 'new_expression') {
-          newNode = node;
+          new_node = node;
         }
       });
 
-      const target = find_assignment_target(newNode, source, "javascript");
-      expect(target).toBe("myVar");
+      const target = find_assignment_target(new_node, source, "javascript");
+      expect(target).toBe("my_var");
     });
 
     it("should find Python assignment target", () => {
@@ -144,14 +144,14 @@ describe("Generic Constructor Call Processor", () => {
       const source = `my_obj = MyClass()`;
       const tree = parser.parse(source);
       
-      let callNode: any = null;
+      let call_node: any = null;
       walk_tree(tree.rootNode, (node) => {
         if (node.type === 'call') {
-          callNode = node;
+          call_node = node;
         }
       });
 
-      const target = find_assignment_target(callNode, source, "python");
+      const target = find_assignment_target(call_node, source, "python");
       expect(target).toBe("my_obj");
     });
 
@@ -161,14 +161,14 @@ describe("Generic Constructor Call Processor", () => {
       const source = `let my_struct = MyStruct::new();`;
       const tree = parser.parse(source);
       
-      let callNode: any = null;
+      let call_node: any = null;
       walk_tree(tree.rootNode, (node) => {
         if (node.type === 'call_expression') {
-          callNode = node;
+          call_node = node;
         }
       });
 
-      const target = find_assignment_target(callNode, source, "rust");
+      const target = find_assignment_target(call_node, source, "rust");
       expect(target).toBe("my_struct");
     });
   });
@@ -180,14 +180,14 @@ describe("Generic Constructor Call Processor", () => {
       const source = `new Person("Alice", 30, true)`;
       const tree = parser.parse(source);
       
-      let newNode: any = null;
+      let new_node: any = null;
       walk_tree(tree.rootNode, (node) => {
         if (node.type === 'new_expression') {
-          newNode = node;
+          new_node = node;
         }
       });
 
-      const count = count_constructor_arguments(newNode, "javascript");
+      const count = count_constructor_arguments(new_node, "javascript");
       expect(count).toBe(3);
     });
 
@@ -197,14 +197,14 @@ describe("Generic Constructor Call Processor", () => {
       const source = `Person(name="Alice", age=30)`;
       const tree = parser.parse(source);
       
-      let callNode: any = null;
+      let call_node: any = null;
       walk_tree(tree.rootNode, (node) => {
         if (node.type === 'call') {
-          callNode = node;
+          call_node = node;
         }
       });
 
-      const count = count_constructor_arguments(callNode, "python");
+      const count = count_constructor_arguments(call_node, "python");
       expect(count).toBe(2);
     });
 
@@ -214,14 +214,14 @@ describe("Generic Constructor Call Processor", () => {
       const source = `Point { x: 1, y: 2, z: 3 }`;
       const tree = parser.parse(source);
       
-      let structNode: any = null;
+      let struct_node: any = null;
       walk_tree(tree.rootNode, (node) => {
         if (node.type === 'struct_expression') {
-          structNode = node;
+          struct_node = node;
         }
       });
 
-      const count = count_constructor_arguments(structNode, "rust");
+      const count = count_constructor_arguments(struct_node, "rust");
       expect(count).toBe(3);
     });
   });
@@ -233,14 +233,14 @@ describe("Generic Constructor Call Processor", () => {
       const source = `new MyClass()`;
       const tree = parser.parse(source);
       
-      let newNode: any = null;
+      let new_node: any = null;
       walk_tree(tree.rootNode, (node) => {
         if (node.type === 'new_expression') {
-          newNode = node;
+          new_node = node;
         }
       });
 
-      expect(uses_new_keyword(newNode, "javascript")).toBe(true);
+      expect(uses_new_keyword(new_node, "javascript")).toBe(true);
     });
 
     it("should return false for regular function calls", () => {
@@ -249,14 +249,14 @@ describe("Generic Constructor Call Processor", () => {
       const source = `MyClass()`;
       const tree = parser.parse(source);
       
-      let callNode: any = null;
+      let call_node: any = null;
       walk_tree(tree.rootNode, (node) => {
         if (node.type === 'call_expression') {
-          callNode = node;
+          call_node = node;
         }
       });
 
-      expect(uses_new_keyword(callNode, "javascript")).toBe(false);
+      expect(uses_new_keyword(call_node, "javascript")).toBe(false);
     });
 
     it("should return false for Python", () => {
@@ -265,14 +265,14 @@ describe("Generic Constructor Call Processor", () => {
       const source = `Person()`;
       const tree = parser.parse(source);
       
-      let callNode: any = null;
+      let call_node: any = null;
       walk_tree(tree.rootNode, (node) => {
         if (node.type === 'call') {
-          callNode = node;
+          call_node = node;
         }
       });
 
-      expect(uses_new_keyword(callNode, "python")).toBe(false);
+      expect(uses_new_keyword(call_node, "python")).toBe(false);
     });
   });
 
@@ -283,14 +283,14 @@ describe("Generic Constructor Call Processor", () => {
       const source = `String::new()`;
       const tree = parser.parse(source);
       
-      let callNode: any = null;
+      let call_node: any = null;
       walk_tree(tree.rootNode, (node) => {
         if (node.type === 'call_expression') {
-          callNode = node;
+          call_node = node;
         }
       });
 
-      expect(is_factory_method_pattern(callNode, source, "rust")).toBe(true);
+      expect(is_factory_method_pattern(call_node, source, "rust")).toBe(true);
     });
 
     it("should detect Rust ::create() pattern", () => {
@@ -299,14 +299,14 @@ describe("Generic Constructor Call Processor", () => {
       const source = `Builder::create()`;
       const tree = parser.parse(source);
       
-      let callNode: any = null;
+      let call_node: any = null;
       walk_tree(tree.rootNode, (node) => {
         if (node.type === 'call_expression') {
-          callNode = node;
+          call_node = node;
         }
       });
 
-      expect(is_factory_method_pattern(callNode, source, "rust")).toBe(true);
+      expect(is_factory_method_pattern(call_node, source, "rust")).toBe(true);
     });
 
     it("should not detect regular Rust method calls", () => {
@@ -315,14 +315,14 @@ describe("Generic Constructor Call Processor", () => {
       const source = `String::len()`;
       const tree = parser.parse(source);
       
-      let callNode: any = null;
+      let call_node: any = null;
       walk_tree(tree.rootNode, (node) => {
         if (node.type === 'call_expression') {
-          callNode = node;
+          call_node = node;
         }
       });
 
-      expect(is_factory_method_pattern(callNode, source, "rust")).toBe(false);
+      expect(is_factory_method_pattern(call_node, source, "rust")).toBe(false);
     });
   });
 });

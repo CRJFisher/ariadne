@@ -18,7 +18,7 @@ describe('constructor_type_resolver', () => {
 
   beforeEach(() => {
     // Create test FileAnalysis objects with proper type definitions
-    const testFileAnalysis: FileAnalysis = {
+    const test_file_analysis: FileAnalysis = {
       file_path: 'test.ts',
       source_code: '',
       language: 'typescript',
@@ -68,7 +68,7 @@ describe('constructor_type_resolver', () => {
       structs: []
     };
 
-    const libFileAnalysis: FileAnalysis = {
+    const lib_file_analysis: FileAnalysis = {
       file_path: 'lib/classes.ts',
       source_code: '',
       language: 'typescript',
@@ -117,7 +117,7 @@ describe('constructor_type_resolver', () => {
       structs: []
     };
 
-    const rustFileAnalysis: FileAnalysis = {
+    const rust_file_analysis: FileAnalysis = {
       file_path: 'test.rs',
       source_code: '',
       language: 'rust',
@@ -156,7 +156,7 @@ describe('constructor_type_resolver', () => {
       ]
     };
 
-    registry = build_type_registry([testFileAnalysis, libFileAnalysis, rustFileAnalysis]);
+    registry = build_type_registry([test_file_analysis, lib_file_analysis, rust_file_analysis]);
   });
 
   describe('enrich_constructor_calls_with_types', () => {
@@ -399,15 +399,15 @@ describe('constructor_type_resolver', () => {
     });
 
     it('should filter by language', () => {
-      const tsTypes = get_constructable_types(registry, 'typescript');
-      expect(tsTypes).toContain('test.ts#MyClass');
-      expect(tsTypes).toContain('Array'); // Built-in
-      expect(tsTypes).not.toContain('test.rs#MyStruct');
+      const ts_types = get_constructable_types(registry, 'typescript');
+      expect(ts_types).toContain('test.ts#MyClass');
+      expect(ts_types).toContain('Array'); // Built-in
+      expect(ts_types).not.toContain('test.rs#MyStruct');
 
-      const rustTypes = get_constructable_types(registry, 'rust');
-      expect(rustTypes).toContain('test.rs#MyStruct');
-      expect(rustTypes).toContain('Vec'); // Built-in
-      expect(rustTypes).not.toContain('test.ts#MyClass');
+      const rust_types = get_constructable_types(registry, 'rust');
+      expect(rust_types).toContain('test.rs#MyStruct');
+      expect(rust_types).toContain('Vec'); // Built-in
+      expect(rust_types).not.toContain('test.ts#MyClass');
     });
   });
 

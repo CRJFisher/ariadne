@@ -33,7 +33,7 @@ describe("Rust Bespoke Handlers", () => {
         return null;
       }
       
-      const callNode = findNode(tree.rootNode, 'call_expression');
+      const call_node = findNode(tree.rootNode, 'call_expression');
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -42,8 +42,8 @@ describe("Rust Bespoke Handlers", () => {
         language: 'rust'
       };
       
-      if (callNode) {
-        const result = handle_enum_variant_construction(callNode, context);
+      if (call_node) {
+        const result = handle_enum_variant_construction(call_node, context);
         expect(result).toBeDefined();
         expect(result?.constructor_name).toContain('Some');
         expect(result?.is_enum_variant).toBe(true);
@@ -63,7 +63,7 @@ describe("Rust Bespoke Handlers", () => {
         return null;
       }
       
-      const callNode = findNode(tree.rootNode, 'call_expression');
+      const call_node = findNode(tree.rootNode, 'call_expression');
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -72,8 +72,8 @@ describe("Rust Bespoke Handlers", () => {
         language: 'rust'
       };
       
-      if (callNode) {
-        const result = handle_enum_variant_construction(callNode, context);
+      if (call_node) {
+        const result = handle_enum_variant_construction(call_node, context);
         expect(result).toBeDefined();
         expect(result?.constructor_name).toContain('Ok');
       }
@@ -92,7 +92,7 @@ describe("Rust Bespoke Handlers", () => {
         return null;
       }
       
-      const callNode = findNode(tree.rootNode, 'call_expression');
+      const call_node = findNode(tree.rootNode, 'call_expression');
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -101,8 +101,8 @@ describe("Rust Bespoke Handlers", () => {
         language: 'rust'
       };
       
-      if (callNode) {
-        const result = handle_enum_variant_construction(callNode, context);
+      if (call_node) {
+        const result = handle_enum_variant_construction(call_node, context);
         expect(result).toBeNull();
       }
     });
@@ -122,7 +122,7 @@ describe("Rust Bespoke Handlers", () => {
         return null;
       }
       
-      const callNode = findNode(tree.rootNode, 'call_expression');
+      const call_node = findNode(tree.rootNode, 'call_expression');
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -131,8 +131,8 @@ describe("Rust Bespoke Handlers", () => {
         language: 'rust'
       };
       
-      if (callNode) {
-        const result = handle_tuple_struct_construction(callNode, context);
+      if (call_node) {
+        const result = handle_tuple_struct_construction(call_node, context);
         expect(result).toBeDefined();
         expect(result?.constructor_name).toBe('Point');
         expect(result?.is_tuple_struct).toBe(true);
@@ -152,7 +152,7 @@ describe("Rust Bespoke Handlers", () => {
         return null;
       }
       
-      const callNode = findNode(tree.rootNode, 'call_expression');
+      const call_node = findNode(tree.rootNode, 'call_expression');
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -161,8 +161,8 @@ describe("Rust Bespoke Handlers", () => {
         language: 'rust'
       };
       
-      if (callNode) {
-        const result = handle_tuple_struct_construction(callNode, context);
+      if (call_node) {
+        const result = handle_tuple_struct_construction(call_node, context);
         expect(result).toBeDefined();
         expect(result?.constructor_name).toBe('Color');
       }
@@ -183,7 +183,7 @@ describe("Rust Bespoke Handlers", () => {
         return null;
       }
       
-      const macroNode = findNode(tree.rootNode, 'macro_invocation');
+      const macro_node = findNode(tree.rootNode, 'macro_invocation');
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -192,8 +192,8 @@ describe("Rust Bespoke Handlers", () => {
         language: 'rust'
       };
       
-      if (macroNode) {
-        const result = handle_macro_construction(macroNode, context);
+      if (macro_node) {
+        const result = handle_macro_construction(macro_node, context);
         expect(result).toBeDefined();
         expect(result?.constructor_name).toBe('vec');
         expect(result?.is_macro_invocation).toBe(true);
@@ -213,7 +213,7 @@ describe("Rust Bespoke Handlers", () => {
         return null;
       }
       
-      const macroNode = findNode(tree.rootNode, 'macro_invocation');
+      const macro_node = findNode(tree.rootNode, 'macro_invocation');
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -222,8 +222,8 @@ describe("Rust Bespoke Handlers", () => {
         language: 'rust'
       };
       
-      if (macroNode) {
-        const result = handle_macro_construction(macroNode, context);
+      if (macro_node) {
+        const result = handle_macro_construction(macro_node, context);
         expect(result).toBeDefined();
         expect(result?.constructor_name).toBe('hashmap');
       }
@@ -242,7 +242,7 @@ describe("Rust Bespoke Handlers", () => {
         return null;
       }
       
-      const macroNode = findNode(tree.rootNode, 'macro_invocation');
+      const macro_node = findNode(tree.rootNode, 'macro_invocation');
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -251,8 +251,8 @@ describe("Rust Bespoke Handlers", () => {
         language: 'rust'
       };
       
-      if (macroNode) {
-        const result = handle_macro_construction(macroNode, context);
+      if (macro_node) {
+        const result = handle_macro_construction(macro_node, context);
         expect(result).toBeNull();
       }
     });
@@ -272,7 +272,7 @@ describe("Rust Bespoke Handlers", () => {
         return null;
       }
       
-      const callNode = findNode(tree.rootNode, 'call_expression');
+      const call_node = findNode(tree.rootNode, 'call_expression');
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -281,8 +281,8 @@ describe("Rust Bespoke Handlers", () => {
         language: 'rust'
       };
       
-      if (callNode) {
-        const result = handle_smart_pointer_construction(callNode, context);
+      if (call_node) {
+        const result = handle_smart_pointer_construction(call_node, context);
         expect(result).toBeDefined();
         expect(result?.constructor_name).toBe('Box');
         expect(result?.is_smart_pointer).toBe(true);
@@ -302,7 +302,7 @@ describe("Rust Bespoke Handlers", () => {
         return null;
       }
       
-      const callNode = findNode(tree.rootNode, 'call_expression');
+      const call_node = findNode(tree.rootNode, 'call_expression');
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -311,8 +311,8 @@ describe("Rust Bespoke Handlers", () => {
         language: 'rust'
       };
       
-      if (callNode) {
-        const result = handle_smart_pointer_construction(callNode, context);
+      if (call_node) {
+        const result = handle_smart_pointer_construction(call_node, context);
         expect(result).toBeDefined();
         expect(result?.constructor_name).toBe('Arc');
       }
@@ -331,7 +331,7 @@ describe("Rust Bespoke Handlers", () => {
         return null;
       }
       
-      const callNode = findNode(tree.rootNode, 'call_expression');
+      const call_node = findNode(tree.rootNode, 'call_expression');
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -340,8 +340,8 @@ describe("Rust Bespoke Handlers", () => {
         language: 'rust'
       };
       
-      if (callNode) {
-        const result = handle_smart_pointer_construction(callNode, context);
+      if (call_node) {
+        const result = handle_smart_pointer_construction(call_node, context);
         expect(result).toBeDefined();
         expect(result?.constructor_name).toBe('Rc');
       }
@@ -362,7 +362,7 @@ describe("Rust Bespoke Handlers", () => {
         return null;
       }
       
-      const callNode = findNode(tree.rootNode, 'call_expression');
+      const call_node = findNode(tree.rootNode, 'call_expression');
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -371,8 +371,8 @@ describe("Rust Bespoke Handlers", () => {
         language: 'rust'
       };
       
-      if (callNode) {
-        const result = handle_default_construction(callNode, context);
+      if (call_node) {
+        const result = handle_default_construction(call_node, context);
         expect(result).toBeDefined();
         expect(result?.constructor_name).toBe('Config');
         expect(result?.is_default_construction).toBe(true);
@@ -392,7 +392,7 @@ describe("Rust Bespoke Handlers", () => {
         return null;
       }
       
-      const callNode = findNode(tree.rootNode, 'call_expression');
+      const call_node = findNode(tree.rootNode, 'call_expression');
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -401,8 +401,8 @@ describe("Rust Bespoke Handlers", () => {
         language: 'rust'
       };
       
-      if (callNode) {
-        const result = handle_default_construction(callNode, context);
+      if (call_node) {
+        const result = handle_default_construction(call_node, context);
         expect(result).toBeDefined();
         expect(result?.constructor_name).toBe('Default');
       }
@@ -421,7 +421,7 @@ describe("Rust Bespoke Handlers", () => {
         return null;
       }
       
-      const callNode = findNode(tree.rootNode, 'call_expression');
+      const call_node = findNode(tree.rootNode, 'call_expression');
       
       const context: ConstructorCallContext = {
         source_code: source,
@@ -430,8 +430,8 @@ describe("Rust Bespoke Handlers", () => {
         language: 'rust'
       };
       
-      if (callNode) {
-        const result = handle_default_construction(callNode, context);
+      if (call_node) {
+        const result = handle_default_construction(call_node, context);
         expect(result).toBeNull();
       }
     });
