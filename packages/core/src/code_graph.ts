@@ -15,9 +15,17 @@ import {
   CodeGraph,
   CodeGraphOptions,
   FilePath,
-  // Scope types
+  // Core types from reorganized files
+  Import,
+  Export,
+  CallInfo,
+  SymbolDefinition,
+  ScopeNode,
+  TypeDefinition,
+  ModulePath,
+  SymbolId,
+  FileAnalysis,
 } from "@ariadnejs/types";
-import type { FileAnalysis, Import } from "@ariadnejs/types";
 import {
   build_class_hierarchy_from_analyses,
 } from "./inheritance/class_hierarchy";
@@ -95,12 +103,12 @@ export async function generate_code_graph(
     const file = await read_and_parse_file(file_path);
 
     // Check cache first
-    const cachedAnalysis = cache.getCachedAnalysis(file_path, file.source_code);
-    if (cachedAnalysis) {
+    const cached_analysis = cache.getCachedAnalysis(file_path, file.source_code);
+    if (cached_analysis) {
       console.debug(`Cache hit for ${file_path}`);
       // Still need to return with tree for compatibility
       const { tree } = await analyze_file(file); // Parse tree only
-      return { analysis: cachedAnalysis, tree };
+      return { analysis: cached_analysis, tree };
     }
 
     // Analyze and cache result
@@ -148,10 +156,8 @@ export async function generate_code_graph(
   // Create imports map for cross-file resolution
   const imports_by_file = new Map<FilePath, Import[]>();
   for (const analysis of analyses) {
-    // Note: analysis.imports are ImportStatement[], but we need ImportInfo[]
-    // This is a type mismatch we need to handle - for now, skip the imports
-    // TODO: Fix type conversion between ImportStatement and ImportInfo
-    imports_by_file.set(analysis.file_path, []);
+    // Imports are already of type Import[] from file_analyzer
+    imports_by_file.set(analysis.file_path, analysis.imports);
   }
 
   // We'll enrich analyses after building the module graph and resolving types
