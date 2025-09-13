@@ -25,13 +25,13 @@ export interface TypeDefinition extends SemanticNode {
   readonly type_expression?: TypeExpression; // Full type expression
 
   // Type parameters and constraints
-  readonly type_parameters?: readonly TypeParameter[];
-  readonly constraints?: readonly TypeConstraint[];
+  readonly type_parameters: readonly TypeParameter[]; // Always present, defaults to empty array
+  readonly constraints: readonly TypeConstraint[]; // Always present, defaults to empty array
 
   // Inheritance and composition
-  readonly extends?: readonly SymbolId[]; // Base types
-  readonly implements?: readonly SymbolId[]; // Interfaces
-  readonly mixins?: readonly SymbolId[]; // Mixins/traits
+  readonly extends: readonly SymbolId[]; // Always present, defaults to empty array
+  readonly implements: readonly SymbolId[]; // Always present, defaults to empty array
+  readonly mixins: readonly SymbolId[]; // Always present, defaults to empty array
 
   // Members (unified for all type kinds)
   readonly members?: ReadonlyMap<SymbolName, TypeMember>;
@@ -285,6 +285,12 @@ export function create_type_definition(
     location,
     language,
     node_type: get_node_type_for_type_kind(kind),
+    // Provide defaults for required array properties
+    type_parameters: [],
+    constraints: [],
+    extends: [],
+    implements: [],
+    mixins: [],
     // Provide defaults for required boolean properties
     is_generic: false,
     is_abstract: false,

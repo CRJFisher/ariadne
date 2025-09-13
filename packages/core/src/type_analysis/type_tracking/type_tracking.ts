@@ -31,6 +31,9 @@ import {
   TypeGraph,
   TypeString,
   ScopeType,
+  symbol_string,
+  Symbol,
+  SymbolName,
 } from "@ariadnejs/types";
 import { node_to_location } from "../../ast/node_utils";
 
@@ -39,8 +42,8 @@ import { node_to_location } from "../../ast/node_utils";
  * The actual TypeInfo type is imported from @ariadnejs/types
  */
 interface LegacyTypeInfo {
-  variable_name?: string;
-  type_name: string;
+  variable_name?: string; // Legacy: use SymbolId instead
+  type_name: string; // TODO: migrate to SymbolId
   type_kind?:
     | "primitive"
     | "class"
@@ -60,9 +63,9 @@ interface LegacyTypeInfo {
  * Information about an imported class/type
  */
 export interface ImportedClassInfo {
-  class_name: string;
+  class_symbol: SymbolId; // Symbol for the imported class/type
   source_module: string;
-  local_name: string;
+  local_symbol: SymbolId; // Symbol for the local alias
   is_default?: boolean;
   is_type_only?: boolean; // TypeScript type-only import
 }
@@ -82,11 +85,12 @@ export interface TypeTrackingContext {
  */
 export interface FileTypeTracker {
   variable_types: Map<SymbolId, TypeInfo>; // Symbol ID -> type info
-  imported_classes: Map<string, ImportedClassInfo>; // Local name -> import info (legacy)
+  imported_classes: Map<SymbolId, ImportedClassInfo>; // Local symbol -> import info
   exported_definitions: Set<string>; // Names of exported definitions
   file_path?: FilePath; // File path for creating SymbolIds
   // Legacy compatibility
   legacy_types?: Map<string, LegacyTypeInfo[]>; // Variable name -> type history
+  legacy_imports?: Map<string, ImportedClassInfo>; // Local name -> import info (for backward compatibility)
 }
 
 /**
@@ -105,11 +109,37 @@ export function create_file_type_tracker(): FileTypeTracker {
  */
 export function set_variable_type(
   tracker: FileTypeTracker,
+  variable_symbol: SymbolId,
+  type_info: LegacyTypeInfo
+): FileTypeTracker;
+
+// Legacy overload for migration compatibility
+export function set_variable_type(
+  tracker: FileTypeTracker,
   var_name: string,
   type_info: LegacyTypeInfo
+): FileTypeTracker;
+
+export function set_variable_type(
+  tracker: FileTypeTracker,
+  var_name_or_symbol: string | SymbolId,
+  type_info: LegacyTypeInfo
 ): FileTypeTracker {
-  // Convert to SymbolId
-  const symbol_id = `variable:${tracker.file_path || 'unknown'}:${var_name}` as SymbolId;
+  // Convert to SymbolId if needed
+  let symbol_id: SymbolId;
+  let var_name: string;
+  
+  if (typeof var_name_or_symbol === 'string' && !var_name_or_symbol.includes(':')) {
+    // Legacy string parameter - convert to SymbolId
+    var_name = var_name_or_symbol;
+    symbol_id = `variable:${tracker.file_path || 'unknown'}:${var_name}` as SymbolId;
+  } else {
+    // SymbolId parameter
+    symbol_id = var_name_or_symbol as SymbolId;
+    // Extract variable name for legacy compatibility
+    const parts = symbol_id.split(':');
+    var_name = parts[parts.length - 1];
+  }
   
   // Convert to TypeInfo from packages/types
   const api_type_info: TypeInfo = {
@@ -149,30 +179,78 @@ function normalize_confidence(
 }
 
 /**
- * Track an imported class/type
+ * Track an imported class/type using SymbolId
  */
+export function set_imported_class(
+  tracker: FileTypeTracker,
+  local_symbol: SymbolId,
+  class_info: ImportedClassInfo
+): FileTypeTracker;
+
+// Legacy overload for migration compatibility
 export function set_imported_class(
   tracker: FileTypeTracker,
   local_name: string,
   class_info: ImportedClassInfo
+): FileTypeTracker;
+
+export function set_imported_class(
+  tracker: FileTypeTracker,
+  local_name_or_symbol: string | SymbolId,
+  class_info: ImportedClassInfo
 ): FileTypeTracker {
   const new_imported_classes = new Map(tracker.imported_classes);
-  new_imported_classes.set(local_name, class_info);
+  const legacy_imports = new Map(tracker.legacy_imports || new Map());
+  
+  // Handle SymbolId parameter
+  if (typeof local_name_or_symbol === 'string' && local_name_or_symbol.includes(':')) {
+    new_imported_classes.set(local_name_or_symbol as SymbolId, class_info);
+    
+    // Also maintain legacy map for backward compatibility - extract the local name from the symbol
+    // SymbolId format: "kind:file_path:line:column:end_line:end_column:name[:qualifier]"
+    const symbol_parts = local_name_or_symbol.split(':');
+    // Name is at position 6 (0-indexed)
+    const local_name = symbol_parts.length > 7 ? symbol_parts[7] : symbol_parts[6];
+    legacy_imports.set(local_name, class_info);
+  } else {
+    // Legacy string parameter - maintain backward compatibility
+    const local_name = local_name_or_symbol as string;
+    legacy_imports.set(local_name, class_info);
+  }
 
   return {
     ...tracker,
     imported_classes: new_imported_classes,
+    legacy_imports,
   };
 }
 
 /**
- * Get imported class information
+ * Get imported class information using SymbolId
  */
 export function get_imported_class(
   tracker: FileTypeTracker,
+  local_symbol: SymbolId
+): ImportedClassInfo | undefined;
+
+// Legacy overload for migration compatibility
+export function get_imported_class(
+  tracker: FileTypeTracker,
   local_name: string
+): ImportedClassInfo | undefined;
+
+export function get_imported_class(
+  tracker: FileTypeTracker,
+  local_name_or_symbol: string | SymbolId
 ): ImportedClassInfo | undefined {
-  return tracker.imported_classes.get(local_name);
+  // Handle SymbolId parameter
+  if (typeof local_name_or_symbol === 'string' && local_name_or_symbol.includes(':')) {
+    return tracker.imported_classes.get(local_name_or_symbol as SymbolId);
+  }
+  
+  // Legacy string parameter - check legacy imports
+  const local_name = local_name_or_symbol as string;
+  return tracker.legacy_imports?.get(local_name);
 }
 
 /**
@@ -758,10 +836,23 @@ export function track_imports_generic(
                       )
                     : import_name;
 
-                  tracker = set_imported_class(tracker, local_name, {
-                    class_name: import_name,
+                  // Create SymbolIds for the import
+                  const import_location: Location = node_to_location(name_node, context.file_path);
+                  const class_symbol_id = symbol_string({
+                    kind: "class",
+                    name: import_name as SymbolName,
+                    location: import_location,
+                  });
+                  const local_symbol_id = symbol_string({
+                    kind: "class",
+                    name: local_name as SymbolName,
+                    location: import_location,
+                  });
+
+                  tracker = set_imported_class(tracker, local_symbol_id, {
+                    class_symbol: class_symbol_id,
                     source_module: module_name,
-                    local_name: local_name,
+                    local_symbol: local_symbol_id,
                     is_type_only: is_type_only,
                   });
                 }
@@ -776,10 +867,23 @@ export function track_imports_generic(
               default_import.startIndex,
               default_import.endIndex
             );
-            tracker = set_imported_class(tracker, import_name, {
-              class_name: import_name,
+            // Create SymbolIds for the default import
+            const default_location: Location = node_to_location(default_import, context.file_path);
+            const class_symbol_id = symbol_string({
+              kind: "class",
+              name: import_name as SymbolName,
+              location: default_location,
+            });
+            const local_symbol_id = symbol_string({
+              kind: "class",
+              name: import_name as SymbolName,
+              location: default_location,
+            });
+
+            tracker = set_imported_class(tracker, local_symbol_id, {
+              class_symbol: class_symbol_id,
               source_module: module_name,
-              local_name: import_name,
+              local_symbol: local_symbol_id,
               is_default: true,
               is_type_only: is_type_only,
             });
@@ -794,10 +898,23 @@ export function track_imports_generic(
               namespace_name.startIndex,
               namespace_name.endIndex
             );
-            tracker = set_imported_class(tracker, import_name, {
-              class_name: "*",
+            // Create SymbolIds for the namespace import
+            const namespace_location: Location = node_to_location(namespace_name, context.file_path);
+            const namespace_symbol_id = symbol_string({
+              kind: "namespace",
+              name: "*" as SymbolName,
+              location: namespace_location,
+            });
+            const local_symbol_id = symbol_string({
+              kind: "namespace",
+              name: import_name as SymbolName,
+              location: namespace_location,
+            });
+
+            tracker = set_imported_class(tracker, local_symbol_id, {
+              class_symbol: namespace_symbol_id,
               source_module: module_name,
-              local_name: import_name,
+              local_symbol: local_symbol_id,
             });
           }
         }
@@ -867,10 +984,23 @@ export function track_imports_generic(
                 alias_node.endIndex
               );
 
-              tracker = set_imported_class(tracker, local_name, {
-                class_name: class_name,
+              // Create SymbolIds for the aliased import
+              const import_location: Location = node_to_location(alias_node || name_node, context.file_path);
+              const class_symbol_id = symbol_string({
+                kind: "class",
+                name: class_name as SymbolName,
+                location: import_location,
+              });
+              const local_symbol_id = symbol_string({
+                kind: "class",
+                name: local_name as SymbolName,
+                location: import_location,
+              });
+
+              tracker = set_imported_class(tracker, local_symbol_id, {
+                class_symbol: class_symbol_id,
                 source_module: module_name,
-                local_name: local_name,
+                local_symbol: local_symbol_id,
               });
             } else if (child.childCount >= 3) {
               // Fallback: Structure is: name as alias
@@ -887,10 +1017,23 @@ export function track_imports_generic(
                   alias.endIndex
                 );
 
-                tracker = set_imported_class(tracker, local_name, {
-                  class_name: class_name,
+                // Create SymbolIds for the aliased import
+                const import_location: Location = node_to_location(alias || actual_name, context.file_path);
+                const class_symbol_id = symbol_string({
+                  kind: "class",
+                  name: class_name as SymbolName,
+                  location: import_location,
+                });
+                const local_symbol_id = symbol_string({
+                  kind: "class",
+                  name: local_name as SymbolName,
+                  location: import_location,
+                });
+
+                tracker = set_imported_class(tracker, local_symbol_id, {
+                  class_symbol: class_symbol_id,
                   source_module: module_name,
-                  local_name: local_name,
+                  local_symbol: local_symbol_id,
                 });
               }
             }
@@ -904,10 +1047,23 @@ export function track_imports_generic(
               child.startIndex,
               child.endIndex
             );
-            tracker = set_imported_class(tracker, import_name, {
-              class_name: import_name,
+            // Create SymbolIds for the regular import
+            const import_location: Location = node_to_location(child, context.file_path);
+            const class_symbol_id = symbol_string({
+              kind: "class",
+              name: import_name as SymbolName,
+              location: import_location,
+            });
+            const local_symbol_id = symbol_string({
+              kind: "class",
+              name: import_name as SymbolName,
+              location: import_location,
+            });
+
+            tracker = set_imported_class(tracker, local_symbol_id, {
+              class_symbol: class_symbol_id,
               source_module: module_name,
-              local_name: import_name,
+              local_symbol: local_symbol_id,
             });
           }
         }
@@ -927,10 +1083,23 @@ export function track_imports_generic(
             child.endIndex
           );
           if (module_name !== "import") {
-            tracker = set_imported_class(tracker, module_name, {
-              class_name: module_name,
+            // Create SymbolIds for the module import
+            const import_location: Location = node_to_location(child, context.file_path);
+            const class_symbol_id = symbol_string({
+              kind: "module",
+              name: module_name as SymbolName,
+              location: import_location,
+            });
+            const local_symbol_id = symbol_string({
+              kind: "module",
+              name: module_name as SymbolName,
+              location: import_location,
+            });
+
+            tracker = set_imported_class(tracker, local_symbol_id, {
+              class_symbol: class_symbol_id,
               source_module: module_name,
-              local_name: module_name,
+              local_symbol: local_symbol_id,
             });
           }
         }
@@ -965,10 +1134,23 @@ function extract_rust_imports(
   if (node.type === "identifier") {
     const name = context.source_code.substring(node.startIndex, node.endIndex);
     const full_path = path_prefix ? `${path_prefix}::${name}` : name;
-    return set_imported_class(tracker, name, {
-      class_name: name,
+    // Create SymbolIds for the simple import
+    const import_location: Location = node_to_location(node, context.file_path);
+    const class_symbol_id = symbol_string({
+      kind: "class",
+      name: name as SymbolName,
+      location: import_location,
+    });
+    const local_symbol_id = symbol_string({
+      kind: "class",
+      name: name as SymbolName,
+      location: import_location,
+    });
+    
+    return set_imported_class(tracker, local_symbol_id, {
+      class_symbol: class_symbol_id,
       source_module: full_path,
-      local_name: name,
+      local_symbol: local_symbol_id,
     });
   }
 
@@ -977,10 +1159,23 @@ function extract_rust_imports(
     const full_path = context.source_code.substring(node.startIndex, node.endIndex);
     const parts = full_path.split("::");
     const name = parts[parts.length - 1];
-    return set_imported_class(tracker, name, {
-      class_name: name,
+    // Create SymbolIds for the scoped import
+    const import_location: Location = node_to_location(node, context.file_path);
+    const class_symbol_id = symbol_string({
+      kind: "class",
+      name: name as SymbolName,
+      location: import_location,
+    });
+    const local_symbol_id = symbol_string({
+      kind: "class",
+      name: name as SymbolName,
+      location: import_location,
+    });
+    
+    return set_imported_class(tracker, local_symbol_id, {
+      class_symbol: class_symbol_id,
       source_module: full_path,
-      local_name: name,
+      local_symbol: local_symbol_id,
     });
   }
 
@@ -1031,10 +1226,23 @@ function extract_rust_imports(
         ? context.source_code.substring(alias_node.startIndex, alias_node.endIndex)
         : original_name;
 
-      return set_imported_class(tracker, alias, {
-        class_name: original_name,
+      // Create SymbolIds for the aliased import
+      const import_location: Location = node_to_location(alias_node || path_node, context.file_path);
+      const class_symbol_id = symbol_string({
+        kind: "class",
+        name: original_name as SymbolName,
+        location: import_location,
+      });
+      const local_symbol_id = symbol_string({
+        kind: "class",
+        name: alias as SymbolName,
+        location: import_location,
+      });
+      
+      return set_imported_class(tracker, local_symbol_id, {
+        class_symbol: class_symbol_id,
         source_module: full_path,
-        local_name: alias,
+        local_symbol: local_symbol_id,
       });
     }
   }

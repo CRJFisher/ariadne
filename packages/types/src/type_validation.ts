@@ -649,7 +649,7 @@ export function assert_defined<T>(
 // Export All Type Guards
 // ============================================================================
 
-export const TypeGuards = {
+export const type_guards = {
   // Branded types
   is_symbol_name,
   is_symbol_id,

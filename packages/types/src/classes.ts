@@ -24,7 +24,7 @@ export interface ClassNode {
   // Direct relationships
   readonly base_classes: readonly SymbolId[];
   readonly derived_classes: readonly SymbolId[];
-  readonly interfaces?: readonly SymbolId[];
+  readonly interfaces: readonly SymbolId[]; // Always present, defaults to empty array
 
   // Type characteristics
   readonly is_abstract: boolean;

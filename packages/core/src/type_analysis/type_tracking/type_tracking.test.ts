@@ -345,9 +345,15 @@ from package.module import SomeClass as Alias
       expect(get_imported_class(tracker, "MyClass")?.source_module).toBe(
         "mymodule"
       );
-      expect(get_imported_class(tracker, "Alias")?.class_name).toBe(
-        "SomeClass"
-      );
+      const aliasImport = get_imported_class(tracker, "Alias");
+      if (aliasImport?.class_symbol) {
+        const parts = aliasImport.class_symbol.split(':');
+        const className = parts.length > 7 ? parts[7] : parts[6];
+        expect(className).toBe("SomeClass");
+      } else {
+        // Legacy support
+        expect((aliasImport as any)?.class_name).toBe("SomeClass");
+      }
     });
 
     it("should infer Python types from literals", () => {
@@ -454,7 +460,15 @@ use crate::utils::helper as h;
       expect(get_imported_class(tracker, "MyStruct")?.source_module).toBe(
         "super::module::MyStruct"
       );
-      expect(get_imported_class(tracker, "h")?.class_name).toBe("helper");
+      const hImport = get_imported_class(tracker, "h");
+      if (hImport?.class_symbol) {
+        const parts = hImport.class_symbol.split(':');
+        const className = parts.length > 7 ? parts[7] : parts[6];
+        expect(className).toBe("helper");
+      } else {
+        // Legacy support
+        expect((hImport as any)?.class_name).toBe("helper");
+      }
     });
 
     it("should infer Rust types from literals", () => {

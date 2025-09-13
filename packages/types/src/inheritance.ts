@@ -25,16 +25,16 @@ export interface UnifiedTypeEntity extends SemanticNode {
   readonly entity_kind: TypeEntityKind;
 
   // Inheritance relationships (unified)
-  readonly extends?: readonly SymbolId[]; // Base classes/interfaces
-  readonly implements?: readonly SymbolId[]; // Implemented interfaces
-  readonly uses?: readonly SymbolId[]; // Traits/mixins
+  readonly extends: readonly SymbolId[]; // Always present, defaults to empty array
+  readonly implements: readonly SymbolId[]; // Always present, defaults to empty array
+  readonly uses: readonly SymbolId[]; // Always present, defaults to empty array
 
   // Members
   readonly members: ReadonlyMap<SymbolName, Member>;
 
   // Type characteristics
-  readonly modifiers?: readonly TypeModifier[];
-  readonly type_parameters?: readonly string[]; // Generic parameters
+  readonly modifiers: readonly TypeModifier[]; // Always present, defaults to empty array
+  readonly type_parameters: readonly string[]; // Always present, defaults to empty array
 
   // Computed hierarchy information
   readonly ancestors?: readonly SymbolId[]; // All ancestors in order
@@ -298,7 +298,12 @@ export function create_class_entity(
     id,
     name,
     entity_kind: "class",
+    extends: [],
+    implements: [],
+    uses: [],
     members: new Map(),
+    modifiers: [],
+    type_parameters: [],
     location,
     language,
     node_type: "class_declaration",
@@ -320,7 +325,12 @@ export function create_interface_entity(
     id,
     name,
     entity_kind: "interface",
+    extends: [],
+    implements: [],
+    uses: [],
     members: new Map(),
+    modifiers: [],
+    type_parameters: [],
     location,
     language,
     node_type: "interface_declaration",

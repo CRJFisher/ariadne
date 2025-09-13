@@ -4,8 +4,8 @@
  * These functions are only used in tests and are not part of the public API
  */
 
-import { FileTypeTracker, TypeInfo } from './type_tracking';
-import { Location } from '@ariadnejs/types';
+import { FileTypeTracker } from './type_tracking';
+import { Location, TypeInfo } from '@ariadnejs/types';
 
 /**
  * Get the type of a variable at a specific position
@@ -16,8 +16,33 @@ export function get_variable_type(
   var_name: string,
   location?: Location
 ): TypeInfo | undefined {
-  const types = tracker.variable_types.get(var_name);
-  if (!types || types.length === 0) return undefined;
+  // First try to find in variable_types by looking for any SymbolId ending with the variable name
+  for (const [symbol_id, type_info] of tracker.variable_types) {
+    const parts = symbol_id.split(':');
+    const name = parts.length > 7 ? parts[7] : parts[6];
+    if (name === var_name) {
+      // For now, just return the type_info directly if no location is specified
+      if (!location) return type_info;
+      
+      // Check if the location matches
+      if (type_info.location.line <= location.line) {
+        return type_info;
+      }
+    }
+  }
+  
+  // Fallback to legacy_types if available
+  const legacy_list = tracker.legacy_types?.get(var_name);
+  if (!legacy_list || legacy_list.length === 0) return undefined;
+  
+  // Convert legacy type info to TypeInfo
+  const types = legacy_list.map(lt => ({
+    type_name: lt.type_name as any,
+    type_kind: lt.type_kind as any || 'unknown',
+    location: lt.location,
+    confidence: lt.confidence as any || 'assumed',
+    source: lt.source,
+  }));
 
   // If no location specified, return the latest type
   if (!location) {
