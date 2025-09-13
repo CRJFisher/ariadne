@@ -1,11 +1,11 @@
 /**
  * Import resolution dispatcher
- * 
+ *
  * Configuration-driven import resolution with language-specific bespoke handlers
  * Refactored to reduce code duplication by 60-70%
  */
 
-import { Language, ExportedSymbol, ImportedSymbol, SymbolDefinition, ModuleNode } from '@ariadnejs/types';
+import { Language, ExportedSymbol, ImportedSymbol, SymbolDefinition, ModuleNode, Import } from '@ariadnejs/types';
 import { ImportStatement } from '@ariadnejs/types';
 
 // Core types and common functions
@@ -130,6 +130,9 @@ export {
   extract_python_imports,
   extract_rust_imports
 };
+
+// Re-export Import type from types package
+export { Import } from '@ariadnejs/types';
 
 // Re-export namespace helper functions
 export {

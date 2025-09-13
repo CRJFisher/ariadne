@@ -9,22 +9,20 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { 
-  Language, 
+import {
+  Language,
   Location,
-  UnifiedImport,
-  NamedImport,
-  DefaultImport,
-  NamespaceImport,
-  SideEffectImport,
-  DynamicImport,
-  createNamedImport,
-  createNamedExport,
   ModulePath,
   SymbolName,
   NamespaceName,
-  toSymbolName,
-  buildModulePath
+  FilePath
+} from '@ariadnejs/types';
+import {
+  Import,
+  NamedImport,
+  DefaultImport,
+  NamespaceImport,
+  SideEffectImport
 } from '@ariadnejs/types';
 import { node_to_location } from '../../ast/node_utils';
 
@@ -37,8 +35,8 @@ export function extract_imports(
   root_node: SyntaxNode,
   source_code: string,
   language: Language,
-  file_path: string
-): UnifiedImport[] {
+  file_path: FilePath
+): Import[] {
   switch (language) {
     case 'javascript':
       return extract_javascript_imports(root_node, source_code, file_path);
@@ -63,9 +61,9 @@ export function extract_imports(
 export function extract_javascript_imports(
   root_node: SyntaxNode,
   source_code: string,
-  file_path: string
-): UnifiedImport[] {
-  const imports: UnifiedImport[] = [];
+  file_path: FilePath
+): Import[] {
+  const imports: Import[] = [];
   
   const visit = (node: SyntaxNode) => {
     // ES6 imports
@@ -102,9 +100,9 @@ export function extract_javascript_imports(
 export function extract_typescript_imports(
   root_node: SyntaxNode,
   source_code: string,
-  file_path: string
-): UnifiedImport[] {
-  const imports: UnifiedImport[] = [];
+  file_path: FilePath
+): Import[] {
+  const imports: Import[] = [];
   const processed_nodes = new Set<SyntaxNode>();
   
   const visit = (node: SyntaxNode) => {
@@ -143,9 +141,9 @@ export function extract_typescript_imports(
 export function extract_python_imports(
   root_node: SyntaxNode,
   source_code: string,
-  file_path: string
-): UnifiedImport[] {
-  const imports: UnifiedImport[] = [];
+  file_path: FilePath
+): Import[] {
+  const imports: Import[] = [];
   
   const visit = (node: SyntaxNode) => {
     // import foo, bar
@@ -175,9 +173,9 @@ export function extract_python_imports(
 export function extract_rust_imports(
   root_node: SyntaxNode,
   source_code: string,
-  file_path: string
-): UnifiedImport[] {
-  const imports: UnifiedImport[] = [];
+  file_path: FilePath
+): Import[] {
+  const imports: Import[] = [];
   
   const visit = (node: SyntaxNode) => {
     // use statements
@@ -206,13 +204,13 @@ export function extract_rust_imports(
 function extract_typescript_import(
   import_node: SyntaxNode,
   source_code: string,
-  file_path: string
-): UnifiedImport[] {
-  const imports: UnifiedImport[] = [];
+  file_path: FilePath
+): Import[] {
+  const imports: Import[] = [];
   const source_node = import_node.childForFieldName('source');
   if (!source_node) return imports;
   
-  const module_source = buildModulePath(extract_string_literal(source_node, source_code));
+  const module_source = extract_string_literal(source_node, source_code) as ModulePath;
   
   // Check if this is a type-only import at the statement level
   // Pattern: import type { ... } from '...' or import type * as ... from '...'
@@ -238,8 +236,10 @@ function extract_typescript_import(
   if (!import_clause) {
     // Side-effect import: import './styles.css'
     const side_effect_import: SideEffectImport = {
-      kind: 'side-effect',
+      kind: 'side_effect',
       source: module_source,
+      is_type_only: false,
+      is_dynamic: false,
       location: node_to_location(import_node, file_path),
       language: 'typescript',
       node_type: 'import_statement'
@@ -248,15 +248,17 @@ function extract_typescript_import(
   }
   
   // Process import clause
-  const named_imports: Array<{ name: SymbolName; alias?: SymbolName }> = [];
+  const named_imports: Array<{ name: SymbolName; alias?: SymbolName; is_type_only: boolean }> = [];
   
   for (const child of import_clause.children) {
     if (child.type === 'identifier') {
       // Default import: import foo from './foo' or import type Foo from './foo'
       const default_import: DefaultImport = {
         kind: 'default',
-        name: toSymbolName(child.text),
+        name: child.text as SymbolName,
         source: module_source,
+        is_type_only: statement_level_type,
+        is_dynamic: false,
         location: node_to_location(child, file_path),
         language: 'typescript',
         node_type: 'import_statement'
@@ -271,6 +273,8 @@ function extract_typescript_import(
           kind: 'namespace',
           namespace_name: identifier_node.text as NamespaceName,
           source: module_source,
+          is_type_only: statement_level_type,
+          is_dynamic: false,
           location: node_to_location(child, file_path),
           language: 'typescript',
           node_type: 'import_statement'
@@ -282,8 +286,9 @@ function extract_typescript_import(
       const specs = extract_typescript_import_specifiers(child, source_code, statement_level_type);
       for (const spec of specs) {
         named_imports.push({
-          name: toSymbolName(spec.name),
-          alias: spec.alias ? toSymbolName(spec.alias) : undefined
+          name: spec.name as SymbolName,
+          alias: spec.alias ? spec.alias as SymbolName : undefined,
+          is_type_only: spec.is_type_only
         });
       }
     }
@@ -295,6 +300,8 @@ function extract_typescript_import(
       kind: 'named',
       imports: named_imports,
       source: module_source,
+      is_type_only: statement_level_type,
+      is_dynamic: false,
       location: node_to_location(import_clause, file_path),
       language: 'typescript',
       node_type: 'import_statement'
@@ -357,13 +364,13 @@ function extract_typescript_import_specifiers(
 function extract_es6_import(
   import_node: SyntaxNode,
   source_code: string,
-  file_path: string
-): UnifiedImport[] {
-  const imports: UnifiedImport[] = [];
+  file_path: FilePath
+): Import[] {
+  const imports: Import[] = [];
   const source_node = import_node.childForFieldName('source');
   if (!source_node) return imports;
   
-  const module_source = buildModulePath(extract_string_literal(source_node, source_code));
+  const module_source = extract_string_literal(source_node, source_code) as ModulePath;
   const import_clause = import_node.childForFieldName('import_clause');
   
   if (!import_clause) {
@@ -371,6 +378,8 @@ function extract_es6_import(
     const side_effect_import: SideEffectImport = {
       kind: 'side_effect',
       source: module_source,
+      is_type_only: false,
+      is_dynamic: false,
       location: node_to_location(import_node, file_path),
       language: 'javascript',
       node_type: 'import_statement'
@@ -379,15 +388,17 @@ function extract_es6_import(
   }
   
   // Process import clause
-  const named_imports: Array<{ name: SymbolName; alias?: SymbolName }> = [];
+  const named_imports: Array<{ name: SymbolName; alias?: SymbolName; is_type_only: boolean }> = [];
   
   for (const child of import_clause.children) {
     if (child.type === 'identifier') {
       // Default import: import foo from './foo'
       const default_import: DefaultImport = {
         kind: 'default',
-        name: toSymbolName(child.text),
+        name: child.text as SymbolName,
         source: module_source,
+        is_type_only: false,
+        is_dynamic: false,
         location: node_to_location(child, file_path),
         language: 'javascript',
         node_type: 'import_statement'
@@ -401,6 +412,8 @@ function extract_es6_import(
           kind: 'namespace',
           namespace_name: alias_node.text as NamespaceName,
           source: module_source,
+          is_type_only: false,
+          is_dynamic: false,
           location: node_to_location(child, file_path),
           language: 'javascript',
           node_type: 'import_statement'
@@ -412,8 +425,9 @@ function extract_es6_import(
       const specs = extract_import_specifiers(child, source_code, file_path);
       for (const spec of specs) {
         named_imports.push({
-          name: toSymbolName(spec.name),
-          alias: spec.alias ? toSymbolName(spec.alias) : undefined
+          name: spec.name as SymbolName,
+          alias: spec.alias ? spec.alias as SymbolName : undefined,
+          is_type_only: false
         });
       }
       
@@ -423,6 +437,8 @@ function extract_es6_import(
           kind: 'named',
           imports: named_imports,
           source: module_source,
+          is_type_only: false,
+          is_dynamic: false,
           location: node_to_location(import_clause, file_path),
           language: 'javascript',
           node_type: 'import_statement'
@@ -438,8 +454,8 @@ function extract_es6_import(
 function extract_commonjs_require(
   call_node: SyntaxNode,
   source_code: string,
-  file_path: string
-): UnifiedImport | null {
+  file_path: FilePath
+): Import | null {
   const func = call_node.childForFieldName('function');
   if (!func || func.text !== 'require') return null;
   
@@ -451,7 +467,7 @@ function extract_commonjs_require(
   );
   if (!first_arg) return null;
   
-  const module_source = buildModulePath(extract_string_literal(first_arg, source_code));
+  const module_source = extract_string_literal(first_arg, source_code) as ModulePath;
   
   // Check for assignment: const foo = require('./foo')
   const parent = call_node.parent;
@@ -462,8 +478,10 @@ function extract_commonjs_require(
         // Default import pattern: const foo = require('./foo')
         const default_import: DefaultImport = {
           kind: 'default',
-          name: toSymbolName(name_node.text),
+          name: name_node.text as SymbolName,
           source: module_source,
+          is_type_only: false,
+          is_dynamic: false,
           location: node_to_location(call_node, file_path),
           language: 'javascript',
           node_type: 'call_expression'
@@ -474,8 +492,10 @@ function extract_commonjs_require(
         const names = extract_destructured_names(name_node, source_code);
         const named_import: NamedImport = {
           kind: 'named',
-          imports: names.map(name => ({ name: toSymbolName(name) })),
+          imports: names.map(name => ({ name: name as SymbolName, is_type_only: false })),
           source: module_source,
+          is_type_only: false,
+          is_dynamic: false,
           location: node_to_location(call_node, file_path),
           language: 'javascript',
           node_type: 'call_expression'
@@ -492,19 +512,22 @@ function extract_commonjs_require(
 function extract_dynamic_import(
   call_node: SyntaxNode,
   source_code: string,
-  file_path: string
-): UnifiedImport | null {
+  file_path: FilePath
+): Import | null {
   const args = call_node.childForFieldName('arguments');
   if (!args) return null;
-  
-  const first_arg = args.children.find(child => 
+
+  const first_arg = args.children.find(child =>
     child.type === 'string' || child.type === 'template_string'
   );
   if (!first_arg) return null;
-  
-  const dynamic_import: DynamicImport = {
-    kind: 'dynamic',
-    source: buildModulePath(extract_string_literal(first_arg, source_code)),
+
+  // Dynamic imports are represented as side-effect imports with is_dynamic=true
+  const dynamic_import: SideEffectImport = {
+    kind: 'side_effect',
+    source: extract_string_literal(first_arg, source_code) as ModulePath,
+    is_type_only: false,
+    is_dynamic: true,
     location: node_to_location(call_node, file_path),
     language: 'javascript',
     node_type: 'call_expression'
@@ -517,9 +540,9 @@ function extract_dynamic_import(
 function extract_python_import(
   import_node: SyntaxNode,
   source_code: string,
-  file_path: string
-): UnifiedImport[] {
-  const imports: UnifiedImport[] = [];
+  file_path: FilePath
+): Import[] {
+  const imports: Import[] = [];
   
   // Find aliased_import or dotted_name nodes
   for (const child of import_node.children) {
@@ -531,7 +554,9 @@ function extract_python_import(
         const namespace_import: NamespaceImport = {
           kind: 'namespace',
           namespace_name: (alias?.text || name.text) as NamespaceName,
-          source: buildModulePath(name.text),
+          source: name.text as ModulePath,
+          is_type_only: false,
+          is_dynamic: false,
           location: node_to_location(child, file_path),
           language: 'python',
           node_type: 'import_statement'
@@ -543,7 +568,9 @@ function extract_python_import(
       const namespace_import: NamespaceImport = {
         kind: 'namespace',
         namespace_name: child.text as NamespaceName,
-        source: buildModulePath(child.text),
+        source: child.text as ModulePath,
+        is_type_only: false,
+        is_dynamic: false,
         location: node_to_location(child, file_path),
         language: 'python',
         node_type: 'import_statement'
@@ -558,9 +585,9 @@ function extract_python_import(
 function extract_python_from_import(
   import_node: SyntaxNode,
   source_code: string,
-  file_path: string
-): UnifiedImport[] {
-  const imports: UnifiedImport[] = [];
+  file_path: FilePath
+): Import[] {
+  const imports: Import[] = [];
   
   // Find the module name - it's the dotted_name or identifier child
   // that comes after 'from' and before 'import'
@@ -578,8 +605,8 @@ function extract_python_from_import(
   }
   
   if (!module) return imports;
-  const source = buildModulePath(module.text);
-  const named_imports: Array<{ name: SymbolName; alias?: SymbolName }> = [];
+  const source = module.text as ModulePath;
+  const named_imports: Array<{ name: SymbolName; alias?: SymbolName; is_type_only: boolean }> = [];
   
   // Find what's being imported
   for (const child of import_node.children) {
@@ -591,13 +618,15 @@ function extract_python_from_import(
           const alias = spec.childForFieldName('alias');
           if (name) {
             named_imports.push({
-              name: toSymbolName(alias?.text || name.text),
-              alias: alias ? toSymbolName(name.text) : undefined
+              name: (alias?.text || name.text) as SymbolName,
+              alias: alias ? name.text as SymbolName : undefined,
+              is_type_only: false
             });
           }
         } else if (spec.type === 'identifier') {
           named_imports.push({
-            name: toSymbolName(spec.text)
+            name: spec.text as SymbolName,
+            is_type_only: false
           });
         }
       }
@@ -607,6 +636,8 @@ function extract_python_from_import(
         kind: 'namespace',
         namespace_name: '*' as NamespaceName,
         source,
+        is_type_only: false,
+        is_dynamic: false,
         location: node_to_location(child, file_path),
         language: 'python',
         node_type: 'import_from_statement'
@@ -619,8 +650,10 @@ function extract_python_from_import(
   if (named_imports.length > 0) {
     const named_import: NamedImport = {
       kind: 'named',
-      imports: named_imports,
+      imports: named_imports.map(imp => ({ ...imp, is_type_only: false })),
       source,
+      is_type_only: false,
+      is_dynamic: false,
       location: node_to_location(import_node, file_path),
       language: 'python',
       node_type: 'import_from_statement'
@@ -636,10 +669,10 @@ function extract_python_from_import(
 function extract_rust_use(
   use_node: SyntaxNode,
   source_code: string,
-  file_path: string
-): UnifiedImport[] {
-  const imports: UnifiedImport[] = [];
-  const named_imports: Array<{ name: SymbolName; alias?: SymbolName }> = [];
+  file_path: FilePath
+): Import[] {
+  const imports: Import[] = [];
+  const named_imports: Array<{ name: SymbolName; alias?: SymbolName; is_type_only: boolean }> = [];
   let module_source: ModulePath | null = null;
   
   // Find the use tree - it's a direct child, not a field
@@ -664,9 +697,10 @@ function extract_rust_use(
       const name = tree.childForFieldName('name');
       if (path && name) {
         const full_path = prefix ? `${prefix}::${path.text}` : path.text;
-        module_source = module_source || buildModulePath(full_path);
+        module_source = module_source || (full_path as ModulePath);
         named_imports.push({
-          name: toSymbolName(name.text)
+          name: name.text as SymbolName,
+          is_type_only: false
         });
       }
     } else if (tree.type === 'scoped_use_list') {
@@ -685,17 +719,19 @@ function extract_rust_use(
       
       if (use_list) {
         // Process each item in the list
-        module_source = module_source || buildModulePath(module_path);
+        module_source = module_source || (module_path as ModulePath);
         for (const item of use_list.children) {
           if (item.type === 'self') {
             // Self import - imports the module itself
             named_imports.push({
-              name: toSymbolName(module_path)
+              name: module_path as SymbolName,
+              is_type_only: false
             });
           } else if (item.type === 'identifier') {
             // Named import from the module
             named_imports.push({
-              name: toSymbolName(item.text)
+              name: item.text as SymbolName,
+              is_type_only: false
             });
           }
         }
@@ -715,10 +751,11 @@ function extract_rust_use(
       const name = tree.childForFieldName('name');
       const alias = tree.childForFieldName('alias');
       if (name) {
-        module_source = module_source || buildModulePath(prefix || name.text);
+        module_source = module_source || ((prefix || name.text) as ModulePath);
         named_imports.push({
-          name: toSymbolName(alias?.text || name.text),
-          alias: alias ? toSymbolName(name.text) : undefined
+          name: (alias?.text || name.text) as SymbolName,
+          alias: alias ? name.text as SymbolName : undefined,
+          is_type_only: false
         });
       }
     } else if (tree.type === 'use_wildcard') {
@@ -733,16 +770,19 @@ function extract_rust_use(
       const namespace_import: NamespaceImport = {
         kind: 'namespace',
         namespace_name: '*' as NamespaceName,
-        source: buildModulePath(path),
+        source: path as ModulePath,
+        is_type_only: false,
+        is_dynamic: false,
         location: node_to_location(tree, file_path),
         language: 'rust',
         node_type: 'use_declaration'
       };
       imports.push(namespace_import);
     } else if (tree.type === 'identifier') {
-      module_source = module_source || buildModulePath(prefix || tree.text);
+      module_source = module_source || ((prefix || tree.text) as ModulePath);
       named_imports.push({
-        name: toSymbolName(tree.text)
+        name: tree.text as SymbolName,
+        is_type_only: false
       });
     }
   };
@@ -753,8 +793,10 @@ function extract_rust_use(
   if (named_imports.length > 0 && module_source) {
     const named_import: NamedImport = {
       kind: 'named',
-      imports: named_imports,
+      imports: named_imports.map(imp => ({ ...imp, is_type_only: false })),
       source: module_source,
+      is_type_only: false,
+      is_dynamic: false,
       location: node_to_location(use_node, file_path),
       language: 'rust',
       node_type: 'use_declaration'
@@ -768,8 +810,8 @@ function extract_rust_use(
 function extract_rust_extern_crate(
   extern_node: SyntaxNode,
   source_code: string,
-  file_path: string
-): UnifiedImport | null {
+  file_path: FilePath
+): Import | null {
   const name = extern_node.childForFieldName('name');
   const alias = extern_node.childForFieldName('alias');
   
@@ -778,10 +820,13 @@ function extract_rust_extern_crate(
   const named_import: NamedImport = {
     kind: 'named',
     imports: [{
-      name: toSymbolName(alias?.text || name.text),
-      alias: alias ? toSymbolName(name.text) : undefined
+      name: (alias?.text || name.text) as SymbolName,
+      alias: alias ? name.text as SymbolName : undefined,
+      is_type_only: false
     }],
-    source: buildModulePath(name.text),
+    source: name.text as ModulePath,
+    is_type_only: false,
+    is_dynamic: false,
     location: node_to_location(extern_node, file_path),
     language: 'rust',
     node_type: 'extern_crate_declaration'
@@ -808,7 +853,7 @@ function extract_string_literal(node: SyntaxNode, source: string): string {
 function extract_import_specifiers(
   named_imports: SyntaxNode,
   source: string,
-  file_path: string
+  file_path: FilePath
 ): Array<{ name: string; alias?: string }> {
   const specifiers: Array<{ name: string; alias?: string }> = [];
   

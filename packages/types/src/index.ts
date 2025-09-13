@@ -61,7 +61,42 @@ export * from "./call_chains";
 // NOTE: Temporarily commenting out conflicting exports to unblock progress
 // These will need proper resolution in a follow-up task
 // export * from "./symbol_scope";
-// export * from "./import_export";  // Has ResolutionReason conflict
+
+// Export import/export types
+export {
+  Import,
+  NamedImport,
+  DefaultImport,
+  NamespaceImport,
+  SideEffectImport,
+  NamedImportItem,
+  Export,
+  NamedExport,
+  DefaultExport,
+  NamespaceExport as NamespaceExportType,
+  ReExport,
+  NamedExportItem,
+  ReExportItem,
+  ResolvedModule,
+  ModuleDependency,
+  CrossModuleResolution,
+  ExportChainStep,
+  is_named_import,
+  is_default_import,
+  is_namespace_import,
+  is_side_effect_import,
+  is_named_export,
+  is_default_export,
+  is_namespace_export,
+  is_re_export,
+  get_imported_symbols,
+  get_exported_symbols,
+  imports_symbol,
+  exports_symbol,
+  create_named_import,
+  create_named_export
+} from "./import_export";
+
 // export * from "./type_analysis";
 // export * from "./inheritance";  // Has TypeModifier conflict
 // export * from "./query_integration";
