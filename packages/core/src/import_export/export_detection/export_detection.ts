@@ -5,7 +5,20 @@
  * detection logic across all languages using language configurations.
  */
 
-import { Language, Location, ExportInfo } from '@ariadnejs/types';
+import {
+  Language,
+  Location,
+  Export,
+  NamedExport,
+  DefaultExport,
+  NamespaceExportType as NamespaceExport,
+  ReExport,
+  NamedExportItem,
+  ReExportItem,
+  NamespaceName,
+  to_symbol_name,
+  build_module_path
+} from '@ariadnejs/types';
 import { SyntaxNode } from 'tree-sitter';
 import {
   get_export_config,
@@ -31,7 +44,7 @@ export const MODULE_CONTEXT = {
  * Export detection result
  */
 export interface ExportDetectionResult {
-  exports: ExportInfo[];
+  exports: Export[];
   requires_bespoke: boolean;
   bespoke_hints?: {
     has_commonjs?: boolean;
@@ -50,7 +63,7 @@ export function detect_exports_generic(
   language: Language
 ): ExportDetectionResult {
   const config = get_export_config(language);
-  const exports: ExportInfo[] = [];
+  const exports: Export[] = [];
   const bespoke_hints: ExportDetectionResult['bespoke_hints'] = {};
   let requires_bespoke = false;
   
@@ -58,7 +71,7 @@ export function detect_exports_generic(
   const processed_nodes = new Set<SyntaxNode>();
   
   // Track export names to detect duplicates and overrides
-  const export_names = new Map<string, ExportInfo>();
+  const export_names = new Map<string, Export>();
   
   // Visit all nodes in the AST
   const visit = (node: SyntaxNode, depth: number = 0, parent?: SyntaxNode) => {
@@ -97,13 +110,12 @@ export function detect_exports_generic(
         const name_node = node.childForFieldName('name');
         if (name_node && !processed_nodes.has(node)) {
           processed_nodes.add(node);
-          exports.push({
-            name: name_node.text,
-            source: 'local',
-            kind: get_item_export_kind(node),
-            location: node_to_location(node),
-            visibility: visibility_result.visibility_level
-          });
+          exports.push(create_named_export(
+            [{ local_name: name_node.text }],
+            node_to_location(node),
+            language,
+            false
+          ));
         }
       }
     }
@@ -175,19 +187,19 @@ function process_export_node(
   source_code: string,
   config: ExportLanguageConfig,
   language: Language
-): ExportInfo[] {
-  const exports: ExportInfo[] = [];
+): Export[] {
+  const exports: Export[] = [];
   const node_text = node.text;
   
   // Handle export = syntax (TypeScript module.exports equivalent)
   if (language === 'typescript' && node_text.startsWith('export =')) {
-    exports.push({
-      name: 'default',
-      source: 'local',
-      kind: 'default',
-      location: node_to_location(node),
-      is_export_equals: true
-    });
+    exports.push(create_default_export(
+      undefined,
+      node_to_location(node),
+      language,
+      false,
+      false
+    ));
     return exports;
   }
   
@@ -209,18 +221,26 @@ function process_export_node(
   }
   
   // Handle async/generator functions
-  if (declaration && (declaration.type === 'generator_function_declaration' || 
+  if (declaration && (declaration.type === 'generator_function_declaration' ||
                      node_text.includes('async function'))) {
     const name_node = declaration.childForFieldName('name');
     if (name_node) {
-      exports.push({
-        name: name_node.text,
-        source: 'local',
-        kind: is_default ? 'default' : 'named',
-        location: node_to_location(node),
-        is_async: node_text.includes('async'),
-        is_generator: declaration.type === 'generator_function_declaration'
-      });
+      if (is_default) {
+        exports.push(create_default_export(
+          name_node.text,
+          node_to_location(node),
+          language,
+          true,
+          false
+        ));
+      } else {
+        exports.push(create_named_export(
+          [{ local_name: name_node.text }],
+          node_to_location(node),
+          language,
+          false
+        ));
+      }
       return exports;
     }
   }
@@ -229,45 +249,52 @@ function process_export_node(
     // Export with declaration (e.g., export function foo())
     if (declaration.type === 'lexical_declaration' || declaration.type === 'variable_declaration') {
       // For const/let/var declarations, look for variable_declarator
+      const names: Array<{ local_name: string }> = [];
       for (const child of declaration.children) {
         if (child.type === 'variable_declarator') {
           const name_node = child.childForFieldName('name');
           if (name_node) {
-            exports.push({
-              name: name_node.text,
-              source: 'local',
-              kind: 'named',
-              location: node_to_location(node)
-            });
+            names.push({ local_name: name_node.text });
           }
         }
+      }
+      if (names.length > 0) {
+        exports.push(create_named_export(
+          names,
+          node_to_location(node),
+          language,
+          false
+        ));
       }
     } else {
       // For function/class declarations, get name directly
       const name_node = declaration.childForFieldName(config.field_names.name || 'name');
       if (name_node) {
-        // Determine the correct kind
-        let kind = 'named';
         if (is_default) {
-          kind = 'default';
-        } else if (is_type_export || declaration.type === 'type_alias_declaration') {
-          kind = 'type';
+          exports.push(create_default_export(
+            name_node.text,
+            node_to_location(node),
+            language,
+            true,
+            is_type_export || declaration.type === 'type_alias_declaration'
+          ));
+        } else {
+          exports.push(create_named_export(
+            [{ local_name: name_node.text, is_type_only: is_type_export || declaration.type === 'type_alias_declaration' }],
+            node_to_location(node),
+            language,
+            is_type_export || declaration.type === 'type_alias_declaration'
+          ));
         }
-        
-        exports.push({
-          name: name_node.text,
-          source: 'local',
-          kind,
-          location: node_to_location(node)
-        });
       } else if (is_default) {
         // Default export with anonymous declaration
-        exports.push({
-          name: 'default',
-          source: 'local',
-          kind: 'default',
-          location: node_to_location(node)
-        });
+        exports.push(create_default_export(
+          undefined,
+          node_to_location(node),
+          language,
+          true,
+          is_type_export
+        ));
       }
     }
   } else if (specifiers) {
@@ -275,27 +302,32 @@ function process_export_node(
     const specifier_exports = process_export_specifiers(
       specifiers,
       source?.text,
-      node
+      node,
+      language,
+      is_type_export
     );
     exports.push(...specifier_exports);
   } else if (is_namespace && source) {
     // Namespace export (e.g., export * from 'module')
-    exports.push({
-      name: '*',
-      source: clean_module_source(source.text),
-      kind: 'namespace',
-      location: node_to_location(node)
-    });
+    exports.push(create_namespace_export(
+      source.text,
+      undefined,
+      node_to_location(node),
+      language,
+      is_type_export
+    ));
   } else if (is_default) {
     // Default export without declaration
-    exports.push({
-      name: 'default',
-      source: 'local',
-      kind: 'default',
-      location: node_to_location(node)
-    });
+    exports.push(create_default_export(
+      undefined,
+      node_to_location(node),
+      language,
+      false,
+      is_type_export
+    ));
   } else {
     // Simple export statement - check for named exports in children
+    const named_items: Array<{ local_name: string }> = [];
     for (const child of node.children) {
       if (child.type === 'lexical_declaration' || child.type === 'variable_declaration') {
         // export const/let/var
@@ -303,26 +335,24 @@ function process_export_node(
           if (declarator_child.type === 'variable_declarator') {
             const name = declarator_child.childForFieldName('name');
             if (name) {
-              exports.push({
-                name: name.text,
-                source: 'local',
-                kind: 'named',
-                location: node_to_location(node)
-              });
+              named_items.push({ local_name: name.text });
             }
           }
         }
       } else if (child.type === 'function_declaration' || child.type === 'class_declaration') {
         const name = child.childForFieldName('name');
         if (name) {
-          exports.push({
-            name: name.text,
-            source: 'local',
-            kind: 'named',
-            location: node_to_location(node)
-          });
+          named_items.push({ local_name: name.text });
         }
       }
+    }
+    if (named_items.length > 0) {
+      exports.push(create_named_export(
+        named_items,
+        node_to_location(node),
+        language,
+        is_type_export
+      ));
     }
   }
   
@@ -335,25 +365,37 @@ function process_export_node(
 function process_export_specifiers(
   specifiers_node: SyntaxNode,
   source_module: string | undefined,
-  parent_node: SyntaxNode
-): ExportInfo[] {
-  const exports: ExportInfo[] = [];
-  
+  parent_node: SyntaxNode,
+  language: Language,
+  is_type_export: boolean = false
+): Export[] {
+  const exports: Export[] = [];
+
+  // Collect all export items
+  const named_items: Array<{ local_name: string; export_name?: string }> = [];
+  const reexport_items: Array<{ source_name: string; export_name?: string }> = [];
+
   // Handle export_clause or named_exports directly (export { foo, bar })
   if (specifiers_node.type === 'export_clause' || specifiers_node.type === 'named_exports') {
     for (const child of specifiers_node.children) {
       if (child.type === 'export_specifier') {
         const name = child.childForFieldName('name');
         const alias = child.childForFieldName('alias');
-        
+
         if (name) {
-          exports.push({
-            name: alias?.text || name.text,
-            source: source_module ? clean_module_source(source_module) : 'local',
-            kind: 'named',
-            location: node_to_location(child),
-            original_name: alias ? name.text : undefined
-          });
+          if (source_module) {
+            // Re-export from another module
+            reexport_items.push({
+              source_name: name.text,
+              export_name: alias?.text
+            });
+          } else {
+            // Local export
+            named_items.push({
+              local_name: name.text,
+              export_name: alias?.text
+            });
+          }
         }
       }
     }
@@ -363,20 +405,44 @@ function process_export_specifiers(
       if (child.type === 'export_specifier' || child.type === 'import_specifier') {
         const name = child.childForFieldName('name')?.text;
         const alias = child.childForFieldName('alias')?.text;
-        
+
         if (name) {
-          exports.push({
-            name: alias || name,
-            source: source_module ? clean_module_source(source_module) : 'local',
-            kind: 'named',
-            location: node_to_location(child),
-            original_name: alias ? name : undefined
-          });
+          if (source_module) {
+            // Re-export from another module
+            reexport_items.push({
+              source_name: name,
+              export_name: alias
+            });
+          } else {
+            // Local export
+            named_items.push({
+              local_name: name,
+              export_name: alias
+            });
+          }
         }
       }
     }
   }
-  
+
+  // Create appropriate export types
+  if (source_module && reexport_items.length > 0) {
+    exports.push(create_re_export(
+      clean_module_source(source_module),
+      reexport_items,
+      node_to_location(parent_node),
+      language,
+      is_type_export
+    ));
+  } else if (named_items.length > 0) {
+    exports.push(create_named_export(
+      named_items,
+      node_to_location(parent_node),
+      language,
+      is_type_export
+    ));
+  }
+
   return exports;
 }
 
@@ -387,17 +453,17 @@ function process_implicit_export(
   node: SyntaxNode,
   source_code: string,
   language: Language
-): ExportInfo | null {
+): Export | null {
   const name_node = node.childForFieldName('name');
   if (!name_node) return null;
-  
+
   const name = name_node.text;
-  
+
   // Skip private symbols
   if (is_private_symbol(name, language)) {
     return null;
   }
-  
+
   // Skip dunder methods except special ones
   if (name.startsWith('__') && name.endsWith('__')) {
     const special_dunders = ['__init__', '__call__', '__str__', '__repr__', '__enter__', '__exit__'];
@@ -405,31 +471,94 @@ function process_implicit_export(
       return null;
     }
   }
-  
-  // Determine export kind based on node type
-  let kind: string = 'named';
-  if (node.type === 'class_definition') {
-    kind = 'class';
-  } else if (node.type === 'function_definition') {
-    kind = 'function';
-    // Check if it's async
-    const async_keyword = node.children.find(c => c.type === 'async');
-    if (async_keyword) {
-      return {
-        name,
-        source: 'local',
-        kind,
-        location: node_to_location(node),
-        is_async: true
-      };
-    }
-  }
-  
+
+  // For Python implicit exports, create a named export
+  return create_named_export(
+    [{ local_name: name }],
+    node_to_location(node),
+    language,
+    false
+  );
+}
+
+/**
+ * Helper functions to create Export types
+ */
+export function create_named_export(
+  names: Array<{ local_name: string; export_name?: string; is_type_only?: boolean }>,
+  location: Location,
+  language: Language,
+  is_type_only: boolean = false
+): NamedExport {
   return {
-    name,
-    source: 'local',
-    kind,
-    location: node_to_location(node)
+    kind: 'named',
+    exports: names.map(n => ({
+      local_name: to_symbol_name(n.local_name),
+      export_name: n.export_name ? to_symbol_name(n.export_name) : undefined,
+      is_type_only: n.is_type_only || false
+    })),
+    location,
+    language,
+    node_type: 'export',
+    is_type_only
+  };
+}
+
+export function create_default_export(
+  symbol: string | undefined,
+  location: Location,
+  language: Language,
+  is_declaration: boolean = false,
+  is_type_only: boolean = false
+): DefaultExport {
+  return {
+    kind: 'default',
+    symbol: symbol ? to_symbol_name(symbol) : undefined,
+    is_declaration,
+    location,
+    language,
+    node_type: 'export',
+    is_type_only
+  };
+}
+
+export function create_namespace_export(
+  source: string,
+  as_name: string | undefined,
+  location: Location,
+  language: Language,
+  is_type_only: boolean = false
+): NamespaceExport {
+  return {
+    kind: 'namespace',
+    source: build_module_path(source),
+    as_name: as_name ? (as_name as NamespaceName) : undefined,
+    location,
+    language,
+    node_type: 'export',
+    is_type_only
+  };
+}
+
+export function create_re_export(
+  source: string,
+  exports: Array<{ source_name: string; export_name?: string; is_type_only?: boolean }>,
+  location: Location,
+  language: Language,
+  is_type_only: boolean = false
+): ReExport {
+  return {
+    kind: 'reexport',
+    source: build_module_path(source),
+    exports: exports.map(e => ({
+      source_name: to_symbol_name(e.source_name),
+      export_name: e.export_name ? to_symbol_name(e.export_name) : undefined,
+      is_type_only: e.is_type_only || false
+    })),
+    location,
+    language,
+    node_type: 'export',
+    is_type_only
   };
 }
 
@@ -438,14 +567,11 @@ function process_implicit_export(
  */
 function node_to_location(node: SyntaxNode): Location {
   return {
-    start: {
-      line: node.startPosition.row + 1,
-      column: node.startPosition.column + 1
-    },
-    end: {
-      line: node.endPosition.row + 1,
-      column: node.endPosition.column + 1
-    }
+    file_path: '' as any, // Will be filled in by caller context
+    line: node.startPosition.row + 1,
+    column: node.startPosition.column + 1,
+    end_line: node.endPosition.row + 1,
+    end_column: node.endPosition.column + 1
   };
 }
 
@@ -461,11 +587,11 @@ function clean_module_source(source: string): string {
  * Prefers bespoke exports over generic when there are duplicates
  */
 export function merge_exports(
-  generic_exports: ExportInfo[],
-  bespoke_exports: ExportInfo[]
-): ExportInfo[] {
-  const merged: ExportInfo[] = [];
-  const seen = new Map<string, ExportInfo>();
+  generic_exports: Export[],
+  bespoke_exports: Export[]
+): Export[] {
+  const merged: Export[] = [];
+  const seen = new Map<string, Export>();
   
   // First add generic exports
   for (const exp of generic_exports) {
@@ -613,7 +739,7 @@ export function detect_exports(
   root_node: SyntaxNode,
   source_code: string,
   language: Language
-): ExportInfo[] {
+): Export[] {
   const result = detect_exports_generic(root_node, source_code, language);
   return result.exports;
 }
@@ -621,7 +747,7 @@ export function detect_exports(
 /**
  * Get export statistics for debugging
  */
-export function get_export_stats(exports: ExportInfo[]): {
+export function get_export_stats(exports: Export[]): {
   total: number;
   by_kind: Record<string, number>;
   by_source: Record<string, number>;
@@ -631,15 +757,15 @@ export function get_export_stats(exports: ExportInfo[]): {
     by_kind: {} as Record<string, number>,
     by_source: {} as Record<string, number>
   };
-  
+
   for (const exp of exports) {
     // Count by kind
     stats.by_kind[exp.kind] = (stats.by_kind[exp.kind] || 0) + 1;
-    
-    // Count by source
-    const source_type = exp.source === 'local' ? 'local' : 'external';
+
+    // Count by source (reexport and namespace have source, others are local)
+    const source_type = (exp.kind === 'reexport' || exp.kind === 'namespace') ? 'external' : 'local';
     stats.by_source[source_type] = (stats.by_source[source_type] || 0) + 1;
   }
-  
+
   return stats;
 }

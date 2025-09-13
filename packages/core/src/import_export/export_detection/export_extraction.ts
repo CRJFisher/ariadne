@@ -9,22 +9,28 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { 
-  Language, 
+import {
+  Language,
   Location,
-  UnifiedExport,
+  Export,
   NamedExport,
   DefaultExport,
-  NamespaceExport,
+  NamespaceExportType as NamespaceExport,
   ReExport,
   NamedExportItem,
   ReExportItem,
   SymbolName,
   ModulePath,
   NamespaceName,
-  toSymbolName,
-  buildModulePath
+  to_symbol_name,
+  build_module_path
 } from '@ariadnejs/types';
+import {
+  create_named_export,
+  create_default_export,
+  create_namespace_export,
+  create_re_export
+} from './export_detection';
 
 /**
  * Extract all exports from AST
@@ -36,7 +42,7 @@ export function extract_exports(
   source_code: string,
   language: Language,
   file_path?: string
-): UnifiedExport[] {
+): Export[] {
   switch (language) {
     case 'javascript':
       return extract_javascript_exports(root_node, source_code);
@@ -61,8 +67,8 @@ export function extract_exports(
 export function extract_javascript_exports(
   root_node: SyntaxNode,
   source_code: string
-): UnifiedExport[] {
-  const exports: UnifiedExport[] = [];
+): Export[] {
+  const exports: Export[] = [];
   exports.push(...extract_es6_exports(root_node, source_code));
   exports.push(...extract_commonjs_exports(root_node, source_code));
   return exports;
@@ -74,8 +80,8 @@ export function extract_javascript_exports(
 export function extract_typescript_exports(
   root_node: SyntaxNode,
   source_code: string
-): UnifiedExport[] {
-  const exports: UnifiedExport[] = [];
+): Export[] {
+  const exports: Export[] = [];
   const processed_nodes = new Set<SyntaxNode>();
   
   const visit = (node: SyntaxNode) => {
@@ -107,8 +113,8 @@ export function extract_typescript_exports(
 export function extract_python_exports(
   root_node: SyntaxNode,
   source_code: string
-): UnifiedExport[] {
-  const exports: UnifiedExport[] = [];
+): Export[] {
+  const exports: Export[] = [];
   
   const visit = (node: SyntaxNode) => {
     // Python __all__ definition
@@ -119,15 +125,12 @@ export function extract_python_exports(
       if (left?.text === '__all__' && right) {
         const all_exports = extract_python_all_exports(right, source_code);
         if (all_exports.length > 0) {
-          const named_export: NamedExport = {
-            kind: 'named',
-            exports: all_exports.map(name => ({
-              local_name: toSymbolName(name)
-            })),
-            location: node_to_location(node),
-            language: 'python',
-            node_type: 'assignment'
-          };
+          const named_export = create_named_export(
+            all_exports.map(name => ({ local_name: name })),
+            node_to_location(node),
+            'python',
+            false
+          );
           exports.push(named_export);
         }
       }
@@ -141,7 +144,7 @@ export function extract_python_exports(
           const named_export: NamedExport = {
             kind: 'named',
             exports: [{
-              local_name: toSymbolName(name_node.text)
+              local_name: to_symbol_name(name_node.text)
             }],
             location: node_to_location(node),
             language: 'python',
@@ -167,8 +170,8 @@ export function extract_python_exports(
 export function extract_rust_exports(
   root_node: SyntaxNode,
   source_code: string
-): UnifiedExport[] {
-  const exports: UnifiedExport[] = [];
+): Export[] {
+  const exports: Export[] = [];
   
   const visit = (node: SyntaxNode) => {
     // Public items with 'pub' visibility
@@ -180,7 +183,7 @@ export function extract_rust_exports(
           const named_export: NamedExport = {
             kind: 'named',
             exports: [{
-              local_name: toSymbolName(name)
+              local_name: to_symbol_name(name)
             }],
             location: node_to_location(parent),
             language: 'rust',
@@ -216,8 +219,8 @@ export function extract_rust_exports(
 function extract_typescript_export(
   export_node: SyntaxNode,
   source_code: string
-): UnifiedExport[] {
-  const exports: UnifiedExport[] = [];
+): Export[] {
+  const exports: Export[] = [];
   
   // Check if this is a type-only export at the statement level
   // Pattern: export type { ... } from '...' or export type * from '...'
@@ -286,8 +289,8 @@ function extract_typescript_export(
             const named_export: NamedExport = {
               kind: 'named',
               exports: [{
-                local_name: toSymbolName(actual_name_node.text),
-                export_name: actual_alias_node ? toSymbolName(actual_alias_node.text) : undefined,
+                local_name: to_symbol_name(actual_name_node.text),
+                export_name: actual_alias_node ? to_symbol_name(actual_alias_node.text) : undefined,
                 is_type_only: statement_level_type || inline_type
               }],
               location: node_to_location(child),
@@ -299,10 +302,10 @@ function extract_typescript_export(
             // Re-export from another module
             const re_export: ReExport = {
               kind: 'reexport',
-              source: buildModulePath(source),
+              source: build_module_path(source),
               exports: [{
-                source_name: toSymbolName(actual_name_node.text),
-                export_name: actual_alias_node ? toSymbolName(actual_alias_node.text) : undefined,
+                source_name: to_symbol_name(actual_name_node.text),
+                export_name: actual_alias_node ? to_symbol_name(actual_alias_node.text) : undefined,
                 is_type_only: statement_level_type || inline_type
               }],
               location: node_to_location(child),
@@ -326,7 +329,7 @@ function extract_typescript_export(
     if (source_node) {
       const namespace_export: NamespaceExport = {
         kind: 'namespace',
-        source: buildModulePath(extract_string_literal(source_node, source_code)),
+        source: build_module_path(extract_string_literal(source_node, source_code)),
         location: node_to_location(export_node),
         language: 'typescript',
         node_type: 'export_statement'
@@ -343,8 +346,8 @@ function extract_typescript_export(
 export function extract_es6_exports(
   root_node: SyntaxNode,
   source_code: string
-): UnifiedExport[] {
-  const exports: UnifiedExport[] = [];
+): Export[] {
+  const exports: Export[] = [];
   
   const visit = (node: SyntaxNode) => {
     if (node.type === 'export_statement') {
@@ -367,7 +370,7 @@ export function extract_es6_exports(
         
         const default_export: DefaultExport = {
           kind: 'default',
-          symbol: name !== 'default' ? toSymbolName(name) : undefined,
+          symbol: name !== 'default' ? to_symbol_name(name) : undefined,
           is_declaration: value_node?.type === 'function_declaration' || 
                           value_node?.type === 'class_declaration',
           location: node_to_location(node),
@@ -401,8 +404,8 @@ export function extract_es6_exports(
                 const named_export: NamedExport = {
                   kind: 'named',
                   exports: [{
-                    local_name: toSymbolName(name.text),
-                    export_name: alias ? toSymbolName(alias.text) : undefined
+                    local_name: to_symbol_name(name.text),
+                    export_name: alias ? to_symbol_name(alias.text) : undefined
                   }],
                   location: node_to_location(child),
                   language: 'javascript',
@@ -413,10 +416,10 @@ export function extract_es6_exports(
                 // Re-export from another module
                 const re_export: ReExport = {
                   kind: 'reexport',
-                  source: buildModulePath(source),
+                  source: build_module_path(source),
                   exports: [{
-                    source_name: toSymbolName(name.text),
-                    export_name: alias ? toSymbolName(alias.text) : undefined
+                    source_name: to_symbol_name(name.text),
+                    export_name: alias ? to_symbol_name(alias.text) : undefined
                   }],
                   location: node_to_location(child),
                   language: 'javascript',
@@ -435,7 +438,7 @@ export function extract_es6_exports(
         if (source_node) {
           const namespace_export: NamespaceExport = {
             kind: 'namespace',
-            source: buildModulePath(extract_string_literal(source_node, source_code)),
+            source: build_module_path(extract_string_literal(source_node, source_code)),
             location: node_to_location(node),
             language: 'javascript',
             node_type: 'export_statement'
@@ -457,8 +460,8 @@ export function extract_es6_exports(
 export function extract_commonjs_exports(
   root_node: SyntaxNode,
   source_code: string
-): UnifiedExport[] {
-  const exports: UnifiedExport[] = [];
+): Export[] {
+  const exports: Export[] = [];
   
   const visit = (node: SyntaxNode) => {
     // module.exports = ...
@@ -475,7 +478,8 @@ export function extract_commonjs_exports(
           // module.exports = something
           const default_export: DefaultExport = {
             kind: 'default',
-            symbol: right.type === 'identifier' ? toSymbolName(right.text) : undefined,
+            symbol: right.type === 'identifier' ? to_symbol_name(right.text) : undefined,
+            is_declaration: false, // module.exports = x is assignment, not declaration
             location: node_to_location(node),
             language: 'javascript',
             node_type: 'assignment_expression'
@@ -493,7 +497,7 @@ export function extract_commonjs_exports(
           const named_export: NamedExport = {
             kind: 'named',
             exports: [{
-              local_name: toSymbolName(property.text)
+              local_name: to_symbol_name(property.text)
             }],
             location: node_to_location(node),
             language: 'javascript',
@@ -518,8 +522,8 @@ export function extract_commonjs_exports(
 function extract_declaration_exports(
   declaration: SyntaxNode,
   source_code: string
-): UnifiedExport[] {
-  const exports: UnifiedExport[] = [];
+): Export[] {
+  const exports: Export[] = [];
   
   if (declaration.type === 'variable_declaration' || 
       declaration.type === 'lexical_declaration') {
@@ -532,7 +536,7 @@ function extract_declaration_exports(
             const named_export: NamedExport = {
               kind: 'named',
               exports: [{
-                local_name: toSymbolName(name.text)
+                local_name: to_symbol_name(name.text)
               }],
               location: node_to_location(name),
               language: 'javascript',
@@ -546,7 +550,7 @@ function extract_declaration_exports(
               const named_export: NamedExport = {
                 kind: 'named',
                 exports: names.map(n => ({
-                  local_name: toSymbolName(n)
+                  local_name: to_symbol_name(n)
                 })),
                 location: node_to_location(name),
                 language: 'javascript',
@@ -565,7 +569,7 @@ function extract_declaration_exports(
       const named_export: NamedExport = {
         kind: 'named',
         exports: [{
-          local_name: toSymbolName(name.text)
+          local_name: to_symbol_name(name.text)
         }],
         location: node_to_location(declaration),
         language: 'javascript',
@@ -581,8 +585,8 @@ function extract_declaration_exports(
 function extract_object_exports(
   object_node: SyntaxNode,
   source_code: string
-): UnifiedExport[] {
-  const exports: UnifiedExport[] = [];
+): Export[] {
+  const exports: Export[] = [];
   const named_exports: NamedExportItem[] = [];
   
   for (const child of object_node.children) {
@@ -590,12 +594,12 @@ function extract_object_exports(
       const key = child.childForFieldName('key');
       if (key) {
         named_exports.push({
-          local_name: toSymbolName(key.text.replace(/['"]/g, ''))
+          local_name: to_symbol_name(key.text.replace(/['"]/g, ''))
         });
       }
     } else if (child.type === 'shorthand_property_identifier') {
       named_exports.push({
-        local_name: toSymbolName(child.text)
+        local_name: to_symbol_name(child.text)
       });
     }
   }
@@ -657,8 +661,8 @@ function extract_rust_item_name(item_node: SyntaxNode): string | null {
 function extract_rust_use_exports(
   use_node: SyntaxNode,
   source_code: string
-): UnifiedExport[] {
-  const exports: UnifiedExport[] = [];
+): Export[] {
+  const exports: Export[] = [];
   const re_exportItems: ReExportItem[] = [];
   let module_path: string | null = null;
   
@@ -691,16 +695,16 @@ function extract_rust_use_exports(
       if (last_identifier) {
         module_path = module_path || node.text;
         re_exportItems.push({
-          source_name: toSymbolName(last_identifier.text),
-          export_name: toSymbolName(last_identifier.text)
+          source_name: to_symbol_name(last_identifier.text),
+          export_name: to_symbol_name(last_identifier.text)
         });
       }
     } else if (node.type === 'identifier') {
       // Simple identifier
       module_path = module_path || node.text;
       re_exportItems.push({
-        source_name: toSymbolName(node.text),
-        export_name: toSymbolName(node.text)
+        source_name: to_symbol_name(node.text),
+        export_name: to_symbol_name(node.text)
       });
     } else if (node.type === 'use_list') {
       // Multiple imports: use module::{Item1, Item2}
@@ -716,15 +720,15 @@ function extract_rust_use_exports(
       if (name && alias) {
         module_path = module_path || node.text;
         re_exportItems.push({
-          source_name: toSymbolName(name.text),
-          export_name: toSymbolName(alias.text)
+          source_name: to_symbol_name(name.text),
+          export_name: to_symbol_name(alias.text)
         });
       }
     } else if (node.type === 'use_wildcard') {
       // Wildcard import: use module::*
       const namespace_export: NamespaceExport = {
         kind: 'namespace',
-        source: buildModulePath(node.parent?.text || ''),
+        source: build_module_path(node.parent?.text || ''),
         location: node_to_location(node),
         language: 'rust',
         node_type: 'use_wildcard'
@@ -739,7 +743,7 @@ function extract_rust_use_exports(
   if (re_exportItems.length > 0 && module_path) {
     const re_export: ReExport = {
       kind: 'reexport',
-      source: buildModulePath(module_path),
+      source: build_module_path(module_path),
       exports: re_exportItems,
       location: node_to_location(use_node),
       language: 'rust',
@@ -787,7 +791,10 @@ function extract_string_literal(node: SyntaxNode, source: string): string {
 
 function node_to_location(node: SyntaxNode): Location {
   return {
-    line: node.startPosition.row,
-    column: node.startPosition.column
+    file_path: '' as any, // Will be filled in by caller context
+    line: node.startPosition.row + 1,
+    column: node.startPosition.column + 1,
+    end_line: node.endPosition.row + 1,
+    end_column: node.endPosition.column + 1
   };
 }

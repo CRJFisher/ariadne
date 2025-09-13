@@ -10,23 +10,22 @@
  * - 15% bespoke: Language-specific handlers for unique patterns
  */
 
-import { Language, ExportInfo, SymbolId } from '@ariadnejs/types';
+import {
+  Language,
+  Export,
+  NamedExport,
+  DefaultExport,
+  NamespaceExportType as NamespaceExport,
+  ReExport,
+  SymbolId
+} from '@ariadnejs/types';
 import { SyntaxNode } from 'tree-sitter';
 
 // Import main detection functions
 import {
   detect_exports,
-  has_exports,
-  find_export_by_name,
-  get_exported_names,
-  group_exports,
-  is_reexport,
-  get_export_source,
-  filter_exports_by_kind,
-  get_default_export,
   get_export_stats,
-  MODULE_CONTEXT,
-  GroupedExports
+  MODULE_CONTEXT
 } from './export_detection';
 
 // Import configuration utilities
@@ -59,20 +58,17 @@ import {
 export { detect_exports };
 
 // Export utility functions
-export {
-  has_exports,
-  find_export_by_name,
-  get_exported_names,
-  group_exports,
-  is_reexport,
-  get_export_source,
-  filter_exports_by_kind,
-  get_default_export,
-  get_export_stats
-};
+export { get_export_stats };
 
 // Export types
-export { GroupedExports, ExportLanguageConfig };
+export {
+  Export,
+  NamedExport,
+  DefaultExport,
+  NamespaceExport,
+  ReExport,
+  ExportLanguageConfig
+};
 
 // Export configuration utilities
 export {
@@ -118,8 +114,8 @@ export function detect_file_exports(
   language: Language,
   file_path?: string,
   options?: ExportDetectionOptions
-): ExportInfo[] {
-  return detect_exports(root_node, source_code, language, options);
+): Export[] {
+  return detect_exports(root_node, source_code, language);
 }
 
 /**
@@ -129,10 +125,10 @@ export function detect_file_exports(
  */
 export interface ModuleInterface {
   file_path?: string;
-  exports: ExportInfo[];
-  default_export?: ExportInfo;
-  named_exports: ExportInfo[];
-  namespace_exports: ExportInfo[];
+  exports: Export[];
+  default_export?: DefaultExport;
+  named_exports: NamedExport[];
+  namespace_exports: NamespaceExport[];
   statistics: ReturnType<typeof get_export_stats>;
 }
 
@@ -143,14 +139,18 @@ export function get_module_interface(
   file_path?: string
 ): ModuleInterface {
   const exports = detect_exports(root_node, source_code, language);
-  const grouped = group_exports(exports);
-  
+
+  // Group exports by type
+  const named_exports = exports.filter((e): e is NamedExport => e.kind === 'named');
+  const default_export = exports.find((e): e is DefaultExport => e.kind === 'default');
+  const namespace_exports = exports.filter((e): e is NamespaceExport => e.kind === 'namespace');
+
   return {
     file_path,
     exports,
-    default_export: grouped.default,
-    named_exports: grouped.named,
-    namespace_exports: grouped.namespace,
+    default_export,
+    named_exports,
+    namespace_exports,
     statistics: get_export_stats(exports)
   };
 }
@@ -182,8 +182,23 @@ export function is_symbol_exported(
   const symbol_name = typeof symbol_or_name === 'string' && !symbol_or_name.includes(':')
     ? symbol_or_name
     : symbol_or_name.split(':').pop() || '';
-  const exported_names = get_exported_names(root_node, source_code, language);
-  return exported_names.has(symbol_name);
+
+  const exports = detect_exports(root_node, source_code, language);
+
+  // Check if symbol is exported
+  for (const exp of exports) {
+    if (exp.kind === 'named') {
+      for (const item of exp.exports) {
+        if ((item.export_name || item.local_name) === symbol_name) {
+          return true;
+        }
+      }
+    } else if (exp.kind === 'default' && exp.symbol === symbol_name) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**
@@ -193,9 +208,9 @@ export function get_reexports(
   root_node: SyntaxNode,
   source_code: string,
   language: Language
-): ExportInfo[] {
+): Export[] {
   const exports = detect_exports(root_node, source_code, language);
-  return exports.filter(is_reexport);
+  return exports.filter(exp => exp.kind === 'reexport' || exp.kind === 'namespace');
 }
 
 /**
@@ -205,12 +220,17 @@ export function get_exports_by_source(
   root_node: SyntaxNode,
   source_code: string,
   language: Language
-): Map<string, ExportInfo[]> {
+): Map<string, Export[]> {
   const exports = detect_exports(root_node, source_code, language);
-  const by_source = new Map<string, ExportInfo[]>();
-  
+  const by_source = new Map<string, Export[]>();
+
   for (const exp of exports) {
-    const source = get_export_source(exp);
+    // Determine source (local or from module)
+    let source = 'local';
+    if (exp.kind === 'reexport' || exp.kind === 'namespace') {
+      source = exp.source;
+    }
+
     const existing = by_source.get(source);
     if (existing) {
       existing.push(exp);
@@ -218,6 +238,6 @@ export function get_exports_by_source(
       by_source.set(source, [exp]);
     }
   }
-  
+
   return by_source;
 }

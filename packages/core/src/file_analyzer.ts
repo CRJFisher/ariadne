@@ -396,7 +396,7 @@ function extract_definitions(
           const result: ParameterType = {
             name: param.name as ParameterName,
             type: (inferred_type_info?.inferred_type ||
-              param.type_annotation) as TypeString | undefined,
+              param.type_annotation) as TypeString || 'unknown' as TypeString,
             default_value: param.default_value,
             is_rest: param.is_rest,
             is_optional: param.is_optional,
@@ -407,7 +407,7 @@ function extract_definitions(
 
       const signature: FunctionSignature = {
         parameters: enhanced_parameters,
-        return_type: return_type_info?.type_name as TypeString | undefined,
+        return_type: (return_type_info?.type_name as TypeString) || 'unknown' as TypeString,
         is_async: scope.metadata?.is_async || false,
         is_generator: scope.metadata?.is_generator || false,
         type_parameters: [],

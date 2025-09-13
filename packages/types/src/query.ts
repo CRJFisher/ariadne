@@ -27,9 +27,9 @@ export interface ASTNode {
  * Extended AST node with semantic information
  */
 export interface SemanticNode extends ASTNode {
-  readonly name?: SymbolName;
-  readonly visibility?: "public" | "private" | "protected" | "internal";
-  readonly modifiers?: readonly string[]; // e.g., ["async", "static", "readonly"]
+  readonly name?: SymbolName; // Optional - not all nodes have names
+  readonly visibility?: "public" | "private" | "protected" | "internal"; // Optional - not all languages have visibility
+  readonly modifiers?: readonly string[]; // Optional - defaults to empty array when no modifiers present
 }
 
 // ============================================================================

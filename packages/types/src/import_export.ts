@@ -104,7 +104,7 @@ export interface NamedExportItem {
 export interface DefaultExport extends BaseExport {
   readonly kind: "default";
   readonly symbol?: SymbolName; // Symbol being exported (if not anonymous)
-  readonly is_declaration?: boolean; // export default class {} vs export default foo
+  readonly is_declaration: boolean; // export default class {} vs export default foo
 }
 
 /**
@@ -140,10 +140,10 @@ export interface ReExportItem {
  */
 export interface ResolvedModule {
   readonly module_path: ModulePath;
-  readonly file_path?: string; // Resolved file path
-  readonly is_external?: boolean; // Node module vs local
-  readonly is_builtin?: boolean; // Node builtin module
-  readonly package_name?: string; // NPM package name
+  readonly file_path?: string; // Resolved file path (optional for external modules)
+  readonly is_external: boolean; // Node module vs local (required - defaults to false)
+  readonly is_builtin: boolean; // Node builtin module (required - defaults to false)
+  readonly package_name?: string; // NPM package name (optional - only for external packages)
   readonly exports: readonly Export[];
   readonly imports: readonly Import[];
 }
