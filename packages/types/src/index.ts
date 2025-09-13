@@ -11,6 +11,7 @@ export * from "./branded_types";
 export {
   Location,
   location_contains,
+  unknown_location,
   FunctionSignature,
   ParameterType,
   TypeParameter,
@@ -89,12 +90,6 @@ export {
   is_default_export,
   is_namespace_export,
   is_re_export,
-  get_imported_symbols,
-  get_exported_symbols,
-  imports_symbol,
-  exports_symbol,
-  create_named_import,
-  create_named_export
 } from "./import_export";
 
 // export * from "./type_analysis";
@@ -151,18 +146,13 @@ export {
 export * from "./definitions";
 export * from "./errors";
 
+// Export map utilities for safer null handling
+export * from "./map_utils";
+
 // Export type validation utilities
 export {
   // Core validation functions
   validate_location,
   validate_language,
   validate_ast_node,
-  
-  // New non-nullability type guards
-  is_non_empty_array,
-  is_defined,
-  is_non_empty_string,
-  assert_defined,
-  assert_valid,
-  assert_type,
 } from "./type_validation";
