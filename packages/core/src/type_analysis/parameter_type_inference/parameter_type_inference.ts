@@ -5,10 +5,10 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { FunctionDefinition, Language, SourceCode, FilePath } from '@ariadnejs/types';
+import { FunctionDefinition, Language, SourceCode, FilePath, DocString, SymbolId, TypeDefinition } from '@ariadnejs/types';
 import {
   get_language_config,
-  is_parameter_node,
+  is_parameter_node as is_parameter_node_type,
   is_typed_parameter_node,
   is_rest_parameter_node,
   get_special_parameter_type,
@@ -114,7 +114,7 @@ export function extract_parameters(
  * Check if a node represents a parameter
  */
 function is_parameter_node(node: SyntaxNode, language: Language): boolean {
-  return is_parameter_node(node.type, language);
+  return is_parameter_node_type(node.type, language);
 }
 
 /**
@@ -134,13 +134,13 @@ function extract_parameter_info(
   };
   
   // Extract name based on node type and field mappings
-  const extractName = (node: SyntaxNode): string => {
+  const extract_name = (node: SyntaxNode): string => {
     return source_code.substring(node.startIndex, node.endIndex);
   };
   
   // Handle different parameter types using configuration
   if (param_node.type === 'identifier') {
-    info.name = extractName(param_node);
+    info.name = extract_name(param_node);
   } else if (is_rest_parameter_node(param_node.type, language)) {
     // Rest parameters
     info.is_rest = true;
@@ -148,7 +148,7 @@ function extract_parameter_info(
     // Skip prefix characters to get the identifier
     const child = param_node.child(1);  // Usually the identifier after prefix
     if (child) {
-      info.name = extractName(child);
+      info.name = extract_name(child);
     }
     
     // Check for keyword-only rest (Python **kwargs)
@@ -163,31 +163,31 @@ function extract_parameter_info(
     if (language === 'python' && param_node.type === 'typed_parameter') {
       // In Python, typed_parameter has children: identifier, ':', type
       const identifier = param_node.child(0);  // First child is the identifier
-      const typeNode = param_node.childForFieldName('type');
+      const type_node = param_node.childForFieldName('type');
       
       if (identifier && identifier.type === 'identifier') {
-        info.name = extractName(identifier);
+        info.name = extract_name(identifier);
       }
-      if (typeNode) {
-        info.type_annotation = extractName(typeNode);
+      if (type_node) {
+        info.type_annotation = extract_name(type_node);
       }
     } else {
       // Try different field names for the identifier
-      const nameNode = fields.pattern ? param_node.childForFieldName(fields.pattern) :
+      const name_node = fields.pattern ? param_node.childForFieldName(fields.pattern) :
                        fields.identifier ? param_node.childForFieldName(fields.identifier) :
                        fields.name ? param_node.childForFieldName(fields.name) :
                        param_node.child(0);  // Fallback to first child
       
-      if (nameNode) {
-        info.name = extractName(nameNode);
+      if (name_node) {
+        info.name = extract_name(name_node);
       }
       
       // Extract type annotation
       if (fields.type) {
-        const typeNode = param_node.childForFieldName(fields.type);
-        if (typeNode) {
+        const type_node = param_node.childForFieldName(fields.type);
+        if (type_node) {
           // Remove leading colon and whitespace for TypeScript
-          let type_text = extractName(typeNode);
+          let type_text = extract_name(type_node);
           if (language === 'typescript' && type_text.startsWith(':')) {
             type_text = type_text.substring(1).trim();
           }
@@ -198,9 +198,9 @@ function extract_parameter_info(
     
     // Extract default value
     if (fields.value) {
-      const valueNode = param_node.childForFieldName(fields.value);
-      if (valueNode) {
-        info.default_value = extractName(valueNode);
+      const value_node = param_node.childForFieldName(fields.value);
+      if (value_node) {
+        info.default_value = extract_name(value_node);
       }
     }
     
@@ -215,44 +215,44 @@ function extract_parameter_info(
     // Extract name and value based on field mappings
     if (fields.left && fields.right) {
       // JavaScript/TypeScript assignment pattern
-      const leftNode = param_node.childForFieldName(fields.left);
-      const rightNode = param_node.childForFieldName(fields.right);
+      const left_node = param_node.childForFieldName(fields.left);
+      const right_node = param_node.childForFieldName(fields.right);
       
-      if (leftNode) {
-        info.name = extractName(leftNode);
+      if (left_node) {
+        info.name = extract_name(left_node);
       }
-      if (rightNode) {
-        info.default_value = extractName(rightNode);
+      if (right_node) {
+        info.default_value = extract_name(right_node);
       }
     } else if (fields.name && fields.value) {
       // Python default parameter
-      const nameNode = param_node.childForFieldName(fields.name);
-      const valueNode = param_node.childForFieldName(fields.value);
+      const name_node = param_node.childForFieldName(fields.name);
+      const value_node = param_node.childForFieldName(fields.value);
       
-      if (nameNode) {
+      if (name_node) {
         // Handle typed default parameters
-        if (is_typed_parameter_node(nameNode.type, language)) {
-          const identNode = nameNode.childForFieldName(fields.identifier || 'identifier');
-          const typeNode = nameNode.childForFieldName(fields.type || 'type');
+        if (is_typed_parameter_node(name_node.type, language)) {
+          const ident_node = name_node.childForFieldName(fields.identifier || 'identifier');
+          const type_node = name_node.childForFieldName(fields.type || 'type');
           
-          if (identNode) {
-            info.name = extractName(identNode);
+          if (ident_node) {
+            info.name = extract_name(ident_node);
           }
-          if (typeNode) {
-            info.type_annotation = extractName(typeNode);
+          if (type_node) {
+            info.type_annotation = extract_name(type_node);
           }
         } else {
-          info.name = extractName(nameNode);
+          info.name = extract_name(name_node);
         }
       }
-      if (valueNode) {
-        info.default_value = extractName(valueNode);
+      if (value_node) {
+        info.default_value = extract_name(value_node);
       }
     }
   } else if (param_node.type === 'self_parameter') {
     // Rust self parameter
     info.name = 'self';
-    const text = extractName(param_node);
+    const text = extract_name(param_node);
     if (text.includes('&')) {
       info.type_annotation = text.includes('mut') ? '&mut Self' : '&Self';
     } else {
@@ -263,15 +263,15 @@ function extract_parameter_info(
     const fields = config.field_mappings;
     
     if (fields.pattern) {
-      const patternNode = param_node.childForFieldName(fields.pattern);
-      if (patternNode) {
-        info.name = extractName(patternNode);
+      const pattern_node = param_node.childForFieldName(fields.pattern);
+      if (pattern_node) {
+        info.name = extract_name(pattern_node);
       }
     }
     if (fields.type) {
-      const typeNode = param_node.childForFieldName(fields.type);
-      if (typeNode) {
-        info.type_annotation = extractName(typeNode);
+      const type_node = param_node.childForFieldName(fields.type);
+      if (type_node) {
+        info.type_annotation = extract_name(type_node);
       }
     }
   }
@@ -695,56 +695,8 @@ export function infer_all_parameter_types(
   source_code: SourceCode,
   language: Language,
   file_path: FilePath
-): Map<string, ParameterAnalysis> {
-  const result = new Map<string, ParameterAnalysis>();
-  const context: ParameterInferenceContext = {
-    language,
-    source_code,
-    debug: false,
-  };
-
-  // Find all function nodes in the tree
-  const find_functions = (node: SyntaxNode): void => {
-    // Check if this is a function definition node
-    if (
-      node.type === "function_declaration" ||
-      node.type === "function_definition" ||
-      node.type === "arrow_function" ||
-      node.type === "method_definition" ||
-      node.type === "function_item" || // Rust
-      node.type === "method_declaration"
-    ) {
-      // Extract function name
-      const name_node = node.childForFieldName("name");
-      const func_name = name_node
-        ? source_code.substring(name_node.startIndex, name_node.endIndex)
-        : `anonymous_${node.startIndex}`;
-
-      // Create a FunctionDefinition for the inference function
-      const func_def: FunctionDefinition = {
-        name: func_name as any,
-        location: node_to_location(node, file_path),
-        signature: source_code.substring(node.startIndex, node.endIndex).split('\n')[0] as any,
-        decorators: [], // No decorators for inference functions
-        is_exported: false, // This would need to be determined from context
-        is_arrow_function: false,
-        is_anonymous: false
-      };
-      
-      // Use the comprehensive type inference function
-      const analysis = infer_parameter_types(func_def, node, context);
-      result.set(func_name, analysis);
-    }
-
-    // Recursively process children
-    for (let i = 0; i < node.childCount; i++) {
-      const child = node.child(i);
-      if (child) {
-        find_functions(child);
-      }
-    }
-  };
-
-  find_functions(root_node);
-  return result;
+): Map<SymbolId, TypeDefinition> {
+  // TODO: Implement using new query-based system
+  // See task 11.100.13 for implementation details
+  return new Map();
 }
