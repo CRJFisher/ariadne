@@ -64,7 +64,6 @@ export function extract_interface_definitions(
   source_code: string
 ): InterfaceDefinition[] {
   const config = get_interface_config(language);
-  if (!config) return [];
   
   const context: InterfaceProcessingContext = {
     language,
@@ -108,7 +107,6 @@ export function find_interface_implementations(
   interfaces: InterfaceDefinition[]
 ): InterfaceImplementation[] {
   const config = get_interface_config(language);
-  if (!config) return [];
   
   const context: InterfaceProcessingContext = {
     language,

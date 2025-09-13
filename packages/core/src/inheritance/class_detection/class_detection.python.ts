@@ -45,7 +45,7 @@ export function enhance_python_class(
   // Extract properties from __init__ method
   const init_properties = extract_init_properties(class_def, context);
   if (init_properties.length > 0) {
-    class_def.properties = [...(class_def.properties || []), ...init_properties];
+    class_def.properties = [...class_def.properties, ...init_properties];
   }
   
   return class_def;

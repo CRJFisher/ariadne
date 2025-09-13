@@ -83,18 +83,18 @@ function extract_javascript_heritage(
     if (child.type === 'class_heritage') {
       // Extract extends information
       for (let j = 0; j < child.childCount; j++) {
-        const heritageChild = child.child(j);
-        if (!heritageChild) continue;
-        
+        const heritage_child = child.child(j);
+        if (!heritage_child) continue;
+
         // Skip 'extends' keyword
-        if (heritageChild.type === 'extends') continue;
-        
+        if (heritage_child.type === 'extends') continue;
+
         // Extract parent class name
-        if (heritageChild.type === 'identifier' || 
-            heritageChild.type === 'member_expression') {
+        if (heritage_child.type === 'identifier' ||
+            heritage_child.type === 'member_expression') {
           extends_list.push(context.source_code.substring(
-            heritageChild.startIndex,
-            heritageChild.endIndex
+            heritage_child.startIndex,
+            heritage_child.endIndex
           ));
         }
       }

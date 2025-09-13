@@ -96,8 +96,8 @@ export function extract_class_generic(
   const class_def: ClassDefinition = {
     name,
     location: node_to_location(node, context.file_path),
-    extends: extends_list || [], // Always provide, default to empty array
-    implements: implements_list || [], // Always provide, default to empty array
+    extends: extends_list, // Non-nullable array guaranteed by extract_inheritance
+    implements: implements_list, // Non-nullable array guaranteed by extract_inheritance
     generics: [], // No generics support yet, default to empty array
     decorators: [], // No decorators extracted yet, default to empty array
     methods,
@@ -123,9 +123,9 @@ function extract_class_name(
 ): string | null {
   // For class expressions, always try to get the variable name first
   if (node.type === 'class' && config.patterns.class_expression) {
-    const varName = extract_class_expression_name(node, context);
-    if (varName && varName !== 'AnonymousClass') {
-      return varName;
+    const var_name = extract_class_expression_name(node, context);
+    if (var_name && var_name !== 'AnonymousClass') {
+      return var_name;
     }
   }
   
@@ -172,10 +172,10 @@ function extract_inheritance(
   node: SyntaxNode,
   context: ClassDetectionContext,
   config: ClassDetectionConfig
-): { extends_list?: string[], implements_list?: string[] } {
+): { extends_list: string[], implements_list: string[] } {
   const extends_list: string[] = [];
   const implements_list: string[] = [];
-  
+
   // Single inheritance
   if (config.fields.superclass) {
     const superclass_node = node.childForFieldName(config.fields.superclass);
@@ -186,7 +186,7 @@ function extract_inheritance(
       ));
     }
   }
-  
+
   // Multiple inheritance (Python)
   if (config.fields.superclasses) {
     const superclasses_node = node.childForFieldName(config.fields.superclasses);
@@ -194,10 +194,10 @@ function extract_inheritance(
       extract_base_classes(superclasses_node, context, extends_list);
     }
   }
-  
+
   return {
-    extends_list: extends_list.length > 0 ? extends_list : undefined,
-    implements_list: implements_list.length > 0 ? implements_list : undefined
+    extends_list, // Always return non-null arrays
+    implements_list // Always return non-null arrays
   };
 }
 

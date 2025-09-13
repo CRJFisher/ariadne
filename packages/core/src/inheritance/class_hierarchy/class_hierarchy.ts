@@ -156,7 +156,7 @@ export function build_generic_class_hierarchy(
     classes.set(key, node);
     
     // Track root classes
-    if (!relationships.base_classes || relationships.base_classes.length === 0) {
+    if (relationships.base_classes.length === 0) {
       roots.add(def.name as ClassName);
     }
     
@@ -547,7 +547,7 @@ function build_method_map(
       location: method.location,
       is_override: method.is_override || false,
       overrides: method.overrides,
-      overridden_by: method.overridden_by || [],
+      overridden_by: method.overridden_by,
       visibility: method.visibility ?? (method.is_private ? "private" : method.is_protected ? "protected" : "public"),
       is_static: method.is_static,
       is_abstract: method.is_abstract,
@@ -600,7 +600,7 @@ function compute_derived_classes(
       for (const [key, node] of classes) {
         if (node.name === edge.to as ClassName) {
           // Safe mutation during building phase
-          (node as any).derived_classes = [...(node.derived_classes || []), edge.from];
+          (node as any).derived_classes = [...node.derived_classes, edge.from];
           break;
         }
       }
@@ -633,7 +633,7 @@ function compute_enhanced_fields(
     (node as any).method_resolution_order = mro;
     
     // Set parent_class reference
-    if (node.base_classes && node.base_classes.length > 0) {
+    if (node.base_classes.length > 0) {
       const parent_name = node.base_classes[0];
       for (const [pkey, parent] of classes) {
         if (parent.name === parent_name as ClassName) {

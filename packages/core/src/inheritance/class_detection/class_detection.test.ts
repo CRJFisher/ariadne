@@ -277,11 +277,11 @@ class Test:
       const classes = find_classes_generic(context);
       const methods = classes[0].methods;
       
-      const protectedMethod = methods.find(m => m.name === '_protected');
-      const privateMethod = methods.find(m => m.name === '__private');
-      
-      expect(protectedMethod?.is_protected).toBe(true);
-      expect(privateMethod?.is_private).toBe(true);
+      const protected_method = methods.find(m => m.name === '_protected');
+      const private_method = methods.find(m => m.name === '__private');
+
+      expect(protected_method?.is_protected).toBe(true);
+      expect(private_method?.is_private).toBe(true);
     });
   });
   

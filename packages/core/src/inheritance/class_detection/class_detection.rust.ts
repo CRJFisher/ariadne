@@ -63,12 +63,12 @@ export function process_rust_structs(
     const struct_def = structs.get(impl_block.struct_name);
     if (struct_def) {
       // Merge methods from impl block
-      const merged_methods = [...(struct_def.methods || []), ...impl_block.methods];
+      const merged_methods = [...struct_def.methods, ...impl_block.methods];
       structs.set(impl_block.struct_name, {
         ...struct_def,
         methods: merged_methods,
-        implements: impl_block.trait_name 
-          ? [...(struct_def.implements || []), impl_block.trait_name]
+        implements: impl_block.trait_name
+          ? [...struct_def.implements, impl_block.trait_name]
           : struct_def.implements
       });
     } else if (!impl_block.trait_name) {

@@ -186,25 +186,26 @@ const RUST_CONFIG: InterfaceImplementationConfig = {
 
 /**
  * Get configuration for a specific language
+ * @returns Configuration for the language (guaranteed to exist for all supported languages)
  */
-export function get_interface_config(language: Language): InterfaceImplementationConfig | null {
+export function get_interface_config(language: Language): InterfaceImplementationConfig {
   switch (language) {
     case 'javascript':
-    case 'jsx':
       return JAVASCRIPT_CONFIG;
-    
+
     case 'typescript':
-    case 'tsx':
       return TYPESCRIPT_CONFIG;
-    
+
     case 'python':
       return PYTHON_CONFIG;
-    
+
     case 'rust':
       return RUST_CONFIG;
-    
+
     default:
-      return null;
+      // This should never be reached with the current Language type definition
+      const _exhaustiveCheck: never = language;
+      throw new Error(`Unsupported language: ${_exhaustiveCheck}`);
   }
 }
 
@@ -213,8 +214,6 @@ export function get_interface_config(language: Language): InterfaceImplementatio
  */
 export function is_interface_node(node_type: string, language: Language): boolean {
   const config = get_interface_config(language);
-  if (!config) return false;
-  
   return config.interface_node_types.includes(node_type);
 }
 
@@ -223,16 +222,15 @@ export function is_interface_node(node_type: string, language: Language): boolea
  */
 export function is_member_node(node_type: string, language: Language): 'method' | 'property' | null {
   const config = get_interface_config(language);
-  if (!config) return null;
-  
+
   if (config.member_patterns.method_node_types.includes(node_type)) {
     return 'method';
   }
-  
+
   if (config.member_patterns.property_node_types.includes(node_type)) {
     return 'property';
   }
-  
+
   return null;
 }
 
