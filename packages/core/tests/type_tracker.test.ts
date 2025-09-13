@@ -27,6 +27,12 @@ import {
 } from '../src/call_graph/type_tracker';
 import { TypeInfo, ImportedClassInfo } from '../src/call_graph/types';
 import { Def } from '../src/graph';
+import {
+  variable_symbol,
+  class_symbol,
+  function_symbol,
+  symbol_from_string
+} from '@ariadnejs/types';
 
 describe('Immutable Type Tracking', () => {
   describe('FileTypeTracker', () => {
@@ -39,30 +45,72 @@ describe('Immutable Type Tracking', () => {
 
     it('should return new instance when setting variable type', () => {
       const tracker1 = create_file_type_tracker();
-      const typeInfo: TypeInfo = {
+      const var_symbol = variable_symbol('myVar', {
+        file_path: 'test.ts',
+        line: 1,
+        column: 0,
+        end_line: 1,
+        end_column: 5
+      });
+      const class_symbol = class_symbol('MyClass', 'test.ts', {
+        file_path: 'test.ts',
+        line: 1,
+        column: 0,
+        end_line: 1,
+        end_column: 7
+      });
+      const type_info: TypeInfo = {
         type: 'class',
-        className: 'MyClass',
+        className: symbol_from_string(class_symbol).name,
         position: { row: 1, column: 0 }
       };
-      
-      const tracker2 = set_variable_type(tracker1, 'myVar', typeInfo);
-      
+
+      const tracker2 = set_variable_type(tracker1, symbol_from_string(var_symbol).name, type_info);
+
       // Original tracker unchanged
       expect(tracker1.variableTypes.size).toBe(0);
       expect(tracker1).not.toBe(tracker2);
-      
+
       // New tracker has the update
       expect(tracker2.variableTypes.size).toBe(1);
-      expect(get_variable_type(tracker2, 'myVar')).toEqual(typeInfo);
+      expect(get_variable_type(tracker2, symbol_from_string(var_symbol).name)).toEqual(type_info);
     });
 
     it('should maintain immutability through multiple operations', () => {
       const tracker1 = create_file_type_tracker();
-      const type1: TypeInfo = { type: 'class', className: 'Class1', position: { row: 1, column: 0 } };
-      const type2: TypeInfo = { type: 'class', className: 'Class2', position: { row: 2, column: 0 } };
+      const var1Symbol = variable_symbol('var1', {
+        file_path: 'test.ts',
+        line: 1,
+        column: 0,
+        end_line: 1,
+        end_column: 4
+      });
+      const var2Symbol = variable_symbol('var2', {
+        file_path: 'test.ts',
+        line: 2,
+        column: 0,
+        end_line: 2,
+        end_column: 4
+      });
+      const class1Symbol = class_symbol('Class1', 'test.ts', {
+        file_path: 'test.ts',
+        line: 1,
+        column: 0,
+        end_line: 1,
+        end_column: 6
+      });
+      const class2Symbol = class_symbol('Class2', 'test.ts', {
+        file_path: 'test.ts',
+        line: 2,
+        column: 0,
+        end_line: 2,
+        end_column: 6
+      });
+      const type1: TypeInfo = { type: 'class', className: symbol_from_string(class1Symbol).name, position: { row: 1, column: 0 } };
+      const type2: TypeInfo = { type: 'class', className: symbol_from_string(class2Symbol).name, position: { row: 2, column: 0 } };
       
-      const tracker2 = set_variable_type(tracker1, 'var1', type1);
-      const tracker3 = set_variable_type(tracker2, 'var2', type2);
+      const tracker2 = set_variable_type(tracker1, symbol_from_string(var1Symbol).name, type1);
+      const tracker3 = set_variable_type(tracker2, symbol_from_string(var2Symbol).name, type2);
       
       // Each tracker maintains its state
       expect(tracker1.variableTypes.size).toBe(0);

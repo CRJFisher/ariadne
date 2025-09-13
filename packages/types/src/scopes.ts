@@ -65,5 +65,43 @@ export interface ScopeNode {
 export interface ScopeTree {
   readonly root_id: ScopeId;
   readonly nodes: ReadonlyMap<ScopeId, ScopeNode>;
-  readonly file_path?: string;
+  readonly file_path: string;
+}
+
+// ============================================================================
+// Type Guards
+// ============================================================================
+
+/**
+ * Type guard to validate ScopeTree objects
+ * Ensures all required fields are present and non-null
+ */
+export function is_scope_tree(value: unknown): value is ScopeTree {
+  if (typeof value !== "object" || value === null) return false;
+
+  const tree = value as any;
+  return (
+    typeof tree.root_id === "string" &&
+    tree.nodes instanceof Map &&
+    typeof tree.file_path === "string" &&
+    tree.file_path.length > 0 // Ensure file_path is not empty
+  );
+}
+
+/**
+ * Type guard to validate ScopeNode objects
+ * Ensures all required fields are present and properly typed
+ */
+export function is_scope_node(value: unknown): value is ScopeNode {
+  if (typeof value !== "object" || value === null) return false;
+
+  const node = value as any;
+  return (
+    typeof node.id === "string" &&
+    typeof node.type === "string" &&
+    typeof node.location === "object" &&
+    node.location !== null &&
+    Array.isArray(node.child_ids) &&
+    node.symbols instanceof Map
+  );
 }

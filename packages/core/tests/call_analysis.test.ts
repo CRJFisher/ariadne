@@ -18,6 +18,15 @@ import {
 import { ScopeGraph, Def, Ref, Import } from '../src/graph';
 import { FileCache } from '../src/file_cache';
 import { TreeNode } from '../src/parse';
+import {
+  function_symbol,
+  class_symbol,
+  method_symbol,
+  variable_symbol,
+  module_symbol,
+  symbol_from_string,
+  SymbolId
+} from '@ariadnejs/types';
 
 // Mock implementations
 function createMockTree(): TreeNode {
@@ -33,13 +42,13 @@ function createMockTree(): TreeNode {
 }
 
 function createMockGraph(nodes: (Def | Ref)[]): ScopeGraph {
-  const mockRootNode = {
+  const mock_root_node = {
     startPosition: { row: 0, column: 0 },
     endPosition: { row: 100, column: 0 },
     type: 'program',
     children: []
   };
-  const graph = new ScopeGraph(mockRootNode as any);
+  const graph = new ScopeGraph(mock_root_node as any);
   
   for (const node of nodes) {
     if (node.kind === 'definition') {
@@ -82,12 +91,19 @@ describe('Immutable Call Analysis', () => {
 
   describe('analyze_calls_from_definition', () => {
     it('should return empty results for definition with no calls', () => {
+      const func_symbol = function_symbol('myFunction', {
+        file_path: 'test.ts',
+        line: 1,
+        column: 0,
+        end_line: 5,
+        end_column: 0
+      });
       const def: Def = {
         id: 1,
         kind: 'definition',
-        name: 'myFunction',
+        name: symbol_from_string(func_symbol).name,
         symbol_kind: 'function',
-        symbol_id: 'test#myFunction',
+        symbol_id: func_symbol,
         range: { start: { row: 1, column: 0 }, end: { row: 5, column: 0 } },
         file_path: 'test.ts'
       };
@@ -99,44 +115,58 @@ describe('Immutable Call Analysis', () => {
     });
 
     it('should detect function calls within definition', () => {
-      const calledFunc: Def = {
+      const helper_symbol = function_symbol('helper', {
+        file_path: 'test.ts',
+        line: 10,
+        column: 0,
+        end_line: 12,
+        end_column: 0
+      });
+      const called_func: Def = {
         id: 2,
         kind: 'definition',
-        name: 'helper',
+        name: symbol_from_string(helper_symbol).name,
         symbol_kind: 'function',
-        symbol_id: 'test#helper',
+        symbol_id: helper_symbol,
         range: { start: { row: 10, column: 0 }, end: { row: 12, column: 0 } },
         file_path: 'test.ts'
       };
-      
-      const funcRef: Ref = {
+
+      const func_ref: Ref = {
         id: 3,
         kind: 'reference',
-        name: 'helper',
+        name: symbol_from_string(helper_symbol).name,
         symbol_kind: 'function',
         range: { start: { row: 3, column: 4 }, end: { row: 3, column: 10 } }
       };
-      
+
+      const my_func_symbol = function_symbol('myFunction', {
+        file_path: 'test.ts',
+        line: 1,
+        column: 0,
+        end_line: 5,
+        end_column: 0
+      });
       const def: Def = {
         id: 1,
         kind: 'definition',
-        name: 'myFunction',
+        name: symbol_from_string(my_func_symbol).name,
         symbol_kind: 'function',
-        symbol_id: 'test#myFunction',
+        symbol_id: my_func_symbol,
         range: { start: { row: 1, column: 0 }, end: { row: 5, column: 0 } },
         file_path: 'test.ts'
       };
-      
-      mockConfig.graph = createMockGraph([def, calledFunc, funcRef]);
-      mockConfig.go_to_definition = () => calledFunc;
+
+      mockConfig.graph = createMockGraph([def, called_func, func_ref]);
+      mockConfig.go_to_definition = () => called_func;
       
       const result = analyze_calls_from_definition(def, mockConfig);
       
       expect(result.calls).toHaveLength(1);
       expect(result.calls[0]).toMatchObject({
         caller_def: def,
-        called_def: calledFunc,
-        call_location: funcRef.range.start,
+        called_def: called_func,
+        call_location: func_ref.range.start,
         is_method_call: false
       });
     });
@@ -152,12 +182,19 @@ class MyClass {
 }
 `;
       
-      const classDef: Def = {
+      const class_symbol = class_symbol('MyClass', 'test.ts', {
+        file_path: 'test.ts',
+        line: 5,
+        column: 6,
+        end_line: 5,
+        end_column: 13
+      });
+      const class_def: Def = {
         id: 2,
         kind: 'definition',
-        name: 'MyClass',
+        name: symbol_from_string(class_symbol).name,
         symbol_kind: 'class',
-        symbol_id: 'test#MyClass',
+        symbol_id: class_symbol,
         range: { start: { row: 5, column: 6 }, end: { row: 5, column: 13 } },
         file_path: 'test.ts'
       };
@@ -165,17 +202,24 @@ class MyClass {
       const classRef: Ref = {
         id: 3,
         kind: 'reference',
-        name: 'MyClass',
+        name: symbol_from_string(class_symbol).name,
         symbol_kind: 'class',
         range: { start: { row: 2, column: 18 }, end: { row: 2, column: 25 } }
       };
       
+      const test_symbol = function_symbol('test', {
+        file_path: 'test.ts',
+        line: 1,
+        column: 0,
+        end_line: 3,
+        end_column: 1
+      });
       const def: Def = {
         id: 1,
         kind: 'definition',
-        name: 'test',
+        name: symbol_from_string(test_symbol).name,
         symbol_kind: 'function',
-        symbol_id: 'test#test',
+        symbol_id: test_symbol,
         range: { start: { row: 1, column: 0 }, end: { row: 3, column: 1 } },
         file_path: 'test.ts'
       };
@@ -189,8 +233,8 @@ class MyClass {
       
       mockFileCache.tree.rootNode.descendantForPosition = () => mockAstNode as any;
       
-      mockConfig.graph = createMockGraph([def, classDef, classRef]);
-      mockConfig.go_to_definition = () => classDef;
+      mockConfig.graph = createMockGraph([def, class_def, classRef]);
+      mockConfig.go_to_definition = () => class_def;
       
       const result = analyze_calls_from_definition(def, mockConfig);
       
@@ -199,12 +243,19 @@ class MyClass {
     });
 
     it('should not mutate input trackers', () => {
+      const funcSymbol = function_symbol('myFunction', {
+        file_path: 'test.ts',
+        line: 1,
+        column: 0,
+        end_line: 5,
+        end_column: 0
+      });
       const def: Def = {
         id: 1,
         kind: 'definition',
-        name: 'myFunction',
+        name: symbol_from_string(funcSymbol).name,
         symbol_kind: 'function',
-        symbol_id: 'test#myFunction',
+        symbol_id: funcSymbol,
         range: { start: { row: 1, column: 0 }, end: { row: 5, column: 0 } },
         file_path: 'test.ts'
       };
@@ -233,12 +284,19 @@ function myFunc() {
 `;
       
       // Simple direct function call at module level
+      const log_symbol = method_symbol('log', 'console', {
+        file_path: 'builtin',
+        line: 0,
+        column: 0,
+        end_line: 0,
+        end_column: 3
+      });
       const logDef: Def = {
         id: 1,
         kind: 'definition',
-        name: 'log',
+        name: symbol_from_string(log_symbol).name,
         symbol_kind: 'function',
-        symbol_id: 'console#log',
+        symbol_id: log_symbol,
         range: { start: { row: 0, column: 0 }, end: { row: 0, column: 3 } },
         file_path: 'builtin'
       };
@@ -246,17 +304,24 @@ function myFunc() {
       const moduleLevelRef: Ref = {
         id: 2,
         kind: 'reference',
-        name: 'log',
+        name: symbol_from_string(log_symbol).name,
         symbol_kind: 'method',
         range: { start: { row: 1, column: 8 }, end: { row: 1, column: 11 } }
       };
       
+      const my_func_symbol = function_symbol('myFunc', {
+        file_path: 'test.ts',
+        line: 3,
+        column: 0,
+        end_line: 5,
+        end_column: 1
+      });
       const funcDef: Def = {
         id: 3,
         kind: 'definition',
-        name: 'myFunc',
+        name: symbol_from_string(my_func_symbol).name,
         symbol_kind: 'function',
-        symbol_id: 'test#myFunc',
+        symbol_id: my_func_symbol,
         range: { start: { row: 3, column: 0 }, end: { row: 5, column: 1 } },
         file_path: 'test.ts',
         enclosing_range: { start: { row: 3, column: 0 }, end: { row: 5, column: 1 } }
@@ -297,23 +362,37 @@ function myFunc() {
 
   describe('resolve_method_call_pure', () => {
     it('should resolve method calls without mutations', () => {
-      const classDef: Def = {
+      const class_symbol = class_symbol('MyClass', 'test.ts', {
+        file_path: 'test.ts',
+        line: 1,
+        column: 0,
+        end_line: 10,
+        end_column: 0
+      });
+      const class_def: Def = {
         id: 1,
         kind: 'definition',
-        name: 'MyClass',
+        name: symbol_from_string(class_symbol).name,
         symbol_kind: 'class',
-        symbol_id: 'test#MyClass',
+        symbol_id: class_symbol,
         range: { start: { row: 1, column: 0 }, end: { row: 10, column: 0 } },
         file_path: 'test.ts',
         enclosing_range: { start: { row: 1, column: 0 }, end: { row: 10, column: 0 } }
       } as any;
       
+      const methodSymbol = method_symbol('doSomething', 'MyClass', {
+        file_path: 'test.ts',
+        line: 3,
+        column: 2,
+        end_line: 5,
+        end_column: 2
+      });
       const methodDef: Def = {
         id: 2,
         kind: 'definition',
-        name: 'doSomething',
+        name: symbol_from_string(methodSymbol).name,
         symbol_kind: 'method',
-        symbol_id: 'test#MyClass.doSomething',
+        symbol_id: methodSymbol,
         range: { start: { row: 3, column: 2 }, end: { row: 5, column: 2 } },
         file_path: 'test.ts'
       };
@@ -321,7 +400,7 @@ function myFunc() {
       const methodRef: Ref = {
         id: 3,
         kind: 'reference',
-        name: 'doSomething',
+        name: symbol_from_string(methodSymbol).name,
         symbol_kind: 'method',
         range: { start: { row: 15, column: 6 }, end: { row: 15, column: 17 } }
       };
@@ -329,11 +408,11 @@ function myFunc() {
       // Set up local type tracker with variable type
       let updatedTracker = set_local_variable_type(localTypeTracker, 'obj', {
         className: 'MyClass',
-        classDef: classDef,
+        classDef: class_def,
         position: { row: 14, column: 0 }
       });
       
-      const classGraph = createMockGraph([classDef, methodDef]);
+      const classGraph = createMockGraph([class_def, methodDef]);
       mockConfig.get_file_graph = () => classGraph;
       
       const result = resolve_method_call_pure(
@@ -351,10 +430,17 @@ function myFunc() {
     });
 
     it('should return empty result if type not found', () => {
+      const unknownSymbol = method_symbol('unknown', 'UnknownClass', {
+        file_path: 'test.ts',
+        line: 1,
+        column: 0,
+        end_line: 1,
+        end_column: 7
+      });
       const methodRef: Ref = {
         id: 1,
         kind: 'reference',
-        name: 'unknown',
+        name: symbol_from_string(unknownSymbol).name,
         symbol_kind: 'method',
         range: { start: { row: 1, column: 0 }, end: { row: 1, column: 7 } }
       };

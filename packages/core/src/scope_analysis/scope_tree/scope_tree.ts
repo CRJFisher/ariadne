@@ -40,7 +40,7 @@ interface MutableScopeNode {
 interface MutableScopeTree {
   root_id: ScopeId;
   nodes: Map<ScopeId, MutableScopeNode>;
-  file_path?: FilePath;
+  file_path: FilePath;
 }
 import { node_to_location } from "../../ast/node_utils";
 import {

@@ -3,6 +3,43 @@
  *
  * Provides a unified way to handle all identifiers in the codebase
  * using SymbolId as the single source of truth.
+ * 
+ * @module symbol_utils
+ * @description This module provides factory functions and utilities for creating
+ * and manipulating symbols throughout the codebase. All identifiers (variables,
+ * functions, classes, methods, etc.) are represented using the SymbolId type.
+ * 
+ * @example
+ * ```typescript
+ * import { function_symbol, class_symbol, method_symbol } from '@ariadnejs/types';
+ * 
+ * // Create a function symbol
+ * const funcId = function_symbol('processData', {
+ *   file_path: 'src/utils.ts',
+ *   line: 10,
+ *   column: 0,
+ *   end_line: 20,
+ *   end_column: 1
+ * });
+ * 
+ * // Create a class symbol
+ * const classId = class_symbol('MyClass', 'src/classes.ts', {
+ *   file_path: 'src/classes.ts',
+ *   line: 5,
+ *   column: 0,
+ *   end_line: 50,
+ *   end_column: 1
+ * });
+ * 
+ * // Create a method symbol
+ * const methodId = method_symbol('getValue', 'MyClass', {
+ *   file_path: 'src/classes.ts',
+ *   line: 15,
+ *   column: 2,
+ *   end_line: 18,
+ *   end_column: 3
+ * });
+ * ```
  */
 
 import { Location } from "./common";
@@ -60,7 +97,21 @@ export interface Symbol {
 // ============================================================================
 
 /**
- * Convert a Symbol to its string representation
+ * Convert a Symbol to its string representation (SymbolId)
+ * 
+ * @param symbol - The Symbol object to convert
+ * @returns A SymbolId string that uniquely identifies the symbol
+ * 
+ * @example
+ * ```typescript
+ * const symbol: Symbol = {
+ *   kind: 'function',
+ *   name: 'processData' as SymbolName,
+ *   location: { file_path: 'src/utils.ts', line: 10, column: 0, end_line: 20, end_column: 1 }
+ * };
+ * const symbolId = symbol_string(symbol);
+ * // Returns: "function:src/utils.ts:10:0:20:1:processData"
+ * ```
  */
 export function symbol_string(symbol: Symbol): SymbolId {
   const parts = [
@@ -80,6 +131,17 @@ export function symbol_string(symbol: Symbol): SymbolId {
 
 /**
  * Parse a SymbolId back into a Symbol structure
+ * 
+ * @param symbol_id - The SymbolId string to parse
+ * @returns A Symbol object with all its components
+ * @throws Error if the SymbolId format is invalid
+ * 
+ * @example
+ * ```typescript
+ * const symbolId = "function:src/utils.ts:10:0:20:1:processData" as SymbolId;
+ * const symbol = symbol_from_string(symbolId);
+ * // Returns: { kind: 'function', name: 'processData', location: {...} }
+ * ```
  */
 export function symbol_from_string(symbol_id: SymbolId): Symbol {
   const parts = symbol_id.split(":");
@@ -94,8 +156,8 @@ export function symbol_from_string(symbol_id: SymbolId): Symbol {
   const column = parts[3];
   const end_line = parts[4];
   const end_column = parts[5];
-  const qualifier = parts.length > 7 ? parts[6] as SymbolName : undefined;
-  const name = parts.length > 7 ? parts[7] : parts[6];
+  const name = parts[6] as SymbolName;
+  const qualifier = parts.length > 7 ? parts[7] as SymbolName : undefined;
 
   return {
     kind: kind as SymbolKind,
@@ -117,6 +179,21 @@ export function symbol_from_string(symbol_id: SymbolId): Symbol {
 
 /**
  * Create a variable symbol
+ * 
+ * @param name - The variable name
+ * @param location - The source location where the variable is defined
+ * @returns A SymbolId for the variable
+ * 
+ * @example
+ * ```typescript
+ * const varId = variable_symbol('myVar', {
+ *   file_path: 'src/app.ts',
+ *   line: 5,
+ *   column: 6,
+ *   end_line: 5,
+ *   end_column: 11
+ * });
+ * ```
  */
 export function variable_symbol(
   name: string,
@@ -131,6 +208,21 @@ export function variable_symbol(
 
 /**
  * Create a function symbol
+ * 
+ * @param name - The function name
+ * @param location - The source location where the function is defined
+ * @returns A SymbolId for the function
+ * 
+ * @example
+ * ```typescript
+ * const funcId = function_symbol('calculateTotal', {
+ *   file_path: 'src/calc.ts',
+ *   line: 10,
+ *   column: 0,
+ *   end_line: 25,
+ *   end_column: 1
+ * });
+ * ```
  */
 export function function_symbol(
   name: string,
@@ -145,6 +237,22 @@ export function function_symbol(
 
 /**
  * Create a class symbol
+ * 
+ * @param name - The class name
+ * @param scope - The file path scope (usually same as location.file_path)
+ * @param location - The source location where the class is defined
+ * @returns A SymbolId for the class
+ * 
+ * @example
+ * ```typescript
+ * const classId = class_symbol('UserService', 'src/services/user.ts', {
+ *   file_path: 'src/services/user.ts',
+ *   line: 8,
+ *   column: 0,
+ *   end_line: 100,
+ *   end_column: 1
+ * });
+ * ```
  */
 export function class_symbol(
   name: string,
@@ -160,6 +268,22 @@ export function class_symbol(
 
 /**
  * Create a method symbol
+ * 
+ * @param method_name - The method name
+ * @param class_name - The name of the class that contains this method
+ * @param location - The source location where the method is defined
+ * @returns A SymbolId for the method
+ * 
+ * @example
+ * ```typescript
+ * const methodId = method_symbol('getUserById', 'UserService', {
+ *   file_path: 'src/services/user.ts',
+ *   line: 25,
+ *   column: 2,
+ *   end_line: 30,
+ *   end_column: 3
+ * });
+ * ```
  */
 export function method_symbol(
   method_name: string,
@@ -176,6 +300,22 @@ export function method_symbol(
 
 /**
  * Create a property symbol
+ * 
+ * @param property_name - The property name
+ * @param class_name - The name of the class that contains this property
+ * @param location - The source location where the property is defined
+ * @returns A SymbolId for the property
+ * 
+ * @example
+ * ```typescript
+ * const propId = property_symbol('isActive', 'User', {
+ *   file_path: 'src/models/user.ts',
+ *   line: 12,
+ *   column: 2,
+ *   end_line: 12,
+ *   end_column: 10
+ * });
+ * ```
  */
 export function property_symbol(
   property_name: string,
@@ -192,6 +332,22 @@ export function property_symbol(
 
 /**
  * Create a module symbol
+ * 
+ * @param name - The module name (often '<module>' for top-level)
+ * @param file_path - The file path of the module
+ * @param location - The source location of the module
+ * @returns A SymbolId for the module
+ * 
+ * @example
+ * ```typescript
+ * const moduleId = module_symbol('<module>', 'src/index.ts', {
+ *   file_path: 'src/index.ts',
+ *   line: 0,
+ *   column: 0,
+ *   end_line: 100,
+ *   end_column: 0
+ * });
+ * ```
  */
 export function module_symbol(
   name: SymbolName | string,
@@ -209,6 +365,22 @@ export function module_symbol(
 
 /**
  * Create a parameter symbol
+ * 
+ * @param param_name - The parameter name
+ * @param function_name - The name of the function that contains this parameter
+ * @param location - The source location where the parameter is defined
+ * @returns A SymbolId for the parameter
+ * 
+ * @example
+ * ```typescript
+ * const paramId = parameter_symbol('userId', 'getUserById', {
+ *   file_path: 'src/services/user.ts',
+ *   line: 25,
+ *   column: 20,
+ *   end_line: 25,
+ *   end_column: 26
+ * });
+ * ```
  */
 export function parameter_symbol(
   param_name: string,
