@@ -62,6 +62,7 @@ import {
   VariableDeclaration,
   SymbolId,
   function_symbol,
+  DocString,
 } from "@ariadnejs/types";
 import {
   ReturnTypeInfo,
@@ -376,15 +377,16 @@ function extract_definitions(
   for (const [_, scope] of scopes.nodes) {
     if (scope.type === "function") {
       // Skip methods here - they'll be handled in the class section
-      if (
-        scope.parent_id &&
-        scopes.nodes.get(scope.parent_id)?.type === "class"
-      ) {
-        continue;
+      // Skip methods inside classes (they'll be handled separately)
+      if (scope.parent_id !== null) {
+        const parent_scope = scopes.nodes.get(scope.parent_id);
+        if (parent_scope?.type === "class") {
+          continue;
+        }
       }
 
       // Get function name from metadata
-      const func_name = scope.metadata?.name || `anonymous_${scope.id}`;
+      const func_name = scope.metadata.name;
       const func_symbol = function_symbol(func_name, scope.location);
 
       // Get pre-computed return type
@@ -393,7 +395,7 @@ function extract_definitions(
       // Merge inferred parameter types
       let enhanced_parameters: ParameterType[] = [];
       const param_analysis = inferred_parameters.get(func_name);
-      if (param_analysis && param_analysis.parameters) {
+      if (param_analysis) {
         // Use parameters from analysis and add inferred types
         enhanced_parameters = param_analysis.parameters.map((param) => {
           const inferred_type_info = param_analysis.inferred_types.get(
@@ -414,8 +416,8 @@ function extract_definitions(
       const signature: FunctionSignature = {
         parameters: enhanced_parameters,
         return_type: (return_type_info?.type_name as TypeString) || 'unknown' as TypeString,
-        is_async: scope.metadata?.is_async || false,
-        is_generator: scope.metadata?.is_generator || false,
+        is_async: scope.metadata.is_async,
+        is_generator: scope.metadata.is_generator,
         type_parameters: [],
       };
 
@@ -423,6 +425,18 @@ function extract_definitions(
         name: func_symbol,
         location: scope.location,
         signature,
+        metadata: {
+          is_async: false,
+          is_generator: false,
+          is_exported: false,
+          is_test: false,
+          is_private: false,
+          complexity: 0,
+          line_count: 1,
+          parameter_names: [],
+          has_decorator: false,
+        },
+        docstring: "" as DocString,
         is_exported: false,
         is_arrow_function: false,
         is_anonymous: func_name.startsWith('anonymous_'),

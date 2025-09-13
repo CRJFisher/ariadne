@@ -17,6 +17,7 @@ import {
   clear_project,
   get_files_matching_pattern,
   get_files_by_language,
+  create_project_config,
   type ProjectManagerContext,
   type ProjectConfig,
   type FileChangeEvent,
@@ -109,13 +110,12 @@ describe('project_manager', () => {
     update_handler = new MockUpdateHandler();
     module_graph = new MockModuleGraph();
     
-    const config: ProjectConfig = {
-      root_path: '/test/project',
+    const config = create_project_config('/test/project', {
       primary_language: 'typescript',
       metadata: {
         version: '1.0.0'
       }
-    };
+    });
     
     context = {
       config,

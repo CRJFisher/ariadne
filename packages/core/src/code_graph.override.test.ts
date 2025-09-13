@@ -67,7 +67,7 @@ module.exports = { Dog, Cat };
       // Check Dog class
       const dogClass = codeGraph.classes.classes.get('Dog');
       expect(dogClass).toBeDefined();
-      if (dogClass && dogClass.methods) {
+      if (dogClass) {
         const speakMethod = dogClass.methods.get('speak');
         expect(speakMethod).toBeDefined();
         if (speakMethod) {
@@ -79,7 +79,7 @@ module.exports = { Dog, Cat };
       // Check Cat class
       const catClass = codeGraph.classes.classes.get('Cat');
       expect(catClass).toBeDefined();
-      if (catClass && catClass.methods) {
+      if (catClass) {
         const speakMethod = catClass.methods.get('speak');
         const moveMethod = catClass.methods.get('move');
         
@@ -144,7 +144,7 @@ class Square(Rectangle):
       // Check Rectangle class
       const rectangleClass = codeGraph.classes.classes.get('Rectangle');
       expect(rectangleClass).toBeDefined();
-      if (rectangleClass && rectangleClass.methods) {
+      if (rectangleClass) {
         const areaMethod = rectangleClass.methods.get('area');
         const perimeterMethod = rectangleClass.methods.get('perimeter');
         
@@ -163,7 +163,7 @@ class Square(Rectangle):
       // Check Square class
       const squareClass = codeGraph.classes.classes.get('Square');
       expect(squareClass).toBeDefined();
-      if (squareClass && squareClass.methods) {
+      if (squareClass) {
         const areaMethod = squareClass.methods.get('area');
         
         expect(areaMethod).toBeDefined();

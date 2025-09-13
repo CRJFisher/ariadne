@@ -116,21 +116,27 @@ const rust_config: MemberAccessConfig = {
   }
 };
 
-// Language configuration map
-const LANGUAGE_CONFIGS: Record<string, MemberAccessConfig> = {
+// Language configuration map - all supported languages must have configs
+const LANGUAGE_CONFIGS: Record<Language, MemberAccessConfig> = {
   javascript: javascript_config,
   typescript: javascript_config,
-  jsx: javascript_config,
-  tsx: javascript_config,
   python: python_config,
   rust: rust_config
 };
 
 /**
  * Get member access configuration for a language
+ * @returns Configuration for the language (guaranteed to exist for all supported languages)
  */
-export function get_member_access_config(language: Language): MemberAccessConfig | null {
-  return LANGUAGE_CONFIGS[language] || null;
+export function get_member_access_config(language: Language): MemberAccessConfig {
+  return LANGUAGE_CONFIGS[language];
+}
+
+/**
+ * Type guard to check if a language has member access configuration
+ */
+export function has_member_access_config(language: string): language is Language {
+  return language in LANGUAGE_CONFIGS;
 }
 
 /**
@@ -141,7 +147,7 @@ export function is_member_access_node(
   language: Language
 ): boolean {
   const config = get_member_access_config(language);
-  return config ? config.node_types.includes(nodeType) : false;
+  return config.node_types.includes(nodeType);
 }
 
 /**
@@ -152,8 +158,6 @@ export function get_member_access_fields(
   language: Language
 ): { object_field: FieldName; member_field: FieldName } | null {
   const config = get_member_access_config(language);
-  if (!config) return null;
-  
   return config.field_mappings[nodeType] || null;
 }
 
@@ -165,5 +169,5 @@ export function should_skip_node(
   language: Language
 ): boolean {
   const config = get_member_access_config(language);
-  return config ? config.skip_node_types.includes(nodeType) : false;
+  return config.skip_node_types.includes(nodeType);
 }

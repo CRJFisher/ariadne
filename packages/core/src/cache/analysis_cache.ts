@@ -14,8 +14,8 @@ import * as crypto from 'crypto';
  */
 export interface CacheOptions {
   enabled: boolean;
-  ttl?: number; // Time-to-live in milliseconds
-  maxSize?: number; // Maximum number of cached entries
+  ttl: number; // Time-to-live in milliseconds
+  maxSize: number; // Maximum number of cached entries
 }
 
 /**
@@ -39,8 +39,8 @@ export class AnalysisCache {
 
   constructor(options: CacheOptions) {
     this.enabled = options.enabled;
-    this.ttl = options.ttl || 15 * 60 * 1000; // 15 minutes default
-    this.maxSize = options.maxSize || 100;
+    this.ttl = options.ttl; // Now guaranteed to be non-null
+    this.maxSize = options.maxSize; // Now guaranteed to be non-null
   }
 
   /**
@@ -180,12 +180,21 @@ export class AnalysisCache {
 }
 
 /**
- * Create a new analysis cache
+ * Default cache options
  */
-export function create_analysis_cache(options?: Partial<CacheOptions>): AnalysisCache {
+const DEFAULT_CACHE_OPTIONS: CacheOptions = {
+  enabled: false,
+  ttl: 15 * 60 * 1000, // 15 minutes
+  maxSize: 100
+};
+
+/**
+ * Create a new analysis cache with default options
+ */
+export function create_analysis_cache(options: Partial<CacheOptions> = {}): AnalysisCache {
   return new AnalysisCache({
-    enabled: options?.enabled ?? false,
-    ttl: options?.ttl,
-    maxSize: options?.maxSize
+    enabled: options.enabled ?? DEFAULT_CACHE_OPTIONS.enabled,
+    ttl: options.ttl ?? DEFAULT_CACHE_OPTIONS.ttl,
+    maxSize: options.maxSize ?? DEFAULT_CACHE_OPTIONS.maxSize
   });
 }

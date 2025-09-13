@@ -5,7 +5,7 @@
  * handles incremental updates, and interfaces with the storage layer.
  */
 
-import { Language } from '@ariadnejs/types';
+import { Language, get_map_value_or_default } from '@ariadnejs/types';
 import { 
   ProjectState, 
   StoredFile, 
@@ -18,19 +18,45 @@ import {
 import * as path from 'path';
 
 /**
- * Project configuration
+ * Project configuration with required properties
  */
 export interface ProjectConfig {
   /** Root directory of the project */
   root_path: string;
   /** Include patterns for files to track */
-  include_patterns?: string[];
+  include_patterns: string[];
   /** Exclude patterns for files to ignore */
-  exclude_patterns?: string[];
+  exclude_patterns: string[];
   /** Language of the project (if single language) */
-  primary_language?: string;
+  primary_language: string;
   /** Custom metadata */
-  metadata?: Record<string, any>;
+  metadata: Record<string, any>;
+}
+
+/**
+ * Default project configuration values
+ */
+const DEFAULT_PROJECT_CONFIG = {
+  include_patterns: ['**/*.ts', '**/*.js', '**/*.py', '**/*.rs'],
+  exclude_patterns: ['node_modules/**', '**/*.test.*', '**/*.spec.*', 'dist/**', 'build/**'],
+  primary_language: 'typescript',
+  metadata: {}
+} as const;
+
+/**
+ * Create a project configuration with proper defaults
+ */
+export function create_project_config(
+  root_path: string,
+  options: Partial<Omit<ProjectConfig, 'root_path'>> = {}
+): ProjectConfig {
+  return {
+    root_path,
+    include_patterns: options.include_patterns ?? [...DEFAULT_PROJECT_CONFIG.include_patterns],
+    exclude_patterns: options.exclude_patterns ?? [...DEFAULT_PROJECT_CONFIG.exclude_patterns],
+    primary_language: options.primary_language ?? DEFAULT_PROJECT_CONFIG.primary_language,
+    metadata: options.metadata ?? { ...DEFAULT_PROJECT_CONFIG.metadata }
+  };
 }
 
 /**
@@ -357,7 +383,8 @@ export async function get_project_stats(
   for (const file of files) {
     // Count by language
     const lang = file.language;
-    files_by_language.set(lang, (files_by_language.get(lang) || 0) + 1);
+    const current_count = get_map_value_or_default(files_by_language, lang, 0);
+    files_by_language.set(lang, current_count + 1);
     
     // Count lines
     total_lines += file.source_code.split('\n').length;

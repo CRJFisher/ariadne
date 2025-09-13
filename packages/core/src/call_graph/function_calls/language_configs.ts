@@ -173,23 +173,23 @@ export function get_language_config(language: Language): LanguageCallConfig {
 /**
  * Check if a node type represents a call expression for the given language
  */
-export function is_call_expression(nodeType: string, language: Language): boolean {
+export function is_call_expression(node_type: string, language: Language): boolean {
   const config = get_language_config(language);
-  return config.call_expression_types.includes(nodeType);
+  return config.call_expression_types.includes(node_type);
 }
 
 /**
  * Check if a node type represents a method expression for the given language
  */
-export function is_method_expression(nodeType: string, language: Language): boolean {
+export function is_method_expression(node_type: string, language: Language): boolean {
   const config = get_language_config(language);
-  return config.method_expression_types.includes(nodeType);
+  return config.method_expression_types.includes(node_type);
 }
 
 /**
  * Check if a node type represents a function definition for the given language
  */
-export function is_function_definition(nodeType: string, language: Language): boolean {
+export function is_function_definition(node_type: string, language: Language): boolean {
   const config = get_language_config(language);
-  return config.function_definition_types.includes(nodeType);
+  return config.function_definition_types.includes(node_type);
 }

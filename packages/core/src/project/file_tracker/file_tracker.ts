@@ -7,7 +7,7 @@
 
 import * as path from 'path';
 import * as fs from 'fs';
-import { Language } from '@ariadnejs/types';
+import { Language, get_map_value_or_default } from '@ariadnejs/types';
 import { FileTracker as IFileTracker } from '../project_manager/project_manager';
 
 /**
@@ -31,24 +31,52 @@ export interface FileState {
   /** Whether file matches exclude patterns */
   matches_exclude: boolean;
   /** When this state was cached (internal use) */
-  cached_at?: number;
+  cached_at: number;
 }
 
 /**
- * File change event
+ * Base file change event
  */
-export interface FileChangeEvent {
-  /** Type of change */
-  type: 'added' | 'modified' | 'removed';
+interface BaseFileChangeEvent {
   /** File path */
   file_path: string;
   /** Timestamp of change */
   timestamp: Date;
-  /** Previous state (for modified/removed) */
-  previous_state?: FileState;
-  /** New state (for added/modified) */
-  new_state?: FileState;
 }
+
+/**
+ * File added event
+ */
+export interface FileAddedEvent extends BaseFileChangeEvent {
+  type: 'added';
+  /** New state (always present for added files) */
+  new_state: FileState;
+}
+
+/**
+ * File modified event
+ */
+export interface FileModifiedEvent extends BaseFileChangeEvent {
+  type: 'modified';
+  /** Previous state (always present for modified files) */
+  previous_state: FileState;
+  /** New state (always present for modified files) */
+  new_state: FileState;
+}
+
+/**
+ * File removed event
+ */
+export interface FileRemovedEvent extends BaseFileChangeEvent {
+  type: 'removed';
+  /** Previous state (always present for removed files) */
+  previous_state: FileState;
+}
+
+/**
+ * File change event (discriminated union)
+ */
+export type FileChangeEvent = FileAddedEvent | FileModifiedEvent | FileRemovedEvent;
 
 /**
  * File change callback
@@ -56,9 +84,9 @@ export interface FileChangeEvent {
 export type FileChangeCallback = (event: FileChangeEvent) => void | Promise<void>;
 
 /**
- * File tracker configuration
+ * File tracker configuration input (with optional properties)
  */
-export interface FileTrackerConfig {
+export interface FileTrackerConfigInput {
   /** Root directory to track */
   root_path: string;
   /** Include patterns (glob patterns) */
@@ -71,6 +99,24 @@ export interface FileTrackerConfig {
   watch?: boolean;
   /** Poll interval for change detection (ms) */
   poll_interval?: number;
+}
+
+/**
+ * File tracker configuration (normalized with defaults)
+ */
+export interface FileTrackerConfig {
+  /** Root directory to track */
+  root_path: string;
+  /** Include patterns (glob patterns) */
+  include_patterns: string[];
+  /** Exclude patterns (glob patterns) */
+  exclude_patterns: string[];
+  /** Whether to auto-track matching files */
+  auto_track: boolean;
+  /** Whether to watch for changes */
+  watch: boolean;
+  /** Poll interval for change detection (ms) */
+  poll_interval: number;
 }
 
 /**
@@ -107,11 +153,36 @@ function get_language_from_path(file_path: string): Language | 'unknown' {
 }
 
 /**
+ * Default configuration values
+ */
+const DEFAULT_CONFIG: Omit<FileTrackerConfig, 'root_path'> = {
+  include_patterns: [],
+  exclude_patterns: ['node_modules/**', '.git/**', 'dist/**', 'build/**'],
+  auto_track: true,
+  watch: true,
+  poll_interval: 1000
+};
+
+/**
+ * Normalize configuration with defaults
+ */
+function normalize_config(input: FileTrackerConfigInput): FileTrackerConfig {
+  return {
+    root_path: input.root_path,
+    include_patterns: input.include_patterns ?? DEFAULT_CONFIG.include_patterns,
+    exclude_patterns: input.exclude_patterns ?? DEFAULT_CONFIG.exclude_patterns,
+    auto_track: input.auto_track ?? DEFAULT_CONFIG.auto_track,
+    watch: input.watch ?? DEFAULT_CONFIG.watch,
+    poll_interval: input.poll_interval ?? DEFAULT_CONFIG.poll_interval
+  };
+}
+
+/**
  * Create a new file tracker context
  */
-export function create_file_tracker(config: FileTrackerConfig): FileTrackerContext {
+export function create_file_tracker(input: FileTrackerConfigInput): FileTrackerContext {
   return {
-    config,
+    config: normalize_config(input),
     tracked_files: new Set(),
     file_states: new Map(),
     change_listeners: new Set()
@@ -142,12 +213,13 @@ export function track_file(
   context.file_states.set(absolute_path, state);
   
   // Notify listeners
-  notify_change(context, {
+  const event: FileAddedEvent = {
     type: 'added',
     file_path: absolute_path,
     timestamp: new Date(),
     new_state: state
-  });
+  };
+  notify_change(context, event);
 }
 
 /**
@@ -174,12 +246,15 @@ export function untrack_file(
   context.file_states.delete(absolute_path);
   
   // Notify listeners
-  notify_change(context, {
-    type: 'removed',
-    file_path: absolute_path,
-    timestamp: new Date(),
-    previous_state
-  });
+  if (previous_state) {
+    const event: FileRemovedEvent = {
+      type: 'removed',
+      file_path: absolute_path,
+      timestamp: new Date(),
+      previous_state
+    };
+    notify_change(context, event);
+  }
 }
 
 /**
@@ -218,7 +293,7 @@ export function get_file_state(
   // Check if cached (unless force refresh)
   if (!force_refresh) {
     const cached = context.file_states.get(absolute_path);
-    if (cached && cached.cached_at && Date.now() - cached.cached_at < 1000) {
+    if (cached && Date.now() - cached.cached_at < 1000) {
       return cached;
     }
   }
@@ -410,34 +485,35 @@ function check_for_changes(context: FileTrackerContext): void {
     
     // Check if file was removed
     if (old_state.exists && !new_state.exists) {
-      notify_change(context, {
+      const event: FileRemovedEvent = {
         type: 'removed',
         file_path,
         timestamp: new Date(),
-        previous_state: old_state,
-        new_state
-      });
+        previous_state: old_state
+      };
+      notify_change(context, event);
     }
     // Check if file was modified
     else if (old_state.exists && new_state.exists &&
              old_state.last_modified !== new_state.last_modified) {
-      notify_change(context, {
+      const event: FileModifiedEvent = {
         type: 'modified',
         file_path,
         timestamp: new Date(),
         previous_state: old_state,
         new_state
-      });
+      };
+      notify_change(context, event);
     }
     // Check if file was added (shouldn't happen for tracked files)
     else if (!old_state.exists && new_state.exists) {
-      notify_change(context, {
+      const event: FileAddedEvent = {
         type: 'added',
         file_path,
         timestamp: new Date(),
-        previous_state: old_state,
         new_state
-      });
+      };
+      notify_change(context, event);
     }
   }
 }
@@ -534,7 +610,7 @@ export function get_stats(context: FileTrackerContext): FileTrackerStats {
       stats.by_status.missing++;
     }
     
-    const lang_count = stats.by_language.get(state.language) || 0;
+    const lang_count = get_map_value_or_default(stats.by_language, state.language, 0);
     stats.by_language.set(state.language, lang_count + 1);
   }
   
