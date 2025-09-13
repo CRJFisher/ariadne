@@ -14,10 +14,10 @@
 // TODO: Integration with Import Resolution
 // - Add import type tracking
 
-import { 
-  FilePath, 
-  Language, 
-  Location, 
+import {
+  FilePath,
+  Language,
+  Location,
   SourceCode,
   TypeInfo,
   SymbolId,
@@ -34,8 +34,30 @@ import {
   symbol_string,
   Symbol,
   SymbolName,
+  TrackedType,
 } from "@ariadnejs/types";
 import { node_to_location } from "../../ast/node_utils";
+import { SyntaxNode } from "tree-sitter";
+
+/**
+ * Main type tracking function that analyzes a file's AST to extract type information
+ *
+ * @param root_node - The root node of the file's AST
+ * @param source_code - The source code of the file
+ * @param language - The programming language of the file
+ * @param file_path - The path to the file being analyzed
+ * @returns Map of SymbolIds to their tracked type information
+ */
+export function track_types(
+  root_node: SyntaxNode,
+  source_code: string,
+  language: Language,
+  file_path: string
+): Map<SymbolId, TrackedType> {
+  // TODO: Implement using new query-based system
+  // See task 11.100.7 for implementation details
+  return new Map();
+}
 
 /**
  * Legacy type information interface - for internal use only
@@ -337,7 +359,6 @@ export function infer_type_kind(
 // GENERIC CONFIGURATION-DRIVEN PROCESSING
 // =============================================================================
 
-import { SyntaxNode } from "tree-sitter";
 import {
   get_type_tracking_config,
   is_assignment_node,
