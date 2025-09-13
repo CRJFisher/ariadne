@@ -74,15 +74,15 @@ export function enrich_method_calls_with_hierarchy(
       }
 
       // Check if this is a virtual call (could dispatch to subclasses)
-      const virtualInfo = analyze_virtual_call(
+      const virtual_info = analyze_virtual_call(
         receiver_type,
         call.method_name,
         class_hierarchy
       );
 
-      if (virtualInfo) {
-        enriched.is_virtual_call = virtualInfo.is_virtual;
-        enriched.possible_targets = virtualInfo.possible_targets;
+      if (virtual_info) {
+        enriched.is_virtual_call = virtual_info.is_virtual;
+        enriched.possible_targets = virtual_info.possible_targets;
       }
     }
 

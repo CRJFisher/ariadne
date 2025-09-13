@@ -201,18 +201,18 @@ export function enhance_rust_method_call(
   if (func?.type === 'field_expression') {
     const value = func.childForFieldName('value');
     if (value) {
-      const valueText = source.substring(value.startIndex, value.endIndex);
-      
+      const value_text = source.substring(value.startIndex, value.endIndex);
+
       // Check if the receiver starts with & (reference)
-      if (valueText.startsWith('(&')) {
+      if (value_text.startsWith('(&')) {
         enhanced.is_ref_method = true;
         // Check if it's a mutable reference
-        enhanced.is_mut_ref = valueText.startsWith('(&mut');
+        enhanced.is_mut_ref = value_text.startsWith('(&mut');
       }
       // Direct reference without parentheses
-      else if (valueText.startsWith('&')) {
+      else if (value_text.startsWith('&')) {
         enhanced.is_ref_method = true;
-        enhanced.is_mut_ref = valueText.startsWith('&mut');
+        enhanced.is_mut_ref = value_text.startsWith('&mut');
       }
     }
   }

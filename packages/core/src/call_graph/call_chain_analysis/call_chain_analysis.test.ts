@@ -11,7 +11,7 @@ import {
   get_recursive_functions,
   CallChainContext
 } from './call_chain_analysis';
-import { FunctionCallInfo, MethodCallInfo, ConstructorCallInfo, CallChain, FilePath, SymbolId, CallerName, ClassName, MODULE_CONTEXT } from '@ariadnejs/types';
+import { FunctionCallInfo, MethodCallInfo, ConstructorCallInfo, CallChain, FilePath, SymbolId, CallerName, ClassName, ResolvedTypeKind, MODULE_CONTEXT } from '@ariadnejs/types';
 
 describe('call_chain_analysis', () => {
 
@@ -29,7 +29,8 @@ describe('call_chain_analysis', () => {
           is_dynamic: false,
           is_macro_call: false,
           is_in_comprehension: false,
-          arguments_count: 0
+          arguments_count: 0,
+          modifiers: []
         },
         {
           kind: 'function',
@@ -42,7 +43,8 @@ describe('call_chain_analysis', () => {
           is_dynamic: false,
           is_macro_call: false,
           is_in_comprehension: false,
-          arguments_count: 0
+          arguments_count: 0,
+          modifiers: []
         }
       ];
 
@@ -72,7 +74,8 @@ describe('call_chain_analysis', () => {
           is_dynamic: false,
           is_macro_call: false,
           is_in_comprehension: false,
-          arguments_count: 1
+          arguments_count: 1,
+          modifiers: []
         }
       ];
 
@@ -105,7 +108,16 @@ describe('call_chain_analysis', () => {
           is_chained: false,
           is_async: false,
           is_dynamic: false,
-          arguments_count: 0
+          arguments_count: 0,
+          modifiers: [],
+          receiver_type: {
+            resolved: {
+              type_name: "unknown" as ClassName,
+              type_kind: "unknown" as ResolvedTypeKind
+            },
+            confidence: "low",
+            reason: "not_found"
+          }
         }
       ];
 
@@ -134,7 +146,8 @@ describe('call_chain_analysis', () => {
           is_new_expression: true,
           is_factory: false,
           is_async: false,
-          is_dynamic: false
+          is_dynamic: false,
+          modifiers: []
         }
       ];
 
@@ -161,7 +174,8 @@ describe('call_chain_analysis', () => {
           is_dynamic: false,
           is_macro_call: false,
           is_in_comprehension: false,
-          arguments_count: 0
+          arguments_count: 0,
+          modifiers: []
         },
         {
           kind: 'function',
@@ -174,7 +188,8 @@ describe('call_chain_analysis', () => {
           is_dynamic: false,
           is_macro_call: false,
           is_in_comprehension: false,
-          arguments_count: 0
+          arguments_count: 0,
+          modifiers: []
         },
         {
           kind: 'function',
@@ -187,7 +202,8 @@ describe('call_chain_analysis', () => {
           is_dynamic: false,
           is_macro_call: false,
           is_in_comprehension: false,
-          arguments_count: 0
+          arguments_count: 0,
+          modifiers: []
         }
       ];
 

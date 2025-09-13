@@ -177,16 +177,16 @@ export function detect_optional_chaining_call(
   }
   
   // Check if it contains optional chaining token
-  let hasOptionalChain = false;
+  let has_optional_chain = false;
   for (let i = 0; i < func.childCount; i++) {
     const child = func.child(i);
     if (child && child.type === 'optional_chain') {
-      hasOptionalChain = true;
+      has_optional_chain = true;
       break;
     }
   }
   
-  if (!hasOptionalChain) {
+  if (!has_optional_chain) {
     return null;
   }
   
@@ -201,11 +201,11 @@ export function detect_optional_chaining_call(
     let receiver_name = source.substring(object.startIndex, object.endIndex);
     if (object.type === 'call_expression') {
       // It's a chained call - extract the method name from the previous call
-      const prevFunc = object.childForFieldName('function');
-      if (prevFunc && prevFunc.type === 'member_expression') {
-        const prevProp = prevFunc.childForFieldName('property');
-        if (prevProp) {
-          receiver_name = source.substring(prevProp.startIndex, prevProp.endIndex) + '()';
+      const prev_func = object.childForFieldName('function');
+      if (prev_func && prev_func.type === 'member_expression') {
+        const prev_prop = prev_func.childForFieldName('property');
+        if (prev_prop) {
+          receiver_name = source.substring(prev_prop.startIndex, prev_prop.endIndex) + '()';
         }
       }
     }
