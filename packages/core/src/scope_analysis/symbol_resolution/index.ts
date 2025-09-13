@@ -84,6 +84,9 @@ import {
   handle_lifetime_parameters,
 } from './symbol_resolution.rust';
 
+// Symbol extraction
+import { extract_symbols } from './symbol_extraction';
+
 // Re-export core types and functions
 export {
   MODULE_CONTEXT,
@@ -111,6 +114,9 @@ export {
   GlobalSymbolTable,
   build_symbol_table,
 };
+
+// Re-export symbol extraction
+export { extract_symbols };
 
 
 
