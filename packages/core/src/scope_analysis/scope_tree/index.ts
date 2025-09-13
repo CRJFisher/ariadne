@@ -6,7 +6,7 @@
  */
 
 import { SyntaxNode } from "tree-sitter";
-import { Language, ScopeTree, FilePath } from "@ariadnejs/types";
+import { Language, ScopeTree, FilePath, ScopeNode, ScopeId, SymbolId } from "@ariadnejs/types";
 
 // Import generic processor
 import {
@@ -51,9 +51,38 @@ export {
   is_builtin_symbol,
 } from "./language_configs";
 
+// Type alias for the new scope definition type
+// TODO: This will be replaced with the proper Scope type from symbol_scope.ts
+// once the exports are fixed
+export type ScopeDefinition = ScopeNode;
+
+/**
+ * Create a global scope definition
+ */
+export function createGlobalScope(file_path: FilePath): ScopeDefinition {
+  return {
+    id: "scope_0" as ScopeId,
+    type: "global",
+    location: {
+      file_path,
+      line: 1,
+      column: 1,
+      end_line: 1,
+      end_column: 1,
+    },
+    child_ids: [],
+    symbols: new Map<SymbolId, any>(),
+    metadata: {
+      is_async: false,
+      is_generator: false,
+      visibility: "public",
+    },
+  };
+}
+
 /**
  * Build language-specific scope tree
- * 
+ *
  * Main entry point that combines generic and bespoke processing
  */
 export function build_scope_tree(
@@ -61,18 +90,10 @@ export function build_scope_tree(
   source_code: string,
   language: Language,
   file_path: FilePath
-): ScopeTree {
-  // Select appropriate bespoke handlers
-  const handlers = get_bespoke_handlers(language);
-  
-  // Build tree with generic processor + bespoke handlers
-  return build_generic_scope_tree(
-    root_node,
-    source_code,
-    language,
-    file_path,
-    handlers
-  );
+): ScopeDefinition {
+  // TODO: Implement using new query-based system
+  // See task 11.100.9 for implementation details
+  return createGlobalScope(file_path);
 }
 
 /**
@@ -83,7 +104,7 @@ export function build_language_scope_tree(
   source_code: string,
   language: Language,
   file_path: FilePath
-): ScopeTree {
+): ScopeDefinition {
   return build_scope_tree(root_node, source_code, language, file_path);
 }
 
@@ -119,11 +140,11 @@ export function resolve_language_symbol(
 ) {
   switch (language) {
     case "python":
-      return resolve_python_symbol(tree, scope_id, symbol_name);
+      return resolve_python_symbol(tree, scope_id as ScopeId, symbol_name);
     case "rust":
-      return resolve_rust_symbol(tree, scope_id, symbol_name);
+      return resolve_rust_symbol(tree, scope_id as ScopeId, symbol_name);
     default:
-      return find_symbol_in_scope_chain(tree, scope_id, symbol_name);
+      return find_symbol_in_scope_chain(tree, scope_id as ScopeId, symbol_name);
   }
 }
 
