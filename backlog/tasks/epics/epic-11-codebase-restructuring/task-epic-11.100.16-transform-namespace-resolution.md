@@ -345,6 +345,21 @@ function resolveAccess(
 - Related to export_detection for exports
 - Used by symbol_resolution for namespace symbols
 
+## Namespace Import Creation
+
+Use `createNamespaceImport()` from `import_export_types.ts`:
+
+```typescript
+const namespaceImport = createNamespaceImport(
+  toNamespaceName('MyNamespace'),
+  buildModulePath('./module'),
+  location,
+  'javascript'
+);
+```
+
+Note: Namespaces are a variant of Import with `kind: 'namespace'`.
+
 ## Notes
 
 - Recently achieved 100% test coverage

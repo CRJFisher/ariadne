@@ -634,6 +634,21 @@ export async function resolve_namespaces_across_files(
 }
 
 /**
+ * Extract namespaces from an AST
+ * Returns Import[] (namespace imports)
+ */
+export function extract_namespaces(
+  root_node: SyntaxNode,
+  source_code: string,
+  language: Language,
+  file_path: string
+): Import[] {
+  // TODO: Implement using new query-based system
+  // See task 11.100.11 for implementation details
+  return [];
+}
+
+/**
  * Helper function to resolve module paths
  * TODO: This should be moved to import_resolution module
  */

@@ -31,7 +31,8 @@ export {
   get_namespace_members,
   namespace_has_member,
   collect_namespace_exports,
-  resolve_namespaces_across_files
+  resolve_namespaces_across_files,
+  extract_namespaces
 } from './namespace_resolution';
 
 // Export configuration utilities
