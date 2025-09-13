@@ -391,10 +391,24 @@ export function validate_unified_symbol(
  * Options for strict validation
  */
 export interface StrictValidationOptions {
-  readonly allow_extra_fields?: boolean; // Allow unknown fields
-  readonly require_all_fields?: boolean; // Require all optional fields
-  readonly check_references?: boolean; // Validate ID references
-  readonly max_depth?: number; // Maximum validation depth
+  readonly allow_extra_fields: boolean; // Allow unknown fields (defaults to false)
+  readonly require_all_fields: boolean; // Require all optional fields (defaults to false)
+  readonly check_references: boolean; // Validate ID references (defaults to true)
+  readonly max_depth?: number; // Maximum validation depth (genuinely optional - no reasonable default)
+}
+
+/**
+ * Create default strict validation options
+ */
+export function createStrictValidationOptions(
+  overrides?: Partial<StrictValidationOptions>
+): StrictValidationOptions {
+  return {
+    allow_extra_fields: false,
+    require_all_fields: false,
+    check_references: true,
+    ...overrides
+  };
 }
 
 /**
@@ -404,7 +418,7 @@ export function strict_validate<T>(
   value: unknown,
   validator: (v: unknown) => v is T,
   deep_validator?: (v: unknown, path?: string) => ValidationResult<T>,
-  options: StrictValidationOptions = {}
+  options: StrictValidationOptions = createStrictValidationOptions()
 ): ValidationResult<T> {
   const errors: ValidationError[] = [];
   const warnings: ValidationWarning[] = [];

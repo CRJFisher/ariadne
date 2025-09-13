@@ -57,7 +57,7 @@ export interface FunctionDefinition {
   readonly location: Location;
   readonly signature: FunctionSignature;
   readonly metadata: FunctionMetadata; // Always present with sensible defaults
-  readonly docstring?: DocString;
+  readonly docstring: DocString; // Defaults to empty string when no docstring
   readonly decorators: readonly SymbolId[]; // Always present, defaults to empty array
   readonly is_exported: boolean;
   readonly is_arrow_function: boolean; // For JS/TS
@@ -80,7 +80,7 @@ export interface ClassDefinition extends Definition {
   readonly methods: readonly MethodDefinition[];
   readonly properties: readonly PropertyDefinition[];
   readonly decorators: readonly SymbolId[]; // Always present, defaults to empty array
-  readonly docstring?: string;
+  readonly docstring: DocString; // Defaults to empty string when no docstring
   readonly is_exported: boolean;
 }
 

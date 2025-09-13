@@ -195,12 +195,25 @@ export interface QueryRequest {
  * Query execution options
  */
 export interface QueryOptions {
-  readonly timeout_ms?: number; // Execution timeout
-  readonly max_captures?: number; // Maximum captures to return
-  readonly include_comments?: boolean; // Include comment nodes
-  readonly include_whitespace?: boolean; // Include whitespace nodes
-  readonly start_point?: [number, number]; // Start position
-  readonly end_point?: [number, number]; // End position
+  readonly timeout_ms?: number; // Execution timeout (no reasonable default)
+  readonly max_captures?: number; // Maximum captures to return (no reasonable default)
+  readonly include_comments: boolean; // Include comment nodes (defaults to false)
+  readonly include_whitespace: boolean; // Include whitespace nodes (defaults to false)
+  readonly start_point?: [number, number]; // Start position (genuinely optional)
+  readonly end_point?: [number, number]; // End position (genuinely optional)
+}
+
+/**
+ * Create default query options
+ */
+export function createQueryOptions(
+  overrides?: Partial<QueryOptions>
+): QueryOptions {
+  return {
+    include_comments: false,
+    include_whitespace: false,
+    ...overrides
+  };
 }
 
 /**

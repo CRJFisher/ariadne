@@ -135,11 +135,11 @@ export interface Symbol extends SemanticNode {
   readonly is_optional: boolean; // Optional parameters/properties
 
   // Type information
-  readonly type?: TypeExpression; // Type annotation/inference
+  readonly type: TypeExpression; // Defaults to "unknown" when type unavailable
   readonly type_parameters: readonly TypeParameter[]; // Generic parameters - always present, defaults to empty array
 
   // Documentation
-  readonly docstring?: DocString;
+  readonly docstring: DocString; // Defaults to empty string when no docstring
 
   // Relations
   readonly parent_symbol?: SymbolId; // Containing class/namespace
@@ -290,6 +290,8 @@ export function create_symbol_definition(
     is_abstract: false,
     is_readonly: false,
     is_optional: false,
+    type: "unknown" as TypeExpression, // Default type when not available
+    docstring: "" as DocString, // Default docstring when not available
     type_parameters: [],
     child_symbols: [],
     modifiers: [], // Always provide default empty array for non-nullable field

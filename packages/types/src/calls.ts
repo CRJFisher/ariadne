@@ -7,7 +7,7 @@ import { Location } from "./common";
 import { FilePath, ClassName } from "./aliases";
 import { ModulePath } from "./import_export";
 import { SymbolId } from "./symbol_utils";
-import { SemanticNode, Resolution } from "./query";
+import { SemanticNode, Resolution, resolve_failed } from "./query";
 
 // ============================================================================
 // Branded Types for Call Graph
@@ -121,9 +121,9 @@ export interface ResolvedTarget {
   readonly file_path: FilePath;
   readonly is_local: boolean;
   readonly is_imported: boolean;
-  readonly source_module: ModulePath; // Defaults to current module when not imported
-  readonly import_alias: SymbolId; // Defaults to symbol_id when no alias
-  readonly original_name: SymbolId; // Defaults to symbol_id when not aliased
+  readonly source_module: ModulePath; // Required - defaults to current module when not imported
+  readonly import_alias: SymbolId; // Required - defaults to symbol_id when no alias
+  readonly original_name: SymbolId; // Required - defaults to symbol_id when not aliased
 }
 
 /**
@@ -139,7 +139,7 @@ export interface FunctionCall extends BaseCallInfo {
   readonly callee: SymbolId; // Function being called
   readonly is_macro_call: boolean; // Rust macros
   readonly is_in_comprehension: boolean; // Python comprehensions
-  readonly resolved?: Resolution<ResolvedTarget>;
+  readonly resolved: Resolution<ResolvedTarget>; // Required - defaults to failed resolution when not resolved
 }
 
 /**
@@ -155,7 +155,7 @@ export interface MethodCall extends BaseCallInfo {
     readonly type_name: ClassName;
     readonly type_kind: ResolvedTypeKind;
   }>; // Defaults to unresolved with "unknown" type
-  readonly resolved?: Resolution<ResolvedTarget>;
+  readonly resolved: Resolution<ResolvedTarget>; // Required - defaults to failed resolution when not resolved
 }
 
 /**
@@ -167,7 +167,7 @@ export interface ConstructorCall extends BaseCallInfo {
   readonly is_new_expression: boolean; // Uses 'new' keyword
   readonly is_factory: boolean; // Factory pattern
   readonly assigned_to: SymbolId; // Defaults to anonymous symbol when not assigned
-  readonly resolved?: Resolution<ResolvedTarget>;
+  readonly resolved: Resolution<ResolvedTarget>; // Required - defaults to failed resolution when not resolved
 }
 
 // ============================================================================
@@ -191,7 +191,7 @@ export interface CallPattern {
   readonly pattern_type: CallPatternType;
   readonly calls: readonly CallInfo[];
   readonly description: string;
-  readonly severity: "info" | "warning" | "error"; // Defaults to "info"
+  readonly severity: "info" | "warning" | "error"; // Required - defaults to "info"
 }
 
 export type CallPatternType =
@@ -264,21 +264,21 @@ export function get_call_target(call: CallInfo): string {
  * Check if a call is resolved with high confidence
  */
 export function is_high_confidence_call(call: CallInfo): boolean {
-  return call.resolved?.confidence === "high";
+  return call.resolved.confidence === "high";
 }
 
 /**
  * Get the resolved symbol ID if available
  */
 export function get_resolved_symbol_id(call: CallInfo): SymbolId | undefined {
-  return call.resolved?.resolved?.symbol_id;
+  return call.resolved.resolved?.symbol_id;
 }
 
 /**
  * Check if a call is to an imported symbol
  */
 export function is_imported_call(call: CallInfo): boolean {
-  return call.resolved?.resolved?.is_imported === true;
+  return call.resolved.resolved?.is_imported === true;
 }
 
 /**
@@ -304,6 +304,8 @@ export function create_function_call(
     is_macro_call: false,
     is_in_comprehension: false,
     modifiers: [], // Always provide default empty array for non-nullable field
+    // Required fields with defaults
+    resolved: resolve_failed("not_found"),
     ...options,
   };
 }
@@ -340,8 +342,10 @@ export function create_method_call(
         type_kind: "unknown" as ResolvedTypeKind
       },
       confidence: "low",
-      reason: "not_found"
+      reason: "not_found",
+      resolution_path: []
     },
+    resolved: resolve_failed("not_found"),
     ...options,
   };
 }
@@ -371,6 +375,7 @@ export function create_constructor_call(
     modifiers: [], // Always provide default empty array for non-nullable field
     // Required fields with defaults
     assigned_to: `anonymous_${Date.now()}` as SymbolId,
+    resolved: resolve_failed("not_found"),
     ...options,
   };
 }

@@ -524,6 +524,7 @@ export function create_tracked_type(
       resolved: type,
       confidence,
       reason: "direct_match",
+      resolution_path: [],
     },
     flow_source: source,
     location,

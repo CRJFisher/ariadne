@@ -44,8 +44,8 @@ export interface TypeMember {
 
 export interface VariableType {
   readonly name: VariableName;
-  readonly type?: TypeString;
-  readonly inferred_type?: TypeString;
+  readonly type: TypeString; // Defaults to "unknown" when type unavailable
+  readonly inferred_type: TypeString; // Defaults to "unknown" when not inferred
   readonly location: Location;
   readonly scope_kind: ScopeType;
   readonly is_reassigned: boolean;
@@ -55,7 +55,7 @@ export interface TypeEdge {
   readonly from: TypeName;
   readonly to: TypeName;
   readonly kind: "extends" | "implements" | "uses" | "returns";
-  readonly location?: Location;
+  readonly location: Location; // Always present with source location
 }
 
 export interface TypeGraph {

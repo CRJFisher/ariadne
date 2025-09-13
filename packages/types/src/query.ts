@@ -29,7 +29,7 @@ export interface ASTNode {
 export interface SemanticNode extends ASTNode {
   readonly name?: SymbolName; // Optional - not all nodes have names
   readonly visibility?: "public" | "private" | "protected" | "internal"; // Optional - not all languages have visibility
-  readonly modifiers?: readonly string[]; // Optional - defaults to empty array when no modifiers present
+  readonly modifiers: readonly string[]; // Required - defaults to empty array when no modifiers present
 }
 
 // ============================================================================
@@ -84,7 +84,7 @@ export interface Resolution<T> {
   readonly resolved: T | undefined;
   readonly confidence: ResolutionConfidence;
   readonly reason: QueryResolutionReason;
-  readonly resolution_path?: readonly FilePath[]; // Files traversed during resolution
+  readonly resolution_path: readonly FilePath[]; // Required - defaults to empty array when no files traversed
 }
 
 /**
@@ -165,7 +165,8 @@ export function is_ast_node(value: unknown): value is ASTNode {
 export function is_semantic_node(value: unknown): value is SemanticNode {
   return (
     is_ast_node(value) &&
-    (!("name" in value) || typeof (value as any).name === "string")
+    (!("name" in value) || typeof (value as any).name === "string") &&
+    ("modifiers" in value && Array.isArray((value as any).modifiers))
   );
 }
 
@@ -235,12 +236,14 @@ export function is_paged_result<T>(value: unknown): value is PagedResult<T> {
  */
 export function resolve_high<T>(
   resolved: T,
-  reason: QueryResolutionReason = "direct_match"
+  reason: QueryResolutionReason = "direct_match",
+  resolution_path: readonly FilePath[] = []
 ): Resolution<T> {
   return {
     resolved,
     confidence: "high",
     reason,
+    resolution_path,
   };
 }
 
@@ -249,12 +252,14 @@ export function resolve_high<T>(
  */
 export function resolve_medium<T>(
   resolved: T,
-  reason: QueryResolutionReason
+  reason: QueryResolutionReason,
+  resolution_path: readonly FilePath[] = []
 ): Resolution<T> {
   return {
     resolved,
     confidence: "medium",
     reason,
+    resolution_path,
   };
 }
 
@@ -263,12 +268,14 @@ export function resolve_medium<T>(
  */
 export function resolve_low<T>(
   resolved: T,
-  reason: QueryResolutionReason
+  reason: QueryResolutionReason,
+  resolution_path: readonly FilePath[] = []
 ): Resolution<T> {
   return {
     resolved,
     confidence: "low",
     reason,
+    resolution_path,
   };
 }
 
@@ -282,6 +289,7 @@ export function resolve_failed<T>(
     resolved: undefined,
     confidence: "low",
     reason,
+    resolution_path: [], // Empty array for failed resolutions
   };
 }
 

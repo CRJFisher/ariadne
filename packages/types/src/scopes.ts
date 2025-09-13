@@ -1,6 +1,7 @@
 import { ScopeId } from "./aliases";
 import { SymbolName, SymbolId, SymbolKind } from "./symbol_utils";
 import { Location } from "./common";
+import { Visibility } from "./symbol_scope";
 
 /**
  * Type of scope (determines resolution rules)
@@ -30,22 +31,42 @@ export interface ScopeSymbol {
 }
 
 /**
- * A node in the scope tree
+ * Base scope node structure
  */
-export interface ScopeNode {
+interface BaseScopeNode {
   readonly id: ScopeId;
   readonly type: ScopeType;
   readonly location: Location;
-  readonly parent_id?: ScopeId;
   readonly child_ids: readonly ScopeId[];
   readonly symbols: ReadonlyMap<SymbolId, ScopeSymbol>;
-  readonly metadata?: {
-    readonly name?: SymbolId; // Function/class/module name
-    readonly is_async?: boolean; // For function scopes
-    readonly is_generator?: boolean; // For function scopes
-    readonly visibility?: string; // public/private/protected
+  readonly metadata: {
+    readonly name: SymbolId; // Always required - generated for anonymous scopes
+    readonly is_async: boolean; // Defaults to false for non-async scopes
+    readonly is_generator: boolean; // Defaults to false for non-generator scopes
+    readonly visibility: Visibility; // Always present, defaults to "public"
   };
 }
+
+/**
+ * Root scope node (no parent)
+ */
+export interface RootScopeNode extends BaseScopeNode {
+  readonly parent_id: null; // Explicitly null for root scopes
+  readonly type: "global" | "module"; // Only root-level scope types
+}
+
+/**
+ * Child scope node (has parent)
+ */
+export interface ChildScopeNode extends BaseScopeNode {
+  readonly parent_id: ScopeId; // Always present for non-root scopes
+  readonly type: "class" | "function" | "block" | "parameter" | "local"; // Non-root scope types
+}
+
+/**
+ * A node in the scope tree - discriminated union for type safety
+ */
+export type ScopeNode = RootScopeNode | ChildScopeNode;
 
 /**
  * Scope tree structure
@@ -84,12 +105,50 @@ export function is_scope_node(value: unknown): value is ScopeNode {
   if (typeof value !== "object" || value === null) return false;
 
   const node = value as any;
-  return (
+  const base_valid = (
     typeof node.id === "string" &&
     typeof node.type === "string" &&
     typeof node.location === "object" &&
     node.location !== null &&
     Array.isArray(node.child_ids) &&
-    node.symbols instanceof Map
+    node.symbols instanceof Map &&
+    typeof node.metadata === "object" &&
+    node.metadata !== null &&
+    typeof node.metadata.name === "string" &&
+    typeof node.metadata.is_async === "boolean" &&
+    typeof node.metadata.is_generator === "boolean"
+  );
+
+  if (!base_valid) return false;
+
+  // Check discriminated union structure
+  return is_root_scope_node(node) || is_child_scope_node(node);
+}
+
+/**
+ * Type guard for root scope nodes
+ */
+export function is_root_scope_node(value: unknown): value is RootScopeNode {
+  if (typeof value !== "object" || value === null) return false;
+
+  const node = value as any;
+  return (
+    (node.type === "global" || node.type === "module") &&
+    node.parent_id === null
+  );
+}
+
+/**
+ * Type guard for child scope nodes
+ */
+export function is_child_scope_node(value: unknown): value is ChildScopeNode {
+  if (typeof value !== "object" || value === null) return false;
+
+  const node = value as any;
+  const valid_child_types = ["class", "function", "block", "parameter", "local"];
+  return (
+    valid_child_types.includes(node.type) &&
+    typeof node.parent_id === "string" &&
+    node.parent_id.length > 0
   );
 }

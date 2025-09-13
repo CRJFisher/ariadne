@@ -241,3 +241,36 @@ export function is_valid_value<T extends readonly unknown[]>(
 ): value is T[number] {
   return validValues.includes(value);
 }
+
+/**
+ * Type guard for validating SymbolId format
+ * SymbolId should be a string with the format: "kind:name:file_path:line:column"
+ */
+export function is_valid_symbol_id(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+
+  // SymbolId format: "kind:name:file_path:line:column"
+  const parts = value.split(':');
+  return parts.length >= 2; // At minimum should have kind:name
+}
+
+/**
+ * Type guard for validating that a string looks like a valid file path
+ */
+export function is_valid_file_path(value: unknown): value is string {
+  return typeof value === 'string' &&
+         value.length > 0 &&
+         !value.includes('\0'); // Basic file path validation
+}
+
+/**
+ * Type guard for checking if a value is a plain object (not array, null, etc.)
+ */
+export function is_plain_object(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' &&
+         value !== null &&
+         !Array.isArray(value) &&
+         !(value instanceof Map) &&
+         !(value instanceof Set) &&
+         !(value instanceof Date);
+}

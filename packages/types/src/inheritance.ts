@@ -20,7 +20,7 @@ import { map_get_array } from "./map_utils";
  * Unified type entity that represents classes, interfaces, traits, mixins
  * Replaces ClassNode, InterfaceDefinition, TraitDefinition
  */
-export interface UnifiedTypeEntity extends SemanticNode {
+export interface TypeEntity extends SemanticNode {
   readonly id: SymbolId;
   readonly name: SymbolName;
   readonly entity_kind: TypeEntityKind;
@@ -38,9 +38,9 @@ export interface UnifiedTypeEntity extends SemanticNode {
   readonly type_parameters: readonly string[]; // Always present, defaults to empty array
 
   // Computed hierarchy information
-  readonly ancestors?: readonly SymbolId[]; // All ancestors in order
-  readonly descendants?: readonly SymbolId[]; // All descendants
-  readonly mro?: readonly SymbolId[]; // Method resolution order
+  readonly ancestors: readonly SymbolId[]; // All ancestors in order, defaults to empty array
+  readonly descendants: readonly SymbolId[]; // All descendants, defaults to empty array
+  readonly mro: readonly SymbolId[]; // Method resolution order, defaults to empty array
 }
 
 /**
@@ -68,25 +68,40 @@ export type TypeModifier =
   | "value"; // Value types
 
 /**
- * Unified member (method, property, etc.)
- * Replaces MethodNode, PropertyNode
+ * Base member information extending SemanticNode
  */
-export interface Member extends SemanticNode {
+interface BaseMember extends SemanticNode {
   readonly id: SymbolId;
   readonly name: SymbolName;
-  readonly member_type: MemberType;
-  readonly visibility?: Visibility;
-  readonly modifiers?: readonly MemberModifier[];
-
-  // Type information
-  readonly type?: TypeDefinition;
-  readonly signature?: MemberSignature;
-
-  // Override information
-  readonly overrides?: SymbolId; // Member being overridden
-  readonly overridden_by?: readonly SymbolId[]; // Members that override this
-  readonly implements?: SymbolId; // Interface member being implemented
+  readonly visibility: Visibility; // Always present, defaults to "public"
+  readonly modifiers: readonly MemberModifier[]; // Override SemanticNode's modifiers with specific type
+  readonly overridden_by: readonly SymbolId[]; // Members that override this, defaults to empty array
 }
+
+/**
+ * Field member (has type, no signature)
+ */
+export interface FieldMember extends BaseMember {
+  readonly member_type: "field" | "static_field";
+  readonly type: TypeDefinition; // Always present for fields
+  readonly overrides?: SymbolId; // Field being overridden (for property overrides)
+  // implements not applicable for fields
+}
+
+/**
+ * Method member (has signature, may have return type info)
+ */
+export interface MethodMember extends BaseMember {
+  readonly member_type: "method" | "constructor" | "destructor" | "getter" | "setter" | "static_method";
+  readonly signature: MemberSignature; // Always present for methods
+  readonly overrides?: SymbolId; // Method being overridden
+  readonly implements?: SymbolId; // Interface method being implemented
+}
+
+/**
+ * Unified member - discriminated union for type safety
+ */
+export type Member = FieldMember | MethodMember;
 
 export type MemberType =
   | "field" // Instance field/property
@@ -112,17 +127,17 @@ export type MemberModifier =
  * Member signature for methods
  */
 export interface MemberSignature {
-  readonly parameters?: readonly Parameter[];
+  readonly parameters: readonly Parameter[]; // Always present, defaults to empty array
   readonly return_type?: TypeDefinition;
-  readonly type_parameters?: readonly string[];
-  readonly throws?: readonly TypeDefinition[]; // Exceptions
+  readonly type_parameters: readonly string[]; // Always present, defaults to empty array
+  readonly throws: readonly TypeDefinition[]; // Always present, defaults to empty array
 }
 
 export interface Parameter {
   readonly name: SymbolName;
   readonly type?: TypeDefinition;
-  readonly is_optional?: boolean;
-  readonly is_rest?: boolean;
+  readonly is_optional: boolean; // Always present, defaults to false
+  readonly is_rest: boolean; // Always present, defaults to false
   readonly default_value?: string;
 }
 
@@ -153,7 +168,7 @@ export type InheritanceType =
  * Complete inheritance hierarchy
  */
 export interface InheritanceHierarchy {
-  readonly entities: ReadonlyMap<SymbolId, UnifiedTypeEntity>;
+  readonly entities: ReadonlyMap<SymbolId, TypeEntity>;
   readonly relations: readonly InheritanceRelation[];
   readonly roots: ReadonlySet<SymbolId>; // Types with no parents
   readonly leaves: ReadonlySet<SymbolId>; // Types with no children
@@ -198,7 +213,7 @@ export interface OverrideStep {
 
 export function is_unified_type_entity(
   value: unknown
-): value is UnifiedTypeEntity {
+): value is TypeEntity {
   if (typeof value !== "object" || value === null) return false;
   const entity = value as any;
   return (
@@ -241,19 +256,19 @@ export function is_inheritance_relation(
 /**
  * Check if entity is abstract
  */
-export function is_abstract(entity: UnifiedTypeEntity): boolean {
+export function is_abstract(entity: TypeEntity): boolean {
   return (
     entity.entity_kind === "abstract_class" ||
     entity.entity_kind === "interface" ||
     entity.entity_kind === "trait" ||
-    entity.modifiers?.includes("abstract") === true
+    entity.modifiers.includes("abstract") === true
   );
 }
 
 /**
  * Check if entity can be instantiated
  */
-export function is_instantiable(entity: UnifiedTypeEntity): boolean {
+export function is_instantiable(entity: TypeEntity): boolean {
   return (
     !is_abstract(entity) &&
     entity.entity_kind !== "interface" &&
@@ -266,10 +281,10 @@ export function is_instantiable(entity: UnifiedTypeEntity): boolean {
  */
 export function is_overridable(member: Member): boolean {
   return (
-    !member.modifiers?.includes("final") &&
-    !member.modifiers?.includes("static") &&
-    (member.modifiers?.includes("virtual") ||
-      member.modifiers?.includes("abstract") ||
+    !member.modifiers.includes("final") &&
+    !member.modifiers.includes("static") &&
+    (member.modifiers.includes("virtual") ||
+      member.modifiers.includes("abstract") ||
       member.visibility !== "private")
   );
 }
@@ -277,11 +292,11 @@ export function is_overridable(member: Member): boolean {
 /**
  * Get all base types (extends + implements + uses)
  */
-export function get_all_base_types(entity: UnifiedTypeEntity): SymbolId[] {
+export function get_all_base_types(entity: TypeEntity): SymbolId[] {
   return [
-    ...(entity.extends || []),
-    ...(entity.implements || []),
-    ...(entity.uses || []),
+    ...entity.extends,
+    ...entity.implements,
+    ...entity.uses,
   ];
 }
 
@@ -293,8 +308,8 @@ export function create_class_entity(
   name: SymbolName,
   location: Location,
   language: Language,
-  options?: Partial<UnifiedTypeEntity>
-): UnifiedTypeEntity {
+  options?: Partial<TypeEntity>
+): TypeEntity {
   return {
     id,
     name,
@@ -305,6 +320,9 @@ export function create_class_entity(
     members: new Map(),
     modifiers: [],
     type_parameters: [],
+    ancestors: [],
+    descendants: [],
+    mro: [],
     location,
     language,
     node_type: "class_declaration",
@@ -320,8 +338,8 @@ export function create_interface_entity(
   name: SymbolName,
   location: Location,
   language: Language,
-  options?: Partial<UnifiedTypeEntity>
-): UnifiedTypeEntity {
+  options?: Partial<TypeEntity>
+): TypeEntity {
   return {
     id,
     name,
@@ -332,6 +350,9 @@ export function create_interface_entity(
     members: new Map(),
     modifiers: [],
     type_parameters: [],
+    ancestors: [],
+    descendants: [],
+    mro: [],
     location,
     language,
     node_type: "interface_declaration",
@@ -383,4 +404,30 @@ export function find_diamond_problems(
   }
 
   return problems;
+}
+
+// ============================================================================
+// Type Guards for Member Types
+// ============================================================================
+
+/**
+ * Type guard to check if a member is a field member
+ */
+export function is_field_member(member: Member): member is FieldMember {
+  return member.member_type === "field" || member.member_type === "static_field";
+}
+
+/**
+ * Type guard to check if a member is a method member
+ */
+export function is_method_member(member: Member): member is MethodMember {
+  const method_types: readonly MemberType[] = [
+    "method",
+    "constructor",
+    "destructor",
+    "getter",
+    "setter",
+    "static_method"
+  ];
+  return method_types.includes(member.member_type);
 }
