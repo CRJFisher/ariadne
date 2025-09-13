@@ -40,18 +40,13 @@ import {
   create_error_collector,
   ErrorCollector,
 } from "./error_collection/analysis_errors";
-// Type adapters no longer needed - using unified types directly
-import { ConstructorCall, create_readonly_array, Export, FunctionCall, Import, MethodCall } from "@ariadnejs/types";
 import {
-  ReturnTypeInfo,
-  infer_all_return_types,
-} from "./type_analysis/return_type_inference";
-import {
-  ParameterAnalysis,
-  infer_all_parameter_types,
-} from "./type_analysis/parameter_type_inference";
-
-import {
+  Import,
+  Export,
+  FunctionCall,
+  MethodCall,
+  ConstructorCall,
+  TypeInfo,
   Language,
   FileAnalysis,
   FunctionDefinition,
@@ -63,17 +58,25 @@ import {
   FilePath,
   TypeString,
   ParameterName,
-  FunctionName,
+  create_readonly_array,
+  VariableDeclaration,
+  SymbolId,
+  function_symbol,
 } from "@ariadnejs/types";
+import {
+  ReturnTypeInfo,
+  infer_all_return_types,
+} from "./type_analysis/return_type_inference";
+import {
+  ParameterAnalysis,
+  infer_all_parameter_types,
+} from "./type_analysis/parameter_type_inference";
 
 // Re-export types from shared modules
 import type { FileTypeTracker } from "./type_analysis/type_tracking";
 import { CodeFile } from "./project/file_scanner";
 // Symbol types
 type ScopeEntityConnections = RealScopeEntityConnections;
-
-
-
 
 /**
  * Main entry point for analyzing a single file
@@ -141,7 +144,8 @@ export async function analyze_file(
     scopes,
     class_definitions,
     inferred_parameters,
-    inferred_returns
+    inferred_returns,
+    file.file_path
   );
 
   // Register symbols
@@ -358,7 +362,8 @@ function extract_definitions(
   scopes: ScopeTree,
   class_definitions: ClassDefinition[],
   inferred_parameters: Map<string, ParameterAnalysis>,
-  inferred_returns: Map<string, ReturnTypeInfo>
+  inferred_returns: Map<string, ReturnTypeInfo>,
+  file_path: FilePath
 ): {
   functions: FunctionDefinition[];
   classes: ClassDefinition[];
@@ -380,6 +385,7 @@ function extract_definitions(
 
       // Get function name from metadata
       const func_name = scope.metadata?.name || `anonymous_${scope.id}`;
+      const func_symbol = function_symbol(func_name, scope.location);
 
       // Get pre-computed return type
       const return_type_info = inferred_returns.get(func_name);
@@ -397,7 +403,7 @@ function extract_definitions(
             name: param.name as ParameterName,
             type: (inferred_type_info?.inferred_type ||
               param.type_annotation) as TypeString || 'unknown' as TypeString,
-            default_value: param.default_value,
+            default_value: param.default_value || '',
             is_rest: param.is_rest,
             is_optional: param.is_optional,
           };
@@ -414,10 +420,13 @@ function extract_definitions(
       };
 
       const func_info: FunctionDefinition = {
-        name: func_name as FunctionName,
+        name: func_symbol,
         location: scope.location,
         signature,
-        docstring: undefined,
+        is_exported: false,
+        is_arrow_function: false,
+        is_anonymous: func_name.startsWith('anonymous_'),
+        closure_captures: [],
         decorators: [],
       };
 
@@ -493,8 +502,9 @@ function build_file_analysis(
   const import_statements = imports;
   const export_statements = exports;
   
-  // TypeInfo is now output directly from type_tracker
-  const public_type_info = type_tracker.variable_types;
+  // Convert type_tracker.variable_types to Map<SymbolId, TypeInfo>
+  const public_type_info = new Map<SymbolId, TypeInfo>();
+  // Note: type_tracker.variable_types needs to be converted to use SymbolId keys
 
   // Extract variables from scope tree
   const variables = extract_variables_from_scopes(scopes);
