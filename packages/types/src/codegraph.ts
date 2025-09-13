@@ -34,8 +34,8 @@ export interface VariableDeclaration {
   readonly name: VariableName;
   readonly location: Location;
   readonly type?: TypeString;
-  readonly is_const?: boolean;
-  readonly is_exported?: boolean;
+  readonly is_const: boolean;
+  readonly is_exported: boolean;
 }
 
 export interface CodeGraph {
@@ -75,6 +75,6 @@ export interface CodeGraphOptions {
   readonly cache?: {
     readonly enabled: boolean;
     readonly ttl?: number;
-    readonly maxSize?: number;
+    readonly max_size?: number;
   };
 }

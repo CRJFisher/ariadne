@@ -17,8 +17,8 @@ import { SemanticNode, Resolution } from "./query";
  */
 interface BaseImport extends SemanticNode {
   readonly source: ModulePath; // Module being imported from
-  readonly is_type_only?: boolean; // TypeScript type-only import
-  readonly is_dynamic?: boolean; // Dynamic import()
+  readonly is_type_only: boolean; // TypeScript type-only import (defaults to false)
+  readonly is_dynamic: boolean; // Dynamic import() (defaults to false)
 }
 
 /**
@@ -40,8 +40,8 @@ export interface NamedImport extends BaseImport {
 
 export interface NamedImportItem {
   readonly name: SymbolName; // Original name in module
-  readonly alias?: SymbolName; // Local alias if renamed
-  readonly is_type_only?: boolean; // Individual type-only marker
+  readonly alias?: SymbolName; // Local alias if renamed (remains optional - not all imports have aliases)
+  readonly is_type_only: boolean; // Individual type-only marker (defaults to false)
 }
 
 /**
@@ -76,7 +76,7 @@ export interface SideEffectImport extends BaseImport {
  * Base export information
  */
 interface BaseExport extends SemanticNode {
-  readonly is_type_only?: boolean; // TypeScript type-only export
+  readonly is_type_only: boolean; // TypeScript type-only export (defaults to false)
 }
 
 /**
@@ -94,8 +94,8 @@ export interface NamedExport extends BaseExport {
 
 export interface NamedExportItem {
   readonly local_name: SymbolName; // Internal name
-  readonly export_name?: SymbolName; // Exported as (if different)
-  readonly is_type_only?: boolean; // Individual type-only marker
+  readonly export_name?: SymbolName; // Exported as (if different) (remains optional - not all exports are renamed)
+  readonly is_type_only: boolean; // Individual type-only marker (defaults to false)
 }
 
 /**
@@ -127,8 +127,8 @@ export interface ReExport extends BaseExport {
 
 export interface ReExportItem {
   readonly source_name: SymbolName; // Name in source module
-  readonly export_name?: SymbolName; // Exported as (if different)
-  readonly is_type_only?: boolean;
+  readonly export_name?: SymbolName; // Exported as (if different) (remains optional - not all re-exports are renamed)
+  readonly is_type_only: boolean; // Type-only re-export (defaults to false)
 }
 
 // ============================================================================
@@ -304,9 +304,12 @@ export function create_named_import(
   return {
     kind: "named",
     source,
+    is_type_only: false, // Default to false for regular imports
+    is_dynamic: false, // Default to false for static imports
     imports: imports.map((i) => ({
       name: i.name,
       alias: i.alias,
+      is_type_only: false, // Default to false for regular imports
     })),
     location,
     language,
@@ -324,9 +327,11 @@ export function create_named_export(
 ): NamedExport {
   return {
     kind: "named",
+    is_type_only: false, // Default to false for regular exports
     exports: exports.map((e) => ({
       local_name: e.local_name,
       export_name: e.export_name,
+      is_type_only: false, // Default to false for regular exports
     })),
     location,
     language,

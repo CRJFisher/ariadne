@@ -123,8 +123,8 @@ export interface MethodDefinition {
   readonly visibility: "public" | "private" | "protected";
   readonly parameters: readonly ParameterDefinition[];
   readonly return_type?: string;
-  readonly generics?: readonly GenericParameter[];
-  readonly decorators?: readonly SymbolId[];
+  readonly generics: readonly GenericParameter[]; // Always present, defaults to empty array
+  readonly decorators: readonly SymbolId[]; // Always present, defaults to empty array
 }
 
 /**
@@ -140,7 +140,7 @@ export interface PropertyDefinition {
   readonly is_readonly: boolean;
   readonly visibility: "public" | "private" | "protected";
   readonly initial_value?: string;
-  readonly decorators?: readonly SymbolId[];
+  readonly decorators: readonly SymbolId[]; // Always present, defaults to empty array
 }
 
 /**
@@ -158,11 +158,11 @@ export interface ParameterDefinition {
  * Interface definition
  */
 export interface InterfaceDefinition extends Definition {
-  readonly extends?: readonly SymbolId[];
-  readonly generics?: readonly GenericParameter[];
+  readonly extends: readonly SymbolId[]; // Always present, defaults to empty array
+  readonly generics: readonly GenericParameter[]; // Always present, defaults to empty array
   readonly methods: readonly MethodSignature[];
   readonly properties: readonly PropertySignature[];
-  readonly is_exported?: boolean;
+  readonly is_exported: boolean;
 }
 
 /**
@@ -172,8 +172,8 @@ export interface MethodSignature {
   readonly name: SymbolId;
   readonly parameters: readonly ParameterDefinition[];
   readonly return_type?: string;
-  readonly generics?: readonly GenericParameter[];
-  readonly is_optional?: boolean;
+  readonly generics: readonly GenericParameter[]; // Always present, defaults to empty array
+  readonly is_optional: boolean; // Defaults to false
 }
 
 /**
@@ -191,8 +191,8 @@ export interface PropertySignature {
  */
 export interface EnumDefinition extends Definition {
   readonly members: readonly EnumMember[];
-  readonly is_const?: boolean; // TypeScript const enum
-  readonly is_exported?: boolean;
+  readonly is_const: boolean; // TypeScript const enum, defaults to false
+  readonly is_exported: boolean;
 }
 
 /**
@@ -209,8 +209,8 @@ export interface EnumMember {
  */
 export interface TypeAliasDefinition extends Definition {
   readonly type_expression: string;
-  readonly generics?: readonly GenericParameter[];
-  readonly is_exported?: boolean;
+  readonly generics: readonly GenericParameter[]; // Always present, defaults to empty array
+  readonly is_exported: boolean;
 }
 
 /**
@@ -218,10 +218,10 @@ export interface TypeAliasDefinition extends Definition {
  */
 export interface StructDefinition extends Definition {
   readonly fields: readonly FieldDefinition[];
-  readonly generics?: readonly GenericParameter[];
-  readonly derives?: readonly SymbolId[];
+  readonly generics: readonly GenericParameter[]; // Always present, defaults to empty array
+  readonly derives: readonly SymbolId[]; // Always present, defaults to empty array
   readonly is_tuple_struct: boolean;
-  readonly is_public?: boolean;
+  readonly is_public: boolean; // Defaults to false
 }
 
 /**
@@ -239,10 +239,10 @@ export interface FieldDefinition {
  */
 export interface TraitDefinition extends Definition {
   readonly methods: readonly MethodSignature[];
-  readonly associated_types?: readonly AssociatedType[];
-  readonly supertraits?: readonly SymbolId[];
-  readonly generics?: readonly GenericParameter[];
-  readonly is_public?: boolean;
+  readonly associated_types: readonly AssociatedType[]; // Always present, defaults to empty array
+  readonly supertraits: readonly SymbolId[]; // Always present, defaults to empty array
+  readonly generics: readonly GenericParameter[]; // Always present, defaults to empty array
+  readonly is_public: boolean; // Defaults to false
 }
 
 /**

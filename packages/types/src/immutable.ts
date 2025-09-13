@@ -7,7 +7,7 @@
  * Deep readonly utility type for TypeScript immutability.
  * Makes all properties and nested properties readonly.
  */
-export type DeepReadonly<T> = T extends primitive
+export type DeepReadonly<T> = T extends Primitive
   ? T
   : T extends (infer U)[]
   ? readonly DeepReadonly<U>[]
@@ -24,7 +24,7 @@ export type DeepReadonly<T> = T extends primitive
 /**
  * Primitive types that don't need deep readonly treatment
  */
-type primitive = string | number | boolean | null | undefined | symbol | bigint;
+type Primitive = string | number | boolean | null | undefined | symbol | bigint;
 
 /**
  * Utility type for immutable arrays

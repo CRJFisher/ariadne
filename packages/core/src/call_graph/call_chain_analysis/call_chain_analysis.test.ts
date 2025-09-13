@@ -11,7 +11,7 @@ import {
   get_recursive_functions,
   CallChainContext
 } from './call_chain_analysis';
-import { FunctionCallInfo, MethodCallInfo, ConstructorCallInfo, CallChain, FilePath } from '@ariadnejs/types';
+import { FunctionCallInfo, MethodCallInfo, ConstructorCallInfo, CallChain, FilePath, SymbolId, CallerName, ClassName, MODULE_CONTEXT } from '@ariadnejs/types';
 
 describe('call_chain_analysis', () => {
 
@@ -19,19 +19,29 @@ describe('call_chain_analysis', () => {
     it('should build simple linear chain', () => {
       const calls: FunctionCallInfo[] = [
         {
-          caller_name: 'main',
-          callee_name: 'foo',
+          kind: 'function',
+          caller: 'main' as CallerName,
+          callee: 'foo' as SymbolId,
           location: { file_path: 'test.js' as FilePath, line: 1, column: 0, end_line: 1, end_column: 10 },
-          is_method_call: false,
-          is_constructor_call: false,
+          language: 'javascript',
+          node_type: 'call_expression',
+          is_async: false,
+          is_dynamic: false,
+          is_macro_call: false,
+          is_in_comprehension: false,
           arguments_count: 0
         },
         {
-          caller_name: 'foo',
-          callee_name: 'bar',
+          kind: 'function',
+          caller: 'foo' as CallerName,
+          callee: 'bar' as SymbolId,
           location: { file_path: 'test.js' as FilePath, line: 5, column: 0, end_line: 5, end_column: 10 },
-          is_method_call: false,
-          is_constructor_call: false,
+          language: 'javascript',
+          node_type: 'call_expression',
+          is_async: false,
+          is_dynamic: false,
+          is_macro_call: false,
+          is_in_comprehension: false,
           arguments_count: 0
         }
       ];
@@ -44,19 +54,24 @@ describe('call_chain_analysis', () => {
 
       const result = build_call_chains(calls, context);
       
-      expect(result.length).toBeGreaterThan(0);
-      expect(result[0]).toBeDefined();
-      expect(result[0].nodes.length).toBeGreaterThan(0);
+      expect(result.chains.length).toBeGreaterThan(0);
+      expect(result.chains[0]).toBeDefined();
+      expect(result.chains[0].nodes.length).toBeGreaterThan(0);
     });
 
     it('should detect recursive chains', () => {
       const calls: FunctionCallInfo[] = [
         {
-          caller_name: 'factorial',
-          callee_name: 'factorial',
+          kind: 'function',
+          caller: 'factorial' as CallerName,
+          callee: 'factorial' as SymbolId,
           location: { file_path: 'test.js' as FilePath, line: 3, column: 0, end_line: 3, end_column: 10 },
-          is_method_call: false,
-          is_constructor_call: false,
+          language: 'javascript',
+          node_type: 'call_expression',
+          is_async: false,
+          is_dynamic: false,
+          is_macro_call: false,
+          is_in_comprehension: false,
           arguments_count: 1
         }
       ];
@@ -70,21 +85,26 @@ describe('call_chain_analysis', () => {
       const result = build_call_chains(calls, context);
       
       // Use detect_recursion function to find recursive chains
-      const recursive_chains = detect_recursion(result);
+      const recursive_chains = detect_recursion(result.chains);
       expect(recursive_chains.length).toBeGreaterThan(0);
-      expect(recursive_chains[0].is_recursive).toBe(true);
-      expect(recursive_chains[0].cycle_point).toBe('factorial');
+      expect(recursive_chains[0].has_recursion).toBe(true);
+      expect(recursive_chains[0].entry_point).toBe('factorial' as SymbolId);
     });
 
     it('should handle method calls', () => {
       const calls: MethodCallInfo[] = [
         {
-          caller_name: 'main',
-          method_name: 'process',
-          receiver_name: 'obj',
+          kind: 'method',
+          caller: 'main' as CallerName,
+          method_name: 'process' as SymbolId,
+          receiver: 'obj' as SymbolId,
           location: { file_path: 'test.js' as FilePath, line: 2, column: 0, end_line: 2, end_column: 10 },
-          is_static_method: false,
-          is_chained_call: false,
+          language: 'javascript',
+          node_type: 'member_expression',
+          is_static: false,
+          is_chained: false,
+          is_async: false,
+          is_dynamic: false,
           arguments_count: 0
         }
       ];
@@ -96,19 +116,25 @@ describe('call_chain_analysis', () => {
 
       const result = build_call_chains(calls, context);
       
-      expect(result.length).toBeGreaterThan(0);
-      expect(result[0]).toBeDefined();
+      expect(result.chains.length).toBeGreaterThan(0);
+      expect(result.chains[0]).toBeDefined();
     });
 
     it('should handle constructor calls', () => {
       const calls: ConstructorCallInfo[] = [
         {
-          constructor_name: 'MyClass',
+          kind: 'constructor',
+          caller: 'main' as CallerName,
+          class_name: 'MyClass' as ClassName,
           location: { file_path: 'test.js' as FilePath, line: 1, column: 0, end_line: 1, end_column: 10 },
+          language: 'javascript',
+          node_type: 'new_expression',
           arguments_count: 0,
-          assigned_to: 'instance',
+          assigned_to: 'instance' as SymbolId,
           is_new_expression: true,
-          is_factory_method: false
+          is_factory: false,
+          is_async: false,
+          is_dynamic: false
         }
       ];
 
@@ -118,34 +144,49 @@ describe('call_chain_analysis', () => {
 
       const result = build_call_chains(calls, context);
       
-      expect(result.length).toBeGreaterThan(0);
-      expect(result[0]).toBeDefined();
+      expect(result.chains.length).toBeGreaterThan(0);
+      expect(result.chains[0]).toBeDefined();
     });
 
     it('should respect max_depth', () => {
       const calls: FunctionCallInfo[] = [
         {
-          caller_name: 'a',
-          callee_name: 'b',
+          kind: 'function',
+          caller: 'a' as CallerName,
+          callee: 'b' as SymbolId,
           location: { file_path: 'test.js' as FilePath, line: 1, column: 0, end_line: 1, end_column: 10 },
-          is_method_call: false,
-          is_constructor_call: false,
+          language: 'javascript',
+          node_type: 'call_expression',
+          is_async: false,
+          is_dynamic: false,
+          is_macro_call: false,
+          is_in_comprehension: false,
           arguments_count: 0
         },
         {
-          caller_name: 'b',
-          callee_name: 'c',
+          kind: 'function',
+          caller: 'b' as CallerName,
+          callee: 'c' as SymbolId,
           location: { file_path: 'test.js' as FilePath, line: 2, column: 0, end_line: 2, end_column: 10 },
-          is_method_call: false,
-          is_constructor_call: false,
+          language: 'javascript',
+          node_type: 'call_expression',
+          is_async: false,
+          is_dynamic: false,
+          is_macro_call: false,
+          is_in_comprehension: false,
           arguments_count: 0
         },
         {
-          caller_name: 'c',
-          callee_name: 'd',
+          kind: 'function',
+          caller: 'c' as CallerName,
+          callee: 'd' as SymbolId,
           location: { file_path: 'test.js' as FilePath, line: 3, column: 0, end_line: 3, end_column: 10 },
-          is_method_call: false,
-          is_constructor_call: false,
+          language: 'javascript',
+          node_type: 'call_expression',
+          is_async: false,
+          is_dynamic: false,
+          is_macro_call: false,
+          is_in_comprehension: false,
           arguments_count: 0
         }
       ];
@@ -158,7 +199,7 @@ describe('call_chain_analysis', () => {
       const result = build_call_chains(calls, context);
       
       // Check that chains respect max depth
-      const maxDepth = Math.max(...result.chains.map(chain => chain.max_depth));
+      const maxDepth = Math.max(...result.chains.map(chain => chain.depth));
       expect(maxDepth).toBeLessThanOrEqual(2);
     });
 
@@ -168,61 +209,57 @@ describe('call_chain_analysis', () => {
     it('should detect direct recursion', () => {
       const chains: CallChain[] = [
         {
-          root: 'factorial',
+          entry_point: 'factorial' as SymbolId,
           nodes: [
             {
-              caller: 'factorial',
-              callee: 'factorial',
+              symbol_id: 'factorial' as SymbolId,
               location: { file_path: 'test.js' as FilePath, line: 3, column: 0, end_line: 3, end_column: 10 },
-              file_path: 'test.js' as FilePath,
-              call_type: 'function',
-              depth: 1
+              depth: 1,
+              is_recursive: true
             }
           ],
-          is_recursive: false,
-          max_depth: 1
+          depth: 1,
+          has_recursion: true,
+          execution_path: ['factorial' as SymbolId, 'factorial' as SymbolId]
         }
       ];
 
       const recursive = detect_recursion(chains);
       
       expect(recursive.length).toBe(1);
-      expect(recursive[0].is_recursive).toBe(true);
-      expect(recursive[0].cycle_point).toBe('factorial');
+      expect(recursive[0].has_recursion).toBe(true);
+      expect(recursive[0].entry_point).toBe('factorial' as SymbolId);
     });
 
     it('should detect indirect recursion', () => {
       const chains: CallChain[] = [
         {
-          root: 'isEven',
+          entry_point: 'isEven' as SymbolId,
           nodes: [
             {
-              caller: 'isEven',
-              callee: 'isOdd',
+              symbol_id: 'isOdd' as SymbolId,
               location: { file_path: 'test.js' as FilePath, line: 2, column: 0, end_line: 2, end_column: 10 },
-              file_path: 'test.js' as FilePath,
-              call_type: 'function',
-              depth: 1
+              depth: 1,
+              is_recursive: false
             },
             {
-              caller: 'isOdd',
-              callee: 'isEven',
+              symbol_id: 'isEven' as SymbolId,
               location: { file_path: 'test.js' as FilePath, line: 6, column: 0, end_line: 6, end_column: 10 },
-              file_path: 'test.js' as FilePath,
-              call_type: 'function',
-              depth: 2
+              depth: 2,
+              is_recursive: true
             }
           ],
-          is_recursive: false,
-          max_depth: 2
+          depth: 2,
+          has_recursion: true,
+          execution_path: ['isEven' as SymbolId, 'isOdd' as SymbolId, 'isEven' as SymbolId]
         }
       ];
 
       const recursive = detect_recursion(chains);
       
       expect(recursive.length).toBe(1);
-      expect(recursive[0].is_recursive).toBe(true);
-      expect(recursive[0].cycle_point).toBe('isEven');
+      expect(recursive[0].has_recursion).toBe(true);
+      expect(recursive[0].entry_point).toBe('isEven' as SymbolId);
     });
   });
 
@@ -236,8 +273,8 @@ describe('call_chain_analysis', () => {
       
       expect(paths.length).toBe(1);
       expect(paths[0].nodes.length).toBe(2);
-      expect(paths[0].nodes[0].caller).toBe('main');
-      expect(paths[0].nodes[1].callee).toBe('bar');
+      expect(paths[0].nodes[0].symbol_id).toBe('main');
+      expect(paths[0].nodes[1].symbol_id).toBe('bar');
     });
 
     it('should find multiple paths', () => {
@@ -268,29 +305,32 @@ describe('call_chain_analysis', () => {
     it('should return longest chain', () => {
       const chains: CallChain[] = [
         {
-          root: 'a',
+          entry_point: 'a' as SymbolId,
           nodes: [],
-          is_recursive: false,
-          max_depth: 2
+          depth: 2,
+          has_recursion: false,
+          execution_path: ['a' as SymbolId]
         },
         {
-          root: 'b',
+          entry_point: 'b' as SymbolId,
           nodes: [],
-          is_recursive: false,
-          max_depth: 5
+          depth: 5,
+          has_recursion: false,
+          execution_path: ['b' as SymbolId]
         },
         {
-          root: 'c',
+          entry_point: 'c' as SymbolId,
           nodes: [],
-          is_recursive: false,
-          max_depth: 3
+          depth: 3,
+          has_recursion: false,
+          execution_path: ['c' as SymbolId]
         }
       ];
 
       const longest = get_longest_chain(chains);
       
-      expect(longest?.root).toBe('b');
-      expect(longest?.max_depth).toBe(5);
+      expect(longest?.entry_point).toBe('b' as SymbolId);
+      expect(longest?.depth).toBe(5);
     });
 
     it('should return null for empty chains', () => {

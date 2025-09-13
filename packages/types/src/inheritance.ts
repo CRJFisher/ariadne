@@ -337,28 +337,28 @@ export function find_diamond_problems(
   const problems: DiamondProblem[] = [];
 
   // For each entity, find if it has multiple paths to any ancestor
-  for (const [entityId, entity] of hierarchy.entities) {
-    const pathsToAncestors = new Map<SymbolId, SymbolId[][]>();
+  for (const [entity_id, entity] of hierarchy.entities) {
+    const paths_to_ancestors = new Map<SymbolId, SymbolId[][]>();
 
     // Track all paths to each ancestor
     const visited = new Set<SymbolId>();
-    const findPaths = (current: SymbolId, path: SymbolId[]) => {
+    const find_paths = (current: SymbolId, path: SymbolId[]) => {
       if (visited.has(current)) return;
       visited.add(current);
 
       const bases = get_all_base_types(hierarchy.entities.get(current)!);
       for (const base of bases) {
-        const newPath = [...path, base];
-        const existing = pathsToAncestors.get(base) || [];
-        pathsToAncestors.set(base, [...existing, newPath]);
-        findPaths(base, newPath);
+        const new_path = [...path, base];
+        const existing = paths_to_ancestors.get(base) || [];
+        paths_to_ancestors.set(base, [...existing, new_path]);
+        find_paths(base, new_path);
       }
     };
 
-    findPaths(entityId, [entityId]);
+    find_paths(entity_id, [entity_id]);
 
     // Check for multiple paths
-    for (const [ancestor, paths] of pathsToAncestors) {
+    for (const [ancestor, paths] of paths_to_ancestors) {
       if (paths.length > 1) {
         problems.push({
           base: ancestor,

@@ -37,7 +37,7 @@ describe("Python Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.py',
+        file_path: 'test.py' as FilePath,
         language: 'python'
       };
       
@@ -65,7 +65,7 @@ describe("Python Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.py',
+        file_path: 'test.py' as FilePath,
         language: 'python'
       };
       
@@ -94,7 +94,7 @@ describe("Python Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.py',
+        file_path: 'test.py' as FilePath,
         language: 'python'
       };
       
@@ -126,7 +126,7 @@ describe("Python Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.py',
+        file_path: 'test.py' as FilePath,
         language: 'python'
       };
       
@@ -154,7 +154,7 @@ describe("Python Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.py',
+        file_path: 'test.py' as FilePath,
         language: 'python'
       };
       
@@ -182,7 +182,7 @@ describe("Python Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.py',
+        file_path: 'test.py' as FilePath,
         language: 'python'
       };
       
@@ -209,7 +209,7 @@ describe("Python Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.py',
+        file_path: 'test.py' as FilePath,
         language: 'python'
       };
       
@@ -237,7 +237,7 @@ describe("Python Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.py',
+        file_path: 'test.py' as FilePath,
         language: 'python'
       };
       

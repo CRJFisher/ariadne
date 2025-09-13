@@ -11,6 +11,7 @@
 import {
   CallChain,
   CallChainNode,
+  CallChainAnalysisResult,
   Language,
   SymbolId,
   FunctionCallInfo,
@@ -53,15 +54,7 @@ export interface CallChainContext {
   // resolve_cross_file?: boolean;  // Follow chains across file boundaries
 }
 
-/**
- * Result of call chain analysis
- */
-export interface CallChainAnalysisResult {
-  readonly chains: readonly CallChain[];
-  readonly recursive_chains: readonly CallChain[];
-  readonly max_chain_depth: number;
-  readonly call_graph: Map<SymbolId, Set<SymbolId>>;
-}
+// CallChainAnalysisResult is imported from @ariadnejs/types
 
 /**
  * Build call chains from function calls
@@ -117,11 +110,20 @@ export function build_call_chains(
     max_chain_depth = Math.max(max_chain_depth, chain.max_depth);
   }
 
+  // Create a proper CallGraph structure
+  const graph: CallGraph = {
+    nodes: new Map(),
+    edges: [],
+    entry_points: Array.from(all_callers).filter(c => !all_callees.has(c)),
+    call_chains: chains
+  };
+
   return {
     chains: chains,
     recursive_chains: recursive_chains,
-    max_chain_depth: max_chain_depth,
-    call_graph: call_graph,
+    max_depth: max_chain_depth,
+    graph: graph,
+    total_calls: calls.length,
   };
 }
 
@@ -178,10 +180,12 @@ function build_call_graph(
       continue;
     }
 
-    if (!graph.has(caller)) {
-      graph.set(caller, new Set());
+    const callees = graph.get(caller);
+    if (callees) {
+      callees.add(callee);
+    } else {
+      graph.set(caller, new Set([callee]));
     }
-    graph.get(caller)!.add(callee);
   }
 
   return graph;
@@ -395,7 +399,13 @@ export function find_paths_between(
         const node: CallChainNode = {
           caller: current,
           callee,
-          location: { start_line: 0, start_column: 0, end_line: 0, end_column: 0 } as Location,
+          location: { 
+            file_path: "" as FilePath, 
+            line: 0, 
+            column: 0, 
+            end_line: 0, 
+            end_column: 0 
+          } as Location,
           file_path: "" as FilePath,
           call_type: "function",
           depth,
@@ -472,7 +482,7 @@ export function create_call_graph(
     for (const func of analysis.functions) {
       const symbol =
         resolution_results.resolved_calls.get(func.location) ||
-        construct_function_symbol(analysis.file_path, func.name);
+        (construct_function_symbol(analysis.file_path, func.name) as SymbolId);
 
       functions.set(symbol, {
         symbol,
@@ -491,12 +501,12 @@ export function create_call_graph(
       for (const method of cls.methods) {
         const symbol =
           resolution_results.resolved_methods.get(method.location) ||
-          construct_method_symbol(
+          (construct_method_symbol(
             analysis.file_path,
             cls.name,
             method.name,
             method.is_static
-          );
+          ) as SymbolId);
 
         functions.set(symbol, {
           symbol,
@@ -523,13 +533,13 @@ export function create_call_graph(
     for (const call of analysis.function_calls) {
       const from = construct_function_symbol(
         analysis.file_path,
-        call.caller_name || SPECIAL_SYMBOLS.MODULE
+        (call.caller as string) || SPECIAL_SYMBOLS.MODULE
       );
 
       // Use resolved symbol if available, otherwise use unresolved name
       const to =
         resolution_results.resolved_calls.get(call.location) ||
-        construct_function_symbol(analysis.file_path, call.callee_name);
+        construct_function_symbol(analysis.file_path, call.callee as string);
 
       edges.push({
         from,
@@ -543,7 +553,7 @@ export function create_call_graph(
     for (const call of analysis.method_calls) {
       const from = construct_function_symbol(
         analysis.file_path,
-        call.caller_name || SPECIAL_SYMBOLS.MODULE
+        (call.caller as string) || SPECIAL_SYMBOLS.MODULE
       );
 
       // Use resolved symbol if available
@@ -551,9 +561,9 @@ export function create_call_graph(
         resolution_results.resolved_methods.get(call.location) ||
         construct_method_symbol(
           analysis.file_path,
-          call.receiver_name,
-          call.method_name,
-          call.is_static_method
+          call.receiver as string,
+          call.method_name as string,
+          call.is_static
         );
 
       edges.push({

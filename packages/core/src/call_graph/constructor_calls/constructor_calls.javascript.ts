@@ -6,7 +6,7 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { ConstructorCallInfo } from '@ariadnejs/types';
+import { ConstructorCall as ConstructorCallInfo } from '@ariadnejs/types';
 import { ConstructorCallContext } from './constructor_calls';
 import { node_to_location } from '../../ast/node_utils';
 

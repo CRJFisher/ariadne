@@ -296,7 +296,7 @@ export function resolve_module_path(
   if (source.startsWith("./") || source.startsWith("../")) {
     // Resolve relative to the importing file
     const base_dir = from_file.substring(0, from_file.lastIndexOf("/"));
-    return normalizeModulePath(`${base_dir}/${source}` as ModulePath);
+    return normalize_module_path(`${base_dir}/${source}` as ModulePath);
   }
 
   // Check module graph for absolute imports
@@ -312,7 +312,7 @@ export function resolve_module_path(
 /**
  * Normalize module path by removing extensions and resolving relative paths
  */
-export function normalizeModulePath(path: ModulePath): ModulePath {
+export function normalize_module_path(path: ModulePath): ModulePath {
   // Remove .ts, .js, .tsx, .jsx extensions
   const normalized = path.replace(/\.(ts|js|tsx|jsx)$/, "");
 

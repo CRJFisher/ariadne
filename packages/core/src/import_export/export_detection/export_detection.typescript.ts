@@ -114,16 +114,16 @@ export function handle_namespace_exports(
       // Extract the namespace name using simple parsing
       const match = node.text.match(/export\s+(namespace|module)\s+(\w+)/);
       if (match) {
-        const namespaceName = match[2];
+        const namespace_name = match[2];
         exports.push({
-          name: namespaceName,
+          name: namespace_name,
           source: 'local',
           kind: 'namespace',
           location: node_to_location(node)
         });
         
         // Find and process the body - look for statement_block which contains the namespace body
-        const processBody = (n: SyntaxNode) => {
+        const process_body = (n: SyntaxNode) => {
           for (const child of n.children) {
             if (child.type === 'statement_block') {
               // Process namespace body members
@@ -132,11 +132,11 @@ export function handle_namespace_exports(
               }
               return;
             } else if (child.children.length > 0) {
-              processBody(child);
+              process_body(child);
             }
           }
         };
-        processBody(node);
+        process_body(node);
         return;
       }
     }
@@ -147,16 +147,16 @@ export function handle_namespace_exports(
       if (node.text.startsWith('export namespace') || node.text.startsWith('export module')) {
         const match = node.text.match(/export\s+(namespace|module)\s+(\w+)/);
         if (match) {
-          const nestedNamespaceName = match[2];
+          const nested_namespace_name = match[2];
           exports.push({
-            name: nestedNamespaceName,
+            name: nested_namespace_name,
             source: 'local',
             kind: 'namespace',
             location: node_to_location(node)
           });
           
           // Process nested namespace body recursively
-          const processBody = (n: SyntaxNode) => {
+          const process_body = (n: SyntaxNode) => {
             for (const child of n.children) {
               if (child.type === 'statement_block') {
                 for (const member of child.children) {
@@ -164,11 +164,11 @@ export function handle_namespace_exports(
                 }
                 return;
               } else if (child.children.length > 0) {
-                processBody(child);
+                process_body(child);
               }
             }
           };
-          processBody(node);
+          process_body(node);
           return;
         }
       }
@@ -176,37 +176,37 @@ export function handle_namespace_exports(
       // Handle regular exports within namespace
       if (node.type === 'export_statement' || node.text.startsWith('export ')) {
         // Extract exported member name
-        const functionMatch = node.text.match(/export\s+function\s+(\w+)/);
-        const classMatch = node.text.match(/export\s+class\s+(\w+)/);
-        const interfaceMatch = node.text.match(/export\s+interface\s+(\w+)/);
-        const typeMatch = node.text.match(/export\s+type\s+(\w+)/);
-        const constMatch = node.text.match(/export\s+const\s+(\w+)/);
+        const function_match = node.text.match(/export\s+function\s+(\w+)/);
+        const class_match = node.text.match(/export\s+class\s+(\w+)/);
+        const interface_match = node.text.match(/export\s+interface\s+(\w+)/);
+        const type_match = node.text.match(/export\s+type\s+(\w+)/);
+        const const_match = node.text.match(/export\s+const\s+(\w+)/);
         
-        let memberName: string | null = null;
-        let memberKind = 'named';
+        let member_name: string | null = null;
+        let member_kind = 'named';
         
-        if (functionMatch) {
-          memberName = functionMatch[1];
-          memberKind = 'function';
-        } else if (classMatch) {
-          memberName = classMatch[1];
-          memberKind = 'class';
-        } else if (interfaceMatch) {
-          memberName = interfaceMatch[1];
-          memberKind = 'interface';
-        } else if (typeMatch) {
-          memberName = typeMatch[1];
-          memberKind = 'type';
-        } else if (constMatch) {
-          memberName = constMatch[1];
-          memberKind = 'named';
+        if (function_match) {
+          member_name = function_match[1];
+          member_kind = 'function';
+        } else if (class_match) {
+          member_name = class_match[1];
+          member_kind = 'class';
+        } else if (interface_match) {
+          member_name = interface_match[1];
+          member_kind = 'interface';
+        } else if (type_match) {
+          member_name = type_match[1];
+          member_kind = 'type';
+        } else if (const_match) {
+          member_name = const_match[1];
+          member_kind = 'named';
         }
         
-        if (memberName) {
+        if (member_name) {
           exports.push({
-            name: memberName,
+            name: member_name,
             source: 'local',
-            kind: memberKind,
+            kind: member_kind,
             location: node_to_location(node),
             namespace_export: true
           });
@@ -251,10 +251,12 @@ export function handle_declaration_merging(
           };
           
           // Track for merging
-          if (!merged_declarations.has(name.text)) {
-            merged_declarations.set(name.text, []);
+          const existing = merged_declarations.get(name.text);
+          if (existing) {
+            existing.push(export_info);
+          } else {
+            merged_declarations.set(name.text, [export_info]);
           }
-          merged_declarations.get(name.text)!.push(export_info);
         }
       }
     }
@@ -263,18 +265,20 @@ export function handle_declaration_merging(
     if (node.text.startsWith('export namespace') || node.text.startsWith('export module')) {
       const match = node.text.match(/export\s+(namespace|module)\s+(\w+)/);
       if (match) {
-        const namespaceName = match[2];
+        const namespace_name = match[2];
         const export_info: ExportInfo = {
-          name: namespaceName,
+          name: namespace_name,
           source: 'local',
           kind: 'namespace',
           location: node_to_location(node)
         };
         
-        if (!merged_declarations.has(namespaceName)) {
-          merged_declarations.set(namespaceName, []);
+        const existing = merged_declarations.get(namespace_name);
+        if (existing) {
+          existing.push(export_info);
+        } else {
+          merged_declarations.set(namespace_name, [export_info]);
         }
-        merged_declarations.get(namespaceName)!.push(export_info);
       }
     }
     

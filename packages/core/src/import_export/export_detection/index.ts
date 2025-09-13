@@ -211,10 +211,12 @@ export function get_exports_by_source(
   
   for (const exp of exports) {
     const source = get_export_source(exp);
-    if (!by_source.has(source)) {
-      by_source.set(source, []);
+    const existing = by_source.get(source);
+    if (existing) {
+      existing.push(exp);
+    } else {
+      by_source.set(source, [exp]);
     }
-    by_source.get(source)!.push(exp);
   }
   
   return by_source;

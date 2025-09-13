@@ -33,22 +33,31 @@ describe('Member Access Type Safety', () => {
     };
 
     // Test that the type system accepts ReadonlySet
-    const analysis = {
+    const source = 'types.User';
+    const tree = parser.parse(source);
+    
+    const analysis: any = {
       file_path: '/test/file.ts' as FilePath,
       language: 'javascript' as const,
       imports: [{
-        is_namespace_import: true,
+        kind: 'namespace' as const,
         namespace_name: 'types' as NamespaceName,
         source: './types',
-        kind: 'namespace' as const
+        language: 'javascript' as const,
+        node_type: 'import_statement'
       }],
       functions: [],
       classes: [],
-      exports: []
+      exports: [],
+      source_code: source,
+      variables: [],
+      errors: [],
+      scopes: { type: 'module', children: [], symbols: new Map() },
+      function_calls: [],
+      method_calls: [],
+      constructor_calls: [],
+      type_info: new Map()
     };
-
-    const source = 'types.User';
-    const tree = parser.parse(source);
     
     const results = find_member_access_expressions(analysis, tree.rootNode);
     
@@ -74,18 +83,27 @@ describe('Member Access Type Safety', () => {
     const source = 'namespace.member';
     const tree = parser.parse(source);
     
-    const analysis = {
+    const analysis: any = {
       file_path: '/test/file.ts' as FilePath,
       language: 'javascript' as const,
       imports: [{
-        is_namespace_import: true,
+        kind: 'namespace' as const,
         namespace_name: 'namespace' as NamespaceName,
         source: './namespace',
-        kind: 'namespace' as const
+        language: 'javascript' as const,
+        node_type: 'import_statement'
       }],
       functions: [],
       classes: [],
-      exports: []
+      exports: [],
+      source_code: source,
+      variables: [],
+      errors: [],
+      scopes: { type: 'module', children: [], symbols: new Map() },
+      function_calls: [],
+      method_calls: [],
+      constructor_calls: [],
+      type_info: new Map()
     };
 
     const results = find_member_access_expressions(analysis, tree.rootNode);

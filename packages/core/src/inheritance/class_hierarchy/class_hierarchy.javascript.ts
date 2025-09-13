@@ -64,8 +64,8 @@ function post_process_typescript_node(
   // Check for decorator-based patterns
   detect_decorator_inheritance(node, def, context);
   
-  // Handle abstract classes
-  if (def.is_abstract === undefined) {
+  // Handle abstract classes (only detect if not already marked)
+  if (!def.is_abstract) {
     detect_abstract_class(node, def, context);
   }
 }

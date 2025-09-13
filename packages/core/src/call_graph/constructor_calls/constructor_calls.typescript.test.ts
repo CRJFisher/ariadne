@@ -36,7 +36,7 @@ describe("TypeScript Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.ts',
+        file_path: 'test.ts' as FilePath,
         language: 'typescript'
       };
       
@@ -65,7 +65,7 @@ describe("TypeScript Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.ts',
+        file_path: 'test.ts' as FilePath,
         language: 'typescript'
       };
       
@@ -94,7 +94,7 @@ describe("TypeScript Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.ts',
+        file_path: 'test.ts' as FilePath,
         language: 'typescript'
       };
       
@@ -121,7 +121,7 @@ describe("TypeScript Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.ts',
+        file_path: 'test.ts' as FilePath,
         language: 'typescript'
       };
       
@@ -149,7 +149,7 @@ describe("TypeScript Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.ts',
+        file_path: 'test.ts' as FilePath,
         language: 'typescript'
       };
       

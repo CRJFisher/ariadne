@@ -38,7 +38,7 @@ describe("Rust Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.rs',
+        file_path: 'test.rs' as FilePath,
         language: 'rust'
       };
       
@@ -68,7 +68,7 @@ describe("Rust Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.rs',
+        file_path: 'test.rs' as FilePath,
         language: 'rust'
       };
       
@@ -97,7 +97,7 @@ describe("Rust Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.rs',
+        file_path: 'test.rs' as FilePath,
         language: 'rust'
       };
       
@@ -127,7 +127,7 @@ describe("Rust Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.rs',
+        file_path: 'test.rs' as FilePath,
         language: 'rust'
       };
       
@@ -157,7 +157,7 @@ describe("Rust Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.rs',
+        file_path: 'test.rs' as FilePath,
         language: 'rust'
       };
       
@@ -188,7 +188,7 @@ describe("Rust Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.rs',
+        file_path: 'test.rs' as FilePath,
         language: 'rust'
       };
       
@@ -218,7 +218,7 @@ describe("Rust Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.rs',
+        file_path: 'test.rs' as FilePath,
         language: 'rust'
       };
       
@@ -247,7 +247,7 @@ describe("Rust Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.rs',
+        file_path: 'test.rs' as FilePath,
         language: 'rust'
       };
       
@@ -277,7 +277,7 @@ describe("Rust Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.rs',
+        file_path: 'test.rs' as FilePath,
         language: 'rust'
       };
       
@@ -307,7 +307,7 @@ describe("Rust Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.rs',
+        file_path: 'test.rs' as FilePath,
         language: 'rust'
       };
       
@@ -336,7 +336,7 @@ describe("Rust Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.rs',
+        file_path: 'test.rs' as FilePath,
         language: 'rust'
       };
       
@@ -367,7 +367,7 @@ describe("Rust Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.rs',
+        file_path: 'test.rs' as FilePath,
         language: 'rust'
       };
       
@@ -397,7 +397,7 @@ describe("Rust Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.rs',
+        file_path: 'test.rs' as FilePath,
         language: 'rust'
       };
       
@@ -426,7 +426,7 @@ describe("Rust Bespoke Handlers", () => {
       const context: ConstructorCallContext = {
         source_code: source,
         ast_root: tree.rootNode,
-        file_path: 'test.rs',
+        file_path: 'test.rs' as FilePath,
         language: 'rust'
       };
       

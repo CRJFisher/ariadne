@@ -164,10 +164,12 @@ function convert_to_module_imports(
     // For now, use a placeholder since ImportedSymbol doesn't have source_module
     // TODO: Update when ImportResolutionInfo is properly migrated
     const source = "unknown_module";
-    if (!by_module.has(source)) {
-      by_module.set(source, []);
+    const existing = by_module.get(source);
+    if (existing) {
+      existing.push(imp);
+    } else {
+      by_module.set(source, [imp]);
     }
-    by_module.get(source)!.push(imp);
   }
 
   // Create ModuleImportInfo for each module

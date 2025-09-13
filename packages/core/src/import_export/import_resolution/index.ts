@@ -21,7 +21,7 @@ import {
   resolve_import,
   resolve_all_imports,
   resolve_module_path,
-  normalizeModulePath,
+  normalize_module_path,
   find_exported_symbol,
   create_module_export,
   get_module_exports
@@ -104,7 +104,8 @@ export {
   is_named_import,
   is_index_file,
   find_exported_symbol,
-  create_module_export
+  create_module_export,
+  normalize_module_path
 };
 
 // Re-export configuration system

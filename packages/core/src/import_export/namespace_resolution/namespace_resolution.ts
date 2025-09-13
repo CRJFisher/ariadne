@@ -179,10 +179,10 @@ function get_namespace_name(imp: Import, config: NamespaceLanguageConfig): strin
   // For namespace imports, use the last part of the source as the name
   // e.g., './utils' -> 'utils', 'std::collections' -> 'collections'
   const parts = imp.source.split(/[\/:]/);
-  const lastPart = parts[parts.length - 1];
+  const last_part = parts[parts.length - 1];
   
   // Remove file extensions if present
-  return lastPart.replace(/\.(js|ts|py|rs)$/, '');
+  return last_part.replace(/\.(js|ts|py|rs)$/, '');
 }
 
 /**

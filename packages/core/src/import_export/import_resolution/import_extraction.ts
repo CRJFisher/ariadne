@@ -237,23 +237,23 @@ function extract_typescript_import(
   
   if (!import_clause) {
     // Side-effect import: import './styles.css'
-    const sideEffectImport: SideEffectImport = {
+    const side_effect_import: SideEffectImport = {
       kind: 'side-effect',
       source: module_source,
       location: node_to_location(import_node, file_path),
       language: 'typescript',
       node_type: 'import_statement'
     };
-    return [sideEffectImport];
+    return [side_effect_import];
   }
   
   // Process import clause
-  const namedImports: Array<{ name: SymbolName; alias?: SymbolName }> = [];
+  const named_imports: Array<{ name: SymbolName; alias?: SymbolName }> = [];
   
   for (const child of import_clause.children) {
     if (child.type === 'identifier') {
       // Default import: import foo from './foo' or import type Foo from './foo'
-      const defaultImport: DefaultImport = {
+      const default_import: DefaultImport = {
         kind: 'default',
         name: toSymbolName(child.text),
         source: module_source,
@@ -261,13 +261,13 @@ function extract_typescript_import(
         language: 'typescript',
         node_type: 'import_statement'
       };
-      imports.push(defaultImport);
+      imports.push(default_import);
     } else if (child.type === 'namespace_import') {
       // Namespace import: import * as foo from './foo' or import type * as foo from './foo'
       // The identifier is a child, not a field
       const identifier_node = child.children.find(c => c.type === 'identifier');
       if (identifier_node) {
-        const namespaceImport: NamespaceImport = {
+        const namespace_import: NamespaceImport = {
           kind: 'namespace',
           namespace_name: identifier_node.text as NamespaceName,
           source: module_source,
@@ -275,13 +275,13 @@ function extract_typescript_import(
           language: 'typescript',
           node_type: 'import_statement'
         };
-        imports.push(namespaceImport);
+        imports.push(namespace_import);
       }
     } else if (child.type === 'named_imports') {
       // Named imports with potential inline type modifiers
       const specs = extract_typescript_import_specifiers(child, source_code, statement_level_type);
       for (const spec of specs) {
-        namedImports.push({
+        named_imports.push({
           name: toSymbolName(spec.name),
           alias: spec.alias ? toSymbolName(spec.alias) : undefined
         });
@@ -290,16 +290,16 @@ function extract_typescript_import(
   }
   
   // Create a single NamedImport with all imports
-  if (namedImports.length > 0) {
-    const namedImport: NamedImport = {
+  if (named_imports.length > 0) {
+    const named_import: NamedImport = {
       kind: 'named',
-      imports: namedImports,
+      imports: named_imports,
       source: module_source,
       location: node_to_location(import_clause, file_path),
       language: 'typescript',
       node_type: 'import_statement'
     };
-    imports.push(namedImport);
+    imports.push(named_import);
   }
   
   return imports;
@@ -368,23 +368,23 @@ function extract_es6_import(
   
   if (!import_clause) {
     // Side-effect import: import './styles.css'
-    const sideEffectImport: SideEffectImport = {
+    const side_effect_import: SideEffectImport = {
       kind: 'side_effect',
       source: module_source,
       location: node_to_location(import_node, file_path),
       language: 'javascript',
       node_type: 'import_statement'
     };
-    return [sideEffectImport];
+    return [side_effect_import];
   }
   
   // Process import clause
-  const namedImports: Array<{ name: SymbolName; alias?: SymbolName }> = [];
+  const named_imports: Array<{ name: SymbolName; alias?: SymbolName }> = [];
   
   for (const child of import_clause.children) {
     if (child.type === 'identifier') {
       // Default import: import foo from './foo'
-      const defaultImport: DefaultImport = {
+      const default_import: DefaultImport = {
         kind: 'default',
         name: toSymbolName(child.text),
         source: module_source,
@@ -392,12 +392,12 @@ function extract_es6_import(
         language: 'javascript',
         node_type: 'import_statement'
       };
-      imports.push(defaultImport);
+      imports.push(default_import);
     } else if (child.type === 'namespace_import') {
       // Namespace import: import * as foo from './foo'
       const alias_node = child.childForFieldName('alias');
       if (alias_node) {
-        const namespaceImport: NamespaceImport = {
+        const namespace_import: NamespaceImport = {
           kind: 'namespace',
           namespace_name: alias_node.text as NamespaceName,
           source: module_source,
@@ -405,29 +405,29 @@ function extract_es6_import(
           language: 'javascript',
           node_type: 'import_statement'
         };
-        imports.push(namespaceImport);
+        imports.push(namespace_import);
       }
     } else if (child.type === 'named_imports') {
       // Named imports: import { foo, bar as baz } from './foo'
       const specs = extract_import_specifiers(child, source_code, file_path);
       for (const spec of specs) {
-        namedImports.push({
+        named_imports.push({
           name: toSymbolName(spec.name),
           alias: spec.alias ? toSymbolName(spec.alias) : undefined
         });
       }
       
       // Create a single NamedImport with all imports
-      if (namedImports.length > 0) {
-        const namedImport: NamedImport = {
+      if (named_imports.length > 0) {
+        const named_import: NamedImport = {
           kind: 'named',
-          imports: namedImports,
+          imports: named_imports,
           source: module_source,
           location: node_to_location(import_clause, file_path),
           language: 'javascript',
           node_type: 'import_statement'
         };
-        imports.push(namedImport);
+        imports.push(named_import);
       }
     }
   }
@@ -460,7 +460,7 @@ function extract_commonjs_require(
     if (name_node) {
       if (name_node.type === 'identifier') {
         // Default import pattern: const foo = require('./foo')
-        const defaultImport: DefaultImport = {
+        const default_import: DefaultImport = {
           kind: 'default',
           name: toSymbolName(name_node.text),
           source: module_source,
@@ -468,11 +468,11 @@ function extract_commonjs_require(
           language: 'javascript',
           node_type: 'call_expression'
         };
-        return defaultImport;
+        return default_import;
       } else if (name_node.type === 'object_pattern') {
         // Destructuring: const { foo, bar } = require('./module')
         const names = extract_destructured_names(name_node, source_code);
-        const namedImport: NamedImport = {
+        const named_import: NamedImport = {
           kind: 'named',
           imports: names.map(name => ({ name: toSymbolName(name) })),
           source: module_source,
@@ -480,7 +480,7 @@ function extract_commonjs_require(
           language: 'javascript',
           node_type: 'call_expression'
         };
-        return namedImport;
+        return named_import;
       }
     }
   }
@@ -502,14 +502,14 @@ function extract_dynamic_import(
   );
   if (!first_arg) return null;
   
-  const dynamicImport: DynamicImport = {
+  const dynamic_import: DynamicImport = {
     kind: 'dynamic',
     source: buildModulePath(extract_string_literal(first_arg, source_code)),
     location: node_to_location(call_node, file_path),
     language: 'javascript',
     node_type: 'call_expression'
   };
-  return dynamicImport;
+  return dynamic_import;
 }
 
 // --- Helper functions for Python ---
@@ -528,7 +528,7 @@ function extract_python_import(
       const alias = child.childForFieldName('alias');
       if (name) {
         // import module as alias - the alias becomes a namespace binding
-        const namespaceImport: NamespaceImport = {
+        const namespace_import: NamespaceImport = {
           kind: 'namespace',
           namespace_name: (alias?.text || name.text) as NamespaceName,
           source: buildModulePath(name.text),
@@ -536,11 +536,11 @@ function extract_python_import(
           language: 'python',
           node_type: 'import_statement'
         };
-        imports.push(namespaceImport);
+        imports.push(namespace_import);
       }
     } else if (child.type === 'dotted_name' || child.type === 'identifier') {
       // import module - creates a namespace binding
-      const namespaceImport: NamespaceImport = {
+      const namespace_import: NamespaceImport = {
         kind: 'namespace',
         namespace_name: child.text as NamespaceName,
         source: buildModulePath(child.text),
@@ -548,7 +548,7 @@ function extract_python_import(
         language: 'python',
         node_type: 'import_statement'
       };
-      imports.push(namespaceImport);
+      imports.push(namespace_import);
     }
   }
   
@@ -565,11 +565,11 @@ function extract_python_from_import(
   // Find the module name - it's the dotted_name or identifier child
   // that comes after 'from' and before 'import'
   let module = null;
-  let foundFrom = false;
+  let found_from = false;
   for (const child of import_node.children) {
     if (child.type === 'from') {
-      foundFrom = true;
-    } else if (foundFrom && (child.type === 'dotted_name' || child.type === 'identifier')) {
+      found_from = true;
+    } else if (found_from && (child.type === 'dotted_name' || child.type === 'identifier')) {
       module = child;
       break;
     } else if (child.type === 'import') {
@@ -579,7 +579,7 @@ function extract_python_from_import(
   
   if (!module) return imports;
   const source = buildModulePath(module.text);
-  const namedImports: Array<{ name: SymbolName; alias?: SymbolName }> = [];
+  const named_imports: Array<{ name: SymbolName; alias?: SymbolName }> = [];
   
   // Find what's being imported
   for (const child of import_node.children) {
@@ -590,20 +590,20 @@ function extract_python_from_import(
           const name = spec.childForFieldName('name');
           const alias = spec.childForFieldName('alias');
           if (name) {
-            namedImports.push({
+            named_imports.push({
               name: toSymbolName(alias?.text || name.text),
               alias: alias ? toSymbolName(name.text) : undefined
             });
           }
         } else if (spec.type === 'identifier') {
-          namedImports.push({
+          named_imports.push({
             name: toSymbolName(spec.text)
           });
         }
       }
     } else if (child.type === 'wildcard_import') {
       // from foo import *
-      const namespaceImport: NamespaceImport = {
+      const namespace_import: NamespaceImport = {
         kind: 'namespace',
         namespace_name: '*' as NamespaceName,
         source,
@@ -611,21 +611,21 @@ function extract_python_from_import(
         language: 'python',
         node_type: 'import_from_statement'
       };
-      imports.push(namespaceImport);
+      imports.push(namespace_import);
     }
   }
   
   // Create a single NamedImport with all imports
-  if (namedImports.length > 0) {
-    const namedImport: NamedImport = {
+  if (named_imports.length > 0) {
+    const named_import: NamedImport = {
       kind: 'named',
-      imports: namedImports,
+      imports: named_imports,
       source,
       location: node_to_location(import_node, file_path),
       language: 'python',
       node_type: 'import_from_statement'
     };
-    imports.push(namedImport);
+    imports.push(named_import);
   }
   
   return imports;
@@ -639,7 +639,7 @@ function extract_rust_use(
   file_path: string
 ): UnifiedImport[] {
   const imports: UnifiedImport[] = [];
-  const namedImports: Array<{ name: SymbolName; alias?: SymbolName }> = [];
+  const named_imports: Array<{ name: SymbolName; alias?: SymbolName }> = [];
   let module_source: ModulePath | null = null;
   
   // Find the use tree - it's a direct child, not a field
@@ -665,7 +665,7 @@ function extract_rust_use(
       if (path && name) {
         const full_path = prefix ? `${prefix}::${path.text}` : path.text;
         module_source = module_source || buildModulePath(full_path);
-        namedImports.push({
+        named_imports.push({
           name: toSymbolName(name.text)
         });
       }
@@ -689,12 +689,12 @@ function extract_rust_use(
         for (const item of use_list.children) {
           if (item.type === 'self') {
             // Self import - imports the module itself
-            namedImports.push({
+            named_imports.push({
               name: toSymbolName(module_path)
             });
           } else if (item.type === 'identifier') {
             // Named import from the module
-            namedImports.push({
+            named_imports.push({
               name: toSymbolName(item.text)
             });
           }
@@ -716,7 +716,7 @@ function extract_rust_use(
       const alias = tree.childForFieldName('alias');
       if (name) {
         module_source = module_source || buildModulePath(prefix || name.text);
-        namedImports.push({
+        named_imports.push({
           name: toSymbolName(alias?.text || name.text),
           alias: alias ? toSymbolName(name.text) : undefined
         });
@@ -730,7 +730,7 @@ function extract_rust_use(
           break;
         }
       }
-      const namespaceImport: NamespaceImport = {
+      const namespace_import: NamespaceImport = {
         kind: 'namespace',
         namespace_name: '*' as NamespaceName,
         source: buildModulePath(path),
@@ -738,10 +738,10 @@ function extract_rust_use(
         language: 'rust',
         node_type: 'use_declaration'
       };
-      imports.push(namespaceImport);
+      imports.push(namespace_import);
     } else if (tree.type === 'identifier') {
       module_source = module_source || buildModulePath(prefix || tree.text);
-      namedImports.push({
+      named_imports.push({
         name: toSymbolName(tree.text)
       });
     }
@@ -750,16 +750,16 @@ function extract_rust_use(
   extract_from_tree(use_tree);
   
   // Create a single NamedImport with all imports
-  if (namedImports.length > 0 && module_source) {
-    const namedImport: NamedImport = {
+  if (named_imports.length > 0 && module_source) {
+    const named_import: NamedImport = {
       kind: 'named',
-      imports: namedImports,
+      imports: named_imports,
       source: module_source,
       location: node_to_location(use_node, file_path),
       language: 'rust',
       node_type: 'use_declaration'
     };
-    imports.push(namedImport);
+    imports.push(named_import);
   }
   
   return imports;
@@ -775,7 +775,7 @@ function extract_rust_extern_crate(
   
   if (!name) return null;
   
-  const namedImport: NamedImport = {
+  const named_import: NamedImport = {
     kind: 'named',
     imports: [{
       name: toSymbolName(alias?.text || name.text),
@@ -786,7 +786,7 @@ function extract_rust_extern_crate(
     language: 'rust',
     node_type: 'extern_crate_declaration'
   };
-  return namedImport;
+  return named_import;
 }
 
 // --- Utility functions ---

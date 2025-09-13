@@ -55,6 +55,9 @@ export * from "./query";
 // Export from calls (no conflicts)
 export * from "./calls";
 
+// Export call chain and graph types
+export * from "./call_chains";
+
 // NOTE: Temporarily commenting out conflicting exports to unblock progress
 // These will need proper resolution in a follow-up task
 // export * from "./symbol_scope";
@@ -112,3 +115,19 @@ export {
 } from "./scopes";
 export * from "./definitions";
 export * from "./errors";
+
+// Export type validation utilities
+export {
+  // Core validation functions
+  validate_location,
+  validate_language,
+  validate_ast_node,
+  
+  // New non-nullability type guards
+  is_non_empty_array,
+  is_defined,
+  is_non_empty_string,
+  assert_defined,
+  assert_valid,
+  assert_type,
+} from "./type_validation";

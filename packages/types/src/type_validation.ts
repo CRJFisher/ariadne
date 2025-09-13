@@ -399,7 +399,7 @@ export interface StrictValidationOptions {
 export function strict_validate<T>(
   value: unknown,
   validator: (v: unknown) => v is T,
-  deepValidator?: (v: unknown, path?: string) => ValidationResult<T>,
+  deep_validator?: (v: unknown, path?: string) => ValidationResult<T>,
   options: StrictValidationOptions = {}
 ): ValidationResult<T> {
   const errors: ValidationError[] = [];
@@ -417,8 +417,8 @@ export function strict_validate<T>(
   }
 
   // Then perform deep validation if provided
-  if (deepValidator) {
-    const deep_result = deepValidator(value);
+  if (deep_validator) {
+    const deep_result = deep_validator(value);
     errors.push(...deep_result.errors);
     warnings.push(...deep_result.warnings);
   }
@@ -454,7 +454,7 @@ export function strict_validate<T>(
  */
 export function validate_array<T>(
   values: unknown,
-  itemValidator: (v: unknown, path?: string) => ValidationResult<T>,
+  item_validator: (v: unknown, path?: string) => ValidationResult<T>,
   path = "array"
 ): ValidationResult<T[]> {
   const errors: ValidationError[] = [];
@@ -473,7 +473,7 @@ export function validate_array<T>(
   const valid_items: T[] = [];
 
   for (let i = 0; i < values.length; i++) {
-    const item_result = itemValidator(values[i], `${path}[${i}]`);
+    const item_result = item_validator(values[i], `${path}[${i}]`);
     if (item_result.valid && item_result.value) {
       valid_items.push(item_result.value);
     }
@@ -494,8 +494,8 @@ export function validate_array<T>(
  */
 export function validate_map<K, V>(
   value: unknown,
-  keyValidator: (v: unknown) => v is K,
-  valueValidator: (v: unknown, path?: string) => ValidationResult<V>,
+  key_validator: (v: unknown) => v is K,
+  value_validator: (v: unknown, path?: string) => ValidationResult<V>,
   path = "map"
 ): ValidationResult<Map<K, V>> {
   const errors: ValidationError[] = [];
@@ -514,7 +514,7 @@ export function validate_map<K, V>(
   const valid_map = new Map<K, V>();
 
   for (const [key, val] of value.entries()) {
-    if (!keyValidator(key)) {
+    if (!key_validator(key)) {
       errors.push({
         path: `${path}.keys`,
         expected: "valid key",
@@ -524,7 +524,7 @@ export function validate_map<K, V>(
       continue;
     }
 
-    const val_result = valueValidator(val, `${path}[${String(key)}]`);
+    const val_result = value_validator(val, `${path}[${String(key)}]`);
     if (val_result.valid && val_result.value) {
       valid_map.set(key, val_result.value);
     }
@@ -604,6 +604,44 @@ export function assert_valid<T>(
   if (!result.valid) {
     const error_messages = result.errors.map((e) => e.message).join(", ");
     throw new TypeError(message || `Validation failed: ${error_messages}`);
+  }
+}
+
+// ============================================================================
+// Additional Non-nullability Type Guards
+// ============================================================================
+
+/**
+ * Type guard to check if an array is non-empty
+ * Useful for converting T[] to [T, ...T[]] type
+ */
+export function is_non_empty_array<T>(value: T[]): value is [T, ...T[]] {
+  return value.length > 0;
+}
+
+/**
+ * Type guard to check if a value is defined (not null or undefined)
+ */
+export function is_defined<T>(value: T | null | undefined): value is T {
+  return value !== null && value !== undefined;
+}
+
+/**
+ * Type guard to check if a string is non-empty
+ */
+export function is_non_empty_string(value: string): value is string & { length: number } {
+  return value.length > 0;
+}
+
+/**
+ * Assertion function for non-null values
+ */
+export function assert_defined<T>(
+  value: T | null | undefined,
+  message?: string
+): asserts value is T {
+  if (value === null || value === undefined) {
+    throw new TypeError(message || "Expected value to be defined, but got null or undefined");
   }
 }
 

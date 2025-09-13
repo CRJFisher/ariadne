@@ -50,6 +50,11 @@ export {
   type FileChangeType
 } from './project/project_manager';
 
+// Import resolution utilities
+export {
+  normalize_module_path
+} from './import_export/import_resolution';
+
 // Re-export common types from @ariadnejs/types for convenience
 export type {
   CallGraph,

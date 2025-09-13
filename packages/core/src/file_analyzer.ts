@@ -407,9 +407,7 @@ function extract_definitions(
 
       const signature: FunctionSignature = {
         parameters: enhanced_parameters,
-        return_type: (return_type_info?.type_name || undefined) as
-          | TypeString
-          | undefined,
+        return_type: return_type_info?.type_name as TypeString | undefined,
         is_async: scope.metadata?.is_async || false,
         is_generator: scope.metadata?.is_generator || false,
         type_parameters: [],

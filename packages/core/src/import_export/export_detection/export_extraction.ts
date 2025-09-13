@@ -119,7 +119,7 @@ export function extract_python_exports(
       if (left?.text === '__all__' && right) {
         const all_exports = extract_python_all_exports(right, source_code);
         if (all_exports.length > 0) {
-          const namedExport: NamedExport = {
+          const named_export: NamedExport = {
             kind: 'named',
             exports: all_exports.map(name => ({
               local_name: toSymbolName(name)
@@ -128,7 +128,7 @@ export function extract_python_exports(
             language: 'python',
             node_type: 'assignment'
           };
-          exports.push(namedExport);
+          exports.push(named_export);
         }
       }
     }
@@ -138,7 +138,7 @@ export function extract_python_exports(
       if (node.type === 'function_definition' || node.type === 'class_definition') {
         const name_node = node.childForFieldName('name');
         if (name_node && !name_node.text.startsWith('_')) {
-          const namedExport: NamedExport = {
+          const named_export: NamedExport = {
             kind: 'named',
             exports: [{
               local_name: toSymbolName(name_node.text)
@@ -147,7 +147,7 @@ export function extract_python_exports(
             language: 'python',
             node_type: node.type
           };
-          exports.push(namedExport);
+          exports.push(named_export);
         }
       }
     }
@@ -177,7 +177,7 @@ export function extract_rust_exports(
       if (parent) {
         const name = extract_rust_item_name(parent);
         if (name) {
-          const namedExport: NamedExport = {
+          const named_export: NamedExport = {
             kind: 'named',
             exports: [{
               local_name: toSymbolName(name)
@@ -186,7 +186,7 @@ export function extract_rust_exports(
             language: 'rust',
             node_type: parent.type
           };
-          exports.push(namedExport);
+          exports.push(named_export);
         }
       }
     }
@@ -283,7 +283,7 @@ function extract_typescript_export(
         if (actual_name_node) {
           if (source === 'local') {
             // Local named export
-            const namedExport: NamedExport = {
+            const named_export: NamedExport = {
               kind: 'named',
               exports: [{
                 local_name: toSymbolName(actual_name_node.text),
@@ -294,10 +294,10 @@ function extract_typescript_export(
               language: 'typescript',
               node_type: 'export_specifier'
             };
-            exports.push(namedExport);
+            exports.push(named_export);
           } else {
             // Re-export from another module
-            const reExport: ReExport = {
+            const re_export: ReExport = {
               kind: 'reexport',
               source: buildModulePath(source),
               exports: [{
@@ -309,7 +309,7 @@ function extract_typescript_export(
               language: 'typescript',
               node_type: 'export_specifier'
             };
-            exports.push(reExport);
+            exports.push(re_export);
           }
         }
       }
@@ -324,14 +324,14 @@ function extract_typescript_export(
   if (has_star) {
     const source_node = export_node.childForFieldName('source');
     if (source_node) {
-      const namespaceExport: NamespaceExport = {
+      const namespace_export: NamespaceExport = {
         kind: 'namespace',
         source: buildModulePath(extract_string_literal(source_node, source_code)),
         location: node_to_location(export_node),
         language: 'typescript',
         node_type: 'export_statement'
       };
-      exports.push(namespaceExport);
+      exports.push(namespace_export);
     }
   }
   
@@ -365,7 +365,7 @@ export function extract_es6_exports(
           }
         }
         
-        const defaultExport: DefaultExport = {
+        const default_export: DefaultExport = {
           kind: 'default',
           symbol: name !== 'default' ? toSymbolName(name) : undefined,
           is_declaration: value_node?.type === 'function_declaration' || 
@@ -374,7 +374,7 @@ export function extract_es6_exports(
           language: 'javascript',
           node_type: 'export_statement'
         };
-        exports.push(defaultExport);
+        exports.push(default_export);
       }
       
       // Check for named exports
@@ -398,7 +398,7 @@ export function extract_es6_exports(
             if (name) {
               if (source === 'local') {
                 // Local named export
-                const namedExport: NamedExport = {
+                const named_export: NamedExport = {
                   kind: 'named',
                   exports: [{
                     local_name: toSymbolName(name.text),
@@ -408,10 +408,10 @@ export function extract_es6_exports(
                   language: 'javascript',
                   node_type: 'export_specifier'
                 };
-                exports.push(namedExport);
+                exports.push(named_export);
               } else {
                 // Re-export from another module
-                const reExport: ReExport = {
+                const re_export: ReExport = {
                   kind: 'reexport',
                   source: buildModulePath(source),
                   exports: [{
@@ -422,7 +422,7 @@ export function extract_es6_exports(
                   language: 'javascript',
                   node_type: 'export_specifier'
                 };
-                exports.push(reExport);
+                exports.push(re_export);
               }
             }
           }
@@ -433,14 +433,14 @@ export function extract_es6_exports(
       if (node.children.some(c => c.type === '*')) {
         const source_node = node.childForFieldName('source');
         if (source_node) {
-          const namespaceExport: NamespaceExport = {
+          const namespace_export: NamespaceExport = {
             kind: 'namespace',
             source: buildModulePath(extract_string_literal(source_node, source_code)),
             location: node_to_location(node),
             language: 'javascript',
             node_type: 'export_statement'
           };
-          exports.push(namespaceExport);
+          exports.push(namespace_export);
         }
       }
     }
@@ -473,14 +473,14 @@ export function extract_commonjs_exports(
           exports.push(...obj_exports);
         } else {
           // module.exports = something
-          const defaultExport: DefaultExport = {
+          const default_export: DefaultExport = {
             kind: 'default',
             symbol: right.type === 'identifier' ? toSymbolName(right.text) : undefined,
             location: node_to_location(node),
             language: 'javascript',
             node_type: 'assignment_expression'
           };
-          exports.push(defaultExport);
+          exports.push(default_export);
         }
       }
       
@@ -490,7 +490,7 @@ export function extract_commonjs_exports(
         const property = left.childForFieldName('property');
         
         if (object?.text === 'exports' && property) {
-          const namedExport: NamedExport = {
+          const named_export: NamedExport = {
             kind: 'named',
             exports: [{
               local_name: toSymbolName(property.text)
@@ -499,7 +499,7 @@ export function extract_commonjs_exports(
             language: 'javascript',
             node_type: 'assignment_expression'
           };
-          exports.push(namedExport);
+          exports.push(named_export);
         }
       }
     }
@@ -529,7 +529,7 @@ function extract_declaration_exports(
         const name = child.childForFieldName('name');
         if (name) {
           if (name.type === 'identifier') {
-            const namedExport: NamedExport = {
+            const named_export: NamedExport = {
               kind: 'named',
               exports: [{
                 local_name: toSymbolName(name.text)
@@ -538,12 +538,12 @@ function extract_declaration_exports(
               language: 'javascript',
               node_type: declaration.type
             };
-            exports.push(namedExport);
+            exports.push(named_export);
           } else if (name.type === 'object_pattern' || name.type === 'array_pattern') {
             // Destructuring
             const names = extract_destructured_names(name, source_code);
             if (names.length > 0) {
-              const namedExport: NamedExport = {
+              const named_export: NamedExport = {
                 kind: 'named',
                 exports: names.map(n => ({
                   local_name: toSymbolName(n)
@@ -552,7 +552,7 @@ function extract_declaration_exports(
                 language: 'javascript',
                 node_type: declaration.type
               };
-              exports.push(namedExport);
+              exports.push(named_export);
             }
           }
         }
@@ -562,7 +562,7 @@ function extract_declaration_exports(
              declaration.type === 'class_declaration') {
     const name = declaration.childForFieldName('name');
     if (name) {
-      const namedExport: NamedExport = {
+      const named_export: NamedExport = {
         kind: 'named',
         exports: [{
           local_name: toSymbolName(name.text)
@@ -571,7 +571,7 @@ function extract_declaration_exports(
         language: 'javascript',
         node_type: declaration.type
       };
-      exports.push(namedExport);
+      exports.push(named_export);
     }
   }
   
@@ -583,32 +583,32 @@ function extract_object_exports(
   source_code: string
 ): UnifiedExport[] {
   const exports: UnifiedExport[] = [];
-  const namedExports: NamedExportItem[] = [];
+  const named_exports: NamedExportItem[] = [];
   
   for (const child of object_node.children) {
     if (child.type === 'pair') {
       const key = child.childForFieldName('key');
       if (key) {
-        namedExports.push({
+        named_exports.push({
           local_name: toSymbolName(key.text.replace(/['"]/g, ''))
         });
       }
     } else if (child.type === 'shorthand_property_identifier') {
-      namedExports.push({
+      named_exports.push({
         local_name: toSymbolName(child.text)
       });
     }
   }
   
-  if (namedExports.length > 0) {
-    const namedExport: NamedExport = {
+  if (named_exports.length > 0) {
+    const named_export: NamedExport = {
       kind: 'named',
-      exports: namedExports,
+      exports: named_exports,
       location: node_to_location(object_node),
       language: 'javascript',
       node_type: 'object'
     };
-    exports.push(namedExport);
+    exports.push(named_export);
   }
   
   return exports;
@@ -659,8 +659,8 @@ function extract_rust_use_exports(
   source_code: string
 ): UnifiedExport[] {
   const exports: UnifiedExport[] = [];
-  const reExportItems: ReExportItem[] = [];
-  let modulePath: string | null = null;
+  const re_exportItems: ReExportItem[] = [];
+  let module_path: string | null = null;
   
   // Find the main identifier or use_list
   let use_target: SyntaxNode | null = null;
@@ -681,24 +681,24 @@ function extract_rust_use_exports(
     if (node.type === 'scoped_identifier') {
       // For nested scoped_identifiers like crate::module::Item,
       // we want the last identifier
-      let lastIdentifier: SyntaxNode | null = null;
+      let last_identifier: SyntaxNode | null = null;
       for (const child of node.children) {
         if (child.type === 'identifier') {
-          lastIdentifier = child;
+          last_identifier = child;
         }
       }
       
-      if (lastIdentifier) {
-        modulePath = modulePath || node.text;
-        reExportItems.push({
-          source_name: toSymbolName(lastIdentifier.text),
-          export_name: toSymbolName(lastIdentifier.text)
+      if (last_identifier) {
+        module_path = module_path || node.text;
+        re_exportItems.push({
+          source_name: toSymbolName(last_identifier.text),
+          export_name: toSymbolName(last_identifier.text)
         });
       }
     } else if (node.type === 'identifier') {
       // Simple identifier
-      modulePath = modulePath || node.text;
-      reExportItems.push({
+      module_path = module_path || node.text;
+      re_exportItems.push({
         source_name: toSymbolName(node.text),
         export_name: toSymbolName(node.text)
       });
@@ -714,38 +714,38 @@ function extract_rust_use_exports(
       const name = node.childForFieldName('name');
       const alias = node.childForFieldName('alias');
       if (name && alias) {
-        modulePath = modulePath || node.text;
-        reExportItems.push({
+        module_path = module_path || node.text;
+        re_exportItems.push({
           source_name: toSymbolName(name.text),
           export_name: toSymbolName(alias.text)
         });
       }
     } else if (node.type === 'use_wildcard') {
       // Wildcard import: use module::*
-      const namespaceExport: NamespaceExport = {
+      const namespace_export: NamespaceExport = {
         kind: 'namespace',
         source: buildModulePath(node.parent?.text || ''),
         location: node_to_location(node),
         language: 'rust',
         node_type: 'use_wildcard'
       };
-      exports.push(namespaceExport);
+      exports.push(namespace_export);
     }
   };
   
   extract_from_node(use_target);
   
   // Create ReExport for collected items
-  if (reExportItems.length > 0 && modulePath) {
-    const reExport: ReExport = {
+  if (re_exportItems.length > 0 && module_path) {
+    const re_export: ReExport = {
       kind: 'reexport',
-      source: buildModulePath(modulePath),
-      exports: reExportItems,
+      source: buildModulePath(module_path),
+      exports: re_exportItems,
       location: node_to_location(use_node),
       language: 'rust',
       node_type: 'use_declaration'
     };
-    exports.push(reExport);
+    exports.push(re_export);
   }
   
   return exports;

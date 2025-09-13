@@ -42,7 +42,7 @@ export function find_member_access_expressions(
   // Build set of namespace imports from the file analysis
   const namespace_imports = new Set<NamespaceName>();
   for (const import_stmt of analysis.imports) {
-    if (import_stmt.is_namespace_import && import_stmt.namespace_name) {
+    if (import_stmt.kind === 'namespace' && 'namespace_name' in import_stmt) {
       namespace_imports.add(import_stmt.namespace_name as NamespaceName);
     }
   }
