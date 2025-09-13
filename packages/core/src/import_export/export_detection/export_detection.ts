@@ -500,7 +500,8 @@ export function create_named_export(
     location,
     language,
     node_type: 'export',
-    is_type_only
+    is_type_only,
+    modifiers: []
   };
 }
 
@@ -518,7 +519,8 @@ export function create_default_export(
     location,
     language,
     node_type: 'export',
-    is_type_only
+    is_type_only,
+    modifiers: []
   };
 }
 
@@ -536,7 +538,8 @@ export function create_namespace_export(
     location,
     language,
     node_type: 'export',
-    is_type_only
+    is_type_only,
+    modifiers: []
   };
 }
 
@@ -558,7 +561,8 @@ export function create_re_export(
     location,
     language,
     node_type: 'export',
-    is_type_only
+    is_type_only,
+    modifiers: []
   };
 }
 

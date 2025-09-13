@@ -105,7 +105,7 @@ describe('export_extraction', () => {
       const code = `
         export const api = {};
         export type { User } from './models';
-        export function getData() {}
+        export function get_data() {}
         export type interface Config {}
       `;
       
@@ -118,8 +118,8 @@ describe('export_extraction', () => {
       const user_export = exports.find(e => e.name === 'User');
       expect(user_export?.is_type_only).toBe(true);
       
-      const getData_export = exports.find(e => e.name === 'getData');
-      expect(getData_export?.is_type_only).toBeFalsy();
+      const get_data_export = exports.find(e => e.name === 'get_data');
+      expect(get_data_export?.is_type_only).toBeFalsy();
     });
   });
   
@@ -291,7 +291,7 @@ describe('Type-only import/export integration', () => {
       }
       
       // Mixed exports
-      export { type User, createUser } from './user';
+      export { type User, create_user } from './user';
     `;
     
     const tree = typescript_parser.parse(code);
@@ -305,7 +305,7 @@ describe('Type-only import/export integration', () => {
     const user_export = exports.find(e => e.name === 'User');
     expect(user_export?.is_type_only).toBe(true);
     
-    const createUser_export = exports.find(e => e.name === 'createUser');
-    expect(createUser_export?.is_type_only).toBeFalsy();
+    const create_user_export = exports.find(e => e.name === 'create_user');
+    expect(create_user_export?.is_type_only).toBeFalsy();
   });
 });

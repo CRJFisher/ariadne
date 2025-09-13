@@ -5,9 +5,9 @@
  * resolution logic across all languages using language configurations.
  */
 
-import { 
-  Language, 
-  ImportStatement as Import, 
+import {
+  Language,
+  ImportStatement as Import,
   Def,
   FileAnalysis,
   FilePath,
@@ -17,6 +17,7 @@ import {
   Location,
   ModuleGraph,
   TypeRegistry,
+  map_get_or_default,
 } from '@ariadnejs/types';
 import Parser, { SyntaxNode } from 'tree-sitter';
 import {
@@ -500,7 +501,7 @@ export function get_namespace_stats(imports: NamespaceImportInfo[]): {
   };
   
   for (const imp of imports) {
-    const count = stats.by_source.get(imp.source_module) || 0;
+    const count = map_get_or_default(stats.by_source, imp.source_module, 0);
     stats.by_source.set(imp.source_module, count + 1);
   }
   

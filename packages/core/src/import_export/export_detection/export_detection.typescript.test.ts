@@ -120,7 +120,7 @@ export module MyModule {
       const code = `
 export namespace Outer {
   export namespace Inner {
-    export function deepFunction() {}
+    export function deep_function() {}
   }
 }
       `;
@@ -193,8 +193,8 @@ export interface Config {
     
     it('should detect namespace and function merging', () => {
       const code = `
-export function MyFunction() {}
-export namespace MyFunction {
+export function my_function() {}
+export namespace my_function {
   export const version = '1.0';
 }
       `;

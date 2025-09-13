@@ -17,17 +17,17 @@ import {
 } from './export_detection';
 
 describe('Generic Export Detection', () => {
-  const jsParser = new Parser();
-  jsParser.setLanguage(JavaScript);
+  const js_parser = new Parser();
+  js_parser.setLanguage(JavaScript);
   
-  const tsParser = new Parser();
-  tsParser.setLanguage(TypeScript.typescript);
+  const ts_parser = new Parser();
+  ts_parser.setLanguage(TypeScript.typescript);
   
-  const pyParser = new Parser();
-  pyParser.setLanguage(Python);
+  const py_parser = new Parser();
+  py_parser.setLanguage(Python);
   
-  const rustParser = new Parser();
-  rustParser.setLanguage(Rust);
+  const rust_parser = new Parser();
+  rust_parser.setLanguage(Rust);
   
   describe('MODULE_CONTEXT', () => {
     it('should have correct module metadata', () => {
@@ -45,7 +45,7 @@ describe('Generic Export Detection', () => {
         export class Baz {}
       `;
       
-      const tree = jsParser.parse(code);
+      const tree = js_parser.parse(code);
       const result = detect_exports_generic(tree.rootNode, code, 'javascript');
       
       expect(result.exports).toHaveLength(3);
@@ -57,7 +57,7 @@ describe('Generic Export Detection', () => {
     it('should detect default exports', () => {
       const code = `export default function main() {}`;
       
-      const tree = jsParser.parse(code);
+      const tree = js_parser.parse(code);
       const result = detect_exports_generic(tree.rootNode, code, 'javascript');
       
       expect(result.exports).toHaveLength(1);
@@ -70,7 +70,7 @@ describe('Generic Export Detection', () => {
         export * from './other';
       `;
       
-      const tree = jsParser.parse(code);
+      const tree = js_parser.parse(code);
       const result = detect_exports_generic(tree.rootNode, code, 'javascript');
       
       expect(result.exports.length).toBeGreaterThan(0);
@@ -83,7 +83,7 @@ describe('Generic Export Detection', () => {
         exports.bar = 42;
       `;
       
-      const tree = jsParser.parse(code);
+      const tree = js_parser.parse(code);
       const result = detect_exports_generic(tree.rootNode, code, 'javascript');
       
       expect(result.requires_bespoke).toBe(true);
@@ -96,7 +96,7 @@ describe('Generic Export Detection', () => {
         export interface Bar {}
       `;
       
-      const tree = tsParser.parse(code);
+      const tree = ts_parser.parse(code);
       const result = detect_exports_generic(tree.rootNode, code, 'typescript');
       
       expect(result.requires_bespoke).toBe(true);
@@ -117,7 +117,7 @@ def _private_function():
     pass
       `;
       
-      const tree = pyParser.parse(code);
+      const tree = py_parser.parse(code);
       const result = detect_exports_generic(tree.rootNode, code, 'python');
       
       // Generic handles implicit exports
@@ -135,7 +135,7 @@ def foo():
     pass
       `;
       
-      const tree = pyParser.parse(code);
+      const tree = py_parser.parse(code);
       const result = detect_exports_generic(tree.rootNode, code, 'python');
       
       expect(result.requires_bespoke).toBe(true);
@@ -151,7 +151,7 @@ pub struct PublicStruct;
 fn private_function() {}
       `;
       
-      const tree = rustParser.parse(code);
+      const tree = rust_parser.parse(code);
       const result = detect_exports_generic(tree.rootNode, code, 'rust');
       
       // Basic pub detection handled by generic
@@ -164,7 +164,7 @@ pub(crate) fn crate_function() {}
 pub(super) struct SuperStruct;
       `;
       
-      const tree = rustParser.parse(code);
+      const tree = rust_parser.parse(code);
       const result = detect_exports_generic(tree.rootNode, code, 'rust');
       
       expect(result.requires_bespoke).toBe(true);

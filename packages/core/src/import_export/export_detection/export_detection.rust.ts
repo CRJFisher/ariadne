@@ -467,8 +467,8 @@ function parse_use_tree_recursive(tree: SyntaxNode, path_prefix: string = ''): A
     // List of imports { item1, item2, ... }
     for (const child of tree.children) {
       if (child.type !== ',' && child.type !== '{' && child.type !== '}') {
-        const subItems = parse_use_tree_recursive(child, path_prefix);
-        items.push(...subItems);
+        const sub_items = parse_use_tree_recursive(child, path_prefix);
+        items.push(...sub_items);
       }
     }
   } else if (tree.type === 'use_tree') {
@@ -476,19 +476,19 @@ function parse_use_tree_recursive(tree: SyntaxNode, path_prefix: string = ''): A
     for (const child of tree.children) {
       if (child.type === 'scoped_identifier') {
         // Update path prefix
-        const newPrefix = child.text + '::';
-        const nextChild = tree.children[tree.children.indexOf(child) + 1];
-        if (nextChild && (nextChild.type === 'use_list' || nextChild.type === 'use_wildcard')) {
-          const subItems = parse_use_tree_recursive(nextChild, newPrefix);
-          items.push(...subItems);
+        const new_prefix = child.text + '::';
+        const next_child = tree.children[tree.children.indexOf(child) + 1];
+        if (next_child && (next_child.type === 'use_list' || next_child.type === 'use_wildcard')) {
+          const sub_items = parse_use_tree_recursive(next_child, new_prefix);
+          items.push(...sub_items);
           break;
         } else {
-          const subItems = parse_use_tree_recursive(child, path_prefix);
-          items.push(...subItems);
+          const sub_items = parse_use_tree_recursive(child, path_prefix);
+          items.push(...sub_items);
         }
       } else if (child.type === 'use_as_clause' || child.type === 'use_list' || child.type === 'use_wildcard') {
-        const subItems = parse_use_tree_recursive(child, path_prefix);
-        items.push(...subItems);
+        const sub_items = parse_use_tree_recursive(child, path_prefix);
+        items.push(...sub_items);
       }
     }
   }

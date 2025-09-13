@@ -349,10 +349,10 @@ export function matches_export_pattern(
   // Handle custom patterns object
   if (export_type === 'custom' && patterns && typeof patterns === 'object') {
     // Check all custom pattern arrays
-    const customPatterns = patterns as { [key: string]: RegExp[] };
-    for (const key in customPatterns) {
-      const patternArray = customPatterns[key];
-      if (Array.isArray(patternArray) && patternArray.some(p => p.test(text))) {
+    const custom_patterns = patterns as { [key: string]: RegExp[] };
+    for (const key in custom_patterns) {
+      const pattern_array = custom_patterns[key];
+      if (Array.isArray(pattern_array) && pattern_array.some(p => p.test(text))) {
         return true;
       }
     }

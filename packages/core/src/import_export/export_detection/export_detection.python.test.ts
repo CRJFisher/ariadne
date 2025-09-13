@@ -41,8 +41,8 @@ __all__.append('baz')
       expect(exports.map(e => e.name)).toContain('bar');
       expect(exports.map(e => e.name)).toContain('baz');
       
-      const appendExports = exports.filter(e => e.dynamic_append);
-      expect(appendExports).toHaveLength(2);
+      const append_exports = exports.filter(e => e.dynamic_append);
+      expect(append_exports).toHaveLength(2);
     });
     
     it('should detect __all__.extend() calls', () => {
@@ -58,8 +58,8 @@ __all__.extend(['bar', 'baz'])
       expect(exports.map(e => e.name)).toContain('bar');
       expect(exports.map(e => e.name)).toContain('baz');
       
-      const extendExports = exports.filter(e => e.dynamic_extend);
-      expect(extendExports).toHaveLength(2);
+      const extend_exports = exports.filter(e => e.dynamic_extend);
+      expect(extend_exports).toHaveLength(2);
     });
     
     it('should handle dynamic __all__ with list comprehension', () => {

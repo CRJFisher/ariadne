@@ -16,26 +16,26 @@ import {
 } from './language_configs';
 
 describe('Export Detection Edge Cases', () => {
-  const jsParser = new Parser();
-  jsParser.setLanguage(JavaScript);
+  const js_parser = new Parser();
+  js_parser.setLanguage(JavaScript);
   
-  const tsParser = new Parser();
-  tsParser.setLanguage(TypeScript.typescript);
+  const ts_parser = new Parser();
+  ts_parser.setLanguage(TypeScript.typescript);
   
-  const pyParser = new Parser();
-  pyParser.setLanguage(Python);
+  const py_parser = new Parser();
+  py_parser.setLanguage(Python);
   
-  const rustParser = new Parser();
-  rustParser.setLanguage(Rust);
+  const rust_parser = new Parser();
+  rust_parser.setLanguage(Rust);
   
   describe('JavaScript Advanced Patterns', () => {
     it('should detect async function exports', () => {
       const code = `
-        export async function fetchData() {}
-        export const asyncFn = async () => {};
+        export async function fetch_data() {}
+        export const async_fn = async () => {};
       `;
       
-      const tree = jsParser.parse(code);
+      const tree = js_parser.parse(code);
       const exports = detect_exports(tree.rootNode, code, 'javascript');
       
       expect(exports.length).toBe(2);
@@ -52,7 +52,7 @@ describe('Export Detection Edge Cases', () => {
         }
       `;
       
-      const tree = jsParser.parse(code);
+      const tree = js_parser.parse(code);
       const exports = detect_exports(tree.rootNode, code, 'javascript');
       
       expect(exports.length).toBe(1);
@@ -68,7 +68,7 @@ describe('Export Detection Edge Cases', () => {
         });
       `;
       
-      const tree = jsParser.parse(code);
+      const tree = js_parser.parse(code);
       const exports = detect_exports(tree.rootNode, code, 'javascript');
       
       expect(exports.length).toBe(1);
@@ -83,7 +83,7 @@ describe('Export Detection Edge Cases', () => {
         exports['literalKey'] = 'value2';
       `;
       
-      const tree = jsParser.parse(code);
+      const tree = js_parser.parse(code);
       const exports = detect_exports(tree.rootNode, code, 'javascript');
       
       expect(exports.length).toBe(2);
@@ -99,7 +99,7 @@ describe('Export Detection Edge Cases', () => {
         export { default as MyComponent } from './MyComponent';
       `;
       
-      const tree = jsParser.parse(code);
+      const tree = js_parser.parse(code);
       const exports = detect_exports(tree.rootNode, code, 'javascript');
       
       const barrelExports = exports.filter(e => e.kind === 'barrel');
@@ -114,7 +114,7 @@ describe('Export Detection Edge Cases', () => {
         export = MyClass;
       `;
       
-      const tree = tsParser.parse(code);
+      const tree = ts_parser.parse(code);
       const exports = detect_exports(tree.rootNode, code, 'typescript');
       
       const defaultExport = exports.find(e => e.kind === 'default');
@@ -129,7 +129,7 @@ describe('Export Detection Edge Cases', () => {
         }
       `;
       
-      const tree = tsParser.parse(code);
+      const tree = ts_parser.parse(code);
       const exports = detect_exports(tree.rootNode, code, 'typescript');
       
       expect(exports.length).toBe(1);
@@ -143,7 +143,7 @@ describe('Export Detection Edge Cases', () => {
         export declare class External {}
       `;
       
-      const tree = tsParser.parse(code);
+      const tree = ts_parser.parse(code);
       const exports = detect_exports(tree.rootNode, code, 'typescript');
       
       expect(exports.length).toBe(3);
@@ -161,7 +161,7 @@ describe('Export Detection Edge Cases', () => {
         }
       `;
       
-      const tree = tsParser.parse(code);
+      const tree = ts_parser.parse(code);
       const exports = detect_exports(tree.rootNode, code, 'typescript');
       
       expect(exports.length).toBe(2);
@@ -181,7 +181,7 @@ async def _private_async():
     pass
       `;
       
-      const tree = pyParser.parse(code);
+      const tree = py_parser.parse(code);
       const exports = detect_exports(tree.rootNode, code, 'python');
       
       expect(exports.length).toBe(1);
@@ -202,7 +202,7 @@ class MyClass:
         pass
       `;
       
-      const tree = pyParser.parse(code);
+      const tree = py_parser.parse(code);
       const exports = detect_exports(tree.rootNode, code, 'python');
       
       // MyClass should be exported, but not the dunder methods
@@ -216,7 +216,7 @@ __all__ = ['foo']
 __all__ += ['bar']
       `;
       
-      const tree = pyParser.parse(code);
+      const tree = py_parser.parse(code);
       const exports = detect_exports(tree.rootNode, code, 'python');
       
       const exportNames = exports.map(e => e.name);
@@ -233,7 +233,7 @@ class DataProcessor:
     pass
       `;
       
-      const tree = pyParser.parse(code);
+      const tree = py_parser.parse(code);
       const exports = detect_exports(tree.rootNode, code, 'python');
       
       // DataProcessor should be exported
@@ -249,7 +249,7 @@ class DataProcessor:
         }
       `;
       
-      const tree = rustParser.parse(code);
+      const tree = rust_parser.parse(code);
       const exports = detect_exports(tree.rootNode, code, 'rust');
       
       expect(exports.length).toBe(1);
@@ -263,7 +263,7 @@ class DataProcessor:
         }
       `;
       
-      const tree = rustParser.parse(code);
+      const tree = rust_parser.parse(code);
       const exports = detect_exports(tree.rootNode, code, 'rust');
       
       expect(exports.length).toBe(1);
@@ -278,7 +278,7 @@ class DataProcessor:
         pub(in crate::module) fn module_visible() {}
       `;
       
-      const tree = rustParser.parse(code);
+      const tree = rust_parser.parse(code);
       const exports = detect_exports(tree.rootNode, code, 'rust');
       
       // All should be detected with appropriate visibility levels
@@ -294,7 +294,7 @@ class DataProcessor:
         pub use crate::utils::*;
       `;
       
-      const tree = rustParser.parse(code);
+      const tree = rust_parser.parse(code);
       const exports = detect_exports(tree.rootNode, code, 'rust');
       
       const namespaceExports = exports.filter(e => e.kind === 'namespace');
@@ -339,7 +339,7 @@ class DataProcessor:
       ).join('\n');
       
       const code = exports;
-      const tree = jsParser.parse(code);
+      const tree = js_parser.parse(code);
       
       const start = performance.now();
       const detectedExports = detect_exports(tree.rootNode, code, 'javascript');
@@ -356,7 +356,7 @@ class DataProcessor:
         const foo = 'value';
       `;
       
-      const tree = jsParser.parse(code);
+      const tree = js_parser.parse(code);
       const exports = detect_exports(tree.rootNode, code, 'javascript');
       
       // Should have unique exports based on name and location

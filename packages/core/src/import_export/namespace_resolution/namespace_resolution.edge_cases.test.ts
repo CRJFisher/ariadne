@@ -30,7 +30,7 @@ import { randomBytes } from 'crypto';
 
 describe('Namespace Resolution Edge Cases', () => {
   // Helper to create a temporary test project
-  function createTestProject(files: Record<string, string>): string {
+  function create_test_project(files: Record<string, string>): string {
     const projectDir = join(tmpdir(), `edge-test-${randomBytes(8).toString('hex')}`);
     mkdirSync(projectDir, { recursive: true });
     
@@ -47,7 +47,7 @@ describe('Namespace Resolution Edge Cases', () => {
   }
 
   // Cleanup helper
-  function cleanupProject(projectDir: string) {
+  function cleanup_project(projectDir: string) {
     try {
       rmSync(projectDir, { recursive: true, force: true });
     } catch {
@@ -94,7 +94,7 @@ describe('Namespace Resolution Edge Cases', () => {
     });
 
     it('should handle imports from empty modules', async () => {
-      const projectDir = createTestProject({
+      const projectDir = create_test_project({
         'empty.js': '',
         'importer.js': 'import * as empty from "./empty";'
       });
@@ -111,7 +111,7 @@ describe('Namespace Resolution Edge Cases', () => {
         expect(importerFile?.imports).toHaveLength(1);
         expect(importerFile?.imports[0].source).toContain('empty');
       } finally {
-        cleanupProject(projectDir);
+        cleanup_project(projectDir);
       }
     });
   });
@@ -140,7 +140,7 @@ describe('Namespace Resolution Edge Cases', () => {
     });
 
     it('should handle missing transitive dependencies', async () => {
-      const projectDir = createTestProject({
+      const projectDir = create_test_project({
         'a.js': 'export * from "./b";',
         'c.js': 'import * as a from "./a";'
         // Note: b.js is missing
@@ -155,7 +155,7 @@ describe('Namespace Resolution Edge Cases', () => {
         // Should not crash despite missing dependency
         expect(graph.files.size).toBeGreaterThan(0);
       } finally {
-        cleanupProject(projectDir);
+        cleanup_project(projectDir);
       }
     });
   });
@@ -239,7 +239,7 @@ describe('Namespace Resolution Edge Cases', () => {
     });
 
     it('should handle circular namespace references', async () => {
-      const projectDir = createTestProject({
+      const projectDir = create_test_project({
         'a.ts': `
           import * as b from './b';
           export const fromA = 'a';
@@ -261,7 +261,7 @@ describe('Namespace Resolution Edge Cases', () => {
         // Should handle circular dependencies without infinite loop
         expect(graph.files.size).toBe(2);
       } finally {
-        cleanupProject(projectDir);
+        cleanup_project(projectDir);
       }
     });
   });
