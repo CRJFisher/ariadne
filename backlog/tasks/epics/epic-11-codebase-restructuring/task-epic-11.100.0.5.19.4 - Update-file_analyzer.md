@@ -73,6 +73,7 @@ import type {
 4. **Known Issues for Follow-up**
    - Some downstream modules (call_chain_analysis, constructor_calls) need updates for new type signatures
    - Type tracker conversion to Map<SymbolId, TypeInfo> needs implementation
+   - Call type property mismatches need fixing (see task-epic-11.100.0.5.19.22)
    - These are separate tasks as they involve other modules
 
 ### Implementation Decisions

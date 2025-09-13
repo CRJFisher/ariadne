@@ -14,6 +14,8 @@ priority: high
 
 Fix property name mismatches and missing properties in call types and CallChainNode that cause compilation errors after type refactoring.
 
+**Note**: file_analyzer.ts (task-epic-11.100.0.5.19.4) has been successfully updated to use new types, but downstream compilation depends on resolving these call type issues.
+
 ## Issues to Fix
 
 ### 1. CallChainNode Property Mismatches
