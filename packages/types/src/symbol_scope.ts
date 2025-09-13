@@ -5,10 +5,108 @@
 
 import { Location, Language, TypeParameter } from "./common";
 import { FilePath, DocString } from "./aliases";
-import { ScopePath, Visibility, TypeExpression } from "./branded_types";
+import { TypeExpression } from "./type_analysis";
 import { SymbolName, SymbolId, SymbolKind } from "./symbol_utils";
 import { SemanticNode, Resolution } from "./query";
 import { ScopeType } from "./scopes";
+
+// ============================================================================
+// Branded Types for Symbol & Scope
+// ============================================================================
+
+/** Scope path (e.g., "global.module.class.method.block") */
+export type ScopePath = string & { __brand: "ScopePath" };
+
+/** Resolution path for symbols */
+export type ResolutionPath = string & { __brand: "ResolutionPath" };
+
+/** Visibility modifiers */
+export type Visibility = "public" | "private" | "protected" | "internal";
+
+/** Resolution reason for call graph */
+export type ResolutionReason =
+  | "imported"
+  | "local_definition"
+  | "class_member"
+  | "inherited"
+  | "builtin"
+  | "global"
+  | "unknown";
+
+// ============================================================================
+// Type Guards for Symbol & Scope
+// ============================================================================
+
+export function is_scope_path(value: unknown): value is ScopePath {
+  return typeof value === "string" && value.includes(".");
+}
+
+export function is_visibility(value: unknown): value is Visibility {
+  return (
+    value === "public" ||
+    value === "private" ||
+    value === "protected" ||
+    value === "internal"
+  );
+}
+
+export function is_resolution_reason(
+  value: unknown
+): value is ResolutionReason {
+  return (
+    value === "imported" ||
+    value === "local_definition" ||
+    value === "class_member" ||
+    value === "inherited" ||
+    value === "builtin" ||
+    value === "global" ||
+    value === "unknown"
+  );
+}
+
+// ============================================================================
+// Branded Type Creators for Symbol & Scope
+// ============================================================================
+
+export function to_scope_path(value: string): ScopePath {
+  if (!value || !value.includes(".")) {
+    throw new Error(
+      `Invalid ScopePath format: "${value}". Expected format: "scope1.scope2.scope3"`
+    );
+  }
+  return value as ScopePath;
+}
+
+/**
+ * Build a ScopePath from scope names
+ */
+export function build_scope_path(scopes: string[]): ScopePath {
+  if (scopes.length === 0) {
+    throw new Error("ScopePath requires at least one scope");
+  }
+  return scopes.join(".") as ScopePath;
+}
+
+/**
+ * Parse a ScopePath into scope names
+ */
+export function parse_scope_path(path: ScopePath): string[] {
+  return path.split(".");
+}
+
+/**
+ * Build a ResolutionPath from file paths
+ */
+export function build_resolution_path(paths: FilePath[]): ResolutionPath {
+  return paths.join(" -> ") as ResolutionPath;
+}
+
+/**
+ * Parse a ResolutionPath into file paths
+ */
+export function parse_resolution_path(path: ResolutionPath): FilePath[] {
+  return path.split(" -> ").map((p) => p.trim() as FilePath);
+}
 
 // ============================================================================
 // Symbol Types
@@ -194,6 +292,7 @@ export function create_symbol_definition(
     is_optional: false,
     type_parameters: [],
     child_symbols: [],
+    modifiers: [], // Always provide default empty array for non-nullable field
     ...options,
   };
 }
@@ -274,13 +373,6 @@ export function is_symbol_accessible(
   }
 
   return false;
-}
-
-/**
- * Build a scope path from components
- */
-export function build_scope_path(components: string[]): ScopePath {
-  return components.join(".") as ScopePath;
 }
 
 /**

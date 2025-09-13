@@ -4,13 +4,98 @@
  */
 
 import { Location } from "./common";
-import { FilePath, ClassName, ModulePath } from "./aliases";
-import {
-  CallerContext,
-  ResolvedTypeKind,
-} from "./branded_types";
+import { FilePath, ClassName } from "./aliases";
+import { ModulePath } from "./import_export";
 import { SymbolId } from "./symbol_utils";
 import { SemanticNode, Resolution } from "./query";
+
+// ============================================================================
+// Branded Types for Call Graph
+// ============================================================================
+
+/** Name of the calling function/method */
+export type CallerName = string & { __brand: "CallerName" };
+
+/** Name of the called function/method */
+export type CalleeName = string & { __brand: "CalleeName" };
+
+/** Name of the object receiving a method call */
+export type ReceiverName = string & { __brand: "ReceiverName" };
+
+/** Special constant for module-level context */
+export const MODULE_CONTEXT = "<module>" as const;
+export type ModuleContext = typeof MODULE_CONTEXT;
+
+/** Caller can be a symbol or module context */
+export type CallerContext = CallerName | ModuleContext;
+
+/** Type kind for resolved types */
+export type ResolvedTypeKind =
+  | "class"
+  | "interface"
+  | "type"
+  | "enum"
+  | "trait"
+  | "primitive"
+  | "unknown";
+
+/** Call type */
+export type CallType =
+  | "direct"
+  | "method"
+  | "constructor"
+  | "dynamic"
+  | "macro"
+  | "decorator";
+
+// ============================================================================
+// Type Guards for Call Graph
+// ============================================================================
+
+export function is_caller_name(value: unknown): value is CallerName {
+  return typeof value === "string" && value.length > 0;
+}
+
+export function is_callee_name(value: unknown): value is CalleeName {
+  return typeof value === "string" && value.length > 0;
+}
+
+export function is_receiver_name(value: unknown): value is ReceiverName {
+  return typeof value === "string" && value.length > 0;
+}
+
+export function is_module_context(value: unknown): value is ModuleContext {
+  return value === MODULE_CONTEXT;
+}
+
+export function is_caller_context(value: unknown): value is CallerContext {
+  return is_caller_name(value) || is_module_context(value);
+}
+
+// ============================================================================
+// Branded Type Creators for Call Graph
+// ============================================================================
+
+export function to_caller_name(value: string): CallerName {
+  if (!value || value.length === 0) {
+    throw new Error(`Invalid CallerName: "${value}"`);
+  }
+  return value as CallerName;
+}
+
+export function to_callee_name(value: string): CalleeName {
+  if (!value || value.length === 0) {
+    throw new Error(`Invalid CalleeName: "${value}"`);
+  }
+  return value as CalleeName;
+}
+
+export function to_receiver_name(value: string): ReceiverName {
+  if (!value || value.length === 0) {
+    throw new Error(`Invalid ReceiverName: "${value}"`);
+  }
+  return value as ReceiverName;
+}
 
 // ============================================================================
 // Call Information
@@ -218,6 +303,7 @@ export function create_function_call(
     is_dynamic: false,
     is_macro_call: false,
     is_in_comprehension: false,
+    modifiers: [], // Always provide default empty array for non-nullable field
     ...options,
   };
 }
@@ -246,6 +332,7 @@ export function create_method_call(
     is_chained: false,
     is_async: false,
     is_dynamic: false,
+    modifiers: [], // Always provide default empty array for non-nullable field
     // Required fields with defaults
     receiver_type: {
       resolved: {
@@ -281,6 +368,7 @@ export function create_constructor_call(
     is_factory: false,
     is_async: false,
     is_dynamic: false,
+    modifiers: [], // Always provide default empty array for non-nullable field
     // Required fields with defaults
     assigned_to: `anonymous_${Date.now()}` as SymbolId,
     ...options,

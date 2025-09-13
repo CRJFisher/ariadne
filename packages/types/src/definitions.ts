@@ -18,13 +18,13 @@ import {
   QualifiedName,
 } from "./aliases";
 import {
-  TypeConstraint,
+  TypeConstraintExpression,
   DefaultValue,
   Expression,
   InitialValue,
   TypeExpression,
-  Visibility,
-} from "./branded_types";
+} from "./type_analysis";
+import { Visibility } from "./symbol_scope";
 import { SymbolName, SymbolId } from "./symbol_utils";
 
 /**

@@ -3,9 +3,69 @@ export * from "./immutable";
 
 // Export all aliases (fundamental branded types)
 export * from "./aliases";
+export { build_qualified_name, parse_qualified_name } from "./aliases";
 
-// Export everything from branded_types (takes precedence)
-export * from "./branded_types";
+// Export branded types from their new locations
+export {
+  CallerName,
+  CalleeName,
+  ReceiverName,
+  MODULE_CONTEXT,
+  ModuleContext,
+  CallerContext,
+  ResolvedTypeKind,
+  CallType,
+  is_caller_name,
+  is_callee_name,
+  is_receiver_name,
+  is_module_context,
+  is_caller_context,
+  to_caller_name,
+  to_callee_name,
+  to_receiver_name,
+} from "./calls";
+
+export {
+  ModulePath,
+  NamespaceName,
+  build_module_path,
+  parse_module_path,
+} from "./import_export";
+
+export {
+  ScopePath,
+  ResolutionPath,
+  Visibility,
+  ResolutionReason,
+  is_scope_path,
+  is_visibility,
+  is_resolution_reason,
+  to_scope_path,
+  build_scope_path,
+  parse_scope_path,
+  build_resolution_path,
+  parse_resolution_path,
+} from "./symbol_scope";
+
+export {
+  TypeExpression,
+  TypeConstraintExpression,
+  DefaultValue,
+  Expression,
+  InitialValue,
+  TypeModifier,
+  is_type_expression,
+  is_type_constraint_expression,
+  is_default_value,
+  is_expression,
+  to_type_expression,
+  to_type_constraint_expression,
+  to_default_value,
+  to_expression,
+  to_initial_value,
+  build_type_expression,
+  parse_type_expression,
+} from "./type_analysis";
 
 // Export from common, excluding types that conflict with branded_types
 export {
@@ -31,6 +91,11 @@ export {
   is_symbol,
   is_symbol_id,
   is_symbol_kind,
+  is_symbol_name,
+  to_symbol_name,
+  to_symbol_id,
+  build_symbol_id,
+  parse_symbol_id,
   get_symbol_display_name,
   variable_symbol,
   function_symbol,

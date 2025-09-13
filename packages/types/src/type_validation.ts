@@ -5,16 +5,20 @@
 
 import { Language, Location } from "./common";
 import {
-  is_symbol_name,
-  is_symbol_id,
   is_caller_name,
   is_callee_name,
   is_receiver_name,
   is_module_context,
   is_caller_context,
+} from "./calls";
+import {
   is_visibility,
   is_resolution_reason,
-} from "./branded_types";
+} from "./symbol_scope";
+import {
+  is_symbol_name,
+  is_symbol_id,
+} from "./symbol_utils";
 import {
   is_ast_node,
   is_semantic_node,

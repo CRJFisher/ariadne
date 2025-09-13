@@ -1,11 +1,10 @@
 import { Location } from "./common";
 import {
   FilePath,
-  ModulePath,
   ImportName,
   ExportName,
-  NamespaceName,
 } from "./aliases";
+import { ModulePath, NamespaceName } from "./import_export";
 import { SymbolName, SymbolId } from "./symbol_utils";
 
 /**

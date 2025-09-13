@@ -5,19 +5,25 @@
 import {
   MODULE_CONTEXT,
   CallerContext,
-  to_symbol_name,
-  to_symbol_id,
   to_caller_name,
-  is_symbol_name,
-  is_symbol_id,
   is_module_context,
-  build_symbol_id,
-  parse_symbol_id,
+} from "./calls";
+import {
   build_scope_path,
   parse_scope_path,
+} from "./symbol_scope";
+import {
+  is_symbol_name,
+  is_symbol_id,
+  to_symbol_name,
+  to_symbol_id,
+  build_symbol_id,
+  parse_symbol_id,
+} from "./symbol_utils";
+import {
   build_qualified_name,
   parse_qualified_name,
-} from "./branded_types";
+} from "./aliases";
 import { FilePath, ClassName, MethodName, FunctionName } from "./aliases";
 import { describe, expect, it } from "vitest";
 

@@ -170,3 +170,74 @@ export function filter_non_null<T>(array: readonly (T | null | undefined)[]): T[
 export function find_non_null<T>(array: readonly (T | null | undefined)[]): T | undefined {
   return array.find(is_not_null);
 }
+
+/**
+ * Assert that an optional field is present and return as non-optional
+ */
+export function assert_field_present<T, K extends keyof T>(
+  obj: T,
+  field: K,
+  message: string
+): asserts obj is T & Required<Pick<T, K>> {
+  if (obj[field] == null) {
+    throw new Error(`${message}: Required field '${String(field)}' is missing`);
+  }
+}
+
+/**
+ * Type guard to check if an optional field is present
+ */
+export function has_field<T, K extends keyof T>(
+  obj: T,
+  field: K
+): obj is T & Required<Pick<T, K>> {
+  return obj[field] != null;
+}
+
+/**
+ * Assert that all required fields are present in a partial object
+ */
+export function assert_required_fields<T extends object>(
+  obj: Partial<T>,
+  requiredFields: (keyof T)[],
+  message: string
+): asserts obj is T {
+  for (const field of requiredFields) {
+    if (obj[field] == null) {
+      throw new Error(`${message}: Required field '${String(field)}' is missing`);
+    }
+  }
+}
+
+/**
+ * Type guard for objects that have all specified required fields
+ */
+export function has_required_fields<T extends object>(
+  obj: Partial<T>,
+  requiredFields: (keyof T)[]
+): obj is T {
+  return requiredFields.every(field => obj[field] != null);
+}
+
+/**
+ * Assert that a value is in a specific array of valid values (for enums/unions)
+ */
+export function assert_valid_value<T extends readonly unknown[]>(
+  value: unknown,
+  validValues: T,
+  message: string
+): asserts value is T[number] {
+  if (!validValues.includes(value)) {
+    throw new Error(`${message}: Value "${String(value)}" is not one of: ${validValues.map(String).join(', ')}`);
+  }
+}
+
+/**
+ * Type guard for checking if a value is in a specific array (for enums/unions)
+ */
+export function is_valid_value<T extends readonly unknown[]>(
+  value: unknown,
+  validValues: T
+): value is T[number] {
+  return validValues.includes(value);
+}

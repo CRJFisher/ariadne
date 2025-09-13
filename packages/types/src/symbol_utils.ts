@@ -430,6 +430,46 @@ export function type_symbol(
 // ============================================================================
 
 /**
+ * Build a SymbolId from components
+ */
+export function build_symbol_id(
+  filePath: FilePath,
+  line: number,
+  column: number,
+  name: SymbolName
+): SymbolId {
+  return `${filePath}:${line}:${column}:${name}` as SymbolId;
+}
+
+/**
+ * Parse a SymbolId into components
+ */
+export function parse_symbol_id(id: SymbolId): {
+  filePath: FilePath;
+  line: number;
+  column: number;
+  name: SymbolName;
+} {
+  const parts = id.split(":");
+  if (parts.length < 4) {
+    throw new Error(`Invalid SymbolId format: "${id}"`);
+  }
+
+  // Handle file paths with colons (e.g., Windows C:\path)
+  const name_index = parts.length - 1;
+  const column_index = parts.length - 2;
+  const line_index = parts.length - 3;
+  const file_path_parts = parts.slice(0, line_index);
+
+  return {
+    filePath: file_path_parts.join(":") as FilePath,
+    line: parseInt(parts[line_index], 10),
+    column: parseInt(parts[column_index], 10),
+    name: parts[name_index] as SymbolName,
+  };
+}
+
+/**
  * Get the display name for a symbol (for UI/debugging)
  */
 export function get_symbol_display_name(symbol_id: SymbolId): SymbolName {
@@ -550,7 +590,31 @@ export function type_names_to_symbols(
   scope: FilePath,
   location: Location
 ): SymbolId[] {
-  return names.map(name => 
+  return names.map(name =>
     type_symbol(name, scope, location)
   );
+}
+
+// ============================================================================
+// Additional Type Guards and Creators
+// ============================================================================
+
+export function is_symbol_name(value: unknown): value is SymbolName {
+  return typeof value === "string" && value.length > 0;
+}
+
+export function to_symbol_name(value: string): SymbolName {
+  if (!value || value.length === 0) {
+    throw new Error(`Invalid SymbolName: "${value}"`);
+  }
+  return value as SymbolName;
+}
+
+export function to_symbol_id(value: string): SymbolId {
+  if (!value || !value.includes(":")) {
+    throw new Error(
+      `Invalid SymbolId format: "${value}". Expected format: "file:line:column:name"`
+    );
+  }
+  return value as SymbolId;
 }

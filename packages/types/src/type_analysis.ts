@@ -4,11 +4,197 @@
  */
 
 import { Location, Language, TypeParameter } from "./common";
-import { FilePath } from "./aliases";
-import { TypeExpression, ResolvedTypeKind } from "./branded_types";
+import { FilePath, TypeName } from "./aliases";
 import { SymbolName } from "./symbol_utils";
 import { SymbolId } from "./symbol_utils";
 import { SemanticNode, Resolution, ResolutionConfidence } from "./query";
+
+// ============================================================================
+// Branded Types for Type Analysis
+// ============================================================================
+
+/** Type expression (more specific than TypeString) */
+export type TypeExpression = string & { __brand: "TypeExpression" };
+
+/** Type constraint expression (e.g., "T extends BaseClass") */
+export type TypeConstraintExpression = string & { __brand: "TypeConstraintExpression" };
+
+/** Default value expression */
+export type DefaultValue = string & { __brand: "DefaultValue" };
+
+/** Code expression */
+export type Expression = string & { __brand: "Expression" };
+
+/** Initial value for a variable */
+export type InitialValue = string & { __brand: "InitialValue" };
+
+/** Type kind for resolved types */
+export type ResolvedTypeKind =
+  | "class"
+  | "interface"
+  | "type"
+  | "enum"
+  | "trait"
+  | "primitive"
+  | "unknown";
+
+// ============================================================================
+// Type Guards for Type Analysis
+// ============================================================================
+
+export function is_type_expression(value: unknown): value is TypeExpression {
+  return typeof value === "string" && value.length > 0;
+}
+
+export function is_type_constraint_expression(value: unknown): value is TypeConstraintExpression {
+  return typeof value === "string" && value.length > 0;
+}
+
+export function is_default_value(value: unknown): value is DefaultValue {
+  return typeof value === "string";
+}
+
+export function is_expression(value: unknown): value is Expression {
+  return typeof value === "string";
+}
+
+// ============================================================================
+// Branded Type Creators for Type Analysis
+// ============================================================================
+
+export function to_type_expression(value: string): TypeExpression {
+  if (!value || value.length === 0) {
+    throw new Error(`Invalid TypeExpression: "${value}"`);
+  }
+  return value as TypeExpression;
+}
+
+export function to_type_constraint_expression(value: string): TypeConstraintExpression {
+  if (!value || value.length === 0) {
+    throw new Error(`Invalid TypeConstraintExpression: "${value}"`);
+  }
+  return value as TypeConstraintExpression;
+}
+
+export function to_default_value(value: string): DefaultValue {
+  return value as DefaultValue;
+}
+
+export function to_expression(value: string): Expression {
+  return value as Expression;
+}
+
+export function to_initial_value(value: string): InitialValue {
+  return value as InitialValue;
+}
+
+// ============================================================================
+// Type Expression Utilities
+// ============================================================================
+
+export type TypeModifier =
+  | "array"
+  | "nullable"
+  | "optional"
+  | "promise"
+  | "readonly";
+
+/**
+ * Build a TypeExpression from components
+ */
+export function build_type_expression(
+  base: string,
+  generics?: string[],
+  modifiers?: TypeModifier[]
+): TypeExpression {
+  let expr = base;
+
+  // Add generic parameters
+  if (generics && generics.length > 0) {
+    expr += `<${generics.join(", ")}>`;
+  }
+
+  // Apply modifiers
+  if (modifiers) {
+    for (const modifier of modifiers) {
+      switch (modifier) {
+        case "array":
+          expr += "[]";
+          break;
+        case "nullable":
+          expr += " | null";
+          break;
+        case "optional":
+          expr += " | undefined";
+          break;
+        case "promise":
+          expr = `Promise<${expr}>`;
+          break;
+        case "readonly":
+          expr = `readonly ${expr}`;
+          break;
+      }
+    }
+  }
+
+  return to_type_expression(expr);
+}
+
+/**
+ * Parse a TypeExpression into components
+ */
+export function parse_type_expression(expr: TypeExpression): {
+  base: string;
+  generics?: string[];
+  is_array: boolean;
+  is_nullable: boolean;
+  is_optional: boolean;
+  is_promise: boolean;
+  is_union: boolean;
+  union_types?: string[];
+} {
+  const str = expr as string;
+
+  // Check for union types
+  const is_union = str.includes(" | ");
+  const union_types = is_union
+    ? str.split(" | ").map((s) => s.trim())
+    : undefined;
+
+  // Check for Promise
+  const is_promise = str.startsWith("Promise<");
+
+  // Check for array
+  const is_array = str.endsWith("[]");
+
+  // Check for nullable/optional
+  const is_nullable = str.includes(" | null");
+  const is_optional = str.includes(" | undefined");
+
+  // Extract base type and generics
+  let base = str;
+  let generics: string[] | undefined;
+
+  // Simple generic extraction (doesn't handle nested generics perfectly)
+  const generic_match = /^([^<]+)<([^>]+)>/.exec(str);
+  if (generic_match) {
+    base = generic_match[1];
+    generics = generic_match[2].split(",").map((s) => s.trim());
+  } else if (is_array) {
+    base = str.replace(/\[\]$/, "");
+  }
+
+  return {
+    base,
+    generics,
+    is_array,
+    is_nullable,
+    is_optional,
+    is_promise,
+    is_union,
+    union_types,
+  };
+}
 
 // ============================================================================
 // Core Type Definition
@@ -294,6 +480,7 @@ export function create_type_definition(
     is_final: false,
     is_nullable: false,
     is_optional: false,
+    modifiers: [], // Always provide default empty array for non-nullable field
     ...options,
   };
 }
@@ -342,5 +529,6 @@ export function create_tracked_type(
     location,
     language,
     node_type: "type_annotation",
+    modifiers: [], // Always provide default empty array for non-nullable field
   };
 }
