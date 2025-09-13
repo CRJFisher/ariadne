@@ -73,7 +73,6 @@ describe('Member Access Type Safety', () => {
 
     // This test verifies that TypeScript prevents mutation
     // The following would cause a compilation error if uncommented:
-    // @ts-expect-error - namespace_imports is readonly
     // context.namespace_imports.add('new' as NamespaceName);
 
     expect(context.namespace_imports.size).toBe(1);

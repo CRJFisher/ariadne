@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createAnalysisCache } from './analysis_cache';
+import { create_analysis_cache } from './analysis_cache';
 import { FileAnalysis, Language, FilePath, SourceCode } from '@ariadnejs/types';
 
 describe('AnalysisCache', () => {
-  let cache: ReturnType<typeof createAnalysisCache>;
+  let cache: ReturnType<typeof create_analysis_cache>;
 
   beforeEach(() => {
-    cache = createAnalysisCache({
+    cache = create_analysis_cache({
       enabled: true,
       ttl: 1000, // 1 second for testing
       maxSize: 3
@@ -29,7 +29,7 @@ describe('AnalysisCache', () => {
         method_calls: [],
         constructor_calls: [],
         type_info: new Map(),
-        scopes: { nodes: new Map(), root_id: 'root' as any, language: 'javascript' as Language }
+        scopes: { nodes: new Map(), root_id: 'root' as any, file_path: '/test/file.js' }
       } as FileAnalysis;
 
       const content = 'const x = 1;';
@@ -58,7 +58,7 @@ describe('AnalysisCache', () => {
         method_calls: [],
         constructor_calls: [],
         type_info: new Map(),
-        scopes: { nodes: new Map(), root_id: 'root' as any, language: 'javascript' as Language }
+        scopes: { nodes: new Map(), root_id: 'root' as any, file_path: '/test/file.js' }
       } as FileAnalysis;
 
       const content1 = 'const x = 1;';
@@ -87,7 +87,7 @@ describe('AnalysisCache', () => {
         method_calls: [],
         constructor_calls: [],
         type_info: new Map(),
-        scopes: { nodes: new Map(), root_id: 'root' as any, language: 'javascript' as Language }
+        scopes: { nodes: new Map(), root_id: 'root' as any, file_path: '/test/file.js' }
       } as FileAnalysis;
 
       const content = 'const x = 1;';
@@ -126,7 +126,7 @@ describe('AnalysisCache', () => {
           method_calls: [],
           constructor_calls: [],
           type_info: new Map(),
-          scopes: { nodes: new Map(), root_id: 'root' as any, language: 'javascript' as Language }
+          scopes: { nodes: new Map(), root_id: 'root' as any, file_path: '/test/file.js' }
         } as FileAnalysis;
         
         cache.cacheAnalysis(`/test/file${i}.js`, content, mockAnalysis);
@@ -152,7 +152,7 @@ describe('AnalysisCache', () => {
         method_calls: [],
         constructor_calls: [],
         type_info: new Map(),
-        scopes: { nodes: new Map(), root_id: 'root' as any, language: 'javascript' as Language }
+        scopes: { nodes: new Map(), root_id: 'root' as any, file_path: '/test/file.js' }
       } as FileAnalysis;
       
       cache.cacheAnalysis('/test/file4.js', content, mockAnalysis4);
@@ -187,7 +187,7 @@ describe('AnalysisCache', () => {
         method_calls: [],
         constructor_calls: [],
         type_info: new Map(),
-        scopes: { nodes: new Map(), root_id: 'root' as any, language: 'javascript' as Language }
+        scopes: { nodes: new Map(), root_id: 'root' as any, file_path: '/test/file.js' }
       } as FileAnalysis;
       
       cache.cacheAnalysis('/test/file.js', 'const x = 1;', mockAnalysis);
@@ -199,7 +199,7 @@ describe('AnalysisCache', () => {
 
   describe('Disabled cache', () => {
     it('should not cache when disabled', () => {
-      const disabledCache = createAnalysisCache({
+      const disabledCache = create_analysis_cache({
         enabled: false
       });
       
@@ -217,7 +217,7 @@ describe('AnalysisCache', () => {
         method_calls: [],
         constructor_calls: [],
         type_info: new Map(),
-        scopes: { nodes: new Map(), root_id: 'root' as any, language: 'javascript' as Language }
+        scopes: { nodes: new Map(), root_id: 'root' as any, file_path: '/test/file.js' }
       } as FileAnalysis;
       
       const content = 'const x = 1;';
