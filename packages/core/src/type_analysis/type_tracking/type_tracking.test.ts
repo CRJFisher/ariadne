@@ -345,14 +345,14 @@ from package.module import SomeClass as Alias
       expect(get_imported_class(tracker, "MyClass")?.source_module).toBe(
         "mymodule"
       );
-      const aliasImport = get_imported_class(tracker, "Alias");
-      if (aliasImport?.class_symbol) {
-        const parts = aliasImport.class_symbol.split(':');
-        const className = parts.length > 7 ? parts[7] : parts[6];
-        expect(className).toBe("SomeClass");
+      const alias_import = get_imported_class(tracker, "Alias");
+      if (alias_import?.class_symbol) {
+        const parts = alias_import.class_symbol.split(':');
+        const class_name = parts.length > 7 ? parts[7] : parts[6];
+        expect(class_name).toBe("SomeClass");
       } else {
         // Legacy support
-        expect((aliasImport as any)?.class_name).toBe("SomeClass");
+        expect((alias_import as any)?.class_name).toBe("SomeClass");
       }
     });
 
@@ -460,14 +460,14 @@ use crate::utils::helper as h;
       expect(get_imported_class(tracker, "MyStruct")?.source_module).toBe(
         "super::module::MyStruct"
       );
-      const hImport = get_imported_class(tracker, "h");
-      if (hImport?.class_symbol) {
-        const parts = hImport.class_symbol.split(':');
-        const className = parts.length > 7 ? parts[7] : parts[6];
-        expect(className).toBe("helper");
+      const h_import = get_imported_class(tracker, "h");
+      if (h_import?.class_symbol) {
+        const parts = h_import.class_symbol.split(':');
+        const class_name = parts.length > 7 ? parts[7] : parts[6];
+        expect(class_name).toBe("helper");
       } else {
         // Legacy support
-        expect((hImport as any)?.class_name).toBe("helper");
+        expect((h_import as any)?.class_name).toBe("helper");
       }
     });
 

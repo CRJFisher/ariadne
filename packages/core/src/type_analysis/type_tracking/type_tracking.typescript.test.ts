@@ -22,13 +22,13 @@ import { FilePath, SourceCode } from "@ariadnejs/types";
 describe("TypeScript bespoke type tracking", () => {
   const parser = get_language_parser("typescript");
 
-  function parseAndGetNode(code: string, nodeType: string) {
+  function parse_and_get_node(code: string, node_type: string) {
     const tree = parser.parse(code);
-    let targetNode: any = null;
+    let target_node: any = null;
 
     function walk(node: any) {
-      if (node.type === nodeType && !targetNode) {
-        targetNode = node;
+      if (node.type === node_type && !target_node) {
+        target_node = node;
         return;
       }
       for (let i = 0; i < node.childCount; i++) {
@@ -36,7 +36,7 @@ describe("TypeScript bespoke type tracking", () => {
       }
     }
     walk(tree.rootNode);
-    return targetNode;
+    return target_node;
   }
 
   describe("Interface tracking", () => {
@@ -48,7 +48,7 @@ describe("TypeScript bespoke type tracking", () => {
         }
       `;
 
-      const interfaceNode = parseAndGetNode(code, "interface_declaration");
+      const interface_node = parse_and_get_node(code, "interface_declaration");
       const tracker = create_file_type_tracker();
       const context = {
         language: "typescript" as const,
@@ -58,14 +58,14 @@ describe("TypeScript bespoke type tracking", () => {
 
       const updated = track_typescript_interface(
         tracker,
-        interfaceNode,
+        interface_node,
         context
       );
-      const interfaceType = get_variable_type(updated, "interface:User");
+      const interface_type = get_variable_type(updated, "interface:User");
 
-      expect(interfaceType?.type_name).toBe("User");
-      expect(interfaceType?.type_kind).toBe("interface");
-      expect(interfaceType?.source).toBe("annotation");
+      expect(interface_type?.type_name).toBe("User");
+      expect(interface_type?.type_kind).toBe("interface");
+      expect(interface_type?.source).toBe("annotation");
     });
 
     it("should track exported interfaces", () => {
@@ -75,8 +75,8 @@ describe("TypeScript bespoke type tracking", () => {
         }
       `;
 
-      const exportNode = parseAndGetNode(code, "export_statement");
-      const interfaceNode = exportNode?.childForFieldName("declaration");
+      const export_node = parse_and_get_node(code, "export_statement");
+      const interface_node = export_node?.childForFieldName("declaration");
       const tracker = create_file_type_tracker();
       const context = {
         language: "typescript" as const,
@@ -84,10 +84,10 @@ describe("TypeScript bespoke type tracking", () => {
         source_code: code as SourceCode,
       };
 
-      if (interfaceNode) {
+      if (interface_node) {
         const updated = track_typescript_interface(
           tracker,
-          interfaceNode,
+          interface_node,
           context
         );
         expect(is_exported(updated, "User")).toBe(true);
@@ -101,19 +101,19 @@ describe("TypeScript bespoke type tracking", () => {
         type UserId = string;
       `;
 
-      const typeAliasNode = parseAndGetNode(code, "type_alias_declaration");
+      const type_alias_node = parse_and_get_node(code, "type_alias_declaration");
       const tracker = create_file_type_tracker();
       const context = { language: "typescript" as const, file_path: "test.ts" as FilePath, source_code: code as SourceCode };
 
       const updated = track_typescript_type_alias(
         tracker,
-        typeAliasNode,
+        type_alias_node,
         context
       );
-      const aliasType = get_variable_type(updated, "type:UserId");
+      const alias_type = get_variable_type(updated, "type:UserId");
 
-      expect(aliasType?.type_name).toBe("UserId");
-      expect(aliasType?.confidence).toBe("explicit");
+      expect(alias_type?.type_name).toBe("UserId");
+      expect(alias_type?.confidence).toBe("explicit");
     });
   });
 
@@ -127,15 +127,15 @@ describe("TypeScript bespoke type tracking", () => {
         }
       `;
 
-      const enumNode = parseAndGetNode(code, "enum_declaration");
+      const enum_node = parse_and_get_node(code, "enum_declaration");
       const tracker = create_file_type_tracker();
       const context = { language: "typescript" as const, file_path: "test.ts" as FilePath, source_code: code as SourceCode };
 
-      const updated = track_typescript_enum(tracker, enumNode, context);
-      const enumType = get_variable_type(updated, "enum:Status");
+      const updated = track_typescript_enum(tracker, enum_node, context);
+      const enum_type = get_variable_type(updated, "enum:Status");
 
-      expect(enumType?.type_name).toBe("Status");
-      expect(enumType?.type_kind).toBe("class"); // Enums behave like classes
+      expect(enum_type?.type_name).toBe("Status");
+      expect(enum_type?.type_kind).toBe("class"); // Enums behave like classes
     });
   });
 
@@ -146,10 +146,10 @@ describe("TypeScript bespoke type tracking", () => {
       const context = { language: "typescript" as const, file_path: "test.ts" as FilePath, source_code: code as SourceCode };
 
       // Find the generic_type node
-      let genericNode: any = null;
+      let generic_node: any = null;
       function walk(node: any) {
-        if (node.type === "generic_type" && !genericNode) {
-          genericNode = node;
+        if (node.type === "generic_type" && !generic_node) {
+          generic_node = node;
           return;
         }
         for (let i = 0; i < node.childCount; i++) {
@@ -158,9 +158,9 @@ describe("TypeScript bespoke type tracking", () => {
       }
       walk(tree.rootNode);
 
-      if (genericNode) {
+      if (generic_node) {
         const result = extract_typescript_complex_generics(
-          genericNode,
+          generic_node,
           context
         );
         expect(result).toBe("Map<string, Array<User>>");
@@ -179,10 +179,10 @@ describe("TypeScript bespoke type tracking", () => {
       const context = { language: "typescript" as const, file_path: "test.ts" as FilePath, source_code: code as SourceCode };
 
       // Find decorator node
-      let decoratorNode: any = null;
+      let decorator_node: any = null;
       function walk(node: any) {
-        if (node.type === "decorator" && !decoratorNode) {
-          decoratorNode = node;
+        if (node.type === "decorator" && !decorator_node) {
+          decorator_node = node;
           return;
         }
         for (let i = 0; i < node.childCount; i++) {
@@ -191,14 +191,14 @@ describe("TypeScript bespoke type tracking", () => {
       }
       walk(tree.rootNode);
 
-      if (decoratorNode) {
-        const typeInfo = extract_decorator_type_metadata(
-          decoratorNode,
+      if (decorator_node) {
+        const type_info = extract_decorator_type_metadata(
+          decorator_node,
           context
         );
-        expect(typeInfo?.type_name).toBe("Service");
-        expect(typeInfo?.type_kind).toBe("class");
-        expect(typeInfo?.confidence).toBe("inferred");
+        expect(type_info?.type_name).toBe("Service");
+        expect(type_info?.type_kind).toBe("class");
+        expect(type_info?.confidence).toBe("inferred");
       }
     });
   });
@@ -211,11 +211,11 @@ describe("TypeScript bespoke type tracking", () => {
         }
       `;
 
-      const namespaceNode = parseAndGetNode(code, "module");
-      if (!namespaceNode) {
+      const namespace_node = parse_and_get_node(code, "module");
+      if (!namespace_node) {
         // Try alternative node type
-        const altNode = parseAndGetNode(code, "namespace_declaration");
-        if (altNode) {
+        const alt_node = parse_and_get_node(code, "namespace_declaration");
+        if (alt_node) {
           const tracker = create_file_type_tracker();
           const context = {
             language: "typescript" as const,
@@ -225,13 +225,13 @@ describe("TypeScript bespoke type tracking", () => {
 
           const updated = track_typescript_namespace(
             tracker,
-            altNode,
+            alt_node,
             context
           );
-          const namespaceType = get_variable_type(updated, "namespace:Utils");
+          const namespace_type = get_variable_type(updated, "namespace:Utils");
 
-          expect(namespaceType?.type_name).toBe("Utils");
-          expect(namespaceType?.type_kind).toBe("object");
+          expect(namespace_type?.type_name).toBe("Utils");
+          expect(namespace_type?.type_kind).toBe("object");
         }
       } else {
         const tracker = create_file_type_tracker();
@@ -243,13 +243,13 @@ describe("TypeScript bespoke type tracking", () => {
 
         const updated = track_typescript_namespace(
           tracker,
-          namespaceNode,
+          namespace_node,
           context
         );
-        const namespaceType = get_variable_type(updated, "namespace:Utils");
+        const namespace_type = get_variable_type(updated, "namespace:Utils");
 
-        expect(namespaceType?.type_name).toBe("Utils");
-        expect(namespaceType?.type_kind).toBe("object");
+        expect(namespace_type?.type_name).toBe("Utils");
+        expect(namespace_type?.type_kind).toBe("object");
       }
     });
   });

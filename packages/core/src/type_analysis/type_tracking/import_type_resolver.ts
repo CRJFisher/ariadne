@@ -18,35 +18,35 @@ import { ImportedClassInfo } from './type_tracking';
 export function build_import_type_map(
   imports: ImportInfo[]
 ): Map<string, ImportedClassInfo> {
-  const typeMap = new Map<string, ImportedClassInfo>();
+  const type_map = new Map<string, ImportedClassInfo>();
 
-  for (const importInfo of imports) {
-    const localName = importInfo.alias || importInfo.name;
+  for (const import_info of imports) {
+    const local_name = import_info.alias || import_info.name;
     
     // Add direct import
-    typeMap.set(localName, {
-      class_name: importInfo.name,
-      source_module: importInfo.source,
-      local_name: localName,
-      is_default: importInfo.kind === 'default',
-      is_type_only: importInfo.is_type_only
+    type_map.set(local_name, {
+      class_name: import_info.name,
+      source_module: import_info.source,
+      local_name: local_name,
+      is_default: import_info.kind === 'default',
+      is_type_only: import_info.is_type_only
     });
 
     // For namespace imports, we can't pre-populate all members
     // They need to be resolved on-demand
-    if (importInfo.kind === 'namespace' && importInfo.namespace_name) {
+    if (import_info.kind === 'namespace' && import_info.namespace_name) {
       // Mark the namespace itself
-      typeMap.set(importInfo.namespace_name, {
+      type_map.set(import_info.namespace_name, {
         class_name: '*',
-        source_module: importInfo.source,
-        local_name: importInfo.namespace_name,
+        source_module: import_info.source,
+        local_name: import_info.namespace_name,
         is_default: false,
-        is_type_only: importInfo.is_type_only
+        is_type_only: import_info.is_type_only
       });
     }
   }
 
-  return typeMap;
+  return type_map;
 }
 
 /**
@@ -60,10 +60,10 @@ export function merge_imported_types(
   tracker: { imported_classes: Map<string, ImportedClassInfo> },
   imports: ImportInfo[]
 ): void {
-  const importTypeMap = build_import_type_map(imports);
+  const import_type_map = build_import_type_map(imports);
   
   // Merge into existing imported_classes map
-  for (const [localName, importInfo] of importTypeMap) {
-    tracker.imported_classes.set(localName, importInfo);
+  for (const [local_name, import_info] of import_type_map) {
+    tracker.imported_classes.set(local_name, import_info);
   }
 }

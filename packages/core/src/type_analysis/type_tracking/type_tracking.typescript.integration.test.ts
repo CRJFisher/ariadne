@@ -70,13 +70,13 @@ describe("TypeScript Type Tracking with Imports", () => {
     );
 
     // Check that imported type is tracked
-    const userType = get_variable_type(tracker, "user");
-    expect(userType).toBeDefined();
-    expect(userType?.type_name).toBe("User");
+    const user_type = get_variable_type(tracker, "user");
+    expect(user_type).toBeDefined();
+    expect(user_type?.type_name).toBe("User");
 
     // Check namespace type resolution
-    const componentType = get_variable_type(tracker, "component");
-    expect(componentType).toBeDefined();
+    const component_type = get_variable_type(tracker, "component");
+    expect(component_type).toBeDefined();
     // Should recognize React.Component as from the React import
   });
 
@@ -118,9 +118,9 @@ describe("TypeScript Type Tracking with Imports", () => {
       imports
     );
 
-    const userType = get_variable_type(tracker, "user");
-    expect(userType).toBeDefined();
-    expect(userType?.type_name).toBe("UserType");
+    const user_type = get_variable_type(tracker, "user");
+    expect(user_type).toBeDefined();
+    expect(user_type?.type_name).toBe("UserType");
   });
 
   it("should handle namespace imports", () => {
@@ -163,8 +163,8 @@ describe("TypeScript Type Tracking with Imports", () => {
       imports
     );
 
-    const userType = get_variable_type(tracker, "user", location);
-    expect(userType).toBeDefined();
+    const user_type = get_variable_type(tracker, "user", location);
+    expect(user_type).toBeDefined();
     // Namespace imports need special handling for member access
     // This test documents the expected behavior
   });
@@ -209,9 +209,9 @@ describe("TypeScript Type Tracking with Imports", () => {
       imports
     );
 
-    const userType = get_variable_type(tracker, "user");
-    expect(userType).toBeDefined();
-    expect(userType?.type_name).toBe("User");
+    const user_type = get_variable_type(tracker, "user");
+    expect(user_type).toBeDefined();
+    expect(user_type?.type_name).toBe("User");
   });
 
   it("should distinguish between imported and local types", () => {
