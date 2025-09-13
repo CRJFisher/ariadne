@@ -37,22 +37,9 @@ export function extract_imports(
   language: Language,
   file_path: FilePath
 ): Import[] {
-  switch (language) {
-    case 'javascript':
-      return extract_javascript_imports(root_node, source_code, file_path);
-    
-    case 'typescript':
-      return extract_typescript_imports(root_node, source_code, file_path);
-    
-    case 'python':
-      return extract_python_imports(root_node, source_code, file_path);
-    
-    case 'rust':
-      return extract_rust_imports(root_node, source_code, file_path);
-    
-    default:
-      return [];
-  }
+  // TODO: Implement using new query-based system
+  // See task 11.100.2 for implementation details
+  return [];
 }
 
 /**

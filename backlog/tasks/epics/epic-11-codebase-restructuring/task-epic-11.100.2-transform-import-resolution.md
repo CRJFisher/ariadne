@@ -235,3 +235,64 @@ export function extract_imports_with_queries(
 - [ ] Query files properly organized and documented
 - [ ] Integration with refined type system
 - [ ] Follows updated architectural guidelines
+
+## New Type Creation Functions
+
+Use these functions from `@ariadnejs/types` to create imports:
+
+- `create_named_import()` - For named imports
+- `build_module_path()` - To create ModulePath values
+
+Example:
+```typescript
+import { create_named_import, build_module_path } from '@ariadnejs/types';
+import { SymbolName } from '@ariadnejs/types';
+
+const namedImport = create_named_import(
+  build_module_path('./module', true),
+  [{ name: 'foo' as SymbolName, alias: 'bar' as SymbolName }],
+  location,
+  'javascript'
+);
+```
+
+For other import types, construct them directly:
+```typescript
+// Default import
+const defaultImport: DefaultImport = {
+  kind: 'default',
+  name: 'MyDefault' as SymbolName,
+  source: build_module_path('./module', true),
+  is_type_only: false,
+  is_dynamic: false,
+  location,
+  language: 'javascript',
+  node_type: 'import_statement',
+  modifiers: []
+};
+
+// Namespace import
+const namespaceImport: NamespaceImport = {
+  kind: 'namespace',
+  namespace_name: 'MyNamespace' as NamespaceName,
+  source: build_module_path('./module', true),
+  is_type_only: false,
+  is_dynamic: false,
+  location,
+  language: 'javascript',
+  node_type: 'import_statement',
+  modifiers: []
+};
+
+// Side-effect import
+const sideEffectImport: SideEffectImport = {
+  kind: 'side_effect',
+  source: build_module_path('./styles.css', true),
+  is_type_only: false,
+  is_dynamic: false,
+  location,
+  language: 'javascript',
+  node_type: 'import_statement',
+  modifiers: []
+};
+```
