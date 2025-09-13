@@ -109,12 +109,12 @@ export function build_module_graph(
 
   // Second pass: Create edges based on imports
   for (const [, node] of Array.from(graph.modules)) {
-    const nodeWithMetadata = node as ModuleNodeWithMetadata;
-    const edges = create_module_edges(nodeWithMetadata, graph, options);
+    const node_with_metadata = node as ModuleNodeWithMetadata;
+    const edges = create_module_edges(node_with_metadata, graph, options);
     (graph.edges as ModuleEdge[]).push(...edges);
 
     // Track external modules
-    for (const imp of nodeWithMetadata.legacy_imports ?? []) {
+    for (const imp of node_with_metadata.legacy_imports) {
       if (is_external_module(imp.source_module)) {
         (graph.external_modules as Set<FilePath>).add(imp.source_module);
       }
@@ -203,7 +203,7 @@ function create_module_edges(
 ): ModuleEdge[] {
   const edges: ModuleEdge[] = [];
 
-  for (const imp of node.legacy_imports ?? []) {
+  for (const imp of node.legacy_imports) {
     // Resolve the module path (for now just use as-is)
     const resolved_path = resolve_module_path(node.path, imp.source_module);
 

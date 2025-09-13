@@ -11,6 +11,8 @@ import {
   Language,
   ScopeTree,
   ScopeNode,
+  RootScopeNode,
+  ChildScopeNode,
   ScopeSymbol,
   ScopeType,
   ScopeId,
@@ -24,6 +26,8 @@ import {
   function_symbol,
   class_symbol,
   module_symbol,
+  Location,
+  Visibility,
 } from "@ariadnejs/types";
 
 // Mutable versions for building
@@ -31,10 +35,15 @@ interface MutableScopeNode {
   id: ScopeId;
   type: ScopeType;
   location: Location;
-  parent_id?: ScopeId;
+  parent_id: ScopeId | null; // Explicit null for root, ScopeId for children
   child_ids: ScopeId[];
   symbols: Map<SymbolId, ScopeSymbol>;
-  metadata?: any;
+  metadata: {
+    name: SymbolId; // Always required - generated for anonymous scopes
+    is_async: boolean;
+    is_generator: boolean;
+    visibility: Visibility;
+  };
 }
 
 interface MutableScopeTree {
@@ -96,8 +105,15 @@ export function create_scope_tree(
     id: root_id,
     type: "global",
     location: node_to_location(root_syntax_node, file_path),
+    parent_id: null, // Root has no parent
     child_ids: [],
     symbols: new Map(),
+    metadata: {
+      name: module_symbol(file_path) as SymbolId, // Use file path as module name
+      is_async: false,
+      is_generator: false,
+      visibility: "public" as Visibility,
+    },
   };
 
   return {
@@ -143,7 +159,8 @@ export function build_generic_scope_tree(
     bespoke_handlers.post_process(tree, context);
   }
 
-  return tree;
+  // Convert to immutable scope tree with proper type structure
+  return convert_to_immutable_scope_tree(tree);
 }
 
 /**
@@ -221,6 +238,9 @@ function traverse_and_build(
     const scope_type = get_scope_type(node.type, context.language);
     const scope_config = context.config.scope_creating_nodes[node.type];
 
+    // Generate a proper name for this scope
+    const scope_name = generate_scope_name(node, scope_type, scope_config, context);
+
     const new_scope: MutableScopeNode = {
       id: scope_id as ScopeId,
       type: scope_type,
@@ -228,7 +248,14 @@ function traverse_and_build(
       parent_id: context.current_scope_id,
       child_ids: [],
       symbols: new Map(),
-      metadata: bespoke_handlers?.extract_scope_metadata?.(node, context),
+      metadata: {
+        name: scope_name,
+        is_async: detect_async_scope(node, scope_type, context),
+        is_generator: detect_generator_scope(node, scope_type, context),
+        visibility: detect_scope_visibility(node, scope_type, context),
+        // Merge any bespoke metadata
+        ...bespoke_handlers?.extract_scope_metadata?.(node, context),
+      },
     };
 
     // Add to tree
@@ -578,18 +605,62 @@ function is_descendant_of(
 }
 
 /**
+ * Type guard for locations with standard format (line, column, end_line, end_column)
+ */
+function is_standard_location(location: unknown): location is {
+  line: number;
+  column: number;
+  end_line: number;
+  end_column: number;
+} {
+  return typeof location === 'object' && location !== null &&
+         'line' in location && typeof (location as any).line === 'number' &&
+         'column' in location && typeof (location as any).column === 'number' &&
+         'end_line' in location && typeof (location as any).end_line === 'number' &&
+         'end_column' in location && typeof (location as any).end_column === 'number';
+}
+
+/**
+ * Type guard for locations with start/end object format
+ */
+function is_range_location(location: unknown): location is {
+  start: { row: number; column: number };
+  end: { row: number; column: number };
+} {
+  return typeof location === 'object' && location !== null &&
+         'start' in location && typeof (location as any).start === 'object' &&
+         'end' in location && typeof (location as any).end === 'object' &&
+         typeof (location as any).start?.row === 'number' &&
+         typeof (location as any).start?.column === 'number' &&
+         typeof (location as any).end?.row === 'number' &&
+         typeof (location as any).end?.column === 'number';
+}
+
+/**
  * Check if a location contains a position
  */
 function location_contains_position(
-  location: any,
+  location: unknown,
   position: { row: number; column: number }
 ): boolean {
   if (!location) return false;
-  
-  const start_row = location.line - 1 || location.start?.row || 0;
-  const start_col = location.column - 1 || location.start?.column || 0;
-  const end_row = location.end_line - 1 || location.end?.row || Infinity;
-  const end_col = location.end_column - 1 || location.end?.column || Infinity;
+
+  let start_row: number, start_col: number, end_row: number, end_col: number;
+
+  if (is_standard_location(location)) {
+    start_row = location.line - 1;
+    start_col = location.column - 1;
+    end_row = location.end_line - 1;
+    end_col = location.end_column - 1;
+  } else if (is_range_location(location)) {
+    start_row = location.start.row;
+    start_col = location.start.column;
+    end_row = location.end.row;
+    end_col = location.end.column;
+  } else {
+    // Fallback for unknown location formats
+    return false;
+  }
 
   if (position.row < start_row || position.row > end_row) {
     return false;
@@ -702,7 +773,7 @@ export function extract_variables_from_scopes(
         const variable: VariableDeclaration = {
           name: name as VariableName,
           location: symbol.location,
-          type: symbol.type_info as TypeString | undefined,
+          type: (symbol.type_info as TypeString) || ("unknown" as TypeString),
           is_const: enhanced_symbol.declaration_type === "const",
           is_exported: symbol.is_exported,
         };
@@ -712,4 +783,173 @@ export function extract_variables_from_scopes(
   }
 
   return variables;
+}
+
+// ============================================================================
+// Helper Functions for Non-nullable Scope Structure
+// ============================================================================
+
+/**
+ * Generate a proper name for a scope
+ */
+function generate_scope_name(
+  node: SyntaxNode,
+  scope_type: ScopeType,
+  scope_config: any,
+  context: GenericScopeContext
+): SymbolId {
+  // Try to get name from configuration
+  if (scope_config?.name_field) {
+    const name_node = node.childForFieldName(scope_config.name_field);
+    if (name_node) {
+      return name_node.text as SymbolId;
+    }
+  }
+
+  // Try common name fields
+  const name_fields = ["name", "identifier", "id"];
+  for (const field of name_fields) {
+    const name_node = node.childForFieldName(field);
+    if (name_node) {
+      return name_node.text as SymbolId;
+    }
+  }
+
+  // Generate anonymous name based on scope type
+  const counter = context.scope_id_counter - 1; // Current scope number
+  switch (scope_type) {
+    case "function":
+      return `<anonymous_function_${counter}>` as SymbolId;
+    case "class":
+      return `<anonymous_class_${counter}>` as SymbolId;
+    case "block":
+      return `<block_${counter}>` as SymbolId;
+    case "parameter":
+      return `<parameters_${counter}>` as SymbolId;
+    case "local":
+      return `<local_${counter}>` as SymbolId;
+    default:
+      return `<scope_${counter}>` as SymbolId;
+  }
+}
+
+/**
+ * Detect if a scope is async
+ */
+function detect_async_scope(
+  node: SyntaxNode,
+  scope_type: ScopeType,
+  context: GenericScopeContext
+): boolean {
+  if (scope_type !== "function") return false;
+
+  // Check for async keyword in various languages
+  const source_text = node.text;
+  switch (context.language) {
+    case "javascript":
+    case "typescript":
+      return source_text.includes("async ");
+    case "python":
+      return source_text.includes("async def");
+    case "rust":
+      return source_text.includes("async fn");
+    default:
+      return false;
+  }
+}
+
+/**
+ * Detect if a scope is a generator
+ */
+function detect_generator_scope(
+  node: SyntaxNode,
+  scope_type: ScopeType,
+  context: GenericScopeContext
+): boolean {
+  if (scope_type !== "function") return false;
+
+  const source_text = node.text;
+  switch (context.language) {
+    case "javascript":
+    case "typescript":
+      return source_text.includes("function*") || source_text.includes("*");
+    case "python":
+      return source_text.includes("yield");
+    default:
+      return false;
+  }
+}
+
+/**
+ * Detect scope visibility
+ */
+function detect_scope_visibility(
+  node: SyntaxNode,
+  scope_type: ScopeType,
+  context: GenericScopeContext
+): Visibility {
+  const source_text = node.text;
+
+  // Check for explicit visibility modifiers
+  if (source_text.includes("private")) return "private" as Visibility;
+  if (source_text.includes("protected")) return "protected" as Visibility;
+  if (source_text.includes("public")) return "public" as Visibility;
+
+  // Language-specific defaults
+  switch (context.language) {
+    case "rust":
+      // Rust is private by default
+      return source_text.includes("pub") ? "public" as Visibility : "private" as Visibility;
+    default:
+      // Most languages default to public
+      return "public" as Visibility;
+  }
+}
+
+/**
+ * Convert mutable scope tree to immutable ScopeTree with proper discriminated union types
+ */
+function convert_to_immutable_scope_tree(mutable_tree: MutableScopeTree): ScopeTree {
+  const immutable_nodes = new Map<ScopeId, ScopeNode>();
+
+  for (const [id, mutable_node] of mutable_tree.nodes) {
+    const base_data = {
+      id: mutable_node.id,
+      location: mutable_node.location,
+      child_ids: Object.freeze([...mutable_node.child_ids]) as readonly ScopeId[],
+      symbols: new Map(mutable_node.symbols) as ReadonlyMap<SymbolId, ScopeSymbol>,
+      metadata: {
+        name: mutable_node.metadata.name,
+        is_async: mutable_node.metadata.is_async,
+        is_generator: mutable_node.metadata.is_generator,
+        visibility: mutable_node.metadata.visibility,
+      },
+    };
+
+    let immutable_node: ScopeNode;
+
+    if (mutable_node.parent_id === null) {
+      // Root scope node
+      immutable_node = {
+        ...base_data,
+        parent_id: null,
+        type: mutable_node.type as "global" | "module",
+      } as RootScopeNode;
+    } else {
+      // Child scope node
+      immutable_node = {
+        ...base_data,
+        parent_id: mutable_node.parent_id,
+        type: mutable_node.type as "class" | "function" | "block" | "parameter" | "local",
+      } as ChildScopeNode;
+    }
+
+    immutable_nodes.set(id, immutable_node);
+  }
+
+  return {
+    root_id: mutable_tree.root_id,
+    nodes: immutable_nodes,
+    file_path: mutable_tree.file_path,
+  };
 }
