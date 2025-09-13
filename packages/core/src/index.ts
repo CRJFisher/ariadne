@@ -19,13 +19,14 @@ export {
 // } from './graph_queries';
 
 // Call resolution functions (global phase)
-export {
-  resolve_method_calls,
-  resolve_constructor_calls,
-  resolve_all_calls,
-  type ResolvedMethodCall,
-  type ResolvedConstructorCall
-} from './call_graph/call_resolution';
+// TODO: call_resolution module needs to be implemented or these exports moved to enrichment
+// export {
+//   resolve_method_calls,
+//   resolve_constructor_calls,
+//   resolve_all_calls,
+//   type ResolvedMethodCall,
+//   type ResolvedConstructorCall
+// } from './call_graph/call_resolution';
 
 // Symbol construction utilities
 export {

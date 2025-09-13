@@ -6,7 +6,6 @@ import { FunctionSignature, Location } from "./common";
 import {
   TypeName,
   FilePath,
-  DecoratorName,
   DocString,
   FunctionName,
   ClassName,
@@ -59,11 +58,11 @@ export interface FunctionDefinition {
   readonly signature: FunctionSignature;
   readonly metadata?: FunctionMetadata;
   readonly docstring?: DocString;
-  readonly decorators: readonly DecoratorName[]; // Always present, defaults to empty array
+  readonly decorators: readonly SymbolId[]; // Always present, defaults to empty array
   readonly is_exported: boolean;
   readonly is_arrow_function: boolean; // For JS/TS
   readonly is_anonymous: boolean;
-  readonly closure_captures?: readonly string[]; // Variables from outer scope
+  readonly closure_captures: readonly string[]; // Always present, defaults to empty array
 }
 
 /**
