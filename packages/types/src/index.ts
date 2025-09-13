@@ -37,6 +37,7 @@ export {
   ResolutionPath,
   Visibility,
   ResolutionReason,
+  Scope,
   is_scope_path,
   is_visibility,
   is_resolution_reason,

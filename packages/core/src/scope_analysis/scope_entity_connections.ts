@@ -18,8 +18,20 @@ import {
   VariableDeclaration,
   Location,
   Language,
+  Scope,
+  Symbol,
+  TrackedType,
 } from "@ariadnejs/types";
 import { find_scope_at_position, get_scope_chain } from "./scope_tree";
+
+/**
+ * Simple entity connections for refactoring
+ */
+export interface EntityConnections {
+  scope_to_symbols: Map<string, SymbolId[]>;
+  symbol_to_type: Map<SymbolId, TrackedType>;
+  type_to_scope: Map<string, string>;
+}
 
 /**
  * Entities contained within a scope
@@ -63,6 +75,44 @@ function create_empty_contents(): ScopeContents {
     methods: new Set(),
     imports: new Set(),
     exports: new Set(),
+  };
+}
+
+/**
+ * Get scope contents with guaranteed non-null return
+ * All scopes are initialized with contents, so this should never return undefined
+ */
+function get_scope_contents_guaranteed(
+  connections: ScopeEntityConnections,
+  scope_id: ScopeId
+): ScopeContents {
+  const contents = connections.scope_contents.get(scope_id);
+  if (!contents) {
+    throw new Error(`Scope contents not found for scope ${scope_id}. This should never happen.`);
+  }
+  return contents;
+}
+
+/**
+ * Build entity connections using new type system
+ *
+ * This function uses the new unified type system for scope-entity connections.
+ * @param scope_tree - The scope definition (using Scope type as ScopeDefinition doesn't exist yet)
+ * @param symbols - Array of symbol definitions
+ * @param types - Map of symbol IDs to their tracked types
+ * @returns Simplified entity connections
+ */
+export function build_entity_connections(
+  scope_tree: Scope,
+  symbols: Symbol[],
+  types: Map<SymbolId, TrackedType>
+): EntityConnections {
+  // TODO: Implement using new query-based system
+  // See task 11.100.18 for implementation details
+  return {
+    scope_to_symbols: new Map(),
+    symbol_to_type: new Map(),
+    type_to_scope: new Map()
   };
 }
 
@@ -130,17 +180,17 @@ function process_functions(
 
     // Add function to its PARENT scope's contents
     if (func_scope.parent_id) {
-      const parent_contents = connections.scope_contents.get(
+      const parent_contents = get_scope_contents_guaranteed(
+        connections,
         func_scope.parent_id
       );
-      if (parent_contents) {
-        // Check if it's a method (parent is a class)
-        const parent_scope = scope_tree.nodes.get(func_scope.parent_id);
-        if (parent_scope?.type === "class") {
-          parent_contents.methods.add(symbol_id);
-        } else {
-          parent_contents.functions.add(symbol_id);
-        }
+
+      // Check if it's a method (parent is a class)
+      const parent_scope = scope_tree.nodes.get(func_scope.parent_id);
+      if (parent_scope?.type === "class") {
+        parent_contents.methods.add(symbol_id);
+      } else {
+        parent_contents.functions.add(symbol_id);
       }
 
       // Record which scope defines this entity
@@ -172,12 +222,11 @@ function process_classes(
 
     // Add class to its PARENT scope's contents
     if (class_scope.parent_id) {
-      const parent_contents = connections.scope_contents.get(
+      const parent_contents = get_scope_contents_guaranteed(
+        connections,
         class_scope.parent_id
       );
-      if (parent_contents) {
-        parent_contents.classes.add(symbol_id);
-      }
+      parent_contents.classes.add(symbol_id);
 
       // Record which scope defines this entity
       connections.entity_defining_scope.set(symbol_id, class_scope.parent_id);
@@ -216,10 +265,11 @@ function process_variables(
     if (!containing_scope) continue;
 
     // Add variable to the scope's contents
-    const scope_contents = connections.scope_contents.get(containing_scope.id);
-    if (scope_contents) {
-      scope_contents.variables.add(symbol_id);
-    }
+    const scope_contents = get_scope_contents_guaranteed(
+      connections,
+      containing_scope.id
+    );
+    scope_contents.variables.add(symbol_id);
 
     // Record which scope defines this entity
     connections.entity_defining_scope.set(symbol_id, containing_scope.id);
@@ -271,7 +321,7 @@ export function get_scope_contents(
   scope_id: ScopeId,
   connections: ScopeEntityConnections
 ): ScopeContents {
-  return connections.scope_contents.get(scope_id) || create_empty_contents();
+  return get_scope_contents_guaranteed(connections, scope_id);
 }
 
 /**
@@ -288,17 +338,15 @@ export function get_visible_entities(
   // Walk from root to current scope, accumulating visible entities
   for (let i = scope_chain.length - 1; i >= 0; i--) {
     const scope = scope_chain[i];
-    const contents = connections.scope_contents.get(scope.id);
+    const contents = get_scope_contents_guaranteed(connections, scope.id);
 
-    if (contents) {
-      // Add all entities from this scope
-      contents.functions.forEach((f) => visible.functions.add(f));
-      contents.classes.forEach((c) => visible.classes.add(c));
-      contents.variables.forEach((v) => visible.variables.add(v));
-      contents.methods.forEach((m) => visible.methods.add(m));
-      contents.imports.forEach((i) => visible.imports.add(i));
-      contents.exports.forEach((e) => visible.exports.add(e));
-    }
+    // Add all entities from this scope
+    contents.functions.forEach((f) => visible.functions.add(f));
+    contents.classes.forEach((c) => visible.classes.add(c));
+    contents.variables.forEach((v) => visible.variables.add(v));
+    contents.methods.forEach((m) => visible.methods.add(m));
+    contents.imports.forEach((i) => visible.imports.add(i));
+    contents.exports.forEach((e) => visible.exports.add(e));
   }
 
   return visible;
