@@ -6,7 +6,7 @@
  */
 
 import { SyntaxNode } from "tree-sitter";
-import { Language, MethodCallInfo } from "@ariadnejs/types";
+import { Language, CallInfo } from "@ariadnejs/types";
 import { TypeInfo } from "../../type_analysis/type_tracking";
 import {
   get_method_call_config,
@@ -40,24 +40,10 @@ export const METHOD_CALLS_CONTEXT = 'method_calls' as const;
 export function find_method_calls_generic(
   context: MethodCallContext,
   type_map?: Map<string, TypeInfo[]>
-): MethodCallInfo[] {
-  const calls: MethodCallInfo[] = [];
-  const config = get_method_call_config(context.language);
-  
-  walk_tree(context.ast_root, (node) => {
-    if (is_method_call_node(node, context.language)) {
-      const method_info = extract_generic_method_call(
-        node,
-        context,
-        type_map
-      );
-      if (method_info) {
-        calls.push(method_info as MethodCallInfo);
-      }
-    }
-  });
-  
-  return calls;
+): CallInfo[] {
+  // TODO: Implement using new query-based system
+  // See task 11.100.5 for implementation details
+  return [];
 }
 
 /**

@@ -183,6 +183,23 @@ export function find_method_calls_with_queries(
 - Better chained call detection
 - Handles all optional chaining
 
+## New Type Creation
+
+Use `createMethodCall()` from `call_types.ts`:
+
+```typescript
+const call = createMethodCall({
+  receiver: toReceiverName('myObject'),
+  method: toCalleeName('myMethod'),
+  caller_context: toCallerContext('parentFunction'),
+  arguments: args.map(toArgumentValue),
+  location,
+  language: 'javascript'
+});
+```
+
+Note: Method calls are discriminated by `kind: 'method'` in the CallInfo union.
+
 ## Success Criteria
 
 ### Functional Requirements

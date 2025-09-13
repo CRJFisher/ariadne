@@ -5,7 +5,7 @@
  */
 
 import { SyntaxNode } from "tree-sitter";
-import { MethodCallInfo } from "@ariadnejs/types";
+import { CallInfo } from "@ariadnejs/types";
 import { TypeInfo } from "../../type_analysis/type_tracking";
 import { 
   MethodCallContext, 
@@ -31,7 +31,7 @@ import {
 } from "./method_calls.rust";
 
 // Re-export types and constants
-export { MethodCallInfo } from "@ariadnejs/types";
+export { CallInfo } from "@ariadnejs/types";
 export { MethodCallContext, METHOD_CALLS_CONTEXT } from "./method_calls";
 
 // Export hierarchy enrichment functions for Global Assembly phase
@@ -60,83 +60,10 @@ export {
 export function find_method_calls(
   context: MethodCallContext,
   type_map?: Map<string, TypeInfo[]>
-): MethodCallInfo[] {
-  // Start with generic processor (handles 85% of patterns)
-  const generic_calls = find_method_calls_generic(context, type_map);
-  
-  // Find bespoke patterns and enhance generic calls
-  const all_calls: MethodCallInfo[] = [];
-  const processed_nodes = new Set<SyntaxNode>();
-  
-  // Walk AST to find bespoke patterns
-  walk_tree(context.ast_root, (node) => {
-    // Try bespoke detection based on language
-    let bespoke_call: MethodCallInfo | null = null;
-    
-    switch (context.language) {
-      case "javascript":
-        bespoke_call = find_javascript_bespoke_method_calls(node, context.source_code);
-        break;
-        
-      case "typescript":
-        bespoke_call = find_typescript_bespoke_method_calls(node, context.source_code);
-        break;
-        
-      case "python":
-        bespoke_call = find_python_bespoke_method_calls(node, context.source_code);
-        break;
-        
-      case "rust":
-        bespoke_call = find_rust_bespoke_method_calls(node, context.source_code);
-        break;
-    }
-    
-    if (bespoke_call) {
-      all_calls.push(bespoke_call);
-      processed_nodes.add(node);
-    }
-  });
-  
-  // Add generic calls that weren't already processed as bespoke
-  for (const call of generic_calls) {
-    // Check if this call's node was already processed
-    const is_duplicate = Array.from(processed_nodes).some(node => 
-      node.startPosition.row === call.location.line &&
-      node.startPosition.column === call.location.column
-    );
-    
-    if (!is_duplicate) {
-      // Enhance with language-specific metadata
-      let enhanced_call = call;
-      
-      // Find the original node for enhancement
-      const node = find_node_at_location(
-        context.ast_root,
-        call.location.line,
-        call.location.column
-      );
-      
-      if (node) {
-        switch (context.language) {
-          case "typescript":
-            enhanced_call = enhance_typescript_method_call(call, node, context.source_code);
-            break;
-            
-          case "python":
-            enhanced_call = enhance_python_method_call(call, node, context.source_code);
-            break;
-            
-          case "rust":
-            enhanced_call = enhance_rust_method_call(call, node, context.source_code);
-            break;
-        }
-      }
-      
-      all_calls.push(enhanced_call);
-    }
-  }
-  
-  return all_calls;
+): CallInfo[] {
+  // TODO: Implement using new query-based system
+  // See task 11.100.5 for implementation details
+  return [];
 }
 
 /**
