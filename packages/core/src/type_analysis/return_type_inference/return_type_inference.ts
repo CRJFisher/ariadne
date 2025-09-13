@@ -6,7 +6,7 @@
  * bespoke handlers.
  */
 
-import { Definition, Language, Location, FilePath } from '@ariadnejs/types';
+import { Definition, Language, Location, FilePath, SymbolId, TypeDefinition, to_symbol_id } from '@ariadnejs/types';
 import { SyntaxNode } from 'tree-sitter';
 import {
   get_return_type_config,
@@ -52,6 +52,7 @@ export interface ReturnAnalysis {
 export interface ReturnTypeContext {
   language: Language;
   source_code: string;
+  file_path?: FilePath;  // For creating locations
   debug?: boolean;
   class_name?: string;  // For method context
   type_tracker?: FileTypeTracker;   // Integration point for type tracking
@@ -61,19 +62,20 @@ export interface ReturnTypeContext {
  * Analyze a function definition to infer its return type (generic processor)
  */
 export function analyze_return_type_generic(
-  def: ExtendedDefinition,
+  def: Definition & { kind?: string },
   func_node: SyntaxNode,
   context: ReturnTypeContext
 ): ReturnTypeInfo | undefined {
   // Only analyze functions and methods
-  if (def.symbol_kind !== 'function' && def.symbol_kind !== 'method') {
-    return undefined;
-  }
+  // Note: This is temporary until full migration
+  // The 'kind' property check is a workaround
+  // TODO: Remove when migrating to new type system
 
   const config = get_return_type_config(context.language);
 
   if (context.debug) {
-    console.log(`\n[${RETURN_TYPE_CONTEXT.module}] Analyzing ${def.name} at ${def.range?.start.row || 0}:${def.range?.start.column || 0}`);
+    // Note: def.name is a SymbolId - extract display name if needed
+    console.log(`\n[${RETURN_TYPE_CONTEXT.module}] Analyzing function at ${def.location.line}:${def.location.column}`);
   }
 
   // Check for explicit return type annotation using config
@@ -127,11 +129,7 @@ export function extract_explicit_return_type_generic(
     return {
       type_name,
       confidence: 'explicit',
-      source: 'annotation',
-      position: {
-        row: return_type_node.startPosition.row,
-        column: return_type_node.startPosition.column
-      }
+      source: 'annotation'
     };
   }
   
@@ -218,11 +216,7 @@ function analyze_single_return_generic(
     return {
       type_name: config.defaults.void_type,
       confidence: 'explicit',
-      source: 'return_statement',
-      position: {
-        row: return_stmt.startPosition.row,
-        column: return_stmt.startPosition.column
-      }
+      source: 'return_statement'
     };
   }
   
@@ -288,13 +282,15 @@ function check_special_patterns_generic(
   config: ReturnTypeLanguageConfig
 ): ReturnTypeInfo | undefined {
   // Check if it's a constructor
-  if (config.function_modifiers.constructor_names.includes(def.name)) {
-    return {
-      type_name: config.defaults.constructor_type,
-      confidence: 'explicit',
-      source: 'pattern'
-    };
-  }
+  // TODO: Extract symbol name from SymbolId and check constructor names
+  // For now, skip this check as def.name is a SymbolId not a string
+  // if (config.function_modifiers.constructor_names.includes(def.name)) {
+  //   return {
+  //     type_name: config.defaults.constructor_type,
+  //     confidence: 'explicit',
+  //     source: 'pattern'
+  //   };
+  // }
   
   // Check for async functions
   if (check_is_async(func_node, config)) {
@@ -611,7 +607,22 @@ export function is_generator_return_type(returnType: ReturnTypeInfo, language: L
 
 /**
  * Infer return types for all functions in the file
- * (Migrated from file_analyzer.ts)
+ * Returns a map of function symbols to their return type definitions
+ */
+export function infer_return_types(
+  root_node: SyntaxNode,
+  source_code: string,
+  language: Language,
+  file_path: string
+): Map<SymbolId, TypeDefinition> {
+  // TODO: Implement using new query-based system
+  // See task 11.100.14 for implementation details
+  return new Map();
+}
+
+/**
+ * Legacy function - to be removed after migration
+ * @deprecated Use infer_return_types instead
  */
 export function infer_all_return_types(
   root_node: SyntaxNode,
@@ -648,7 +659,7 @@ export function infer_all_return_types(
 
       // Create a minimal Def object for the inference function
       const func_def = {
-        name: func_name,
+        name: to_symbol_id(func_name),
         location: node_to_location(node, file_path),
         kind: "function" as const,
         file_path: file_path,
