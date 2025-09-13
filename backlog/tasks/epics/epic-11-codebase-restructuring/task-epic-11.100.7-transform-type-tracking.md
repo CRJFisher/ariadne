@@ -191,6 +191,23 @@ export function track_types_with_queries(
 - Catches all type annotations
 - Handles complex generic types
 
+## TrackedType Creation
+
+Use functions from `@ariadnejs/types/type_analysis`:
+
+```typescript
+import { create_tracked_type } from '@ariadnejs/types';
+
+const trackedType = create_tracked_type(
+  symbol_id,           // SymbolId for the variable/parameter/etc
+  type_definition,     // TypeDefinition object
+  source,             // TypeFlowSource (e.g., 'annotation', 'inference', etc)
+  location,           // Location in the source file
+  language,           // Language ('javascript', 'typescript', etc)
+  confidence          // ResolutionConfidence (optional, defaults to 'high')
+);
+```
+
 ## Success Criteria
 
 ### Functional Requirements

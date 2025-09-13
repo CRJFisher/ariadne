@@ -65,6 +65,8 @@ export {
   to_initial_value,
   build_type_expression,
   parse_type_expression,
+  TrackedType,
+  create_tracked_type,
 } from "./type_analysis";
 
 // Export from common, excluding types that conflict with branded_types
