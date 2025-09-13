@@ -22,7 +22,7 @@ import {
   build_class_hierarchy_from_analyses,
 } from "./inheritance/class_hierarchy";
 import {
-  createAnalysisCache,
+  create_analysis_cache,
 } from "./cache/analysis_cache";
 import {
   scan_files,
@@ -72,7 +72,7 @@ export async function generate_code_graph(
   const start_time = Date.now();
 
   // Create cache if enabled
-  const cache = createAnalysisCache({
+  const cache = create_analysis_cache({
     enabled: options.cache?.enabled ?? false,
     ttl: options.cache?.ttl,
     maxSize: options.cache?.maxSize,

@@ -182,7 +182,7 @@ export class AnalysisCache {
 /**
  * Create a new analysis cache
  */
-export function createAnalysisCache(options?: Partial<CacheOptions>): AnalysisCache {
+export function create_analysis_cache(options?: Partial<CacheOptions>): AnalysisCache {
   return new AnalysisCache({
     enabled: options?.enabled ?? false,
     ttl: options?.ttl,

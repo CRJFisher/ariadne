@@ -34,7 +34,7 @@ import {
   is_type_reference_node,
   ClassHierarchyConfig
 } from './language_configs';
-import { AnyLocationFormat, extractTargetPosition } from '../../ast/location_utils';
+import { AnyLocationFormat, extract_target_position } from '../../ast/location_utils';
 
 /**
  * Module context for refactoring tracking
@@ -216,6 +216,12 @@ function extract_relationships_generic(
   // Find the AST node for this definition
   // Handle both location and range formats from tests
   const location_info = def.location || (def as any).range;
+
+  // Type guard: ensure tree and rootNode exist
+  if (!context.tree || !context.tree.rootNode) {
+    return { base_classes, interfaces, is_abstract };
+  }
+
   const ast_node = find_node_at_location(
     context.tree.rootNode,
     location_info
@@ -485,11 +491,7 @@ function find_node_at_location(
   location: AnyLocationFormat
 ): SyntaxNode | null {
   // Extract target position using shared utility
-  const position = extractTargetPosition(location);
-  if (!position) {
-    return null;
-  }
-  
+  const position = extract_target_position(location);
   const { row: target_row, column: target_column } = position;
   
   // Find node that contains the location

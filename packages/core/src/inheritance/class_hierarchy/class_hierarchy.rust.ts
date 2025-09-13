@@ -18,7 +18,7 @@ import {
   BespokeHandlers,
   ClassHierarchyContext
 } from './class_hierarchy';
-import { AnyLocationFormat, extractTargetPosition } from '../../ast/location_utils';
+import { AnyLocationFormat, extract_target_position } from '../../ast/location_utils';
 
 /**
  * Create Rust bespoke handlers
@@ -39,7 +39,12 @@ function extract_trait_implementations(
   context: ClassHierarchyContext
 ): string[] {
   const traits: string[] = [];
-  
+
+  // Type guard: ensure tree and rootNode exist
+  if (!context.tree || !context.tree.rootNode) {
+    return traits;
+  }
+
   // Search for impl blocks in the entire file
   find_impl_blocks(
     def.name,
@@ -111,8 +116,14 @@ function extract_super_traits(
   context: ClassHierarchyContext
 ): string[] {
   const super_traits: string[] = [];
-  
+
   const location_info = def.location || (def as any).range;
+
+  // Type guard: ensure tree and rootNode exist
+  if (!context.tree || !context.tree.rootNode) {
+    return super_traits;
+  }
+
   const ast_node = find_node_at_location(context.tree.rootNode, location_info);
   if (!ast_node) return super_traits;
   
@@ -215,6 +226,12 @@ function detect_unsafe_trait(
   context: ClassHierarchyContext
 ): void {
   const location_info = def.location || (def as any).range;
+
+  // Type guard: ensure tree and rootNode exist
+  if (!context.tree || !context.tree.rootNode) {
+    return;
+  }
+
   const ast_node = find_node_at_location(context.tree.rootNode, location_info);
   if (!ast_node) return;
   
@@ -245,6 +262,12 @@ function detect_auto_trait(
   context: ClassHierarchyContext
 ): void {
   const location_info = def.location || (def as any).range;
+
+  // Type guard: ensure tree and rootNode exist
+  if (!context.tree || !context.tree.rootNode) {
+    return;
+  }
+
   const ast_node = find_node_at_location(context.tree.rootNode, location_info);
   if (!ast_node) return;
   
@@ -284,6 +307,12 @@ function detect_generic_constraints(
   context: ClassHierarchyContext
 ): void {
   const location_info = def.location || (def as any).range;
+
+  // Type guard: ensure tree and rootNode exist
+  if (!context.tree || !context.tree.rootNode) {
+    return;
+  }
+
   const ast_node = find_node_at_location(context.tree.rootNode, location_info);
   if (!ast_node) return;
   
@@ -427,11 +456,7 @@ function find_node_at_location(
   location: AnyLocationFormat
 ): SyntaxNode | null {
   // Extract target position using shared utility
-  const position = extractTargetPosition(location);
-  if (!position) {
-    return null;
-  }
-  
+  const position = extract_target_position(location);
   const targetRow = position.row;
   
   function search(node: SyntaxNode): SyntaxNode | null {
