@@ -49,6 +49,25 @@ function extract_exports(node: SyntaxNode) {
 }
 ```
 
+## New Type Creation Functions
+
+Use these functions from `import_export_types.ts` to create exports:
+
+- `createNamedExport()` - For named exports
+- `createDefaultExport()` - For default exports
+- `createNamespaceExport()` - For namespace exports
+- `createReExport()` - For re-exports
+- `createAggregateExport()` - For aggregate exports
+
+Example:
+```typescript
+const namedExport = createNamedExport(
+  [{ name: toSymbolName('foo'), alias: toSymbolName('bar') }],
+  location,
+  'javascript'
+);
+```
+
 ## Query-Based Implementation
 
 ### Tree-sitter Query Pattern

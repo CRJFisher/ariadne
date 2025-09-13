@@ -34,31 +34,18 @@ import {
 
 /**
  * Extract all exports from AST
- * 
+ *
  * Main entry point that dispatches to language-specific extractors
  */
 export function extract_exports(
   root_node: SyntaxNode,
   source_code: string,
   language: Language,
-  file_path?: string
+  file_path: string
 ): Export[] {
-  switch (language) {
-    case 'javascript':
-      return extract_javascript_exports(root_node, source_code);
-    
-    case 'typescript':
-      return extract_typescript_exports(root_node, source_code);
-    
-    case 'python':
-      return extract_python_exports(root_node, source_code);
-    
-    case 'rust':
-      return extract_rust_exports(root_node, source_code);
-    
-    default:
-      return [];
-  }
+  // TODO: Implement using new query-based system
+  // See task 11.100.3 for implementation details
+  return [];
 }
 
 /**
