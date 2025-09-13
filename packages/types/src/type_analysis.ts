@@ -34,7 +34,7 @@ export interface TypeDefinition extends SemanticNode {
   readonly mixins: readonly SymbolId[]; // Always present, defaults to empty array
 
   // Members (unified for all type kinds)
-  readonly members?: ReadonlyMap<SymbolName, TypeMember>;
+  readonly members: ReadonlyMap<SymbolName, TypeMember>; // Always present, defaults to empty map
 
   // Type metadata
   readonly is_generic: boolean;
@@ -204,7 +204,9 @@ export function is_type_definition(value: unknown): value is TypeDefinition {
     "name" in type &&
     "kind" in type &&
     "location" in type &&
-    "language" in type
+    "language" in type &&
+    "members" in type &&
+    type.members instanceof Map
   );
 }
 
@@ -264,7 +266,7 @@ export function is_nullable_type(type: TypeDefinition): boolean {
  * Get all base types (extends + implements)
  */
 export function get_base_types(type: TypeDefinition): SymbolId[] {
-  return [...(type.extends || []), ...(type.implements || [])];
+  return [...type.extends, ...type.implements];
 }
 
 /**
@@ -291,6 +293,8 @@ export function create_type_definition(
     extends: [],
     implements: [],
     mixins: [],
+    // Provide defaults for required map properties
+    members: new Map(),
     // Provide defaults for required boolean properties
     is_generic: false,
     is_abstract: false,

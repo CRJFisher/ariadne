@@ -272,7 +272,7 @@ function extract_typescript_export(
         if (first_child && first_child.type === 'type') {
           inline_type = true;
           // The identifier comes after the type keyword
-          actual_name_node = child.children.find(c => c.type === 'identifier') || null;
+          actual_name_node = child.children.find(c => c.type === 'identifier');
         } else {
           // Normal export specifier
           actual_name_node = child.childForFieldName('name');
@@ -648,7 +648,7 @@ function extract_rust_item_name(item_node: SyntaxNode): string | null {
   const field = type_to_field[item_node.type];
   if (field) {
     const name_node = item_node.childForFieldName(field);
-    return name_node?.text || null;
+    return name_node?.text ?? null;
   }
   
   return null;

@@ -232,7 +232,7 @@ function extract_typescript_import(
   let import_clause = import_node.childForFieldName('import_clause');
   if (!import_clause) {
     // When there's a 'type' keyword, import_clause is a child but not a field
-    import_clause = import_node.children.find(c => c.type === 'import_clause') || null;
+    import_clause = import_node.children.find(c => c.type === 'import_clause');
   }
   
   if (!import_clause) {
@@ -325,7 +325,7 @@ function extract_typescript_import_specifiers(
       if (first_child && first_child.type === 'type') {
         inline_type = true;
         // The identifier comes after the type keyword
-        actual_name_node = child.children.find(c => c.type === 'identifier') || null;
+        actual_name_node = child.children.find(c => c.type === 'identifier');
       } else {
         // Normal import specifier
         actual_name_node = child.childForFieldName('name');

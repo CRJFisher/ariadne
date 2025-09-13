@@ -63,9 +63,11 @@ interface LegacyTypeInfo {
  * Information about an imported class/type
  */
 export interface ImportedClassInfo {
-  class_symbol: SymbolId; // Symbol for the imported class/type
+  class_name: string; // Legacy: use class_symbol for new code
   source_module: string;
-  local_symbol: SymbolId; // Symbol for the local alias
+  local_name: string; // Legacy: use local_symbol for new code
+  class_symbol?: SymbolId; // Symbol for the imported class/type
+  local_symbol?: SymbolId; // Symbol for the local alias
   is_default?: boolean;
   is_type_only?: boolean; // TypeScript type-only import
 }
@@ -850,6 +852,8 @@ export function track_imports_generic(
                   });
 
                   tracker = set_imported_class(tracker, local_symbol_id, {
+                    class_name: import_name, // Legacy
+                    local_name: local_name, // Legacy
                     class_symbol: class_symbol_id,
                     source_module: module_name,
                     local_symbol: local_symbol_id,
@@ -881,6 +885,8 @@ export function track_imports_generic(
             });
 
             tracker = set_imported_class(tracker, local_symbol_id, {
+              class_name: import_name, // Legacy
+              local_name: import_name, // Legacy
               class_symbol: class_symbol_id,
               source_module: module_name,
               local_symbol: local_symbol_id,
@@ -912,6 +918,8 @@ export function track_imports_generic(
             });
 
             tracker = set_imported_class(tracker, local_symbol_id, {
+              class_name: "*", // Legacy
+              local_name: import_name, // Legacy
               class_symbol: namespace_symbol_id,
               source_module: module_name,
               local_symbol: local_symbol_id,
@@ -998,6 +1006,8 @@ export function track_imports_generic(
               });
 
               tracker = set_imported_class(tracker, local_symbol_id, {
+                class_name: class_name, // Legacy
+                local_name: local_name, // Legacy
                 class_symbol: class_symbol_id,
                 source_module: module_name,
                 local_symbol: local_symbol_id,
@@ -1031,6 +1041,8 @@ export function track_imports_generic(
                 });
 
                 tracker = set_imported_class(tracker, local_symbol_id, {
+                  class_name: class_name, // Legacy
+                  local_name: local_name, // Legacy
                   class_symbol: class_symbol_id,
                   source_module: module_name,
                   local_symbol: local_symbol_id,
@@ -1061,6 +1073,8 @@ export function track_imports_generic(
             });
 
             tracker = set_imported_class(tracker, local_symbol_id, {
+              class_name: import_name, // Legacy
+              local_name: import_name, // Legacy
               class_symbol: class_symbol_id,
               source_module: module_name,
               local_symbol: local_symbol_id,
@@ -1097,6 +1111,8 @@ export function track_imports_generic(
             });
 
             tracker = set_imported_class(tracker, local_symbol_id, {
+              class_name: module_name, // Legacy
+              local_name: module_name, // Legacy
               class_symbol: class_symbol_id,
               source_module: module_name,
               local_symbol: local_symbol_id,
@@ -1148,6 +1164,8 @@ function extract_rust_imports(
     });
     
     return set_imported_class(tracker, local_symbol_id, {
+      class_name: name, // Legacy
+      local_name: name, // Legacy
       class_symbol: class_symbol_id,
       source_module: full_path,
       local_symbol: local_symbol_id,
@@ -1173,6 +1191,8 @@ function extract_rust_imports(
     });
     
     return set_imported_class(tracker, local_symbol_id, {
+      class_name: name, // Legacy
+      local_name: name, // Legacy
       class_symbol: class_symbol_id,
       source_module: full_path,
       local_symbol: local_symbol_id,
@@ -1240,6 +1260,8 @@ function extract_rust_imports(
       });
       
       return set_imported_class(tracker, local_symbol_id, {
+        class_name: original_name, // Legacy
+        local_name: alias, // Legacy
         class_symbol: class_symbol_id,
         source_module: full_path,
         local_symbol: local_symbol_id,
