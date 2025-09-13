@@ -26,12 +26,14 @@ import {
   FunctionSignature,
   map_get_or_default,
   map_get_array,
+  CallInfo,
 } from "@ariadnejs/types";
 import {
   construct_function_symbol,
   construct_method_symbol,
   SPECIAL_SYMBOLS,
 } from "../../utils/symbol_construction";
+import { DefaultMap } from "../../utils/collection_utils";
 import { ResolutionResult } from "../../scope_analysis/symbol_resolution/symbol_resolution";
 
 /**
@@ -57,6 +59,17 @@ export interface CallChainContext {
 }
 
 // CallChainAnalysisResult is imported from @ariadnejs/types
+
+/**
+ * Analyze call chains using unified call information
+ */
+export function analyze_call_chains(
+  calls: CallInfo[]
+): CallChain[] {
+  // TODO: Implement using new query-based system
+  // See task 11.100.19 for implementation details
+  return [];
+}
 
 /**
  * Build call chains from function calls
@@ -158,7 +171,7 @@ function is_constructor_call_info(
 function build_call_graph(
   calls: readonly (FunctionCallInfo | MethodCallInfo | ConstructorCallInfo)[]
 ): Map<string, Set<string>> {
-  const graph = new Map<string, Set<string>>();
+  const graph = new DefaultMap<string, Set<string>>(() => new Set());
 
   for (const call of calls) {
     let caller: string;
@@ -182,12 +195,8 @@ function build_call_graph(
       continue;
     }
 
-    const callees = graph.get(caller);
-    if (callees) {
-      callees.add(callee);
-    } else {
-      graph.set(caller, new Set([callee]));
-    }
+    // DefaultMap automatically creates a new Set if the key doesn't exist
+    graph.get(caller).add(callee);
   }
 
   return graph;
