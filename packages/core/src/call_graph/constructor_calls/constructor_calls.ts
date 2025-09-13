@@ -189,7 +189,7 @@ function extract_constructor_info(
     constructor_name,
     location: node_to_location(node, context.file_path),
     arguments_count,
-    assigned_to: assigned_to || undefined,
+    assigned_to: assigned_to || (`anonymous_${Date.now()}` as any),
     is_new_expression: is_new,
     is_factory_method: !is_new && is_factory_call(node, context.language)
   };
@@ -267,7 +267,7 @@ function extract_potential_constructor_info(
     constructor_name: name,
     location: node_to_location(node, context.file_path),
     arguments_count: count_constructor_arguments(node, context.language),
-    assigned_to: assigned_to || undefined,
+    assigned_to: assigned_to || (`anonymous_${Date.now()}` as any),
     is_new_expression: false,
     is_factory_method
   };

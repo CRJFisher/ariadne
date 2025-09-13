@@ -395,7 +395,7 @@ export function parse_module_path(path: ModulePath): {
     isRelative: is_relative,
     isScoped: is_scoped,
     packageName: package_name,
-    subpath: subpath || undefined,
+    subpath,
   };
 }
 
