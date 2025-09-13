@@ -25,13 +25,11 @@ export function enhance_python_class(
 ): ClassDefinition {
   // Extract decorators
   const decorators = extract_decorators(node, context);
-  if (decorators?.length) {
-    class_def.decorators = decorators;
-    
-    // Check for abstract class via decorator
-    if (decorators.some(d => d.includes('abstractmethod'))) {
-      class_def.is_abstract = true;
-    }
+  class_def.decorators = decorators;
+
+  // Check for abstract class via decorator
+  if (decorators.some(d => d.includes('abstractmethod'))) {
+    class_def.is_abstract = true;
   }
   
   // Handle metaclass from superclasses
@@ -67,23 +65,21 @@ export function enhance_python_method(
     ? extract_decorators(decorated_node, context)
     : extract_decorators(node, context);
   
-  if (decorators?.length) {
-    method.decorators = decorators;
-    
-    // Check for special decorators
-    if (decorators.some(d => d.includes('staticmethod'))) {
-      method.is_static = true;
-    }
-    if (decorators.some(d => d.includes('classmethod'))) {
-      method.is_static = true; // Treat classmethod as static for simplicity
-    }
-    if (decorators.some(d => d.includes('abstractmethod'))) {
-      method.is_abstract = true;
-    }
-    if (decorators.some(d => d === 'property')) {
-      // Mark as property getter
-      (method as any).is_property = true;
-    }
+  method.decorators = decorators;
+
+  // Check for special decorators
+  if (decorators.some(d => d.includes('staticmethod'))) {
+    method.is_static = true;
+  }
+  if (decorators.some(d => d.includes('classmethod'))) {
+    method.is_static = true; // Treat classmethod as static for simplicity
+  }
+  if (decorators.some(d => d.includes('abstractmethod'))) {
+    method.is_abstract = true;
+  }
+  if (decorators.some(d => d === 'property')) {
+    // Mark as property getter
+    (method as any).is_property = true;
   }
   
   // Extract return type annotation
@@ -269,7 +265,7 @@ function extract_type_annotation(
 function extract_decorators(
   node: SyntaxNode,
   context: ClassDetectionContext
-): string[] | undefined {
+): string[] {
   const decorators: string[] = [];
   
   // For decorated_definition, look for all decorator children
@@ -296,7 +292,7 @@ function extract_decorators(
     sibling = sibling.previousSibling;
   }
   
-  return decorators.length > 0 ? decorators : undefined;
+  return decorators;
 }
 
 /**

@@ -40,13 +40,13 @@ export function enhance_typescript_class(
   const heritage_node = find_child_by_type(node, 'class_heritage');
   if (heritage_node) {
     const { extends_list, implements_list } = extract_heritage(heritage_node, context);
-    if (extends_list?.length) class_def.extends = extends_list;
-    if (implements_list?.length) class_def.implements = implements_list;
+    class_def.extends = extends_list;
+    class_def.implements = implements_list;
   }
   
   // Extract decorators
   const decorators = extract_decorators(node, context);
-  if (decorators?.length) class_def.decorators = decorators;
+  class_def.decorators = decorators;
   
   return class_def;
 }
@@ -92,7 +92,7 @@ export function enhance_typescript_method(
   
   // Extract decorators
   const decorators = extract_decorators(node, context);
-  if (decorators?.length) method.decorators = decorators;
+  method.decorators = decorators;
   
   // Enhance parameters with types
   const params_node = node.childForFieldName('parameters');
@@ -119,7 +119,7 @@ export function enhance_typescript_property(
   
   // Extract decorators
   const decorators = extract_decorators(node, context);
-  if (decorators?.length) property.decorators = decorators;
+  property.decorators = decorators;
   
   return property;
 }
@@ -130,7 +130,7 @@ export function enhance_typescript_property(
 function extract_heritage(
   heritage_node: SyntaxNode,
   context: ClassDetectionContext
-): { extends_list?: string[], implements_list?: string[] } {
+): { extends_list: string[], implements_list: string[] } {
   const extends_list: string[] = [];
   const implements_list: string[] = [];
   
@@ -172,8 +172,8 @@ function extract_heritage(
   }
   
   return {
-    extends_list: extends_list.length > 0 ? extends_list : undefined,
-    implements_list: implements_list.length > 0 ? implements_list : undefined
+    extends_list,
+    implements_list
   };
 }
 
@@ -283,7 +283,7 @@ function extract_type_annotation(
 function extract_decorators(
   node: SyntaxNode,
   context: ClassDetectionContext
-): string[] | undefined {
+): string[] {
   const decorators: string[] = [];
   
   // For TypeScript, decorators are children of the class_declaration node
@@ -299,7 +299,7 @@ function extract_decorators(
     }
   }
   
-  return decorators.length > 0 ? decorators : undefined;
+  return decorators;
 }
 
 /**
