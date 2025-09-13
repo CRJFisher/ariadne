@@ -5,7 +5,7 @@
 
 import { Location, Language } from "./common";
 import { FilePath } from "./aliases";
-import { Visibility } from "./branded-types";
+import { Visibility } from "./branded_types";
 import { SymbolName } from "./symbol_utils";
 import { SymbolId } from "./symbol_utils";
 import { SemanticNode, Resolution } from "./query";

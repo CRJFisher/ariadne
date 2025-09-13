@@ -70,8 +70,8 @@ export interface FunctionDefinition {
  * Class definition with all metadata
  */
 export interface ClassDefinition extends Definition {
-  readonly extends: readonly string[]; // Always present, defaults to empty array
-  readonly implements: readonly string[]; // Always present, defaults to empty array
+  readonly extends: readonly SymbolId[]; // Always present, defaults to empty array
+  readonly implements: readonly SymbolId[]; // Always present, defaults to empty array
   readonly is_abstract: boolean;
   readonly is_final: boolean;
   readonly is_interface: boolean;
@@ -80,7 +80,7 @@ export interface ClassDefinition extends Definition {
   readonly generics: readonly GenericParameter[]; // Always present, defaults to empty array
   readonly methods: readonly MethodDefinition[];
   readonly properties: readonly PropertyDefinition[];
-  readonly decorators: readonly string[]; // Always present, defaults to empty array
+  readonly decorators: readonly SymbolId[]; // Always present, defaults to empty array
   readonly docstring?: string;
   readonly is_exported: boolean;
 }
@@ -119,12 +119,12 @@ export interface MethodDefinition {
   readonly is_override: boolean;
   readonly is_async: boolean;
   readonly overrides?: string;
-  readonly overridden_by: readonly string[];
+  readonly overridden_by: readonly SymbolId[];
   readonly visibility: "public" | "private" | "protected";
   readonly parameters: readonly ParameterDefinition[];
   readonly return_type?: string;
   readonly generics?: readonly GenericParameter[];
-  readonly decorators?: readonly string[];
+  readonly decorators?: readonly SymbolId[];
 }
 
 /**
@@ -140,7 +140,7 @@ export interface PropertyDefinition {
   readonly is_readonly: boolean;
   readonly visibility: "public" | "private" | "protected";
   readonly initial_value?: string;
-  readonly decorators?: readonly string[];
+  readonly decorators?: readonly SymbolId[];
 }
 
 /**
@@ -158,7 +158,7 @@ export interface ParameterDefinition {
  * Interface definition
  */
 export interface InterfaceDefinition extends Definition {
-  readonly extends?: readonly string[];
+  readonly extends?: readonly SymbolId[];
   readonly generics?: readonly GenericParameter[];
   readonly methods: readonly MethodSignature[];
   readonly properties: readonly PropertySignature[];
@@ -219,7 +219,7 @@ export interface TypeAliasDefinition extends Definition {
 export interface StructDefinition extends Definition {
   readonly fields: readonly FieldDefinition[];
   readonly generics?: readonly GenericParameter[];
-  readonly derives?: readonly string[];
+  readonly derives?: readonly SymbolId[];
   readonly is_tuple_struct: boolean;
   readonly is_public?: boolean;
 }
@@ -240,7 +240,7 @@ export interface FieldDefinition {
 export interface TraitDefinition extends Definition {
   readonly methods: readonly MethodSignature[];
   readonly associated_types?: readonly AssociatedType[];
-  readonly supertraits?: readonly string[];
+  readonly supertraits?: readonly SymbolId[];
   readonly generics?: readonly GenericParameter[];
   readonly is_public?: boolean;
 }
@@ -260,7 +260,7 @@ export interface AssociatedType {
 export interface ProtocolDefinition extends Definition {
   readonly methods: readonly MethodSignature[];
   readonly properties: readonly PropertySignature[];
-  readonly bases?: readonly string[];
+  readonly bases?: readonly SymbolId[];
 }
 
 // Type guards for runtime type checking

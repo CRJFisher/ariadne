@@ -270,16 +270,16 @@ export function parse_symbol_id(id: SymbolId): {
   }
 
   // Handle file paths with colons (e.g., Windows C:\path)
-  const nameIndex = parts.length - 1;
-  const columnIndex = parts.length - 2;
-  const lineIndex = parts.length - 3;
-  const filePathParts = parts.slice(0, lineIndex);
+  const name_index = parts.length - 1;
+  const column_index = parts.length - 2;
+  const line_index = parts.length - 3;
+  const file_path_parts = parts.slice(0, line_index);
 
   return {
-    filePath: filePathParts.join(":") as FilePath,
-    line: parseInt(parts[lineIndex], 10),
-    column: parseInt(parts[columnIndex], 10),
-    name: parts[nameIndex] as SymbolName,
+    filePath: file_path_parts.join(":") as FilePath,
+    line: parseInt(parts[line_index], 10),
+    column: parseInt(parts[column_index], 10),
+    name: parts[name_index] as SymbolName,
   };
 }
 
@@ -317,14 +317,14 @@ export function parse_qualified_name(name: QualifiedName): {
   className: ClassName;
   memberName: string;
 } {
-  const lastDot = name.lastIndexOf(".");
-  if (lastDot === -1) {
+  const last_dot = name.lastIndexOf(".");
+  if (last_dot === -1) {
     throw new Error(`Invalid QualifiedName format: "${name}"`);
   }
 
   return {
-    className: name.substring(0, lastDot) as ClassName,
-    memberName: name.substring(lastDot + 1),
+    className: name.substring(0, last_dot) as ClassName,
+    memberName: name.substring(last_dot + 1),
   };
 }
 
@@ -371,30 +371,30 @@ export function parse_module_path(path: ModulePath): {
   packageName?: string;
   subpath?: string;
 } {
-  const isRelative = path.startsWith("./") || path.startsWith("../");
-  const isScoped = path.startsWith("@");
+  const is_relative = path.startsWith("./") || path.startsWith("../");
+  const is_scoped = path.startsWith("@");
   const segments = path.split("/").filter((s) => s.length > 0);
 
-  let packageName: string | undefined;
+  let package_name: string | undefined;
   let subpath: string | undefined;
 
-  if (!isRelative) {
-    if (isScoped && segments.length >= 2) {
+  if (!is_relative) {
+    if (is_scoped && segments.length >= 2) {
       // Scoped package like @types/node
-      packageName = segments.slice(0, 2).join("/");
+      package_name = segments.slice(0, 2).join("/");
       subpath = segments.slice(2).join("/");
     } else if (segments.length > 0) {
       // Regular package like lodash
-      packageName = segments[0];
+      package_name = segments[0];
       subpath = segments.slice(1).join("/");
     }
   }
 
   return {
     segments,
-    isRelative,
-    isScoped,
-    packageName,
+    isRelative: is_relative,
+    isScoped: is_scoped,
+    packageName: package_name,
     subpath: subpath || undefined,
   };
 }
@@ -463,43 +463,43 @@ export function parse_type_expression(expr: TypeExpression): {
   const str = expr as string;
 
   // Check for union types
-  const isUnion = str.includes(" | ");
-  const unionTypes = isUnion
+  const is_union = str.includes(" | ");
+  const union_types = is_union
     ? str.split(" | ").map((s) => s.trim())
     : undefined;
 
   // Check for Promise
-  const isPromise = str.startsWith("Promise<");
+  const is_promise = str.startsWith("Promise<");
 
   // Check for array
-  const isArray = str.endsWith("[]");
+  const is_array = str.endsWith("[]");
 
   // Check for nullable/optional
-  const isNullable = str.includes(" | null");
-  const isOptional = str.includes(" | undefined");
+  const is_nullable = str.includes(" | null");
+  const is_optional = str.includes(" | undefined");
 
   // Extract base type and generics
   let base = str;
   let generics: string[] | undefined;
 
   // Simple generic extraction (doesn't handle nested generics perfectly)
-  const genericMatch = /^([^<]+)<([^>]+)>/.exec(str);
-  if (genericMatch) {
-    base = genericMatch[1];
-    generics = genericMatch[2].split(",").map((s) => s.trim());
-  } else if (isArray) {
+  const generic_match = /^([^<]+)<([^>]+)>/.exec(str);
+  if (generic_match) {
+    base = generic_match[1];
+    generics = generic_match[2].split(",").map((s) => s.trim());
+  } else if (is_array) {
     base = str.replace(/\[\]$/, "");
   }
 
   return {
     base,
     generics,
-    isArray,
-    isNullable,
-    isOptional,
-    isPromise,
-    isUnion,
-    unionTypes,
+    isArray: is_array,
+    isNullable: is_nullable,
+    isOptional: is_optional,
+    isPromise: is_promise,
+    isUnion: is_union,
+    unionTypes: union_types,
   };
 }
 

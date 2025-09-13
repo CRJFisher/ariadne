@@ -83,14 +83,14 @@ export type ResolutionConfidence = "high" | "medium" | "low";
 export interface Resolution<T> {
   readonly resolved: T | undefined;
   readonly confidence: ResolutionConfidence;
-  readonly reason: ResolutionReason;
+  readonly reason: QueryResolutionReason;
   readonly resolution_path?: readonly FilePath[]; // Files traversed during resolution
 }
 
 /**
- * Reasons for resolution outcomes
+ * Reasons for query resolution outcomes
  */
-export type ResolutionReason =
+export type QueryResolutionReason =
   | "direct_match" // Exact match found
   | "imported" // Resolved through import
   | "inherited" // Resolved through inheritance
@@ -235,7 +235,7 @@ export function is_paged_result<T>(value: unknown): value is PagedResult<T> {
  */
 export function resolve_high<T>(
   resolved: T,
-  reason: ResolutionReason = "direct_match"
+  reason: QueryResolutionReason = "direct_match"
 ): Resolution<T> {
   return {
     resolved,
@@ -249,7 +249,7 @@ export function resolve_high<T>(
  */
 export function resolve_medium<T>(
   resolved: T,
-  reason: ResolutionReason
+  reason: QueryResolutionReason
 ): Resolution<T> {
   return {
     resolved,
@@ -263,7 +263,7 @@ export function resolve_medium<T>(
  */
 export function resolve_low<T>(
   resolved: T,
-  reason: ResolutionReason
+  reason: QueryResolutionReason
 ): Resolution<T> {
   return {
     resolved,
@@ -276,7 +276,7 @@ export function resolve_low<T>(
  * Create a failed resolution
  */
 export function resolve_failed<T>(
-  reason: ResolutionReason = "not_found"
+  reason: QueryResolutionReason = "not_found"
 ): Resolution<T> {
   return {
     resolved: undefined,

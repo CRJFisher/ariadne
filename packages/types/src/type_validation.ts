@@ -14,7 +14,7 @@ import {
   is_caller_context,
   is_visibility,
   is_resolution_reason,
-} from "./branded-types";
+} from "./branded_types";
 import {
   is_ast_node,
   is_semantic_node,
@@ -29,7 +29,7 @@ import {
   is_constructor_call,
   is_call_info,
 } from "./calls";
-import { is_symbol, is_unified_scope, isSymbolUsage } from "./symbol_scope";
+import { is_symbol, is_unified_scope, SymbolUsage } from "./symbol_scope";
 import {
   is_named_import,
   is_default_import,
@@ -97,7 +97,7 @@ export interface ValidationWarning {
 /**
  * Deep validation for Location
  */
-export function validateLocation(
+export function validate_location(
   value: unknown,
   path = "location"
 ): ValidationResult<Location> {
@@ -125,8 +125,8 @@ export function validateLocation(
     });
   }
 
-  const numFields = ["line", "column", "end_line", "end_column"];
-  for (const field of numFields) {
+  const num_fields = ["line", "column", "end_line", "end_column"];
+  for (const field of num_fields) {
     if (typeof loc[field] !== "number" || loc[field] < 0) {
       errors.push({
         path: `${path}.${field}`,
@@ -163,19 +163,19 @@ export function validateLocation(
 /**
  * Deep validation for Language
  */
-export function validateLanguage(
+export function validate_language(
   value: unknown,
   path = "language"
 ): ValidationResult<Language> {
   const errors: ValidationError[] = [];
-  const validLanguages = ["javascript", "typescript", "python", "rust"];
+  const valid_languages = ["javascript", "typescript", "python", "rust"];
 
-  if (!validLanguages.includes(value as string)) {
+  if (!valid_languages.includes(value as string)) {
     errors.push({
       path,
-      expected: validLanguages.join(" | "),
+      expected: valid_languages.join(" | "),
       actual: value,
-      message: `Language must be one of: ${validLanguages.join(", ")}`,
+      message: `Language must be one of: ${valid_languages.join(", ")}`,
     });
   }
 
@@ -190,7 +190,7 @@ export function validateLanguage(
 /**
  * Deep validation for ASTNode
  */
-export function validateASTNode(
+export function validate_ast_node(
   value: unknown,
   path = "node"
 ): ValidationResult<any> {
@@ -208,18 +208,18 @@ export function validateASTNode(
   }
 
   // Validate nested Location
-  const locResult = validateLocation(
+  const loc_result = validate_location(
     (value as any).location,
     `${path}.location`
   );
-  errors.push(...locResult.errors);
+  errors.push(...loc_result.errors);
 
   // Validate Language
-  const langResult = validateLanguage(
+  const lang_result = validate_language(
     (value as any).language,
     `${path}.language`
   );
-  errors.push(...langResult.errors);
+  errors.push(...lang_result.errors);
 
   // Check node_type
   if (
@@ -269,8 +269,8 @@ export function validate_call_info(
     });
   }
 
-  const locResult = validateLocation(call.location, `${path}.location`);
-  errors.push(...locResult.errors);
+  const loc_result = validate_location(call.location, `${path}.location`);
+  errors.push(...loc_result.errors);
 
   if (typeof call.arguments_count !== "number" || call.arguments_count < 0) {
     warnings.push({
@@ -373,8 +373,8 @@ export function validate_unified_symbol(
   }
 
   // Validate nested ASTNode fields
-  const astResult = validateASTNode(symbol, path);
-  errors.push(...astResult.errors);
+  const ast_result = validate_ast_node(symbol, path);
+  errors.push(...ast_result.errors);
 
   return { valid: errors.length === 0, value, errors, warnings };
 }
@@ -396,7 +396,7 @@ export interface StrictValidationOptions {
 /**
  * Perform strict validation with TypeScript strict mode compliance
  */
-export function strictValidate<T>(
+export function strict_validate<T>(
   value: unknown,
   validator: (v: unknown) => v is T,
   deepValidator?: (v: unknown, path?: string) => ValidationResult<T>,
@@ -418,9 +418,9 @@ export function strictValidate<T>(
 
   // Then perform deep validation if provided
   if (deepValidator) {
-    const deepResult = deepValidator(value);
-    errors.push(...deepResult.errors);
-    warnings.push(...deepResult.warnings);
+    const deep_result = deepValidator(value);
+    errors.push(...deep_result.errors);
+    warnings.push(...deep_result.warnings);
   }
 
   // Check for extra fields if strict
@@ -452,7 +452,7 @@ export function strictValidate<T>(
 /**
  * Validate an array of items
  */
-export function validateArray<T>(
+export function validate_array<T>(
   values: unknown,
   itemValidator: (v: unknown, path?: string) => ValidationResult<T>,
   path = "array"
@@ -470,20 +470,20 @@ export function validateArray<T>(
     return { valid: false, errors, warnings };
   }
 
-  const validItems: T[] = [];
+  const valid_items: T[] = [];
 
   for (let i = 0; i < values.length; i++) {
-    const itemResult = itemValidator(values[i], `${path}[${i}]`);
-    if (itemResult.valid && itemResult.value) {
-      validItems.push(itemResult.value);
+    const item_result = itemValidator(values[i], `${path}[${i}]`);
+    if (item_result.valid && item_result.value) {
+      valid_items.push(item_result.value);
     }
-    errors.push(...itemResult.errors);
-    warnings.push(...itemResult.warnings);
+    errors.push(...item_result.errors);
+    warnings.push(...item_result.warnings);
   }
 
   return {
     valid: errors.length === 0,
-    value: errors.length === 0 ? validItems : undefined,
+    value: errors.length === 0 ? valid_items : undefined,
     errors,
     warnings,
   };
@@ -492,7 +492,7 @@ export function validateArray<T>(
 /**
  * Validate a map of items
  */
-export function validateMap<K, V>(
+export function validate_map<K, V>(
   value: unknown,
   keyValidator: (v: unknown) => v is K,
   valueValidator: (v: unknown, path?: string) => ValidationResult<V>,
@@ -511,7 +511,7 @@ export function validateMap<K, V>(
     return { valid: false, errors, warnings };
   }
 
-  const validMap = new Map<K, V>();
+  const valid_map = new Map<K, V>();
 
   for (const [key, val] of value.entries()) {
     if (!keyValidator(key)) {
@@ -524,17 +524,17 @@ export function validateMap<K, V>(
       continue;
     }
 
-    const valResult = valueValidator(val, `${path}[${String(key)}]`);
-    if (valResult.valid && valResult.value) {
-      validMap.set(key, valResult.value);
+    const val_result = valueValidator(val, `${path}[${String(key)}]`);
+    if (val_result.valid && val_result.value) {
+      valid_map.set(key, val_result.value);
     }
-    errors.push(...valResult.errors);
-    warnings.push(...valResult.warnings);
+    errors.push(...val_result.errors);
+    warnings.push(...val_result.warnings);
   }
 
   return {
     valid: errors.length === 0,
-    value: errors.length === 0 ? validMap : undefined,
+    value: errors.length === 0 ? valid_map : undefined,
     errors,
     warnings,
   };
@@ -547,7 +547,7 @@ export function validateMap<K, V>(
 /**
  * Create a composite validator from multiple validators
  */
-export function combineValidators<T>(
+export function combine_validators<T>(
   ...validators: Array<(v: unknown) => v is T>
 ): (v: unknown) => v is T {
   return (value: unknown): value is T => {
@@ -584,7 +584,7 @@ export function nullable<T>(
 /**
  * Assert that a value is of a specific type
  */
-export function assertType<T>(
+export function assert_type<T>(
   value: unknown,
   validator: (v: unknown) => v is T,
   message?: string
@@ -597,13 +597,13 @@ export function assertType<T>(
 /**
  * Assert with validation result
  */
-export function assertValid<T>(
+export function assert_valid<T>(
   result: ValidationResult<T>,
   message?: string
 ): asserts result is ValidationResult<T> & { valid: true; value: T } {
   if (!result.valid) {
-    const errorMessages = result.errors.map((e) => e.message).join(", ");
-    throw new TypeError(message || `Validation failed: ${errorMessages}`);
+    const error_messages = result.errors.map((e) => e.message).join(", ");
+    throw new TypeError(message || `Validation failed: ${error_messages}`);
   }
 }
 
@@ -640,7 +640,6 @@ export const TypeGuards = {
   // Unified symbol/scope types
   is_symbol,
   is_unified_scope,
-  isSymbolUsage,
 
   // Unified import/export types
   is_named_import,

@@ -19,7 +19,7 @@ import {
   parse_qualified_name,
   to_symbol_name,
   to_type_expression,
-} from "./branded-types";
+} from "./branded_types";
 import { FilePath } from "./aliases";
 
 // Note: These tests would normally use a test framework like Jest or Vitest
@@ -149,7 +149,7 @@ function testQualifiedNameRoundTrip() {
 }
 
 // Run all tests
-export function runCompoundBuilderTests() {
+export function run_compound_builder_tests() {
   try {
     testModulePathBuilders();
     console.log("✓ ModulePath builders work correctly");

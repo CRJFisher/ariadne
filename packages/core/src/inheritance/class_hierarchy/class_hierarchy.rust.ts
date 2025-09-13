@@ -18,6 +18,7 @@ import {
   BespokeHandlers,
   ClassHierarchyContext
 } from './class_hierarchy';
+import { AnyLocationFormat, extractTargetPosition } from '../../ast/location_utils';
 
 /**
  * Create Rust bespoke handlers
@@ -423,20 +424,15 @@ function extract_type_name(node: SyntaxNode, source_code: string): string | null
  */
 function find_node_at_location(
   root: SyntaxNode,
-  location: any
+  location: AnyLocationFormat
 ): SyntaxNode | null {
-  // Handle both location formats
-  let targetRow: number;
-  
-  if (location.line !== undefined) {
-    targetRow = location.line - 1;
-  } else if (location.start !== undefined) {
-    targetRow = location.start.row;
-  } else if (location.row !== undefined) {
-    targetRow = location.row;
-  } else {
+  // Extract target position using shared utility
+  const position = extractTargetPosition(location);
+  if (!position) {
     return null;
   }
+  
+  const targetRow = position.row;
   
   function search(node: SyntaxNode): SyntaxNode | null {
     const start = node.startPosition;

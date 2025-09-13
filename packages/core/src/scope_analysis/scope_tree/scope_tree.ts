@@ -21,7 +21,27 @@ import {
   TypeString,
   SymbolId,
   variable_symbol,
+  function_symbol,
+  class_symbol,
+  module_symbol,
 } from "@ariadnejs/types";
+
+// Mutable versions for building
+interface MutableScopeNode {
+  id: ScopeId;
+  type: ScopeType;
+  location: Location;
+  parent_id?: ScopeId;
+  child_ids: ScopeId[];
+  symbols: Map<SymbolId, ScopeSymbol>;
+  metadata?: any;
+}
+
+interface MutableScopeTree {
+  root_id: ScopeId;
+  nodes: Map<ScopeId, MutableScopeNode>;
+  file_path?: FilePath;
+}
 import { node_to_location } from "../../ast/node_utils";
 import {
   get_language_config,
@@ -33,7 +53,7 @@ import {
 /**
  * Get a scope node that must exist in the tree, throwing an error if not found
  */
-function get_required_scope(tree: ScopeTree, scope_id: ScopeId): ScopeNode {
+function get_required_scope(tree: MutableScopeTree, scope_id: ScopeId): MutableScopeNode {
   const scope = tree.nodes.get(scope_id);
   if (!scope) {
     throw new Error(`Scope ${scope_id} not found in tree`);
@@ -70,9 +90,9 @@ export interface GenericScopeContext {
 export function create_scope_tree(
   file_path: FilePath,
   root_syntax_node: SyntaxNode
-): ScopeTree {
-  const root_id = "scope_0";
-  const root_node: ScopeNode = {
+): MutableScopeTree {
+  const root_id = "scope_0" as ScopeId;
+  const root_node: MutableScopeNode = {
     id: root_id,
     type: "global",
     location: node_to_location(root_syntax_node, file_path),
@@ -136,7 +156,7 @@ export interface BespokeHandlers {
   /** Pre-process node before generic handling */
   pre_process_node?: (
     node: SyntaxNode,
-    tree: ScopeTree,
+    tree: MutableScopeTree,
     context: GenericScopeContext
   ) => boolean; // Return true to skip generic processing
   
@@ -153,12 +173,12 @@ export interface BespokeHandlers {
   ) => ScopeSymbol[];
   
   /** Post-process the entire tree */
-  post_process?: (tree: ScopeTree, context: GenericScopeContext) => void;
+  post_process?: (tree: MutableScopeTree, context: GenericScopeContext) => void;
   
   /** Custom parameter extraction */
   extract_custom_parameters?: (
     node: SyntaxNode,
-    scope: ScopeNode,
+    scope: MutableScopeNode,
     context: GenericScopeContext
   ) => void;
   
@@ -174,7 +194,7 @@ export interface BespokeHandlers {
  */
 function traverse_and_build(
   node: SyntaxNode,
-  tree: ScopeTree,
+  tree: MutableScopeTree,
   context: GenericScopeContext,
   bespoke_handlers?: BespokeHandlers
 ) {
@@ -201,8 +221,8 @@ function traverse_and_build(
     const scope_type = get_scope_type(node.type, context.language);
     const scope_config = context.config.scope_creating_nodes[node.type];
 
-    const new_scope: ScopeNode = {
-      id: scope_id,
+    const new_scope: MutableScopeNode = {
+      id: scope_id as ScopeId,
       type: scope_type,
       location: node_to_location(node, context.file_path),
       parent_id: context.current_scope_id,
@@ -218,23 +238,22 @@ function traverse_and_build(
     const parent_scope = get_required_scope(tree, context.current_scope_id);
     parent_scope.child_ids.push(scope_id);
 
-      // If this node adds its name to parent scope
-      if (scope_config.adds_to_parent && scope_config.name_field) {
-        const name_node = node.childForFieldName(scope_config.name_field);
-        if (name_node) {
-          const symbol = create_symbol(
-            name_node.text,
-            get_symbol_kind_for_scope(scope_type),
-            node,
-            context
-          );
-          parent_scope.symbols.set(symbol.name, symbol);
-        }
+    // If this node adds its name to parent scope
+    if (scope_config?.adds_to_parent && scope_config?.name_field) {
+      const name_node = node.childForFieldName(scope_config.name_field);
+      if (name_node) {
+        const symbol = create_symbol(
+          name_node.text,
+          get_symbol_kind_for_scope(scope_type),
+          node,
+          context
+        );
+        parent_scope.symbols.set(symbol.name, symbol);
       }
     }
 
     // Extract parameters
-    if (scope_config.parameter_fields) {
+    if (scope_config?.parameter_fields) {
       for (const field of scope_config.parameter_fields) {
         const param_node = node.childForFieldName(field);
         if (param_node) {
@@ -244,7 +263,7 @@ function traverse_and_build(
     }
 
     // Extract generic/type parameters
-    if (scope_config.generic_fields) {
+    if (scope_config?.generic_fields) {
       for (const field of scope_config.generic_fields) {
         const generic_node = node.childForFieldName(field);
         if (generic_node) {
@@ -384,7 +403,7 @@ function extract_assignment_targets(
  */
 function extract_parameters(
   node: SyntaxNode,
-  scope: ScopeNode,
+  scope: MutableScopeNode,
   context: GenericScopeContext
 ) {
   for (let i = 0; i < node.childCount; i++) {
@@ -434,7 +453,7 @@ function extract_parameter_symbol(
  */
 function extract_generic_parameters(
   node: SyntaxNode,
-  scope: ScopeNode,
+  scope: MutableScopeNode,
   context: GenericScopeContext
 ) {
   for (let i = 0; i < node.childCount; i++) {
@@ -467,11 +486,36 @@ function create_symbol(
   node: SyntaxNode,
   context: GenericScopeContext
 ): ScopeSymbol {
+  const location = node_to_location(node, context.file_path);
+  
+  // Create appropriate SymbolId based on kind
+  let symbol_id: SymbolId;
+  switch (kind) {
+    case "function":
+      symbol_id = function_symbol(name, context.file_path, location);
+      break;
+    case "class":
+      symbol_id = class_symbol(name, context.file_path, location);
+      break;
+    case "module":
+      symbol_id = module_symbol(name, context.file_path, location);
+      break;
+    case "variable":
+    case "parameter":
+    case "type":
+    default:
+      symbol_id = variable_symbol(name, context.file_path, location);
+      break;
+  }
+  
   return {
-    name,
+    name: symbol_id,
     kind: kind as SymbolKind,
-    location: node_to_location(node, context.file_path),
-    type: undefined,
+    location,
+    is_hoisted: false,
+    is_imported: false,
+    is_exported: false,
+    type_info: undefined,
   };
 }
 

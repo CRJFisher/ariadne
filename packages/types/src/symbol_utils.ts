@@ -148,6 +148,7 @@ export function function_symbol(
  */
 export function class_symbol(
   name: string,
+  scope: FilePath,
   location: Location
 ): SymbolId {
   return symbol_string({
@@ -190,6 +191,23 @@ export function property_symbol(
 }
 
 /**
+ * Create a module symbol
+ */
+export function module_symbol(
+  name: SymbolName | string,
+  file_path: FilePath | string,
+  location: Location
+): SymbolId {
+  // Ensure location has the correct file_path
+  const loc = { ...location, file_path: file_path as FilePath };
+  return symbol_string({
+    name: name as SymbolName,
+    kind: "module",
+    location: loc,
+  });
+}
+
+/**
  * Create a parameter symbol
  */
 export function parameter_symbol(
@@ -201,6 +219,36 @@ export function parameter_symbol(
     kind: "parameter",
     name: param_name as SymbolName,
     qualifier: function_name as SymbolName,
+    location,
+  });
+}
+
+/**
+ * Create an interface symbol
+ */
+export function interface_symbol(
+  name: string,
+  scope: FilePath,
+  location: Location
+): SymbolId {
+  return symbol_string({
+    kind: "interface",
+    name: name as SymbolName,
+    location,
+  });
+}
+
+/**
+ * Create a type symbol
+ */
+export function type_symbol(
+  name: string,
+  scope: FilePath,
+  location: Location
+): SymbolId {
+  return symbol_string({
+    kind: "type",
+    name: name as SymbolName,
     location,
   });
 }
@@ -264,5 +312,73 @@ export function is_symbol(value: unknown): value is Symbol {
     typeof s.location.end_column === "number" &&
     typeof s.name === "string" &&
     (s.qualifier === undefined || typeof s.qualifier === "string")
+  );
+}
+
+// ============================================================================
+// Array Conversion Helpers
+// ============================================================================
+
+/**
+ * Convert array of names to SymbolIds
+ */
+export function to_symbol_array(
+  names: readonly string[],
+  kind: SymbolKind,
+  scope: FilePath,
+  location: Location
+): SymbolId[] {
+  return names.map(name => 
+    symbol_string({
+      kind,
+      name: name as SymbolName,
+      location,
+    })
+  );
+}
+
+/**
+ * Extract names from SymbolId array for display
+ */
+export function extract_names(symbols: readonly SymbolId[]): SymbolName[] {
+  return symbols.map(id => symbol_from_string(id).name);
+}
+
+/**
+ * Convert class names to SymbolIds
+ */
+export function class_names_to_symbols(
+  names: readonly string[],
+  scope: FilePath,
+  location: Location
+): SymbolId[] {
+  return names.map(name => 
+    class_symbol(name, scope, location)
+  );
+}
+
+/**
+ * Convert interface names to SymbolIds
+ */
+export function interface_names_to_symbols(
+  names: readonly string[],
+  scope: FilePath,
+  location: Location
+): SymbolId[] {
+  return names.map(name => 
+    interface_symbol(name, scope, location)
+  );
+}
+
+/**
+ * Convert type names to SymbolIds
+ */
+export function type_names_to_symbols(
+  names: readonly string[],
+  scope: FilePath,
+  location: Location
+): SymbolId[] {
+  return names.map(name => 
+    type_symbol(name, scope, location)
   );
 }

@@ -92,7 +92,7 @@ export function construct_symbol(components: SymbolComponents): SymbolId {
   const full_scope = [...scope_parts, name].filter(Boolean);
   
   // Construct final symbol
-  return `${normalized_path}#${full_scope.join(':')}`;
+  return `${normalized_path}#${full_scope.join(':')}` as SymbolId;
 }
 
 /**

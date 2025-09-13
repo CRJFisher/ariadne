@@ -265,18 +265,22 @@ export function register_type(
   registry.types.set(qualified_name, type_def);
 
   // Register by file
-  if (!registry.files.has(file_path)) {
-    registry.files.set(file_path, new Set());
+  const fileSet = registry.files.get(file_path);
+  if (fileSet) {
+    fileSet.add(qualified_name);
+  } else {
+    registry.files.set(file_path, new Set([qualified_name]));
   }
-  registry.files.get(file_path)!.add(qualified_name);
 
   // Register exports
   if (exported) {
-    if (!registry.exports.has(file_path)) {
-      registry.exports.set(file_path, new Map());
-    }
     const exp_name = export_name || type_def.name;
-    registry.exports.get(file_path)!.set(exp_name, qualified_name);
+    const exportMap = registry.exports.get(file_path);
+    if (exportMap) {
+      exportMap.set(exp_name, qualified_name);
+    } else {
+      registry.exports.set(file_path, new Map([[exp_name, qualified_name]]));
+    }
   }
 }
 /**

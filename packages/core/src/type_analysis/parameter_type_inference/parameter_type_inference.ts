@@ -724,7 +724,10 @@ export function infer_all_parameter_types(
         name: func_name as any,
         location: node_to_location(node, file_path),
         signature: source_code.substring(node.startIndex, node.endIndex).split('\n')[0] as any,
-        is_exported: false // This would need to be determined from context
+        decorators: [], // No decorators for inference functions
+        is_exported: false, // This would need to be determined from context
+        is_arrow_function: false,
+        is_anonymous: false
       };
       
       // Use the comprehensive type inference function

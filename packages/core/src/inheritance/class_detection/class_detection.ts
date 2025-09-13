@@ -96,14 +96,19 @@ export function extract_class_generic(
   const class_def: ClassDefinition = {
     name,
     location: node_to_location(node, context.file_path),
+    extends: extends_list || [], // Always provide, default to empty array
+    implements: implements_list || [], // Always provide, default to empty array
+    generics: [], // No generics support yet, default to empty array
+    decorators: [], // No decorators extracted yet, default to empty array
     methods,
-    properties
+    properties,
+    is_abstract: is_abstract || false,
+    is_final: false, // Set appropriate defaults
+    is_interface: false,
+    is_trait: false,
+    is_mixin: false,
+    is_exported: false // This would need to be determined from context
   };
-  
-  // Add optional fields
-  if (extends_list?.length) class_def.extends = extends_list;
-  if (implements_list?.length) class_def.implements = implements_list;
-  if (is_abstract) class_def.is_abstract = is_abstract;
   
   return class_def;
 }

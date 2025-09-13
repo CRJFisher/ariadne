@@ -35,7 +35,7 @@ export function location_contains(
 export interface FunctionSignature {
   readonly parameters: readonly ParameterType[];
   readonly return_type?: TypeString;
-  readonly type_parameters?: readonly TypeParameter[];
+  readonly type_parameters: readonly TypeParameter[]; // Always present, defaults to empty array
   readonly is_async: boolean;
   readonly is_generator: boolean;
 }

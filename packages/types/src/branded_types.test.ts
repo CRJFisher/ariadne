@@ -17,21 +17,21 @@ import {
   parse_scope_path,
   build_qualified_name,
   parse_qualified_name,
-} from "./branded-types";
+} from "./branded_types";
 import { FilePath, ClassName, MethodName, FunctionName } from "./aliases";
 import { describe, expect, it } from "vitest";
 
 describe("Branded Types", () => {
   describe("Type Creation", () => {
     it("should create branded types with validation", () => {
-      const symbolName = to_symbol_name("myFunction");
-      expect(symbolName).toBe("myFunction");
+      const symbol_name = to_symbol_name("myFunction");
+      expect(symbol_name).toBe("myFunction");
       
-      const symbolId = to_symbol_id("file.ts:10:5:myFunction");
-      expect(symbolId).toBe("file.ts:10:5:myFunction");
+      const symbol_id = to_symbol_id("file.ts:10:5:myFunction");
+      expect(symbol_id).toBe("file.ts:10:5:myFunction");
       
-      const callerName = to_caller_name("callingFunction");
-      expect(callerName).toBe("callingFunction");
+      const caller_name = to_caller_name("callingFunction");
+      expect(caller_name).toBe("callingFunction");
     });
     
     it("should throw errors for invalid values", () => {
@@ -62,34 +62,34 @@ describe("Branded Types", () => {
   
   describe("Compound Type Builders", () => {
     it("should build and parse SymbolId correctly", () => {
-      const filePath = "/path/to/file.ts" as FilePath;
+      const file_path = "/path/to/file.ts" as FilePath;
       const name = to_symbol_name("myFunction");
       
-      const symbolId = build_symbol_id(filePath, 10, 5, name);
-      expect(symbolId).toBe("/path/to/file.ts:10:5:myFunction");
+      const symbol_id = build_symbol_id(file_path, 10, 5, name);
+      expect(symbol_id).toBe("/path/to/file.ts:10:5:myFunction");
       
-      const parsed = parse_symbol_id(symbolId);
-      expect(parsed.filePath).toBe(filePath);
+      const parsed = parse_symbol_id(symbol_id);
+      expect(parsed.filePath).toBe(file_path);
       expect(parsed.line).toBe(10);
       expect(parsed.column).toBe(5);
       expect(parsed.name).toBe(name);
     });
     
     it("should handle Windows paths with colons", () => {
-      const filePath = "C:\\Users\\test\\file.ts" as FilePath;
+      const file_path = "C:\\Users\\test\\file.ts" as FilePath;
       const name = to_symbol_name("myFunction");
         
-      const symbolId = build_symbol_id(filePath, 10, 5, name);
-      const parsed = parse_symbol_id(symbolId);
-      expect(parsed.filePath).toBe(filePath);
+      const symbol_id = build_symbol_id(file_path, 10, 5, name);
+      const parsed = parse_symbol_id(symbol_id);
+      expect(parsed.filePath).toBe(file_path);
     });
     
     it("should build and parse ScopePath correctly", () => {
       const scopes = ["global", "module", "class", "method"];
-      const scopePath = build_scope_path(scopes);
-      expect(scopePath).toBe("global.module.class.method");
+      const scope_path = build_scope_path(scopes);
+      expect(scope_path).toBe("global.module.class.method");
       
-      const parsed = parse_scope_path(scopePath);
+      const parsed = parse_scope_path(scope_path);
       expect(parsed).toEqual(scopes);
     });
     

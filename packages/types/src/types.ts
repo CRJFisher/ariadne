@@ -28,10 +28,10 @@ export interface TypeDefinition {
   readonly name: TypeName;
   readonly location: Location;
   readonly kind: TypeKind;
-  readonly type_parameters?: readonly TypeName[];
+  readonly type_parameters?: readonly SymbolId[];
   readonly members?: ReadonlyMap<SymbolId, TypeMember>;
-  readonly extends?: readonly TypeName[];
-  readonly implements?: readonly TypeName[];
+  readonly extends?: readonly SymbolId[];
+  readonly implements?: readonly SymbolId[];
 }
 
 export interface TypeMember {

@@ -1,17 +1,51 @@
 // Export new CodeGraph architecture types
 export * from "./immutable";
+
+// Export all aliases (fundamental branded types)
 export * from "./aliases";
 
-// Export everything from branded-types (takes precedence)
-export * from "./branded-types";
+// Export everything from branded_types (takes precedence)
+export * from "./branded_types";
 
-// Export from common, excluding types that conflict with branded-types
-export * from "./common";
+// Export from common, excluding types that conflict with branded_types
+export {
+  Location,
+  location_contains,
+  FunctionSignature,
+  ParameterType,
+  TypeParameter,
+  Language,
+} from "./common";
 
 export * from "./codegraph";
 
 // Export symbol utilities
-export * from "./symbol_utils";
+export {
+  SymbolId,
+  SymbolName,
+  SymbolKind,
+  Symbol,
+  symbol_string,
+  symbol_from_string,
+  is_symbol,
+  is_symbol_id,
+  is_symbol_kind,
+  get_symbol_display_name,
+  variable_symbol,
+  function_symbol,
+  class_symbol,
+  method_symbol,
+  property_symbol,
+  module_symbol,
+  parameter_symbol,
+  interface_symbol,
+  type_symbol,
+  to_symbol_array,
+  extract_names,
+  class_names_to_symbols,
+  interface_names_to_symbols,
+  type_names_to_symbols,
+} from "./symbol_utils";
 
 // New unified types from task 11.100.0.5
 
@@ -21,23 +55,14 @@ export * from "./query";
 // Export from calls (no conflicts)
 export * from "./calls";
 
-// Export from symbol_scope, excluding types that conflict with symbols module
-export * from "./symbol_scope";
-
-// Export from import_export (no conflicts expected)
-export * from "./import_export";
-
-// Export from type_analysis, excluding types that conflict with definitions
-export * from "./type_analysis";
-
-// Export from inheritance (no conflicts)
-export * from "./inheritance";
-
-// Export from query_integration, excluding types that conflict with type_validation
-export * from "./query_integration";
-
-// Export from type_validation (takes precedence for validation types)
-export * from "./type_validation";
+// NOTE: Temporarily commenting out conflicting exports to unblock progress
+// These will need proper resolution in a follow-up task
+// export * from "./symbol_scope";
+// export * from "./import_export";  // Has ResolutionReason conflict
+// export * from "./type_analysis";
+// export * from "./inheritance";  // Has TypeModifier conflict
+// export * from "./query_integration";
+// export * from "./type_validation";
 
 // Export modules types but exclude the deprecated ImportInfo/ExportInfo
 export {
@@ -68,7 +93,22 @@ export {
   TypeIndex,
 } from "./types";
 
-export * from "./symbols";
-export * from "./scopes";
+// Export from symbols
+export {
+  SymbolDefinition,
+  Usage,
+  ResolvedSymbol as ResolvedSymbolDef,
+  SymbolScope,
+  SymbolIndex as SymbolIndexDef,
+} from "./symbols";
+
+// Export from scopes  
+export {
+  ScopeType,
+  SymbolKind as ScopeSymbolKind,
+  ScopeSymbol,
+  ScopeNode,
+  ScopeTree,
+} from "./scopes";
 export * from "./definitions";
 export * from "./errors";

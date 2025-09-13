@@ -22,9 +22,9 @@ export interface ClassNode {
   readonly location: Location;
 
   // Direct relationships
-  readonly base_classes: readonly ClassName[];
-  readonly derived_classes: readonly ClassName[];
-  readonly interfaces?: readonly InterfaceName[];
+  readonly base_classes: readonly SymbolId[];
+  readonly derived_classes: readonly SymbolId[];
+  readonly interfaces?: readonly SymbolId[];
 
   // Type characteristics
   readonly is_abstract: boolean;
@@ -79,10 +79,10 @@ export interface InheritanceEdge {
 export interface ClassHierarchy {
   readonly classes: ReadonlyMap<QualifiedName, ClassNode>;
   readonly inheritance_edges: readonly InheritanceEdge[];
-  readonly root_classes: ReadonlySet<ClassName>;
+  readonly root_classes: ReadonlySet<SymbolId>;
   readonly interface_implementations?: ReadonlyMap<
-    InterfaceName,
-    ReadonlySet<ClassName>
+    SymbolId,
+    ReadonlySet<SymbolId>
   >;
 
   // Enhanced fields from local types

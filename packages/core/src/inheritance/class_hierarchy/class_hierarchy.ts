@@ -34,6 +34,7 @@ import {
   is_type_reference_node,
   ClassHierarchyConfig
 } from './language_configs';
+import { AnyLocationFormat, extractTargetPosition } from '../../ast/location_utils';
 
 /**
  * Module context for refactoring tracking
@@ -481,27 +482,15 @@ function find_child_by_type(node: SyntaxNode, type: string): SyntaxNode | null {
  */
 function find_node_at_location(
   root: SyntaxNode,
-  location: any
+  location: AnyLocationFormat
 ): SyntaxNode | null {
-  // Handle both location formats - single point and range
-  let target_row: number;
-  let target_column: number;
-  
-  if (location.line !== undefined) {
-    // Format: { line: number, column: number }
-    target_row = location.line - 1;  // Convert to 0-based
-    target_column = location.column - 1;
-  } else if (location.start !== undefined) {
-    // Format: { start: { row, column }, end: { row, column } }
-    target_row = location.start.row;
-    target_column = location.start.column;
-  } else if (location.row !== undefined) {
-    // Format: { row: number, column: number }
-    target_row = location.row;
-    target_column = location.column;
-  } else {
+  // Extract target position using shared utility
+  const position = extractTargetPosition(location);
+  if (!position) {
     return null;
   }
+  
+  const { row: target_row, column: target_column } = position;
   
   // Find node that contains the location
   function search(node: SyntaxNode): SyntaxNode | null {
