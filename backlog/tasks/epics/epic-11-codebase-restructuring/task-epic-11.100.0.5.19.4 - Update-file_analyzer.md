@@ -130,3 +130,22 @@ import type {
    - Tests will need updates once all dependent modules are aligned
    - Consider integration tests to verify end-to-end type flow
    - Unit tests should validate SymbolId creation and usage
+
+## Follow-up Sub-tasks Created
+
+Based on compilation errors and implementation gaps identified, the following sub-tasks have been created:
+
+### task-epic-11.100.0.5.19.4.1 - Fix call_chain_analysis module type errors
+- **Priority**: High (compilation errors)
+- **Issues**: CallChainNode property mismatches, missing MethodCall receiver_type, String to SymbolId conversions
+- **Impact**: Required for project compilation
+
+### task-epic-11.100.0.5.19.4.2 - Fix constructor_calls module type errors
+- **Priority**: High (compilation errors)
+- **Issues**: ConstructorCall structure updates, property name corrections, SymbolId conversions
+- **Impact**: Multiple language files affected
+
+### task-epic-11.100.0.5.19.4.3 - Implement type_tracker SymbolId conversion
+- **Priority**: Medium (functionality gap)
+- **Issues**: Convert Map<string, TypeInfo> to Map<SymbolId, TypeInfo> in file_analyzer
+- **Impact**: Complete type information integration in FileAnalysis
