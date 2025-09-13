@@ -208,6 +208,27 @@ function extractNewExpression(group: QueryCapture[]): ConstructorCallInfo {
 - [ ] Copy constructors
 - [ ] Builder patterns
 
+## New Type Creation
+
+Use `create_constructor_call()` from `@ariadnejs/types`:
+
+```typescript
+const call = create_constructor_call(
+  to_caller_context('parentFunction'),
+  to_class_name('MyClass'),
+  location,
+  'javascript',
+  {
+    arguments_count: args.length,
+    is_new_expression: true,
+    is_factory: false,
+    assigned_to: to_symbol_id('myInstance')
+  }
+);
+```
+
+Note: Constructor calls are discriminated by `kind: 'constructor'` in the CallInfo union.
+
 ## Expected Improvements
 
 ### Code Reduction
