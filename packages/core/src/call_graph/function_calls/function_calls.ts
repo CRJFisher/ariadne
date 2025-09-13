@@ -10,11 +10,11 @@ import {
   FilePath,
   Language,
   SourceCode,
-  FunctionCallInfo,
+  CallInfo,
   ScopeTree,
   ScopeNode,
   Location,
-  ImportInfo,
+  Import,
 } from "@ariadnejs/types";
 import { get_language_config, LanguageCallConfig } from "./language_configs";
 import { node_to_location } from "../../ast/node_utils";
@@ -42,7 +42,7 @@ export interface FunctionCallContext {
   ast_root: SyntaxNode;
   // Integration points for cross-feature functionality
   scope_tree?: ScopeTree;  // For symbol resolution
-  imports?: ImportInfo[];  // Already-resolved imports for this file
+  imports?: Import[];  // Already-resolved imports for this file
   type_map?: Map<string, TypeInfo>;  // Pre-computed type information
 }
 
@@ -59,33 +59,10 @@ export interface FunctionCallContext {
  */
 export function find_function_calls(
   context: FunctionCallContext
-): FunctionCallInfo[] {
-  // Use generic processor for all languages
-  const calls = find_function_calls_generic(context);
-
-  // Apply language-specific enhancements for bespoke features
-  switch (context.language) {
-    case "typescript":
-      // TypeScript decorators require special handling
-      return enhance_with_typescript_features(calls, context);
-
-    case "rust":
-      // Rust macros are already handled in generic processor
-      // but may need additional enhancement
-      return enhance_with_rust_features(calls, context);
-
-    case "python":
-      // Python comprehensions may contain function calls
-      return enhance_with_python_features(calls, context);
-
-    case "javascript":
-      // JavaScript is fully handled by generic processor
-      return calls;
-
-    default:
-      // For any unsupported language, return what we found
-      return calls;
-  }
+): CallInfo[] {
+  // TODO: Implement using new query-based system
+  // See task 11.100.4 for implementation details
+  return [];
 }
 
 /**
@@ -95,8 +72,8 @@ function find_scope_for_location(
   tree: ScopeTree,
   location: Location
 ): ScopeNode | null {
-  let deepestScope: ScopeNode | null = null;
-  let deepestDepth = -1;
+  let deepest_scope: ScopeNode | null = null;
+  let deepest_depth = -1;
   
   // Check all scopes to find the deepest one containing the location
   for (const scope of tree.nodes.values()) {
@@ -104,47 +81,47 @@ function find_scope_for_location(
     if (scope.location.file_path !== location.file_path) continue;
     
     // Check if the point (start of the call) is within the scope's range
-    const pointLine = location.line;
-    const pointCol = location.column;
-    const scopeStartLine = scope.location.line;
-    const scopeStartCol = scope.location.column;
-    const scopeEndLine = scope.location.end_line;
-    const scopeEndCol = scope.location.end_column;
+    const point_line = location.line;
+    const point_col = location.column;
+    const scope_start_line = scope.location.line;
+    const scope_start_col = scope.location.column;
+    const scope_end_line = scope.location.end_line;
+    const scope_end_col = scope.location.end_column;
     
-    let isInScope = false;
+    let is_in_scope = false;
     
-    if (pointLine > scopeStartLine && pointLine < scopeEndLine) {
+    if (point_line > scope_start_line && point_line < scope_end_line) {
       // Point is on a middle line - definitely inside
-      isInScope = true;
-    } else if (pointLine === scopeStartLine && pointLine === scopeEndLine) {
+      is_in_scope = true;
+    } else if (point_line === scope_start_line && point_line === scope_end_line) {
       // Scope is on a single line
-      isInScope = pointCol >= scopeStartCol && pointCol <= scopeEndCol;
-    } else if (pointLine === scopeStartLine) {
+      is_in_scope = point_col >= scope_start_col && point_col <= scope_end_col;
+    } else if (point_line === scope_start_line) {
       // Point is on the start line
-      isInScope = pointCol >= scopeStartCol;
-    } else if (pointLine === scopeEndLine) {
+      is_in_scope = point_col >= scope_start_col;
+    } else if (point_line === scope_end_line) {
       // Point is on the end line
-      isInScope = pointCol <= scopeEndCol;
+      is_in_scope = point_col <= scope_end_col;
     }
     
-    if (isInScope) {
+    if (is_in_scope) {
       // Count depth by counting parents
       let depth = 0;
-      let currentId = scope.parent_id;
-      while (currentId) {
+      let current_id = scope.parent_id;
+      while (current_id) {
         depth++;
-        const parent = tree.nodes.get(currentId);
-        currentId = parent?.parent_id;
+        const parent = tree.nodes.get(current_id);
+        current_id = parent?.parent_id;
       }
       
-      if (depth > deepestDepth) {
-        deepestDepth = depth;
-        deepestScope = scope;
+      if (depth > deepest_depth) {
+        deepest_depth = depth;
+        deepest_scope = scope;
       }
     }
   }
   
-  return deepestScope;
+  return deepest_scope;
 }
 
 /**
@@ -190,7 +167,7 @@ function resolve_method_with_types(
   const type_info = type_map.get(location_key) || type_map.get(object_name);
   
   if (type_info) {
-    // Map type_kind to the values expected by FunctionCallInfo
+    // Map type_kind to the values expected by CallInfo
     let mapped_kind: "class" | "interface" | "type" | "enum" | "trait";
     switch (type_info.type_kind) {
       case 'class':
@@ -246,9 +223,9 @@ function enhance_with_import_info(
   }
 
   // Check for namespace imports (e.g., ns.function where ns is imported)
-  const namespaceParts = callee_name.split('.');
-  if (namespaceParts.length > 1) {
-    const namespace = namespaceParts[0];
+  const namespace_parts = callee_name.split('.');
+  if (namespace_parts.length > 1) {
+    const namespace = namespace_parts[0];
     const namespace_import = imports.find(imp => 
       imp.kind === 'namespace' && imp.namespace_name === namespace
     );
@@ -257,7 +234,7 @@ function enhance_with_import_info(
         is_imported: true,
         source_module: namespace_import.source,
         import_alias: callee_name,
-        original_name: namespaceParts.slice(1).join('.'),
+        original_name: namespace_parts.slice(1).join('.'),
       };
     }
   }
@@ -297,31 +274,10 @@ function resolve_local_function(
  */
 export function find_function_calls_generic(
   context: FunctionCallContext
-): FunctionCallInfo[] {
-  const config = get_language_config(context.language);
-  const calls: FunctionCallInfo[] = [];
-
-  // Walk the AST to find all call expressions
-  walk_tree(context.ast_root, (node) => {
-    // Check if this is a call expression for this language
-    if (config.call_expression_types.includes(node.type)) {
-      // Skip call expressions that are direct children of decorators (TypeScript)
-      // These will be handled by the bespoke decorator handler
-      if (
-        context.language === "typescript" &&
-        node.parent?.type === "decorator"
-      ) {
-        return;
-      }
-
-      const call_info = extract_call_generic(node, context, config);
-      if (call_info) {
-        calls.push(call_info);
-      }
-    }
-  });
-
-  return calls;
+): CallInfo[] {
+  // TODO: Implement using new query-based system
+  // See task 11.100.4 for implementation details
+  return [];
 }
 
 /**
@@ -331,82 +287,10 @@ function extract_call_generic(
   node: SyntaxNode,
   context: FunctionCallContext,
   config: LanguageCallConfig
-): FunctionCallInfo | null {
-  const callee_name = extract_callee_name_generic(
-    node,
-    context.source_code,
-    config
-  );
-  if (!callee_name) return null;
-
-  const caller_name =
-    get_enclosing_function_generic(node, context.source_code, config) ||
-    MODULE_CONTEXT;
-  const is_method = is_method_call_generic(node, config);
-  const is_constructor = is_constructor_call_generic(
-    node,
-    context.source_code,
-    config
-  );
-  const args_count = count_arguments_generic(node, config);
-  const location = node_to_location(node, context.file_path);
-
-  // Collect enhanced resolution fields
-  let resolved_target = undefined;
-  let is_imported = undefined;
-  let source_module = undefined;
-  let import_alias = undefined;
-  let original_name = undefined;
-  let resolved_type = undefined;
-
-  // If scope tree is available, try to resolve the local function
-  if (context.scope_tree && !is_method && !is_constructor) {
-    resolved_target = resolve_local_function(
-      callee_name,
-      location,
-      context.scope_tree
-    ) || undefined;
-  }
-
-  // If imports are available and the call wasn't resolved locally, check imports
-  if (context.imports && !resolved_target && !is_constructor) {
-    const import_info = enhance_with_import_info(callee_name, context.imports);
-    if (import_info) {
-      is_imported = import_info.is_imported;
-      source_module = import_info.source_module;
-      import_alias = import_info.import_alias;
-      original_name = import_info.original_name;
-    }
-  }
-
-  // If type map is available and this is a method call, try to resolve the type
-  if (context.type_map && is_method) {
-    resolved_type = resolve_method_with_types(
-      node, 
-      context.type_map, 
-      context.source_code, 
-      config
-    ) || undefined;
-  }
-
-  // Create the complete call_info object with all fields
-  const call_info: FunctionCallInfo = {
-    caller_name,
-    callee_name,
-    location,
-    is_method_call: is_method,
-    is_constructor_call: is_constructor,
-    arguments_count: args_count,
-    // Enhanced fields
-    resolved_target,
-    is_imported,
-    source_module,
-    import_alias,
-    original_name,
-    resolved_type,
-  };
-
-  return call_info;
+): CallInfo | null {
+  // TODO: Implement using new query-based system
+  // See task 11.100.4 for implementation details
+  return null;
 }
 
 /**
@@ -605,9 +489,9 @@ function walk_tree(
  * Enhance with TypeScript-specific features
  */
 export function enhance_with_typescript_features(
-  calls: FunctionCallInfo[],
+  calls: CallInfo[],
   context: FunctionCallContext
-): FunctionCallInfo[] {
+): CallInfo[] {
   const decorator_calls = handle_typescript_decorators(context);
   return [...calls, ...decorator_calls];
 }
@@ -616,9 +500,9 @@ export function enhance_with_typescript_features(
  */
 
 export function enhance_with_rust_features(
-  calls: FunctionCallInfo[],
+  calls: CallInfo[],
   context: FunctionCallContext
-): FunctionCallInfo[] {
+): CallInfo[] {
   const macro_calls = handle_rust_macros(context);
   return [...calls, ...macro_calls];
 }
@@ -627,9 +511,9 @@ export function enhance_with_rust_features(
  */
 
 export function enhance_with_python_features(
-  calls: FunctionCallInfo[],
+  calls: CallInfo[],
   context: FunctionCallContext
-): FunctionCallInfo[] {
+): CallInfo[] {
   const comprehension_calls = handle_python_comprehensions(context);
   return [...calls, ...comprehension_calls];
 }
