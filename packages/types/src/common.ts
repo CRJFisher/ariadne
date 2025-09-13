@@ -16,6 +16,19 @@ export interface Location {
   readonly end_column: number;
 }
 
+/**
+ * Creates a default location for cases where actual location is unknown
+ */
+export function unknown_location(file_path: FilePath): Location {
+  return {
+    file_path,
+    line: 0,
+    column: 0,
+    end_line: 0,
+    end_column: 0
+  };
+}
+
 export function location_contains(
   location: Location,
   other_location: Location
@@ -43,14 +56,14 @@ export interface FunctionSignature {
 export interface ParameterType {
   readonly name: ParameterName;
   readonly type: TypeString; // Required - use "unknown" when type cannot be inferred
-  readonly default_value?: string;
+  readonly default_value: string; // Defaults to empty string when no default
   readonly is_rest: boolean;
   readonly is_optional: boolean;
 }
 
 export interface TypeParameter {
   readonly name: SymbolId;
-  readonly constraint?: TypeString;
-  readonly default?: TypeString;
+  readonly constraint: TypeString; // Defaults to "unknown" when no constraint
+  readonly default: TypeString; // Defaults to "unknown" when no default
 }
 

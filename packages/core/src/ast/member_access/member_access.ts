@@ -9,10 +9,10 @@ import type { SyntaxNode } from 'tree-sitter';
 import { Language, FilePath, NamespaceName, FileAnalysis, ASTNodeType } from '@ariadnejs/types';
 import { MemberAccessExpression, MemberAccessContext } from './types';
 import { 
-  getMemberAccessConfig, 
-  isMemberAccessNode, 
-  getMemberAccessFields, 
-  shouldSkipNode 
+  get_member_access_config, 
+  is_member_access_node, 
+  get_member_access_fields, 
+  should_skip_node 
 } from './language_configs';
 import { node_to_location } from '../node_utils';
 
@@ -82,7 +82,7 @@ function traverse_for_member_access(
   }
   
   // Check if we should traverse children
-  if (!shouldSkipNode(node.type as ASTNodeType, language)) {
+  if (!should_skip_node(node.type as ASTNodeType, language)) {
     // Recursively traverse children
     for (let i = 0; i < node.childCount; i++) {
       const child = node.child(i);
@@ -146,12 +146,12 @@ function detect_member_access_with_config(
   context: MemberAccessContext
 ): MemberAccessExpression | null {
   // Check if this node type represents member access
-  if (!isMemberAccessNode(node.type as ASTNodeType, language)) {
+  if (!is_member_access_node(node.type as ASTNodeType, language)) {
     return null;
   }
   
   // Get field mappings for this node type
-  const fields = getMemberAccessFields(node.type as ASTNodeType, language);
+  const fields = get_member_access_fields(node.type as ASTNodeType, language);
   if (!fields) {
     return null;
   }

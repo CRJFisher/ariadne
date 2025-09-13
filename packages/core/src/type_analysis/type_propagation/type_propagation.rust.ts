@@ -17,10 +17,10 @@ import {
   merge_type_flows
 } from './type_propagation';
 import {
-  getTypePropagationConfig,
-  isAssignmentNode,
-  isDeclarationNode,
-  isMemberAccessNode
+  get_type_propagation_config,
+  is_assignment_node,
+  is_declaration_node,
+  is_member_access_node
 } from './language_configs';
 
 /**
@@ -33,11 +33,11 @@ export function propagate_rust_types(
   let flows: TypeFlow[] = [];
   
   // Use generic propagation for common patterns
-  if (isAssignmentNode(node.type, context.language) || 
-      isDeclarationNode(node.type, context.language) ||
+  if (is_assignment_node(node.type, context.language) || 
+      is_declaration_node(node.type, context.language) ||
       node.type === 'let_declaration') {
     flows = propagate_assignment_types(node, context);
-  } else if (isMemberAccessNode(node.type, context.language)) {
+  } else if (is_member_access_node(node.type, context.language)) {
     flows = propagate_property_types(node, context);
   }
   

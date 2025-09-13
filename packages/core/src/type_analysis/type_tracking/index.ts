@@ -40,7 +40,7 @@ export {
 export {
   TypeTrackingLanguageConfig,
   get_type_tracking_config as getTypeTrackingConfig,
-  is_assignment_node as isAssignmentNode,
+  is_assignment_node as is_assignment_node,
   get_literal_type as getLiteralType,
   get_collection_type as getCollectionType,
 } from "./language_configs";

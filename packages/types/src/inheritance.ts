@@ -10,6 +10,7 @@ import { SymbolName } from "./symbol_utils";
 import { SymbolId } from "./symbol_utils";
 import { SemanticNode, Resolution } from "./query";
 import { TypeDefinition, TypeMember } from "./type_analysis";
+import { map_get_array } from "./map_utils";
 
 // ============================================================================
 // Unified Class/Interface/Trait Types
@@ -356,10 +357,13 @@ export function find_diamond_problems(
       if (visited.has(current)) return;
       visited.add(current);
 
-      const bases = get_all_base_types(hierarchy.entities.get(current)!);
+      const entity = hierarchy.entities.get(current);
+      if (!entity) return;
+
+      const bases = get_all_base_types(entity);
       for (const base of bases) {
         const new_path = [...path, base];
-        const existing = paths_to_ancestors.get(base) || [];
+        const existing = map_get_array(paths_to_ancestors, base);
         paths_to_ancestors.set(base, [...existing, new_path]);
         find_paths(base, new_path);
       }

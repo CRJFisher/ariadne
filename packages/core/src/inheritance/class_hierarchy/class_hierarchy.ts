@@ -136,15 +136,15 @@ export function build_generic_class_hierarchy(
       is_interface: def.is_interface ?? false,
       is_trait: def.is_trait ?? false,
       is_mixin: def.is_mixin ?? false,
-      methods: build_method_map(def.methods || [], def.name as ClassName, def.location),
-      properties: build_property_map(def.properties || [], def.name as ClassName, def.location),
+      methods: build_method_map(def.methods, def.name as ClassName, def.location),
+      properties: build_property_map(def.properties, def.name as ClassName, def.location),
       
-      // Enhanced fields - computed later
-      all_ancestors: undefined,
-      all_descendants: undefined,
-      method_resolution_order: undefined,
-      parent_class: undefined,
-      interface_nodes: undefined,
+      // Enhanced fields - defaults to empty arrays
+      all_ancestors: [],
+      all_descendants: [],
+      method_resolution_order: [],
+      parent_class: null, // Explicit null for no parent
+      interface_nodes: [],
     };
     
     // Apply bespoke post-processing

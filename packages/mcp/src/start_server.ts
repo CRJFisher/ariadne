@@ -5,10 +5,10 @@ import { Project } from "@ariadnejs/core";
 import { z } from "zod";
 import * as path from "path";
 import * as fs from "fs/promises";
-import { getSymbolContext, getSymbolContextSchema } from "./tools/get_symbol_context";
-import { getFileMetadata, getFileMetadataSchema } from "./tools/get_file_metadata";
-import { findReferences, findReferencesSchema } from "./tools/find_references";
-import { getSourceCode, getSourceCodeSchema } from "./tools/get_source_code";
+import { get_symbol_context, get_symbol_contextSchema } from "./tools/get_symbol_context";
+import { get_file_metadata, get_file_metadataSchema } from "./tools/get_file_metadata";
+import { find_references, find_referencesSchema } from "./tools/find_references";
+import { get_source_code, get_source_codeSchema } from "./tools/get_source_code";
 import { VERSION } from "./version";
 
 export interface AriadneMCPServerOptions {
@@ -16,7 +16,7 @@ export interface AriadneMCPServerOptions {
   transport?: "stdio";
 }
 
-export async function startServer(options: AriadneMCPServerOptions = {}): Promise<Server> {
+export async function start_server(options: AriadneMCPServerOptions = {}): Promise<Server> {
   // Support PROJECT_PATH environment variable as per task 53
   const projectPath = options.projectPath || process.env.PROJECT_PATH || process.cwd();
   
@@ -129,14 +129,14 @@ export async function startServer(options: AriadneMCPServerOptions = {}): Promis
     try {
       switch (name) {
         case "get_symbol_context": {
-          const validatedArgs = getSymbolContextSchema.parse(args);
+          const validatedArgs = get_symbol_contextSchema.parse(args);
           
           // Load all files in the project if needed
           // TODO: Implement smart file loading based on search scope
           // For now, load all files in the project
-          await loadProjectFiles(project, projectPath);
+          await load_project_files(project, projectPath);
           
-          const result = await getSymbolContext(project, validatedArgs);
+          const result = await get_symbol_context(project, validatedArgs);
           
           return {
             content: [
@@ -149,16 +149,16 @@ export async function startServer(options: AriadneMCPServerOptions = {}): Promis
         }
 
         case "get_file_metadata": {
-          const validatedArgs = getFileMetadataSchema.parse(args);
+          const validatedArgs = get_file_metadataSchema.parse(args);
           
           // Load the specific file
           const resolvedPath = path.isAbsolute(validatedArgs.filePath)
             ? validatedArgs.filePath
             : path.join(projectPath, validatedArgs.filePath);
           
-          await loadFileIfNeeded(project, resolvedPath);
+          await load_file_if_needed(project, resolvedPath);
           
-          const result = await getFileMetadata(project, validatedArgs);
+          const result = await get_file_metadata(project, validatedArgs);
           
           return {
             content: [
@@ -171,12 +171,12 @@ export async function startServer(options: AriadneMCPServerOptions = {}): Promis
         }
 
         case "find_references": {
-          const validatedArgs = findReferencesSchema.parse(args);
+          const validatedArgs = find_referencesSchema.parse(args);
           
           // Load all project files for reference finding
-          await loadProjectFiles(project, projectPath);
+          await load_project_files(project, projectPath);
           
-          const result = await findReferences(project, validatedArgs);
+          const result = await find_references(project, validatedArgs);
           
           return {
             content: [
@@ -189,12 +189,12 @@ export async function startServer(options: AriadneMCPServerOptions = {}): Promis
         }
 
         case "get_source_code": {
-          const validatedArgs = getSourceCodeSchema.parse(args);
+          const validatedArgs = get_source_codeSchema.parse(args);
           
           // Load all project files to find the symbol
-          await loadProjectFiles(project, projectPath);
+          await load_project_files(project, projectPath);
           
-          const result = await getSourceCode(project, validatedArgs);
+          const result = await get_source_code(project, validatedArgs);
           
           return {
             content: [
@@ -223,7 +223,7 @@ export async function startServer(options: AriadneMCPServerOptions = {}): Promis
   });
 
   // Helper function to load a file if not already in the project
-  async function loadFileIfNeeded(project: Project, filePath: string): Promise<void> {
+  async function load_file_if_needed(project: Project, filePath: string): Promise<void> {
     try {
       const sourceCode = await fs.readFile(filePath, "utf-8");
       project.add_or_update_file(filePath, sourceCode);
@@ -233,7 +233,7 @@ export async function startServer(options: AriadneMCPServerOptions = {}): Promis
   }
   
   // Helper function to load all project files (Task 53)
-  async function loadProjectFiles(project: Project, projectPath: string): Promise<void> {
+  async function load_project_files(project: Project, projectPath: string): Promise<void> {
     const loadedFiles = new Set<string>();
     let gitignorePatterns: string[] = [];
     
@@ -249,7 +249,7 @@ export async function startServer(options: AriadneMCPServerOptions = {}): Promis
       // .gitignore not found or unreadable, continue without it
     }
     
-    function shouldIgnore(filePath: string): boolean {
+    function should_ignore(filePath: string): boolean {
       const relativePath = path.relative(projectPath, filePath);
       
       // Always ignore common directories
@@ -275,8 +275,8 @@ export async function startServer(options: AriadneMCPServerOptions = {}): Promis
       return false;
     }
     
-    async function loadDirectory(dirPath: string): Promise<void> {
-      if (shouldIgnore(dirPath)) return;
+    async function load_directory(dirPath: string): Promise<void> {
+      if (should_ignore(dirPath)) return;
       
       let entries;
       try {
@@ -289,16 +289,16 @@ export async function startServer(options: AriadneMCPServerOptions = {}): Promis
       for (const entry of entries) {
         const fullPath = path.join(dirPath, entry.name);
         
-        if (shouldIgnore(fullPath)) continue;
+        if (should_ignore(fullPath)) continue;
         
         if (entry.isDirectory()) {
-          await loadDirectory(fullPath);
+          await load_directory(fullPath);
         } else if (entry.isFile()) {
           // Load supported source files
           if (/\.(ts|tsx|js|jsx|py|rs|go|java|cpp|c|hpp|h)$/.test(entry.name) && !entry.name.endsWith('.d.ts')) {
             if (!loadedFiles.has(fullPath)) {
               try {
-                await loadFileIfNeeded(project, fullPath);
+                await load_file_if_needed(project, fullPath);
                 loadedFiles.add(fullPath);
               } catch (error) {
                 console.warn(`Skipping file ${fullPath}: ${error}`);
@@ -311,7 +311,7 @@ export async function startServer(options: AriadneMCPServerOptions = {}): Promis
     
     console.log(`Loading project files from: ${projectPath}`);
     const startTime = Date.now();
-    await loadDirectory(projectPath);
+    await load_directory(projectPath);
     const duration = Date.now() - startTime;
     console.log(`Loaded ${loadedFiles.size} files in ${duration}ms`);
   }

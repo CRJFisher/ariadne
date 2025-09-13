@@ -135,10 +135,9 @@ export {
   SymbolIndex as SymbolIndexDef,
 } from "./symbols";
 
-// Export from scopes  
+// Export from scopes
 export {
   ScopeType,
-  SymbolKind as ScopeSymbolKind,
   ScopeSymbol,
   ScopeNode,
   ScopeTree,
@@ -148,6 +147,9 @@ export * from "./errors";
 
 // Export map utilities for safer null handling
 export * from "./map_utils";
+
+// Export type guards and assertion functions for null safety
+export * from "./type_guards";
 
 // Export type validation utilities
 export {

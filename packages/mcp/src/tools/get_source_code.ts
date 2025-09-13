@@ -4,12 +4,12 @@ import * as path from "path";
 import * as fs from "fs/promises";
 
 // Request schema for the MCP tool
-export const getSourceCodeSchema = z.object({
+export const get_source_codeSchema = z.object({
   symbol: z.string().describe("Name of the symbol to get source code for"),
   includeDocstring: z.boolean().optional().default(true).describe("Include documentation/comments if available")
 });
 
-export type GetSourceCodeRequest = z.infer<typeof getSourceCodeSchema>;
+export type GetSourceCodeRequest = z.infer<typeof get_source_codeSchema>;
 
 // Response interfaces
 export interface SourceCodeResult {
@@ -36,7 +36,7 @@ export type GetSourceCodeResponse = SourceCodeResult | SymbolNotFoundError;
 /**
  * Detect language from file extension
  */
-function detectLanguage(filePath: string): string {
+function detect_language(filePath: string): string {
   const ext = path.extname(filePath).toLowerCase();
   const languageMap: Record<string, string> = {
     '.ts': 'typescript',
@@ -58,7 +58,7 @@ function detectLanguage(filePath: string): string {
 /**
  * Find similar symbol names for suggestions
  */
-function findSimilarSymbols(project: Project, symbolName: string, limit: number = 5): string[] {
+function find_similar_symbols(project: Project, symbolName: string, limit: number = 5): string[] {
   const allDefsMap = project.get_all_functions();
   const symbolLower = symbolName.toLowerCase();
   const allDefs: Array<{name: string}> = [];
@@ -112,7 +112,7 @@ function findSimilarSymbols(project: Project, symbolName: string, limit: number 
 /**
  * Find a symbol definition by name
  */
-function findSymbolDefinition(project: Project, symbolName: string): {def: any, file: string} | null {
+function find_symbol_definition(project: Project, symbolName: string): {def: any, file: string} | null {
   // First check get_all_functions (includes methods, functions)
   const allFunctionsMap = project.get_all_functions();
   
@@ -142,7 +142,7 @@ function findSymbolDefinition(project: Project, symbolName: string): {def: any, 
 /**
  * Extract source code with improved range handling
  */
-async function extractSourceCode(
+async function extract_source_code(
   filePath: string, 
   def: any,
   includeDocstring: boolean
@@ -258,7 +258,7 @@ async function extractSourceCode(
     docstring = def.docstring;
   } else if (includeDocstring && startLine > 0) {
     // Look for comments/docstrings above the definition
-    const lang = detectLanguage(filePath);
+    const lang = detect_language(filePath);
     
     if (lang === 'python') {
       // Check for Python docstring (first string after def)
@@ -319,21 +319,21 @@ async function extractSourceCode(
  * Implementation of get_source_code MCP tool
  * Extracts the complete source code of a function, class, or other symbol
  */
-export async function getSourceCode(
+export async function get_source_code(
   project: Project,
   request: GetSourceCodeRequest
 ): Promise<GetSourceCodeResponse> {
   const { symbol, includeDocstring } = request;
   
   // Find the symbol definition
-  const result = findSymbolDefinition(project, symbol);
+  const result = find_symbol_definition(project, symbol);
   
   if (!result) {
     return {
       error: "symbol_not_found",
       message: `No symbol named '${symbol}' found in the project`,
       symbol,
-      suggestions: findSimilarSymbols(project, symbol)
+      suggestions: find_similar_symbols(project, symbol)
     };
   }
   
@@ -348,7 +348,7 @@ export async function getSourceCode(
     let docstring: string | undefined;
     
     // Always use manual extraction since get_source_code doesn't return full source
-    const extracted = await extractSourceCode(file, def, includeDocstring);
+    const extracted = await extract_source_code(file, def, includeDocstring);
     sourceCode = extracted.sourceCode;
     startLine = extracted.startLine;
     endLine = extracted.endLine;
@@ -360,7 +360,7 @@ export async function getSourceCode(
       startLine,
       endLine,
       sourceCode,
-      language: detectLanguage(file),
+      language: detect_language(file),
       docstring,
       signature: def.signature
     };

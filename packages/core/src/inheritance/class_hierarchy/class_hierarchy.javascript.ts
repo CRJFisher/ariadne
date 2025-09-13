@@ -106,20 +106,20 @@ function detect_mixin_pattern(
   
   // Check if extends uses a call expression (mixin pattern)
   // Need to check recursively as call_expression might be nested
-  function hasCallExpression(node: SyntaxNode): boolean {
+  function has_call_expression(node: SyntaxNode): boolean {
     if (node.type === 'call_expression') {
       return true;
     }
     for (let i = 0; i < node.childCount; i++) {
       const child = node.child(i);
-      if (child && hasCallExpression(child)) {
+      if (child && has_call_expression(child)) {
         return true;
       }
     }
     return false;
   }
   
-  if (hasCallExpression(heritage)) {
+  if (has_call_expression(heritage)) {
     (node as any).is_mixin = true;
   }
 }

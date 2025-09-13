@@ -4,12 +4,13 @@
  * Collects and manages errors during code analysis
  */
 
-import { 
+import {
   AnalysisError,
   ErrorSeverity,
   Location,
   Language,
-  AnalysisPhase
+  AnalysisPhase,
+  unknown_location
 } from '@ariadnejs/types';
 
 /**
@@ -50,13 +51,7 @@ export class ErrorCollector {
       message,
       severity,
       phase: this.context.phase,
-      location: location || {
-        file_path: this.context.file_path,
-        line: 0,
-        column: 0,
-        end_line: 0,
-        end_column: 0
-      },
+      location: location || unknown_location(this.context.file_path),
       details
     };
     

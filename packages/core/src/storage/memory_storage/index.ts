@@ -10,7 +10,7 @@ export type { MemoryStorageState, MemoryTransactionState } from './types';
 // For backwards compatibility, export a MemoryStorage class wrapper
 // This allows existing code to continue using `new MemoryStorage()`
 import { create_memory_storage } from './memory_storage';
-import { StorageInterface } from '../storage_interface';
+import { StorageInterface, ProjectState, StoredFile } from '../storage_interface';
 
 export class MemoryStorage implements StorageInterface {
   private storage: StorageInterface;
@@ -27,7 +27,7 @@ export class MemoryStorage implements StorageInterface {
     return this.storage.get_state();
   }
   
-  async set_state(state: any) {
+  async set_state(state: ProjectState) {
     return this.storage.set_state(state);
   }
   
@@ -35,7 +35,7 @@ export class MemoryStorage implements StorageInterface {
     return this.storage.get_file(file_path);
   }
   
-  async update_file(file: any) {
+  async update_file(file: StoredFile) {
     return this.storage.update_file(file);
   }
   

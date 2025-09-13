@@ -5,10 +5,10 @@
 import { describe, it, expect } from 'vitest';
 import {
   LANGUAGE_CONFIGS,
-  getLanguageConfig,
-  isCallExpression,
-  isMethodExpression,
-  isFunctionDefinition
+  get_language_config,
+  is_call_expression,
+  is_method_expression,
+  is_function_definition
 } from './language_configs';
 import { Language } from '@ariadnejs/types';
 
@@ -146,62 +146,62 @@ describe('Language Configurations', () => {
   
   describe('Helper functions', () => {
     
-    describe('getLanguageConfig', () => {
+    describe('get_language_config', () => {
       it('should return configuration for valid languages', () => {
-        expect(getLanguageConfig('javascript')).toBe(LANGUAGE_CONFIGS.javascript);
-        expect(getLanguageConfig('python')).toBe(LANGUAGE_CONFIGS.python);
+        expect(get_language_config('javascript')).toBe(LANGUAGE_CONFIGS.javascript);
+        expect(get_language_config('python')).toBe(LANGUAGE_CONFIGS.python);
       });
       
       it('should throw for unsupported languages', () => {
-        expect(() => getLanguageConfig('unknown' as Language)).toThrow('Unsupported language');
+        expect(() => get_language_config('unknown' as Language)).toThrow('Unsupported language');
       });
     });
     
-    describe('isCallExpression', () => {
+    describe('is_call_expression', () => {
       it('should identify JavaScript call expressions', () => {
-        expect(isCallExpression('call_expression', 'javascript')).toBe(true);
-        expect(isCallExpression('new_expression', 'javascript')).toBe(true);
-        expect(isCallExpression('identifier', 'javascript')).toBe(false);
+        expect(is_call_expression('call_expression', 'javascript')).toBe(true);
+        expect(is_call_expression('new_expression', 'javascript')).toBe(true);
+        expect(is_call_expression('identifier', 'javascript')).toBe(false);
       });
       
       it('should identify Python call expressions', () => {
-        expect(isCallExpression('call', 'python')).toBe(true);
-        expect(isCallExpression('identifier', 'python')).toBe(false);
+        expect(is_call_expression('call', 'python')).toBe(true);
+        expect(is_call_expression('identifier', 'python')).toBe(false);
       });
     });
     
-    describe('isMethodExpression', () => {
+    describe('is_method_expression', () => {
       it('should identify JavaScript method expressions', () => {
-        expect(isMethodExpression('member_expression', 'javascript')).toBe(true);
-        expect(isMethodExpression('identifier', 'javascript')).toBe(false);
+        expect(is_method_expression('member_expression', 'javascript')).toBe(true);
+        expect(is_method_expression('identifier', 'javascript')).toBe(false);
       });
       
       it('should identify Python method expressions', () => {
-        expect(isMethodExpression('attribute', 'python')).toBe(true);
-        expect(isMethodExpression('identifier', 'python')).toBe(false);
+        expect(is_method_expression('attribute', 'python')).toBe(true);
+        expect(is_method_expression('identifier', 'python')).toBe(false);
       });
       
       it('should identify Rust method expressions', () => {
-        expect(isMethodExpression('field_expression', 'rust')).toBe(true);
-        expect(isMethodExpression('scoped_identifier', 'rust')).toBe(true);
+        expect(is_method_expression('field_expression', 'rust')).toBe(true);
+        expect(is_method_expression('scoped_identifier', 'rust')).toBe(true);
       });
     });
     
-    describe('isFunctionDefinition', () => {
+    describe('is_function_definition', () => {
       it('should identify JavaScript function definitions', () => {
-        expect(isFunctionDefinition('function_declaration', 'javascript')).toBe(true);
-        expect(isFunctionDefinition('arrow_function', 'javascript')).toBe(true);
-        expect(isFunctionDefinition('call_expression', 'javascript')).toBe(false);
+        expect(is_function_definition('function_declaration', 'javascript')).toBe(true);
+        expect(is_function_definition('arrow_function', 'javascript')).toBe(true);
+        expect(is_function_definition('call_expression', 'javascript')).toBe(false);
       });
       
       it('should identify Python function definitions', () => {
-        expect(isFunctionDefinition('function_definition', 'python')).toBe(true);
-        expect(isFunctionDefinition('call', 'python')).toBe(false);
+        expect(is_function_definition('function_definition', 'python')).toBe(true);
+        expect(is_function_definition('call', 'python')).toBe(false);
       });
       
       it('should identify Rust function definitions', () => {
-        expect(isFunctionDefinition('function_item', 'rust')).toBe(true);
-        expect(isFunctionDefinition('closure_expression', 'rust')).toBe(true);
+        expect(is_function_definition('function_item', 'rust')).toBe(true);
+        expect(is_function_definition('closure_expression', 'rust')).toBe(true);
       });
     });
   });

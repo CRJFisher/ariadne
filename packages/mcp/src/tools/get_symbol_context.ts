@@ -2,13 +2,13 @@ import { Project } from "@ariadnejs/core";
 import { z } from "zod";
 
 // Request schema for the MCP tool
-export const getSymbolContextSchema = z.object({
+export const get_symbol_contextSchema = z.object({
   symbol: z.string().describe("Name of the symbol to look up (function, class, variable, etc.)"),
   searchScope: z.enum(["file", "project", "dependencies"]).optional().default("project").describe("Scope to search within"),
   includeTests: z.boolean().optional().default(false).describe("Whether to include test file references")
 });
 
-export type GetSymbolContextRequest = z.infer<typeof getSymbolContextSchema>;
+export type GetSymbolContextRequest = z.infer<typeof get_symbol_contextSchema>;
 
 // Response interfaces
 export interface SymbolInfo {
@@ -81,20 +81,20 @@ export type GetSymbolContextResponse = SymbolContext | SymbolNotFoundError;
  * Implementation of get_symbol_context MCP tool
  * Finds a symbol by name and returns comprehensive context
  */
-export async function getSymbolContext(
+export async function get_symbol_context(
   project: Project,
   request: GetSymbolContextRequest
 ): Promise<GetSymbolContextResponse> {
   const { symbol, searchScope, includeTests } = request;
   
   // Find all definitions matching the symbol name
-  const definitions = findSymbolDefinitions(project, symbol, searchScope);
+  const definitions = find_symbol_definitions(project, symbol, searchScope);
   
   if (definitions.length === 0) {
     return {
       error: "symbol_not_found",
       message: `No symbol named '${symbol}' found in ${searchScope}`,
-      suggestions: findSimilarSymbols(project, symbol, searchScope)
+      suggestions: find_similar_symbols(project, symbol, searchScope)
     };
   }
   
@@ -103,11 +103,11 @@ export async function getSymbolContext(
   const primaryDef = definitions[0];
   
   // Extract comprehensive context
-  const symbolInfo = extractSymbolInfo(primaryDef);
-  const definitionInfo = extractDefinitionInfo(primaryDef, project);
-  const usageInfo = findSymbolUsages(project, primaryDef, includeTests);
-  const relationships = analyzeRelationships(project, primaryDef);
-  const metrics = calculateMetrics(primaryDef, usageInfo);
+  const symbolInfo = extract_symbol_info(primaryDef);
+  const definitionInfo = extract_definition_info(primaryDef, project);
+  const usageInfo = find_symbol_usages(project, primaryDef, includeTests);
+  const relationships = analyze_relationships(project, primaryDef);
+  const metrics = calculate_metrics(primaryDef, usageInfo);
   
   return {
     symbol: symbolInfo,
@@ -120,7 +120,7 @@ export async function getSymbolContext(
 
 // Helper functions
 
-function findSymbolDefinitions(
+function find_symbol_definitions(
   project: Project,
   symbolName: string,
   _searchScope: string
@@ -151,7 +151,7 @@ function findSymbolDefinitions(
   return definitions;
 }
 
-function findSimilarSymbols(
+function find_similar_symbols(
   project: Project,
   symbolName: string,
   _searchScope: string
@@ -197,7 +197,7 @@ function findSimilarSymbols(
   return suggestions;
 }
 
-function extractSymbolInfo(def: any): SymbolInfo {
+function extract_symbol_info(def: any): SymbolInfo {
   const symbolKindMap: Record<string, SymbolInfo["kind"]> = {
     "function": "function",
     "method": "method",
@@ -218,7 +218,7 @@ function extractSymbolInfo(def: any): SymbolInfo {
   };
 }
 
-function extractDefinitionInfo(def: any, project: Project): DefinitionInfo {
+function extract_definition_info(def: any, project: Project): DefinitionInfo {
   let implementation = "// Source code not available";
   let startLine = def.range.start.row;
   
@@ -344,7 +344,7 @@ function extractDefinitionInfo(def: any, project: Project): DefinitionInfo {
   };
 }
 
-function findSymbolUsages(
+function find_symbol_usages(
   project: Project,
   def: any,
   includeTests: boolean
@@ -358,13 +358,13 @@ function findSymbolUsages(
   // First, find local references in the same file
   const localRefs = def.graph.getRefsForDef(def.id);
   for (const ref of localRefs) {
-    const context = extractReferenceContext(def.file_path, ref, project);
+    const context = extract_reference_context(def.file_path, ref, project);
     
     // Check if this is a test file and we should track it as a test
-    const isInTestFunction = isReferenceInTestFunction(def.file_path, ref, fileGraphs);
+    const isInTestFunction = is_reference_in_test_function(def.file_path, ref, fileGraphs);
     
     if (isInTestFunction && includeTests) {
-      const testName = extractTestName(def.file_path, ref, project);
+      const testName = extract_test_name(def.file_path, ref, project);
       tests.push({
         file: def.file_path,
         testName: testName || "test function",
@@ -408,22 +408,22 @@ function findSymbolUsages(
           });
           
           // Find references to this import using the helper function
-          const importRefs = findReferencesToImport(graph, imp);
+          const importRefs = find_referencesToImport(graph, imp);
           
           // Also find direct references by name in this file
           const allRefs = graph.getNodes('reference') as any[];
           const nameMatchingRefs = allRefs.filter(ref => ref.name === imp.name);
           
           for (const ref of nameMatchingRefs) {
-            const context = extractReferenceContext(filePath, ref, project);
+            const context = extract_reference_context(filePath, ref, project);
             
             // Check if the reference is inside a test function
-            const isInTestFunction = isReferenceInTestFunction(filePath, ref, fileGraphs);
+            const isInTestFunction = is_reference_in_test_function(filePath, ref, fileGraphs);
             
             if (isInTestFunction) {
               if (includeTests) {
                 // Try to extract test name
-                const testName = extractTestName(filePath, ref, project);
+                const testName = extract_test_name(filePath, ref, project);
                 tests.push({
                   file: filePath,
                   testName: testName || "test function",
@@ -452,7 +452,7 @@ function findSymbolUsages(
   };
 }
 
-function findReferencesToImport(graph: any, imp: any): any[] {
+function find_referencesToImport(graph: any, imp: any): any[] {
   const refs: any[] = [];
   const allRefs = graph.getNodes('reference');
   
@@ -466,7 +466,7 @@ function findReferencesToImport(graph: any, imp: any): any[] {
   return refs;
 }
 
-function extractReferenceContext(filePath: string, ref: any, project: Project): string {
+function extract_reference_context(filePath: string, ref: any, project: Project): string {
   try {
     // Create a dummy def with just the range we need (one line)
     const dummyDef = {
@@ -487,7 +487,7 @@ function extractReferenceContext(filePath: string, ref: any, project: Project): 
   }
 }
 
-function extractTestName(filePath: string, ref: any, project: Project): string | null {
+function extract_test_name(filePath: string, ref: any, project: Project): string | null {
   try {
     // Search backwards for test/it/describe
     for (let i = ref.range.start.row; i >= 0; i--) {
@@ -520,7 +520,7 @@ function extractTestName(filePath: string, ref: any, project: Project): string |
   return null;
 }
 
-function isReferenceInTestFunction(filePath: string, _ref: any, _fileGraphs: Map<string, any>): boolean {
+function is_reference_in_test_function(filePath: string, _ref: any, _fileGraphs: Map<string, any>): boolean {
   // Note: We're not using graph or ref parameters currently due to limitations
   // in how Ariadne detects test functions (primarily for named functions, not
   // anonymous functions or code blocks within test suites)
@@ -536,7 +536,7 @@ function isReferenceInTestFunction(filePath: string, _ref: any, _fileGraphs: Map
   return isTestFile;
 }
 
-function analyzeRelationships(project: Project, def: any): RelationshipInfo {
+function analyze_relationships(project: Project, def: any): RelationshipInfo {
   const relationships: RelationshipInfo = {
     calls: [],
     calledBy: [],
@@ -579,7 +579,7 @@ function analyzeRelationships(project: Project, def: any): RelationshipInfo {
         }
       } else {
         // Fallback: try to extract inheritance from source code
-        const fallbackRelationships = extractInheritanceFromSource(project, def);
+        const fallbackRelationships = extract_inheritance_from_source(project, def);
         if (fallbackRelationships.extends) {
           relationships.extends = fallbackRelationships.extends;
         }
@@ -592,7 +592,7 @@ function analyzeRelationships(project: Project, def: any): RelationshipInfo {
       console.warn(`Failed to analyze inheritance for ${def.name}: ${error}`);
       
       // Try fallback method
-      const fallbackRelationships = extractInheritanceFromSource(project, def);
+      const fallbackRelationships = extract_inheritance_from_source(project, def);
       if (fallbackRelationships.extends) {
         relationships.extends = fallbackRelationships.extends;
       }
@@ -609,7 +609,7 @@ function analyzeRelationships(project: Project, def: any): RelationshipInfo {
           relationships.dependents = subclasses.map(sub => sub.name);
         } else {
           // Fallback: search for classes that extend this one
-          relationships.dependents = findDependentClassesFromSource(project, def);
+          relationships.dependents = find_dependent_classes_from_source(project, def);
         }
       } else if (def.symbol_kind === 'interface') {
         const implementations = project.find_implementations(def);
@@ -617,13 +617,13 @@ function analyzeRelationships(project: Project, def: any): RelationshipInfo {
           relationships.dependents = implementations.map(impl => impl.name);
         } else {
           // Fallback: search for classes that implement this interface
-          relationships.dependents = findDependentClassesFromSource(project, def);
+          relationships.dependents = find_dependent_classes_from_source(project, def);
         }
       }
     } catch (error) {
       console.warn(`Failed to find dependents for ${def.name}: ${error}`);
       // Use fallback method
-      relationships.dependents = findDependentClassesFromSource(project, def);
+      relationships.dependents = find_dependent_classes_from_source(project, def);
     }
   }
   
@@ -635,7 +635,7 @@ function analyzeRelationships(project: Project, def: any): RelationshipInfo {
 }
 
 // Fallback inheritance extraction functions
-function extractInheritanceFromSource(project: Project, def: any): { extends?: string; implements?: string[] } {
+function extract_inheritance_from_source(project: Project, def: any): { extends?: string; implements?: string[] } {
   try {
     // Get the source code around the class definition using enclosing_range
     const defWithEnclosingRange = {
@@ -732,7 +732,7 @@ function extractInheritanceFromSource(project: Project, def: any): { extends?: s
   }
 }
 
-function findDependentClassesFromSource(project: Project, def: any): string[] {
+function find_dependent_classes_from_source(project: Project, def: any): string[] {
   const dependents: string[] = [];
   
   try {
@@ -789,7 +789,7 @@ function findDependentClassesFromSource(project: Project, def: any): string[] {
   return dependents;
 }
 
-function calculateMetrics(def: any, _usage: UsageInfo): MetricsInfo {
+function calculate_metrics(def: any, _usage: UsageInfo): MetricsInfo {
   // Use metadata.line_count if available (most accurate), otherwise fall back to range calculation
   let linesOfCode: number;
   

@@ -7,12 +7,12 @@
 import { SyntaxNode } from 'tree-sitter';
 import { FunctionDefinition, Language, SourceCode, FilePath } from '@ariadnejs/types';
 import {
-  getLanguageConfig,
-  isParameterNode,
-  isTypedParameterNode,
-  isRestParameterNode,
-  getSpecialParameterType,
-  getDefaultTypes
+  get_language_config,
+  is_parameter_node,
+  is_typed_parameter_node,
+  is_rest_parameter_node,
+  get_special_parameter_type,
+  get_default_types
 } from './language_configs';
 import { node_to_location } from '../../ast/node_utils';
 
@@ -114,7 +114,7 @@ export function extract_parameters(
  * Check if a node represents a parameter
  */
 function is_parameter_node(node: SyntaxNode, language: Language): boolean {
-  return isParameterNode(node.type, language);
+  return is_parameter_node(node.type, language);
 }
 
 /**
@@ -126,7 +126,7 @@ function extract_parameter_info(
   context: ParameterInferenceContext
 ): ParameterInfo | undefined {
   const { language, source_code } = context;
-  const config = getLanguageConfig(language);
+  const config = get_language_config(language);
   
   const info: ParameterInfo = {
     name: '',
@@ -141,7 +141,7 @@ function extract_parameter_info(
   // Handle different parameter types using configuration
   if (param_node.type === 'identifier') {
     info.name = extractName(param_node);
-  } else if (isRestParameterNode(param_node.type, language)) {
+  } else if (is_rest_parameter_node(param_node.type, language)) {
     // Rest parameters
     info.is_rest = true;
     
@@ -155,7 +155,7 @@ function extract_parameter_info(
     if (param_node.type === 'dictionary_splat_pattern') {
       info.is_keyword_only = true;
     }
-  } else if (isTypedParameterNode(param_node.type, language)) {
+  } else if (is_typed_parameter_node(param_node.type, language)) {
     // Typed parameters
     const fields = config.field_mappings;
     
@@ -231,7 +231,7 @@ function extract_parameter_info(
       
       if (nameNode) {
         // Handle typed default parameters
-        if (isTypedParameterNode(nameNode.type, language)) {
+        if (is_typed_parameter_node(nameNode.type, language)) {
           const identNode = nameNode.childForFieldName(fields.identifier || 'identifier');
           const typeNode = nameNode.childForFieldName(fields.type || 'type');
           
@@ -287,7 +287,7 @@ function infer_type_from_default(
   default_value: string,
   language: Language
 ): ParameterTypeInfo | undefined {
-  const defaults = getDefaultTypes(language);
+  const defaults = get_default_types(language);
   
   // Simple literal detection
   if (default_value === 'true' || default_value === 'false' || 
@@ -373,10 +373,10 @@ function check_parameter_patterns(
 ): ParameterTypeInfo | undefined {
   const { name } = param;
   const { language, class_name } = context;
-  const defaults = getDefaultTypes(language);
+  const defaults = get_default_types(language);
   
   // Check for special parameters first (self, cls)
-  const special_type = getSpecialParameterType(name, language, class_name);
+  const special_type = get_special_parameter_type(name, language, class_name);
   if (special_type) {
     return {
       param_name: name,
@@ -498,7 +498,7 @@ function infer_parameter_types_by_language(
   context: ParameterInferenceContext
 ): Map<string, ParameterTypeInfo> {
   const inferred_types = new Map<string, ParameterTypeInfo>();
-  const defaults = getDefaultTypes(context.language);
+  const defaults = get_default_types(context.language);
   
   // Generic configuration-driven inference (85% of logic)
   for (const param of parameters) {
@@ -532,7 +532,7 @@ function infer_parameter_types_by_language(
     
     // Rest parameters
     if (param.is_rest) {
-      const config = getLanguageConfig(context.language);
+      const config = get_language_config(context.language);
       const rest_type = param.is_keyword_only ? 
         config.rest_patterns.keyword_type || config.rest_patterns.default_type :
         config.rest_patterns.default_type;
@@ -568,7 +568,8 @@ function infer_parameter_types_by_language(
   
   // Merge bespoke results, preferring them over generic inference
   for (const [name, type_info] of bespoke_types) {
-    if (!inferred_types.has(name) || inferred_types.get(name)!.confidence === 'assumed') {
+    const existing = inferred_types.get(name);
+    if (!existing || existing.confidence === 'assumed') {
       inferred_types.set(name, type_info);
     }
   }

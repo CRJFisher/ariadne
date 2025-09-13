@@ -416,7 +416,7 @@ export function find_symbol_references(
   symbol_id: SymbolId,
   table: GlobalSymbolTable
 ): Location[] {
-  return table.references.get(symbol_id) || [];
+  return table.references.get(symbol_id) ?? [];
 }
 
 /**

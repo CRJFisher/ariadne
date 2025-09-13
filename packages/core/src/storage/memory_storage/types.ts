@@ -4,7 +4,7 @@
  * Immutable data structures for in-memory storage
  */
 
-import { ProjectState, StoredFile } from '../storage_interface';
+import { ProjectState, StoredFile, StorageInterface } from '../storage_interface';
 
 /**
  * Memory storage state container (immutable)
@@ -21,7 +21,7 @@ export interface MemoryTransactionState {
   readonly state: ProjectState;
   readonly committed: boolean;
   readonly rolled_back: boolean;
-  readonly storage_ref: any; // Reference to parent storage
+  readonly storage_ref: StorageInterface; // Reference to parent storage
 }
 
 /**
@@ -43,7 +43,7 @@ export function create_initial_storage_state(): MemoryStorageState {
  */
 export function create_initial_transaction_state(
   initial_state: ProjectState,
-  storage_ref: any
+  storage_ref: StorageInterface
 ): MemoryTransactionState {
   return {
     state: {

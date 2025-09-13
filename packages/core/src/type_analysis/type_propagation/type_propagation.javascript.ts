@@ -17,12 +17,12 @@ import {
   merge_type_flows
 } from './type_propagation';
 import {
-  getTypePropagationConfig,
-  isAssignmentNode,
-  isDeclarationNode,
-  isCallNode,
-  isMemberAccessNode,
-  isNarrowingNode
+  get_type_propagation_config,
+  is_assignment_node,
+  is_declaration_node,
+  is_call_node,
+  is_member_access_node,
+  is_narrowing_node
 } from './language_configs';
 
 /**
@@ -33,13 +33,13 @@ export function propagate_javascript_types(
   context: TypePropagationContext
 ): TypeFlow[] {
   let flows: TypeFlow[] = [];
-  const config = getTypePropagationConfig(context.language);
+  const config = get_type_propagation_config(context.language);
   
   // Use generic propagation for common patterns
-  if (isAssignmentNode(node.type, context.language) || 
-      isDeclarationNode(node.type, context.language)) {
+  if (is_assignment_node(node.type, context.language) || 
+      is_declaration_node(node.type, context.language)) {
     flows = propagate_assignment_types(node, context);
-  } else if (isMemberAccessNode(node.type, context.language)) {
+  } else if (is_member_access_node(node.type, context.language)) {
     flows = propagate_property_types(node, context);
   }
   
@@ -50,7 +50,7 @@ export function propagate_javascript_types(
   }
   
   // Handle type narrowing in control flow
-  if (isNarrowingNode(node.type, context.language)) {
+  if (is_narrowing_node(node.type, context.language)) {
     const narrowing_flows = handle_type_narrowing(node, context);
     flows = merge_type_flows(flows, narrowing_flows);
   }
@@ -125,7 +125,7 @@ export function handle_type_narrowing(
 ): TypeFlow[] {
   const flows: TypeFlow[] = [];
   const { source_code } = context;
-  const config = getTypePropagationConfig(context.language);
+  const config = get_type_propagation_config(context.language);
   
   const condition = control_node.childForFieldName(config.fields.condition);
   if (!condition) return flows;

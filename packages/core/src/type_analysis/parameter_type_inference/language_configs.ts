@@ -292,7 +292,7 @@ const language_configs: Record<Language, ParameterConfig> = {
 /**
  * Get configuration for a language
  */
-export function getLanguageConfig(language: Language): ParameterConfig {
+export function get_language_config(language: Language): ParameterConfig {
   const config = language_configs[language];
   if (!config) {
     throw new Error(`No parameter configuration for language: ${language}`);
@@ -303,36 +303,36 @@ export function getLanguageConfig(language: Language): ParameterConfig {
 /**
  * Check if a node type represents a parameter
  */
-export function isParameterNode(node_type: string, language: Language): boolean {
-  const config = getLanguageConfig(language);
+export function is_parameter_node(node_type: string, language: Language): boolean {
+  const config = get_language_config(language);
   return config.parameter_node_types.includes(node_type);
 }
 
 /**
  * Check if a node type represents a typed parameter
  */
-export function isTypedParameterNode(node_type: string, language: Language): boolean {
-  const config = getLanguageConfig(language);
+export function is_typed_parameter_node(node_type: string, language: Language): boolean {
+  const config = get_language_config(language);
   return config.typed_parameter_node_types.includes(node_type);
 }
 
 /**
  * Check if a node type represents a rest parameter
  */
-export function isRestParameterNode(node_type: string, language: Language): boolean {
-  const config = getLanguageConfig(language);
+export function is_rest_parameter_node(node_type: string, language: Language): boolean {
+  const config = get_language_config(language);
   return config.rest_parameter_node_types.includes(node_type);
 }
 
 /**
  * Get the inferred type for a special parameter
  */
-export function getSpecialParameterType(
+export function get_special_parameter_type(
   param_name: string,
   language: Language,
   class_name?: string
 ): string | undefined {
-  const config = getLanguageConfig(language);
+  const config = get_language_config(language);
   const special = config.special_parameters[param_name];
   
   if (!special) {
@@ -350,8 +350,8 @@ export function getSpecialParameterType(
 /**
  * Normalize a type annotation for a language
  */
-export function normalizeType(type_str: string, language: Language): string {
-  const config = getLanguageConfig(language);
+export function normalize_type(type_str: string, language: Language): string {
+  const config = get_language_config(language);
   
   if (config.type_mappings) {
     return config.type_mappings[type_str] || type_str;
@@ -363,7 +363,7 @@ export function normalizeType(type_str: string, language: Language): string {
 /**
  * Get default type names for a language
  */
-export function getDefaultTypes(language: Language) {
-  const config = getLanguageConfig(language);
+export function get_default_types(language: Language) {
+  const config = get_language_config(language);
   return config.defaults;
 }

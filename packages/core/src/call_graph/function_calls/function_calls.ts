@@ -16,7 +16,7 @@ import {
   Location,
   ImportInfo,
 } from "@ariadnejs/types";
-import { getLanguageConfig, LanguageCallConfig } from "./language_configs";
+import { get_language_config, LanguageCallConfig } from "./language_configs";
 import { node_to_location } from "../../ast/node_utils";
 import { handle_typescript_decorators } from "./function_calls.typescript";
 import { handle_rust_macros } from "./function_calls.rust";
@@ -298,7 +298,7 @@ function resolve_local_function(
 export function find_function_calls_generic(
   context: FunctionCallContext
 ): FunctionCallInfo[] {
-  const config = getLanguageConfig(context.language);
+  const config = get_language_config(context.language);
   const calls: FunctionCallInfo[] = [];
 
   // Walk the AST to find all call expressions

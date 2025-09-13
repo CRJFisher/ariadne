@@ -22,12 +22,12 @@ import {
   ResolvedGeneric,
 } from "@ariadnejs/types";
 import {
-  getTypePropagationConfig,
-  isAssignmentNode,
-  isDeclarationNode,
-  isCallNode,
-  isMemberAccessNode,
-  getConstructorType,
+  get_type_propagation_config,
+  is_assignment_node,
+  is_declaration_node,
+  is_call_node,
+  is_member_access_node,
+  get_constructor_type,
 } from "./language_configs";
 import { ModuleGraphWithEdges } from "../../import_export/module_graph";
 import { TypeRegistry } from "../type_registry";
@@ -65,8 +65,8 @@ export function propagate_assignment_types(
 
   // Use configuration to determine if this is an assignment
   if (
-    !isAssignmentNode(assignment_node.type, language) &&
-    !isDeclarationNode(assignment_node.type, language)
+    !is_assignment_node(assignment_node.type, language) &&
+    !is_declaration_node(assignment_node.type, language)
   ) {
     return flows;
   }
@@ -103,7 +103,7 @@ function get_assignment_target(
   context: TypePropagationContext
 ): { identifier: string; is_property: boolean } | undefined {
   const { language, source_code } = context;
-  const config = getTypePropagationConfig(language);
+  const config = get_type_propagation_config(language);
 
   // Get the left field based on configuration
   const left =
@@ -117,7 +117,7 @@ function get_assignment_target(
         identifier: source_code.substring(left.startIndex, left.endIndex),
         is_property: false,
       };
-    } else if (isMemberAccessNode(left.type, language)) {
+    } else if (is_member_access_node(left.type, language)) {
       // Handle property assignment
       const property = left.childForFieldName(config.fields.property);
       if (property) {
@@ -143,7 +143,7 @@ function get_assignment_source(
   context: TypePropagationContext
 ): { node: SyntaxNode; is_literal: boolean } | undefined {
   const { language } = context;
-  const config = getTypePropagationConfig(language);
+  const config = get_type_propagation_config(language);
 
   // Try different field names based on configuration
   const right =
@@ -165,7 +165,7 @@ function get_assignment_source(
  * Check if a node is a literal value using configuration
  */
 function is_literal_node(node: SyntaxNode, language: Language): boolean {
-  const config = getTypePropagationConfig(language);
+  const config = get_type_propagation_config(language);
   return config.literal_nodes.includes(node.type);
 }
 
@@ -285,7 +285,7 @@ function is_constructor_call(node: SyntaxNode, language: Language): boolean {
   if (node.type === "struct_expression") return true; // Rust struct literals
 
   // Check if it's a call to a constructor function
-  const config = getTypePropagationConfig(language);
+  const config = get_type_propagation_config(language);
   if (config.call_nodes.includes(node.type)) {
     // Language-specific checks for constructor patterns
     if (language === "python") {
@@ -305,7 +305,7 @@ function is_constructor_call(node: SyntaxNode, language: Language): boolean {
  * Check if node is a function call using configuration
  */
 function is_function_call(node: SyntaxNode, language: Language): boolean {
-  return isCallNode(node.type, language);
+  return is_call_node(node.type, language);
 }
 
 /**
@@ -342,7 +342,7 @@ function extract_constructor_type(
   source_code: string,
   language: Language
 ): string | undefined {
-  const config = getTypePropagationConfig(language);
+  const config = get_type_propagation_config(language);
 
   // Handle new expressions (JS/TS)
   if (node.type === "new_expression") {
@@ -365,7 +365,7 @@ function extract_constructor_type(
   }
 
   // Handle regular calls that might be constructors
-  if (isCallNode(node.type, language)) {
+  if (is_call_node(node.type, language)) {
     const func =
       node.childForFieldName(config.fields.function) ||
       node.childForFieldName(config.fields.callee);
@@ -373,7 +373,7 @@ function extract_constructor_type(
       const name = source_code.substring(func.startIndex, func.endIndex);
 
       // Check if it's a known constructor
-      const constructorType = getConstructorType(name, language);
+      const constructorType = get_constructor_type(name, language);
       if (constructorType) {
         return constructorType;
       }

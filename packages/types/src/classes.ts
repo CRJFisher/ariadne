@@ -37,13 +37,13 @@ export interface ClassNode {
   readonly properties: ReadonlyMap<SymbolId, PropertyNode>;
 
   // Enhanced computed fields from local types
-  readonly all_ancestors?: readonly ClassNode[]; // Complete inheritance chain
-  readonly all_descendants?: readonly ClassNode[]; // All derived classes
-  readonly method_resolution_order?: readonly ClassNode[]; // MRO for method lookup
+  readonly all_ancestors: readonly ClassNode[]; // Complete inheritance chain, defaults to empty
+  readonly all_descendants: readonly ClassNode[]; // All derived classes, defaults to empty
+  readonly method_resolution_order: readonly ClassNode[]; // MRO for method lookup, defaults to empty
 
   // Resolution tracking
-  readonly parent_class?: ClassNode; // Direct parent reference (resolved)
-  readonly interface_nodes?: readonly ClassNode[]; // Resolved interface nodes
+  readonly parent_class: ClassNode | null; // Direct parent reference (explicit null for no parent)
+  readonly interface_nodes: readonly ClassNode[]; // Resolved interface nodes, defaults to empty
 }
 
 export interface MethodNode {

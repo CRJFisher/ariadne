@@ -162,7 +162,7 @@ export const LANGUAGE_CONFIGS: Record<Language, LanguageCallConfig> = {
 /**
  * Helper to get configuration for a language
  */
-export function getLanguageConfig(language: Language): LanguageCallConfig {
+export function get_language_config(language: Language): LanguageCallConfig {
   const config = LANGUAGE_CONFIGS[language];
   if (!config) {
     throw new Error(`Unsupported language: ${language}`);
@@ -173,23 +173,23 @@ export function getLanguageConfig(language: Language): LanguageCallConfig {
 /**
  * Check if a node type represents a call expression for the given language
  */
-export function isCallExpression(nodeType: string, language: Language): boolean {
-  const config = getLanguageConfig(language);
+export function is_call_expression(nodeType: string, language: Language): boolean {
+  const config = get_language_config(language);
   return config.call_expression_types.includes(nodeType);
 }
 
 /**
  * Check if a node type represents a method expression for the given language
  */
-export function isMethodExpression(nodeType: string, language: Language): boolean {
-  const config = getLanguageConfig(language);
+export function is_method_expression(nodeType: string, language: Language): boolean {
+  const config = get_language_config(language);
   return config.method_expression_types.includes(nodeType);
 }
 
 /**
  * Check if a node type represents a function definition for the given language
  */
-export function isFunctionDefinition(nodeType: string, language: Language): boolean {
-  const config = getLanguageConfig(language);
+export function is_function_definition(nodeType: string, language: Language): boolean {
+  const config = get_language_config(language);
   return config.function_definition_types.includes(nodeType);
 }

@@ -1,8 +1,11 @@
 /**
  * Collection and data structure utilities
- * 
+ *
  * Provides helpers for working with arrays, maps, sets, and other collections
+ * Uses type-safe patterns to avoid null/undefined issues
  */
+
+import { get_map_array_or_empty } from '@ariadnejs/types';
 
 /**
  * Group array items by a key function
@@ -15,9 +18,8 @@ export function group_by<T, K>(
   
   for (const item of items) {
     const key = keyFn(item);
-    const group = groups.get(key) || [];
-    group.push(item);
-    groups.set(key, group);
+    const group = get_map_array_or_empty(groups, key);
+    groups.set(key, [...group, item]);
   }
   
   return groups;

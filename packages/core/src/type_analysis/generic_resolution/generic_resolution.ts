@@ -15,7 +15,7 @@ import {
   ClassHierarchy
 } from '@ariadnejs/types';
 import { SyntaxNode } from 'tree-sitter';
-import { getLanguageConfig, isGenericParameter as isGenericParam } from './language_configs';
+import { get_language_config, is_generic_parameter as isGenericParam } from './language_configs';
 import { ModuleGraphWithEdges } from '../../import_export/module_graph';
 import { TypeRegistry } from '../type_registry';
 
@@ -489,7 +489,7 @@ function extract_generic_parameters(
   source_code: string,
   language: Language
 ): GenericParameter[] {
-  const config = getLanguageConfig(language);
+  const config = get_language_config(language);
   const params: GenericParameter[] = [];
   
   // Check if this language supports generics

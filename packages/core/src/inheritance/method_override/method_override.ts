@@ -5,7 +5,7 @@
  */
 
 import { Parser, Query, SyntaxNode } from 'tree-sitter';
-import { Def, ClassDefinition, ClassHierarchy, MethodOverrideMap } from '@ariadnejs/types';
+import { Def, ClassDefinition, ClassHierarchy, MethodOverrideMap, get_map_array_or_empty } from '@ariadnejs/types';
 import { 
   ClassInfo
 } from '../class_hierarchy/class_hierarchy';
@@ -119,7 +119,7 @@ export function find_parent_method_generic(
   
   // Check each ancestor class
   for (const ancestor of ancestors) {
-    const ancestor_methods = all_methods.get(ancestor.name) || [];
+    const ancestor_methods = get_map_array_or_empty(all_methods, ancestor.name);
     
     for (const ancestor_method of ancestor_methods) {
       const ancestor_sig = extract_method_signature(ancestor_method);
@@ -147,7 +147,7 @@ export function find_child_overrides_generic(
   
   // Check each descendant class
   for (const descendant of class_info.all_descendants) {
-    const descendant_methods = all_methods.get(descendant.name) || [];
+    const descendant_methods = get_map_array_or_empty(all_methods, descendant.name);
     
     for (const descendant_method of descendant_methods) {
       const descendant_sig = extract_method_signature(descendant_method);
@@ -357,7 +357,7 @@ export function detect_overrides_generic(
   
   // Process each class and its methods
   for (const [class_name, class_info] of hierarchy.classes) {
-    const methods = all_methods.get(class_name) || [];
+    const methods = get_map_array_or_empty(all_methods, class_name);
     
     for (const method of methods) {
       const method_key = `${class_name}.${method.name}`;
@@ -388,7 +388,7 @@ export function detect_overrides_generic(
         
         // Find parent class of current method
         for (const [ancestor_name, ancestor_info] of hierarchy.classes) {
-          const ancestor_methods = all_methods.get(ancestor_name) || [];
+          const ancestor_methods = get_map_array_or_empty(all_methods, ancestor_name);
           if (ancestor_methods.includes(current)) {
             const ancestor_parent = find_parent_method_generic(
               current, 

@@ -103,7 +103,7 @@ export interface NamedExportItem {
  */
 export interface DefaultExport extends BaseExport {
   readonly kind: "default";
-  readonly symbol?: SymbolName; // Symbol being exported (if not anonymous)
+  readonly symbol: SymbolName; // Generated symbol for anonymous exports
   readonly is_declaration: boolean; // export default class {} vs export default foo
 }
 

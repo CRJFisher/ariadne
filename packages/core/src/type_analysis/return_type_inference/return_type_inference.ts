@@ -8,13 +8,14 @@
 
 import { Definition, Language, Location, FilePath } from '@ariadnejs/types';
 import { SyntaxNode } from 'tree-sitter';
-import { 
-  get_return_type_config, 
+import {
+  get_return_type_config,
   ReturnTypeLanguageConfig,
   is_type_node,
-  get_expression_category 
+  get_expression_category
 } from './language_configs';
 import { node_to_location } from '../../ast/node_utils';
+import { FileTypeTracker } from '../type_tracking/type_tracking';
 
 /**
  * MODULE_CONTEXT for return type inference
@@ -53,7 +54,7 @@ export interface ReturnTypeContext {
   source_code: string;
   debug?: boolean;
   class_name?: string;  // For method context
-  type_tracker?: any;   // Integration point for type tracking
+  type_tracker?: FileTypeTracker;   // Integration point for type tracking
 }
 
 /**

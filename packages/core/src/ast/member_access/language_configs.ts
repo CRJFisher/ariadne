@@ -49,7 +49,7 @@ export interface MemberAccessConfig {
 }
 
 // JavaScript/TypeScript configuration
-const javascriptConfig: MemberAccessConfig = {
+const javascript_config: MemberAccessConfig = {
   node_types: ['member_expression' as ASTNodeType, 'nested_type_identifier' as ASTNodeType],
   field_mappings: {
     'member_expression': {
@@ -75,7 +75,7 @@ const javascriptConfig: MemberAccessConfig = {
 };
 
 // Python configuration
-const pythonConfig: MemberAccessConfig = {
+const python_config: MemberAccessConfig = {
   node_types: ['attribute' as ASTNodeType],
   field_mappings: {
     'attribute': {
@@ -94,7 +94,7 @@ const pythonConfig: MemberAccessConfig = {
 };
 
 // Rust configuration
-const rustConfig: MemberAccessConfig = {
+const rust_config: MemberAccessConfig = {
   node_types: ['scoped_identifier' as ASTNodeType, 'field_expression' as ASTNodeType],
   field_mappings: {
     'scoped_identifier': {
@@ -118,40 +118,40 @@ const rustConfig: MemberAccessConfig = {
 
 // Language configuration map
 const LANGUAGE_CONFIGS: Record<string, MemberAccessConfig> = {
-  javascript: javascriptConfig,
-  typescript: javascriptConfig,
-  jsx: javascriptConfig,
-  tsx: javascriptConfig,
-  python: pythonConfig,
-  rust: rustConfig
+  javascript: javascript_config,
+  typescript: javascript_config,
+  jsx: javascript_config,
+  tsx: javascript_config,
+  python: python_config,
+  rust: rust_config
 };
 
 /**
  * Get member access configuration for a language
  */
-export function getMemberAccessConfig(language: Language): MemberAccessConfig | null {
+export function get_member_access_config(language: Language): MemberAccessConfig | null {
   return LANGUAGE_CONFIGS[language] || null;
 }
 
 /**
  * Check if a node type represents member access in a language
  */
-export function isMemberAccessNode(
+export function is_member_access_node(
   nodeType: ASTNodeType,
   language: Language
 ): boolean {
-  const config = getMemberAccessConfig(language);
+  const config = get_member_access_config(language);
   return config ? config.node_types.includes(nodeType) : false;
 }
 
 /**
  * Get field names for a member access node type
  */
-export function getMemberAccessFields(
+export function get_member_access_fields(
   nodeType: ASTNodeType,
   language: Language
 ): { object_field: FieldName; member_field: FieldName } | null {
-  const config = getMemberAccessConfig(language);
+  const config = get_member_access_config(language);
   if (!config) return null;
   
   return config.field_mappings[nodeType] || null;
@@ -160,10 +160,10 @@ export function getMemberAccessFields(
 /**
  * Check if a node type should be skipped during traversal
  */
-export function shouldSkipNode(
+export function should_skip_node(
   nodeType: ASTNodeType,
   language: Language
 ): boolean {
-  const config = getMemberAccessConfig(language);
+  const config = get_member_access_config(language);
   return config ? config.skip_node_types.includes(nodeType) : false;
 }

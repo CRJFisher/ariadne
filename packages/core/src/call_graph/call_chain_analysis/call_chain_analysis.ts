@@ -24,6 +24,8 @@ import {
   CallEdge,
   FileAnalysis,
   FunctionSignature,
+  map_get_or_default,
+  map_get_array,
 } from "@ariadnejs/types";
 import {
   construct_function_symbol,
@@ -480,9 +482,11 @@ export function create_call_graph(
   for (const analysis of analyses) {
     // Add function nodes
     for (const func of analysis.functions) {
-      const symbol =
-        resolution_results.resolved_calls.get(func.location) ||
-        (construct_function_symbol(analysis.file_path, func.name) as SymbolId);
+      const symbol = map_get_or_default(
+        resolution_results.resolved_calls,
+        func.location,
+        construct_function_symbol(analysis.file_path, func.name) as SymbolId
+      );
 
       functions.set(symbol, {
         symbol,
@@ -499,14 +503,16 @@ export function create_call_graph(
     // Add method nodes
     for (const cls of analysis.classes) {
       for (const method of cls.methods) {
-        const symbol =
-          resolution_results.resolved_methods.get(method.location) ||
-          (construct_method_symbol(
+        const symbol = map_get_or_default(
+          resolution_results.resolved_methods,
+          method.location,
+          construct_method_symbol(
             analysis.file_path,
             cls.name,
             method.name,
             method.is_static
-          ) as SymbolId);
+          ) as SymbolId
+        );
 
         functions.set(symbol, {
           symbol,
@@ -537,9 +543,11 @@ export function create_call_graph(
       );
 
       // Use resolved symbol if available, otherwise use unresolved name
-      const to =
-        resolution_results.resolved_calls.get(call.location) ||
-        construct_function_symbol(analysis.file_path, call.callee as string);
+      const to = map_get_or_default(
+        resolution_results.resolved_calls,
+        call.location,
+        construct_function_symbol(analysis.file_path, call.callee as string)
+      );
 
       edges.push({
         from,
@@ -557,14 +565,16 @@ export function create_call_graph(
       );
 
       // Use resolved symbol if available
-      const to =
-        resolution_results.resolved_methods.get(call.location) ||
+      const to = map_get_or_default(
+        resolution_results.resolved_methods,
+        call.location,
         construct_method_symbol(
           analysis.file_path,
           call.receiver as string,
           call.method_name as string,
           call.is_static
-        );
+        )
+      );
 
       edges.push({
         from,

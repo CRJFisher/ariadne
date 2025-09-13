@@ -17,8 +17,8 @@ export interface SymbolDefinition {
     | "interface"
     | "enum";
   readonly location: Location;
-  readonly is_exported?: boolean;
-  readonly docstring?: DocString;
+  readonly is_exported: boolean; // Defaults to false for non-exported symbols
+  readonly docstring: DocString; // Defaults to empty string when no docstring
   readonly references: readonly Usage[];
 }
 

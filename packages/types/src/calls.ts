@@ -36,9 +36,9 @@ export interface ResolvedTarget {
   readonly file_path: FilePath;
   readonly is_local: boolean;
   readonly is_imported: boolean;
-  readonly source_module?: ModulePath;
-  readonly import_alias?: SymbolId;
-  readonly original_name?: SymbolId;
+  readonly source_module: ModulePath; // Defaults to current module when not imported
+  readonly import_alias: SymbolId; // Defaults to symbol_id when no alias
+  readonly original_name: SymbolId; // Defaults to symbol_id when not aliased
 }
 
 /**
@@ -66,10 +66,10 @@ export interface MethodCall extends BaseCallInfo {
   readonly receiver: SymbolId; // Object receiving the call
   readonly is_static: boolean; // Static vs instance method
   readonly is_chained: boolean; // Part of method chain
-  readonly receiver_type?: Resolution<{
+  readonly receiver_type: Resolution<{
     readonly type_name: ClassName;
     readonly type_kind: ResolvedTypeKind;
-  }>;
+  }>; // Defaults to unresolved with "unknown" type
   readonly resolved?: Resolution<ResolvedTarget>;
 }
 
@@ -81,7 +81,7 @@ export interface ConstructorCall extends BaseCallInfo {
   readonly class_name: ClassName; // Class being instantiated
   readonly is_new_expression: boolean; // Uses 'new' keyword
   readonly is_factory: boolean; // Factory pattern
-  readonly assigned_to?: SymbolId; // Variable receiving instance
+  readonly assigned_to: SymbolId; // Defaults to anonymous symbol when not assigned
   readonly resolved?: Resolution<ResolvedTarget>;
 }
 
@@ -246,6 +246,15 @@ export function create_method_call(
     is_chained: false,
     is_async: false,
     is_dynamic: false,
+    // Required fields with defaults
+    receiver_type: {
+      resolved: {
+        type_name: "unknown" as ClassName,
+        type_kind: "unknown" as ResolvedTypeKind
+      },
+      confidence: "low",
+      reason: "not_found"
+    },
     ...options,
   };
 }
@@ -272,6 +281,8 @@ export function create_constructor_call(
     is_factory: false,
     is_async: false,
     is_dynamic: false,
+    // Required fields with defaults
+    assigned_to: `anonymous_${Date.now()}` as SymbolId,
     ...options,
   };
 }

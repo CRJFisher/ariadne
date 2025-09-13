@@ -44,7 +44,7 @@ export interface GenericResolutionConfig {
 /**
  * Get configuration for a specific language
  */
-export function getLanguageConfig(language: Language): GenericResolutionConfig {
+export function get_language_config(language: Language): GenericResolutionConfig {
   switch (language) {
     case 'typescript':
       return typescript_config;
@@ -62,11 +62,11 @@ export function getLanguageConfig(language: Language): GenericResolutionConfig {
 /**
  * Check if a type name matches generic patterns for a language
  */
-export function isGenericParameter(
+export function is_generic_parameter(
   type_name: string,
   language: Language
 ): boolean {
-  const config = getLanguageConfig(language);
+  const config = get_language_config(language);
   
   // Check common names first (faster)
   if (config.common_generic_names.includes(type_name)) {

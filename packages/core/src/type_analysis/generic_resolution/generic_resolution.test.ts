@@ -20,7 +20,7 @@ import {
 // Note: Some functions are now internal and not exported
 
 // Create a mock TypeRegistry for tests
-const mockTypeRegistry = build_type_registry([]);
+const mock_type_registry = build_type_registry([]);
 
 describe('Generic Type Resolution', () => {
   describe('Generic Context', () => {
@@ -206,7 +206,7 @@ describe('Generic Type Resolution', () => {
       const context = create_generic_context([{ name: 'T' }]);
       const bound = bind_type_arguments(context, ['User' as TypeName]);
       
-      const resolved = resolve_language_generic('Partial<T>', 'typescript', bound, mockTypeRegistry);
+      const resolved = resolve_language_generic('Partial<T>', 'typescript', bound, mock_type_registry);
       
       expect(resolved.resolved_type).toBe('{ [K in keyof User]?: User[K] }');
     });
@@ -216,7 +216,7 @@ describe('Generic Type Resolution', () => {
       const context = create_generic_context([{ name: 'T' }]);
       const bound = bind_type_arguments(context, ['String' as TypeName]);
       
-      const resolved = resolve_language_generic("&'a T", 'rust', bound, mockTypeRegistry);
+      const resolved = resolve_language_generic("&'a T", 'rust', bound, mock_type_registry);
       
       expect(resolved.resolved_type).toBe('& String');
     });
@@ -226,7 +226,7 @@ describe('Generic Type Resolution', () => {
       const context = create_generic_context([{ name: 'T' }]);
       const bound = bind_type_arguments(context, ['str' as TypeName]);
       
-      const resolved = resolve_language_generic('List<T>', 'python', bound, mockTypeRegistry);
+      const resolved = resolve_language_generic('List<T>', 'python', bound, mock_type_registry);
       
       expect(resolved.resolved_type).toBe('list[str]');
     });
@@ -268,7 +268,7 @@ describe('Generic Type Resolution', () => {
       expect(typeof resolve_generics_across_files).toBe('function');
       
       // It should be an async function
-      const result = resolve_generics_across_files([], mockTypeRegistry, {}, {} as any);
+      const result = resolve_generics_across_files([], mock_type_registry, {}, {} as any);
       expect(result instanceof Promise).toBe(true);
     });
 
@@ -278,11 +278,11 @@ describe('Generic Type Resolution', () => {
       const bound = bind_type_arguments(context, ['string' as TypeName]);
       
       // Test TypeScript generic resolution
-      const tsResolved = resolve_language_generic('Array<T>', 'typescript', bound, mockTypeRegistry);
+      const tsResolved = resolve_language_generic('Array<T>', 'typescript', bound, mock_type_registry);
       expect(tsResolved.resolved_type).toBe('Array<string>');
       
       // Test Python generic resolution
-      const pyResolved = resolve_language_generic('List[T]', 'python', bound, mockTypeRegistry);
+      const pyResolved = resolve_language_generic('List[T]', 'python', bound, mock_type_registry);
       expect(pyResolved.resolved_type).toBe('List[string]');
     });
   });
@@ -356,13 +356,13 @@ describe('Generic Type Resolution', () => {
 
       it('should handle JavaScript (no generics)', () => {
         const context = create_generic_context([{ name: 'T' }]);
-        const result = resolve_language_generic('Array', 'javascript', context, mockTypeRegistry);
+        const result = resolve_language_generic('Array', 'javascript', context, mock_type_registry);
         expect(result.resolved_type).toBe('Array');
       });
 
       it('should handle unknown language gracefully', () => {
         const context = create_generic_context([{ name: 'T' }]);
-        const result = resolve_language_generic('Array<T>', 'unknown' as any, context, mockTypeRegistry);
+        const result = resolve_language_generic('Array<T>', 'unknown' as any, context, mock_type_registry);
         expect(result.resolved_type).toBe('Array<T>');
       });
     });
@@ -447,7 +447,7 @@ describe('Generic Type Resolution', () => {
 
     describe('Async Operations', () => {
       it('should handle async resolve_generics_across_files with empty input', async () => {
-        const result = await resolve_generics_across_files([], mockTypeRegistry, {}, {} as any);
+        const result = await resolve_generics_across_files([], mock_type_registry, {}, {} as any);
         expect(result).toEqual({});
       });
 
@@ -462,7 +462,7 @@ describe('Generic Type Resolution', () => {
           }
         ];
         
-        const result = await resolve_generics_across_files(mockAnalyses, mockTypeRegistry, {}, {} as any);
+        const result = await resolve_generics_across_files(mockAnalyses, mock_type_registry, {}, {} as any);
         expect(result).toBeDefined();
       });
     });
@@ -474,9 +474,9 @@ describe('Generic Type Resolution', () => {
         const context = create_generic_context([{ name: 'T' }]);
         context.type_arguments.set('T', 'string');
         
-        const tsResult = resolve_language_generic('Array<T>', 'typescript', context, mockTypeRegistry);
-        const pyResult = resolve_language_generic('List[T]', 'python', context, mockTypeRegistry);
-        const rustResult = resolve_language_generic('Vec<T>', 'rust', context, mockTypeRegistry);
+        const tsResult = resolve_language_generic('Array<T>', 'typescript', context, mock_type_registry);
+        const pyResult = resolve_language_generic('List[T]', 'python', context, mock_type_registry);
+        const rustResult = resolve_language_generic('Vec<T>', 'rust', context, mock_type_registry);
         
         expect(tsResult.type_substitutions.get('T')).toBe('string');
         expect(pyResult.type_substitutions.get('T')).toBe('string');
@@ -488,15 +488,15 @@ describe('Generic Type Resolution', () => {
         context.type_arguments.set('T', 'User');
         
         // TypeScript utility type
-        const tsResult = resolve_language_generic('Partial<T>', 'typescript', context, mockTypeRegistry);
+        const tsResult = resolve_language_generic('Partial<T>', 'typescript', context, mock_type_registry);
         expect(tsResult.resolved_type).toBe('Partial<User>');
         
         // Python Optional type
-        const pyResult = resolve_language_generic('Optional[T]', 'python', context, mockTypeRegistry);
+        const pyResult = resolve_language_generic('Optional[T]', 'python', context, mock_type_registry);
         expect(pyResult.resolved_type).toBe('Optional[User]');
         
         // Rust reference type
-        const rustResult = resolve_language_generic('&T', 'rust', context, mockTypeRegistry);
+        const rustResult = resolve_language_generic('&T', 'rust', context, mock_type_registry);
         expect(rustResult.resolved_type).toBe('&User');
       });
     });
@@ -507,7 +507,7 @@ describe('Generic Type Resolution', () => {
         context.type_arguments.set('T', 'User');
         context.type_arguments.set('K', '"name" | "email"');
         
-        const result = resolve_language_generic('Partial<Pick<T, K>>', 'typescript', context, mockTypeRegistry);
+        const result = resolve_language_generic('Partial<Pick<T, K>>', 'typescript', context, mock_type_registry);
         expect(result.resolved_type).toBe('Partial<Pick<User, "name" | "email">>');
       });
 
@@ -515,7 +515,7 @@ describe('Generic Type Resolution', () => {
         const context = create_generic_context([{ name: 'T' }]);
         context.type_arguments.set('T', 'str');
         
-        const result = resolve_language_generic('Generic[T]', 'python', context, mockTypeRegistry);
+        const result = resolve_language_generic('Generic[T]', 'python', context, mock_type_registry);
         expect(result.resolved_type).toBe('Generic[str]');
       });
 
@@ -523,7 +523,7 @@ describe('Generic Type Resolution', () => {
         const context = create_generic_context([{ name: 'T' }]);
         context.type_arguments.set('T', 'Clone + Send');
         
-        const result = resolve_language_generic('Box<dyn T>', 'rust', context, mockTypeRegistry);
+        const result = resolve_language_generic('Box<dyn T>', 'rust', context, mock_type_registry);
         expect(result.resolved_type).toBe('Box<dyn Clone + Send>');
       });
     });

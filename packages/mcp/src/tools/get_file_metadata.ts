@@ -4,11 +4,11 @@ import * as path from "path";
 import * as fs from "fs/promises";
 
 // Request schema for the MCP tool
-export const getFileMetadataSchema = z.object({
+export const get_file_metadataSchema = z.object({
   filePath: z.string().describe("Path to the file to analyze (relative or absolute)")
 });
 
-export type GetFileMetadataRequest = z.infer<typeof getFileMetadataSchema>;
+export type GetFileMetadataRequest = z.infer<typeof get_file_metadataSchema>;
 
 // Response interfaces
 export interface SymbolMetadata {
@@ -41,7 +41,7 @@ export type GetFileMetadataResponse = FileMetadata | FileNotFoundError;
 /**
  * Extract a 1-line signature from the source code
  */
-function extractSignature(source: string, startLine: number): string {
+function extract_signature(source: string, startLine: number): string {
   const lines = source.split('\n');
   if (startLine > 0 && startLine <= lines.length) {
     let line = lines[startLine - 1].trim();
@@ -68,7 +68,7 @@ function extractSignature(source: string, startLine: number): string {
  * Implementation of get_file_metadata MCP tool
  * Returns all symbols defined in a file with their signatures and line numbers
  */
-export async function getFileMetadata(
+export async function get_file_metadata(
   project: Project,
   request: GetFileMetadataRequest
 ): Promise<GetFileMetadataResponse> {
@@ -146,7 +146,7 @@ export async function getFileMetadata(
     let signature = '';
     if (line > 0) {
       // Try to get a clean signature from the source
-      signature = extractSignature(source, line);
+      signature = extract_signature(source, line);
       
       // If empty, try to construct from available info
       if (!signature && def.signature) {

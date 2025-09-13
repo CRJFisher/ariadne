@@ -172,8 +172,8 @@ export function resolve_method_in_hierarchy(
       
       // First check if this is a trait/interface implementation
       // Check implemented_interfaces (test structure) or interface_nodes (real structure)
-      const implemented_interfaces = (class_info as any).implemented_interfaces || [];
-      const interface_nodes = class_info.interface_nodes || [];
+      const implemented_interfaces = (class_info as any).implemented_interfaces ?? [];
+      const interface_nodes = class_info.interface_nodes;
       
       // Check test structure interfaces
       for (const interface_name of implemented_interfaces) {

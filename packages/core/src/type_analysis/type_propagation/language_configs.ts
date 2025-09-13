@@ -96,7 +96,7 @@ export interface TypePropagationConfig {
 }
 
 // JavaScript configuration
-const javascriptConfig: TypePropagationConfig = {
+const javascript_config: TypePropagationConfig = {
   assignment_nodes: ['assignment_expression', 'augmented_assignment_expression'],
   declaration_nodes: ['variable_declarator', 'lexical_declaration', 'variable_declaration'],
   call_nodes: ['call_expression', 'new_expression'],
@@ -172,8 +172,8 @@ const javascriptConfig: TypePropagationConfig = {
 };
 
 // TypeScript configuration (extends JavaScript)
-const typescriptConfig: TypePropagationConfig = {
-  ...javascriptConfig,
+const typescript_config: TypePropagationConfig = {
+  ...javascript_config,
   type_annotation_nodes: [
     'type_annotation',
     'type_assertion',
@@ -183,19 +183,19 @@ const typescriptConfig: TypePropagationConfig = {
     'type_arguments'
   ],
   narrowing_nodes: [
-    ...javascriptConfig.narrowing_nodes,
+    ...javascript_config.narrowing_nodes,
     'type_predicate',
     'type_assertion'
   ],
   
   narrowing_operators: {
-    ...javascriptConfig.narrowing_operators,
+    ...javascript_config.narrowing_operators,
     is: ['is']
   }
 };
 
 // Python configuration
-const pythonConfig: TypePropagationConfig = {
+const python_config: TypePropagationConfig = {
   assignment_nodes: ['assignment', 'augmented_assignment'],
   declaration_nodes: ['assignment', 'annotated_assignment', 'typed_parameter', 'typed_default_parameter'],
   call_nodes: ['call', 'decorator'],
@@ -270,7 +270,7 @@ const pythonConfig: TypePropagationConfig = {
 };
 
 // Rust configuration
-const rustConfig: TypePropagationConfig = {
+const rust_config: TypePropagationConfig = {
   assignment_nodes: ['assignment_expression', 'compound_assignment_expr'],
   declaration_nodes: ['let_declaration', 'const_item', 'static_item'],
   call_nodes: ['call_expression', 'macro_invocation'],
@@ -354,18 +354,18 @@ const rustConfig: TypePropagationConfig = {
 
 // Configuration map
 const configs: Record<Language | 'jsx' | 'tsx', TypePropagationConfig> = {
-  javascript: javascriptConfig,
-  jsx: javascriptConfig,
-  typescript: typescriptConfig,
-  tsx: typescriptConfig,
-  python: pythonConfig,
-  rust: rustConfig
+  javascript: javascript_config,
+  jsx: javascript_config,
+  typescript: typescript_config,
+  tsx: typescript_config,
+  python: python_config,
+  rust: rust_config
 };
 
 /**
  * Get type propagation configuration for a language
  */
-export function getTypePropagationConfig(language: Language | 'jsx' | 'tsx'): TypePropagationConfig {
+export function get_type_propagation_config(language: Language | 'jsx' | 'tsx'): TypePropagationConfig {
   const config = configs[language];
   if (!config) {
     throw new Error(`No type propagation configuration for language: ${language}`);
@@ -376,56 +376,56 @@ export function getTypePropagationConfig(language: Language | 'jsx' | 'tsx'): Ty
 /**
  * Check if a node type represents an assignment
  */
-export function isAssignmentNode(nodeType: string, language: Language | 'jsx' | 'tsx'): boolean {
-  const config = getTypePropagationConfig(language);
+export function is_assignment_node(nodeType: string, language: Language | 'jsx' | 'tsx'): boolean {
+  const config = get_type_propagation_config(language);
   return config.assignment_nodes.includes(nodeType);
 }
 
 /**
  * Check if a node type represents a declaration
  */
-export function isDeclarationNode(nodeType: string, language: Language | 'jsx' | 'tsx'): boolean {
-  const config = getTypePropagationConfig(language);
+export function is_declaration_node(nodeType: string, language: Language | 'jsx' | 'tsx'): boolean {
+  const config = get_type_propagation_config(language);
   return config.declaration_nodes.includes(nodeType);
 }
 
 /**
  * Check if a node type represents a call
  */
-export function isCallNode(nodeType: string, language: Language | 'jsx' | 'tsx'): boolean {
-  const config = getTypePropagationConfig(language);
+export function is_call_node(nodeType: string, language: Language | 'jsx' | 'tsx'): boolean {
+  const config = get_type_propagation_config(language);
   return config.call_nodes.includes(nodeType);
 }
 
 /**
  * Check if a node type represents member access
  */
-export function isMemberAccessNode(nodeType: string, language: Language | 'jsx' | 'tsx'): boolean {
-  const config = getTypePropagationConfig(language);
+export function is_member_access_node(nodeType: string, language: Language | 'jsx' | 'tsx'): boolean {
+  const config = get_type_propagation_config(language);
   return config.member_access_nodes.includes(nodeType);
 }
 
 /**
  * Check if a node type represents a type annotation
  */
-export function isTypeAnnotationNode(nodeType: string, language: Language | 'jsx' | 'tsx'): boolean {
-  const config = getTypePropagationConfig(language);
+export function is_type_annotation_node(nodeType: string, language: Language | 'jsx' | 'tsx'): boolean {
+  const config = get_type_propagation_config(language);
   return config.type_annotation_nodes.includes(nodeType);
 }
 
 /**
  * Check if a node type represents type narrowing
  */
-export function isNarrowingNode(nodeType: string, language: Language | 'jsx' | 'tsx'): boolean {
-  const config = getTypePropagationConfig(language);
+export function is_narrowing_node(nodeType: string, language: Language | 'jsx' | 'tsx'): boolean {
+  const config = get_type_propagation_config(language);
   return config.narrowing_nodes.includes(nodeType);
 }
 
 /**
  * Get the field name for a specific purpose
  */
-export function getFieldName(purpose: keyof TypePropagationConfig['fields'] | string, language: Language | 'jsx' | 'tsx'): string | undefined {
-  const config = getTypePropagationConfig(language);
+export function get_field_name(purpose: keyof TypePropagationConfig['fields'] | string, language: Language | 'jsx' | 'tsx'): string | undefined {
+  const config = get_type_propagation_config(language);
   
   // Handle direct field lookup
   if (purpose in config.fields) {
@@ -452,22 +452,22 @@ export function getFieldName(purpose: keyof TypePropagationConfig['fields'] | st
 /**
  * Get the result type of a type converter function
  */
-export function getConverterResultType(functionName: string, language: Language | 'jsx' | 'tsx'): string | undefined {
-  const config = getTypePropagationConfig(language);
+export function get_converter_result_type(functionName: string, language: Language | 'jsx' | 'tsx'): string | undefined {
+  const config = get_type_propagation_config(language);
   return config.type_converters[functionName];
 }
 
 /**
  * Get the type for a constructor
  */
-export function getConstructorType(constructorName: string, language: Language | 'jsx' | 'tsx'): string | undefined {
-  const config = getTypePropagationConfig(language);
+export function get_constructor_type(constructorName: string, language: Language | 'jsx' | 'tsx'): string | undefined {
+  const config = get_type_propagation_config(language);
   return config.type_constructors[constructorName];
 }
 
 /**
- * Get the result type of a type conversion function (alias for getConverterResultType)
+ * Get the result type of a type conversion function (alias for get_converter_result_type)
  */
-export function getTypeConversionFunction(functionName: string, language: Language | 'jsx' | 'tsx'): string | undefined {
-  return getConverterResultType(functionName, language);
+export function get_type_conversion_function(functionName: string, language: Language | 'jsx' | 'tsx'): string | undefined {
+  return get_converter_result_type(functionName, language);
 }

@@ -17,10 +17,10 @@ import {
   merge_type_flows
 } from './type_propagation';
 import {
-  getTypePropagationConfig,
-  isAssignmentNode,
-  isDeclarationNode,
-  isMemberAccessNode
+  get_type_propagation_config,
+  is_assignment_node,
+  is_declaration_node,
+  is_member_access_node
 } from './language_configs';
 
 /**
@@ -33,10 +33,10 @@ export function propagate_python_types(
   let flows: TypeFlow[] = [];
   
   // Use generic propagation for common patterns
-  if (isAssignmentNode(node.type, context.language) || 
-      isDeclarationNode(node.type, context.language)) {
+  if (is_assignment_node(node.type, context.language) || 
+      is_declaration_node(node.type, context.language)) {
     flows = propagate_assignment_types(node, context);
-  } else if (isMemberAccessNode(node.type, context.language)) {
+  } else if (is_member_access_node(node.type, context.language)) {
     flows = propagate_property_types(node, context);
   }
   
@@ -176,7 +176,7 @@ function handle_comprehension(
   
   // Find the parent assignment if any
   const parent = comp_node.parent;
-  if (parent && isAssignmentNode(parent.type, context.language)) {
+  if (parent && is_assignment_node(parent.type, context.language)) {
     const left = parent.childForFieldName('left');
     if (left && left.type === 'identifier') {
       const identifier = source_code.substring(left.startIndex, left.endIndex);
@@ -208,7 +208,7 @@ function handle_lambda(
   
   // Lambda expressions create callable types
   const parent = lambda_node.parent;
-  if (parent && isAssignmentNode(parent.type, context.language)) {
+  if (parent && is_assignment_node(parent.type, context.language)) {
     const left = parent.childForFieldName('left');
     if (left && left.type === 'identifier') {
       const identifier = context.source_code.substring(left.startIndex, left.endIndex);
