@@ -246,7 +246,7 @@ describe('Return Type Language Configurations', () => {
 });
 
 // Helper function to validate config completeness
-function validateConfigCompleteness(config: ReturnTypeLanguageConfig) {
+function validate_config_completeness(config: ReturnTypeLanguageConfig) {
   // Check main fields
   expect(config.return_type_field).toBeDefined();
   expect(config.type_node_types).toBeDefined();

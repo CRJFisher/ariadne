@@ -104,8 +104,9 @@ describe("Type Registry (Immutable)", () => {
       const class2 = registry.types.get(
         "/src/file2.ts#Class2" as QualifiedName
       );
-      expect(class2?.extends).toEqual(["BaseClass"]);
-      expect(class2?.implements).toEqual(["IInterface"]);
+      expect(class2).toBeDefined();
+      expect(class2!.extends).toEqual(["BaseClass"]);
+      expect(class2!.implements).toEqual(["IInterface"]);
     });
 
     it("should create an immutable registry that cannot be modified", () => {

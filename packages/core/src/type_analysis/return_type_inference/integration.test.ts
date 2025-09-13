@@ -36,10 +36,12 @@ describe.skip('Return Type Inference Integration', () => {
     expect(analysis.functions).toHaveLength(2);
     
     const getString = analysis.functions.find(f => f.name === 'getString');
-    expect(getString?.signature.return_type).toBe('string');
-    
+    expect(getString).toBeDefined();
+    expect(getString!.signature.return_type).toBe('string');
+
     const getNumber = analysis.functions.find(f => f.name === 'getNumber');
-    expect(getNumber?.signature.return_type).toBe('number');
+    expect(getNumber).toBeDefined();
+    expect(getNumber!.signature.return_type).toBe('number');
   });
   
   it('should infer return types from return statements', async () => {
@@ -67,13 +69,16 @@ describe.skip('Return Type Inference Integration', () => {
     expect(analysis.functions).toHaveLength(3);
     
     const getStringLiteral = analysis.functions.find(f => f.name === 'getStringLiteral');
-    expect(getStringLiteral?.signature.return_type).toBe('string');
-    
+    expect(getStringLiteral).toBeDefined();
+    expect(getStringLiteral!.signature.return_type).toBe('string');
+
     const getNumberLiteral = analysis.functions.find(f => f.name === 'getNumberLiteral');
-    expect(getNumberLiteral?.signature.return_type).toBe('number');
-    
+    expect(getNumberLiteral).toBeDefined();
+    expect(getNumberLiteral!.signature.return_type).toBe('number');
+
     const getBooleanLiteral = analysis.functions.find(f => f.name === 'getBooleanLiteral');
-    expect(getBooleanLiteral?.signature.return_type).toBe('boolean');
+    expect(getBooleanLiteral).toBeDefined();
+    expect(getBooleanLiteral!.signature.return_type).toBe('boolean');
   });
   
   it('should handle async functions', async () => {
@@ -97,12 +102,14 @@ describe.skip('Return Type Inference Integration', () => {
     expect(analysis.functions).toHaveLength(2);
     
     const fetchData = analysis.functions.find(f => f.name === 'fetchData');
-    expect(fetchData?.signature.return_type).toBe('Promise<string>');
-    expect(fetchData?.signature.is_async).toBe(true);
-    
+    expect(fetchData).toBeDefined();
+    expect(fetchData!.signature.return_type).toBe('Promise<string>');
+    expect(fetchData!.signature.is_async).toBe(true);
+
     const fetchNumber = analysis.functions.find(f => f.name === 'fetchNumber');
-    expect(fetchNumber?.signature.return_type).toBe('Promise<number>');
-    expect(fetchNumber?.signature.is_async).toBe(true);
+    expect(fetchNumber).toBeDefined();
+    expect(fetchNumber!.signature.return_type).toBe('Promise<number>');
+    expect(fetchNumber!.signature.is_async).toBe(true);
   });
   
   it('should handle generator functions', async () => {
@@ -150,10 +157,12 @@ describe.skip('Return Type Inference Integration', () => {
     expect(analysis.functions).toHaveLength(2);
     
     const doNothing = analysis.functions.find((f: any) => f.name === 'doNothing');
-    expect(doNothing?.signature.return_type).toBe('void');
-    
+    expect(doNothing).toBeDefined();
+    expect(doNothing!.signature.return_type).toBe('void');
+
     const implicitVoid = analysis.functions.find((f: any) => f.name === 'implicitVoid');
-    expect(implicitVoid?.signature.return_type).toBe('void');
+    expect(implicitVoid).toBeDefined();
+    expect(implicitVoid!.signature.return_type).toBe('void');
   });
   
   it('should handle multiple return paths', async () => {

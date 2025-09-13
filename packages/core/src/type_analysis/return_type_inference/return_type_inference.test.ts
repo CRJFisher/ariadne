@@ -658,7 +658,7 @@ impl MyStruct {
 });
 
 // Helper functions
-function findFunction(root: SyntaxNode, name: string): SyntaxNode | undefined {
+function find_function(root: SyntaxNode, name: string): SyntaxNode | undefined {
   for (let i = 0; i < root.childCount; i++) {
     const child = root.child(i);
     if (child && (child.type === 'function_declaration' || 
@@ -678,7 +678,7 @@ function findFunction(root: SyntaxNode, name: string): SyntaxNode | undefined {
   return undefined;
 }
 
-function findMethod(root: SyntaxNode, name: string): SyntaxNode | undefined {
+function find_method(root: SyntaxNode, name: string): SyntaxNode | undefined {
   function traverse(node: SyntaxNode): SyntaxNode | undefined {
     if (node.type === 'function_definition' || node.type === 'function_item') {
       const nameNode = node.childForFieldName('name');
@@ -701,7 +701,7 @@ function findMethod(root: SyntaxNode, name: string): SyntaxNode | undefined {
   return traverse(root);
 }
 
-function createDef(name: string, kind: 'function' | 'method'): ExtendedDefinition {
+function create_def(name: string, kind: 'function' | 'method'): ExtendedDefinition {
   return {
     name,
     location: {

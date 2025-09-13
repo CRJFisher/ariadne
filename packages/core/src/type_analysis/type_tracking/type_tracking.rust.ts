@@ -355,10 +355,10 @@ export function infer_rust_typed_literal(
     const text = context.source_code.substring(node.startIndex, node.endIndex);
     
     // Check for type suffix
-    const suffixMatch = text.match(/^[0-9_]+(i8|i16|i32|i64|i128|isize|u8|u16|u32|u64|u128|usize)$/);
-    if (suffixMatch) {
+    const suffix_match = text.match(/^[0-9_]+(i8|i16|i32|i64|i128|isize|u8|u16|u32|u64|u128|usize)$/);
+    if (suffix_match) {
       return {
-        type_name: suffixMatch[1],
+        type_name: suffix_match[1],
         type_kind: 'primitive',
         location,
         confidence: 'explicit',
@@ -381,10 +381,10 @@ export function infer_rust_typed_literal(
     const text = context.source_code.substring(node.startIndex, node.endIndex);
     
     // Check for type suffix
-    const suffixMatch = text.match(/^[0-9_.]+[eE]?[+-]?[0-9]*(f32|f64)$/);
-    if (suffixMatch) {
+    const suffix_match = text.match(/^[0-9_.]+[eE]?[+-]?[0-9]*(f32|f64)$/);
+    if (suffix_match) {
       return {
-        type_name: suffixMatch[1],
+        type_name: suffix_match[1],
         type_kind: 'primitive',
         location,
         confidence: 'explicit',

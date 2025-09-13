@@ -253,13 +253,13 @@ describe("TypeScript Type Tracking with Imports", () => {
 
     const tracker = process_file_for_types(tree.rootNode, context, imports);
 
-    const remoteType = get_variable_type(tracker, "remote");
-    expect(remoteType).toBeDefined();
-    expect(remoteType?.type_name).toBe("RemoteUser");
+    const remote_type = get_variable_type(tracker, "remote");
+    expect(remote_type).toBeDefined();
+    expect(remote_type?.type_name).toBe("RemoteUser");
 
-    const localType = get_variable_type(tracker, "local");
-    expect(localType).toBeDefined();
-    expect(localType?.type_name).toBe("LocalUser");
+    const local_type = get_variable_type(tracker, "local");
+    expect(local_type).toBeDefined();
+    expect(local_type?.type_name).toBe("LocalUser");
     // Local type should not be marked as imported
   });
 });

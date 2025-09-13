@@ -39,10 +39,10 @@ export {
 // Re-export configuration system
 export {
   TypeTrackingLanguageConfig,
-  get_type_tracking_config as getTypeTrackingConfig,
-  is_assignment_node as is_assignment_node,
-  get_literal_type as getLiteralType,
-  get_collection_type as getCollectionType,
+  get_type_tracking_config,
+  is_assignment_node,
+  get_literal_type,
+  get_collection_type,
 } from "./language_configs";
 
 // Import bespoke handlers

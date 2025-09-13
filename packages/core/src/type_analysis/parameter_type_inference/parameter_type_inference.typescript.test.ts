@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { resolve_overload_parameters } from './parameter_type_inference.typescript';
 import { get_language_parser } from '../../scope_queries/loader';
 import { ParameterInfo, ParameterInferenceContext } from './parameter_type_inference';
-import { FunctionDefinition, Location } from '@ariadnejs/types';
+import { FunctionDefinition, Location, DocString } from '@ariadnejs/types';
 
 describe('TypeScript bespoke parameter type inference', () => {
   function create_mock_def(name: string): FunctionDefinition {
@@ -15,8 +15,31 @@ describe('TypeScript bespoke parameter type inference', () => {
     return {
       name,
       location,
-      signature: `function ${name}()`,
-      is_exported: false
+      signature: {
+        signature: `function ${name}()`,
+        parameters: [],
+        return_type: "void",
+        is_async: false,
+        is_generator: false,
+        type_parameters: [],
+      },
+      metadata: {
+        is_async: false,
+        is_generator: false,
+        is_exported: false,
+        is_test: false,
+        is_private: false,
+        complexity: 0,
+        line_count: 1,
+        parameter_names: [],
+        has_decorator: false,
+      },
+      docstring: "" as DocString,
+      decorators: [],
+      is_exported: false,
+      is_arrow_function: false,
+      is_anonymous: false,
+      closure_captures: [],
     };
   }
 

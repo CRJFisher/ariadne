@@ -228,7 +228,7 @@ function withThen() {
 });
 
 // Helper functions
-function findFunction(root: SyntaxNode, name: string): SyntaxNode | undefined {
+function find_function(root: SyntaxNode, name: string): SyntaxNode | undefined {
   function traverse(node: SyntaxNode): SyntaxNode | undefined {
     if (node.type === 'function_declaration' || node.type === 'function_expression') {
       const nameNode = node.childForFieldName('name');
@@ -261,7 +261,7 @@ function findFunction(root: SyntaxNode, name: string): SyntaxNode | undefined {
   return traverse(root);
 }
 
-function createDef(name: string, kind: 'function' | 'method'): ExtendedDefinition {
+function create_def(name: string, kind: 'function' | 'method'): ExtendedDefinition {
   return {
     name,
     location: {

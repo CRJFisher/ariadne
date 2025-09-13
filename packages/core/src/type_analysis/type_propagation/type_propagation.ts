@@ -20,6 +20,7 @@ import {
   FilePath,
   FileAnalysis,
   ResolvedGeneric,
+  get_map_value,
 } from "@ariadnejs/types";
 import {
   get_type_propagation_config,
@@ -201,7 +202,8 @@ function infer_expression_type(
       expr_node.endIndex
     );
     if (context.known_types?.has(identifier_name)) {
-      return context.known_types.get(identifier_name);
+      return get_map_value(context.known_types, identifier_name,
+        `Expected type information for identifier '${identifier_name}'`);
     }
     return undefined;
   }
