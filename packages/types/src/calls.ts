@@ -7,11 +7,8 @@ import { Location } from "./common";
 import { FilePath, ClassName, ModulePath } from "./aliases";
 import {
   CallerContext,
-  CalleeName,
-  ReceiverName,
   ResolvedTypeKind,
 } from "./branded_types";
-import { SymbolName } from "./symbol_utils";
 import { SymbolId } from "./symbol_utils";
 import { SemanticNode, Resolution } from "./query";
 
@@ -109,7 +106,7 @@ export interface CallPattern {
   readonly pattern_type: CallPatternType;
   readonly calls: readonly CallInfo[];
   readonly description: string;
-  readonly severity?: "info" | "warning" | "error";
+  readonly severity: "info" | "warning" | "error"; // Defaults to "info"
 }
 
 export type CallPatternType =

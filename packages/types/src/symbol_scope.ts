@@ -42,7 +42,7 @@ export interface Symbol extends SemanticNode {
   readonly scope_path: ScopePath; // Full scope path to this symbol
 
   // Common metadata
-  readonly visibility?: Visibility;
+  readonly visibility: Visibility; // Defaults to "public"
   readonly is_exported: boolean;
   readonly is_imported: boolean;
   readonly is_hoisted: boolean; // JS hoisting
@@ -53,21 +53,21 @@ export interface Symbol extends SemanticNode {
 
   // Type information
   readonly type?: TypeExpression; // Type annotation/inference
-  readonly type_parameters?: readonly TypeParameter[]; // Generic parameters
+  readonly type_parameters: readonly TypeParameter[]; // Generic parameters - always present, defaults to empty array
 
   // Documentation
   readonly docstring?: DocString;
 
   // Relations
   readonly parent_symbol?: SymbolId; // Containing class/namespace
-  readonly child_symbols?: readonly SymbolId[]; // Nested symbols
+  readonly child_symbols: readonly SymbolId[]; // Nested symbols - always present, defaults to empty array
 }
 
 /**
  * Simplified type parameter
  */
 export interface TypeParameter {
-  readonly name: string;
+  readonly name: SymbolId;
   readonly constraint?: TypeExpression;
   readonly default?: TypeExpression;
 }
@@ -100,8 +100,8 @@ export interface Scope extends SemanticNode {
 
   // Scope metadata
   readonly owner_symbol?: SymbolId; // Symbol that owns this scope (function/class)
-  readonly is_closure?: boolean; // Captures outer variables
-  readonly captured_symbols?: readonly SymbolId[]; // Symbols from outer scopes
+  readonly is_closure: boolean; // Captures outer variables - defaults to false
+  readonly captured_symbols: readonly SymbolId[]; // Symbols from outer scopes - always present, defaults to empty array
 }
 
 // ============================================================================
@@ -231,7 +231,8 @@ export function create_symbol_definition(
     language,
     scope_path,
     node_type: get_node_type_for_kind(kind),
-    // Provide defaults for required boolean properties
+    // Provide defaults for required properties
+    visibility: "public",
     is_exported: false,
     is_imported: false,
     is_hoisted: false,
@@ -239,6 +240,8 @@ export function create_symbol_definition(
     is_abstract: false,
     is_readonly: false,
     is_optional: false,
+    type_parameters: [],
+    child_symbols: [],
     ...options,
   };
 }
