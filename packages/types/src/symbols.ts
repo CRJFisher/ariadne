@@ -3,8 +3,6 @@ import { FilePath, FunctionName, ScopeId, DocString } from "./aliases";
 // Symbol types are now imported from symbol_utils.ts for consistency
 import { SymbolName, SymbolId } from "./symbol_utils";
 
-// Re-export for backward compatibility
-export { SymbolName, SymbolId };
 
 export interface SymbolDefinition {
   readonly symbol: SymbolName;

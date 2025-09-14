@@ -6,7 +6,18 @@ import { describe, it, expect } from 'vitest';
 import {
   build_import_type_map,
 } from './import_type_resolver';
-import { FilePath, ImportInfo } from '@ariadnejs/types';
+import { FilePath } from '@ariadnejs/types';
+
+// Local interface for test data
+interface ImportInfo {
+  name: string;
+  source: string;
+  alias?: string;
+  kind?: string;
+  location?: any;
+  is_type_only?: boolean;
+  namespace_name?: string;
+}
 
 describe('Import Type Resolver', () => {
   const test_imports: ImportInfo[] = [

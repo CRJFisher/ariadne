@@ -7,7 +7,18 @@
 import { describe, it, expect } from "vitest";
 import Parser from "tree-sitter";
 import TypeScript from "tree-sitter-typescript";
-import { FilePath, ImportInfo, SourceCode } from "@ariadnejs/types";
+import { FilePath, SourceCode } from "@ariadnejs/types";
+
+// Local interface for test data
+interface ImportInfo {
+  name: string;
+  source: string;
+  alias?: string;
+  kind?: string;
+  location?: any;
+  is_type_only?: boolean;
+  namespace_name?: string;
+}
 import { process_file_for_types } from "./index";
 import { get_variable_type } from "./test_utils";
 

@@ -4,7 +4,7 @@
  * Analyzes sequences of function calls to understand execution flow
  */
 
-import { Language, FunctionCallInfo, MethodCallInfo, ConstructorCallInfo, CallChainNode, CallChain, CallInfo } from '@ariadnejs/types';
+import { Language, FunctionCall, MethodCall, ConstructorCall, CallChainNode, CallChain, CallInfo } from '@ariadnejs/types';
 import {
   CallChainContext,
   analyze_call_chains,

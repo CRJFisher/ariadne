@@ -10,7 +10,7 @@ import {
   get_constructable_types,
   ConstructorCallWithType
 } from './constructor_type_resolver';
-import { ConstructorCallInfo, FileAnalysis, ClassDefinition } from '@ariadnejs/types';
+import { ConstructorCall, FileAnalysis, ClassDefinition } from '@ariadnejs/types';
 import { TypeRegistry, build_type_registry } from '../../type_analysis/type_registry';
 
 describe('constructor_type_resolver', () => {
@@ -161,7 +161,7 @@ describe('constructor_type_resolver', () => {
 
   describe('enrich_constructor_calls_with_types', () => {
     it('should enrich valid constructor calls', () => {
-      const constructor_calls: ConstructorCallInfo[] = [
+      const constructor_calls: ConstructorCall[] = [
         {
           class_name: 'MyClass',
           location: { line: 20, column: 10 },
@@ -183,7 +183,7 @@ describe('constructor_type_resolver', () => {
     });
 
     it('should detect parameter mismatches', () => {
-      const constructor_calls: ConstructorCallInfo[] = [
+      const constructor_calls: ConstructorCall[] = [
         {
           class_name: 'MyClass',
           location: { line: 20, column: 10 },
@@ -202,7 +202,7 @@ describe('constructor_type_resolver', () => {
     });
 
     it('should mark invalid constructors', () => {
-      const constructor_calls: ConstructorCallInfo[] = [
+      const constructor_calls: ConstructorCall[] = [
         {
           class_name: 'NonExistentClass',
           location: { line: 20, column: 10 },
@@ -221,7 +221,7 @@ describe('constructor_type_resolver', () => {
     });
 
     it('should handle missing registry gracefully', () => {
-      const constructor_calls: ConstructorCallInfo[] = [
+      const constructor_calls: ConstructorCall[] = [
         {
           class_name: 'MyClass',
           location: { line: 20, column: 10 },
@@ -354,7 +354,7 @@ describe('constructor_type_resolver', () => {
 
   describe('batch_validate_constructors', () => {
     it('should validate multiple constructor calls', () => {
-      const calls: ConstructorCallInfo[] = [
+      const calls: ConstructorCall[] = [
         {
           class_name: 'MyClass',
           location: { line: 10, column: 5 },
@@ -413,7 +413,7 @@ describe('constructor_type_resolver', () => {
 
   describe('parameter validation', () => {
     it('should detect too few arguments', () => {
-      const constructor_calls: ConstructorCallInfo[] = [
+      const constructor_calls: ConstructorCall[] = [
         {
           class_name: 'MyClass',
           location: { line: 20, column: 10 },
@@ -431,7 +431,7 @@ describe('constructor_type_resolver', () => {
     });
 
     it('should allow optional parameters', () => {
-      const constructor_calls: ConstructorCallInfo[] = [
+      const constructor_calls: ConstructorCall[] = [
         {
           class_name: 'MyClass',
           location: { line: 20, column: 10 },
@@ -449,7 +449,7 @@ describe('constructor_type_resolver', () => {
     });
 
     it('should detect too many arguments', () => {
-      const constructor_calls: ConstructorCallInfo[] = [
+      const constructor_calls: ConstructorCall[] = [
         {
           class_name: 'MyClass',
           location: { line: 20, column: 10 },

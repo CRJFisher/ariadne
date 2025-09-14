@@ -5,14 +5,14 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language, ConstructorCallInfo, Location, FilePath, SourceCode } from '@ariadnejs/types';
+import { Language, ConstructorCall, Location, FilePath, SourceCode } from '@ariadnejs/types';
 import { TypeInfo } from '../../type_analysis/type_tracking';
 
 /**
  * Result containing both constructor calls and discovered type assignments
  */
 export interface ConstructorCallResult {
-  calls: ConstructorCallInfo[];
+  calls: ConstructorCall[];
   type_assignments: Map<string, TypeInfo[]>;
 }
 

@@ -11,13 +11,13 @@ import {
   get_recursive_functions,
   CallChainContext
 } from './call_chain_analysis';
-import { FunctionCallInfo, MethodCallInfo, ConstructorCallInfo, CallChain, FilePath, SymbolId, CallerName, ClassName, ResolvedTypeKind, MODULE_CONTEXT } from '@ariadnejs/types';
+import { FunctionCall, MethodCall, ConstructorCall, CallChain, FilePath, SymbolId, CallerName, ClassName, ResolvedTypeKind, MODULE_CONTEXT } from '@ariadnejs/types';
 
 describe('call_chain_analysis', () => {
 
   describe('build_call_chains', () => {
     it('should build simple linear chain', () => {
-      const calls: FunctionCallInfo[] = [
+      const calls: FunctionCall[] = [
         {
           kind: 'function',
           caller: 'main' as CallerName,
@@ -62,7 +62,7 @@ describe('call_chain_analysis', () => {
     });
 
     it('should detect recursive chains', () => {
-      const calls: FunctionCallInfo[] = [
+      const calls: FunctionCall[] = [
         {
           kind: 'function',
           caller: 'factorial' as CallerName,
@@ -95,7 +95,7 @@ describe('call_chain_analysis', () => {
     });
 
     it('should handle method calls', () => {
-      const calls: MethodCallInfo[] = [
+      const calls: MethodCall[] = [
         {
           kind: 'method',
           caller: 'main' as CallerName,
@@ -133,7 +133,7 @@ describe('call_chain_analysis', () => {
     });
 
     it('should handle constructor calls', () => {
-      const calls: ConstructorCallInfo[] = [
+      const calls: ConstructorCall[] = [
         {
           kind: 'constructor',
           caller: 'main' as CallerName,
@@ -162,7 +162,7 @@ describe('call_chain_analysis', () => {
     });
 
     it('should respect max_depth', () => {
-      const calls: FunctionCallInfo[] = [
+      const calls: FunctionCall[] = [
         {
           kind: 'function',
           caller: 'a' as CallerName,

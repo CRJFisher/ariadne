@@ -5,7 +5,7 @@
  * and language-specific bespoke handlers when needed.
  */
 
-import { Language, Def, Ref, Position, SymbolId, FunctionCallInfo, MethodCallInfo, ConstructorCallInfo } from '@ariadnejs/types';
+import { Language, Def, Ref, Position, SymbolId, FunctionCall, MethodCall, ConstructorCall } from '@ariadnejs/types';
 import { SyntaxNode } from 'tree-sitter';
 import { ScopeTree } from '../scope_tree';
 

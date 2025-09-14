@@ -28,18 +28,6 @@ import {
 } from "@ariadnejs/types";
 import { SyntaxNode } from "tree-sitter";
 
-/**
- * Information about an imported class/type
- */
-export interface ImportedClassInfo {
-  class_name: string;
-  source_module: string;
-  local_name: string;
-  class_symbol?: SymbolId;
-  local_symbol?: SymbolId;
-  is_default?: boolean;
-  is_type_only?: boolean;
-}
 
 /**
  * Type tracking context
@@ -57,7 +45,7 @@ export interface TypeTrackingContext {
 export interface FileTypeTracker {
   file_path: FilePath;
   variables: Map<SymbolId, TypeInfo>;
-  imported_classes: Map<string, ImportedClassInfo>;
+  imported_classes: Map<string, any>;
   exported_symbols: Set<SymbolId>;
   type_assignments: Map<SymbolId, TypeInfo[]>;
 }
@@ -111,7 +99,7 @@ export function set_variable_type(
 export function set_imported_class(
   tracker: FileTypeTracker,
   local_name: string,
-  class_info: ImportedClassInfo
+  class_info: any
 ): FileTypeTracker {
   // TODO: Implement using tree-sitter queries
   return tracker;
@@ -123,7 +111,7 @@ export function set_imported_class(
 export function get_imported_class(
   tracker: FileTypeTracker,
   local_name: string
-): ImportedClassInfo | undefined {
+): any | undefined {
   // TODO: Implement using tree-sitter queries
   return undefined;
 }
@@ -197,7 +185,7 @@ export function extract_type_annotation_generic(
 export function track_imports_generic(
   node: SyntaxNode,
   context: TypeTrackingContext
-): ImportedClassInfo[] {
+): any[] {
   // TODO: Implement using tree-sitter queries
   return [];
 }

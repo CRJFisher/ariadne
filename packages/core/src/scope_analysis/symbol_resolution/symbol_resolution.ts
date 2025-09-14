@@ -261,7 +261,7 @@ export function resolve_function_call(
  * Resolve a method call to its definition
  */
 export function resolve_method_call(
-  call: MethodCallInfo,
+  call: MethodCall,
   context: FileResolutionContext
 ): SymbolId | undefined {
   const { file_analysis, language } = context;
@@ -289,7 +289,7 @@ export function resolve_method_call(
  * Resolve a constructor call to its definition
  */
 export function resolve_constructor_call(
-  call: ConstructorCallInfo,
+  call: ConstructorCall,
   context: FileResolutionContext
 ): SymbolId | undefined {
   const { file_analysis, language } = context;
@@ -326,12 +326,6 @@ function resolve_symbol_generic(
   context: FileResolutionContext
 ): SymbolId | undefined;
 
-// Legacy overload for migration compatibility
-function resolve_symbol_generic(
-  symbol_name: string,
-  scope_id: string,
-  context: FileResolutionContext
-): SymbolId | undefined;
 
 function resolve_symbol_generic(
   symbol_or_name: SymbolId | string,
@@ -405,12 +399,6 @@ function resolve_in_local_scope(
   file_analysis: FileAnalysis
 ): SymbolId | undefined;
 
-// Legacy overload
-function resolve_in_local_scope(
-  symbol_name: string,
-  scope_id: string,
-  file_analysis: FileAnalysis
-): SymbolId | undefined;
 
 function resolve_in_local_scope(
   symbol_or_name: SymbolId | string,
@@ -541,7 +529,7 @@ function resolve_from_imports(
  * Generic method resolution
  */
 function resolve_method_generic(
-  call: MethodCallInfo,
+  call: MethodCall,
   scope: ScopeNode,
   context: FileResolutionContext
 ): SymbolId | undefined {
@@ -581,7 +569,7 @@ function is_definition_in_scope(def: Def, scope: ScopeNode): boolean {
  * Placeholder for bespoke function call resolution
  */
 function resolve_function_call_bespoke(
-  call: FunctionCallInfo,
+  call: FunctionCall,
   context: FileResolutionContext
 ): SymbolId | undefined {
   // This will be implemented by language-specific bespoke modules
@@ -592,7 +580,7 @@ function resolve_function_call_bespoke(
  * Placeholder for bespoke method call resolution
  */
 function resolve_method_call_bespoke(
-  call: MethodCallInfo,
+  call: MethodCall,
   context: FileResolutionContext
 ): SymbolId | undefined {
   // This will be implemented by language-specific bespoke modules
@@ -603,7 +591,7 @@ function resolve_method_call_bespoke(
  * Placeholder for bespoke constructor call resolution
  */
 function resolve_constructor_call_bespoke(
-  call: ConstructorCallInfo,
+  call: ConstructorCall,
   context: FileResolutionContext
 ): SymbolId | undefined {
   // This will be implemented by language-specific bespoke modules

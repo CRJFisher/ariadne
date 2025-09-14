@@ -14,9 +14,9 @@ import {
   CallChainAnalysisResult,
   Language,
   SymbolId,
-  FunctionCallInfo,
-  MethodCallInfo,
-  ConstructorCallInfo,
+  FunctionCall,
+  MethodCall,
+  ConstructorCall,
   Location,
   FilePath,
   CallGraph,
@@ -75,7 +75,7 @@ export function analyze_call_chains(
  * Build call chains from function calls
  */
 export function build_call_chains(
-  calls: readonly (FunctionCallInfo | MethodCallInfo | ConstructorCallInfo)[],
+  calls: readonly (FunctionCall | MethodCall | ConstructorCall)[],
   context: CallChainContext
 ): CallChainAnalysisResult {
   const max_depth = context.max_depth || 10;
@@ -147,29 +147,29 @@ export function build_call_chains(
  */
 // Type guard functions for explicit type checking
 function is_function_call_info(
-  call: FunctionCallInfo | MethodCallInfo | ConstructorCallInfo
-): call is FunctionCallInfo {
+  call: FunctionCall | MethodCall | ConstructorCall
+): call is FunctionCall {
   return (
     "callee_name" in call && "caller_name" in call && !("method_name" in call)
   );
 }
 
 function is_method_call_info(
-  call: FunctionCallInfo | MethodCallInfo | ConstructorCallInfo
-): call is MethodCallInfo {
+  call: FunctionCall | MethodCall | ConstructorCall
+): call is MethodCall {
   return (
     "method_name" in call && "caller_name" in call && "receiver_name" in call
   );
 }
 
 function is_constructor_call_info(
-  call: FunctionCallInfo | MethodCallInfo | ConstructorCallInfo
-): call is ConstructorCallInfo {
+  call: FunctionCall | MethodCall | ConstructorCall
+): call is ConstructorCall {
   return "constructor_name" in call && !("caller_name" in call);
 }
 
 function build_call_graph(
-  calls: readonly (FunctionCallInfo | MethodCallInfo | ConstructorCallInfo)[]
+  calls: readonly (FunctionCall | MethodCall | ConstructorCall)[]
 ): Map<string, Set<string>> {
   const graph = new DefaultMap<string, Set<string>>(() => new Set());
 
@@ -215,9 +215,9 @@ function traverse_chain(
   max_depth: number,
   depth: number,
   original_calls: readonly (
-    | FunctionCallInfo
-    | MethodCallInfo
-    | ConstructorCallInfo
+    | FunctionCall
+    | MethodCall
+    | ConstructorCall
   )[]
 ): void {
   // Check for max depth
@@ -314,7 +314,7 @@ function create_chain(
 function find_call_info(
   caller: SymbolId,
   callee: SymbolId,
-  calls: readonly (FunctionCallInfo | MethodCallInfo | ConstructorCallInfo)[]
+  calls: readonly (FunctionCall | MethodCall | ConstructorCall)[]
 ): any {
   for (const call of calls) {
     if ("caller_name" in call && call.caller_name === caller) {

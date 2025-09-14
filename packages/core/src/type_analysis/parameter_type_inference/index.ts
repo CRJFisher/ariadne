@@ -12,8 +12,6 @@ export {
   // Main API function that should be used by file_analyzer.ts
   infer_parameter_types,
   infer_all_parameter_types,
-  // Also keep extract_parameters for backward compatibility
-  extract_parameters,
 } from './parameter_type_inference';
 
 // Internal exports for testing only - should not be used by external modules

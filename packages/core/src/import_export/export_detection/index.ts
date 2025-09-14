@@ -165,13 +165,6 @@ export function is_symbol_exported(
   language: Language
 ): boolean;
 
-// Legacy overload
-export function is_symbol_exported(
-  symbol_name: string,
-  root_node: SyntaxNode,
-  source_code: string,
-  language: Language
-): boolean;
 
 export function is_symbol_exported(
   symbol_or_name: SymbolId | string,

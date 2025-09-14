@@ -28,7 +28,7 @@ export interface FunctionCallContext {
   language: Language;
   ast_root: SyntaxNode;
   scope_tree?: ScopeTree;
-  imports?: Import[];
+  imports?: any[];
 }
 
 /**

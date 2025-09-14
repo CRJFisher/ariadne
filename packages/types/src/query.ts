@@ -128,25 +128,7 @@ export type QueryErrorKind =
 // Collection Types
 // ============================================================================
 
-/**
- * Paginated collection result
- */
-export interface PagedResult<T> {
-  readonly items: readonly T[];
-  readonly total_count: number;
-  readonly page: number;
-  readonly page_size: number;
-  readonly has_more: boolean;
-}
 
-/**
- * Grouped collection result
- */
-export interface GroupedResult<K extends string | number, V> {
-  readonly groups: ReadonlyMap<K, readonly V[]>;
-  readonly total_count: number;
-  readonly group_count: number;
-}
 
 // ============================================================================
 // Type Guards
@@ -214,18 +196,6 @@ export function is_query_error(value: unknown): value is QueryError {
   );
 }
 
-export function is_paged_result<T>(value: unknown): value is PagedResult<T> {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "items" in value &&
-    "total_count" in value &&
-    "page" in value &&
-    "page_size" in value &&
-    "has_more" in value &&
-    Array.isArray((value as any).items)
-  );
-}
 
 // ============================================================================
 // Utility Functions

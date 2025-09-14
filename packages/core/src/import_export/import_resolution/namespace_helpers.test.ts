@@ -11,7 +11,18 @@ import {
   resolve_nested_namespace,
   expand_namespace_import
 } from './namespace_helpers';
-import { ImportInfo, ModuleGraph, ModuleNode } from '@ariadnejs/types';
+import { ModuleGraph, ModuleNode } from '@ariadnejs/types';
+
+// Local interface for test data
+interface ImportInfo {
+  name: string;
+  source: string;
+  alias?: string;
+  kind?: string;
+  location?: any;
+  is_type_only?: boolean;
+  namespace_name?: string;
+}
 
 describe('namespace_helpers', () => {
   describe('is_namespace_access', () => {

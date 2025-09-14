@@ -8,7 +8,18 @@
  * - Rust: items from `use module::*`
  */
 
-import { ImportInfo, ModuleGraph, ExportedSymbol } from '@ariadnejs/types';
+import { ModuleGraph, ExportedSymbol } from '@ariadnejs/types';
+
+// Local interface for backward compatibility
+interface ImportInfo {
+  name: string;
+  source: string;
+  alias?: string;
+  kind?: string;
+  location?: any;
+  is_type_only?: boolean;
+  namespace_name?: string;
+}
 
 /**
  * Check if an identifier is a namespace member access

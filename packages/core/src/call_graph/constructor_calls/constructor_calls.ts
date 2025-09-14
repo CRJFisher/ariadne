@@ -48,16 +48,3 @@ export function is_factory_method_pattern(node: SyntaxNode): boolean {
   return false;
 }
 
-/**
- * Walk tree recursively
- */
-export function walk_tree(node: SyntaxNode, callback: (node: SyntaxNode) => void): void {
-  // TODO: Implement using tree-sitter queries
-  callback(node);
-  for (let i = 0; i < node.childCount; i++) {
-    const child = node.child(i);
-    if (child) {
-      walk_tree(child, callback);
-    }
-  }
-}

@@ -63,10 +63,5 @@ export type {
   CallEdge as CallGraphEdge
 } from '@ariadnejs/types';
 
-// Import for Project alias
-import { ProjectManager } from './project/project_manager';
-
-// Alias for backward compatibility  
-export const Project = ProjectManager;
 
 // That's it! Everything else is internal implementation details.

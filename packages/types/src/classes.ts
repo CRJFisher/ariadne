@@ -7,7 +7,7 @@ import {
   QualifiedName,
   InterfaceName,
 } from "./aliases";
-import { SymbolId } from "./symbols";
+import { SymbolId } from "./symbol_utils";
 
 /**
  * Enhanced ClassNode with computed fields for hierarchy processing

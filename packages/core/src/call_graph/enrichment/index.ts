@@ -14,9 +14,9 @@
  */
 
 import {
-  FunctionCallInfo,
-  MethodCallInfo,
-  ConstructorCallInfo,
+  FunctionCall,
+  MethodCall,
+  ConstructorCall,
   ClassHierarchy,
   FileAnalysis,
   ModuleGraph,
@@ -32,12 +32,10 @@ import { TypeRegistry } from "../../type_analysis/type_registry";
 
 import {
   enrich_method_calls_with_hierarchy,
-  MethodCallWithHierarchy,
 } from "../method_calls/method_hierarchy_resolver";
 
 import {
   enrich_constructor_calls_with_types,
-  ConstructorCallWithType,
 } from "../constructor_calls/constructor_type_resolver";
 
 /**
@@ -64,37 +62,8 @@ export interface EnrichmentOptions {
   track_inheritance: boolean; // Track inheritance chains
 }
 
-/**
- * Enhanced method call with polymorphic resolution and confidence
- */
-export interface EnrichedMethodCall extends MethodCallWithHierarchy {
-  // From call_resolution module
-  possible_targets: ResolvedTarget[]; // Polymorphic dispatch targets
-  dispatch_type: DispatchType; // Type of dispatch (static, virtual, interface)
-  confidence_score: number; // Resolution confidence (0-1)
-  interface_implementations: string[]; // Interfaces this method implements
-}
 
-/**
- * Enhanced constructor call with validation
- */
-export interface EnrichedConstructorCall extends ConstructorCallWithType {
-  // Additional validation from call_resolution
-  type_parameters: string[]; // Resolved generic type parameters
-  is_abstract: boolean; // Whether trying to instantiate abstract class
-}
 
-/**
- * Enhanced function call with additional global context information
- * Note: FunctionCallInfo now includes resolved_target, is_imported, source_module etc.
- * This interface adds fields that require global context from Phase 2.
- */
-export interface EnrichedFunctionCall extends FunctionCallInfo {
-  return_type?: string; // Resolved return type (from global type flow)
-  parameter_types?: string[]; // Resolved parameter types (from global type flow)
-  confidence_score?: number; // Resolution confidence
-  cross_file_resolved?: boolean; // Whether resolution used cross-file information
-}
 
 /**
  * Resolved target for polymorphic dispatch
@@ -157,7 +126,7 @@ export function enrich_all_calls(
  * @returns Enriched function calls
  */
 export function enrich_function_calls(
-  calls: readonly FunctionCallInfo[],
+  calls: readonly FunctionCall[],
   context: EnrichmentContext,
   options: Required<EnrichmentOptions>
 ): EnrichedFunctionCall[] {
@@ -236,7 +205,7 @@ export function enrich_function_calls(
  * @returns Enriched method calls
  */
 export function enrich_method_calls(
-  calls: readonly MethodCallInfo[],
+  calls: readonly MethodCall[],
   context: EnrichmentContext,
   options: Required<EnrichmentOptions>
 ): EnrichedMethodCall[] {
@@ -316,7 +285,7 @@ export function enrich_method_calls(
  * @returns Enriched constructor calls
  */
 export function enrich_constructor_calls(
-  calls: readonly ConstructorCallInfo[],
+  calls: readonly ConstructorCall[],
   context: EnrichmentContext,
   options: Required<EnrichmentOptions>
 ): EnrichedConstructorCall[] {
@@ -388,7 +357,7 @@ export function enrich_constructor_calls(
  * Resolve polymorphic targets for a method call
  */
 function resolve_polymorphic_targets(
-  call: MethodCallWithHierarchy,
+  call: any,
   hierarchy: ClassHierarchy
 ): ResolvedTarget[] {
   const targets: ResolvedTarget[] = [];
@@ -436,7 +405,7 @@ function resolve_polymorphic_targets(
  * Determine the type of dispatch for a method call
  */
 function determine_dispatch_type(
-  call: MethodCallInfo,
+  call: MethodCall,
   targets: ResolvedTarget[]
 ): DispatchType {
   if (targets.length === 0) {
@@ -459,7 +428,7 @@ function determine_dispatch_type(
  * Find interface implementations for a method
  */
 function find_interface_implementations(
-  call: MethodCallWithHierarchy,
+  call: any,
   hierarchy: ClassHierarchy
 ): string[] {
   const implementations: string[] = [];
@@ -490,7 +459,7 @@ function find_interface_implementations(
  * Calculate dispatch probability for polymorphic resolution
  */
 function calculate_dispatch_probability(
-  call: MethodCallInfo,
+  call: MethodCall,
   target_class: any
 ): number {
   // Simple heuristic based on class depth and usage

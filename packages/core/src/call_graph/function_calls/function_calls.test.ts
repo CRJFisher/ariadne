@@ -8,7 +8,18 @@ import JavaScript from "tree-sitter-javascript";
 import TypeScript from "tree-sitter-typescript";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
-import { Language, SourceCode, FilePath, ImportInfo } from "@ariadnejs/types";
+import { Language, SourceCode, FilePath } from "@ariadnejs/types";
+
+// Local interface for test data
+interface ImportInfo {
+  name: string;
+  source: string;
+  alias?: string;
+  kind?: string;
+  location?: any;
+  is_type_only?: boolean;
+  namespace_name?: string;
+}
 import { find_function_calls } from "./function_calls";
 import {
   FunctionCallContext,

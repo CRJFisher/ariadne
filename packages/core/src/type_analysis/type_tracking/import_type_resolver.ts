@@ -6,19 +6,18 @@
  */
 
 import { ImportInfo } from '@ariadnejs/types';
-import { ImportedClassInfo } from './type_tracking';
 
 
 /**
  * Convert ImportInfo[] to a map of imported types for faster lookups
  * 
  * @param imports The ImportInfo[] from import_resolution layer
- * @returns Map of local name to ImportedClassInfo
+ * @returns Map of local name to any
  */
 export function build_import_type_map(
   imports: ImportInfo[]
-): Map<string, ImportedClassInfo> {
-  const type_map = new Map<string, ImportedClassInfo>();
+): Map<string, any> {
+  const type_map = new Map<string, any>();
 
   for (const import_info of imports) {
     const local_name = import_info.alias || import_info.name;
@@ -57,7 +56,7 @@ export function build_import_type_map(
  * @returns Updated tracker with imported types
  */
 export function merge_imported_types(
-  tracker: { imported_classes: Map<string, ImportedClassInfo> },
+  tracker: { imported_classes: Map<string, any> },
   imports: ImportInfo[]
 ): void {
   const import_type_map = build_import_type_map(imports);

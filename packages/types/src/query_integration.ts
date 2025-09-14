@@ -62,7 +62,7 @@ export interface QueryProcessor<TInput = QueryCapture[], TOutput = unknown> {
   /**
    * Validate captures before processing
    */
-  validate?(captures: TInput): ValidationResult;
+  validate?(captures: TInput): any;
 
   /**
    * Post-process output for language-specific adjustments
@@ -81,14 +81,6 @@ export interface ProcessorContext {
   readonly parent_context?: ProcessorContext; // For nested processing
 }
 
-/**
- * Validation result from query processor
- */
-export interface ValidationResult {
-  readonly is_valid: boolean;
-  readonly errors?: readonly ValidationError[];
-  readonly warnings?: readonly ValidationWarning[];
-}
 
 // ValidationError and ValidationWarning moved to type_validation.ts
 
@@ -216,15 +208,6 @@ export function createQueryOptions(
   };
 }
 
-/**
- * Query execution response
- */
-export interface QueryResponse<T = unknown> {
-  readonly request: QueryRequest;
-  readonly result?: QueryResult<T>;
-  readonly error?: QueryExecutionError;
-  readonly timing: QueryTiming;
-}
 
 /**
  * Query execution error

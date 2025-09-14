@@ -7,10 +7,6 @@ import { Location } from "./common";
 import { FilePath } from "./aliases";
 import { FunctionCall, MethodCall, ConstructorCall, CallInfo } from "./calls";
 
-// Legacy type aliases for backward compatibility
-export type FunctionCallInfo = FunctionCall;
-export type MethodCallInfo = MethodCall;
-export type ConstructorCallInfo = ConstructorCall;
 
 /**
  * Node in a call chain representing a single function/method

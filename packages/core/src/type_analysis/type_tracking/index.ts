@@ -10,7 +10,6 @@ import { Language, ImportInfo } from "@ariadnejs/types";
 // Re-export core types
 export {
   TypeInfo,
-  ImportedClassInfo,
   TypeTrackingContext,
   FileTypeTracker,
   create_file_type_tracker,

@@ -12,7 +12,7 @@ import {
   MethodCallWithHierarchy
 } from './method_hierarchy_resolver';
 import { ClassHierarchy, ClassInfo } from '../../inheritance/class_hierarchy';
-import { MethodCallInfo } from '@ariadnejs/types';
+import { MethodCall } from '@ariadnejs/types';
 import { Def } from '@ariadnejs/types';
 
 describe('method_hierarchy_resolver', () => {
@@ -120,7 +120,7 @@ describe('method_hierarchy_resolver', () => {
     it('should enrich method calls with hierarchy information', () => {
       const hierarchy = create_test_hierarchy();
       
-      const method_calls: MethodCallInfo[] = [
+      const method_calls: MethodCall[] = [
         {
           caller_name: 'main',
           method_name: 'method2',
@@ -139,7 +139,7 @@ describe('method_hierarchy_resolver', () => {
     });
 
     it('should handle missing hierarchy gracefully', () => {
-      const method_calls: MethodCallInfo[] = [
+      const method_calls: MethodCall[] = [
         {
           caller_name: 'main',
           method_name: 'test',
@@ -157,7 +157,7 @@ describe('method_hierarchy_resolver', () => {
     it('should identify virtual method calls', () => {
       const hierarchy = create_test_hierarchy();
       
-      const method_calls: MethodCallInfo[] = [
+      const method_calls: MethodCall[] = [
         {
           caller_name: 'main',
           method_name: 'method3',
