@@ -45,6 +45,10 @@ Replace all manual AST traversal modules with stub implementations that return e
 10. **import_export/export_detection**
     - `extract_exports()` - manual AST traversal
 
+### Other Modules
+
+- Search for other instances of AST traversal (maybe search for tree-sitter types such as SyntaxNode) and then make the stubs there too.
+
 ## Implementation Approach
 
 For each module:

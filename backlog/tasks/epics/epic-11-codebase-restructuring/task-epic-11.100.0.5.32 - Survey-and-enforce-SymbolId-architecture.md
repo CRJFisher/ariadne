@@ -1,6 +1,7 @@
-# Task 11.100.0.5.33: Survey and Enforce SymbolId Architecture
+# Task 11.100.0.5.32: Survey and Enforce SymbolId Architecture
 
 ## Status
+
 Status: Not Started
 Priority: Critical
 Created: 2025-09-14
@@ -13,7 +14,9 @@ Conduct a comprehensive survey of the reduced codebase to ensure the SymbolId-ba
 ## Survey Areas
 
 ### 1. Symbol References
+
 Ensure all symbol references use SymbolId:
+
 ```typescript
 // ❌ BAD - Raw strings
 const symbols = new Map<string, Symbol>();
@@ -25,28 +28,34 @@ function findFunction(symbol: SymbolId): Function;
 ```
 
 ### 2. Call Information
+
 Verify all calls use unified types:
+
 ```typescript
 // All calls should have:
 interface CallInfo {
-  symbol: SymbolId;  // Not string!
+  symbol: SymbolId; // Not string!
   location: Location;
   arguments: CallArgument[];
 }
 ```
 
 ### 3. Definition Storage
+
 Check all definition maps:
+
 ```typescript
 // Every module should use:
-Map<SymbolId, FunctionDefinition>
-Map<SymbolId, ClassDefinition>
-Map<SymbolId, MethodDefinition>
+Map<SymbolId, FunctionDefinition>;
+Map<SymbolId, ClassDefinition>;
+Map<SymbolId, MethodDefinition>;
 // Never Map<string, ...>
 ```
 
 ### 4. Cross-File Resolution
+
 Verify enhancement modules use SymbolId:
+
 - Symbol resolution
 - Type propagation
 - Method hierarchy resolution
@@ -57,14 +66,17 @@ Verify enhancement modules use SymbolId:
 ### Core Modules to Verify
 
 1. **file_analyzer.ts**
+
    - [ ] Symbol maps use SymbolId keys
    - [ ] No raw string identifiers
 
 2. **code_graph.ts**
+
    - [ ] All symbol operations use SymbolId
    - [ ] Resolution results keyed by SymbolId
 
 3. **Enhancement Modules**
+
    - [ ] symbol_resolution uses SymbolId
    - [ ] type_propagation uses SymbolId
    - [ ] method_hierarchy_resolver uses SymbolId
@@ -78,6 +90,7 @@ Verify enhancement modules use SymbolId:
 ### Search Patterns
 
 Use these patterns to find violations:
+
 ```bash
 # Find raw string maps
 grep -r "Map<string," packages/core/src
@@ -97,19 +110,21 @@ grep -r "\.name[^a-zA-Z]" packages/core/src
 ### Common Fixes
 
 1. **Map Keys**
+
    ```typescript
    // Before
    const funcs = new Map<string, Function>();
-   // After  
+   // After
    const funcs = new Map<SymbolId, Function>();
    ```
 
 2. **Function Parameters**
+
    ```typescript
    // Before
-   function resolve(name: string, className?: string)
+   function resolve(name: string, className?: string);
    // After
-   function resolve(symbol: SymbolId, classSymbol?: SymbolId)
+   function resolve(symbol: SymbolId, classSymbol?: SymbolId);
    ```
 
 3. **Property Access**
@@ -123,13 +138,17 @@ grep -r "\.name[^a-zA-Z]" packages/core/src
 ## Validation
 
 ### Type Checking
+
 After changes, ensure:
+
 - `npm run typecheck` passes
 - No type errors related to identifiers
 - Branded types prevent mixing
 
 ### Runtime Validation
+
 Create validation utilities:
+
 ```typescript
 function validateSymbolMap<T>(map: Map<any, T>): void {
   for (const key of map.keys()) {
@@ -154,13 +173,3 @@ function validateSymbolMap<T>(map: Map<any, T>): void {
 - **Consistency**: One pattern for all identifiers
 - **Maintainability**: Clear symbol semantics
 - **Future-Proof**: Ready for query-based extraction
-
-## Dependencies
-
-- Task 32: Old types deleted
-- Tasks 27-31: Codebase simplified
-
-## Follow-up Tasks
-
-- Document SymbolId patterns for contributors
-- Add linting rules to enforce SymbolId usage

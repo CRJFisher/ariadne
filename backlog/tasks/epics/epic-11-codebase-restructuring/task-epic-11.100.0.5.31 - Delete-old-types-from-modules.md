@@ -1,4 +1,4 @@
-# Task 11.100.0.5.32: Delete Old Types from Modules
+# Task 11.100.0.5.31: Delete Old Types from Modules
 
 ## Status
 Status: Not Started
@@ -102,13 +102,3 @@ import {
 - All remaining types use SymbolId pattern
 - No compilation errors
 - Significant reduction in type complexity
-
-## Dependencies
-
-- Task 27: Stub modules implemented
-- Task 29: Language-specific files removed
-- Task 31: Helper functions deleted
-
-## Follow-up Tasks
-
-- Task 33: Survey SymbolId usage universally
