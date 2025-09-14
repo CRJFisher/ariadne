@@ -15,10 +15,11 @@ import {
   SCOPE_TREE_CONTEXT,
   BespokeHandlers,
 } from "./scope_tree";
-import { create_javascript_handlers } from "./scope_tree.javascript";
-import { create_python_handlers } from "./scope_tree.python";
-import { create_rust_handlers } from "./scope_tree.rust";
-import { create_typescript_handlers } from "./scope_tree.typescript";
+// TODO: Re-enable after implementing tree-sitter query-based approach
+// import { create_javascript_handlers } from "./scope_tree.javascript";
+// import { create_python_handlers } from "./scope_tree.python";
+// import { create_rust_handlers } from "./scope_tree.rust";
+// import { create_typescript_handlers } from "./scope_tree.typescript";
 
 // Helper function to parse code
 function parse_code(code: string, language: Language) {

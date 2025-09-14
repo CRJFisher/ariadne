@@ -391,13 +391,12 @@ This document inventories all modules in `packages/core/src` and their integrati
 
 ---
 
-### 34. scope_queries/ ❌ NOT WIRED
+### ~~34. scope_queries/~~ ✅ MIGRATED
 
-**Should Be**: Query interface layer
-**Purpose**: Query scope data
-**Implementation**: Minimal
-**Duplication**: None
-**Next Steps**: Consider for query API
+**MIGRATION COMPLETED**: Successfully moved to `scope_analysis/scope_tree/queries/`
+**Purpose**: Tree-sitter query patterns for scope analysis
+**Implementation**: Integrated into scope_tree module structure
+**Status**: Query files and loader functionality moved to proper module structure per Architecture.md
 
 ---
 
@@ -448,7 +447,7 @@ This document inventories all modules in `packages/core/src` and their integrati
 
 1. **Add Caching**: Wire storage layers for performance
 2. **Incremental Processing**: Implement incremental_updates
-3. **Query API**: Build on scope_queries
+3. **Query API**: Build on scope_analysis/scope_tree query system
 
 ### Long Term
 

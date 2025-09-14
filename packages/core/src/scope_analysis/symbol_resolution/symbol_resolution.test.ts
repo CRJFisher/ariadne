@@ -12,7 +12,8 @@ import {
   go_to_definition,
   find_symbol_definition,
 } from "./index";
-import { RustResolutionContext, resolve_rust_symbol } from "./symbol_resolution.rust";
+// TODO: Re-enable after implementing tree-sitter query-based approach
+// import { RustResolutionContext, resolve_rust_symbol } from "./symbol_resolution.rust";
 import { Language, Position } from "@ariadnejs/types";
 
 describe("Symbol Resolution", () => {

@@ -15,9 +15,7 @@ import {
   get_root_method
 } from './method_override';
 import { detect_overrides_generic, MethodOverrideContext } from './method_override';
-import { handle_typescript_overrides } from './method_override.typescript';
-import { handle_python_overrides } from './method_override.python';
-import { handle_rust_trait_implementations } from './method_override.rust';
+// TODO: Language-specific handlers will be replaced with tree-sitter queries
 import { ClassHierarchy } from '../class_hierarchy/class_hierarchy';
 
 // Re-export core types  
@@ -78,62 +76,14 @@ export function detect_method_overrides(
   ast: SyntaxNode,
   metadata: OverrideMetadata
 ): MethodOverrideMap {
-  // Use explicit dispatch based on language
-  switch (metadata.language) {
-    case 'javascript':
-      // JavaScript has no bespoke features - pure generic
-      return detect_overrides_generic(
-        ast,
-        metadata.file_path,
-        metadata.parser,
-        metadata.language
-      );
-    
-    case 'typescript':
-      // TypeScript has interfaces and explicit override keyword
-      return detect_overrides_generic(
-        ast,
-        metadata.file_path,
-        metadata.parser,
-        metadata.language,
-        handle_typescript_overrides
-      );
-    
-    case 'python':
-      // Python has MRO and decorators
-      return detect_overrides_generic(
-        ast,
-        metadata.file_path,
-        metadata.parser,
-        metadata.language,
-        handle_python_overrides
-      );
-    
-    case 'rust':
-      // Rust has traits which require special handling
-      return detect_overrides_generic(
-        ast,
-        metadata.file_path,
-        metadata.parser,
-        metadata.language,
-        (context) => handle_rust_trait_implementations(
-          ast,
-          metadata.file_path,
-          metadata.parser,
-          context
-        )
-      );
-    
-    default:
-      // Unsupported language
-      return {
-        overrides: new Map(),
-        override_edges: [],
-        leaf_methods: [],
-        abstract_methods: [],
-        language: metadata.language
-      };
-  }
+  // TODO: Implement using tree-sitter queries
+  return {
+    overrides: new Map(),
+    override_edges: [],
+    leaf_methods: [],
+    abstract_methods: [],
+    language: metadata.language
+  };
 }
 
 /**

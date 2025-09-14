@@ -114,7 +114,7 @@ The current structure mixes concerns and creates unclear dependencies. The impro
 
 #### 3. Foundation (Core Infrastructure)
 
-- **scope_queries/** - Tree-sitter query patterns (per Architecture.md)
+- ~~**scope_queries/**~~ ✅ **MIGRATED to scope_analysis/scope_tree/queries/** - Tree-sitter query patterns (per Architecture.md)
   - `loader` - Central loader and file extension mapping
   - `javascript.scm` - JavaScript scope patterns
   - `javascript.meta.json` - Symbol kinds and capture mappings

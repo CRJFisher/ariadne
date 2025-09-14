@@ -15,7 +15,7 @@
 
 ## Language Handling
 
-- Language resolution must be delegated to `scope_queries/loader.ts` (no implicit detection here)
+- Language resolution must be delegated to `scope_analysis/scope_tree/loader.ts` (no implicit detection here)
 
 ## Non-Goals (for this task)
 

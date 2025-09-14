@@ -18,10 +18,4 @@ export {
   find_member_access_expressions
 } from './member_access';
 
-// Export configuration functions - used by type_propagation module
-export {
-  get_member_access_config,
-  is_member_access_node,
-  get_member_access_fields,
-  should_skip_node
-} from './language_configs';
+// TODO: Configuration functions will be replaced with tree-sitter queries

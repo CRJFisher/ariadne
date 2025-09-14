@@ -17,7 +17,7 @@ Comprehensive test overhaul for the scope_tree module transformation to ensure 1
 - [ ] **Achieve 100% Test Coverage**
   - All scope detection patterns (function, class, block) must have tests
   - All language-specific query patterns (.scm files) must be tested
-  - All existing .scm files in scope_queries/ must be validated
+  - All existing .scm files in scope_analysis/scope_tree/queries/ must be validated
   - All edge cases (nested scopes, hoisting) must be tested
 
 - [ ] **Language-Specific Test Files**
@@ -47,7 +47,7 @@ Comprehensive test overhaul for the scope_tree module transformation to ensure 1
   - Async function scope handling
 
 - [ ] **Query Pattern Validation**
-  - Test existing .scm files in scope_queries/ directory
+  - Test existing .scm files in scope_analysis/scope_tree/queries/ directory
   - Verify scope boundary detection accuracy
   - Test symbol definition capture
   - Validate scope hierarchy construction

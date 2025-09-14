@@ -19,11 +19,7 @@ import {
   SCOPE_TREE_CONTEXT,
 } from "./scope_tree";
 
-// Import bespoke handlers
-import { create_javascript_handlers } from "./scope_tree.javascript";
-import { create_typescript_handlers } from "./scope_tree.typescript";
-import { create_python_handlers, resolve_python_symbol } from "./scope_tree.python";
-import { create_rust_handlers, resolve_rust_symbol } from "./scope_tree.rust";
+// TODO: Bespoke handlers will be replaced with tree-sitter queries
 
 // Re-export core types and functions
 export {
@@ -42,14 +38,7 @@ export {
   extract_variables_from_symbols,
 } from "./enhanced_symbols";
 
-// Re-export configuration utilities
-export {
-  get_language_config,
-  creates_scope,
-  get_scope_type,
-  should_hoist_symbol,
-  is_builtin_symbol,
-} from "./language_configs";
+// TODO: Configuration utilities will be replaced with tree-sitter queries
 
 // Type alias for the new scope definition type
 // TODO: This will be replaced with the proper Scope type from symbol_scope.ts
@@ -110,27 +99,16 @@ export function build_language_scope_tree(
 
 /**
  * Get bespoke handlers for a language
+ * TODO: Replace with tree-sitter query-based handlers
  */
 function get_bespoke_handlers(language: Language) {
-  switch (language) {
-    case "javascript":
-      return create_javascript_handlers();
-    case "typescript":
-      return create_typescript_handlers();
-    case "python":
-      return create_python_handlers();
-    case "rust":
-      return create_rust_handlers();
-    default:
-      // No bespoke handlers for unknown languages
-      return undefined;
-  }
+  // TODO: Implement using tree-sitter queries
+  return undefined;
 }
 
 /**
  * Resolve symbol in language-specific way
- * 
- * Some languages have special resolution rules (Python's LEGB, Rust's prelude)
+ * TODO: Implement language-specific resolution using tree-sitter queries
  */
 export function resolve_language_symbol(
   tree: ScopeTree,
@@ -138,18 +116,8 @@ export function resolve_language_symbol(
   symbol_name: string,
   language: Language
 ) {
-  switch (language) {
-    case "python":
-      return resolve_python_symbol(tree, scope_id as ScopeId, symbol_name);
-    case "rust":
-      return resolve_rust_symbol(tree, scope_id as ScopeId, symbol_name);
-    default:
-      return find_symbol_in_scope_chain(tree, scope_id as ScopeId, symbol_name);
-  }
+  // TODO: Implement using tree-sitter queries for language-specific resolution
+  return find_symbol_in_scope_chain(tree, scope_id as ScopeId, symbol_name);
 }
 
-/**
- * JavaScript-specific exports for compatibility
- */
-export { check_closure_capture } from "./scope_tree.javascript";
-export { find_enclosing_module_scope } from "./scope_tree.typescript";
+// TODO: Language-specific exports will be replaced with tree-sitter query-based implementations

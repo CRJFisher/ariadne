@@ -56,13 +56,13 @@ This document reviews the current `packages/core/src/` folder structure against 
 
 **Issue**: Overlapping scope functionality
 
-- `/scope_queries/` - Appears to duplicate scope_analysis functionality
+- ~~`/scope_queries/`~~ - **COMPLETED**: Successfully moved to `scope_analysis/scope_tree/queries/`
 - `/scope_analysis/definition_finder/` - Not directly used
 - `/scope_analysis/usage_finder/` - Not directly used
 
 **Recommendation**:
 
-- Delete `/scope_queries/` if truly redundant
+- ✅ ~~Delete `/scope_queries/` if truly redundant~~ - **DONE**: Moved to proper module structure
 - Keep `definition_finder` and `usage_finder` - they could enhance symbol resolution
 
 #### Storage Layer
@@ -144,7 +144,7 @@ These modules exist but aren't mentioned in the architecture:
 
 1. **Delete** `/inheritance/class_detection/` (empty placeholder)
 2. **Rename** `/inheritance_analysis/` → `/inheritance/`
-3. **Delete** `/scope_queries/` (if truly redundant with scope_analysis)
+3. ✅ ~~**Delete** `/scope_queries/` (if truly redundant with scope_analysis)~~ - **COMPLETED**: Moved to `scope_analysis/scope_tree/queries/`
 4. **Move** leftover test files to proper test directories
 
 ### Wire Up Existing Code
