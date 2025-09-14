@@ -227,40 +227,7 @@ function withThen() {
   });
 });
 
-// Helper functions
-function find_function(root: SyntaxNode, name: string): SyntaxNode | undefined {
-  function traverse(node: SyntaxNode): SyntaxNode | undefined {
-    if (node.type === 'function_declaration' || node.type === 'function_expression') {
-      const nameNode = node.childForFieldName('name');
-      if (nameNode && nameNode.text === name) {
-        return node;
-      }
-      // For function expressions assigned to variables
-      if (node.type === 'function_expression' && node.parent) {
-        const parent = node.parent;
-        if (parent.type === 'variable_declarator') {
-          const varName = parent.childForFieldName('name');
-          if (varName && varName.text === name) {
-            return node;
-          }
-        }
-      }
-    }
-    
-    for (let i = 0; i < node.childCount; i++) {
-      const child = node.child(i);
-      if (child) {
-        const result = traverse(child);
-        if (result) return result;
-      }
-    }
-    
-    return undefined;
-  }
-  
-  return traverse(root);
-}
-
+// Helper function
 function create_def(name: string, kind: 'function' | 'method'): ExtendedDefinition {
   return {
     name,

@@ -657,50 +657,7 @@ impl MyStruct {
   });
 });
 
-// Helper functions
-function find_function(root: SyntaxNode, name: string): SyntaxNode | undefined {
-  for (let i = 0; i < root.childCount; i++) {
-    const child = root.child(i);
-    if (child && (child.type === 'function_declaration' || 
-                  child.type === 'function_definition' ||
-                  child.type === 'function_item')) {
-      const nameNode = child.childForFieldName('name');
-      if (nameNode && nameNode.text === name) {
-        return child;
-      }
-    }
-    // Recursively search in child nodes
-    if (child) {
-      const found = findFunction(child, name);
-      if (found) return found;
-    }
-  }
-  return undefined;
-}
-
-function find_method(root: SyntaxNode, name: string): SyntaxNode | undefined {
-  function traverse(node: SyntaxNode): SyntaxNode | undefined {
-    if (node.type === 'function_definition' || node.type === 'function_item') {
-      const nameNode = node.childForFieldName('name');
-      if (nameNode && nameNode.text === name) {
-        return node;
-      }
-    }
-    
-    for (let i = 0; i < node.childCount; i++) {
-      const child = node.child(i);
-      if (child) {
-        const result = traverse(child);
-        if (result) return result;
-      }
-    }
-    
-    return undefined;
-  }
-  
-  return traverse(root);
-}
-
+// Helper function
 function create_def(name: string, kind: 'function' | 'method'): ExtendedDefinition {
   return {
     name,
