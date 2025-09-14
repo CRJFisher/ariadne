@@ -14,6 +14,7 @@ import {
   CallChainAnalysisResult,
   Language,
   SymbolId,
+  SymbolKind,
   FunctionCall,
   MethodCall,
   ConstructorCall,
@@ -31,6 +32,7 @@ import {
 import {
   construct_function_symbol,
   construct_method_symbol,
+  construct_class_symbol,
   SPECIAL_SYMBOLS,
 } from "../../utils/symbol_construction";
 import { DefaultMap } from "../../utils/collection_utils";
@@ -175,20 +177,26 @@ function build_call_graph(
 
     if (is_function_call_info(call)) {
       // Function call: caller -> callee
-      caller = typeof call.caller === 'string' && call.caller === '<module>' ?
-        construct_function_symbol('<module>', call.location.file_path) :
-        call.caller as unknown as SymbolId;
+      if (call.caller === '<module>') {
+        caller = construct_function_symbol(call.location.file_path, '<module>') as SymbolId;
+      } else {
+        // Convert CallerName to SymbolId - assume it's a function name
+        caller = construct_function_symbol(call.location.file_path, call.caller as string) as SymbolId;
+      }
       callee = call.callee;
     } else if (is_method_call_info(call)) {
       // Method call: caller -> method_name (on receiver)
-      caller = typeof call.caller === 'string' && call.caller === '<module>' ?
-        construct_function_symbol('<module>', call.location.file_path) :
-        call.caller as unknown as SymbolId;
+      if (call.caller === '<module>') {
+        caller = construct_function_symbol(call.location.file_path, '<module>') as SymbolId;
+      } else {
+        // Convert CallerName to SymbolId
+        caller = construct_function_symbol(call.location.file_path, call.caller as string) as SymbolId;
+      }
       callee = call.method_name;
     } else if (is_constructor_call_info(call)) {
       // Constructor call: assigned_to -> class_name
       caller = call.assigned_to;
-      callee = construct_function_symbol(call.class_name, call.location.file_path);
+      callee = construct_class_symbol(call.location.file_path, call.class_name as string) as SymbolId;
     } else {
       // This should never happen with proper typing, but provides safety
       console.warn("Unknown call type encountered:", call);
@@ -301,7 +309,7 @@ function create_chain(
   is_recursive: boolean,
   cycle_point?: SymbolId
 ): CallChain {
-  const entry_point = path.length > 0 ? path[0].symbol_id : construct_function_symbol("<unknown>", "" as FilePath);
+  const entry_point = path.length > 0 ? path[0].symbol_id : construct_function_symbol("", "<unknown>") as SymbolId;
   const max_depth = path.length > 0 ? Math.max(...path.map((n) => n.depth)) : 0;
   const execution_path = path.map(node => node.symbol_id);
 
@@ -324,9 +332,9 @@ function find_call_info(
 ): CallInfo | null {
   for (const call of calls) {
     // Check if this call matches our caller/callee pair
-    const callCaller = typeof call.caller === 'string' && call.caller === '<module>' ?
-      construct_function_symbol('<module>', call.location.file_path) :
-      call.caller as unknown as SymbolId;
+    const callCaller = call.caller === '<module>' ?
+      construct_function_symbol(call.location.file_path, '<module>') as SymbolId :
+      construct_function_symbol(call.location.file_path, call.caller as string) as SymbolId;
 
     if (callCaller === caller) {
       if (call.kind === 'function' && call.callee === callee) {
@@ -337,7 +345,7 @@ function find_call_info(
       }
     }
     if (call.kind === 'constructor' && call.assigned_to === caller) {
-      const constructorSymbol = construct_function_symbol(call.class_name, call.location.file_path);
+      const constructorSymbol = construct_class_symbol(call.location.file_path, call.class_name as string) as SymbolId;
       if (constructorSymbol === callee) {
         return call;
       }
@@ -412,18 +420,16 @@ export function find_paths_between(
     if (callees) {
       for (const callee of callees) {
         const node: CallChainNode = {
-          caller: current,
-          callee,
-          location: { 
-            file_path: "" as FilePath, 
-            line: 0, 
-            column: 0, 
-            end_line: 0, 
-            end_column: 0 
+          symbol_id: callee as SymbolId,
+          location: {
+            file_path: "" as FilePath,
+            line: 0,
+            column: 0,
+            end_line: 0,
+            end_column: 0
           } as Location,
-          file_path: "" as FilePath,
-          call_type: "function",
           depth,
+          is_recursive: false,
         };
 
         current_path.push(node);
@@ -448,7 +454,7 @@ export function get_longest_chain(
   if (chains.length === 0) return null;
 
   return chains.reduce((longest, current) =>
-    current.max_depth > longest.max_depth ? current : longest
+    current.depth > longest.depth ? current : longest
   );
 }
 
@@ -457,23 +463,14 @@ export function get_longest_chain(
  */
 export function get_recursive_functions(
   chains: readonly CallChain[]
-): Set<string> {
-  const recursive_funcs = new Set<string>();
+): Set<SymbolId> {
+  const recursive_funcs = new Set<SymbolId>();
 
   for (const chain of chains) {
-    if (chain.is_recursive && chain.cycle_point) {
-      recursive_funcs.add(chain.cycle_point);
-
-      // Also add all functions in the cycle
-      let in_cycle = false;
+    if (chain.has_recursion) {
+      // Add all functions in recursive chains
       for (const node of chain.nodes) {
-        if (node.callee === chain.cycle_point) {
-          in_cycle = true;
-        }
-        if (in_cycle) {
-          recursive_funcs.add(node.caller);
-          recursive_funcs.add(node.callee);
-        }
+        recursive_funcs.add(node.symbol_id);
       }
     }
   }
@@ -495,14 +492,18 @@ export function create_call_graph(
   for (const analysis of analyses) {
     // Add function nodes
     for (const func of analysis.functions) {
-      const symbol = map_get_or_default(
+      const resolved_ref = map_get_or_default(
         resolution_results.resolved_calls,
         func.location,
-        construct_function_symbol(analysis.file_path, func.name) as SymbolId
+        {
+          symbol_id: construct_function_symbol(analysis.file_path, func.name) as SymbolId,
+          definition_location: func.location,
+          kind: 'function' as SymbolKind
+        }
       );
 
-      functions.set(symbol, {
-        symbol,
+      functions.set(resolved_ref.symbol_id, {
+        symbol_id: resolved_ref.symbol_id,
         file_path: analysis.file_path,
         location: func.location,
         signature: func.signature,
@@ -563,10 +564,10 @@ export function create_call_graph(
       );
 
       edges.push({
-        from,
-        to,
-        location: call.location,
-        call_type: "direct",
+        from: from as SymbolId,
+        to: to as SymbolId,
+        call: call,
+        count: 1,
       });
     }
 
@@ -590,10 +591,10 @@ export function create_call_graph(
       );
 
       edges.push({
-        from,
-        to,
-        location: call.location,
-        call_type: "method",
+        from: from as SymbolId,
+        to: to as SymbolId,
+        call: call,
+        count: 1,
       });
     }
   }
