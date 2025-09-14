@@ -8,8 +8,9 @@ import {
   MethodName,
   QualifiedName,
 } from "./aliases";
-import { SymbolId } from "./symbols";
+import { SymbolId } from "./symbol_utils";
 import { Language, ScopeType } from "./index";
+import { TypeMember } from "./type_analysis";
 
 export enum TypeKind {
   CLASS = "class",
@@ -34,13 +35,6 @@ export interface TypeDefinition {
   readonly implements?: readonly SymbolId[];
 }
 
-export interface TypeMember {
-  readonly name: PropertyName | MethodName;
-  readonly type?: TypeString;
-  readonly kind: "property" | "method" | "constructor";
-  readonly is_optional: boolean;
-  readonly is_readonly: boolean;
-}
 
 export interface VariableType {
   readonly name: VariableName;
@@ -89,17 +83,3 @@ export interface TypeInfo {
     | "parameter";
 }
 
-/**
- * @deprecated Use ImportedTypeInfo from './import_export' instead
- * This type is preserved for backward compatibility but will be removed in the next major version.
- * The new ImportedTypeInfo in import_export.ts provides better type categorization.
- *
- * Information about an imported class/type
- */
-export interface ImportedClassInfo {
-  readonly class_name: string;
-  readonly source_module: string;
-  readonly local_name: string;
-  readonly is_default?: boolean;
-  readonly is_type_only?: boolean; // TypeScript type-only import
-}

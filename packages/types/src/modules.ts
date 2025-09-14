@@ -7,41 +7,6 @@ import {
 import { ModulePath, NamespaceName } from "./import_export";
 import { SymbolName, SymbolId } from "./symbol_utils";
 
-/**
- * @deprecated Use ImportInfo from './import_export' instead
- * This type is preserved for backward compatibility but will be removed in the next major version.
- * The new ImportInfo in import_export.ts is the single source of truth.
- *
- * Simplified import information for per-file analysis
- * Used during Layer 2 (Local Structure Detection)
- */
-export interface ImportInfo {
-  readonly name: SymbolId; // The imported name
-  readonly source: string; // The module path/source
-  readonly alias?: SymbolId; // Local alias if renamed
-  readonly kind: "named" | "default" | "namespace" | "dynamic";
-  readonly location: Location;
-  readonly is_type_only: boolean; // TypeScript type-only import
-  readonly namespace_name?: SymbolId; // For namespace imports (import * as X)
-}
-
-/**
- * @deprecated Use ExportInfo from './import_export' instead
- * This type is preserved for backward compatibility but will be removed in the next major version.
- * The new ExportInfo in import_export.ts is the single source of truth.
- *
- * Simplified export information for per-file analysis
- * Used during Layer 2 (Local Structure Detection)
- */
-export interface ExportInfo {
-  readonly name: SymbolId; // The exported name
-  readonly kind: "named" | "default" | "namespace";
-  readonly location: Location;
-  readonly local_name?: SymbolId; // Internal name if different
-  readonly is_type_only: boolean; // TypeScript type-only export
-  readonly is_reexport: boolean; // If re-exporting from another module
-  readonly source?: string; // Source module for re-exports
-}
 
 export interface ModuleNode {
   readonly path: FilePath;

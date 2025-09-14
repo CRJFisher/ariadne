@@ -12,20 +12,9 @@
  * - Handle type aliases in constructor calls
  */
 
-import { ConstructorCallInfo } from '@ariadnejs/types';
+import { ConstructorCall } from '@ariadnejs/types';
 import { TypeRegistry } from '../../type_analysis/type_registry';
 
-/**
- * Extended constructor call info with type validation
- */
-export interface ConstructorCallWithType extends ConstructorCallInfo {
-  is_valid?: boolean;              // Whether type exists in registry
-  resolved_type?: string;          // Fully qualified type name
-  expected_params?: ParameterInfo[]; // Expected constructor parameters
-  param_mismatch?: boolean;        // If params don't match signature
-  is_imported?: boolean;           // If this is an imported class
-  type_kind?: 'class' | 'interface' | 'struct' | 'trait'; // What kind of type
-}
 
 /**
  * Parameter information for validation
@@ -49,9 +38,9 @@ export interface ParameterInfo {
  * @returns Constructor calls enriched with type validation
  */
 export function enrich_constructor_calls_with_types(
-  constructor_calls: readonly ConstructorCallInfo[],
+  constructor_calls: readonly ConstructorCall[],
   type_registry: TypeRegistry | undefined,
-  imports?: Map<string, ImportInfo[]>
+  imports?: Map<string, any[]>
 ): readonly ConstructorCallWithType[] {
   if (!type_registry) {
     // No registry available, return calls as-is
@@ -94,26 +83,7 @@ export function enrich_constructor_calls_with_types(
   });
 }
 
-/**
- * Import information for cross-file resolution
- */
-interface ImportInfo {
-  name: string;
-  source: string;
-  alias?: string;
-  is_type_import?: boolean;
-}
 
-/**
- * Validation result
- */
-interface ValidationResult {
-  is_valid: boolean;
-  resolved_type?: string;
-  expected_params?: ParameterInfo[];
-  is_imported?: boolean;
-  type_kind?: 'class' | 'interface' | 'struct' | 'trait';
-}
 
 /**
  * Validate a constructor call against the type registry
@@ -128,8 +98,8 @@ export function validate_constructor(
   class_name: string,
   registry: TypeRegistry,
   file_path: string,
-  imports?: ImportInfo[]
-): ValidationResult | undefined {
+  imports?: any[]
+): any | undefined {
   // First check if it's a built-in type
   const language = detect_language(file_path);
   const builtins = registry.builtins.get(language);
@@ -196,30 +166,22 @@ export function validate_constructor(
  */
 function find_import(
   name: string,
-  imports: ImportInfo[]
-): ImportInfo | undefined {
+  imports: any[]
+): any | undefined {
   return imports.find(imp => 
     imp.name === name || imp.alias === name
   );
 }
 
-/**
- * Resolved type information
- */
-interface ResolvedType {
-  qualified_name: string;
-  constructor_params?: ParameterInfo[];
-  type_kind: 'class' | 'interface' | 'struct' | 'trait';
-}
 
 /**
  * Resolve an imported type through the registry
  */
 function resolve_imported_type(
-  import_info: ImportInfo,
+  import_info: any,
   registry: TypeRegistry,
   importing_file: string
-): ResolvedType | undefined {
+): any | undefined {
   // Try to resolve through the import cache
   const cache_key = `${importing_file}#${import_info.name}`;
   const cached = registry.import_cache.get(cache_key);
@@ -266,7 +228,7 @@ function find_local_type(
   type_name: string,
   file_path: string,
   registry: TypeRegistry
-): ResolvedType | undefined {
+): any | undefined {
   const file_types = registry.files.get(file_path);
   
   if (file_types) {
@@ -411,11 +373,11 @@ function resolve_import_path(import_source: string, importing_file: string): str
  * @returns Map of validation results by call
  */
 export function batch_validate_constructors(
-  calls: ConstructorCallInfo[],
+  calls: ConstructorCall[],
   registry: TypeRegistry,
-  imports: Map<string, ImportInfo[]>
-): Map<ConstructorCallInfo, ValidationResult> {
-  const results = new Map<ConstructorCallInfo, ValidationResult>();
+  imports: Map<string, any[]>
+): Map<ConstructorCall, any> {
+  const results = new Map<ConstructorCall, any>();
   
   for (const call of calls) {
     const file_imports = call.file_path ? imports.get(call.file_path) : undefined;

@@ -20,20 +20,13 @@ export interface CacheConfig {
   ttl_ms?: number;               // Time-to-live in milliseconds
 }
 
-/**
- * Cached item with timestamp
- */
-interface CachedItem<T> {
-  value: T;
-  timestamp: number;
-}
 
 /**
  * Cache layer implementation
  */
 export class CacheLayer implements StorageInterface {
-  private file_cache = new Map<string, CachedItem<StoredFile>>();
-  private state_cache: CachedItem<ProjectState> | null = null;
+  private file_cache = new Map<string, any>();
+  private state_cache: any | null = null;
   private readonly max_cache_size: number;
   private readonly ttl_ms: number;
   
@@ -183,7 +176,7 @@ export class CacheLayer implements StorageInterface {
     }
   }
   
-  private is_cache_valid<T>(cached: CachedItem<T>): boolean {
+  private is_cache_valid<T>(cached: any): boolean {
     return Date.now() - cached.timestamp < this.ttl_ms;
   }
 }

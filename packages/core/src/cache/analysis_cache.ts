@@ -18,21 +18,13 @@ export interface CacheOptions {
   maxSize: number; // Maximum number of cached entries
 }
 
-/**
- * Cached entry with metadata
- */
-interface CacheEntry<T> {
-  value: T;
-  hash: string;
-  timestamp: number;
-}
 
 /**
  * Simple LRU cache for analysis results
  */
 export class AnalysisCache {
-  private astCache = new Map<string, CacheEntry<Tree>>();
-  private analysisCache = new Map<string, CacheEntry<FileAnalysis>>();
+  private astCache = new Map<string, any>();
+  private analysisCache = new Map<string, any>();
   private readonly ttl: number;
   private readonly maxSize: number;
   private readonly enabled: boolean;
@@ -53,7 +45,7 @@ export class AnalysisCache {
   /**
    * Check if cache entry is still valid
    */
-  private isValid(entry: CacheEntry<any>, currentHash: string): boolean {
+  private isValid(entry: any, currentHash: string): boolean {
     if (!this.enabled) return false;
     
     // Check hash match
@@ -67,7 +59,7 @@ export class AnalysisCache {
   /**
    * Evict oldest entries if cache is full
    */
-  private evictIfNeeded<T>(cache: Map<string, CacheEntry<T>>): void {
+  private evictIfNeeded<T>(cache: Map<string, any>): void {
     if (cache.size >= this.maxSize) {
       // Simple FIFO eviction - remove first (oldest) entry
       const firstKey = cache.keys().next().value;
@@ -107,7 +99,7 @@ export class AnalysisCache {
     
     this.evictIfNeeded(this.astCache);
     
-    const entry: CacheEntry<Tree> = {
+    const entry = {
       value: ast,
       hash: this.generateHash(content),
       timestamp: Date.now()
@@ -146,7 +138,7 @@ export class AnalysisCache {
     
     this.evictIfNeeded(this.analysisCache);
     
-    const entry: CacheEntry<FileAnalysis> = {
+    const entry = {
       value: analysis,
       hash: this.generateHash(content),
       timestamp: Date.now()

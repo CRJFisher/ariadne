@@ -76,8 +76,6 @@ import {
 // Re-export types from shared modules
 import type { FileTypeTracker } from "./type_analysis/type_tracking";
 import { CodeFile } from "./project/file_scanner";
-// Symbol types
-type ScopeEntityConnections = RealScopeEntityConnections;
 
 /**
  * Main entry point for analyzing a single file

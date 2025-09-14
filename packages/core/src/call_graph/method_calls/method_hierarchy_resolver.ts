@@ -11,21 +11,9 @@
  * - Handle interface/trait method implementations
  */
 
-import { MethodCallInfo, SymbolId } from '@ariadnejs/types';
+import { MethodCall, SymbolId } from '@ariadnejs/types';
 import type { ClassHierarchy, ClassNode } from '@ariadnejs/types';
 
-/**
- * Extended method call info with hierarchy resolution
- */
-export interface MethodCallWithHierarchy extends MethodCallInfo {
-  receiver_type?: string;               // Resolved type of the receiver (from type tracking)
-  defining_class_resolved?: string;    // Class that actually defines the method
-  is_override?: boolean;               // If this overrides a parent method
-  override_chain?: string[];           // Classes in override chain
-  is_interface_method?: boolean;       // If from interface/trait
-  is_virtual_call?: boolean;           // If this is a virtual method call
-  possible_targets?: string[];         // Possible target classes (polymorphic)
-}
 
 /**
  * Enrich method calls with class hierarchy information
@@ -39,7 +27,7 @@ export interface MethodCallWithHierarchy extends MethodCallInfo {
  * @returns Method calls enriched with hierarchy information
  */
 export function enrich_method_calls_with_hierarchy(
-  method_calls: readonly MethodCallInfo[],
+  method_calls: readonly MethodCall[],
   class_hierarchy: ClassHierarchy | undefined,
   type_info?: Map<string, string>  // Maps receiver_name to type
 ): readonly MethodCallWithHierarchy[] {
@@ -90,15 +78,6 @@ export function enrich_method_calls_with_hierarchy(
   });
 }
 
-/**
- * Method resolution result
- */
-interface MethodResolution {
-  defining_class: string;
-  is_override: boolean;
-  override_chain: string[];
-  is_interface_method: boolean;
-}
 
 /**
  * Resolve a method through the class hierarchy
@@ -112,20 +91,14 @@ export function resolve_method_in_hierarchy(
   class_symbol: SymbolId,
   method_symbol: SymbolId,
   hierarchy: ClassHierarchy
-): MethodResolution | undefined;
+): any | undefined;
 
-// Legacy overload
-export function resolve_method_in_hierarchy(
-  class_name: string,
-  method_name: string,
-  hierarchy: ClassHierarchy
-): MethodResolution | undefined;
 
 export function resolve_method_in_hierarchy(
   class_name_or_symbol: string | SymbolId,
   method_name_or_symbol: string | SymbolId,
   hierarchy: ClassHierarchy
-): MethodResolution | undefined {
+): any | undefined {
   // Extract names for lookup
   const class_name = typeof class_name_or_symbol === 'string' && !class_name_or_symbol.includes(':')
     ? class_name_or_symbol
@@ -155,7 +128,7 @@ export function resolve_method_in_hierarchy(
   function resolve_recursive(
     current_class: string,
     is_first: boolean = true
-  ): MethodResolution | undefined {
+  ): any | undefined {
     if (visited.has(current_class)) {
       return undefined;
     }
@@ -283,13 +256,6 @@ export function resolve_method_in_hierarchy(
   return resolve_recursive(class_name);
 }
 
-/**
- * Virtual call analysis result
- */
-interface VirtualCallInfo {
-  is_virtual: boolean;
-  possible_targets: string[];
-}
 
 /**
  * Analyze if a method call is virtual (could dispatch to subclasses)
@@ -303,7 +269,7 @@ export function analyze_virtual_call(
   class_name: string,
   method_name: string,
   hierarchy: ClassHierarchy
-): VirtualCallInfo | undefined {
+): any | undefined {
   const class_info = hierarchy.classes.get(class_name);
   if (!class_info) {
     return undefined;

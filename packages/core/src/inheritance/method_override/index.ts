@@ -43,25 +43,7 @@ export interface OverrideMetadata {
   parser: Parser;
 }
 
-/**
- * Processor function type
- */
-type OverrideProcessor = (
-  ast: SyntaxNode,
-  file_path: string,
-  parser: Parser
-) => MethodOverrideMap;
 
-/**
- * Bespoke handlers for language-specific features
- */
-type BespokeHandler = (context: MethodOverrideContext) => void;
-type RustBespokeHandler = (
-  ast: SyntaxNode,
-  file_path: string,
-  parser: Parser,
-  context: MethodOverrideContext
-) => void;
 
 /**
  * Detect method overrides in code
