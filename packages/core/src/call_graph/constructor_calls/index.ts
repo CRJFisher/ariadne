@@ -7,8 +7,6 @@
 import { CallInfo } from '@ariadnejs/types';
 import {
   ConstructorCallContext,
-  process_constructor_calls_generic,
-  walk_tree
 } from './constructor_calls';
 import { node_to_location } from '../../ast/node_utils';
 
