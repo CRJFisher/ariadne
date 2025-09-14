@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { handle_pattern_parameters } from './parameter_type_inference.rust';
-import { get_language_parser } from '../../scope_queries/loader';
+import { get_language_parser } from '../../scope_analysis/scope_tree/loader';
 import { ParameterInferenceContext } from './parameter_type_inference';
 
 describe('Rust bespoke parameter type inference', () => {

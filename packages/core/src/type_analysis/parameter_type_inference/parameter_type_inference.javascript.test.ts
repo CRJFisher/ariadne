@@ -3,7 +3,7 @@ import {
   extract_jsdoc_parameter_types,
   analyze_javascript_parameter_usage
 } from './parameter_type_inference.javascript';
-import { get_language_parser } from '../../scope_queries/loader';
+import { get_language_parser } from '../../scope_analysis/scope_tree/loader';
 import { ParameterInfo, ParameterInferenceContext } from './parameter_type_inference';
 
 describe('JavaScript bespoke parameter type inference', () => {

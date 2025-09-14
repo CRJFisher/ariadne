@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { get_language_parser } from "../../scope_queries/loader";
+import { get_language_parser } from "./loader";
 import { Language } from "@ariadnejs/types";
 import { build_generic_scope_tree } from "./scope_tree";
 import { create_javascript_handlers, check_closure_capture } from "./scope_tree.javascript";

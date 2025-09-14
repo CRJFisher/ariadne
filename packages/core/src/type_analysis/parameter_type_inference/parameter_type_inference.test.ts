@@ -10,7 +10,7 @@ import {
   infer_type_from_default,
   check_parameter_patterns,
 } from './parameter_type_inference';
-import { get_language_parser } from '../../scope_queries/loader';
+import { get_language_parser } from '../../scope_analysis/scope_tree/loader';
 import { Language, FunctionDefinition, Location, DocString } from '@ariadnejs/types';
 
 function create_mock_def(name: string, kind: string): FunctionDefinition {

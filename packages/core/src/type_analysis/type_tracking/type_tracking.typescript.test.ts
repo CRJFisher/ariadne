@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { get_language_parser } from "../../scope_queries/loader";
+import { get_language_parser } from "../../scope_analysis/scope_tree/loader";
 import {
   track_typescript_interface,
   track_typescript_type_alias,

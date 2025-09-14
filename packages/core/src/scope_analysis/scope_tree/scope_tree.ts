@@ -1,7 +1,7 @@
 /**
  * Scope tree stub implementation
  *
- * TODO: Implement using tree-sitter queries from scope_queries/*.scm
+ * TODO: Implement using tree-sitter queries from queries/*.scm
  */
 
 import { SyntaxNode } from "tree-sitter";
@@ -32,7 +32,7 @@ export function build_scope_tree(
   source: string,
   language: Language
 ): ScopeTree {
-  // TODO: Implement using tree-sitter queries from scope_queries/*.scm
+  // TODO: Implement using tree-sitter queries from queries/*.scm
   const file_path = "" as FilePath;
   const root_id = "scope_0" as ScopeId;
   const root_node: RootScopeNode = {

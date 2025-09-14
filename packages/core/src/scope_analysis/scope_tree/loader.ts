@@ -28,14 +28,14 @@ export function get_language_for_file(file_path: string): Language | null {
 }
 
 export function load_scope_query(language: Language): string {
-  const query_path = path.join(__dirname, `${language}.scm`);
-  
+  const query_path = path.join(__dirname, 'queries', `${language}.scm`);
+
   // Try multiple paths to handle both compiled and source scenarios
   const possible_paths = [
     query_path,
-    path.join(__dirname, '..', '..', 'src', 'scope_queries', `${language}.scm`),
-    path.join(process.cwd(), 'src', 'scope_queries', `${language}.scm`),
-    path.join(process.cwd(), 'dist', 'scope_queries', `${language}.scm`),
+    path.join(__dirname, '..', '..', '..', 'src', 'scope_analysis', 'scope_tree', 'queries', `${language}.scm`),
+    path.join(process.cwd(), 'src', 'scope_analysis', 'scope_tree', 'queries', `${language}.scm`),
+    path.join(process.cwd(), 'dist', 'scope_analysis', 'scope_tree', 'queries', `${language}.scm`),
   ];
 
   for (const p of possible_paths) {

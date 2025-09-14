@@ -1,7 +1,7 @@
 # Task 11.100.0.5.28: Move Scope Queries to Module Structure
 
 ## Status
-Status: Not Started
+Status: Completed
 Priority: High
 Created: 2025-09-14
 Epic: epic-11-codebase-restructuring

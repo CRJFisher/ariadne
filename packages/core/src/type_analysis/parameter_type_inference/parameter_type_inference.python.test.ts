@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { extract_docstring_type, normalize_python_type } from './parameter_type_inference.python';
-import { get_language_parser } from '../../scope_queries/loader';
+import { get_language_parser } from '../../scope_analysis/scope_tree/loader';
 import { ParameterInferenceContext } from './parameter_type_inference';
 
 describe('Python bespoke parameter type inference', () => {
