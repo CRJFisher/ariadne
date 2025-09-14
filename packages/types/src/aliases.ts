@@ -5,23 +5,34 @@ export type SourceCode = string & { __brand: 'SourceCode' }; // Source code
 export type QualifiedName = string & { __brand: 'QualifiedName' }; // Fully qualified name (e.g., "MyClass.myMethod")
 
 // Class-related identifiers
+/** @deprecated Use SymbolId from symbol_utils.ts instead */
 export type ClassName = string & { __brand: 'ClassName' }; // Class name
+/** @deprecated Use SymbolId from symbol_utils.ts instead */
 export type MethodName = string & { __brand: 'MethodName' }; // Method name
+/** @deprecated Use SymbolId from symbol_utils.ts instead */
 export type PropertyName = string & { __brand: 'PropertyName' }; // Property name
+/** @deprecated Use SymbolId from symbol_utils.ts instead */
 export type InterfaceName = string & { __brand: 'InterfaceName' }; // Interface name
+/** @deprecated Use SymbolId from symbol_utils.ts instead */
 export type TraitName = string & { __brand: 'TraitName' }; // Trait name (for Rust)
 
 // Function and variable identifiers
+/** @deprecated Use SymbolId from symbol_utils.ts instead */
 export type FunctionName = string & { __brand: 'FunctionName' }; // Function name
+/** @deprecated Use SymbolId from symbol_utils.ts instead */
 export type VariableName = string & { __brand: 'VariableName' }; // Variable name
+/** @deprecated Use SymbolId from symbol_utils.ts instead */
 export type ParameterName = string & { __brand: 'ParameterName' }; // Parameter name
 
 // Type system identifiers
+/** @deprecated Use SymbolId from symbol_utils.ts instead */
 export type TypeName = string & { __brand: 'TypeName' }; // Type name (for type definitions)
 export type TypeString = string & { __brand: 'TypeString' }; // Type annotation as string (e.g., "string[]", "Promise<void>")
 
 // Import/export identifiers
+/** @deprecated Use SymbolId from symbol_utils.ts instead */
 export type ExportName = string & { __brand: 'ExportName' }; // Export name (may differ from local name)
+/** @deprecated Use SymbolId from symbol_utils.ts instead */
 export type ImportName = string & { __brand: 'ImportName' }; // Import name (may differ from source name)
 
 // Scope identifiers

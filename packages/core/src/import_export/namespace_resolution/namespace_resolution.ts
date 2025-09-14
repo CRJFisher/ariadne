@@ -18,6 +18,12 @@ import {
   ModuleGraph,
   TypeRegistry,
   map_get_or_default,
+  SymbolId,
+  module_symbol,
+  function_symbol,
+  class_symbol,
+  symbol_from_string,
+  to_symbol_name,
 } from '@ariadnejs/types';
 import Parser, { SyntaxNode } from 'tree-sitter';
 import {
@@ -30,17 +36,17 @@ import { find_member_access_expressions } from '../../ast/member_access';
  * Information about a namespace import
  */
 export interface NamespaceImportInfo {
-  namespace_name: string;
+  namespace_symbol: SymbolId;
   source_module: string;
   is_namespace: boolean;
-  members?: string[];
+  members?: SymbolId[];
 }
 
 /**
  * Information about a namespace export
  */
 export interface NamespaceExport {
-  name: string;
+  symbol: SymbolId;
   is_exported: boolean;
   is_namespace_reexport?: boolean;
   target_module?: string;
@@ -63,14 +69,14 @@ export interface NamespaceResolutionContext {
  */
 export interface NamespaceResolver {
   detect_imports(imports: Import[]): NamespaceImportInfo[];
-  resolve_member(namespace: string, member: string): any;
+  resolve_member(namespace: SymbolId, member: SymbolId): any;
 }
 
 /**
- * Qualified name resolver interface  
+ * Qualified name resolver interface
  */
 export interface QualifiedNameResolver {
-  parse(qualified_name: string): { namespace: string; members: string[] };
+  parse(qualified_name: string): { namespace: SymbolId; members: SymbolId[] };
   resolve(qualified_name: string): any;
 }
 
@@ -112,8 +118,16 @@ export function detect_namespace_imports_generic(
   for (const imp of imports) {
     // Check if this is a namespace import based on configuration
     if (is_namespace_import_generic(imp, config, language)) {
+      const namespace_name = get_namespace_name(imp, config);
+      const namespace_location: Location = imp.location || {
+        file_path: imp.source as FilePath,
+        line: 0,
+        column: 0,
+        end_line: 0,
+        end_column: 0
+      };
       namespace_imports.push({
-        namespace_name: get_namespace_name(imp, config),
+        namespace_symbol: module_symbol(to_symbol_name(namespace_name), imp.source as FilePath, namespace_location),
         source_module: imp.source,
         is_namespace: true,
         members: undefined // Will be populated on demand
@@ -190,10 +204,10 @@ function get_namespace_name(imp: Import, config: NamespaceLanguageConfig): strin
  * Generic namespace member resolver using configuration
  */
 export function resolve_namespace_member_generic(
-  namespace: string,
-  member: string,
+  namespace: SymbolId,
+  member: SymbolId,
   context: NamespaceResolutionContext,
-  exports: Map<string, NamespaceExport>
+  exports: Map<SymbolId, NamespaceExport>
 ): Def | undefined {
   const config = get_namespace_config(context.language);
   
@@ -202,9 +216,10 @@ export function resolve_namespace_member_generic(
   if (!export_entry) {
     return undefined;
   }
-  
+
   // Check visibility rules
-  if (!is_member_visible_generic(member, config)) {
+  const member_symbol = symbol_from_string(member);
+  if (!is_member_visible_generic(member_symbol.name, config)) {
     return undefined;
   }
   
@@ -265,8 +280,8 @@ function resolve_reexport_generic(
 export function get_namespace_exports_generic(
   target_file: string,
   context: NamespaceResolutionContext
-): Map<string, NamespaceExport> {
-  const exports = new Map<string, NamespaceExport>();
+): Map<SymbolId, NamespaceExport> {
+  const exports = new Map<SymbolId, NamespaceExport>();
   const config = get_namespace_config(context.language);
   
   // Get file analysis
@@ -279,7 +294,25 @@ export function get_namespace_exports_generic(
   for (const def of file_graph.defs) {
     // Check if this definition is exported (simplified check)
     if (is_exported_definition(def, config)) {
-      exports.set(def.name, def);
+      // Create a SymbolId for the definition
+      const def_location = def.location || {
+        file_path: target_file as FilePath,
+        line: 0,
+        column: 0,
+        end_line: 0,
+        end_column: 0
+      };
+      const def_symbol = def.kind === 'function'
+        ? function_symbol(def.name, def_location)
+        : def.kind === 'class'
+        ? class_symbol(def.name, target_file as FilePath, def_location)
+        : module_symbol(to_symbol_name(def.name), target_file as FilePath, def_location);
+
+      exports.set(def_symbol, {
+        symbol: def_symbol,
+        is_exported: true,
+        visibility: 'public'
+      });
     }
   }
   
@@ -322,7 +355,7 @@ function is_exported_definition(
 export function parse_qualified_access_generic(
   qualified_name: string,
   config: NamespaceLanguageConfig
-): { namespace: string; members: string[] } {
+): { namespace: SymbolId; members: SymbolId[] } {
   const separators = [config.member_access.separator];
   if (config.member_access.alt_separators) {
     separators.push(...config.member_access.alt_separators);
@@ -333,12 +366,33 @@ export function parse_qualified_access_generic(
   const parts = qualified_name.split(new RegExp(sep_pattern));
   
   if (parts.length < 2) {
-    return { namespace: qualified_name, members: [] };
+    // Create a module symbol for the namespace
+    const location: Location = {
+      file_path: '' as FilePath,
+      line: 0,
+      column: 0,
+      end_line: 0,
+      end_column: 0
+    };
+    return { namespace: module_symbol(to_symbol_name(qualified_name), '' as FilePath, location), members: [] };
   }
-  
+
+  // Create symbols for namespace and members
+  const location: Location = {
+    file_path: '' as FilePath,
+    line: 0,
+    column: 0,
+    end_line: 0,
+    end_column: 0
+  };
+  const namespace = module_symbol(to_symbol_name(parts[0]), '' as FilePath, location);
+  const members = parts.slice(1).map(part =>
+    function_symbol(part, location)
+  );
+
   return {
-    namespace: parts[0],
-    members: parts.slice(1)
+    namespace,
+    members
   };
 }
 
@@ -383,18 +437,16 @@ export function merge_namespace_results(
   bespoke_results: NamespaceImportInfo[]
 ): NamespaceImportInfo[] {
   const merged: NamespaceImportInfo[] = [];
-  const seen = new Map<string, NamespaceImportInfo>();
-  
+  const seen = new Map<SymbolId, NamespaceImportInfo>();
+
   // First add generic results
   for (const result of generic_results) {
-    const key = `${result.namespace_name}:${result.source_module}`;
-    seen.set(key, result);
+    seen.set(result.namespace_symbol, result);
   }
-  
+
   // Override with bespoke results (they take precedence)
   for (const result of bespoke_results) {
-    const key = `${result.namespace_name}:${result.source_module}`;
-    seen.set(key, result); // This will override generic if duplicate
+    seen.set(result.namespace_symbol, result); // This will override generic if duplicate
   }
   
   // Add all results to merged array
@@ -437,7 +489,7 @@ export function is_namespace_import(
 export function resolve_namespace_exports(
   namespace: string,
   context: NamespaceResolutionContext
-): Map<string, NamespaceExport> {
+): Map<SymbolId, NamespaceExport> {
   return get_namespace_exports_generic(namespace, context);
 }
 
@@ -445,10 +497,10 @@ export function resolve_namespace_exports(
  * Resolve namespace member (main API wrapper)
  */
 export function resolve_namespace_member(
-  namespace: string,
-  member: string,
+  namespace: SymbolId,
+  member: SymbolId,
   context: NamespaceResolutionContext,
-  exports: Map<string, NamespaceExport>
+  exports: Map<SymbolId, NamespaceExport>
 ): any {
   return resolve_namespace_member_generic(namespace, member, context, exports);
 }
@@ -471,7 +523,7 @@ export function resolve_nested_namespace(
 export function get_namespace_members(
   namespace: string,
   context: NamespaceResolutionContext
-): string[] {
+): SymbolId[] {
   const exports = get_namespace_exports_generic(namespace, context);
   return Array.from(exports.keys());
 }
@@ -481,7 +533,7 @@ export function get_namespace_members(
  */
 export function namespace_has_member(
   namespace: string,
-  member: string,
+  member: SymbolId,
   context: NamespaceResolutionContext
 ): boolean {
   const exports = get_namespace_exports_generic(namespace, context);
@@ -513,13 +565,14 @@ export function get_namespace_stats(imports: NamespaceImportInfo[]): {
  */
 export function collect_namespace_exports(
   analysis: FileAnalysis
-): Map<string, NamespaceExportInfo> {
-  const exports = new Map<string, NamespaceExportInfo>();
+): Map<SymbolId, NamespaceExportInfo> {
+  const exports = new Map<SymbolId, NamespaceExportInfo>();
 
   // Collect named exports
   for (const export_stmt of analysis.exports) {
     if (export_stmt.symbol_name && !export_stmt.is_default) {
-      exports.set(export_stmt.symbol_name, {
+      const export_symbol = function_symbol(export_stmt.symbol_name, export_stmt.location);
+      exports.set(export_symbol, {
         name: export_stmt.symbol_name,
         kind: "export",
         location: export_stmt.location,
@@ -529,7 +582,8 @@ export function collect_namespace_exports(
 
   // Collect exported functions
   for (const func of analysis.functions) {
-    exports.set(func.name, {
+    const func_symbol = function_symbol(func.name, func.location);
+    exports.set(func_symbol, {
       name: func.name,
       kind: "function",
       location: func.location,
@@ -538,7 +592,8 @@ export function collect_namespace_exports(
 
   // Collect exported classes
   for (const cls of analysis.classes) {
-    exports.set(cls.name, {
+    const class_symbol_id = class_symbol(cls.name, analysis.file_path, cls.location);
+    exports.set(class_symbol_id, {
       name: cls.name,
       kind: "class",
       location: cls.location,

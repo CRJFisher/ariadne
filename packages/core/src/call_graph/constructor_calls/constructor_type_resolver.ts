@@ -12,7 +12,7 @@
  * - Handle type aliases in constructor calls
  */
 
-import { ConstructorCall } from '@ariadnejs/types';
+import { ConstructorCall, SymbolId, parameter_symbol, to_symbol_name } from '@ariadnejs/types';
 import { TypeRegistry } from '../../type_analysis/type_registry';
 
 
@@ -20,7 +20,7 @@ import { TypeRegistry } from '../../type_analysis/type_registry';
  * Parameter information for validation
  */
 export interface ParameterInfo {
-  name: string;
+  symbol: SymbolId;
   type?: string;
   is_optional?: boolean;
   default_value?: string;
@@ -40,7 +40,7 @@ export interface ParameterInfo {
 export function enrich_constructor_calls_with_types(
   constructor_calls: readonly ConstructorCall[],
   type_registry: TypeRegistry | undefined,
-  imports?: Map<string, any[]>
+  imports?: Map<SymbolId, any[]>
 ): readonly ConstructorCallWithType[] {
   if (!type_registry) {
     // No registry available, return calls as-is

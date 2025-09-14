@@ -12,6 +12,7 @@ import {
   ModulePath,
   FilePath,
   ModuleGraph,
+  SymbolId,
 } from '@ariadnejs/types';
 import {
   ImportPatternConfig,
@@ -37,7 +38,7 @@ export interface ResolvedImport {
 export const MODULE_CONTEXT = {
   debug_enabled: false,
   cache_enabled: true,
-  resolution_cache: new Map<string, ExportedSymbol | undefined>()
+  resolution_cache: new Map<SymbolId, ExportedSymbol | undefined>()
 };
 
 /**

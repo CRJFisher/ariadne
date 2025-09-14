@@ -5,7 +5,7 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Language, ConstructorCall, Location, FilePath, SourceCode } from '@ariadnejs/types';
+import { Language, ConstructorCall, Location, FilePath, SourceCode, SymbolId, variable_symbol, to_symbol_name } from '@ariadnejs/types';
 import { TypeInfo } from '../../type_analysis/type_tracking';
 
 /**
@@ -13,14 +13,14 @@ import { TypeInfo } from '../../type_analysis/type_tracking';
  */
 export interface ConstructorCallResult {
   calls: ConstructorCall[];
-  type_assignments: Map<string, TypeInfo[]>;
+  type_assignments: Map<SymbolId, TypeInfo[]>;
 }
 
 /**
  * Type assignment discovered from a constructor call
  */
 export interface ConstructorTypeAssignment {
-  variable_name: string;
+  variable_symbol: SymbolId;
   type_name: string;
   location: Location;
   is_property_assignment?: boolean;
@@ -47,9 +47,9 @@ export function extract_constructor_calls_and_types(
  * Merge constructor types
  */
 export function merge_constructor_types(
-  type_map1: Map<string, TypeInfo[]>,
-  type_map2: Map<string, TypeInfo[]>
-): Map<string, TypeInfo[]> {
+  type_map1: Map<SymbolId, TypeInfo[]>,
+  type_map2: Map<SymbolId, TypeInfo[]>
+): Map<SymbolId, TypeInfo[]> {
   // TODO: Implement merging logic
   return new Map([...type_map1, ...type_map2]);
 }

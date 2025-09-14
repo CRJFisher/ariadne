@@ -120,9 +120,9 @@ export function build_call_chains(
     );
   }
 
-  // Calculate max depth
+  // Calculate max depth from chains
   for (const chain of chains) {
-    max_chain_depth = Math.max(max_chain_depth, chain.max_depth);
+    max_chain_depth = Math.max(max_chain_depth, chain.depth);
   }
 
   // Create a proper CallGraph structure
@@ -149,46 +149,46 @@ export function build_call_chains(
 function is_function_call_info(
   call: FunctionCall | MethodCall | ConstructorCall
 ): call is FunctionCall {
-  return (
-    "callee_name" in call && "caller_name" in call && !("method_name" in call)
-  );
+  return call.kind === "function";
 }
 
 function is_method_call_info(
   call: FunctionCall | MethodCall | ConstructorCall
 ): call is MethodCall {
-  return (
-    "method_name" in call && "caller_name" in call && "receiver_name" in call
-  );
+  return call.kind === "method";
 }
 
 function is_constructor_call_info(
   call: FunctionCall | MethodCall | ConstructorCall
 ): call is ConstructorCall {
-  return "constructor_name" in call && !("caller_name" in call);
+  return call.kind === "constructor";
 }
 
 function build_call_graph(
   calls: readonly (FunctionCall | MethodCall | ConstructorCall)[]
-): Map<string, Set<string>> {
-  const graph = new DefaultMap<string, Set<string>>(() => new Set());
+): Map<SymbolId, Set<SymbolId>> {
+  const graph = new DefaultMap<SymbolId, Set<SymbolId>>(() => new Set());
 
   for (const call of calls) {
-    let caller: string;
-    let callee: string;
+    let caller: SymbolId;
+    let callee: SymbolId;
 
     if (is_function_call_info(call)) {
       // Function call: caller -> callee
-      caller = call.caller_name;
-      callee = call.callee_name;
+      caller = typeof call.caller === 'string' && call.caller === '<module>' ?
+        construct_function_symbol('<module>', call.location.file_path) :
+        call.caller as unknown as SymbolId;
+      callee = call.callee;
     } else if (is_method_call_info(call)) {
       // Method call: caller -> method_name (on receiver)
-      caller = call.caller_name;
+      caller = typeof call.caller === 'string' && call.caller === '<module>' ?
+        construct_function_symbol('<module>', call.location.file_path) :
+        call.caller as unknown as SymbolId;
       callee = call.method_name;
     } else if (is_constructor_call_info(call)) {
-      // Constructor call: no explicit caller (module-level or assignment context)
-      caller = call.assigned_to || "<module>";
-      callee = call.constructor_name;
+      // Constructor call: assigned_to -> class_name
+      caller = call.assigned_to;
+      callee = construct_function_symbol(call.class_name, call.location.file_path);
     } else {
       // This should never happen with proper typing, but provides safety
       console.warn("Unknown call type encountered:", call);
@@ -247,12 +247,17 @@ function traverse_chain(
       const call_info = find_call_info(current, callee, original_calls);
 
       const node: CallChainNode = {
-        caller: current,
-        callee,
-        location: call_info?.location || { row: 0, column: 0 },
-        file_path: call_info?.file_path || "",
-        call_type: determine_call_type(call_info),
+        symbol_id: callee,
+        location: call_info?.location || {
+          file_path: "" as FilePath,
+          line: 0,
+          column: 0,
+          end_line: 0,
+          end_column: 0
+        },
         depth: depth + 1,
+        is_recursive: false,
+        call: call_info || undefined
       };
 
       path.push(node);
@@ -296,15 +301,16 @@ function create_chain(
   is_recursive: boolean,
   cycle_point?: SymbolId
 ): CallChain {
-  const root = path.length > 0 ? path[0].caller : "<unknown>";
+  const entry_point = path.length > 0 ? path[0].symbol_id : construct_function_symbol("<unknown>", "" as FilePath);
   const max_depth = path.length > 0 ? Math.max(...path.map((n) => n.depth)) : 0;
+  const execution_path = path.map(node => node.symbol_id);
 
   return {
-    root,
+    entry_point,
     nodes: [...path],
-    is_recursive,
-    max_depth,
-    cycle_point,
+    has_recursion: is_recursive,
+    depth: max_depth,
+    execution_path,
   };
 }
 
@@ -315,18 +321,26 @@ function find_call_info(
   caller: SymbolId,
   callee: SymbolId,
   calls: readonly (FunctionCall | MethodCall | ConstructorCall)[]
-): any {
+): CallInfo | null {
   for (const call of calls) {
-    if ("caller_name" in call && call.caller_name === caller) {
-      if ("callee_name" in call && call.callee_name === callee) {
+    // Check if this call matches our caller/callee pair
+    const callCaller = typeof call.caller === 'string' && call.caller === '<module>' ?
+      construct_function_symbol('<module>', call.location.file_path) :
+      call.caller as unknown as SymbolId;
+
+    if (callCaller === caller) {
+      if (call.kind === 'function' && call.callee === callee) {
         return call;
       }
-      if ("method_name" in call && (call as any).method_name === callee) {
+      if (call.kind === 'method' && call.method_name === callee) {
         return call;
       }
     }
-    if ("constructor_name" in call && call.constructor_name === callee) {
-      return call;
+    if (call.kind === 'constructor' && call.assigned_to === caller) {
+      const constructorSymbol = construct_function_symbol(call.class_name, call.location.file_path);
+      if (constructorSymbol === callee) {
+        return call;
+      }
     }
   }
   return null;
@@ -336,18 +350,10 @@ function find_call_info(
  * Determine the type of call
  */
 function determine_call_type(
-  call_info: any
+  call_info: CallInfo | null
 ): "function" | "method" | "constructor" {
   if (!call_info) return "function";
-
-  // Handle new call info types
-  if ("constructor_name" in call_info) return "constructor";
-  if ("method_name" in call_info) return "method";
-  if ("is_constructor_call" in call_info && call_info.is_constructor_call)
-    return "constructor";
-  if ("is_method_call" in call_info && call_info.is_method_call)
-    return "method";
-  return "function";
+  return call_info.kind;
 }
 
 /**
@@ -357,18 +363,16 @@ export function detect_recursion(chains: readonly CallChain[]): CallChain[] {
   const recursive: CallChain[] = [];
 
   for (const chain of chains) {
-    const seen = new Set<string>();
+    const seen = new Set<SymbolId>();
     let found_recursion = false;
 
     for (const node of chain.nodes) {
-      if (seen.has(node.callee)) {
+      if (seen.has(node.symbol_id)) {
         // Found recursion
-        (chain as any).is_recursive = true;
-        (chain as any).cycle_point = node.callee;
         found_recursion = true;
         break;
       }
-      seen.add(node.caller);
+      seen.add(node.symbol_id);
     }
 
     if (found_recursion) {
@@ -383,9 +387,9 @@ export function detect_recursion(chains: readonly CallChain[]): CallChain[] {
  * Find all paths between two functions
  */
 export function find_paths_between(
-  start: string,
-  end: string,
-  call_graph: Map<string, Set<string>>,
+  start: SymbolId,
+  end: SymbolId,
+  call_graph: Map<SymbolId, Set<SymbolId>>,
   max_depth: number = 10
 ): CallChain[] {
   const paths: CallChain[] = [];
