@@ -22,6 +22,8 @@ import {
   function_symbol,
   method_symbol,
   class_symbol,
+  to_symbol_name,
+  to_symbol_id,
   CallInfo,
 } from "@ariadnejs/types";
 import { SyntaxNode } from "tree-sitter";
@@ -353,16 +355,22 @@ function resolve_symbol(
 
   // Check if it's a special symbol
   if (is_global_symbol(symbol_name, language)) {
-    return construct_symbol({
-      file_path: "global",
-      name: symbol_name,
+    return function_symbol(to_symbol_name(symbol_name), {
+      file_path: "global" as any,
+      line: 0,
+      column: 0,
+      end_line: 0,
+      end_column: 0,
     });
   }
 
   if (is_builtin_symbol(symbol_name, language)) {
-    return construct_symbol({
-      file_path: "builtin",
-      name: symbol_name,
+    return function_symbol(to_symbol_name(symbol_name), {
+      file_path: "builtin" as any,
+      line: 0,
+      column: 0,
+      end_line: 0,
+      end_column: 0,
     });
   }
 
