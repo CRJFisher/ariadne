@@ -20,7 +20,8 @@ export type SymbolKind =
   | "import"
   | "export"
   | "namespace"
-  | "module";
+  | "module"
+  | "global";
 
 export enum SymbolVisibility {
   PUBLIC = "public",

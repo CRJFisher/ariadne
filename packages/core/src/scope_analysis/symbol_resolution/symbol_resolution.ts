@@ -23,7 +23,6 @@ import {
   method_symbol,
   class_symbol,
   to_symbol_name,
-  to_symbol_id,
   CallInfo,
 } from "@ariadnejs/types";
 import { SyntaxNode } from "tree-sitter";

@@ -15,6 +15,7 @@ import {
   Language,
   SymbolId,
   SymbolKind,
+  SymbolName,
   FunctionCall,
   MethodCall,
   ConstructorCall,
@@ -25,12 +26,12 @@ import {
   CallEdge,
   FileAnalysis,
   FunctionSignature,
-  map_get_or_default,
   map_get_array,
   CallInfo,
   function_symbol,
   method_symbol,
   class_symbol,
+  to_symbol_name,
 } from "@ariadnejs/types";
 import { DefaultMap } from "../../utils/collection_utils";
 import { ResolutionResult } from "../../scope_analysis/symbol_resolution/symbol_resolution";
@@ -63,18 +64,10 @@ export function create_call_graph(
   for (const analysis of analyses) {
     // Add function nodes
     for (const func of analysis.functions) {
-      const resolved_ref = map_get_or_default(
-        resolution_results.resolved_calls,
-        func.location,
-        {
-          symbol_id: function_symbol(func.name, func.location),
-          definition_location: func.location,
-          kind: "function",
-        }
-      );
+      const symbol = function_symbol(func.name, func.location);
 
-      functions.set(resolved_ref.symbol_id, {
-        symbol_id: resolved_ref.symbol_id,
+      functions.set(symbol, {
+        symbol_id: symbol,
         location: func.location,
       });
     }
@@ -82,35 +75,15 @@ export function create_call_graph(
     // Add method nodes
     for (const cls of analysis.classes) {
       for (const method of cls.methods) {
-        const symbol = map_get_or_default(
-          resolution_results.resolved_methods,
-          method.location,
-          method_symbol(
-            method.name,
-            cls.symbol,
-            method.location,
-            // analysis.file_path,
-            // method.location,
-            // cls.symbol,
-            // method.name,
-            // method.is_static
-          )
+        const symbol = method_symbol(
+          method.name,
+          cls.name,
+          method.location
         );
 
         functions.set(symbol, {
-          symbol,
-          file_path: analysis.file_path,
+          symbol_id: symbol,
           location: method.location,
-          signature: {
-            parameters: method.parameters,
-            return_type: method.return_type,
-            type_parameters: method.generics,
-            is_async: method.is_async,
-          },
-          calls: [],
-          called_by: [],
-          is_exported: false, // TODO: Check if class is exported
-          is_entry_point: false,
         });
       }
     }
@@ -120,50 +93,39 @@ export function create_call_graph(
   for (const analysis of analyses) {
     // Function calls
     for (const call of analysis.function_calls) {
-      const from = function_symbol(
-        analysis.file_path,
-        (call.caller as string) || SPECIAL_SYMBOLS.MODULE
-      );
+      const from = call.caller
+        ? function_symbol(to_symbol_name(call.caller), call.location)
+        : function_symbol(to_symbol_name("<module>"), call.location);
 
-      // Use resolved symbol if available, otherwise use unresolved name
-      const to = map_get_or_default(
-        resolution_results.resolved_calls,
-        call.location,
-        function_symbol(analysis.file_path, call.callee as string)
-      );
+      // Get resolved function or create unresolved symbol
+      const resolved_func = resolution_results.resolved_functions.get(call);
+      const to = resolved_func
+        ? function_symbol(to_symbol_name(resolved_func.name), resolved_func.location)
+        : function_symbol(to_symbol_name(call.callee), call.location);
 
       edges.push({
-        from: from as SymbolId,
-        to: to as SymbolId,
+        from: from,
+        to: to,
         call: call,
-        count: 1,
       });
     }
 
     // Method calls
     for (const call of analysis.method_calls) {
-      const from = function_symbol(
-        analysis.file_path,
-        (call.caller as string) || SPECIAL_SYMBOLS.MODULE
-      );
+      const from = call.caller
+        ? function_symbol(to_symbol_name(call.caller), call.location)
+        : function_symbol(to_symbol_name("<module>"), call.location);
 
-      // Use resolved symbol if available
-      const to = map_get_or_default(
-        resolution_results.resolved_methods,
-        call.location,
-        method_symbol(
-          analysis.file_path,
-          call.receiver as string,
-          call.method_name as string,
-          call.is_static
-        )
-      );
+      // Get resolved method or create unresolved symbol
+      const resolved_method = resolution_results.resolved_methods.get(call);
+      const to = resolved_method
+        ? resolved_method.symbol  // Use the symbol directly from the resolved definition
+        : method_symbol(call.method_name, call.receiver || "", call.location);
 
       edges.push({
-        from: from as SymbolId,
-        to: to as SymbolId,
+        from: from,
+        to: to,
         call: call,
-        count: 1,
       });
     }
   }
@@ -193,10 +155,10 @@ export function create_call_graph(
   }
 
   return {
-    functions,
+    nodes: functions,
     edges,
-    entry_points,
-    call_chains,
+    entry_points: Array.from(entry_points),
+    call_chains: call_chains.chains,
   };
 }
 
@@ -306,30 +268,30 @@ function build_call_graph(
       // Function call: caller -> callee
       if (call.caller === "<module>") {
         caller = function_symbol(
-          call.location.file_path,
-          "<module>"
-        ) as SymbolId;
+          to_symbol_name("<module>"),
+          call.location
+        );
       } else {
         // Convert CallerName to SymbolId - assume it's a function name
         caller = function_symbol(
-          call.location.file_path,
-          call.caller as string
-        ) as SymbolId;
+          to_symbol_name(call.caller),
+          call.location
+        );
       }
       callee = call.callee;
     } else if (is_method_call_info(call)) {
       // Method call: caller -> method_name (on receiver)
       if (call.caller === "<module>") {
         caller = function_symbol(
-          call.location.file_path,
-          "<module>"
-        ) as SymbolId;
+          to_symbol_name("<module>"),
+          call.location
+        );
       } else {
         // Convert CallerName to SymbolId
         caller = function_symbol(
-          call.location.file_path,
-          call.caller as string
-        ) as SymbolId;
+          to_symbol_name(call.caller),
+          call.location
+        );
       }
       callee = call.method_name;
     } else if (is_constructor_call_info(call)) {
@@ -447,7 +409,13 @@ function create_chain(
   const entry_point =
     path.length > 0
       ? path[0].symbol_id
-      : (function_symbol("", "<unknown>") as SymbolId);
+      : function_symbol(to_symbol_name("<unknown>"), {
+          file_path: "" as FilePath,
+          line: 0,
+          column: 0,
+          end_line: 0,
+          end_column: 0,
+        });
   const max_depth = path.length > 0 ? Math.max(...path.map((n) => n.depth)) : 0;
   const execution_path = path.map((node) => node.symbol_id);
 
@@ -472,11 +440,8 @@ function find_call_info(
     // Check if this call matches our caller/callee pair
     const callCaller =
       call.caller === "<module>"
-        ? (function_symbol(call.location.file_path, "<module>") as SymbolId)
-        : (function_symbol(
-            call.location.file_path,
-            call.caller as string
-          ) as SymbolId);
+        ? function_symbol(to_symbol_name("<module>"), call.location)
+        : function_symbol(to_symbol_name(call.caller), call.location);
 
     if (callCaller === caller) {
       if (call.kind === "function" && call.callee === callee) {
@@ -488,9 +453,9 @@ function find_call_info(
     }
     if (call.kind === "constructor" && call.assigned_to === caller) {
       const constructorSymbol = class_symbol(
-        call.location.file_path,
-        call.class_name as string
-      ) as SymbolId;
+        call.class_name,
+        call.location
+      );
       if (constructorSymbol === callee) {
         return call;
       }

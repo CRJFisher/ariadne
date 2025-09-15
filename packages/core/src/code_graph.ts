@@ -247,7 +247,7 @@ export async function generate_code_graph(
   );
 
   console.log(
-    `Resolved ${resolution_results.resolved_calls.size} function calls`
+    `Resolved ${resolution_results.resolved_functions.size} function calls`
   );
   console.log(
     `Resolved ${resolution_results.resolved_methods.size} method calls`
@@ -255,7 +255,7 @@ export async function generate_code_graph(
   console.log(
     `Resolved ${resolution_results.resolved_constructors.size} constructor calls`
   );
-  console.log(`Unresolved references: ${resolution_results.unresolved.length}`);
+  console.log(`Unresolved references: ${resolution_results.unresolved_calls.length}`);
 
   // CALL GRAPH - Build from enriched analyses using resolved symbols
   const calls = create_call_graph(enriched_analyses, resolution_results);
