@@ -1,13 +1,6 @@
 import { Location } from "./common";
-import {
-  ClassName,
-  FilePath,
-  MethodName,
-  PropertyName,
-  QualifiedName,
-  InterfaceName,
-} from "./aliases";
-import { SymbolId } from "./symbol_utils";
+import { FilePath, QualifiedName, TypeString } from "./aliases";
+import { SymbolId } from "./symbols";
 
 /**
  * Enhanced ClassNode with computed fields for hierarchy processing
@@ -17,7 +10,7 @@ import { SymbolId } from "./symbol_utils";
  */
 export interface ClassNode {
   // Core identification
-  readonly name: ClassName;
+  readonly symbol: SymbolId;
   readonly file_path: FilePath;
   readonly location: Location;
 
@@ -47,7 +40,7 @@ export interface ClassNode {
 }
 
 export interface MethodNode {
-  readonly name: MethodName;
+  readonly symbol: SymbolId;
   readonly location: Location;
   readonly is_override: boolean;
   readonly overrides?: QualifiedName;
@@ -58,9 +51,9 @@ export interface MethodNode {
 }
 
 export interface PropertyNode {
-  readonly name: PropertyName;
+  readonly name: SymbolId;
   readonly location: Location;
-  readonly type?: string;
+  readonly type?: TypeString;
   readonly visibility: "public" | "private" | "protected";
   readonly is_static: boolean;
   readonly is_readonly: boolean;

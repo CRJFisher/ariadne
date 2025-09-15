@@ -14,7 +14,7 @@ import {
   ModulePath,
   ExportName,
   ScopeTree,
-  ScopeId
+  ScopeId,
 } from "@ariadnejs/types";
 
 describe("Type Registry (Immutable)", () => {
@@ -29,7 +29,13 @@ describe("Type Registry (Immutable)", () => {
           exports: [
             {
               symbol_name: "Class1",
-              location: { line: 60, column: 80, file_path: "/src/file1.ts" as FilePath, end_line: 80, end_column: 0 },
+              location: {
+                line: 60,
+                column: 80,
+                file_path: "/src/file1.ts" as FilePath,
+                end_line: 80,
+                end_column: 0,
+              },
               is_default: false,
               is_type_export: false,
               source: "/src/file1.ts" as ModulePath,
@@ -39,8 +45,14 @@ describe("Type Registry (Immutable)", () => {
           functions: [],
           classes: [
             {
-              name: "Class1",
-              location: { line: 0, column: 50, file_path: "/src/file1.ts" as FilePath, end_line: 50, end_column: 0 },
+              symbol: "Class1",
+              location: {
+                line: 0,
+                column: 50,
+                file_path: "/src/file1.ts" as FilePath,
+                end_line: 50,
+                end_column: 0,
+              },
               methods: [],
               properties: [],
               is_exported: true,
@@ -50,7 +62,11 @@ describe("Type Registry (Immutable)", () => {
           function_calls: [],
           method_calls: [],
           constructor_calls: [],
-          scopes: { root_id: "root" as ScopeId, nodes: new Map(), edges: [] } as ScopeTree,
+          scopes: {
+            root_id: "root" as ScopeId,
+            nodes: new Map(),
+            edges: [],
+          } as ScopeTree,
           type_info: new Map(),
           errors: [],
         },
@@ -63,8 +79,14 @@ describe("Type Registry (Immutable)", () => {
           functions: [],
           classes: [
             {
-              name: "Class2",
-              location: { line: 0, column: 40, file_path: "/src/file2.ts" as FilePath, end_line: 40, end_column: 0 },
+              symbol: "Class2",
+              location: {
+                line: 0,
+                column: 40,
+                file_path: "/src/file2.ts" as FilePath,
+                end_line: 40,
+                end_column: 0,
+              },
               methods: [],
               properties: [],
               is_exported: false,
@@ -76,7 +98,11 @@ describe("Type Registry (Immutable)", () => {
           function_calls: [],
           method_calls: [],
           constructor_calls: [],
-          scopes: { root_id: "root" as ScopeId, nodes: new Map(), edges: [] } as ScopeTree,
+          scopes: {
+            root_id: "root" as ScopeId,
+            nodes: new Map(),
+            edges: [],
+          } as ScopeTree,
           type_info: new Map(),
           errors: [],
         },
@@ -123,7 +149,11 @@ describe("Type Registry (Immutable)", () => {
           function_calls: [],
           method_calls: [],
           constructor_calls: [],
-          scopes: { root_id: "root" as ScopeId, nodes: new Map(), edges: [] } as ScopeTree,
+          scopes: {
+            root_id: "root" as ScopeId,
+            nodes: new Map(),
+            edges: [],
+          } as ScopeTree,
           type_info: new Map(),
           errors: [],
         },
@@ -159,7 +189,13 @@ describe("Type Registry (Immutable)", () => {
           exports: [
             {
               symbol_name: "ExportedClass",
-              location: { line: 0, column: 30, file_path: "/src/source.ts" as FilePath, end_line: 30, end_column: 0 },
+              location: {
+                line: 0,
+                column: 30,
+                file_path: "/src/source.ts" as FilePath,
+                end_line: 30,
+                end_column: 0,
+              },
               is_default: false,
               is_type_export: false,
               source: "/src/source.ts" as ModulePath,
@@ -167,7 +203,13 @@ describe("Type Registry (Immutable)", () => {
             },
             {
               symbol_name: "OriginalName",
-              location: { line: 40, column: 60, file_path: "/src/source.ts" as FilePath, end_line: 60, end_column: 0 },
+              location: {
+                line: 40,
+                column: 60,
+                file_path: "/src/source.ts" as FilePath,
+                end_line: 60,
+                end_column: 0,
+              },
               is_default: false,
               is_type_export: false,
               source: "/src/source.ts" as ModulePath,
@@ -177,15 +219,27 @@ describe("Type Registry (Immutable)", () => {
           functions: [],
           classes: [
             {
-              name: "ExportedClass",
-              location: { line: 0, column: 50, file_path: "/src/source.ts" as FilePath, end_line: 50, end_column: 0 },
+              symbol: "ExportedClass",
+              location: {
+                line: 0,
+                column: 50,
+                file_path: "/src/source.ts" as FilePath,
+                end_line: 50,
+                end_column: 0,
+              },
               methods: [],
               properties: [],
               is_exported: true,
             },
             {
-              name: "OriginalName",
-              location: { line: 60, column: 110, file_path: "/src/source.ts" as FilePath, end_line: 110, end_column: 0 },
+              symbol: "OriginalName",
+              location: {
+                line: 60,
+                column: 110,
+                file_path: "/src/source.ts" as FilePath,
+                end_line: 110,
+                end_column: 0,
+              },
               methods: [],
               properties: [],
               is_exported: true,
@@ -195,13 +249,16 @@ describe("Type Registry (Immutable)", () => {
           function_calls: [],
           method_calls: [],
           constructor_calls: [],
-          scopes: { root_id: "root" as ScopeId, nodes: new Map(), edges: [] } as ScopeTree,
+          scopes: {
+            root_id: "root" as ScopeId,
+            nodes: new Map(),
+            edges: [],
+          } as ScopeTree,
           type_info: new Map(),
           errors: [],
         },
       ];
       registry = build_type_registry(analyses);
     });
-
   });
 });

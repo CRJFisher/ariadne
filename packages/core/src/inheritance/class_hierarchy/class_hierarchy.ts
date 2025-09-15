@@ -6,7 +6,6 @@
 
 import { SyntaxNode } from 'tree-sitter';
 import {
-  ClassNode,
   ClassHierarchy,
   InheritanceEdge,
   Language,
@@ -37,23 +36,11 @@ export interface ClassHierarchyContext {
 }
 
 /**
- * Bespoke handlers for language-specific features
- */
-export interface BespokeHandlers {
-  extract_trait_implementations?: (def: ClassDefinition, context: ClassHierarchyContext) => string[];
-  extract_metaclass?: (def: ClassDefinition, context: ClassHierarchyContext) => string | undefined;
-  detect_abstract_base?: (def: ClassDefinition, context: ClassHierarchyContext) => boolean;
-  extract_super_traits?: (def: ClassDefinition, context: ClassHierarchyContext) => string[];
-  post_process_node?: (node: ClassNode, def: ClassDefinition, context: ClassHierarchyContext) => void;
-}
-
-/**
  * Build class hierarchy using generic processing
  */
 export function build_generic_class_hierarchy(
   definitions: ClassDefinition[],
   contexts: Map<FilePath, ClassHierarchyContext>,
-  handlers: Map<Language, BespokeHandlers> = new Map()
 ): ClassHierarchy {
   // TODO: Implement using tree-sitter queries from class_hierarchy_queries/*.scm
   return {

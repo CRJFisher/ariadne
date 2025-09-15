@@ -3,16 +3,16 @@
  *
  * Provides a unified way to handle all identifiers in the codebase
  * using SymbolId as the single source of truth.
- * 
+ *
  * @module symbol_utils
  * @description This module provides factory functions and utilities for creating
  * and manipulating symbols throughout the codebase. All identifiers (variables,
  * functions, classes, methods, etc.) are represented using the SymbolId type.
- * 
+ *
  * @example
  * ```typescript
  * import { function_symbol, class_symbol, method_symbol } from '@ariadnejs/types';
- * 
+ *
  * // Create a function symbol
  * const funcId = function_symbol('processData', {
  *   file_path: 'src/utils.ts',
@@ -21,7 +21,7 @@
  *   end_line: 20,
  *   end_column: 1
  * });
- * 
+ *
  * // Create a class symbol
  * const classId = class_symbol('MyClass', 'src/classes.ts', {
  *   file_path: 'src/classes.ts',
@@ -30,7 +30,7 @@
  *   end_line: 50,
  *   end_column: 1
  * });
- * 
+ *
  * // Create a method symbol
  * const methodId = method_symbol('getValue', 'MyClass', {
  *   file_path: 'src/classes.ts',
@@ -44,53 +44,7 @@
 
 import { Location } from "./common";
 import { FilePath } from "./aliases";
-
-// ============================================================================
-// Core Symbol Types
-// ============================================================================
-
-export type SymbolId = string & { __brand: "SymbolId" }; // This is the encoded version of the Symbol object
-export type SymbolName = string & { __brand: "SymbolName" }; // This is the local identifier of the symbol
-
-/**
- * Symbol kinds represent the semantic type of a symbol
- */
-export type SymbolKind =
-  | "variable"
-  | "function"
-  | "class"
-  | "method"
-  | "property"
-  | "parameter"
-  | "type"
-  | "interface"
-  | "enum"
-  | "import"
-  | "export"
-  | "namespace"
-  | "module";
-
-/**
- * Structured representation of a symbol
- */
-export interface Symbol {
-  readonly kind: SymbolKind;
-  readonly name: SymbolName; // Local identifier
-  readonly qualifier?: SymbolName; // For nested symbols (e.g., Class.method)
-  readonly location: Location; // Source location
-}
-
-// ============================================================================
-// Symbol ID Format
-// ============================================================================
-
-/**
- * SymbolId format: "kind:scope:name[:qualifier]"
- * Examples:
- * - "variable:src/file.ts:myVar"
- * - "method:src/class.ts:MyClass:getValue"
- * - "function:src/utils.ts:processData"
- */
+import { SymbolDefinition, SymbolId, SymbolKind, SymbolName } from "./symbols";
 
 // ============================================================================
 // Core Conversion Functions
@@ -98,10 +52,10 @@ export interface Symbol {
 
 /**
  * Convert a Symbol to its string representation (SymbolId)
- * 
+ *
  * @param symbol - The Symbol object to convert
  * @returns A SymbolId string that uniquely identifies the symbol
- * 
+ *
  * @example
  * ```typescript
  * const symbol: Symbol = {
@@ -113,7 +67,7 @@ export interface Symbol {
  * // Returns: "function:src/utils.ts:10:0:20:1:processData"
  * ```
  */
-export function symbol_string(symbol: Symbol): SymbolId {
+export function symbol_string(symbol: SymbolDefinition): SymbolId {
   const parts = [
     symbol.kind,
     symbol.location.file_path,
@@ -123,19 +77,16 @@ export function symbol_string(symbol: Symbol): SymbolId {
     symbol.location.end_column,
     symbol.name,
   ];
-  if (symbol.qualifier) {
-    parts.push(symbol.qualifier);
-  }
   return parts.join(":") as SymbolId;
 }
 
 /**
  * Parse a SymbolId back into a Symbol structure
- * 
+ *
  * @param symbol_id - The SymbolId string to parse
  * @returns A Symbol object with all its components
  * @throws Error if the SymbolId format is invalid
- * 
+ *
  * @example
  * ```typescript
  * const symbolId = "function:src/utils.ts:10:0:20:1:processData" as SymbolId;
@@ -143,7 +94,7 @@ export function symbol_string(symbol: Symbol): SymbolId {
  * // Returns: { kind: 'function', name: 'processData', location: {...} }
  * ```
  */
-export function symbol_from_string(symbol_id: SymbolId): Symbol {
+export function symbol_from_string(symbol_id: SymbolId): SymbolDefinition {
   const parts = symbol_id.split(":");
 
   if (parts.length < 3) {
@@ -157,7 +108,7 @@ export function symbol_from_string(symbol_id: SymbolId): Symbol {
   const end_line = parts[4];
   const end_column = parts[5];
   const name = parts[6] as SymbolName;
-  const qualifier = parts.length > 7 ? parts[7] as SymbolName : undefined;
+  const qualifier = parts.length > 7 ? (parts[7] as SymbolName) : undefined;
 
   return {
     kind: kind as SymbolKind,
@@ -179,11 +130,11 @@ export function symbol_from_string(symbol_id: SymbolId): Symbol {
 
 /**
  * Create a variable symbol
- * 
+ *
  * @param name - The variable name
  * @param location - The source location where the variable is defined
  * @returns A SymbolId for the variable
- * 
+ *
  * @example
  * ```typescript
  * const varId = variable_symbol('myVar', {
@@ -195,10 +146,7 @@ export function symbol_from_string(symbol_id: SymbolId): Symbol {
  * });
  * ```
  */
-export function variable_symbol(
-  name: string,
-  location: Location
-): SymbolId {
+export function variable_symbol(name: string, location: Location): SymbolId {
   return symbol_string({
     kind: "variable",
     name: name as SymbolName,
@@ -208,11 +156,11 @@ export function variable_symbol(
 
 /**
  * Create a function symbol
- * 
+ *
  * @param name - The function name
  * @param location - The source location where the function is defined
  * @returns A SymbolId for the function
- * 
+ *
  * @example
  * ```typescript
  * const funcId = function_symbol('calculateTotal', {
@@ -225,7 +173,7 @@ export function variable_symbol(
  * ```
  */
 export function function_symbol(
-  name: string,
+  name: SymbolName,
   location: Location
 ): SymbolId {
   return symbol_string({
@@ -237,12 +185,12 @@ export function function_symbol(
 
 /**
  * Create a class symbol
- * 
+ *
  * @param name - The class name
  * @param scope - The file path scope (usually same as location.file_path)
  * @param location - The source location where the class is defined
  * @returns A SymbolId for the class
- * 
+ *
  * @example
  * ```typescript
  * const classId = class_symbol('UserService', 'src/services/user.ts', {
@@ -256,7 +204,6 @@ export function function_symbol(
  */
 export function class_symbol(
   name: string,
-  scope: FilePath,
   location: Location
 ): SymbolId {
   return symbol_string({
@@ -268,12 +215,12 @@ export function class_symbol(
 
 /**
  * Create a method symbol
- * 
+ *
  * @param method_name - The method name
  * @param class_name - The name of the class that contains this method
  * @param location - The source location where the method is defined
  * @returns A SymbolId for the method
- * 
+ *
  * @example
  * ```typescript
  * const methodId = method_symbol('getUserById', 'UserService', {
@@ -300,12 +247,12 @@ export function method_symbol(
 
 /**
  * Create a property symbol
- * 
+ *
  * @param property_name - The property name
  * @param class_name - The name of the class that contains this property
  * @param location - The source location where the property is defined
  * @returns A SymbolId for the property
- * 
+ *
  * @example
  * ```typescript
  * const propId = property_symbol('isActive', 'User', {
@@ -332,12 +279,12 @@ export function property_symbol(
 
 /**
  * Create a module symbol
- * 
+ *
  * @param name - The module name (often '<module>' for top-level)
  * @param file_path - The file path of the module
  * @param location - The source location of the module
  * @returns A SymbolId for the module
- * 
+ *
  * @example
  * ```typescript
  * const moduleId = module_symbol('<module>', 'src/index.ts', {
@@ -350,8 +297,8 @@ export function property_symbol(
  * ```
  */
 export function module_symbol(
-  name: SymbolName | string,
-  file_path: FilePath | string,
+  name: SymbolName,
+  file_path: FilePath,
   location: Location
 ): SymbolId {
   // Ensure location has the correct file_path
@@ -365,12 +312,12 @@ export function module_symbol(
 
 /**
  * Create a parameter symbol
- * 
+ *
  * @param param_name - The parameter name
  * @param function_name - The name of the function that contains this parameter
  * @param location - The source location where the parameter is defined
  * @returns A SymbolId for the parameter
- * 
+ *
  * @example
  * ```typescript
  * const paramId = parameter_symbol('userId', 'getUserById', {
@@ -400,7 +347,6 @@ export function parameter_symbol(
  */
 export function interface_symbol(
   name: string,
-  scope: FilePath,
   location: Location
 ): SymbolId {
   return symbol_string({
@@ -415,7 +361,6 @@ export function interface_symbol(
  */
 export function type_symbol(
   name: string,
-  scope: FilePath,
   location: Location
 ): SymbolId {
   return symbol_string({
@@ -540,7 +485,7 @@ export function to_symbol_array(
   scope: FilePath,
   location: Location
 ): SymbolId[] {
-  return names.map(name => 
+  return names.map((name) =>
     symbol_string({
       kind,
       name: name as SymbolName,
@@ -553,7 +498,7 @@ export function to_symbol_array(
  * Extract names from SymbolId array for display
  */
 export function extract_names(symbols: readonly SymbolId[]): SymbolName[] {
-  return symbols.map(id => symbol_from_string(id).name);
+  return symbols.map((id) => symbol_from_string(id).name);
 }
 
 /**
@@ -564,9 +509,7 @@ export function class_names_to_symbols(
   scope: FilePath,
   location: Location
 ): SymbolId[] {
-  return names.map(name => 
-    class_symbol(name, scope, location)
-  );
+  return names.map((name) => class_symbol(name, location));
 }
 
 /**
@@ -577,9 +520,7 @@ export function interface_names_to_symbols(
   scope: FilePath,
   location: Location
 ): SymbolId[] {
-  return names.map(name => 
-    interface_symbol(name, scope, location)
-  );
+  return names.map((name) => interface_symbol(name, location));
 }
 
 /**
@@ -590,9 +531,7 @@ export function type_names_to_symbols(
   scope: FilePath,
   location: Location
 ): SymbolId[] {
-  return names.map(name =>
-    type_symbol(name, scope, location)
-  );
+  return names.map((name) => type_symbol(name, location));
 }
 
 // ============================================================================

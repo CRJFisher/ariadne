@@ -6,8 +6,6 @@ import { describe, it, expect } from 'vitest';
 import {
   SymbolId,
   SymbolName,
-  SymbolKind,
-  Symbol,
   symbol_string,
   symbol_from_string,
   variable_symbol,
@@ -37,7 +35,7 @@ describe('Symbol Utilities', () => {
 
   describe('symbol_string and symbol_from_string', () => {
     it('should convert Symbol to SymbolId and back', () => {
-      const symbol: Symbol = {
+      const symbol: SymbolDefinition = {
         kind: 'function',
         name: 'processData' as SymbolName,
         location: test_location
@@ -52,7 +50,7 @@ describe('Symbol Utilities', () => {
     });
 
     it('should handle qualified symbols (methods)', () => {
-      const symbol: Symbol = {
+      const symbol: SymbolDefinition = {
         kind: 'method',
         name: 'getValue' as SymbolName,
         qualifier: 'MyClass' as SymbolName,

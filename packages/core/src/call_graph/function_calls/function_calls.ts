@@ -40,13 +40,3 @@ export function find_function_calls(
   // TODO: Implement using tree-sitter queries from function_call_queries/*.scm
   return [];
 }
-
-/**
- * Generic function call processor
- */
-export function find_function_calls_generic(
-  context: FunctionCallContext
-): CallInfo[] {
-  // TODO: Implement using tree-sitter queries from function_call_queries/*.scm
-  return [];
-}

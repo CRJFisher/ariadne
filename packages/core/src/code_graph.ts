@@ -10,45 +10,25 @@ import { build_type_registry } from "./type_analysis/type_registry/type_registry
 import { build_type_index } from "./type_analysis/type_tracking";
 import { resolve_namespaces_across_files } from "./import_export/namespace_resolution";
 import {
-  Language,
-  // Main types
   CodeGraph,
   CodeGraphOptions,
   FilePath,
-  // Core types from reorganized files
   Import,
-  Export,
-  CallInfo,
-  SymbolDefinition,
-  ScopeNode,
-  TypeDefinition,
-  ModulePath,
-  SymbolId,
   FileAnalysis,
 } from "@ariadnejs/types";
-import {
-  build_class_hierarchy_from_analyses,
-} from "./inheritance/class_hierarchy";
-import {
-  create_analysis_cache,
-} from "./cache/analysis_cache";
-import {
-  scan_files,
-  read_and_parse_file,
-} from "./project/file_scanner";
+import { build_class_hierarchy_from_analyses } from "./inheritance/class_hierarchy";
+import { create_analysis_cache } from "./cache/analysis_cache";
+import { scan_files, read_and_parse_file } from "./project/file_scanner";
 import {
   enrich_all_calls,
   EnrichmentContext,
   EnrichmentOptions,
-} from "./call_graph/enrichment";
+} from "./call_graph/call_enrichment";
 import { create_call_graph } from "./call_graph/call_chain_analysis";
-import {
-  build_symbol_table,
-  build_symbol_index,
-} from "./scope_analysis/symbol_resolution";
-import { resolve_all_symbols } from "./scope_analysis/symbol_resolution";
+import { resolve_references_to_symbols } from "./scope_analysis/symbol_resolution";
 import { resolve_generics_across_files } from "./type_analysis/generic_resolution";
 import { propagate_types_across_files } from "./type_analysis/type_propagation";
+import { register_symbols } from "./scope_analysis/symbol_resolution/global_symbol_table";
 
 /**
  * Resolve namespace imports and their members across all files
@@ -83,7 +63,7 @@ export async function generate_code_graph(
   const cache = create_analysis_cache({
     enabled: options.cache?.enabled ?? false,
     ttl: options.cache?.ttl,
-    maxSize: options.cache?.maxSize,
+    max_size: options.cache?.max_size,
   });
 
   // FILE SCAN
@@ -103,7 +83,10 @@ export async function generate_code_graph(
     const file = await read_and_parse_file(file_path);
 
     // Check cache first
-    const cached_analysis = cache.getCachedAnalysis(file_path, file.source_code);
+    const cached_analysis = cache.get_cached_analysis(
+      file_path,
+      file.source_code
+    );
     if (cached_analysis) {
       console.debug(`Cache hit for ${file_path}`);
       // Still need to return with tree for compatibility
@@ -113,7 +96,7 @@ export async function generate_code_graph(
 
     // Analyze and cache result
     const result = await analyze_file(file);
-    cache.cacheAnalysis(file_path, file.source_code, result.analysis);
+    cache.cache_analysis(file_path, file.source_code, result.analysis);
     return result;
   });
 
@@ -136,17 +119,6 @@ export async function generate_code_graph(
     file_name_to_tree
   );
 
-  // TODO: LAYER 9 - Global Call Resolution
-  // After class hierarchy and type registry are built (Layers 6-7),
-  // resolve method and constructor calls using global information:
-  // const { resolve_all_calls } = await import('./call_graph/call_resolution');
-  // const resolved = resolve_all_calls(
-  //   all_method_calls,
-  //   all_constructor_calls,
-  //   classes,
-  //   type_registry
-  // );
-
   // METHOD HIERARCHY ENRICHMENT (task 11.62.5)
   // Enrich method calls with class hierarchy information
 
@@ -154,7 +126,7 @@ export async function generate_code_graph(
   // Validate and enrich constructor calls with type registry
 
   // Create imports map for cross-file resolution
-  const imports_by_file = new Map<FilePath, Import[]>();
+  const imports_by_file = new Map<FilePath, readonly Import[]>();
   for (const analysis of analyses) {
     // Imports are already of type Import[] from file_analyzer
     imports_by_file.set(analysis.file_path, analysis.imports);
@@ -165,9 +137,9 @@ export async function generate_code_graph(
 
   // FILE ANALYSIS - Build files map from enriched analyses
   const files = new Map<FilePath, FileAnalysis>();
-  const language_stats = new Map<Language, number>();
-
+  
   // TODO: why was this here before? It's set with FileAnalysis later...
+  // const language_stats = new Map<Language, number>();
   // for (const analysis of analyses) {
   //   files.set(analysis.file_path, analysis);
   //   const count = language_stats.get(analysis.language) || 0;
@@ -251,8 +223,16 @@ export async function generate_code_graph(
     files.set(analysis.file_path, analysis);
   }
 
+  // TODO: Aggregate global scopes across files
+  // Files with "global" scope type (e.g., C files, browser scripts) share a namespace.
+  // We should merge their scope trees into a single global scope before symbol resolution.
+  // This would involve:
+  // 1. Identify all files with root scope type "global"
+  // 2. Create a unified global scope that contains all their symbols
+  // 3. Update symbol resolution to handle cross-file global symbols
+
   // LAYER 8: GLOBAL SYMBOL RESOLUTION - Build global symbol table and resolve references
-  const global_symbols = build_symbol_table({
+  const global_symbols = register_symbols({
     analyses: enriched_analyses,
     module_graph: modules,
     type_registry,
@@ -261,7 +241,7 @@ export async function generate_code_graph(
   });
 
   // LAYER 9: SYMBOL RESOLUTION - Resolve all references to their definitions
-  const resolution_results = resolve_all_symbols(
+  const resolution_results = resolve_references_to_symbols(
     enriched_analyses,
     global_symbols
   );
@@ -281,23 +261,13 @@ export async function generate_code_graph(
   const calls = create_call_graph(enriched_analyses, resolution_results);
 
   // TYPE INDEX
-  const types = build_type_index(enriched_analyses);
+  // const types = build_type_index(enriched_analyses);
 
   // SYMBOL INDEX - Enhanced with global symbol table
-  const symbols = build_symbol_index(enriched_analyses, global_symbols);
+  // const symbols = build_symbol_index(enriched_analyses, global_symbols);
 
   return {
-    files,
-    modules,
-    calls,
-    classes: class_hierarchy,
-    types,
-    symbols,
-    metadata: {
-      root_path: options.root_path,
-      file_count: file_paths.length,
-      analysis_time: Date.now() - start_time,
-      language_stats,
-    },
+    // symbols,
+    call_graph: calls,
   };
 }

@@ -3,7 +3,6 @@ export * from "./immutable";
 
 // Export all aliases (fundamental branded types)
 export * from "./aliases";
-export { build_qualified_name, parse_qualified_name } from "./aliases";
 
 // Export branded types from their new locations
 export {
@@ -25,70 +24,20 @@ export {
   to_receiver_name,
 } from "./calls";
 
-export {
-  ModulePath,
-  NamespaceName,
-  build_module_path,
-  parse_module_path,
-} from "./import_export";
-
-export {
-  ScopePath,
-  ResolutionPath,
-  Visibility,
-  ResolutionReason,
-  Scope,
-  is_scope_path,
-  is_visibility,
-  is_resolution_reason,
-  to_scope_path,
-  build_scope_path,
-  parse_scope_path,
-  build_resolution_path,
-  parse_resolution_path,
-} from "./symbol_scope";
+export { ModulePath, NamespaceName } from "./import_export";
 
 export {
   TypeExpression,
-  TypeConstraintExpression,
-  DefaultValue,
-  Expression,
-  InitialValue,
-  TypeModifier,
-  is_type_expression,
-  is_type_constraint_expression,
-  is_default_value,
-  is_expression,
-  to_type_expression,
-  to_type_constraint_expression,
-  to_default_value,
-  to_expression,
-  to_initial_value,
-  build_type_expression,
-  parse_type_expression,
   TrackedType,
-  create_tracked_type,
 } from "./type_analysis";
 
 // Export from common, excluding types that conflict with branded_types
-export {
-  Location,
-  location_contains,
-  unknown_location,
-  FunctionSignature,
-  ParameterType,
-  TypeParameter,
-  Language,
-} from "./common";
+export { Location, Language } from "./common";
 
 export * from "./codegraph";
 
 // Export symbol utilities
 export {
-  SymbolId,
-  SymbolName,
-  SymbolKind,
-  Symbol,
   symbol_string,
   symbol_from_string,
   is_symbol,
@@ -196,19 +145,30 @@ export {
 
 // Export from symbols
 export {
+  SymbolId,
+  SymbolName,
+  SymbolKind,
+  SymbolVisibility,
   SymbolDefinition,
-  Usage,
-  ResolvedSymbol as ResolvedSymbolDef,
-  SymbolScope,
-  SymbolIndex as SymbolIndexDef,
+  SymbolUsage,
+  SymbolIndex,
 } from "./symbols";
 
 // Export from scopes
 export {
   ScopeType,
-  ScopeSymbol,
   ScopeNode,
   ScopeTree,
+  RootScopeNode,
+  ChildScopeNode,
+  ScopeId,
+  global_scope,
+  module_scope,
+  function_scope,
+  class_scope,
+  block_scope,
+  parameter_scope,
+  local_scope,
 } from "./scopes";
 export * from "./definitions";
 export * from "./errors";
@@ -220,9 +180,9 @@ export * from "./map_utils";
 export * from "./type_guards";
 
 // Export type validation utilities
-export {
-  // Core validation functions
-  validate_location,
-  validate_language,
-  validate_ast_node,
-} from "./type_validation";
+// export {
+//   // Core validation functions
+//   validate_location,
+//   validate_language,
+//   validate_ast_node,
+// } from "./type_validation";

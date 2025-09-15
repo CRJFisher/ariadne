@@ -7,7 +7,7 @@
 
 import { Location, Language } from "./common";
 import { FilePath } from "./aliases";
-import { SymbolName } from "./symbol_utils";
+import { SymbolName } from "./symbols";
 
 // ============================================================================
 // Core AST Types
@@ -84,7 +84,7 @@ export interface Resolution<T> {
   readonly resolved: T | undefined;
   readonly confidence: ResolutionConfidence;
   readonly reason: QueryResolutionReason;
-  readonly resolution_path: readonly FilePath[]; // Required - defaults to empty array when no files traversed
+  readonly resolution_path: readonly FilePath[];
 }
 
 /**
@@ -128,8 +128,6 @@ export type QueryErrorKind =
 // Collection Types
 // ============================================================================
 
-
-
 // ============================================================================
 // Type Guards
 // ============================================================================
@@ -148,7 +146,8 @@ export function is_semantic_node(value: unknown): value is SemanticNode {
   return (
     is_ast_node(value) &&
     (!("name" in value) || typeof (value as any).name === "string") &&
-    ("modifiers" in value && Array.isArray((value as any).modifiers))
+    "modifiers" in value &&
+    Array.isArray((value as any).modifiers)
   );
 }
 
@@ -195,7 +194,6 @@ export function is_query_error(value: unknown): value is QueryError {
     typeof (value as any).message === "string"
   );
 }
-
 
 // ============================================================================
 // Utility Functions

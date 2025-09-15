@@ -1,12 +1,8 @@
 import { Location } from "./common";
-import {
-  FilePath,
-  ImportName,
-  ExportName,
-} from "./aliases";
+import { FilePath, ImportName, ExportName } from "./aliases";
 import { ModulePath, NamespaceName } from "./import_export";
-import { SymbolName, SymbolId } from "./symbol_utils";
-
+import { SymbolId } from "./symbols";
+import { SymbolName } from "./symbols";
 
 export interface ModuleNode {
   readonly path: FilePath;

@@ -6,7 +6,7 @@
 import { Location } from "./common";
 import { FilePath, ClassName } from "./aliases";
 import { ModulePath } from "./import_export";
-import { SymbolId } from "./symbol_utils";
+import { SymbolId } from "./symbols";
 import { SemanticNode, Resolution, resolve_failed } from "./query";
 
 // ============================================================================
@@ -118,12 +118,11 @@ interface BaseCallInfo extends SemanticNode {
 export interface ResolvedTarget {
   readonly symbol_id: SymbolId;
   readonly definition_location: Location;
-  readonly file_path: FilePath;
   readonly is_local: boolean;
   readonly is_imported: boolean;
-  readonly source_module: ModulePath; // Required - defaults to current module when not imported
-  readonly import_alias: SymbolId; // Required - defaults to symbol_id when no alias
-  readonly original_name: SymbolId; // Required - defaults to symbol_id when not aliased
+  readonly source_module?: ModulePath;
+  readonly import_alias?: SymbolId;
+  readonly original_name?: SymbolId;
 }
 
 /**
@@ -137,9 +136,7 @@ export type CallInfo = FunctionCall | MethodCall | ConstructorCall;
 export interface FunctionCall extends BaseCallInfo {
   readonly kind: "function";
   readonly callee: SymbolId; // Function being called
-  readonly is_macro_call: boolean; // Rust macros
-  readonly is_in_comprehension: boolean; // Python comprehensions
-  readonly resolved: Resolution<ResolvedTarget>; // Required - defaults to failed resolution when not resolved
+  readonly resolved?: Resolution<ResolvedTarget>;
 }
 
 /**
@@ -151,11 +148,11 @@ export interface MethodCall extends BaseCallInfo {
   readonly receiver: SymbolId; // Object receiving the call
   readonly is_static: boolean; // Static vs instance method
   readonly is_chained: boolean; // Part of method chain
-  readonly receiver_type: Resolution<{
+  readonly receiver_type?: Resolution<{
     readonly type_name: ClassName;
     readonly type_kind: ResolvedTypeKind;
-  }>; // Defaults to unresolved with "unknown" type
-  readonly resolved: Resolution<ResolvedTarget>; // Required - defaults to failed resolution when not resolved
+  }>;
+  readonly resolved?: Resolution<ResolvedTarget>;
 }
 
 /**
@@ -167,7 +164,7 @@ export interface ConstructorCall extends BaseCallInfo {
   readonly is_new_expression: boolean; // Uses 'new' keyword
   readonly is_factory: boolean; // Factory pattern
   readonly assigned_to: SymbolId; // Defaults to anonymous symbol when not assigned
-  readonly resolved: Resolution<ResolvedTarget>; // Required - defaults to failed resolution when not resolved
+  readonly resolved?: Resolution<ResolvedTarget>;
 }
 
 // ============================================================================
@@ -240,142 +237,4 @@ export function is_call_info(value: unknown): value is CallInfo {
     default:
       return false;
   }
-}
-
-// ============================================================================
-// Utility Functions
-// ============================================================================
-
-/**
- * Get the target name from any call type
- */
-export function get_call_target(call: CallInfo): string {
-  switch (call.kind) {
-    case "function":
-      return call.callee;
-    case "method":
-      return `${call.receiver}.${call.method_name}`;
-    case "constructor":
-      return call.class_name;
-  }
-}
-
-/**
- * Check if a call is resolved with high confidence
- */
-export function is_high_confidence_call(call: CallInfo): boolean {
-  return call.resolved.confidence === "high";
-}
-
-/**
- * Get the resolved symbol ID if available
- */
-export function get_resolved_symbol_id(call: CallInfo): SymbolId | undefined {
-  return call.resolved.resolved?.symbol_id;
-}
-
-/**
- * Check if a call is to an imported symbol
- */
-export function is_imported_call(call: CallInfo): boolean {
-  return call.resolved.resolved?.is_imported === true;
-}
-
-/**
- * Create a function call
- */
-export function create_function_call(
-  caller: CallerContext,
-  callee: SymbolId,
-  location: Location,
-  language: "javascript" | "typescript" | "python" | "rust",
-  options?: Partial<FunctionCall>
-): FunctionCall {
-  return {
-    kind: "function",
-    caller,
-    callee,
-    location,
-    language,
-    node_type: "call_expression",
-    arguments_count: 0,
-    is_async: false,
-    is_dynamic: false,
-    is_macro_call: false,
-    is_in_comprehension: false,
-    modifiers: [], // Always provide default empty array for non-nullable field
-    // Required fields with defaults
-    resolved: resolve_failed("not_found"),
-    ...options,
-  };
-}
-
-/**
- * Create a method call
- */
-export function create_method_call(
-  caller: CallerContext,
-  receiver: SymbolId,
-  method_name: SymbolId,
-  location: Location,
-  language: "javascript" | "typescript" | "python" | "rust",
-  options?: Partial<MethodCall>
-): MethodCall {
-  return {
-    kind: "method",
-    caller,
-    receiver,
-    method_name,
-    location,
-    language,
-    node_type: "member_expression",
-    arguments_count: 0,
-    is_static: false,
-    is_chained: false,
-    is_async: false,
-    is_dynamic: false,
-    modifiers: [], // Always provide default empty array for non-nullable field
-    // Required fields with defaults
-    receiver_type: {
-      resolved: {
-        type_name: "unknown" as ClassName,
-        type_kind: "unknown" as ResolvedTypeKind
-      },
-      confidence: "low",
-      reason: "not_found",
-      resolution_path: []
-    },
-    resolved: resolve_failed("not_found"),
-    ...options,
-  };
-}
-
-/**
- * Create a constructor call
- */
-export function create_constructor_call(
-  caller: CallerContext,
-  class_name: ClassName,
-  location: Location,
-  language: "javascript" | "typescript" | "python" | "rust",
-  options?: Partial<ConstructorCall>
-): ConstructorCall {
-  return {
-    kind: "constructor",
-    caller,
-    class_name,
-    location,
-    language,
-    node_type: "new_expression",
-    arguments_count: 0,
-    is_new_expression: language === "javascript" || language === "typescript",
-    is_factory: false,
-    is_async: false,
-    is_dynamic: false,
-    modifiers: [], // Always provide default empty array for non-nullable field
-    // Required fields with defaults
-    assigned_to: `anonymous_${Date.now()}` as SymbolId,
-    resolved: resolve_failed("not_found"),
-    ...options,
-  };
 }

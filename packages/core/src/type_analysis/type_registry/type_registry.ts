@@ -12,32 +12,15 @@ import {
   TypeAliasDefinition,
   TypeDefinition,
   FilePath,
-  TypeName,
   QualifiedName,
   TypeKind,
   FileAnalysis,
   SymbolId,
+  SymbolName,
+  TypeIndex,
 } from "@ariadnejs/types";
 
-export interface TypeRegistry {
-  // All registered types by fully qualified name (readonly)
-  readonly types: ReadonlyMap<QualifiedName, TypeDefinition>;
 
-  // Types organized by file (readonly)
-  readonly files: ReadonlyMap<FilePath, ReadonlySet<QualifiedName>>;
-
-  // Exported types by module path (readonly)
-  readonly exports: ReadonlyMap<FilePath, ReadonlyMap<string, QualifiedName>>; // module -> export_name -> type_name
-
-  // Type aliases mapping (readonly)
-  readonly aliases: ReadonlyMap<SymbolId, QualifiedName>; // alias -> actual_type
-
-  // Built-in types per language (readonly)
-  readonly builtins: ReadonlyMap<Language, ReadonlySet<TypeName>>;
-
-  // Import resolution cache (readonly)
-  readonly import_cache: ReadonlyMap<string, QualifiedName>; // "file#import_name" -> resolved_type
-}
 
 /**
  * Build an immutable type registry from file analyses
@@ -52,8 +35,8 @@ export interface TypeRegistry {
 
 export function build_type_registry(
   file_analyses: FileAnalysis[]
-): TypeRegistry {
-  // Create mutable builder
+): TypeIndex {
+  // Create mutable builder // TODO: remove this builder pattern and use immutable structure created at the end of the function
   const builder: MutableTypeRegistry = {
     types: new Map(),
     files: new Map(),
@@ -72,10 +55,7 @@ export function build_type_registry(
     if (analysis.classes) {
       for (const class_def of analysis.classes) {
         const is_exported =
-          analysis.exports?.some(
-            (e) =>
-              e.symbol_name === class_def.name
-          ) ?? false;
+          analysis.exports?.some((e) => e.name === class_def.symbol) ?? false;
         register_class(builder, class_def, analysis.file_path, is_exported);
       }
     }
@@ -85,11 +65,14 @@ export function build_type_registry(
     if (interfaces) {
       for (const interface_def of interfaces) {
         const is_exported =
-          analysis.exports?.some(
-            (e) =>
-              e.symbol_name === interface_def.name
-          ) ?? false; 
-        register_interface(builder, interface_def, analysis.file_path, is_exported);
+          analysis.exports?.some((e) => e.symbol_name === interface_def.name) ??
+          false;
+        register_interface(
+          builder,
+          interface_def,
+          analysis.file_path,
+          is_exported
+        );
       }
     }
 
@@ -98,24 +81,24 @@ export function build_type_registry(
     if (enums) {
       for (const enum_def of enums) {
         const is_exported =
-          analysis.exports?.some(
-            (e) =>
-              e.symbol_name === enum_def.name
-          ) ?? false;
+          analysis.exports?.some((e) => e.symbol_name === enum_def.name) ??
+          false;
         register_enum(builder, enum_def, analysis.file_path, is_exported);
       }
     }
 
-    // Register type aliases (if available in FileAnalysis)
-    const type_aliases = (analysis as any).type_aliases;
+    const type_aliases = analysis.type_aliases;
     if (type_aliases) {
       for (const type_alias of type_aliases) {
         const is_exported =
-          analysis.exports?.some(
-            (e) =>
-              e.symbol_name === type_alias.name
-          ) ?? false;
-        register_type_alias(builder, type_alias, analysis.file_path, is_exported);
+          analysis.exports?.some((e) => e.symbol_name === type_alias.name) ??
+          false;
+        register_type_alias(
+          builder,
+          type_alias,
+          analysis.file_path,
+          is_exported
+        );
       }
     }
 
@@ -124,10 +107,8 @@ export function build_type_registry(
     if (structs) {
       for (const struct_def of structs) {
         const is_exported =
-          analysis.exports?.some(
-            (e) =>
-              e.symbol_name === struct_def.name
-          ) ?? false;
+          analysis.exports?.some((e) => e.symbol_name === struct_def.name) ??
+          false;
         register_struct(builder, struct_def, analysis.file_path, is_exported);
       }
     }
@@ -159,15 +140,15 @@ export function register_struct(
 ): void {
   // Build members map first
   const members = new Map();
-  
+
   // Add constructor/new method to members if it exists
   if (struct_def.methods) {
     for (const method of struct_def.methods) {
-      if (method.name === 'new' || method.name === 'constructor') {
+      if (method.name === "new" || method.name === "constructor") {
         members.set(method.name, {
           name: method.name,
-          kind: 'constructor',
-          parameters: method.parameters
+          kind: "constructor",
+          parameters: method.parameters,
         } as any);
       }
     }
@@ -194,7 +175,7 @@ export function register_type_alias(
   export_name?: string
 ): void {
   const type_def: TypeDefinition = {
-    name: type_alias.name as TypeName,
+    name: type_alias.symbol as TypeName,
     location: type_alias.location,
     kind: TypeKind.TYPE,
     type_parameters: type_alias.generics?.map((g) => g.name as TypeName),
@@ -206,14 +187,20 @@ export function register_type_alias(
   // Also register as an alias if it's aliasing another type
   // The type field or type_expression should indicate what it's aliasing
   const aliased_type = (type_alias as any).type || type_alias.type_expression;
-  if (aliased_type && typeof aliased_type === 'string') {
+  if (aliased_type && typeof aliased_type === "string") {
     // Check if the aliased type is local to this file
-    const aliased_qualified = get_qualified_name(file_path, aliased_type as TypeName);
+    const aliased_qualified = get_qualified_name(
+      file_path,
+      aliased_type as TypeName
+    );
     if (registry.types.has(aliased_qualified)) {
-      registry.aliases.set(type_alias.name as TypeName, aliased_qualified);
+      registry.aliases.set(type_alias.symbol as TypeName, aliased_qualified);
     } else {
       // Might be a built-in or imported type - just use the type name
-      registry.aliases.set(type_alias.name as TypeName, aliased_type as QualifiedName);
+      registry.aliases.set(
+        type_alias.symbol as TypeName,
+        aliased_type as QualifiedName
+      );
     }
   }
 }
@@ -229,7 +216,7 @@ export function register_enum(
   export_name?: string
 ): void {
   const type_def: TypeDefinition = {
-    name: enum_def.name as TypeName,
+    name: enum_def.symbol as TypeName,
     location: enum_def.location,
     kind: TypeKind.ENUM,
     members: new Map(),
@@ -295,7 +282,7 @@ export function register_interface(
   export_name?: string
 ): void {
   const type_def: TypeDefinition = {
-    name: interface_def.name as TypeName,
+    name: interface_def.symbol as TypeName,
     location: interface_def.location,
     kind: TypeKind.INTERFACE,
     type_parameters: interface_def.generics?.map((g) => g.name as TypeName),
@@ -317,39 +304,40 @@ export function register_class(
   export_name?: string
 ): void {
   const members = new Map();
-  
+
   // Convert methods to members
   if (class_def.methods) {
     for (const method of class_def.methods) {
       // Identify constructor methods
-      const is_constructor = method.name === 'constructor' || 
-                          method.name === '__init__' || 
-                          method.name === 'new';
-      
+      const is_constructor =
+        method.name === "constructor" ||
+        method.name === "__init__" ||
+        method.name === "new";
+
       members.set(method.name, {
         name: method.name,
-        kind: is_constructor ? 'constructor' : 'method',
+        kind: is_constructor ? "constructor" : "method",
         parameters: method.parameters,
-        type: method.return_type
+        type: method.return_type,
       } as any);
     }
   }
-  
+
   // Convert properties to members
   if (class_def.properties) {
     for (const prop of class_def.properties) {
       members.set(prop.name, {
         name: prop.name,
-        kind: 'property',
+        kind: "property",
         type: prop.type,
         is_optional: false,
-        is_readonly: prop.is_readonly
+        is_readonly: prop.is_readonly,
       } as any);
     }
   }
-  
+
   const type_def: TypeDefinition = {
-    name: class_def.name as TypeName,
+    name: class_def.symbol as TypeName,
     location: class_def.location,
     kind: TypeKind.CLASS,
     type_parameters: class_def.generics?.map((g) => g.name as TypeName),
@@ -391,7 +379,13 @@ export function initialize_builtins(registry: MutableTypeRegistry): void {
   registry.builtins.set("javascript", js_builtins);
   registry.builtins.set(
     "typescript",
-    new Set([...js_builtins, "any", "unknown", "never", "void"]) as Set<TypeName>
+    new Set([
+      ...js_builtins,
+      "any",
+      "unknown",
+      "never",
+      "void",
+    ]) as Set<TypeName>
   );
 
   // Python built-ins

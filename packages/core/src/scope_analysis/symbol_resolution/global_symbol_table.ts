@@ -6,59 +6,29 @@
  */
 
 import {
-  SymbolId,
   FileAnalysis,
   ModuleGraph,
-  Language,
   Location,
   FunctionDefinition,
   VariableDeclaration,
   FilePath,
-  ImportName,
-  ExportName,
   ClassDefinition,
   MethodDefinition,
-  FileAnalysis,
+  Export,
+  Import,
+  SymbolDefinition,
+  SymbolId,
+  SymbolVisibility,
 } from "@ariadnejs/types";
 import { TypeRegistry } from "../../type_analysis/type_registry";
-
-/**
- * Symbol visibility levels
- */
-export enum SymbolVisibility {
-  PUBLIC = "public",
-  PRIVATE = "private",
-  PROTECTED = "protected",
-  INTERNAL = "internal",
-}
-
-/**
- * Symbol definition in the global table
- */
-export interface SymbolDefinition {
-  symbol_id: SymbolId;
-  name: string;
-  kind: "function" | "class" | "method" | "variable" | "type" | "namespace";
-  location: Location;
-  visibility: SymbolVisibility;
-  is_exported: boolean;
-  export_name?: string;
-  metadata?: {
-    parent_class?: string;
-    is_static?: boolean;
-    is_async?: boolean;
-    is_generator?: boolean;
-    is_abstract?: boolean;
-  };
-}
 
 /**
  * Global symbol table structure
  */
 export interface GlobalSymbolTable {
   symbols: Map<SymbolId, SymbolDefinition>;
-  exports: Map<FilePath, Map<ExportName, SymbolId>>; // file → export name → symbol
-  imports: Map<FilePath, Map<ImportName, SymbolId>>; // file → import name → symbol
+  exports: Map<FilePath, Map<Export, SymbolId>>; // file → export → symbol
+  imports: Map<FilePath, Map<Import, SymbolId>>; // file → import → symbol
   visibility: Map<SymbolId, SymbolVisibility>;
   references: Map<SymbolId, Location[]>; // symbol → usage locations
 }
@@ -77,7 +47,7 @@ export interface SymbolTableOptions {
 /**
  * Build a global symbol table from all file analyses
  */
-export function build_symbol_table(
+export function register_symbols(
   options: SymbolTableOptions
 ): GlobalSymbolTable {
   const {
@@ -87,6 +57,7 @@ export function build_symbol_table(
     track_visibility = true,
   } = options;
 
+  // TODO: remove this builder pattern and use immutable structure created at the end of the function
   const table: GlobalSymbolTable = {
     symbols: new Map(),
     exports: new Map(),
@@ -123,7 +94,7 @@ export function build_symbol_table(
               table,
               method,
               method_symbol_id,
-              cls.name,
+              cls.symbol,
               analysis
             );
           }
@@ -170,7 +141,6 @@ function add_function_to_table(
     name: func.name,
     kind: "function",
     location: func.location,
-    visibility: SymbolVisibility.PUBLIC, // TODO: Detect actual visibility
     is_exported: check_if_exported(func.name, analysis),
     metadata: {
       is_async: func.signature.is_async,
@@ -195,11 +165,11 @@ function add_class_to_table(
 ): void {
   const definition: SymbolDefinition = {
     symbol_id,
-    name: cls.name,
+    name: cls.symbol,
     kind: "class",
     location: cls.location,
     visibility: SymbolVisibility.PUBLIC, // TODO: Detect actual visibility
-    is_exported: cls.is_exported || check_if_exported(cls.name, analysis),
+    is_exported: cls.is_exported || check_if_exported(cls.symbol, analysis),
     metadata: {
       is_abstract: cls.is_abstract,
     },
@@ -357,7 +327,7 @@ function find_symbol_by_name(
 
   // Search classes
   for (const cls of analysis.classes) {
-    if (cls.name === name) {
+    if (cls.symbol === name) {
       return registry.get(cls);
     }
   }

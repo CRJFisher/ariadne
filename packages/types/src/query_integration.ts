@@ -5,10 +5,22 @@
 
 import { Location, Language } from "./common";
 import { FilePath } from "./aliases";
-import { SymbolName } from "./symbol_utils";
-import { SymbolId } from "./symbol_utils";
+import { SymbolName } from "./symbols";
+import { SymbolId } from "./symbols";
 import { ASTNode, QueryCapture, QueryResult, QueryMetadata } from "./query";
-import { ValidationError, ValidationWarning } from "./type_validation";
+// import { ValidationError, ValidationWarning } from "./type_validation";
+// Define these types locally for now
+export interface ValidationError {
+  readonly kind: "error";
+  readonly message: string;
+  readonly location?: Location;
+}
+
+export interface ValidationWarning {
+  readonly kind: "warning";
+  readonly message: string;
+  readonly location?: Location;
+}
 
 // ============================================================================
 // Typed Query Captures
@@ -80,7 +92,6 @@ export interface ProcessorContext {
   readonly metadata?: QueryMetadata;
   readonly parent_context?: ProcessorContext; // For nested processing
 }
-
 
 // ValidationError and ValidationWarning moved to type_validation.ts
 
@@ -204,10 +215,9 @@ export function createQueryOptions(
   return {
     include_comments: false,
     include_whitespace: false,
-    ...overrides
+    ...overrides,
   };
 }
-
 
 /**
  * Query execution error

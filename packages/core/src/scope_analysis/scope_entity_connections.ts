@@ -7,7 +7,6 @@
  */
 
 import {
-  ScopeId,
   SymbolId,
   ScopeTree,
   ScopeNode,
@@ -18,11 +17,12 @@ import {
   VariableDeclaration,
   Location,
   Language,
-  Scope,
-  Symbol,
   TrackedType,
+  SymbolDefinition,
+  FilePath,
 } from "@ariadnejs/types";
-import { find_scope_at_position, get_scope_chain } from "./scope_tree";
+import { find_scope_at_location, get_scope_chain } from "./scope_tree";
+import { ScopeId } from "@ariadnejs/types/src/scopes";
 
 /**
  * Simple entity connections for refactoring
@@ -61,7 +61,7 @@ export interface ScopeEntityConnections {
 
   // Metadata
   language: Language;
-  file_path: string;
+  file_path: FilePath;
 }
 
 /**
@@ -103,8 +103,8 @@ function get_scope_contents_guaranteed(
  * @returns Simplified entity connections
  */
 export function build_entity_connections(
-  scope_tree: Scope,
-  symbols: Symbol[],
+  scope_tree: ScopeTree,
+  symbols: SymbolDefinition[],
   types: Map<SymbolId, TrackedType>
 ): EntityConnections {
   // TODO: Implement using new query-based system
@@ -129,8 +129,9 @@ export function build_scope_entity_connections(
   variables: readonly VariableDeclaration[],
   symbol_registry: Map<any, SymbolId>,
   language: Language,
-  file_path: string
+  file_path: FilePath
 ): ScopeEntityConnections {
+  // TODO: remove mutability, construct at the end
   const connections: ScopeEntityConnections = {
     scope_to_symbol: new Map(),
     symbol_to_scope: new Map(),
@@ -171,7 +172,7 @@ function process_functions(
     if (!symbol_id) continue;
 
     // Find the function scope that corresponds to this function entity
-    const func_scope = find_scope_at_position(scope_tree, func.location);
+    const func_scope = find_scope_at_location(scope_tree, func.location);
     if (!func_scope || func_scope.type !== "function") continue;
 
     // Map the function scope to its symbol (the function IS the scope)
@@ -213,7 +214,7 @@ function process_classes(
     if (!symbol_id) continue;
 
     // Find the class scope that corresponds to this class entity
-    const class_scope = find_scope_at_position(scope_tree, cls.location);
+    const class_scope = find_scope_at_location(scope_tree, cls.location);
     if (!class_scope || class_scope.type !== "class") continue;
 
     // Map the class scope to its symbol (the class IS the scope)
@@ -238,7 +239,7 @@ function process_classes(
       if (method_symbol) {
         // Methods are already added to class contents by process_functions
         // Just ensure the defining scope is set
-        connections.entity_defining_scope.set(method_symbol, class_scope.id);
+        connections.entity_defining_scope.set(method_symbol, class_scope);
       }
     }
   }
@@ -258,21 +259,21 @@ function process_variables(
     if (!symbol_id) continue;
 
     // Find the scope containing this variable
-    const containing_scope = find_scope_at_position(
+    const containing_scope = find_scope_at_location(
       scope_tree,
       variable.location
     );
-    if (!containing_scope) continue;
+    if (containing_scope === undefined) continue;
 
     // Add variable to the scope's contents
     const scope_contents = get_scope_contents_guaranteed(
       connections,
-      containing_scope.id
+      containing_scope
     );
     scope_contents.variables.add(symbol_id);
 
     // Record which scope defines this entity
-    connections.entity_defining_scope.set(symbol_id, containing_scope.id);
+    connections.entity_defining_scope.set(symbol_id, containing_scope);
   }
 }
 
@@ -428,3 +429,4 @@ export function get_child_entities(
   // Return the contents of that scope
   return get_scope_contents(entity_scope, connections);
 }
+

@@ -1,4 +1,4 @@
-import { Language } from "./index";
+import { CallGraph, Language } from "./index";
 import { Location } from "./common";
 import { FunctionDefinition } from "./definitions";
 import { ClassDefinition } from "./definitions";
@@ -8,10 +8,10 @@ import { ClassHierarchy } from "./classes";
 import { TypeIndex, TypeInfo } from "./types";
 import { SymbolIndex } from "./symbols";
 import { ScopeTree } from "./scopes";
-import { FilePath, VariableName, TypeString, SourceCode } from "./aliases";
+import { FilePath, TypeString, SourceCode } from "./aliases";
 import { Export, Import } from "./import_export";
 import { AnalysisError } from "./errors";
-import { SymbolId } from "./symbol_utils";
+import { SymbolId } from "./symbols";
 
 export interface FileAnalysis {
   readonly file_path: FilePath;
@@ -30,8 +30,9 @@ export interface FileAnalysis {
   readonly type_info: ReadonlyMap<SymbolId, TypeInfo>;
 }
 
+// TODO shouldn't this be in definitions?
 export interface VariableDeclaration {
-  readonly name: VariableName;
+  readonly name: SymbolId;
   readonly location: Location;
   readonly type: TypeString; // Defaults to "unknown" when type unavailable
   readonly is_const: boolean;
@@ -39,13 +40,12 @@ export interface VariableDeclaration {
 }
 
 export interface CodeGraph {
-  readonly files: ReadonlyMap<FilePath, FileAnalysis>;
-  readonly modules: ModuleGraph;
-  readonly calls: CallInfo[];
-  readonly classes: ClassHierarchy;
-  readonly types: TypeIndex;
-  readonly symbols: SymbolIndex;
-  readonly metadata: CodeGraphMetadata;
+  // readonly modules: ModuleGraph;
+  // readonly classes: ClassHierarchy;
+  // readonly types: TypeIndex;
+  readonly call_graph: CallGraph;
+  // readonly symbols: SymbolIndex;
+  // readonly metadata: CodeGraphMetadata;
 }
 
 export interface CodeGraphMetadata {
@@ -59,23 +59,23 @@ export interface CodeGraphMetadata {
 
 export interface CodeGraphOptions {
   readonly root_path: FilePath;
-  readonly include_patterns: readonly FilePath[]; // Defaults to empty array
-  readonly exclude_patterns: readonly FilePath[]; // Defaults to empty array
-  readonly languages: readonly Language[]; // Defaults to all supported languages
-  readonly max_file_size: number; // Defaults to 1MB
-  readonly follow_symlinks: boolean; // Defaults to false
-  readonly include_tests: boolean; // Defaults to true
-  readonly include_dependencies: boolean; // Defaults to false
-  readonly analysis_options: {
-    readonly resolve_types: boolean; // Defaults to true
-    readonly track_usage: boolean; // Defaults to true
-    readonly include_call_chains: boolean; // Defaults to true
-    readonly max_call_depth: number; // Defaults to 10
+  readonly include_patterns?: readonly FilePath[]; // Defaults to empty array
+  readonly exclude_patterns?: readonly FilePath[]; // Defaults to empty array
+  readonly languages?: readonly Language[]; // Defaults to all supported languages
+  readonly max_file_size?: number; // Defaults to 1MB
+  readonly follow_symlinks?: boolean; // Defaults to false
+  readonly include_tests?: boolean; // Defaults to false
+  readonly include_dependencies?: boolean; // Defaults to false
+  readonly analysis_options?: {
+    readonly resolve_types?: boolean; // Defaults to true
+    readonly track_usage?: boolean; // Defaults to true
+    readonly include_call_chains?: boolean; // Defaults to true
+    readonly max_call_depth?: number; // Defaults to 10
   };
-  readonly cache: {
-    readonly enabled: boolean; // Required
-    readonly ttl: number; // Defaults to 3600 seconds
-    readonly max_size: number; // Defaults to 100MB
+  readonly cache?: {
+    readonly enabled?: boolean; // Required
+    readonly ttl?: number; // Defaults to 3600 seconds
+    readonly max_size?: number; // Defaults to 100MB
   };
 }
 
@@ -84,13 +84,20 @@ export interface CodeGraphOptions {
  */
 export type CodeGraphOptionsInput = {
   readonly root_path: FilePath;
-} & Partial<Omit<CodeGraphOptions, 'root_path'>>;
+} & Partial<Omit<CodeGraphOptions, "root_path">>;
 
 /**
  * Create code graph options with proper defaults
  */
-export function create_code_graph_options(input: CodeGraphOptionsInput): CodeGraphOptions {
-  const default_languages: Language[] = ['javascript', 'typescript', 'python', 'rust'];
+export function create_code_graph_options(
+  input: CodeGraphOptionsInput
+): CodeGraphOptions {
+  const default_languages: Language[] = [
+    "javascript",
+    "typescript",
+    "python",
+    "rust",
+  ];
 
   return {
     root_path: input.root_path,

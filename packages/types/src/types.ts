@@ -8,7 +8,7 @@ import {
   MethodName,
   QualifiedName,
 } from "./aliases";
-import { SymbolId } from "./symbol_utils";
+import { SymbolId } from "./symbols";
 import { Language, ScopeType } from "./index";
 import { TypeMember } from "./type_analysis";
 
@@ -35,10 +35,9 @@ export interface TypeDefinition {
   readonly implements?: readonly SymbolId[];
 }
 
-
 export interface VariableType {
   readonly name: VariableName;
-  readonly type: TypeString; // Defaults to "unknown" when type unavailable
+  readonly type: TypeString;
   readonly inferred_type: TypeString; // Defaults to "unknown" when not inferred
   readonly location: Location;
   readonly scope_kind: ScopeType;
@@ -82,4 +81,3 @@ export interface TypeInfo {
     | "return"
     | "parameter";
 }
-

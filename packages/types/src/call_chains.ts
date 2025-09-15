@@ -2,11 +2,9 @@
  * Call chain and call graph analysis types
  */
 
-import { SymbolId } from "./symbol_utils";
+import { SymbolId } from "./symbols";
 import { Location } from "./common";
-import { FilePath } from "./aliases";
-import { FunctionCall, MethodCall, ConstructorCall, CallInfo } from "./calls";
-
+import { CallInfo } from "./calls";
 
 /**
  * Node in a call chain representing a single function/method
@@ -36,11 +34,6 @@ export interface CallChain {
 export interface FunctionNode {
   readonly symbol_id: SymbolId;
   readonly location: Location;
-  readonly file_path: FilePath;
-  readonly is_exported: boolean;
-  readonly is_entry_point: boolean;
-  readonly calls_count: number;
-  readonly called_by_count: number;
 }
 
 /**
@@ -50,7 +43,6 @@ export interface CallEdge {
   readonly from: SymbolId;
   readonly to: SymbolId;
   readonly call: CallInfo;
-  readonly count: number;
 }
 
 /**

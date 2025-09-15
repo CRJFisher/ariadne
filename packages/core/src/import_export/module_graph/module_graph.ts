@@ -9,16 +9,14 @@ import {
   ModuleNode,
   ModuleGraph,
   FilePath,
-  ImportStatement,
-  ExportStatement,
+  Import,
+  Export,
 } from "@ariadnejs/types";
 
 /**
  * Extended module node with additional metadata for graph building
  */
 export interface ModuleNodeWithMetadata extends ModuleNode {
-  readonly legacy_exports: ExportStatement[];
-  readonly legacy_imports: ImportStatement[];
   readonly is_entry_point?: boolean;
   readonly is_external?: boolean;
   readonly metadata?: {
@@ -80,8 +78,8 @@ export function build_module_graph(
     {
       file_path: FilePath;
       language: Language;
-      imports: readonly ImportStatement[];
-      exports: readonly ExportStatement[];
+      imports: readonly Import[];
+      exports: readonly Export[];
     }
   >,
   options: ModuleGraphOptions = {}
@@ -114,7 +112,7 @@ export function build_module_graph(
     (graph.edges as ModuleEdge[]).push(...edges);
 
     // Track external modules
-    for (const imp of node_with_metadata.legacy_imports) {
+    for (const imp of node_with_metadata.imports) {
       if (is_external_module(imp.source_module)) {
         (graph.external_modules as Set<FilePath>).add(imp.source_module);
       }
@@ -131,66 +129,19 @@ function create_module_node(
   file_path: FilePath,
   analysis: {
     language: Language;
-    imports: ImportStatement[];
-    exports: ExportStatement[];
+    imports: Import[];
+    exports: Export[];
   }
 ): ModuleNodeWithMetadata {
-  // Convert ImportResolutionInfo to ModuleImportInfo
-  const legacy_imports = convert_to_module_imports(analysis.imports, file_path);
-
-  return {
+    return {
     path: file_path,
     imports: new Map(), // TODO: Convert to new ImportedModule format
     exports: new Map(), // TODO: Convert to new ExportedSymbol format
     imported_by: new Set(),
     language: analysis.language,
-    legacy_exports: analysis.exports,
-    legacy_imports,
+    exports: analysis.exports,
+    imports: legacy_imports,
   } as ModuleNodeWithMetadata;
-}
-
-/**
- * Convert import resolution info to module import info
- */
-function convert_to_module_imports(
-  imports: ImportStatement[],
-  _file_path: FilePath
-): ModuleImportInfo[] {
-  const module_imports: ModuleImportInfo[] = [];
-
-  // Group imports by source module
-  const by_module = new Map<string, ImportStatement[]>();
-  for (const imp of imports) {
-    // For now, use a placeholder since ImportedSymbol doesn't have source_module
-    // TODO: Update when ImportResolutionInfo is properly migrated
-    const source = "unknown_module";
-    const existing = by_module.get(source);
-    if (existing) {
-      existing.push(imp);
-    } else {
-      by_module.set(source, [imp]);
-    }
-  }
-
-  // Create ModuleImportInfo for each module
-  for (const [source_module, imports_from_module] of Array.from(by_module)) {
-    if (!source_module) continue; // Skip empty sources
-
-    const info: ModuleImportInfo = {
-      source_module,
-      imported_names: imports_from_module.map((i) => i.local_name),
-      is_namespace: imports_from_module.some(
-        (i) => i.import_statement?.is_namespace === true
-      ),
-      is_default: imports_from_module.some(
-        (i) => i.import_statement?.is_default === true
-      ),
-    };
-
-    module_imports.push(info);
-  }
-
-  return module_imports;
 }
 
 /**
@@ -203,7 +154,7 @@ function create_module_edges(
 ): ModuleEdge[] {
   const edges: ModuleEdge[] = [];
 
-  for (const imp of node.legacy_imports) {
+  for (const imp of node.imports) {
     // Resolve the module path (for now just use as-is)
     const resolved_path = resolve_module_path(node.path, imp.source_module);
 
@@ -232,7 +183,7 @@ function create_module_edges(
  */
 function resolve_module_path(
   _from_file: FilePath,
-  import_path: string
+  import_path: FilePath
 ): FilePath {
   // TODO: Implement proper module resolution
   // For now, just return the import path as-is
@@ -270,7 +221,7 @@ function is_entry_point(file_path: FilePath): boolean {
 /**
  * Check if a module is external
  */
-function is_external_module(module_path: string): boolean {
+function is_external_module(module_path: FilePath): boolean {
   // TODO: make language-specific
   // Check for common external module patterns
   if (module_path.includes("node_modules")) return true;
@@ -282,3 +233,4 @@ function is_external_module(module_path: string): boolean {
   }
   return false;
 }
+

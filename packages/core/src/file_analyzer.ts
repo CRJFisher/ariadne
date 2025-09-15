@@ -11,29 +11,15 @@ import TypeScript from "tree-sitter-typescript";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
 
-import { 
-  build_scope_tree,
-  extract_variables_from_scopes,
-  EnhancedScopeSymbol,
-  extract_variables_from_symbols,
-} from "./scope_analysis/scope_tree";
+import { build_scope_tree } from "./scope_analysis/scope_tree";
 import {
   build_scope_entity_connections,
-  ScopeEntityConnections as RealScopeEntityConnections,
+  ScopeEntityConnections,
 } from "./scope_analysis/scope_entity_connections";
-import {
-  SymbolRegistry,
-  build_symbol_registry,
-} from "./scope_analysis/symbol_resolution";
-import { extract_imports } from "./import_export/import_resolution";
-import { extract_exports } from "./import_export/export_detection";
+import { extract_exports, extract_imports } from "./import_export/import_export_resolution";
 import { find_class_definitions } from "./inheritance/class_detection";
-import {
-  process_file_for_types,
-  TypeTrackingContext,
-} from "./type_analysis/type_tracking";
 import { find_function_calls } from "./call_graph/function_calls/function_calls";
-import { find_method_calls } from "./call_graph/method_calls";
+import { find_method_calls } from "./call_graph/method_calls/method_calls";
 import { find_constructor_calls } from "./call_graph/constructor_calls";
 // Variable extraction now done through scope_tree
 import {
@@ -63,6 +49,7 @@ import {
   SymbolId,
   function_symbol,
   DocString,
+  TypeIndex,
 } from "@ariadnejs/types";
 import {
   ReturnTypeInfo,
@@ -74,7 +61,6 @@ import {
 } from "./type_analysis/parameter_type_inference";
 
 // Re-export types from shared modules
-import type { FileTypeTracker } from "./type_analysis/type_tracking";
 import { CodeFile } from "./project/file_scanner";
 
 /**
@@ -96,13 +82,7 @@ export async function analyze_file(
 
   // Analyze scopes
   error_collector.set_phase("scope_analysis");
-  const scopes = analyze_scopes(
-    tree,
-    source_code,
-    file.language,
-    file.file_path,
-    error_collector
-  );
+  const scopes = build_scope_tree(tree.rootNode, file.file_path, file.language);
 
   // Detect local structures (imports, exports, classes)
   error_collector.set_phase("class_detection");
@@ -204,19 +184,6 @@ function parse_file(file: CodeFile): Parser.Tree {
 }
 
 /**
- * Analyze scopes in the file
- */
-function analyze_scopes(
-  tree: Parser.Tree,
-  source_code: SourceCode,
-  language: Language,
-  file_path: FilePath,
-  _error_collector?: ErrorCollector
-): ScopeTree {
-  return build_scope_tree(tree.rootNode, source_code, language, file_path);
-}
-
-/**
  * Detect local structures (imports, exports, classes)
  */
 function detect_local_structures(
@@ -231,10 +198,20 @@ function detect_local_structures(
   class_definitions: ClassDefinition[];
 } {
   // Extract imports
-  const imports = extract_imports(root_node, source_code, language, file_path);
+  const imports = extract_imports({
+    source_code,
+    file_path,
+    language,
+    ast_root: root_node,
+  });
 
   // Extract exports
-  const exports = extract_exports(root_node, source_code, language, file_path);
+  const exports = extract_exports({
+    source_code,
+    file_path,
+    language,
+    ast_root: root_node,
+  });
 
   // Detect class definitions
   const class_detection_context = {
@@ -259,7 +236,7 @@ function analyze_local_types(
   _imports: Import[],
   _class_definitions: ClassDefinition[]
 ): {
-  type_tracker: FileTypeTracker;
+  type_tracker: TypeIndex;
   inferred_parameters: Map<string, ParameterAnalysis>;
   inferred_returns: Map<string, ReturnTypeInfo>;
 } {
@@ -270,17 +247,14 @@ function analyze_local_types(
     debug: false,
   };
 
-  const type_tracker = process_file_for_types(
-    root_node,
-    type_tracking_context
-  );
+  const type_tracker = process_file_for_types(root_node, type_tracking_context);
 
   // Infer parameter types for all functions
   const inferred_parameters = infer_all_parameter_types(
     root_node,
     source_code,
     file.language,
-    file.file_path,
+    file.file_path
   );
 
   // Infer return types for all functions
@@ -305,7 +279,7 @@ function analyze_calls(
   root_node: SyntaxNode,
   source_code: SourceCode,
   language: Language,
-  _type_tracker: FileTypeTracker,
+  _type_tracker: TypeTracker,
   _scopes: ScopeTree,
   file_path: FilePath
 ): {
@@ -401,9 +375,11 @@ function extract_definitions(
           );
           const result: ParameterType = {
             name: param.name as ParameterName,
-            type: (inferred_type_info?.inferred_type ||
-              param.type_annotation) as TypeString || 'unknown' as TypeString,
-            default_value: param.default_value || '',
+            type:
+              ((inferred_type_info?.inferred_type ||
+                param.type_annotation) as TypeString) ||
+              ("unknown" as TypeString),
+            default_value: param.default_value || "",
             is_rest: param.is_rest,
             is_optional: param.is_optional,
           };
@@ -413,31 +389,23 @@ function extract_definitions(
 
       const signature: FunctionSignature = {
         parameters: enhanced_parameters,
-        return_type: (return_type_info?.type_name as TypeString) || 'unknown' as TypeString,
+        return_type:
+          (return_type_info?.type_name as TypeString) ||
+          ("unknown" as TypeString),
         is_async: scope.metadata.is_async,
         is_generator: scope.metadata.is_generator,
         type_parameters: [],
       };
 
       const func_info: FunctionDefinition = {
-        name: func_symbol,
+        symbol: func_symbol,
+        name: func_name,
         location: scope.location,
         signature,
-        metadata: {
-          is_async: false,
-          is_generator: false,
-          is_exported: false,
-          is_test: false,
-          is_private: false,
-          complexity: 0,
-          line_count: 1,
-          parameter_names: [],
-          has_decorator: false,
-        },
         docstring: "" as DocString,
         is_exported: false,
         is_arrow_function: false,
-        is_anonymous: func_name.startsWith('anonymous_'),
+        is_anonymous: func_name.startsWith("anonymous_"),
         closure_captures: [],
         decorators: [],
       };
@@ -505,15 +473,15 @@ function build_file_analysis(
   method_calls: MethodCall[],
   constructor_calls: ConstructorCall[],
   type_tracker: FileTypeTracker,
-  _symbol_registry: SymbolRegistry,
-  _scope_entity_connections: ScopeEntityConnections,
+  symbol_registry: SymbolRegistry,
+  scope_entity_connections: ScopeEntityConnections,
   scopes: ScopeTree,
   error_collector?: ErrorCollector
 ): FileAnalysis {
   // Use unified types directly (no conversion needed)
   const import_statements = imports;
   const export_statements = exports;
-  
+
   // Convert type_tracker.variable_types to Map<SymbolId, TypeInfo>
   const public_type_info = new Map<SymbolId, TypeInfo>();
   // Note: type_tracker.variable_types needs to be converted to use SymbolId keys

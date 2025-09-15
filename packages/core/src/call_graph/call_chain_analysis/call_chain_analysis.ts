@@ -28,23 +28,12 @@ import {
   map_get_or_default,
   map_get_array,
   CallInfo,
+  function_symbol,
+  method_symbol,
+  class_symbol,
 } from "@ariadnejs/types";
-import {
-  construct_function_symbol,
-  construct_method_symbol,
-  construct_class_symbol,
-  SPECIAL_SYMBOLS,
-} from "../../utils/symbol_construction";
 import { DefaultMap } from "../../utils/collection_utils";
 import { ResolutionResult } from "../../scope_analysis/symbol_resolution/symbol_resolution";
-
-/**
- * A single call in a chain
- */
-
-/**
- * A complete call chain from root to leaf
- */
 
 /**
  * Context for call chain analysis
@@ -60,17 +49,155 @@ export interface CallChainContext {
   // resolve_cross_file?: boolean;  // Follow chains across file boundaries
 }
 
-// CallChainAnalysisResult is imported from @ariadnejs/types
-
 /**
- * Analyze call chains using unified call information
+ * Create a comprehensive call graph from file analyses
  */
-export function analyze_call_chains(
-  calls: CallInfo[]
-): CallChain[] {
-  // TODO: Implement using new query-based system
-  // See task 11.100.19 for implementation details
-  return [];
+export function create_call_graph(
+  analyses: FileAnalysis[],
+  resolution_results: ResolutionResult
+): CallGraph {
+  const functions = new Map<SymbolId, FunctionNode>();
+  const edges: CallEdge[] = [];
+
+  // Build function nodes from all functions and methods
+  for (const analysis of analyses) {
+    // Add function nodes
+    for (const func of analysis.functions) {
+      const resolved_ref = map_get_or_default(
+        resolution_results.resolved_calls,
+        func.location,
+        {
+          symbol_id: function_symbol(func.name, func.location),
+          definition_location: func.location,
+          kind: "function",
+        }
+      );
+
+      functions.set(resolved_ref.symbol_id, {
+        symbol_id: resolved_ref.symbol_id,
+        location: func.location,
+      });
+    }
+
+    // Add method nodes
+    for (const cls of analysis.classes) {
+      for (const method of cls.methods) {
+        const symbol = map_get_or_default(
+          resolution_results.resolved_methods,
+          method.location,
+          method_symbol(
+            method.name,
+            cls.symbol,
+            method.location,
+            // analysis.file_path,
+            // method.location,
+            // cls.symbol,
+            // method.name,
+            // method.is_static
+          )
+        );
+
+        functions.set(symbol, {
+          symbol,
+          file_path: analysis.file_path,
+          location: method.location,
+          signature: {
+            parameters: method.parameters,
+            return_type: method.return_type,
+            type_parameters: method.generics,
+            is_async: method.is_async,
+          },
+          calls: [],
+          called_by: [],
+          is_exported: false, // TODO: Check if class is exported
+          is_entry_point: false,
+        });
+      }
+    }
+  }
+
+  // Build call edges using resolved symbols where available
+  for (const analysis of analyses) {
+    // Function calls
+    for (const call of analysis.function_calls) {
+      const from = function_symbol(
+        analysis.file_path,
+        (call.caller as string) || SPECIAL_SYMBOLS.MODULE
+      );
+
+      // Use resolved symbol if available, otherwise use unresolved name
+      const to = map_get_or_default(
+        resolution_results.resolved_calls,
+        call.location,
+        function_symbol(analysis.file_path, call.callee as string)
+      );
+
+      edges.push({
+        from: from as SymbolId,
+        to: to as SymbolId,
+        call: call,
+        count: 1,
+      });
+    }
+
+    // Method calls
+    for (const call of analysis.method_calls) {
+      const from = function_symbol(
+        analysis.file_path,
+        (call.caller as string) || SPECIAL_SYMBOLS.MODULE
+      );
+
+      // Use resolved symbol if available
+      const to = map_get_or_default(
+        resolution_results.resolved_methods,
+        call.location,
+        method_symbol(
+          analysis.file_path,
+          call.receiver as string,
+          call.method_name as string,
+          call.is_static
+        )
+      );
+
+      edges.push({
+        from: from as SymbolId,
+        to: to as SymbolId,
+        call: call,
+        count: 1,
+      });
+    }
+  }
+
+  // Build call chains
+  const all_calls = [
+    ...analyses.flatMap((analysis) => analysis.function_calls),
+    ...analyses.flatMap((analysis) => analysis.method_calls),
+    ...analyses.flatMap((analysis) => analysis.constructor_calls),
+  ];
+  const call_chains = build_call_chains(all_calls, {
+    language: analyses[0].language, // TODO: improve multi-language support
+    track_recursion: true,
+  });
+
+  // Find entry points (functions that are not called by anything)
+  const called_functions = new Set<SymbolId>();
+  for (const edge of edges) {
+    called_functions.add(edge.to);
+  }
+
+  const entry_points = new Set<SymbolId>();
+  for (const [symbol, node] of functions) {
+    if (!called_functions.has(symbol)) {
+      entry_points.add(symbol);
+    }
+  }
+
+  return {
+    functions,
+    edges,
+    entry_points,
+    call_chains,
+  };
 }
 
 /**
@@ -131,8 +258,8 @@ export function build_call_chains(
   const graph: CallGraph = {
     nodes: new Map(),
     edges: [],
-    entry_points: Array.from(all_callers).filter(c => !all_callees.has(c)),
-    call_chains: chains
+    entry_points: Array.from(all_callers).filter((c) => !all_callees.has(c)),
+    call_chains: chains,
   };
 
   return {
@@ -177,26 +304,38 @@ function build_call_graph(
 
     if (is_function_call_info(call)) {
       // Function call: caller -> callee
-      if (call.caller === '<module>') {
-        caller = construct_function_symbol(call.location.file_path, '<module>') as SymbolId;
+      if (call.caller === "<module>") {
+        caller = function_symbol(
+          call.location.file_path,
+          "<module>"
+        ) as SymbolId;
       } else {
         // Convert CallerName to SymbolId - assume it's a function name
-        caller = construct_function_symbol(call.location.file_path, call.caller as string) as SymbolId;
+        caller = function_symbol(
+          call.location.file_path,
+          call.caller as string
+        ) as SymbolId;
       }
       callee = call.callee;
     } else if (is_method_call_info(call)) {
       // Method call: caller -> method_name (on receiver)
-      if (call.caller === '<module>') {
-        caller = construct_function_symbol(call.location.file_path, '<module>') as SymbolId;
+      if (call.caller === "<module>") {
+        caller = function_symbol(
+          call.location.file_path,
+          "<module>"
+        ) as SymbolId;
       } else {
         // Convert CallerName to SymbolId
-        caller = construct_function_symbol(call.location.file_path, call.caller as string) as SymbolId;
+        caller = function_symbol(
+          call.location.file_path,
+          call.caller as string
+        ) as SymbolId;
       }
       callee = call.method_name;
     } else if (is_constructor_call_info(call)) {
       // Constructor call: assigned_to -> class_name
       caller = call.assigned_to;
-      callee = construct_class_symbol(call.location.file_path, call.class_name as string) as SymbolId;
+      callee = class_symbol(call.class_name, call.location);
     } else {
       // This should never happen with proper typing, but provides safety
       console.warn("Unknown call type encountered:", call);
@@ -222,11 +361,7 @@ function traverse_chain(
   recursive_chains: CallChain[],
   max_depth: number,
   depth: number,
-  original_calls: readonly (
-    | FunctionCall
-    | MethodCall
-    | ConstructorCall
-  )[]
+  original_calls: readonly (FunctionCall | MethodCall | ConstructorCall)[]
 ): void {
   // Check for max depth
   if (depth >= max_depth) {
@@ -261,11 +396,11 @@ function traverse_chain(
           line: 0,
           column: 0,
           end_line: 0,
-          end_column: 0
+          end_column: 0,
         },
         depth: depth + 1,
         is_recursive: false,
-        call: call_info || undefined
+        call: call_info || undefined,
       };
 
       path.push(node);
@@ -309,9 +444,12 @@ function create_chain(
   is_recursive: boolean,
   cycle_point?: SymbolId
 ): CallChain {
-  const entry_point = path.length > 0 ? path[0].symbol_id : construct_function_symbol("", "<unknown>") as SymbolId;
+  const entry_point =
+    path.length > 0
+      ? path[0].symbol_id
+      : (function_symbol("", "<unknown>") as SymbolId);
   const max_depth = path.length > 0 ? Math.max(...path.map((n) => n.depth)) : 0;
-  const execution_path = path.map(node => node.symbol_id);
+  const execution_path = path.map((node) => node.symbol_id);
 
   return {
     entry_point,
@@ -332,20 +470,27 @@ function find_call_info(
 ): CallInfo | null {
   for (const call of calls) {
     // Check if this call matches our caller/callee pair
-    const callCaller = call.caller === '<module>' ?
-      construct_function_symbol(call.location.file_path, '<module>') as SymbolId :
-      construct_function_symbol(call.location.file_path, call.caller as string) as SymbolId;
+    const callCaller =
+      call.caller === "<module>"
+        ? (function_symbol(call.location.file_path, "<module>") as SymbolId)
+        : (function_symbol(
+            call.location.file_path,
+            call.caller as string
+          ) as SymbolId);
 
     if (callCaller === caller) {
-      if (call.kind === 'function' && call.callee === callee) {
+      if (call.kind === "function" && call.callee === callee) {
         return call;
       }
-      if (call.kind === 'method' && call.method_name === callee) {
+      if (call.kind === "method" && call.method_name === callee) {
         return call;
       }
     }
-    if (call.kind === 'constructor' && call.assigned_to === caller) {
-      const constructorSymbol = construct_class_symbol(call.location.file_path, call.class_name as string) as SymbolId;
+    if (call.kind === "constructor" && call.assigned_to === caller) {
+      const constructorSymbol = class_symbol(
+        call.location.file_path,
+        call.class_name as string
+      ) as SymbolId;
       if (constructorSymbol === callee) {
         return call;
       }
@@ -389,244 +534,4 @@ export function detect_recursion(chains: readonly CallChain[]): CallChain[] {
   }
 
   return recursive;
-}
-
-/**
- * Find all paths between two functions
- */
-export function find_paths_between(
-  start: SymbolId,
-  end: SymbolId,
-  call_graph: Map<SymbolId, Set<SymbolId>>,
-  max_depth: number = 10
-): CallChain[] {
-  const paths: CallChain[] = [];
-  const visited = new Set<string>();
-  const current_path: CallChainNode[] = [];
-
-  function dfs(current: string, depth: number): void {
-    if (depth > max_depth) return;
-
-    if (current === end) {
-      // Found a path
-      paths.push(create_chain(current_path, false));
-      return;
-    }
-
-    if (visited.has(current)) return;
-    visited.add(current);
-
-    const callees = call_graph.get(current);
-    if (callees) {
-      for (const callee of callees) {
-        const node: CallChainNode = {
-          symbol_id: callee as SymbolId,
-          location: {
-            file_path: "" as FilePath,
-            line: 0,
-            column: 0,
-            end_line: 0,
-            end_column: 0
-          } as Location,
-          depth,
-          is_recursive: false,
-        };
-
-        current_path.push(node);
-        dfs(callee, depth + 1);
-        current_path.pop();
-      }
-    }
-
-    visited.delete(current);
-  }
-
-  dfs(start, 0);
-  return paths;
-}
-
-/**
- * Get the longest call chain
- */
-export function get_longest_chain(
-  chains: readonly CallChain[]
-): CallChain | null {
-  if (chains.length === 0) return null;
-
-  return chains.reduce((longest, current) =>
-    current.depth > longest.depth ? current : longest
-  );
-}
-
-/**
- * Get all functions involved in recursive calls
- */
-export function get_recursive_functions(
-  chains: readonly CallChain[]
-): Set<SymbolId> {
-  const recursive_funcs = new Set<SymbolId>();
-
-  for (const chain of chains) {
-    if (chain.has_recursion) {
-      // Add all functions in recursive chains
-      for (const node of chain.nodes) {
-        recursive_funcs.add(node.symbol_id);
-      }
-    }
-  }
-
-  return recursive_funcs;
-}
-
-/**
- * Create a comprehensive call graph from file analyses
- */
-export function create_call_graph(
-  analyses: FileAnalysis[],
-  resolution_results: ResolutionResult
-): CallGraph {
-  const functions = new Map<SymbolId, FunctionNode>();
-  const edges: CallEdge[] = [];
-
-  // Build function nodes from all functions and methods
-  for (const analysis of analyses) {
-    // Add function nodes
-    for (const func of analysis.functions) {
-      const resolved_ref = map_get_or_default(
-        resolution_results.resolved_calls,
-        func.location,
-        {
-          symbol_id: construct_function_symbol(analysis.file_path, func.name) as SymbolId,
-          definition_location: func.location,
-          kind: 'function' as SymbolKind
-        }
-      );
-
-      functions.set(resolved_ref.symbol_id, {
-        symbol_id: resolved_ref.symbol_id,
-        file_path: analysis.file_path,
-        location: func.location,
-        signature: func.signature,
-        calls: [],
-        called_by: [],
-        is_exported: false, // TODO: Check exports
-        is_entry_point: false,
-      });
-    }
-
-    // Add method nodes
-    for (const cls of analysis.classes) {
-      for (const method of cls.methods) {
-        const symbol = map_get_or_default(
-          resolution_results.resolved_methods,
-          method.location,
-          construct_method_symbol(
-            analysis.file_path,
-            cls.name,
-            method.name,
-            method.is_static
-          ) as SymbolId
-        );
-
-        functions.set(symbol, {
-          symbol,
-          file_path: analysis.file_path,
-          location: method.location,
-          signature: {
-            parameters: method.parameters,
-            return_type: method.return_type,
-            type_parameters: method.generics,
-            is_async: method.is_async,
-          },
-          calls: [],
-          called_by: [],
-          is_exported: false, // TODO: Check if class is exported
-          is_entry_point: false,
-        });
-      }
-    }
-  }
-
-  // Build call edges using resolved symbols where available
-  for (const analysis of analyses) {
-    // Function calls
-    for (const call of analysis.function_calls) {
-      const from = construct_function_symbol(
-        analysis.file_path,
-        (call.caller as string) || SPECIAL_SYMBOLS.MODULE
-      );
-
-      // Use resolved symbol if available, otherwise use unresolved name
-      const to = map_get_or_default(
-        resolution_results.resolved_calls,
-        call.location,
-        construct_function_symbol(analysis.file_path, call.callee as string)
-      );
-
-      edges.push({
-        from: from as SymbolId,
-        to: to as SymbolId,
-        call: call,
-        count: 1,
-      });
-    }
-
-    // Method calls
-    for (const call of analysis.method_calls) {
-      const from = construct_function_symbol(
-        analysis.file_path,
-        (call.caller as string) || SPECIAL_SYMBOLS.MODULE
-      );
-
-      // Use resolved symbol if available
-      const to = map_get_or_default(
-        resolution_results.resolved_methods,
-        call.location,
-        construct_method_symbol(
-          analysis.file_path,
-          call.receiver as string,
-          call.method_name as string,
-          call.is_static
-        )
-      );
-
-      edges.push({
-        from: from as SymbolId,
-        to: to as SymbolId,
-        call: call,
-        count: 1,
-      });
-    }
-  }
-
-  // Build call chains
-  const all_calls = [
-    ...analyses.flatMap((analysis) => analysis.function_calls),
-    ...analyses.flatMap((analysis) => analysis.method_calls),
-    ...analyses.flatMap((analysis) => analysis.constructor_calls),
-  ];
-  const call_chains = build_call_chains(all_calls, {
-    language: analyses[0].language, // TODO: improve multi-language support
-    track_recursion: true,
-  });
-
-  // Find entry points (functions that are not called by anything)
-  const called_functions = new Set<SymbolId>();
-  for (const edge of edges) {
-    called_functions.add(edge.to);
-  }
-
-  const entry_points = new Set<SymbolId>();
-  for (const [symbol, node] of functions) {
-    if (!called_functions.has(symbol)) {
-      entry_points.add(symbol);
-    }
-  }
-
-  return {
-    functions,
-    edges,
-    entry_points,
-    call_chains,
-  };
 }

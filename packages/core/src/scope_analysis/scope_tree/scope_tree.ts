@@ -1,113 +1,304 @@
 /**
- * Scope tree stub implementation
- *
- * TODO: Implement using tree-sitter queries from queries/*.scm
+ * Scope tree implementation using tree-sitter queries
  */
 
-import { SyntaxNode } from "tree-sitter";
+import { SyntaxNode, Query } from "tree-sitter";
+import Parser from "tree-sitter";
 import {
   Language,
   ScopeTree,
-  ScopeNode,
+  FilePath,
+  Location,
   RootScopeNode,
   ChildScopeNode,
-  ScopeSymbol,
-  ScopeType,
   ScopeId,
-  FilePath,
-  SymbolKind,
-  VariableDeclaration,
-  SymbolId,
-  module_symbol,
-  Location,
-  Visibility,
+  global_scope,
+  module_scope,
+  function_scope,
+  class_scope,
+  block_scope,
+  local_scope,
 } from "@ariadnejs/types";
 import { node_to_location } from "../../ast/node_utils";
+import { load_scope_query, get_language_parser } from "./loader";
+import { location_contains } from "@ariadnejs/types/src/common";
+
+/**
+ * Determine whether a file should have module or global scope based on language and content
+ *
+ * @param root - The root AST node of the file
+ * @param language - The programming language
+ * @returns The appropriate scope type for the file's root scope
+ */
+function determine_root_scope_type(language: Language): "module" | "global" {
+  switch (language) {
+    case "python":
+    case "rust":
+      return "module";
+
+    case "typescript":
+      return "module";
+
+    case "javascript":
+      // TODO: Use tree-sitter query to detect import/export statements
+      return "global";
+
+    // C/C++ and other languages default to global scope
+    default:
+      throw new Error(`Unsupported language: ${language}`);
+  }
+}
 
 /**
  * Build scope tree using tree-sitter queries
  */
+/**
+ * Helper function to determine if one AST node contains another
+ */
+function contains_node(parent: SyntaxNode, child: SyntaxNode): boolean {
+  return (
+    parent.startIndex <= child.startIndex && parent.endIndex >= child.endIndex
+  );
+}
+
+/**
+ * Find the parent scope for a given AST node
+ */
+function find_parent_scope(
+  node: SyntaxNode,
+  scope_nodes: Array<{ node: SyntaxNode; id: ScopeId }>,
+  root_id: ScopeId
+): ScopeId {
+  // Find the smallest scope that contains this node
+  let parent_scope: { node: SyntaxNode; id: ScopeId } | null = null;
+
+  for (const scope of scope_nodes) {
+    // Skip if this is the same node
+    if (scope.node === node) continue;
+
+    // Check if this scope contains our node
+    if (contains_node(scope.node, node)) {
+      // If we haven't found a parent yet, or this scope is smaller than our current parent
+      if (!parent_scope || contains_node(parent_scope.node, scope.node)) {
+        parent_scope = scope;
+      }
+    }
+  }
+
+  return parent_scope ? parent_scope.id : root_id;
+}
+
 export function build_scope_tree(
   root: SyntaxNode,
-  source: string,
+  file_path: FilePath,
   language: Language
 ): ScopeTree {
-  // TODO: Implement using tree-sitter queries from queries/*.scm
-  const file_path = "" as FilePath;
-  const root_id = "scope_0" as ScopeId;
+  const node_location = node_to_location(root, file_path);
+
+  // Determine whether this file uses module or global scope
+  const scope_type = determine_root_scope_type(language);
+  const root_id =
+    scope_type === "module"
+      ? module_scope(node_location)
+      : global_scope(node_location);
+
+  // Track all scope nodes for parent resolution
+  const scope_nodes: Array<{ node: SyntaxNode; id: ScopeId }> = [];
+
+  // Collect all scopes with their AST nodes
+  const all_scopes: Array<{
+    node: SyntaxNode;
+    id: ScopeId;
+    type: "function" | "class" | "block" | "parameter" | "local";
+    location: Location;
+  }> = [];
+
+  // Load and execute the scope query for this language
+  const query_string = load_scope_query(language);
+
+  if (query_string) {
+    try {
+      // Get the parser for this language to create the Query object
+      const parser = get_language_parser(language);
+      const query = new (Query as any)(parser.getLanguage(), query_string);
+
+      // Execute the query on the AST
+      const matches = query.matches(root);
+
+      // First pass: collect all scopes
+      for (const match of matches) {
+        for (const capture of match.captures) {
+          const captured_node = capture.node;
+          const capture_name = query.captureNames[capture.index];
+
+          if (capture_name === "local.scope") {
+            // Determine scope type based on the node type
+            let scope_type_from_capture:
+              | "function"
+              | "class"
+              | "block"
+              | "parameter"
+              | "local";
+
+            switch (captured_node.type) {
+              case "function_declaration":
+              case "function_expression":
+              case "arrow_function":
+              case "generator_function_declaration":
+              case "method_definition":
+                scope_type_from_capture = "function";
+                break;
+              case "class_body":
+                scope_type_from_capture = "class";
+                break;
+              case "statement_block":
+              case "for_statement":
+              case "for_in_statement":
+              case "switch_case":
+              case "catch_clause":
+                scope_type_from_capture = "block";
+                break;
+              default:
+                scope_type_from_capture = "local";
+            }
+
+            // Create scope ID based on location and type
+            const scope_location = node_to_location(captured_node, file_path);
+            let scope_id: ScopeId;
+
+            switch (scope_type_from_capture) {
+              case "function":
+                scope_id = function_scope(scope_location);
+                break;
+              case "class":
+                scope_id = class_scope(scope_location);
+                break;
+              case "block":
+                scope_id = block_scope(scope_location);
+                break;
+              default:
+                scope_id = local_scope(scope_location);
+            }
+
+            all_scopes.push({
+              node: captured_node,
+              id: scope_id,
+              type: scope_type_from_capture,
+              location: scope_location,
+            });
+
+            scope_nodes.push({ node: captured_node, id: scope_id });
+          }
+        }
+      }
+    } catch (e) {
+      // Query parsing/execution failed, return minimal tree
+      console.warn(`Failed to execute scope query for ${language}:`, e);
+    }
+  }
+
+  // Second pass: determine parent-child relationships
+  const parent_child_map = new Map<ScopeId, ScopeId[]>();
+  parent_child_map.set(root_id, []);
+
+  for (const scope of all_scopes) {
+    const parent_id = find_parent_scope(scope.node, scope_nodes, root_id);
+
+    // Add this scope to its parent's children
+    const siblings = parent_child_map.get(parent_id) || [];
+    siblings.push(scope.id);
+    parent_child_map.set(parent_id, siblings);
+
+    // Initialize this scope's children array
+    if (!parent_child_map.has(scope.id)) {
+      parent_child_map.set(scope.id, []);
+    }
+  }
+
+  // Now build the immutable nodes with complete parent-child relationships
+  const nodes = new Map<ScopeId, RootScopeNode | ChildScopeNode>();
+
+  // Create root node with its direct children
+  const root_child_ids = parent_child_map.get(root_id) || [];
   const root_node: RootScopeNode = {
     id: root_id,
-    type: "global",
-    location: node_to_location(root, file_path),
+    type: scope_type,
+    location: node_location,
     parent_id: null,
-    child_ids: [],
-    symbols: new Map(),
-    metadata: {
-      name: module_symbol(file_path) as SymbolId,
-      is_async: false,
-      is_generator: false,
-      visibility: "public" as Visibility,
-    },
+    child_ids: root_child_ids,
   };
+  nodes.set(root_id, root_node);
+
+  // Create all child nodes with their proper parent and children
+  for (const scope of all_scopes) {
+    const parent_id = find_parent_scope(scope.node, scope_nodes, root_id);
+    const child_ids = parent_child_map.get(scope.id) || [];
+
+    const child_node: ChildScopeNode = {
+      id: scope.id,
+      type: scope.type,
+      location: scope.location,
+      parent_id: parent_id,
+      child_ids: child_ids,
+    };
+    nodes.set(scope.id, child_node);
+  }
 
   return {
     root_id,
-    nodes: new Map([[root_id, root_node]]),
+    nodes,
     file_path,
   };
 }
 
 /**
- * Find scope at position
+ * Get the scope chain from the scope id to the root
+ * @param scope_id - The scope id to get the chain for
+ * @param tree - The scope tree to get the chain from
+ * @returns The scope chain from the scope id to the root (innermost to outermost)
  */
-export function find_scope_at_position(
-  tree: ScopeTree,
-  position: { row: number; column: number }
-): ScopeNode | undefined {
-  // TODO: Implement using tree-sitter queries
-  return undefined;
+export function get_scope_chain(scope_id: ScopeId, tree: ScopeTree): ScopeId[] {
+  const chain: ScopeId[] = [];
+  let current_id: ScopeId | null = scope_id;
+
+  // Walk up the parent chain until we reach the root
+  while (current_id) {
+    const node = tree.nodes.get(current_id);
+    if (!node) {
+      // Scope not found - break to avoid infinite loop
+      break;
+    }
+
+    chain.push(current_id);
+
+    // Move to parent (will be null for root)
+    current_id = node.parent_id;
+  }
+
+  return chain;
 }
 
-/**
- * Get scope chain from a scope to root
- */
-export function get_scope_chain(
+export function find_scope_at_location(
   tree: ScopeTree,
-  scope_id: ScopeId
-): ScopeNode[] {
-  // TODO: Implement using tree-sitter queries
-  return [];
-}
+  location: Location
+): ScopeId | undefined {
+  let most_specific_scope: ScopeId | undefined = undefined;
+  let deepest_level = -1;
 
-/**
- * Find symbol in scope chain
- */
-export function find_symbol_in_scope_chain(
-  tree: ScopeTree,
-  scope_id: ScopeId,
-  symbol_name: string
-): ScopeSymbol | undefined {
-  // TODO: Implement using tree-sitter queries
-  return undefined;
-}
+  // Check all scopes to find the most specific one containing the location
+  for (const [scope_id, node] of tree.nodes) {
+    if (location_contains(node.location, location)) {
+      // Count the depth of this scope (number of ancestors)
+      const chain = get_scope_chain(scope_id, tree);
+      const depth = chain.length;
 
-/**
- * Get all visible symbols from a scope
- */
-export function get_visible_symbols(
-  tree: ScopeTree,
-  scope_id: ScopeId
-): Map<SymbolId, ScopeSymbol> {
-  // TODO: Implement using tree-sitter queries
-  return new Map();
-}
+      // Keep the deepest (most specific) scope
+      if (depth > deepest_level) {
+        deepest_level = depth;
+        most_specific_scope = scope_id;
+      }
+    }
+  }
 
-/**
- * Extract variable declarations from scope tree
- */
-export function extract_variables_from_scopes(
-  scopes: ScopeTree
-): VariableDeclaration[] {
-  // TODO: Implement using tree-sitter queries
-  return [];
+  return most_specific_scope;
 }

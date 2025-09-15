@@ -2,67 +2,32 @@
  * Type definitions for code element definitions
  */
 
-import { FunctionSignature, Location } from "./common";
-import {
-  TypeName,
-  FilePath,
-  DocString,
-  FunctionName,
-  ClassName,
-  ParameterName,
-  VariableName,
-  MethodName,
-  PropertyName,
-  InterfaceName,
-  TypeString,
-  QualifiedName,
-} from "./aliases";
-import {
-  TypeConstraintExpression,
-  DefaultValue,
-  Expression,
-  InitialValue,
-  TypeExpression,
-} from "./type_analysis";
-import { Visibility } from "./symbol_scope";
-import { SymbolName, SymbolId } from "./symbol_utils";
+import { Location } from "./common";
+import { DocString, TypeString } from "./aliases";
+
+export type ParameterName = string & { __brand: "ParameterName" };
+
+import { SymbolId } from "./symbols";
+import { SymbolName } from "./symbols";
 
 /**
  * Common base interface for all definition types
  * All entity-specific definition types should extend this
  */
 export interface Definition {
-  readonly name: SymbolId; // Symbol identifier - replaces generic string
+  readonly symbol: SymbolId;
+  readonly name: SymbolName;
   readonly location: Location;
 }
 
-/**
- * Standalone function definition
- */
-export interface FunctionMetadata {
-  readonly is_async: boolean;
-  readonly is_generator: boolean;
-  readonly is_exported: boolean;
-  readonly is_test: boolean;
-  readonly is_private: boolean;
-  readonly complexity: number; // Defaults to 0
-  readonly line_count: number;
-  readonly parameter_names: readonly SymbolId[];
-  readonly has_decorator: boolean;
-  readonly class_name?: ClassName;
-}
-
-export interface FunctionDefinition {
-  readonly name: SymbolId;
-  readonly location: Location;
+export interface FunctionDefinition extends Definition {
   readonly signature: FunctionSignature;
-  readonly metadata: FunctionMetadata; // Always present with sensible defaults
-  readonly docstring: DocString; // Defaults to empty string when no docstring
-  readonly decorators: readonly SymbolId[]; // Always present, defaults to empty array
+  readonly docstring?: DocString;
+  readonly decorators?: readonly SymbolId[];
   readonly is_exported: boolean;
-  readonly is_arrow_function: boolean; // For JS/TS
-  readonly is_anonymous: boolean;
-  readonly closure_captures: readonly string[]; // Always present, defaults to empty array
+  readonly is_arrow_function?: boolean; // For JS/TS
+  readonly is_anonymous?: boolean;
+  readonly closure_captures?: readonly string[];
 }
 
 /**
@@ -107,9 +72,7 @@ export interface ResolvedGeneric {
 /**
  * Method definition within a class
  */
-export interface MethodDefinition {
-  readonly name: SymbolId;
-  readonly location: Location;
+export interface MethodDefinition extends Definition {
   readonly is_static: boolean;
   readonly is_abstract: boolean;
   readonly is_private: boolean;
@@ -129,9 +92,7 @@ export interface MethodDefinition {
 /**
  * Property/field definition within a class
  */
-export interface PropertyDefinition {
-  readonly name: SymbolId;
-  readonly location: Location;
+export interface PropertyDefinition extends Definition {
   readonly type: string; // Required - use "unknown" when type cannot be inferred
   readonly is_static: boolean;
   readonly is_private: boolean;
@@ -145,8 +106,7 @@ export interface PropertyDefinition {
 /**
  * Function/method parameter definition
  */
-export interface ParameterDefinition {
-  readonly name: SymbolId;
+export interface ParameterDefinition extends Definition {
   readonly type: string; // Required - use "unknown" when type cannot be inferred
   readonly is_optional: boolean;
   readonly is_rest: boolean;
@@ -167,8 +127,7 @@ export interface InterfaceDefinition extends Definition {
 /**
  * Method signature in an interface
  */
-export interface MethodSignature {
-  readonly name: SymbolId;
+export interface MethodSignature extends Definition {
   readonly parameters: readonly ParameterDefinition[];
   readonly return_type: string; // Required - use "unknown" when type cannot be inferred
   readonly generics: readonly GenericParameter[]; // Always present, defaults to empty array
@@ -226,8 +185,7 @@ export interface StructDefinition extends Definition {
 /**
  * Rust struct field
  */
-export interface FieldDefinition {
-  readonly name?: SymbolId; // Optional for tuple structs
+export interface FieldDefinition extends Definition {
   readonly type: string;
   readonly is_public: boolean;
   readonly location: Location;
@@ -261,47 +219,29 @@ export interface ProtocolDefinition extends Definition {
   readonly properties: readonly PropertySignature[];
   readonly bases?: readonly SymbolId[];
 }
-
-// Type guards for runtime type checking
-
-export function is_function_definition(
-  def: Definition
-): def is FunctionDefinition {
-  return "parameters" in def && "is_async" in def && "is_generator" in def;
+/**
+ * Function signature information
+ */
+export interface FunctionSignature {
+  readonly parameters: readonly ParameterType[];
+  readonly return_type?: TypeString;
+  readonly type_parameters?: readonly TypeParameter[];
+  readonly is_async?: boolean;
+  readonly is_generator?: boolean;
 }
 
-export function is_class_definition(def: Definition): def is ClassDefinition {
-  return "methods" in def && "properties" in def && !("type_expression" in def);
+export interface ParameterType {
+  readonly name: ParameterName;
+  readonly type: TypeString; // Required - use "unknown" when type cannot be inferred
+  readonly default_value?: string;
+  readonly is_rest: boolean;
+  readonly is_optional: boolean;
 }
 
-export function is_interface_definition(
-  def: Definition
-): def is InterfaceDefinition {
-  return "methods" in def && "properties" in def && !("is_abstract" in def);
-}
-
-export function is_enum_definition(def: Definition): def is EnumDefinition {
-  return "members" in def && !("fields" in def);
-}
-
-export function is_type_alias_definition(
-  def: Definition
-): def is TypeAliasDefinition {
-  return "type_expression" in def;
-}
-
-export function is_struct_definition(def: Definition): def is StructDefinition {
-  return "fields" in def && "is_tuple_struct" in def;
-}
-
-export function is_trait_definition(def: Definition): def is TraitDefinition {
-  return "methods" in def && "supertraits" in def;
-}
-
-export function is_protocol_definition(
-  def: Definition
-): def is ProtocolDefinition {
-  return "methods" in def && "bases" in def;
+export interface TypeParameter {
+  readonly name: SymbolId;
+  readonly constraint: TypeString; // Defaults to "unknown" when no constraint
+  readonly default: TypeString; // Defaults to "unknown" when no default
 }
 
 /**

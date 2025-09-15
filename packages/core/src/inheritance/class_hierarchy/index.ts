@@ -1,6 +1,6 @@
 /**
  * Class hierarchy module - Refactored with configuration-driven pattern
- * 
+ *
  * Combines generic processing with language-specific bespoke handlers
  * to build class hierarchies across all supported languages.
  */
@@ -10,15 +10,15 @@ import {
   ClassHierarchy,
   Language,
   FilePath,
-  FileAnalysis
-} from '@ariadnejs/types';
-import Parser from 'tree-sitter';
+  FileAnalysis,
+} from "@ariadnejs/types";
+import Parser from "tree-sitter";
 import {
   build_generic_class_hierarchy,
   ClassHierarchyContext,
   BespokeHandlers,
-  CLASS_HIERARCHY_CONTEXT
-} from './class_hierarchy';
+  CLASS_HIERARCHY_CONTEXT,
+} from "./class_hierarchy";
 // TODO: Language-specific handlers will be replaced with tree-sitter queries
 
 /**
@@ -34,9 +34,13 @@ export function build_class_hierarchy(
 }
 
 // Re-export types and context
-export { ClassHierarchyContext } from './class_hierarchy';
+export { ClassHierarchyContext } from "./class_hierarchy";
 export { CLASS_HIERARCHY_CONTEXT };
-export type { ClassNode, ClassHierarchy, InheritanceEdge } from '@ariadnejs/types';
+export type {
+  ClassNode,
+  ClassHierarchy,
+  InheritanceEdge,
+} from "@ariadnejs/types";
 
 /**
  * Build class hierarchy from all file analyses
@@ -112,12 +116,12 @@ function track_interface_implementations(
 
   for (const class_def of class_definitions) {
     if (class_def.implements && class_def.implements.length > 0) {
-      const classNode = hierarchy.classes.get(class_def.name);
+      const classNode = hierarchy.classes.get(class_def.symbol);
       if (classNode) {
         // Verify interfaces are properly tracked
         if (!classNode.interfaces || classNode.interfaces.length === 0) {
           console.warn(
-            `Class ${class_def.name} implements interfaces but they are not tracked in hierarchy`
+            `Class ${class_def.symbol} implements interfaces but they are not tracked in hierarchy`
           );
         }
       }
@@ -136,6 +140,8 @@ function detect_and_validate_method_overrides(
   class_definitions: ClassDefinition[]
 ): any {
   // Import the function from method_override module
-  const { detect_and_validate_method_overrides: detectOverrides } = require('../method_override');
+  const {
+    detect_and_validate_method_overrides: detectOverrides,
+  } = require("../method_override");
   return detectOverrides(hierarchy, class_definitions);
 }

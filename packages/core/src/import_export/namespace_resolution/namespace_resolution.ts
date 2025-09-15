@@ -1,6 +1,6 @@
 /**
  * Generic namespace resolution processor
- * 
+ *
  * Configuration-driven namespace resolution that handles ~80% of namespace
  * resolution logic across all languages using language configurations.
  */
@@ -24,13 +24,13 @@ import {
   class_symbol,
   symbol_from_string,
   to_symbol_name,
-} from '@ariadnejs/types';
-import Parser, { SyntaxNode } from 'tree-sitter';
+} from "@ariadnejs/types";
+import Parser, { SyntaxNode } from "tree-sitter";
 import {
   NamespaceLanguageConfig,
-  get_namespace_config
-} from './language_configs';
-import { find_member_access_expressions } from '../../ast/member_access';
+  get_namespace_config,
+} from "./language_configs";
+import { find_member_access_expressions } from "../../ast/member_access";
 
 /**
  * Information about a namespace import
@@ -50,7 +50,7 @@ export interface NamespaceExport {
   is_exported: boolean;
   is_namespace_reexport?: boolean;
   target_module?: string;
-  visibility?: 'public' | 'private' | 'protected';
+  visibility?: "public" | "private" | "protected";
 }
 
 /**
@@ -84,9 +84,9 @@ export interface QualifiedNameResolver {
  * Module context shared across resolution
  */
 export const MODULE_CONTEXT = {
-  name: 'namespace_resolution',
-  version: '2.0.0',
-  layer: 2
+  name: "namespace_resolution",
+  version: "2.0.0",
+  layer: 2,
 } as const;
 
 /**
@@ -112,9 +112,9 @@ export function detect_namespace_imports_generic(
 ): NamespaceResolutionResult {
   const config = get_namespace_config(language);
   const namespace_imports: NamespaceImportInfo[] = [];
-  const bespoke_hints: NamespaceResolutionResult['bespoke_hints'] = {};
+  const bespoke_hints: NamespaceResolutionResult["bespoke_hints"] = {};
   let requires_bespoke = false;
-  
+
   for (const imp of imports) {
     // Check if this is a namespace import based on configuration
     if (is_namespace_import_generic(imp, config, language)) {
@@ -124,29 +124,33 @@ export function detect_namespace_imports_generic(
         line: 0,
         column: 0,
         end_line: 0,
-        end_column: 0
+        end_column: 0,
       };
       namespace_imports.push({
-        namespace_symbol: module_symbol(to_symbol_name(namespace_name), imp.source as FilePath, namespace_location),
+        namespace_symbol: module_symbol(
+          to_symbol_name(namespace_name),
+          imp.source as FilePath,
+          namespace_location
+        ),
         source_module: imp.source,
         is_namespace: true,
-        members: undefined // Will be populated on demand
+        members: undefined, // Will be populated on demand
       });
     }
-    
+
     // Check for patterns that need bespoke handling
     // Since we don't have import_statement, we can't detect CommonJS or dynamic imports
     // We can only check the source for __init__ patterns
-    if (config.features.has_packages && imp.source?.includes('__init__')) {
+    if (config.features.has_packages && imp.source?.includes("__init__")) {
       bespoke_hints.has_packages = true;
       requires_bespoke = true;
     }
   }
-  
+
   return {
     imports: namespace_imports,
     requires_bespoke,
-    bespoke_hints: requires_bespoke ? bespoke_hints : undefined
+    bespoke_hints: requires_bespoke ? bespoke_hints : undefined,
   };
 }
 
@@ -162,42 +166,45 @@ function is_namespace_import_generic(
   if (imp.is_namespace_import === true) {
     return true;
   }
-  
+
   // Check for wildcard imports (symbol_name === '*')
-  if (imp.symbol_name === '*') {
+  if (imp.symbol_name === "*") {
     return true;
   }
-  
+
   // Language-specific checks
   switch (language) {
-    case 'python':
+    case "python":
       // In Python, imports without symbol_name create namespaces
       if (!imp.symbol_name) {
         return true;
       }
       break;
-    case 'rust':
+    case "rust":
       // In Rust, check if source ends with ::*
-      if (imp.source.endsWith('::*')) {
+      if (imp.source.endsWith("::*")) {
         return true;
       }
       break;
   }
-  
+
   return false;
 }
 
 /**
  * Extract namespace name from import
  */
-function get_namespace_name(imp: Import, config: NamespaceLanguageConfig): string {
+function get_namespace_name(
+  imp: Import,
+  config: NamespaceLanguageConfig
+): string {
   // For namespace imports, use the last part of the source as the name
   // e.g., './utils' -> 'utils', 'std::collections' -> 'collections'
   const parts = imp.source.split(/[\/:]/);
   const last_part = parts[parts.length - 1];
-  
+
   // Remove file extensions if present
-  return last_part.replace(/\.(js|ts|py|rs)$/, '');
+  return last_part.replace(/\.(js|ts|py|rs)$/, "");
 }
 
 /**
@@ -210,7 +217,7 @@ export function resolve_namespace_member_generic(
   exports: Map<SymbolId, NamespaceExport>
 ): Def | undefined {
   const config = get_namespace_config(context.language);
-  
+
   // Check if member exists in exports
   const export_entry = exports.get(member);
   if (!export_entry) {
@@ -222,12 +229,12 @@ export function resolve_namespace_member_generic(
   if (!is_member_visible_generic(member_symbol.name, config)) {
     return undefined;
   }
-  
+
   // Handle re-export
   if (is_reexport(export_entry)) {
     return resolve_reexport_generic(export_entry, context, config);
   }
-  
+
   // Return the definition
   return export_entry as Def;
 }
@@ -245,7 +252,7 @@ function is_member_visible_generic(
       return false;
     }
   }
-  
+
   // If not private, it's visible
   return true;
 }
@@ -253,8 +260,10 @@ function is_member_visible_generic(
 /**
  * Check if an export is a re-export
  */
-function is_reexport(exp: NamespaceExport): exp is { is_namespace_reexport: true; target_module: string } {
-  return 'is_namespace_reexport' in exp && exp.is_namespace_reexport === true;
+function is_reexport(
+  exp: NamespaceExport
+): exp is { is_namespace_reexport: true; target_module: string } {
+  return "is_namespace_reexport" in exp && exp.is_namespace_reexport === true;
 }
 
 /**
@@ -268,7 +277,7 @@ function resolve_reexport_generic(
   if (!config.reexport_patterns.follow_chains) {
     return undefined;
   }
-  
+
   // TODO: Implement re-export chain following
   // This would require loading the target module and resolving from there
   return undefined;
@@ -283,13 +292,13 @@ export function get_namespace_exports_generic(
 ): Map<SymbolId, NamespaceExport> {
   const exports = new Map<SymbolId, NamespaceExport>();
   const config = get_namespace_config(context.language);
-  
+
   // Get file analysis
   const file_graph = context.config.get_file_graph?.(target_file);
   if (!file_graph) {
     return exports;
   }
-  
+
   // Process definitions that are exported
   for (const def of file_graph.defs) {
     // Check if this definition is exported (simplified check)
@@ -300,25 +309,30 @@ export function get_namespace_exports_generic(
         line: 0,
         column: 0,
         end_line: 0,
-        end_column: 0
+        end_column: 0,
       };
-      const def_symbol = def.kind === 'function'
-        ? function_symbol(def.name, def_location)
-        : def.kind === 'class'
-        ? class_symbol(def.name, target_file as FilePath, def_location)
-        : module_symbol(to_symbol_name(def.name), target_file as FilePath, def_location);
+      const def_symbol =
+        def.kind === "function"
+          ? function_symbol(def.name, def_location)
+          : def.kind === "class"
+          ? class_symbol(def.name, target_file as FilePath, def_location)
+          : module_symbol(
+              to_symbol_name(def.name),
+              target_file as FilePath,
+              def_location
+            );
 
       exports.set(def_symbol, {
         symbol: def_symbol,
         is_exported: true,
-        visibility: 'public'
+        visibility: "public",
       });
     }
   }
-  
+
   // TODO: Handle re-exports
   // TODO: Handle export lists (__all__ in Python)
-  
+
   return exports;
 }
 
@@ -330,21 +344,23 @@ function is_exported_definition(
   config: NamespaceLanguageConfig
 ): boolean {
   // Check for private prefix first (applies to all languages that have it)
-  if (config.visibility_rules.private_prefix && 
-      def.name.startsWith(config.visibility_rules.private_prefix)) {
+  if (
+    config.visibility_rules.private_prefix &&
+    def.name.startsWith(config.visibility_rules.private_prefix)
+  ) {
     return false;
   }
-  
+
   // Explicit export flag always takes precedence
   if (def.is_exported !== undefined) {
     return def.is_exported;
   }
-  
+
   // In languages with default public visibility, all non-private top-level defs are exported
   if (config.visibility_rules.default_public) {
     return true;
   }
-  
+
   // For languages with explicit exports, default to false
   return false;
 }
@@ -360,39 +376,50 @@ export function parse_qualified_access_generic(
   if (config.member_access.alt_separators) {
     separators.push(...config.member_access.alt_separators);
   }
-  
+
   // Create regex pattern for any separator
-  const sep_pattern = separators.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+  const sep_pattern = separators
+    .map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join("|");
   const parts = qualified_name.split(new RegExp(sep_pattern));
-  
+
   if (parts.length < 2) {
     // Create a module symbol for the namespace
     const location: Location = {
-      file_path: '' as FilePath,
+      file_path: "" as FilePath,
       line: 0,
       column: 0,
       end_line: 0,
-      end_column: 0
+      end_column: 0,
     };
-    return { namespace: module_symbol(to_symbol_name(qualified_name), '' as FilePath, location), members: [] };
+    return {
+      namespace: module_symbol(
+        to_symbol_name(qualified_name),
+        "" as FilePath,
+        location
+      ),
+      members: [],
+    };
   }
 
   // Create symbols for namespace and members
   const location: Location = {
-    file_path: '' as FilePath,
+    file_path: "" as FilePath,
     line: 0,
     column: 0,
     end_line: 0,
-    end_column: 0
+    end_column: 0,
   };
-  const namespace = module_symbol(to_symbol_name(parts[0]), '' as FilePath, location);
-  const members = parts.slice(1).map(part =>
-    function_symbol(part, location)
+  const namespace = module_symbol(
+    to_symbol_name(parts[0]),
+    "" as FilePath,
+    location
   );
+  const members = parts.slice(1).map((part) => function_symbol(part, location));
 
   return {
     namespace,
-    members
+    members,
   };
 }
 
@@ -404,28 +431,32 @@ export function needs_bespoke_processing(
   language: Language
 ): boolean {
   const config = get_namespace_config(language);
-  
+
   // Quick checks for patterns that need bespoke handling
-  if (config.features.has_commonjs && 
-      (source_code.includes('module.exports') ||
-       source_code.includes('exports.') ||
-       source_code.includes('require('))) {
+  if (
+    config.features.has_commonjs &&
+    (source_code.includes("module.exports") ||
+      source_code.includes("exports.") ||
+      source_code.includes("require("))
+  ) {
     return true;
   }
-  
-  if (config.features.has_dynamic_imports && source_code.includes('import(')) {
+
+  if (config.features.has_dynamic_imports && source_code.includes("import(")) {
     return true;
   }
-  
-  if (config.features.has_namespace_declarations && 
-      (source_code.includes('namespace ') || source_code.includes('module '))) {
+
+  if (
+    config.features.has_namespace_declarations &&
+    (source_code.includes("namespace ") || source_code.includes("module "))
+  ) {
     return true;
   }
-  
-  if (config.features.has_packages && source_code.includes('__init__')) {
+
+  if (config.features.has_packages && source_code.includes("__init__")) {
     return true;
   }
-  
+
   return false;
 }
 
@@ -448,12 +479,12 @@ export function merge_namespace_results(
   for (const result of bespoke_results) {
     seen.set(result.namespace_symbol, result); // This will override generic if duplicate
   }
-  
+
   // Add all results to merged array
   for (const result of seen.values()) {
     merged.push(result);
   }
-  
+
   return merged;
 }
 
@@ -470,15 +501,12 @@ export function detect_namespace_imports(
 
 /**
  * Check if an import creates a namespace (public API)
- * 
+ *
  * @param imp - The import statement to check
  * @param language - The programming language
  * @returns true if this import creates a namespace
  */
-export function is_namespace_import(
-  imp: Import,
-  language: Language
-): boolean {
+export function is_namespace_import(imp: Import, language: Language): boolean {
   const config = get_namespace_config(language);
   return is_namespace_import_generic(imp, config, language);
 }
@@ -549,14 +577,14 @@ export function get_namespace_stats(imports: NamespaceImportInfo[]): {
 } {
   const stats = {
     total: imports.length,
-    by_source: new Map<string, number>()
+    by_source: new Map<string, number>(),
   };
-  
+
   for (const imp of imports) {
     const count = map_get_or_default(stats.by_source, imp.source_module, 0);
     stats.by_source.set(imp.source_module, count + 1);
   }
-  
+
   return stats;
 }
 
@@ -571,7 +599,10 @@ export function collect_namespace_exports(
   // Collect named exports
   for (const export_stmt of analysis.exports) {
     if (export_stmt.symbol_name && !export_stmt.is_default) {
-      const export_symbol = function_symbol(export_stmt.symbol_name, export_stmt.location);
+      const export_symbol = function_symbol(
+        export_stmt.symbol_name,
+        export_stmt.location
+      );
       exports.set(export_symbol, {
         name: export_stmt.symbol_name,
         kind: "export",
@@ -592,9 +623,13 @@ export function collect_namespace_exports(
 
   // Collect exported classes
   for (const cls of analysis.classes) {
-    const class_symbol_id = class_symbol(cls.name, analysis.file_path, cls.location);
+    const class_symbol_id = class_symbol(
+      cls.symbol,
+      analysis.file_path,
+      cls.location
+    );
     exports.set(class_symbol_id, {
-      name: cls.name,
+      name: cls.symbol,
       kind: "class",
       location: cls.location,
     });

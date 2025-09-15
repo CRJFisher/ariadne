@@ -5,9 +5,11 @@
 
 import { Location, Language } from "./common";
 import { FilePath } from "./aliases";
-import { Visibility } from "./symbol_scope";
-import { SymbolName } from "./symbol_utils";
-import { SymbolId } from "./symbol_utils";
+// import { Visibility } from "./symbol_scope";
+// Define Visibility locally for now
+export type Visibility = "public" | "private" | "protected";
+import { SymbolName } from "./symbols";
+import { SymbolId } from "./symbols";
 import { SemanticNode, Resolution } from "./query";
 import { TypeDefinition, TypeMember } from "./type_analysis";
 import { map_get_array } from "./map_utils";
@@ -92,7 +94,13 @@ export interface FieldMember extends BaseMember {
  * Method member (has signature, may have return type info)
  */
 export interface MethodMember extends BaseMember {
-  readonly member_type: "method" | "constructor" | "destructor" | "getter" | "setter" | "static_method";
+  readonly member_type:
+    | "method"
+    | "constructor"
+    | "destructor"
+    | "getter"
+    | "setter"
+    | "static_method";
   readonly signature: MemberSignature; // Always present for methods
   readonly overrides?: SymbolId; // Method being overridden
   readonly implements?: SymbolId; // Interface method being implemented
@@ -211,9 +219,7 @@ export interface OverrideStep {
 // Type Guards
 // ============================================================================
 
-export function is_unified_type_entity(
-  value: unknown
-): value is TypeEntity {
+export function is_unified_type_entity(value: unknown): value is TypeEntity {
   if (typeof value !== "object" || value === null) return false;
   const entity = value as any;
   return (
@@ -293,11 +299,7 @@ export function is_overridable(member: Member): boolean {
  * Get all base types (extends + implements + uses)
  */
 export function get_all_base_types(entity: TypeEntity): SymbolId[] {
-  return [
-    ...entity.extends,
-    ...entity.implements,
-    ...entity.uses,
-  ];
+  return [...entity.extends, ...entity.implements, ...entity.uses];
 }
 
 /**
@@ -414,7 +416,9 @@ export function find_diamond_problems(
  * Type guard to check if a member is a field member
  */
 export function is_field_member(member: Member): member is FieldMember {
-  return member.member_type === "field" || member.member_type === "static_field";
+  return (
+    member.member_type === "field" || member.member_type === "static_field"
+  );
 }
 
 /**
@@ -427,7 +431,7 @@ export function is_method_member(member: Member): member is MethodMember {
     "destructor",
     "getter",
     "setter",
-    "static_method"
+    "static_method",
   ];
   return method_types.includes(member.member_type);
 }

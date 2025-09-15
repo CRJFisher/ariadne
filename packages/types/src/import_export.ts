@@ -3,8 +3,8 @@
  */
 
 import { Location, Language } from "./common";
-import { SymbolName } from "./symbol_utils";
-import { SymbolId } from "./symbol_utils";
+import { SymbolName } from "./symbols";
+import { SymbolId } from "./symbols";
 import { SemanticNode, Resolution } from "./query";
 
 // ============================================================================
@@ -12,75 +12,10 @@ import { SemanticNode, Resolution } from "./query";
 // ============================================================================
 
 /** Module import path (e.g., 'lodash', './utils') */
-export type ModulePath = string & { __brand: 'ModulePath' };
+export type ModulePath = string & { __brand: "ModulePath" };
 
 /** Namespace name */
-export type NamespaceName = string & { __brand: 'NamespaceName' };
-
-// ============================================================================
-// Module Path Utilities
-// ============================================================================
-
-/**
- * Build a ModulePath from components
- */
-export function build_module_path(
-  source: string,
-  is_relative: boolean = false
-): ModulePath {
-  let path = source;
-
-  // Normalize path separators
-  path = path.replace(/\\/g, "/");
-
-  // Add relative prefix if needed
-  if (is_relative && !path.startsWith(".")) {
-    path = "./" + path;
-  }
-
-  // Remove .js/.ts extensions for cleaner paths
-  path = path.replace(/\.(js|jsx|ts|tsx|mjs|cjs|mts|cts)$/, "");
-
-  return path as ModulePath;
-}
-
-/**
- * Parse a ModulePath into components
- */
-export function parse_module_path(path: ModulePath): {
-  segments: string[];
-  is_relative: boolean;
-  is_scoped: boolean;
-  package_name?: string;
-  subpath?: string;
-} {
-  const is_relative = path.startsWith("./") || path.startsWith("../");
-  const is_scoped = path.startsWith("@");
-  const segments = path.split("/").filter((s) => s.length > 0);
-
-  let package_name: string | undefined;
-  let subpath: string | undefined;
-
-  if (!is_relative) {
-    if (is_scoped && segments.length >= 2) {
-      // Scoped package like @types/node
-      package_name = segments.slice(0, 2).join("/");
-      subpath = segments.slice(2).join("/");
-    } else if (segments.length > 0) {
-      // Regular package like lodash
-      package_name = segments[0];
-      subpath = segments.slice(1).join("/");
-    }
-  }
-
-  return {
-    segments,
-    is_relative,
-    is_scoped,
-    package_name,
-    subpath,
-  };
-}
+export type NamespaceName = string & { __brand: "NamespaceName" };
 
 // ============================================================================
 // Import Types
