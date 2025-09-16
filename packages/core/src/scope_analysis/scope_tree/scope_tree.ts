@@ -18,6 +18,7 @@ import {
   class_scope,
   block_scope,
   local_scope,
+  ScopeNode,
 } from "@ariadnejs/types";
 import { node_to_location } from "../../ast/node_utils";
 import { load_scope_query, get_language_parser } from "./loader";
@@ -276,6 +277,21 @@ export function get_scope_chain(scope_id: ScopeId, tree: ScopeTree): ScopeId[] {
   }
 
   return chain;
+}
+
+export function find_parent_class_scope(scope_id: ScopeId, tree: ScopeTree): ScopeNode | undefined {
+  const node = tree.nodes.get(scope_id);
+  if (!node) {
+    return undefined;
+  }
+  const class_scope_node = node.parent_id ? tree.nodes.get(node.parent_id) : undefined;
+  if (!class_scope_node) {
+    return undefined;
+  }
+  if (class_scope_node.type !== "class") {
+    throw new Error(`Scope '${scope_id}' has a non-class parent scope of type: '${class_scope_node.type}'`);
+  }
+  return class_scope_node;
 }
 
 export function find_scope_at_location(

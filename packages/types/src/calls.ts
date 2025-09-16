@@ -21,7 +21,7 @@ export const MODULE_CONTEXT = "<module>" as const;
 export type ModuleContext = typeof MODULE_CONTEXT;
 
 /** Caller can be a symbol or module context */
-export type CallerContext = SymbolName | ModuleContext;
+export type CallerContext = SymbolId | ModuleContext;
 
 /** Type kind for resolved types */
 export type ResolvedTypeKind =

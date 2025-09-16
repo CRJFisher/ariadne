@@ -16,7 +16,10 @@ import {
   build_scope_entity_connections,
   ScopeEntityConnections,
 } from "./scope_analysis/scope_entity_connections";
-import { extract_exports, extract_imports } from "./import_export/import_export_resolution";
+import {
+  extract_exports,
+  extract_imports,
+} from "./import_export/import_export_resolution";
 import { find_class_definitions } from "./inheritance/class_detection";
 import { find_function_calls } from "./call_graph/function_calls/function_calls";
 import { find_method_calls } from "./call_graph/method_calls/method_calls";
@@ -51,6 +54,7 @@ import {
   DocString,
   TypeIndex,
   TypeDefinition,
+  CallerContext,
 } from "@ariadnejs/types";
 import {
   ReturnTypeInfo,
@@ -63,7 +67,11 @@ import {
 
 // Re-export types from shared modules
 import { CodeFile } from "./project/file_scanner";
-import { process_file_for_types, TypeTrackingContext } from "./type_analysis/type_tracking";
+import {
+  process_file_for_types,
+  TypeTrackingContext,
+} from "./type_analysis/type_tracking";
+import { determine_caller } from "./scope_analysis/usage_finder";
 
 /**
  * Main entry point for analyzing a single file
@@ -252,24 +260,20 @@ function analyze_local_types(
   const type_tracker = process_file_for_types(type_tracking_context);
 
   // Infer parameter types for all functions
-  const inferred_parameters = infer_all_parameter_types(
-    {
-      language: file.language,
-      file_path: file.file_path,
-      source_code: source_code,
-      ast_root: root_node,
-    }
-  );
+  const inferred_parameters = infer_all_parameter_types({
+    language: file.language,
+    file_path: file.file_path,
+    source_code: source_code,
+    ast_root: root_node,
+  });
 
   // Infer return types for all functions
-  const inferred_returns = infer_all_return_types(
-    {
-      language: file.language,
-      file_path: file.file_path,
-      source_code: source_code,
-      ast_root: root_node,
-    }
-  );
+  const inferred_returns = infer_all_return_types({
+    language: file.language,
+    file_path: file.file_path,
+    source_code: source_code,
+    ast_root: root_node,
+  });
 
   return {
     type_tracker,
@@ -280,6 +284,18 @@ function analyze_local_types(
 
 /**
  * Analyze function, method, and constructor calls
+ *
+ * This implements Phase 1 (Layer 4) early enrichment from PROCESSING_PIPELINE.md:
+ * - Tree-sitter queries find the calls (simple pattern matching)
+ * - Scope tree determines the caller context (structural information)
+ * - Type tracker will be used for indirect call resolution (semantic analysis)
+ *
+ * The separation of concerns is intentional:
+ * - Tree-sitter: Fast syntactic pattern matching for call detection
+ * - Scope tree: Already-built structural context for caller identification
+ * - TODO: Type tracker: Future enhancement for resolving variable references,
+ *   method bindings, and dynamic dispatch (e.g., when `processor` variable
+ *   holds a function reference, or for polymorphic method calls)
  */
 function analyze_calls(
   root_node: SyntaxNode,
@@ -293,43 +309,31 @@ function analyze_calls(
   method_calls: MethodCall[];
   constructor_calls: ConstructorCall[];
 } {
-  // Create context for function calls
-  const function_call_context = {
+  const context = {
     source_code,
     file_path,
     language,
     ast_root: root_node,
   };
 
-  // Find function calls
-  const function_calls = find_function_calls(function_call_context);
+  // Enrich with caller information from scope tree
+  const function_calls = find_function_calls(context).map((call) => ({
+    ...call,
+    caller: determine_caller(call.location, scopes),
+  }));
 
-  // Create context for method calls - similar structure for now
-  const method_call_context = {
-    source_code,
-    file_path,
-    language,
-    ast_root: root_node,
-  };
+  const method_calls = find_method_calls(context).map((call) => ({
+    ...call,
+    caller: determine_caller(call.location, scopes),
+  }));
 
-  // Find method calls
-  const method_calls = find_method_calls(method_call_context);
-
-  // Create context for constructor calls
-  const constructor_call_context = {
-    source_code,
-    file_path,
-    language,
-    ast_root: root_node,
-  };
-
-  // Find constructor calls
-  const constructor_calls = find_constructor_calls(constructor_call_context);
+  const constructor_calls = find_constructor_calls(context).map((call) => ({
+    ...call,
+    caller: determine_caller(call.location, scopes),
+  }));
 
   return { function_calls, method_calls, constructor_calls };
 }
-
-// Variable extraction is done through scope_tree
 
 /**
  * Extract function and class definitions

@@ -11,7 +11,9 @@ export type ScopeType =
   | "global" // Top-level file scope
   | "module" // Module/namespace scope
   | "class" // Class/struct scope
-  | "function" // Function/method scope
+  | "function" // Function scope
+  | "method" // Method scope
+  | "constructor" // Constructor scope
   | "block" // Block scope (if/for/while/etc)
   | "parameter" // Function parameter scope
   | "local"; // Local/let/const scope
@@ -22,6 +24,7 @@ export type ScopeType =
 interface BaseScopeNode {
   readonly id: ScopeId;
   readonly parent_id: ScopeId | null;
+  readonly name: ScopeName | null;
   readonly type: ScopeType;
   readonly location: Location;
   readonly child_ids: readonly ScopeId[];
@@ -38,7 +41,7 @@ export interface RootScopeNode extends BaseScopeNode {
  * Child scope node (has parent)
  */
 export interface ChildScopeNode extends BaseScopeNode {
-  readonly type: "class" | "function" | "block" | "parameter" | "local"; // Non-root scope types
+  readonly type: "class" | "function" | "method" | "constructor" | "block" | "parameter" | "local"; // Non-root scope types
 }
 
 /**

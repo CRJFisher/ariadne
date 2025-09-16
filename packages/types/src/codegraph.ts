@@ -30,7 +30,7 @@ export interface FileAnalysis {
   readonly type_info: ReadonlyMap<SymbolId, TypeInfo>;
 }
 
-// TODO shouldn't this be in definitions?
+// TODO shouldn't this be in definitions or type_tracking?
 export interface VariableDeclaration {
   readonly name: SymbolId;
   readonly location: Location;

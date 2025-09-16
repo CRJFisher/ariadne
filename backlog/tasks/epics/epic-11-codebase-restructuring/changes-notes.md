@@ -15,7 +15,11 @@
   - The `ResolutionResult` usage of `Location` -> `ResolvedReference` seems weird.
   - Do we need this extra `ResolvedReference` type?
 
-## Move to AST queries which aren't documented in tasks:
+## Move to AST queries which aren't documented in tasks
 
 - type_tracking.ts
   - `process_file_for_types`
+
+## Why are we collecting `variables` in file_analyzer?
+
+- We could use them to track function references and include them in the call graph

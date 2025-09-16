@@ -32,12 +32,14 @@ export interface FunctionCallContext {
   imports?: any[];
 }
 
+interface FunctionCallWithoutCaller extends Omit<FunctionCall, "caller"> {}
+
 /**
  * Find all function calls in code
  */
 export function find_function_calls(
   context: FunctionCallContext
-): FunctionCall[] {
+): FunctionCallWithoutCaller[] {
   // TODO: Implement using tree-sitter queries from function_call_queries/*.scm
   return [];
 }
