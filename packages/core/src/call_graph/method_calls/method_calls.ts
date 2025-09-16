@@ -1,4 +1,4 @@
-import { CallInfo, FilePath, Language, SourceCode } from "@ariadnejs/types";
+import { FilePath, Language, MethodCall, SourceCode } from "@ariadnejs/types";
 import { SyntaxNode } from "tree-sitter";
 
 export interface MethodCallContext {
@@ -11,7 +11,7 @@ export interface MethodCallContext {
 /**
  * Find all method calls in source code
  */
-export function find_method_calls(context: MethodCallContext): CallInfo[] {
+export function find_method_calls(context: MethodCallContext): MethodCall[] {
   // TODO: Implement using tree-sitter queries from method_call_queries/*.scm
   return [];
 }

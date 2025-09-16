@@ -50,6 +50,7 @@ import {
   function_symbol,
   DocString,
   TypeIndex,
+  TypeDefinition,
 } from "@ariadnejs/types";
 import {
   ReturnTypeInfo,
@@ -62,6 +63,7 @@ import {
 
 // Re-export types from shared modules
 import { CodeFile } from "./project/file_scanner";
+import { process_file_for_types, TypeTrackingContext } from "./type_analysis/type_tracking";
 
 /**
  * Main entry point for analyzing a single file
@@ -233,36 +235,40 @@ function analyze_local_types(
   root_node: SyntaxNode,
   file: CodeFile,
   scopes: ScopeTree,
-  _imports: Import[],
-  _class_definitions: ClassDefinition[]
+  imports: Import[],
+  class_definitions: ClassDefinition[]
 ): {
   type_tracker: TypeIndex;
-  inferred_parameters: Map<string, ParameterAnalysis>;
-  inferred_returns: Map<string, ReturnTypeInfo>;
+  inferred_parameters: TypeDefinition[];
+  inferred_returns: TypeDefinition[];
 } {
   const type_tracking_context: TypeTrackingContext = {
     language: file.language,
     file_path: file.file_path,
     source_code: source_code,
-    debug: false,
+    ast_root: root_node,
   };
 
-  const type_tracker = process_file_for_types(root_node, type_tracking_context);
+  const type_tracker = process_file_for_types(type_tracking_context);
 
   // Infer parameter types for all functions
   const inferred_parameters = infer_all_parameter_types(
-    root_node,
-    source_code,
-    file.language,
-    file.file_path
+    {
+      language: file.language,
+      file_path: file.file_path,
+      source_code: source_code,
+      ast_root: root_node,
+    }
   );
 
   // Infer return types for all functions
   const inferred_returns = infer_all_return_types(
-    root_node,
-    source_code,
-    file.language,
-    file.file_path
+    {
+      language: file.language,
+      file_path: file.file_path,
+      source_code: source_code,
+      ast_root: root_node,
+    }
   );
 
   return {
@@ -279,8 +285,8 @@ function analyze_calls(
   root_node: SyntaxNode,
   source_code: SourceCode,
   language: Language,
-  _type_tracker: TypeTracker,
-  _scopes: ScopeTree,
+  type_tracker: TypeIndex,
+  scopes: ScopeTree,
   file_path: FilePath
 ): {
   function_calls: FunctionCall[];
@@ -334,8 +340,8 @@ function extract_definitions(
   _file: CodeFile,
   scopes: ScopeTree,
   class_definitions: ClassDefinition[],
-  inferred_parameters: Map<string, ParameterAnalysis>,
-  inferred_returns: Map<string, ReturnTypeInfo>,
+  inferred_parameters: TypeDefinition[],
+  inferred_returns: TypeDefinition[],
   file_path: FilePath
 ): {
   functions: FunctionDefinition[];
@@ -487,7 +493,7 @@ function build_file_analysis(
   // Note: type_tracker.variable_types needs to be converted to use SymbolId keys
 
   // Extract variables from scope tree
-  const variables = extract_variables_from_scopes(scopes);
+  // const variables = extract_variables_from_scopes(scopes); // TODO: why are variables in scopes? Why are we extracting variables?
   const errors = error_collector?.get_errors() || [];
 
   return {
@@ -498,7 +504,7 @@ function build_file_analysis(
     exports: export_statements,
     functions: create_readonly_array(functions),
     classes: create_readonly_array(classes),
-    variables,
+    // variables,
     errors,
     function_calls: create_readonly_array(function_calls),
     method_calls: create_readonly_array(method_calls),

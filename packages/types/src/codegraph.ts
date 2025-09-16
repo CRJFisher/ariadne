@@ -21,7 +21,7 @@ export interface FileAnalysis {
   readonly classes: readonly ClassDefinition[];
   readonly imports: readonly Import[];
   readonly exports: readonly Export[];
-  readonly variables: readonly VariableDeclaration[];
+  // readonly variables: readonly VariableDeclaration[];
   readonly errors: readonly AnalysisError[];
   readonly scopes: ScopeTree;
   readonly function_calls: readonly FunctionCall[];
@@ -76,48 +76,5 @@ export interface CodeGraphOptions {
     readonly enabled?: boolean; // Required
     readonly ttl?: number; // Defaults to 3600 seconds
     readonly max_size?: number; // Defaults to 100MB
-  };
-}
-
-/**
- * Input type for creating code graph options (allows partial specification)
- */
-export type CodeGraphOptionsInput = {
-  readonly root_path: FilePath;
-} & Partial<Omit<CodeGraphOptions, "root_path">>;
-
-/**
- * Create code graph options with proper defaults
- */
-export function create_code_graph_options(
-  input: CodeGraphOptionsInput
-): CodeGraphOptions {
-  const default_languages: Language[] = [
-    "javascript",
-    "typescript",
-    "python",
-    "rust",
-  ];
-
-  return {
-    root_path: input.root_path,
-    include_patterns: input.include_patterns ?? [],
-    exclude_patterns: input.exclude_patterns ?? [],
-    languages: input.languages ?? default_languages,
-    max_file_size: input.max_file_size ?? 1024 * 1024, // 1MB
-    follow_symlinks: input.follow_symlinks ?? false,
-    include_tests: input.include_tests ?? true,
-    include_dependencies: input.include_dependencies ?? false,
-    analysis_options: {
-      resolve_types: input.analysis_options?.resolve_types ?? true,
-      track_usage: input.analysis_options?.track_usage ?? true,
-      include_call_chains: input.analysis_options?.include_call_chains ?? true,
-      max_call_depth: input.analysis_options?.max_call_depth ?? 10,
-    },
-    cache: {
-      enabled: input.cache?.enabled ?? false,
-      ttl: input.cache?.ttl ?? 3600,
-      max_size: input.cache?.max_size ?? 100 * 1024 * 1024, // 100MB
-    },
   };
 }

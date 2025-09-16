@@ -13,7 +13,31 @@ import {
   ScopeType,
   TypeString,
   TypeIndex,
+  Language,
+  FilePath,
+  SourceCode,
 } from "@ariadnejs/types";
+import { SyntaxNode } from "tree-sitter";
+
+
+export interface TypeTrackingContext {
+  source_code: SourceCode;
+  file_path: FilePath;
+  language: Language;
+  ast_root: SyntaxNode;
+}
+
+export function process_file_for_types(context: TypeTrackingContext): TypeIndex {
+  // TODO: implement this with tree-sitter queries
+  return {
+    types: new Map(),
+    variables: new Map(),
+    type_graph: {
+      nodes: new Map(),
+      edges: [],
+    },
+  };
+}
 
 export function build_type_index(analyses: FileAnalysis[]): TypeIndex {
   const variables = new Map<string, VariableType>();

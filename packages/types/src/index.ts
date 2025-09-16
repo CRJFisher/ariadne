@@ -6,8 +6,6 @@ export * from "./aliases";
 
 // Export branded types from their new locations
 export {
-  CallerName,
-  CalleeName,
   ReceiverName,
   MODULE_CONTEXT,
   ModuleContext,
@@ -19,8 +17,6 @@ export {
   is_receiver_name,
   is_module_context,
   is_caller_context,
-  to_caller_name,
-  to_callee_name,
   to_receiver_name,
 } from "./calls";
 

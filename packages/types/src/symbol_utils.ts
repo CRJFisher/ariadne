@@ -297,16 +297,12 @@ export function property_symbol(
  * ```
  */
 export function module_symbol(
-  name: SymbolName,
-  file_path: FilePath,
   location: Location
 ): SymbolId {
-  // Ensure location has the correct file_path
-  const loc = { ...location, file_path: file_path as FilePath };
   return symbol_string({
-    name: name as SymbolName,
+    name: "<module>" as SymbolName,
     kind: "module",
-    location: loc,
+    location: location,
   });
 }
 

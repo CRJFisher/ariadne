@@ -103,12 +103,12 @@ export function register_symbols(
     }
 
     // Process variables
-    for (const variable of analysis.variables) {
-      const symbol_id = registry.get(variable);
-      if (symbol_id) {
-        add_variable_to_table(table, variable, symbol_id, analysis);
-      }
-    }
+    // for (const variable of analysis.variables) {
+    //   const symbol_id = registry.get(variable);
+    //   if (symbol_id) {
+    //     add_variable_to_table(table, variable, symbol_id, analysis);
+    //   }
+    // }
 
     // Process exports
     process_exports(table, analysis);
@@ -333,11 +333,11 @@ function find_symbol_by_name(
   }
 
   // Search variables
-  for (const variable of analysis.variables) {
-    if (variable.name === name) {
-      return registry.get(variable);
-    }
-  }
+  // for (const variable of analysis.variables) {
+  //   if (variable.name === name) {
+  //     return registry.get(variable);
+  //   }
+  // }
 
   return undefined;
 }

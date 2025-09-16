@@ -14,3 +14,8 @@
 - resolve_references_to_symbols
   - The `ResolutionResult` usage of `Location` -> `ResolvedReference` seems weird.
   - Do we need this extra `ResolvedReference` type?
+
+## Move to AST queries which aren't documented in tasks:
+
+- type_tracking.ts
+  - `process_file_for_types`

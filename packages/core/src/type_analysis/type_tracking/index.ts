@@ -6,4 +6,6 @@
 
 export {
   build_type_index,
+  process_file_for_types,
+  TypeTrackingContext,
 } from "./type_tracking";

@@ -12,6 +12,7 @@ import {
   CallInfo,
   ScopeTree,
   Import,
+  FunctionCall,
 } from "@ariadnejs/types";
 
 /**
@@ -36,7 +37,7 @@ export interface FunctionCallContext {
  */
 export function find_function_calls(
   context: FunctionCallContext
-): CallInfo[] {
+): FunctionCall[] {
   // TODO: Implement using tree-sitter queries from function_call_queries/*.scm
   return [];
 }

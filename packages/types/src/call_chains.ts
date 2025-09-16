@@ -2,46 +2,27 @@
  * Call chain and call graph analysis types
  */
 
-import { SymbolId } from "./symbols";
+import { SymbolId, SymbolName } from "./symbols";
 import { Location } from "./common";
 import { CallInfo } from "./calls";
-
-/**
- * Node in a call chain representing a single function/method
- */
-export interface CallChainNode {
-  readonly symbol_id: SymbolId;
-  readonly location: Location;
-  readonly depth: number;
-  readonly is_recursive: boolean;
-  readonly call?: CallInfo;
-}
-
-/**
- * Complete call chain from entry point to leaf
- */
-export interface CallChain {
-  readonly nodes: readonly CallChainNode[];
-  readonly entry_point: SymbolId;
-  readonly depth: number;
-  readonly has_recursion: boolean;
-  readonly execution_path: readonly SymbolId[];
-}
+import { ScopeId } from "./scopes";
 
 /**
  * Node in a call graph representing a function/method
  */
 export interface FunctionNode {
   readonly symbol_id: SymbolId;
+  readonly name: SymbolName;
+  readonly enclosed_calls: readonly EnclosedCall[];
   readonly location: Location;
 }
 
 /**
  * Edge in a call graph representing a call relationship
  */
-export interface CallEdge {
-  readonly from: SymbolId;
-  readonly to: SymbolId;
+export interface EnclosedCall {
+  readonly location: Location;
+  // readonly scope_id: ScopeId; // TODO: implement so we can 
   readonly call: CallInfo;
 }
 
@@ -50,18 +31,5 @@ export interface CallEdge {
  */
 export interface CallGraph {
   readonly nodes: ReadonlyMap<SymbolId, FunctionNode>;
-  readonly edges: readonly CallEdge[];
   readonly entry_points: readonly SymbolId[];
-  readonly call_chains?: readonly CallChain[];
-}
-
-/**
- * Result of call chain analysis
- */
-export interface CallChainAnalysisResult {
-  readonly chains: readonly CallChain[];
-  readonly graph: CallGraph;
-  readonly recursive_chains: readonly CallChain[];
-  readonly max_depth: number;
-  readonly total_calls: number;
 }
