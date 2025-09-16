@@ -116,6 +116,9 @@ export function build_scope_tree(
     location: Location;
   }> = [];
 
+  // Collect all definition nodes (for extracting names)
+  const definition_nodes: Map<SyntaxNode, string> = new Map();
+
   // Load and execute the scope query for this language
   const query_string = load_scope_query(language);
 
@@ -128,11 +131,22 @@ export function build_scope_tree(
       // Execute the query on the AST
       const matches = query.matches(root);
 
-      // First pass: collect all scopes
+      // First pass: collect all scopes and definitions
       for (const match of matches) {
         for (const capture of match.captures) {
           const captured_node = capture.node;
           const capture_name = capture.name; //query.captureNames[capture.index];
+
+          // Capture definitions for name extraction
+          if (capture_name.includes("definition.function") ||
+              capture_name.includes("definition.class") ||
+              capture_name.includes("definition.method") ||
+              capture_name.includes("definition.generator")) {
+            // Store the identifier text with its parent node (the declaration)
+            if (captured_node.parent) {
+              definition_nodes.set(captured_node.parent, captured_node.text);
+            }
+          }
 
           if (capture_name === "local.scope") {
             // Determine scope type based on the node type
@@ -170,11 +184,38 @@ export function build_scope_tree(
             switch (scope_type_from_capture) {
               case "function":
                 scope_id = function_scope(scope_location);
-                scope_name = captured_node.name; // TODO: how to get the name of the function from the capture?
+                // Look up the name from the definition nodes
+                const func_name = definition_nodes.get(captured_node);
+                // Try to find the identifier child if not found
+                if (!func_name && captured_node.type === "function_declaration") {
+                  const id_node = captured_node.childForFieldName("name");
+                  scope_name = id_node ? (id_node.text as ScopeName) : null;
+                } else {
+                  scope_name = func_name ? (func_name as ScopeName) : null;
+                }
+                break;
+              case "method":
+                scope_id = function_scope(scope_location); // Methods use function scope type
+                // Try to find the method name
+                if (captured_node.type === "method_definition") {
+                  const id_node = captured_node.childForFieldName("name");
+                  scope_name = id_node ? (id_node.text as ScopeName) : null;
+                }
                 break;
               case "class":
                 scope_id = class_scope(scope_location);
-                scope_name = captured_node.name; // TODO: how to get the name of the class from the capture?
+                // Look up the name from the definition nodes
+                const class_name = definition_nodes.get(captured_node);
+                // Try to find the identifier child if not found
+                if (!class_name && (captured_node.type === "class_declaration" || captured_node.type === "class_body")) {
+                  const parent = captured_node.type === "class_body" ? captured_node.parent : captured_node;
+                  if (parent) {
+                    const id_node = parent.childForFieldName("name");
+                    scope_name = id_node ? (id_node.text as ScopeName) : null;
+                  }
+                } else {
+                  scope_name = class_name ? (class_name as ScopeName) : null;
+                }
                 break;
               case "block":
                 scope_id = block_scope(scope_location);
@@ -227,6 +268,7 @@ export function build_scope_tree(
   const root_node: RootScopeNode = {
     id: root_id,
     type: scope_type,
+    name: null, // Root scopes typically don't have names
     location: node_location,
     parent_id: null,
     child_ids: root_child_ids,
@@ -240,7 +282,7 @@ export function build_scope_tree(
 
     const child_node: ChildScopeNode = {
       id: scope.id,
-      type: scope.type,
+      type: scope.type as "class" | "function" | "method" | "constructor" | "block" | "parameter" | "local",
       name: scope.name,
       location: scope.location,
       parent_id: parent_id,
