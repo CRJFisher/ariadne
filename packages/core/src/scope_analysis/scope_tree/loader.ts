@@ -37,7 +37,7 @@ export function load_scope_query(language: Language): string {
     // For now, return empty query since queries are being implemented
     // TODO: Once all query files are in place, throw error instead
     console.warn(`Scope query not found for ${language} at ${query_path}, using empty query`);
-    return '';
+    throw new Error(`Scope query not found for ${language} at ${query_path}`);
   }
 }
 
@@ -50,7 +50,8 @@ function create_javascript_parser(): Parser {
 
 function create_typescript_parser(): Parser {
   const parser = new Parser();
-  const typescript = TypeScript.typescript;
+  // Use TSX variant which is a superset of TypeScript and includes JSX support
+  const typescript = TypeScript.tsx;
   parser.setLanguage(typescript as any);
   parser.setTimeoutMicros(5000000); // 5 seconds
   return parser;

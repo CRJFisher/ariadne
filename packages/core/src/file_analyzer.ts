@@ -13,10 +13,6 @@ import Rust from "tree-sitter-rust";
 
 import { build_scope_tree } from "./scope_analysis/scope_tree";
 import {
-  build_scope_entity_connections,
-  ScopeEntityConnections,
-} from "./scope_analysis/scope_entity_connections";
-import {
   extract_exports,
   extract_imports,
 } from "./import_export/import_export_resolution";
@@ -133,14 +129,6 @@ export async function analyze_file(
     file.file_path
   );
 
-  // Register symbols
-  const { symbol_registry, scope_entity_connections } = register_symbols(
-    file.file_path,
-    file.language,
-    function_definitions,
-    class_definitions,
-    scopes
-  );
 
   // Build final analysis
   const analysis = build_file_analysis(
@@ -153,8 +141,6 @@ export async function analyze_file(
     method_calls,
     constructor_calls,
     type_tracker,
-    symbol_registry,
-    scope_entity_connections,
     scopes,
     error_collector
   );
@@ -322,42 +308,6 @@ function analyze_calls(
 }
 
 /**
- * Register symbols and create connections
- */
-function register_symbols(
-  file_path: FilePath,
-  language: Language,
-  functions: FunctionDefinition[],
-  classes: ClassDefinition[],
-  scopes: ScopeTree
-): {
-  symbol_registry: SymbolIndex;
-  scope_entity_connections: ScopeEntityConnections;
-} {
-  // Build symbol registry from functions and classes
-  const symbol_registry: SymbolIndex = build_symbol_index(
-    functions,
-    classes
-  );
-
-  // Extract variables from scopes for connections
-  const variables = extract_variables_from_scopes(scopes);
-
-  // Build real scope entity connections using the actual implementation
-  const scope_entity_connections = build_scope_entity_connections(
-    scopes,
-    functions,
-    classes,
-    variables,
-    symbol_registry,
-    language,
-    file_path
-  );
-
-  return { symbol_registry, scope_entity_connections };
-}
-
-/**
  * Build the final FileAnalysis object
  */
 function build_file_analysis(
@@ -370,8 +320,6 @@ function build_file_analysis(
   method_calls: MethodCall[],
   constructor_calls: ConstructorCall[],
   type_tracker: TypeIndex,
-  symbol_registry: SymbolIndex,
-  scope_entity_connections: ScopeEntityConnections,
   scopes: ScopeTree,
   error_collector?: ErrorCollector
 ): FileAnalysis {

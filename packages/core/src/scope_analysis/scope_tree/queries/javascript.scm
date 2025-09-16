@@ -2,14 +2,15 @@
 
 [
   (statement_block)
-  (class_body)
   (arrow_function)
-  (object)
   ;; anonymous function expressions create scopes, just like arrow functions
   (function_expression)
   (function_declaration)
   (method_definition)
   (generator_function_declaration)
+  (generator_function)
+  (class_declaration)
+  (class)
   (for_statement)
   (for_in_statement)
   (switch_case)

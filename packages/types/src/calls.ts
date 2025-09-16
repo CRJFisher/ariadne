@@ -73,7 +73,7 @@ export type CallInfo = FunctionCall | MethodCall | ConstructorCall;
  */
 export interface FunctionCall extends BaseCallInfo {
   readonly kind: "function";
-  readonly callee: SymbolName; // Function being called
+  readonly callee: SymbolName; // Function being called - at this point we haven't resolved it as a SymbolId
   readonly resolved?: Resolution<ResolvedTarget>;
 }
 
@@ -82,8 +82,8 @@ export interface FunctionCall extends BaseCallInfo {
  */
 export interface MethodCall extends BaseCallInfo {
   readonly kind: "method";
-  readonly method_name: SymbolId; // Method being called
-  readonly receiver: SymbolId; // Object receiving the call
+  readonly method_name: SymbolName; // Method being called - at this point we haven't resolved it as a SymbolId
+  readonly receiver: SymbolName; // Object receiving the call
   readonly is_static: boolean; // Static vs instance method
   readonly is_chained: boolean; // Part of method chain
   readonly receiver_type?: Resolution<{

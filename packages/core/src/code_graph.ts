@@ -7,7 +7,6 @@
 import { analyze_file } from "./file_analyzer";
 import { build_module_graph } from "./import_export/module_graph";
 import { build_type_registry } from "./type_analysis/type_registry/type_registry";
-import { build_type_index } from "./type_analysis/type_tracking";
 import { resolve_namespaces_across_files } from "./import_export/namespace_resolution";
 import {
   CodeGraph,
@@ -28,7 +27,6 @@ import { create_call_graph } from "./call_graph/call_chain_analysis";
 import { resolve_references_to_symbols } from "./scope_analysis/symbol_resolution";
 import { resolve_generics_across_files } from "./type_analysis/generic_resolution";
 import { propagate_types_across_files } from "./type_analysis/type_propagation";
-import { register_symbols } from "./scope_analysis/symbol_resolution/global_symbol_table";
 
 /**
  * Resolve namespace imports and their members across all files
@@ -231,29 +229,20 @@ export async function generate_code_graph(
   // 2. Create a unified global scope that contains all their symbols
   // 3. Update symbol resolution to handle cross-file global symbols
 
-  // LAYER 8: GLOBAL SYMBOL RESOLUTION - Build global symbol table and resolve references
-  const global_symbols = register_symbols({
-    analyses: enriched_analyses,
-    module_graph: modules,
-    type_registry,
-    resolve_imports: true,
-    track_visibility: true,
-  });
 
-  // LAYER 9: SYMBOL RESOLUTION - Resolve all references to their definitions
+  // LAYER 8: SYMBOL RESOLUTION - Resolve all references to their definitions
   const resolution_results = resolve_references_to_symbols(
     enriched_analyses,
-    global_symbols
   );
 
   console.log(
-    `Resolved ${resolution_results.resolved_functions.size} function calls`
+    `Resolved ${resolution_results.function_calls.size} function calls`
   );
   console.log(
-    `Resolved ${resolution_results.resolved_methods.size} method calls`
+    `Resolved ${resolution_results.method_calls.size} method calls`
   );
   console.log(
-    `Resolved ${resolution_results.resolved_constructors.size} constructor calls`
+    `Resolved ${resolution_results.constructor_calls.size} constructor calls`
   );
   console.log(`Unresolved references: ${resolution_results.unresolved_calls.length}`);
 
@@ -264,7 +253,7 @@ export async function generate_code_graph(
   // const types = build_type_index(enriched_analyses);
 
   // SYMBOL INDEX - Enhanced with global symbol table
-  // const symbols = build_symbol_index(enriched_analyses, global_symbols);
+  // const symbols = build_symbol_index(enriched_analyses);
 
   return {
     // symbols,

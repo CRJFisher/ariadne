@@ -78,7 +78,7 @@ describe("Scope Name Extraction", () => {
 
   describe("TypeScript", () => {
     const parser = new Parser();
-    parser.setLanguage(TypeScript.typescript as any);
+    parser.setLanguage(TypeScript.tsx as any);
 
     it("should extract function and class names", () => {
       const code = `

@@ -7,13 +7,14 @@
 
 [
   (statement_block)
-  (class_body)
   (arrow_function)
-  (object)
   ;; anonymous function expressions create scopes, just like arrow functions
   (function_expression)
   (function_declaration)
   (generator_function_declaration)
+  (method_definition)
+  (class_declaration)
+  (class)
   (for_statement)
   (for_in_statement)
   (switch_case)
@@ -33,19 +34,6 @@
   ;;       }],
   ;;     }
   (sequence_expression)
-
-  ;; type signatures in properties may contain parameter
-  ;; definitions, which can never have references. this
-  ;; scope "seals" off this definitions.
-  ;;
-  ;;     type S = {
-  ;;        getter: (f: string) => string;
-  ;;     }
-  ;;
-  ;; should produce one top-level definition: `S`. without
-  ;; sealing the property signature, it also produces `f`
-  ;; as a top-level definition.
-  (property_signature)
 ] @local.scope
 
 

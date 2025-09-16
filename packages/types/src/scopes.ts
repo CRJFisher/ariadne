@@ -2,7 +2,7 @@ import { FilePath } from "./aliases";
 import { Location } from "./common";
 
 export type ScopeId = string & { __brand: "ScopeId" }; // Unique scope identifier
-export type ScopeName = string & { __brand: "ScopeName"; }; // Scope name (if named)
+export type ScopeName = string & { __brand: "ScopeName" }; // Scope name (if named)
 
 /**
  * Type of scope (determines resolution rules)
@@ -41,7 +41,14 @@ export interface RootScopeNode extends BaseScopeNode {
  * Child scope node (has parent)
  */
 export interface ChildScopeNode extends BaseScopeNode {
-  readonly type: "class" | "function" | "method" | "constructor" | "block" | "parameter" | "local"; // Non-root scope types
+  readonly type:
+    | "class"
+    | "function"
+    | "method"
+    | "constructor"
+    | "block"
+    | "parameter"
+    | "local"; // Non-root scope types
 }
 
 /**
@@ -56,6 +63,7 @@ export interface ScopeTree {
   readonly root_id: ScopeId;
   readonly nodes: ReadonlyMap<ScopeId, ScopeNode>;
   readonly file_path: FilePath;
+  readonly scope_depths: ReadonlyMap<ScopeId, number>;
 }
 
 // ============================================================================
@@ -80,10 +88,10 @@ export interface ScopeLocation {
 
 /**
  * Convert a ScopeLocation to its string representation (ScopeId)
- * 
+ *
  * @param scope - The scope location to convert
  * @returns A ScopeId string that uniquely identifies the scope
- * 
+ *
  * @example
  * ```typescript
  * const scope: ScopeLocation = {
@@ -102,17 +110,17 @@ export function scope_string(scope: ScopeLocation): ScopeId {
     scope.location.line,
     scope.location.column,
     scope.location.end_line,
-    scope.location.end_column
-  ].join(':') as ScopeId;
+    scope.location.end_column,
+  ].join(":") as ScopeId;
 }
 
 /**
  * Parse a ScopeId back into a ScopeLocation structure
- * 
+ *
  * @param scope_id - The ScopeId string to parse
  * @returns A ScopeLocation object with all its components
  * @throws Error if the ScopeId format is invalid
- * 
+ *
  * @example
  * ```typescript
  * const scopeId = "function:src/utils.ts:10:0:20:1" as ScopeId;
@@ -121,19 +129,19 @@ export function scope_string(scope: ScopeLocation): ScopeId {
  * ```
  */
 export function scope_from_string(scope_id: ScopeId): ScopeLocation {
-  const parts = scope_id.split(':');
-  
+  const parts = scope_id.split(":");
+
   if (parts.length < 6) {
     throw new Error(`Invalid ScopeId format: ${scope_id}`);
   }
-  
+
   const type = parts[0] as ScopeType;
   const file_path = parts[1] as FilePath;
   const line = parseInt(parts[2], 10);
   const column = parseInt(parts[3], 10);
   const end_line = parseInt(parts[4], 10);
   const end_column = parseInt(parts[5], 10);
-  
+
   return {
     type,
     location: {
@@ -141,8 +149,8 @@ export function scope_from_string(scope_id: ScopeId): ScopeLocation {
       line,
       column,
       end_line,
-      end_column
-    }
+      end_column,
+    },
   };
 }
 
@@ -154,23 +162,23 @@ export function scope_from_string(scope_id: ScopeId): ScopeLocation {
  * Create a global scope ID
  */
 export function global_scope(location: Location): ScopeId {
-  return scope_string({ type: 'global', location });
+  return scope_string({ type: "global", location });
 }
 
 /**
  * Create a module scope ID
  */
 export function module_scope(location: Location): ScopeId {
-  return scope_string({ type: 'module', location });
+  return scope_string({ type: "module", location });
 }
 
 /**
  * Create a function scope ID
  */
 export function function_scope(location: Location): ScopeId {
-  return scope_string({ 
-    type: 'function', 
-    location 
+  return scope_string({
+    type: "function",
+    location,
   });
 }
 
@@ -178,9 +186,9 @@ export function function_scope(location: Location): ScopeId {
  * Create a class scope ID
  */
 export function class_scope(location: Location): ScopeId {
-  return scope_string({ 
-    type: 'class', 
-    location 
+  return scope_string({
+    type: "class",
+    location,
   });
 }
 
@@ -188,9 +196,9 @@ export function class_scope(location: Location): ScopeId {
  * Create a block scope ID
  */
 export function block_scope(location: Location): ScopeId {
-  return scope_string({ 
-    type: 'block', 
-    location 
+  return scope_string({
+    type: "block",
+    location,
   });
 }
 
@@ -198,9 +206,9 @@ export function block_scope(location: Location): ScopeId {
  * Create a parameter scope ID
  */
 export function parameter_scope(location: Location): ScopeId {
-  return scope_string({ 
-    type: 'parameter', 
-    location 
+  return scope_string({
+    type: "parameter",
+    location,
   });
 }
 
@@ -208,8 +216,8 @@ export function parameter_scope(location: Location): ScopeId {
  * Create a local scope ID
  */
 export function local_scope(location: Location): ScopeId {
-  return scope_string({ 
-    type: 'local', 
-    location 
+  return scope_string({
+    type: "local",
+    location,
   });
 }

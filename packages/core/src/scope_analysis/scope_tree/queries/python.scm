@@ -1,7 +1,6 @@
 ;; scopes
 ;;
-[(block)
- (lambda)
+[(lambda)
 
  ;; defs in comprehensions are limited to the
  ;; comprehension itself
@@ -15,6 +14,7 @@
  (for_statement)
 
  (function_definition)
+ (class_definition)
  ] @local.scope
 
 
