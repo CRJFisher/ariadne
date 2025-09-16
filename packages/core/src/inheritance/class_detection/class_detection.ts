@@ -6,12 +6,14 @@
 
 import { SyntaxNode } from 'tree-sitter';
 import { Language, ClassDefinition, FilePath } from '@ariadnejs/types';
+import { ErrorCollector } from '../../error_collection/analysis_errors';
 
 export interface ClassDetectionContext {
   source_code: string;
   file_path: FilePath;
   language: Language;
   ast_root: SyntaxNode;
+  error_collector: ErrorCollector;
 }
 
 /**

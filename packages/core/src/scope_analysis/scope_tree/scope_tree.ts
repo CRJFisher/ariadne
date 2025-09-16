@@ -3,7 +3,6 @@
  */
 
 import { SyntaxNode, Query } from "tree-sitter";
-import Parser from "tree-sitter";
 import {
   Language,
   ScopeTree,
@@ -19,6 +18,8 @@ import {
   block_scope,
   local_scope,
   ScopeNode,
+  ScopeName,
+  ScopeType,
 } from "@ariadnejs/types";
 import { node_to_location } from "../../ast/node_utils";
 import { load_scope_query, get_language_parser } from "./loader";
@@ -110,7 +111,8 @@ export function build_scope_tree(
   const all_scopes: Array<{
     node: SyntaxNode;
     id: ScopeId;
-    type: "function" | "class" | "block" | "parameter" | "local";
+    name: ScopeName | null;
+    type: ScopeType;
     location: Location;
   }> = [];
 
@@ -121,7 +123,7 @@ export function build_scope_tree(
     try {
       // Get the parser for this language to create the Query object
       const parser = get_language_parser(language);
-      const query = new (Query as any)(parser.getLanguage(), query_string);
+      const query = new Query(parser.getLanguage(), query_string);
 
       // Execute the query on the AST
       const matches = query.matches(root);
@@ -130,24 +132,21 @@ export function build_scope_tree(
       for (const match of matches) {
         for (const capture of match.captures) {
           const captured_node = capture.node;
-          const capture_name = query.captureNames[capture.index];
+          const capture_name = capture.name; //query.captureNames[capture.index];
 
           if (capture_name === "local.scope") {
             // Determine scope type based on the node type
-            let scope_type_from_capture:
-              | "function"
-              | "class"
-              | "block"
-              | "parameter"
-              | "local";
+            let scope_type_from_capture: ScopeType;
 
             switch (captured_node.type) {
               case "function_declaration":
               case "function_expression":
               case "arrow_function":
               case "generator_function_declaration":
-              case "method_definition":
                 scope_type_from_capture = "function";
+                break;
+              case "method_definition":
+                scope_type_from_capture = "method";
                 break;
               case "class_body":
                 scope_type_from_capture = "class";
@@ -166,13 +165,16 @@ export function build_scope_tree(
             // Create scope ID based on location and type
             const scope_location = node_to_location(captured_node, file_path);
             let scope_id: ScopeId;
+            let scope_name: ScopeName | null = null;
 
             switch (scope_type_from_capture) {
               case "function":
                 scope_id = function_scope(scope_location);
+                scope_name = captured_node.name; // TODO: how to get the name of the function from the capture?
                 break;
               case "class":
                 scope_id = class_scope(scope_location);
+                scope_name = captured_node.name; // TODO: how to get the name of the class from the capture?
                 break;
               case "block":
                 scope_id = block_scope(scope_location);
@@ -186,6 +188,7 @@ export function build_scope_tree(
               id: scope_id,
               type: scope_type_from_capture,
               location: scope_location,
+              name: scope_name,
             });
 
             scope_nodes.push({ node: captured_node, id: scope_id });
@@ -238,6 +241,7 @@ export function build_scope_tree(
     const child_node: ChildScopeNode = {
       id: scope.id,
       type: scope.type,
+      name: scope.name,
       location: scope.location,
       parent_id: parent_id,
       child_ids: child_ids,

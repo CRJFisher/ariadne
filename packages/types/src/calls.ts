@@ -4,14 +4,10 @@
  */
 
 import { Location } from "./common";
-import { FilePath, ClassName } from "./aliases";
+import { ClassName } from "./aliases";
 import { ModulePath } from "./import_export";
 import { SymbolId, SymbolName } from "./symbols";
-import { SemanticNode, Resolution, resolve_failed } from "./query";
-
-// ============================================================================
-// Branded Types for Call Graph
-// ============================================================================
+import { SemanticNode, Resolution } from "./query";
 
 /** Name of the object receiving a method call */
 export type ReceiverName = string & { __brand: "ReceiverName" };
@@ -42,33 +38,6 @@ export type CallType =
   | "macro"
   | "decorator";
 
-// ============================================================================
-// Type Guards for Call Graph
-// ============================================================================
-
-export function is_receiver_name(value: unknown): value is ReceiverName {
-  return typeof value === "string" && value.length > 0;
-}
-
-export function is_module_context(value: unknown): value is ModuleContext {
-  return value === MODULE_CONTEXT;
-}
-
-
-// ============================================================================
-// Branded Type Creators for Call Graph
-// ============================================================================
-
-export function to_receiver_name(value: string): ReceiverName {
-  if (!value || value.length === 0) {
-    throw new Error(`Invalid ReceiverName: "${value}"`);
-  }
-  return value as ReceiverName;
-}
-
-// ============================================================================
-// Call Information
-// ============================================================================
 
 /**
  * Base information common to all calls

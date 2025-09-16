@@ -39,29 +39,20 @@ import {
   Language,
   FileAnalysis,
   FunctionDefinition,
-  FunctionSignature,
   ScopeTree,
   ClassDefinition,
-  ParameterType,
   SourceCode,
   FilePath,
-  TypeString,
-  ParameterName,
   create_readonly_array,
-  VariableDeclaration,
   SymbolId,
-  function_symbol,
-  DocString,
   TypeIndex,
   TypeDefinition,
-  CallerContext,
+  SymbolIndex,
 } from "@ariadnejs/types";
 import {
-  ReturnTypeInfo,
   infer_all_return_types,
 } from "./type_analysis/return_type_inference";
 import {
-  ParameterAnalysis,
   infer_all_parameter_types,
 } from "./type_analysis/parameter_type_inference";
 
@@ -72,6 +63,7 @@ import {
   TypeTrackingContext,
 } from "./type_analysis/type_tracking";
 import { determine_caller } from "./scope_analysis/usage_finder";
+import { extract_definitions as extract_function_definitions } from "./call_graph/function_definitions";
 
 /**
  * Main entry point for analyzing a single file
@@ -95,14 +87,24 @@ export async function analyze_file(
   const scopes = build_scope_tree(tree.rootNode, file.file_path, file.language);
 
   // Detect local structures (imports, exports, classes)
-  error_collector.set_phase("class_detection");
-  const { imports, exports, class_definitions } = detect_local_structures(
+  error_collector.set_phase("imports_and_exports");
+  const { imports, exports } = detect_imports_and_exports(
     tree.rootNode,
     source_code,
     file.language,
     file.file_path,
     error_collector
   );
+
+  // Detect class definitions
+  error_collector.set_phase("class_detection");
+  const class_definitions = find_class_definitions({
+    ast_root: tree.rootNode,
+    source_code,
+    language: file.language,
+    file_path: file.file_path,
+    error_collector,
+  });
 
   // Analyze local types
   const { type_tracker, inferred_parameters, inferred_returns } =
@@ -126,14 +128,8 @@ export async function analyze_file(
   );
 
   // Extract definitions
-  const { functions, classes } = extract_definitions(
+  const function_definitions = extract_function_definitions(
     tree.rootNode,
-    source_code,
-    file,
-    scopes,
-    class_definitions,
-    inferred_parameters,
-    inferred_returns,
     file.file_path
   );
 
@@ -141,8 +137,8 @@ export async function analyze_file(
   const { symbol_registry, scope_entity_connections } = register_symbols(
     file.file_path,
     file.language,
-    functions,
-    classes,
+    function_definitions,
+    class_definitions,
     scopes
   );
 
@@ -151,8 +147,8 @@ export async function analyze_file(
     file,
     imports,
     exports,
-    functions,
-    classes,
+    function_definitions,
+    class_definitions,
     function_calls,
     method_calls,
     constructor_calls,
@@ -196,7 +192,7 @@ function parse_file(file: CodeFile): Parser.Tree {
 /**
  * Detect local structures (imports, exports, classes)
  */
-function detect_local_structures(
+function detect_imports_and_exports(
   root_node: SyntaxNode,
   source_code: SourceCode,
   language: Language,
@@ -205,7 +201,6 @@ function detect_local_structures(
 ): {
   imports: Import[];
   exports: Export[];
-  class_definitions: ClassDefinition[];
 } {
   // Extract imports
   const imports = extract_imports({
@@ -223,16 +218,7 @@ function detect_local_structures(
     ast_root: root_node,
   });
 
-  // Detect class definitions
-  const class_detection_context = {
-    source_code,
-    file_path,
-    language,
-    ast_root: root_node,
-  };
-  const class_definitions = find_class_definitions(class_detection_context);
-
-  return { imports, exports, class_definitions };
+  return { imports, exports };
 }
 
 /**
@@ -247,8 +233,8 @@ function analyze_local_types(
   class_definitions: ClassDefinition[]
 ): {
   type_tracker: TypeIndex;
-  inferred_parameters: TypeDefinition[];
-  inferred_returns: TypeDefinition[];
+  inferred_parameters: Map<SymbolId, TypeDefinition[]>;
+  inferred_returns: Map<SymbolId, TypeDefinition>;
 } {
   const type_tracking_context: TypeTrackingContext = {
     language: file.language,
@@ -336,105 +322,6 @@ function analyze_calls(
 }
 
 /**
- * Extract function and class definitions
- */
-function extract_definitions(
-  _root_node: SyntaxNode,
-  _source_code: SourceCode,
-  _file: CodeFile,
-  scopes: ScopeTree,
-  class_definitions: ClassDefinition[],
-  inferred_parameters: TypeDefinition[],
-  inferred_returns: TypeDefinition[],
-  file_path: FilePath
-): {
-  functions: FunctionDefinition[];
-  classes: ClassDefinition[];
-} {
-  const functions: FunctionDefinition[] = [];
-  const classes: ClassDefinition[] = [];
-  // Error collector should be passed from parent
-
-  // Extract functions from scope tree
-  for (const [_, scope] of scopes.nodes) {
-    if (scope.type === "function") {
-      // Skip methods here - they'll be handled in the class section
-      // Skip methods inside classes (they'll be handled separately)
-      if (scope.parent_id !== null) {
-        const parent_scope = scopes.nodes.get(scope.parent_id);
-        if (parent_scope?.type === "class") {
-          continue;
-        }
-      }
-
-      // Get function name from metadata
-      const func_name = scope.metadata.name;
-      const func_symbol = function_symbol(func_name, scope.location);
-
-      // Get pre-computed return type
-      const return_type_info = inferred_returns.get(func_name);
-
-      // Merge inferred parameter types
-      let enhanced_parameters: ParameterType[] = [];
-      const param_analysis = inferred_parameters.get(func_name);
-      if (param_analysis) {
-        // Use parameters from analysis and add inferred types
-        enhanced_parameters = param_analysis.parameters.map((param) => {
-          const inferred_type_info = param_analysis.inferred_types.get(
-            param.name
-          );
-          const result: ParameterType = {
-            name: param.name as ParameterName,
-            type:
-              ((inferred_type_info?.inferred_type ||
-                param.type_annotation) as TypeString) ||
-              ("unknown" as TypeString),
-            default_value: param.default_value || "",
-            is_rest: param.is_rest,
-            is_optional: param.is_optional,
-          };
-          return result;
-        });
-      }
-
-      const signature: FunctionSignature = {
-        parameters: enhanced_parameters,
-        return_type:
-          (return_type_info?.type_name as TypeString) ||
-          ("unknown" as TypeString),
-        is_async: scope.metadata.is_async,
-        is_generator: scope.metadata.is_generator,
-        type_parameters: [],
-      };
-
-      const func_info: FunctionDefinition = {
-        symbol: func_symbol,
-        name: func_name,
-        location: scope.location,
-        signature,
-        docstring: "" as DocString,
-        is_exported: false,
-        is_arrow_function: false,
-        is_anonymous: func_name.startsWith("anonymous_"),
-        closure_captures: [],
-        decorators: [],
-      };
-
-      // Only add standalone functions (not methods inside classes)
-      functions.push(func_info);
-    }
-  }
-
-  // Extract classes from class definitions
-  // ClassDefinition already has methods and properties, so we just pass them through
-  for (const class_def of class_definitions) {
-    classes.push(class_def);
-  }
-
-  return { functions, classes };
-}
-
-/**
  * Register symbols and create connections
  */
 function register_symbols(
@@ -444,11 +331,11 @@ function register_symbols(
   classes: ClassDefinition[],
   scopes: ScopeTree
 ): {
-  symbol_registry: SymbolRegistry;
+  symbol_registry: SymbolIndex;
   scope_entity_connections: ScopeEntityConnections;
 } {
   // Build symbol registry from functions and classes
-  const symbol_registry: SymbolRegistry = build_symbol_registry(
+  const symbol_registry: SymbolIndex = build_symbol_index(
     functions,
     classes
   );
@@ -482,8 +369,8 @@ function build_file_analysis(
   function_calls: FunctionCall[],
   method_calls: MethodCall[],
   constructor_calls: ConstructorCall[],
-  type_tracker: FileTypeTracker,
-  symbol_registry: SymbolRegistry,
+  type_tracker: TypeIndex,
+  symbol_registry: SymbolIndex,
   scope_entity_connections: ScopeEntityConnections,
   scopes: ScopeTree,
   error_collector?: ErrorCollector

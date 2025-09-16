@@ -2,7 +2,6 @@
  * Import and export types for module dependencies and APIs
  */
 
-import { Location, Language } from "./common";
 import { SymbolName } from "./symbols";
 import { SymbolId } from "./symbols";
 import { SemanticNode, Resolution } from "./query";
@@ -26,8 +25,8 @@ export type NamespaceName = string & { __brand: "NamespaceName" };
  */
 interface BaseImport extends SemanticNode {
   readonly source: ModulePath; // Module being imported from
-  readonly is_type_only: boolean; // TypeScript type-only import (defaults to false)
-  readonly is_dynamic: boolean; // Dynamic import() (defaults to false)
+  readonly is_type_only?: boolean;
+  readonly is_dynamic?: boolean;
 }
 
 /**
@@ -66,7 +65,7 @@ export interface DefaultImport extends BaseImport {
  */
 export interface NamespaceImport extends BaseImport {
   readonly kind: "namespace";
-  readonly namespace_name: NamespaceName; // Namespace alias (renamed to avoid conflict)
+  readonly namespace_name: NamespaceName;
 }
 
 /**

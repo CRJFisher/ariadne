@@ -3,8 +3,7 @@ import { Location } from "./common";
 export type AnalysisPhase =
   | "parsing"
   | "scope_analysis"
-  | "import_resolution"
-  | "export_detection"
+  | "imports_and_exports"
   | "type_tracking"
   | "call_graph"
   | "class_detection"

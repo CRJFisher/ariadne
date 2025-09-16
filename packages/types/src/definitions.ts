@@ -232,7 +232,7 @@ export interface FunctionSignature {
 
 export interface ParameterType {
   readonly name: ParameterName;
-  readonly type: TypeString; // Required - use "unknown" when type cannot be inferred
+  readonly type?: TypeString;
   readonly default_value?: string;
   readonly is_rest: boolean;
   readonly is_optional: boolean;

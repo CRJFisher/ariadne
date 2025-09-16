@@ -61,10 +61,10 @@ export interface FileResolutionContext {
     scope_entity_connections?: ScopeEntityConnections;
   };
   global_symbols: GlobalSymbolTable;
-  imports_by_file: Map<string, readonly Import[]>;
-  exports_by_file: Map<string, readonly Export[]>;
+  imports_by_file: Map<FilePath, readonly Import[]>;
+  exports_by_file: Map<FilePath, readonly Export[]>;
   language: Language;
-  definitions_by_file: Map<string, {
+  definitions_by_file: Map<FilePath, {
     functions: Map<SymbolId, FunctionDefinition>;
     classes: Map<SymbolId, ClassDefinition>;
     methods: Map<SymbolId, MethodDefinition>;
@@ -136,7 +136,7 @@ export interface ResolutionResult {
  * Index of definitions by file and symbol
  */
 interface DefinitionIndex {
-  readonly by_file: ReadonlyMap<string, {
+  readonly by_file: ReadonlyMap<FilePath, {
     readonly functions: ReadonlyMap<SymbolId, FunctionDefinition>;
     readonly classes: ReadonlyMap<SymbolId, ClassDefinition>;
     readonly methods: ReadonlyMap<SymbolId, MethodDefinition>;
@@ -170,7 +170,7 @@ interface ResolutionState {
  * Build an index of all definitions organized by file and symbol
  */
 function build_definition_index(analyses: readonly FileAnalysis[]): DefinitionIndex {
-  const by_file = new Map<string, {
+  const by_file = new Map<FilePath, {
     functions: Map<SymbolId, FunctionDefinition>;
     classes: Map<SymbolId, ClassDefinition>;
     methods: Map<SymbolId, MethodDefinition>;
@@ -211,8 +211,8 @@ function build_cross_file_context(
   analyses: readonly FileAnalysis[],
   global_symbols: GlobalSymbolTable
 ): CrossFileContext {
-  const imports_by_file = new Map<string, readonly Import[]>();
-  const exports_by_file = new Map<string, readonly Export[]>();
+  const imports_by_file = new Map<FilePath, readonly Import[]>();
+  const exports_by_file = new Map<FilePath, readonly Export[]>();
 
   for (const analysis of analyses) {
     imports_by_file.set(analysis.file_path, analysis.imports);
@@ -425,6 +425,8 @@ export function resolve_function_call(
   );
 
   if (!call_scope) return undefined;
+
+  // TODO: see if it resolves via imports / global symbols. Need to match symbol-name (at point of call) 
 
   // Use configuration-driven resolution to get the symbol
   // const symbol = resolve_symbol(call.callee, call_scope, context);

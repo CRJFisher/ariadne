@@ -71,7 +71,7 @@ export function infer_parameter_types(
  */
 export function infer_all_parameter_types(
   context: ParameterTypeContext
-): TypeDefinition[] {
+): Map<SymbolId, TypeDefinition[]> {
   // TODO: Implement using tree-sitter queries from parameter_type_queries/*.scm
   return [];
 }

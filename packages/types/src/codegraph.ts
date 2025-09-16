@@ -1,17 +1,14 @@
-import { CallGraph, Language } from "./index";
-import { Location } from "./common";
-import { FunctionDefinition } from "./definitions";
-import { ClassDefinition } from "./definitions";
-import { ModuleGraph } from "./modules";
-import { FunctionCall, MethodCall, ConstructorCall, CallInfo } from "./calls";
-import { ClassHierarchy } from "./classes";
-import { TypeIndex, TypeInfo } from "./types";
-import { SymbolIndex } from "./symbols";
+import { Location, Language } from "./common";
+import { FunctionDefinition, ClassDefinition } from "./definitions";
+import { FunctionCall, MethodCall, ConstructorCall } from "./calls";
 import { ScopeTree } from "./scopes";
 import { FilePath, TypeString, SourceCode } from "./aliases";
 import { Export, Import } from "./import_export";
 import { AnalysisError } from "./errors";
 import { SymbolId } from "./symbols";
+import { TypeInfo } from "./types";
+import { CallGraph } from "./call_chains";
+
 
 export interface FileAnalysis {
   readonly file_path: FilePath;

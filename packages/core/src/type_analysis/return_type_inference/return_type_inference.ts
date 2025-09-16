@@ -11,7 +11,7 @@ import {
   TypeDefinition,
   SymbolId,
   Location,
-  FunctionDefinition
+  FunctionDefinition,
 } from '@ariadnejs/types';
 
 /**
@@ -44,9 +44,9 @@ export interface ReturnTypeInfo {
 export function infer_return_types(
   context: ReturnTypeContext,
   functions?: FunctionDefinition[]
-): ReturnTypeInfo[] {
+): Map<SymbolId, TypeDefinition> {
   // TODO: Implement using tree-sitter queries from return_type_queries/*.scm
-  return [];
+  return new Map<SymbolId, TypeDefinition>();
 }
 
 /**
@@ -54,7 +54,7 @@ export function infer_return_types(
  */
 export function infer_all_return_types(
   context: ReturnTypeContext
-): TypeDefinition[] {
+): Map<SymbolId, TypeDefinition> {
   // TODO: Implement using tree-sitter queries from return_type_queries/*.scm
-  return [];
+  return new Map<SymbolId, TypeDefinition>();
 }

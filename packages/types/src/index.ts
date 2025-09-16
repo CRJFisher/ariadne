@@ -12,12 +12,6 @@ export {
   CallerContext,
   ResolvedTypeKind,
   CallType,
-  is_caller_name,
-  is_callee_name,
-  is_receiver_name,
-  is_module_context,
-  is_caller_context,
-  to_receiver_name,
 } from "./calls";
 
 export { ModulePath, NamespaceName } from "./import_export";
@@ -62,6 +56,3 @@ export * from "./symbols";
 export * from "./scopes";
 export * from "./definitions";
 export * from "./errors";
-
-// Export map utilities for safer null handling
-export * from "./map_utils";

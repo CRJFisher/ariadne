@@ -1,16 +1,13 @@
 import { Location } from "./common";
 import {
   TypeName,
-  FilePath,
   VariableName,
   TypeString,
-  PropertyName,
-  MethodName,
   QualifiedName,
 } from "./aliases";
 import { SymbolId } from "./symbols";
-import { Language, ScopeType } from "./index";
 import { TypeMember } from "./type_analysis";
+import { ScopeType } from "./scopes";
 
 export enum TypeKind {
   CLASS = "class",

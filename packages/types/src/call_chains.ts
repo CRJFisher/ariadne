@@ -5,7 +5,6 @@
 import { SymbolId, SymbolName } from "./symbols";
 import { Location } from "./common";
 import { CallInfo } from "./calls";
-import { ScopeId } from "./scopes";
 
 /**
  * Node in a call graph representing a function/method
@@ -22,7 +21,7 @@ export interface FunctionNode {
  */
 export interface EnclosedCall {
   readonly location: Location;
-  // readonly scope_id: ScopeId; // TODO: implement so we can 
+  // readonly scope_id: ScopeId; // TODO: implement so we can see more context for the call e.g. if/else block, loops etc
   readonly call: CallInfo;
 }
 
