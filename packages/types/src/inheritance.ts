@@ -3,8 +3,8 @@
  * with unified handling of interfaces, traits, and mixins
  */
 
-import { SymbolName } from "./symbols";
-import { SymbolId } from "./symbols";
+import { SymbolName } from "./symbol";
+import { SymbolId } from "./symbol";
 import { SemanticNode } from "./query";
 import { TypeDefinition } from "./type_analysis";
 

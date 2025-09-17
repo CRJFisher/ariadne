@@ -46,7 +46,17 @@ describe("parse_qualified_name", () => {
 
     const context: FileResolutionContext = {
       scope_tree: {
-        root: { id: function_scope({ file_path, line: 1, column: 1, end_line: 10, end_column: 1 }), type: "function", parent_id: undefined },
+        root: {
+          id: function_scope({
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 10,
+            end_column: 1,
+          }),
+          type: "function",
+          parent_id: undefined,
+        },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
         get_parent_scope: () => undefined,
@@ -54,7 +64,7 @@ describe("parse_qualified_name", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "typescript",
-      definitions_by_file: new Map(),
+      definitions: new Map(),
     };
 
     // The function won't resolve, but it tests the parsing logic
@@ -117,7 +127,17 @@ describe("parse_qualified_name", () => {
 
     const context: FileResolutionContext = {
       scope_tree: {
-        root: { id: function_scope({ file_path: file_b, line: 1, column: 1, end_line: 10, end_column: 1 }), type: "function", parent_id: undefined },
+        root: {
+          id: function_scope({
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 10,
+            end_column: 1,
+          }),
+          type: "function",
+          parent_id: undefined,
+        },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
         get_parent_scope: () => undefined,
@@ -125,12 +145,17 @@ describe("parse_qualified_name", () => {
       imports_by_file: new Map([[file_b, imports]]),
       exports_by_file: new Map([[file_a, exports]]),
       language: "typescript",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map([[function_symbol("func" as SymbolName, func.location), func]]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map([
+              [function_symbol("func" as SymbolName, func.location), func],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -158,7 +183,17 @@ describe("parse_qualified_name", () => {
 
     const context: FileResolutionContext = {
       scope_tree: {
-        root: { id: function_scope({ file_path, line: 1, column: 1, end_line: 10, end_column: 1 }), type: "function", parent_id: undefined },
+        root: {
+          id: function_scope({
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 10,
+            end_column: 1,
+          }),
+          type: "function",
+          parent_id: undefined,
+        },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
         get_parent_scope: () => undefined,
@@ -166,7 +201,7 @@ describe("parse_qualified_name", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "typescript",
-      definitions_by_file: new Map(),
+      definitions: new Map(),
     };
 
     // Won't resolve but tests parsing of deep nesting
@@ -235,7 +270,17 @@ describe("match_callee_to_import", () => {
 
     const context: FileResolutionContext = {
       scope_tree: {
-        root: { id: function_scope({ file_path: file_b, line: 1, column: 1, end_line: 10, end_column: 1 }), type: "function", parent_id: undefined },
+        root: {
+          id: function_scope({
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 10,
+            end_column: 1,
+          }),
+          type: "function",
+          parent_id: undefined,
+        },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
         get_parent_scope: () => undefined,
@@ -243,12 +288,17 @@ describe("match_callee_to_import", () => {
       imports_by_file: new Map([[file_b, imports]]),
       exports_by_file: new Map([[file_a, exports]]),
       language: "typescript",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map([[function_symbol("utilFunc" as SymbolName, func.location), func]]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map([
+              [function_symbol("utilFunc" as SymbolName, func.location), func],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -317,7 +367,17 @@ describe("match_callee_to_import", () => {
 
     const context: FileResolutionContext = {
       scope_tree: {
-        root: { id: function_scope({ file_path: file_b, line: 1, column: 1, end_line: 10, end_column: 1 }), type: "function", parent_id: undefined },
+        root: {
+          id: function_scope({
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 10,
+            end_column: 1,
+          }),
+          type: "function",
+          parent_id: undefined,
+        },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
         get_parent_scope: () => undefined,
@@ -325,12 +385,20 @@ describe("match_callee_to_import", () => {
       imports_by_file: new Map([[file_b, imports]]),
       exports_by_file: new Map([[file_a, exports]]),
       language: "typescript",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map([[function_symbol("originalName" as SymbolName, func.location), func]]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map([
+              [
+                function_symbol("originalName" as SymbolName, func.location),
+                func,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -389,7 +457,17 @@ describe("match_callee_to_import", () => {
 
     const context: FileResolutionContext = {
       scope_tree: {
-        root: { id: function_scope({ file_path: file_b, line: 1, column: 1, end_line: 10, end_column: 1 }), type: "function", parent_id: undefined },
+        root: {
+          id: function_scope({
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 10,
+            end_column: 1,
+          }),
+          type: "function",
+          parent_id: undefined,
+        },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
         get_parent_scope: () => undefined,
@@ -397,12 +475,20 @@ describe("match_callee_to_import", () => {
       imports_by_file: new Map([[file_b, imports]]),
       exports_by_file: new Map([[file_a, exports]]),
       language: "typescript",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map([[function_symbol("defaultFunc" as SymbolName, func.location), func]]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map([
+              [
+                function_symbol("defaultFunc" as SymbolName, func.location),
+                func,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -439,7 +525,17 @@ describe("match_callee_to_import", () => {
 
     const context: FileResolutionContext = {
       scope_tree: {
-        root: { id: function_scope({ file_path: file_b, line: 1, column: 1, end_line: 10, end_column: 1 }), type: "function", parent_id: undefined },
+        root: {
+          id: function_scope({
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 10,
+            end_column: 1,
+          }),
+          type: "function",
+          parent_id: undefined,
+        },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
         get_parent_scope: () => undefined,
@@ -447,7 +543,7 @@ describe("match_callee_to_import", () => {
       imports_by_file: new Map([[file_b, imports]]),
       exports_by_file: new Map(),
       language: "typescript",
-      definitions_by_file: new Map(),
+      definitions: new Map(),
     };
 
     const result = resolve_function_call(call, context);
@@ -515,7 +611,17 @@ describe("resolve_module_to_file", () => {
 
     const context: FileResolutionContext = {
       scope_tree: {
-        root: { id: function_scope({ file_path: file_b, line: 1, column: 1, end_line: 10, end_column: 1 }), type: "function", parent_id: undefined },
+        root: {
+          id: function_scope({
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 10,
+            end_column: 1,
+          }),
+          type: "function",
+          parent_id: undefined,
+        },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
         get_parent_scope: () => undefined,
@@ -523,12 +629,17 @@ describe("resolve_module_to_file", () => {
       imports_by_file: new Map([[file_b, imports]]),
       exports_by_file: new Map([[file_a, exports]]),
       language: "typescript",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map([[function_symbol("helper" as SymbolName, func.location), func]]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map([
+              [function_symbol("helper" as SymbolName, func.location), func],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -596,7 +707,17 @@ describe("resolve_module_to_file", () => {
 
     const context: FileResolutionContext = {
       scope_tree: {
-        root: { id: function_scope({ file_path: file_b, line: 1, column: 1, end_line: 10, end_column: 1 }), type: "function", parent_id: undefined },
+        root: {
+          id: function_scope({
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 10,
+            end_column: 1,
+          }),
+          type: "function",
+          parent_id: undefined,
+        },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
         get_parent_scope: () => undefined,
@@ -604,12 +725,20 @@ describe("resolve_module_to_file", () => {
       imports_by_file: new Map([[file_b, imports]]),
       exports_by_file: new Map([[file_a, exports]]),
       language: "typescript",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map([[function_symbol("parentFunc" as SymbolName, func.location), func]]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map([
+              [
+                function_symbol("parentFunc" as SymbolName, func.location),
+                func,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 

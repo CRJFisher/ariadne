@@ -43,7 +43,6 @@ import {
   SymbolId,
   TypeIndex,
   TypeDefinition,
-  SymbolIndex,
 } from "@ariadnejs/types";
 import {
   infer_all_return_types,

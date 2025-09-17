@@ -2,7 +2,8 @@
  * Call chain and call graph analysis types
  */
 
-import { SymbolId, SymbolName } from "./symbols";
+import { SymbolId } from "./symbol";
+import { SymbolName } from "./symbol";
 import { Location } from "./common";
 import { CallInfo } from "./calls";
 

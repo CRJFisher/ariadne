@@ -1,11 +1,6 @@
 import { Location } from "./common";
-import {
-  TypeName,
-  VariableName,
-  TypeString,
-  QualifiedName,
-} from "./aliases";
-import { SymbolId } from "./symbols";
+import { TypeName, VariableName, TypeString, QualifiedName } from "./aliases";
+import { SymbolId } from "./symbol";
 import { TypeMember } from "./type_analysis";
 import { ScopeType } from "./scopes";
 

@@ -22,6 +22,9 @@ import {
   FilePath,
   create_readonly_map,
   create_readonly_array,
+  ModuleGraph,
+  TypeIndex,
+  ClassHierarchy,
 } from "@ariadnejs/types";
 
 import { resolve_function_call } from "./function_resolution/function_resolution";
@@ -36,14 +39,12 @@ export interface FileResolutionContext {
   imports_by_file: ReadonlyMap<FilePath, readonly Import[]>;
   exports_by_file: ReadonlyMap<FilePath, readonly Export[]>;
   language: Language;
-  definitions_by_file: ReadonlyMap<
-    FilePath,
-    {
-      functions: ReadonlyMap<SymbolId, FunctionDefinition>;
-      classes: ReadonlyMap<SymbolId, ClassDefinition>;
-      methods: ReadonlyMap<SymbolId, MethodDefinition>;
-    }
-  >;
+  definitions: DefinitionIndex;
+  module_graph?: ModuleGraph;
+  type_index?: TypeIndex;
+  class_hierarchy?: ClassHierarchy;
+  // TODO: Add class_hierarchy_helpers?: ClassHierarchyHelpers;
+  // This would provide convenient methods for class resolution
 }
 
 /**
@@ -62,15 +63,13 @@ export interface ResolutionResult {
 /**
  * Index of definitions by file and symbol
  */
-interface DefinitionIndex {
-  readonly by_file: ReadonlyMap<
-    FilePath,
-    {
-      readonly functions: ReadonlyMap<SymbolId, FunctionDefinition>;
-      readonly classes: ReadonlyMap<SymbolId, ClassDefinition>;
-      readonly methods: ReadonlyMap<SymbolId, MethodDefinition>;
-    }
-  >;
+export interface DefinitionIndex {
+  readonly functions: ReadonlyMap<SymbolId, FunctionDefinition>;
+  readonly functions_by_file: ReadonlyMap<FilePath, ReadonlyMap<SymbolId, FunctionDefinition>>;
+  readonly classes: ReadonlyMap<SymbolId, ClassDefinition>;
+  readonly classes_by_file: ReadonlyMap<FilePath, ReadonlyMap<SymbolId, ClassDefinition>>;
+  readonly methods: ReadonlyMap<SymbolId, MethodDefinition>;
+  readonly methods_by_file: ReadonlyMap<FilePath, ReadonlyMap<SymbolId, MethodDefinition>>;
 }
 
 /**
@@ -97,7 +96,7 @@ export function resolve_references_to_symbols(
   }
 
   // Combine
-  return {
+  return Object.freeze({
     function_calls: combine_maps(results.map((r) => r.function_calls)),
     function_call_defs: combine_maps(results.map((r) => r.function_call_defs)),
     method_calls: combine_maps(results.map((r) => r.method_calls)),
@@ -107,7 +106,7 @@ export function resolve_references_to_symbols(
       results.map((r) => r.constructor_call_defs)
     ),
     unresolved_calls: results.flatMap((r) => r.unresolved_calls),
-  };
+  });
 }
 
 /**
@@ -116,31 +115,28 @@ export function resolve_references_to_symbols(
 function build_definition_index(
   analyses: readonly FileAnalysis[]
 ): DefinitionIndex {
-  const by_file = new Map<
-    FilePath,
-    {
-      functions: Map<SymbolId, FunctionDefinition>;
-      classes: Map<SymbolId, ClassDefinition>;
-      methods: Map<SymbolId, MethodDefinition>;
-    }
-  >();
+  const functions = new Map<SymbolId, FunctionDefinition>();
+  const functions_by_file = new Map<FilePath, Map<SymbolId, FunctionDefinition>>();
+  const classes = new Map<SymbolId, ClassDefinition>();
+  const classes_by_file = new Map<FilePath, Map<SymbolId, ClassDefinition>>();
+  const methods = new Map<SymbolId, MethodDefinition>();
+  const methods_by_file = new Map<FilePath, Map<SymbolId, MethodDefinition>>();
 
   for (const analysis of analyses) {
-    const functions = new Map<SymbolId, FunctionDefinition>();
-    const classes = new Map<SymbolId, ClassDefinition>();
-    const methods = new Map<SymbolId, MethodDefinition>();
-
     // Index functions by their symbols
     for (const func of analysis.functions) {
       const symbol = function_symbol(func.name, func.location);
       functions.set(symbol, func);
+      const functions_in_file = functions_by_file.get(analysis.file_path) || new Map<SymbolId, FunctionDefinition>();
+      functions_in_file.set(symbol, func);
     }
 
     // Index classes and their methods by their symbols
     for (const cls of analysis.classes) {
       const classSymbol = class_symbol(cls.name, cls.location);
       classes.set(classSymbol, cls);
-
+      const classes_in_file = classes_by_file.get(analysis.file_path) || new Map<SymbolId, ClassDefinition>();
+      classes_in_file.set(classSymbol, cls);
       for (const method of cls.methods) {
         const methodSymbol = method_symbol(
           method.name,
@@ -148,13 +144,13 @@ function build_definition_index(
           method.location
         );
         methods.set(methodSymbol, method);
+        const methods_in_file = methods_by_file.get(analysis.file_path) || new Map<SymbolId, MethodDefinition>();
+        methods_in_file.set(methodSymbol, method);
       }
     }
-
-    by_file.set(analysis.file_path, { functions, classes, methods });
   }
 
-  return { by_file };
+  return { functions, functions_by_file, classes, classes_by_file, methods, methods_by_file };
 }
 
 /**
@@ -194,7 +190,7 @@ function resolve_file_calls(
     imports_by_file: cross_file_context.imports_by_file,
     exports_by_file: cross_file_context.exports_by_file,
     language,
-    definitions_by_file: cross_file_context.definitions.by_file,
+    definitions: cross_file_context.definitions,
   };
 
   const function_def_calls = new Map<FunctionDefinition, FunctionCall[]>();

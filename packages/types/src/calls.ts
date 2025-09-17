@@ -6,7 +6,8 @@
 import { Location } from "./common";
 import { ClassName } from "./aliases";
 import { ModulePath } from "./import_export";
-import { SymbolId, SymbolName } from "./symbols";
+import { SymbolId } from "./symbol";
+import { SymbolName } from "./symbol";
 import { SemanticNode, Resolution } from "./query";
 
 /** Name of the object receiving a method call */
@@ -38,7 +39,6 @@ export type CallType =
   | "macro"
   | "decorator";
 
-
 /**
  * Base information common to all calls
  */
@@ -48,19 +48,6 @@ interface BaseCallInfo extends SemanticNode {
   readonly arguments_count: number; // Number of arguments passed
   readonly is_async: boolean; // Whether the call is async/await
   readonly is_dynamic: boolean; // Runtime-resolved call
-}
-
-/**
- * Information about the resolved target of a call
- */
-export interface ResolvedTarget {
-  readonly symbol_id: SymbolId;
-  readonly definition_location: Location;
-  readonly is_local: boolean;
-  readonly is_imported: boolean;
-  readonly source_module?: ModulePath;
-  readonly import_alias?: SymbolId;
-  readonly original_name?: SymbolId;
 }
 
 /**
@@ -74,7 +61,6 @@ export type CallInfo = FunctionCall | MethodCall | ConstructorCall;
 export interface FunctionCall extends BaseCallInfo {
   readonly kind: "function";
   readonly callee: SymbolName; // Function being called - at this point we haven't resolved it as a SymbolId
-  readonly resolved?: Resolution<ResolvedTarget>;
 }
 
 /**
@@ -86,11 +72,6 @@ export interface MethodCall extends BaseCallInfo {
   readonly receiver: SymbolName; // Object receiving the call
   readonly is_static: boolean; // Static vs instance method
   readonly is_chained: boolean; // Part of method chain
-  readonly receiver_type?: Resolution<{
-    readonly type_name: ClassName;
-    readonly type_kind: ResolvedTypeKind;
-  }>;
-  readonly resolved?: Resolution<ResolvedTarget>;
 }
 
 /**
@@ -98,10 +79,8 @@ export interface MethodCall extends BaseCallInfo {
  */
 export interface ConstructorCall extends BaseCallInfo {
   readonly kind: "constructor";
-  readonly class_name: ClassName; // Class being instantiated
+  readonly class_name: SymbolName; // Class being instantiated
   readonly is_new_expression: boolean; // Uses 'new' keyword
   readonly is_factory: boolean; // Factory pattern
   readonly assigned_to: SymbolId; // Defaults to anonymous symbol when not assigned
-  readonly resolved?: Resolution<ResolvedTarget>;
 }
-

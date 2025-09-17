@@ -22,7 +22,7 @@ export interface EnrichmentContext {
     module_graph: ModuleGraph;
     resolved_generics: Map<FilePath, ResolvedGeneric[]>; // Arrays of resolved generics per type
     propagated_types: Map<FilePath, TypeFlow[]>; // Type flows or other type info by file path
-    namespace_resolutions: Map<FilePath, NamespaceInfo>; // Namespace imports and their exported members
+    // namespace_resolutions: Map<FilePath, NamespaceInfo>; // Namespace imports and their exported members
   }
   
   /**

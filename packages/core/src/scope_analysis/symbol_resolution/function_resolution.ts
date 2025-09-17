@@ -14,8 +14,8 @@ import {
   ModuleGraph,
   ScopeTree,
 } from "@ariadnejs/types";
-import { FileResolutionContext } from "../symbol_resolution";
-import { find_scope_at_location } from "../../scope_tree";
+import { FileResolutionContext } from "./symbol_resolution";
+import { find_scope_at_location } from "../scope_tree";
 import { resolve, dirname, join } from "path";
 
 /**

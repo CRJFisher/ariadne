@@ -7,7 +7,7 @@
 
 import { Location, Language } from "./common";
 import { FilePath } from "./aliases";
-import { SymbolName } from "./symbols";
+import { SymbolName } from "./symbol";
 
 // ============================================================================
 // Core AST Types

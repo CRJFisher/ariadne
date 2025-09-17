@@ -1,18 +1,18 @@
 import { Location } from "./common";
 import { FilePath, ImportName, ExportName } from "./aliases";
 import { ModulePath, NamespaceName } from "./import_export";
-import { SymbolId } from "./symbols";
-import { SymbolName } from "./symbols";
+import { SymbolId } from "./symbol";
+import { SymbolName } from "./symbol";
 
 export interface ModuleNode {
   readonly path: FilePath;
-  readonly imports: ReadonlyMap<ModulePath, ImportedModule>;
+  readonly imports: ReadonlyMap<FilePath, ImportedModule>;
   readonly exports: ReadonlyMap<ExportName, ExportedSymbol>;
   readonly imported_by: ReadonlySet<FilePath>;
 }
 
 export interface ImportedModule {
-  readonly source: ModulePath;
+  readonly source: FilePath;
   readonly symbols: readonly ImportedSymbol[];
   readonly is_type_import: boolean;
   readonly location: Location;

@@ -16,10 +16,7 @@ export {
 
 export { ModulePath, NamespaceName } from "./import_export";
 
-export {
-  TypeExpression,
-  TrackedType,
-} from "./type_analysis";
+export { TypeExpression, TrackedType } from "./type_analysis";
 
 // Export from common, excluding types that conflict with branded_types
 export { Location, Language } from "./common";
@@ -27,7 +24,7 @@ export { Location, Language } from "./common";
 export * from "./codegraph";
 
 // Export symbol utilities
-export * from "./symbol_utils";
+export * from "./symbol";
 
 // Export from query (no conflicts)
 export * from "./query";

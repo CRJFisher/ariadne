@@ -2,8 +2,9 @@
  * Import and export types for module dependencies and APIs
  */
 
-import { SymbolName } from "./symbols";
-import { SymbolId } from "./symbols";
+import { FilePath } from "./aliases";
+import { SymbolName } from "./symbol";
+import { SymbolId } from "./symbol";
 import { SemanticNode, Resolution } from "./query";
 
 // ============================================================================
@@ -24,7 +25,7 @@ export type NamespaceName = string & { __brand: "NamespaceName" };
  * Base import information
  */
 interface BaseImport extends SemanticNode {
-  readonly source: ModulePath; // Module being imported from
+  readonly source: FilePath; // Module being imported from
   readonly is_type_only?: boolean;
   readonly is_dynamic?: boolean;
 }
@@ -44,6 +45,7 @@ export type Import =
 export interface NamedImport extends BaseImport {
   readonly kind: "named";
   readonly imports: readonly NamedImportItem[];
+  readonly resolved_exports: ReadonlyMap<SymbolName, Export>; // Maps each imported name to its export
 }
 
 export interface NamedImportItem {
@@ -58,6 +60,7 @@ export interface NamedImportItem {
 export interface DefaultImport extends BaseImport {
   readonly kind: "default";
   readonly name: SymbolName; // Local name for default export
+  readonly resolved_export: Export; // The actual default export from the module
 }
 
 /**
@@ -66,6 +69,7 @@ export interface DefaultImport extends BaseImport {
 export interface NamespaceImport extends BaseImport {
   readonly kind: "namespace";
   readonly namespace_name: NamespaceName;
+  readonly exports: ReadonlyMap<SymbolName, Export>; // All exports available through this namespace
 }
 
 /**
@@ -84,7 +88,9 @@ export interface SideEffectImport extends BaseImport {
  * Base export information
  */
 interface BaseExport extends SemanticNode {
-  readonly is_type_only: boolean; // TypeScript type-only export (defaults to false)
+  readonly symbol: SymbolId;  // We build these in the original file so we always know the symbol-id
+  readonly symbol_name: SymbolName;
+  readonly is_type_only?: boolean; // TypeScript type-only export
 }
 
 /**
@@ -97,13 +103,11 @@ export type Export = NamedExport | DefaultExport | NamespaceExport | ReExport;
  */
 export interface NamedExport extends BaseExport {
   readonly kind: "named";
-  readonly exports: readonly NamedExportItem[];
-}
-
-export interface NamedExportItem {
-  readonly local_name: SymbolName; // Internal name
-  readonly export_name?: SymbolName; // Exported as (if different) (remains optional - not all exports are renamed)
-  readonly is_type_only: boolean; // Individual type-only marker (defaults to false)
+  readonly exports: readonly {
+    readonly local_name: SymbolName; // Internal name
+    readonly export_name?: SymbolName; // Exported as (if different) (remains optional - not all exports are renamed)
+    readonly is_type_only: boolean; // Individual type-only marker (defaults to false)
+  }[];
 }
 
 /**
@@ -111,7 +115,6 @@ export interface NamedExportItem {
  */
 export interface DefaultExport extends BaseExport {
   readonly kind: "default";
-  readonly symbol: SymbolName; // Generated symbol for anonymous exports
   readonly is_declaration: boolean; // export default class {} vs export default foo
 }
 
@@ -120,7 +123,7 @@ export interface DefaultExport extends BaseExport {
  */
 export interface NamespaceExport extends BaseExport {
   readonly kind: "namespace";
-  readonly source: ModulePath; // Re-export source
+  readonly source: FilePath; // Re-export source
   readonly as_name?: NamespaceName; // export * as foo from 'module'
 }
 
@@ -129,7 +132,7 @@ export interface NamespaceExport extends BaseExport {
  */
 export interface ReExport extends BaseExport {
   readonly kind: "reexport";
-  readonly source: ModulePath;
+  readonly source: FilePath; // This is the file path of the module being re-exported
   readonly exports: readonly ReExportItem[];
 }
 
@@ -137,57 +140,4 @@ export interface ReExportItem {
   readonly source_name: SymbolName; // Name in source module
   readonly export_name?: SymbolName; // Exported as (if different) (remains optional - not all re-exports are renamed)
   readonly is_type_only: boolean; // Type-only re-export (defaults to false)
-}
-
-// ============================================================================
-// Module Resolution Types
-// ============================================================================
-
-/**
- * Resolved module information
- */
-export interface ResolvedModule {
-  readonly module_path: ModulePath;
-  readonly file_path?: string; // Resolved file path (optional for external modules)
-  readonly is_external: boolean; // Node module vs local (required - defaults to false)
-  readonly is_builtin: boolean; // Node builtin module (required - defaults to false)
-  readonly package_name?: string; // NPM package name (optional - only for external packages)
-  readonly exports: readonly Export[];
-  readonly imports: readonly Import[];
-}
-
-/**
- * Module dependency edge
- */
-export interface ModuleDependency {
-  readonly from: ModulePath;
-  readonly to: ModulePath;
-  readonly imports: readonly Import[];
-  readonly is_circular?: boolean; // Circular dependency detected
-  readonly is_dev_only?: boolean; // Dev dependency only
-}
-
-/**
- * Symbol resolution across modules
- */
-export interface CrossModuleResolution {
-  readonly symbol: SymbolName;
-  readonly from_module: ModulePath;
-  readonly to_module: ModulePath;
-  readonly resolution: Resolution<{
-    readonly symbol_id: SymbolId;
-    readonly export_chain: readonly ExportChainStep[];
-  }>;
-}
-
-/**
- * Step in export/re-export chain
- */
-export interface ExportChainStep {
-  readonly module: ModulePath;
-  readonly export_type: "direct" | "reexport" | "namespace";
-  readonly name_transformation?: {
-    readonly from: SymbolName;
-    readonly to: SymbolName;
-  };
 }

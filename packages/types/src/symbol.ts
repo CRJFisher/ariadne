@@ -1,50 +1,30 @@
-/**
- * Symbol Utilities for Universal Identifier System
- *
- * Provides a unified way to handle all identifiers in the codebase
- * using SymbolId as the single source of truth.
- *
- * @module symbol_utils
- * @description This module provides factory functions and utilities for creating
- * and manipulating symbols throughout the codebase. All identifiers (variables,
- * functions, classes, methods, etc.) are represented using the SymbolId type.
- *
- * @example
- * ```typescript
- * import { function_symbol, class_symbol, method_symbol } from '@ariadnejs/types';
- *
- * // Create a function symbol
- * const funcId = function_symbol('processData', {
- *   file_path: 'src/utils.ts',
- *   line: 10,
- *   column: 0,
- *   end_line: 20,
- *   end_column: 1
- * });
- *
- * // Create a class symbol
- * const classId = class_symbol('MyClass', 'src/classes.ts', {
- *   file_path: 'src/classes.ts',
- *   line: 5,
- *   column: 0,
- *   end_line: 50,
- *   end_column: 1
- * });
- *
- * // Create a method symbol
- * const methodId = method_symbol('getValue', 'MyClass', {
- *   file_path: 'src/classes.ts',
- *   line: 15,
- *   column: 2,
- *   end_line: 18,
- *   end_column: 3
- * });
- * ```
- */
-
 import { Location } from "./common";
-import { FilePath } from "./aliases";
-import { SymbolDefinition, SymbolId, SymbolKind, SymbolName } from "./symbols";
+
+export type SymbolId = string & { __brand: "SymbolId" }; // This is the encoded version of the Symbol object
+export type SymbolName = string & { __brand: "SymbolName" }; // This is the local identifier of the symbol
+
+type SymbolKind =
+  | "variable"
+  | "function"
+  | "class"
+  | "method"
+  | "property"
+  | "parameter"
+  | "type"
+  | "interface"
+  | "enum"
+  | "import"
+  | "export"
+  | "namespace"
+  | "module"
+  | "global";
+
+interface SymbolDefinition {
+  readonly kind: SymbolKind;
+  readonly name: SymbolName;
+  readonly location: Location;
+  readonly qualifier?: SymbolName;
+}
 
 // ============================================================================
 // Core Conversion Functions
@@ -67,7 +47,7 @@ import { SymbolDefinition, SymbolId, SymbolKind, SymbolName } from "./symbols";
  * // Returns: "function:src/utils.ts:10:0:20:1:processData"
  * ```
  */
-export function symbol_string(symbol: SymbolDefinition): SymbolId {
+function symbol_string(symbol: SymbolDefinition): SymbolId {
   const parts = [
     symbol.kind,
     symbol.location.file_path,
@@ -78,50 +58,6 @@ export function symbol_string(symbol: SymbolDefinition): SymbolId {
     symbol.name,
   ];
   return parts.join(":") as SymbolId;
-}
-
-/**
- * Parse a SymbolId back into a Symbol structure
- *
- * @param symbol_id - The SymbolId string to parse
- * @returns A Symbol object with all its components
- * @throws Error if the SymbolId format is invalid
- *
- * @example
- * ```typescript
- * const symbolId = "function:src/utils.ts:10:0:20:1:processData" as SymbolId;
- * const symbol = symbol_from_string(symbolId);
- * // Returns: { kind: 'function', name: 'processData', location: {...} }
- * ```
- */
-export function symbol_from_string(symbol_id: SymbolId): SymbolDefinition {
-  const parts = symbol_id.split(":");
-
-  if (parts.length < 3) {
-    throw new Error(`Invalid SymbolId format: ${symbol_id}`);
-  }
-
-  const kind = parts[0];
-  const file_path = parts[1];
-  const line = parts[2];
-  const column = parts[3];
-  const end_line = parts[4];
-  const end_column = parts[5];
-  const name = parts[6] as SymbolName;
-  const qualifier = parts.length > 7 ? (parts[7] as SymbolName) : undefined;
-
-  return {
-    kind: kind as SymbolKind,
-    name: name as SymbolName,
-    qualifier,
-    location: {
-      file_path: file_path as FilePath,
-      line: parseInt(line, 10),
-      column: parseInt(column, 10),
-      end_line: parseInt(end_line, 10),
-      end_column: parseInt(end_column, 10),
-    },
-  };
 }
 
 // ============================================================================
@@ -202,10 +138,7 @@ export function function_symbol(
  * });
  * ```
  */
-export function class_symbol(
-  name: string,
-  location: Location
-): SymbolId {
+export function class_symbol(name: string, location: Location): SymbolId {
   return symbol_string({
     kind: "class",
     name: name as SymbolName,
@@ -296,9 +229,7 @@ export function property_symbol(
  * });
  * ```
  */
-export function module_symbol(
-  location: Location
-): SymbolId {
+export function module_symbol(location: Location): SymbolId {
   return symbol_string({
     name: "<module>" as SymbolName,
     kind: "module",
@@ -341,10 +272,7 @@ export function parameter_symbol(
 /**
  * Create an interface symbol
  */
-export function interface_symbol(
-  name: string,
-  location: Location
-): SymbolId {
+export function interface_symbol(name: string, location: Location): SymbolId {
   return symbol_string({
     kind: "interface",
     name: name as SymbolName,
@@ -355,10 +283,7 @@ export function interface_symbol(
 /**
  * Create a type symbol
  */
-export function type_symbol(
-  name: string,
-  location: Location
-): SymbolId {
+export function type_symbol(name: string, location: Location): SymbolId {
   return symbol_string({
     kind: "type",
     name: name as SymbolName,

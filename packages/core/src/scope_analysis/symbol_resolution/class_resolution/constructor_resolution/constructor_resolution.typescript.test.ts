@@ -62,10 +62,22 @@ describe("TypeScript constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path, line: 1, column: 1, end_line: 20, end_column: 1 }),
+          id: function_scope({
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 20,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path, line: 1, column: 1, end_line: 20, end_column: 1 },
+          location: {
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 20,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -74,12 +86,17 @@ describe("TypeScript constructor resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "typescript",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("GenericClass" as SymbolName, cls.location), cls]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [class_symbol("GenericClass" as SymbolName, cls.location), cls],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -121,10 +138,22 @@ describe("TypeScript constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path, line: 1, column: 1, end_line: 30, end_column: 1 }),
+          id: function_scope({
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 30,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path, line: 1, column: 1, end_line: 30, end_column: 1 },
+          location: {
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 30,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -133,12 +162,17 @@ describe("TypeScript constructor resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "typescript",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("MyClass" as SymbolName, cls.location), cls]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [class_symbol("MyClass" as SymbolName, cls.location), cls],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -172,7 +206,7 @@ describe("TypeScript constructor resolution", () => {
           {
             name: "UserClass" as SymbolName,
             is_type_only: true, // Type-only import
-          }
+          },
         ],
       } as unknown as NamedImport,
     ];
@@ -204,10 +238,22 @@ describe("TypeScript constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path: file_b, line: 1, column: 1, end_line: 20, end_column: 1 }),
+          id: function_scope({
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 20,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path: file_b, line: 1, column: 1, end_line: 20, end_column: 1 },
+          location: {
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 20,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -216,12 +262,17 @@ describe("TypeScript constructor resolution", () => {
       imports_by_file: new Map([[file_b, imports]]),
       exports_by_file: new Map([[file_a, exports]]),
       language: "typescript",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("UserClass" as SymbolName, cls.location), cls]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [class_symbol("UserClass" as SymbolName, cls.location), cls],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -292,10 +343,22 @@ describe("TypeScript constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path, line: 1, column: 1, end_line: 30, end_column: 1 }),
+          id: function_scope({
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 30,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path, line: 1, column: 1, end_line: 30, end_column: 1 },
+          location: {
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 30,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -304,15 +367,30 @@ describe("TypeScript constructor resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "typescript",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map(),
-          classes: new Map([
-            [class_symbol("AbstractBase" as SymbolName, abstractClass.location), abstractClass],
-            [class_symbol("ConcreteImpl" as SymbolName, concreteClass.location), concreteClass],
-          ]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [
+                class_symbol(
+                  "AbstractBase" as SymbolName,
+                  abstractClass.location
+                ),
+                abstractClass,
+              ],
+              [
+                class_symbol(
+                  "ConcreteImpl" as SymbolName,
+                  concreteClass.location
+                ),
+                concreteClass,
+              ],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -381,10 +459,22 @@ describe("TypeScript constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path: file_b, line: 1, column: 1, end_line: 30, end_column: 1 }),
+          id: function_scope({
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 30,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path: file_b, line: 1, column: 1, end_line: 30, end_column: 1 },
+          location: {
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 30,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -393,12 +483,17 @@ describe("TypeScript constructor resolution", () => {
       imports_by_file: new Map([[file_b, imports]]),
       exports_by_file: new Map([[file_a, exports]]),
       language: "typescript",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("User" as SymbolName, cls.location), cls]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [class_symbol("User" as SymbolName, cls.location), cls],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -440,10 +535,22 @@ describe("TypeScript constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path, line: 1, column: 1, end_line: 30, end_column: 1 }),
+          id: function_scope({
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 30,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path, line: 1, column: 1, end_line: 30, end_column: 1 },
+          location: {
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 30,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -452,12 +559,20 @@ describe("TypeScript constructor resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "typescript",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("MyImplementation" as SymbolName, cls.location), cls]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [
+                class_symbol("MyImplementation" as SymbolName, cls.location),
+                cls,
+              ],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -500,10 +615,22 @@ describe("TypeScript constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path, line: 1, column: 1, end_line: 25, end_column: 1 }),
+          id: function_scope({
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 25,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path, line: 1, column: 1, end_line: 25, end_column: 1 },
+          location: {
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 25,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -512,12 +639,17 @@ describe("TypeScript constructor resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "typescript",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("DecoratedClass" as SymbolName, cls.location), cls]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [class_symbol("DecoratedClass" as SymbolName, cls.location), cls],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -553,7 +685,7 @@ describe("TypeScript constructor resolution", () => {
             name: "ButtonComponent" as SymbolName,
             alias: "Button" as SymbolName,
             is_type_only: false,
-          }
+          },
         ],
       } as unknown as NamedImport,
     ];
@@ -585,10 +717,22 @@ describe("TypeScript constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path: file_b, line: 1, column: 1, end_line: 20, end_column: 1 }),
+          id: function_scope({
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 20,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path: file_b, line: 1, column: 1, end_line: 20, end_column: 1 },
+          location: {
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 20,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -597,12 +741,20 @@ describe("TypeScript constructor resolution", () => {
       imports_by_file: new Map([[file_b, imports]]),
       exports_by_file: new Map([[file_a, exports]]),
       language: "typescript",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("ButtonComponent" as SymbolName, cls.location), cls]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [
+                class_symbol("ButtonComponent" as SymbolName, cls.location),
+                cls,
+              ],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 

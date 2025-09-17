@@ -15,7 +15,7 @@ import {
   Import,
   FileAnalysis,
 } from "@ariadnejs/types";
-import { build_class_hierarchy_from_analyses } from "./inheritance/class_hierarchy";
+import { build_class_hierarchy_from_analyses } from "./inheritance/class_hierarchy/class_hierarchy";
 import { create_analysis_cache } from "./cache/analysis_cache";
 import { scan_files, read_and_parse_file } from "./project/file_scanner";
 import {
@@ -101,21 +101,22 @@ export async function generate_code_graph(
   const analysis_and_trees = await Promise.all(analysis_promises);
 
   const analyses = analysis_and_trees.map((analysis) => analysis.analysis);
-  const file_name_to_tree = new Map(
-    analysis_and_trees.map((analysis) => [
-      analysis.analysis.file_path,
-      analysis.tree,
-    ])
-  );
 
+  // const file_name_to_tree = new Map(
+  //   analysis_and_trees.map((analysis) => [
+  //     analysis.analysis.file_path,
+  //     analysis.tree,
+  //   ])
+  // );
+  //
   // TYPE REGISTRY - Build unified type registry from all files (needed for enrichment)
-  const type_registry = build_type_registry(analyses);
-
+  // const type_registry = build_type_registry(analyses);
+  //
   // CLASS HIERARCHY - Build inheritance tree from all classes (needed for enrichment)
-  const class_hierarchy = await build_class_hierarchy_from_analyses(
-    analyses,
-    file_name_to_tree
-  );
+  // const class_hierarchy = await build_class_hierarchy_from_analyses(
+  //   analyses,
+  //   file_name_to_tree
+  // );
 
   // METHOD HIERARCHY ENRICHMENT (task 11.62.5)
   // Enrich method calls with class hierarchy information
@@ -134,8 +135,8 @@ export async function generate_code_graph(
   // let enriched_analyses = analyses as FileAnalysis[];
 
   // FILE ANALYSIS - Build files map from enriched analyses
-  const files = new Map<FilePath, FileAnalysis>();
-  
+  // const files = new Map<FilePath, FileAnalysis>();
+
   // TODO: why was this here before? It's set with FileAnalysis later...
   // const language_stats = new Map<Language, number>();
   // for (const analysis of analyses) {
@@ -145,81 +146,81 @@ export async function generate_code_graph(
   // }
 
   // MODULE GRAPH - Build from enriched analyses
-  const file_data = new Map(
-    analyses.map((a) => [
-      a.file_path,
-      {
-        file_path: a.file_path,
-        language: a.language,
-        imports: a.imports,
-        exports: a.exports,
-      },
-    ])
-  );
+  // const file_data = new Map(
+  //   analyses.map((a) => [
+  //     a.file_path,
+  //     {
+  //       file_path: a.file_path,
+  //       language: a.language,
+  //       imports: a.imports,
+  //       exports: a.exports,
+  //     },
+  //   ])
+  // );
 
-  const modules = build_module_graph(file_data, {
-    root_path: options.root_path,
-    include_external: false,
-  });
+  // const modules = build_module_graph(file_data, {
+  //   root_path: options.root_path,
+  //   include_external: false,
+  // });
 
   // LAYER 7 - Cross-File Type Resolution (Generic Resolution)
   // Resolve generic types across all analyses using the type registry and class hierarchy
-  const resolved_generics = await resolve_generics_across_files(
-    analyses,
-    type_registry,
-    class_hierarchy,
-    modules
-  );
+  // const resolved_generics = await resolve_generics_across_files(
+  //   analyses,
+  //   type_registry,
+  //   class_hierarchy,
+  //   modules
+  // );
 
   // LAYER 7b - Type Propagation (after generics)
   // Propagate types through assignments, function calls, and control flow
-  const propagated_types = await propagate_types_across_files(
-    analyses,
-    type_registry,
-    resolved_generics,
-    modules
-  );
+  // const propagated_types = await propagate_types_across_files(
+  //   analyses,
+  //   type_registry,
+  //   resolved_generics,
+  //   modules
+  // );
 
   // LAYER 7c - Namespace Resolution (after type propagation)
   // Resolve namespace imports and their members across file boundaries
-  const namespace_resolutions = await resolve_namespaces_across_files(
-    analyses,
-    modules,
-    type_registry,
-    propagated_types,
-    file_name_to_tree
-  );
+  // const namespace_resolutions = await resolve_namespaces_across_files(
+  //   analyses,
+  //   modules,
+  //   type_registry,
+  //   propagated_types,
+  //   file_name_to_tree
+  // );
 
   // LAYER 7d - CALL ENRICHMENT - Enrich calls with all global context now available
   // Create enrichment context with all global information
-  const enrichment_context: EnrichmentContext = {
-    type_registry,
-    class_hierarchy,
-    module_graph: modules,
-    resolved_generics,
-    propagated_types,
-    namespace_resolutions,
-  };
+  // const enrichment_context: EnrichmentContext = {
+  //   type_registry,
+  //   class_hierarchy,
+  //   module_graph: modules,
+  //   resolved_generics,
+  //   propagated_types,
+  //   // namespace_resolutions,
+  // };
 
   // Enrichment options for comprehensive analysis
-  const enrichment_options: EnrichmentOptions = {
-    resolve_polymorphic: true,
-    track_interfaces: true,
-    include_confidence: true,
-    resolve_virtual_dispatch: true,
-    validate_constructors: true,
-    track_inheritance: true,
-  };
+  // const enrichment_options: EnrichmentOptions = {
+  //   resolve_polymorphic: true,
+  //   track_interfaces: true,
+  //   include_confidence: true,
+  //   resolve_virtual_dispatch: true,
+  //   validate_constructors: true,
+  //   track_inheritance: true,
+  // };
 
   // Re-enrich analyses with full global context
-  const enriched_analyses = analyses.map((analysis) =>
-    enrich_all_calls(analysis, enrichment_context, enrichment_options)
-  );
+  // const enriched_analyses = analyses.map((analysis) =>
+  //   enrich_all_calls(analysis, enrichment_context, enrichment_options)
+  // );
 
   // Update the files map with enriched analyses
-  for (const analysis of enriched_analyses) {
-    files.set(analysis.file_path, analysis);
-  }
+  // for (const analysis of enriched_analyses) {
+  //   files.set(analysis.file_path, analysis);
+  // }
 
   // TODO: Aggregate global scopes across files
   // Files with "global" scope type (e.g., C files, browser scripts) share a namespace.
@@ -229,25 +230,22 @@ export async function generate_code_graph(
   // 2. Create a unified global scope that contains all their symbols
   // 3. Update symbol resolution to handle cross-file global symbols
 
-
   // LAYER 8: SYMBOL RESOLUTION - Resolve all references to their definitions
-  const resolution_results = resolve_references_to_symbols(
-    enriched_analyses,
-  );
+  const resolution_results = resolve_references_to_symbols(analyses); // enriched_analyses
 
   console.log(
     `Resolved ${resolution_results.function_calls.size} function calls`
   );
-  console.log(
-    `Resolved ${resolution_results.method_calls.size} method calls`
-  );
+  console.log(`Resolved ${resolution_results.method_calls.size} method calls`);
   console.log(
     `Resolved ${resolution_results.constructor_calls.size} constructor calls`
   );
-  console.log(`Unresolved references: ${resolution_results.unresolved_calls.length}`);
+  console.log(
+    `Unresolved references: ${resolution_results.unresolved_calls.length}`
+  );
 
   // CALL GRAPH - Build from enriched analyses using resolved symbols
-  const calls = create_call_graph(enriched_analyses, resolution_results);
+  const calls = create_call_graph(analyses, resolution_results); // enriched_analyses
 
   // TYPE INDEX
   // const types = build_type_index(enriched_analyses);

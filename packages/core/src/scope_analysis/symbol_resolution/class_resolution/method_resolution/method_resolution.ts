@@ -8,30 +8,19 @@ import {
   ClassDefinition,
   FilePath,
   SymbolName,
-  Import,
-  Export,
-  SymbolId,
-  method_symbol,
-  class_symbol,
-  NamedImport,
-  ScopeNode,
   ScopeId,
   Location,
-  ModulePath,
-  ModuleGraph,
   ScopeTree,
-  VariableDefinition,
   Language,
+  SymbolId,
 } from "@ariadnejs/types";
 import { FileResolutionContext } from "../../symbol_resolution";
 import { find_scope_at_location } from "../../../scope_tree";
 import {
   find_class_in_file,
   resolve_imported_class,
-  resolve_module_to_file,
   find_containing_class_scope,
   find_parent_class,
-  find_default_exported_class,
   get_class_from_scope,
 } from "../class_resolution_utils";
 
@@ -42,7 +31,7 @@ export function resolve_method_call(
   call: MethodCall,
   context: FileResolutionContext
 ): MethodDefinition | undefined {
-  const { scope_tree, language, definitions_by_file } = context;
+  const { scope_tree, language, definitions } = context;
 
   // Find the scope where this call is made
   const call_scope = find_scope_at_location(scope_tree, call.location);
@@ -113,14 +102,14 @@ function resolve_self_method_call(
 ): MethodDefinition | undefined {
   if (!call_scope) return undefined;
 
-  const { scope_tree, definitions_by_file } = context;
+  const { scope_tree, definitions } = context;
 
   // Find the containing class scope
   const class_scope = find_containing_class_scope(call_scope, scope_tree);
   if (!class_scope) return undefined;
 
   // Get the class definition from the scope
-  const class_def = get_class_from_scope(class_scope, definitions_by_file);
+  const class_def = get_class_from_scope(class_scope, definitions);
   if (!class_def) return undefined;
 
   // Find method in the class
@@ -157,7 +146,7 @@ function resolve_static_method_call(
   call: MethodCall,
   context: FileResolutionContext
 ): MethodDefinition | undefined {
-  const { definitions_by_file, imports_by_file } = context;
+  const { definitions } = context;
 
   // Try to find the class
   const class_name = extract_class_from_receiver(call.receiver);
@@ -166,8 +155,8 @@ function resolve_static_method_call(
   // 1. Check local file for class definition
   const local_class = find_class_in_file(
     class_name,
-    call.location.file_path as FilePath,
-    definitions_by_file
+    call.location.file_path,
+    definitions
   );
 
   if (local_class) {
@@ -220,11 +209,11 @@ export function find_method_in_class(
 ): MethodDefinition | undefined {
   // Look through the class's methods
   for (const method of class_def.methods) {
+    // TODO: what if there are multiple methods with the same name e.g. overloads? Does that count as a single method?
     if (method.name === method_name) {
       return method;
     }
   }
-
   return undefined;
 }
 
@@ -236,58 +225,9 @@ export function trace_receiver_type(
   call_location: Location,
   context: FileResolutionContext
 ): ClassDefinition | undefined {
-  const { scope_tree, definitions_by_file } = context;
+  const { scope_tree, definitions, type_index } = context;
 
-  // Find the scope where the call is made
-  const call_scope = find_scope_at_location(scope_tree, call_location);
-  if (!call_scope) return undefined;
-
-  // Look for variable definitions in scope
-  const var_type = find_variable_type(receiver, call_scope, scope_tree);
-  if (!var_type) return undefined;
-
-  // Find the class definition for this type
-  return resolve_type_to_class(var_type, call_location.file_path as FilePath, context);
-}
-
-/**
- * Find the type of a variable in scope
- */
-function find_variable_type(
-  var_name: SymbolName,
-  scope_id: ScopeId,
-  scope_tree: ScopeTree
-): SymbolName | undefined {
-  // Look up variable definitions in the scope tree
-  const symbols = scope_tree.get_symbols_in_scope(scope_id);
-  if (!symbols) return undefined;
-
-  // Search for the variable in current and parent scopes
-  let current_scope = scope_id;
-  while (current_scope) {
-    const scope_symbols = scope_tree.get_symbols_in_scope(current_scope);
-    if (scope_symbols) {
-      for (const [symbol_id, symbol_info] of scope_symbols) {
-        // Check if this is a variable definition with the right name
-        const symbol_str = symbol_id as string;
-
-        // Parse the symbol to check if it matches the variable name
-        // Symbol format might be "variable:varname@file:line:col"
-        if (symbol_str.includes(`variable:${var_name as string}`) ||
-            symbol_str.includes(`parameter:${var_name as string}`)) {
-          // If there's type information stored, extract it
-          // This would need to be populated during initial AST analysis
-          // For now, return undefined as type tracking is not yet implemented
-          return undefined;
-        }
-      }
-    }
-
-    // Move to parent scope
-    const scope_node = scope_tree.nodes.get(current_scope);
-    current_scope = scope_node?.parent_id || null;
-  }
-
+  // TODO: use type index to trace the type of the receiver
   return undefined;
 }
 
@@ -300,7 +240,7 @@ function resolve_type_to_class(
   context: FileResolutionContext
 ): ClassDefinition | undefined {
   // 1. Check local file
-  const local_class = find_class_in_file(type_name, file_path, context.definitions_by_file);
+  const local_class = find_class_in_file(type_name, file_path, context.definitions);
   if (local_class) return local_class;
 
   // 2. Check imports
@@ -355,20 +295,12 @@ function resolve_imported_method(
 
       if (ns_name === receiver_str) {
         // This is a namespace method call
-        const source_file = resolve_module_to_file(
-          imp.source,
-          call.location.file_path as FilePath,
-          context
-        );
-
-        if (source_file) {
-          // Look for a class that exports this method
-          const file_defs = context.definitions_by_file.get(source_file);
-          if (file_defs) {
-            for (const [, class_def] of file_defs.classes) {
-              const method = find_method_in_class(call.method_name, class_def, context);
-              if (method) return method;
-            }
+        const source_file = imp.source;
+        const file_defs = context.definitions.classes_by_file.get(source_file);
+        if (file_defs) {
+          for (const [, class_def] of file_defs) {
+            const method = find_method_in_class(call.method_name, class_def, context);
+            if (method) return method;
           }
         }
       }
@@ -466,7 +398,7 @@ function resolve_javascript_specific_method(
     const class_def = find_class_in_file(
       class_name,
       call.location.file_path as FilePath,
-      context.definitions_by_file
+      context.definitions
     );
 
     if (class_def) {
@@ -491,23 +423,21 @@ function resolve_super_method_call(
   call: MethodCall,
   context: FileResolutionContext
 ): MethodDefinition | undefined {
+  // With ClassHierarchy:
   const call_scope = find_scope_at_location(context.scope_tree, call.location);
   if (!call_scope) return undefined;
 
-  // Find containing class
   const class_scope = find_containing_class_scope(call_scope, context.scope_tree);
   if (!class_scope) return undefined;
 
-  const class_def = get_class_from_scope(class_scope, context.definitions_by_file);
-  if (!class_def || !class_def.extends || class_def.extends.length === 0) {
-    return undefined;
-  }
+  const class_def = get_class_from_scope(class_scope, context.definitions);
+  if (!class_def) return undefined;
 
   // Find method in parent class
   const parent_name = class_def.extends[0];
   const parent_class = find_parent_class(
     parent_name,
-    class_def.location.file_path as FilePath,
+    class_def.location.file_path,
     context
   );
 

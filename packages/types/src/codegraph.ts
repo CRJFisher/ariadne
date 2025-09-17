@@ -5,10 +5,9 @@ import { ScopeTree } from "./scopes";
 import { FilePath, TypeString, SourceCode } from "./aliases";
 import { Export, Import } from "./import_export";
 import { AnalysisError } from "./errors";
-import { SymbolId } from "./symbols";
+import { SymbolId } from "./symbol";
 import { TypeInfo } from "./types";
 import { CallGraph } from "./call_chains";
-
 
 export interface FileAnalysis {
   readonly file_path: FilePath;
@@ -41,7 +40,6 @@ export interface CodeGraph {
   // readonly classes: ClassHierarchy;
   // readonly types: TypeIndex;
   readonly call_graph: CallGraph;
-  // readonly symbols: SymbolIndex;
   // readonly metadata: CodeGraphMetadata;
 }
 

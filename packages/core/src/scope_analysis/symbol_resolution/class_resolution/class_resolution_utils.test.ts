@@ -50,28 +50,44 @@ describe("find_class_in_file", () => {
     };
 
     const definitions_by_file = new Map([
-      [file_path, {
-        functions: new Map(),
-        classes: new Map([[class_symbol("MyClass" as SymbolName, cls.location), cls]]),
-        methods: new Map(),
-      }],
+      [
+        file_path,
+        {
+          functions: new Map(),
+          classes: new Map([
+            [class_symbol("MyClass" as SymbolName, cls.location), cls],
+          ]),
+          methods: new Map(),
+        },
+      ],
     ]);
 
-    const result = find_class_in_file("MyClass" as SymbolName, file_path, definitions_by_file);
+    const result = find_class_in_file(
+      "MyClass" as SymbolName,
+      file_path,
+      definitions_by_file
+    );
     expect(result).toBe(cls);
   });
 
   it("should return undefined if class not found", () => {
     const file_path: FilePath = "test.ts" as FilePath;
     const definitions_by_file = new Map([
-      [file_path, {
-        functions: new Map(),
-        classes: new Map(),
-        methods: new Map(),
-      }],
+      [
+        file_path,
+        {
+          functions: new Map(),
+          classes: new Map(),
+          methods: new Map(),
+        },
+      ],
     ]);
 
-    const result = find_class_in_file("NonExistent" as SymbolName, file_path, definitions_by_file);
+    const result = find_class_in_file(
+      "NonExistent" as SymbolName,
+      file_path,
+      definitions_by_file
+    );
     expect(result).toBeUndefined();
   });
 });
@@ -80,11 +96,9 @@ describe("resolve_module_to_file", () => {
   it("should resolve relative imports with ../", () => {
     const context: FileResolutionContext = {
       language: "typescript",
-      exports_by_file: new Map([
-        ["src/models/User.ts" as FilePath, []],
-      ]),
+      exports_by_file: new Map([["src/models/User.ts" as FilePath, []]]),
       imports_by_file: new Map(),
-      definitions_by_file: new Map(),
+      definitions: new Map(),
       scope_tree: {} as ScopeTree,
     };
 
@@ -99,11 +113,9 @@ describe("resolve_module_to_file", () => {
   it("should resolve relative imports with ./", () => {
     const context: FileResolutionContext = {
       language: "typescript",
-      exports_by_file: new Map([
-        ["src/utils.ts" as FilePath, []],
-      ]),
+      exports_by_file: new Map([["src/utils.ts" as FilePath, []]]),
       imports_by_file: new Map(),
-      definitions_by_file: new Map(),
+      definitions: new Map(),
       scope_tree: {} as ScopeTree,
     };
 
@@ -118,11 +130,9 @@ describe("resolve_module_to_file", () => {
   it("should resolve index files", () => {
     const context: FileResolutionContext = {
       language: "typescript",
-      exports_by_file: new Map([
-        ["src/components/index.ts" as FilePath, []],
-      ]),
+      exports_by_file: new Map([["src/components/index.ts" as FilePath, []]]),
       imports_by_file: new Map(),
-      definitions_by_file: new Map(),
+      definitions: new Map(),
       scope_tree: {} as ScopeTree,
     };
 
@@ -137,11 +147,9 @@ describe("resolve_module_to_file", () => {
   it("should resolve Python __init__.py files", () => {
     const context: FileResolutionContext = {
       language: "python",
-      exports_by_file: new Map([
-        ["models/__init__.py" as FilePath, []],
-      ]),
+      exports_by_file: new Map([["models/__init__.py" as FilePath, []]]),
       imports_by_file: new Map(),
-      definitions_by_file: new Map(),
+      definitions: new Map(),
       scope_tree: {} as ScopeTree,
     };
 
@@ -156,11 +164,9 @@ describe("resolve_module_to_file", () => {
   it("should resolve Python dotted module paths", () => {
     const context: FileResolutionContext = {
       language: "python",
-      exports_by_file: new Map([
-        ["models/user.py" as FilePath, []],
-      ]),
+      exports_by_file: new Map([["models/user.py" as FilePath, []]]),
       imports_by_file: new Map(),
-      definitions_by_file: new Map(),
+      definitions: new Map(),
       scope_tree: {} as ScopeTree,
     };
 
@@ -175,11 +181,9 @@ describe("resolve_module_to_file", () => {
   it("should resolve Rust src/lib.rs for crate imports", () => {
     const context: FileResolutionContext = {
       language: "rust",
-      exports_by_file: new Map([
-        ["src/lib.rs" as FilePath, []],
-      ]),
+      exports_by_file: new Map([["src/lib.rs" as FilePath, []]]),
       imports_by_file: new Map(),
-      definitions_by_file: new Map(),
+      definitions: new Map(),
       scope_tree: {} as ScopeTree,
     };
 
@@ -219,7 +223,7 @@ describe("resolve_imported_class", () => {
           {
             name: "User" as SymbolName,
             is_type_only: false,
-          }
+          },
         ],
       } as unknown as NamedImport,
     ];
@@ -228,17 +232,26 @@ describe("resolve_imported_class", () => {
       language: "typescript",
       imports_by_file: new Map([[file_b, imports]]),
       exports_by_file: new Map([[file_a, []]]),
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("User" as SymbolName, cls.location), cls]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [class_symbol("User" as SymbolName, cls.location), cls],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
       scope_tree: {} as ScopeTree,
     };
 
-    const result = resolve_imported_class("User" as SymbolName, file_b, context);
+    const result = resolve_imported_class(
+      "User" as SymbolName,
+      file_b,
+      context
+    );
     expect(result).toBe(cls);
   });
 
@@ -269,7 +282,7 @@ describe("resolve_imported_class", () => {
             name: "UserModel" as SymbolName,
             alias: "User" as SymbolName,
             is_type_only: false,
-          }
+          },
         ],
       } as unknown as NamedImport,
     ];
@@ -278,17 +291,26 @@ describe("resolve_imported_class", () => {
       language: "typescript",
       imports_by_file: new Map([[file_b, imports]]),
       exports_by_file: new Map([[file_a, []]]),
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("UserModel" as SymbolName, cls.location), cls]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [class_symbol("UserModel" as SymbolName, cls.location), cls],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
       scope_tree: {} as ScopeTree,
     };
 
-    const result = resolve_imported_class("User" as SymbolName, file_b, context);
+    const result = resolve_imported_class(
+      "User" as SymbolName,
+      file_b,
+      context
+    );
     expect(result).toBe(cls);
   });
 });
@@ -322,12 +344,17 @@ describe("find_default_exported_class", () => {
       language: "typescript",
       imports_by_file: new Map(),
       exports_by_file: new Map([[file_path, exports]]),
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("MyComponent" as SymbolName, cls.location), cls]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [class_symbol("MyComponent" as SymbolName, cls.location), cls],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
       scope_tree: {} as ScopeTree,
     };
@@ -340,9 +367,27 @@ describe("find_default_exported_class", () => {
 describe("find_containing_class_scope", () => {
   it("should find the containing class scope", () => {
     const file_path: FilePath = "test.ts" as FilePath;
-    const rootId = function_scope({ file_path, line: 1, column: 1, end_line: 20, end_column: 1 });
-    const classId = class_scope({ file_path, line: 5, column: 1, end_line: 15, end_column: 2 });
-    const methodId = function_scope({ file_path, line: 7, column: 3, end_line: 10, end_column: 4 });
+    const rootId = function_scope({
+      file_path,
+      line: 1,
+      column: 1,
+      end_line: 20,
+      end_column: 1,
+    });
+    const classId = class_scope({
+      file_path,
+      line: 5,
+      column: 1,
+      end_line: 15,
+      end_column: 2,
+    });
+    const methodId = function_scope({
+      file_path,
+      line: 7,
+      column: 3,
+      end_line: 10,
+      end_column: 4,
+    });
 
     const classNode: ScopeNode = {
       id: classId,
@@ -363,7 +408,13 @@ describe("find_containing_class_scope", () => {
         id: rootId,
         type: "function",
         parent_id: undefined,
-        location: { file_path, line: 1, column: 1, end_line: 20, end_column: 1 },
+        location: {
+          file_path,
+          line: 1,
+          column: 1,
+          end_line: 20,
+          end_column: 1,
+        },
       },
       nodes: new Map([
         [classId, classNode],
@@ -379,8 +430,20 @@ describe("find_containing_class_scope", () => {
 
   it("should return undefined if no class scope found", () => {
     const file_path: FilePath = "test.ts" as FilePath;
-    const rootId = function_scope({ file_path, line: 1, column: 1, end_line: 20, end_column: 1 });
-    const funcId = function_scope({ file_path, line: 5, column: 1, end_line: 10, end_column: 2 });
+    const rootId = function_scope({
+      file_path,
+      line: 1,
+      column: 1,
+      end_line: 20,
+      end_column: 1,
+    });
+    const funcId = function_scope({
+      file_path,
+      line: 5,
+      column: 1,
+      end_line: 10,
+      end_column: 2,
+    });
 
     const funcNode: ScopeNode = {
       id: funcId,
@@ -394,11 +457,15 @@ describe("find_containing_class_scope", () => {
         id: rootId,
         type: "function",
         parent_id: undefined,
-        location: { file_path, line: 1, column: 1, end_line: 20, end_column: 1 },
+        location: {
+          file_path,
+          line: 1,
+          column: 1,
+          end_line: 20,
+          end_column: 1,
+        },
       },
-      nodes: new Map([
-        [funcId, funcNode],
-      ]),
+      nodes: new Map([[funcId, funcNode]]),
       get_symbols_in_scope: () => new Map(),
       get_parent_scope: () => undefined,
     } as unknown as ScopeTree;
@@ -411,14 +478,26 @@ describe("find_containing_class_scope", () => {
 describe("is_scope_ancestor_or_same", () => {
   it("should return true for same scope", () => {
     const file_path: FilePath = "test.ts" as FilePath;
-    const scopeId = function_scope({ file_path, line: 1, column: 1, end_line: 10, end_column: 1 });
+    const scopeId = function_scope({
+      file_path,
+      line: 1,
+      column: 1,
+      end_line: 10,
+      end_column: 1,
+    });
 
     const scope_tree: ScopeTree = {
       root: {
         id: scopeId,
         type: "function",
         parent_id: undefined,
-        location: { file_path, line: 1, column: 1, end_line: 10, end_column: 1 },
+        location: {
+          file_path,
+          line: 1,
+          column: 1,
+          end_line: 10,
+          end_column: 1,
+        },
       },
       nodes: new Map(),
       get_symbols_in_scope: () => new Map(),
@@ -431,8 +510,20 @@ describe("is_scope_ancestor_or_same", () => {
 
   it("should return true for ancestor scope", () => {
     const file_path: FilePath = "test.ts" as FilePath;
-    const rootId = function_scope({ file_path, line: 1, column: 1, end_line: 20, end_column: 1 });
-    const childId = function_scope({ file_path, line: 5, column: 1, end_line: 10, end_column: 2 });
+    const rootId = function_scope({
+      file_path,
+      line: 1,
+      column: 1,
+      end_line: 20,
+      end_column: 1,
+    });
+    const childId = function_scope({
+      file_path,
+      line: 5,
+      column: 1,
+      end_line: 10,
+      end_column: 2,
+    });
 
     const childNode: ScopeNode = {
       id: childId,
@@ -446,11 +537,15 @@ describe("is_scope_ancestor_or_same", () => {
         id: rootId,
         type: "function",
         parent_id: undefined,
-        location: { file_path, line: 1, column: 1, end_line: 20, end_column: 1 },
+        location: {
+          file_path,
+          line: 1,
+          column: 1,
+          end_line: 20,
+          end_column: 1,
+        },
       },
-      nodes: new Map([
-        [childId, childNode],
-      ]),
+      nodes: new Map([[childId, childNode]]),
       get_symbols_in_scope: () => new Map(),
       get_parent_scope: () => undefined,
     } as unknown as ScopeTree;
@@ -461,9 +556,27 @@ describe("is_scope_ancestor_or_same", () => {
 
   it("should return false for non-ancestor scope", () => {
     const file_path: FilePath = "test.ts" as FilePath;
-    const rootId = function_scope({ file_path, line: 1, column: 1, end_line: 30, end_column: 1 });
-    const scope1Id = function_scope({ file_path, line: 5, column: 1, end_line: 10, end_column: 2 });
-    const scope2Id = function_scope({ file_path, line: 15, column: 1, end_line: 20, end_column: 2 });
+    const rootId = function_scope({
+      file_path,
+      line: 1,
+      column: 1,
+      end_line: 30,
+      end_column: 1,
+    });
+    const scope1Id = function_scope({
+      file_path,
+      line: 5,
+      column: 1,
+      end_line: 10,
+      end_column: 2,
+    });
+    const scope2Id = function_scope({
+      file_path,
+      line: 15,
+      column: 1,
+      end_line: 20,
+      end_column: 2,
+    });
 
     const scope1Node: ScopeNode = {
       id: scope1Id,
@@ -484,7 +597,13 @@ describe("is_scope_ancestor_or_same", () => {
         id: rootId,
         type: "function",
         parent_id: undefined,
-        location: { file_path, line: 1, column: 1, end_line: 30, end_column: 1 },
+        location: {
+          file_path,
+          line: 1,
+          column: 1,
+          end_line: 30,
+          end_column: 1,
+        },
       },
       nodes: new Map([
         [scope1Id, scope1Node],
@@ -521,17 +640,29 @@ describe("find_parent_class", () => {
       language: "typescript",
       imports_by_file: new Map(),
       exports_by_file: new Map(),
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("BaseClass" as SymbolName, parentClass.location), parentClass]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [
+                class_symbol("BaseClass" as SymbolName, parentClass.location),
+                parentClass,
+              ],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
       scope_tree: {} as ScopeTree,
     };
 
-    const result = find_parent_class("BaseClass" as SymbolName, file_path, context);
+    const result = find_parent_class(
+      "BaseClass" as SymbolName,
+      file_path,
+      context
+    );
     expect(result).toBe(parentClass);
   });
 
@@ -561,7 +692,7 @@ describe("find_parent_class", () => {
           {
             name: "BaseClass" as SymbolName,
             is_type_only: false,
-          }
+          },
         ],
       } as unknown as NamedImport,
     ];
@@ -570,17 +701,29 @@ describe("find_parent_class", () => {
       language: "typescript",
       imports_by_file: new Map([[file_b, imports]]),
       exports_by_file: new Map([[file_a, []]]),
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("BaseClass" as SymbolName, parentClass.location), parentClass]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [
+                class_symbol("BaseClass" as SymbolName, parentClass.location),
+                parentClass,
+              ],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
       scope_tree: {} as ScopeTree,
     };
 
-    const result = find_parent_class("BaseClass" as SymbolName, file_b, context);
+    const result = find_parent_class(
+      "BaseClass" as SymbolName,
+      file_b,
+      context
+    );
     expect(result).toBe(parentClass);
   });
 });

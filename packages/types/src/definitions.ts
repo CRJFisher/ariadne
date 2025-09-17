@@ -7,8 +7,8 @@ import { DocString, TypeString } from "./aliases";
 
 export type ParameterName = string & { __brand: "ParameterName" };
 
-import { SymbolId } from "./symbols";
-import { SymbolName } from "./symbols";
+import { SymbolId } from "./symbol";
+import { SymbolName } from "./symbol";
 
 /**
  * Common base interface for all definition types
@@ -23,8 +23,8 @@ export interface Definition {
 export interface FunctionDefinition extends Definition {
   readonly signature: FunctionSignature;
   readonly docstring?: DocString;
-  readonly decorators?: readonly SymbolId[];
-  readonly is_exported: boolean;
+  readonly decorators?: readonly SymbolName[];
+  readonly is_exported?: boolean;
   readonly is_arrow_function?: boolean; // For JS/TS
   readonly is_anonymous?: boolean;
   readonly closure_captures?: readonly string[];
@@ -34,8 +34,8 @@ export interface FunctionDefinition extends Definition {
  * Class definition with all metadata
  */
 export interface ClassDefinition extends Definition {
-  readonly extends: readonly SymbolId[]; // Always present, defaults to empty array
-  readonly implements: readonly SymbolId[]; // Always present, defaults to empty array
+  readonly extends: readonly SymbolName[]; // Always present, defaults to empty array
+  readonly implements: readonly SymbolName[]; // Always present, defaults to empty array
   readonly is_abstract: boolean;
   readonly is_final: boolean;
   readonly is_interface: boolean;
@@ -78,15 +78,15 @@ export interface MethodDefinition extends Definition {
   readonly is_private: boolean;
   readonly is_protected: boolean;
   readonly is_constructor: boolean;
-  readonly is_override: boolean;
+  readonly is_override?: boolean;
   readonly is_async: boolean;
   readonly overrides?: string;
-  readonly overridden_by: readonly SymbolId[];
+  readonly overridden_by: readonly SymbolName[];
   readonly visibility: "public" | "private" | "protected";
   readonly parameters: readonly ParameterDefinition[];
-  readonly return_type: string; // Required - use "unknown" when type cannot be inferred
-  readonly generics: readonly GenericParameter[]; // Always present, defaults to empty array
-  readonly decorators: readonly SymbolId[]; // Always present, defaults to empty array
+  readonly return_type?: string;
+  readonly generics?: readonly GenericParameter[];
+  readonly decorators?: readonly SymbolName[];
 }
 
 /**

@@ -6,17 +6,13 @@ import {
   ClassDefinition,
   FilePath,
   SymbolName,
-  Import,
-  Export,
   ModulePath,
   ScopeTree,
   ScopeNode,
   ScopeId,
-  Location,
+  SymbolId,
 } from "@ariadnejs/types";
-import { FileResolutionContext } from "./symbol_resolution";
-import { find_scope_at_location } from "../scope_tree";
-import { dirname, join } from "path";
+import { DefinitionIndex, FileResolutionContext } from "../symbol_resolution";
 
 /**
  * Find class in a file
@@ -24,12 +20,12 @@ import { dirname, join } from "path";
 export function find_class_in_file(
   class_name: SymbolName,
   file_path: FilePath,
-  definitions_by_file: FileResolutionContext["definitions_by_file"]
+  definitions: DefinitionIndex
 ): ClassDefinition | undefined {
-  const file_defs = definitions_by_file.get(file_path);
+  const file_defs = definitions.classes_by_file.get(file_path);
   if (!file_defs) return undefined;
 
-  for (const [, class_def] of file_defs.classes) {
+  for (const [, class_def] of file_defs) {
     if (class_def.name === class_name) {
       return class_def;
     }
@@ -57,18 +53,14 @@ export function resolve_imported_class(
         for (const item of imp.imports) {
           const local_name = item.alias || item.name;
           if (local_name === class_name) {
-            // Resolve to the source file
-            const source_file = resolve_module_to_file(imp.source, file_path, context);
-            if (source_file) {
-              return find_class_in_file(item.name, source_file, context.definitions_by_file);
-            }
+            return find_class_in_file(item.name, imp.source, context.definitions);
           }
         }
         break;
 
       case "default":
         if (imp.name === class_name) {
-          const source_file = resolve_module_to_file(imp.source, file_path, context);
+          const source_file = imp.source;
           if (source_file) {
             // Look for default exported class
             return find_default_exported_class(source_file, context);
@@ -98,142 +90,13 @@ export function find_default_exported_class(
   for (const exp of exports) {
     if (exp.kind === "default") {
       // Find the class with this symbol
-      const file_defs = context.definitions_by_file.get(file_path);
+      const file_defs = context.definitions.classes_by_file.get(file_path);
       if (file_defs) {
-        for (const [, class_def] of file_defs.classes) {
-          if (class_def.name === exp.symbol) {
+        for (const [, class_def] of file_defs) {
+          if (class_def.name === exp.symbol_name) {
             return class_def;
           }
         }
-      }
-    }
-  }
-
-  return undefined;
-}
-
-/**
- * Resolve a module path to a file path
- */
-export function resolve_module_to_file(
-  module_path: ModulePath,
-  from_file: FilePath,
-  context: FileResolutionContext
-): FilePath | undefined {
-  // 1. If we have a module graph, use it
-  if (context.module_graph) {
-    const modules = Array.from(context.module_graph.modules.entries());
-    for (const [file_path] of modules) {
-      if (file_path === (module_path as unknown as FilePath)) {
-        return file_path;
-      }
-    }
-  }
-
-  // 2. Try to resolve as a relative path
-  const module_str = module_path as string;
-  if (module_str.startsWith('./') || module_str.startsWith('../')) {
-    const from_dir = dirname(from_file as string);
-
-    let resolved: string;
-    if (module_str.startsWith('./')) {
-      resolved = from_dir + '/' + module_str.slice(2);
-    } else if (module_str.startsWith('../')) {
-      const parts = from_dir.split('/');
-      const module_parts = module_str.split('/');
-
-      for (const part of module_parts) {
-        if (part === '..') {
-          parts.pop();
-        } else if (part !== '.') {
-          parts.push(part);
-        }
-      }
-      resolved = parts.join('/');
-    } else {
-      resolved = from_dir + '/' + module_str;
-    }
-
-    // Try with common extensions
-    const extensions = ['.ts', '.tsx', '.js', '.jsx', '.py', '.rs'];
-
-    if (context.exports_by_file.has(resolved as FilePath)) {
-      return resolved as FilePath;
-    }
-
-    for (const ext of extensions) {
-      const with_ext = resolved + ext;
-      if (context.exports_by_file.has(with_ext as FilePath)) {
-        return with_ext as FilePath;
-      }
-    }
-
-    // Also check if the resolved path matches any export file paths
-    // Sometimes paths are stored with leading './'
-    const normalizedResolved = resolved.replace(/^\.\//, '');
-    for (const ext of extensions) {
-      const with_ext = normalizedResolved + ext;
-      if (context.exports_by_file.has(with_ext as FilePath)) {
-        return with_ext as FilePath;
-      }
-    }
-
-    // Try index files
-    const index_files = ['index.ts', 'index.js', '__init__.py', 'mod.rs'];
-    for (const index of index_files) {
-      const index_path = join(resolved, index);
-      if (context.exports_by_file.has(index_path as FilePath)) {
-        return index_path as FilePath;
-      }
-    }
-  }
-
-  // 3. For non-relative imports, check special cases by language
-  if (context.language === "rust") {
-    if (!module_str.includes('/') && !module_str.includes('::')) {
-      const lib_path = "src/lib.rs" as FilePath;
-      if (context.exports_by_file.has(lib_path)) {
-        return lib_path;
-      }
-    }
-  }
-
-  // 4. For Python, handle dotted module paths
-  if (context.language === "python" && module_str.includes('.')) {
-    // Convert dots to slashes for Python module paths
-    const path_with_slashes = module_str.replace(/\./g, '/');
-
-    // Try with .py extension
-    const py_path = path_with_slashes + '.py';
-    if (context.exports_by_file.has(py_path as FilePath)) {
-      return py_path as FilePath;
-    }
-
-    // Try __init__.py in the module directory
-    const init_path = path_with_slashes + '/__init__.py';
-    if (context.exports_by_file.has(init_path as FilePath)) {
-      return init_path as FilePath;
-    }
-  }
-
-  // 5. Check known files
-  const file_paths = Array.from(context.exports_by_file.keys());
-  for (const file_path of file_paths) {
-    const file_str = file_path as string;
-    if (file_str.endsWith(module_str) ||
-        file_str.endsWith(module_str + '.ts') ||
-        file_str.endsWith(module_str + '.js') ||
-        file_str.endsWith(module_str + '.py') ||
-        file_str.endsWith(module_str + '.rs')) {
-      return file_path;
-    }
-
-    // For Python, also check if module path matches with dots replaced by slashes
-    if (context.language === "python" && module_str.includes('.')) {
-      const path_with_slashes = module_str.replace(/\./g, '/');
-      if (file_str.endsWith(path_with_slashes + '.py') ||
-          file_str === path_with_slashes + '.py') {
-        return file_path;
       }
     }
   }
@@ -258,7 +121,11 @@ export function find_containing_class_scope(
       return scope_node;
     }
 
-    current_id = scope_node.parent_id;
+    if (scope_node.parent_id) {
+      current_id = scope_node.parent_id;
+    } else {
+      break;
+    }
   }
 
   return undefined;
@@ -269,15 +136,15 @@ export function find_containing_class_scope(
  */
 export function get_class_from_scope(
   class_scope: ScopeNode,
-  definitions_by_file: FileResolutionContext["definitions_by_file"]
+  definitions: FileResolutionContext["definitions"]
 ): ClassDefinition | undefined {
   // Use the scope's location to find the matching class definition
   const file_path = class_scope.location.file_path;
-  const file_defs = definitions_by_file.get(file_path);
+  const file_defs = definitions.classes_by_file.get(file_path);
   if (!file_defs) return undefined;
 
   // Find class at the scope's location
-  for (const [, class_def] of file_defs.classes) {
+  for (const [, class_def] of file_defs) {
     // Check if class location matches scope location
     // Classes should be defined at the same location as their scope
     if (
@@ -325,7 +192,7 @@ export function find_parent_class(
   context: FileResolutionContext
 ): ClassDefinition | undefined {
   // 1. Check local file
-  const local_class = find_class_in_file(parent_name, file_path, context.definitions_by_file);
+  const local_class = find_class_in_file(parent_name, file_path, context.definitions);
   if (local_class) return local_class;
 
   // 2. Check imports

@@ -5,7 +5,7 @@
  */
 
 import { SyntaxNode } from 'tree-sitter';
-import { Def, ClassDefinition, ClassHierarchy, MethodOverrideMap } from '@ariadnejs/types';
+import { ClassDefinition, ClassHierarchy, MethodOverrideMap, SymbolName } from '@ariadnejs/types';
 
 export interface MethodOverride {
   parent_method: Def;
@@ -21,7 +21,7 @@ export interface OverrideInfo {
 }
 
 export interface MethodSignature {
-  name: string;
+  name: SymbolName;
   parameters: string[];
   return_type?: string;
 }
@@ -76,17 +76,6 @@ export function find_child_overrides_generic(
 ): Def[] {
   // TODO: Implement using tree-sitter queries
   return [];
-}
-
-/**
- * Build hierarchy for override analysis
- */
-export function build_hierarchy_generic(
-  classes: ClassDefinition[],
-  context: MethodOverrideContext
-): Map<string, Def[]> {
-  // TODO: Implement using tree-sitter queries
-  return new Map();
 }
 
 /**

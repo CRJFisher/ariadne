@@ -16,9 +16,9 @@ import { find_scope_at_location } from "../../../scope_tree";
 import {
   find_class_in_file,
   resolve_imported_class,
-  resolve_module_to_file,
   find_containing_class_scope,
   is_scope_ancestor_or_same,
+  get_class_from_scope,
 } from "../class_resolution_utils";
 
 /**
@@ -34,31 +34,47 @@ export function resolve_constructor_call(
   const call_scope = find_scope_at_location(scope_tree, call.location);
 
   // 1. Try local resolution first (check if defined in current file)
-  const file_definitions = context.definitions_by_file.get(call.location.file_path as FilePath);
+  const file_definitions = context.definitions.get(
+    call.location.file_path as FilePath
+  );
   if (file_definitions) {
     // Check all classes in the file to see if any match the class name
     const classes = Array.from(file_definitions.classes.entries());
-    for (const [symbol_id, class_def] of classes) {
+    for (const [_, class_def] of classes) {
       if (class_def.name === call.class_name) {
         // Check accessibility
         if (call_scope) {
           // If we have a scope, check accessibility properly
-          if (is_class_accessible_from_scope(class_def, call_scope, call.location, context)) {
+          if (
+            is_class_accessible_from_scope(
+              class_def,
+              call_scope,
+              call.location,
+              context
+            )
+          ) {
             return class_def;
           }
         } else {
           // No scope information - for JS/TS, still check temporal dead zone
-          if (context.language === "javascript" || context.language === "typescript") {
+          if (
+            context.language === "javascript" ||
+            context.language === "typescript"
+          ) {
             // Classes cannot be used before declaration in the same file
-            if (class_def.location.file_path === call.location.file_path &&
-                class_def.location.line > call.location.line) {
+            if (
+              class_def.location.file_path === call.location.file_path &&
+              class_def.location.line > call.location.line
+            ) {
               // Class defined after call - temporal dead zone
               continue;
             }
           } else if (context.language === "python") {
             // Python also requires definition before use
-            if (class_def.location.file_path === call.location.file_path &&
-                class_def.location.line > call.location.line) {
+            if (
+              class_def.location.file_path === call.location.file_path &&
+              class_def.location.line > call.location.line
+            ) {
               continue;
             }
           }
@@ -70,7 +86,10 @@ export function resolve_constructor_call(
   }
 
   // 2. Parse the class name to check for namespace/module access
-  const { namespace, member } = parse_qualified_class_name(call.class_name, language);
+  const { namespace, member } = parse_qualified_class_name(
+    call.class_name,
+    language
+  );
 
   if (namespace) {
     // Handle namespace member access (e.g., "React.Component" or "module::ClassName")
@@ -89,7 +108,9 @@ export function resolve_constructor_call(
   }
 
   // 3. Try import resolution
-  const imports = context.imports_by_file.get(call.location.file_path as FilePath);
+  const imports = context.imports_by_file.get(
+    call.location.file_path as FilePath
+  );
   if (imports) {
     const match = match_class_to_import(call.class_name, imports);
     if (match) {
@@ -173,8 +194,13 @@ function parse_qualified_class_name(
       const second_part = parts[1];
 
       // Check if this is a method/variant pattern (ClassName::new, Enum::Variant)
-      if (first_part && first_part[0] === first_part[0].toUpperCase() &&
-          second_part && (second_part === "new" || second_part[0] === second_part[0].toUpperCase())) {
+      if (
+        first_part &&
+        first_part[0] === first_part[0].toUpperCase() &&
+        second_part &&
+        (second_part === "new" ||
+          second_part[0] === second_part[0].toUpperCase())
+      ) {
         // This is ClassName::new or Enum::Variant - return the class name
         return { member: first_part as SymbolName };
       }
@@ -183,7 +209,7 @@ function parse_qualified_class_name(
       if (second_part && second_part[0] === second_part[0].toUpperCase()) {
         return {
           namespace: first_part as SymbolName,
-          member: second_part as SymbolName
+          member: second_part as SymbolName,
         };
       }
     } else if (parts.length > 2) {
@@ -192,7 +218,7 @@ function parse_qualified_class_name(
       if (last_part && last_part[0] === last_part[0].toUpperCase()) {
         return {
           namespace: parts.slice(0, -1).join("::") as SymbolName,
-          member: last_part as SymbolName
+          member: last_part as SymbolName,
         };
       }
     }
@@ -227,7 +253,7 @@ function resolve_import_to_class_definition(
   let source_path: FilePath | undefined;
 
   if (from_file) {
-    source_path = resolve_module_to_file(imp.source, from_file, context);
+    source_path = imp.source;
   }
 
   // Fallback to direct cast if resolution failed
@@ -265,16 +291,21 @@ function resolve_import_to_class_definition(
       case "reexport":
         // Handle re-exports: export { Foo } from './other'
         for (const item of exp.exports) {
-          if (item.exported_name === exported_name || item.source_name === exported_name) {
+          if (
+            item.exported_name === exported_name ||
+            item.source_name === exported_name
+          ) {
             // This is re-exported from another module
             // Recursively resolve from the re-export source
             const reexport_import: Import = {
               kind: "named",
               source: exp.source,
-              imports: [{
-                name: item.source_name,
-                is_type_only: item.is_type_only,
-              }],
+              imports: [
+                {
+                  name: item.source_name,
+                  is_type_only: item.is_type_only,
+                },
+              ],
             } as unknown as NamedImport;
 
             return resolve_import_to_class_definition(
@@ -295,10 +326,12 @@ function resolve_import_to_class_definition(
           const barrel_import: Import = {
             kind: "named",
             source: exp.source,
-            imports: [{
-              name: exported_name,
-              is_type_only: false,
-            }],
+            imports: [
+              {
+                name: exported_name,
+                is_type_only: false,
+              },
+            ],
           } as unknown as NamedImport;
 
           const barrel_def = resolve_import_to_class_definition(
@@ -318,7 +351,7 @@ function resolve_import_to_class_definition(
   if (!matching_class_name) return undefined;
 
   // Look up the definition by name
-  const definitions = context.definitions_by_file.get(source_path);
+  const definitions = context.definitions.get(source_path);
   if (definitions) {
     // Search through all classes to find one with matching name
     const classes = Array.from(definitions.classes.entries());
@@ -344,10 +377,7 @@ function is_class_accessible_from_scope(
   const { scope_tree, language } = context;
 
   // Find the scope where the class is defined
-  const class_scope = find_scope_at_location(
-    scope_tree,
-    class_def.location
-  );
+  const class_scope = find_scope_at_location(scope_tree, class_def.location);
 
   if (!class_scope) {
     // If we can't find the class's scope, be conservative
@@ -414,7 +444,10 @@ function resolve_namespace_class(
 
   // Find namespace import
   for (const imp of imports) {
-    if (imp.kind === "namespace" && (imp.namespace_name as string) === (namespace as string)) {
+    if (
+      imp.kind === "namespace" &&
+      (imp.namespace_name as string) === (namespace as string)
+    ) {
       // Resolve class from the namespace source
       return resolve_import_to_class_definition(
         imp,

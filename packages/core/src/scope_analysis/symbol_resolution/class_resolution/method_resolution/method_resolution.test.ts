@@ -44,7 +44,8 @@ export function create_test_scope_tree(
 
     while (current?.parent_id) {
       depth++;
-      current = nodes.get(current.parent_id) || additional_nodes.get(current.parent_id);
+      current =
+        nodes.get(current.parent_id) || additional_nodes.get(current.parent_id);
     }
 
     scope_depths.set(id, depth);
@@ -92,7 +93,7 @@ export function create_test_context(
   return {
     scope_tree,
     language,
-    definitions_by_file: definitions_by_file || new Map(),
+    definitions: definitions_by_file || new Map(),
     imports_by_file: imports_by_file || new Map(),
     exports_by_file: exports_by_file || new Map(),
   };
@@ -109,7 +110,11 @@ describe("Method Resolution Test Utilities", () => {
       end_column: 1,
     };
 
-    const root_node = create_test_scope_node("global:test.ts" as ScopeId, "global", location);
+    const root_node = create_test_scope_node(
+      "global:test.ts" as ScopeId,
+      "global",
+      location
+    );
     const scope_tree = create_test_scope_tree(root_node);
 
     expect(scope_tree.root_id).toBe(root_node.id);
@@ -147,7 +152,11 @@ describe("find_method_in_class", () => {
       },
       visibility: "public",
       is_static: false,
-      symbol: method_symbol("getValue" as SymbolName, "MyClass" as SymbolName, method_location),
+      symbol: method_symbol(
+        "getValue" as SymbolName,
+        "MyClass" as SymbolName,
+        method_location
+      ),
     };
 
     const class_def: ClassDefinition = {
@@ -164,10 +173,14 @@ describe("find_method_in_class", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "typescript",
-      definitions_by_file: new Map(),
+      definitions: new Map(),
     };
 
-    const result = find_method_in_class("getValue" as SymbolName, class_def, context);
+    const result = find_method_in_class(
+      "getValue" as SymbolName,
+      class_def,
+      context
+    );
     expect(result).toBe(method);
   });
 
@@ -195,10 +208,14 @@ describe("find_method_in_class", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "typescript",
-      definitions_by_file: new Map(),
+      definitions: new Map(),
     };
 
-    const result = find_method_in_class("nonExistent" as SymbolName, class_def, context);
+    const result = find_method_in_class(
+      "nonExistent" as SymbolName,
+      class_def,
+      context
+    );
     expect(result).toBeUndefined();
   });
 });

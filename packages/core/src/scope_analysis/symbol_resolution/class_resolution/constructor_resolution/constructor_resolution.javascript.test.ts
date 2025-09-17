@@ -58,10 +58,22 @@ describe("JavaScript constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path, line: 1, column: 1, end_line: 20, end_column: 1 }),
+          id: function_scope({
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 20,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path, line: 1, column: 1, end_line: 20, end_column: 1 },
+          location: {
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 20,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -70,12 +82,17 @@ describe("JavaScript constructor resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "javascript",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("MyClass" as SymbolName, cls.location), cls]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [class_symbol("MyClass" as SymbolName, cls.location), cls],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -117,10 +134,22 @@ describe("JavaScript constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path, line: 1, column: 1, end_line: 25, end_column: 1 }),
+          id: function_scope({
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 25,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path, line: 1, column: 1, end_line: 25, end_column: 1 },
+          location: {
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 25,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -129,12 +158,17 @@ describe("JavaScript constructor resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "javascript",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("MyClass" as SymbolName, cls.location), cls]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [class_symbol("MyClass" as SymbolName, cls.location), cls],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -168,7 +202,7 @@ describe("JavaScript constructor resolution", () => {
           {
             name: "User" as SymbolName,
             is_type_only: false,
-          }
+          },
         ],
       } as unknown as NamedImport,
     ];
@@ -200,10 +234,22 @@ describe("JavaScript constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path: file_b, line: 1, column: 1, end_line: 20, end_column: 1 }),
+          id: function_scope({
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 20,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path: file_b, line: 1, column: 1, end_line: 20, end_column: 1 },
+          location: {
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 20,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -212,12 +258,17 @@ describe("JavaScript constructor resolution", () => {
       imports_by_file: new Map([[file_b, imports]]),
       exports_by_file: new Map([[file_a, exports]]),
       language: "javascript",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("User" as SymbolName, cls.location), cls]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [class_symbol("User" as SymbolName, cls.location), cls],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -274,10 +325,22 @@ describe("JavaScript constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path: file_b, line: 1, column: 1, end_line: 30, end_column: 1 }),
+          id: function_scope({
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 30,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path: file_b, line: 1, column: 1, end_line: 30, end_column: 1 },
+          location: {
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 30,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -286,12 +349,20 @@ describe("JavaScript constructor resolution", () => {
       imports_by_file: new Map([[file_b, imports]]),
       exports_by_file: new Map([[file_a, exports]]),
       language: "javascript",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("ButtonComponent" as SymbolName, cls.location), cls]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [
+                class_symbol("ButtonComponent" as SymbolName, cls.location),
+                cls,
+              ],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -353,10 +424,22 @@ describe("JavaScript constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path: file_b, line: 1, column: 1, end_line: 30, end_column: 1 }),
+          id: function_scope({
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 30,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path: file_b, line: 1, column: 1, end_line: 30, end_column: 1 },
+          location: {
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 30,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -365,12 +448,17 @@ describe("JavaScript constructor resolution", () => {
       imports_by_file: new Map([[file_b, imports]]),
       exports_by_file: new Map([[file_a, exports]]),
       language: "javascript",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("Helper" as SymbolName, cls.location), cls]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [class_symbol("Helper" as SymbolName, cls.location), cls],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -426,10 +514,22 @@ describe("JavaScript constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path, line: 1, column: 1, end_line: 25, end_column: 1 }),
+          id: function_scope({
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 25,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path, line: 1, column: 1, end_line: 25, end_column: 1 },
+          location: {
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 25,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -438,15 +538,27 @@ describe("JavaScript constructor resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "javascript",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map(),
-          classes: new Map([
-            [class_symbol("BaseClass" as SymbolName, baseClass.location), baseClass],
-            [class_symbol("DerivedClass" as SymbolName, derivedClass.location), derivedClass],
-          ]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [
+                class_symbol("BaseClass" as SymbolName, baseClass.location),
+                baseClass,
+              ],
+              [
+                class_symbol(
+                  "DerivedClass" as SymbolName,
+                  derivedClass.location
+                ),
+                derivedClass,
+              ],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -529,10 +641,22 @@ describe("JavaScript constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path: file_c, line: 1, column: 1, end_line: 20, end_column: 1 }),
+          id: function_scope({
+            file_path: file_c,
+            line: 1,
+            column: 1,
+            end_line: 20,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path: file_c, line: 1, column: 1, end_line: 20, end_column: 1 },
+          location: {
+            file_path: file_c,
+            line: 1,
+            column: 1,
+            end_line: 20,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -544,12 +668,17 @@ describe("JavaScript constructor resolution", () => {
         [file_b, exports_b],
       ]),
       language: "javascript",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("User" as SymbolName, cls.location), cls]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [class_symbol("User" as SymbolName, cls.location), cls],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 

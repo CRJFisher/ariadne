@@ -55,10 +55,22 @@ describe("Rust constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path, line: 1, column: 1, end_line: 20, end_column: 1 }),
+          id: function_scope({
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 20,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path, line: 1, column: 1, end_line: 20, end_column: 1 },
+          location: {
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 20,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -67,12 +79,20 @@ describe("Rust constructor resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "rust",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("User" as SymbolName, struct_def.location), struct_def]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [
+                class_symbol("User" as SymbolName, struct_def.location),
+                struct_def,
+              ],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -114,10 +134,22 @@ describe("Rust constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path, line: 1, column: 1, end_line: 25, end_column: 1 }),
+          id: function_scope({
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 25,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path, line: 1, column: 1, end_line: 25, end_column: 1 },
+          location: {
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 25,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -126,12 +158,20 @@ describe("Rust constructor resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "rust",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("MyStruct" as SymbolName, struct_def.location), struct_def]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [
+                class_symbol("MyStruct" as SymbolName, struct_def.location),
+                struct_def,
+              ],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -166,7 +206,7 @@ describe("Rust constructor resolution", () => {
           {
             name: "User" as SymbolName,
             is_type_only: false,
-          }
+          },
         ],
       } as unknown as NamedImport,
     ];
@@ -198,10 +238,22 @@ describe("Rust constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path: file_b, line: 1, column: 1, end_line: 30, end_column: 1 }),
+          id: function_scope({
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 30,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path: file_b, line: 1, column: 1, end_line: 30, end_column: 1 },
+          location: {
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 30,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -210,12 +262,20 @@ describe("Rust constructor resolution", () => {
       imports_by_file: new Map([[file_b, imports]]),
       exports_by_file: new Map([[file_a, exports]]),
       language: "rust",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("User" as SymbolName, struct_def.location), struct_def]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [
+                class_symbol("User" as SymbolName, struct_def.location),
+                struct_def,
+              ],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -278,10 +338,22 @@ describe("Rust constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path: file_b, line: 1, column: 1, end_line: 25, end_column: 1 }),
+          id: function_scope({
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 25,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path: file_b, line: 1, column: 1, end_line: 25, end_column: 1 },
+          location: {
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 25,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -290,12 +362,20 @@ describe("Rust constructor resolution", () => {
       imports_by_file: new Map([[file_b, imports]]),
       exports_by_file: new Map([[file_a, exports]]),
       language: "rust",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("User" as SymbolName, struct_def.location), struct_def]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [
+                class_symbol("User" as SymbolName, struct_def.location),
+                struct_def,
+              ],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -331,7 +411,7 @@ describe("Rust constructor resolution", () => {
             name: "UserModel" as SymbolName,
             alias: "User" as SymbolName,
             is_type_only: false,
-          }
+          },
         ],
       } as unknown as NamedImport,
     ];
@@ -363,10 +443,22 @@ describe("Rust constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path: file_b, line: 1, column: 1, end_line: 15, end_column: 1 }),
+          id: function_scope({
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 15,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path: file_b, line: 1, column: 1, end_line: 15, end_column: 1 },
+          location: {
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 15,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -375,12 +467,20 @@ describe("Rust constructor resolution", () => {
       imports_by_file: new Map([[file_b, imports]]),
       exports_by_file: new Map([[file_a, exports]]),
       language: "rust",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("UserModel" as SymbolName, struct_def.location), struct_def]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [
+                class_symbol("UserModel" as SymbolName, struct_def.location),
+                struct_def,
+              ],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -415,7 +515,7 @@ describe("Rust constructor resolution", () => {
           {
             name: "Config" as SymbolName,
             is_type_only: false,
-          }
+          },
         ],
       } as unknown as NamedImport,
     ];
@@ -447,10 +547,22 @@ describe("Rust constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path: file_b, line: 1, column: 1, end_line: 25, end_column: 1 }),
+          id: function_scope({
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 25,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path: file_b, line: 1, column: 1, end_line: 25, end_column: 1 },
+          location: {
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 25,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -459,12 +571,20 @@ describe("Rust constructor resolution", () => {
       imports_by_file: new Map([[file_b, imports]]),
       exports_by_file: new Map([[file_a, exports]]),
       language: "rust",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("Config" as SymbolName, struct_def.location), struct_def]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [
+                class_symbol("Config" as SymbolName, struct_def.location),
+                struct_def,
+              ],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -508,10 +628,22 @@ describe("Rust constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path, line: 1, column: 1, end_line: 15, end_column: 1 }),
+          id: function_scope({
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 15,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path, line: 1, column: 1, end_line: 15, end_column: 1 },
+          location: {
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 15,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -520,12 +652,20 @@ describe("Rust constructor resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "rust",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("Result" as SymbolName, enum_def.location), enum_def]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [
+                class_symbol("Result" as SymbolName, enum_def.location),
+                enum_def,
+              ],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -567,10 +707,22 @@ describe("Rust constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path, line: 1, column: 1, end_line: 10, end_column: 1 }),
+          id: function_scope({
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 10,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path, line: 1, column: 1, end_line: 10, end_column: 1 },
+          location: {
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 10,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -579,12 +731,20 @@ describe("Rust constructor resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "rust",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("Point" as SymbolName, tuple_struct.location), tuple_struct]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [
+                class_symbol("Point" as SymbolName, tuple_struct.location),
+                tuple_struct,
+              ],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -626,10 +786,22 @@ describe("Rust constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path, line: 1, column: 1, end_line: 30, end_column: 1 }),
+          id: function_scope({
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 30,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path, line: 1, column: 1, end_line: 30, end_column: 1 },
+          location: {
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 30,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -638,12 +810,20 @@ describe("Rust constructor resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "rust",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("MyStruct" as SymbolName, struct_def.location), struct_def]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [
+                class_symbol("MyStruct" as SymbolName, struct_def.location),
+                struct_def,
+              ],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 

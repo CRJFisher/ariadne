@@ -57,10 +57,22 @@ describe("Python constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path, line: 1, column: 1, end_line: 30, end_column: 1 }),
+          id: function_scope({
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 30,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path, line: 1, column: 1, end_line: 30, end_column: 1 },
+          location: {
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 30,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -69,12 +81,17 @@ describe("Python constructor resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "python",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("User" as SymbolName, cls.location), cls]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [class_symbol("User" as SymbolName, cls.location), cls],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -116,10 +133,22 @@ describe("Python constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path, line: 1, column: 1, end_line: 35, end_column: 1 }),
+          id: function_scope({
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 35,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path, line: 1, column: 1, end_line: 35, end_column: 1 },
+          location: {
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 35,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -128,12 +157,17 @@ describe("Python constructor resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "python",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("MyClass" as SymbolName, cls.location), cls]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [class_symbol("MyClass" as SymbolName, cls.location), cls],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -186,28 +220,61 @@ describe("Python constructor resolution", () => {
     };
 
     const classScope: ScopeNode = {
-      id: class_scope({ file_path, line: 8, column: 1, end_line: 15, end_column: 1 }),
+      id: class_scope({
+        file_path,
+        line: 8,
+        column: 1,
+        end_line: 15,
+        end_column: 1,
+      }),
       type: "class",
-      parent_id: function_scope({ file_path, line: 1, column: 1, end_line: 20, end_column: 1 }),
+      parent_id: function_scope({
+        file_path,
+        line: 1,
+        column: 1,
+        end_line: 20,
+        end_column: 1,
+      }),
       location: { file_path, line: 8, column: 1, end_line: 15, end_column: 1 },
     };
 
-    const rootId = function_scope({ file_path, line: 1, column: 1, end_line: 20, end_column: 1 });
+    const rootId = function_scope({
+      file_path,
+      line: 1,
+      column: 1,
+      end_line: 20,
+      end_column: 1,
+    });
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
           id: rootId,
           type: "function",
           parent_id: undefined,
-          location: { file_path, line: 1, column: 1, end_line: 20, end_column: 1 },
+          location: {
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 20,
+            end_column: 1,
+          },
         },
         nodes: new Map([
-          [rootId, {
-            id: rootId,
-            type: "function",
-            parent_id: undefined,
-            location: { file_path, line: 1, column: 1, end_line: 20, end_column: 1 },
-          }],
+          [
+            rootId,
+            {
+              id: rootId,
+              type: "function",
+              parent_id: undefined,
+              location: {
+                file_path,
+                line: 1,
+                column: 1,
+                end_line: 20,
+                end_column: 1,
+              },
+            },
+          ],
           [classScope.id, classScope],
         ]),
         scope_depths: new Map([
@@ -220,15 +287,27 @@ describe("Python constructor resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "python",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map(),
-          classes: new Map([
-            [class_symbol("BaseClass" as SymbolName, baseClass.location), baseClass],
-            [class_symbol("DerivedClass" as SymbolName, derivedClass.location), derivedClass],
-          ]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [
+                class_symbol("BaseClass" as SymbolName, baseClass.location),
+                baseClass,
+              ],
+              [
+                class_symbol(
+                  "DerivedClass" as SymbolName,
+                  derivedClass.location
+                ),
+                derivedClass,
+              ],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -263,7 +342,7 @@ describe("Python constructor resolution", () => {
           {
             name: "User" as SymbolName,
             is_type_only: false,
-          }
+          },
         ],
       } as unknown as NamedImport,
     ];
@@ -295,10 +374,22 @@ describe("Python constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path: file_b, line: 1, column: 1, end_line: 30, end_column: 1 }),
+          id: function_scope({
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 30,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path: file_b, line: 1, column: 1, end_line: 30, end_column: 1 },
+          location: {
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 30,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -307,12 +398,17 @@ describe("Python constructor resolution", () => {
       imports_by_file: new Map([[file_b, imports]]),
       exports_by_file: new Map([[file_a, exports]]),
       language: "python",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("User" as SymbolName, cls.location), cls]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [class_symbol("User" as SymbolName, cls.location), cls],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -348,7 +444,7 @@ describe("Python constructor resolution", () => {
             name: "UserModel" as SymbolName,
             alias: "User" as SymbolName,
             is_type_only: false,
-          }
+          },
         ],
       } as unknown as NamedImport,
     ];
@@ -380,10 +476,22 @@ describe("Python constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path: file_b, line: 1, column: 1, end_line: 25, end_column: 1 }),
+          id: function_scope({
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 25,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path: file_b, line: 1, column: 1, end_line: 25, end_column: 1 },
+          location: {
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 25,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -392,12 +500,17 @@ describe("Python constructor resolution", () => {
       imports_by_file: new Map([[file_b, imports]]),
       exports_by_file: new Map([[file_a, exports]]),
       language: "python",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("UserModel" as SymbolName, cls.location), cls]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [class_symbol("UserModel" as SymbolName, cls.location), cls],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -459,10 +572,22 @@ describe("Python constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path: file_b, line: 1, column: 1, end_line: 20, end_column: 1 }),
+          id: function_scope({
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 20,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path: file_b, line: 1, column: 1, end_line: 20, end_column: 1 },
+          location: {
+            file_path: file_b,
+            line: 1,
+            column: 1,
+            end_line: 20,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -471,12 +596,17 @@ describe("Python constructor resolution", () => {
       imports_by_file: new Map([[file_b, imports]]),
       exports_by_file: new Map([[file_a, exports]]),
       language: "python",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map(),
-          classes: new Map([[class_symbol("Model" as SymbolName, cls.location), cls]]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [class_symbol("Model" as SymbolName, cls.location), cls],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -545,10 +675,22 @@ describe("Python constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path, line: 1, column: 1, end_line: 25, end_column: 1 }),
+          id: function_scope({
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 25,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path, line: 1, column: 1, end_line: 25, end_column: 1 },
+          location: {
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 25,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -557,16 +699,25 @@ describe("Python constructor resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "python",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map(),
-          classes: new Map([
-            [class_symbol("Base1" as SymbolName, base1.location), base1],
-            [class_symbol("Base2" as SymbolName, base2.location), base2],
-            [class_symbol("MultipleInheritance" as SymbolName, derived.location), derived],
-          ]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [class_symbol("Base1" as SymbolName, base1.location), base1],
+              [class_symbol("Base2" as SymbolName, base2.location), base2],
+              [
+                class_symbol(
+                  "MultipleInheritance" as SymbolName,
+                  derived.location
+                ),
+                derived,
+              ],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -624,10 +775,22 @@ describe("Python constructor resolution", () => {
     const context: FileResolutionContext = {
       scope_tree: {
         root: {
-          id: function_scope({ file_path, line: 1, column: 1, end_line: 20, end_column: 1 }),
+          id: function_scope({
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 20,
+            end_column: 1,
+          }),
           type: "function",
           parent_id: undefined,
-          location: { file_path, line: 1, column: 1, end_line: 20, end_column: 1 },
+          location: {
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 20,
+            end_column: 1,
+          },
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -636,15 +799,24 @@ describe("Python constructor resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "python",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map(),
-          classes: new Map([
-            [class_symbol("OuterClass" as SymbolName, outerClass.location), outerClass],
-            [class_symbol("InnerClass" as SymbolName, innerClass.location), innerClass],
-          ]),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map(),
+            classes: new Map([
+              [
+                class_symbol("OuterClass" as SymbolName, outerClass.location),
+                outerClass,
+              ],
+              [
+                class_symbol("InnerClass" as SymbolName, innerClass.location),
+                innerClass,
+              ],
+            ]),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 

@@ -66,7 +66,7 @@ describe("Rust function resolution", () => {
             end_column: 1,
           }),
           type: "function",
-          parent_id: undefined
+          parent_id: undefined,
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -75,14 +75,20 @@ describe("Rust function resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "rust",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map([
-            [function_symbol("process" as SymbolName, func_def.location), func_def],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map([
+              [
+                function_symbol("process" as SymbolName, func_def.location),
+                func_def,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -104,12 +110,14 @@ describe("Rust function resolution", () => {
         end_line: 5,
         end_column: 2,
       },
-      parameters: [{
-        name: "x" as SymbolName,
-        type: "i32",
-        is_optional: false,
-        is_rest: false,
-      }],
+      parameters: [
+        {
+          name: "x" as SymbolName,
+          type: "i32",
+          is_optional: false,
+          is_rest: false,
+        },
+      ],
       is_async: false,
       is_generator: false,
       return_type: "i32",
@@ -150,10 +158,12 @@ describe("Rust function resolution", () => {
         end_line: 10,
         end_column: 20,
       },
-      arguments: [{
-        value: "42",
-        type: "i32",
-      }],
+      arguments: [
+        {
+          value: "42",
+          type: "i32",
+        },
+      ],
       is_async_call: false,
     };
 
@@ -168,27 +178,29 @@ describe("Rust function resolution", () => {
             end_column: 1,
           }),
           type: "function",
-          parent_id: undefined
+          parent_id: undefined,
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
         get_parent_scope: () => undefined,
       } as unknown as ScopeTree,
-      imports_by_file: new Map([
-        [file_b, imports_b],
-      ]),
-      exports_by_file: new Map([
-        [file_a, exports_a],
-      ]),
+      imports_by_file: new Map([[file_b, imports_b]]),
+      exports_by_file: new Map([[file_a, exports_a]]),
       language: "rust",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map([
-            [function_symbol("calculate" as SymbolName, util_func.location), util_func],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map([
+              [
+                function_symbol("calculate" as SymbolName, util_func.location),
+                util_func,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -262,27 +274,32 @@ describe("Rust function resolution", () => {
             end_column: 1,
           }),
           type: "function",
-          parent_id: undefined
+          parent_id: undefined,
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
         get_parent_scope: () => undefined,
       } as unknown as ScopeTree,
-      imports_by_file: new Map([
-        [file_b, imports_b],
-      ]),
-      exports_by_file: new Map([
-        [file_a, exports_a],
-      ]),
+      imports_by_file: new Map([[file_b, imports_b]]),
+      exports_by_file: new Map([[file_a, exports_a]]),
       language: "rust",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map([
-            [function_symbol("library_function" as SymbolName, lib_func.location), lib_func],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map([
+              [
+                function_symbol(
+                  "library_function" as SymbolName,
+                  lib_func.location
+                ),
+                lib_func,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -303,12 +320,14 @@ describe("Rust function resolution", () => {
         end_line: 5,
         end_column: 2,
       },
-      parameters: [{
-        name: "url" as SymbolName,
-        type: "&str",
-        is_optional: false,
-        is_rest: false,
-      }],
+      parameters: [
+        {
+          name: "url" as SymbolName,
+          type: "&str",
+          is_optional: false,
+          is_rest: false,
+        },
+      ],
       is_async: true,
       is_generator: false,
       return_type: "Result<String, Error>",
@@ -323,10 +342,12 @@ describe("Rust function resolution", () => {
         end_line: 10,
         end_column: 21,
       },
-      arguments: [{
-        value: '"https://api.example.com"',
-        type: "&str",
-      }],
+      arguments: [
+        {
+          value: '"https://api.example.com"',
+          type: "&str",
+        },
+      ],
       is_async_call: true,
     };
 
@@ -341,7 +362,7 @@ describe("Rust function resolution", () => {
             end_column: 1,
           }),
           type: "function",
-          parent_id: undefined
+          parent_id: undefined,
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -350,14 +371,23 @@ describe("Rust function resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "rust",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map([
-            [function_symbol("fetch_data" as SymbolName, async_func.location), async_func],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map([
+              [
+                function_symbol(
+                  "fetch_data" as SymbolName,
+                  async_func.location
+                ),
+                async_func,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -391,7 +421,7 @@ describe("Rust function resolution", () => {
           type: "&mut T",
           is_optional: false,
           is_rest: false,
-        }
+        },
       ],
       is_async: false,
       is_generator: false,
@@ -416,7 +446,7 @@ describe("Rust function resolution", () => {
         {
           value: "&mut y",
           type: "&mut i32",
-        }
+        },
       ],
       is_async_call: false,
     };
@@ -432,7 +462,7 @@ describe("Rust function resolution", () => {
             end_column: 1,
           }),
           type: "function",
-          parent_id: undefined
+          parent_id: undefined,
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -441,14 +471,20 @@ describe("Rust function resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "rust",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map([
-            [function_symbol("swap" as SymbolName, generic_func.location), generic_func],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map([
+              [
+                function_symbol("swap" as SymbolName, generic_func.location),
+                generic_func,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -470,12 +506,14 @@ describe("Rust function resolution", () => {
         end_line: 3,
         end_column: 30,
       },
-      parameters: [{
-        name: "x" as SymbolName,
-        type: "i32",
-        is_optional: false,
-        is_rest: false,
-      }],
+      parameters: [
+        {
+          name: "x" as SymbolName,
+          type: "i32",
+          is_optional: false,
+          is_rest: false,
+        },
+      ],
       is_async: false,
       is_generator: false,
       return_type: "i32",
@@ -490,10 +528,12 @@ describe("Rust function resolution", () => {
         end_line: 5,
         end_column: 18,
       },
-      arguments: [{
-        value: "5",
-        type: "i32",
-      }],
+      arguments: [
+        {
+          value: "5",
+          type: "i32",
+        },
+      ],
       is_async_call: false,
     };
 
@@ -508,7 +548,7 @@ describe("Rust function resolution", () => {
             end_column: 1,
           }),
           type: "function",
-          parent_id: undefined
+          parent_id: undefined,
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -517,14 +557,20 @@ describe("Rust function resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "rust",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map([
-            [function_symbol("add_one" as SymbolName, closure_func.location), closure_func],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map([
+              [
+                function_symbol("add_one" as SymbolName, closure_func.location),
+                closure_func,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -579,7 +625,7 @@ describe("Rust function resolution", () => {
             end_column: 1,
           }),
           type: "function",
-          parent_id: undefined
+          parent_id: undefined,
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -588,14 +634,20 @@ describe("Rust function resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "rust",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map([
-            [function_symbol("my_macro" as SymbolName, macro_func.location), macro_func],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map([
+              [
+                function_symbol("my_macro" as SymbolName, macro_func.location),
+                macro_func,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 

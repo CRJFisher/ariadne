@@ -95,27 +95,29 @@ describe("resolve_function_call", () => {
         get_symbols_in_scope: () => new Map(),
         get_parent_scope: () => undefined,
       } as unknown as ScopeTree,
-      imports_by_file: new Map([
-        [file_b, imports_b],
-      ]),
-      exports_by_file: new Map([
-        [file_a, exports_a],
-      ]),
+      imports_by_file: new Map([[file_b, imports_b]]),
+      exports_by_file: new Map([[file_a, exports_a]]),
       language: "typescript" as Language,
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map([
-            [function_symbol("processData" as SymbolName, {
-              file_path: file_a,
-              line: 0,
-              column: 0,
-              end_line: 0,
-              end_column: 0,
-            }), processData_def],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map([
+              [
+                function_symbol("processData" as SymbolName, {
+                  file_path: file_a,
+                  line: 0,
+                  column: 0,
+                  end_line: 0,
+                  end_column: 0,
+                }),
+                processData_def,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -187,27 +189,29 @@ describe("resolve_function_call", () => {
         get_parent_scope: () => undefined,
       } as unknown as ScopeTree,
       global_symbols: {} as GlobalSymbolTable,
-      imports_by_file: new Map([
-        [file_b, imports_b],
-      ]),
-      exports_by_file: new Map([
-        [file_a, exports_a],
-      ]),
+      imports_by_file: new Map([[file_b, imports_b]]),
+      exports_by_file: new Map([[file_a, exports_a]]),
       language: "typescript" as Language,
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map([
-            [function_symbol("defaultFunc" as SymbolName, {
-              file_path: file_a,
-              line: 0,
-              column: 0,
-              end_line: 0,
-              end_column: 0,
-            }), defaultFunc_def],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map([
+              [
+                function_symbol("defaultFunc" as SymbolName, {
+                  file_path: file_a,
+                  line: 0,
+                  column: 0,
+                  end_line: 0,
+                  end_column: 0,
+                }),
+                defaultFunc_def,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -279,27 +283,29 @@ describe("resolve_function_call", () => {
         get_symbols_in_scope: () => new Map(),
         get_parent_scope: () => undefined,
       } as unknown as ScopeTree,
-      imports_by_file: new Map([
-        [file_b, imports_b],
-      ]),
-      exports_by_file: new Map([
-        [file_a, exports_a],
-      ]),
+      imports_by_file: new Map([[file_b, imports_b]]),
+      exports_by_file: new Map([[file_a, exports_a]]),
       language: "typescript" as Language,
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map([
-            [function_symbol("sqrt" as SymbolName, {
-              file_path: file_a,
-              line: 0,
-              column: 0,
-              end_line: 0,
-              end_column: 0,
-            }), sqrt_def],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map([
+              [
+                function_symbol("sqrt" as SymbolName, {
+                  file_path: file_a,
+                  line: 0,
+                  column: 0,
+                  end_line: 0,
+                  end_column: 0,
+                }),
+                sqrt_def,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -390,28 +396,32 @@ describe("resolve_function_call", () => {
         get_symbols_in_scope: () => new Map(),
         get_parent_scope: () => undefined,
       } as unknown as ScopeTree,
-      imports_by_file: new Map([
-        [file_c, imports_c],
-      ]),
+      imports_by_file: new Map([[file_c, imports_c]]),
       exports_by_file: new Map([
         [file_a, exports_a],
         [file_b, exports_b],
       ]),
       language: "typescript" as Language,
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map([
-            [function_symbol("originalFunc" as SymbolName, {
-              file_path: file_a,
-              line: 0,
-              column: 0,
-              end_line: 0,
-              end_column: 0,
-            }), original_def],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map([
+              [
+                function_symbol("originalFunc" as SymbolName, {
+                  file_path: file_a,
+                  line: 0,
+                  column: 0,
+                  end_line: 0,
+                  end_column: 0,
+                }),
+                original_def,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 

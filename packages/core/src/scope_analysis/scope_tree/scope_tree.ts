@@ -38,8 +38,8 @@ export function build_scope_tree(
     file_path: file_path,
     line: 1,
     column: 1,
-    end_line: node_location.end_line,
-    end_column: node_location.end_column,
+    end_line: node_location.end_line + 1,
+    end_column: node_location.end_column + 1,
   };
 
   // Determine whether this file uses module or global scope

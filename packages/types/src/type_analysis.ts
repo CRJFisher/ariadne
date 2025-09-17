@@ -3,8 +3,8 @@
  * across all type analysis modules
  */
 
-import { SymbolName } from "./symbols";
-import { SymbolId } from "./symbols";
+import { SymbolName } from "./symbol";
+import { SymbolId } from "./symbol";
 import { SemanticNode, Resolution } from "./query";
 import { TypeParameter } from "./definitions";
 
@@ -24,7 +24,6 @@ export type ResolvedTypeKind =
   | "trait"
   | "primitive"
   | "unknown";
-
 
 // ============================================================================
 // Core Type Definition

@@ -76,7 +76,7 @@ describe("TypeScript function resolution", () => {
             end_column: 1,
           }),
           type: "function",
-          parent_id: undefined
+          parent_id: undefined,
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -85,14 +85,23 @@ describe("TypeScript function resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "typescript",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map([
-            [function_symbol("hoistedFunc" as SymbolName, hoisted_func.location), hoisted_func],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map([
+              [
+                function_symbol(
+                  "hoistedFunc" as SymbolName,
+                  hoisted_func.location
+                ),
+                hoisted_func,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -144,7 +153,7 @@ describe("TypeScript function resolution", () => {
             end_column: 1,
           }),
           type: "function",
-          parent_id: undefined
+          parent_id: undefined,
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -153,14 +162,20 @@ describe("TypeScript function resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "typescript",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map([
-            [function_symbol("arrowFunc" as SymbolName, arrow_func.location), arrow_func],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map([
+              [
+                function_symbol("arrowFunc" as SymbolName, arrow_func.location),
+                arrow_func,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -211,7 +226,7 @@ describe("TypeScript function resolution", () => {
             end_column: 1,
           }),
           type: "function",
-          parent_id: undefined
+          parent_id: undefined,
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -220,14 +235,20 @@ describe("TypeScript function resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "typescript",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map([
-            [function_symbol("fetchData" as SymbolName, async_func.location), async_func],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map([
+              [
+                function_symbol("fetchData" as SymbolName, async_func.location),
+                async_func,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -249,12 +270,14 @@ describe("TypeScript function resolution", () => {
         end_line: 3,
         end_column: 2,
       },
-      parameters: [{
-        name: "value" as SymbolName,
-        type: "T",
-        is_optional: false,
-        is_rest: false,
-      }],
+      parameters: [
+        {
+          name: "value" as SymbolName,
+          type: "T",
+          is_optional: false,
+          is_rest: false,
+        },
+      ],
       is_async: false,
       is_generator: false,
       return_type: "T",
@@ -270,10 +293,12 @@ describe("TypeScript function resolution", () => {
         end_line: 5,
         end_column: 20,
       },
-      arguments: [{
-        value: "string literal",
-        type: "string",
-      }],
+      arguments: [
+        {
+          value: "string literal",
+          type: "string",
+        },
+      ],
       is_async_call: false,
     };
 
@@ -288,7 +313,7 @@ describe("TypeScript function resolution", () => {
             end_column: 1,
           }),
           type: "function",
-          parent_id: undefined
+          parent_id: undefined,
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -297,14 +322,23 @@ describe("TypeScript function resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "typescript",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map([
-            [function_symbol("identity" as SymbolName, generic_func.location), generic_func],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map([
+              [
+                function_symbol(
+                  "identity" as SymbolName,
+                  generic_func.location
+                ),
+                generic_func,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -357,18 +391,16 @@ describe("TypeScript function resolution", () => {
             end_column: 1,
           }),
           type: "function",
-          parent_id: undefined
+          parent_id: undefined,
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
         get_parent_scope: () => undefined,
       } as unknown as ScopeTree,
-      imports_by_file: new Map([
-        [file_b, imports_b],
-      ]),
+      imports_by_file: new Map([[file_b, imports_b]]),
       exports_by_file: new Map(),
       language: "typescript",
-      definitions_by_file: new Map(),
+      definitions: new Map(),
     };
 
     const resolved = resolve_function_call(call, context);
@@ -428,34 +460,40 @@ describe("TypeScript function resolution", () => {
         root_id: outer_scope_id,
         file_path,
         nodes: new Map([
-          [outer_scope_id, {
-            id: outer_scope_id,
-            type: "function",
-            parent_id: null,
-            name: null,
-            location: {
-              file_path,
-              line: 1,
-              column: 1,
-              end_line: 10,
-              end_column: 1,
+          [
+            outer_scope_id,
+            {
+              id: outer_scope_id,
+              type: "function",
+              parent_id: null,
+              name: null,
+              location: {
+                file_path,
+                line: 1,
+                column: 1,
+                end_line: 10,
+                end_column: 1,
+              },
+              child_ids: [inner_scope_id],
             },
-            child_ids: [inner_scope_id],
-          }],
-          [inner_scope_id, {
-            id: inner_scope_id,
-            type: "block",
-            parent_id: outer_scope_id,
-            name: null,
-            location: {
-              file_path,
-              line: 3,
-              column: 1,
-              end_line: 8,
-              end_column: 1,
+          ],
+          [
+            inner_scope_id,
+            {
+              id: inner_scope_id,
+              type: "block",
+              parent_id: outer_scope_id,
+              name: null,
+              location: {
+                file_path,
+                line: 3,
+                column: 1,
+                end_line: 8,
+                end_column: 1,
+              },
+              child_ids: [],
             },
-            child_ids: [],
-          }],
+          ],
         ]),
         scope_depths: new Map([
           [outer_scope_id, 0],
@@ -465,14 +503,20 @@ describe("TypeScript function resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "typescript",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map([
-            [function_symbol("innerFunc" as SymbolName, inner_func.location), inner_func],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map([
+              [
+                function_symbol("innerFunc" as SymbolName, inner_func.location),
+                inner_func,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -550,27 +594,32 @@ describe("TypeScript function resolution", () => {
             end_column: 1,
           }),
           type: "function",
-          parent_id: undefined
+          parent_id: undefined,
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
         get_parent_scope: () => undefined,
       } as unknown as ScopeTree,
-      imports_by_file: new Map([
-        [file_b, imports_b],
-      ]),
-      exports_by_file: new Map([
-        [file_a, exports_a],
-      ]),
+      imports_by_file: new Map([[file_b, imports_b]]),
+      exports_by_file: new Map([[file_a, exports_a]]),
       language: "typescript",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map([
-            [function_symbol("augmentedMethod" as SymbolName, augmented_func.location), augmented_func],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map([
+              [
+                function_symbol(
+                  "augmentedMethod" as SymbolName,
+                  augmented_func.location
+                ),
+                augmented_func,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 

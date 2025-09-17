@@ -1,6 +1,6 @@
 import { Location } from "./common";
 import { FilePath, QualifiedName, TypeString } from "./aliases";
-import { SymbolId } from "./symbols";
+import { SymbolId } from "./symbol";
 
 /**
  * Enhanced ClassNode with computed fields for hierarchy processing
@@ -43,8 +43,8 @@ export interface MethodNode {
   readonly symbol: SymbolId;
   readonly location: Location;
   readonly is_override: boolean;
-  readonly overrides?: QualifiedName;
-  readonly overridden_by: readonly QualifiedName[];
+  readonly overrides?: SymbolId;
+  readonly overridden_by: readonly SymbolId[];
   readonly visibility: "public" | "private" | "protected";
   readonly is_static: boolean;
   readonly is_abstract: boolean;
@@ -63,25 +63,23 @@ export interface PropertyNode {
  * Enhanced InheritanceEdge with richer relationship types
  */
 export interface InheritanceEdge {
-  readonly from: QualifiedName;
-  readonly to: QualifiedName;
+  readonly from: SymbolId;
+  readonly to: SymbolId;
   readonly type: "extends" | "implements" | "trait" | "mixin"; // Added trait and mixin
   readonly source_location?: Location; // Where the inheritance is declared
 }
 
 export interface ClassHierarchy {
-  readonly classes: ReadonlyMap<QualifiedName, ClassNode>;
+  readonly classes: ReadonlyMap<SymbolId, ClassNode>;
   readonly inheritance_edges: readonly InheritanceEdge[];
   readonly root_classes: ReadonlySet<SymbolId>;
   readonly interface_implementations?: ReadonlyMap<
     SymbolId,
     ReadonlySet<SymbolId>
   >;
+  readonly method_overrides?: ReadonlyMap<SymbolId, ReadonlySet<SymbolId>>;
 
-  // Enhanced fields from local types
-  readonly metadata?: {
-    readonly build_time?: number;
-    readonly total_classes?: number;
-    readonly max_depth?: number;
-  };
+  // Lookup maps for efficient access patterns needed by resolvers
+  readonly classes_by_location?: ReadonlyMap<FilePath, ReadonlyMap<number, SymbolId>>; // file_path -> line_number -> class_symbol
+  readonly classes_in_file?: ReadonlyMap<FilePath, ReadonlySet<SymbolId>>; // file_path -> set of class_symbols
 }

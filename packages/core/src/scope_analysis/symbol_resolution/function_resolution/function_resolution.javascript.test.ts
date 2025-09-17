@@ -93,27 +93,32 @@ describe("JavaScript function resolution", () => {
             end_column: 1,
           }),
           type: "function",
-          parent_id: undefined
+          parent_id: undefined,
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
         get_parent_scope: () => undefined,
       } as unknown as ScopeTree,
-      imports_by_file: new Map([
-        [file_b, imports_b],
-      ]),
-      exports_by_file: new Map([
-        [file_a, exports_a],
-      ]),
+      imports_by_file: new Map([[file_b, imports_b]]),
+      exports_by_file: new Map([[file_a, exports_a]]),
       language: "javascript",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map([
-            [function_symbol("processData" as SymbolName, exported_func.location), exported_func],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map([
+              [
+                function_symbol(
+                  "processData" as SymbolName,
+                  exported_func.location
+                ),
+                exported_func,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -166,7 +171,7 @@ describe("JavaScript function resolution", () => {
             end_column: 1,
           }),
           type: "function",
-          parent_id: undefined
+          parent_id: undefined,
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -175,14 +180,20 @@ describe("JavaScript function resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "javascript",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map([
-            [function_symbol("hoistedVar" as SymbolName, var_func.location), var_func],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map([
+              [
+                function_symbol("hoistedVar" as SymbolName, var_func.location),
+                var_func,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -234,7 +245,7 @@ describe("JavaScript function resolution", () => {
             end_column: 1,
           }),
           type: "function",
-          parent_id: undefined
+          parent_id: undefined,
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -243,14 +254,20 @@ describe("JavaScript function resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "javascript",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map([
-            [function_symbol("publicApi" as SymbolName, iife_func.location), iife_func],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map([
+              [
+                function_symbol("publicApi" as SymbolName, iife_func.location),
+                iife_func,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -301,7 +318,7 @@ describe("JavaScript function resolution", () => {
             end_column: 1,
           }),
           type: "function",
-          parent_id: undefined
+          parent_id: undefined,
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -310,14 +327,23 @@ describe("JavaScript function resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "javascript",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map([
-            [function_symbol("numberGenerator" as SymbolName, generator_func.location), generator_func],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map([
+              [
+                function_symbol(
+                  "numberGenerator" as SymbolName,
+                  generator_func.location
+                ),
+                generator_func,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -370,7 +396,7 @@ describe("JavaScript function resolution", () => {
             end_column: 1,
           }),
           type: "function",
-          parent_id: undefined
+          parent_id: undefined,
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
@@ -379,14 +405,23 @@ describe("JavaScript function resolution", () => {
       imports_by_file: new Map(),
       exports_by_file: new Map(),
       language: "javascript",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map([
-            [function_symbol("MyClass" as SymbolName, constructor_func.location), constructor_func],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_path,
+          {
+            functions: new Map([
+              [
+                function_symbol(
+                  "MyClass" as SymbolName,
+                  constructor_func.location
+                ),
+                constructor_func,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
@@ -456,27 +491,32 @@ describe("JavaScript function resolution", () => {
             end_column: 1,
           }),
           type: "function",
-          parent_id: undefined
+          parent_id: undefined,
         },
         nodes: new Map(),
         get_symbols_in_scope: () => new Map(),
         get_parent_scope: () => undefined,
       } as unknown as ScopeTree,
-      imports_by_file: new Map([
-        [file_b, imports_b],
-      ]),
-      exports_by_file: new Map([
-        [file_a, exports_a],
-      ]),
+      imports_by_file: new Map([[file_b, imports_b]]),
+      exports_by_file: new Map([[file_a, exports_a]]),
       language: "javascript",
-      definitions_by_file: new Map([
-        [file_a, {
-          functions: new Map([
-            [function_symbol("lazyLoad" as SymbolName, dynamic_func.location), dynamic_func],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
+      definitions: new Map([
+        [
+          file_a,
+          {
+            functions: new Map([
+              [
+                function_symbol(
+                  "lazyLoad" as SymbolName,
+                  dynamic_func.location
+                ),
+                dynamic_func,
+              ],
+            ]),
+            classes: new Map(),
+            methods: new Map(),
+          },
+        ],
       ]),
     };
 
