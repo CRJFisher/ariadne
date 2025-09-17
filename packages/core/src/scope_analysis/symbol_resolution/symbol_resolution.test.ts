@@ -3,10 +3,8 @@
  */
 
 import { describe, it, expect } from "vitest";
-import {
-  resolve_function_call,
-  FileResolutionContext,
-} from "./symbol_resolution";
+import { FileResolutionContext } from "./symbol_resolution";
+import { resolve_function_call } from "./function_resolution/function_resolution";
 import {
   FunctionCall,
   FunctionDefinition,

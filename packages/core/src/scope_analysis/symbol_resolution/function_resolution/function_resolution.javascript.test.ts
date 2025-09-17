@@ -20,7 +20,7 @@ import {
   function_scope,
   block_scope,
 } from "@ariadnejs/types";
-import { FileResolutionContext } from "./symbol_resolution";
+import { FileResolutionContext } from "../symbol_resolution";
 
 describe("JavaScript function resolution", () => {
   it("should resolve CommonJS require and module.exports", () => {

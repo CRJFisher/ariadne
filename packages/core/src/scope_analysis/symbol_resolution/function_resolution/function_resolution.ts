@@ -1,6 +1,6 @@
 import { FunctionCall, FunctionDefinition, FilePath, SymbolName, Import, SymbolId, function_symbol, NamedImport, ScopeNode, ScopeId, Location, ModulePath, ModuleGraph, ScopeTree } from "@ariadnejs/types";
-import { FileResolutionContext } from "./symbol_resolution";
-import { find_scope_at_location } from "../scope_tree";
+import { FileResolutionContext } from "../symbol_resolution";
+import { find_scope_at_location } from "../../scope_tree";
 import { resolve, dirname, join } from "path";
 
 /**
@@ -107,7 +107,7 @@ export function resolve_function_call(
    * Resolve a module path to a file path using module graph or file system conventions
    */
   function resolve_module_to_file(
-    module_path: ModulePath,
+    module_path: FilePath,
     from_file: FilePath,
     context: FileResolutionContext
   ): FilePath | undefined {

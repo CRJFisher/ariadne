@@ -24,7 +24,7 @@ import {
   function_scope,
   ModulePath,
 } from "@ariadnejs/types";
-import { FileResolutionContext } from "./symbol_resolution";
+import { FileResolutionContext } from "../symbol_resolution";
 
 describe("parse_qualified_name", () => {
   it("should parse simple function name", () => {

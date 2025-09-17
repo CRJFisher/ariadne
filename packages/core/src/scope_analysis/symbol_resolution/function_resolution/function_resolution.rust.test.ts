@@ -1,5 +1,5 @@
 /**
- * Python-specific tests for function resolution
+ * Rust-specific tests for function resolution
  */
 
 import { describe, it, expect } from "vitest";
@@ -16,27 +16,24 @@ import {
   FilePath,
   function_symbol,
   ScopeTree,
-  ScopeName,
   function_scope,
-  module_scope,
-  class_scope,
   block_scope,
 } from "@ariadnejs/types";
-import { FileResolutionContext } from "./symbol_resolution";
+import { FileResolutionContext } from "../symbol_resolution";
 
-describe("Python function resolution", () => {
-  it("should NOT resolve function called before definition", () => {
-    const file_path: FilePath = "src/order.py" as FilePath;
+describe("Rust function resolution", () => {
+  it("should resolve functions regardless of definition order", () => {
+    const file_path: FilePath = "src/lib.rs" as FilePath;
 
-    // Function defined after the call
-    const late_func: FunctionDefinition = {
-      name: "late_function" as SymbolName,
+    // Function can be called before definition in Rust
+    const func_def: FunctionDefinition = {
+      name: "process" as SymbolName,
       location: {
         file_path,
-        line: 10,
+        line: 15,
         column: 1,
-        end_line: 12,
-        end_column: 20,
+        end_line: 17,
+        end_column: 2,
       },
       parameters: [],
       is_async: false,
@@ -44,57 +41,44 @@ describe("Python function resolution", () => {
       return_type: undefined,
     };
 
-    // Call before definition
+    // Call before definition (valid in Rust)
     const call: FunctionCall = {
-      callee: "late_function" as SymbolName,
+      callee: "process" as SymbolName,
       location: {
         file_path,
         line: 5,
-        column: 1,
+        column: 5,
         end_line: 5,
-        end_column: 15,
+        end_column: 13,
       },
       arguments: [],
       is_async_call: false,
     };
 
-    const root_scope_id = module_scope({
-      file_path,
-      line: 1,
-      column: 1,
-      end_line: 20,
-      end_column: 1,
-    });
-
     const context: FileResolutionContext = {
       scope_tree: {
-        root_id: root_scope_id,
-        file_path,
-        nodes: new Map([
-          [root_scope_id, {
-            id: root_scope_id,
-            type: "module",
-            parent_id: null,
-            name: null,
-            location: {
-              file_path,
-              line: 1,
-              column: 1,
-              end_line: 20,
-              end_column: 1,
-            },
-            child_ids: [],
-          }],
-        ]),
-        scope_depths: new Map([[root_scope_id, 0]]),
-      } as ScopeTree,
+        root: {
+          id: function_scope({
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 20,
+            end_column: 1,
+          }),
+          type: "function",
+          parent_id: undefined
+        },
+        nodes: new Map(),
+        get_symbols_in_scope: () => new Map(),
+        get_parent_scope: () => undefined,
+      } as unknown as ScopeTree,
       imports_by_file: new Map(),
       exports_by_file: new Map(),
-      language: "python",
+      language: "rust",
       definitions_by_file: new Map([
         [file_path, {
           functions: new Map([
-            [function_symbol("late_function" as SymbolName, late_func.location), late_func],
+            [function_symbol("process" as SymbolName, func_def.location), func_def],
           ]),
           classes: new Map(),
           methods: new Map(),
@@ -103,26 +87,32 @@ describe("Python function resolution", () => {
     };
 
     const resolved = resolve_function_call(call, context);
-    expect(resolved).toBeUndefined(); // Python requires definition before use
+    expect(resolved).toBeDefined();
+    expect(resolved?.name).toBe("process");
   });
 
-  it("should resolve module imports with 'from module import func'", () => {
-    const file_a: FilePath = "utils.py" as FilePath;
-    const file_b: FilePath = "main.py" as FilePath;
+  it("should resolve module path imports", () => {
+    const file_a: FilePath = "src/utils.rs" as FilePath;
+    const file_b: FilePath = "src/main.rs" as FilePath;
 
     const util_func: FunctionDefinition = {
-      name: "process_data" as SymbolName,
+      name: "calculate" as SymbolName,
       location: {
         file_path: file_a,
-        line: 1,
+        line: 3,
         column: 1,
-        end_line: 3,
-        end_column: 20,
+        end_line: 5,
+        end_column: 2,
       },
-      parameters: [],
+      parameters: [{
+        name: "x" as SymbolName,
+        type: "i32",
+        is_optional: false,
+        is_rest: false,
+      }],
       is_async: false,
       is_generator: false,
-      return_type: undefined,
+      return_type: "i32",
     };
 
     const exports_a: Export[] = [
@@ -130,21 +120,21 @@ describe("Python function resolution", () => {
         kind: "named",
         exports: [
           {
-            local_name: "process_data" as SymbolName,
+            local_name: "calculate" as SymbolName,
             is_type_only: false,
           },
         ],
       } as unknown as NamedExport,
     ];
 
-    // from utils import process_data
+    // use utils::calculate;
     const imports_b: Import[] = [
       {
         kind: "named",
         source: "utils" as any,
         imports: [
           {
-            name: "process_data" as SymbolName,
+            name: "calculate" as SymbolName,
             is_type_only: false,
           },
         ],
@@ -152,15 +142,18 @@ describe("Python function resolution", () => {
     ];
 
     const call: FunctionCall = {
-      callee: "process_data" as SymbolName,
+      callee: "calculate" as SymbolName,
       location: {
         file_path: file_b,
         line: 10,
-        column: 1,
+        column: 10,
         end_line: 10,
-        end_column: 13,
+        end_column: 20,
       },
-      arguments: [],
+      arguments: [{
+        value: "42",
+        type: "i32",
+      }],
       is_async_call: false,
     };
 
@@ -187,11 +180,11 @@ describe("Python function resolution", () => {
       exports_by_file: new Map([
         [file_a, exports_a],
       ]),
-      language: "python",
+      language: "rust",
       definitions_by_file: new Map([
         [file_a, {
           functions: new Map([
-            [function_symbol("process_data" as SymbolName, util_func.location), util_func],
+            [function_symbol("calculate" as SymbolName, util_func.location), util_func],
           ]),
           classes: new Map(),
           methods: new Map(),
@@ -201,31 +194,27 @@ describe("Python function resolution", () => {
 
     const resolved = resolve_function_call(call, context);
     expect(resolved).toBeDefined();
-    expect(resolved?.name).toBe("process_data");
+    expect(resolved?.name).toBe("calculate");
+    expect(resolved?.return_type).toBe("i32");
   });
 
-  it("should resolve 'import module' with qualified calls", () => {
-    const file_a: FilePath = "math_utils.py" as FilePath;
-    const file_b: FilePath = "calculator.py" as FilePath;
+  it("should resolve crate path imports", () => {
+    const file_a: FilePath = "src/lib.rs" as FilePath;
+    const file_b: FilePath = "src/bin/main.rs" as FilePath;
 
-    const sqrt_func: FunctionDefinition = {
-      name: "sqrt" as SymbolName,
+    const lib_func: FunctionDefinition = {
+      name: "library_function" as SymbolName,
       location: {
         file_path: file_a,
-        line: 5,
+        line: 1,
         column: 1,
-        end_line: 7,
-        end_column: 20,
+        end_line: 3,
+        end_column: 2,
       },
-      parameters: [{
-        name: "x" as SymbolName,
-        type: "float",
-        is_optional: false,
-        is_rest: false,
-      }],
+      parameters: [],
       is_async: false,
       is_generator: false,
-      return_type: "float",
+      return_type: "String",
     };
 
     const exports_a: Export[] = [
@@ -233,35 +222,32 @@ describe("Python function resolution", () => {
         kind: "named",
         exports: [
           {
-            local_name: "sqrt" as SymbolName,
+            local_name: "library_function" as SymbolName,
             is_type_only: false,
           },
         ],
       } as unknown as NamedExport,
     ];
 
-    // import math_utils
+    // use my_crate::library_function;
     const imports_b: Import[] = [
       {
         kind: "namespace",
-        source: "math_utils" as any,
-        namespace_name: "math_utils" as any,
+        source: "my_crate" as any,
+        namespace_name: "my_crate" as any,
       } as unknown as NamespaceImport,
     ];
 
     const call: FunctionCall = {
-      callee: "math_utils.sqrt" as SymbolName,
+      callee: "my_crate::library_function" as SymbolName,
       location: {
         file_path: file_b,
         line: 10,
         column: 10,
         end_line: 10,
-        end_column: 26,
+        end_column: 37,
       },
-      arguments: [{
-        value: "16",
-        type: "int",
-      }],
+      arguments: [],
       is_async_call: false,
     };
 
@@ -288,11 +274,11 @@ describe("Python function resolution", () => {
       exports_by_file: new Map([
         [file_a, exports_a],
       ]),
-      language: "python",
+      language: "rust",
       definitions_by_file: new Map([
         [file_a, {
           functions: new Map([
-            [function_symbol("sqrt" as SymbolName, sqrt_func.location), sqrt_func],
+            [function_symbol("library_function" as SymbolName, lib_func.location), lib_func],
           ]),
           classes: new Map(),
           methods: new Map(),
@@ -302,80 +288,11 @@ describe("Python function resolution", () => {
 
     const resolved = resolve_function_call(call, context);
     expect(resolved).toBeDefined();
-    expect(resolved?.name).toBe("sqrt");
+    expect(resolved?.name).toBe("library_function");
   });
 
-  it("should resolve decorated functions", () => {
-    const file_path: FilePath = "decorators.py" as FilePath;
-
-    const decorated_func: FunctionDefinition = {
-      name: "cached_function" as SymbolName,
-      location: {
-        file_path,
-        line: 3,
-        column: 1,
-        end_line: 5,
-        end_column: 20,
-      },
-      parameters: [],
-      is_async: false,
-      is_generator: false,
-      return_type: undefined,
-      decorators: ["@cache", "@timing"],
-    };
-
-    const call: FunctionCall = {
-      callee: "cached_function" as SymbolName,
-      location: {
-        file_path,
-        line: 10,
-        column: 10,
-        end_line: 10,
-        end_column: 26,
-      },
-      arguments: [],
-      is_async_call: false,
-    };
-
-    const context: FileResolutionContext = {
-      scope_tree: {
-        root: {
-          id: function_scope({
-            file_path,
-            line: 1,
-            column: 1,
-            end_line: 15,
-            end_column: 1,
-          }),
-          type: "function",
-          parent_id: undefined
-        },
-        nodes: new Map(),
-        get_symbols_in_scope: () => new Map(),
-        get_parent_scope: () => undefined,
-      } as unknown as ScopeTree,
-      imports_by_file: new Map(),
-      exports_by_file: new Map(),
-      language: "python",
-      definitions_by_file: new Map([
-        [file_path, {
-          functions: new Map([
-            [function_symbol("cached_function" as SymbolName, decorated_func.location), decorated_func],
-          ]),
-          classes: new Map(),
-          methods: new Map(),
-        }],
-      ]),
-    };
-
-    const resolved = resolve_function_call(call, context);
-    expect(resolved).toBeDefined();
-    expect(resolved?.name).toBe("cached_function");
-    expect(resolved?.decorators).toContain("@cache");
-  });
-
-  it("should resolve async/await coroutines", () => {
-    const file_path: FilePath = "async_code.py" as FilePath;
+  it("should resolve async functions", () => {
+    const file_path: FilePath = "src/async_code.rs" as FilePath;
 
     const async_func: FunctionDefinition = {
       name: "fetch_data" as SymbolName,
@@ -383,18 +300,18 @@ describe("Python function resolution", () => {
         file_path,
         line: 1,
         column: 1,
-        end_line: 3,
-        end_column: 20,
+        end_line: 5,
+        end_column: 2,
       },
       parameters: [{
         name: "url" as SymbolName,
-        type: "str",
+        type: "&str",
         is_optional: false,
         is_rest: false,
       }],
       is_async: true,
       is_generator: false,
-      return_type: "Any",
+      return_type: "Result<String, Error>",
     };
 
     const call: FunctionCall = {
@@ -407,8 +324,8 @@ describe("Python function resolution", () => {
         end_column: 21,
       },
       arguments: [{
-        value: "'https://api.example.com'",
-        type: "str",
+        value: '"https://api.example.com"',
+        type: "&str",
       }],
       is_async_call: true,
     };
@@ -432,7 +349,7 @@ describe("Python function resolution", () => {
       } as unknown as ScopeTree,
       imports_by_file: new Map(),
       exports_by_file: new Map(),
-      language: "python",
+      language: "rust",
       definitions_by_file: new Map([
         [file_path, {
           functions: new Map([
@@ -450,101 +367,84 @@ describe("Python function resolution", () => {
     expect(resolved?.is_async).toBe(true);
   });
 
-  it("should resolve nested function definitions", () => {
-    const file_path: FilePath = "nested.py" as FilePath;
+  it("should resolve generic functions", () => {
+    const file_path: FilePath = "src/generics.rs" as FilePath;
 
-    // Inner function defined inside outer function
-    const inner_func: FunctionDefinition = {
-      name: "inner" as SymbolName,
+    const generic_func: FunctionDefinition = {
+      name: "swap" as SymbolName,
       location: {
         file_path,
-        line: 3,
-        column: 5,
-        end_line: 5,
-        end_column: 20,
+        line: 1,
+        column: 1,
+        end_line: 4,
+        end_column: 2,
       },
-      parameters: [],
+      parameters: [
+        {
+          name: "a" as SymbolName,
+          type: "&mut T",
+          is_optional: false,
+          is_rest: false,
+        },
+        {
+          name: "b" as SymbolName,
+          type: "&mut T",
+          is_optional: false,
+          is_rest: false,
+        }
+      ],
       is_async: false,
       is_generator: false,
       return_type: undefined,
+      type_parameters: ["T"],
     };
 
-    // Call from within the same outer function
     const call: FunctionCall = {
-      callee: "inner" as SymbolName,
+      callee: "swap" as SymbolName,
       location: {
         file_path,
-        line: 6,
+        line: 10,
         column: 5,
-        end_line: 6,
-        end_column: 11,
+        end_line: 10,
+        end_column: 17,
       },
-      arguments: [],
+      arguments: [
+        {
+          value: "&mut x",
+          type: "&mut i32",
+        },
+        {
+          value: "&mut y",
+          type: "&mut i32",
+        }
+      ],
       is_async_call: false,
     };
 
-    const outer_scope_id = function_scope({
-      file_path,
-      line: 1,
-      column: 1,
-      end_line: 8,
-      end_column: 1,
-    });
-
-    const inner_scope_id = function_scope({
-      file_path,
-      line: 3,
-      column: 5,
-      end_line: 5,
-      end_column: 20,
-    });
-
     const context: FileResolutionContext = {
       scope_tree: {
-        root_id: outer_scope_id,
-        file_path,
-        nodes: new Map([
-          [outer_scope_id, {
-            id: outer_scope_id,
-            type: "function",
-            parent_id: null,
-            name: null,
-            location: {
-              file_path,
-              line: 1,
-              column: 1,
-              end_line: 10,
-              end_column: 1,
-            },
-            child_ids: [inner_scope_id],
-          }],
-          [inner_scope_id, {
-            id: inner_scope_id,
-            type: "function",
-            parent_id: outer_scope_id,
-            name: "inner" as ScopeName,
-            location: {
-              file_path,
-              line: 3,
-              column: 5,
-              end_line: 5,
-              end_column: 20,
-            },
-            child_ids: [],
-          }],
-        ]),
-        scope_depths: new Map([
-          [outer_scope_id, 0],
-          [inner_scope_id, 1],
-        ]),
-      } as ScopeTree,
+        root: {
+          id: function_scope({
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 15,
+            end_column: 1,
+          }),
+          type: "function",
+          parent_id: undefined
+        },
+        nodes: new Map(),
+        get_symbols_in_scope: () => new Map(),
+        get_parent_scope: () => undefined,
+      } as unknown as ScopeTree,
       imports_by_file: new Map(),
       exports_by_file: new Map(),
-      language: "python",
+      language: "rust",
       definitions_by_file: new Map([
         [file_path, {
           functions: new Map([
-            [function_symbol("inner" as SymbolName, inner_func.location), inner_func],
+            [function_symbol("swap" as SymbolName, generic_func.location), generic_func],
           ]),
           classes: new Map(),
           methods: new Map(),
@@ -554,44 +454,45 @@ describe("Python function resolution", () => {
 
     const resolved = resolve_function_call(call, context);
     expect(resolved).toBeDefined();
-    expect(resolved?.name).toBe("inner");
+    expect(resolved?.name).toBe("swap");
+    expect(resolved?.type_parameters).toContain("T");
   });
 
-  it("should resolve lambda functions assigned to variables", () => {
-    const file_path: FilePath = "lambdas.py" as FilePath;
+  it("should resolve closures assigned to variables", () => {
+    const file_path: FilePath = "src/closures.rs" as FilePath;
 
-    const lambda_func: FunctionDefinition = {
-      name: "square" as SymbolName, // Variable name holding the lambda
+    const closure_func: FunctionDefinition = {
+      name: "add_one" as SymbolName, // Variable holding the closure
       location: {
         file_path,
-        line: 2,
+        line: 3,
         column: 10,
-        end_line: 2,
-        end_column: 25,
+        end_line: 3,
+        end_column: 30,
       },
       parameters: [{
         name: "x" as SymbolName,
-        type: undefined,
+        type: "i32",
         is_optional: false,
         is_rest: false,
       }],
       is_async: false,
       is_generator: false,
-      return_type: undefined,
+      return_type: "i32",
     };
 
     const call: FunctionCall = {
-      callee: "square" as SymbolName,
+      callee: "add_one" as SymbolName,
       location: {
         file_path,
         line: 5,
         column: 10,
         end_line: 5,
-        end_column: 17,
+        end_column: 18,
       },
       arguments: [{
         value: "5",
-        type: "int",
+        type: "i32",
       }],
       is_async_call: false,
     };
@@ -615,11 +516,11 @@ describe("Python function resolution", () => {
       } as unknown as ScopeTree,
       imports_by_file: new Map(),
       exports_by_file: new Map(),
-      language: "python",
+      language: "rust",
       definitions_by_file: new Map([
         [file_path, {
           functions: new Map([
-            [function_symbol("square" as SymbolName, lambda_func.location), lambda_func],
+            [function_symbol("add_one" as SymbolName, closure_func.location), closure_func],
           ]),
           classes: new Map(),
           methods: new Map(),
@@ -629,6 +530,78 @@ describe("Python function resolution", () => {
 
     const resolved = resolve_function_call(call, context);
     expect(resolved).toBeDefined();
-    expect(resolved?.name).toBe("square");
+    expect(resolved?.name).toBe("add_one");
+  });
+
+  it("should resolve macro invocations (special case)", () => {
+    const file_path: FilePath = "src/macros.rs" as FilePath;
+
+    // Macro that expands to a function
+    const macro_func: FunctionDefinition = {
+      name: "my_macro" as SymbolName,
+      location: {
+        file_path,
+        line: 1,
+        column: 1,
+        end_line: 3,
+        end_column: 2,
+      },
+      parameters: [],
+      is_async: false,
+      is_generator: false,
+      return_type: undefined,
+      is_macro: true,
+    };
+
+    // Macro invocation with !
+    const call: FunctionCall = {
+      callee: "my_macro" as SymbolName,
+      location: {
+        file_path,
+        line: 10,
+        column: 5,
+        end_line: 10,
+        end_column: 15,
+      },
+      arguments: [],
+      is_async_call: false,
+      is_macro_call: true,
+    };
+
+    const context: FileResolutionContext = {
+      scope_tree: {
+        root: {
+          id: function_scope({
+            file_path,
+            line: 1,
+            column: 1,
+            end_line: 15,
+            end_column: 1,
+          }),
+          type: "function",
+          parent_id: undefined
+        },
+        nodes: new Map(),
+        get_symbols_in_scope: () => new Map(),
+        get_parent_scope: () => undefined,
+      } as unknown as ScopeTree,
+      imports_by_file: new Map(),
+      exports_by_file: new Map(),
+      language: "rust",
+      definitions_by_file: new Map([
+        [file_path, {
+          functions: new Map([
+            [function_symbol("my_macro" as SymbolName, macro_func.location), macro_func],
+          ]),
+          classes: new Map(),
+          methods: new Map(),
+        }],
+      ]),
+    };
+
+    const resolved = resolve_function_call(call, context);
+    expect(resolved).toBeDefined();
+    expect(resolved?.name).toBe("my_macro");
+    expect(resolved?.is_macro).toBe(true);
   });
 });

@@ -23,31 +23,36 @@ import {
   class_scope,
   block_scope,
 } from "@ariadnejs/types";
-import { FileResolutionContext } from "./symbol_resolution";
+import { FileResolutionContext } from "../symbol_resolution";
 
 describe("TypeScript function resolution", () => {
   it("should resolve hoisted function declarations", () => {
     const file_path: FilePath = "src/hoisting.ts" as FilePath;
 
+    const func_location = {
+      file_path,
+      line: 10,
+      column: 1,
+      end_line: 12,
+      end_column: 2,
+    };
+    const func_name = "hoistedFunc" as SymbolName;
     // Function defined after the call (hoisting)
     const hoisted_func: FunctionDefinition = {
-      name: "hoistedFunc" as SymbolName,
-      location: {
-        file_path,
-        line: 10,
-        column: 1,
-        end_line: 12,
-        end_column: 2,
+      name: func_name,
+      location: func_location,
+      signature: {
+        parameters: [],
+        return_type: undefined,
+        is_async: false,
+        is_generator: false,
       },
-      parameters: [],
-      is_async: false,
-      is_generator: false,
-      return_type: undefined,
+      symbol: function_symbol(func_name, func_location),
     };
 
     // Call before definition
     const call: FunctionCall = {
-      callee: "hoistedFunc" as SymbolName,
+      callee: func_name,
       location: {
         file_path,
         line: 5,
@@ -56,6 +61,7 @@ describe("TypeScript function resolution", () => {
         end_column: 15,
       },
       arguments: [],
+      symbol: function_symbol(func_name, func_location),
       is_async_call: false,
     };
 
