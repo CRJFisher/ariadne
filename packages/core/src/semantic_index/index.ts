@@ -7,4 +7,3 @@
  */
 
 export { build_semantic_index } from './semantic_index';
-export { load_query } from './query_loader';
