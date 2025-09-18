@@ -19,6 +19,8 @@ export enum SemanticCategory {
   TYPE = "type",
   ASSIGNMENT = "assignment",
   RETURN = "return",
+  DECORATOR = "decorator",
+  MODIFIER = "modifier",
 }
 
 /**
@@ -32,6 +34,9 @@ export enum SemanticEntity {
   METHOD = "method",
   CONSTRUCTOR = "constructor",
   BLOCK = "block",
+  INTERFACE = "interface",
+  ENUM = "enum",
+  NAMESPACE = "namespace",
 
   // Definitions
   VARIABLE = "variable",
@@ -39,20 +44,29 @@ export enum SemanticEntity {
   PARAMETER = "parameter",
   FIELD = "field",
   PROPERTY = "property",
+  TYPE_PARAMETER = "type_parameter",
+  ENUM_MEMBER = "enum_member",
 
   // Types
-  INTERFACE = "interface",
-  ENUM = "enum",
+  TYPE = "type",
   TYPE_ALIAS = "type_alias",
+  TYPE_ANNOTATION = "type_annotation",
+  TYPE_PARAMETERS = "type_parameters",
+  TYPE_ASSERTION = "type_assertion",
 
   // References
   CALL = "call",
   MEMBER_ACCESS = "member_access",
   TYPE_REFERENCE = "type_reference",
+  TYPEOF = "typeof",
 
   // Special
   THIS = "this",
   SUPER = "super",
+
+  // Modifiers
+  ACCESS_MODIFIER = "access_modifier",
+  READONLY_MODIFIER = "readonly_modifier",
 }
 
 /**
@@ -97,11 +111,14 @@ export interface CaptureContext {
   source_module?: string;
   import_alias?: string;
   is_side_effect_import?: boolean;
+  import_kind?: string;
   skip?: boolean;
 
   // For exports
   export_alias?: string;
   export_source?: string;
+  export_type?: string;
+  export_kind?: string;
   is_namespace_export?: boolean;
   namespace_alias?: string;
   is_reexport?: boolean;
@@ -118,16 +135,54 @@ export interface CaptureContext {
   // For method calls
   receiver_node?: SyntaxNode;
   property_chain?: string[];
+  is_generic_call?: boolean;
+  type_arguments?: string;
 
   // For constructor calls
   construct_target?: SyntaxNode;
+  is_generic_constructor?: boolean;
 
   // For class inheritance
   extends_class?: string;
+  implements_interface?: string;
   implements_interfaces?: string[];
 
   // For returns
   containing_function_node?: SyntaxNode;
+
+  // For TypeScript type system
+  annotation_type?: string;
+  annotation_kind?: string;
+  type_params?: string;
+  params_for?: string;
+  constraint_type?: string;
+  type_name?: string;
+  is_generic?: boolean;
+  cast_to_type?: string;
+  assertion_kind?: string;
+  typeof_target?: string;
+
+  // For decorators
+  decorator_name?: string;
+  decorates?: string;
+
+  // For modifiers
+  modifier?: string;
+  applies_to?: string;
+  is_property?: boolean;
+
+  // For method/function metadata
+  method_name?: string;
+  return_type?: string;
+  type_parameters?: string;
+  access_modifier?: string;
+  is_static?: boolean;
+  is_async?: boolean;
+
+  // For parameter properties
+  is_parameter_property?: boolean;
+  property_type?: string;
+  param_type?: string;
 }
 
 /**

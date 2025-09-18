@@ -6,6 +6,7 @@ import type { QueryCapture } from "tree-sitter";
 import type { Language, FilePath } from "@ariadnejs/types";
 import type { NormalizedCapture, LanguageCaptureConfig } from "./capture_types";
 import { JAVASCRIPT_CAPTURE_CONFIG } from "./language_configs/javascript";
+import { TYPESCRIPT_CAPTURE_CONFIG } from "./language_configs/typescript";
 import { node_to_location } from "../ast/node_utils";
 
 /**
@@ -13,7 +14,7 @@ import { node_to_location } from "../ast/node_utils";
  */
 const LANGUAGE_CONFIGS: Map<Language, LanguageCaptureConfig> = new Map([
   ["javascript", JAVASCRIPT_CAPTURE_CONFIG],
-  ["typescript", JAVASCRIPT_CAPTURE_CONFIG], // TypeScript uses same config
+  ["typescript", TYPESCRIPT_CAPTURE_CONFIG],
   // TODO: Add Python config
   // ["python", PYTHON_CAPTURE_CONFIG],
   // TODO: Add Rust config
@@ -70,6 +71,8 @@ export function group_captures_by_category(captures: NormalizedCapture[]): {
   types: NormalizedCapture[];
   assignments: NormalizedCapture[];
   returns: NormalizedCapture[];
+  decorators: NormalizedCapture[];
+  modifiers: NormalizedCapture[];
 } {
   const grouped = {
     scopes: [] as NormalizedCapture[],
@@ -80,6 +83,8 @@ export function group_captures_by_category(captures: NormalizedCapture[]): {
     types: [] as NormalizedCapture[],
     assignments: [] as NormalizedCapture[],
     returns: [] as NormalizedCapture[],
+    decorators: [] as NormalizedCapture[],
+    modifiers: [] as NormalizedCapture[],
   };
 
   for (const capture of captures) {
@@ -107,6 +112,12 @@ export function group_captures_by_category(captures: NormalizedCapture[]): {
         break;
       case "return":
         grouped.returns.push(capture);
+        break;
+      case "decorator":
+        grouped.decorators.push(capture);
+        break;
+      case "modifier":
+        grouped.modifiers.push(capture);
         break;
     }
   }

@@ -25,11 +25,6 @@ export function load_query(language: Language): string {
   try {
     return readFileSync(queryPath, 'utf-8');
   } catch (error) {
-    // For TypeScript, fall back to JavaScript query
-    if (language === 'typescript') {
-      const jsPath = join(__dirname, 'queries', 'javascript.scm');
-      return readFileSync(jsPath, 'utf-8');
-    }
     throw new Error(`No semantic index query found for language: ${language}`);
   }
 }
