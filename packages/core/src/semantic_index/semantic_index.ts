@@ -12,34 +12,29 @@ import type {
   SymbolName,
 } from "@ariadnejs/types";
 
+import { Query } from "tree-sitter";
 import { build_scope_tree } from "./scope_tree";
 import { process_definitions } from "./definitions";
 import { process_imports } from "./imports";
 import { process_exports } from "./exports";
 import { process_references } from "./references";
-import type { SemanticCapture } from "./types";
+import { normalize_captures, group_captures_by_category } from "./capture_normalizer";
+import { LANGUAGE_TO_TREESITTER_LANG, load_query } from "./query_loader";
 
 /**
  * Build semantic index for a file
  */
 export function build_semantic_index(
-  parser_language: any, // Parser.Language type
-  query_text: string,
   file_path: FilePath,
   tree: Tree,
   lang: Language
 ): SemanticIndex {
-  // Import Query constructor from tree-sitter
-  const Query = require("tree-sitter").Query;
-  const query = new Query(parser_language, query_text);
-  const captures = query.captures(tree.rootNode);
-
-  // Parse captures into semantic categories
-  const semantic_captures = parse_captures(captures);
+  // Get raw captures from tree-sitter
+  const grouped = query_tree_and_parse_captures(lang, tree);
 
   // Phase 1: Build scope tree
   const { root_scope, scopes } = build_scope_tree(
-    semantic_captures.scopes,
+    grouped.scopes,
     tree,
     file_path,
     lang
@@ -47,7 +42,7 @@ export function build_semantic_index(
 
   // Phase 2: Process definitions
   const { symbols, symbols_by_name } = process_definitions(
-    semantic_captures.definitions,
+    grouped.definitions,
     root_scope,
     scopes,
     file_path
@@ -55,7 +50,7 @@ export function build_semantic_index(
 
   // Phase 3: Process imports
   const imports = process_imports(
-    semantic_captures.imports,
+    grouped.imports,
     root_scope,
     symbols,
     file_path
@@ -63,7 +58,7 @@ export function build_semantic_index(
 
   // Phase 4: Process exports
   const exports = process_exports(
-    semantic_captures.exports,
+    grouped.exports,
     root_scope,
     symbols,
     file_path
@@ -71,18 +66,18 @@ export function build_semantic_index(
 
   // Phase 5: Process references with enhanced context
   const unresolved_references = process_references(
-    semantic_captures.references,
+    grouped.references,
     root_scope,
     scopes,
     file_path,
-    semantic_captures.assignments,
-    semantic_captures.methods,
-    semantic_captures.returns
+    grouped.assignments,
+    grouped.types,
+    grouped.returns
   );
 
   // Process class inheritance and static modifiers
   process_class_metadata(
-    semantic_captures.classes,
+    grouped.types,
     symbols,
     file_path
   );
@@ -104,13 +99,13 @@ export function build_semantic_index(
  * Process class metadata (inheritance, static members)
  */
 function process_class_metadata(
-  class_captures: SemanticCapture[],
+  type_captures: import("./capture_types").NormalizedCapture[],
   symbols: Map<SymbolId, SymbolDefinition>,
   _file_path: FilePath
 ): void {
-  // Find class definitions and their extends relationships
-  for (const capture of class_captures) {
-    if (capture.subcategory === "extends") {
+  // Find class inheritance relationships
+  for (const capture of type_captures) {
+    if (capture.context?.extends_class) {
       // Find the associated class definition
       const class_node = capture.node.parent?.parent; // class_heritage -> class_declaration
       if (class_node) {
@@ -120,7 +115,7 @@ function process_class_metadata(
           // Find the class symbol and add extends information
           for (const [, symbol] of symbols) {
             if (symbol.name === class_name && symbol.kind === "class") {
-              (symbol as any).extends_class = capture.text as SymbolName;
+              (symbol as any).extends_class = capture.context.extends_class as SymbolName;
               break;
             }
           }
@@ -131,85 +126,18 @@ function process_class_metadata(
 }
 
 /**
- * Parse captures into semantic categories
+ * Query tree and parse captures into normalized semantic categories
+ * Returns grouped normalized captures for testing and use
  */
-function parse_captures(captures: QueryCapture[]): {
-  scopes: SemanticCapture[];
-  definitions: SemanticCapture[];
-  references: SemanticCapture[];
-  imports: SemanticCapture[];
-  exports: SemanticCapture[];
-  types: SemanticCapture[];
-  assignments: SemanticCapture[];
-  classes: SemanticCapture[];
-  methods: SemanticCapture[];
-  returns: SemanticCapture[];
-} {
-  const result = {
-    scopes: [] as SemanticCapture[],
-    definitions: [] as SemanticCapture[],
-    references: [] as SemanticCapture[],
-    imports: [] as SemanticCapture[],
-    exports: [] as SemanticCapture[],
-    types: [] as SemanticCapture[],
-    assignments: [] as SemanticCapture[],
-    classes: [] as SemanticCapture[],
-    methods: [] as SemanticCapture[],
-    returns: [] as SemanticCapture[],
-  };
+export function query_tree_and_parse_captures(lang: Language, tree: Tree) {
+  const query_string = load_query(lang);
+  const query = new Query(LANGUAGE_TO_TREESITTER_LANG.get(lang), query_string);
+  const captures = query.captures(tree.rootNode);
 
-  for (const capture of captures) {
-    const parts = capture.name.split(".");
-    const category = parts[0];
-    const subcategory = parts[1];
-    const detail = parts[2];
+  // Normalize captures to common semantic format
+  const normalized = normalize_captures(captures, lang);
 
-    const semantic: SemanticCapture = {
-      name: capture.name,
-      node: capture.node,
-      text: capture.node.text,
-      category: category as any,
-      subcategory,
-      detail,
-    };
-
-    switch (category) {
-      case "scope":
-        result.scopes.push(semantic);
-        break;
-      case "def":
-        result.definitions.push(semantic);
-        break;
-      case "ref":
-        result.references.push(semantic);
-        break;
-      case "import":
-        result.imports.push(semantic);
-        break;
-      case "export":
-        result.exports.push(semantic);
-        break;
-      case "type":
-        result.types.push(semantic);
-        break;
-      case "assign":
-      case "assignment":
-        result.assignments.push(semantic);
-        break;
-      case "class":
-        result.classes.push(semantic);
-        break;
-      case "method":
-      case "method_call":
-      case "constructor":
-      case "constructor_call":
-        result.methods.push(semantic);
-        break;
-      case "return":
-        result.returns.push(semantic);
-        break;
-    }
-  }
-
-  return result;
+  // Group by category and return
+  return group_captures_by_category(normalized);
 }
+

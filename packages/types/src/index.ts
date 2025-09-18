@@ -47,7 +47,7 @@ export * from "./classes";
 export * from "./types";
 
 // Export from symbols
-export * from "./symbols";
+export * from "./semantic_index";
 
 // Export from scopes
 export * from "./scopes";

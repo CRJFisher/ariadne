@@ -14,13 +14,13 @@ import type {
 } from "@ariadnejs/types";
 import { variable_symbol } from "@ariadnejs/types";
 import { node_to_location } from "../../ast/node_utils";
-import type { SemanticCapture } from "../types";
+import type { NormalizedCapture } from "../capture_types";
 
 /**
  * Process imports
  */
 export function process_imports(
-  import_captures: SemanticCapture[],
+  import_captures: NormalizedCapture[],
   root_scope: LexicalScope,
   symbols: Map<SymbolId, SymbolDefinition>,
   file_path: FilePath
@@ -29,21 +29,22 @@ export function process_imports(
 
   // Group captures by import statement
   for (const capture of import_captures) {
-    // Find source from parent import statement
-    const import_stmt = capture.node.parent;
-    const source_node = import_stmt?.childForFieldName?.("source");
-    const source = source_node ? source_node.text.slice(1, -1) : "";
+    // Get source from normalized capture context
+    const source = capture.context?.source_module || "";
     const location = node_to_location(capture.node, file_path);
 
-    // Create simple named import for now
-    // TODO: Detect and handle default, namespace, and side-effect imports
+    // Determine import kind based on modifiers
+    const kind = capture.modifiers.is_default ? "default" :
+                 capture.modifiers.is_namespace ? "namespace" : "named";
+
+    // Create import based on kind
     const import_item: NamedImport = {
-      kind: "named",
+      kind: "named" as const,
       source: source as FilePath,
       imports: [
         {
           name: capture.text as SymbolName,
-          is_type_only: false,
+          is_type_only: capture.modifiers.is_type_only || false,
         },
       ],
       resolved_exports: new Map(),

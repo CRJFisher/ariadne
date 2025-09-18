@@ -82,18 +82,7 @@
 (class_declaration
   name: (identifier) @def.class
   (class_heritage
-    (extends_clause
-      (identifier) @class.extends
-    )
-  )?
-) @class.with_inheritance
-
-(class
-  name: (identifier) @def.class
-  (class_heritage
-    (extends_clause
-      (identifier) @class.extends
-    )
+    (identifier) @class.extends
   )?
 )
 
@@ -145,12 +134,8 @@
 
 ; Loop variables
 (for_in_statement
-  left: (identifier) @def.loop_var
-)
-
-(for_in_statement
-  left: (variable_declarator
-    name: (identifier) @def.loop_var
+  left: (_
+    (identifier) @def.loop_var
   )
 )
 

@@ -14,13 +14,13 @@ import type {
 } from "@ariadnejs/types";
 import { variable_symbol } from "@ariadnejs/types";
 import { node_to_location } from "../../ast/node_utils";
-import type { SemanticCapture } from "../types";
+import type { NormalizedCapture } from "../capture_types";
 
 /**
  * Process exports
  */
 export function process_exports(
-  export_captures: SemanticCapture[],
+  export_captures: NormalizedCapture[],
   root_scope: LexicalScope,
   symbols: Map<SymbolId, SymbolDefinition>,
   file_path: FilePath
@@ -36,23 +36,33 @@ export function process_exports(
     const symbol_id =
       existing_symbol?.id || variable_symbol(capture.text, location);
 
-    // Create simple named export for now
-    // TODO: Detect and handle default, namespace, and re-exports
-    const export_item: NamedExport = {
-      kind: "named",
-      symbol: symbol_id,
-      symbol_name,
-      exports: [
-        {
-          local_name: symbol_name,
-          is_type_only: false,
-        },
-      ],
-      location,
-      modifiers: [],
-      language: "javascript",
-      node_type: "export_statement",
-    };
+    // Check if this is a default export from normalized capture
+    const is_default = capture.modifiers?.is_default || false;
+
+    // Create export based on type
+    const export_item: Export = is_default
+      ? {
+          kind: "default",
+          symbol: symbol_id,
+          location,
+          language: "javascript",
+          node_type: "export_statement",
+        }
+      : {
+          kind: "named",
+          symbol: symbol_id,
+          symbol_name,
+          exports: [
+            {
+              local_name: symbol_name,
+              is_type_only: false,
+            },
+          ],
+          location,
+          modifiers: [],
+          language: "javascript",
+          node_type: "export_statement",
+        };
 
     exports.push(export_item);
 

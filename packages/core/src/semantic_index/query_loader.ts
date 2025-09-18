@@ -1,6 +1,20 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import type { Language } from '@ariadnejs/types';
+import JavaScript from 'tree-sitter-javascript';
+import Python from 'tree-sitter-python';
+import Rust from 'tree-sitter-rust';
+import TypeScript from 'tree-sitter-typescript';
+
+/**
+ * Language to tree-sitter parser mapping
+ */
+export const LANGUAGE_TO_TREESITTER_LANG = new Map([
+  ['javascript', JavaScript],
+  ['typescript', TypeScript.tsx],
+  ['python', Python],
+  ['rust', Rust],
+]);
 
 /**
  * Load a tree-sitter query for a specific language

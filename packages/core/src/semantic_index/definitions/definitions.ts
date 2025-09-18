@@ -21,13 +21,14 @@ import {
 } from "@ariadnejs/types";
 import { node_to_location } from "../../ast/node_utils";
 import { find_containing_scope } from "../scope_tree";
-import type { SemanticCapture } from "../types";
+import type { NormalizedCapture } from "../capture_types";
+import { SemanticEntity } from "../capture_types";
 
 /**
  * Process symbol definitions
  */
 export function process_definitions(
-  def_captures: SemanticCapture[],
+  def_captures: NormalizedCapture[],
   root_scope: LexicalScope,
   scopes: Map<ScopeId, LexicalScope>,
   file_path: FilePath
@@ -41,8 +42,8 @@ export function process_definitions(
   for (const capture of def_captures) {
     const scope = find_containing_scope(capture.node, root_scope, scopes, file_path);
     const name = capture.text as SymbolName;
-    const kind = get_symbol_kind(capture.subcategory || "");
-    const is_hoisted = check_is_hoisted(kind, capture);
+    const kind = map_entity_to_symbol_kind(capture.entity);
+    const is_hoisted = check_is_hoisted_entity(capture.entity, capture.modifiers);
     const def_scope = is_hoisted ? get_hoist_target(scope, kind, scopes) : scope;
     const location = node_to_location(capture.node, file_path);
 
@@ -77,33 +78,31 @@ export function process_definitions(
 }
 
 /**
- * Get symbol kind from capture subcategory
+ * Map semantic entity to symbol kind
  */
-export function get_symbol_kind(subcategory: string): SymbolKind {
-  switch (subcategory) {
-    case "function":
+export function map_entity_to_symbol_kind(entity: SemanticEntity): SymbolKind {
+  switch (entity) {
+    case SemanticEntity.FUNCTION:
       return "function";
-    case "class":
+    case SemanticEntity.CLASS:
       return "class";
-    case "method":
-    case "constructor":
-    case "accessor":
+    case SemanticEntity.METHOD:
+    case SemanticEntity.CONSTRUCTOR:
       return "method";
-    case "field":
-    case "param":
-    case "catch_param":
+    case SemanticEntity.FIELD:
+    case SemanticEntity.PROPERTY:
+      return "property" as SymbolKind;
+    case SemanticEntity.PARAMETER:
       return "parameter";
-    case "const":
+    case SemanticEntity.CONSTANT:
       return "constant";
-    case "let":
-    case "var":
-    case "loop_var":
+    case SemanticEntity.VARIABLE:
       return "variable";
-    case "interface":
+    case SemanticEntity.INTERFACE:
       return "interface";
-    case "enum":
+    case SemanticEntity.ENUM:
       return "enum";
-    case "type_alias":
+    case SemanticEntity.TYPE_ALIAS:
       return "type_alias";
     default:
       return "variable";
@@ -111,13 +110,13 @@ export function get_symbol_kind(subcategory: string): SymbolKind {
 }
 
 /**
- * Check if symbol is hoisted
+ * Check if entity is hoisted
  */
-function check_is_hoisted(kind: SymbolKind, capture: SemanticCapture): boolean {
+function check_is_hoisted_entity(entity: SemanticEntity, modifiers: any): boolean {
   return (
-    kind === "function" ||
-    kind === "class" ||
-    (kind === "variable" && capture.subcategory === "var")
+    entity === SemanticEntity.FUNCTION ||
+    entity === SemanticEntity.CLASS ||
+    entity === SemanticEntity.VARIABLE // var declarations are hoisted in JS
   );
 }
 

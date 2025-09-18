@@ -19,14 +19,37 @@ import {
   block_scope,
 } from "@ariadnejs/types";
 import { node_to_location } from "../../ast/node_utils";
-import { location_contains } from "@ariadnejs/types/src/common";
-import type { SemanticCapture } from "../types";
+import { location_contains } from "@ariadnejs/types";
+import type { NormalizedCapture } from "../capture_types";
+import { SemanticEntity } from "../capture_types";
+
+/**
+ * Map semantic entity to scope type
+ */
+function map_entity_to_scope_type(entity: SemanticEntity): ScopeType {
+  switch (entity) {
+    case SemanticEntity.MODULE:
+      return "module";
+    case SemanticEntity.CLASS:
+      return "class";
+    case SemanticEntity.FUNCTION:
+      return "function";
+    case SemanticEntity.METHOD:
+      return "method";
+    case SemanticEntity.CONSTRUCTOR:
+      return "constructor";
+    case SemanticEntity.BLOCK:
+      return "block";
+    default:
+      return "block";
+  }
+}
 
 /**
  * Build hierarchical scope tree from captures
  */
 export function build_scope_tree(
-  scope_captures: SemanticCapture[],
+  scope_captures: NormalizedCapture[],
   tree: Tree,
   file_path: FilePath,
   _language: Language
@@ -61,10 +84,10 @@ export function build_scope_tree(
 
   // Process each scope capture
   for (const capture of sorted_captures) {
-    if (capture.subcategory === "module") continue; // Skip root
+    if (capture.entity === SemanticEntity.MODULE) continue; // Skip root
 
     const location = node_to_location(capture.node, file_path);
-    const scope_type = capture.subcategory as ScopeType;
+    const scope_type = map_entity_to_scope_type(capture.entity);
 
     // Create scope ID based on type
     let scope_id: ScopeId;
