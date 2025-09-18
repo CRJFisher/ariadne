@@ -10,10 +10,10 @@ import type {
   SymbolId,
   SymbolName,
   Location,
-  SemanticIndex,
   SymbolReference,
   TypeId,
 } from "@ariadnejs/types";
+import { SemanticIndex } from "../semantic_index/semantic_index";
 
 // ============================================================================
 // Resolution Maps - Core output types

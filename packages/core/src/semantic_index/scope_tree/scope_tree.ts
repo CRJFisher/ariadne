@@ -52,16 +52,18 @@ export function build_scope_tree(
   scope_captures: NormalizedCapture[],
   tree: Tree,
   file_path: FilePath,
-  _language: Language
+  language: Language
 ): {
   root_scope: LexicalScope;
   scopes: Map<ScopeId, LexicalScope>;
 } {
   // Sort by start position to process in order
-  const sorted_captures = [...scope_captures].sort(
-    (a, b) => (a.node_location.line * 10000 + a.node_location.column) -
-             (b.node_location.line * 10000 + b.node_location.column)
-  );
+  const sorted_captures = [...scope_captures].sort((a, b) => {
+    if (a.node_location.line !== b.node_location.line) {
+      return a.node_location.line - b.node_location.line;
+    }
+    return a.node_location.column - b.node_location.column;
+  });
 
   const scopes = new Map<ScopeId, LexicalScope>();
 

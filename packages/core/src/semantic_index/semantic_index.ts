@@ -6,12 +6,13 @@ import type { Tree } from "tree-sitter";
 import type {
   FilePath,
   Language,
-  SemanticIndex,
   SymbolId,
   SymbolDefinition,
   SymbolName,
   ScopeId,
   LexicalScope,
+  Import,
+  Export,
 } from "@ariadnejs/types";
 
 import { Query } from "tree-sitter";
@@ -26,6 +27,65 @@ import {
 } from "./capture_normalizer";
 import { LANGUAGE_TO_TREESITTER_LANG, load_query } from "./query_loader";
 import { NormalizedCapture } from "./capture_types";
+
+
+/**
+ * Complete semantic index for a file
+ * Core data structure for symbol resolution and call chain analysis
+ */
+export interface SemanticIndex {
+  /** File being indexed */
+  readonly file_path: FilePath;
+
+  /** Language for language-specific resolution */
+  readonly language: Language;
+
+  /** Root scope ID (module/global scope) */
+  readonly root_scope_id: ScopeId;
+
+  /** All scopes in the file */
+  readonly scopes: ReadonlyMap<ScopeId, LexicalScope>;
+
+  /** All symbols in the file */
+  readonly symbols: ReadonlyMap<SymbolId, SymbolDefinition>;
+
+  /** All processed references with specialized type information */
+  readonly references: any; // ProcessedReferences from the core package
+
+  /** Module imports */
+  readonly imports: readonly Import[];
+
+  /** Module exports */
+  readonly exports: readonly Export[];
+
+  /** Quick lookup: name -> symbols with that name */
+  readonly file_symbols_by_name: ReadonlyMap<
+    FilePath,
+    ReadonlyMap<SymbolName, SymbolId>
+  >;
+}
+
+/**
+ * Cross-file semantic index
+ * Aggregates multiple file indices for project-wide resolution
+ */
+export interface ProjectSemanticIndex {
+  /** All indexed files */
+  readonly files: ReadonlyMap<FilePath, SemanticIndex>;
+
+  /** Global symbol table (exported symbols only) */
+  readonly global_symbols: ReadonlyMap<SymbolId, SymbolDefinition>;
+
+  /** Module dependency graph */
+  readonly import_graph: ReadonlyMap<FilePath, readonly FilePath[]>;
+
+  /** Export graph (who exports what) */
+  readonly export_graph: ReadonlyMap<
+    FilePath,
+    ReadonlyMap<SymbolName, SymbolId>
+  >;
+}
+
 
 /**
  * Build semantic index for a file

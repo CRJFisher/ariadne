@@ -12,7 +12,6 @@ import type {
   Location,
   SymbolId,
   SymbolReference,
-  SemanticIndex,
   FilePath,
   SymbolName,
   TypeId,
@@ -25,6 +24,7 @@ import type {
   TypeResolutionMap,
   MethodResolutionMap,
 } from "./types";
+import { SemanticIndex } from "../semantic_index/semantic_index";
 
 /**
  * Main entry point for symbol resolution
