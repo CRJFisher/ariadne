@@ -10,6 +10,8 @@ import type {
   SymbolId,
   SymbolDefinition,
   SymbolName,
+  ScopeId,
+  LexicalScope,
 } from "@ariadnejs/types";
 
 import { Query } from "tree-sitter";
@@ -52,6 +54,9 @@ export function build_semantic_index(
     file_path
   );
 
+  // Build scope-to-symbol mapping for function/method/class scopes
+  const scope_to_symbol = build_scope_to_symbol_map(scopes, symbols);
+
   // Phase 3: Process imports
   const imports = process_imports(
     grouped.imports,
@@ -78,7 +83,8 @@ export function build_semantic_index(
     file_path,
     grouped.assignments,
     grouped.types,
-    grouped.returns
+    grouped.returns,
+    scope_to_symbol
   );
 
   // Process class inheritance and static modifiers
@@ -107,26 +113,53 @@ function process_class_metadata(
   // Find class inheritance relationships
   for (const capture of type_captures) {
     if (capture.context?.extends_class) {
-      // Find the associated class definition
-      const class_node = capture.node_location.parent?.parent; // class_heritage -> class_declaration
-      if (class_node) {
-        const class_name_node = class_node.childForFieldName?.("name");
-        if (class_name_node) {
-          const class_name = class_name_node.text;
-          // Find the class symbol and add extends information
-          for (const [, symbol] of symbols) {
-            if (symbol.name === class_name && symbol.kind === "class") {
-              symbols.set(symbol.id, {
-                ...symbol,
-                extends_class: capture.context.extends_class as SymbolName,
-              });
-              break;
-            }
-          }
+      // Find the class symbol at this location
+      for (const [, symbol] of symbols) {
+        if (
+          symbol.kind === "class" &&
+          symbol.location.line === capture.node_location.line &&
+          symbol.location.file_path === capture.node_location.file_path
+        ) {
+          symbols.set(symbol.id, {
+            ...symbol,
+            extends_class: capture.context.extends_class as SymbolName,
+          });
+          break;
         }
       }
     }
   }
+}
+
+/**
+ * Build mapping from scope IDs to their defining symbol IDs
+ * This allows us to find which symbol created a given scope
+ */
+function build_scope_to_symbol_map(
+  scopes: Map<ScopeId, LexicalScope>,
+  symbols: Map<SymbolId, SymbolDefinition>
+): Map<ScopeId, SymbolId> {
+  const scope_to_symbol = new Map<ScopeId, SymbolId>();
+
+  // For each symbol that creates a scope, find its scope
+  for (const [symbol_id, symbol] of symbols) {
+    if (symbol.kind === "function" || symbol.kind === "method" || symbol.kind === "class") {
+      // Find scope with matching location
+      for (const [scope_id, scope] of scopes) {
+        if (
+          scope.location.line === symbol.location.line &&
+          scope.location.column === symbol.location.column &&
+          scope.location.file_path === symbol.location.file_path &&
+          (scope.type === "function" || scope.type === "method" || scope.type === "constructor" || scope.type === "class")
+        ) {
+          scope_to_symbol.set(scope_id, symbol_id);
+          break;
+        }
+      }
+    }
+  }
+
+  return scope_to_symbol;
 }
 
 /**

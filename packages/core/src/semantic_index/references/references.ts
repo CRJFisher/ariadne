@@ -27,8 +27,9 @@ export function process_references(
   scopes: Map<ScopeId, LexicalScope>,
   file_path: FilePath,
   assignments?: NormalizedCapture[],
-  _type_captures?: NormalizedCapture[],
-  returns?: NormalizedCapture[]
+  type_captures?: NormalizedCapture[],
+  returns?: NormalizedCapture[],
+  scope_to_symbol?: Map<ScopeId, SymbolId>
 ): SymbolReference[] {
   const references: SymbolReference[] = [];
 
@@ -72,7 +73,7 @@ export function process_references(
         construct_target: context?.construct_target
           ? node_to_location(context.construct_target, file_path)
           : undefined,
-        containing_function: undefined, // TODO: Resolve function symbol ID
+        containing_function: get_containing_function(scope, scopes, scope_to_symbol),
         property_chain: context?.property_chain
           ? context.property_chain.map((p) => p as SymbolName)
           : undefined,
@@ -123,6 +124,37 @@ function build_return_map(
   }
 
   return map;
+}
+
+/**
+ * Get the containing function/method/constructor symbol for a reference
+ * Traverses up the scope chain to find the first callable scope
+ */
+function get_containing_function(
+  scope: LexicalScope,
+  scopes: Map<ScopeId, LexicalScope>,
+  scope_to_symbol?: Map<ScopeId, SymbolId>
+): SymbolId | undefined {
+  if (!scope_to_symbol) return undefined;
+
+  let current: LexicalScope | null = scope;
+
+  // Traverse up to find the first function/method/constructor scope
+  while (current) {
+    if (
+      current.type === "function" ||
+      current.type === "method" ||
+      current.type === "constructor"
+    ) {
+      // Found a callable scope, return its defining symbol
+      return scope_to_symbol.get(current.id);
+    }
+
+    // Move up to parent scope
+    current = current.parent_id ? scopes.get(current.parent_id) || null : null;
+  }
+
+  return undefined;
 }
 
 /**

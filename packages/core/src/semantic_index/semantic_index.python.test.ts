@@ -7,7 +7,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import Parser from "tree-sitter";
 import Python from "tree-sitter-python";
-import type { Language } from "@ariadnejs/types";
+import type { Language, FilePath } from "@ariadnejs/types";
 import { query_tree_and_parse_captures } from "./semantic_index";
 import { SemanticEntity } from "./capture_types";
 import { build_scope_tree } from "./scope_tree";
@@ -38,7 +38,7 @@ describe("Semantic Index - Python", () => {
         "utf8"
       );
       const tree = parser.parse(code);
-      const parsed_captures = query_tree_and_parse_captures("python", tree);
+      const parsed_captures = query_tree_and_parse_captures("python", tree, "test.py" as FilePath);
 
       // Build semantic index to get exports
       const { root_scope, scopes } = build_scope_tree(
