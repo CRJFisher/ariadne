@@ -96,7 +96,7 @@ export function build_semantic_index(
     root_scope_id: root_scope.id,
     scopes,
     symbols,
-    unresolved_references: references,
+    references,
     imports,
     exports,
     file_symbols_by_name,
@@ -143,14 +143,21 @@ function build_scope_to_symbol_map(
 
   // For each symbol that creates a scope, find its scope
   for (const [symbol_id, symbol] of symbols) {
-    if (symbol.kind === "function" || symbol.kind === "method" || symbol.kind === "class") {
+    if (
+      symbol.kind === "function" ||
+      symbol.kind === "method" ||
+      symbol.kind === "class"
+    ) {
       // Find scope with matching location
       for (const [scope_id, scope] of scopes) {
         if (
           scope.location.line === symbol.location.line &&
           scope.location.column === symbol.location.column &&
           scope.location.file_path === symbol.location.file_path &&
-          (scope.type === "function" || scope.type === "method" || scope.type === "constructor" || scope.type === "class")
+          (scope.type === "function" ||
+            scope.type === "method" ||
+            scope.type === "constructor" ||
+            scope.type === "class")
         ) {
           scope_to_symbol.set(scope_id, symbol_id);
           break;
@@ -166,7 +173,11 @@ function build_scope_to_symbol_map(
  * Query tree and parse captures into normalized semantic categories
  * Returns grouped normalized captures for testing and use
  */
-export function query_tree_and_parse_captures(lang: Language, tree: Tree, file_path: FilePath) {
+export function query_tree_and_parse_captures(
+  lang: Language,
+  tree: Tree,
+  file_path: FilePath
+) {
   const query_string = load_query(lang);
   const query = new Query(LANGUAGE_TO_TREESITTER_LANG.get(lang), query_string);
   const captures = query.captures(tree.rootNode);

@@ -60,8 +60,9 @@ export interface TypeIndex {
 
 /**
  * Type information for a variable at a specific position
+ * @deprecated Use TypeInfo from semantic_index.ts instead
  */
-export interface TypeInfo {
+export interface LegacyTypeInfo {
   readonly type_name: TypeName; // The type name (e.g., "string", "MyClass")
   readonly type_kind: TypeKind;
   readonly location: Location;

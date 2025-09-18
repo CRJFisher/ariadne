@@ -2,7 +2,7 @@ import { Location } from "./common";
 
 export type SymbolId = string & { __brand: "SymbolId" }; // This is the encoded version of the Symbol object
 export type SymbolName = string & { __brand: "SymbolName" }; // This is the local identifier of the symbol
-export type TypeId = string & { __brand: "TypeId" }; // Type identifier for type resolution
+// TypeId moved to type_id.ts for comprehensive type identification support
 export type TypeName = string & { __brand: "TypeName" }; // Type name
 
 type SymbolKind =

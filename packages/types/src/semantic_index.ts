@@ -10,6 +10,7 @@ import type { FilePath } from "./common";
 import type { SymbolId, SymbolName } from "./symbol";
 import type { ScopeId, ScopeType } from "./scopes";
 import type { Import, Export } from "./import_export";
+import type { TypeId } from "./type_id";
 
 /**
  * Symbol kind - essential for resolution rules
@@ -116,7 +117,24 @@ export interface SymbolDefinition {
 }
 
 /**
- * Symbol reference - tracks usage for call chains
+ * Type information for references
+ */
+export interface TypeInfo {
+  /** Type identifier */
+  readonly type_id: TypeId;
+
+  /** Human-readable type name */
+  readonly type_name: SymbolName;
+
+  /** How certain we are about this type */
+  readonly certainty: "declared" | "inferred" | "ambiguous";
+
+  /** Whether nullable */
+  readonly is_nullable?: boolean;
+}
+
+/**
+ * Symbol reference - tracks usage for call chains with rich type information
  */
 export interface SymbolReference {
   /** Reference location */
@@ -133,6 +151,30 @@ export interface SymbolReference {
 
   /** Additional context for resolution */
   readonly context?: ReferenceContext;
+
+  /** Type information at this reference */
+  readonly type_info?: TypeInfo;
+
+  /** For calls: what kind of call */
+  readonly call_type?: "function" | "method" | "constructor" | "super";
+
+  /** For assignments: type flow information */
+  readonly type_flow?: {
+    source_type?: TypeInfo;
+    target_type?: TypeInfo;
+    is_narrowing: boolean;
+    is_widening: boolean;
+  };
+
+  /** For returns: return type */
+  readonly return_type?: TypeInfo;
+
+  /** For member access: access details */
+  readonly member_access?: {
+    object_type?: TypeInfo;
+    access_type: "property" | "method" | "index";
+    is_optional_chain: boolean;
+  };
 }
 
 /**
@@ -178,8 +220,8 @@ export interface SemanticIndex {
   /** All symbols in the file */
   readonly symbols: ReadonlyMap<SymbolId, SymbolDefinition>;
 
-  /** Unresolved references (for cross-file resolution) */
-  readonly unresolved_references: readonly SymbolReference[];
+  /** All processed references with specialized type information */
+  readonly references: any; // ProcessedReferences from the core package
 
   /** Module imports */
   readonly imports: readonly Import[];
@@ -188,7 +230,10 @@ export interface SemanticIndex {
   readonly exports: readonly Export[];
 
   /** Quick lookup: name -> symbols with that name */
-  readonly file_symbols_by_name: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>;
+  readonly file_symbols_by_name: ReadonlyMap<
+    FilePath,
+    ReadonlyMap<SymbolName, SymbolId>
+  >;
 }
 
 /**

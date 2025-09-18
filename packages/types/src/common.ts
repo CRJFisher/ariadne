@@ -44,3 +44,17 @@ export function location_contains(
 }
 // File and module identifiers
 export type FilePath = string & { __brand: "FilePath" }; // Absolute or relative file path
+
+/**
+ * Branded type for location-based keys used in maps
+ * Format: "file_path:line:column:end_line:end_column"
+ */
+export type LocationKey = string & { __brand: "LocationKey" };
+
+/**
+ * Convert a Location to a unique string key for map lookups
+ * Includes all location fields to ensure uniqueness
+ */
+export function location_key(location: Location): LocationKey {
+  return `${location.file_path}:${location.line}:${location.column}:${location.end_line}:${location.end_column}` as LocationKey;
+}

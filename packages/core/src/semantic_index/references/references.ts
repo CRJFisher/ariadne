@@ -1,25 +1,28 @@
 /**
- * References - Process symbol references
+ * References - Main entry point for processing symbol references
+ *
  */
 
-import type { SyntaxNode } from "tree-sitter";
 import type {
   FilePath,
-  SymbolName,
   ScopeId,
   LexicalScope,
-  SymbolReference,
-  ReferenceType,
   SymbolId,
 } from "@ariadnejs/types";
-import { node_to_location } from "../../ast/node_utils";
-import { find_containing_scope } from "../scope_tree";
 import type { NormalizedCapture } from "../capture_types";
 import { SemanticEntity } from "../capture_types";
 
+// Import ONLY the processing functions
+import { process_call_references } from "./call_references/call_references";
+import { process_type_flow_references } from "./type_flow_references/type_flow_references";
+import { process_return_references } from "./return_references/return_references";
+import { process_member_access_references } from "./member_access_references/member_access_references";
+import { process_type_annotation_references } from "./type_annotation_references/type_annotation_references";
+import { build_type_annotation_map } from "./type_tracking/type_tracking";
+import type { ProcessedReferences } from "./reference_types";
+
 /**
- * Process references with enhanced context
- * Resolution requires cross-file type tracking and happens in a separate phase
+ * Process all references 
  */
 export function process_references(
   ref_captures: NormalizedCapture[],
@@ -30,150 +33,90 @@ export function process_references(
   type_captures?: NormalizedCapture[],
   returns?: NormalizedCapture[],
   scope_to_symbol?: Map<ScopeId, SymbolId>
-): SymbolReference[] {
-  const references: SymbolReference[] = [];
+): ProcessedReferences {
+  const result: ProcessedReferences = {
+    calls: [],
+    type_flows: [],
+    returns: [],
+    member_accesses: [],
+    type_annotations: [],
+  };
 
-  // Build context maps
-  const _assignment_map = build_assignment_map(assignments || []);
-  const _return_map = build_return_map(
-    returns || [],
-    root_scope,
-    scopes
+  // 1. Process type annotations (they're anchors for type inference)
+  if (type_captures && type_captures.length > 0) {
+    const type_annotations = process_type_annotation_references(
+      type_captures,
+      root_scope,
+      scopes,
+      file_path
+    );
+    (result as any).type_annotations = type_annotations;
+  }
+
+  // 2. Process call references
+  const call_captures = ref_captures.filter(c =>
+    c.entity === SemanticEntity.CALL ||
+    c.entity === SemanticEntity.SUPER
   );
 
-  for (const capture of ref_captures) {
-    const scope = find_containing_scope(
-      capture.node_location,
+  if (call_captures.length > 0) {
+    const calls = process_call_references(
+      call_captures,
       root_scope,
-      scopes
+      scopes,
+      file_path,
+      scope_to_symbol
     );
-    const name = capture.text as SymbolName;
-    const ref_type = get_reference_type_from_entity(capture.entity);
-    const location = capture.node_location;
-
-    // Use context from normalized capture
-    const context = capture.context;
-
-    // Create reference with context
-    const reference: SymbolReference = {
-      location,
-      type: ref_type,
-      scope_id: scope.id,
-      name,
-      context: {
-        receiver_location: context?.receiver_node
-          ? node_to_location(context.receiver_node, file_path)
-          : undefined,
-        assignment_source: context?.source_node
-          ? node_to_location(context.source_node, file_path)
-          : undefined,
-        assignment_target: context?.target_node
-          ? node_to_location(context.target_node, file_path)
-          : undefined,
-        construct_target: context?.construct_target
-          ? node_to_location(context.construct_target, file_path)
-          : undefined,
-        containing_function: get_containing_function(scope, scopes, scope_to_symbol),
-        property_chain: context?.property_chain
-          ? context.property_chain.map((p) => p as SymbolName)
-          : undefined,
-      },
-    };
-
-    references.push(reference);
+    (result as any).calls = calls;
   }
 
-  return references;
-}
+  // 3. Process type flow from assignments
+  if (assignments && assignments.length > 0) {
+    const type_map = type_captures
+      ? build_type_annotation_map(type_captures)
+      : new Map();
 
-/**
- * Build assignment map
- */
-function build_assignment_map(
-  assignments: NormalizedCapture[]
-): Map<string, NormalizedCapture> {
-  const map = new Map<string, NormalizedCapture>();
-
-  for (const capture of assignments) {
-    // Map by location as key
-    const key = `${capture.node_location.line}:${capture.node_location.column}`;
-    map.set(key, capture);
-  }
-
-  return map;
-}
-
-/**
- * Build return statement map
- */
-function build_return_map(
-  returns: NormalizedCapture[],
-  root_scope: LexicalScope,
-  scopes: Map<ScopeId, LexicalScope>
-): Map<string, ScopeId> {
-  const map = new Map<string, ScopeId>();
-
-  for (const capture of returns) {
-    const containing_scope = find_containing_scope(
-      capture.node_location,
+    const type_flows = process_type_flow_references(
+      assignments,
       root_scope,
-      scopes
+      scopes,
+      file_path,
+      type_map
     );
-    const key = `${capture.node_location.line}:${capture.node_location.column}`;
-    map.set(key, containing_scope.id);
+    (result as any).type_flows = type_flows;
   }
 
-  return map;
-}
-
-/**
- * Get the containing function/method/constructor symbol for a reference
- * Traverses up the scope chain to find the first callable scope
- */
-function get_containing_function(
-  scope: LexicalScope,
-  scopes: Map<ScopeId, LexicalScope>,
-  scope_to_symbol?: Map<ScopeId, SymbolId>
-): SymbolId | undefined {
-  if (!scope_to_symbol) return undefined;
-
-  let current: LexicalScope | null = scope;
-
-  // Traverse up to find the first function/method/constructor scope
-  while (current) {
-    if (
-      current.type === "function" ||
-      current.type === "method" ||
-      current.type === "constructor"
-    ) {
-      // Found a callable scope, return its defining symbol
-      return scope_to_symbol.get(current.id);
-    }
-
-    // Move up to parent scope
-    current = current.parent_id ? scopes.get(current.parent_id) || null : null;
+  // 4. Process return references
+  if (returns && returns.length > 0) {
+    const return_refs = process_return_references(
+      returns,
+      root_scope,
+      scopes,
+      file_path,
+      scope_to_symbol
+    );
+    (result as any).returns = return_refs;
   }
 
-  return undefined;
-}
+  // 5. Process member access references
+  const member_captures = ref_captures.filter(c =>
+    c.entity === SemanticEntity.MEMBER_ACCESS ||
+    c.entity === SemanticEntity.PROPERTY ||
+    c.entity === SemanticEntity.METHOD
+  );
 
-/**
- * Get reference type from entity
- */
-export function get_reference_type_from_entity(
-  entity: SemanticEntity
-): ReferenceType {
-  switch (entity) {
-    case SemanticEntity.CALL:
-      return "call";
-    case SemanticEntity.MEMBER_ACCESS:
-      return "member_access";
-    case SemanticEntity.TYPE_REFERENCE:
-      return "type";
-    case SemanticEntity.THIS:
-    case SemanticEntity.SUPER:
-    case SemanticEntity.VARIABLE:
-    default:
-      return "read";
+  if (member_captures.length > 0) {
+    const member_accesses = process_member_access_references(
+      member_captures,
+      root_scope,
+      scopes,
+      file_path
+    );
+    (result as any).member_accesses = member_accesses;
   }
+
+  // Note: Unprocessed references are intentionally not included
+  // as they don't have specialized type information
+
+  return result;
 }

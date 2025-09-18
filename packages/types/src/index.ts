@@ -26,6 +26,9 @@ export * from "./codegraph";
 // Export symbol utilities
 export * from "./symbol";
 
+// Export type identification system
+export * from "./type_id";
+
 // Export from query (no conflicts)
 export * from "./query";
 
@@ -53,3 +56,6 @@ export * from "./semantic_index";
 export * from "./scopes";
 export * from "./definitions";
 export * from "./errors";
+
+// Export TypeInfo from semantic_index (the new one with TypeId)
+export { type TypeInfo } from "./semantic_index";
