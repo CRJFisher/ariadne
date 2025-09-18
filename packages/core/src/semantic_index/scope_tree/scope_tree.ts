@@ -6,7 +6,6 @@ import type { SyntaxNode, Tree } from "tree-sitter";
 import type {
   FilePath,
   Language,
-  Location,
   ScopeId,
   ScopeType,
   LexicalScope,

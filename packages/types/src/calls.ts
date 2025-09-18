@@ -4,11 +4,9 @@
  */
 
 import { Location } from "./common";
-import { ClassName } from "./aliases";
-import { ModulePath } from "./import_export";
 import { SymbolId } from "./symbol";
 import { SymbolName } from "./symbol";
-import { SemanticNode, Resolution } from "./query";
+import { SemanticNode } from "./query";
 
 /** Name of the object receiving a method call */
 export type ReceiverName = string & { __brand: "ReceiverName" };

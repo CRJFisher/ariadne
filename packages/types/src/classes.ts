@@ -1,5 +1,6 @@
 import { Location } from "./common";
-import { FilePath, QualifiedName, TypeString } from "./aliases";
+import { QualifiedName, TypeString } from "./aliases";
+import { FilePath } from "./common";
 import { SymbolId } from "./symbol";
 
 /**
@@ -80,6 +81,9 @@ export interface ClassHierarchy {
   readonly method_overrides?: ReadonlyMap<SymbolId, ReadonlySet<SymbolId>>;
 
   // Lookup maps for efficient access patterns needed by resolvers
-  readonly classes_by_location?: ReadonlyMap<FilePath, ReadonlyMap<number, SymbolId>>; // file_path -> line_number -> class_symbol
+  readonly classes_by_location?: ReadonlyMap<
+    FilePath,
+    ReadonlyMap<number, SymbolId>
+  >; // file_path -> line_number -> class_symbol
   readonly classes_in_file?: ReadonlyMap<FilePath, ReadonlySet<SymbolId>>; // file_path -> set of class_symbols
 }

@@ -1,5 +1,6 @@
 import { Location } from "./common";
-import { FilePath, ImportName, ExportName } from "./aliases";
+import { ImportName, ExportName } from "./aliases";
+import { FilePath } from "./common";
 import { ModulePath, NamespaceName } from "./import_export";
 import { SymbolId } from "./symbol";
 import { SymbolName } from "./symbol";

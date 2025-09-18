@@ -2,7 +2,7 @@
  * Import and export types for module dependencies and APIs
  */
 
-import { FilePath } from "./aliases";
+import { FilePath } from "./common";
 import { SymbolName } from "./symbol";
 import { SymbolId } from "./symbol";
 import { SemanticNode, Resolution } from "./query";
@@ -88,7 +88,7 @@ export interface SideEffectImport extends BaseImport {
  * Base export information
  */
 interface BaseExport extends SemanticNode {
-  readonly symbol: SymbolId;  // We build these in the original file so we always know the symbol-id
+  readonly symbol: SymbolId; // We build these in the original file so we always know the symbol-id
   readonly symbol_name: SymbolName;
   readonly is_type_only?: boolean; // TypeScript type-only export
 }

@@ -5,7 +5,6 @@
  */
 
 import type { SyntaxNode } from "tree-sitter";
-import type { Location, FilePath } from "@ariadnejs/types";
 
 /**
  * Core semantic categories

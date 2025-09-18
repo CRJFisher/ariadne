@@ -1,5 +1,3 @@
-import { FilePath } from "./aliases";
-
 // Language type
 export type Language = "javascript" | "typescript" | "python" | "rust";
 
@@ -44,3 +42,5 @@ export function location_contains(
 
   return true;
 }
+// File and module identifiers
+export type FilePath = string & { __brand: "FilePath" }; // Absolute or relative file path

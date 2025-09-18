@@ -5,40 +5,40 @@
  * Language-agnostic with minimal fields needed for call graph construction.
  */
 
-import type { Location, Language } from './common';
-import type { FilePath } from './aliases';
-import type { SymbolId, SymbolName } from './symbol';
-import type { ScopeId, ScopeType } from './scopes';
-import type { Import, Export } from './import_export';
+import type { Location, Language } from "./common";
+import type { FilePath } from "./common";
+import type { SymbolId, SymbolName } from "./symbol";
+import type { ScopeId, ScopeType } from "./scopes";
+import type { Import, Export } from "./import_export";
 
 /**
  * Symbol kind - essential for resolution rules
  */
 export type SymbolKind =
-  | 'function'
-  | 'class'
-  | 'method'
-  | 'constructor'
-  | 'parameter'
-  | 'variable'
-  | 'constant'
-  | 'import'
-  | 'interface'
-  | 'enum'
-  | 'type_alias';
+  | "function"
+  | "class"
+  | "method"
+  | "constructor"
+  | "parameter"
+  | "variable"
+  | "constant"
+  | "import"
+  | "interface"
+  | "enum"
+  | "type_alias";
 
 /**
  * Reference type - essential for call chain tracking
  */
 export type ReferenceType =
-  | 'call'        // Function/method call - CRITICAL for call chains
-  | 'construct'   // Constructor call - CRITICAL for call chains
-  | 'read'        // Variable read
-  | 'write'       // Variable write
-  | 'member_access' // Property/method access - needed for method resolution
-  | 'type'        // Type reference
-  | 'assignment'  // Assignment target/source connection
-  | 'return';     // Return value - tracks function return types
+  | "call" // Function/method call - CRITICAL for call chains
+  | "construct" // Constructor call - CRITICAL for call chains
+  | "read" // Variable read
+  | "write" // Variable write
+  | "member_access" // Property/method access - needed for method resolution
+  | "type" // Type reference
+  | "assignment" // Assignment target/source connection
+  | "return"; // Return value - tracks function return types
 
 /**
  * Lexical scope with symbols
@@ -206,5 +206,8 @@ export interface ProjectSemanticIndex {
   readonly import_graph: ReadonlyMap<FilePath, readonly FilePath[]>;
 
   /** Export graph (who exports what) */
-  readonly export_graph: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>;
+  readonly export_graph: ReadonlyMap<
+    FilePath,
+    ReadonlyMap<SymbolName, SymbolId>
+  >;
 }

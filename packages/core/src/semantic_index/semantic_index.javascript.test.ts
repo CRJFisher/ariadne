@@ -1,5 +1,5 @@
 /**
- * Semantic index tests
+ * Semantic index tests - JavaScript
  */
 
 import { describe, it, expect, beforeAll } from "vitest";
@@ -13,7 +13,7 @@ import { SemanticEntity } from "./capture_types";
 
 const FIXTURES_DIR = join(__dirname, "fixtures");
 
-describe("Semantic Index - Query Parsing", () => {
+describe("Semantic Index - JavaScript", () => {
   let parser: Parser;
 
   beforeAll(() => {

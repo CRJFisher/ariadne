@@ -6,7 +6,7 @@
  */
 
 import { Location, Language } from "./common";
-import { FilePath } from "./aliases";
+import { FilePath } from "./common";
 import { SymbolName } from "./symbol";
 
 // ============================================================================

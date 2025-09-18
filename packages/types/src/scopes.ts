@@ -1,4 +1,4 @@
-import { FilePath } from "./aliases";
+import { FilePath } from "./common";
 import { Location } from "./common";
 
 export type ScopeId = string & { __brand: "ScopeId" }; // Unique scope identifier
