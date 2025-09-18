@@ -14,7 +14,7 @@ export type ScopeType =
   | "function" // Function scope
   | "method" // Method scope
   | "constructor" // Constructor scope
-  | "block" // Block scope (if/for/while/etc)
+  | "block" // Block scope (if/for/while/try/catch/finally/etc)
   | "parameter" // Function parameter scope
   | "local"; // Local/let/const scope
 
