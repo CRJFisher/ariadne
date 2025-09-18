@@ -13,7 +13,6 @@ import type {
   Language,
 } from "@ariadnejs/types";
 import { variable_symbol } from "@ariadnejs/types";
-import { node_to_location } from "../../ast/node_utils";
 import type { NormalizedCapture } from "../capture_types";
 
 /**
@@ -23,7 +22,7 @@ export function process_imports(
   import_captures: NormalizedCapture[],
   root_scope: LexicalScope,
   symbols: Map<SymbolId, SymbolDefinition>,
-  file_path: FilePath,
+  _file_path: FilePath,
   language: Language
 ): Import[] {
   const imports: Import[] = [];
@@ -37,7 +36,7 @@ export function process_imports(
 
     // Get source from normalized capture context
     const source = capture.context?.source_module || "";
-    const location = node_to_location(capture.node, file_path);
+    const location = capture.node_location;
 
     // Determine import type based on modifiers and entity
     let import_item: Import;

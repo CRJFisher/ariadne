@@ -424,6 +424,158 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
     },
   ],
 
+  // Namespace exports
+  [
+    "export.namespace.source",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.MODULE,
+      modifiers: () => ({ is_namespace: true }),
+      context: (node) => {
+        // This is the source string for a namespace export
+        return {
+          export_source: node.text.slice(1, -1),
+          is_namespace_export: true
+        };
+      },
+    },
+  ],
+  [
+    "export.namespace.alias",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.MODULE,
+      modifiers: () => ({ is_namespace: true }),
+      context: (node) => {
+        // This is the alias for namespace export (export * as foo from 'module')
+        return { namespace_alias: node.text };
+      },
+    },
+  ],
+  [
+    "export.namespace.source.aliased",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.MODULE,
+      context: (node) => {
+        // Source for aliased namespace export
+        const export_stmt = node.parent;
+        const namespace_export = export_stmt?.children?.find((c: any) => c.type === "namespace_export");
+        const alias = namespace_export?.childForFieldName?.("alias") ||
+                     namespace_export?.children?.find((c: any) => c.type === "identifier");
+        return {
+          export_source: node.text.slice(1, -1),
+          namespace_alias: alias?.text,
+          is_namespace_export: true
+        };
+      },
+    },
+  ],
+
+  // Re-exports
+  [
+    "export.reexport",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.VARIABLE,
+      modifiers: () => ({ is_reexport: true }),
+      context: (node) => {
+        return { reexport_name: node.text };
+      },
+    },
+  ],
+  [
+    "export.reexport.source",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.MODULE,
+      context: (node) => {
+        // Get re-exported names from the export clause
+        const export_stmt = node.parent;
+        const export_clause = export_stmt?.childForFieldName?.("declaration") ||
+                            export_stmt?.children?.find((c: any) => c.type === "export_clause");
+        const specifiers: string[] = [];
+        if (export_clause) {
+          for (const child of export_clause.children || []) {
+            if (child.type === "export_specifier") {
+              const name = child.childForFieldName?.("name");
+              if (name) specifiers.push(name.text);
+            }
+          }
+        }
+        return {
+          export_source: node.text.slice(1, -1),
+          is_reexport: true,
+          reexport_names: specifiers
+        };
+      },
+    },
+  ],
+  [
+    "export.reexport.original",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.VARIABLE,
+      modifiers: () => ({ is_reexport: true }),
+      context: (node) => {
+        const specifier = node.parent;
+        const alias_node = specifier?.childForFieldName?.("alias");
+        return {
+          reexport_name: node.text,
+          reexport_alias: alias_node?.text
+        };
+      },
+    },
+  ],
+  [
+    "export.reexport.alias",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.VARIABLE,
+      context: (node) => {
+        const specifier = node.parent;
+        const name_node = specifier?.childForFieldName?.("name");
+        return {
+          reexport_original: name_node?.text,
+          reexport_alias: node.text
+        };
+      },
+    },
+  ],
+  [
+    "export.reexport.source.aliased",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.MODULE,
+      context: (node) => {
+        // Get aliased re-exports from the export clause
+        const export_stmt = node.parent;
+        const export_clause = export_stmt?.childForFieldName?.("declaration") ||
+                            export_stmt?.children?.find((c: any) => c.type === "export_clause");
+        const reexports: Array<{original: string, alias?: string}> = [];
+        if (export_clause) {
+          for (const child of export_clause.children || []) {
+            if (child.type === "export_specifier") {
+              const name = child.childForFieldName?.("name");
+              const alias = child.childForFieldName?.("alias");
+              if (name) {
+                reexports.push({
+                  original: name.text,
+                  alias: alias?.text
+                });
+              }
+            }
+          }
+        }
+        return {
+          export_source: node.text.slice(1, -1),
+          is_reexport: true,
+          reexports
+        };
+      },
+    },
+  ],
+
   // ============================================================================
   // ASSIGNMENTS
   // ============================================================================

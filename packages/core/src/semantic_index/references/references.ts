@@ -27,20 +27,28 @@ export function process_references(
   scopes: Map<ScopeId, LexicalScope>,
   file_path: FilePath,
   assignments?: NormalizedCapture[],
-  type_captures?: NormalizedCapture[],
+  _type_captures?: NormalizedCapture[],
   returns?: NormalizedCapture[]
 ): SymbolReference[] {
   const references: SymbolReference[] = [];
 
   // Build context maps
-  const assignment_map = build_assignment_map(assignments || []);
-  const return_map = build_return_map(returns || [], root_scope, scopes, file_path);
+  const _assignment_map = build_assignment_map(assignments || []);
+  const _return_map = build_return_map(
+    returns || [],
+    root_scope,
+    scopes
+  );
 
   for (const capture of ref_captures) {
-    const scope = find_containing_scope(capture.node, root_scope, scopes, file_path);
+    const scope = find_containing_scope(
+      capture.node_location,
+      root_scope,
+      scopes
+    );
     const name = capture.text as SymbolName;
     const ref_type = get_reference_type_from_entity(capture.entity);
-    const location = node_to_location(capture.node, file_path);
+    const location = capture.node_location;
 
     // Use context from normalized capture
     const context = capture.context;
@@ -52,12 +60,22 @@ export function process_references(
       scope_id: scope.id,
       name,
       context: {
-        receiver_location: context?.receiver_node ? node_to_location(context.receiver_node, file_path) : undefined,
-        assignment_source: context?.source_node ? node_to_location(context.source_node, file_path) : undefined,
-        assignment_target: context?.target_node ? node_to_location(context.target_node, file_path) : undefined,
-        construct_target: context?.construct_target ? node_to_location(context.construct_target, file_path) : undefined,
-        containing_function: context?.containing_function_node ? node_to_location(context.containing_function_node, file_path) : undefined,
-        property_chain: context?.property_chain ? context.property_chain.map(p => p as SymbolName) : undefined,
+        receiver_location: context?.receiver_node
+          ? node_to_location(context.receiver_node, file_path)
+          : undefined,
+        assignment_source: context?.source_node
+          ? node_to_location(context.source_node, file_path)
+          : undefined,
+        assignment_target: context?.target_node
+          ? node_to_location(context.target_node, file_path)
+          : undefined,
+        construct_target: context?.construct_target
+          ? node_to_location(context.construct_target, file_path)
+          : undefined,
+        containing_function: undefined, // TODO: Resolve function symbol ID
+        property_chain: context?.property_chain
+          ? context.property_chain.map((p) => p as SymbolName)
+          : undefined,
       },
     };
 
@@ -70,12 +88,14 @@ export function process_references(
 /**
  * Build assignment map
  */
-function build_assignment_map(assignments: NormalizedCapture[]): Map<string, NormalizedCapture> {
+function build_assignment_map(
+  assignments: NormalizedCapture[]
+): Map<string, NormalizedCapture> {
   const map = new Map<string, NormalizedCapture>();
 
   for (const capture of assignments) {
-    // Map by node position as key
-    const key = `${capture.node.startIndex}`;
+    // Map by location as key
+    const key = `${capture.node_location.line}:${capture.node_location.column}`;
     map.set(key, capture);
   }
 
@@ -88,14 +108,17 @@ function build_assignment_map(assignments: NormalizedCapture[]): Map<string, Nor
 function build_return_map(
   returns: NormalizedCapture[],
   root_scope: LexicalScope,
-  scopes: Map<ScopeId, LexicalScope>,
-  file_path: FilePath
+  scopes: Map<ScopeId, LexicalScope>
 ): Map<string, ScopeId> {
   const map = new Map<string, ScopeId>();
 
   for (const capture of returns) {
-    const containing_scope = find_containing_scope(capture.node, root_scope, scopes, file_path);
-    const key = `${capture.node.startIndex}`;
+    const containing_scope = find_containing_scope(
+      capture.node_location,
+      root_scope,
+      scopes
+    );
+    const key = `${capture.node_location.line}:${capture.node_location.column}`;
     map.set(key, containing_scope.id);
   }
 
@@ -105,7 +128,9 @@ function build_return_map(
 /**
  * Get reference type from entity
  */
-export function get_reference_type_from_entity(entity: SemanticEntity): ReferenceType {
+export function get_reference_type_from_entity(
+  entity: SemanticEntity
+): ReferenceType {
   switch (entity) {
     case SemanticEntity.CALL:
       return "call";

@@ -34,7 +34,7 @@ export function build_semantic_index(
   lang: Language
 ): SemanticIndex {
   // Get raw captures from tree-sitter
-  const grouped = query_tree_and_parse_captures(lang, tree);
+  const grouped = query_tree_and_parse_captures(lang, tree, file_path);
 
   // Phase 1: Build scope tree
   const { root_scope, scopes } = build_scope_tree(
@@ -45,7 +45,7 @@ export function build_semantic_index(
   );
 
   // Phase 2: Process definitions
-  const { symbols, symbols_by_name } = process_definitions(
+  const { symbols, file_symbols_by_name } = process_definitions(
     grouped.definitions,
     root_scope,
     scopes,
@@ -93,7 +93,7 @@ export function build_semantic_index(
     unresolved_references: references,
     imports,
     exports,
-    symbols_by_name,
+    file_symbols_by_name,
   };
 }
 
@@ -108,7 +108,7 @@ function process_class_metadata(
   for (const capture of type_captures) {
     if (capture.context?.extends_class) {
       // Find the associated class definition
-      const class_node = capture.node.parent?.parent; // class_heritage -> class_declaration
+      const class_node = capture.node_location.parent?.parent; // class_heritage -> class_declaration
       if (class_node) {
         const class_name_node = class_node.childForFieldName?.("name");
         if (class_name_node) {
@@ -133,13 +133,13 @@ function process_class_metadata(
  * Query tree and parse captures into normalized semantic categories
  * Returns grouped normalized captures for testing and use
  */
-export function query_tree_and_parse_captures(lang: Language, tree: Tree) {
+export function query_tree_and_parse_captures(lang: Language, tree: Tree, file_path: FilePath) {
   const query_string = load_query(lang);
   const query = new Query(LANGUAGE_TO_TREESITTER_LANG.get(lang), query_string);
   const captures = query.captures(tree.rootNode);
 
   // Normalize captures to common semantic format
-  const normalized = normalize_captures(captures, lang);
+  const normalized = normalize_captures(captures, lang, file_path);
 
   // Group by category and return
   return group_captures_by_category(normalized);

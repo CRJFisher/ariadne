@@ -230,6 +230,38 @@
   )
 )
 
+; Namespace exports (export * from 'module')
+(export_statement
+  source: (string) @export.namespace.source
+)
+
+; Namespace exports with alias (export * as ns from 'module')
+(export_statement
+  (namespace_export (identifier) @export.namespace.alias)
+  source: (string) @export.namespace.source.aliased
+)
+
+; Re-exports (export { foo } from 'module')
+(export_statement
+  (export_clause
+    (export_specifier
+      name: (identifier) @export.reexport
+    )
+  )
+  source: (string) @export.reexport.source
+)
+
+; Re-exports with alias (export { foo as bar } from 'module')
+(export_statement
+  (export_clause
+    (export_specifier
+      name: (identifier) @export.reexport.original
+      alias: (identifier) @export.reexport.alias
+    )
+  )
+  source: (string) @export.reexport.source.aliased
+)
+
 ;; ==============================================================================
 ;; REFERENCES with Enhanced Context
 ;; ==============================================================================

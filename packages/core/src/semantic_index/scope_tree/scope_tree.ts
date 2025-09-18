@@ -2,13 +2,14 @@
  * Scope Tree - Build hierarchical scope structure
  */
 
-import type { SyntaxNode, Tree } from "tree-sitter";
+import type { Tree } from "tree-sitter";
 import type {
   FilePath,
   Language,
   ScopeId,
   ScopeType,
   LexicalScope,
+  Location,
 } from "@ariadnejs/types";
 import {
   scope_string,
@@ -55,15 +56,14 @@ export function build_scope_tree(
 ): {
   root_scope: LexicalScope;
   scopes: Map<ScopeId, LexicalScope>;
-  node_to_scope: Map<SyntaxNode, LexicalScope>;
 } {
   // Sort by start position to process in order
   const sorted_captures = [...scope_captures].sort(
-    (a, b) => a.node.startIndex - b.node.startIndex
+    (a, b) => (a.node_location.line * 10000 + a.node_location.column) -
+             (b.node_location.line * 10000 + b.node_location.column)
   );
 
   const scopes = new Map<ScopeId, LexicalScope>();
-  const node_to_scope = new Map<SyntaxNode, LexicalScope>();
 
   // Create root scope (module)
   const root_location = node_to_location(tree.rootNode, file_path);
@@ -79,13 +79,12 @@ export function build_scope_tree(
   };
 
   scopes.set(root_scope_id, root_scope);
-  node_to_scope.set(tree.rootNode, root_scope);
 
   // Process each scope capture
   for (const capture of sorted_captures) {
     if (capture.entity === SemanticEntity.MODULE) continue; // Skip root
 
-    const location = node_to_location(capture.node, file_path);
+    const location = capture.node_location;
     const scope_type = map_entity_to_scope_type(capture.entity);
 
     // Create scope ID based on type
@@ -108,7 +107,7 @@ export function build_scope_tree(
     }
 
     // Find parent scope using position containment
-    const parent = find_containing_scope(capture.node, root_scope, scopes, file_path);
+    const parent = find_containing_scope(location, root_scope, scopes);
 
     // Create the scope with parent reference
     const scope: LexicalScope = {
@@ -134,10 +133,9 @@ export function build_scope_tree(
     }
 
     scopes.set(scope_id, scope);
-    node_to_scope.set(capture.node, scope);
   }
 
-  return { root_scope, scopes, node_to_scope };
+  return { root_scope, scopes };
 }
 
 /**
@@ -161,13 +159,10 @@ export function compute_scope_depth(
  * Helper to find containing scope
  */
 export function find_containing_scope(
-  node: SyntaxNode,
+  node_location: Location,
   root_scope: LexicalScope,
-  scopes: Map<ScopeId, LexicalScope>,
-  file_path: FilePath
+  scopes: Map<ScopeId, LexicalScope>
 ): LexicalScope {
-  const node_location = node_to_location(node, file_path);
-
   // Find deepest scope that contains this node
   let best_scope = root_scope;
   let best_depth = 0;

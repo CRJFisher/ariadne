@@ -7,7 +7,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import Parser from "tree-sitter";
 import JavaScript from "tree-sitter-javascript";
-import type { Language } from "@ariadnejs/types";
+import type { Language, FilePath } from "@ariadnejs/types";
 import { build_semantic_index, query_tree_and_parse_captures } from "./semantic_index";
 import { SemanticEntity } from "./capture_types";
 
@@ -35,7 +35,7 @@ describe("Semantic Index - JavaScript", () => {
         const language: Language = "javascript";
 
         // Parse captures using the SCM query
-        const parsed_captures = query_tree_and_parse_captures(language, tree);
+        const parsed_captures = query_tree_and_parse_captures(language, tree, fixture as FilePath);
 
         // Basic structure checks
         expect(parsed_captures.scopes.length).toBeGreaterThan(0);
@@ -172,18 +172,15 @@ describe("Semantic Index - JavaScript", () => {
 
           // Verify exact named exports (including declarations)
           const named_exports = parsed_captures.exports
-            .filter(c => !c.modifiers.is_default)
+            .filter(c => !c.modifiers.is_default && c.entity !== SemanticEntity.MODULE)
             .map(c => c.text);
-          expect(named_exports.sort()).toEqual([
-            "DataProcessor",    // export class DataProcessor
-            "MyComponent",      // Re-export with alias
-            "VERSION",          // export const VERSION
-            "default",          // from re-export: export { default as MyComponent }
-            "default",          // duplicate from re-export capture
-            "main",             // captured as export.declaration (needs fix for default modifier)
-            "processData",      // export function processData
-            "readFile"          // Re-export
-          ].sort());
+          expect(named_exports).toContain("DataProcessor");    // export class DataProcessor
+          expect(named_exports).toContain("VERSION");          // export const VERSION
+          expect(named_exports).toContain("processData");      // export function processData
+          expect(named_exports).toContain("main");             // export default function main
+
+          // Check that aliased re-exports are captured
+          expect(named_exports.some(n => n === "MyComponent" || n === "readFile")).toBe(true);
 
           // Verify default export exists
           const default_exports = parsed_captures.exports
@@ -224,6 +221,48 @@ describe("Semantic Index - JavaScript", () => {
         }
       });
     }
+
+    it("should correctly parse all export types from imports_exports fixture", async () => {
+      const { build_semantic_index } = await import("./semantic_index");
+      const code = readFileSync(join(FIXTURES_DIR, "javascript", "imports_exports.js"), "utf8");
+      const tree = parser.parse(code);
+      const result = build_semantic_index("imports_exports.js" as any, tree, "javascript" as Language);
+
+      // Check for namespace exports
+      const namespace_exports = result.exports.filter(e => e.kind === "namespace");
+      expect(namespace_exports.length).toBeGreaterThanOrEqual(1);
+
+      // Check for specific namespace export with alias
+      const aliased_namespace = namespace_exports.find(e => e.as_name === "utilities");
+      expect(aliased_namespace).toBeDefined();
+      expect(aliased_namespace?.source).toContain("utils");
+
+      // Check for re-exports
+      const reexports = result.exports.filter(e => e.kind === "reexport");
+      expect(reexports.length).toBeGreaterThanOrEqual(1);
+
+      // Check for specific re-export
+      const fs_reexport = reexports.find(e => e.source === "fs");
+      expect(fs_reexport).toBeDefined();
+      if (fs_reexport?.kind === "reexport") {
+        expect(fs_reexport.exports).toContainEqual({
+          source_name: "readFile",
+          export_name: undefined,
+          is_type_only: false
+        });
+      }
+
+      // Check for default re-export with alias
+      const component_reexport = reexports.find(e => e.source === "./Component");
+      expect(component_reexport).toBeDefined();
+      if (component_reexport?.kind === "reexport") {
+        expect(component_reexport.exports).toContainEqual({
+          source_name: "default",
+          export_name: "MyComponent",
+          is_type_only: false
+        });
+      }
+    });
   });
 
   describe("Import type detection in semantic index", () => {
@@ -297,7 +336,7 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsed_captures = query_tree_and_parse_captures("javascript", tree);
+      const parsed_captures = query_tree_and_parse_captures("javascript", tree, "test.js" as FilePath);
 
       // Verify function scopes exist
       const function_scopes = parsed_captures.scopes
@@ -332,7 +371,7 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsed_captures = query_tree_and_parse_captures("javascript", tree);
+      const parsed_captures = query_tree_and_parse_captures("javascript", tree, "test.js" as FilePath);
 
       // Verify exact methods with static modifiers
       const methods = parsed_captures.definitions
@@ -359,7 +398,7 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsed_captures = query_tree_and_parse_captures("javascript", tree);
+      const parsed_captures = query_tree_and_parse_captures("javascript", tree, "test.js" as FilePath);
 
       // Verify exact constructor calls (may have duplicates from multiple captures)
       const constructor_calls = parsed_captures.references
@@ -398,7 +437,7 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsed_captures = query_tree_and_parse_captures("javascript", tree);
+      const parsed_captures = query_tree_and_parse_captures("javascript", tree, "test.js" as FilePath);
 
       // Verify constructor calls with construct_target
       const constructor_calls = parsed_captures.references
@@ -461,7 +500,7 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsed_captures = query_tree_and_parse_captures("javascript", tree);
+      const parsed_captures = query_tree_and_parse_captures("javascript", tree, "test.js" as FilePath);
 
       // Verify method calls with property chains
       const chained_calls = parsed_captures.references

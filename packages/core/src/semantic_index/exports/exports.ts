@@ -11,9 +11,12 @@ import type {
   Export,
   Language,
   NamedExport,
+  DefaultExport,
+  NamespaceExport,
+  ReExport,
+  NamespaceName,
 } from "@ariadnejs/types";
 import { variable_symbol } from "@ariadnejs/types";
-import { node_to_location } from "../../ast/node_utils";
 import type { NormalizedCapture } from "../capture_types";
 
 /**
@@ -43,58 +46,177 @@ export function process_exports(
   export_captures: NormalizedCapture[],
   root_scope: LexicalScope,
   symbols: Map<SymbolId, SymbolDefinition>,
-  file_path: FilePath,
+  _file_path: FilePath,
   language: Language
 ): Export[] {
   const exports: Export[] = [];
 
+  // Group captures by export statement to consolidate related captures
+  const export_groups = new Map<number, NormalizedCapture[]>();
   for (const capture of export_captures) {
-    const location = node_to_location(capture.node, file_path);
-    const symbol_name = capture.text as SymbolName;
+    // Skip captures marked to skip
+    if (capture.context?.skip) {
+      continue;
+    }
 
-    // Find or create symbol ID
-    const existing_symbol = root_scope.symbols.get(symbol_name);
-    const symbol_id =
-      existing_symbol?.id || variable_symbol(capture.text, location);
+    // Group by location line (captures from same statement should be on same line)
+    const key = capture.node_location.line;
+    if (!export_groups.has(key)) {
+      export_groups.set(key, []);
+    }
+    export_groups.get(key)!.push(capture);
+  }
 
-    // Check if this is a default export from normalized capture
-    const is_default = capture.modifiers?.is_default || false;
+  // Process each export statement group
+  for (const captures of export_groups.values()) {
+    const primary = captures[0];
+    if (!primary) continue;
 
-    // Create export based on type
-    const export_item: Export = is_default
-      ? {
+    const location =  primary.node_location;
+
+    // Handle re-exports first (they are more specific than namespace exports)
+    const is_reexport = captures.some(
+      (c) => c.context?.is_reexport || c.modifiers?.is_reexport
+    );
+    if (is_reexport) {
+      // Look for export_source in any capture of the group, but exclude non-reexport captures
+      const source_capture = captures.find(
+        (c) => c.context?.export_source && c.context?.is_reexport
+      );
+      const source = source_capture?.context?.export_source || "";
+      const reexports =
+        captures.find((c) => c.context?.reexports)?.context?.reexports || [];
+
+      // Build re-export items from captures
+      const reexport_items = reexports.map((item) => ({
+        source_name: item.original as SymbolName,
+        export_name: item.alias ? (item.alias as SymbolName) : undefined,
+        is_type_only: false,
+      }));
+
+      // Also handle simple re-exports without aliases
+      const reexport_names = captures.find((c) => c.context?.reexport_names)
+        ?.context?.reexport_names;
+      if (reexport_items.length === 0 && reexport_names) {
+        for (const name of reexport_names) {
+          reexport_items.push({
+            source_name: name as SymbolName,
+            export_name: undefined,
+            is_type_only: false,
+          });
+        }
+      }
+
+      // Single re-export capture
+      const single_reexport = captures.find((c) => c.context?.reexport_name);
+      if (reexport_items.length === 0 && single_reexport) {
+        reexport_items.push({
+          source_name: single_reexport.context!.reexport_name as SymbolName,
+          export_name: single_reexport.context!.reexport_alias as SymbolName,
+          is_type_only: false,
+        });
+      }
+
+      const reexport: ReExport = {
+        kind: "reexport",
+        symbol: variable_symbol("reexport", location),
+        symbol_name: "reexport" as SymbolName,
+        source: source as FilePath,
+        exports: reexport_items,
+        location,
+        modifiers: [],
+        language,
+        node_type: "export_statement",
+      };
+      exports.push(reexport);
+      continue;
+    }
+
+    // Handle namespace exports
+    const is_namespace = captures.some(
+      (c) => c.context?.is_namespace_export || c.modifiers?.is_namespace
+    );
+    if (is_namespace) {
+      const namespace_alias = captures.find((c) => c.context?.namespace_alias)
+        ?.context?.namespace_alias;
+      // Look for export_source in any capture of the group
+      const source =
+        captures.find((c) => c.context?.export_source)?.context
+          ?.export_source || "";
+
+      const namespace_export: NamespaceExport = {
+        kind: "namespace",
+        symbol: variable_symbol(namespace_alias || "*", location),
+        symbol_name: (namespace_alias || "*") as SymbolName,
+        source: source as FilePath,
+        as_name: namespace_alias as NamespaceName,
+        location,
+        modifiers: [],
+        language,
+        node_type: "export_statement",
+      };
+      exports.push(namespace_export);
+      continue;
+    }
+
+    // Process regular exports
+    for (const capture of captures) {
+      const symbol_name = capture.text as SymbolName;
+
+      // Find or create symbol ID
+      const existing_symbol = root_scope.symbols.get(symbol_name);
+      const symbol_id =
+        existing_symbol?.id || variable_symbol(capture.text, location);
+
+      // Check if this is a default export
+      const is_default = capture.modifiers?.is_default || false;
+
+      // Handle aliased exports
+      const export_alias = capture.context?.export_alias;
+
+      // Create export based on type
+      let export_item: Export;
+
+      if (is_default) {
+        const default_export: DefaultExport = {
           kind: "default",
           symbol: symbol_id,
           symbol_name,
           location,
           modifiers: [],
-          is_declaration: false,
-          language: "javascript",
+          is_declaration: capture.modifiers?.is_exported || false,
+          language,
           node_type: "export_statement",
-        }
-      : {
+        };
+        export_item = default_export;
+      } else {
+        const named_export: NamedExport = {
           kind: "named",
           symbol: symbol_id,
           symbol_name,
           exports: [
             {
               local_name: symbol_name,
-              is_type_only: false,
+              export_name: export_alias as SymbolName,
+              is_type_only: capture.modifiers?.is_type_only || false,
             },
           ],
           location,
           modifiers: [],
-          language: "javascript",
+          language,
           node_type: "export_statement",
         };
+        export_item = named_export;
+      }
 
-    exports.push(export_item);
+      exports.push(export_item);
 
-    // Mark exported symbol if it exists
-    const symbol = symbols.get(symbol_id);
-    if (symbol) {
-      (symbol as any).is_exported = true;
-      (symbol as any).exported_as = symbol_name;
+      // Mark exported symbol if it exists
+      const symbol = symbols.get(symbol_id);
+      if (symbol) {
+        (symbol as any).is_exported = true;
+        (symbol as any).exported_as = export_alias || symbol_name;
+      }
     }
   }
 

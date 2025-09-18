@@ -4,6 +4,7 @@
  * Maps language-specific tree-sitter captures to common semantic concepts
  */
 
+import type { Location } from "@ariadnejs/types";
 import type { SyntaxNode } from "tree-sitter";
 
 /**
@@ -71,6 +72,7 @@ export interface SemanticModifiers {
   is_namespace?: boolean;
   is_type_only?: boolean;
   is_side_effect?: boolean;
+  is_reexport?: boolean;
 }
 
 /**
@@ -79,7 +81,7 @@ export interface SemanticModifiers {
 export interface NormalizedCapture {
   category: SemanticCategory;
   entity: SemanticEntity;
-  node: SyntaxNode;
+  node_location: Location;
   text: string;
   modifiers: SemanticModifiers;
 
@@ -100,6 +102,14 @@ export interface CaptureContext {
   // For exports
   export_alias?: string;
   export_source?: string;
+  is_namespace_export?: boolean;
+  namespace_alias?: string;
+  is_reexport?: boolean;
+  reexport_name?: string;
+  reexport_names?: string[];
+  reexport_alias?: string;
+  reexport_original?: string;
+  reexports?: Array<{ original: string; alias?: string }>;
 
   // For assignments
   target_node?: SyntaxNode;

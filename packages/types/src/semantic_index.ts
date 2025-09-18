@@ -64,7 +64,7 @@ export interface LexicalScope {
   readonly child_ids: readonly ScopeId[];
 
   /** Symbols defined in this scope */
-  readonly symbols: ReadonlyMap<SymbolName, SymbolDefinition>;
+  readonly symbols: Map<SymbolName, SymbolDefinition>;
 }
 
 /**
@@ -188,7 +188,7 @@ export interface SemanticIndex {
   readonly exports: readonly Export[];
 
   /** Quick lookup: name -> symbols with that name */
-  readonly symbols_by_name: ReadonlyMap<SymbolName, readonly SymbolId[]>;
+  readonly file_symbols_by_name: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>;
 }
 
 /**

@@ -19,7 +19,6 @@ import {
   method_symbol,
   variable_symbol,
 } from "@ariadnejs/types";
-import { node_to_location } from "../../ast/node_utils";
 import { find_containing_scope } from "../scope_tree";
 import type { NormalizedCapture } from "../capture_types";
 import { SemanticEntity } from "../capture_types";
@@ -34,18 +33,23 @@ export function process_definitions(
   file_path: FilePath
 ): {
   symbols: Map<SymbolId, SymbolDefinition>;
-  symbols_by_name: Map<SymbolName, SymbolId[]>;
+  file_symbols_by_name: Map<FilePath, Map<SymbolName, SymbolId>>;
 } {
   const symbols = new Map<SymbolId, SymbolDefinition>();
-  const symbols_by_name = new Map<SymbolName, SymbolId[]>();
+  const symbols_by_name = new Map<FilePath, Map<SymbolName, SymbolId>>();
 
   for (const capture of def_captures) {
-    const scope = find_containing_scope(capture.node, root_scope, scopes, file_path);
+    const location = capture.node_location;
+    const scope = find_containing_scope(location, root_scope, scopes);
     const name = capture.text as SymbolName;
     const kind = map_entity_to_symbol_kind(capture.entity);
-    const is_hoisted = check_is_hoisted_entity(capture.entity, capture.modifiers);
-    const def_scope = is_hoisted ? get_hoist_target(scope, kind, scopes) : scope;
-    const location = node_to_location(capture.node, file_path);
+    const is_hoisted = check_is_hoisted_entity(
+      capture.entity,
+      capture.modifiers
+    );
+    const def_scope = is_hoisted
+      ? get_hoist_target(scope, kind, scopes)
+      : scope;
 
     // Create symbol ID
     const symbol_id = create_symbol_id(name, kind, location);
@@ -65,16 +69,18 @@ export function process_definitions(
 
     // Store symbol
     symbols.set(symbol_id, symbol);
-    (def_scope.symbols as Map<SymbolName, SymbolDefinition>).set(name, symbol);
+    def_scope.symbols.set(name, symbol);
 
     // Update name index
-    if (!symbols_by_name.has(name)) {
-      symbols_by_name.set(name, []);
+    if (!symbols_by_name.has(file_path)) {
+      symbols_by_name.set(file_path, new Map<SymbolName, SymbolId>());
     }
-    symbols_by_name.get(name)!.push(symbol_id);
+    if (!symbols_by_name.get(file_path)!.has(name)) {
+      symbols_by_name.get(file_path)!.set(name, symbol_id);
+    }
   }
 
-  return { symbols, symbols_by_name };
+  return { symbols, file_symbols_by_name: symbols_by_name };
 }
 
 /**
@@ -112,7 +118,10 @@ export function map_entity_to_symbol_kind(entity: SemanticEntity): SymbolKind {
 /**
  * Check if entity is hoisted
  */
-function check_is_hoisted_entity(entity: SemanticEntity, modifiers: any): boolean {
+function check_is_hoisted_entity(
+  entity: SemanticEntity,
+  _modifiers: any
+): boolean {
   return (
     entity === SemanticEntity.FUNCTION ||
     entity === SemanticEntity.CLASS ||
@@ -135,7 +144,7 @@ function get_hoist_target(
       current &&
       !["module", "function", "method", "constructor"].includes(current.type)
     ) {
-      const parent_id = current.parent_id;
+      const parent_id: ScopeId | null = current.parent_id;
       current = parent_id ? scopes.get(parent_id) || null : null;
     }
     return current || scope;
