@@ -13,6 +13,8 @@ import type {
   LexicalScope,
   Import,
   Export,
+  TypeId,
+  Location,
 } from "@ariadnejs/types";
 
 import { Query } from "tree-sitter";
@@ -27,6 +29,18 @@ import {
 } from "./capture_normalizer";
 import { LANGUAGE_TO_TREESITTER_LANG, load_query } from "./query_loader";
 import { NormalizedCapture } from "./capture_types";
+import type {
+  FileTypeRegistry,
+  TypeMemberMap,
+  VariableTypeMap,
+} from "./type_registry";
+import { build_file_type_registry } from "./type_resolution";
+import { collect_type_members } from "./type_members";
+import {
+  build_variable_type_map,
+  track_constructor_types,
+} from "./references/type_flow_references/type_flow_references";
+import { connect_return_types_to_functions } from "./references/return_references/return_references";
 
 
 /**
@@ -63,6 +77,22 @@ export interface SemanticIndex {
     FilePath,
     ReadonlyMap<SymbolName, SymbolId>
   >;
+
+  // Type information
+  /** Type registry for the file */
+  readonly type_registry: FileTypeRegistry;
+
+  /** Type members and inheritance */
+  readonly type_members: TypeMemberMap;
+
+  /** Variable type tracking */
+  readonly variable_types: VariableTypeMap;
+
+  /** Function return types */
+  readonly function_returns: ReadonlyMap<SymbolId, TypeId>;
+
+  /** Constructor type mapping */
+  readonly constructor_types: ReadonlyMap<Location, TypeId>;
 }
 
 /**
@@ -150,6 +180,60 @@ export function build_semantic_index(
   // Process class inheritance and static modifiers
   process_class_metadata(grouped.types, symbols);
 
+  // Phase 6: Build type registry
+  const type_registry = build_file_type_registry(symbols, file_path);
+
+  // Phase 7: Collect type members
+  const type_members = collect_type_members(symbols, scopes);
+
+  // Phase 8: Connect return types to functions
+  const function_returns = connect_return_types_to_functions(
+    references.returns,
+    symbols as Map<SymbolId, SymbolDefinition>,
+    {
+      resolve_type_info: (info) => {
+        // Simple resolution for now - could be enhanced
+        return type_registry.name_to_type.get(info.type_name);
+      }
+    }
+  );
+
+  // Phase 9: Build variable type maps
+  const variable_type_info = build_variable_type_map(
+    references.type_flows,
+    symbols as Map<SymbolId, SymbolDefinition>,
+    {
+      resolve_type_info: (info) => {
+        return type_registry.name_to_type.get(info.type_name);
+      }
+    }
+  );
+
+  // Phase 10: Track constructor types
+  const constructor_types = track_constructor_types(
+    references.type_flows,
+    symbols as Map<SymbolId, SymbolDefinition>,
+    {
+      name_to_type: type_registry.name_to_type as Map<SymbolName, TypeId>
+    }
+  );
+
+  // Create variable type map structure
+  // Extract just TypeIds from the detailed info
+  const variable_type_ids = new Map<Location, TypeId>();
+  for (const [loc, info] of variable_type_info) {
+    if (info.type_id) {
+      variable_type_ids.set(loc, info.type_id);
+    }
+  }
+
+  const variable_types: VariableTypeMap = {
+    variable_type_info,
+    variable_types: variable_type_ids,
+    reassignments: new Map(),
+    scope_variables: new Map(),
+  };
+
   return {
     file_path,
     language: lang,
@@ -160,6 +244,12 @@ export function build_semantic_index(
     imports,
     exports,
     file_symbols_by_name,
+    // Type information
+    type_registry,
+    type_members,
+    variable_types,
+    function_returns,
+    constructor_types,
   };
 }
 

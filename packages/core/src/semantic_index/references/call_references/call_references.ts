@@ -9,6 +9,7 @@ import type {
   ScopeId,
   LexicalScope,
   Location,
+  TypeId,
 } from "@ariadnejs/types";
 import { node_to_location } from "../../../ast/node_utils";
 import { find_containing_scope } from "../../scope_tree";
@@ -35,6 +36,7 @@ export interface CallReference {
   /** For method calls: receiver type and location */
   readonly receiver?: {
     type?: TypeInfo;
+    type_id?: TypeId;  // Resolved TypeId
     location?: Location;
   };
 
@@ -49,6 +51,12 @@ export interface CallReference {
 
   /** Resolved symbol (if known) */
   resolved_symbol?: SymbolId;
+
+  /** Return type of the call (for chaining) */
+  resolved_return_type?: TypeId;
+
+  /** For method calls: whether the receiver is static */
+  is_static_call?: boolean;
 }
 
 /**

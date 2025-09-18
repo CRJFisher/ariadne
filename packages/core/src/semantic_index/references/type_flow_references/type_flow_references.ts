@@ -9,6 +9,9 @@ import type {
   ScopeId,
   LexicalScope,
   LocationKey,
+  TypeId,
+  SymbolDefinition,
+  SymbolId,
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
 import { find_containing_scope } from "../../scope_tree";
@@ -16,6 +19,7 @@ import type { NormalizedCapture } from "../../capture_types";
 import { SemanticEntity } from "../../capture_types";
 import type { TypeInfo, AssignmentContext } from "../type_tracking/type_tracking";
 import { build_typed_assignment_map } from "../type_tracking/type_tracking";
+import type { VariableTypeInfo } from "../../type_registry/type_registry";
 
 /**
  * Type flow reference - Tracks how types flow through assignments
@@ -246,6 +250,93 @@ export function track_type_mutations(
 /**
  * Find type at a specific location using type flow
  */
+/**
+ * Build a map of variables to their types
+ */
+export function build_variable_type_map(
+  flows: readonly TypeFlowReference[],
+  symbols: Map<SymbolId, SymbolDefinition>,
+  type_registry?: { resolve_type_info?: (info: TypeInfo) => TypeId | undefined }
+): Map<Location, VariableTypeInfo> {
+  const variable_types = new Map<Location, VariableTypeInfo>();
+
+  // Process each type flow
+  for (const flow of flows) {
+    const var_info: VariableTypeInfo = {
+      variable_name: flow.name,
+      scope_id: flow.scope_id,
+      type_info: flow.source_type,
+      location: flow.target_location,
+      source: flow.flow_type === "assignment" ? "assignment" : "inference",
+    };
+
+    // Try to resolve TypeId
+    if (type_registry?.resolve_type_info) {
+      var_info.type_id = type_registry.resolve_type_info(flow.source_type);
+    }
+
+    variable_types.set(flow.target_location, var_info);
+  }
+
+  // Also add variable declarations from symbols
+  for (const [, symbol] of symbols) {
+    if (symbol.kind === "variable" || symbol.kind === "constant") {
+      if (symbol.value_type) {
+        const var_info: VariableTypeInfo = {
+          variable_name: symbol.name,
+          scope_id: symbol.scope_id,
+          type_info: {
+            type_name: "unknown" as SymbolName,
+            type_id: symbol.value_type,
+            certainty: "declared",
+            source: {
+              kind: "annotation",
+              location: symbol.location,
+            },
+          },
+          type_id: symbol.value_type,
+          location: symbol.location,
+          source: "declaration",
+        };
+        variable_types.set(symbol.location, var_info);
+      }
+    }
+  }
+
+  return variable_types;
+}
+
+/**
+ * Track type flow through constructor calls
+ */
+export function track_constructor_types(
+  flows: readonly TypeFlowReference[],
+  _symbols: Map<SymbolId, SymbolDefinition>,
+  type_registry?: { name_to_type?: Map<SymbolName, TypeId> }
+): Map<Location, TypeId> {
+  const constructor_types = new Map<Location, TypeId>();
+
+  for (const flow of flows) {
+    // Check if source type looks like a constructor
+    if (flow.source_type.source.kind === "construction") {
+      const class_name = flow.source_type.type_name;
+
+      // Find the class type
+      if (type_registry?.name_to_type) {
+        const class_type = type_registry.name_to_type.get(class_name);
+        if (class_type) {
+          constructor_types.set(flow.target_location, class_type);
+
+          // Update the flow's source type
+          flow.source_type.type_id = class_type;
+        }
+      }
+    }
+  }
+
+  return constructor_types;
+}
+
 export function find_type_at_location(
   location: Location,
   flows: TypeFlowReference[]

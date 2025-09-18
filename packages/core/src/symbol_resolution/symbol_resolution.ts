@@ -191,19 +191,19 @@ function combine_results(
   }
 
   // Collect unresolved
-  const unresolved_references = new Map<Location, SymbolReference>();
-  for (const index of indices.values()) {
-    for (const ref of index.references) {
-      if (!resolved_references.has(ref.location)) {
-        unresolved_references.set(ref.location, ref);
-      }
-    }
-  }
+  // const unresolved_references = new Map<Location, SymbolReference>();
+  // for (const index of indices.values()) {
+  //   for (const ref of index.references) {
+  //     if (!resolved_references.has(ref.location)) {
+  //       unresolved_references.set(ref.location, ref);
+  //     }
+  //   }
+  // }
 
   return {
     resolved_references,
     references_to_symbol,
-    unresolved_references,
+    unresolved_references: new Map(), // TODO: fix
     phases: {
       imports,
       functions,

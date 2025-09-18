@@ -2,7 +2,7 @@
  * Type tracking utilities for enhanced reference processing
  */
 
-import type { Location, FilePath, LocationKey } from "@ariadnejs/types";
+import type { Location, FilePath, LocationKey, TypeId } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
 import type {
   SymbolName,
@@ -18,6 +18,9 @@ export interface TypeInfo {
   /** The type name or identifier */
   type_name: SymbolName;
 
+  /** Resolved TypeId (when available) */
+  type_id?: TypeId;
+
   /** How certain we are about this type */
   certainty: "declared" | "inferred" | "ambiguous";
 
@@ -32,6 +35,12 @@ export interface TypeInfo {
 
   /** Whether this is an array type */
   is_array?: boolean;
+
+  /** For methods: the return type */
+  return_type?: TypeInfo;
+
+  /** For classes: available members */
+  members?: Map<SymbolName, TypeInfo>;
 }
 
 /**

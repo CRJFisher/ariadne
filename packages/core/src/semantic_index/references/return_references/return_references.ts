@@ -9,6 +9,8 @@ import type {
   ScopeId,
   LexicalScope,
   SymbolId,
+  TypeId,
+  SymbolDefinition,
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
 import { find_containing_scope } from "../../scope_tree";
@@ -55,7 +57,7 @@ export function process_return_references(
   returns: NormalizedCapture[],
   root_scope: LexicalScope,
   scopes: Map<ScopeId, LexicalScope>,
-  file_path: FilePath,
+  _file_path: FilePath,
   scope_to_symbol?: Map<ScopeId, SymbolId>
 ): ReturnReference[] {
   const return_refs: ReturnReference[] = [];
@@ -124,10 +126,11 @@ export interface InferredReturnType {
   function_symbol?: SymbolId;
   return_types: TypeInfo[];
   unified_type?: TypeInfo;
+  resolved_type?: TypeId;
 }
 
 export function infer_function_return_types(
-  returns: ReturnReference[]
+  returns: readonly ReturnReference[]
 ): Map<ScopeId, InferredReturnType> {
   const function_returns = new Map<ScopeId, InferredReturnType>();
 
@@ -232,4 +235,39 @@ export function find_never_returning_functions(
   }
 
   return never_returning;
+}
+
+/**
+ * Connect inferred return types to function symbols
+ */
+export function connect_return_types_to_functions(
+  returns: readonly ReturnReference[],
+  symbols: Map<SymbolId, SymbolDefinition>,
+  type_registry?: { resolve_type_info?: (info: TypeInfo) => TypeId | undefined }
+): Map<SymbolId, TypeId> {
+  const function_return_types = new Map<SymbolId, TypeId>();
+
+  // First, infer return types for each function
+  const inferred = infer_function_return_types(returns);
+
+  // Then connect them to function symbols
+  for (const [, inferred_type] of inferred) {
+    if (inferred_type.function_symbol) {
+      const symbol = symbols.get(inferred_type.function_symbol);
+      if (symbol) {
+        // Try to resolve the unified type to a TypeId
+        if (inferred_type.unified_type && type_registry?.resolve_type_info) {
+          const resolved = type_registry.resolve_type_info(inferred_type.unified_type);
+          if (resolved) {
+            // Update the symbol's return type
+            (symbol as any).return_type = resolved;
+            function_return_types.set(inferred_type.function_symbol, resolved);
+            inferred_type.resolved_type = resolved;
+          }
+        }
+      }
+    }
+  }
+
+  return function_return_types;
 }
