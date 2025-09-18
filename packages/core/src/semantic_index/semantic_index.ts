@@ -61,7 +61,8 @@ export function build_semantic_index(
     grouped.exports,
     root_scope,
     symbols,
-    file_path
+    file_path,
+    lang
   );
 
   // Phase 5: Process references with enhanced context
