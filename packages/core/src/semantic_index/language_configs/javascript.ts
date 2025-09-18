@@ -205,6 +205,25 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
     },
   ],
   [
+    "import.named.source",
+    {
+      category: SemanticCategory.IMPORT,
+      entity: SemanticEntity.VARIABLE,
+      context: (node) => {
+        // This is the source name in an aliased import (e.g., "join" in: join as pathJoin)
+        const specifier = node.parent; // import_specifier
+        const alias_node = specifier?.childForFieldName?.("alias");
+        const import_stmt = specifier?.parent?.parent; // import_statement
+        const source = import_stmt?.childForFieldName?.("source");
+        return {
+          source_module: source ? source.text.slice(1, -1) : undefined,
+          import_alias: alias_node?.text,
+        };
+      },
+    },
+  ],
+  // import.named.alias is handled via import.named.source context, so we don't map it separately
+  [
     "import.default",
     {
       category: SemanticCategory.IMPORT,
@@ -239,6 +258,32 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
     {
       category: SemanticCategory.EXPORT,
       entity: SemanticEntity.VARIABLE,
+    },
+  ],
+  [
+    "export.named.source",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.VARIABLE,
+      context: (node) => {
+        // This is the source name in an aliased export
+        const specifier = node.parent; // export_specifier
+        const alias_node = specifier?.childForFieldName?.("alias");
+        return { export_alias: alias_node?.text };
+      },
+    },
+  ],
+  [
+    "export.named.alias",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.VARIABLE,
+      context: (node) => {
+        // This is the alias in an aliased export
+        const specifier = node.parent; // export_specifier
+        const source_node = specifier?.childForFieldName?.("name");
+        return { export_source: source_node?.text };
+      },
     },
   ],
   [

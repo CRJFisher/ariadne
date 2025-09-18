@@ -215,6 +215,20 @@
   )
 )
 
+; Export function declarations
+(export_statement
+  declaration: (function_declaration
+    name: (identifier) @export.declaration
+  )
+)
+
+; Export class declarations
+(export_statement
+  declaration: (class_declaration
+    name: (identifier) @export.declaration
+  )
+)
+
 ;; ==============================================================================
 ;; REFERENCES with Enhanced Context
 ;; ==============================================================================
