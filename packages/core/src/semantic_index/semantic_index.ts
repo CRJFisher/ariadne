@@ -20,7 +20,7 @@ import { build_scope_tree } from "./scope_tree";
 import { process_definitions } from "./definitions";
 import { process_imports } from "./imports";
 import { process_exports } from "./exports";
-import { process_references } from "./references";
+import { process_references, ProcessedReferences } from "./references";
 import {
   normalize_captures,
   group_captures_by_category,
@@ -50,7 +50,7 @@ export interface SemanticIndex {
   readonly symbols: ReadonlyMap<SymbolId, SymbolDefinition>;
 
   /** All processed references with specialized type information */
-  readonly references: any; // ProcessedReferences from the core package
+  readonly references: ProcessedReferences;
 
   /** Module imports */
   readonly imports: readonly Import[];

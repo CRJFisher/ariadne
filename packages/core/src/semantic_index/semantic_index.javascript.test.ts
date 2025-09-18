@@ -594,16 +594,16 @@ describe("Semantic Index - JavaScript", () => {
         "javascript" as Language
       );
 
-      // Find constructor call reference
-      const constructor_ref = result.references.find(
-        (ref) => ref.name === "TestClass" && ref.type === "call"
+      // Find constructor call reference in the calls array
+      const constructor_ref = result.references.calls.find(
+        (ref) => ref.name === "TestClass" && ref.call_type === "constructor"
       );
 
       expect(constructor_ref).toBeDefined();
-      expect(constructor_ref?.context?.construct_target).toBeDefined();
+      expect(constructor_ref?.construct_target).toBeDefined();
 
       // The construct_target should be a Location object with file_path, line, column
-      expect(constructor_ref?.context?.construct_target).toMatchObject({
+      expect(constructor_ref?.construct_target).toMatchObject({
         file_path: "test.js",
         line: expect.any(Number),
         column: expect.any(Number),

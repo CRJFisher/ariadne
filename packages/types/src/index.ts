@@ -3,6 +3,8 @@ export * from "./immutable";
 
 // Export all common
 export * from "./common";
+// Export location_key function specifically
+export { location_key } from "./common";
 
 // Export branded types from their new locations
 export {
@@ -15,8 +17,6 @@ export {
 } from "./calls";
 
 export { ModulePath, NamespaceName } from "./import_export";
-
-export { TypeExpression, TrackedType } from "./type_analysis";
 
 // Export from common, excluding types that conflict with branded_types
 export { Location, Language } from "./common";
@@ -41,13 +41,7 @@ export * from "./call_chains";
 // Export import/export types
 export * from "./import_export";
 
-// Export modules types but exclude the deprecated ImportInfo/ExportInfo
-export * from "./modules";
-
 export * from "./classes";
-
-// Export types but exclude the deprecated ImportedClassInfo
-export * from "./types";
 
 // Export from symbols
 export * from "./semantic_index";
