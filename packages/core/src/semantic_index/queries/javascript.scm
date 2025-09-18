@@ -247,7 +247,7 @@
   )
 ) @method_call.full
 
-; Chained method calls
+; Chained method calls (2 levels)
 (call_expression
   function: (member_expression
     object: (member_expression
@@ -257,6 +257,17 @@
     property: (property_identifier) @ref.method_call.chained
   )
 ) @method_call.chained
+
+; Deep property chains (3+ levels)
+(call_expression
+  function: (member_expression
+    object: (member_expression
+      object: (member_expression) @ref.receiver.deep
+      property: (property_identifier) @ref.chain.prop2
+    ) @ref.receiver.chain2
+    property: (property_identifier) @ref.method_call.deep
+  )
+) @method_call.deep
 
 ; Constructor calls
 (new_expression

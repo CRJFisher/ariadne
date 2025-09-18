@@ -10,6 +10,7 @@ import type {
   LexicalScope,
   SymbolReference,
   ReferenceType,
+  SymbolId,
 } from "@ariadnejs/types";
 import { node_to_location } from "../../ast/node_utils";
 import { find_containing_scope } from "../scope_tree";
@@ -50,7 +51,14 @@ export function process_references(
       type: ref_type,
       scope_id: scope.id,
       name,
-      context: context || undefined,
+      context: {
+        receiver_location: context?.receiver_node ? node_to_location(context.receiver_node, file_path) : undefined,
+        assignment_source: context?.source_node ? node_to_location(context.source_node, file_path) : undefined,
+        assignment_target: context?.target_node ? node_to_location(context.target_node, file_path) : undefined,
+        construct_target: context?.construct_target ? node_to_location(context.construct_target, file_path) : undefined,
+        containing_function: containing_function,
+        property_chain: context?.property_chain ? context.property_chain.map(p => p as SymbolName) : undefined,
+      },
     };
 
     references.push(reference);

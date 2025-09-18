@@ -107,9 +107,10 @@ export interface CaptureContext {
 
   // For method calls
   receiver_node?: SyntaxNode;
+  property_chain?: string[];
 
   // For constructor calls
-  construct_target?: string;
+  construct_target?: SyntaxNode;
 
   // For class inheritance
   extends_class?: string;

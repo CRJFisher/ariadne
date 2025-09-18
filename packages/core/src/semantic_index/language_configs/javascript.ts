@@ -152,6 +152,60 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
     },
   ],
   [
+    "ref.method_call.chained",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.CALL,
+      context: (node) => {
+        const parent = node.parent;
+        const receiver = parent?.childForFieldName?.("object");
+
+        // Build property chain from the receiver
+        const property_chain: string[] = [];
+        let current = receiver;
+        while (current?.type === "member_expression") {
+          const prop = current.childForFieldName?.("property");
+          if (prop) {
+            property_chain.unshift(prop.text);
+          }
+          current = current.childForFieldName?.("object");
+        }
+
+        return {
+          receiver_node: current || undefined,
+          property_chain: property_chain.length > 0 ? property_chain : undefined
+        };
+      },
+    },
+  ],
+  [
+    "ref.method_call.deep",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.CALL,
+      context: (node) => {
+        const parent = node.parent;
+        const receiver = parent?.childForFieldName?.("object");
+
+        // Build property chain from the deep receiver
+        const property_chain: string[] = [];
+        let current = receiver;
+        while (current?.type === "member_expression") {
+          const prop = current.childForFieldName?.("property");
+          if (prop) {
+            property_chain.unshift(prop.text);
+          }
+          current = current.childForFieldName?.("object");
+        }
+
+        return {
+          receiver_node: current || undefined,
+          property_chain: property_chain.length > 0 ? property_chain : undefined
+        };
+      },
+    },
+  ],
+  [
     "ref.constructor",
     {
       category: SemanticCategory.REFERENCE,
