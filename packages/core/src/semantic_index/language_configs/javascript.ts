@@ -193,12 +193,37 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
   // IMPORTS
   // ============================================================================
   [
+    "import.source",
+    {
+      category: SemanticCategory.IMPORT,
+      entity: SemanticEntity.MODULE,
+      context: (node) => {
+        // Check if this is a side-effect import by seeing if parent has import_clause
+        const import_stmt = node.parent;
+        // Look for import_clause among named children
+        const has_import_clause = import_stmt?.namedChildren?.some(
+          (child: any) => child.type === "import_clause"
+        );
+        if (!has_import_clause) {
+          // This is a side-effect import (no import clause means just import 'module')
+          return { source_module: node.text.slice(1, -1), is_side_effect_import: true };
+        }
+        // Not a side-effect import, will be handled by other captures
+        return { skip: true };
+      },
+    },
+  ],
+  [
     "import.named",
     {
       category: SemanticCategory.IMPORT,
       entity: SemanticEntity.VARIABLE,
       context: (node) => {
-        const import_stmt = node.parent;
+        // Navigate up: import_specifier -> named_imports -> import_clause -> import_statement
+        let import_stmt = node.parent; // import_specifier or identifier
+        while (import_stmt && import_stmt.type !== "import_statement") {
+          import_stmt = import_stmt.parent;
+        }
         const source = import_stmt?.childForFieldName?.("source");
         return source ? { source_module: source.text.slice(1, -1) } : {};
       },
@@ -213,7 +238,11 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
         // This is the source name in an aliased import (e.g., "join" in: join as pathJoin)
         const specifier = node.parent; // import_specifier
         const alias_node = specifier?.childForFieldName?.("alias");
-        const import_stmt = specifier?.parent?.parent; // import_statement
+        // Navigate up to import_statement
+        let import_stmt = specifier;
+        while (import_stmt && import_stmt.type !== "import_statement") {
+          import_stmt = import_stmt.parent;
+        }
         const source = import_stmt?.childForFieldName?.("source");
         return {
           source_module: source ? source.text.slice(1, -1) : undefined,
@@ -243,7 +272,11 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
       entity: SemanticEntity.MODULE,
       modifiers: () => ({ is_namespace: true }),
       context: (node) => {
-        const import_stmt = node.parent?.parent;
+        // Navigate up: identifier -> namespace_import -> import_clause -> import_statement
+        let import_stmt = node.parent;
+        while (import_stmt && import_stmt.type !== "import_statement") {
+          import_stmt = import_stmt.parent;
+        }
         const source = import_stmt?.childForFieldName?.("source");
         return source ? { source_module: source.text.slice(1, -1) } : {};
       },

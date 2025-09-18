@@ -8,7 +8,7 @@ import { join } from "path";
 import Parser from "tree-sitter";
 import JavaScript from "tree-sitter-javascript";
 import type { Language } from "@ariadnejs/types";
-import { query_tree_and_parse_captures } from "./semantic_index";
+import { build_semantic_index, query_tree_and_parse_captures } from "./semantic_index";
 import { SemanticEntity } from "./capture_types";
 
 const FIXTURES_DIR = join(__dirname, "fixtures");
@@ -138,26 +138,36 @@ describe("Semantic Index - JavaScript", () => {
         if (fixture === "imports_exports.js") {
           // Verify exact named imports (aliased imports appear twice)
           const named_imports = parsed_captures.imports
-            .filter(c => !c.modifiers.is_default && !c.modifiers.is_namespace)
-            .map(c => ({ name: c.text, alias: c.context?.import_alias }));
+            .filter(c => !c.modifiers.is_default && !c.modifiers.is_namespace && !c.context?.is_side_effect_import && !c.context?.skip)
+            .map(c => ({ name: c.text, alias: c.context?.import_alias, source: c.context?.source_module }));
           expect(named_imports).toEqual([
-            { name: "readFile", alias: undefined },
-            { name: "writeFile", alias: undefined },
-            { name: "join", alias: undefined }, // Non-aliased capture
-            { name: "join", alias: "pathJoin" } // Aliased capture
+            { name: "readFile", alias: undefined, source: "fs" },
+            { name: "writeFile", alias: undefined, source: "fs" },
+            { name: "join", alias: undefined, source: "path" }, // Non-aliased capture
+            { name: "join", alias: "pathJoin", source: "path" } // Aliased capture with source
           ]);
 
           // Verify exact default imports
           const default_imports = parsed_captures.imports
             .filter(c => c.modifiers.is_default)
-            .map(c => c.text);
-          expect(default_imports).toEqual(["React"]);
+            .map(c => ({ name: c.text, source: c.context?.source_module }));
+          expect(default_imports).toEqual([
+            { name: "React", source: "react" }
+          ]);
 
           // Verify exact namespace imports
           const namespace_imports = parsed_captures.imports
             .filter(c => c.modifiers.is_namespace)
-            .map(c => c.text);
-          expect(namespace_imports).toEqual(["utils"]);
+            .map(c => ({ name: c.text, source: c.context?.source_module }));
+          expect(namespace_imports).toEqual([
+            { name: "utils", source: "./utils" }
+          ]);
+
+          // Verify exact side-effect imports
+          const side_effect_imports = parsed_captures.imports
+            .filter(c => c.context?.is_side_effect_import)
+            .map(c => c.context?.source_module);
+          expect(side_effect_imports).toEqual(["polyfill", "./styles.css"]);
 
           // Verify exact named exports (including declarations)
           const named_exports = parsed_captures.exports
@@ -213,6 +223,67 @@ describe("Semantic Index - JavaScript", () => {
         }
       });
     }
+  });
+
+  describe("Import type detection in semantic index", () => {
+    it("should correctly create Import objects for all import types", async () => {
+      const code = `
+        // Named imports
+        import { join, resolve } from "path";
+
+        // Default import
+        import fs from "fs";
+
+        // Namespace import
+        import * as utils from "./utils";
+
+        // Side-effect import
+        import "polyfill";
+
+        // Mixed import
+        import React, { Component } from "react";
+      `;
+
+      const tree = parser.parse(code);
+      const result = build_semantic_index("test.js" as any, tree, "javascript" as Language);
+
+      // Filter out duplicates and organize by kind
+      const imports_by_kind: Record<string, any[]> = {};
+      for (const imp of result.imports) {
+        if (!imports_by_kind[imp.kind]) {
+          imports_by_kind[imp.kind] = [];
+        }
+        imports_by_kind[imp.kind].push(imp);
+      }
+
+      // Verify named imports
+      const named_imports = imports_by_kind["named"] || [];
+      expect(named_imports.some(imp =>
+        imp.imports.some((i: any) => i.name === "join") && imp.source === "path"
+      )).toBe(true);
+      expect(named_imports.some(imp =>
+        imp.imports.some((i: any) => i.name === "resolve") && imp.source === "path"
+      )).toBe(true);
+      expect(named_imports.some(imp =>
+        imp.imports.some((i: any) => i.name === "Component") && imp.source === "react"
+      )).toBe(true);
+
+      // Verify default imports
+      const default_imports = imports_by_kind["default"] || [];
+      expect(default_imports.some(imp => imp.name === "fs" && imp.source === "fs")).toBe(true);
+      expect(default_imports.some(imp => imp.name === "React" && imp.source === "react")).toBe(true);
+
+      // Verify namespace imports
+      const namespace_imports = imports_by_kind["namespace"] || [];
+      expect(namespace_imports.some(imp => imp.namespace_name === "utils" && imp.source === "./utils")).toBe(true);
+
+      // Verify side-effect imports
+      const side_effect_imports = imports_by_kind["side_effect"] || [];
+      expect(side_effect_imports.some(imp => imp.source === "polyfill")).toBe(true);
+
+      // Verify total import count (accounting for how imports are parsed)
+      expect(result.imports.length).toBeGreaterThanOrEqual(7); // At least one for each import item
+    });
   });
 
   describe("Detailed capture parsing", () => {

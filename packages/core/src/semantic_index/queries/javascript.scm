@@ -143,6 +143,7 @@
 ;; IMPORTS
 ;; ==============================================================================
 
+; Import source (captured for all imports)
 (import_statement
   source: (string) @import.source
 )

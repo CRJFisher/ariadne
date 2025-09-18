@@ -2,7 +2,7 @@
  * Semantic Index - Main orchestration
  */
 
-import type { Tree, QueryCapture } from "tree-sitter";
+import type { Tree } from "tree-sitter";
 import type {
   FilePath,
   Language,
@@ -18,8 +18,12 @@ import { process_definitions } from "./definitions";
 import { process_imports } from "./imports";
 import { process_exports } from "./exports";
 import { process_references } from "./references";
-import { normalize_captures, group_captures_by_category } from "./capture_normalizer";
+import {
+  normalize_captures,
+  group_captures_by_category,
+} from "./capture_normalizer";
 import { LANGUAGE_TO_TREESITTER_LANG, load_query } from "./query_loader";
+import { NormalizedCapture } from "./capture_types";
 
 /**
  * Build semantic index for a file
@@ -53,7 +57,8 @@ export function build_semantic_index(
     grouped.imports,
     root_scope,
     symbols,
-    file_path
+    file_path,
+    lang
   );
 
   // Phase 4: Process exports
@@ -66,7 +71,7 @@ export function build_semantic_index(
   );
 
   // Phase 5: Process references with enhanced context
-  const unresolved_references = process_references(
+  const references = process_references(
     grouped.references,
     root_scope,
     scopes,
@@ -77,11 +82,7 @@ export function build_semantic_index(
   );
 
   // Process class inheritance and static modifiers
-  process_class_metadata(
-    grouped.types,
-    symbols,
-    file_path
-  );
+  process_class_metadata(grouped.types, symbols);
 
   return {
     file_path,
@@ -89,7 +90,7 @@ export function build_semantic_index(
     root_scope_id: root_scope.id,
     scopes,
     symbols,
-    unresolved_references,
+    unresolved_references: references,
     imports,
     exports,
     symbols_by_name,
@@ -100,9 +101,8 @@ export function build_semantic_index(
  * Process class metadata (inheritance, static members)
  */
 function process_class_metadata(
-  type_captures: import("./capture_types").NormalizedCapture[],
-  symbols: Map<SymbolId, SymbolDefinition>,
-  _file_path: FilePath
+  type_captures: NormalizedCapture[],
+  symbols: Map<SymbolId, SymbolDefinition>
 ): void {
   // Find class inheritance relationships
   for (const capture of type_captures) {
@@ -116,7 +116,10 @@ function process_class_metadata(
           // Find the class symbol and add extends information
           for (const [, symbol] of symbols) {
             if (symbol.name === class_name && symbol.kind === "class") {
-              (symbol as any).extends_class = capture.context.extends_class as SymbolName;
+              symbols.set(symbol.id, {
+                ...symbol,
+                extends_class: capture.context.extends_class as SymbolName,
+              });
               break;
             }
           }
@@ -141,4 +144,3 @@ export function query_tree_and_parse_captures(lang: Language, tree: Tree) {
   // Group by category and return
   return group_captures_by_category(normalized);
 }
-

@@ -70,6 +70,7 @@ export interface SemanticModifiers {
   is_default?: boolean;
   is_namespace?: boolean;
   is_type_only?: boolean;
+  is_side_effect?: boolean;
 }
 
 /**
@@ -93,6 +94,8 @@ export interface CaptureContext {
   // For imports
   source_module?: string;
   import_alias?: string;
+  is_side_effect_import?: boolean;
+  skip?: boolean;
 
   // For exports
   export_alias?: string;

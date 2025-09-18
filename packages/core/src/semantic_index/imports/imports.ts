@@ -2,7 +2,6 @@
  * Imports - Process import statements
  */
 
-import type { SyntaxNode } from "tree-sitter";
 import type {
   FilePath,
   SymbolId,
@@ -11,6 +10,7 @@ import type {
   SymbolDefinition,
   Import,
   NamedImport,
+  Language,
 } from "@ariadnejs/types";
 import { variable_symbol } from "@ariadnejs/types";
 import { node_to_location } from "../../ast/node_utils";
@@ -23,36 +23,98 @@ export function process_imports(
   import_captures: NormalizedCapture[],
   root_scope: LexicalScope,
   symbols: Map<SymbolId, SymbolDefinition>,
-  file_path: FilePath
+  file_path: FilePath,
+  language: Language
 ): Import[] {
   const imports: Import[] = [];
 
   // Group captures by import statement
   for (const capture of import_captures) {
+    // Skip captures that are marked to skip (e.g., import.source that aren't side-effects)
+    if (capture.context?.skip) {
+      continue;
+    }
+
     // Get source from normalized capture context
     const source = capture.context?.source_module || "";
     const location = node_to_location(capture.node, file_path);
 
-    // Determine import kind based on modifiers
-    const kind = capture.modifiers.is_default ? "default" :
-                 capture.modifiers.is_namespace ? "namespace" : "named";
+    // Determine import type based on modifiers and entity
+    let import_item: Import;
 
-    // Create import based on kind
-    const import_item: NamedImport = {
-      kind: "named" as const,
-      source: source as FilePath,
-      imports: [
-        {
-          name: capture.text as SymbolName,
-          is_type_only: capture.modifiers.is_type_only || false,
-        },
-      ],
-      resolved_exports: new Map(),
-      location,
-      modifiers: [],
-      language: "javascript",
-      node_type: "import_statement",
-    };
+    if (capture.context?.is_side_effect_import) {
+      // Side-effect import
+      import_item = {
+        kind: "side_effect" as const,
+        source: source as FilePath,
+        location,
+        modifiers: [],
+        language: language,
+        node_type: "import_statement",
+      };
+      // Skip symbol creation for side-effect imports
+      imports.push(import_item);
+      continue;
+    } else if (capture.modifiers.is_default) {
+      // Default import
+      import_item = {
+        kind: "default" as const,
+        source: source as FilePath,
+        name: capture.text as SymbolName,
+        resolved_export: {} as any, // Will be resolved later
+        location,
+        modifiers: [],
+        language: language,
+        node_type: "import_statement",
+      };
+    } else if (capture.modifiers.is_namespace) {
+      // Namespace import
+      import_item = {
+        kind: "namespace" as const,
+        source: source as FilePath,
+        namespace_name: capture.text as any,
+        exports: new Map(),
+        location,
+        modifiers: [],
+        language: language,
+        node_type: "import_statement",
+      };
+    } else if (capture.context?.import_alias) {
+      // Named import with alias
+      import_item = {
+        kind: "named" as const,
+        source: source as FilePath,
+        imports: [
+          {
+            name: capture.text as SymbolName,
+            alias: capture.context.import_alias as SymbolName,
+            is_type_only: capture.modifiers.is_type_only || false,
+          },
+        ],
+        resolved_exports: new Map(),
+        location,
+        modifiers: [],
+        language: language,
+        node_type: "import_statement",
+      };
+    } else {
+      // Regular named import
+      import_item = {
+        kind: "named" as const,
+        source: source as FilePath,
+        imports: [
+          {
+            name: capture.text as SymbolName,
+            is_type_only: capture.modifiers.is_type_only || false,
+          },
+        ],
+        resolved_exports: new Map(),
+        location,
+        modifiers: [],
+        language: language,
+        node_type: "import_statement",
+      };
+    }
 
     imports.push(import_item);
 
