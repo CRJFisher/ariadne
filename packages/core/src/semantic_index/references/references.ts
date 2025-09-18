@@ -56,7 +56,7 @@ export function process_references(
         assignment_source: context?.source_node ? node_to_location(context.source_node, file_path) : undefined,
         assignment_target: context?.target_node ? node_to_location(context.target_node, file_path) : undefined,
         construct_target: context?.construct_target ? node_to_location(context.construct_target, file_path) : undefined,
-        containing_function: containing_function,
+        containing_function: context?.containing_function_node ? node_to_location(context.containing_function_node, file_path) : undefined,
         property_chain: context?.property_chain ? context.property_chain.map(p => p as SymbolName) : undefined,
       },
     };

@@ -215,7 +215,25 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
         const parent = node.parent?.parent;
         if (parent?.type === "variable_declarator") {
           const target = parent.childForFieldName?.("name");
-          return target ? { target_node: target } : {};
+          return target ? { construct_target: target } : {};
+        }
+        return {};
+      },
+    },
+  ],
+  [
+    "ref.constructor.assigned",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.CALL,
+      context: (node) => {
+        // This capture is specifically for constructors within variable declarations
+        // The parent structure is: identifier -> new_expression -> variable_declarator
+        const new_expr = node.parent; // new_expression
+        const var_declarator = new_expr?.parent; // variable_declarator
+        if (var_declarator?.type === "variable_declarator") {
+          const target = var_declarator.childForFieldName?.("name");
+          return target ? { construct_target: target } : {};
         }
         return {};
       },
