@@ -1353,6 +1353,7 @@ describe("Imports Module", () => {
             modifiers: {},
             context: {
               source_module: "fs",
+              // @ts-ignore - Testing invalid properties
               import_alias: 123, // Number - should be treated as regular import
             },
           },
@@ -1364,6 +1365,7 @@ describe("Imports Module", () => {
             modifiers: {},
             context: {
               source_module: "path",
+              // @ts-ignore - Testing invalid properties
               import_alias: {}, // Object - should be treated as regular import
             },
           },
@@ -1375,6 +1377,7 @@ describe("Imports Module", () => {
             modifiers: {},
             context: {
               source_module: "url",
+              // @ts-ignore - Testing invalid properties
               import_alias: [], // Array - should be treated as regular import
             },
           },
@@ -1386,6 +1389,7 @@ describe("Imports Module", () => {
             modifiers: {},
             context: {
               source_module: "crypto",
+              // @ts-ignore - Testing invalid properties
               import_alias: true, // Boolean - should be treated as regular import
             },
           },
@@ -1414,6 +1418,7 @@ describe("Imports Module", () => {
             modifiers: {},
             context: {
               source_module: "fs",
+              // @ts-ignore - Testing invalid properties
               import_alias: null, // Null - should be treated as regular import
             },
           },

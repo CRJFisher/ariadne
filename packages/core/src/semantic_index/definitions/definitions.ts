@@ -314,7 +314,7 @@ function get_hoist_target(
  * Create symbol ID based on kind
  */
 function create_symbol_id(
-  name: string,
+  name: SymbolName,
   kind: SymbolKind,
   location: Location
 ): SymbolId {

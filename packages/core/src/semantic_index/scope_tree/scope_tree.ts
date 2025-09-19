@@ -18,7 +18,7 @@ import {
   class_scope as create_class_scope,
   block_scope,
 } from "@ariadnejs/types";
-import { node_to_location } from "../../ast/node_utils";
+import { node_to_location } from "../../utils/node_utils";
 import { location_contains } from "@ariadnejs/types";
 import type { NormalizedCapture } from "../capture_types";
 import { SemanticEntity } from "../capture_types";

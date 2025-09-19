@@ -978,6 +978,7 @@ describe("Definitions Module", () => {
             file_path: file_path,
             line: -1, // Invalid line
             column: -1, // Invalid column
+            // @ts-ignore - Testing invalid location data
             start_byte: -1, // Invalid byte
             end_byte: -1, // Invalid byte
           },
@@ -1000,6 +1001,7 @@ describe("Definitions Module", () => {
           node_location: base_location,
           modifiers: {
             is_static: "invalid" as any, // Should be boolean
+            // @ts-ignore - Testing invalid properties
             unknown_property: true,
           },
         },
@@ -1019,45 +1021,50 @@ describe("Definitions Module", () => {
       const module_scope: LexicalScope = {
         id: "deep_0" as ScopeId,
         type: "module",
+        name: null,
         location: { ...base_location, line: 1 },
         parent_id: null,
-        children: new Map(),
+        child_ids: [],
         symbols: new Map(),
       };
 
       const class_scope: LexicalScope = {
         id: "deep_1" as ScopeId,
         type: "class",
+        name: null,
         location: { ...base_location, line: 2 },
         parent_id: module_scope.id,
-        children: new Map(),
+        child_ids: [],
         symbols: new Map(),
       };
 
       const method_scope: LexicalScope = {
         id: "deep_2" as ScopeId,
         type: "method",
+        name: null,
         location: { ...base_location, line: 3 },
         parent_id: class_scope.id,
-        children: new Map(),
+        child_ids: [],
         symbols: new Map(),
       };
 
       const block_scope: LexicalScope = {
         id: "deep_3" as ScopeId,
         type: "block",
+        name: null,
         location: { ...base_location, line: 4 },
         parent_id: method_scope.id,
-        children: new Map(),
+        child_ids: [],
         symbols: new Map(),
       };
 
       const function_scope: LexicalScope = {
         id: "deep_4" as ScopeId,
         type: "function",
+        name: null,
         location: { ...base_location, line: 5 },
         parent_id: block_scope.id,
-        children: new Map(),
+        child_ids: [],
         symbols: new Map(),
       };
 
@@ -1090,18 +1097,20 @@ describe("Definitions Module", () => {
       const scope_a: LexicalScope = {
         id: "cyclic_a" as ScopeId,
         type: "function",
+        name: null,
         location: { ...base_location, line: 1 },
         parent_id: "cyclic_b" as ScopeId, // Points to B
-        children: new Map(),
+        child_ids: [],
         symbols: new Map(),
       };
 
       const scope_b: LexicalScope = {
         id: "cyclic_b" as ScopeId,
         type: "function",
+        name: null,
         location: { ...base_location, line: 2 },
         parent_id: "cyclic_a" as ScopeId, // Points back to A
-        children: new Map(),
+        child_ids: [],
         symbols: new Map(),
       };
 
@@ -1374,9 +1383,10 @@ describe("Definitions Module", () => {
       const nested_block: LexicalScope = {
         id: "nested_block" as ScopeId,
         type: "block",
-        location: { ...base_location, line: 10 },
+        name: null,
+        location: { ...base_location, line: 10, end_line: 10 },
         parent_id: "scope_1" as ScopeId, // Child of function scope
-        children: new Map(),
+        child_ids: [],
         symbols: new Map(),
       };
 
@@ -1429,9 +1439,10 @@ describe("Definitions Module", () => {
       const orphaned_scope: LexicalScope = {
         id: "orphaned" as ScopeId,
         type: "function",
-        location: { ...base_location, line: 50 },
+        name: null,
+        location: { ...base_location, line: 50, end_line: 50 },
         parent_id: "nonexistent" as ScopeId, // References non-existent parent
-        children: new Map(),
+        child_ids: [],
         symbols: new Map(),
       };
 
