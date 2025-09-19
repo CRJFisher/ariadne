@@ -12,7 +12,6 @@ import type {
 import type { NormalizedCapture } from "../capture_types";
 import { SemanticEntity } from "../capture_types";
 
-// Import ONLY the processing functions
 import { process_call_references } from "./call_references/call_references";
 import { process_type_flow_references } from "./type_flow_references/type_flow_references";
 import { process_return_references } from "./return_references/return_references";
@@ -114,9 +113,6 @@ export function process_references(
     );
     (result as any).member_accesses = member_accesses;
   }
-
-  // Note: Unprocessed references are intentionally not included
-  // as they don't have specialized type information
 
   return result;
 }

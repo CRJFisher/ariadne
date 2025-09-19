@@ -17,7 +17,10 @@ import type {
 import { location_key } from "@ariadnejs/types";
 import type { NormalizedCapture } from "../../capture_types";
 import { SemanticEntity, SemanticCategory } from "../../capture_types";
-import type { TypeInfo, AssignmentContext } from "../type_tracking/type_tracking";
+import type {
+  TypeInfo,
+  AssignmentContext,
+} from "../type_tracking/type_tracking";
 import type { VariableTypeInfo } from "../../type_registry/type_registry";
 import {
   TypeFlowReference,
@@ -49,20 +52,19 @@ describe("Type Flow References", () => {
   const mockLocation: Location = {
     file_path: mockFilePath,
     line: 1,
-          column: 0,
+    column: 0,
     end_line: 1,
-          end_column: 10,
+    end_column: 10,
   };
 
   const mockScope: LexicalScope = {
     id: "scope_1" as ScopeId,
     type: "function",
-    line: 1,
-          column: 0,
-    end_line: 10,
-          end_column: 0,
-    parent_id: undefined,
-    name: "testFunction",
+    location: { line: 1, column: 0, end_line: 10, end_column: 0, file_path: mockFilePath },
+    parent_id: null,
+    child_ids: [],
+    symbols: new Map(),
+    name: "testFunction" as SymbolName,
   };
 
   const mockScopes = new Map<ScopeId, LexicalScope>([
@@ -180,9 +182,10 @@ describe("Type Flow References", () => {
         const captures: NormalizedCapture[] = [
           {
             category: SemanticCategory.REFERENCE,
-            entity: SemanticEntity.ASSIGNMENT,
+            entity: SemanticEntity.VARIABLE,
             text: "variable",
             node_location: mockLocation,
+            modifiers: {},
             context: {},
           },
         ];
@@ -191,6 +194,7 @@ describe("Type Flow References", () => {
           source_type: mockTypeInfo,
           source_location: sourceLocation,
           target_location: targetLocation,
+          scope_id: mockScope.id,
         };
 
         const assignmentMap = new Map<LocationKey, AssignmentContext>([
@@ -218,37 +222,47 @@ describe("Type Flow References", () => {
         const captures: NormalizedCapture[] = [
           {
             category: SemanticCategory.REFERENCE,
-            entity: SemanticEntity.ASSIGNMENT,
+            entity: SemanticEntity.VARIABLE,
             text: "var1",
             node_location: mockLocation,
+            modifiers: {},
             context: {},
           },
           {
             category: SemanticCategory.REFERENCE,
-            entity: SemanticEntity.ASSIGNMENT,
+            entity: SemanticEntity.VARIABLE,
             text: "var2",
             node_location: {
               ...mockLocation,
               line: 2,
-          column: 0,
+              column: 0,
               end_line: 2,
-          end_column: 10,
+              end_column: 10,
             },
+            modifiers: {},
             context: {},
           },
         ];
 
         const assignmentMap = new Map<LocationKey, AssignmentContext>([
-          [location_key(mockLocation), {
-            source_type: mockTypeInfo,
-            source_location: mockLocation,
-            target_location: mockLocation,
-          }],
-          [location_key(captures[1].node_location), {
-            source_type: mockTypeInfo,
-            source_location: mockLocation,
-            target_location: mockLocation,
-          }],
+          [
+            location_key(mockLocation),
+            {
+              source_type: mockTypeInfo,
+              source_location: mockLocation,
+              target_location: mockLocation,
+              scope_id: mockScope.id,
+            },
+          ],
+          [
+            location_key(captures[1].node_location),
+            {
+              source_type: mockTypeInfo,
+              source_location: mockLocation,
+              target_location: mockLocation,
+              scope_id: mockScope.id,
+            },
+          ],
         ]);
 
         mockBuildTypedAssignmentMap.mockReturnValue(assignmentMap);
@@ -269,7 +283,7 @@ describe("Type Flow References", () => {
         const anyType: TypeInfo = {
           type_name: "any" as SymbolName,
           certainty: "ambiguous",
-          source: { kind: "inference", location: mockLocation },
+          source: { kind: "assignment", location: mockLocation },
         };
 
         const stringType: TypeInfo = {
@@ -281,10 +295,11 @@ describe("Type Flow References", () => {
         const captures: NormalizedCapture[] = [
           {
             category: SemanticCategory.REFERENCE,
-            entity: SemanticEntity.ASSIGNMENT,
+            entity: SemanticEntity.VARIABLE,
             text: "narrowed",
             node_location: mockLocation,
             context: {},
+            modifiers: {},
           },
         ];
 
@@ -292,6 +307,7 @@ describe("Type Flow References", () => {
           source_type: stringType,
           source_location: mockLocation,
           target_location: mockLocation,
+          scope_id: mockScope.id,
         };
 
         const typeAnnotations = new Map<LocationKey, TypeInfo>([
@@ -325,16 +341,17 @@ describe("Type Flow References", () => {
         const anyType: TypeInfo = {
           type_name: "any" as SymbolName,
           certainty: "ambiguous",
-          source: { kind: "inference", location: mockLocation },
+          source: { kind: "assignment", location: mockLocation },
         };
 
         const captures: NormalizedCapture[] = [
           {
             category: SemanticCategory.REFERENCE,
-            entity: SemanticEntity.ASSIGNMENT,
+            entity: SemanticEntity.VARIABLE,
             text: "widened",
             node_location: mockLocation,
             context: {},
+            modifiers: {},
           },
         ];
 
@@ -342,6 +359,7 @@ describe("Type Flow References", () => {
           source_type: anyType,
           source_location: mockLocation,
           target_location: mockLocation,
+          scope_id: mockScope.id,
         };
 
         const typeAnnotations = new Map<LocationKey, TypeInfo>([
@@ -369,10 +387,11 @@ describe("Type Flow References", () => {
         const captures: NormalizedCapture[] = [
           {
             category: SemanticCategory.REFERENCE,
-            entity: SemanticEntity.ASSIGNMENT,
+            entity: SemanticEntity.VARIABLE,
             text: "unannotated",
             node_location: mockLocation,
             context: {},
+            modifiers: {},
           },
         ];
 
@@ -380,6 +399,7 @@ describe("Type Flow References", () => {
           source_type: mockTypeInfo,
           source_location: mockLocation,
           target_location: mockLocation,
+          scope_id: mockScope.id,
         };
 
         mockBuildTypedAssignmentMap.mockReturnValue(
@@ -418,10 +438,11 @@ describe("Type Flow References", () => {
         const captures: NormalizedCapture[] = [
           {
             category: SemanticCategory.REFERENCE,
-            entity: SemanticEntity.ASSIGNMENT,
+            entity: SemanticEntity.VARIABLE,
             text: "orphaned",
             node_location: mockLocation,
             context: {},
+            modifiers: {},
           },
         ];
 
@@ -441,10 +462,11 @@ describe("Type Flow References", () => {
         const captures: NormalizedCapture[] = [
           {
             category: SemanticCategory.REFERENCE,
-            entity: SemanticEntity.ASSIGNMENT,
+            entity: SemanticEntity.VARIABLE,
             text: "unknown_source",
             node_location: mockLocation,
             context: {},
+            modifiers: {},
           },
         ];
 
@@ -452,6 +474,7 @@ describe("Type Flow References", () => {
           source_type: undefined,
           source_location: mockLocation,
           target_location: mockLocation,
+          scope_id: mockScope.id,
         };
 
         mockBuildTypedAssignmentMap.mockReturnValue(
@@ -522,7 +545,7 @@ describe("Type Flow References", () => {
             location: {
               ...mockLocation,
               line: 2,
-          column: 0,
+              column: 0,
             },
             name: "other_var" as SymbolName,
             scope_id: mockScope.id,
@@ -535,7 +558,10 @@ describe("Type Flow References", () => {
           },
         ];
 
-        const mutations = track_type_mutations(flows, "tracked_var" as SymbolName);
+        const mutations = track_type_mutations(
+          flows,
+          "tracked_var" as SymbolName
+        );
 
         expect(mutations).toHaveLength(1);
         expect(mutations[0].variable).toBe("tracked_var");
@@ -545,7 +571,7 @@ describe("Type Flow References", () => {
       it("should sort mutations by location", () => {
         const flows: TypeFlowReference[] = [
           {
-            location: { ...mockLocation, line: 3, column: 0 },
+            location: { ...mockLocation, line: 3, column: 0 , end_line: 3, end_column: 0  },
             name: "var" as SymbolName,
             scope_id: mockScope.id,
             flow_type: "assignment",
@@ -556,7 +582,7 @@ describe("Type Flow References", () => {
             is_widening: false,
           },
           {
-            location: { ...mockLocation, line: 1, column: 0 },
+            location: { ...mockLocation, line: 1, column: 0 , end_line: 1, end_column: 0  },
             name: "var" as SymbolName,
             scope_id: mockScope.id,
             flow_type: "assignment",
@@ -567,7 +593,7 @@ describe("Type Flow References", () => {
             is_widening: false,
           },
           {
-            location: { ...mockLocation, line: 2, column: 0 },
+            location: { ...mockLocation, line: 2, column: 0 , end_line: 2, end_column: 0  },
             name: "var" as SymbolName,
             scope_id: mockScope.id,
             flow_type: "assignment",
@@ -632,7 +658,7 @@ describe("Type Flow References", () => {
       it("should handle same column sorting", () => {
         const flows: TypeFlowReference[] = [
           {
-            location: { ...mockLocation, line: 1, column: 5 },
+            location: { ...mockLocation, line: 1, column: 5 , end_line: 1, end_column: 5  },
             name: "var" as SymbolName,
             scope_id: mockScope.id,
             flow_type: "assignment",
@@ -643,7 +669,7 @@ describe("Type Flow References", () => {
             is_widening: false,
           },
           {
-            location: { ...mockLocation, line: 1, column: 0 },
+            location: { ...mockLocation, line: 1, column: 0 , end_line: 1, end_column: 0  },
             name: "var" as SymbolName,
             scope_id: mockScope.id,
             flow_type: "assignment",
@@ -684,7 +710,10 @@ describe("Type Flow References", () => {
           },
         ];
 
-        const mutations = track_type_mutations(flows, "missing_var" as SymbolName);
+        const mutations = track_type_mutations(
+          flows,
+          "missing_var" as SymbolName
+        );
         expect(mutations).toEqual([]);
       });
     });
@@ -729,6 +758,10 @@ describe("Type Flow References", () => {
           location: mockLocation,
           scope_id: mockScope.id,
           value_type: "string_type" as TypeId,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
         };
 
         const symbolMap = new Map<SymbolId, SymbolDefinition>([
@@ -768,13 +801,19 @@ describe("Type Flow References", () => {
         expect(result.size).toBe(1);
         const varInfo = result.get(mockLocation)!;
         expect(varInfo.type_id).toBe("resolved_type");
-        expect(typeRegistry.resolve_type_info).toHaveBeenCalledWith(mockTypeInfo);
+        expect(typeRegistry.resolve_type_info).toHaveBeenCalledWith(
+          mockTypeInfo
+        );
       });
 
       it("should handle constants from symbols", () => {
         const constantDefinition: SymbolDefinition = {
           id: "const_symbol" as SymbolId,
           kind: "constant",
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
           name: "CONST_VAR" as SymbolName,
           location: mockLocation,
           scope_id: mockScope.id,
@@ -804,6 +843,10 @@ describe("Type Flow References", () => {
         const symbolDefinition: SymbolDefinition = {
           id: "no_type_symbol" as SymbolId,
           kind: "variable",
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
           name: "no_type_var" as SymbolName,
           location: mockLocation,
           scope_id: mockScope.id,
@@ -822,6 +865,10 @@ describe("Type Flow References", () => {
         const functionDefinition: SymbolDefinition = {
           id: "func_symbol" as SymbolId,
           kind: "function",
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
           name: "testFunc" as SymbolName,
           location: mockLocation,
           scope_id: mockScope.id,
@@ -921,7 +968,7 @@ describe("Type Flow References", () => {
             location: {
               ...mockLocation,
               line: 2,
-          column: 0,
+              column: 0,
             },
             name: "instance2" as SymbolName,
             scope_id: mockScope.id,
@@ -935,7 +982,7 @@ describe("Type Flow References", () => {
             target_location: {
               ...mockLocation,
               line: 2,
-          column: 0,
+              column: 0,
             },
             is_narrowing: false,
             is_widening: false,
@@ -1055,7 +1102,7 @@ describe("Type Flow References", () => {
               source: { kind: "annotation", location: mockLocation },
             },
             source_location: mockLocation,
-            target_location: { ...mockLocation, line: 1, column: 0 },
+            target_location: { ...mockLocation, line: 1, column: 0 , end_line: 1, end_column: 0  },
             is_narrowing: false,
             is_widening: false,
           },
@@ -1070,7 +1117,7 @@ describe("Type Flow References", () => {
               source: { kind: "annotation", location: mockLocation },
             },
             source_location: mockLocation,
-            target_location: { ...mockLocation, line: 3, column: 0 },
+            target_location: { ...mockLocation, line: 3, column: 0 , end_line: 3, end_column: 0  },
             is_narrowing: false,
             is_widening: false,
           },
@@ -1097,7 +1144,7 @@ describe("Type Flow References", () => {
             flow_type: "assignment",
             source_type: mockTypeInfo,
             source_location: mockLocation,
-            target_location: { ...mockLocation, line: 1, column: 5 },
+            target_location: { ...mockLocation, line: 1, column: 5 , end_line: 1, end_column: 5  },
             is_narrowing: false,
             is_widening: false,
           },
@@ -1128,7 +1175,7 @@ describe("Type Flow References", () => {
               source: { kind: "annotation", location: mockLocation },
             },
             source_location: mockLocation,
-            target_location: { ...mockLocation, line: 1, column: 0 },
+            target_location: { ...mockLocation, line: 1, column: 0 , end_line: 1, end_column: 0  },
             is_narrowing: false,
             is_widening: false,
           },
@@ -1143,7 +1190,7 @@ describe("Type Flow References", () => {
               source: { kind: "annotation", location: mockLocation },
             },
             source_location: mockLocation,
-            target_location: { ...mockLocation, line: 2, column: 0 },
+            target_location: { ...mockLocation, line: 2, column: 0 , end_line: 2, end_column: 0  },
             is_narrowing: false,
             is_widening: false,
           },
@@ -1177,7 +1224,7 @@ describe("Type Flow References", () => {
             flow_type: "assignment",
             source_type: mockTypeInfo,
             source_location: mockLocation,
-            target_location: { ...mockLocation, line: 5, column: 0 },
+            target_location: { ...mockLocation, line: 5, column: 0 , end_line: 5, end_column: 0  },
             is_narrowing: false,
             is_widening: false,
           },
@@ -1202,7 +1249,7 @@ describe("Type Flow References", () => {
             flow_type: "assignment",
             source_type: mockTypeInfo,
             source_location: mockLocation,
-            target_location: { ...mockLocation, line: 1, column: 5 },
+            target_location: { ...mockLocation, line: 1, column: 5 , end_line: 1, end_column: 5  },
             is_narrowing: false,
             is_widening: false,
           },
@@ -1227,10 +1274,11 @@ describe("Type Flow References", () => {
       const captures: NormalizedCapture[] = [
         {
           category: SemanticCategory.REFERENCE,
-          entity: SemanticEntity.ASSIGNMENT,
+          entity: SemanticEntity.VARIABLE,
           text: "myVar",
           node_location: mockLocation,
           context: {},
+          modifiers: {},
         },
       ];
 
@@ -1238,6 +1286,7 @@ describe("Type Flow References", () => {
         source_type: mockTypeInfo,
         source_location: mockLocation,
         target_location: mockLocation,
+        scope_id: mockScope.id,
       };
 
       mockBuildTypedAssignmentMap.mockReturnValue(
@@ -1264,7 +1313,7 @@ describe("Type Flow References", () => {
 
       // Find type at location
       const typeAtLocation = find_type_at_location(
-        { ...mockLocation, line: 2, column: 0 },
+        { ...mockLocation, line: 2, column: 0 , end_line: 2, end_column: 0  },
         flows
       );
       expect(typeAtLocation).toBeDefined();

@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import type { Location, SymbolName } from "@ariadnejs/types";
+import type { FilePath, Location, SymbolName } from "@ariadnejs/types";
 import type { TypeId } from "@ariadnejs/types";
 import {
   TypeCategory,
@@ -35,8 +35,9 @@ import {
 } from './type_info';
 
 // Mock data for testing
-const mockLocation: Location = { line: 1, column: 1 };
-const mockLocation2: Location = { line: 2, column: 5 };
+const mockFilePath = "test.ts" as FilePath;
+const mockLocation: Location = { file_path: mockFilePath, line: 1, column: 1 , end_line: 1, end_column: 1  };
+const mockLocation2: Location = { file_path: mockFilePath, line: 2, column: 5 , end_line: 2, end_column: 5  };
 
 describe('Type Info Module', () => {
   describe('TypeInfo interface', () => {
@@ -203,7 +204,7 @@ describe('Type Info Module', () => {
     });
 
     it('should create TypeInfo for user-defined types', () => {
-      const userType = "MyCustomType";
+      const userType = "MyCustomType" as SymbolName;
       const typeInfo = type_info_from_annotation(userType as SymbolName, mockLocation);
 
       expect(typeInfo.type_name).toBe(userType);
@@ -213,7 +214,7 @@ describe('Type Info Module', () => {
     });
 
     it('should create TypeInfo for user-defined types with custom category', () => {
-      const userType = "MyClass";
+      const userType = "MyClass" as SymbolName;
       const typeInfo = type_info_from_annotation(userType as SymbolName, mockLocation, TypeCategory.CLASS);
 
       expect(typeInfo.type_name).toBe(userType);
