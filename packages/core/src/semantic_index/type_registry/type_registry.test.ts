@@ -32,7 +32,7 @@ import {
 
 // Mock data for testing
 const mockFilePath = "/test/file.ts" as FilePath;
-const mockLocation: Location = { line: 1, column: 1 };
+const mockLocation: Location = { file_path: mockFilePath, line: 1, column: 1 , end_line: 1, end_column: 1  };
 const mockSymbolId = "test_symbol" as SymbolId;
 const mockSymbolName = "TestSymbol" as SymbolName;
 const mockTypeId = "test_type_id" as TypeId;
@@ -309,7 +309,7 @@ describe('Type Registry', () => {
         variable_name: "testVar" as SymbolName,
         scope_id: mockScopeId,
         type_info: {
-          id: mockTypeId,
+          type_id: mockTypeId,
           type_name: "string" as SymbolName,
           certainty: "declared",
           source: {
@@ -332,7 +332,7 @@ describe('Type Registry', () => {
         variable_name: "testVar" as SymbolName,
         scope_id: mockScopeId,
         type_info: {
-          id: mockTypeId,
+          type_id: mockTypeId,
           type_name: "number" as SymbolName,
           certainty: "inferred",
           source: {
@@ -354,7 +354,7 @@ describe('Type Registry', () => {
         variable_name: "testVar" as SymbolName,
         scope_id: mockScopeId,
         type_info: {
-          id: mockTypeId,
+          type_id: mockTypeId,
           type_name: "unknown" as SymbolName,
           certainty: "ambiguous",
           source: {
@@ -582,7 +582,7 @@ describe('Type Registry', () => {
         variable_name: "trackedVar" as SymbolName,
         scope_id: mockScopeId,
         type_info: {
-          id: mockTypeId,
+          type_id: mockTypeId,
           type_name: "string" as SymbolName,
           certainty: "declared",
           source: {

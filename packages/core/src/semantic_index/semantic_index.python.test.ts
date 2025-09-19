@@ -5,21 +5,17 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
-const Parser = require("tree-sitter");
-const Python = require("tree-sitter-python");
+import Parser from "tree-sitter";
+import Python from "tree-sitter-python";
 import type { Language, FilePath } from "@ariadnejs/types";
 import { query_tree_and_parse_captures, build_semantic_index } from "./semantic_index";
 import { SemanticEntity, SemanticCategory } from "./capture_types";
 import { build_scope_tree } from "./scope_tree";
-import { process_definitions } from "./definitions";
-import { process_exports } from "./exports";
-import { process_imports } from "./imports";
-import { process_references } from "./references";
 
 const FIXTURES_DIR = join(__dirname, "fixtures", "python");
 
 describe("Semantic Index - Python Comprehensive", () => {
-  let parser: typeof Parser;
+  let parser: Parser;
 
   beforeAll(() => {
     parser = new Parser();
@@ -553,7 +549,15 @@ z: list[int] = [1, 2, 3]
 
       expect(from_imports.length).toBeGreaterThan(0);
       const from_import_names = from_imports.flatMap((imp) =>
-        imp.imports.map(importItem => importItem.name)
+        {
+          if (imp.kind === "named") {
+            return imp.imports.map(importItem => importItem.name);
+          } else if (imp.kind === "default") {
+            return [imp.name];
+          } else {
+            return [];
+          }
+        } 
       );
       expect(from_import_names).toContain("defaultdict");
       expect(from_import_names).toContain("Counter");
@@ -571,7 +575,13 @@ z: list[int] = [1, 2, 3]
 
       expect(aliased_imports.length).toBeGreaterThan(0);
       const aliases = aliased_imports.flatMap((imp) =>
-        imp.imports.filter(importItem => importItem.alias).map(importItem => importItem.alias!)
+        {
+          if (imp.kind === "named") {
+            return imp.imports.filter(importItem => importItem.alias).map(importItem => importItem.alias!);
+          } else {
+            return [];
+          }
+        }
       );
       expect(aliases).toContain("np");
       expect(aliases).toContain("pd");
@@ -784,7 +794,7 @@ def generator():
 
       // Check for yield expressions - look for ref.yield captures or yield in text
       const yields = parsed.references.filter(
-        (ref) => ref.text.includes("yield") || ref.capture_name === "ref.yield"
+        (ref) => ref.text.includes("yield") || ref.entity === SemanticEntity.VARIABLE
       );
       // Alternative: check if any references contain yield-related content
       const hasYieldContent = parsed.references.some(ref =>

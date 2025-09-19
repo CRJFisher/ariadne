@@ -38,8 +38,10 @@ describe("Type Resolution", () => {
   const mockFilePath = "test.ts" as FilePath;
   const mockLocation: Location = {
     file_path: mockFilePath,
-    start: { line: 1, column: 0 },
-    end: { line: 1, column: 10 },
+    line: 1,
+    column: 0,
+    end_line: 1,
+    end_column: 10,
   };
 
   let mockSymbols: Map<SymbolId, SymbolDefinition>;
@@ -73,7 +75,15 @@ describe("Type Resolution", () => {
       });
 
       it("should resolve all primitive types", () => {
-        const primitives = ["string", "number", "boolean", "symbol", "bigint", "undefined", "null"];
+        const primitives = [
+          "string",
+          "number",
+          "boolean",
+          "symbol",
+          "bigint",
+          "undefined",
+          "null",
+        ];
 
         for (const primitive of primitives) {
           const typeInfo: TypeInfo = {
@@ -91,7 +101,17 @@ describe("Type Resolution", () => {
 
     describe("Built-in Types", () => {
       it("should resolve built-in types", () => {
-        const builtins = ["Date", "RegExp", "Error", "Promise", "Map", "Set", "Array", "Object", "Function"];
+        const builtins = [
+          "Date",
+          "RegExp",
+          "Error",
+          "Promise",
+          "Map",
+          "Set",
+          "Array",
+          "Object",
+          "Function",
+        ];
 
         for (const builtin of builtins) {
           const typeInfo: TypeInfo = {
@@ -135,8 +155,15 @@ describe("Type Resolution", () => {
 
     describe("Registry Types", () => {
       it("should resolve registered types", () => {
-        const customTypeId = defined_type_id(TypeCategory.CLASS, "CustomType" as SymbolName, mockLocation);
-        mockRegistry.name_to_type.set("CustomType" as SymbolName, customTypeId);
+        const customTypeId = defined_type_id(
+          TypeCategory.CLASS,
+          "CustomType" as SymbolName,
+          mockLocation
+        );
+        (mockRegistry.name_to_type as Map<SymbolName, TypeId>).set(
+          "CustomType" as SymbolName,
+          customTypeId
+        );
 
         const typeInfo: TypeInfo = {
           type_name: "CustomType" as SymbolName,
@@ -158,6 +185,10 @@ describe("Type Resolution", () => {
           name: "MyClass" as SymbolName,
           location: mockLocation,
           scope_id: "scope" as any,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
         };
 
         mockSymbols.set("class_symbol" as SymbolId, classSymbol);
@@ -170,7 +201,13 @@ describe("Type Resolution", () => {
 
         const result = resolve_type_info(typeInfo, mockSymbols, mockRegistry);
 
-        expect(result).toEqual(defined_type_id(TypeCategory.CLASS, "MyClass" as SymbolName, mockLocation));
+        expect(result).toEqual(
+          defined_type_id(
+            TypeCategory.CLASS,
+            "MyClass" as SymbolName,
+            mockLocation
+          )
+        );
       });
 
       it("should resolve interface symbols", () => {
@@ -180,6 +217,10 @@ describe("Type Resolution", () => {
           name: "IInterface" as SymbolName,
           location: mockLocation,
           scope_id: "scope" as any,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
         };
 
         mockSymbols.set("interface_symbol" as SymbolId, interfaceSymbol);
@@ -192,7 +233,13 @@ describe("Type Resolution", () => {
 
         const result = resolve_type_info(typeInfo, mockSymbols, mockRegistry);
 
-        expect(result).toEqual(defined_type_id(TypeCategory.INTERFACE, "IInterface" as SymbolName, mockLocation));
+        expect(result).toEqual(
+          defined_type_id(
+            TypeCategory.INTERFACE,
+            "IInterface" as SymbolName,
+            mockLocation
+          )
+        );
       });
 
       it("should resolve type alias symbols", () => {
@@ -202,6 +249,10 @@ describe("Type Resolution", () => {
           name: "StringAlias" as SymbolName,
           location: mockLocation,
           scope_id: "scope" as any,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
         };
 
         mockSymbols.set("alias_symbol" as SymbolId, aliasSymbol);
@@ -214,7 +265,13 @@ describe("Type Resolution", () => {
 
         const result = resolve_type_info(typeInfo, mockSymbols, mockRegistry);
 
-        expect(result).toEqual(defined_type_id(TypeCategory.TYPE_ALIAS, "StringAlias" as SymbolName, mockLocation));
+        expect(result).toEqual(
+          defined_type_id(
+            TypeCategory.TYPE_ALIAS,
+            "StringAlias" as SymbolName,
+            mockLocation
+          )
+        );
       });
 
       it("should resolve enum symbols", () => {
@@ -224,6 +281,10 @@ describe("Type Resolution", () => {
           name: "MyEnum" as SymbolName,
           location: mockLocation,
           scope_id: "scope" as any,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
         };
 
         mockSymbols.set("enum_symbol" as SymbolId, enumSymbol);
@@ -236,7 +297,13 @@ describe("Type Resolution", () => {
 
         const result = resolve_type_info(typeInfo, mockSymbols, mockRegistry);
 
-        expect(result).toEqual(defined_type_id(TypeCategory.ENUM, "MyEnum" as SymbolName, mockLocation));
+        expect(result).toEqual(
+          defined_type_id(
+            TypeCategory.ENUM,
+            "MyEnum" as SymbolName,
+            mockLocation
+          )
+        );
       });
     });
 
@@ -284,8 +351,15 @@ describe("Type Resolution", () => {
 
     describe("Generic Types", () => {
       it("should resolve generic types", () => {
-        const baseTypeId = defined_type_id(TypeCategory.CLASS, "Promise" as SymbolName, mockLocation);
-        mockRegistry.name_to_type.set("Promise" as SymbolName, baseTypeId);
+        const baseTypeId = defined_type_id(
+          TypeCategory.CLASS,
+          "Promise" as SymbolName,
+          mockLocation
+        );
+        (mockRegistry.name_to_type as Map<SymbolName, TypeId>).set(
+          "Promise" as SymbolName,
+          baseTypeId
+        );
 
         const argType: TypeInfo = {
           type_name: "string" as SymbolName,
@@ -300,14 +374,27 @@ describe("Type Resolution", () => {
           type_args: [argType],
         };
 
-        const result = resolve_type_info(genericType, mockSymbols, mockRegistry);
+        const result = resolve_type_info(
+          genericType,
+          mockSymbols,
+          mockRegistry
+        );
 
-        expect(result).toEqual(generic_type_id(baseTypeId, [primitive_type_id("string")]));
+        expect(result).toEqual(
+          generic_type_id(baseTypeId, [primitive_type_id("string")])
+        );
       });
 
       it("should handle partial generic resolution", () => {
-        const baseTypeId = defined_type_id(TypeCategory.CLASS, "Map" as SymbolName, mockLocation);
-        mockRegistry.name_to_type.set("Map" as SymbolName, baseTypeId);
+        const baseTypeId = defined_type_id(
+          TypeCategory.CLASS,
+          "Map" as SymbolName,
+          mockLocation
+        );
+        (mockRegistry.name_to_type as Map<SymbolName, TypeId>).set(
+          "Map" as SymbolName,
+          baseTypeId
+        );
 
         const keyType: TypeInfo = {
           type_name: "string" as SymbolName,
@@ -328,7 +415,11 @@ describe("Type Resolution", () => {
           type_args: [keyType, valueType],
         };
 
-        const result = resolve_type_info(genericType, mockSymbols, mockRegistry);
+        const result = resolve_type_info(
+          genericType,
+          mockSymbols,
+          mockRegistry
+        );
 
         expect(result).toBeUndefined();
       });
@@ -369,6 +460,10 @@ describe("Type Resolution", () => {
           name: "myVar" as SymbolName,
           location: mockLocation,
           scope_id: "scope" as any,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
         };
 
         mockSymbols.set("var_symbol" as SymbolId, variableSymbol);
@@ -395,6 +490,10 @@ describe("Type Resolution", () => {
           name: "MyClass" as SymbolName,
           location: mockLocation,
           scope_id: "scope" as any,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
         };
 
         const symbols = new Map([["class_symbol" as SymbolId, classSymbol]]);
@@ -408,7 +507,9 @@ describe("Type Resolution", () => {
 
         const typeId = result.name_to_type.get("MyClass" as SymbolName);
         expect(typeId).toBeDefined();
-        expect(result.symbol_to_type.get("class_symbol" as SymbolId)).toEqual(typeId);
+        expect(result.symbol_to_type.get("class_symbol" as SymbolId)).toEqual(
+          typeId
+        );
         expect(result.defined_types.has(typeId!)).toBe(true);
       });
 
@@ -422,6 +523,10 @@ describe("Type Resolution", () => {
           location: mockLocation,
           scope_id: "scope" as any,
           return_type: returnTypeId,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
         };
 
         const symbols = new Map([["func_symbol" as SymbolId, functionSymbol]]);
@@ -429,7 +534,9 @@ describe("Type Resolution", () => {
         const result = build_file_type_registry(symbols, mockFilePath);
 
         expect(result.return_types.size).toBe(1);
-        expect(result.return_types.get("func_symbol" as SymbolId)).toEqual(returnTypeId);
+        expect(result.return_types.get("func_symbol" as SymbolId)).toEqual(
+          returnTypeId
+        );
       });
 
       it("should include variable value types", () => {
@@ -442,6 +549,10 @@ describe("Type Resolution", () => {
           location: mockLocation,
           scope_id: "scope" as any,
           value_type: valueTypeId,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
         };
 
         const symbols = new Map([["var_symbol" as SymbolId, variableSymbol]]);
@@ -449,39 +560,69 @@ describe("Type Resolution", () => {
         const result = build_file_type_registry(symbols, mockFilePath);
 
         expect(result.symbol_types.size).toBe(1);
-        expect(result.symbol_types.get("var_symbol" as SymbolId)).toEqual(valueTypeId);
+        expect(result.symbol_types.get("var_symbol" as SymbolId)).toEqual(
+          valueTypeId
+        );
       });
 
       it("should handle all type symbol kinds", () => {
         const symbols = new Map<SymbolId, SymbolDefinition>([
-          ["class" as SymbolId, {
-            id: "class" as SymbolId,
-            kind: "class",
-            name: "MyClass" as SymbolName,
-            location: mockLocation,
-            scope_id: "scope" as any,
-          }],
-          ["interface" as SymbolId, {
-            id: "interface" as SymbolId,
-            kind: "interface",
-            name: "IInterface" as SymbolName,
-            location: mockLocation,
-            scope_id: "scope" as any,
-          }],
-          ["type_alias" as SymbolId, {
-            id: "type_alias" as SymbolId,
-            kind: "type_alias",
-            name: "TypeAlias" as SymbolName,
-            location: mockLocation,
-            scope_id: "scope" as any,
-          }],
-          ["enum" as SymbolId, {
-            id: "enum" as SymbolId,
-            kind: "enum",
-            name: "MyEnum" as SymbolName,
-            location: mockLocation,
-            scope_id: "scope" as any,
-          }],
+          [
+            "class" as SymbolId,
+            {
+              id: "class" as SymbolId,
+              kind: "class",
+              name: "MyClass" as SymbolName,
+              location: mockLocation,
+              scope_id: "scope" as any,
+              is_hoisted: false,
+              is_exported: false,
+              is_imported: false,
+              references: [],
+            },
+          ],
+          [
+            "interface" as SymbolId,
+            {
+              id: "interface" as SymbolId,
+              kind: "interface",
+              name: "IInterface" as SymbolName,
+              location: mockLocation,
+              scope_id: "scope" as any,
+              is_hoisted: false,
+              is_exported: false,
+              is_imported: false,
+              references: [],
+            },
+          ],
+          [
+            "type_alias" as SymbolId,
+            {
+              id: "type_alias" as SymbolId,
+              kind: "type_alias",
+              name: "TypeAlias" as SymbolName,
+              location: mockLocation,
+              scope_id: "scope" as any,
+              is_hoisted: false,
+              is_exported: false,
+              is_imported: false,
+              references: [],
+            },
+          ],
+          [
+            "enum" as SymbolId,
+            {
+              id: "enum" as SymbolId,
+              kind: "enum",
+              name: "MyEnum" as SymbolName,
+              location: mockLocation,
+              scope_id: "scope" as any,
+              is_hoisted: false,
+              is_exported: false,
+              is_imported: false,
+              references: [],
+            },
+          ],
         ]);
 
         const result = build_file_type_registry(symbols, mockFilePath);
@@ -503,6 +644,10 @@ describe("Type Resolution", () => {
           name: "MyClass" as SymbolName,
           location: mockLocation,
           scope_id: "scope" as any,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
         };
 
         const symbols = new Map([["class_symbol" as SymbolId, classSymbol]]);
@@ -532,6 +677,10 @@ describe("Type Resolution", () => {
           name: "myFunc" as SymbolName,
           location: mockLocation,
           scope_id: "scope" as any,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
         };
 
         const symbols = new Map([["func_symbol" as SymbolId, functionSymbol]]);
@@ -694,10 +843,12 @@ describe("Type Resolution", () => {
 
         const result = create_union_type(types, mockSymbols, mockRegistry);
 
-        expect(result).toEqual(union_type_id([
-          primitive_type_id("string"),
-          primitive_type_id("number"),
-        ]));
+        expect(result).toEqual(
+          union_type_id([
+            primitive_type_id("string"),
+            primitive_type_id("number"),
+          ])
+        );
       });
 
       it("should return single type for one element", () => {
@@ -771,17 +922,35 @@ describe("Type Resolution", () => {
           name: "MyClass" as SymbolName,
           location: mockLocation,
           scope_id: "scope" as any,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
         };
 
         mockSymbols.set("class_symbol" as SymbolId, classSymbol);
 
-        const result = infer_type_from_constructor("MyClass" as SymbolName, mockSymbols, mockRegistry);
+        const result = infer_type_from_constructor(
+          "MyClass" as SymbolName,
+          mockSymbols,
+          mockRegistry
+        );
 
-        expect(result).toEqual(defined_type_id(TypeCategory.CLASS, "MyClass" as SymbolName, mockLocation));
+        expect(result).toEqual(
+          defined_type_id(
+            TypeCategory.CLASS,
+            "MyClass" as SymbolName,
+            mockLocation
+          )
+        );
       });
 
       it("should use existing type_id from symbol", () => {
-        const existingTypeId = defined_type_id(TypeCategory.CLASS, "MyClass" as SymbolName, mockLocation);
+        const existingTypeId = defined_type_id(
+          TypeCategory.CLASS,
+          "MyClass" as SymbolName,
+          mockLocation
+        );
 
         const classSymbol: SymbolDefinition = {
           id: "class_symbol" as SymbolId,
@@ -790,20 +959,39 @@ describe("Type Resolution", () => {
           location: mockLocation,
           scope_id: "scope" as any,
           type_id: existingTypeId,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
         };
 
         mockSymbols.set("class_symbol" as SymbolId, classSymbol);
 
-        const result = infer_type_from_constructor("MyClass" as SymbolName, mockSymbols, mockRegistry);
+        const result = infer_type_from_constructor(
+          "MyClass" as SymbolName,
+          mockSymbols,
+          mockRegistry
+        );
 
         expect(result).toEqual(existingTypeId);
       });
 
       it("should check registry when symbol not found", () => {
-        const registryTypeId = defined_type_id(TypeCategory.CLASS, "RegistryClass" as SymbolName, mockLocation);
-        mockRegistry.name_to_type.set("RegistryClass" as SymbolName, registryTypeId);
+        const registryTypeId = defined_type_id(
+          TypeCategory.CLASS,
+          "RegistryClass" as SymbolName,
+          mockLocation
+        );
+        (mockRegistry.name_to_type as Map<SymbolName, TypeId>).set(
+          "RegistryClass" as SymbolName,
+          registryTypeId
+        );
 
-        const result = infer_type_from_constructor("RegistryClass" as SymbolName, mockSymbols, mockRegistry);
+        const result = infer_type_from_constructor(
+          "RegistryClass" as SymbolName,
+          mockSymbols,
+          mockRegistry
+        );
 
         expect(result).toEqual(registryTypeId);
       });
@@ -811,7 +999,11 @@ describe("Type Resolution", () => {
 
     describe("Edge Cases", () => {
       it("should return undefined for unknown constructor", () => {
-        const result = infer_type_from_constructor("UnknownClass" as SymbolName, mockSymbols, mockRegistry);
+        const result = infer_type_from_constructor(
+          "UnknownClass" as SymbolName,
+          mockSymbols,
+          mockRegistry
+        );
 
         expect(result).toBeUndefined();
       });
@@ -823,11 +1015,19 @@ describe("Type Resolution", () => {
           name: "MyInterface" as SymbolName,
           location: mockLocation,
           scope_id: "scope" as any,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
         };
 
         mockSymbols.set("interface_symbol" as SymbolId, interfaceSymbol);
 
-        const result = infer_type_from_constructor("MyInterface" as SymbolName, mockSymbols, mockRegistry);
+        const result = infer_type_from_constructor(
+          "MyInterface" as SymbolName,
+          mockSymbols,
+          mockRegistry
+        );
 
         expect(result).toBeUndefined();
       });
@@ -837,8 +1037,16 @@ describe("Type Resolution", () => {
   describe("resolve_inheritance_chain", () => {
     describe("Success Cases", () => {
       it("should resolve simple inheritance chain", () => {
-        const baseTypeId = defined_type_id(TypeCategory.CLASS, "BaseClass" as SymbolName, mockLocation);
-        const derivedTypeId = defined_type_id(TypeCategory.CLASS, "DerivedClass" as SymbolName, mockLocation);
+        const baseTypeId = defined_type_id(
+          TypeCategory.CLASS,
+          "BaseClass" as SymbolName,
+          mockLocation
+        );
+        const derivedTypeId = defined_type_id(
+          TypeCategory.CLASS,
+          "DerivedClass" as SymbolName,
+          mockLocation
+        );
 
         const baseSymbol: SymbolDefinition = {
           id: "base_symbol" as SymbolId,
@@ -847,6 +1055,10 @@ describe("Type Resolution", () => {
           location: mockLocation,
           scope_id: "scope" as any,
           type_id: baseTypeId,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
         };
 
         const derivedSymbol: SymbolDefinition = {
@@ -857,21 +1069,44 @@ describe("Type Resolution", () => {
           scope_id: "scope" as any,
           type_id: derivedTypeId,
           extends_class: "BaseClass" as SymbolName,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
         };
 
         mockSymbols.set("base_symbol" as SymbolId, baseSymbol);
         mockSymbols.set("derived_symbol" as SymbolId, derivedSymbol);
-        mockRegistry.name_to_type.set("BaseClass" as SymbolName, baseTypeId);
+        (mockRegistry.name_to_type as Map<SymbolName, TypeId>).set(
+          "BaseClass" as SymbolName,
+          baseTypeId
+        );
 
-        const result = resolve_inheritance_chain(derivedTypeId, mockSymbols, mockRegistry);
+        const result = resolve_inheritance_chain(
+          derivedTypeId,
+          mockSymbols,
+          mockRegistry
+        );
 
         expect(result).toEqual([derivedTypeId, baseTypeId]);
       });
 
       it("should handle multiple inheritance levels", () => {
-        const grandParentTypeId = defined_type_id(TypeCategory.CLASS, "GrandParent" as SymbolName, mockLocation);
-        const parentTypeId = defined_type_id(TypeCategory.CLASS, "Parent" as SymbolName, mockLocation);
-        const childTypeId = defined_type_id(TypeCategory.CLASS, "Child" as SymbolName, mockLocation);
+        const grandParentTypeId = defined_type_id(
+          TypeCategory.CLASS,
+          "GrandParent" as SymbolName,
+          mockLocation
+        );
+        const parentTypeId = defined_type_id(
+          TypeCategory.CLASS,
+          "Parent" as SymbolName,
+          mockLocation
+        );
+        const childTypeId = defined_type_id(
+          TypeCategory.CLASS,
+          "Child" as SymbolName,
+          mockLocation
+        );
 
         const grandParentSymbol: SymbolDefinition = {
           id: "grandparent_symbol" as SymbolId,
@@ -917,17 +1152,35 @@ describe("Type Resolution", () => {
         mockSymbols.set("grandparent_symbol" as SymbolId, grandParentSymbol);
         mockSymbols.set("parent_symbol" as SymbolId, parentSymbol);
         mockSymbols.set("child_symbol" as SymbolId, childSymbol);
-        mockRegistry.name_to_type.set("GrandParent" as SymbolName, grandParentTypeId);
-        mockRegistry.name_to_type.set("Parent" as SymbolName, parentTypeId);
+        (mockRegistry.name_to_type as Map<SymbolName, TypeId>).set(
+          "GrandParent" as SymbolName,
+          grandParentTypeId
+        );
+        (mockRegistry.name_to_type as Map<SymbolName, TypeId>).set(
+          "Parent" as SymbolName,
+          parentTypeId
+        );
 
-        const result = resolve_inheritance_chain(childTypeId, mockSymbols, mockRegistry);
+        const result = resolve_inheritance_chain(
+          childTypeId,
+          mockSymbols,
+          mockRegistry
+        );
 
         expect(result).toEqual([childTypeId, parentTypeId, grandParentTypeId]);
       });
 
       it("should handle circular inheritance", () => {
-        const type1Id = defined_type_id(TypeCategory.CLASS, "Class1" as SymbolName, mockLocation);
-        const type2Id = defined_type_id(TypeCategory.CLASS, "Class2" as SymbolName, mockLocation);
+        const type1Id = defined_type_id(
+          TypeCategory.CLASS,
+          "Class1" as SymbolName,
+          mockLocation
+        );
+        const type2Id = defined_type_id(
+          TypeCategory.CLASS,
+          "Class2" as SymbolName,
+          mockLocation
+        );
 
         const symbol1: SymbolDefinition = {
           id: "symbol1" as SymbolId,
@@ -937,6 +1190,10 @@ describe("Type Resolution", () => {
           scope_id: "scope" as any,
           type_id: type1Id,
           extends_class: "Class2" as SymbolName,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
         };
 
         const symbol2: SymbolDefinition = {
@@ -947,14 +1204,28 @@ describe("Type Resolution", () => {
           scope_id: "scope" as any,
           type_id: type2Id,
           extends_class: "Class1" as SymbolName,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
         };
 
         mockSymbols.set("symbol1" as SymbolId, symbol1);
         mockSymbols.set("symbol2" as SymbolId, symbol2);
-        mockRegistry.name_to_type.set("Class1" as SymbolName, type1Id);
-        mockRegistry.name_to_type.set("Class2" as SymbolName, type2Id);
+        (mockRegistry.name_to_type as Map<SymbolName, TypeId>).set(
+          "Class1" as SymbolName,
+          type1Id
+        );
+        (mockRegistry.name_to_type as Map<SymbolName, TypeId>).set(
+          "Class2" as SymbolName,
+          type2Id
+        );
 
-        const result = resolve_inheritance_chain(type1Id, mockSymbols, mockRegistry);
+        const result = resolve_inheritance_chain(
+          type1Id,
+          mockSymbols,
+          mockRegistry
+        );
 
         expect(result).toEqual([type1Id, type2Id]);
       });
@@ -962,7 +1233,11 @@ describe("Type Resolution", () => {
 
     describe("Edge Cases", () => {
       it("should handle type with no inheritance", () => {
-        const typeId = defined_type_id(TypeCategory.CLASS, "StandaloneClass" as SymbolName, mockLocation);
+        const typeId = defined_type_id(
+          TypeCategory.CLASS,
+          "StandaloneClass" as SymbolName,
+          mockLocation
+        );
 
         const symbol: SymbolDefinition = {
           id: "symbol" as SymbolId,
@@ -971,17 +1246,29 @@ describe("Type Resolution", () => {
           location: mockLocation,
           scope_id: "scope" as any,
           type_id: typeId,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
         };
 
         mockSymbols.set("symbol" as SymbolId, symbol);
 
-        const result = resolve_inheritance_chain(typeId, mockSymbols, mockRegistry);
+        const result = resolve_inheritance_chain(
+          typeId,
+          mockSymbols,
+          mockRegistry
+        );
 
         expect(result).toEqual([typeId]);
       });
 
       it("should handle unknown parent types", () => {
-        const typeId = defined_type_id(TypeCategory.CLASS, "DerivedClass" as SymbolName, mockLocation);
+        const typeId = defined_type_id(
+          TypeCategory.CLASS,
+          "DerivedClass" as SymbolName,
+          mockLocation
+        );
 
         const symbol: SymbolDefinition = {
           id: "symbol" as SymbolId,
@@ -991,19 +1278,35 @@ describe("Type Resolution", () => {
           scope_id: "scope" as any,
           type_id: typeId,
           extends_class: "UnknownParent" as SymbolName,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
         };
 
         mockSymbols.set("symbol" as SymbolId, symbol);
 
-        const result = resolve_inheritance_chain(typeId, mockSymbols, mockRegistry);
+        const result = resolve_inheritance_chain(
+          typeId,
+          mockSymbols,
+          mockRegistry
+        );
 
         expect(result).toEqual([typeId]);
       });
 
       it("should handle type not found in symbols", () => {
-        const unknownTypeId = defined_type_id(TypeCategory.CLASS, "UnknownClass" as SymbolName, mockLocation);
+        const unknownTypeId = defined_type_id(
+          TypeCategory.CLASS,
+          "UnknownClass" as SymbolName,
+          mockLocation
+        );
 
-        const result = resolve_inheritance_chain(unknownTypeId, mockSymbols, mockRegistry);
+        const result = resolve_inheritance_chain(
+          unknownTypeId,
+          mockSymbols,
+          mockRegistry
+        );
 
         expect(result).toEqual([unknownTypeId]);
       });
@@ -1019,6 +1322,10 @@ describe("Type Resolution", () => {
         name: "BaseClass" as SymbolName,
         location: mockLocation,
         scope_id: "scope" as any,
+        is_hoisted: false,
+        is_exported: false,
+        is_imported: false,
+        references: [],
       };
 
       const derivedClassSymbol: SymbolDefinition = {
@@ -1028,6 +1335,10 @@ describe("Type Resolution", () => {
         location: mockLocation,
         scope_id: "scope" as any,
         extends_class: "BaseClass" as SymbolName,
+        is_hoisted: false,
+        is_exported: false,
+        is_imported: false,
+        references: [],
       };
 
       const interfaceSymbol: SymbolDefinition = {
@@ -1036,6 +1347,10 @@ describe("Type Resolution", () => {
         name: "IInterface" as SymbolName,
         location: mockLocation,
         scope_id: "scope" as any,
+        is_hoisted: false,
+        is_exported: false,
+        is_imported: false,
+        references: [],
       };
 
       const symbols = new Map<SymbolId, SymbolDefinition>([
@@ -1074,13 +1389,23 @@ describe("Type Resolution", () => {
       expect(resolved.get(typeInfos[2])).toBeDefined();
 
       // Test inheritance chain
-      const derivedTypeId = registry.name_to_type.get("DerivedClass" as SymbolName)!;
-      const inheritanceChain = resolve_inheritance_chain(derivedTypeId, symbols, registry);
+      const derivedTypeId = registry.name_to_type.get(
+        "DerivedClass" as SymbolName
+      )!;
+      const inheritanceChain = resolve_inheritance_chain(
+        derivedTypeId,
+        symbols,
+        registry
+      );
 
       expect(inheritanceChain).toHaveLength(2);
 
       // Test union creation
-      const unionType = create_union_type([typeInfos[0], typeInfos[1]], symbols, registry);
+      const unionType = create_union_type(
+        [typeInfos[0], typeInfos[1]],
+        symbols,
+        registry
+      );
       expect(unionType).toBeDefined();
     });
   });
