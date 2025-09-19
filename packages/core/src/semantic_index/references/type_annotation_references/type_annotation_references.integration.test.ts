@@ -14,7 +14,6 @@ import type {
 import { location_key } from "@ariadnejs/types";
 import type { NormalizedCapture } from "../../capture_types";
 import { SemanticEntity, SemanticCategory } from "../../capture_types";
-import type { TypeInfo } from "../type_tracking/type_tracking";
 import {
   process_type_annotation_references,
   build_type_hierarchy,
