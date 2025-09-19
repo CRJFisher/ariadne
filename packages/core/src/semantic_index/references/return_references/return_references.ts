@@ -72,6 +72,11 @@ export function process_return_references(
       scopes
     );
 
+    // Skip captures where scope cannot be determined
+    if (!scope) {
+      continue;
+    }
+
     const key = location_key(capture.node_location);
     const return_context = return_map.get(key);
 
@@ -91,6 +96,22 @@ export function process_return_references(
 }
 
 /**
+ * Detect if return expression contains async patterns
+ */
+function is_async_return(expression: string): boolean {
+  // Check for await keyword in the return expression
+  return /\bawait\b/.test(expression);
+}
+
+/**
+ * Detect if return expression is actually a yield
+ */
+function is_yield_return(expression: string): boolean {
+  // Check if expression starts with 'yield' or contains 'yield'
+  return /^yield\b|\byield\b/.test(expression);
+}
+
+/**
  * Create a return reference
  */
 function create_return_reference(
@@ -105,6 +126,10 @@ function create_return_reference(
   // Get function symbol if available
   const function_symbol = scope_to_symbol?.get(return_context.function_scope_id);
 
+  // Detect async and yield patterns from the expression
+  const is_async = is_async_return(expression);
+  const is_yield = is_yield_return(expression);
+
   return {
     location,
     expression,
@@ -113,8 +138,8 @@ function create_return_reference(
     function_symbol,
     returned_type: return_context.returned_type,
     is_conditional: return_context.is_conditional || false,
-    is_async: false, // Would need function analysis
-    is_yield: false, // Would need to check for yield keyword
+    is_async,
+    is_yield,
   };
 }
 
@@ -158,15 +183,33 @@ export function infer_function_return_types(
 }
 
 /**
+ * Check if two TypeInfo objects are structurally equal
+ */
+function types_equal(a: TypeInfo, b: TypeInfo): boolean {
+  if (a.type_name !== b.type_name) return false;
+
+  // Compare type arguments if they exist
+  if (a.type_args && b.type_args) {
+    if (a.type_args.length !== b.type_args.length) return false;
+    return a.type_args.every((arg, i) => types_equal(arg, b.type_args![i]));
+  }
+
+  // If one has type_args and the other doesn't, they're different
+  if (a.type_args || b.type_args) return false;
+
+  return true;
+}
+
+/**
  * Simple type unification
  */
 function unify_types(types: TypeInfo[]): TypeInfo | undefined {
   if (types.length === 0) return undefined;
   if (types.length === 1) return types[0];
 
-  // Check if all types are the same
+  // Check if all types are structurally the same
   const first = types[0];
-  const all_same = types.every(t => t.type_name === first.type_name);
+  const all_same = types.every(t => types_equal(t, first));
 
   if (all_same) {
     return first;
@@ -201,10 +244,13 @@ export function analyze_return_paths(
   const paths = returns.filter(r => r.function_scope_id === function_scope_id);
 
   const has_conditional_returns = paths.some(p => p.is_conditional);
+  const has_unconditional_returns = paths.some(p => !p.is_conditional);
 
   // Check if function might have implicit return (no return statement on some paths)
-  // This would need control flow analysis to be accurate
-  const has_implicit_return = has_conditional_returns && paths.length === 1;
+  // - If no returns at all, definitely has implicit return
+  // - If all returns are conditional, might have code paths without explicit returns
+  // - If there's at least one unconditional return, all paths should have explicit returns
+  const has_implicit_return = paths.length === 0 || (has_conditional_returns && !has_unconditional_returns);
 
   return {
     function_scope_id,
@@ -259,8 +305,7 @@ export function connect_return_types_to_functions(
         if (inferred_type.unified_type && type_registry?.resolve_type_info) {
           const resolved = type_registry.resolve_type_info(inferred_type.unified_type);
           if (resolved) {
-            // Update the symbol's return type
-            (symbol as any).return_type = resolved;
+            // Store the resolved type mapping (without mutating input symbols)
             function_return_types.set(inferred_type.function_symbol, resolved);
             inferred_type.resolved_type = resolved;
           }

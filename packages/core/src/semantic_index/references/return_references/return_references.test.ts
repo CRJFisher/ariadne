@@ -47,25 +47,30 @@ describe("Return References", () => {
   const mockFilePath = "test.ts" as FilePath;
   const mockLocation: Location = {
     file_path: mockFilePath,
-    start: { line: 1, column: 0 },
-    end: { line: 1, column: 10 },
+    line: 1,
+    column: 0 ,
+    end_line: 1,
+    end_column: 10 ,
   };
 
   const mockScope: LexicalScope = {
     id: "scope_1" as ScopeId,
+    name: "testBlock" as SymbolName,
     type: "block",
-    start: { line: 1, column: 0 },
-    end: { line: 10, column: 0 },
+    location: mockLocation,
+    child_ids: [],
     parent_id: "func_scope" as ScopeId,
+    symbols: new Map(),
   };
 
   const mockFunctionScope: LexicalScope = {
     id: "func_scope" as ScopeId,
     type: "function",
-    start: { line: 1, column: 0 },
-    end: { line: 15, column: 0 },
-    parent_id: undefined,
-    name: "testFunction",
+    location: {line: 1, column: 0 , end_line: 15, end_column: 0, file_path: mockFilePath },
+    parent_id: "func_scope" as ScopeId,
+    name: "testFunction" as SymbolName,
+    symbols: new Map(),
+    child_ids: [],
   };
 
   const mockScopes = new Map<ScopeId, LexicalScope>([
@@ -173,11 +178,12 @@ describe("Return References", () => {
       it("should process return captures with context", () => {
         const returns: NormalizedCapture[] = [
           {
-            category: SemanticCategory.REFERENCE,
-            entity: SemanticEntity.RETURN,
+            category: SemanticCategory.RETURN,
+            entity: SemanticEntity.REFERENCE,
             text: "return 42",
             node_location: mockLocation,
             context: {},
+            modifiers: {},
           },
         ];
 
@@ -185,6 +191,7 @@ describe("Return References", () => {
           function_scope_id: mockFunctionScope.id,
           returned_type: mockTypeInfo,
           is_conditional: false,
+          location: mockLocation,
         };
 
         const returnMap = new Map([
@@ -210,10 +217,11 @@ describe("Return References", () => {
       it("should include function symbol when scope mapping provided", () => {
         const returns: NormalizedCapture[] = [
           {
-            category: SemanticCategory.REFERENCE,
-            entity: SemanticEntity.RETURN,
+            category: SemanticCategory.RETURN,
+            entity: SemanticEntity.REFERENCE,
             text: "return value",
             node_location: mockLocation,
+            modifiers: {},
             context: {},
           },
         ];
@@ -222,6 +230,7 @@ describe("Return References", () => {
           function_scope_id: mockFunctionScope.id,
           returned_type: mockTypeInfo,
           is_conditional: false,
+          location: mockLocation,
         };
 
         const scopeToSymbol = new Map<ScopeId, SymbolId>([
@@ -245,25 +254,24 @@ describe("Return References", () => {
       });
 
       it("should handle multiple return captures", () => {
-        const location2: Location = {
-          ...mockLocation,
-          start: { line: 5, column: 0 },
-        };
+        const location2: Location = { ...mockLocation, line: 5, column: 0 , end_line: 5, end_column: 0  };
 
         const returns: NormalizedCapture[] = [
           {
-            category: SemanticCategory.REFERENCE,
-            entity: SemanticEntity.RETURN,
+            category: SemanticCategory.RETURN,
+            entity: SemanticEntity.REFERENCE,
             text: "return first",
             node_location: mockLocation,
             context: {},
+            modifiers: {},
           },
           {
-            category: SemanticCategory.REFERENCE,
-            entity: SemanticEntity.RETURN,
+            category: SemanticCategory.RETURN,
+            entity: SemanticEntity.REFERENCE,
             text: "return second",
             node_location: location2,
             context: {},
+            modifiers: {},
           },
         ];
 
@@ -272,11 +280,13 @@ describe("Return References", () => {
             function_scope_id: mockFunctionScope.id,
             returned_type: mockTypeInfo,
             is_conditional: false,
+            location: mockLocation,
           }],
           [location_key(location2), {
             function_scope_id: mockFunctionScope.id,
             returned_type: mockTypeInfo,
             is_conditional: true,
+            location: location2,
           }],
         ]);
 
@@ -302,11 +312,12 @@ describe("Return References", () => {
       it("should handle conditional returns", () => {
         const returns: NormalizedCapture[] = [
           {
-            category: SemanticCategory.REFERENCE,
-            entity: SemanticEntity.RETURN,
+            category: SemanticCategory.RETURN,
+            entity: SemanticEntity.REFERENCE,
             text: "return conditionalValue",
             node_location: mockLocation,
             context: {},
+            modifiers: {},
           },
         ];
 
@@ -314,6 +325,7 @@ describe("Return References", () => {
           function_scope_id: mockFunctionScope.id,
           returned_type: mockTypeInfo,
           is_conditional: true,
+          location: mockLocation,
         };
 
         mockBuildTypedReturnMap.mockReturnValue(
@@ -349,11 +361,12 @@ describe("Return References", () => {
       it("should skip returns without context", () => {
         const returns: NormalizedCapture[] = [
           {
-            category: SemanticCategory.REFERENCE,
-            entity: SemanticEntity.RETURN,
+            category: SemanticCategory.RETURN,
+            entity: SemanticEntity.REFERENCE,
             text: "orphaned return",
             node_location: mockLocation,
             context: {},
+            modifiers: {},
           },
         ];
 
@@ -372,11 +385,12 @@ describe("Return References", () => {
       it("should handle returns without function symbol mapping", () => {
         const returns: NormalizedCapture[] = [
           {
-            category: SemanticCategory.REFERENCE,
-            entity: SemanticEntity.RETURN,
+            category: SemanticCategory.RETURN,
+            entity: SemanticEntity.REFERENCE,
             text: "return value",
             node_location: mockLocation,
             context: {},
+            modifiers: {},
           },
         ];
 
@@ -384,6 +398,7 @@ describe("Return References", () => {
           function_scope_id: mockFunctionScope.id,
           returned_type: mockTypeInfo,
           is_conditional: false,
+          location: mockLocation,
         };
 
         mockBuildTypedReturnMap.mockReturnValue(
@@ -404,17 +419,19 @@ describe("Return References", () => {
       it("should handle returns without type info", () => {
         const returns: NormalizedCapture[] = [
           {
-            category: SemanticCategory.REFERENCE,
-            entity: SemanticEntity.RETURN,
+            category: SemanticCategory.RETURN,
+            entity: SemanticEntity.REFERENCE,
             text: "return",
             node_location: mockLocation,
             context: {},
+            modifiers: {},
           },
         ];
 
         const returnContext: ReturnContext = {
           function_scope_id: mockFunctionScope.id,
           is_conditional: false,
+          location: mockLocation,
         };
 
         mockBuildTypedReturnMap.mockReturnValue(
@@ -795,7 +812,7 @@ describe("Return References", () => {
         const result = analyze_return_paths(returns, mockFunctionScope.id);
 
         expect(result.has_conditional_returns).toBe(true);
-        expect(result.has_implicit_return).toBe(false);
+        expect(result.has_implicit_return).toBe(true); // All returns are conditional, so implicit return possible
       });
     });
 
@@ -806,7 +823,7 @@ describe("Return References", () => {
         expect(result.function_scope_id).toBe(mockFunctionScope.id);
         expect(result.paths).toHaveLength(0);
         expect(result.has_conditional_returns).toBe(false);
-        expect(result.has_implicit_return).toBe(false);
+        expect(result.has_implicit_return).toBe(true); // No explicit returns means implicit return
       });
 
       it("should handle no matching function scope", () => {
@@ -827,7 +844,7 @@ describe("Return References", () => {
 
         expect(result.paths).toHaveLength(0);
         expect(result.has_conditional_returns).toBe(false);
-        expect(result.has_implicit_return).toBe(false);
+        expect(result.has_implicit_return).toBe(true); // No returns for this function means implicit return
       });
     });
   });
@@ -981,6 +998,10 @@ describe("Return References", () => {
           name: "myFunction" as SymbolName,
           location: mockLocation,
           scope_id: mockFunctionScope.id,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
         };
 
         const symbols = new Map<SymbolId, SymbolDefinition>([
@@ -996,7 +1017,7 @@ describe("Return References", () => {
         expect(result.size).toBe(1);
         expect(result.get("my_function" as SymbolId)).toBe("string_type");
         expect(typeRegistry.resolve_type_info).toHaveBeenCalledWith(mockTypeInfo);
-        expect((functionDef as any).return_type).toBe("string_type");
+        // Symbols are no longer mutated - function returns mapping instead
       });
 
       it("should handle multiple functions", () => {
@@ -1036,6 +1057,10 @@ describe("Return References", () => {
             name: "func1" as SymbolName,
             location: mockLocation,
             scope_id: "func1_scope" as ScopeId,
+            is_hoisted: false,
+            is_exported: false,
+            is_imported: false,
+            references: [],
           }],
           ["func2" as SymbolId, {
             id: "func2" as SymbolId,
@@ -1043,6 +1068,10 @@ describe("Return References", () => {
             name: "func2" as SymbolName,
             location: mockLocation,
             scope_id: "func2_scope" as ScopeId,
+            is_hoisted: false,
+            is_exported: false,
+            is_imported: false,
+            references: [],
           }],
         ]);
 
@@ -1122,6 +1151,10 @@ describe("Return References", () => {
             name: "myFunction" as SymbolName,
             location: mockLocation,
             scope_id: mockFunctionScope.id,
+            is_hoisted: false,
+            is_exported: false,
+            is_imported: false,
+            references: [],
           }],
         ]);
 
@@ -1152,6 +1185,10 @@ describe("Return References", () => {
             name: "myFunction" as SymbolName,
             location: mockLocation,
             scope_id: mockFunctionScope.id,
+            is_hoisted: false,
+            is_exported: false,
+            is_imported: false,
+            references: [],
           }],
         ]);
 
@@ -1185,6 +1222,10 @@ describe("Return References", () => {
             name: "myFunction" as SymbolName,
             location: mockLocation,
             scope_id: mockFunctionScope.id,
+            is_hoisted: false,
+            is_exported: false,
+            is_imported: false,
+            references: [],
           }],
         ]);
 
@@ -1199,15 +1240,17 @@ describe("Return References", () => {
     it("should process complete return analysis pipeline", () => {
       const returns: NormalizedCapture[] = [
         {
-          category: SemanticCategory.REFERENCE,
-          entity: SemanticEntity.RETURN,
+          category: SemanticCategory.RETURN,
+          entity: SemanticEntity.REFERENCE,
           text: "return result",
           node_location: mockLocation,
           context: {},
+          modifiers: {},
         },
       ];
 
       const returnContext: ReturnContext = {
+        location: mockLocation,
         function_scope_id: mockFunctionScope.id,
         returned_type: mockTypeInfo,
         is_conditional: false,
@@ -1253,6 +1296,10 @@ describe("Return References", () => {
         name: "testFunction" as SymbolName,
         location: mockLocation,
         scope_id: mockFunctionScope.id,
+        is_hoisted: false,
+        is_exported: false,
+        is_imported: false,
+        references: [],
       };
 
       const symbols = new Map([["test_function" as SymbolId, functionDef]]);
