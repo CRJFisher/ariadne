@@ -1,8 +1,8 @@
 /**
- * Comprehensive tests for type members collection and organization
+ * Comprehensive tests for type members extraction (local only)
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import type {
   SymbolId,
   SymbolName,
@@ -13,28 +13,13 @@ import type {
   LexicalScope,
   FilePath,
 } from "@ariadnejs/types";
-import type {
-  TypeMemberMap,
-  MemberInfo,
-  InheritanceInfo,
-  ParameterInfo,
-} from "../type_registry/type_registry";
 import {
-  collect_type_members,
-  find_type_methods,
-  resolve_method_on_type,
+  extract_type_members,
+  find_direct_type_methods,
+  find_direct_member,
+  type LocalTypeInfo,
+  type LocalMemberInfo,
 } from "./type_members";
-
-// Mock the unimplemented function
-vi.mock("./type_members", async () => {
-  const actual = await vi.importActual("./type_members");
-  return {
-    ...actual,
-    create_type_id_from_symbol: vi.fn((symbol: SymbolDefinition) => {
-      return `${symbol.kind}_${symbol.name}_type` as TypeId;
-    }),
-  };
-});
 
 describe("Type Members", () => {
   const mockFilePath = "test.ts" as FilePath;
@@ -50,7 +35,7 @@ describe("Type Members", () => {
   let mockScopes: Map<ScopeId, LexicalScope>;
 
   // Helper function to create properly typed SymbolDefinition objects
-  const createSymbolDefinition = (
+  const create_symbol_definition = (
     partial: Partial<SymbolDefinition>
   ): SymbolDefinition =>
     ({
@@ -64,98 +49,85 @@ describe("Type Members", () => {
   beforeEach(() => {
     mockSymbols = new Map();
     mockScopes = new Map();
-    vi.clearAllMocks();
   });
 
-  describe("collect_type_members", () => {
+  describe("extract_type_members", () => {
     describe("Success Cases", () => {
-      it("should collect members from class symbols", () => {
-        const classSymbol: SymbolDefinition = createSymbolDefinition({
-          id: "class_symbol" as SymbolId,
-          kind: "class",
-          name: "MyClass" as SymbolName,
-          location: mockLocation,
-          scope_id: "class_scope" as ScopeId,
-          type_id: "class_MyClass_type" as TypeId,
-        });
-
-        const methodSymbol: SymbolDefinition = createSymbolDefinition({
+      it("should extract direct members from class symbols", () => {
+        const methodSymbol: SymbolDefinition = create_symbol_definition({
           id: "method_symbol" as SymbolId,
           kind: "method",
           name: "myMethod" as SymbolName,
           location: mockLocation,
           scope_id: "method_scope" as ScopeId,
-          member_of: "class_MyClass_type" as TypeId,
-          return_type: "string_type" as TypeId,
+          return_type_hint: "string" as SymbolName,
         });
 
-        const propertySymbol: SymbolDefinition = createSymbolDefinition({
+        const propertySymbol: SymbolDefinition = create_symbol_definition({
           id: "property_symbol" as SymbolId,
           kind: "variable",
           name: "myProperty" as SymbolName,
           location: mockLocation,
           scope_id: "class_scope" as ScopeId,
-          member_of: "class_MyClass_type" as TypeId,
-          value_type: "number_type" as TypeId,
+        });
+
+        const classSymbol: SymbolDefinition = create_symbol_definition({
+          id: "class_symbol" as SymbolId,
+          kind: "class",
+          name: "MyClass" as SymbolName,
+          location: mockLocation,
+          scope_id: "class_scope" as ScopeId,
+          members: ["method_symbol" as SymbolId, "property_symbol" as SymbolId],
         });
 
         mockSymbols.set("class_symbol" as SymbolId, classSymbol);
         mockSymbols.set("method_symbol" as SymbolId, methodSymbol);
         mockSymbols.set("property_symbol" as SymbolId, propertySymbol);
 
-        const result = collect_type_members(mockSymbols, mockScopes);
+        const result = extract_type_members(mockSymbols, mockScopes, mockFilePath);
 
-        expect(result.instance_members.size).toBe(1);
-        expect(result.static_members.size).toBe(1);
-        expect(result.constructors.size).toBe(0);
-        expect(result.inheritance.size).toBe(1);
+        expect(result.length).toBe(1);
+        const classInfo = result[0];
+        expect(classInfo.type_name).toBe("MyClass");
+        expect(classInfo.kind).toBe("class");
+        expect(classInfo.direct_members.size).toBe(2);
 
-        const classMembers = result.instance_members.get(
-          "class_MyClass_type" as TypeId
-        );
-        expect(classMembers?.size).toBe(2);
-        expect(classMembers?.has("myMethod" as SymbolName)).toBe(true);
-        expect(classMembers?.has("myProperty" as SymbolName)).toBe(true);
+        const methodInfo = classInfo.direct_members.get("myMethod" as SymbolName);
+        expect(methodInfo?.kind).toBe("method");
+        expect(methodInfo?.type_annotation).toBe("string");
 
-        const methodInfo = classMembers?.get("myMethod" as SymbolName);
-        expect(methodInfo?.member_type).toBe("method");
-        expect(methodInfo?.return_type).toBe("string_type");
-
-        const propertyInfo = classMembers?.get("myProperty" as SymbolName);
-        expect(propertyInfo?.member_type).toBe("field");
-        expect(propertyInfo?.value_type).toBe("number_type");
+        const propertyInfo = classInfo.direct_members.get("myProperty" as SymbolName);
+        expect(propertyInfo?.kind).toBe("field");  // Non-static variable members become fields
+        expect(propertyInfo?.type_annotation).toBeUndefined();  // No type annotation available
       });
 
-      it("should collect static members separately", () => {
-        const classSymbol: SymbolDefinition = createSymbolDefinition({
-          id: "class_symbol" as SymbolId,
-          kind: "class",
-          name: "MyClass" as SymbolName,
-          location: mockLocation,
-          scope_id: "class_scope" as ScopeId,
-          type_id: "class_MyClass_type" as TypeId,
-        });
-
-        const staticMethodSymbol: SymbolDefinition = createSymbolDefinition({
+      it("should mark static members with is_static flag", () => {
+        const staticMethodSymbol: SymbolDefinition = create_symbol_definition({
           id: "static_method_symbol" as SymbolId,
           kind: "method",
           name: "staticMethod" as SymbolName,
           location: mockLocation,
           scope_id: "method_scope" as ScopeId,
-          member_of: "class_MyClass_type" as TypeId,
           is_static: true,
-          return_type: "void_type" as TypeId,
+          return_type_hint: "void" as SymbolName,
         });
 
-        const staticPropertySymbol: SymbolDefinition = createSymbolDefinition({
+        const staticPropertySymbol: SymbolDefinition = create_symbol_definition({
           id: "static_property_symbol" as SymbolId,
           kind: "constant",
           name: "STATIC_CONSTANT" as SymbolName,
           location: mockLocation,
           scope_id: "class_scope" as ScopeId,
-          member_of: "class_MyClass_type" as TypeId,
           is_static: true,
-          value_type: "string_type" as TypeId,
+        });
+
+        const classSymbol: SymbolDefinition = create_symbol_definition({
+          id: "class_symbol" as SymbolId,
+          kind: "class",
+          name: "MyClass" as SymbolName,
+          location: mockLocation,
+          scope_id: "class_scope" as ScopeId,
+          static_members: ["static_method_symbol" as SymbolId, "static_property_symbol" as SymbolId],
         });
 
         mockSymbols.set("class_symbol" as SymbolId, classSymbol);
@@ -165,95 +137,78 @@ describe("Type Members", () => {
           staticPropertySymbol
         );
 
-        const result = collect_type_members(mockSymbols, mockScopes);
+        const result = extract_type_members(mockSymbols, mockScopes, mockFilePath);
 
-        const staticMembers = result.static_members.get(
-          "class_MyClass_type" as TypeId
-        );
-        expect(staticMembers?.size).toBe(2);
-        expect(staticMembers?.has("staticMethod" as SymbolName)).toBe(true);
-        expect(staticMembers?.has("STATIC_CONSTANT" as SymbolName)).toBe(true);
+        const classInfo = result[0];
+        const staticMethod = classInfo.direct_members.get("staticMethod" as SymbolName);
+        expect(staticMethod?.is_static).toBe(true);
+        expect(staticMethod?.kind).toBe("method");
 
-        const staticMethodInfo = staticMembers?.get(
-          "staticMethod" as SymbolName
-        );
-        expect(staticMethodInfo?.member_type).toBe("method");
-        expect(staticMethodInfo?.is_static).toBe(true);
-
-        const staticPropertyInfo = staticMembers?.get(
-          "STATIC_CONSTANT" as SymbolName
-        );
-        expect(staticPropertyInfo?.member_type).toBe("property");
-        expect(staticPropertyInfo?.is_static).toBe(true);
+        const staticProperty = classInfo.direct_members.get("STATIC_CONSTANT" as SymbolName);
+        expect(staticProperty?.is_static).toBe(true);
+        expect(staticProperty?.kind).toBe("property");
       });
 
-      it("should collect constructor information", () => {
-        const classSymbol: SymbolDefinition = createSymbolDefinition({
-          id: "class_symbol" as SymbolId,
-          kind: "class",
-          name: "MyClass" as SymbolName,
-          location: mockLocation,
-          scope_id: "class_scope" as ScopeId,
-          type_id: "class_MyClass_type" as TypeId,
-        });
-
-        const constructorSymbol: SymbolDefinition = createSymbolDefinition({
+      it("should extract constructor as a direct member", () => {
+        const constructorSymbol: SymbolDefinition = create_symbol_definition({
           id: "constructor_symbol" as SymbolId,
           kind: "constructor",
           name: "constructor" as SymbolName,
           location: mockLocation,
           scope_id: "constructor_scope" as ScopeId,
-          member_of: "class_MyClass_type" as TypeId,
         });
 
-        mockSymbols.set("class_symbol" as SymbolId, classSymbol);
-        mockSymbols.set("constructor_symbol" as SymbolId, constructorSymbol);
-
-        const result = collect_type_members(mockSymbols, mockScopes);
-
-        expect(result.constructors.size).toBe(1);
-        const constructorInfo = result.constructors.get(
-          "class_MyClass_type" as TypeId
-        );
-        expect(constructorInfo?.member_type).toBe("constructor");
-        expect(constructorInfo?.symbol_id).toBe("constructor_symbol");
-      });
-
-      it("should collect method parameters", () => {
-        const classSymbol: SymbolDefinition = createSymbolDefinition({
+        const classSymbol: SymbolDefinition = create_symbol_definition({
           id: "class_symbol" as SymbolId,
           kind: "class",
           name: "MyClass" as SymbolName,
           location: mockLocation,
           scope_id: "class_scope" as ScopeId,
-          type_id: "class_MyClass_type" as TypeId,
+          members: ["constructor_symbol" as SymbolId],
         });
 
-        const methodSymbol: SymbolDefinition = createSymbolDefinition({
+        mockSymbols.set("class_symbol" as SymbolId, classSymbol);
+        mockSymbols.set("constructor_symbol" as SymbolId, constructorSymbol);
+
+        const result = extract_type_members(mockSymbols, mockScopes, mockFilePath);
+
+        const classInfo = result[0];
+        const constructorInfo = classInfo.direct_members.get("constructor" as SymbolName);
+        expect(constructorInfo?.kind).toBe("constructor");
+      });
+
+      it("should extract method parameters", () => {
+        const classSymbol: SymbolDefinition = create_symbol_definition({
+          id: "class_symbol" as SymbolId,
+          kind: "class",
+          name: "MyClass" as SymbolName,
+          location: mockLocation,
+          scope_id: "class_scope" as ScopeId,
+          members: ["method_symbol" as SymbolId],
+        });
+
+        const methodSymbol: SymbolDefinition = create_symbol_definition({
           id: "method_symbol" as SymbolId,
           kind: "method",
           name: "methodWithParams" as SymbolName,
           location: mockLocation,
           scope_id: "method_scope" as ScopeId,
-          member_of: "class_MyClass_type" as TypeId,
         });
 
-        const param1Symbol: SymbolDefinition = createSymbolDefinition({
+        const param1Symbol: SymbolDefinition = create_symbol_definition({
           id: "param1_symbol" as SymbolId,
           kind: "parameter",
           name: "param1" as SymbolName,
           location: mockLocation,
           scope_id: "method_scope" as ScopeId,
-          value_type: "string_type" as TypeId,
         });
 
-        const param2Symbol: SymbolDefinition = createSymbolDefinition({
+        const param2Symbol: SymbolDefinition = create_symbol_definition({
           id: "param2_symbol" as SymbolId,
           kind: "parameter",
           name: "param2" as SymbolName,
           location: mockLocation,
           scope_id: "method_scope" as ScopeId,
-          value_type: "number_type" as TypeId,
         });
 
         mockSymbols.set("class_symbol" as SymbolId, classSymbol);
@@ -261,56 +216,52 @@ describe("Type Members", () => {
         mockSymbols.set("param1_symbol" as SymbolId, param1Symbol);
         mockSymbols.set("param2_symbol" as SymbolId, param2Symbol);
 
-        const result = collect_type_members(mockSymbols, mockScopes);
+        const result = extract_type_members(mockSymbols, mockScopes, mockFilePath);
 
-        const classMembers = result.instance_members.get(
-          "class_MyClass_type" as TypeId
-        );
-        const methodInfo = classMembers?.get("methodWithParams" as SymbolName);
+        const classInfo = result[0];
+        const methodInfo = classInfo.direct_members.get("methodWithParams" as SymbolName);
 
         expect(methodInfo?.parameters).toHaveLength(2);
         expect(methodInfo?.parameters![0].name).toBe("param1");
-        expect(methodInfo?.parameters![0].type).toBe("string_type");
+        expect(methodInfo?.parameters![0].type_annotation).toBeUndefined();
         expect(methodInfo?.parameters![1].name).toBe("param2");
-        expect(methodInfo?.parameters![1].type).toBe("number_type");
+        expect(methodInfo?.parameters![1].type_annotation).toBeUndefined();
       });
 
-      it("should handle inheritance relationships", () => {
-        const baseClassSymbol: SymbolDefinition = createSymbolDefinition({
+      it("should capture extends clauses as unresolved names", () => {
+        const baseClassSymbol: SymbolDefinition = create_symbol_definition({
           id: "base_class_symbol" as SymbolId,
           kind: "class",
           name: "BaseClass" as SymbolName,
           location: mockLocation,
           scope_id: "base_class_scope" as ScopeId,
-          type_id: "class_BaseClass_type" as TypeId,
+          members: ["base_method_symbol" as SymbolId],
         });
 
-        const derivedClassSymbol: SymbolDefinition = createSymbolDefinition({
+        const derivedClassSymbol: SymbolDefinition = create_symbol_definition({
           id: "derived_class_symbol" as SymbolId,
           kind: "class",
           name: "DerivedClass" as SymbolName,
           location: mockLocation,
           scope_id: "derived_class_scope" as ScopeId,
-          type_id: "class_DerivedClass_type" as TypeId,
           extends_class: "BaseClass" as SymbolName,
+          members: ["derived_method_symbol" as SymbolId],
         });
 
-        const baseMethodSymbol: SymbolDefinition = createSymbolDefinition({
+        const baseMethodSymbol: SymbolDefinition = create_symbol_definition({
           id: "base_method_symbol" as SymbolId,
           kind: "method",
           name: "baseMethod" as SymbolName,
           location: mockLocation,
           scope_id: "base_method_scope" as ScopeId,
-          member_of: "class_BaseClass_type" as TypeId,
         });
 
-        const derivedMethodSymbol: SymbolDefinition = createSymbolDefinition({
+        const derivedMethodSymbol: SymbolDefinition = create_symbol_definition({
           id: "derived_method_symbol" as SymbolId,
           kind: "method",
           name: "derivedMethod" as SymbolName,
           location: mockLocation,
           scope_id: "derived_method_scope" as ScopeId,
-          member_of: "class_DerivedClass_type" as TypeId,
         });
 
         mockSymbols.set("base_class_symbol" as SymbolId, baseClassSymbol);
@@ -321,33 +272,27 @@ describe("Type Members", () => {
           derivedMethodSymbol
         );
 
-        const result = collect_type_members(mockSymbols, mockScopes);
+        const result = extract_type_members(mockSymbols, mockScopes, mockFilePath);
 
-        const baseInheritance = result.inheritance.get(
-          "class_BaseClass_type" as TypeId
-        );
-        const derivedInheritance = result.inheritance.get(
-          "class_DerivedClass_type" as TypeId
-        );
+        // Find the base and derived classes
+        const baseClass = result.find(t => t.type_name === "BaseClass");
+        const derivedClass = result.find(t => t.type_name === "DerivedClass");
 
-        expect(baseInheritance?.extends_type).toBeUndefined();
-        expect(derivedInheritance?.extends_type).toBe("class_BaseClass_type");
+        // Base class should have no extends clause
+        expect(baseClass?.extends_clause).toBeUndefined();
+        // Derived class should have BaseClass as unresolved extends clause
+        expect(derivedClass?.extends_clause).toEqual(["BaseClass"]);
 
-        expect(derivedInheritance?.all_ancestors).toContain(
-          "class_BaseClass_type" as TypeId
-        );
+        // Each class should only have its direct members
+        expect(baseClass?.direct_members.has("baseMethod" as SymbolName)).toBe(true);
+        expect(baseClass?.direct_members.has("derivedMethod" as SymbolName)).toBe(false);
 
-        // Check that derived class inherits base methods
-        expect(
-          derivedInheritance?.all_members.has("baseMethod" as SymbolName)
-        ).toBe(true);
-        expect(
-          derivedInheritance?.all_members.has("derivedMethod" as SymbolName)
-        ).toBe(true);
+        expect(derivedClass?.direct_members.has("derivedMethod" as SymbolName)).toBe(true);
+        expect(derivedClass?.direct_members.has("baseMethod" as SymbolName)).toBe(false);
       });
 
       it("should handle interface implementation", () => {
-        const interfaceSymbol: SymbolDefinition = createSymbolDefinition({
+        const interfaceSymbol: SymbolDefinition = create_symbol_definition({
           id: "interface_symbol" as SymbolId,
           kind: "interface",
           name: "IInterface" as SymbolName,
@@ -356,7 +301,7 @@ describe("Type Members", () => {
           type_id: "interface_IInterface_type" as TypeId,
         });
 
-        const classSymbol: SymbolDefinition = createSymbolDefinition({
+        const classSymbol: SymbolDefinition = create_symbol_definition({
           id: "class_symbol" as SymbolId,
           kind: "class",
           name: "MyClass" as SymbolName,
@@ -369,21 +314,19 @@ describe("Type Members", () => {
         mockSymbols.set("interface_symbol" as SymbolId, interfaceSymbol);
         mockSymbols.set("class_symbol" as SymbolId, classSymbol);
 
-        const result = collect_type_members(mockSymbols, mockScopes);
+        const result = extract_type_members(mockSymbols, mockScopes, mockFilePath);
 
-        const classInheritance = result.inheritance.get(
-          "class_MyClass_type" as TypeId
-        );
-        expect(classInheritance?.implements_types).toContain(
-          "interface_IInterface_type" as TypeId
-        );
-        expect(classInheritance?.all_ancestors).toContain(
-          "interface_IInterface_type" as TypeId
-        );
+        const classInfo = result.find(t => t.type_name === "MyClass");
+        const interfaceInfo = result.find(t => t.type_name === "IInterface");
+
+        // Class should have IInterface as unresolved implements clause
+        expect(classInfo?.implements_clause).toEqual(["IInterface"]);
+        // Interface should have no implements clause
+        expect(interfaceInfo?.implements_clause).toBeUndefined();
       });
 
       it("should collect members from scope relationships", () => {
-        const classSymbol: SymbolDefinition = createSymbolDefinition({
+        const classSymbol: SymbolDefinition = create_symbol_definition({
           id: "class_symbol" as SymbolId,
           kind: "class",
           name: "MyClass" as SymbolName,
@@ -392,7 +335,7 @@ describe("Type Members", () => {
           type_id: "class_MyClass_type" as TypeId,
         });
 
-        const methodSymbol: SymbolDefinition = createSymbolDefinition({
+        const methodSymbol: SymbolDefinition = create_symbol_definition({
           id: "method_symbol" as SymbolId,
           kind: "method",
           name: "scopeMethod" as SymbolName,
@@ -417,552 +360,646 @@ describe("Type Members", () => {
         mockSymbols.set("method_symbol" as SymbolId, methodSymbol);
         mockScopes.set("class_scope" as ScopeId, classScope);
 
-        const result = collect_type_members(mockSymbols, mockScopes);
+        const result = extract_type_members(mockSymbols, mockScopes, mockFilePath);
 
-        const classMembers = result.instance_members.get(
-          "class_MyClass_type" as TypeId
-        );
-        expect(classMembers?.has("scopeMethod" as SymbolName)).toBe(true);
+        const classInfo = result[0];
+        expect(classInfo.direct_members.has("scopeMethod" as SymbolName)).toBe(true);
       });
     });
 
     describe("Edge Cases", () => {
       it("should handle empty symbols map", () => {
-        const result = collect_type_members(new Map(), mockScopes);
+        const result = extract_type_members(new Map(), mockScopes, mockFilePath);
 
-        expect(result.instance_members.size).toBe(0);
-        expect(result.static_members.size).toBe(0);
-        expect(result.constructors.size).toBe(0);
-        expect(result.inheritance.size).toBe(0);
+        expect(result.length).toBe(0);
       });
 
       it("should handle classes without type_id", () => {
-        const classSymbol: SymbolDefinition = createSymbolDefinition({
+        const classSymbol: SymbolDefinition = create_symbol_definition({
           id: "class_symbol" as SymbolId,
           kind: "class",
           name: "MyClass" as SymbolName,
           location: mockLocation,
           scope_id: "class_scope" as ScopeId,
-          // No type_id - should be created automatically
         });
 
         mockSymbols.set("class_symbol" as SymbolId, classSymbol);
 
-        const result = collect_type_members(mockSymbols, mockScopes);
+        const result = extract_type_members(mockSymbols, mockScopes, mockFilePath);
 
-        expect(result.instance_members.size).toBe(1);
-        expect(result.inheritance.size).toBe(1);
+        expect(result.length).toBe(1);
+        expect(result[0].type_name).toBe("MyClass");
       });
 
-      it("should handle circular inheritance", () => {
-        const class1Symbol: SymbolDefinition = createSymbolDefinition({
+      it("should capture circular extends clauses without resolution", () => {
+        const class1Symbol: SymbolDefinition = create_symbol_definition({
           id: "class1_symbol" as SymbolId,
           kind: "class",
           name: "Class1" as SymbolName,
           location: mockLocation,
           scope_id: "class1_scope" as ScopeId,
-          type_id: "class_Class1_type" as TypeId,
           extends_class: "Class2" as SymbolName,
         });
 
-        const class2Symbol: SymbolDefinition = createSymbolDefinition({
+        const class2Symbol: SymbolDefinition = create_symbol_definition({
           id: "class2_symbol" as SymbolId,
           kind: "class",
           name: "Class2" as SymbolName,
           location: mockLocation,
           scope_id: "class2_scope" as ScopeId,
-          type_id: "class_Class2_type" as TypeId,
           extends_class: "Class1" as SymbolName,
         });
 
         mockSymbols.set("class1_symbol" as SymbolId, class1Symbol);
         mockSymbols.set("class2_symbol" as SymbolId, class2Symbol);
 
-        expect(() => {
-          collect_type_members(mockSymbols, mockScopes);
-        }).not.toThrow();
+        const result = extract_type_members(mockSymbols, mockScopes, mockFilePath);
+
+        const class1 = result.find(t => t.type_name === "Class1");
+        const class2 = result.find(t => t.type_name === "Class2");
+
+        expect(class1?.extends_clause).toEqual(["Class2"]);
+        expect(class2?.extends_clause).toEqual(["Class1"]);
       });
 
-      it("should handle members without valid member_of", () => {
-        const orphanMethodSymbol: SymbolDefinition = createSymbolDefinition({
+      it("should skip members without matching type", () => {
+        const orphanMethodSymbol: SymbolDefinition = create_symbol_definition({
           id: "orphan_method_symbol" as SymbolId,
           kind: "method",
           name: "orphanMethod" as SymbolName,
           location: mockLocation,
           scope_id: "orphan_scope" as ScopeId,
-          member_of: "non_existent_type" as TypeId,
+          member_of: "non_existent_type" as any as TypeId,
         });
 
         mockSymbols.set("orphan_method_symbol" as SymbolId, orphanMethodSymbol);
 
-        const result = collect_type_members(mockSymbols, mockScopes);
+        const result = extract_type_members(mockSymbols, mockScopes, mockFilePath);
 
-        expect(result.instance_members.size).toBe(0);
-        expect(result.static_members.size).toBe(0);
+        expect(result.length).toBe(0);
       });
 
-      it("should handle unknown parent classes", () => {
-        const classSymbol: SymbolDefinition = createSymbolDefinition({
+      it("should capture unknown parent classes as unresolved names", () => {
+        const classSymbol: SymbolDefinition = create_symbol_definition({
           id: "class_symbol" as SymbolId,
           kind: "class",
           name: "MyClass" as SymbolName,
           location: mockLocation,
           scope_id: "class_scope" as ScopeId,
-          type_id: "class_MyClass_type" as TypeId,
           extends_class: "UnknownParent" as SymbolName,
         });
 
         mockSymbols.set("class_symbol" as SymbolId, classSymbol);
 
-        const result = collect_type_members(mockSymbols, mockScopes);
+        const result = extract_type_members(mockSymbols, mockScopes, mockFilePath);
 
-        const inheritance = result.inheritance.get(
-          "class_MyClass_type" as TypeId
-        );
-        expect(inheritance?.extends_type).toBeUndefined();
-        expect(inheritance?.all_ancestors).toEqual([]);
+        const classInfo = result[0];
+        expect(classInfo.extends_clause).toEqual(["UnknownParent"]);
       });
 
-      it("should handle unknown implemented interfaces", () => {
-        const classSymbol: SymbolDefinition = createSymbolDefinition({
+      it("should capture unknown interfaces as unresolved names", () => {
+        const classSymbol: SymbolDefinition = create_symbol_definition({
           id: "class_symbol" as SymbolId,
           kind: "class",
           name: "MyClass" as SymbolName,
           location: mockLocation,
           scope_id: "class_scope" as ScopeId,
-          type_id: "class_MyClass_type" as TypeId,
           implements_interfaces: ["UnknownInterface" as SymbolName],
         });
 
         mockSymbols.set("class_symbol" as SymbolId, classSymbol);
 
-        const result = collect_type_members(mockSymbols, mockScopes);
+        const result = extract_type_members(mockSymbols, mockScopes, mockFilePath);
 
-        const inheritance = result.inheritance.get(
-          "class_MyClass_type" as TypeId
-        );
-        expect(inheritance?.implements_types).toEqual([]);
+        const classInfo = result[0];
+        expect(classInfo.implements_clause).toEqual(["UnknownInterface"]);
+      });
+
+      it("should extract interface types with members", () => {
+        const interfaceSymbol: SymbolDefinition = create_symbol_definition({
+          id: "interface_symbol" as SymbolId,
+          kind: "interface",
+          name: "IMyInterface" as SymbolName,
+          location: mockLocation,
+          scope_id: "interface_scope" as ScopeId,
+          members: ["method_sig_symbol" as SymbolId, "prop_sig_symbol" as SymbolId],
+        });
+
+        const methodSignatureSymbol: SymbolDefinition = create_symbol_definition({
+          id: "method_sig_symbol" as SymbolId,
+          kind: "method",
+          name: "doSomething" as SymbolName,
+          location: mockLocation,
+          scope_id: "interface_scope" as ScopeId,
+          return_type: "boolean",
+        });
+
+        const propertySignatureSymbol: SymbolDefinition = create_symbol_definition({
+          id: "prop_sig_symbol" as SymbolId,
+          kind: "variable",
+          name: "value" as SymbolName,
+          location: mockLocation,
+          scope_id: "interface_scope" as ScopeId,
+          value_type: "string",
+        });
+
+        mockSymbols.set("interface_symbol" as SymbolId, interfaceSymbol);
+        mockSymbols.set("method_sig_symbol" as SymbolId, methodSignatureSymbol);
+        mockSymbols.set("prop_sig_symbol" as SymbolId, propertySignatureSymbol);
+
+        const result = extract_type_members(mockSymbols, mockScopes, mockFilePath);
+
+        expect(result.length).toBe(1);
+        const interfaceInfo = result[0];
+        expect(interfaceInfo.type_name).toBe("IMyInterface");
+        expect(interfaceInfo.kind).toBe("interface");
+        expect(interfaceInfo.direct_members.size).toBe(2);
+        expect(interfaceInfo.direct_members.has("doSomething" as SymbolName)).toBe(true);
+        expect(interfaceInfo.direct_members.has("value" as SymbolName)).toBe(true);
+      });
+
+      it("should extract multiple types from same file", () => {
+        const class1Symbol: SymbolDefinition = create_symbol_definition({
+          id: "class1_symbol" as SymbolId,
+          kind: "class",
+          name: "FirstClass" as SymbolName,
+          location: mockLocation,
+          scope_id: "class1_scope" as ScopeId,
+        });
+
+        const class2Symbol: SymbolDefinition = create_symbol_definition({
+          id: "class2_symbol" as SymbolId,
+          kind: "class",
+          name: "SecondClass" as SymbolName,
+          location: mockLocation,
+          scope_id: "class2_scope" as ScopeId,
+        });
+
+        const interfaceSymbol: SymbolDefinition = create_symbol_definition({
+          id: "interface_symbol" as SymbolId,
+          kind: "interface",
+          name: "IInterface" as SymbolName,
+          location: mockLocation,
+          scope_id: "interface_scope" as ScopeId,
+        });
+
+        mockSymbols.set("class1_symbol" as SymbolId, class1Symbol);
+        mockSymbols.set("class2_symbol" as SymbolId, class2Symbol);
+        mockSymbols.set("interface_symbol" as SymbolId, interfaceSymbol);
+
+        const result = extract_type_members(mockSymbols, mockScopes, mockFilePath);
+
+        expect(result.length).toBe(3);
+        const typeNames = result.map(t => t.type_name);
+        expect(typeNames).toContain("FirstClass");
+        expect(typeNames).toContain("SecondClass");
+        expect(typeNames).toContain("IInterface");
+      });
+
+      it("should handle optional and rest parameters", () => {
+        const classSymbol: SymbolDefinition = create_symbol_definition({
+          id: "class_symbol" as SymbolId,
+          kind: "class",
+          name: "MyClass" as SymbolName,
+          location: mockLocation,
+          scope_id: "class_scope" as ScopeId,
+          members: ["method_symbol" as SymbolId],
+        });
+
+        const methodSymbol: SymbolDefinition = create_symbol_definition({
+          id: "method_symbol" as SymbolId,
+          kind: "method",
+          name: "flexibleMethod" as SymbolName,
+          location: mockLocation,
+          scope_id: "method_scope" as ScopeId,
+        });
+
+        const requiredParam: SymbolDefinition = create_symbol_definition({
+          id: "param1" as SymbolId,
+          kind: "parameter",
+          name: "required" as SymbolName,
+          location: mockLocation,
+          scope_id: "method_scope" as ScopeId,
+          value_type: "string",
+        });
+
+        const optionalParam: SymbolDefinition = create_symbol_definition({
+          id: "param2" as SymbolId,
+          kind: "parameter",
+          name: "optional" as SymbolName,
+          location: mockLocation,
+          scope_id: "method_scope" as ScopeId,
+          value_type: "number",
+          is_optional: true,
+        });
+
+        const restParam: SymbolDefinition = create_symbol_definition({
+          id: "param3" as SymbolId,
+          kind: "parameter",
+          name: "rest" as SymbolName,
+          location: mockLocation,
+          scope_id: "method_scope" as ScopeId,
+          value_type: "string[]",
+          is_rest: true,
+        });
+
+        mockSymbols.set("class_symbol" as SymbolId, classSymbol);
+        mockSymbols.set("method_symbol" as SymbolId, methodSymbol);
+        mockSymbols.set("param1" as SymbolId, requiredParam);
+        mockSymbols.set("param2" as SymbolId, optionalParam);
+        mockSymbols.set("param3" as SymbolId, restParam);
+
+        const result = extract_type_members(mockSymbols, mockScopes, mockFilePath);
+
+        const classInfo = result[0];
+        const methodInfo = classInfo.direct_members.get("flexibleMethod" as SymbolName);
+        expect(methodInfo?.parameters).toHaveLength(3);
+
+        // Note: Current implementation doesn't capture optional/rest flags
+        // This is a known limitation that should be documented or fixed
+        expect(methodInfo?.parameters?.[0].name).toBe("required");
+        expect(methodInfo?.parameters?.[1].name).toBe("optional");
+        expect(methodInfo?.parameters?.[2].name).toBe("rest");
+      });
+
+      it("should handle class with both extends and implements", () => {
+        const classSymbol: SymbolDefinition = create_symbol_definition({
+          id: "class_symbol" as SymbolId,
+          kind: "class",
+          name: "ComplexClass" as SymbolName,
+          location: mockLocation,
+          scope_id: "class_scope" as ScopeId,
+          extends_class: "BaseClass" as SymbolName,
+          implements_interfaces: ["IFoo" as SymbolName, "IBar" as SymbolName],
+        });
+
+        mockSymbols.set("class_symbol" as SymbolId, classSymbol);
+
+        const result = extract_type_members(mockSymbols, mockScopes, mockFilePath);
+
+        const classInfo = result[0];
+        expect(classInfo.extends_clause).toEqual(["BaseClass"]);
+        expect(classInfo.implements_clause).toEqual(["IFoo", "IBar"]);
+      });
+
+      it("should handle types without any members", () => {
+        const emptyClassSymbol: SymbolDefinition = create_symbol_definition({
+          id: "empty_class" as SymbolId,
+          kind: "class",
+          name: "EmptyClass" as SymbolName,
+          location: mockLocation,
+          scope_id: "empty_scope" as ScopeId,
+        });
+
+        const emptyInterfaceSymbol: SymbolDefinition = create_symbol_definition({
+          id: "empty_interface" as SymbolId,
+          kind: "interface",
+          name: "EmptyInterface" as SymbolName,
+          location: mockLocation,
+          scope_id: "empty_interface_scope" as ScopeId,
+        });
+
+        mockSymbols.set("empty_class" as SymbolId, emptyClassSymbol);
+        mockSymbols.set("empty_interface" as SymbolId, emptyInterfaceSymbol);
+
+        const result = extract_type_members(mockSymbols, mockScopes, mockFilePath);
+
+        expect(result.length).toBe(2);
+        const emptyClass = result.find(t => t.type_name === "EmptyClass");
+        const emptyInterface = result.find(t => t.type_name === "EmptyInterface");
+
+        expect(emptyClass?.direct_members.size).toBe(0);
+        expect(emptyInterface?.direct_members.size).toBe(0);
       });
     });
   });
 
-  describe("find_type_methods", () => {
-    let mockMembers: TypeMemberMap;
+  describe("find_direct_type_methods", () => {
+    let mockTypeInfo: LocalTypeInfo;
 
     beforeEach(() => {
-      const instanceMembers = new Map<TypeId, Map<SymbolName, MemberInfo>>();
-      const staticMembers = new Map<TypeId, Map<SymbolName, MemberInfo>>();
-      const constructors = new Map<TypeId, MemberInfo>();
-      const inheritance = new Map<TypeId, InheritanceInfo>();
-
-      const methodInfo: MemberInfo = {
-        symbol_id: "method_symbol" as SymbolId,
+      const methodInfo: LocalMemberInfo = {
         name: "instanceMethod" as SymbolName,
-        member_type: "method",
-        is_static: false,
-        is_private: false,
-        is_readonly: false,
+        kind: "method",
         location: mockLocation,
+        is_static: false,
       };
 
-      const staticMethodInfo: MemberInfo = {
-        symbol_id: "static_method_symbol" as SymbolId,
+      const staticMethodInfo: LocalMemberInfo = {
         name: "staticMethod" as SymbolName,
-        member_type: "method",
+        kind: "method",
+        location: mockLocation,
         is_static: true,
-        is_private: false,
-        is_readonly: false,
-        location: mockLocation,
       };
 
-      const propertyInfo: MemberInfo = {
-        symbol_id: "property_symbol" as SymbolId,
+      const propertyInfo: LocalMemberInfo = {
         name: "property" as SymbolName,
-        member_type: "property",
-        is_static: false,
-        is_private: false,
-        is_readonly: false,
+        kind: "property",
         location: mockLocation,
       };
 
-      const inheritedMethodInfo: MemberInfo = {
-        symbol_id: "inherited_method_symbol" as SymbolId,
-        name: "inheritedMethod" as SymbolName,
-        member_type: "method",
-        is_static: false,
-        is_private: false,
-        is_readonly: false,
+      mockTypeInfo = {
+        type_name: "TestClass" as SymbolName,
+        kind: "class",
         location: mockLocation,
-      };
-
-      const typeId = "test_type" as TypeId;
-
-      instanceMembers.set(
-        typeId,
-        new Map([
+        direct_members: new Map([
           ["instanceMethod" as SymbolName, methodInfo],
-          ["property" as SymbolName, propertyInfo],
-        ])
-      );
-
-      staticMembers.set(
-        typeId,
-        new Map([["staticMethod" as SymbolName, staticMethodInfo]])
-      );
-
-      inheritance.set(typeId, {
-        extends_type: undefined,
-        implements_types: [],
-        all_ancestors: [],
-        all_members: new Map([
-          ["instanceMethod" as SymbolName, methodInfo],
-          ["inheritedMethod" as SymbolName, inheritedMethodInfo],
+          ["staticMethod" as SymbolName, staticMethodInfo],
           ["property" as SymbolName, propertyInfo],
         ]),
-      });
-
-      mockMembers = {
-        instance_members: instanceMembers,
-        static_members: staticMembers,
-        constructors,
-        inheritance,
       };
     });
 
     describe("Success Cases", () => {
       it("should find instance methods only by default", () => {
-        const result = find_type_methods("test_type" as TypeId, mockMembers);
+        const result = find_direct_type_methods(mockTypeInfo);
 
-        expect(result.size).toBe(2);
+        expect(result.size).toBe(1);
         expect(result.has("instanceMethod" as SymbolName)).toBe(true);
-        expect(result.has("inheritedMethod" as SymbolName)).toBe(true);
         expect(result.has("staticMethod" as SymbolName)).toBe(false);
       });
 
       it("should include static methods when requested", () => {
-        const result = find_type_methods(
-          "test_type" as TypeId,
-          mockMembers,
-          true
-        );
+        const result = find_direct_type_methods(mockTypeInfo, true);
 
-        expect(result.size).toBe(3);
+        expect(result.size).toBe(2);
         expect(result.has("instanceMethod" as SymbolName)).toBe(true);
-        expect(result.has("inheritedMethod" as SymbolName)).toBe(true);
         expect(result.has("staticMethod" as SymbolName)).toBe(true);
       });
 
       it("should filter out non-method members", () => {
-        const result = find_type_methods("test_type" as TypeId, mockMembers);
+        const result = find_direct_type_methods(mockTypeInfo);
 
         expect(result.has("property" as SymbolName)).toBe(false);
-      });
-
-      it("should handle types without methods", () => {
-        const result = find_type_methods(
-          "non_existent_type" as TypeId,
-          mockMembers
-        );
-
-        expect(result.size).toBe(0);
       });
     });
 
     describe("Edge Cases", () => {
       it("should handle empty member maps", () => {
-        const emptyMembers: TypeMemberMap = {
-          instance_members: new Map(),
-          static_members: new Map(),
-          constructors: new Map(),
-          inheritance: new Map(),
+        const emptyTypeInfo: LocalTypeInfo = {
+          type_name: "EmptyClass" as SymbolName,
+          kind: "class",
+          location: mockLocation,
+          direct_members: new Map(),
         };
 
-        const result = find_type_methods("test_type" as TypeId, emptyMembers);
+        const result = find_direct_type_methods(emptyTypeInfo);
 
         expect(result.size).toBe(0);
       });
 
-      it("should handle types without inheritance info", () => {
-        const membersWithoutInheritance: TypeMemberMap = {
-          ...mockMembers,
-          inheritance: new Map(),
+      it("should handle type with only properties and fields", () => {
+        const typeInfo: LocalTypeInfo = {
+          type_name: "DataClass" as SymbolName,
+          kind: "class",
+          location: mockLocation,
+          direct_members: new Map([
+            ["prop1" as SymbolName, {
+              name: "prop1" as SymbolName,
+              kind: "property",
+              location: mockLocation,
+            }],
+            ["field1" as SymbolName, {
+              name: "field1" as SymbolName,
+              kind: "field",
+              location: mockLocation,
+            }],
+          ]),
         };
 
-        const result = find_type_methods(
-          "test_type" as TypeId,
-          membersWithoutInheritance
-        );
+        const result = find_direct_type_methods(typeInfo, true);
+        expect(result.size).toBe(0);
+      });
 
+      it("should distinguish constructors from methods", () => {
+        const typeInfo: LocalTypeInfo = {
+          type_name: "ClassWithConstructor" as SymbolName,
+          kind: "class",
+          location: mockLocation,
+          direct_members: new Map([
+            ["constructor" as SymbolName, {
+              name: "constructor" as SymbolName,
+              kind: "constructor",
+              location: mockLocation,
+            }],
+            ["method1" as SymbolName, {
+              name: "method1" as SymbolName,
+              kind: "method",
+              location: mockLocation,
+            }],
+          ]),
+        };
+
+        const result = find_direct_type_methods(typeInfo);
         expect(result.size).toBe(1);
-        expect(result.has("instanceMethod" as SymbolName)).toBe(true);
-        expect(result.has("inheritedMethod" as SymbolName)).toBe(false);
+        expect(result.has("method1" as SymbolName)).toBe(true);
+        expect(result.has("constructor" as SymbolName)).toBe(false);
       });
     });
   });
 
-  describe("resolve_method_on_type", () => {
-    let mockMembers: TypeMemberMap;
+  describe("find_direct_member", () => {
+    let mockTypeInfo: LocalTypeInfo;
 
     beforeEach(() => {
-      const instanceMembers = new Map<TypeId, Map<SymbolName, MemberInfo>>();
-      const staticMembers = new Map<TypeId, Map<SymbolName, MemberInfo>>();
-      const constructors = new Map<TypeId, MemberInfo>();
-      const inheritance = new Map<TypeId, InheritanceInfo>();
-
-      const instanceMethodInfo: MemberInfo = {
-        symbol_id: "instance_method_symbol" as SymbolId,
+      const instanceMethodInfo: LocalMemberInfo = {
         name: "instanceMethod" as SymbolName,
-        member_type: "method",
-        is_static: false,
-        is_private: false,
-        is_readonly: false,
+        kind: "method",
         location: mockLocation,
+        is_static: false,
       };
 
-      const staticMethodInfo: MemberInfo = {
-        symbol_id: "static_method_symbol" as SymbolId,
+      const staticMethodInfo: LocalMemberInfo = {
         name: "staticMethod" as SymbolName,
-        member_type: "method",
+        kind: "method",
+        location: mockLocation,
         is_static: true,
-        is_private: false,
-        is_readonly: false,
-        location: mockLocation,
       };
 
-      const inheritedMethodInfo: MemberInfo = {
-        symbol_id: "inherited_method_symbol" as SymbolId,
-        name: "inheritedMethod" as SymbolName,
-        member_type: "method",
-        is_static: false,
-        is_private: false,
-        is_readonly: false,
-        location: mockLocation,
-      };
-
-      const propertyInfo: MemberInfo = {
-        symbol_id: "property_symbol" as SymbolId,
+      const propertyInfo: LocalMemberInfo = {
         name: "notAMethod" as SymbolName,
-        member_type: "property",
-        is_static: false,
-        is_private: false,
-        is_readonly: false,
+        kind: "property",
         location: mockLocation,
       };
 
-      const typeId = "test_type" as TypeId;
-
-      instanceMembers.set(
-        typeId,
-        new Map([
+      mockTypeInfo = {
+        type_name: "TestClass" as SymbolName,
+        kind: "class",
+        location: mockLocation,
+        direct_members: new Map([
           ["instanceMethod" as SymbolName, instanceMethodInfo],
+          ["staticMethod" as SymbolName, staticMethodInfo],
           ["notAMethod" as SymbolName, propertyInfo],
-        ])
-      );
-
-      staticMembers.set(
-        typeId,
-        new Map([["staticMethod" as SymbolName, staticMethodInfo]])
-      );
-
-      inheritance.set(typeId, {
-        extends_type: undefined,
-        implements_types: [],
-        all_ancestors: [],
-        all_members: new Map([
-          ["inheritedMethod" as SymbolName, inheritedMethodInfo],
         ]),
-      });
-
-      mockMembers = {
-        instance_members: instanceMembers,
-        static_members: staticMembers,
-        constructors,
-        inheritance,
       };
     });
 
     describe("Success Cases", () => {
-      it("should resolve instance methods", () => {
-        const result = resolve_method_on_type(
-          "test_type" as TypeId,
-          "instanceMethod" as SymbolName,
-          mockMembers
+      it("should find instance methods", () => {
+        const result = find_direct_member(
+          mockTypeInfo,
+          "instanceMethod" as SymbolName
         );
 
         expect(result).toBeDefined();
-        expect(result!.symbol_id).toBe("instance_method_symbol");
-        expect(result!.member_type).toBe("method");
+        expect(result!.name).toBe("instanceMethod");
+        expect(result!.kind).toBe("method");
       });
 
-      it("should resolve static methods when requested", () => {
-        const result = resolve_method_on_type(
-          "test_type" as TypeId,
-          "staticMethod" as SymbolName,
-          mockMembers,
-          true
+      it("should find static methods", () => {
+        const result = find_direct_member(
+          mockTypeInfo,
+          "staticMethod" as SymbolName
         );
 
         expect(result).toBeDefined();
-        expect(result!.symbol_id).toBe("static_method_symbol");
-        expect(result!.member_type).toBe("method");
+        expect(result!.name).toBe("staticMethod");
+        expect(result!.kind).toBe("method");
+        expect(result!.is_static).toBe(true);
       });
 
-      it("should resolve inherited methods", () => {
-        const result = resolve_method_on_type(
-          "test_type" as TypeId,
-          "inheritedMethod" as SymbolName,
-          mockMembers
+      it("should find property members", () => {
+        const result = find_direct_member(
+          mockTypeInfo,
+          "notAMethod" as SymbolName
         );
 
         expect(result).toBeDefined();
-        expect(result!.symbol_id).toBe("inherited_method_symbol");
-        expect(result!.member_type).toBe("method");
-      });
-
-      it("should prioritize own methods over inherited", () => {
-        // Add the same method name to both instance and inherited
-        const instanceMembers = mockMembers.instance_members.get(
-          "test_type" as TypeId
-        )! as Map<SymbolName, MemberInfo>;
-        const overriddenMethod: MemberInfo = {
-          symbol_id: "overridden_method_symbol" as SymbolId,
-          name: "inheritedMethod" as SymbolName,
-          member_type: "method",
-          is_static: false,
-          is_private: false,
-          is_readonly: false,
-          location: mockLocation,
-        };
-        instanceMembers.set("inheritedMethod" as SymbolName, overriddenMethod);
-
-        const result = resolve_method_on_type(
-          "test_type" as TypeId,
-          "inheritedMethod" as SymbolName,
-          mockMembers
-        );
-
-        expect(result).toBeDefined();
-        expect(result!.symbol_id).toBe("overridden_method_symbol");
+        expect(result!.name).toBe("notAMethod");
+        expect(result!.kind).toBe("property");
       });
     });
 
     describe("Edge Cases", () => {
-      it("should return undefined for non-existent methods", () => {
-        const result = resolve_method_on_type(
-          "test_type" as TypeId,
-          "nonExistentMethod" as SymbolName,
-          mockMembers
+      it("should return undefined for non-existent members", () => {
+        const result = find_direct_member(
+          mockTypeInfo,
+          "nonExistentMember" as SymbolName
         );
 
         expect(result).toBeUndefined();
       });
 
-      it("should return undefined for non-method members", () => {
-        const result = resolve_method_on_type(
-          "test_type" as TypeId,
-          "notAMethod" as SymbolName,
-          mockMembers
-        );
-
-        expect(result).toBeUndefined();
-      });
-
-      it("should return undefined for non-existent types", () => {
-        const result = resolve_method_on_type(
-          "non_existent_type" as TypeId,
-          "anyMethod" as SymbolName,
-          mockMembers
-        );
-
-        expect(result).toBeUndefined();
-      });
-
-      it("should not find static methods when looking for instance methods", () => {
-        const result = resolve_method_on_type(
-          "test_type" as TypeId,
-          "staticMethod" as SymbolName,
-          mockMembers,
-          false
-        );
-
-        expect(result).toBeUndefined();
-      });
-
-      it("should not find instance methods when looking for static methods", () => {
-        const result = resolve_method_on_type(
-          "test_type" as TypeId,
-          "instanceMethod" as SymbolName,
-          mockMembers,
-          true
-        );
-
-        expect(result).toBeUndefined();
-      });
-
-      it("should handle types without inheritance info", () => {
-        const membersWithoutInheritance: TypeMemberMap = {
-          ...mockMembers,
-          inheritance: new Map(),
+      it("should handle empty member maps", () => {
+        const emptyTypeInfo: LocalTypeInfo = {
+          type_name: "EmptyClass" as SymbolName,
+          kind: "class",
+          location: mockLocation,
+          direct_members: new Map(),
         };
 
-        const result = resolve_method_on_type(
-          "test_type" as TypeId,
-          "inheritedMethod" as SymbolName,
-          membersWithoutInheritance
+        const result = find_direct_member(
+          emptyTypeInfo,
+          "anyMember" as SymbolName
         );
 
         expect(result).toBeUndefined();
+      });
+
+      it("should find constructors", () => {
+        const constructorInfo: LocalMemberInfo = {
+          name: "constructor" as SymbolName,
+          kind: "constructor",
+          location: mockLocation,
+          parameters: [
+            { name: "param1" as SymbolName, type_annotation: "string" },
+          ],
+        };
+
+        const typeInfo: LocalTypeInfo = {
+          type_name: "TestClass" as SymbolName,
+          kind: "class",
+          location: mockLocation,
+          direct_members: new Map([
+            ["constructor" as SymbolName, constructorInfo],
+          ]),
+        };
+
+        const result = find_direct_member(typeInfo, "constructor" as SymbolName);
+
+        expect(result).toBeDefined();
+        expect(result?.kind).toBe("constructor");
+        expect(result?.parameters).toHaveLength(1);
+      });
+
+      it("should find fields vs properties correctly", () => {
+        const fieldInfo: LocalMemberInfo = {
+          name: "field" as SymbolName,
+          kind: "field",
+          location: mockLocation,
+        };
+
+        const propertyInfo: LocalMemberInfo = {
+          name: "property" as SymbolName,
+          kind: "property",
+          location: mockLocation,
+          is_static: true,
+        };
+
+        const typeInfo: LocalTypeInfo = {
+          type_name: "TestClass" as SymbolName,
+          kind: "class",
+          location: mockLocation,
+          direct_members: new Map([
+            ["field" as SymbolName, fieldInfo],
+            ["property" as SymbolName, propertyInfo],
+          ]),
+        };
+
+        const fieldResult = find_direct_member(typeInfo, "field" as SymbolName);
+        const propertyResult = find_direct_member(typeInfo, "property" as SymbolName);
+
+        expect(fieldResult?.kind).toBe("field");
+        expect(propertyResult?.kind).toBe("property");
+        expect(propertyResult?.is_static).toBe(true);
       });
     });
   });
 
   describe("Integration Tests", () => {
-    it("should handle complete type member collection and resolution", () => {
+    it("should handle complete type member extraction", () => {
       // Setup a complex class hierarchy
-      const baseClassSymbol: SymbolDefinition = createSymbolDefinition({
+      const baseClassSymbol: SymbolDefinition = create_symbol_definition({
         id: "base_class_symbol" as SymbolId,
         kind: "class",
         name: "BaseClass" as SymbolName,
         location: mockLocation,
         scope_id: "base_class_scope" as ScopeId,
-        type_id: "class_BaseClass_type" as TypeId,
+        members: ["base_method_symbol" as SymbolId],
       });
 
-      const derivedClassSymbol: SymbolDefinition = createSymbolDefinition({
+      const derivedClassSymbol: SymbolDefinition = create_symbol_definition({
         id: "derived_class_symbol" as SymbolId,
         kind: "class",
         name: "DerivedClass" as SymbolName,
         location: mockLocation,
         scope_id: "derived_class_scope" as ScopeId,
-        type_id: "class_DerivedClass_type" as TypeId,
         extends_class: "BaseClass" as SymbolName,
+        members: ["derived_method_symbol" as SymbolId, "overridden_method_symbol" as SymbolId],
       });
 
-      const baseMethodSymbol: SymbolDefinition = createSymbolDefinition({
+      const baseMethodSymbol: SymbolDefinition = create_symbol_definition({
         id: "base_method_symbol" as SymbolId,
         kind: "method",
         name: "baseMethod" as SymbolName,
         location: mockLocation,
         scope_id: "base_method_scope" as ScopeId,
-        member_of: "class_BaseClass_type" as TypeId,
       });
 
-      const derivedMethodSymbol: SymbolDefinition = createSymbolDefinition({
+      const derivedMethodSymbol: SymbolDefinition = create_symbol_definition({
         id: "derived_method_symbol" as SymbolId,
         kind: "method",
         name: "derivedMethod" as SymbolName,
         location: mockLocation,
         scope_id: "derived_method_scope" as ScopeId,
-        member_of: "class_DerivedClass_type" as TypeId,
       });
 
-      const overriddenMethodSymbol: SymbolDefinition = createSymbolDefinition({
+      const overriddenMethodSymbol: SymbolDefinition = create_symbol_definition({
         id: "overridden_method_symbol" as SymbolId,
         kind: "method",
         name: "baseMethod" as SymbolName,
         location: mockLocation,
         scope_id: "overridden_method_scope" as ScopeId,
-        member_of: "class_DerivedClass_type" as TypeId,
       });
 
       mockSymbols.set("base_class_symbol" as SymbolId, baseClassSymbol);
@@ -974,39 +1011,36 @@ describe("Type Members", () => {
         overriddenMethodSymbol
       );
 
-      // Collect members
-      const members = collect_type_members(mockSymbols, mockScopes);
+      // Extract type members
+      const types = extract_type_members(mockSymbols, mockScopes, mockFilePath);
 
-      // Test inheritance resolution
-      const derivedInheritance = members.inheritance.get(
-        "class_DerivedClass_type" as TypeId
-      );
-      expect(derivedInheritance?.extends_type).toBe("class_BaseClass_type");
+      // Find base and derived classes
+      const baseClass = types.find(t => t.type_name === "BaseClass");
+      const derivedClass = types.find(t => t.type_name === "DerivedClass");
+
+      // Test extends clause capture
+      expect(baseClass?.extends_clause).toBeUndefined();
+      expect(derivedClass?.extends_clause).toEqual(["BaseClass"]);
+
+      // Test direct member extraction
+      expect(baseClass?.direct_members.size).toBe(1);
+      expect(baseClass?.direct_members.has("baseMethod" as SymbolName)).toBe(true);
+
+      expect(derivedClass?.direct_members.size).toBe(2);
+      expect(derivedClass?.direct_members.has("baseMethod" as SymbolName)).toBe(true);
+      expect(derivedClass?.direct_members.has("derivedMethod" as SymbolName)).toBe(true);
 
       // Test method finding
-      const derivedMethods = find_type_methods(
-        "class_DerivedClass_type" as TypeId,
-        members
-      );
+      const derivedMethods = find_direct_type_methods(derivedClass!);
       expect(derivedMethods.size).toBe(2);
       expect(derivedMethods.has("baseMethod" as SymbolName)).toBe(true);
       expect(derivedMethods.has("derivedMethod" as SymbolName)).toBe(true);
 
-      // Test method resolution (should prioritize overridden method)
-      const resolvedBaseMethod = resolve_method_on_type(
-        "class_DerivedClass_type" as TypeId,
-        "baseMethod" as SymbolName,
-        members
-      );
-      expect(resolvedBaseMethod?.symbol_id).toBe("overridden_method_symbol");
-
-      // Test method resolution for derived-only method
-      const resolvedDerivedMethod = resolve_method_on_type(
-        "class_DerivedClass_type" as TypeId,
-        "derivedMethod" as SymbolName,
-        members
-      );
-      expect(resolvedDerivedMethod?.symbol_id).toBe("derived_method_symbol");
+      // Test member finding
+      const overriddenMethod = find_direct_member(derivedClass!, "baseMethod" as SymbolName);
+      expect(overriddenMethod?.name).toBe("baseMethod");
+      const derivedMethod = find_direct_member(derivedClass!, "derivedMethod" as SymbolName);
+      expect(derivedMethod?.name).toBe("derivedMethod");
     });
   });
 });

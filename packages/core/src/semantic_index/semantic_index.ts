@@ -31,16 +31,15 @@ import { LANGUAGE_TO_TREESITTER_LANG, load_query } from "./query_loader";
 import { NormalizedCapture } from "./capture_types";
 import type {
   FileTypeRegistry,
-  TypeMemberMap,
   VariableTypeMap,
 } from "./type_registry";
 import { build_file_type_registry } from "./type_resolution";
-import { collect_type_members } from "./type_members";
+import { extract_type_members, type LocalTypeInfo } from "./type_members";
 import {
   build_variable_type_map,
   track_constructor_types,
 } from "./references/type_flow_references/type_flow_references";
-import { connect_return_types_to_functions } from "./references/return_references/return_references";
+import type { TypeInfo } from "./references/type_tracking/type_info";
 
 
 /**
@@ -82,8 +81,8 @@ export interface SemanticIndex {
   /** Type registry for the file */
   readonly type_registry: FileTypeRegistry;
 
-  /** Type members and inheritance */
-  readonly type_members: TypeMemberMap;
+  /** Local type members (single-file only) */
+  readonly local_types: LocalTypeInfo[];
 
   /** Variable type tracking */
   readonly variable_types: VariableTypeMap;
@@ -184,40 +183,31 @@ export function build_semantic_index(
   // Phase 6: Build type registry
   const type_registry = build_file_type_registry(symbols, file_path);
 
-  // Phase 7: Collect type members
-  const type_members = collect_type_members(symbols, scopes);
+  // Phase 7: Extract local type members
+  const local_types = extract_type_members(symbols, scopes, file_path);
 
-  // Phase 8: Connect return types to functions
-  const function_returns = connect_return_types_to_functions(
-    references.returns,
-    symbols as Map<SymbolId, SymbolDefinition>,
-    {
-      resolve_type_info: (info) => {
-        // Simple resolution for now - could be enhanced
-        return type_registry.name_to_type.get(info.type_name);
-      }
-    }
-  );
+  // Phase 8: Return type resolution (moved to Phase 3 symbol_resolution)
+  // For now, return empty map as type resolution happens in Phase 3
+  const function_returns = new Map<SymbolId, TypeId>();
 
   // Phase 9: Build variable type maps
-  const variable_type_info = build_variable_type_map(
+  const variable_type_info = build_variable_type_map(references.type_flows);
+
+  // Phase 10: Track constructor types
+  const constructor_type_info = track_constructor_types(
     references.type_flows,
-    symbols as Map<SymbolId, SymbolDefinition>,
     {
-      resolve_type_info: (info) => {
-        return type_registry.name_to_type.get(info.type_name);
-      }
+      name_to_type: type_registry.name_to_type as Map<SymbolName, TypeInfo>
     }
   );
 
-  // Phase 10: Track constructor types
-  const constructor_types = track_constructor_types(
-    references.type_flows,
-    symbols as Map<SymbolId, SymbolDefinition>,
-    {
-      name_to_type: type_registry.name_to_type as Map<SymbolName, TypeId>
+  // Convert constructor TypeInfo to TypeId
+  const constructor_types = new Map<Location, TypeId>();
+  for (const [loc, info] of constructor_type_info) {
+    if (info.type_id) {
+      constructor_types.set(loc, info.type_id);
     }
-  );
+  }
 
   // Create variable type map structure
   // Extract just TypeIds from the detailed info
@@ -247,7 +237,7 @@ export function build_semantic_index(
     file_symbols_by_name,
     // Type information
     type_registry,
-    type_members,
+    local_types,
     variable_types,
     function_returns,
     constructor_types,
