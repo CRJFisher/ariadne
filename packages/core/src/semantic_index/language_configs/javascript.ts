@@ -2,12 +2,17 @@
  * JavaScript/TypeScript capture mapping configuration
  */
 
+import type { SyntaxNode } from "tree-sitter";
 import {
   SemanticCategory,
   SemanticEntity,
   type CaptureMapping,
   type LanguageCaptureConfig,
 } from "../capture_types";
+
+const safeNodeText = (node: SyntaxNode | undefined): string => {
+  return node?.text || "";
+};
 
 /**
  * Map JavaScript/TypeScript tree-sitter captures to normalized semantic concepts
@@ -244,6 +249,46 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
     {
       category: SemanticCategory.REFERENCE,
       entity: SemanticEntity.MEMBER_ACCESS,
+      context: (node) => {
+        const parent = node.parent; // member_expression
+        const receiver = parent?.childForFieldName?.("object");
+        return receiver ? { receiver_node: receiver } : {};
+      },
+    },
+  ],
+  [
+    "ref.property.computed",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.MEMBER_ACCESS,
+      context: (node) => {
+        const parent = node.parent; // subscript_expression
+        const receiver = parent?.childForFieldName?.("object");
+        const index = parent?.childForFieldName?.("index");
+        return {
+          receiver_node: receiver || undefined,
+          computed_key_node: index || undefined,
+          is_computed: true,
+          bracket_notation: true,
+        };
+      },
+    },
+  ],
+  [
+    "ref.property.optional",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.MEMBER_ACCESS,
+      context: (node) => {
+        const parent = node.parent; // member_expression with optional chaining
+        const receiver = parent?.childForFieldName?.("object");
+        return {
+          receiver_node: receiver || undefined,
+          optional_chaining: true,
+          is_optional: true,
+          uses_optional_operator: true,
+        };
+      },
     },
   ],
   [
@@ -600,6 +645,62 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
         const parent = node.parent;
         const target = parent?.childForFieldName?.("name");
         return target ? { target_node: target, source_node: node } : {};
+      },
+    },
+  ],
+  [
+    "assign.constructor",
+    {
+      category: SemanticCategory.ASSIGNMENT,
+      entity: SemanticEntity.CONSTRUCTOR,
+      context: (node) => ({
+        constructor_name: safeNodeText(node),
+      }),
+    },
+  ],
+  [
+    "assign.source.constructor",
+    {
+      category: SemanticCategory.ASSIGNMENT,
+      entity: SemanticEntity.CONSTRUCTOR,
+      context: (node) => {
+        const constructor_node = node.childForFieldName?.("constructor");
+        return constructor_node
+          ? { constructor_name: safeNodeText(constructor_node) }
+          : {};
+      },
+    },
+  ],
+  [
+    "assignment.constructor",
+    {
+      category: SemanticCategory.ASSIGNMENT,
+      entity: SemanticEntity.CONSTRUCTOR,
+      context: (node) => {
+        const name = node.childForFieldName?.("name");
+        const value = node.childForFieldName?.("value");
+        const constructor_node = value?.childForFieldName?.("constructor");
+        return {
+          variable_name: name ? safeNodeText(name) : undefined,
+          constructor_name: constructor_node
+            ? safeNodeText(constructor_node)
+            : undefined,
+        };
+      },
+    },
+  ],
+  [
+    "assignment.var",
+    {
+      category: SemanticCategory.ASSIGNMENT,
+      entity: SemanticEntity.VARIABLE,
+      context: (node) => {
+        const name = node.childForFieldName?.("name");
+        const value = node.childForFieldName?.("value");
+        return {
+          variable_name: name ? safeNodeText(name) : undefined,
+          value_node: value,
+        };
       },
     },
   ],

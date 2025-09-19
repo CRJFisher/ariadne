@@ -618,6 +618,19 @@
   property: (property_identifier) @ref.property
 ) @member_access
 
+; Computed member access (bracket notation)
+(subscript_expression
+  object: (identifier) @ref.object
+  index: (_) @ref.property.computed
+) @member_access.computed
+
+; Optional chaining member access
+(member_expression
+  object: (identifier) @ref.object
+  property: (property_identifier) @ref.property.optional
+  "?." @optional_chaining_operator
+) @member_access.optional
+
 ; Type references (TypeScript)
 (type_identifier) @ref.type
 

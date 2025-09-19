@@ -176,6 +176,16 @@ export interface CaptureContext {
   property_chain?: string[];
   is_generic_call?: boolean;
   type_arguments?: string;
+  is_call?: boolean;
+  followed_by_call?: boolean;
+
+  // For member access
+  is_computed?: boolean;
+  bracket_notation?: boolean;
+  computed_key_node?: SyntaxNode;
+  optional_chaining?: boolean;
+  is_optional?: boolean;
+  uses_optional_operator?: boolean;
 
   // For constructor calls
   construct_target?: SyntaxNode;
@@ -225,6 +235,11 @@ export interface CaptureContext {
 
   // For Python __all__ exports
   all_contents?: string[];
+
+  // For assignment tracking
+  constructor_name?: string;
+  variable_name?: string;
+  value_node?: SyntaxNode;
 
   // For Rust pub use statements
   is_pub_use?: boolean;
