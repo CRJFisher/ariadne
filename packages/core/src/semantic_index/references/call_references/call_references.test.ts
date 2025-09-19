@@ -18,14 +18,8 @@ import type { NormalizedCapture } from "../../capture_types";
 import { SemanticEntity, SemanticCategory } from "../../capture_types";
 import {
   CallReference,
-  ClassSymbol,
-  MethodSymbol,
-  Symbol,
-  MethodResolution,
   InvalidCaptureError,
   process_call_references,
-  resolve_method_calls,
-  apply_method_resolutions,
 } from "./call_references";
 
 // Mock dependencies
@@ -462,6 +456,8 @@ describe("Call References", () => {
     });
   });
 
+  // Resolution tests removed - resolution happens in symbol_resolution Phase 3
+  /*
   describe("resolve_method_calls", () => {
     const createClassSymbol = (
       name: string,
@@ -712,6 +708,7 @@ describe("Call References", () => {
       expect(calls[0].resolved_return_type).toBeUndefined();
     });
   });
+  */
 
   describe("InvalidCaptureError", () => {
     it("should create error with capture context", () => {
@@ -792,6 +789,8 @@ describe("Call References", () => {
       expect(calls).toHaveLength(0);
     });
 
+    // Resolution test removed - resolution happens in symbol_resolution Phase 3
+    /*
     it("should handle method resolution with many methods", () => {
       const methodIds = Array.from(
         { length: 1000 },
@@ -834,7 +833,7 @@ describe("Call References", () => {
         kind: "class",
         name,
         methods,
-        static_methods: staticMethods,
+        static_members: staticMethods,
       };
     }
 
@@ -850,5 +849,6 @@ describe("Call References", () => {
         return_type: returnType,
       };
     }
+    */
   });
 });

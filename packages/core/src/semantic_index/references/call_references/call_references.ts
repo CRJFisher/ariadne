@@ -16,29 +16,6 @@ import type { NormalizedCapture, CaptureContext } from "../../capture_types";
 import { SemanticEntity } from "../../capture_types";
 
 /**
- * Enhanced symbol interface with proper typing
- */
-export interface ClassSymbol {
-  readonly kind: "class";
-  readonly name: string;
-  readonly methods?: readonly SymbolId[];
-  readonly static_methods?: readonly SymbolId[];
-  readonly parent_class?: SymbolId;
-}
-
-export interface MethodSymbol {
-  readonly kind: "method";
-  readonly name: string;
-  readonly is_static?: boolean;
-  readonly return_type?: SymbolName;
-}
-
-export type Symbol =
-  | ClassSymbol
-  | MethodSymbol
-  | { readonly kind: string; readonly name: string };
-
-/**
  * Call reference - Represents a function/method/constructor call
  */
 export interface CallReference {
@@ -72,18 +49,7 @@ export interface CallReference {
   /** For method calls: whether the receiver is static */
   readonly is_static_call?: boolean;
 
-  // These remain mutable for resolution phase
-  resolved_symbol?: SymbolId;
-  resolved_return_type?: SymbolName;
-}
-
-/**
- * Method resolution result - separates resolution from mutation
- */
-export interface MethodResolution {
-  readonly call_location: Location;
-  readonly resolved_symbol: SymbolId;
-  readonly resolved_return_type?: SymbolName;
+  // Note: Resolution happens in symbol_resolution Phase 3, not here
 }
 
 /**
@@ -325,34 +291,3 @@ function get_containing_function(
   return undefined;
 }
 
-/**
- * Resolve method calls
- */
-export function resolve_method_calls(
-  _calls: readonly CallReference[],
-  _symbols: Map<SymbolId, Symbol>
-): MethodResolution[] {
-  return [];
-}
-
-/**
- * Apply method resolutions to calls (separate function for mutation)
- */
-export function apply_method_resolutions(
-  calls: CallReference[],
-  resolutions: readonly MethodResolution[]
-): void {
-  const resolution_map = new Map<Location, MethodResolution>();
-
-  for (const resolution of resolutions) {
-    resolution_map.set(resolution.call_location, resolution);
-  }
-
-  for (const call of calls) {
-    const resolution = resolution_map.get(call.location);
-    if (resolution) {
-      call.resolved_symbol = resolution.resolved_symbol;
-      call.resolved_return_type = resolution.resolved_return_type;
-    }
-  }
-}

@@ -5,17 +5,12 @@
 import type {
   Location,
   FilePath,
-  SymbolName,
   ScopeId,
   LexicalScope,
   SymbolId,
-  SymbolDefinition,
 } from "@ariadnejs/types";
-import { location_key } from "@ariadnejs/types";
 import { find_containing_scope } from "../../scope_tree";
 import type { NormalizedCapture } from "../../capture_types";
-import type { TypeInfo, ReturnContext } from "../type_tracking";
-import { build_typed_return_map } from "../type_tracking";
 
 /**
  * Return reference - Represents a return statement
@@ -35,9 +30,6 @@ export interface ReturnReference {
 
   /** Containing function symbol */
   readonly function_symbol?: SymbolId;
-
-  /** Inferred return type */
-  readonly returned_type?: TypeInfo;
 
   /** Whether in conditional branch */
   readonly is_conditional: boolean;
@@ -61,9 +53,6 @@ export function process_return_references(
 ): ReturnReference[] {
   const return_refs: ReturnReference[] = [];
 
-  // Build return context map
-  const return_map = build_typed_return_map(returns, root_scope, scopes);
-
   for (const capture of returns) {
     const scope = find_containing_scope(
       capture.node_location,
@@ -76,19 +65,14 @@ export function process_return_references(
       continue;
     }
 
-    const key = location_key(capture.node_location);
-    const return_context = return_map.get(key);
+    const return_ref = create_return_reference(
+      capture,
+      scope,
+      scopes,
+      scope_to_symbol
+    );
 
-    if (return_context) {
-      const return_ref = create_return_reference(
-        capture,
-        scope,
-        return_context,
-        scope_to_symbol
-      );
-
-      return_refs.push(return_ref);
-    }
+    return_refs.push(return_ref);
   }
 
   return return_refs;
@@ -111,19 +95,47 @@ function is_yield_return(expression: string): boolean {
 }
 
 /**
+ * Get the containing function scope
+ */
+function get_function_scope(
+  scope: LexicalScope,
+  scopes: Map<ScopeId, LexicalScope>
+): ScopeId | undefined {
+  let current: LexicalScope | undefined = scope;
+  const visited = new Set<ScopeId>();
+
+  while (current && !visited.has(current.id)) {
+    visited.add(current.id);
+    if (current.type === "function" || current.type === "method" || current.type === "constructor") {
+      return current.id;
+    }
+    current = current.parent_id ? scopes.get(current.parent_id) : undefined;
+  }
+
+  return undefined;
+}
+
+/**
  * Create a return reference
  */
 function create_return_reference(
   capture: NormalizedCapture,
   scope: LexicalScope,
-  return_context: ReturnContext,
+  scopes: Map<ScopeId, LexicalScope>,
   scope_to_symbol?: Map<ScopeId, SymbolId>
 ): ReturnReference {
   const location = capture.node_location;
   const expression = capture.text;
 
+  // Get containing function scope
+  const function_scope_id = get_function_scope(scope, scopes);
+  if (!function_scope_id) {
+    // Return must be in a function - use scope id as fallback
+    throw new Error("Return statement not in function scope");
+  }
+
   // Get function symbol if available
-  const function_symbol = scope_to_symbol?.get(return_context.function_scope_id);
+  const function_symbol = scope_to_symbol?.get(function_scope_id);
 
   // Detect async and yield patterns from the expression
   const is_async = is_async_return(expression);
@@ -133,101 +145,14 @@ function create_return_reference(
     location,
     expression,
     scope_id: scope.id,
-    function_scope_id: return_context.function_scope_id,
+    function_scope_id,
     function_symbol,
-    returned_type: return_context.returned_type,
-    is_conditional: return_context.is_conditional || false,
+    is_conditional: false, // Note: Control flow analysis happens in symbol_resolution
     is_async,
     is_yield,
   };
 }
 
-/**
- * Infer function return type from all returns
- */
-export interface InferredReturnType {
-  function_scope_id: ScopeId;
-  function_symbol?: SymbolId;
-  return_types: TypeInfo[];
-  unified_type?: TypeInfo;
-  resolved_type?: TypeInfo;
-}
-
-export function infer_function_return_types(
-  returns: readonly ReturnReference[]
-): Map<ScopeId, InferredReturnType> {
-  const function_returns = new Map<ScopeId, InferredReturnType>();
-
-  for (const ret of returns) {
-    if (!function_returns.has(ret.function_scope_id)) {
-      function_returns.set(ret.function_scope_id, {
-        function_scope_id: ret.function_scope_id,
-        function_symbol: ret.function_symbol,
-        return_types: [],
-      });
-    }
-
-    const inferred = function_returns.get(ret.function_scope_id)!;
-    if (ret.returned_type) {
-      inferred.return_types.push(ret.returned_type);
-    }
-  }
-
-  // Unify return types for each function
-  for (const inferred of function_returns.values()) {
-    inferred.unified_type = unify_types(inferred.return_types);
-  }
-
-  return function_returns;
-}
-
-/**
- * Check if two TypeInfo objects are structurally equal
- */
-function types_equal(a: TypeInfo, b: TypeInfo): boolean {
-  if (a.type_name !== b.type_name) return false;
-
-  // Compare type arguments if they exist
-  if (a.type_params && b.type_params) {
-    if (a.type_params.length !== b.type_params.length) return false;
-    return a.type_params.every((arg, i) => types_equal(arg, b.type_params![i]));
-  }
-
-  // If one has type_args and the other doesn't, they're different
-  if (a.type_params || b.type_params) return false;
-
-  return true;
-}
-
-/**
- * Simple type unification
- */
-function unify_types(types: TypeInfo[]): TypeInfo | undefined {
-  if (types.length === 0) return undefined;
-  if (types.length === 1) return types[0];
-
-  // Check if all types are structurally the same
-  const first = types[0];
-  const all_same = types.every(t => types_equal(t, first));
-
-  if (all_same) {
-    return first;
-  }
-
-  // Create union type
-  const type_names = types.map(t => t.type_name);
-  const union_name = type_names.join(" | ") as SymbolName;
-
-  return {
-    type_name: union_name,
-    certainty: "inferred",
-    source: {
-      kind: "return",
-      location: types[0].source.location,
-    },
-    union_members: types,
-  };
-}
 
 /**
  * Get all return paths for a function
@@ -285,36 +210,3 @@ export function find_never_returning_functions(
   return never_returning;
 }
 
-/**
- * Connect inferred return types to function symbols
- */
-export function connect_return_types_to_functions(
-  returns: readonly ReturnReference[],
-  symbols: Map<SymbolId, SymbolDefinition>,
-  type_registry?: { resolve_type_info?: (info: TypeInfo) => TypeInfo | undefined }
-): Map<SymbolId, TypeInfo> {
-  const function_return_types = new Map<SymbolId, TypeInfo>();
-
-  // First, infer return types for each function
-  const inferred = infer_function_return_types(returns);
-
-  // Then connect them to function symbols
-  for (const [, inferred_type] of inferred) {
-    if (inferred_type.function_symbol) {
-      const symbol = symbols.get(inferred_type.function_symbol);
-      if (symbol) {
-        // Try to resolve the unified type
-        if (inferred_type.unified_type && type_registry?.resolve_type_info) {
-          const resolved = type_registry.resolve_type_info(inferred_type.unified_type);
-          if (resolved) {
-            // Store the resolved type mapping (without mutating input symbols)
-            function_return_types.set(inferred_type.function_symbol, resolved);
-            inferred_type.resolved_type = resolved;
-          }
-        }
-      }
-    }
-  }
-
-  return function_return_types;
-}

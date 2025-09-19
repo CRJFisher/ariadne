@@ -13,7 +13,6 @@ import { node_to_location } from "../../../utils/node_utils";
 import { find_containing_scope } from "../../scope_tree";
 import type { NormalizedCapture } from "../../capture_types";
 import { SemanticEntity } from "../../capture_types";
-import type { TypeInfo } from "../type_tracking";
 
 /**
  * Member access reference - Property or method access on an object
@@ -34,7 +33,7 @@ export interface MemberAccessReference {
   /** Object being accessed */
   readonly object: {
     location?: Location;
-    type?: TypeInfo;
+    // Note: Type resolution happens in symbol_resolution Phase 3
   };
 
   /** For chained access */
@@ -246,7 +245,7 @@ function create_member_access_reference(
   const object: MemberAccessReference["object"] = {};
   if (context?.receiver_node) {
     object.location = node_to_location(context.receiver_node, file_path);
-    // Type would come from type inference
+    // Note: Type resolution happens in symbol_resolution Phase 3
   }
 
   // Process property chain with validation
@@ -274,7 +273,6 @@ function create_member_access_reference(
  */
 export interface ObjectMemberAccesses {
   object_location: Location;
-  object_type?: TypeInfo;
   accesses: MemberAccessReference[];
   accessed_members: Set<SymbolName>;
 }
@@ -299,7 +297,6 @@ export function group_by_object(
     if (!groups.has(key)) {
       groups.set(key, {
         object_location: access.object.location,
-        object_type: access.object.type,
         accesses: [],
         accessed_members: new Set(),
       });
@@ -313,26 +310,6 @@ export function group_by_object(
   return Array.from(groups.values());
 }
 
-/**
- * Find all method calls on a specific type
- */
-export function find_method_calls_on_type(
-  accesses: MemberAccessReference[],
-  type_name: SymbolName
-): MemberAccessReference[] {
-  // Input validation
-  if (!Array.isArray(accesses)) {
-    throw new Error("accesses must be an array");
-  }
-  if (!type_name) {
-    throw new Error("type_name is required");
-  }
-
-  return accesses.filter(
-    (a) =>
-      a && a.access_type === "method" && a.object?.type?.type_name === type_name
-  );
-}
 
 /**
  * Find property chains (e.g., obj.prop1.prop2.method())
@@ -366,42 +343,3 @@ export function find_property_chains(
   return chains;
 }
 
-/**
- * Find potential null pointer dereferences
- */
-export interface PotentialNullDereference {
-  location: Location;
-  member_access: MemberAccessReference;
-  reason: "nullable_type" | "no_null_check" | "after_null_assignment";
-}
-
-export function find_potential_null_dereferences(
-  accesses: MemberAccessReference[]
-): PotentialNullDereference[] {
-  // Input validation
-  if (!Array.isArray(accesses)) {
-    throw new Error("accesses must be an array");
-  }
-
-  const potential_issues: PotentialNullDereference[] = [];
-
-  for (const access of accesses) {
-    if (!access) continue;
-
-    // Skip if using optional chaining
-    if (access.is_optional_chain) continue;
-
-    // Check if object type is nullable
-    if (access.object?.type?.is_nullable) {
-      potential_issues.push({
-        location: access.location,
-        member_access: access,
-        reason: "nullable_type",
-      });
-    }
-
-    // Additional checks would require control flow analysis
-  }
-
-  return potential_issues;
-}

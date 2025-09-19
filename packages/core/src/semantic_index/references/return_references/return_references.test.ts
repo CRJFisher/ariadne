@@ -10,21 +10,15 @@ import type {
   ScopeId,
   LexicalScope,
   SymbolId,
-  SymbolDefinition,
 } from "@ariadnejs/types";
-import { location_key } from "@ariadnejs/types";
 import type { NormalizedCapture } from "../../capture_types";
 import { SemanticEntity, SemanticCategory } from "../../capture_types";
-import type { TypeInfo, ReturnContext } from "../type_tracking";
 import {
   ReturnReference,
-  InferredReturnType,
   ReturnPath,
   process_return_references,
-  infer_function_return_types,
   analyze_return_paths,
   find_never_returning_functions,
-  connect_return_types_to_functions,
 } from "./return_references";
 
 // Mock dependencies
@@ -32,15 +26,10 @@ vi.mock("../../scope_tree", () => ({
   find_containing_scope: vi.fn(),
 }));
 
-vi.mock("../type_tracking", () => ({
-  build_typed_return_map: vi.fn(),
-}));
-
 import { find_containing_scope } from "../../scope_tree";
-import { build_typed_return_map } from "../type_tracking";
 
 const mockFindContainingScope = vi.mocked(find_containing_scope);
-const mockBuildTypedReturnMap = vi.mocked(build_typed_return_map);
+// Type tracking removed - functionality moved to symbol_resolution Phase 3
 
 describe("Return References", () => {
   const mockFilePath = "test.ts" as FilePath;
@@ -77,14 +66,7 @@ describe("Return References", () => {
     [mockFunctionScope.id, mockFunctionScope],
   ]);
 
-  const mockTypeInfo: TypeInfo = {
-    type_name: "string" as SymbolName,
-    certainty: "declared",
-    source: {
-      kind: "annotation",
-      location: mockLocation,
-    },
-  };
+  // Type info removed - type resolution happens in symbol_resolution Phase 3
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -99,7 +81,6 @@ describe("Return References", () => {
         scope_id: mockScope.id,
         function_scope_id: mockFunctionScope.id,
         function_symbol: "func_symbol" as SymbolId,
-        returned_type: mockTypeInfo,
         is_conditional: false,
         is_async: false,
         is_yield: false,
@@ -120,7 +101,6 @@ describe("Return References", () => {
         expression: "return conditionalValue",
         scope_id: mockScope.id,
         function_scope_id: mockFunctionScope.id,
-        returned_type: mockTypeInfo,
         is_conditional: true,
         is_async: false,
         is_yield: false,
@@ -135,7 +115,6 @@ describe("Return References", () => {
         expression: "return await promise",
         scope_id: mockScope.id,
         function_scope_id: mockFunctionScope.id,
-        returned_type: mockTypeInfo,
         is_conditional: false,
         is_async: true,
         is_yield: false,
@@ -146,7 +125,6 @@ describe("Return References", () => {
         expression: "yield value",
         scope_id: mockScope.id,
         function_scope_id: mockFunctionScope.id,
-        returned_type: mockTypeInfo,
         is_conditional: false,
         is_async: false,
         is_yield: true,
@@ -168,7 +146,7 @@ describe("Return References", () => {
       };
 
       expect(minimalReturn.function_symbol).toBeUndefined();
-      expect(minimalReturn.returned_type).toBeUndefined();
+      // Type resolution happens in symbol_resolution Phase 3
     });
   });
 
@@ -186,18 +164,7 @@ describe("Return References", () => {
           },
         ];
 
-        const returnContext: ReturnContext = {
-          function_scope_id: mockFunctionScope.id,
-          returned_type: mockTypeInfo,
-          is_conditional: false,
-          location: mockLocation,
-        };
-
-        const returnMap = new Map([
-          [location_key(mockLocation), returnContext],
-        ]);
-
-        mockBuildTypedReturnMap.mockReturnValue(returnMap);
+        // Type resolution happens in symbol_resolution Phase 3
 
         const result = process_return_references(
           returns,
@@ -209,7 +176,7 @@ describe("Return References", () => {
         expect(result).toHaveLength(1);
         expect(result[0].expression).toBe("return 42");
         expect(result[0].function_scope_id).toBe(mockFunctionScope.id);
-        expect(result[0].returned_type).toEqual(mockTypeInfo);
+        // Type resolution happens in symbol_resolution Phase 3
         expect(result[0].is_conditional).toBe(false);
       });
 
@@ -225,20 +192,11 @@ describe("Return References", () => {
           },
         ];
 
-        const returnContext: ReturnContext = {
-          function_scope_id: mockFunctionScope.id,
-          returned_type: mockTypeInfo,
-          is_conditional: false,
-          location: mockLocation,
-        };
-
         const scopeToSymbol = new Map<ScopeId, SymbolId>([
           [mockFunctionScope.id, "my_function" as SymbolId],
         ]);
 
-        mockBuildTypedReturnMap.mockReturnValue(
-          new Map([[location_key(mockLocation), returnContext]])
-        );
+        // Type resolution happens in symbol_resolution Phase 3
 
         const result = process_return_references(
           returns,
@@ -274,22 +232,7 @@ describe("Return References", () => {
           },
         ];
 
-        const returnMap = new Map([
-          [location_key(mockLocation), {
-            function_scope_id: mockFunctionScope.id,
-            returned_type: mockTypeInfo,
-            is_conditional: false,
-            location: mockLocation,
-          }],
-          [location_key(location2), {
-            function_scope_id: mockFunctionScope.id,
-            returned_type: mockTypeInfo,
-            is_conditional: true,
-            location: location2,
-          }],
-        ]);
-
-        mockBuildTypedReturnMap.mockReturnValue(returnMap);
+        // Type resolution happens in symbol_resolution Phase 3
 
         const result = process_return_references(
           returns,
@@ -320,16 +263,7 @@ describe("Return References", () => {
           },
         ];
 
-        const returnContext: ReturnContext = {
-          function_scope_id: mockFunctionScope.id,
-          returned_type: mockTypeInfo,
-          is_conditional: true,
-          location: mockLocation,
-        };
-
-        mockBuildTypedReturnMap.mockReturnValue(
-          new Map([[location_key(mockLocation), returnContext]])
-        );
+        // Type resolution and conditional analysis happens in symbol_resolution Phase 3
 
         const result = process_return_references(
           returns,
@@ -339,14 +273,13 @@ describe("Return References", () => {
         );
 
         expect(result).toHaveLength(1);
-        expect(result[0].is_conditional).toBe(true);
+        // Conditional analysis happens in Phase 3
+        expect(result[0].is_conditional).toBe(false);
       });
     });
 
     describe("Edge Cases", () => {
       it("should handle empty returns array", () => {
-        mockBuildTypedReturnMap.mockReturnValue(new Map());
-
         const result = process_return_references(
           [],
           mockScope,
@@ -357,19 +290,19 @@ describe("Return References", () => {
         expect(result).toEqual([]);
       });
 
-      it("should skip returns without context", () => {
+      it("should process returns without type context", () => {
         const returns: NormalizedCapture[] = [
           {
             category: SemanticCategory.RETURN,
             entity: SemanticEntity.REFERENCE,
-            text: "orphaned return",
+            text: "return value",
             node_location: mockLocation,
             context: {},
             modifiers: {},
           },
         ];
 
-        mockBuildTypedReturnMap.mockReturnValue(new Map());
+        // Type resolution happens in symbol_resolution Phase 3
 
         const result = process_return_references(
           returns,
@@ -378,7 +311,8 @@ describe("Return References", () => {
           mockFilePath
         );
 
-        expect(result).toEqual([]);
+        expect(result).toHaveLength(1);
+        expect(result[0].expression).toBe("return value");
       });
 
       it("should handle returns without function symbol mapping", () => {
@@ -393,16 +327,7 @@ describe("Return References", () => {
           },
         ];
 
-        const returnContext: ReturnContext = {
-          function_scope_id: mockFunctionScope.id,
-          returned_type: mockTypeInfo,
-          is_conditional: false,
-          location: mockLocation,
-        };
-
-        mockBuildTypedReturnMap.mockReturnValue(
-          new Map([[location_key(mockLocation), returnContext]])
-        );
+        // Type resolution happens in symbol_resolution Phase 3
 
         const result = process_return_references(
           returns,
@@ -427,15 +352,7 @@ describe("Return References", () => {
           },
         ];
 
-        const returnContext: ReturnContext = {
-          function_scope_id: mockFunctionScope.id,
-          is_conditional: false,
-          location: mockLocation,
-        };
-
-        mockBuildTypedReturnMap.mockReturnValue(
-          new Map([[location_key(mockLocation), returnContext]])
-        );
+        // Type resolution happens in symbol_resolution Phase 3
 
         const result = process_return_references(
           returns,
@@ -445,11 +362,13 @@ describe("Return References", () => {
         );
 
         expect(result).toHaveLength(1);
-        expect(result[0].returned_type).toBeUndefined();
+        // Type resolution happens in symbol_resolution Phase 3
       });
     });
   });
 
+  // Type inference tests removed - type resolution happens in symbol_resolution Phase 3
+  /*
   describe("InferredReturnType Interface", () => {
     it("should define correct structure", () => {
       const inferred: InferredReturnType = {
@@ -489,8 +408,7 @@ describe("Return References", () => {
             scope_id: mockScope.id,
             function_scope_id: mockFunctionScope.id,
             function_symbol: "test_func" as SymbolId,
-            returned_type: mockTypeInfo,
-            is_conditional: false,
+                is_conditional: false,
             is_async: false,
             is_yield: false,
           },
@@ -521,8 +439,7 @@ describe("Return References", () => {
             expression: "return 'hello'",
             scope_id: mockScope.id,
             function_scope_id: mockFunctionScope.id,
-            returned_type: mockTypeInfo,
-            is_conditional: false,
+                is_conditional: false,
             is_async: false,
             is_yield: false,
           },
@@ -558,8 +475,7 @@ describe("Return References", () => {
             expression: "return 'first'",
             scope_id: mockScope.id,
             function_scope_id: mockFunctionScope.id,
-            returned_type: mockTypeInfo,
-            is_conditional: false,
+                is_conditional: false,
             is_async: false,
             is_yield: false,
           },
@@ -568,8 +484,7 @@ describe("Return References", () => {
             expression: "return 'second'",
             scope_id: mockScope.id,
             function_scope_id: mockFunctionScope.id,
-            returned_type: mockTypeInfo,
-            is_conditional: true,
+                is_conditional: true,
             is_async: false,
             is_yield: false,
           },
@@ -596,8 +511,7 @@ describe("Return References", () => {
             expression: "return 'string'",
             scope_id: mockScope.id,
             function_scope_id: mockFunctionScope.id,
-            returned_type: mockTypeInfo,
-            is_conditional: false,
+                is_conditional: false,
             is_async: false,
             is_yield: false,
           },
@@ -656,8 +570,7 @@ describe("Return References", () => {
             expression: "return value",
             scope_id: mockScope.id,
             function_scope_id: mockFunctionScope.id,
-            returned_type: mockTypeInfo,
-            is_conditional: false,
+                is_conditional: false,
             is_async: false,
             is_yield: false,
           },
@@ -691,6 +604,7 @@ describe("Return References", () => {
       });
     });
   });
+  */
 
   describe("ReturnPath Interface", () => {
     it("should define correct structure", () => {
@@ -717,8 +631,7 @@ describe("Return References", () => {
             expression: "return value",
             scope_id: mockScope.id,
             function_scope_id: mockFunctionScope.id,
-            returned_type: mockTypeInfo,
-            is_conditional: false,
+                is_conditional: false,
             is_async: false,
             is_yield: false,
           },
@@ -739,8 +652,7 @@ describe("Return References", () => {
             expression: "return value",
             scope_id: mockScope.id,
             function_scope_id: mockFunctionScope.id,
-            returned_type: mockTypeInfo,
-            is_conditional: true,
+                is_conditional: true,
             is_async: false,
             is_yield: false,
           },
@@ -761,8 +673,7 @@ describe("Return References", () => {
             expression: "return 1",
             scope_id: mockScope.id,
             function_scope_id: mockFunctionScope.id,
-            returned_type: mockTypeInfo,
-            is_conditional: false,
+                is_conditional: false,
             is_async: false,
             is_yield: false,
           },
@@ -771,8 +682,7 @@ describe("Return References", () => {
             expression: "return 2",
             scope_id: mockScope.id,
             function_scope_id: otherFuncScope,
-            returned_type: mockTypeInfo,
-            is_conditional: false,
+                is_conditional: false,
             is_async: false,
             is_yield: false,
           },
@@ -791,8 +701,7 @@ describe("Return References", () => {
             expression: "return 1",
             scope_id: mockScope.id,
             function_scope_id: mockFunctionScope.id,
-            returned_type: mockTypeInfo,
-            is_conditional: true,
+                is_conditional: true,
             is_async: false,
             is_yield: false,
           },
@@ -801,8 +710,7 @@ describe("Return References", () => {
             expression: "return 2",
             scope_id: mockScope.id,
             function_scope_id: mockFunctionScope.id,
-            returned_type: mockTypeInfo,
-            is_conditional: true,
+                is_conditional: true,
             is_async: false,
             is_yield: false,
           },
@@ -832,8 +740,7 @@ describe("Return References", () => {
             expression: "return value",
             scope_id: mockScope.id,
             function_scope_id: "other_func" as ScopeId,
-            returned_type: mockTypeInfo,
-            is_conditional: false,
+                is_conditional: false,
             is_async: false,
             is_yield: false,
           },
@@ -857,8 +764,7 @@ describe("Return References", () => {
             expression: "return value",
             scope_id: mockScope.id,
             function_scope_id: "func_with_return" as ScopeId,
-            returned_type: mockTypeInfo,
-            is_conditional: false,
+                is_conditional: false,
             is_async: false,
             is_yield: false,
           },
@@ -885,8 +791,7 @@ describe("Return References", () => {
             expression: "return 1",
             scope_id: mockScope.id,
             function_scope_id: "func1" as ScopeId,
-            returned_type: mockTypeInfo,
-            is_conditional: false,
+                is_conditional: false,
             is_async: false,
             is_yield: false,
           },
@@ -895,8 +800,7 @@ describe("Return References", () => {
             expression: "return 2",
             scope_id: mockScope.id,
             function_scope_id: "func2" as ScopeId,
-            returned_type: mockTypeInfo,
-            is_conditional: false,
+                is_conditional: false,
             is_async: false,
             is_yield: false,
           },
@@ -943,8 +847,7 @@ describe("Return References", () => {
             expression: "return 1",
             scope_id: mockScope.id,
             function_scope_id: "multi_return_func" as ScopeId,
-            returned_type: mockTypeInfo,
-            is_conditional: false,
+                is_conditional: false,
             is_async: false,
             is_yield: false,
           },
@@ -953,8 +856,7 @@ describe("Return References", () => {
             expression: "return 2",
             scope_id: mockScope.id,
             function_scope_id: "multi_return_func" as ScopeId,
-            returned_type: mockTypeInfo,
-            is_conditional: true,
+                is_conditional: true,
             is_async: false,
             is_yield: false,
           },
@@ -974,6 +876,8 @@ describe("Return References", () => {
     });
   });
 
+  // Type inference tests removed - type resolution happens in symbol_resolution Phase 3
+  /*
   describe("connect_return_types_to_functions", () => {
     describe("Success Cases", () => {
       it("should connect inferred types to function symbols", () => {
@@ -984,8 +888,7 @@ describe("Return References", () => {
             scope_id: mockScope.id,
             function_scope_id: mockFunctionScope.id,
             function_symbol: "my_function" as SymbolId,
-            returned_type: mockTypeInfo,
-            is_conditional: false,
+                is_conditional: false,
             is_async: false,
             is_yield: false,
           },
@@ -1027,8 +930,7 @@ describe("Return References", () => {
             scope_id: mockScope.id,
             function_scope_id: "func1_scope" as ScopeId,
             function_symbol: "func1" as SymbolId,
-            returned_type: mockTypeInfo,
-            is_conditional: false,
+                is_conditional: false,
             is_async: false,
             is_yield: false,
           },
@@ -1096,8 +998,7 @@ describe("Return References", () => {
             expression: "return value",
             scope_id: mockScope.id,
             function_scope_id: mockFunctionScope.id,
-            returned_type: mockTypeInfo,
-            is_conditional: false,
+                is_conditional: false,
             is_async: false,
             is_yield: false,
           },
@@ -1116,8 +1017,7 @@ describe("Return References", () => {
             scope_id: mockScope.id,
             function_scope_id: mockFunctionScope.id,
             function_symbol: "missing_function" as SymbolId,
-            returned_type: mockTypeInfo,
-            is_conditional: false,
+                is_conditional: false,
             is_async: false,
             is_yield: false,
           },
@@ -1136,8 +1036,7 @@ describe("Return References", () => {
             scope_id: mockScope.id,
             function_scope_id: mockFunctionScope.id,
             function_symbol: "my_function" as SymbolId,
-            returned_type: mockTypeInfo,
-            is_conditional: false,
+                is_conditional: false,
             is_async: false,
             is_yield: false,
           },
@@ -1170,8 +1069,7 @@ describe("Return References", () => {
             scope_id: mockScope.id,
             function_scope_id: mockFunctionScope.id,
             function_symbol: "my_function" as SymbolId,
-            returned_type: mockTypeInfo,
-            is_conditional: false,
+                is_conditional: false,
             is_async: false,
             is_yield: false,
           },
@@ -1234,81 +1132,14 @@ describe("Return References", () => {
       });
     });
   });
+  */
 
+  // Integration tests removed - type resolution happens in symbol_resolution Phase 3
+  /*
   describe("Integration Tests", () => {
     it("should process complete return analysis pipeline", () => {
-      const returns: NormalizedCapture[] = [
-        {
-          category: SemanticCategory.RETURN,
-          entity: SemanticEntity.REFERENCE,
-          text: "return result",
-          node_location: mockLocation,
-          context: {},
-          modifiers: {},
-        },
-      ];
-
-      const returnContext: ReturnContext = {
-        location: mockLocation,
-        function_scope_id: mockFunctionScope.id,
-        returned_type: mockTypeInfo,
-        is_conditional: false,
-      };
-
-      const scopeToSymbol = new Map<ScopeId, SymbolId>([
-        [mockFunctionScope.id, "test_function" as SymbolId],
-      ]);
-
-      mockBuildTypedReturnMap.mockReturnValue(
-        new Map([[location_key(mockLocation), returnContext]])
-      );
-
-      // Process return references
-      const returnRefs = process_return_references(
-        returns,
-        mockScope,
-        mockScopes,
-        mockFilePath,
-        scopeToSymbol
-      );
-
-      expect(returnRefs).toHaveLength(1);
-
-      // Infer return types
-      const inferred = infer_function_return_types(returnRefs);
-      expect(inferred.size).toBe(1);
-
-      // Analyze return paths
-      const paths = analyze_return_paths(returnRefs, mockFunctionScope.id);
-      expect(paths.paths).toHaveLength(1);
-
-      // Find never returning functions
-      const allFunctions = new Set([mockFunctionScope.id, "other_func" as ScopeId]);
-      const neverReturning = find_never_returning_functions(returnRefs, allFunctions);
-      expect(neverReturning.size).toBe(1);
-      expect(neverReturning.has("other_func" as ScopeId)).toBe(true);
-
-      // Connect types to functions
-      const functionDef: SymbolDefinition = {
-        id: "test_function" as SymbolId,
-        kind: "function",
-        name: "testFunction" as SymbolName,
-        location: mockLocation,
-        scope_id: mockFunctionScope.id,
-        is_hoisted: false,
-        is_exported: false,
-        is_imported: false,
-        references: [],
-      };
-
-      const symbols = new Map([["test_function" as SymbolId, functionDef]]);
-      const typeRegistry = {
-        resolve_type_info: vi.fn().mockReturnValue(mockTypeInfo),
-      };
-
-      const connected = connect_return_types_to_functions(returnRefs, symbols, typeRegistry);
-      expect(connected.size).toBe(1);
-      expect(connected.get("test_function" as SymbolId)).toBe("string_type");
+      // Complete integration including type resolution moved to Phase 3
     });
   });
+  */
 });

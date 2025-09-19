@@ -12,17 +12,13 @@ import type {
 } from "@ariadnejs/types";
 import type { NormalizedCapture } from "../../capture_types";
 import { SemanticEntity, SemanticCategory } from "../../capture_types";
-import type { TypeInfo } from "../type_tracking";
 import {
   MemberAccessReference,
   ObjectMemberAccesses,
   PropertyChain,
-  PotentialNullDereference,
   process_member_access_references,
   group_by_object,
-  find_method_calls_on_type,
   find_property_chains,
-  find_potential_null_dereferences,
 } from "./member_access_references";
 
 // Mock dependencies
@@ -115,7 +111,7 @@ describe("Member Access References", () => {
       expect(memberAccess.member_name).toBe("propertyName");
       expect(memberAccess.access_type).toBe("property");
       expect(memberAccess.object.location).toEqual(mockLocation);
-      expect(memberAccess.object.type).toEqual(mockTypeInfo);
+      // Type resolution happens in symbol_resolution Phase 3
       expect(memberAccess.property_chain).toHaveLength(3);
       expect(memberAccess.is_optional_chain).toBe(false);
       expect(memberAccess.computed_key).toEqual(mockLocation);
@@ -178,7 +174,7 @@ describe("Member Access References", () => {
       };
 
       expect(minimalAccess.object.location).toBeUndefined();
-      expect(minimalAccess.object.type).toBeUndefined();
+      // Type resolution happens in symbol_resolution Phase 3
     });
   });
 
@@ -460,7 +456,6 @@ describe("Member Access References", () => {
     it("should define correct structure", () => {
       const objectAccesses: ObjectMemberAccesses = {
         object_location: mockLocation,
-        object_type: mockTypeInfo,
         accesses: [],
         accessed_members: new Set([
           "prop1" as SymbolName,
@@ -469,7 +464,7 @@ describe("Member Access References", () => {
       };
 
       expect(objectAccesses.object_location).toEqual(mockLocation);
-      expect(objectAccesses.object_type).toEqual(mockTypeInfo);
+      // Type resolution happens in symbol_resolution Phase 3
       expect(Array.isArray(objectAccesses.accesses)).toBe(true);
       expect(objectAccesses.accessed_members).toBeInstanceOf(Set);
       expect(objectAccesses.accessed_members.size).toBe(2);
@@ -537,7 +532,7 @@ describe("Member Access References", () => {
         expect(group1.accessed_members.size).toBe(2);
         expect(group1.accessed_members.has("prop1" as SymbolName)).toBe(true);
         expect(group1.accessed_members.has("prop2" as SymbolName)).toBe(true);
-        expect(group1.object_type).toEqual(mockTypeInfo);
+        // Type resolution happens in symbol_resolution Phase 3
 
         expect(group2.accesses).toHaveLength(1);
         expect(group2.accessed_members.size).toBe(1);
@@ -680,6 +675,8 @@ describe("Member Access References", () => {
     });
   });
 
+  // Type resolution tests removed - resolution happens in symbol_resolution Phase 3
+  /*
   describe("find_method_calls_on_type", () => {
     describe("Success Cases", () => {
       it("should find method calls on specific type", () => {
@@ -834,6 +831,7 @@ describe("Member Access References", () => {
       });
     });
   });
+  */
 
   describe("PropertyChain Interface", () => {
     it("should define correct structure", () => {
@@ -1025,6 +1023,8 @@ describe("Member Access References", () => {
     });
   });
 
+  // Null dereference detection removed - requires type resolution
+  /*
   describe("PotentialNullDereference Interface", () => {
     it("should define correct structure", () => {
       const mockAccess: MemberAccessReference = {
@@ -1225,6 +1225,7 @@ describe("Member Access References", () => {
       });
     });
   });
+  */
 
   describe("Integration Tests", () => {
     it("should process complete member access analysis pipeline", () => {
@@ -1273,39 +1274,17 @@ describe("Member Access References", () => {
 
       expect(accesses).toHaveLength(2);
 
-      // Add type info to test other functions (use separate objects to avoid shared references)
-      accesses[0].object.type = { ...mockTypeInfo };
-      accesses[1].object.type = { ...mockTypeInfo };
-
       // Group by object
       const grouped = group_by_object(accesses);
       expect(grouped).toHaveLength(1);
       expect(grouped[0].accessed_members.size).toBe(2);
-
-      // Find method calls on type
-      const methodCalls = find_method_calls_on_type(
-        accesses,
-        "MyClass" as SymbolName
-      );
-      expect(methodCalls).toHaveLength(1);
-      expect(methodCalls[0].member_name).toBe("myMethod");
 
       // Find property chains
       const chains = find_property_chains(accesses);
       expect(chains).toHaveLength(1);
       expect(chains[0].chain).toEqual(["obj", "nested", "myProperty"]);
 
-      // Test null dereferences (mark type as nullable)
-      accesses[0] = {
-        ...accesses[0],
-        object: {
-          ...accesses[0].object,
-          type: { ...accesses[0].object.type, is_nullable: true },
-        },
-      };
-      const nullDerefs = find_potential_null_dereferences(accesses);
-      expect(nullDerefs).toHaveLength(1);
-      expect(nullDerefs[0].reason).toBe("nullable_type");
+      // Type resolution tests removed - resolution happens in symbol_resolution Phase 3
     });
   });
 
@@ -1585,6 +1564,8 @@ describe("Member Access References", () => {
           group_by_object(null as any);
         }).toThrow("accesses must be an array");
 
+        // Type resolution tests removed - resolution happens in symbol_resolution Phase 3
+        /*
         expect(() => {
           find_method_calls_on_type(null as any, "TestType" as SymbolName);
         }).toThrow("accesses must be an array");
@@ -1592,14 +1573,18 @@ describe("Member Access References", () => {
         expect(() => {
           find_method_calls_on_type([], "" as SymbolName);
         }).toThrow("type_name is required");
+        */
 
         expect(() => {
           find_property_chains(null as any);
         }).toThrow("accesses must be an array");
 
+        // Null dereference detection removed - requires type resolution
+        /*
         expect(() => {
           find_potential_null_dereferences(null as any);
         }).toThrow("accesses must be an array");
+        */
       });
 
       it("should handle property chain validation and convert types to strings", () => {
@@ -1842,12 +1827,10 @@ describe("Member Access References", () => {
         expect(() => {
           const grouped = group_by_object(accessesWithNulls);
           const chains = find_property_chains(accessesWithNulls);
-          const nullDerefs =
-            find_potential_null_dereferences(accessesWithNulls);
+          // Type resolution and null checking moved to symbol_resolution Phase 3
 
           expect(grouped).toBeDefined();
           expect(chains).toBeDefined();
-          expect(nullDerefs).toBeDefined();
         }).not.toThrow();
       });
     });

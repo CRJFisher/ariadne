@@ -35,10 +35,9 @@ vi.mock("../../scope_tree", () => ({
 }));
 
 import { find_containing_scope } from "../../scope_tree";
-import { build_type_annotation_map } from "../type_tracking/type_tracking";
 
 const mockFindContainingScope = vi.mocked(find_containing_scope);
-const mockBuildTypeAnnotationMap = vi.mocked(build_type_annotation_map);
+// Type tracking removed - type resolution happens in symbol_resolution Phase 3
 
 describe("Type Annotation References - Bug Fixes", () => {
   const mockFilePath = "bugfix.ts" as FilePath;
@@ -65,7 +64,7 @@ describe("Type Annotation References - Bug Fixes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFindContainingScope.mockReturnValue(mockScope);
-    mockBuildTypeAnnotationMap.mockReturnValue(new Map());
+    // Type tracking removed - type resolution happens in symbol_resolution Phase 3
   });
 
   describe("Bug Fix 1: Incomplete Annotation Kind Detection", () => {
