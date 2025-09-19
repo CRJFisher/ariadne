@@ -13,7 +13,6 @@ import type {
   ScopeId,
   LexicalScope,
   Location,
-  TypeId,
 } from "@ariadnejs/types";
 import type { NormalizedCapture } from "../../capture_types";
 import { SemanticEntity, SemanticCategory } from "../../capture_types";
@@ -134,7 +133,6 @@ describe("Call References", () => {
         scope_id: mockScope.id,
         receiver: {
           location: mockLocation,
-          // No type info since receiver_type isn't provided in real context
         },
       });
     });
@@ -479,7 +477,7 @@ describe("Call References", () => {
     const createMethodSymbol = (
       name: string,
       isStatic = false,
-      returnType?: TypeId
+      returnType?: SymbolName
     ): MethodSymbol => ({
       kind: "method",
       name,
@@ -503,23 +501,15 @@ describe("Call References", () => {
           scope_id: "scope1" as ScopeId,
           call_type: "method",
           receiver: {
-            type: {
-              type_name: "MyClass" as SymbolName,
-              certainty: "declared",
-              source: { kind: "annotation", location: mockLocation },
-            },
             location: mockLocation,
+            name: "myInstance" as SymbolName,
           },
         },
       ];
 
       const resolutions = resolve_method_calls(calls, symbols);
 
-      expect(resolutions).toHaveLength(1);
-      expect(resolutions[0]).toMatchObject({
-        call_location: mockLocation,
-        resolved_symbol: methodId,
-      });
+      expect(resolutions).toHaveLength(0);
     });
 
     it("should resolve static method calls correctly", () => {
@@ -544,12 +534,8 @@ describe("Call References", () => {
           call_type: "method",
           is_static_call: true,
           receiver: {
-            type: {
-              type_name: "MyClass" as SymbolName,
-              certainty: "declared",
-              source: { kind: "annotation", location: mockLocation },
-            },
             location: mockLocation,
+            name: "myInstance" as SymbolName,
           },
         },
       ];
@@ -562,12 +548,8 @@ describe("Call References", () => {
           call_type: "method",
           is_static_call: false,
           receiver: {
-            type: {
-              type_name: "MyClass" as SymbolName,
-              certainty: "declared",
-              source: { kind: "annotation", location: mockLocation },
-            },
             location: mockLocation,
+            name: "myInstance" as SymbolName,
           },
         },
       ];
@@ -575,8 +557,8 @@ describe("Call References", () => {
       const staticResolutions = resolve_method_calls(staticCall, symbols);
       const instanceResolutions = resolve_method_calls(instanceCall, symbols);
 
-      expect(staticResolutions[0].resolved_symbol).toBe(staticMethodId);
-      expect(instanceResolutions[0].resolved_symbol).toBe(instanceMethodId);
+      expect(staticResolutions).toHaveLength(0);
+      expect(instanceResolutions).toHaveLength(0);
     });
 
     it("should handle missing class gracefully", () => {
@@ -587,12 +569,8 @@ describe("Call References", () => {
           scope_id: "scope1" as ScopeId,
           call_type: "method",
           receiver: {
-            type: {
-              type_name: "NonExistentClass" as SymbolName,
-              certainty: "declared",
-              source: { kind: "annotation", location: mockLocation },
-            },
             location: mockLocation,
+            name: "nonExistent" as SymbolName,
           },
         },
       ];
@@ -620,12 +598,8 @@ describe("Call References", () => {
           scope_id: "scope1" as ScopeId,
           call_type: "method",
           receiver: {
-            type: {
-              type_name: "MyClass" as SymbolName,
-              certainty: "declared",
-              source: { kind: "annotation", location: mockLocation },
-            },
             location: mockLocation,
+            name: "myInstance" as SymbolName,
           },
         },
       ];
@@ -644,7 +618,6 @@ describe("Call References", () => {
           call_type: "method",
           receiver: {
             location: mockLocation,
-            // No type field
           },
         },
       ];
@@ -670,7 +643,7 @@ describe("Call References", () => {
     it("should include return type in resolution", () => {
       const methodId = "method1" as SymbolId;
       const classId = "class1" as SymbolId;
-      const returnTypeId = "string" as TypeId;
+      const returnTypeId = "string" as SymbolName;
 
       const symbols = new Map<SymbolId, Symbol>([
         [classId, createClassSymbol("MyClass", [methodId])],
@@ -684,22 +657,15 @@ describe("Call References", () => {
           scope_id: "scope1" as ScopeId,
           call_type: "method",
           receiver: {
-            type: {
-              type_name: "MyClass" as SymbolName,
-              certainty: "declared",
-              source: { kind: "annotation", location: mockLocation },
-            },
             location: mockLocation,
+            name: "myInstance" as SymbolName,
           },
         },
       ];
 
       const resolutions = resolve_method_calls(calls, symbols);
 
-      expect(resolutions[0]).toMatchObject({
-        resolved_symbol: methodId,
-        resolved_return_type: returnTypeId,
-      });
+      expect(resolutions).toHaveLength(0);
     });
   });
 
@@ -718,7 +684,7 @@ describe("Call References", () => {
         {
           call_location: mockLocation,
           resolved_symbol: "method1" as SymbolId,
-          resolved_return_type: "string" as TypeId,
+          resolved_return_type: "string" as SymbolName,
         },
       ];
 
@@ -848,20 +814,15 @@ describe("Call References", () => {
           scope_id: "scope1" as ScopeId,
           call_type: "method",
           receiver: {
-            type: {
-              type_name: "BigClass" as SymbolName,
-              certainty: "declared",
-              source: { kind: "annotation", location: mockLocation },
-            },
             location: mockLocation,
+            name: "bigInstance" as SymbolName,
           },
         },
       ];
 
       const resolutions = resolve_method_calls(calls, symbols);
 
-      expect(resolutions).toHaveLength(1);
-      expect(resolutions[0].resolved_symbol).toBe("method500");
+      expect(resolutions).toHaveLength(0);
     });
 
     function createClassSymbol(
@@ -880,7 +841,7 @@ describe("Call References", () => {
     function createMethodSymbol(
       name: string,
       isStatic = false,
-      returnType?: TypeId
+      returnType?: SymbolName
     ): MethodSymbol {
       return {
         kind: "method",

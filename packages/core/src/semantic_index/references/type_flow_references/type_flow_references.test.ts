@@ -10,7 +10,6 @@ import type {
   ScopeId,
   LexicalScope,
   LocationKey,
-  TypeId,
   SymbolDefinition,
   SymbolId,
 } from "@ariadnejs/types";
@@ -18,10 +17,9 @@ import { location_key } from "@ariadnejs/types";
 import type { NormalizedCapture } from "../../capture_types";
 import { SemanticEntity, SemanticCategory } from "../../capture_types";
 import type {
-  TypeInfo,
   AssignmentContext,
 } from "../type_tracking/type_tracking";
-import type { VariableTypeInfo } from "../../type_registry/type_registry";
+import type { TypeInfo } from "../type_tracking/type_info";
 import {
   TypeFlowReference,
   TypeMutation,
@@ -757,7 +755,7 @@ describe("Type Flow References", () => {
           name: "declared_var" as SymbolName,
           location: mockLocation,
           scope_id: mockScope.id,
-          value_type: "string_type" as TypeId,
+          value_type: mockTypeInfo,
           is_hoisted: false,
           is_exported: false,
           is_imported: false,
@@ -793,7 +791,7 @@ describe("Type Flow References", () => {
         ];
 
         const typeRegistry = {
-          resolve_type_info: vi.fn().mockReturnValue("resolved_type" as TypeId),
+          resolve_type_info: vi.fn().mockReturnValue(mockTypeInfo),
         };
 
         const result = build_variable_type_map(flows, new Map(), typeRegistry);
@@ -817,7 +815,7 @@ describe("Type Flow References", () => {
           name: "CONST_VAR" as SymbolName,
           location: mockLocation,
           scope_id: mockScope.id,
-          value_type: "number_type" as TypeId,
+          value_type: mockTypeInfo,
         };
 
         const symbolMap = new Map([
@@ -935,8 +933,8 @@ describe("Type Flow References", () => {
         ];
 
         const typeRegistry = {
-          name_to_type: new Map<SymbolName, TypeId>([
-            ["MyClass" as SymbolName, "MyClass_type" as TypeId],
+          name_to_type: new Map<SymbolName, TypeInfo>([
+            ["MyClass" as SymbolName, mockTypeInfo],
           ]),
         };
 
@@ -944,7 +942,6 @@ describe("Type Flow References", () => {
 
         expect(result.size).toBe(1);
         expect(result.get(mockLocation)).toBe("MyClass_type");
-        expect(flows[0].source_type.type_id).toBe("MyClass_type");
       });
 
       it("should handle multiple constructor calls", () => {
@@ -990,9 +987,9 @@ describe("Type Flow References", () => {
         ];
 
         const typeRegistry = {
-          name_to_type: new Map<SymbolName, TypeId>([
-            ["Class1" as SymbolName, "Class1_type" as TypeId],
-            ["Class2" as SymbolName, "Class2_type" as TypeId],
+          name_to_type: new Map<SymbolName, TypeInfo>([
+            ["Class1" as SymbolName, mockTypeInfo],
+            ["Class2" as SymbolName, mockTypeInfo],
           ]),
         };
 
@@ -1076,8 +1073,8 @@ describe("Type Flow References", () => {
         ];
 
         const typeRegistry = {
-          name_to_type: new Map<SymbolName, TypeId>([
-            ["KnownClass" as SymbolName, "KnownClass_type" as TypeId],
+          name_to_type: new Map<SymbolName, TypeInfo>([
+            ["KnownClass" as SymbolName, mockTypeInfo],
           ]),
         };
 
@@ -1317,6 +1314,1130 @@ describe("Type Flow References", () => {
         flows
       );
       expect(typeAtLocation).toBeDefined();
+    });
+  });
+
+  describe("Bug Fix Tests", () => {
+    describe("Data Mutation Bug in track_constructor_types", () => {
+      it("should NOT mutate readonly input flows", () => {
+        const originalTypeInfo: TypeInfo = {
+          type_name: "MyClass" as SymbolName,
+          certainty: "declared",
+          source: {
+            kind: "construction",
+            location: mockLocation,
+          },
+        };
+
+        const flows: readonly TypeFlowReference[] = [
+          {
+            location: mockLocation,
+            name: "instance" as SymbolName,
+            scope_id: mockScope.id,
+            flow_type: "assignment",
+            source_type: originalTypeInfo,
+            source_location: mockLocation,
+            target_location: mockLocation,
+            is_narrowing: false,
+            is_widening: false,
+          },
+        ];
+
+        const typeRegistry = {
+          name_to_type: new Map<SymbolName, TypeInfo>([
+            ["MyClass" as SymbolName, mockTypeInfo],
+          ]),
+        };
+
+        // Capture original state
+        const originalTypeName = flows[0].source_type.type_name;
+
+        track_constructor_types(flows, new Map(), typeRegistry);
+
+        // Bug: the function should NOT mutate the input
+        // This test should fail with the current implementation
+        expect(flows[0].source_type.type_name).toBe(originalTypeName);
+      });
+
+      it("should return constructor types without side effects", () => {
+        const flows: readonly TypeFlowReference[] = [
+          {
+            location: mockLocation,
+            name: "instance" as SymbolName,
+            scope_id: mockScope.id,
+            flow_type: "assignment",
+            source_type: {
+              type_name: "MyClass" as SymbolName,
+              certainty: "declared",
+              source: { kind: "construction", location: mockLocation },
+            },
+            source_location: mockLocation,
+            target_location: mockLocation,
+            is_narrowing: false,
+            is_widening: false,
+          },
+        ];
+
+        const typeRegistry = {
+          name_to_type: new Map<SymbolName, TypeInfo>([
+            ["MyClass" as SymbolName, mockTypeInfo],
+          ]),
+        };
+
+        const result = track_constructor_types(flows, new Map(), typeRegistry);
+
+        expect(result.size).toBe(1);
+        expect(result.get(mockLocation)).toBe("MyClass_type");
+        // The function should work correctly, just without mutations
+      });
+    });
+
+    describe("Type Narrowing/Widening Logic Inversion Bug", () => {
+      it("should correctly detect any->string as narrowing (not widening)", () => {
+        const anyType: TypeInfo = {
+          type_name: "any" as SymbolName,
+          certainty: "declared",
+          source: { kind: "annotation", location: mockLocation },
+        };
+
+        const stringType: TypeInfo = {
+          type_name: "string" as SymbolName,
+          certainty: "declared",
+          source: { kind: "annotation", location: mockLocation },
+        };
+
+        const captures: NormalizedCapture[] = [
+          {
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.VARIABLE,
+            text: "var",
+            node_location: mockLocation,
+            context: {},
+            modifiers: {},
+          },
+        ];
+
+        const assignmentContext: AssignmentContext = {
+          source_type: stringType, // any -> string should be narrowing
+          source_location: mockLocation,
+          target_location: mockLocation,
+          scope_id: mockScope.id,
+        };
+
+        const typeAnnotations = new Map<LocationKey, TypeInfo>([
+          [location_key(mockLocation), anyType], // target is any
+        ]);
+
+        mockBuildTypedAssignmentMap.mockReturnValue(
+          new Map([[location_key(mockLocation), assignmentContext]])
+        );
+
+        const result = process_type_flow_references(
+          captures,
+          mockScope,
+          mockScopes,
+          mockFilePath,
+          typeAnnotations
+        );
+
+        expect(result).toHaveLength(1);
+        expect(result[0].is_narrowing).toBe(true);
+        expect(result[0].is_widening).toBe(false);
+      });
+
+      it("should correctly detect string->any as widening (not narrowing)", () => {
+        const stringType: TypeInfo = {
+          type_name: "string" as SymbolName,
+          certainty: "declared",
+          source: { kind: "annotation", location: mockLocation },
+        };
+
+        const anyType: TypeInfo = {
+          type_name: "any" as SymbolName,
+          certainty: "declared",
+          source: { kind: "annotation", location: mockLocation },
+        };
+
+        const captures: NormalizedCapture[] = [
+          {
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.VARIABLE,
+            text: "var",
+            node_location: mockLocation,
+            context: {},
+            modifiers: {},
+          },
+        ];
+
+        const assignmentContext: AssignmentContext = {
+          source_type: anyType, // string -> any should be widening
+          source_location: mockLocation,
+          target_location: mockLocation,
+          scope_id: mockScope.id,
+        };
+
+        const typeAnnotations = new Map<LocationKey, TypeInfo>([
+          [location_key(mockLocation), stringType], // target is string
+        ]);
+
+        mockBuildTypedAssignmentMap.mockReturnValue(
+          new Map([[location_key(mockLocation), assignmentContext]])
+        );
+
+        const result = process_type_flow_references(
+          captures,
+          mockScope,
+          mockScopes,
+          mockFilePath,
+          typeAnnotations
+        );
+
+        expect(result).toHaveLength(1);
+        expect(result[0].is_narrowing).toBe(false);
+        expect(result[0].is_widening).toBe(true);
+      });
+
+      it("should correctly detect unknown->string as narrowing", () => {
+        const unknownType: TypeInfo = {
+          type_name: "unknown" as SymbolName,
+          certainty: "ambiguous",
+          source: { kind: "assignment", location: mockLocation },
+        };
+
+        const stringType: TypeInfo = {
+          type_name: "string" as SymbolName,
+          certainty: "declared",
+          source: { kind: "annotation", location: mockLocation },
+        };
+
+        const captures: NormalizedCapture[] = [
+          {
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.VARIABLE,
+            text: "var",
+            node_location: mockLocation,
+            context: {},
+            modifiers: {},
+          },
+        ];
+
+        const assignmentContext: AssignmentContext = {
+          source_type: stringType,
+          source_location: mockLocation,
+          target_location: mockLocation,
+          scope_id: mockScope.id,
+        };
+
+        const typeAnnotations = new Map<LocationKey, TypeInfo>([
+          [location_key(mockLocation), unknownType],
+        ]);
+
+        mockBuildTypedAssignmentMap.mockReturnValue(
+          new Map([[location_key(mockLocation), assignmentContext]])
+        );
+
+        const result = process_type_flow_references(
+          captures,
+          mockScope,
+          mockScopes,
+          mockFilePath,
+          typeAnnotations
+        );
+
+        expect(result).toHaveLength(1);
+        expect(result[0].is_narrowing).toBe(true);
+        expect(result[0].is_widening).toBe(false);
+      });
+
+      it("should correctly detect string->unknown as widening", () => {
+        const stringType: TypeInfo = {
+          type_name: "string" as SymbolName,
+          certainty: "declared",
+          source: { kind: "annotation", location: mockLocation },
+        };
+
+        const unknownType: TypeInfo = {
+          type_name: "unknown" as SymbolName,
+          certainty: "ambiguous",
+          source: { kind: "assignment", location: mockLocation },
+        };
+
+        const captures: NormalizedCapture[] = [
+          {
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.VARIABLE,
+            text: "var",
+            node_location: mockLocation,
+            context: {},
+            modifiers: {},
+          },
+        ];
+
+        const assignmentContext: AssignmentContext = {
+          source_type: unknownType,
+          source_location: mockLocation,
+          target_location: mockLocation,
+          scope_id: mockScope.id,
+        };
+
+        const typeAnnotations = new Map<LocationKey, TypeInfo>([
+          [location_key(mockLocation), stringType],
+        ]);
+
+        mockBuildTypedAssignmentMap.mockReturnValue(
+          new Map([[location_key(mockLocation), assignmentContext]])
+        );
+
+        const result = process_type_flow_references(
+          captures,
+          mockScope,
+          mockScopes,
+          mockFilePath,
+          typeAnnotations
+        );
+
+        expect(result).toHaveLength(1);
+        expect(result[0].is_narrowing).toBe(false);
+        expect(result[0].is_widening).toBe(true);
+      });
+    });
+
+    describe("Location Comparison Logic Issues", () => {
+      it("should use assignment location for temporal ordering", () => {
+        const flows: TypeFlowReference[] = [
+          {
+            location: { ...mockLocation, line: 2, column: 0, end_line: 2, end_column: 5 }, // Assignment happens at line 2
+            name: "var" as SymbolName,
+            scope_id: mockScope.id,
+            flow_type: "assignment",
+            source_type: {
+              type_name: "string" as SymbolName,
+              certainty: "declared",
+              source: { kind: "annotation", location: mockLocation },
+            },
+            source_location: mockLocation,
+            target_location: { ...mockLocation, line: 1, column: 0, end_line: 1, end_column: 3 }, // Target is at line 1
+            is_narrowing: false,
+            is_widening: false,
+          },
+        ];
+
+        // Looking for type at line 3 - should find the assignment from line 2
+        const searchLocation: Location = {
+          ...mockLocation,
+          line: 3,
+          column: 0,
+        };
+
+        const result = find_type_at_location(searchLocation, flows);
+
+        // This should find the type, but current implementation might miss it
+        // because it uses target_location (line 1) instead of location (line 2)
+        expect(result).toBeDefined();
+        expect(result!.type_name).toBe("string");
+      });
+
+      it("should handle complex temporal ordering correctly", () => {
+        const flows: TypeFlowReference[] = [
+          {
+            location: { ...mockLocation, line: 1, column: 0, end_line: 1, end_column: 5 },
+            name: "var" as SymbolName,
+            scope_id: mockScope.id,
+            flow_type: "assignment",
+            source_type: {
+              type_name: "string" as SymbolName,
+              certainty: "declared",
+              source: { kind: "annotation", location: mockLocation },
+            },
+            source_location: mockLocation,
+            target_location: { ...mockLocation, line: 1, column: 0, end_line: 1, end_column: 3 },
+            is_narrowing: false,
+            is_widening: false,
+          },
+          {
+            location: { ...mockLocation, line: 3, column: 0, end_line: 3, end_column: 5 },
+            name: "var" as SymbolName,
+            scope_id: mockScope.id,
+            flow_type: "assignment",
+            source_type: {
+              type_name: "number" as SymbolName,
+              certainty: "declared",
+              source: { kind: "annotation", location: mockLocation },
+            },
+            source_location: mockLocation,
+            target_location: { ...mockLocation, line: 3, column: 0, end_line: 3, end_column: 3 },
+            is_narrowing: false,
+            is_widening: false,
+          },
+        ];
+
+        // At line 2, should find first assignment (string)
+        const result1 = find_type_at_location(
+          { ...mockLocation, line: 2, column: 0 },
+          flows
+        );
+        expect(result1?.type_name).toBe("string");
+
+        // At line 4, should find second assignment (number)
+        const result2 = find_type_at_location(
+          { ...mockLocation, line: 4, column: 0 },
+          flows
+        );
+        expect(result2?.type_name).toBe("number");
+      });
+
+      it("should exclude assignments at exact same location when looking before", () => {
+        const flows: TypeFlowReference[] = [
+          {
+            location: { ...mockLocation, line: 2, column: 5, end_line: 2, end_column: 10 },
+            name: "var" as SymbolName,
+            scope_id: mockScope.id,
+            flow_type: "assignment",
+            source_type: {
+              type_name: "string" as SymbolName,
+              certainty: "declared",
+              source: { kind: "annotation", location: mockLocation },
+            },
+            source_location: mockLocation,
+            target_location: { ...mockLocation, line: 2, column: 5, end_line: 2, end_column: 8 },
+            is_narrowing: false,
+            is_widening: false,
+          },
+        ];
+
+        // Looking at the exact same location as the assignment
+        const searchLocation: Location = {
+          ...mockLocation,
+          line: 2,
+          column: 5,
+        };
+
+        const result = find_type_at_location(searchLocation, flows);
+
+        // Should this include the assignment at the same location?
+        // Current logic includes it (<=), but semantically it might not make sense
+        expect(result).toBeDefined();
+      });
+    });
+  });
+
+  describe("Internal Helper Function Logic", () => {
+    describe("Type Narrowing Logic Comprehensive Tests", () => {
+      it("should detect all forms of type narrowing", () => {
+        const testCases = [
+          {
+            name: "any to specific type",
+            target: {
+              type_name: "any" as SymbolName,
+              certainty: "declared" as const,
+              source: { kind: "annotation" as const, location: mockLocation },
+            },
+            source: {
+              type_name: "string" as SymbolName,
+              certainty: "declared" as const,
+              source: { kind: "annotation" as const, location: mockLocation },
+            },
+            expected: true,
+          },
+          {
+            name: "unknown to specific type",
+            target: {
+              type_name: "unknown" as SymbolName,
+              certainty: "ambiguous" as const,
+              source: { kind: "assignment" as const, location: mockLocation },
+            },
+            source: {
+              type_name: "number" as SymbolName,
+              certainty: "declared" as const,
+              source: { kind: "annotation" as const, location: mockLocation },
+            },
+            expected: true,
+          },
+          {
+            name: "ambiguous to declared certainty",
+            target: {
+              type_name: "string" as SymbolName,
+              certainty: "ambiguous" as const,
+              source: { kind: "assignment" as const, location: mockLocation },
+            },
+            source: {
+              type_name: "string" as SymbolName,
+              certainty: "declared" as const,
+              source: { kind: "annotation" as const, location: mockLocation },
+            },
+            expected: true,
+          },
+          {
+            name: "ambiguous to inferred certainty",
+            target: {
+              type_name: "number" as SymbolName,
+              certainty: "ambiguous" as const,
+              source: { kind: "assignment" as const, location: mockLocation },
+            },
+            source: {
+              type_name: "number" as SymbolName,
+              certainty: "inferred" as const,
+              source: { kind: "assignment" as const, location: mockLocation },
+            },
+            expected: true,
+          },
+          {
+            name: "same specific types should not narrow",
+            target: {
+              type_name: "string" as SymbolName,
+              certainty: "declared" as const,
+              source: { kind: "annotation" as const, location: mockLocation },
+            },
+            source: {
+              type_name: "string" as SymbolName,
+              certainty: "declared" as const,
+              source: { kind: "annotation" as const, location: mockLocation },
+            },
+            expected: false,
+          },
+          {
+            name: "declared to ambiguous should not narrow",
+            target: {
+              type_name: "string" as SymbolName,
+              certainty: "declared" as const,
+              source: { kind: "annotation" as const, location: mockLocation },
+            },
+            source: {
+              type_name: "string" as SymbolName,
+              certainty: "ambiguous" as const,
+              source: { kind: "assignment" as const, location: mockLocation },
+            },
+            expected: false,
+          },
+        ];
+
+        for (const testCase of testCases) {
+          const captures: NormalizedCapture[] = [{
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.VARIABLE,
+            text: "test_var",
+            node_location: mockLocation,
+            context: {},
+            modifiers: {},
+          }];
+
+          const assignmentContext: AssignmentContext = {
+            source_type: testCase.source,
+            source_location: mockLocation,
+            target_location: mockLocation,
+            scope_id: mockScope.id,
+          };
+
+          const typeAnnotations = new Map<LocationKey, TypeInfo>([
+            [location_key(mockLocation), testCase.target],
+          ]);
+
+          mockBuildTypedAssignmentMap.mockReturnValue(
+            new Map([[location_key(mockLocation), assignmentContext]])
+          );
+
+          const result = process_type_flow_references(
+            captures,
+            mockScope,
+            mockScopes,
+            mockFilePath,
+            typeAnnotations
+          );
+
+          expect(result).toHaveLength(1);
+          expect(result[0].is_narrowing).toBe(testCase.expected);
+        }
+      });
+
+      it("should not narrow when target is undefined", () => {
+        const captures: NormalizedCapture[] = [{
+          category: SemanticCategory.REFERENCE,
+          entity: SemanticEntity.VARIABLE,
+          text: "test_var",
+          node_location: mockLocation,
+          context: {},
+          modifiers: {},
+        }];
+
+        const assignmentContext: AssignmentContext = {
+          source_type: {
+            type_name: "string" as SymbolName,
+            certainty: "declared" as const,
+            source: { kind: "annotation" as const, location: mockLocation },
+          },
+          source_location: mockLocation,
+          target_location: mockLocation,
+          scope_id: mockScope.id,
+        };
+
+        mockBuildTypedAssignmentMap.mockReturnValue(
+          new Map([[location_key(mockLocation), assignmentContext]])
+        );
+
+        const result = process_type_flow_references(
+          captures,
+          mockScope,
+          mockScopes,
+          mockFilePath
+          // No type annotations provided - target will be undefined
+        );
+
+        expect(result).toHaveLength(1);
+        expect(result[0].is_narrowing).toBe(false);
+      });
+
+      it("should handle edge cases in type names", () => {
+        const edgeCases = [
+          {
+            name: "any to any should not narrow",
+            target: "any" as SymbolName,
+            source: "any" as SymbolName,
+            expected: false,
+          },
+          {
+            name: "unknown to unknown should not narrow",
+            target: "unknown" as SymbolName,
+            source: "unknown" as SymbolName,
+            expected: false,
+          },
+          {
+            name: "any to empty string should narrow",
+            target: "any" as SymbolName,
+            source: "" as SymbolName,
+            expected: true,
+          },
+        ];
+
+        for (const testCase of edgeCases) {
+          const captures: NormalizedCapture[] = [{
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.VARIABLE,
+            text: "test_var",
+            node_location: mockLocation,
+            context: {},
+            modifiers: {},
+          }];
+
+          const assignmentContext: AssignmentContext = {
+            source_type: {
+              type_name: testCase.source,
+              certainty: "declared" as const,
+              source: { kind: "annotation" as const, location: mockLocation },
+            },
+            source_location: mockLocation,
+            target_location: mockLocation,
+            scope_id: mockScope.id,
+          };
+
+          const typeAnnotations = new Map<LocationKey, TypeInfo>([
+            [location_key(mockLocation), {
+              type_name: testCase.target,
+              certainty: "declared" as const,
+              source: { kind: "annotation" as const, location: mockLocation },
+            }],
+          ]);
+
+          mockBuildTypedAssignmentMap.mockReturnValue(
+            new Map([[location_key(mockLocation), assignmentContext]])
+          );
+
+          const result = process_type_flow_references(
+            captures,
+            mockScope,
+            mockScopes,
+            mockFilePath,
+            typeAnnotations
+          );
+
+          expect(result).toHaveLength(1);
+          expect(result[0].is_narrowing).toBe(testCase.expected);
+        }
+      });
+    });
+
+    describe("Type Widening Logic Comprehensive Tests", () => {
+      it("should detect all forms of type widening", () => {
+        const testCases = [
+          {
+            name: "specific type to any",
+            target: {
+              type_name: "string" as SymbolName,
+              certainty: "declared" as const,
+              source: { kind: "annotation" as const, location: mockLocation },
+            },
+            source: {
+              type_name: "any" as SymbolName,
+              certainty: "declared" as const,
+              source: { kind: "annotation" as const, location: mockLocation },
+            },
+            expected: true,
+          },
+          {
+            name: "specific type to unknown",
+            target: {
+              type_name: "number" as SymbolName,
+              certainty: "declared" as const,
+              source: { kind: "annotation" as const, location: mockLocation },
+            },
+            source: {
+              type_name: "unknown" as SymbolName,
+              certainty: "ambiguous" as const,
+              source: { kind: "assignment" as const, location: mockLocation },
+            },
+            expected: true,
+          },
+          {
+            name: "declared to ambiguous certainty",
+            target: {
+              type_name: "string" as SymbolName,
+              certainty: "declared" as const,
+              source: { kind: "annotation" as const, location: mockLocation },
+            },
+            source: {
+              type_name: "string" as SymbolName,
+              certainty: "ambiguous" as const,
+              source: { kind: "assignment" as const, location: mockLocation },
+            },
+            expected: true,
+          },
+          {
+            name: "inferred to ambiguous certainty",
+            target: {
+              type_name: "number" as SymbolName,
+              certainty: "inferred" as const,
+              source: { kind: "assignment" as const, location: mockLocation },
+            },
+            source: {
+              type_name: "number" as SymbolName,
+              certainty: "ambiguous" as const,
+              source: { kind: "assignment" as const, location: mockLocation },
+            },
+            expected: true,
+          },
+          {
+            name: "any to any should not widen",
+            target: {
+              type_name: "any" as SymbolName,
+              certainty: "declared" as const,
+              source: { kind: "annotation" as const, location: mockLocation },
+            },
+            source: {
+              type_name: "any" as SymbolName,
+              certainty: "declared" as const,
+              source: { kind: "annotation" as const, location: mockLocation },
+            },
+            expected: false,
+          },
+          {
+            name: "unknown to unknown should not widen",
+            target: {
+              type_name: "unknown" as SymbolName,
+              certainty: "ambiguous" as const,
+              source: { kind: "assignment" as const, location: mockLocation },
+            },
+            source: {
+              type_name: "unknown" as SymbolName,
+              certainty: "ambiguous" as const,
+              source: { kind: "assignment" as const, location: mockLocation },
+            },
+            expected: false,
+          },
+        ];
+
+        for (const testCase of testCases) {
+          const captures: NormalizedCapture[] = [{
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.VARIABLE,
+            text: "test_var",
+            node_location: mockLocation,
+            context: {},
+            modifiers: {},
+          }];
+
+          const assignmentContext: AssignmentContext = {
+            source_type: testCase.source,
+            source_location: mockLocation,
+            target_location: mockLocation,
+            scope_id: mockScope.id,
+          };
+
+          const typeAnnotations = new Map<LocationKey, TypeInfo>([
+            [location_key(mockLocation), testCase.target],
+          ]);
+
+          mockBuildTypedAssignmentMap.mockReturnValue(
+            new Map([[location_key(mockLocation), assignmentContext]])
+          );
+
+          const result = process_type_flow_references(
+            captures,
+            mockScope,
+            mockScopes,
+            mockFilePath,
+            typeAnnotations
+          );
+
+          expect(result).toHaveLength(1);
+          expect(result[0].is_widening).toBe(testCase.expected);
+        }
+      });
+
+      it("should not widen when target is undefined", () => {
+        const captures: NormalizedCapture[] = [{
+          category: SemanticCategory.REFERENCE,
+          entity: SemanticEntity.VARIABLE,
+          text: "test_var",
+          node_location: mockLocation,
+          context: {},
+          modifiers: {},
+        }];
+
+        const assignmentContext: AssignmentContext = {
+          source_type: {
+            type_name: "any" as SymbolName,
+            certainty: "declared" as const,
+            source: { kind: "annotation" as const, location: mockLocation },
+          },
+          source_location: mockLocation,
+          target_location: mockLocation,
+          scope_id: mockScope.id,
+        };
+
+        mockBuildTypedAssignmentMap.mockReturnValue(
+          new Map([[location_key(mockLocation), assignmentContext]])
+        );
+
+        const result = process_type_flow_references(
+          captures,
+          mockScope,
+          mockScopes,
+          mockFilePath
+          // No type annotations provided - target will be undefined
+        );
+
+        expect(result).toHaveLength(1);
+        expect(result[0].is_widening).toBe(false);
+      });
+    });
+
+    describe("Flow Reference Creation Edge Cases", () => {
+      it("should handle captures with different text formats", () => {
+        const textFormats = [
+          "normalVariable",
+          "kebab-case-variable",
+          "snake_case_variable",
+          "PascalCaseVariable",
+          "camelCaseVariable",
+          "CONSTANT_VARIABLE",
+          "$dollarVariable",
+          "_underscore",
+          "number123variable",
+          "π", // Unicode character
+          "",  // Empty string
+        ];
+
+        for (const text of textFormats) {
+          const captures: NormalizedCapture[] = [{
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.VARIABLE,
+            text,
+            node_location: mockLocation,
+            context: {},
+            modifiers: {},
+          }];
+
+          const assignmentContext: AssignmentContext = {
+            source_type: mockTypeInfo,
+            source_location: mockLocation,
+            target_location: mockLocation,
+            scope_id: mockScope.id,
+          };
+
+          mockBuildTypedAssignmentMap.mockReturnValue(
+            new Map([[location_key(mockLocation), assignmentContext]])
+          );
+
+          const result = process_type_flow_references(
+            captures,
+            mockScope,
+            mockScopes,
+            mockFilePath
+          );
+
+          expect(result).toHaveLength(1);
+          expect(result[0].name).toBe(text as SymbolName);
+          expect(result[0].location).toEqual(mockLocation);
+          expect(result[0].flow_type).toBe("assignment");
+        }
+      });
+
+      it("should create default source type when assignment context has undefined source_type", () => {
+        const captures: NormalizedCapture[] = [{
+          category: SemanticCategory.REFERENCE,
+          entity: SemanticEntity.VARIABLE,
+          text: "test_var",
+          node_location: mockLocation,
+          context: {},
+          modifiers: {},
+        }];
+
+        const assignmentContext: AssignmentContext = {
+          source_type: undefined,
+          source_location: mockLocation,
+          target_location: mockLocation,
+          scope_id: mockScope.id,
+        };
+
+        mockBuildTypedAssignmentMap.mockReturnValue(
+          new Map([[location_key(mockLocation), assignmentContext]])
+        );
+
+        const result = process_type_flow_references(
+          captures,
+          mockScope,
+          mockScopes,
+          mockFilePath
+        );
+
+        expect(result).toHaveLength(1);
+        expect(result[0].source_type.type_name).toBe("unknown");
+        expect(result[0].source_type.certainty).toBe("ambiguous");
+        expect(result[0].source_type.source.kind).toBe("assignment");
+        expect(result[0].source_type.source.location).toEqual(mockLocation);
+      });
+
+      it("should handle different location formats", () => {
+        const locationVariations = [
+          { line: 0, column: 0, end_line: 0, end_column: 0 },
+          { line: 1, column: 1, end_line: 1, end_column: 1 },
+          { line: 999999, column: 999999, end_line: 999999, end_column: 999999 },
+          { line: 1, column: 0, end_line: 5, end_column: 10 }, // Multi-line
+        ];
+
+        for (const locationData of locationVariations) {
+          const location: Location = {
+            file_path: mockFilePath,
+            ...locationData,
+          };
+
+          const captures: NormalizedCapture[] = [{
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.VARIABLE,
+            text: "test_var",
+            node_location: location,
+            context: {},
+            modifiers: {},
+          }];
+
+          const assignmentContext: AssignmentContext = {
+            source_type: mockTypeInfo,
+            source_location: location,
+            target_location: location,
+            scope_id: mockScope.id,
+          };
+
+          mockBuildTypedAssignmentMap.mockReturnValue(
+            new Map([[location_key(location), assignmentContext]])
+          );
+
+          const result = process_type_flow_references(
+            captures,
+            mockScope,
+            mockScopes,
+            mockFilePath
+          );
+
+          expect(result).toHaveLength(1);
+          expect(result[0].location).toEqual(location);
+          expect(result[0].source_location).toEqual(location);
+          expect(result[0].target_location).toEqual(location);
+        }
+      });
+    });
+
+    describe("Type Annotation Map Edge Cases", () => {
+      it("should handle malformed type annotation keys", () => {
+        const captures: NormalizedCapture[] = [{
+          category: SemanticCategory.REFERENCE,
+          entity: SemanticEntity.VARIABLE,
+          text: "test_var",
+          node_location: mockLocation,
+          context: {},
+          modifiers: {},
+        }];
+
+        const assignmentContext: AssignmentContext = {
+          source_type: mockTypeInfo,
+          source_location: mockLocation,
+          target_location: {
+            ...mockLocation,
+            line: 999, // Different location for target
+            column: 999,
+          },
+          scope_id: mockScope.id,
+        };
+
+        // Create type annotations map with wrong key
+        const typeAnnotations = new Map<LocationKey, TypeInfo>([
+          [location_key(mockLocation), mockTypeInfo], // Wrong key - doesn't match target_location
+        ]);
+
+        mockBuildTypedAssignmentMap.mockReturnValue(
+          new Map([[location_key(mockLocation), assignmentContext]])
+        );
+
+        const result = process_type_flow_references(
+          captures,
+          mockScope,
+          mockScopes,
+          mockFilePath,
+          typeAnnotations
+        );
+
+        expect(result).toHaveLength(1);
+        expect(result[0].target_type).toBeUndefined(); // Should not find annotation for wrong location
+        expect(result[0].is_narrowing).toBe(false);
+        expect(result[0].is_widening).toBe(false);
+      });
+
+      it("should handle empty type annotations map", () => {
+        const captures: NormalizedCapture[] = [{
+          category: SemanticCategory.REFERENCE,
+          entity: SemanticEntity.VARIABLE,
+          text: "test_var",
+          node_location: mockLocation,
+          context: {},
+          modifiers: {},
+        }];
+
+        const assignmentContext: AssignmentContext = {
+          source_type: mockTypeInfo,
+          source_location: mockLocation,
+          target_location: mockLocation,
+          scope_id: mockScope.id,
+        };
+
+        const emptyTypeAnnotations = new Map<LocationKey, TypeInfo>();
+
+        mockBuildTypedAssignmentMap.mockReturnValue(
+          new Map([[location_key(mockLocation), assignmentContext]])
+        );
+
+        const result = process_type_flow_references(
+          captures,
+          mockScope,
+          mockScopes,
+          mockFilePath,
+          emptyTypeAnnotations
+        );
+
+        expect(result).toHaveLength(1);
+        expect(result[0].target_type).toBeUndefined();
+        expect(result[0].is_narrowing).toBe(false);
+        expect(result[0].is_widening).toBe(false);
+      });
+    });
+
+    describe("Complex Interaction Scenarios", () => {
+      it("should handle simultaneous narrowing and widening detection correctly", () => {
+        // This tests that the narrowing and widening logic doesn't conflict
+        const ambiguousType: TypeInfo = {
+          type_name: "string" as SymbolName,
+          certainty: "ambiguous" as const,
+          source: { kind: "assignment" as const, location: mockLocation },
+        };
+
+        const declaredType: TypeInfo = {
+          type_name: "string" as SymbolName,
+          certainty: "declared" as const,
+          source: { kind: "annotation" as const, location: mockLocation },
+        };
+
+        const captures: NormalizedCapture[] = [{
+          category: SemanticCategory.REFERENCE,
+          entity: SemanticEntity.VARIABLE,
+          text: "test_var",
+          node_location: mockLocation,
+          context: {},
+          modifiers: {},
+        }];
+
+        const assignmentContext: AssignmentContext = {
+          source_type: declaredType, // ambiguous -> declared = narrowing
+          source_location: mockLocation,
+          target_location: mockLocation,
+          scope_id: mockScope.id,
+        };
+
+        const typeAnnotations = new Map<LocationKey, TypeInfo>([
+          [location_key(mockLocation), ambiguousType],
+        ]);
+
+        mockBuildTypedAssignmentMap.mockReturnValue(
+          new Map([[location_key(mockLocation), assignmentContext]])
+        );
+
+        const result = process_type_flow_references(
+          captures,
+          mockScope,
+          mockScopes,
+          mockFilePath,
+          typeAnnotations
+        );
+
+        expect(result).toHaveLength(1);
+        expect(result[0].is_narrowing).toBe(true);
+        expect(result[0].is_widening).toBe(false);
+        // Should not be both narrowing AND widening
+        expect(result[0].is_narrowing && result[0].is_widening).toBe(false);
+      });
+
+      it("should maintain consistent state across multiple captures", () => {
+        const multipleCaptures: NormalizedCapture[] = Array.from({ length: 100 }, (_, i) => ({
+          category: SemanticCategory.REFERENCE,
+          entity: SemanticEntity.VARIABLE,
+          text: `var_${i}`,
+          node_location: {
+            ...mockLocation,
+            line: i + 1,
+            column: 0,
+            end_line: i + 1,
+            end_column: 10,
+          },
+          context: {},
+          modifiers: {},
+        }));
+
+        const assignmentMap = new Map<LocationKey, AssignmentContext>();
+        for (const capture of multipleCaptures) {
+          assignmentMap.set(location_key(capture.node_location), {
+            source_type: mockTypeInfo,
+            source_location: capture.node_location,
+            target_location: capture.node_location,
+            scope_id: mockScope.id,
+          });
+        }
+
+        mockBuildTypedAssignmentMap.mockReturnValue(assignmentMap);
+
+        const result = process_type_flow_references(
+          multipleCaptures,
+          mockScope,
+          mockScopes,
+          mockFilePath
+        );
+
+        expect(result).toHaveLength(100);
+
+        // All should have consistent structure
+        for (let i = 0; i < 100; i++) {
+          expect(result[i].name).toBe(`var_${i}`);
+          expect(result[i].flow_type).toBe("assignment");
+          expect(result[i].scope_id).toBe(mockScope.id);
+          expect(result[i].source_type).toEqual(mockTypeInfo);
+          expect(result[i].location.line).toBe(i + 1);
+        }
+      });
     });
   });
 });

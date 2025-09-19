@@ -1296,7 +1296,13 @@ describe("Member Access References", () => {
       expect(chains[0].chain).toEqual(["obj", "nested", "myProperty"]);
 
       // Test null dereferences (mark type as nullable)
-      accesses[0].object.type!.is_nullable = true;
+      accesses[0] = {
+        ...accesses[0],
+        object: {
+          ...accesses[0].object,
+          type: { ...accesses[0].object.type, is_nullable: true },
+        },
+      };
       const nullDerefs = find_potential_null_dereferences(accesses);
       expect(nullDerefs).toHaveLength(1);
       expect(nullDerefs[0].reason).toBe("nullable_type");

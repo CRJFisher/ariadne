@@ -10,7 +10,6 @@ import type {
   ScopeId,
   LexicalScope,
   SymbolId,
-  TypeId,
   SymbolDefinition,
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
@@ -458,7 +457,7 @@ describe("Return References", () => {
         function_symbol: "func_symbol" as SymbolId,
         return_types: [mockTypeInfo],
         unified_type: mockTypeInfo,
-        resolved_type: "string_type" as TypeId,
+        resolved_type: mockTypeInfo,
       };
 
       expect(inferred.function_scope_id).toBe(mockFunctionScope.id);
@@ -619,7 +618,7 @@ describe("Return References", () => {
         expect(result.size).toBe(1);
         const inferred = result.get(mockFunctionScope.id)!;
         expect(inferred.unified_type?.type_name).toBe("union");
-        expect(inferred.unified_type?.type_args).toHaveLength(2);
+        expect(inferred.unified_type?.union_members).toHaveLength(2);
       });
 
       it("should skip returns without type info", () => {
@@ -1009,7 +1008,7 @@ describe("Return References", () => {
         ]);
 
         const typeRegistry = {
-          resolve_type_info: vi.fn().mockReturnValue("string_type" as TypeId),
+          resolve_type_info: vi.fn().mockReturnValue(mockTypeInfo),
         };
 
         const result = connect_return_types_to_functions(returns, symbols, typeRegistry);
@@ -1040,7 +1039,7 @@ describe("Return References", () => {
             function_scope_id: "func2_scope" as ScopeId,
             function_symbol: "func2" as SymbolId,
             returned_type: {
-              type_name: "number" as SymbolName,
+                  type_name: "number" as SymbolName,
               certainty: "declared",
               source: { kind: "annotation", location: mockLocation },
             },
@@ -1077,8 +1076,8 @@ describe("Return References", () => {
 
         const typeRegistry = {
           resolve_type_info: vi.fn()
-            .mockReturnValueOnce("string_type" as TypeId)
-            .mockReturnValueOnce("number_type" as TypeId),
+            .mockReturnValueOnce(mockTypeInfo)
+            .mockReturnValueOnce({ ...mockTypeInfo, type_name: "number" as SymbolName }),
         };
 
         const result = connect_return_types_to_functions(returns, symbols, typeRegistry);
@@ -1304,7 +1303,7 @@ describe("Return References", () => {
 
       const symbols = new Map([["test_function" as SymbolId, functionDef]]);
       const typeRegistry = {
-        resolve_type_info: vi.fn().mockReturnValue("string_type" as TypeId),
+        resolve_type_info: vi.fn().mockReturnValue(mockTypeInfo),
       };
 
       const connected = connect_return_types_to_functions(returnRefs, symbols, typeRegistry);

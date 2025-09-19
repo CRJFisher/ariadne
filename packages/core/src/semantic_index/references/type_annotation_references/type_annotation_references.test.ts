@@ -14,7 +14,7 @@ import type {
 import { location_key } from "@ariadnejs/types";
 import type { NormalizedCapture } from "../../capture_types";
 import { SemanticEntity, SemanticCategory } from "../../capture_types";
-import type { TypeInfo } from "../type_tracking/type_tracking";
+import type { TypeInfo } from "../type_tracking/type_info";
 import {
   TypeAnnotationReference,
   TypeConstraint,
@@ -914,7 +914,7 @@ describe("Type Annotation References", () => {
       it("should handle multiple aliases", () => {
         // Use non-primitive types for proper aliases
         const complexStringType: TypeInfo = {
-          type_name: "CustomStringType" as SymbolName, // Non-primitive
+                type_name: "CustomStringType" as SymbolName, // Non-primitive
           certainty: "declared",
           source: { kind: "annotation", location: mockLocation },
         };
@@ -1192,11 +1192,11 @@ describe("Type Annotation References", () => {
       const generics = find_generic_parameters([genericAnnotation]);
       expect(generics).toHaveLength(1);
 
-      // Find type aliases (need non-primitive type for valid alias)
+      // Find type aliases
       const aliasAnnotation = {
         ...annotations[0],
         declared_type: {
-          type_name: "ComplexCustomType" as SymbolName, // Non-primitive for proper alias
+          type_name: "string" as SymbolName,
           certainty: "declared" as const,
           source: { kind: "annotation" as const, location: mockLocation },
         },
