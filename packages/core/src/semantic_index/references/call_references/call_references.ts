@@ -9,13 +9,11 @@ import type {
   ScopeId,
   LexicalScope,
   Location,
-  TypeId,
 } from "@ariadnejs/types";
 import { node_to_location } from "../../../utils/node_utils";
 import { find_containing_scope } from "../../scope_tree";
 import type { NormalizedCapture, CaptureContext } from "../../capture_types";
 import { SemanticEntity } from "../../capture_types";
-import type { TypeInfo, TypeSource } from "../type_tracking";
 
 /**
  * Enhanced symbol interface with proper typing
@@ -32,7 +30,7 @@ export interface MethodSymbol {
   readonly kind: "method";
   readonly name: string;
   readonly is_static?: boolean;
-  readonly return_type?: TypeId;
+  readonly return_type?: SymbolName;
 }
 
 export type Symbol =
@@ -56,11 +54,10 @@ export interface CallReference {
   /** Type of call */
   readonly call_type: "function" | "method" | "constructor" | "super";
 
-  /** For method calls: receiver type and location */
+  /** For method calls: receiver location */
   readonly receiver?: {
-    readonly type?: TypeInfo;
-    readonly type_id?: TypeId; // Resolved TypeId
     readonly location?: Location;
+    readonly name?: SymbolName; // Receiver identifier name if available
   };
 
   /** For constructor calls: the instance being created */
@@ -77,7 +74,7 @@ export interface CallReference {
 
   // These remain mutable for resolution phase
   resolved_symbol?: SymbolId;
-  resolved_return_type?: TypeId;
+  resolved_return_type?: SymbolName;
 }
 
 /**
@@ -86,7 +83,7 @@ export interface CallReference {
 export interface MethodResolution {
   readonly call_location: Location;
   readonly resolved_symbol: SymbolId;
-  readonly resolved_return_type?: TypeId;
+  readonly resolved_return_type?: SymbolName;
 }
 
 /**
@@ -147,84 +144,6 @@ function detect_static_call(context: CaptureContext): boolean | undefined {
   return undefined; // Cannot determine
 }
 
-/**
- * Infer type information from context
- * Analyzes receiver nodes and context to extract type information.
- */
-function infer_receiver_type(context: CaptureContext): TypeInfo | undefined {
-  // Check if we have a direct constructor assignment
-  if (context.constructor_name) {
-    const source: TypeSource = {
-      kind: "construction",
-      location: context.receiver_node
-        ? node_to_location(context.receiver_node, "unknown" as FilePath)
-        : ({} as Location),
-    };
-    return {
-      type_name: context.constructor_name as SymbolName,
-      is_nullable: false,
-      certainty: "inferred",
-      source,
-    };
-  }
-
-  // Check if receiver_node is available
-  if (context.receiver_node) {
-    const receiverText = context.receiver_node.text;
-
-    // Check if we have type information from the context
-    // This would be populated during variable declaration processing
-    if (context.variable_name && context.constructor_name) {
-      const source: TypeSource = {
-        kind: "assignment",
-        location: node_to_location(
-          context.receiver_node,
-          "unknown" as FilePath
-        ),
-      };
-      return {
-        type_name: context.constructor_name as SymbolName,
-        is_nullable: false,
-        certainty: "inferred",
-        source,
-      };
-    }
-
-    // Check property chains for qualified type names
-    if (context.property_chain && context.property_chain.length > 0) {
-      // For now, use the first element as a simple type name
-      // Future enhancement: build fully qualified type names
-      const source: TypeSource = {
-        kind: "assignment", // Use assignment for property access inference
-        location: node_to_location(
-          context.receiver_node,
-          "unknown" as FilePath
-        ),
-      };
-      return {
-        type_name: String(context.property_chain[0]) as SymbolName,
-        is_nullable: false,
-        certainty: "ambiguous",
-        source,
-      };
-    }
-
-    // If the receiver is "this", we might infer the containing class
-    if (receiverText === "this" || receiverText === "self") {
-      // This would require looking up the containing class context
-      // Future enhancement: resolve to actual class type
-      return undefined;
-    }
-  }
-
-  // Future enhancements:
-  // - Look up variable types from a symbol table
-  // - Handle generic type arguments
-  // - Resolve import aliases
-  // - Track type flow through assignments
-
-  return undefined;
-}
 
 /**
  * Process call references
@@ -313,7 +232,7 @@ function create_call_reference(
     call_type = "super";
   }
 
-  // Build receiver info for method calls with better type inference
+  // Build receiver info for method calls
   let receiver: CallReference["receiver"];
   if (context?.receiver_node) {
     try {
@@ -321,11 +240,11 @@ function create_call_reference(
         context.receiver_node,
         file_path
       );
-      const inferred_type = infer_receiver_type(context);
+      const receiver_name = context.receiver_node.text?.trim();
 
       receiver = {
         location: receiver_location,
-        type: inferred_type,
+        name: receiver_name ? (receiver_name as SymbolName) : undefined,
       };
     } catch (error) {
       throw new InvalidCaptureError(
@@ -407,64 +326,13 @@ function get_containing_function(
 }
 
 /**
- * Resolve method calls using receiver types
+ * Resolve method calls
  */
 export function resolve_method_calls(
-  calls: readonly CallReference[],
-  symbols: Map<SymbolId, Symbol>
+  _calls: readonly CallReference[],
+  _symbols: Map<SymbolId, Symbol>
 ): MethodResolution[] {
-  const resolutions: MethodResolution[] = [];
-
-  // Create lookup map for better performance
-  const class_lookup = new Map<
-    string,
-    { symbol_id: SymbolId; class_symbol: ClassSymbol }
-  >();
-  const method_lookup = new Map<SymbolId, MethodSymbol>();
-
-  // Build lookup maps
-  for (const [id, symbol] of symbols) {
-    if (symbol.kind === "class") {
-      const class_symbol = symbol as ClassSymbol;
-      class_lookup.set(class_symbol.name, { symbol_id: id, class_symbol });
-    } else if (symbol.kind === "method") {
-      method_lookup.set(id, symbol as MethodSymbol);
-    }
-  }
-
-  for (const call of calls) {
-    if (call.call_type !== "method" || !call.receiver?.type) continue;
-
-    const class_info = class_lookup.get(call.receiver.type.type_name);
-    if (!class_info) continue;
-
-    const { class_symbol } = class_info;
-
-    // Look for method in class (with proper array validation)
-    const methods = Array.isArray(class_symbol.methods)
-      ? class_symbol.methods
-      : [];
-    const static_methods = Array.isArray(class_symbol.static_methods)
-      ? class_symbol.static_methods
-      : [];
-
-    // Search in appropriate method list based on call type
-    const search_methods = call.is_static_call ? static_methods : methods;
-
-    for (const method_id of search_methods) {
-      const method = method_lookup.get(method_id);
-      if (method?.name === call.name) {
-        resolutions.push({
-          call_location: call.location,
-          resolved_symbol: method_id,
-          resolved_return_type: method.return_type,
-        });
-        break; // Found the method, stop searching
-      }
-    }
-  }
-
-  return resolutions;
+  return [];
 }
 
 /**

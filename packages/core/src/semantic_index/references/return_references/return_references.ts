@@ -9,7 +9,6 @@ import type {
   ScopeId,
   LexicalScope,
   SymbolId,
-  TypeId,
   SymbolDefinition,
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
@@ -151,7 +150,7 @@ export interface InferredReturnType {
   function_symbol?: SymbolId;
   return_types: TypeInfo[];
   unified_type?: TypeInfo;
-  resolved_type?: TypeId;
+  resolved_type?: TypeInfo;
 }
 
 export function infer_function_return_types(
@@ -189,13 +188,13 @@ function types_equal(a: TypeInfo, b: TypeInfo): boolean {
   if (a.type_name !== b.type_name) return false;
 
   // Compare type arguments if they exist
-  if (a.type_args && b.type_args) {
-    if (a.type_args.length !== b.type_args.length) return false;
-    return a.type_args.every((arg, i) => types_equal(arg, b.type_args![i]));
+  if (a.type_params && b.type_params) {
+    if (a.type_params.length !== b.type_params.length) return false;
+    return a.type_params.every((arg, i) => types_equal(arg, b.type_params![i]));
   }
 
   // If one has type_args and the other doesn't, they're different
-  if (a.type_args || b.type_args) return false;
+  if (a.type_params || b.type_params) return false;
 
   return true;
 }
@@ -216,14 +215,17 @@ function unify_types(types: TypeInfo[]): TypeInfo | undefined {
   }
 
   // Create union type
+  const type_names = types.map(t => t.type_name);
+  const union_name = type_names.join(" | ") as SymbolName;
+
   return {
-    type_name: "union" as SymbolName,
+    type_name: union_name,
     certainty: "inferred",
     source: {
       kind: "return",
       location: types[0].source.location,
     },
-    type_args: types,
+    union_members: types,
   };
 }
 
@@ -289,9 +291,9 @@ export function find_never_returning_functions(
 export function connect_return_types_to_functions(
   returns: readonly ReturnReference[],
   symbols: Map<SymbolId, SymbolDefinition>,
-  type_registry?: { resolve_type_info?: (info: TypeInfo) => TypeId | undefined }
-): Map<SymbolId, TypeId> {
-  const function_return_types = new Map<SymbolId, TypeId>();
+  type_registry?: { resolve_type_info?: (info: TypeInfo) => TypeInfo | undefined }
+): Map<SymbolId, TypeInfo> {
+  const function_return_types = new Map<SymbolId, TypeInfo>();
 
   // First, infer return types for each function
   const inferred = infer_function_return_types(returns);
@@ -301,7 +303,7 @@ export function connect_return_types_to_functions(
     if (inferred_type.function_symbol) {
       const symbol = symbols.get(inferred_type.function_symbol);
       if (symbol) {
-        // Try to resolve the unified type to a TypeId
+        // Try to resolve the unified type
         if (inferred_type.unified_type && type_registry?.resolve_type_info) {
           const resolved = type_registry.resolve_type_info(inferred_type.unified_type);
           if (resolved) {

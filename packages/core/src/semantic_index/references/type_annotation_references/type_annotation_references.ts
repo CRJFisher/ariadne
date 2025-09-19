@@ -539,5 +539,5 @@ function is_primitive_type_annotation(annotation: TypeAnnotationReference): bool
     "any", "unknown", "never", "void", "bigint", "symbol"
   ]);
 
-  return primitive_types.has(annotation.declared_type.type_name.toLowerCase());
+  return primitive_types.has(annotation.type_name.toLowerCase());
 }
