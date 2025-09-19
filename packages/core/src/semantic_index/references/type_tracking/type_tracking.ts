@@ -2,7 +2,7 @@
  * Type tracking utilities for enhanced reference processing
  */
 
-import type { Location, FilePath, LocationKey, TypeId } from "@ariadnejs/types";
+import type { Location, FilePath, LocationKey } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
 import type {
   SymbolName,
@@ -11,37 +11,8 @@ import type {
 } from "@ariadnejs/types";
 import type { NormalizedCapture } from "../../capture_types";
 
-/**
- * Type information at a specific location
- */
-export interface TypeInfo {
-  /** The type name or identifier */
-  type_name: SymbolName;
-
-  /** Resolved TypeId (when available) */
-  type_id?: TypeId;
-
-  /** How certain we are about this type */
-  certainty: "declared" | "inferred" | "ambiguous";
-
-  /** Where this type info comes from */
-  source: TypeSource;
-
-  /** Generic type arguments if applicable */
-  type_args?: TypeInfo[];
-
-  /** Whether this type can be null/undefined */
-  is_nullable?: boolean;
-
-  /** Whether this is an array type */
-  is_array?: boolean;
-
-  /** For methods: the return type */
-  return_type?: TypeInfo;
-
-  /** For classes: available members */
-  members?: Map<SymbolName, TypeInfo>;
-}
+// Import the canonical TypeInfo interface
+import type { TypeInfo } from './type_info';
 
 /**
  * Source of type information
@@ -108,6 +79,15 @@ export interface ReturnContext {
 export function build_typed_assignment_map(
   assignments: NormalizedCapture[]
 ): Map<LocationKey, AssignmentContext> {
+  // Input validation
+  if (!assignments) {
+    throw new Error("assignments cannot be null or undefined");
+  }
+
+  if (!Array.isArray(assignments)) {
+    throw new Error("assignments must be an array");
+  }
+
   const map = new Map<LocationKey, AssignmentContext>();
 
   for (const capture of assignments) {
@@ -143,6 +123,27 @@ export function build_typed_return_map(
   root_scope: LexicalScope,
   scopes: Map<ScopeId, LexicalScope>
 ): Map<LocationKey, ReturnContext> {
+  // Input validation
+  if (!returns) {
+    throw new Error("returns cannot be null or undefined");
+  }
+
+  if (!Array.isArray(returns)) {
+    throw new Error("returns must be an array");
+  }
+
+  if (!root_scope) {
+    throw new Error("root_scope cannot be null or undefined");
+  }
+
+  if (!scopes) {
+    throw new Error("scopes cannot be null or undefined");
+  }
+
+  if (!(scopes instanceof Map)) {
+    throw new Error("scopes must be a Map");
+  }
+
   const map = new Map<LocationKey, ReturnContext>();
 
   for (const capture of returns) {
@@ -177,13 +178,23 @@ export function build_typed_return_map(
 export function build_type_annotation_map(
   type_captures: NormalizedCapture[]
 ): Map<LocationKey, TypeInfo> {
+  // Input validation
+  if (!type_captures) {
+    throw new Error("type_captures cannot be null or undefined");
+  }
+
+  if (!Array.isArray(type_captures)) {
+    throw new Error("type_captures must be an array");
+  }
+
   const map = new Map<LocationKey, TypeInfo>();
 
   for (const capture of type_captures) {
     const key = location_key(capture.node_location);
 
+    const type_name = capture.text as SymbolName;
     const type_info: TypeInfo = {
-      type_name: capture.text as SymbolName,
+      type_name,
       certainty: "declared",
       source: {
         kind: "annotation",
@@ -208,8 +219,9 @@ function infer_type_from_capture(
 ): TypeInfo | undefined {
   // Check for constructor calls
   if (capture.context?.construct_target) {
+    const type_name = capture.text as SymbolName;
     return {
-      type_name: capture.text as SymbolName,
+      type_name,
       certainty: "inferred",
       source: {
         kind: "construction",
@@ -219,7 +231,7 @@ function infer_type_from_capture(
   }
 
   // Try to infer from the text if it looks like a literal
-  const literal_type = infer_type_from_text(capture.text);
+  const literal_type = infer_type_from_text(capture.text, capture.node_location);
   if (literal_type) {
     return literal_type;
   }
@@ -231,62 +243,67 @@ function infer_type_from_capture(
 /**
  * Infer type from text that looks like a literal
  */
-function infer_type_from_text(text: string): TypeInfo | undefined {
+function infer_type_from_text(text: string, location: Location): TypeInfo | undefined {
   // Check for string literals
   if (text.startsWith('"') || text.startsWith("'") || text.startsWith("`")) {
+    const type_name = "string" as SymbolName;
     return {
-      type_name: "string" as SymbolName,
+      type_name,
       certainty: "inferred",
       source: {
         kind: "literal",
-        location: {} as Location, // Will be filled by caller
+        location,
       },
     };
   }
 
   // Check for numeric literals
   if (/^\d+(\.\d+)?$/.test(text)) {
+    const type_name = "number" as SymbolName;
     return {
-      type_name: "number" as SymbolName,
+      type_name,
       certainty: "inferred",
       source: {
         kind: "literal",
-        location: {} as Location, // Will be filled by caller
+        location,
       },
     };
   }
 
   // Check for boolean literals
   if (text === "true" || text === "false") {
+    const type_name = "boolean" as SymbolName;
     return {
-      type_name: "boolean" as SymbolName,
+      type_name,
       certainty: "inferred",
       source: {
         kind: "literal",
-        location: {} as Location, // Will be filled by caller
+        location,
       },
     };
   }
 
   // Check for null/undefined
   if (text === "null") {
+    const type_name = "null" as SymbolName;
     return {
-      type_name: "null" as SymbolName,
+      type_name,
       certainty: "inferred",
       source: {
         kind: "literal",
-        location: {} as Location, // Will be filled by caller
+        location,
       },
     };
   }
 
   if (text === "undefined") {
+    const type_name = "undefined" as SymbolName;
     return {
-      type_name: "undefined" as SymbolName,
+      type_name,
       certainty: "inferred",
       source: {
         kind: "literal",
-        location: {} as Location, // Will be filled by caller
+        location,
       },
     };
   }
@@ -294,43 +311,6 @@ function infer_type_from_text(text: string): TypeInfo | undefined {
   return undefined;
 }
 
-/**
- * Infer type from literal value
- */
-function infer_type_from_literal(value: any, file_path: FilePath): TypeInfo {
-  let type_name: SymbolName;
-
-  if (typeof value === "string") {
-    type_name = "string" as SymbolName;
-  } else if (typeof value === "number") {
-    type_name = "number" as SymbolName;
-  } else if (typeof value === "boolean") {
-    type_name = "boolean" as SymbolName;
-  } else if (value === null) {
-    type_name = "null" as SymbolName;
-  } else if (value === undefined) {
-    type_name = "undefined" as SymbolName;
-  } else if (Array.isArray(value)) {
-    type_name = "Array" as SymbolName;
-  } else {
-    type_name = "object" as SymbolName;
-  }
-
-  return {
-    type_name,
-    certainty: "inferred",
-    source: {
-      kind: "literal",
-      location: {
-        file_path,
-        line: 0,
-        column: 0,
-        end_line: 0,
-        end_column: 0
-      }, // Will be filled by caller
-    },
-  };
-}
 
 /**
  * Find containing function/method/constructor scope
@@ -340,7 +320,7 @@ function find_containing_function_scope(
   root_scope: LexicalScope,
   scopes: Map<ScopeId, LexicalScope>
 ): LexicalScope | undefined {
-  // Start from innermost scope
+  // Start from innermost scope - this may return undefined if location is not contained
   let current: LexicalScope | undefined = find_innermost_scope(location, root_scope, scopes);
 
   while (current) {
@@ -366,16 +346,33 @@ function find_innermost_scope(
   location: Location,
   root_scope: LexicalScope,
   scopes: Map<ScopeId, LexicalScope>
-): LexicalScope {
+): LexicalScope | undefined {
+  // First check if the location is even within the root scope
+  if (!contains_location(root_scope.location, location)) {
+    return undefined;
+  }
+
   let current = root_scope;
+  const visited = new Set<ScopeId>(); // Prevent infinite loops
 
   // Traverse down to find deepest containing scope
   let changed = true;
-  while (changed) {
+  let iterations = 0;
+  const MAX_ITERATIONS = scopes.size * 2; // Safety limit
+
+  while (changed && iterations < MAX_ITERATIONS) {
     changed = false;
+    iterations++;
+
     for (const child_id of current.child_ids) {
+      // Skip if we've already visited this scope (circular reference)
+      if (visited.has(child_id)) {
+        continue;
+      }
+
       const child = scopes.get(child_id);
       if (child && contains_location(child.location, location)) {
+        visited.add(current.id);
         current = child;
         changed = true;
         break;
@@ -393,8 +390,29 @@ function contains_location(
   scope_loc: Location,
   point: Location
 ): boolean {
-  // Simple line-based check (would need end location for accuracy)
-  return scope_loc.line <= point.line;
+  // Check if point is within scope boundaries
+
+  // Point must be on or after scope start line
+  if (point.line < scope_loc.line) {
+    return false;
+  }
+
+  // Point must be on or before scope end line
+  if (point.line > scope_loc.end_line) {
+    return false;
+  }
+
+  // If on the same start line, check column boundaries
+  if (point.line === scope_loc.line && point.column < scope_loc.column) {
+    return false;
+  }
+
+  // If on the same end line, check column boundaries
+  if (point.line === scope_loc.end_line && point.column > scope_loc.end_column) {
+    return false;
+  }
+
+  return true;
 }
 
 /**
