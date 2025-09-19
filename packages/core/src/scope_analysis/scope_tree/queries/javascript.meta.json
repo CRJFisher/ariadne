@@ -1,5 +1,0 @@
-{
-  "language": "javascript",
-  "symbolKinds": ["function", "class", "method", "variable", "import", "export"],
-  "captureNames": ["@name", "@function", "@class", "@method", "@variable"]
-}
