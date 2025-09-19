@@ -178,7 +178,8 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
 
         return {
           receiver_node: current || undefined,
-          property_chain: property_chain.length > 0 ? property_chain : undefined
+          property_chain:
+            property_chain.length > 0 ? property_chain : undefined,
         };
       },
     },
@@ -205,7 +206,8 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
 
         return {
           receiver_node: current || undefined,
-          property_chain: property_chain.length > 0 ? property_chain : undefined
+          property_chain:
+            property_chain.length > 0 ? property_chain : undefined,
         };
       },
     },
@@ -323,7 +325,10 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
         );
         if (!has_import_clause) {
           // This is a side-effect import (no import clause means just import 'module')
-          return { source_module: node.text.slice(1, -1), is_side_effect_import: true };
+          return {
+            source_module: node.text.slice(1, -1),
+            is_side_effect_import: true,
+          };
         }
         // Not a side-effect import, will be handled by other captures
         return { skip: true };
@@ -480,7 +485,7 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
         // This is the source string for a namespace export
         return {
           export_source: node.text.slice(1, -1),
-          is_namespace_export: true
+          is_namespace_export: true,
         };
       },
     },
@@ -505,13 +510,16 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
       context: (node) => {
         // Source for aliased namespace export
         const export_stmt = node.parent;
-        const namespace_export = export_stmt?.children?.find((c: any) => c.type === "namespace_export");
-        const alias = namespace_export?.childForFieldName?.("alias") ||
-                     namespace_export?.children?.find((c: any) => c.type === "identifier");
+        const namespace_export = export_stmt?.children?.find(
+          (c: any) => c.type === "namespace_export"
+        );
+        const alias =
+          namespace_export?.childForFieldName?.("alias") ||
+          namespace_export?.children?.find((c: any) => c.type === "identifier");
         return {
           export_source: node.text.slice(1, -1),
           namespace_alias: alias?.text,
-          is_namespace_export: true
+          is_namespace_export: true,
         };
       },
     },
@@ -537,8 +545,9 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
       context: (node) => {
         // Get re-exported names from the export clause
         const export_stmt = node.parent;
-        const export_clause = export_stmt?.childForFieldName?.("declaration") ||
-                            export_stmt?.children?.find((c: any) => c.type === "export_clause");
+        const export_clause =
+          export_stmt?.childForFieldName?.("declaration") ||
+          export_stmt?.children?.find((c: any) => c.type === "export_clause");
         const specifiers: string[] = [];
         if (export_clause) {
           for (const child of export_clause.children || []) {
@@ -551,7 +560,7 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
         return {
           export_source: node.text.slice(1, -1),
           is_reexport: true,
-          reexport_names: specifiers
+          reexport_names: specifiers,
         };
       },
     },
@@ -567,7 +576,7 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
         const alias_node = specifier?.childForFieldName?.("alias");
         return {
           reexport_name: node.text,
-          reexport_alias: alias_node?.text
+          reexport_alias: alias_node?.text,
         };
       },
     },
@@ -582,7 +591,7 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
         const name_node = specifier?.childForFieldName?.("name");
         return {
           reexport_original: name_node?.text,
-          reexport_alias: node.text
+          reexport_alias: node.text,
         };
       },
     },
@@ -595,9 +604,10 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
       context: (node) => {
         // Get aliased re-exports from the export clause
         const export_stmt = node.parent;
-        const export_clause = export_stmt?.childForFieldName?.("declaration") ||
-                            export_stmt?.children?.find((c: any) => c.type === "export_clause");
-        const reexports: Array<{original: string, alias?: string}> = [];
+        const export_clause =
+          export_stmt?.childForFieldName?.("declaration") ||
+          export_stmt?.children?.find((c: any) => c.type === "export_clause");
+        const reexports: Array<{ original: string; alias?: string }> = [];
         if (export_clause) {
           for (const child of export_clause.children || []) {
             if (child.type === "export_specifier") {
@@ -606,7 +616,7 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
               if (name) {
                 reexports.push({
                   original: name.text,
-                  alias: alias?.text
+                  alias: alias?.text,
                 });
               }
             }
@@ -615,7 +625,7 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
         return {
           export_source: node.text.slice(1, -1),
           is_reexport: true,
-          reexports
+          reexports,
         };
       },
     },
@@ -699,7 +709,7 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
         const value = node.childForFieldName?.("value");
         return {
           variable_name: name ? safeNodeText(name) : undefined,
-          value_node: value,
+          value_node: value || undefined,
         };
       },
     },
@@ -712,7 +722,7 @@ export const JAVASCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
     "ref.return",
     {
       category: SemanticCategory.RETURN,
-      entity: SemanticEntity.VARIABLE,
+      entity: SemanticEntity.REFERENCE,
       context: (node) => {
         // Find containing function
         let current = node.parent;

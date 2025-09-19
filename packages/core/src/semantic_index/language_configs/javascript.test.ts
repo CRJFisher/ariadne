@@ -51,7 +51,7 @@ describe("JavaScript Language Configuration", () => {
         "scope.function",
         "scope.method",
         "scope.class",
-        "scope.block"
+        "scope.block",
       ];
 
       for (const mapping of scopeMappings) {
@@ -71,7 +71,7 @@ describe("JavaScript Language Configuration", () => {
         "def.method",
         "def.constructor",
         "def.param",
-        "def.field"
+        "def.field",
       ];
 
       for (const mapping of definitionMappings) {
@@ -92,7 +92,7 @@ describe("JavaScript Language Configuration", () => {
         "ref.constructor.assigned",
         "ref.property",
         "ref.this",
-        "ref.super"
+        "ref.super",
       ];
 
       for (const mapping of referenceMappings) {
@@ -109,7 +109,7 @@ describe("JavaScript Language Configuration", () => {
         "import.named",
         "import.named.source",
         "import.default",
-        "import.namespace"
+        "import.namespace",
       ];
 
       for (const mapping of importMappings) {
@@ -131,7 +131,7 @@ describe("JavaScript Language Configuration", () => {
         "export.declaration",
         "export.namespace.source",
         "export.namespace.alias",
-        "export.reexport"
+        "export.reexport",
       ];
 
       for (const mapping of exportMappings) {
@@ -143,10 +143,7 @@ describe("JavaScript Language Configuration", () => {
     });
 
     it("should contain assignment capture mappings", () => {
-      const assignmentMappings = [
-        "assign.target",
-        "assign.source"
-      ];
+      const assignmentMappings = ["assign.target", "assign.source"];
 
       for (const mapping of assignmentMappings) {
         expect(JAVASCRIPT_CAPTURE_CONFIG.has(mapping)).toBe(true);
@@ -157,9 +154,7 @@ describe("JavaScript Language Configuration", () => {
     });
 
     it("should contain return capture mappings", () => {
-      const returnMappings = [
-        "ref.return"
-      ];
+      const returnMappings = ["ref.return"];
 
       for (const mapping of returnMappings) {
         expect(JAVASCRIPT_CAPTURE_CONFIG.has(mapping)).toBe(true);
@@ -195,8 +190,8 @@ class TestClass {
         // Test with mock node that has static modifier
         const mockNode = {
           parent: {
-            children: [{ type: "static" }]
-          }
+            children: [{ type: "static" }],
+          },
         } as any;
 
         const modifiers = methodConfig.modifiers(mockNode);
@@ -212,8 +207,8 @@ class TestClass {
         // Test with mock node that has static modifier
         const mockNode = {
           parent: {
-            children: [{ type: "static" }]
-          }
+            children: [{ type: "static" }],
+          },
         } as any;
 
         const modifiers = fieldConfig.modifiers(mockNode);
@@ -242,7 +237,8 @@ class TestClass {
     });
 
     it("should handle export default modifiers", () => {
-      const exportDefaultConfig = JAVASCRIPT_CAPTURE_CONFIG.get("export.default");
+      const exportDefaultConfig =
+        JAVASCRIPT_CAPTURE_CONFIG.get("export.default");
 
       expect(exportDefaultConfig?.modifiers).toBeDefined();
       if (typeof exportDefaultConfig?.modifiers === "function") {
@@ -255,7 +251,8 @@ class TestClass {
   describe("Context Functions", () => {
     describe("Method Call Context", () => {
       it("should extract basic method call context", () => {
-        const methodCallConfig = JAVASCRIPT_CAPTURE_CONFIG.get("ref.method_call");
+        const methodCallConfig =
+          JAVASCRIPT_CAPTURE_CONFIG.get("ref.method_call");
 
         expect(methodCallConfig?.context).toBeDefined();
         if (typeof methodCallConfig?.context === "function") {
@@ -266,8 +263,8 @@ class TestClass {
                   return { text: "obj" };
                 }
                 return null;
-              }
-            }
+              },
+            },
           } as any;
 
           const context = methodCallConfig.context(mockNode);
@@ -276,7 +273,9 @@ class TestClass {
       });
 
       it("should extract chained method call context", () => {
-        const chainedConfig = JAVASCRIPT_CAPTURE_CONFIG.get("ref.method_call.chained");
+        const chainedConfig = JAVASCRIPT_CAPTURE_CONFIG.get(
+          "ref.method_call.chained"
+        );
 
         expect(chainedConfig?.context).toBeDefined();
         if (typeof chainedConfig?.context === "function") {
@@ -291,12 +290,12 @@ class TestClass {
                       if (field === "property") return { text: "prop" };
                       if (field === "object") return { text: "obj" };
                       return null;
-                    }
+                    },
                   };
                 }
                 return null;
-              }
-            }
+              },
+            },
           } as any;
 
           const context = chainedConfig.context(mockNode);
@@ -307,7 +306,8 @@ class TestClass {
 
     describe("Constructor Context", () => {
       it("should extract constructor assignment context", () => {
-        const constructorConfig = JAVASCRIPT_CAPTURE_CONFIG.get("ref.constructor");
+        const constructorConfig =
+          JAVASCRIPT_CAPTURE_CONFIG.get("ref.constructor");
 
         expect(constructorConfig?.context).toBeDefined();
         if (typeof constructorConfig?.context === "function") {
@@ -318,9 +318,9 @@ class TestClass {
                 childForFieldName: (field: string) => {
                   if (field === "name") return { text: "instance" };
                   return null;
-                }
-              }
-            }
+                },
+              },
+            },
           } as any;
 
           const context = constructorConfig.context(mockNode);
@@ -329,7 +329,9 @@ class TestClass {
       });
 
       it("should extract assigned constructor context", () => {
-        const assignedConfig = JAVASCRIPT_CAPTURE_CONFIG.get("ref.constructor.assigned");
+        const assignedConfig = JAVASCRIPT_CAPTURE_CONFIG.get(
+          "ref.constructor.assigned"
+        );
 
         expect(assignedConfig?.context).toBeDefined();
         if (typeof assignedConfig?.context === "function") {
@@ -340,9 +342,9 @@ class TestClass {
                 childForFieldName: (field: string) => {
                   if (field === "name") return { text: "instance" };
                   return null;
-                }
-              }
-            }
+                },
+              },
+            },
           } as any;
 
           const context = assignedConfig.context(mockNode);
@@ -353,7 +355,8 @@ class TestClass {
 
     describe("Import Context", () => {
       it("should extract side-effect import context", () => {
-        const importSourceConfig = JAVASCRIPT_CAPTURE_CONFIG.get("import.source");
+        const importSourceConfig =
+          JAVASCRIPT_CAPTURE_CONFIG.get("import.source");
 
         expect(importSourceConfig?.context).toBeDefined();
         if (typeof importSourceConfig?.context === "function") {
@@ -361,8 +364,8 @@ class TestClass {
           const mockNode = {
             text: "'side-effect-module'",
             parent: {
-              namedChildren: []
-            }
+              namedChildren: [],
+            },
           } as any;
 
           const context = importSourceConfig.context(mockNode);
@@ -372,15 +375,16 @@ class TestClass {
       });
 
       it("should skip regular imports with import clause", () => {
-        const importSourceConfig = JAVASCRIPT_CAPTURE_CONFIG.get("import.source");
+        const importSourceConfig =
+          JAVASCRIPT_CAPTURE_CONFIG.get("import.source");
 
         if (typeof importSourceConfig?.context === "function") {
           // Test regular import (has import clause)
           const mockNode = {
             text: "'regular-module'",
             parent: {
-              namedChildren: [{ type: "import_clause" }]
-            }
+              namedChildren: [{ type: "import_clause" }],
+            },
           } as any;
 
           const context = importSourceConfig.context(mockNode);
@@ -402,11 +406,11 @@ class TestClass {
                     childForFieldName: (field: string) => {
                       if (field === "source") return { text: "'module'" };
                       return null;
-                    }
-                  }
-                }
-              }
-            }
+                    },
+                  },
+                },
+              },
+            },
           } as any;
 
           const context = namedImportConfig.context(mockNode);
@@ -415,7 +419,9 @@ class TestClass {
       });
 
       it("should extract aliased import context", () => {
-        const aliasedImportConfig = JAVASCRIPT_CAPTURE_CONFIG.get("import.named.source");
+        const aliasedImportConfig = JAVASCRIPT_CAPTURE_CONFIG.get(
+          "import.named.source"
+        );
 
         expect(aliasedImportConfig?.context).toBeDefined();
         if (typeof aliasedImportConfig?.context === "function") {
@@ -431,10 +437,10 @@ class TestClass {
                   childForFieldName: (field: string) => {
                     if (field === "source") return { text: "'module'" };
                     return null;
-                  }
-                }
-              }
-            }
+                  },
+                },
+              },
+            },
           } as any;
 
           const context = aliasedImportConfig.context(mockNode);
@@ -444,7 +450,8 @@ class TestClass {
       });
 
       it("should extract default import context", () => {
-        const defaultImportConfig = JAVASCRIPT_CAPTURE_CONFIG.get("import.default");
+        const defaultImportConfig =
+          JAVASCRIPT_CAPTURE_CONFIG.get("import.default");
 
         expect(defaultImportConfig?.context).toBeDefined();
         if (typeof defaultImportConfig?.context === "function") {
@@ -455,9 +462,9 @@ class TestClass {
                 childForFieldName: (field: string) => {
                   if (field === "source") return { text: "'module'" };
                   return null;
-                }
-              }
-            }
+                },
+              },
+            },
           } as any;
 
           const context = defaultImportConfig.context(mockNode);
@@ -466,7 +473,8 @@ class TestClass {
       });
 
       it("should extract namespace import context", () => {
-        const namespaceImportConfig = JAVASCRIPT_CAPTURE_CONFIG.get("import.namespace");
+        const namespaceImportConfig =
+          JAVASCRIPT_CAPTURE_CONFIG.get("import.namespace");
 
         expect(namespaceImportConfig?.context).toBeDefined();
         if (typeof namespaceImportConfig?.context === "function") {
@@ -478,10 +486,10 @@ class TestClass {
                   childForFieldName: (field: string) => {
                     if (field === "source") return { text: "'module'" };
                     return null;
-                  }
-                }
-              }
-            }
+                  },
+                },
+              },
+            },
           } as any;
 
           const context = namespaceImportConfig.context(mockNode);
@@ -492,7 +500,9 @@ class TestClass {
 
     describe("Export Context", () => {
       it("should extract named export alias context", () => {
-        const namedSourceConfig = JAVASCRIPT_CAPTURE_CONFIG.get("export.named.source");
+        const namedSourceConfig = JAVASCRIPT_CAPTURE_CONFIG.get(
+          "export.named.source"
+        );
 
         expect(namedSourceConfig?.context).toBeDefined();
         if (typeof namedSourceConfig?.context === "function") {
@@ -501,8 +511,8 @@ class TestClass {
               childForFieldName: (field: string) => {
                 if (field === "alias") return { text: "exportAlias" };
                 return null;
-              }
-            }
+              },
+            },
           } as any;
 
           const context = namedSourceConfig.context(mockNode);
@@ -511,12 +521,14 @@ class TestClass {
       });
 
       it("should extract namespace export context", () => {
-        const namespaceSourceConfig = JAVASCRIPT_CAPTURE_CONFIG.get("export.namespace.source");
+        const namespaceSourceConfig = JAVASCRIPT_CAPTURE_CONFIG.get(
+          "export.namespace.source"
+        );
 
         expect(namespaceSourceConfig?.context).toBeDefined();
         if (typeof namespaceSourceConfig?.context === "function") {
           const mockNode = {
-            text: "'module'"
+            text: "'module'",
           } as any;
 
           const context = namespaceSourceConfig.context(mockNode);
@@ -531,7 +543,7 @@ class TestClass {
         expect(reexportConfig?.context).toBeDefined();
         if (typeof reexportConfig?.context === "function") {
           const mockNode = {
-            text: "reexportedItem"
+            text: "reexportedItem",
           } as any;
 
           const context = reexportConfig.context(mockNode);
@@ -540,7 +552,9 @@ class TestClass {
       });
 
       it("should extract reexport source context", () => {
-        const reexportSourceConfig = JAVASCRIPT_CAPTURE_CONFIG.get("export.reexport.source");
+        const reexportSourceConfig = JAVASCRIPT_CAPTURE_CONFIG.get(
+          "export.reexport.source"
+        );
 
         expect(reexportSourceConfig?.context).toBeDefined();
         if (typeof reexportSourceConfig?.context === "function") {
@@ -556,15 +570,15 @@ class TestClass {
                         childForFieldName: (field: string) => {
                           if (field === "name") return { text: "item" };
                           return null;
-                        }
-                      }
-                    ]
+                        },
+                      },
+                    ],
                   };
                 }
                 return null;
               },
-              children: []
-            }
+              children: [],
+            },
           } as any;
 
           const context = reexportSourceConfig.context(mockNode);
@@ -577,7 +591,8 @@ class TestClass {
 
     describe("Assignment Context", () => {
       it("should extract assignment target context", () => {
-        const assignTargetConfig = JAVASCRIPT_CAPTURE_CONFIG.get("assign.target");
+        const assignTargetConfig =
+          JAVASCRIPT_CAPTURE_CONFIG.get("assign.target");
 
         expect(assignTargetConfig?.context).toBeDefined();
         if (typeof assignTargetConfig?.context === "function") {
@@ -586,8 +601,8 @@ class TestClass {
               childForFieldName: (field: string) => {
                 if (field === "value") return { text: "sourceValue" };
                 return null;
-              }
-            }
+              },
+            },
           } as any;
 
           const context = assignTargetConfig.context(mockNode);
@@ -597,7 +612,8 @@ class TestClass {
       });
 
       it("should extract assignment source context", () => {
-        const assignSourceConfig = JAVASCRIPT_CAPTURE_CONFIG.get("assign.source");
+        const assignSourceConfig =
+          JAVASCRIPT_CAPTURE_CONFIG.get("assign.source");
 
         expect(assignSourceConfig?.context).toBeDefined();
         if (typeof assignSourceConfig?.context === "function") {
@@ -606,8 +622,8 @@ class TestClass {
               childForFieldName: (field: string) => {
                 if (field === "name") return { text: "targetVar" };
                 return null;
-              }
-            }
+              },
+            },
           } as any;
 
           const context = assignSourceConfig.context(mockNode);
@@ -626,9 +642,9 @@ class TestClass {
           const mockNode = {
             parent: {
               parent: {
-                type: "function_declaration"
-              }
-            }
+                type: "function_declaration",
+              },
+            },
           } as any;
 
           const context = returnConfig.context(mockNode);
@@ -639,12 +655,13 @@ class TestClass {
 
     describe("Class Context", () => {
       it("should extract class extends context", () => {
-        const classExtendsConfig = JAVASCRIPT_CAPTURE_CONFIG.get("class.extends");
+        const classExtendsConfig =
+          JAVASCRIPT_CAPTURE_CONFIG.get("class.extends");
 
         expect(classExtendsConfig?.context).toBeDefined();
         if (typeof classExtendsConfig?.context === "function") {
           const mockNode = {
-            text: "BaseClass"
+            text: "BaseClass",
           } as any;
 
           const context = classExtendsConfig.context(mockNode);
@@ -695,7 +712,8 @@ class TestClass {
   constructor() {}
 }`;
         const tree = getAstNode(code);
-        const constructorConfig = JAVASCRIPT_CAPTURE_CONFIG.get("def.constructor");
+        const constructorConfig =
+          JAVASCRIPT_CAPTURE_CONFIG.get("def.constructor");
         expect(constructorConfig?.entity).toBe(SemanticEntity.CONSTRUCTOR);
       });
     });
@@ -711,14 +729,16 @@ class TestClass {
       it("should handle default imports", () => {
         const code = `import defaultExport from 'module';`;
         const tree = getAstNode(code);
-        const defaultImportConfig = JAVASCRIPT_CAPTURE_CONFIG.get("import.default");
+        const defaultImportConfig =
+          JAVASCRIPT_CAPTURE_CONFIG.get("import.default");
         expect(defaultImportConfig?.entity).toBe(SemanticEntity.VARIABLE);
       });
 
       it("should handle namespace imports", () => {
         const code = `import * as namespace from 'module';`;
         const tree = getAstNode(code);
-        const namespaceImportConfig = JAVASCRIPT_CAPTURE_CONFIG.get("import.namespace");
+        const namespaceImportConfig =
+          JAVASCRIPT_CAPTURE_CONFIG.get("import.namespace");
         expect(namespaceImportConfig?.entity).toBe(SemanticEntity.MODULE);
       });
 
@@ -732,7 +752,9 @@ class TestClass {
       it("should handle default exports", () => {
         const code = `export default function() {}`;
         const tree = getAstNode(code);
-        const defaultExportConfig = JAVASCRIPT_CAPTURE_CONFIG.get("export.default.function");
+        const defaultExportConfig = JAVASCRIPT_CAPTURE_CONFIG.get(
+          "export.default.function"
+        );
         expect(defaultExportConfig?.entity).toBe(SemanticEntity.FUNCTION);
       });
     });
@@ -748,7 +770,8 @@ class TestClass {
       it("should handle method calls", () => {
         const code = `obj.method();`;
         const tree = getAstNode(code);
-        const methodCallConfig = JAVASCRIPT_CAPTURE_CONFIG.get("ref.method_call");
+        const methodCallConfig =
+          JAVASCRIPT_CAPTURE_CONFIG.get("ref.method_call");
         expect(methodCallConfig?.entity).toBe(SemanticEntity.CALL);
       });
 
@@ -778,7 +801,9 @@ class TestClass {
   describe("Edge Cases and Error Conditions", () => {
     it("should handle empty capture mappings gracefully", () => {
       // Test that all mappings have required properties
-      for (const [key, mapping] of Array.from(JAVASCRIPT_CAPTURE_CONFIG.entries())) {
+      for (const [key, mapping] of Array.from(
+        JAVASCRIPT_CAPTURE_CONFIG.entries()
+      )) {
         expect(mapping.category).toBeDefined();
         expect(mapping.entity).toBeDefined();
         expect(typeof key).toBe("string");
@@ -791,16 +816,16 @@ class TestClass {
       if (typeof methodConfig?.modifiers === "function") {
         // These should throw since the functions access .parent without null checks
         expect(() => {
-          methodConfig.modifiers(null as any);
+          methodConfig.modifiers!(null as any);
         }).toThrow();
 
         expect(() => {
-          methodConfig.modifiers(undefined as any);
+          methodConfig.modifiers!(undefined as any);
         }).toThrow();
 
         // Empty objects should work (but may still access .parent)
         expect(() => {
-          methodConfig.modifiers({} as any);
+          methodConfig.modifiers!({} as any);
         }).not.toThrow();
       }
     });
@@ -810,11 +835,11 @@ class TestClass {
       if (typeof methodCallConfig?.context === "function") {
         // These should throw since the functions access .parent without null checks
         expect(() => {
-          methodCallConfig.context(null as any);
+          methodCallConfig.context!(null as any);
         }).toThrow();
 
         expect(() => {
-          methodCallConfig.context(undefined as any);
+          methodCallConfig.context!(undefined as any);
         }).toThrow();
 
         // But empty objects should work
@@ -829,12 +854,12 @@ class TestClass {
         // Test with deeply nested null references
         const mockNode = {
           parent: {
-            parent: null
-          }
+            parent: null,
+          },
         } as any;
 
         expect(() => {
-          importConfig.context(mockNode);
+          importConfig.context!(mockNode);
         }).not.toThrow();
       }
     });
@@ -845,11 +870,11 @@ class TestClass {
         const mockNode = {
           parent: {
             // Missing childForFieldName method
-          }
+          },
         } as any;
 
         expect(() => {
-          assignConfig.context(mockNode);
+          assignConfig.context!(mockNode);
         }).not.toThrow();
       }
     });
@@ -860,13 +885,13 @@ class TestClass {
         const mockNode = {
           // Missing text property
           parent: {
-            namedChildren: []
-          }
+            namedChildren: [],
+          },
         } as any;
 
         // This should throw since the function tries to slice undefined text
         expect(() => {
-          importSourceConfig.context(mockNode);
+          importSourceConfig.context!(mockNode);
         }).toThrow();
       }
     });
@@ -885,7 +910,7 @@ class TestClass {
               if (field === "property") return { text: `prop${depth}` };
               if (field === "object") return createNestedNode(depth - 1);
               return null;
-            }
+            },
           };
         };
 
@@ -894,8 +919,8 @@ class TestClass {
             childForFieldName: (field: string) => {
               if (field === "object") return createNestedNode(5);
               return null;
-            }
-          }
+            },
+          },
         } as any;
 
         const context = deepConfig.context(mockNode);

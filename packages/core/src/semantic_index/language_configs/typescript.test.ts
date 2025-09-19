@@ -48,7 +48,9 @@ describe("TypeScript Language Configuration", () => {
 
     it("should extend JavaScript configuration", () => {
       // Should contain all JavaScript mappings plus TypeScript-specific ones
-      expect(TYPESCRIPT_CAPTURE_CONFIG.size).toBeGreaterThan(JAVASCRIPT_CAPTURE_CONFIG.size);
+      expect(TYPESCRIPT_CAPTURE_CONFIG.size).toBeGreaterThan(
+        JAVASCRIPT_CAPTURE_CONFIG.size
+      );
 
       // Check that JavaScript mappings are included
       const jsKeys = Array.from(JAVASCRIPT_CAPTURE_CONFIG.keys());
@@ -61,7 +63,7 @@ describe("TypeScript Language Configuration", () => {
       const tsSpecificScopes = [
         "scope.interface",
         "scope.enum",
-        "scope.namespace"
+        "scope.namespace",
       ];
 
       for (const mapping of tsSpecificScopes) {
@@ -79,7 +81,7 @@ describe("TypeScript Language Configuration", () => {
         "def.enum",
         "def.enum.member",
         "def.namespace",
-        "def.type_param"
+        "def.type_param",
       ];
 
       for (const mapping of typeDefinitions) {
@@ -98,7 +100,7 @@ describe("TypeScript Language Configuration", () => {
         "arrow.return_type",
         "property.type",
         "field.type",
-        "var.type"
+        "var.type",
       ];
 
       for (const mapping of typeAnnotations) {
@@ -115,7 +117,7 @@ describe("TypeScript Language Configuration", () => {
         "class.type_params",
         "interface.type_params",
         "function.type_params",
-        "method.type_params"
+        "method.type_params",
       ];
 
       for (const mapping of genericMappings) {
@@ -132,7 +134,7 @@ describe("TypeScript Language Configuration", () => {
         "method.access",
         "field.access",
         "field.readonly",
-        "param.access"
+        "param.access",
       ];
 
       for (const mapping of modifierMappings) {
@@ -147,7 +149,7 @@ describe("TypeScript Language Configuration", () => {
       const decoratorMappings = [
         "decorator.class",
         "decorator.method",
-        "decorator.property"
+        "decorator.property",
       ];
 
       for (const mapping of decoratorMappings) {
@@ -165,7 +167,7 @@ describe("TypeScript Language Configuration", () => {
         "import.source.type",
         "export.type_only",
         "export.type",
-        "export.interface"
+        "export.interface",
       ];
 
       for (const mapping of typeImportExportMappings) {
@@ -213,10 +215,8 @@ describe("TypeScript Language Configuration", () => {
           const mockNode = {
             text: "testMethod",
             parent: {
-              children: [
-                { type: "accessibility_modifier", text: "private" }
-              ]
-            }
+              children: [{ type: "accessibility_modifier", text: "private" }],
+            },
           } as any;
 
           const context = methodConfig.context(mockNode);
@@ -234,10 +234,8 @@ describe("TypeScript Language Configuration", () => {
           const mockNode = {
             text: "staticField",
             parent: {
-              children: [
-                { type: "static" }
-              ]
-            }
+              children: [{ type: "static" }],
+            },
           } as any;
 
           const context = fieldConfig.context(mockNode);
@@ -255,10 +253,8 @@ describe("TypeScript Language Configuration", () => {
           const mockNode = {
             text: "readonlyField",
             parent: {
-              children: [
-                { type: "readonly" }
-              ]
-            }
+              children: [{ type: "readonly" }],
+            },
           } as any;
 
           const context = fieldConfig.context(mockNode);
@@ -276,10 +272,8 @@ describe("TypeScript Language Configuration", () => {
           const mockNode = {
             text: "asyncMethod",
             parent: {
-              children: [
-                { type: "async" }
-              ]
-            }
+              children: [{ type: "async" }],
+            },
           } as any;
 
           const context = methodConfig.context(mockNode);
@@ -302,8 +296,8 @@ describe("TypeScript Language Configuration", () => {
               childForFieldName: (field: string) => {
                 if (field === "type_parameters") return { text: "<T, U>" };
                 return null;
-              }
-            }
+              },
+            },
           } as any;
 
           const context = interfaceConfig.context(mockNode);
@@ -326,8 +320,8 @@ describe("TypeScript Language Configuration", () => {
                 if (field === "value") return { text: "string | number" };
                 if (field === "type_parameters") return { text: "<T>" };
                 return null;
-              }
-            }
+              },
+            },
           } as any;
 
           const context = typeAliasConfig.context(mockNode);
@@ -350,7 +344,8 @@ describe("TypeScript Language Configuration", () => {
       });
 
       it("should handle enum member definition", () => {
-        const enumMemberConfig = TYPESCRIPT_CAPTURE_CONFIG.get("def.enum.member");
+        const enumMemberConfig =
+          TYPESCRIPT_CAPTURE_CONFIG.get("def.enum.member");
         expect(enumMemberConfig?.context).toBeDefined();
 
         if (typeof enumMemberConfig?.context === "function") {
@@ -360,8 +355,8 @@ describe("TypeScript Language Configuration", () => {
               childForFieldName: (field: string) => {
                 if (field === "value") return { text: "0" };
                 return null;
-              }
-            }
+              },
+            },
           } as any;
 
           const context = enumMemberConfig.context(mockNode);
@@ -383,8 +378,8 @@ describe("TypeScript Language Configuration", () => {
                 if (field === "constraint") return { text: "string" };
                 if (field === "default_type") return { text: "never" };
                 return null;
-              }
-            }
+              },
+            },
           } as any;
 
           const context = typeParamConfig.context(mockNode);
@@ -395,7 +390,8 @@ describe("TypeScript Language Configuration", () => {
 
     describe("Generic Type Parameters", () => {
       it("should handle class type parameters", () => {
-        const classTypeParamsConfig = TYPESCRIPT_CAPTURE_CONFIG.get("class.type_params");
+        const classTypeParamsConfig =
+          TYPESCRIPT_CAPTURE_CONFIG.get("class.type_params");
         expect(classTypeParamsConfig?.context).toBeDefined();
 
         if (typeof classTypeParamsConfig?.context === "function") {
@@ -408,7 +404,9 @@ describe("TypeScript Language Configuration", () => {
       });
 
       it("should handle function type parameters", () => {
-        const functionTypeParamsConfig = TYPESCRIPT_CAPTURE_CONFIG.get("function.type_params");
+        const functionTypeParamsConfig = TYPESCRIPT_CAPTURE_CONFIG.get(
+          "function.type_params"
+        );
         expect(functionTypeParamsConfig?.context).toBeDefined();
 
         if (typeof functionTypeParamsConfig?.context === "function") {
@@ -452,7 +450,9 @@ describe("TypeScript Language Configuration", () => {
 
     describe("Return Types", () => {
       it("should analyze function return types", () => {
-        const returnTypeConfig = TYPESCRIPT_CAPTURE_CONFIG.get("function.return_type");
+        const returnTypeConfig = TYPESCRIPT_CAPTURE_CONFIG.get(
+          "function.return_type"
+        );
         expect(returnTypeConfig?.context).toBeDefined();
 
         if (typeof returnTypeConfig?.context === "function") {
@@ -467,7 +467,8 @@ describe("TypeScript Language Configuration", () => {
       });
 
       it("should analyze method return types", () => {
-        const methodReturnTypeConfig = TYPESCRIPT_CAPTURE_CONFIG.get("method.return_type");
+        const methodReturnTypeConfig =
+          TYPESCRIPT_CAPTURE_CONFIG.get("method.return_type");
         expect(methodReturnTypeConfig?.context).toBeDefined();
 
         if (typeof methodReturnTypeConfig?.context === "function") {
@@ -482,7 +483,8 @@ describe("TypeScript Language Configuration", () => {
 
     describe("Property Types", () => {
       it("should analyze property type annotations", () => {
-        const propertyTypeConfig = TYPESCRIPT_CAPTURE_CONFIG.get("property.type");
+        const propertyTypeConfig =
+          TYPESCRIPT_CAPTURE_CONFIG.get("property.type");
         expect(propertyTypeConfig?.context).toBeDefined();
 
         if (typeof propertyTypeConfig?.context === "function") {
@@ -580,20 +582,26 @@ describe("TypeScript Language Configuration", () => {
 
   describe("Decorators", () => {
     it("should handle class decorators", () => {
-      const classDecoratorConfig = TYPESCRIPT_CAPTURE_CONFIG.get("decorator.class");
+      const classDecoratorConfig =
+        TYPESCRIPT_CAPTURE_CONFIG.get("decorator.class");
       expect(classDecoratorConfig?.context).toBeDefined();
 
       if (typeof classDecoratorConfig?.context === "function") {
-        const mockNode = { text: "@Component({ selector: 'app-test' })" } as any;
+        const mockNode = {
+          text: "@Component({ selector: 'app-test' })",
+        } as any;
         const context = classDecoratorConfig.context(mockNode);
 
-        expect(context?.decorator_name).toBe("@Component({ selector: 'app-test' })");
+        expect(context?.decorator_name).toBe(
+          "@Component({ selector: 'app-test' })"
+        );
         expect(context?.decorates).toBe("class");
       }
     });
 
     it("should handle method decorators", () => {
-      const methodDecoratorConfig = TYPESCRIPT_CAPTURE_CONFIG.get("decorator.method");
+      const methodDecoratorConfig =
+        TYPESCRIPT_CAPTURE_CONFIG.get("decorator.method");
       expect(methodDecoratorConfig?.context).toBeDefined();
 
       if (typeof methodDecoratorConfig?.context === "function") {
@@ -606,7 +614,8 @@ describe("TypeScript Language Configuration", () => {
     });
 
     it("should handle property decorators", () => {
-      const propertyDecoratorConfig = TYPESCRIPT_CAPTURE_CONFIG.get("decorator.property");
+      const propertyDecoratorConfig =
+        TYPESCRIPT_CAPTURE_CONFIG.get("decorator.property");
       expect(propertyDecoratorConfig?.context).toBeDefined();
 
       if (typeof propertyDecoratorConfig?.context === "function") {
@@ -621,7 +630,8 @@ describe("TypeScript Language Configuration", () => {
 
   describe("Enhanced Class Features", () => {
     it("should handle class implements", () => {
-      const implementsConfig = TYPESCRIPT_CAPTURE_CONFIG.get("class.implements");
+      const implementsConfig =
+        TYPESCRIPT_CAPTURE_CONFIG.get("class.implements");
       expect(implementsConfig?.context).toBeDefined();
 
       if (typeof implementsConfig?.context === "function") {
@@ -645,25 +655,24 @@ describe("TypeScript Language Configuration", () => {
               if (field === "class_heritage") {
                 return {
                   childForFieldName: (field: string) => {
-                    if (field === "extends_clause") return { text: "BaseClass" };
+                    if (field === "extends_clause")
+                      return { text: "BaseClass" };
                     if (field === "implements_clause") {
                       return {
                         children: [
                           { type: "type_identifier", text: "Interface1" },
-                          { type: "type_identifier", text: "Interface2" }
-                        ]
+                          { type: "type_identifier", text: "Interface2" },
+                        ],
                       };
                     }
                     return null;
-                  }
+                  },
                 };
               }
               return null;
             },
-            children: [
-              { type: "abstract" }
-            ]
-          }
+            children: [{ type: "abstract" }],
+          },
         } as any;
 
         const context = classConfig.context(mockNode);
@@ -679,7 +688,8 @@ describe("TypeScript Language Configuration", () => {
 
   describe("Type-specific Imports/Exports", () => {
     it("should handle type-only imports", () => {
-      const typeOnlyImportConfig = TYPESCRIPT_CAPTURE_CONFIG.get("import.type_only");
+      const typeOnlyImportConfig =
+        TYPESCRIPT_CAPTURE_CONFIG.get("import.type_only");
       expect(typeOnlyImportConfig?.modifiers).toBeDefined();
       expect(typeOnlyImportConfig?.context).toBeDefined();
 
@@ -707,7 +717,8 @@ describe("TypeScript Language Configuration", () => {
     });
 
     it("should handle type-only exports", () => {
-      const typeOnlyExportConfig = TYPESCRIPT_CAPTURE_CONFIG.get("export.type_only");
+      const typeOnlyExportConfig =
+        TYPESCRIPT_CAPTURE_CONFIG.get("export.type_only");
       expect(typeOnlyExportConfig?.modifiers).toBeDefined();
       expect(typeOnlyExportConfig?.context).toBeDefined();
 
@@ -723,7 +734,8 @@ describe("TypeScript Language Configuration", () => {
     });
 
     it("should handle interface exports", () => {
-      const interfaceExportConfig = TYPESCRIPT_CAPTURE_CONFIG.get("export.interface");
+      const interfaceExportConfig =
+        TYPESCRIPT_CAPTURE_CONFIG.get("export.interface");
       expect(interfaceExportConfig?.modifiers).toBeDefined();
       expect(interfaceExportConfig?.context).toBeDefined();
 
@@ -744,7 +756,8 @@ describe("TypeScript Language Configuration", () => {
 
   describe("Type References", () => {
     it("should handle generic type references", () => {
-      const genericTypeRefConfig = TYPESCRIPT_CAPTURE_CONFIG.get("ref.type.generic");
+      const genericTypeRefConfig =
+        TYPESCRIPT_CAPTURE_CONFIG.get("ref.type.generic");
       expect(genericTypeRefConfig?.context).toBeDefined();
 
       if (typeof genericTypeRefConfig?.context === "function") {
@@ -752,10 +765,11 @@ describe("TypeScript Language Configuration", () => {
           text: "Array",
           parent: {
             childForFieldName: (field: string) => {
-              if (field === "type_arguments") return { text: "<string, number>" };
+              if (field === "type_arguments")
+                return { text: "<string, number>" };
               return null;
-            }
-          }
+            },
+          },
         } as any;
 
         const context = genericTypeRefConfig.context(mockNode);
@@ -767,7 +781,9 @@ describe("TypeScript Language Configuration", () => {
     });
 
     it("should handle generic constructor calls", () => {
-      const genericConstructorConfig = TYPESCRIPT_CAPTURE_CONFIG.get("ref.constructor.generic");
+      const genericConstructorConfig = TYPESCRIPT_CAPTURE_CONFIG.get(
+        "ref.constructor.generic"
+      );
       expect(genericConstructorConfig?.context).toBeDefined();
 
       if (typeof genericConstructorConfig?.context === "function") {
@@ -775,7 +791,8 @@ describe("TypeScript Language Configuration", () => {
           text: "Map",
           parent: {
             childForFieldName: (field: string) => {
-              if (field === "type_arguments") return { text: "<string, number>" };
+              if (field === "type_arguments")
+                return { text: "<string, number>" };
               return null;
             },
             parent: {
@@ -783,9 +800,9 @@ describe("TypeScript Language Configuration", () => {
               childForFieldName: (field: string) => {
                 if (field === "name") return { text: "myMap" };
                 return null;
-              }
-            }
-          }
+              },
+            },
+          },
         } as any;
 
         const context = genericConstructorConfig.context(mockNode);
@@ -798,7 +815,8 @@ describe("TypeScript Language Configuration", () => {
     });
 
     it("should handle generic function calls", () => {
-      const genericCallConfig = TYPESCRIPT_CAPTURE_CONFIG.get("ref.call.generic");
+      const genericCallConfig =
+        TYPESCRIPT_CAPTURE_CONFIG.get("ref.call.generic");
       expect(genericCallConfig?.context).toBeDefined();
 
       if (typeof genericCallConfig?.context === "function") {
@@ -808,8 +826,8 @@ describe("TypeScript Language Configuration", () => {
             childForFieldName: (field: string) => {
               if (field === "type_arguments") return { text: "<string>" };
               return null;
-            }
-          }
+            },
+          },
         } as any;
 
         const context = genericCallConfig.context(mockNode);
@@ -832,8 +850,8 @@ describe("TypeScript Language Configuration", () => {
             childForFieldName: (field: string) => {
               if (field === "type") return { text: "string" };
               return null;
-            }
-          }
+            },
+          },
         } as any;
 
         const context = castValueConfig.context(mockNode);
@@ -854,8 +872,8 @@ describe("TypeScript Language Configuration", () => {
             childForFieldName: (field: string) => {
               if (field === "expression") return { text: "someValue" };
               return null;
-            }
-          }
+            },
+          },
         } as any;
 
         const context = castTypeConfig.context(mockNode);
@@ -882,7 +900,8 @@ describe("TypeScript Language Configuration", () => {
 
   describe("Enhanced Parameter Definitions", () => {
     it("should handle optional parameters", () => {
-      const optionalParamConfig = TYPESCRIPT_CAPTURE_CONFIG.get("def.param.optional");
+      const optionalParamConfig =
+        TYPESCRIPT_CAPTURE_CONFIG.get("def.param.optional");
       expect(optionalParamConfig?.modifiers).toBeDefined();
       expect(optionalParamConfig?.context).toBeDefined();
 
@@ -898,8 +917,8 @@ describe("TypeScript Language Configuration", () => {
             childForFieldName: (field: string) => {
               if (field === "type") return { text: "string" };
               return null;
-            }
-          }
+            },
+          },
         } as any;
 
         const context = optionalParamConfig.context(mockNode);
@@ -909,7 +928,8 @@ describe("TypeScript Language Configuration", () => {
     });
 
     it("should handle parameter properties", () => {
-      const paramPropertyConfig = TYPESCRIPT_CAPTURE_CONFIG.get("param.property");
+      const paramPropertyConfig =
+        TYPESCRIPT_CAPTURE_CONFIG.get("param.property");
       expect(paramPropertyConfig?.context).toBeDefined();
 
       if (typeof paramPropertyConfig?.context === "function") {
@@ -918,13 +938,13 @@ describe("TypeScript Language Configuration", () => {
           parent: {
             children: [
               { type: "accessibility_modifier", text: "private" },
-              { type: "readonly" }
+              { type: "readonly" },
             ],
             childForFieldName: (field: string) => {
               if (field === "type") return { text: "string" };
               return null;
-            }
-          }
+            },
+          },
         } as any;
 
         const context = paramPropertyConfig.context(mockNode);
@@ -938,7 +958,8 @@ describe("TypeScript Language Configuration", () => {
 
   describe("Type Alias Values", () => {
     it("should analyze complex type alias values", () => {
-      const typeAliasValueConfig = TYPESCRIPT_CAPTURE_CONFIG.get("type.alias.value");
+      const typeAliasValueConfig =
+        TYPESCRIPT_CAPTURE_CONFIG.get("type.alias.value");
       expect(typeAliasValueConfig?.context).toBeDefined();
 
       if (typeof typeAliasValueConfig?.context === "function") {
@@ -950,7 +971,8 @@ describe("TypeScript Language Configuration", () => {
     });
 
     it("should detect mapped types", () => {
-      const typeAliasValueConfig = TYPESCRIPT_CAPTURE_CONFIG.get("type.alias.value");
+      const typeAliasValueConfig =
+        TYPESCRIPT_CAPTURE_CONFIG.get("type.alias.value");
 
       if (typeof typeAliasValueConfig?.context === "function") {
         const mockNode = { text: "{ [K in keyof T]: T[K] }" } as any;
@@ -964,7 +986,9 @@ describe("TypeScript Language Configuration", () => {
   describe("Edge Cases and Error Conditions", () => {
     it("should handle empty capture mappings gracefully", () => {
       // Test that all mappings have required properties
-      for (const [key, mapping] of Array.from(TYPESCRIPT_CAPTURE_CONFIG.entries())) {
+      for (const [key, mapping] of Array.from(
+        TYPESCRIPT_CAPTURE_CONFIG.entries()
+      )) {
         expect(mapping.category).toBeDefined();
         expect(mapping.entity).toBeDefined();
         expect(typeof key).toBe("string");
@@ -977,11 +1001,11 @@ describe("TypeScript Language Configuration", () => {
       if (typeof interfaceConfig?.context === "function") {
         // These should actually throw since the function accesses .parent
         expect(() => {
-          interfaceConfig.context(null as any);
+          interfaceConfig.context!(null as any);
         }).toThrow();
 
         expect(() => {
-          interfaceConfig.context(undefined as any);
+          interfaceConfig.context!(undefined as any);
         }).toThrow();
 
         const result = interfaceConfig.context({} as any);
@@ -995,7 +1019,7 @@ describe("TypeScript Language Configuration", () => {
         const mockNode = { text: "MyType", parent: null } as any;
 
         expect(() => {
-          typeAliasConfig.context(mockNode);
+          typeAliasConfig.context!(mockNode);
         }).not.toThrow();
       }
     });
@@ -1007,18 +1031,19 @@ describe("TypeScript Language Configuration", () => {
           text: "MyClass",
           parent: {
             // Missing childForFieldName method
-            children: []
-          }
+            children: [],
+          },
         } as any;
 
         expect(() => {
-          classConfig.context(mockNode);
+          classConfig.context!(mockNode);
         }).not.toThrow();
       }
     });
 
     it("should handle malformed type parameter strings", () => {
-      const classTypeParamsConfig = TYPESCRIPT_CAPTURE_CONFIG.get("class.type_params");
+      const classTypeParamsConfig =
+        TYPESCRIPT_CAPTURE_CONFIG.get("class.type_params");
       if (typeof classTypeParamsConfig?.context === "function") {
         // Test with malformed type parameters
         const mockNode = { text: "<<T,," } as any;
@@ -1034,29 +1059,32 @@ describe("TypeScript Language Configuration", () => {
         const mockNode = {
           text: "method",
           parent: {
-            children: null // Invalid children structure
-          }
+            children: null, // Invalid children structure
+          },
         } as any;
 
         expect(() => {
-          methodConfig.context(mockNode);
+          methodConfig.context!(mockNode);
         }).not.toThrow();
       }
     });
 
     it("should handle complex nested type structures", () => {
-      const genericTypeRefConfig = TYPESCRIPT_CAPTURE_CONFIG.get("ref.type.generic");
+      const genericTypeRefConfig =
+        TYPESCRIPT_CAPTURE_CONFIG.get("ref.type.generic");
       if (typeof genericTypeRefConfig?.context === "function") {
         const mockNode = {
           text: "ComplexType",
           parent: {
             childForFieldName: (field: string) => {
               if (field === "type_arguments") {
-                return { text: "<Map<string, Array<Promise<T | U>>>, WeakMap<K, V>>" };
+                return {
+                  text: "<Map<string, Array<Promise<T | U>>>, WeakMap<K, V>>",
+                };
               }
               return null;
-            }
-          }
+            },
+          },
         } as any;
 
         const context = genericTypeRefConfig.context(mockNode);

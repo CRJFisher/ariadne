@@ -58,7 +58,7 @@ describe("Python Language Configuration", () => {
         "scope.with",
         "scope.if",
         "scope.try",
-        "scope.comprehension"
+        "scope.comprehension",
       ];
 
       for (const mapping of scopeMappings) {
@@ -79,7 +79,7 @@ describe("Python Language Configuration", () => {
         "def.constructor",
         "def.property",
         "def.variable",
-        "def.param"
+        "def.param",
       ];
 
       for (const mapping of definitionMappings) {
@@ -95,7 +95,7 @@ describe("Python Language Configuration", () => {
         "import.module",
         "import.source",
         "import.named",
-        "import.star"
+        "import.star",
       ];
 
       for (const mapping of importMappings) {
@@ -107,10 +107,7 @@ describe("Python Language Configuration", () => {
     });
 
     it("should contain export capture mappings", () => {
-      const exportMappings = [
-        "export.all",
-        "export.explicit"
-      ];
+      const exportMappings = ["export.all", "export.explicit"];
 
       for (const mapping of exportMappings) {
         expect(PYTHON_CAPTURE_CONFIG.has(mapping)).toBe(true);
@@ -130,7 +127,7 @@ describe("Python Language Configuration", () => {
         "ref.self",
         "ref.cls",
         "ref.super",
-        "ref.decorator"
+        "ref.decorator",
       ];
 
       for (const mapping of referenceMappings) {
@@ -204,7 +201,8 @@ class TestClass:
         const methodNode = findNodeByType(tree, "identifier");
 
         if (methodNode && methodNode.text === "__init__") {
-          const constructorConfig = PYTHON_CAPTURE_CONFIG.get("def.constructor");
+          const constructorConfig =
+            PYTHON_CAPTURE_CONFIG.get("def.constructor");
           expect(constructorConfig).toBeDefined();
           expect(constructorConfig?.entity).toBe(SemanticEntity.CONSTRUCTOR);
         }
@@ -293,7 +291,9 @@ def func(param: List[str]):
       it("should handle comprehension scopes", () => {
         const code = `[x for x in range(10)]`;
         const tree = getAstNode(code);
-        const comprehensionConfig = PYTHON_CAPTURE_CONFIG.get("scope.comprehension");
+        const comprehensionConfig = PYTHON_CAPTURE_CONFIG.get(
+          "scope.comprehension"
+        );
         expect(comprehensionConfig).toBeDefined();
         expect(comprehensionConfig?.entity).toBe(SemanticEntity.BLOCK);
       });
@@ -461,7 +461,9 @@ def generator():
   describe("Edge Cases and Error Conditions", () => {
     it("should handle empty capture mappings gracefully", () => {
       // Test that all mappings have required properties
-      for (const [key, mapping] of Array.from(PYTHON_CAPTURE_CONFIG.entries())) {
+      for (const [key, mapping] of Array.from(
+        PYTHON_CAPTURE_CONFIG.entries()
+      )) {
         expect(mapping.category).toBeDefined();
         expect(mapping.entity).toBeDefined();
         expect(typeof key).toBe("string");
@@ -474,13 +476,13 @@ def generator():
       if (typeof methodConfig?.modifiers === "function") {
         // Test with null node - should throw since function accesses .text
         expect(() => {
-          methodConfig.modifiers(null as any);
+          methodConfig.modifiers!(null as any);
         }).toThrow();
 
         // Test with node without parent - should work
         const mockNode = { text: "test", parent: null } as any;
         expect(() => {
-          methodConfig.modifiers(mockNode);
+          methodConfig.modifiers!(mockNode);
         }).not.toThrow();
       }
     });
@@ -490,13 +492,13 @@ def generator():
       if (typeof importConfig?.context === "function") {
         // Test with null node - should throw since function accesses .text
         expect(() => {
-          importConfig.context(null as any);
+          importConfig.context!(null as any);
         }).toThrow();
 
         // Test with node without text - should also throw since replace is called on undefined
         const mockNode = {} as any;
         expect(() => {
-          importConfig.context(mockNode);
+          importConfig.context!(mockNode);
         }).toThrow();
       }
     });
@@ -530,7 +532,7 @@ class C(B):
       if (typeof classConfig?.context === "function") {
         // This tests the inheritance extraction logic
         expect(() => {
-          classConfig.context({} as SyntaxNode);
+          classConfig.context!({} as SyntaxNode);
         }).not.toThrow();
       }
     });
