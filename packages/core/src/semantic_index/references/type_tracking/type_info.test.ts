@@ -6,21 +6,6 @@
 
 import { describe, it, expect } from 'vitest';
 import type { FilePath, Location, SymbolName } from "@ariadnejs/types";
-import type { TypeId } from "@ariadnejs/types";
-import {
-  TypeCategory,
-  primitive_type_id,
-  builtin_type_id,
-  defined_type_id,
-  generic_type_id,
-  union_type_id,
-  array_type_id,
-  literal_type_id,
-  ANY_TYPE,
-  UNKNOWN_TYPE,
-  NEVER_TYPE,
-  VOID_TYPE,
-} from "@ariadnejs/types";
 
 import {
   type TypeInfo,
@@ -43,7 +28,6 @@ describe('Type Info Module', () => {
   describe('TypeInfo interface', () => {
     it('should handle complete TypeInfo structure', () => {
       const typeInfo: TypeInfo = {
-        id: primitive_type_id("string"),
         type_name: "string" as SymbolName,
         certainty: "declared",
         source: {
@@ -54,7 +38,7 @@ describe('Type Info Module', () => {
         is_array: false,
       };
 
-      expect(typeInfo.id).toBeDefined();
+      expect(typeInfo.type_name).toBeDefined();
       expect(typeInfo.type_name).toBe("string");
       expect(typeInfo.certainty).toBe("declared");
       expect(typeInfo.source.kind).toBe("annotation");
@@ -64,14 +48,12 @@ describe('Type Info Module', () => {
 
     it('should handle TypeInfo with type parameters', () => {
       const elementType: TypeInfo = {
-        id: primitive_type_id("string"),
         type_name: "string" as SymbolName,
         certainty: "declared",
         source: { kind: "annotation", location: mockLocation },
       };
 
       const arrayType: TypeInfo = {
-        id: array_type_id(elementType.id),
         type_name: "Array" as SymbolName,
         certainty: "declared",
         source: { kind: "annotation", location: mockLocation },
@@ -86,21 +68,18 @@ describe('Type Info Module', () => {
 
     it('should handle TypeInfo with union members', () => {
       const stringType: TypeInfo = {
-        id: primitive_type_id("string"),
         type_name: "string" as SymbolName,
         certainty: "declared",
         source: { kind: "annotation", location: mockLocation },
       };
 
       const numberType: TypeInfo = {
-        id: primitive_type_id("number"),
         type_name: "number" as SymbolName,
         certainty: "declared",
         source: { kind: "annotation", location: mockLocation },
       };
 
       const unionType: TypeInfo = {
-        id: union_type_id([stringType.id, numberType.id]),
         type_name: "string | number" as SymbolName,
         certainty: "declared",
         source: { kind: "annotation", location: mockLocation },
@@ -169,7 +148,7 @@ describe('Type Info Module', () => {
         expect(typeInfo.certainty).toBe("declared");
         expect(typeInfo.source.kind).toBe("annotation");
         expect(typeInfo.source.location).toBe(mockLocation);
-        expect(typeInfo.id).toBe(primitive_type_id(primitive as any));
+        expect(typeInfo.type_name).toBe(primitive);
       });
     });
 
@@ -182,24 +161,23 @@ describe('Type Info Module', () => {
         expect(typeInfo.type_name).toBe(builtin);
         expect(typeInfo.certainty).toBe("declared");
         expect(typeInfo.source.kind).toBe("annotation");
-        expect(typeInfo.id).toBe(builtin_type_id(builtin as any));
+        expect(typeInfo.type_name).toBe(builtin);
       });
     });
 
     it('should create TypeInfo for special types', () => {
       const specials = [
-        { name: "any", expectedId: ANY_TYPE },
-        { name: "unknown", expectedId: UNKNOWN_TYPE },
-        { name: "never", expectedId: NEVER_TYPE },
-        { name: "void", expectedId: VOID_TYPE },
+        { name: "any" },
+        { name: "unknown" },
+        { name: "never" },
+        { name: "void" },
       ];
 
-      specials.forEach(({ name, expectedId }) => {
+      specials.forEach(({ name }) => {
         const typeInfo = type_info_from_annotation(name as SymbolName, mockLocation);
 
         expect(typeInfo.type_name).toBe(name);
         expect(typeInfo.certainty).toBe("declared");
-        expect(typeInfo.id).toBe(expectedId);
       });
     });
 
@@ -210,15 +188,15 @@ describe('Type Info Module', () => {
       expect(typeInfo.type_name).toBe(userType);
       expect(typeInfo.certainty).toBe("declared");
       expect(typeInfo.source.kind).toBe("annotation");
-      expect(typeInfo.id).toBe(defined_type_id(TypeCategory.INTERFACE, userType, mockLocation));
+      expect(typeInfo.type_name).toBe(userType);
     });
 
     it('should create TypeInfo for user-defined types with custom category', () => {
       const userType = "MyClass" as SymbolName;
-      const typeInfo = type_info_from_annotation(userType as SymbolName, mockLocation, TypeCategory.CLASS);
+      const typeInfo = type_info_from_annotation(userType as SymbolName, mockLocation);
 
       expect(typeInfo.type_name).toBe(userType);
-      expect(typeInfo.id).toBe(defined_type_id(TypeCategory.CLASS, userType, mockLocation));
+      expect(typeInfo.type_name).toBe(userType);
     });
   });
 
@@ -231,7 +209,7 @@ describe('Type Info Module', () => {
       expect(typeInfo.certainty).toBe("inferred");
       expect(typeInfo.source.kind).toBe("literal");
       expect(typeInfo.source.location).toBe(mockLocation);
-      expect(typeInfo.id).toBe(literal_type_id("string", stringValue));
+      expect(typeInfo.type_name).toBe("string");
     });
 
     it('should create TypeInfo for number literals', () => {
@@ -241,7 +219,7 @@ describe('Type Info Module', () => {
       expect(typeInfo.type_name).toBe("number");
       expect(typeInfo.certainty).toBe("inferred");
       expect(typeInfo.source.kind).toBe("literal");
-      expect(typeInfo.id).toBe(literal_type_id("number", numberValue));
+      expect(typeInfo.type_name).toBe("number");
     });
 
     it('should create TypeInfo for boolean literals', () => {
@@ -253,7 +231,7 @@ describe('Type Info Module', () => {
         expect(typeInfo.type_name).toBe("boolean");
         expect(typeInfo.certainty).toBe("inferred");
         expect(typeInfo.source.kind).toBe("literal");
-        expect(typeInfo.id).toBe(literal_type_id("boolean", boolValue));
+        expect(typeInfo.type_name).toBe("boolean");
       });
     });
 
@@ -263,7 +241,7 @@ describe('Type Info Module', () => {
       expect(typeInfo.type_name).toBe("null");
       expect(typeInfo.certainty).toBe("inferred");
       expect(typeInfo.source.kind).toBe("literal");
-      expect(typeInfo.id).toBe(primitive_type_id("null"));
+      expect(typeInfo.type_name).toBe("null");
     });
 
     it('should create TypeInfo for undefined literal', () => {
@@ -272,7 +250,7 @@ describe('Type Info Module', () => {
       expect(typeInfo.type_name).toBe("undefined");
       expect(typeInfo.certainty).toBe("inferred");
       expect(typeInfo.source.kind).toBe("literal");
-      expect(typeInfo.id).toBe(primitive_type_id("undefined"));
+      expect(typeInfo.type_name).toBe("undefined");
     });
 
     it('should create TypeInfo for unknown literal values', () => {
@@ -282,7 +260,7 @@ describe('Type Info Module', () => {
       expect(typeInfo.type_name).toBe("unknown");
       expect(typeInfo.certainty).toBe("inferred");
       expect(typeInfo.source.kind).toBe("literal");
-      expect(typeInfo.id).toBe(UNKNOWN_TYPE);
+      expect(typeInfo.type_name).toBe("unknown");
     });
   });
 
@@ -298,7 +276,7 @@ describe('Type Info Module', () => {
       expect(arrayType.is_array).toBe(true);
       expect(arrayType.type_params).toHaveLength(1);
       expect(arrayType.type_params![0]).toBe(elementType);
-      expect(arrayType.id).toBe(array_type_id(elementType.id));
+      expect(arrayType.type_name).toBe("Array");
     });
 
     it('should inherit certainty from element type', () => {
@@ -333,8 +311,7 @@ describe('Type Info Module', () => {
       expect(unionType.union_members![0]).toBe(stringType);
       expect(unionType.union_members![1]).toBe(numberType);
 
-      const expectedId = union_type_id([stringType.id, numberType.id]);
-      expect(unionType.id).toBe(expectedId);
+      expect(unionType.type_name).toBe("string | number");
     });
 
     it('should handle mixed certainty in union members', () => {
@@ -386,8 +363,7 @@ describe('Type Info Module', () => {
       expect(genericType.type_params![0]).toBe(stringType);
       expect(genericType.type_params![1]).toBe(numberType);
 
-      const expectedId = generic_type_id(baseType.id, [stringType.id, numberType.id]);
-      expect(genericType.id).toBe(expectedId);
+      expect(genericType.type_name).toBe("Map<string, number>");
     });
 
     it('should handle single type parameter', () => {
@@ -519,7 +495,6 @@ describe('Type Info Module', () => {
 
     it('should handle nullable type assignments', () => {
       const nullableString: TypeInfo = {
-        id: primitive_type_id("string"),
         type_name: "string" as SymbolName,
         certainty: "declared",
         source: { kind: "annotation", location: mockLocation },
@@ -527,7 +502,6 @@ describe('Type Info Module', () => {
       };
 
       const nonNullableString: TypeInfo = {
-        id: primitive_type_id("string"),
         type_name: "string" as SymbolName,
         certainty: "declared",
         source: { kind: "annotation", location: mockLocation },
@@ -752,7 +726,7 @@ describe('Type Info Module', () => {
       const type2 = type_info_from_annotation("TestType" as SymbolName, mockLocation);
       const type3 = type_info_from_annotation("DifferentType" as SymbolName, mockLocation);
 
-      // Same type names should be equal (same TypeId)
+      // Same type names should be equal
       expect(types_equal(type1, type2)).toBe(true);
       expect(types_equal(type1, type3)).toBe(false);
 

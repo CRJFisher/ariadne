@@ -7,19 +7,12 @@ import type {
   Location,
   FilePath,
   LocationKey,
-  TypeId,
   SymbolName,
   ScopeId,
   LexicalScope,
 } from "@ariadnejs/types";
 import {
   location_key,
-  primitive_type_id,
-  builtin_type_id,
-  defined_type_id,
-  TypeCategory,
-  ANY_TYPE,
-  UNKNOWN_TYPE,
 } from "@ariadnejs/types";
 import type { NormalizedCapture } from "../../capture_types";
 import { SemanticEntity, SemanticCategory } from "../../capture_types";
@@ -37,28 +30,6 @@ import {
   connect_return_type,
   connect_type_annotation,
 } from "./type_tracking";
-
-// Helper function to generate TypeId for tests
-function generateTypeId(name: SymbolName, location: Location): TypeId {
-  // Check for primitives
-  if (["string", "number", "boolean", "symbol", "bigint", "undefined", "null"].includes(name)) {
-    return primitive_type_id(name as any);
-  }
-  // Check for built-in types
-  else if (["Date", "RegExp", "Error", "Promise", "Map", "Set", "Array", "Object", "Function"].includes(name)) {
-    return builtin_type_id(name as any);
-  }
-  // Check for special types
-  else if (name === "any") {
-    return ANY_TYPE;
-  } else if (name === "unknown") {
-    return UNKNOWN_TYPE;
-  }
-  // User-defined type
-  else {
-    return defined_type_id(TypeCategory.INTERFACE, name, location);
-  }
-}
 
 describe("Type Tracking", () => {
   const mockFilePath = "test.ts" as FilePath;
@@ -93,7 +64,6 @@ describe("Type Tracking", () => {
   describe("TypeInfo Interface", () => {
     it("should define correct structure with required fields", () => {
       const typeInfo: TypeInfo = {
-        id: generateTypeId("string" as SymbolName, mockLocation),
         type_name: "string" as SymbolName,
         certainty: "declared",
         source: {
@@ -113,7 +83,6 @@ describe("Type Tracking", () => {
 
       for (const certainty of certaintyLevels) {
         const typeInfo: TypeInfo = {
-          id: generateTypeId("test" as SymbolName, mockLocation),
           type_name: "test" as SymbolName,
           certainty,
           source: {
@@ -128,14 +97,12 @@ describe("Type Tracking", () => {
 
     it("should support optional fields", () => {
       const stringType: TypeInfo = {
-        id: generateTypeId("string" as SymbolName, mockLocation),
         type_name: "string" as SymbolName,
         certainty: "declared",
         source: { kind: "annotation", location: mockLocation },
       };
 
       const fullTypeInfo: TypeInfo = {
-        id: generateTypeId("ComplexType" as SymbolName, mockLocation),
         type_name: "ComplexType" as SymbolName,
         certainty: "declared",
         source: {
@@ -147,7 +114,7 @@ describe("Type Tracking", () => {
         is_array: false,
       };
 
-      expect(fullTypeInfo.id).toBeDefined();
+      expect(fullTypeInfo.type_name).toBeDefined();
       expect(fullTypeInfo.type_params).toHaveLength(1);
       expect(fullTypeInfo.is_nullable).toBe(true);
       expect(fullTypeInfo.is_array).toBe(false);
@@ -200,13 +167,11 @@ describe("Type Tracking", () => {
           end_column: 15,
         },
         source_type: {
-          id: generateTypeId("string" as SymbolName, mockLocation),
           type_name: "string" as SymbolName,
           certainty: "inferred",
           source: { kind: "literal", location: mockLocation },
         },
         previous_type: {
-          id: generateTypeId("unknown" as SymbolName, mockLocation),
           type_name: "unknown" as SymbolName,
           certainty: "ambiguous",
           source: { kind: "assignment", location: mockLocation },
@@ -241,7 +206,6 @@ describe("Type Tracking", () => {
         location: mockLocation,
         function_scope_id: mockScope.id,
         returned_type: {
-          id: generateTypeId("number" as SymbolName, mockLocation),
           type_name: "number" as SymbolName,
           certainty: "inferred",
           source: { kind: "return", location: mockLocation },
@@ -970,7 +934,6 @@ describe("Type Tracking", () => {
       const constraint: TypeConstraint = {
         kind: "narrowing",
         target_type: {
-          id: generateTypeId("string" as SymbolName, mockLocation),
           type_name: "string" as SymbolName,
           certainty: "declared",
           source: { kind: "annotation", location: mockLocation },
@@ -980,7 +943,6 @@ describe("Type Tracking", () => {
 
       const context: TypedReferenceContext = {
         inferred_type: {
-          id: generateTypeId("any" as SymbolName, mockLocation),
           type_name: "any" as SymbolName,
           certainty: "ambiguous",
           source: { kind: "assignment", location: mockLocation },
@@ -995,13 +957,11 @@ describe("Type Tracking", () => {
           function_scope_id: mockScope.id,
         },
         receiver_type: {
-          id: generateTypeId("MyClass" as SymbolName, mockLocation),
           type_name: "MyClass" as SymbolName,
           certainty: "declared",
           source: { kind: "annotation", location: mockLocation },
         },
         property_type: {
-          id: generateTypeId("number" as SymbolName, mockLocation),
           type_name: "number" as SymbolName,
           certainty: "inferred",
           source: { kind: "assignment", location: mockLocation },
@@ -1038,8 +998,7 @@ describe("Type Tracking", () => {
         const constraint: TypeConstraint = {
           kind,
           target_type: {
-            id: generateTypeId("string" as SymbolName, mockLocation),
-            type_name: "string" as SymbolName,
+              type_name: "string" as SymbolName,
             certainty: "declared",
             source: { kind: "annotation", location: mockLocation },
           },
@@ -1056,7 +1015,6 @@ describe("Type Tracking", () => {
       const constraint: TypeConstraint = {
         kind: "cast",
         target_type: {
-          id: generateTypeId("number" as SymbolName, mockLocation),
           type_name: "number" as SymbolName,
           certainty: "declared",
           source: { kind: "annotation", location: mockLocation },
@@ -1156,7 +1114,6 @@ describe("Type Tracking", () => {
     describe("Success Cases", () => {
       it("should connect location to type annotation", () => {
         const typeInfo: TypeInfo = {
-          id: generateTypeId("string" as SymbolName, mockLocation),
           type_name: "string" as SymbolName,
           certainty: "declared",
           source: { kind: "annotation", location: mockLocation },
@@ -1756,7 +1713,7 @@ describe("Type Tracking", () => {
       });
     });
 
-    describe("generate_type_id edge cases", () => {
+    describe("type inference edge cases", () => {
       it("should handle type annotation map with all type categories", () => {
         const allTypeCaptures: NormalizedCapture[] = [
           // Primitive types
