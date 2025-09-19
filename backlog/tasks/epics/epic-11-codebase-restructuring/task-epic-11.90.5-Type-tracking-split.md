@@ -11,12 +11,14 @@
 ## Objective
 
 Split the `semantic_index/references/type_tracking` module into:
+
 1. **Local extraction** (stays in semantic_index): Extract type annotation syntax only
 2. **Resolution** (moves to symbol_resolution): Resolve type references to TypeIds
 
 ## Background
 
 The type_tracking module currently attempts to:
+
 - Create TypeInfo objects with resolution
 - Track variable types through imports
 - Resolve type annotations to actual types
@@ -139,6 +141,7 @@ export function extract_type_tracking(
 ### 2. Remove Resolution Logic
 
 Delete these functions from type_tracking:
+
 - `resolve_type_annotation()` - Attempts to resolve types
 - `create_type_info()` - Creates resolved TypeInfo
 - `track_variable_type()` - Tracks resolved types
@@ -195,7 +198,11 @@ export function resolve_type_tracking(
       );
 
       if (type_id) {
-        const symbol_id = variable_symbol(annotation.name, file_path, annotation.location);
+        const symbol_id = variable_symbol(
+          annotation.name,
+          file_path,
+          annotation.location
+        );
         variable_types.set(symbol_id, type_id);
         expression_types.set(annotation.location, type_id);
       }
@@ -215,7 +222,11 @@ export function resolve_type_tracking(
         );
 
         if (inferred_type) {
-          const symbol_id = variable_symbol(declaration.name, file_path, declaration.location);
+          const symbol_id = variable_symbol(
+            declaration.name,
+            file_path,
+            declaration.location
+          );
           variable_types.set(symbol_id, inferred_type);
         }
       }
@@ -225,12 +236,7 @@ export function resolve_type_tracking(
   // Phase 3: Track type flow through assignments
   for (const [file_path, tracking] of local_tracking) {
     for (const assignment of tracking.assignments) {
-      track_assignment_flow(
-        assignment,
-        file_path,
-        variable_types,
-        type_flows
-      );
+      track_assignment_flow(assignment, file_path, variable_types, type_flows);
     }
   }
 
@@ -250,11 +256,22 @@ function resolve_annotation_to_type(
   const parsed = parse_type_annotation(annotation);
 
   // Resolve base type
-  const base_type = resolve_type_reference(parsed.base, file_path, imports, registry);
+  const base_type = resolve_type_reference(
+    parsed.base,
+    file_path,
+    imports,
+    registry
+  );
 
   // Handle generics if present
   if (parsed.generics) {
-    return resolve_generic_type(base_type, parsed.generics, file_path, imports, registry);
+    return resolve_generic_type(
+      base_type,
+      parsed.generics,
+      file_path,
+      imports,
+      registry
+    );
   }
 
   return base_type;
@@ -297,7 +314,12 @@ describe("resolve_type_tracking", () => {
     const imports = create_resolved_imports();
     const registry = create_type_registry();
 
-    const resolved = resolve_type_tracking(local_tracking, imports, registry, functions);
+    const resolved = resolve_type_tracking(
+      local_tracking,
+      imports,
+      registry,
+      functions
+    );
 
     // Should have resolved TypeIds
     const x_type = resolved.variable_types.get(variable_symbol("x"));
@@ -328,14 +350,17 @@ describe("resolve_type_tracking", () => {
 ## Risks and Mitigations
 
 ### Risk 1: Breaking Variable Type Tracking
+
 **Mitigation**: Keep both implementations temporarily, switch gradually
 
 ### Risk 2: Complex Type Inference
+
 **Mitigation**: Start with simple cases, add complexity incrementally
 
 ## Next Steps
 
 After this task:
+
 - Phase 6: Type flow references split
 - Phase 8: Integration testing
 

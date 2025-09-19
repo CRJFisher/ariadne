@@ -15,6 +15,7 @@ Move the entire `semantic_index/type_resolution` module to `symbol_resolution/ty
 ## Background
 
 The type_resolution module currently violates architectural principles by:
+
 1. Attempting to resolve type references across files
 2. Creating TypeInfo with resolution logic
 3. Tracking type relationships before imports are resolved
@@ -73,7 +74,11 @@ export function resolve_all_types(
   const registry = build_type_registry(local_types, imports);
   const hierarchy = build_type_hierarchy(registry, imports);
   const members = resolve_all_members(registry, hierarchy, local_types);
-  const annotations = resolve_type_annotations(local_types.type_annotations, registry, imports);
+  const annotations = resolve_type_annotations(
+    local_types.type_annotations,
+    registry,
+    imports
+  );
   const flows = track_type_flows(local_types.type_flows, functions, registry);
 
   return {
@@ -190,7 +195,12 @@ describe("resolve_all_types", () => {
     const imports = create_mock_resolved_imports();
     const functions = create_mock_resolved_functions();
 
-    const resolved = resolve_all_types(local_types, imports, functions, indices);
+    const resolved = resolve_all_types(
+      local_types,
+      imports,
+      functions,
+      indices
+    );
 
     // Should have resolved TypeIds
     expect(resolved.type_registry.types.size).toBeGreaterThan(0);
@@ -202,7 +212,12 @@ describe("resolve_all_types", () => {
 
   it("should build correct inheritance hierarchy", () => {
     // Test that inheritance is resolved after imports
-    const resolved = resolve_all_types(local_types, imports, functions, indices);
+    const resolved = resolve_all_types(
+      local_types,
+      imports,
+      functions,
+      indices
+    );
 
     const child_hierarchy = resolved.type_hierarchy.get(child_type_id);
     expect(child_hierarchy?.base_types).toContain(parent_type_id);
@@ -249,17 +264,21 @@ describe("Phase 3 Integration", () => {
 ## Risks and Mitigations
 
 ### Risk 1: Complex Module Dependencies
+
 **Mitigation**: Move module incrementally, keeping both versions temporarily
 
 ### Risk 2: Breaking Type Resolution
+
 **Mitigation**: Comprehensive test coverage before switching
 
 ### Risk 3: Performance Impact
+
 **Mitigation**: Benchmark before/after, optimize if needed
 
 ## Next Steps
 
 After this task:
+
 - Type tracking split (Phase 5)
 - Type flow references split (Phase 6)
 - Integration testing (Phase 8)
@@ -267,6 +286,7 @@ After this task:
 ## Notes
 
 This migration is essential for correct type resolution. The module can only work properly when it has access to:
+
 - Resolved import paths and locations
 - Complete type registry with TypeIds
 - Cross-file type definitions

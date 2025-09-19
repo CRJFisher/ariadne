@@ -14,6 +14,7 @@ Simplify the `semantic_index/references/type_annotation_references` module to ex
 ## Current Problem
 
 The module currently attempts to:
+
 1. Create TypeInfo objects with resolution
 2. Build type hierarchies (requires resolving imported base types)
 3. Resolve generic type parameters and constraints
@@ -37,16 +38,16 @@ export interface LocalTypeAnnotation {
   readonly location: Location;
 
   /** Raw annotation text as written in code */
-  readonly annotation_text: string;  // "string", "Foo<Bar>", "A | B", etc.
+  readonly annotation_text: string; // "string", "Foo<Bar>", "A | B", etc.
 
   /** What this annotation is for */
   readonly annotation_kind:
-    | "variable"      // let x: string
-    | "parameter"     // (x: string) =>
-    | "return"        // (): string =>
-    | "property"      // { prop: string }
-    | "generic"       // <T extends Foo>
-    | "cast";         // x as string
+    | "variable" // let x: string
+    | "parameter" // (x: string) =>
+    | "return" // (): string =>
+    | "property" // { prop: string }
+    | "generic" // <T extends Foo>
+    | "cast"; // x as string
 
   /** Containing scope */
   readonly scope_id: ScopeId;
@@ -55,7 +56,7 @@ export interface LocalTypeAnnotation {
   readonly is_optional?: boolean;
 
   /** For generics: constraint text (unresolved) */
-  readonly constraint_text?: string;  // "extends Foo", "implements Bar"
+  readonly constraint_text?: string; // "extends Foo", "implements Bar"
 
   /** What this annotation applies to */
   readonly annotates_location: Location;
@@ -87,12 +88,13 @@ export function process_type_annotations(
     // Just extract syntax, don't resolve
     annotations.push({
       location: capture.node_location,
-      annotation_text: capture.text,  // Raw text
+      annotation_text: capture.text, // Raw text
       annotation_kind: determine_annotation_kind(capture),
       scope_id: scope.id,
       is_optional: capture.modifiers?.is_optional,
       constraint_text: extract_constraint_text(capture),
-      annotates_location: capture.context?.target_location || capture.node_location,
+      annotates_location:
+        capture.context?.target_location || capture.node_location,
     });
   }
 
@@ -103,6 +105,7 @@ export function process_type_annotations(
 ### 3. Remove These Functions Entirely
 
 Delete all resolution-related functions:
+
 - `create_type_annotation_reference()` - Creates TypeInfo
 - `build_type_hierarchy()` - Needs import resolution
 - `find_generic_parameters()` - Resolves generic constraints
@@ -113,6 +116,7 @@ Delete all resolution-related functions:
 ### 4. Simplify Helper Functions
 
 Keep only syntax extraction helpers:
+
 ```typescript
 // KEEP: Just determines syntax kind
 function determine_annotation_kind(capture: NormalizedCapture): AnnotationKind {
@@ -120,7 +124,9 @@ function determine_annotation_kind(capture: NormalizedCapture): AnnotationKind {
 }
 
 // KEEP: Extracts raw constraint text
-function extract_constraint_text(capture: NormalizedCapture): string | undefined {
+function extract_constraint_text(
+  capture: NormalizedCapture
+): string | undefined {
   // Just extract "extends Foo", don't resolve Foo
 }
 
@@ -184,6 +190,7 @@ describe("process_type_annotations", () => {
 ## Notes
 
 This is a critical simplification that enforces the architectural boundary. The full annotation resolution will be implemented in `symbol_resolution/type_resolution/resolve_annotations.ts` where it has access to:
+
 - Resolved imports
 - TypeId generation capability
 - Complete type registry

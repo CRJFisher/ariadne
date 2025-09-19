@@ -11,12 +11,14 @@
 ## Objective
 
 Split the `semantic_index/references/type_flow_references` module into:
+
 1. **Assignment tracking** (stays in semantic_index): Track assignment patterns only
 2. **Type flow analysis** (moves to symbol_resolution): Resolve types through assignments
 
 ## Background
 
 The type_flow_references module currently attempts to:
+
 - Resolve constructor types before classes are resolved
 - Track types through function returns (needs resolved signatures)
 - Build type propagation graphs
@@ -116,7 +118,11 @@ export interface LocalCallAssignment {
 
 export type FlowSource =
   | { kind: "variable"; name: SymbolName }
-  | { kind: "literal"; value: string; literal_type: "string" | "number" | "boolean" }
+  | {
+      kind: "literal";
+      value: string;
+      literal_type: "string" | "number" | "boolean";
+    }
   | { kind: "constructor"; class_name: SymbolName }
   | { kind: "function_call"; function_name: SymbolName }
   | { kind: "expression"; text: string };
@@ -170,6 +176,7 @@ export function extract_type_flow(
 ### 2. Remove Resolution Logic
 
 Delete these functions from type_flow_references:
+
 - `resolve_constructor_type()` - Needs resolved class types
 - `propagate_types()` - Requires TypeIds
 - `infer_return_type()` - Needs resolved function signatures
@@ -190,7 +197,11 @@ Create `packages/core/src/symbol_resolution/type_resolution/type_flow.ts`:
 
 import type { TypeId, SymbolId, Location, FilePath } from "@ariadnejs/types";
 import type { LocalTypeFlow } from "../../semantic_index/references/type_flow_references";
-import type { ImportResolutionMap, FunctionResolutionMap, TypeRegistry } from "../types";
+import type {
+  ImportResolutionMap,
+  FunctionResolutionMap,
+  TypeRegistry,
+} from "../types";
 
 export interface ResolvedTypeFlow {
   /** Type flow graph with resolved types */
@@ -262,8 +273,14 @@ export function analyze_type_flow(
           inferred_types.set(var_symbol, type_id);
 
           // Add to flow graph
-          const source_node: FlowNode = { kind: "constructor", location: constructor.location };
-          const target_node: FlowNode = { kind: "variable", symbol: var_symbol };
+          const source_node: FlowNode = {
+            kind: "constructor",
+            location: constructor.location,
+          };
+          const target_node: FlowNode = {
+            kind: "variable",
+            symbol: var_symbol,
+          };
           flow_graph.addFlow(source_node, target_node, type_id);
         }
       }
@@ -291,7 +308,10 @@ export function analyze_type_flow(
 
         // Add to flow graph
         const source_node = create_flow_node(assignment.source, file_path);
-        const target_node: FlowNode = { kind: "variable", symbol: target_symbol };
+        const target_node: FlowNode = {
+          kind: "variable",
+          symbol: target_symbol,
+        };
         flow_graph.addFlow(source_node, target_node, source_type);
       }
     }
@@ -319,7 +339,10 @@ export function analyze_type_flow(
         const existing = return_types.get(func_symbol);
         if (existing && existing !== return_type) {
           // Handle union types
-          return_types.set(func_symbol, create_union_type(existing, return_type));
+          return_types.set(
+            func_symbol,
+            create_union_type(existing, return_type)
+          );
         } else {
           return_types.set(func_symbol, return_type);
         }
@@ -445,20 +468,24 @@ describe("analyze_type_flow", () => {
 ## Risks and Mitigations
 
 ### Risk 1: Complex Flow Analysis
+
 **Mitigation**: Start with simple direct flows, add complexity gradually
 
 ### Risk 2: Performance with Large Graphs
+
 **Mitigation**: Implement incremental propagation, cache results
 
 ## Next Steps
 
 After this task:
+
 - Phase 7: Type annotation references split (already documented)
 - Phase 8: Integration testing
 
 ## Notes
 
 Type flow analysis is one of the most complex parts of type resolution. It requires:
+
 - Resolved constructor-to-type mappings
 - Resolved function return types
 - Complete type registry

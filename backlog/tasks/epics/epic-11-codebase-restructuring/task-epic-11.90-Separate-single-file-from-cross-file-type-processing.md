@@ -72,14 +72,18 @@ symbol_resolution/
 ## Subtasks
 
 ### Phase 1: Prepare Infrastructure
+
 **Task ID**: task-epic-11.90.1
+
 - Create `symbol_resolution/type_resolution/` directory structure
 - Define interfaces for local vs resolved type information
 - Create type resolution test fixtures
 - Set up module exports and imports
 
 ### Phase 2: Type Members Module Split
+
 **Task ID**: task-epic-11.90.2
+
 - Simplify `type_members` to extract only direct members
 - Remove inheritance resolution from `type_members`
 - Create `symbol_resolution/type_resolution/resolve_members.ts`
@@ -87,7 +91,9 @@ symbol_resolution/
 - Update type_members tests for local-only extraction
 
 ### Phase 3: Type Registry Migration
+
 **Task ID**: task-epic-11.90.3
+
 - Move type_registry to symbol_resolution
 - Remove TypeId generation from semantic_index
 - Implement TypeId generation in Phase 3
@@ -95,28 +101,36 @@ symbol_resolution/
 - Create global type registry tests
 
 ### Phase 4: Type Resolution Migration
+
 **Task ID**: task-epic-11.90.4
+
 - Move type_resolution module to symbol_resolution
 - Integrate with Phase 3 pipeline
 - Remove type_resolution from semantic_index
 - Update all imports and dependencies
 
 ### Phase 5: Type Tracking Split
+
 **Task ID**: task-epic-11.90.5
+
 - Simplify type_tracking to annotation extraction only
 - Remove TypeInfo resolution logic
 - Create annotation resolution in symbol_resolution
 - Update type_tracking tests
 
 ### Phase 6: Type Flow References Split
+
 **Task ID**: task-epic-11.90.6
+
 - Simplify type_flow to assignment tracking only
 - Remove constructor type resolution
 - Create type flow analysis in symbol_resolution
 - Update type_flow tests
 
 ### Phase 7: Type Annotation References Split
+
 **Task ID**: task-epic-11.90.7
+
 - Simplify type_annotation_references to syntax extraction only
 - Remove TypeInfo creation and hierarchy building
 - Extract generic syntax without resolution
@@ -124,7 +138,9 @@ symbol_resolution/
 - Update type_annotation_references tests
 
 ### Phase 8: Integration
+
 **Task ID**: task-epic-11.90.8
+
 - Wire type resolution into symbol_resolution Phase 3
 - Update SemanticIndex interface
 - Integration testing across all phases

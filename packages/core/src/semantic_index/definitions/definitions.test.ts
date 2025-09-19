@@ -171,17 +171,12 @@ describe("Definitions Module", () => {
       const result = process_definitions(captures, root_scope, scopes, file_path);
 
       expect(result.symbols.size).toBe(1);
-      expect(result.class_types.size).toBe(1);
-      expect(result.type_symbols.size).toBe(1);
 
       const symbol = Array.from(result.symbols.values())[0];
       expect(symbol.name).toBe("TestClass");
       expect(symbol.kind).toBe("class");
 
-      // Check type mappings
-      const type_id = result.class_types.get(symbol.id);
-      expect(type_id).toBeDefined();
-      expect(result.type_symbols.get(type_id!)).toBe(symbol.id);
+      // Type mappings now happen in symbol_resolution Phase 3
     });
 
     it("should process interface definitions", () => {
@@ -475,8 +470,6 @@ describe("Definitions Module", () => {
 
         expect(result.symbols.size).toBe(0);
         expect(result.file_symbols_by_name.size).toBe(0);
-        expect(result.class_types.size).toBe(0);
-        expect(result.type_symbols.size).toBe(0);
       });
 
       it("should handle missing scope gracefully", () => {
@@ -673,8 +666,7 @@ describe("Definitions Module", () => {
       expect(symbol_kinds.has("method")).toBe(true);
 
       // Check we have type symbols for classes, interfaces, enums
-      expect(result.class_types.size).toBeGreaterThan(0);
-      expect(result.type_symbols.size).toBeGreaterThan(0);
+      // Type mappings now happen in symbol_resolution Phase 3
 
       // Verify file symbols mapping
       expect(result.file_symbols_by_name.has("comprehensive_definitions.ts" as FilePath)).toBe(true);
@@ -885,8 +877,6 @@ describe("Definitions Module", () => {
 
       expect(result.symbols.size).toBe(0);
       expect(result.file_symbols_by_name.size).toBe(0);
-      expect(result.class_types.size).toBe(0);
-      expect(result.type_symbols.size).toBe(0);
     });
 
     it("should handle moderately large files without performance issues", () => {
@@ -1292,14 +1282,12 @@ describe("Definitions Module", () => {
 
       // Verify internal data structures are properly populated
       expect(result.symbols.size).toBe(1);
-      expect(result.class_types.size).toBe(1);
-      expect(result.type_symbols.size).toBe(1);
 
       const class_symbol = Array.from(result.symbols.values())[0];
-      const type_id = result.class_types.get(class_symbol.id);
+      expect(class_symbol).toBeDefined();
+      expect(class_symbol.kind).toBe("class");
 
-      expect(type_id).toBeDefined();
-      expect(result.type_symbols.get(type_id!)).toBe(class_symbol.id);
+      // Type mappings now happen in symbol_resolution Phase 3
     });
   });
 
@@ -1339,13 +1327,22 @@ describe("Definitions Module", () => {
       const result = process_definitions(captures, root_scope, scopes, file_path);
 
       expect(result.symbols.size).toBe(3);
-      expect(result.class_types.size).toBe(3);
-      expect(result.type_symbols.size).toBe(3);
+      // Type mappings now happen in symbol_resolution Phase 3
+      const all_symbols = Array.from(result.symbols.values());
+      expect(all_symbols.length).toBe(3);
 
-      // All type IDs should be unique
-      const type_ids = Array.from(result.class_types.values());
-      const unique_type_ids = new Set(type_ids);
-      expect(unique_type_ids.size).toBe(3);
+      // Check we have one of each kind
+      const classes = all_symbols.filter(s => s.kind === "class");
+      const interfaces = all_symbols.filter(s => s.kind === "interface");
+      const enums = all_symbols.filter(s => s.kind === "enum");
+      expect(classes.length).toBe(1);
+      expect(interfaces.length).toBe(1);
+      expect(enums.length).toBe(1);
+
+      // All symbol IDs should be unique despite same name
+      const symbol_ids = all_symbols.map(s => s.id);
+      const unique_symbol_ids = new Set(symbol_ids);
+      expect(unique_symbol_ids.size).toBe(3);
     });
   });
 

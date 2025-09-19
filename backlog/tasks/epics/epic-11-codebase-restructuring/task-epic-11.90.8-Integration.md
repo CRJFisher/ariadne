@@ -15,6 +15,7 @@ Integrate all the refactored type processing modules into the symbol_resolution 
 ## Background
 
 After completing Phases 1-7, we have:
+
 - Created the type_resolution infrastructure (Phase 1)
 - Split type_members into local/resolved (Phase 2)
 - Moved type_registry to symbol_resolution (Phase 3)
@@ -397,12 +398,14 @@ Update `docs/architecture.md`:
 The type processing system strictly separates single-file extraction from cross-file resolution:
 
 #### Semantic Index (Single-File)
+
 - Extracts type syntax and structure
 - Captures member declarations
 - Records type annotations as text
 - Tracks assignment patterns
 
 #### Symbol Resolution Phase 3 (Cross-File)
+
 - Generates TypeIds with full context
 - Resolves inheritance hierarchies
 - Merges inherited members
@@ -417,23 +420,25 @@ The type processing system strictly separates single-file extraction from cross-
 4. **Type flow needs functions**: Requires Phase 2 function signatures
 
 ### Module Organization
-
 ```
+
 semantic_index/
-├── type_members/           # Extract direct members only
+├── type_members/ # Extract direct members only
 └── references/
-    ├── type_tracking/      # Extract annotations as text
-    ├── type_flow/          # Track assignment patterns
-    └── type_annotations/   # Extract annotation syntax
+├── type_tracking/ # Extract annotations as text
+├── type_flow/ # Track assignment patterns
+└── type_annotations/ # Extract annotation syntax
 
 symbol_resolution/
-└── type_resolution/        # All cross-file type work
-    ├── type_registry.ts    # Global TypeId registry
-    ├── resolve_members.ts  # Full member resolution
-    ├── resolve_annotations.ts # Annotation to TypeId
-    ├── type_flow.ts        # Type propagation
-    └── inheritance.ts      # Hierarchy resolution
+└── type_resolution/ # All cross-file type work
+├── type_registry.ts # Global TypeId registry
+├── resolve_members.ts # Full member resolution
+├── resolve_annotations.ts # Annotation to TypeId
+├── type_flow.ts # Type propagation
+└── inheritance.ts # Hierarchy resolution
+
 ```
+
 ```
 
 ## Success Criteria
@@ -455,32 +460,39 @@ symbol_resolution/
 ## Testing Strategy
 
 ### Unit Tests
+
 - Each module tested in isolation
 - Mock data for dependencies
 
 ### Integration Tests
+
 - Full pipeline testing
 - Multi-file projects
 - Complex inheritance scenarios
 
 ### Performance Tests
+
 - Benchmark against old implementation
 - Large project testing
 - Memory usage monitoring
 
 ### Regression Tests
+
 - Ensure existing functionality preserved
 - Test migration paths
 
 ## Risks and Mitigations
 
 ### Risk 1: Breaking Changes
+
 **Mitigation**: Provide migration script, maintain backward compatibility temporarily
 
 ### Risk 2: Performance Regression
+
 **Mitigation**: Benchmark throughout, optimize hot paths
 
 ### Risk 3: Incomplete Migration
+
 **Mitigation**: Comprehensive test coverage, gradual rollout
 
 ## Notes
@@ -493,6 +505,7 @@ This integration phase is critical for validating the entire refactoring effort.
 4. **Usability**: Provide clear migration path
 
 The success of this refactoring enables:
+
 - Parallel semantic indexing (huge performance win)
 - Accurate cross-file type resolution
 - Better incremental compilation
