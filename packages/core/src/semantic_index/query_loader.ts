@@ -1,27 +1,31 @@
-import { readFileSync, existsSync } from 'fs';
-import { join, dirname, resolve } from 'path';
-import { fileURLToPath } from 'url';
-import type { Language } from '@ariadnejs/types';
-import JavaScript from 'tree-sitter-javascript';
-import Python from 'tree-sitter-python';
-import Rust from 'tree-sitter-rust';
-import TypeScript from 'tree-sitter-typescript';
-import { Query } from 'tree-sitter';
+import { readFileSync, existsSync } from "fs";
+import { join, dirname } from "path";
+import type { Language } from "@ariadnejs/types";
+import JavaScript from "tree-sitter-javascript";
+import Python from "tree-sitter-python";
+import Rust from "tree-sitter-rust";
+import TypeScript from "tree-sitter-typescript";
+import { Query } from "tree-sitter";
 
 /**
  * Language to tree-sitter parser mapping
  */
 export const LANGUAGE_TO_TREESITTER_LANG = new Map([
-  ['javascript', JavaScript],
-  ['typescript', TypeScript.tsx],
-  ['python', Python],
-  ['rust', Rust],
+  ["javascript", JavaScript],
+  ["typescript", TypeScript.tsx],
+  ["python", Python],
+  ["rust", Rust],
 ]);
 
 /**
  * Supported languages (derived from the Language type)
  */
-export const SUPPORTED_LANGUAGES: readonly Language[] = ['javascript', 'typescript', 'python', 'rust'] as const;
+export const SUPPORTED_LANGUAGES: readonly Language[] = [
+  "javascript",
+  "typescript",
+  "python",
+  "rust",
+] as const;
 
 /**
  * Query cache for performance
@@ -29,19 +33,84 @@ export const SUPPORTED_LANGUAGES: readonly Language[] = ['javascript', 'typescri
 const query_cache = new Map<Language, string>();
 
 /**
+ * Cache for the queries directory path (computed once per process)
+ */
+let cached_queries_dir: string | null = null;
+
+/**
  * Get the queries directory path (robust across different environments)
  */
 function get_queries_dir(): string {
-  // Try multiple methods to find the queries directory
-  const current_file = typeof __filename !== 'undefined' ? __filename :
-                     typeof import.meta !== 'undefined' && import.meta.url ?
-                     fileURLToPath(import.meta.url) : __filename;
-
-  if (!current_file) {
-    throw new Error('Unable to determine current file location for query loading');
+  // Return cached result if available
+  if (cached_queries_dir !== null) {
+    return cached_queries_dir;
   }
 
-  return join(dirname(current_file), 'queries');
+  // Strategy: Try multiple approaches to find the queries directory
+  // This handles development, CI, production, and bundled environments
+
+  const possible_paths = [
+    // 1. Standard CommonJS approach (works in most cases)
+    join(dirname(__filename), "queries"),
+
+    // 2. From package root (for cases where __filename is in a different structure)
+    join(__dirname, "queries"),
+
+    // 3. Relative to current working directory (fallback for some CI environments)
+    join(
+      process.cwd(),
+      "packages",
+      "core",
+      "dist",
+      "semantic_index",
+      "queries"
+    ),
+    join(process.cwd(), "packages", "core", "src", "semantic_index", "queries"),
+    join(process.cwd(), "dist", "semantic_index", "queries"),
+    join(process.cwd(), "src", "semantic_index", "queries"),
+
+    // 4. For bundled environments or when installed as a package
+    join(
+      process.cwd(),
+      "node_modules",
+      "@ariadnejs",
+      "core",
+      "dist",
+      "semantic_index",
+      "queries"
+    ),
+  ];
+
+  // Try each path until we find one that exists
+  for (const path of possible_paths) {
+    if (existsSync(path)) {
+      cached_queries_dir = path;
+      return path;
+    }
+  }
+
+  // If all else fails, provide detailed error information for debugging
+  const error_details = possible_paths
+    .map(
+      (path, index) => `  ${index + 1}. ${path} (exists: ${existsSync(path)})`
+    )
+    .join("\n");
+
+  const environment_info = {
+    node_env: process.env.NODE_ENV,
+    cwd: process.cwd(),
+    filename: __filename,
+    dirname: __dirname,
+    argv0: process.argv[0],
+    argv1: process.argv[1],
+    platform: process.platform,
+    arch: process.arch,
+  };
+
+  throw new Error(
+    `Unable to locate queries directory. Tried the following paths:\n${error_details}\n\n` +
+      `Environment information:\n${JSON.stringify(environment_info, null, 2)}`
+  );
 }
 
 /**
@@ -49,11 +118,17 @@ function get_queries_dir(): string {
  */
 function validate_language(language: Language): void {
   if (!SUPPORTED_LANGUAGES.includes(language)) {
-    throw new Error(`Unsupported language: ${language}. Supported languages: ${SUPPORTED_LANGUAGES.join(', ')}`);
+    throw new Error(
+      `Unsupported language: ${language}. Supported languages: ${SUPPORTED_LANGUAGES.join(
+        ", "
+      )}`
+    );
   }
 
   if (!LANGUAGE_TO_TREESITTER_LANG.has(language)) {
-    throw new Error(`No tree-sitter parser available for language: ${language}`);
+    throw new Error(
+      `No tree-sitter parser available for language: ${language}`
+    );
   }
 }
 
@@ -69,7 +144,11 @@ function validate_query_syntax(query_string: string, language: Language): void {
     // Attempt to create the query to validate syntax
     new Query(parser, query_string);
   } catch (error) {
-    throw new Error(`Invalid query syntax for ${language}: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Invalid query syntax for ${language}: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
   }
 }
 
@@ -90,7 +169,7 @@ export function load_query(language: Language): string {
   const query_path = join(queries_dir, `${language}.scm`);
 
   try {
-    const query_string = readFileSync(query_path, 'utf-8');
+    const query_string = readFileSync(query_path, "utf-8");
 
     // Validate query syntax
     validate_query_syntax(query_string, language);
@@ -100,14 +179,19 @@ export function load_query(language: Language): string {
 
     return query_string;
   } catch (error) {
-    if (error instanceof Error && error.message.includes('Invalid query syntax')) {
+    if (
+      error instanceof Error &&
+      error.message.includes("Invalid query syntax")
+    ) {
       // Re-throw validation errors as-is
       throw error;
     }
 
     // File system errors
     const error_msg = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to load semantic index query for language '${language}' from '${query_path}': ${error_msg}`);
+    throw new Error(
+      `Failed to load semantic index query for language '${language}' from '${query_path}': ${error_msg}`
+    );
   }
 }
 
@@ -122,7 +206,10 @@ export function has_query(language: Language): boolean {
     }
 
     // Validate language support (but don't throw)
-    if (!SUPPORTED_LANGUAGES.includes(language) || !LANGUAGE_TO_TREESITTER_LANG.has(language)) {
+    if (
+      !SUPPORTED_LANGUAGES.includes(language) ||
+      !LANGUAGE_TO_TREESITTER_LANG.has(language)
+    ) {
       return false;
     }
 
@@ -144,8 +231,82 @@ export function clear_query_cache(): void {
 }
 
 /**
+ * Clear all caches including path cache (useful for testing different environments)
+ */
+export function clear_all_caches(): void {
+  query_cache.clear();
+  cached_queries_dir = null;
+}
+
+/**
  * Get cache size (useful for monitoring)
  */
 export function get_cache_size(): number {
   return query_cache.size;
+}
+
+/**
+ * Get the current queries directory path (useful for debugging)
+ */
+export function get_current_queries_dir(): string {
+  return get_queries_dir();
+}
+
+/**
+ * Test path resolution without throwing errors (useful for debugging)
+ */
+export function test_path_resolution(): {
+  found_path: string | null;
+  tried_paths: Array<{ path: string; exists: boolean }>;
+  environment_info: Record<string, unknown>;
+} {
+  const possible_paths = [
+    join(dirname(__filename), "queries"),
+    join(__dirname, "queries"),
+    join(
+      process.cwd(),
+      "packages",
+      "core",
+      "dist",
+      "semantic_index",
+      "queries"
+    ),
+    join(process.cwd(), "packages", "core", "src", "semantic_index", "queries"),
+    join(process.cwd(), "dist", "semantic_index", "queries"),
+    join(process.cwd(), "src", "semantic_index", "queries"),
+    join(
+      process.cwd(),
+      "node_modules",
+      "@ariadnejs",
+      "core",
+      "dist",
+      "semantic_index",
+      "queries"
+    ),
+  ];
+
+  const tried_paths = possible_paths.map((path) => ({
+    path,
+    exists: existsSync(path),
+  }));
+
+  const found_path = tried_paths.find((p) => p.exists)?.path || null;
+
+  const environment_info = {
+    node_env: process.env.NODE_ENV,
+    cwd: process.cwd(),
+    filename: __filename,
+    dirname: __dirname,
+    argv0: process.argv[0],
+    argv1: process.argv[1],
+    platform: process.platform,
+    arch: process.arch,
+    cached_queries_dir,
+  };
+
+  return {
+    found_path,
+    tried_paths,
+    environment_info,
+  };
 }
