@@ -190,6 +190,11 @@ export function build_type_annotation_map(
   const map = new Map<LocationKey, TypeInfo>();
 
   for (const capture of type_captures) {
+    // Skip captures with invalid location or text
+    if (!capture?.node_location || !capture?.text) {
+      continue;
+    }
+
     const key = location_key(capture.node_location);
 
     const type_name = capture.text as SymbolName;

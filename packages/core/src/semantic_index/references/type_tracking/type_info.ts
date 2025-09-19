@@ -172,9 +172,41 @@ export function type_info_generic(
  * Note: This is a simple name-based comparison until full resolution
  */
 export function types_equal(a: TypeInfo, b: TypeInfo): boolean {
-  // Simple name comparison for now
-  // Full type equality requires resolved type definitions
-  return a.type_name === b.type_name;
+  // For union types, check members (order-independent)
+  // Do this first before name comparison since union names are order-dependent
+  if (a.union_members || b.union_members) {
+    if (!a.union_members || !b.union_members) return false;
+    if (a.union_members.length !== b.union_members.length) return false;
+    if (a.source.kind !== b.source.kind) return false;
+
+    // Check that every member of a has an equal member in b
+    for (const aMember of a.union_members) {
+      const hasMatch = b.union_members.some(bMember => types_equal(aMember, bMember));
+      if (!hasMatch) return false;
+    }
+    // Check that every member of b has an equal member in a
+    for (const bMember of b.union_members) {
+      const hasMatch = a.union_members.some(aMember => types_equal(aMember, bMember));
+      if (!hasMatch) return false;
+    }
+    return true; // Union types are equal if members match
+  }
+
+  // For non-union types, check name and source kind
+  // This distinguishes between literal types and annotated types
+  if (a.type_name !== b.type_name) return false;
+  if (a.source.kind !== b.source.kind) return false;
+
+  // For generic types, check type parameters
+  if (a.type_params || b.type_params) {
+    if (!a.type_params || !b.type_params) return false;
+    if (a.type_params.length !== b.type_params.length) return false;
+    for (let i = 0; i < a.type_params.length; i++) {
+      if (!types_equal(a.type_params[i], b.type_params[i])) return false;
+    }
+  }
+
+  return true;
 }
 
 /**

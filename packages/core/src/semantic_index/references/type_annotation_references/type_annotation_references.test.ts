@@ -1196,7 +1196,7 @@ describe("Type Annotation References", () => {
       const aliasAnnotation = {
         ...annotations[0],
         declared_type: {
-          type_name: "string" as SymbolName,
+          type_name: "AnotherType" as SymbolName, // Use non-primitive type
           certainty: "declared" as const,
           source: { kind: "annotation" as const, location: mockLocation },
         },
