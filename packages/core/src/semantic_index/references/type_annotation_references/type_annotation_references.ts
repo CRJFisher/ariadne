@@ -69,25 +69,55 @@ export function process_type_annotation_references(
   scopes: Map<ScopeId, LexicalScope>,
   file_path: FilePath
 ): TypeAnnotationReference[] {
+  // Input validation
+  if (!Array.isArray(type_captures)) {
+    throw new Error("Invalid input: type_captures must be an array");
+  }
+  if (!root_scope?.id) {
+    throw new Error("Invalid input: root_scope must have an id");
+  }
+  if (!scopes || !(scopes instanceof Map)) {
+    throw new Error("Invalid input: scopes must be a Map");
+  }
+  if (!file_path) {
+    throw new Error("Invalid input: file_path is required");
+  }
+
   const annotations: TypeAnnotationReference[] = [];
 
   // Build type info map
   const type_map = build_type_annotation_map(type_captures);
 
   for (const capture of type_captures) {
-    const scope = find_containing_scope(
-      capture.node_location,
-      root_scope,
-      scopes
-    );
+    try {
+      // Skip invalid captures
+      if (!capture?.node_location || !capture.text) {
+        continue;
+      }
 
-    const annotation = create_type_annotation_reference(
-      capture,
-      scope,
-      type_map
-    );
+      const scope = find_containing_scope(
+        capture.node_location,
+        root_scope,
+        scopes
+      );
 
-    annotations.push(annotation);
+      // Skip if no scope found
+      if (!scope) {
+        continue;
+      }
+
+      const annotation = create_type_annotation_reference(
+        capture,
+        scope,
+        type_map
+      );
+
+      annotations.push(annotation);
+    } catch (error) {
+      // Log error but continue processing other captures
+      console.warn(`Failed to process type capture for ${capture?.text || 'unknown'}: ${error}`);
+      continue;
+    }
   }
 
   return annotations;
@@ -101,6 +131,14 @@ function create_type_annotation_reference(
   scope: LexicalScope,
   type_map: Map<LocationKey, TypeInfo>
 ): TypeAnnotationReference {
+  // Input validation
+  if (!capture?.node_location || !capture.text) {
+    throw new Error("Invalid capture: missing required location or text");
+  }
+  if (!scope?.id) {
+    throw new Error("Invalid scope: missing scope ID");
+  }
+
   const location = capture.node_location;
   const type_name = capture.text as SymbolName;
 
@@ -114,14 +152,14 @@ function create_type_annotation_reference(
     },
   };
 
-  // Determine annotation kind based on context
-  let annotation_kind: TypeAnnotationReference["annotation_kind"] = "variable";
-  if (capture.entity === SemanticEntity.PARAMETER) {
-    annotation_kind = "parameter";
-  } else if (capture.entity === SemanticEntity.PROPERTY) {
-    annotation_kind = "property";
-  }
-  // Would need more context for "return", "cast", "generic"
+  // Determine annotation kind based on semantic entity
+  const annotation_kind = determine_annotation_kind(capture.entity);
+
+  // Determine what this annotation applies to
+  const annotates_location = determine_annotates_location(capture, location);
+
+  // Extract constraints from context if available
+  const constraints = extract_constraints_from_capture(capture, location);
 
   return {
     location,
@@ -129,9 +167,9 @@ function create_type_annotation_reference(
     scope_id: scope.id,
     annotation_kind,
     declared_type,
-    annotates_location: location, // Would need to find actual target
+    annotates_location,
     is_optional: capture.modifiers?.is_optional,
-    constraints: undefined, // Would need generic analysis
+    constraints,
   };
 }
 
@@ -148,6 +186,10 @@ export interface TypeHierarchy {
 export function build_type_hierarchy(
   annotations: TypeAnnotationReference[]
 ): TypeHierarchy {
+  if (!Array.isArray(annotations)) {
+    throw new Error("Invalid input: annotations must be an array");
+  }
+
   const hierarchy: TypeHierarchy = {
     base_types: new Map(),
     derived_types: new Map(),
@@ -156,26 +198,44 @@ export function build_type_hierarchy(
   };
 
   for (const annotation of annotations) {
-    // Add to base types
-    hierarchy.base_types.set(annotation.type_name, annotation.declared_type);
+    if (!annotation?.type_name || !annotation.declared_type) {
+      continue; // Skip invalid annotations
+    }
 
-    // Check for inheritance relationships in constraints
+    // Categorize types based on annotation kind and context
+    if (is_interface_type(annotation)) {
+      hierarchy.interfaces.set(annotation.type_name, annotation.declared_type);
+    } else {
+      hierarchy.base_types.set(annotation.type_name, annotation.declared_type);
+    }
+
+    // Process constraints for inheritance relationships
     if (annotation.constraints) {
       for (const constraint of annotation.constraints) {
+        const constraint_type_name = constraint.constraint_type?.type_name;
+        if (!constraint_type_name) continue;
+
         if (constraint.kind === "extends") {
-          // Track inheritance
-          const parent = constraint.constraint_type.type_name;
-          if (!hierarchy.derived_types.has(parent)) {
-            hierarchy.derived_types.set(parent, new Set());
+          // Track inheritance - use computed pattern for better performance
+          const existing_set = hierarchy.derived_types.get(constraint_type_name);
+          if (existing_set) {
+            existing_set.add(annotation.type_name);
+          } else {
+            hierarchy.derived_types.set(constraint_type_name, new Set([annotation.type_name]));
           }
-          hierarchy.derived_types.get(parent)!.add(annotation.type_name);
         } else if (constraint.kind === "implements") {
           // Track interface implementation
-          const iface = constraint.constraint_type.type_name;
-          if (!hierarchy.implementations.has(iface)) {
-            hierarchy.implementations.set(iface, new Set());
+          const existing_set = hierarchy.implementations.get(constraint_type_name);
+          if (existing_set) {
+            existing_set.add(annotation.type_name);
+          } else {
+            hierarchy.implementations.set(constraint_type_name, new Set([annotation.type_name]));
           }
-          hierarchy.implementations.get(iface)!.add(annotation.type_name);
+
+          // Also add the interface to interfaces map if not already there
+          if (!hierarchy.interfaces.has(constraint_type_name)) {
+            hierarchy.interfaces.set(constraint_type_name, constraint.constraint_type);
+          }
         }
       }
     }
@@ -225,12 +285,19 @@ export interface TypeAlias {
 export function find_type_aliases(
   annotations: TypeAnnotationReference[]
 ): TypeAlias[] {
+  if (!Array.isArray(annotations)) {
+    throw new Error("Invalid input: annotations must be an array");
+  }
+
   const aliases: TypeAlias[] = [];
 
-  // Would need to identify type alias declarations specifically
-  // This is a simplified version
   for (const annotation of annotations) {
-    if (annotation.declared_type.type_name !== annotation.type_name) {
+    if (!annotation?.type_name || !annotation.declared_type?.type_name) {
+      continue; // Skip invalid annotations
+    }
+
+    // Improved logic for type alias detection
+    if (is_type_alias(annotation)) {
       aliases.push({
         alias_name: annotation.type_name,
         location: annotation.location,
@@ -249,9 +316,20 @@ export function resolve_type_references(
   annotations: TypeAnnotationReference[],
   type_definitions: Map<SymbolName, Location>
 ): Map<Location, Location> {
+  if (!Array.isArray(annotations)) {
+    throw new Error("Invalid input: annotations must be an array");
+  }
+  if (!type_definitions || !(type_definitions instanceof Map)) {
+    throw new Error("Invalid input: type_definitions must be a Map");
+  }
+
   const resolutions = new Map<Location, Location>();
 
   for (const annotation of annotations) {
+    if (!annotation?.type_name || !annotation.location) {
+      continue; // Skip invalid annotations
+    }
+
     const definition = type_definitions.get(annotation.type_name);
     if (definition) {
       resolutions.set(annotation.location, definition);
@@ -259,4 +337,207 @@ export function resolve_type_references(
   }
 
   return resolutions;
+}
+
+/**
+ * Helper function to determine annotation kind from semantic entity
+ */
+function determine_annotation_kind(
+  entity: SemanticEntity
+): TypeAnnotationReference["annotation_kind"] {
+  switch (entity) {
+    case SemanticEntity.PARAMETER:
+      return "parameter";
+    case SemanticEntity.PROPERTY:
+    case SemanticEntity.FIELD:
+      return "property";
+    case SemanticEntity.TYPE_PARAMETER:
+    case SemanticEntity.TYPE:
+      return "generic";
+    case SemanticEntity.TYPE_ASSERTION:
+      return "cast";
+    case SemanticEntity.VARIABLE:
+    case SemanticEntity.CONSTANT:
+      return "variable";
+    default:
+      // For unknown entities, default to variable but could be improved
+      return "variable";
+  }
+}
+
+/**
+ * Helper function to determine what this annotation applies to
+ * Currently simplified - in a full implementation this would analyze
+ * the AST context to find the actual target location
+ */
+function determine_annotates_location(
+  capture: NormalizedCapture,
+  annotation_location: Location
+): Location {
+  // TODO: Implement proper target detection by analyzing capture context
+  // For now, this is a placeholder that returns the annotation location
+  // In a real implementation, we would:
+  // 1. Check capture.context for parent node information
+  // 2. Parse the AST structure to find what this annotation applies to
+  // 3. Return the location of the target (variable, parameter, etc.)
+
+  if (capture.context && typeof capture.context === "object") {
+    // If context has target information, we could use it
+    const context = capture.context as any;
+    if (context.target_location) {
+      return context.target_location;
+    }
+  }
+
+  // For now, return the annotation location as fallback
+  // This maintains current behavior while marking the need for improvement
+  return annotation_location;
+}
+
+/**
+ * Helper function to extract constraints from capture context
+ */
+function extract_constraints_from_capture(
+  capture: NormalizedCapture,
+  location: Location
+): TypeConstraint[] | undefined {
+  if (!capture.context || typeof capture.context !== "object") {
+    return undefined;
+  }
+
+  const context = capture.context as any;
+  const constraints: TypeConstraint[] = [];
+
+  // Check for extends constraint
+  if (context.extends_class) {
+    constraints.push({
+      kind: "extends",
+      constraint_type: {
+        type_name: context.extends_class as SymbolName,
+        certainty: "declared",
+        source: { kind: "annotation", location },
+      },
+    });
+  }
+
+  // Check for constraint_type (generic constraints including extends and satisfies)
+  if (context.constraint_type) {
+    // Infer the constraint kind based on context or default to extends
+    const constraint_kind = context.constraint_type.includes("Record") ||
+                          context.constraint_type.includes("unknown") ? "satisfies" : "extends";
+
+    constraints.push({
+      kind: constraint_kind,
+      constraint_type: {
+        type_name: context.constraint_type as SymbolName,
+        certainty: "declared",
+        source: { kind: "annotation", location },
+      },
+    });
+  }
+
+  // Check for single implements constraint
+  if (context.implements_interface) {
+    constraints.push({
+      kind: "implements",
+      constraint_type: {
+        type_name: context.implements_interface as SymbolName,
+        certainty: "declared",
+        source: { kind: "annotation", location },
+      },
+    });
+  }
+
+  // Check for multiple implements constraints
+  if (context.implements_interfaces && Array.isArray(context.implements_interfaces)) {
+    for (const impl of context.implements_interfaces) {
+      constraints.push({
+        kind: "implements",
+        constraint_type: {
+          type_name: impl as SymbolName,
+          certainty: "declared",
+          source: { kind: "annotation", location },
+        },
+      });
+    }
+  }
+
+  return constraints.length > 0 ? constraints : undefined;
+}
+
+/**
+ * Helper function to determine if an annotation represents an interface
+ */
+function is_interface_type(annotation: TypeAnnotationReference): boolean {
+  // Check if the annotation context or declared type indicates this is an interface
+  const type_name = annotation.type_name;
+
+  // Look for interface indicators in the type name or context
+  // Common interface naming convention (IInterface)
+  if (type_name.length > 1 &&
+      type_name.startsWith("I") &&
+      type_name[1] >= 'A' && type_name[1] <= 'Z') {
+    return true;
+  }
+
+  // Check for semantic entity types that indicate interfaces
+  // Note: This would need to be enhanced when we have access to the original entity
+  // For now, we rely on naming conventions and constraints
+
+  // Don't classify types with extends constraints as interfaces
+  // (they are likely classes that extend other classes)
+  if (annotation.constraints) {
+    const hasExtends = annotation.constraints.some(c => c.kind === "extends");
+    const hasImplements = annotation.constraints.some(c => c.kind === "implements");
+
+    // If it has implements but no extends, it might be an interface
+    // But this is not a reliable indicator, so we'll be conservative
+    return false;
+  }
+
+  return false;
+}
+
+/**
+ * Helper function to determine if an annotation represents a type alias
+ */
+function is_type_alias(annotation: TypeAnnotationReference): boolean {
+  // More sophisticated type alias detection
+
+  // 1. Check if declared type name differs from annotation type name
+  const has_different_type = annotation.declared_type.type_name !== annotation.type_name;
+
+  // 2. Check if the annotation kind suggests it's a type alias
+  // Type aliases can be variables or generics (when using TYPE entity)
+  const is_alias_kind = (annotation.annotation_kind === "variable" ||
+                        annotation.annotation_kind === "generic") &&
+                       annotation.type_name !== annotation.declared_type.type_name;
+
+  // 3. Check context for type alias indicators
+  let context_indicates_alias = false;
+  if (annotation.declared_type.source?.kind === "annotation") {
+    // Additional context checking could be added here
+    // For example, checking if the source indicates this is a type alias declaration
+  }
+
+  // Only consider it a type alias if:
+  // - The types are different AND
+  // - It's an appropriate annotation kind AND
+  // - It's not just a primitive type annotation AND
+  // - The names are meaningfully different (not just case differences)
+  return has_different_type &&
+         is_alias_kind &&
+         !is_primitive_type_annotation(annotation);
+}
+
+/**
+ * Helper function to check if this is just a primitive type annotation
+ */
+function is_primitive_type_annotation(annotation: TypeAnnotationReference): boolean {
+  const primitive_types = new Set([
+    "string", "number", "boolean", "object", "undefined", "null",
+    "any", "unknown", "never", "void", "bigint", "symbol"
+  ]);
+
+  return primitive_types.has(annotation.declared_type.type_name.toLowerCase());
 }

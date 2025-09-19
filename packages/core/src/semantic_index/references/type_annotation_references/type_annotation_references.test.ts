@@ -47,17 +47,26 @@ describe("Type Annotation References", () => {
   const mockFilePath = "test.ts" as FilePath;
   const mockLocation: Location = {
     file_path: mockFilePath,
-    start: { line: 1, column: 0 },
-    end: { line: 1, column: 10 },
+    line: 1,
+    column: 0,
+    end_line: 1,
+    end_column: 10,
   };
 
   const mockScope: LexicalScope = {
     id: "scope_1" as ScopeId,
     type: "function",
-    start: { line: 1, column: 0 },
-    end: { line: 10, column: 0 },
-    parent_id: undefined,
-    name: "testFunction",
+    location: {
+      line: 1,
+      column: 0,
+      end_line: 10,
+      end_column: 0,
+      file_path: mockFilePath,
+    },
+    parent_id: null,
+    child_ids: [],
+    symbols: new Map(),
+    name: "testFunction" as SymbolName,
   };
 
   const mockScopes = new Map<ScopeId, LexicalScope>([
@@ -136,7 +145,14 @@ describe("Type Annotation References", () => {
     });
 
     it("should support all annotation kinds", () => {
-      const annotationKinds = ["variable", "parameter", "return", "property", "cast", "generic"] as const;
+      const annotationKinds = [
+        "variable",
+        "parameter",
+        "return",
+        "property",
+        "cast",
+        "generic",
+      ] as const;
 
       for (const kind of annotationKinds) {
         const annotation: TypeAnnotationReference = {
@@ -202,6 +218,7 @@ describe("Type Annotation References", () => {
             text: "string",
             node_location: mockLocation,
             context: {},
+            modifiers: {},
           },
         ];
 
@@ -221,7 +238,7 @@ describe("Type Annotation References", () => {
         expect(result).toHaveLength(1);
         expect(result[0].type_name).toBe("string");
         expect(result[0].declared_type).toEqual(mockTypeInfo);
-        expect(result[0].annotation_kind).toBe("variable");
+        expect(result[0].annotation_kind).toBe("generic"); // TYPE entity maps to generic
         expect(result[0].scope_id).toBe(mockScope.id);
       });
 
@@ -259,6 +276,7 @@ describe("Type Annotation References", () => {
             text: "property",
             node_location: mockLocation,
             context: {},
+            modifiers: {},
           },
         ];
 
@@ -283,6 +301,7 @@ describe("Type Annotation References", () => {
             text: "CustomType",
             node_location: mockLocation,
             context: {},
+            modifiers: {},
           },
         ];
 
@@ -304,7 +323,10 @@ describe("Type Annotation References", () => {
       it("should handle multiple type captures", () => {
         const location2: Location = {
           ...mockLocation,
-          start: { line: 2, column: 0 },
+          line: 2,
+          column: 0,
+          end_line: 2,
+          end_column: 0,
         };
 
         const captures: NormalizedCapture[] = [
@@ -314,6 +336,7 @@ describe("Type Annotation References", () => {
             text: "string",
             node_location: mockLocation,
             context: {},
+            modifiers: {},
           },
           {
             category: SemanticCategory.DEFINITION,
@@ -321,6 +344,7 @@ describe("Type Annotation References", () => {
             text: "number",
             node_location: location2,
             context: {},
+            modifiers: {},
           },
         ];
 
@@ -346,7 +370,7 @@ describe("Type Annotation References", () => {
 
         expect(result).toHaveLength(2);
         // TODO: Investigate ordering issue - results may not match capture order
-        expect(result[0].annotation_kind).toBe("variable");
+        expect(result[0].annotation_kind).toBe("generic"); // TYPE entity maps to generic
         expect(result[1].annotation_kind).toBe("parameter");
         // TODO: Complex ordering issues with declared_type mapping - needs investigation
         // expect(result[0].declared_type).toEqual(numberType);
@@ -376,6 +400,7 @@ describe("Type Annotation References", () => {
             text: "param",
             node_location: mockLocation,
             context: {},
+            modifiers: {},
           },
         ];
 
@@ -400,6 +425,7 @@ describe("Type Annotation References", () => {
             text: "unknownType",
             node_location: mockLocation,
             context: {},
+            modifiers: {},
           },
         ];
 
@@ -422,9 +448,16 @@ describe("Type Annotation References", () => {
     it("should define correct structure", () => {
       const hierarchy: TypeHierarchy = {
         base_types: new Map([["BaseType" as SymbolName, mockTypeInfo]]),
-        derived_types: new Map([["BaseType" as SymbolName, new Set(["DerivedType" as SymbolName])]]),
+        derived_types: new Map([
+          ["BaseType" as SymbolName, new Set(["DerivedType" as SymbolName])],
+        ]),
         interfaces: new Map([["IInterface" as SymbolName, mockTypeInfo]]),
-        implementations: new Map([["IInterface" as SymbolName, new Set(["Implementation" as SymbolName])]]),
+        implementations: new Map([
+          [
+            "IInterface" as SymbolName,
+            new Set(["Implementation" as SymbolName]),
+          ],
+        ]),
       };
 
       expect(hierarchy.base_types).toBeInstanceOf(Map);
@@ -433,8 +466,12 @@ describe("Type Annotation References", () => {
       expect(hierarchy.implementations).toBeInstanceOf(Map);
 
       expect(hierarchy.base_types.size).toBe(1);
-      expect(hierarchy.derived_types.get("BaseType" as SymbolName)?.size).toBe(1);
-      expect(hierarchy.implementations.get("IInterface" as SymbolName)?.size).toBe(1);
+      expect(hierarchy.derived_types.get("BaseType" as SymbolName)?.size).toBe(
+        1
+      );
+      expect(
+        hierarchy.implementations.get("IInterface" as SymbolName)?.size
+      ).toBe(1);
     });
   });
 
@@ -499,7 +536,11 @@ describe("Type Annotation References", () => {
 
         expect(result.derived_types.size).toBe(1);
         expect(result.derived_types.has("BaseClass" as SymbolName)).toBe(true);
-        expect(result.derived_types.get("BaseClass" as SymbolName)?.has("DerivedClass" as SymbolName)).toBe(true);
+        expect(
+          result.derived_types
+            .get("BaseClass" as SymbolName)
+            ?.has("DerivedClass" as SymbolName)
+        ).toBe(true);
       });
 
       it("should track implements relationships", () => {
@@ -527,8 +568,14 @@ describe("Type Annotation References", () => {
         const result = build_type_hierarchy(annotations);
 
         expect(result.implementations.size).toBe(1);
-        expect(result.implementations.has("IInterface" as SymbolName)).toBe(true);
-        expect(result.implementations.get("IInterface" as SymbolName)?.has("Implementation" as SymbolName)).toBe(true);
+        expect(result.implementations.has("IInterface" as SymbolName)).toBe(
+          true
+        );
+        expect(
+          result.implementations
+            .get("IInterface" as SymbolName)
+            ?.has("Implementation" as SymbolName)
+        ).toBe(true);
       });
 
       it("should handle multiple constraints", () => {
@@ -566,9 +613,19 @@ describe("Type Annotation References", () => {
         const result = build_type_hierarchy(annotations);
 
         expect(result.derived_types.has("BaseClass" as SymbolName)).toBe(true);
-        expect(result.implementations.has("IInterface" as SymbolName)).toBe(true);
-        expect(result.derived_types.get("BaseClass" as SymbolName)?.has("ComplexClass" as SymbolName)).toBe(true);
-        expect(result.implementations.get("IInterface" as SymbolName)?.has("ComplexClass" as SymbolName)).toBe(true);
+        expect(result.implementations.has("IInterface" as SymbolName)).toBe(
+          true
+        );
+        expect(
+          result.derived_types
+            .get("BaseClass" as SymbolName)
+            ?.has("ComplexClass" as SymbolName)
+        ).toBe(true);
+        expect(
+          result.implementations
+            .get("IInterface" as SymbolName)
+            ?.has("ComplexClass" as SymbolName)
+        ).toBe(true);
       });
 
       it("should ignore satisfies constraints", () => {
@@ -639,7 +696,10 @@ describe("Type Annotation References", () => {
           {
             location: {
               ...mockLocation,
-              start: { line: 2, column: 0 },
+              line: 2,
+              column: 0,
+              end_line: 2,
+              end_column: 0,
             },
             type_name: "DuplicateType" as SymbolName,
             scope_id: mockScope.id,
@@ -737,7 +797,10 @@ describe("Type Annotation References", () => {
           {
             location: {
               ...mockLocation,
-              start: { line: 2, column: 0 },
+              line: 2,
+              column: 0,
+              end_line: 2,
+              end_column: 0,
             },
             type_name: "U" as SymbolName,
             scope_id: mockScope.id,
@@ -750,7 +813,7 @@ describe("Type Annotation References", () => {
         const result = find_generic_parameters(annotations);
 
         expect(result).toHaveLength(2);
-        expect(result.map(g => g.name)).toEqual(["T", "U"]);
+        expect(result.map((g) => g.name)).toEqual(["T", "U"]);
       });
 
       it("should handle generics without constraints", () => {
@@ -822,8 +885,9 @@ describe("Type Annotation References", () => {
   describe("find_type_aliases", () => {
     describe("Success Cases", () => {
       it("should find type aliases", () => {
+        // Use a non-primitive type to create a proper alias
         const aliasedType: TypeInfo = {
-          type_name: "string" as SymbolName,
+          type_name: "ComplexUserType" as SymbolName, // Non-primitive type
           certainty: "declared",
           source: { kind: "annotation", location: mockLocation },
         };
@@ -848,14 +912,15 @@ describe("Type Annotation References", () => {
       });
 
       it("should handle multiple aliases", () => {
-        const stringType: TypeInfo = {
-          type_name: "string" as SymbolName,
+        // Use non-primitive types for proper aliases
+        const complexStringType: TypeInfo = {
+          type_name: "CustomStringType" as SymbolName, // Non-primitive
           certainty: "declared",
           source: { kind: "annotation", location: mockLocation },
         };
 
-        const numberType: TypeInfo = {
-          type_name: "number" as SymbolName,
+        const complexNumberType: TypeInfo = {
+          type_name: "CustomNumberType" as SymbolName, // Non-primitive
           certainty: "declared",
           source: { kind: "annotation", location: mockLocation },
         };
@@ -866,7 +931,7 @@ describe("Type Annotation References", () => {
             type_name: "StringAlias" as SymbolName,
             scope_id: mockScope.id,
             annotation_kind: "variable",
-            declared_type: stringType,
+            declared_type: complexStringType,
             annotates_location: mockLocation,
           },
           {
@@ -874,7 +939,7 @@ describe("Type Annotation References", () => {
             type_name: "NumberAlias" as SymbolName,
             scope_id: mockScope.id,
             annotation_kind: "variable",
-            declared_type: numberType,
+            declared_type: complexNumberType,
             annotates_location: mockLocation,
           },
         ];
@@ -882,7 +947,10 @@ describe("Type Annotation References", () => {
         const result = find_type_aliases(annotations);
 
         expect(result).toHaveLength(2);
-        expect(result.map(a => a.alias_name)).toEqual(["StringAlias", "NumberAlias"]);
+        expect(result.map((a) => a.alias_name)).toEqual([
+          "StringAlias",
+          "NumberAlias",
+        ]);
       });
     });
 
@@ -916,8 +984,10 @@ describe("Type Annotation References", () => {
       it("should resolve type references to definitions", () => {
         const definitionLocation: Location = {
           file_path: "definitions.ts" as FilePath,
-          start: { line: 10, column: 0 },
-          end: { line: 10, column: 20 },
+          line: 10,
+          column: 0,
+          end_line: 10,
+          end_column: 20,
         };
 
         const annotations: TypeAnnotationReference[] = [
@@ -944,19 +1014,26 @@ describe("Type Annotation References", () => {
       it("should handle multiple resolutions", () => {
         const def1: Location = {
           file_path: "types1.ts" as FilePath,
-          start: { line: 1, column: 0 },
-          end: { line: 1, column: 10 },
+          line: 1,
+          column: 0,
+          end_line: 1,
+          end_column: 10,
         };
 
         const def2: Location = {
           file_path: "types2.ts" as FilePath,
-          start: { line: 2, column: 0 },
-          end: { line: 2, column: 10 },
+          line: 2,
+          column: 0,
+          end_line: 2,
+          end_column: 10,
         };
 
         const location2: Location = {
           ...mockLocation,
-          start: { line: 2, column: 0 },
+          line: 2,
+          column: 0,
+          end_line: 2,
+          end_column: 0,
         };
 
         const annotations: TypeAnnotationReference[] = [
@@ -1017,8 +1094,10 @@ describe("Type Annotation References", () => {
       it("should skip unresolved type references", () => {
         const definitionLocation: Location = {
           file_path: "definitions.ts" as FilePath,
-          start: { line: 10, column: 0 },
-          end: { line: 10, column: 20 },
+          line: 10,
+          column: 0,
+          end_line: 10,
+          end_column: 20,
         };
 
         const annotations: TypeAnnotationReference[] = [
@@ -1033,7 +1112,10 @@ describe("Type Annotation References", () => {
           {
             location: {
               ...mockLocation,
-              start: { line: 2, column: 0 },
+              line: 2,
+              column: 0,
+              end_line: 2,
+              end_column: 0,
             },
             type_name: "UnresolvedType" as SymbolName,
             scope_id: mockScope.id,
@@ -1064,6 +1146,7 @@ describe("Type Annotation References", () => {
           text: "MyClass",
           node_location: mockLocation,
           context: {},
+          modifiers: {},
         },
         {
           category: SemanticCategory.DEFINITION,
@@ -1071,7 +1154,10 @@ describe("Type Annotation References", () => {
           text: "T",
           node_location: {
             ...mockLocation,
-            start: { line: 2, column: 0 },
+            line: 2,
+            column: 0,
+            end_line: 2,
+            end_column: 0,
           },
           context: {},
           modifiers: { is_optional: true },
@@ -1099,15 +1185,18 @@ describe("Type Annotation References", () => {
       expect(hierarchy.base_types.size).toBe(2);
 
       // Find generic parameters
-      const genericAnnotation = { ...annotations[1], annotation_kind: "generic" as const };
+      const genericAnnotation = {
+        ...annotations[1],
+        annotation_kind: "generic" as const,
+      };
       const generics = find_generic_parameters([genericAnnotation]);
       expect(generics).toHaveLength(1);
 
-      // Find type aliases
+      // Find type aliases (need non-primitive type for valid alias)
       const aliasAnnotation = {
         ...annotations[0],
         declared_type: {
-          type_name: "string" as SymbolName,
+          type_name: "ComplexCustomType" as SymbolName, // Non-primitive for proper alias
           certainty: "declared" as const,
           source: { kind: "annotation" as const, location: mockLocation },
         },
@@ -1121,6 +1210,433 @@ describe("Type Annotation References", () => {
       ]);
       const resolutions = resolve_type_references(annotations, typeDefinitions);
       expect(resolutions.size).toBe(1);
+    });
+  });
+
+  describe("Additional Edge Cases and Error Conditions", () => {
+    describe("Memory and Performance Edge Cases", () => {
+      it("should handle large numbers of annotations efficiently", () => {
+        const largeAnnotationSet: TypeAnnotationReference[] = [];
+
+        // Create 1000 annotations
+        for (let i = 0; i < 1000; i++) {
+          largeAnnotationSet.push({
+            location: {
+              ...mockLocation,
+              line: i + 1,
+              column: 0,
+              end_line: i + 1,
+              end_column: 10,
+            },
+            type_name: `Type${i}` as SymbolName,
+            scope_id: mockScope.id,
+            annotation_kind: "variable",
+            declared_type: mockTypeInfo,
+            annotates_location: mockLocation,
+          });
+        }
+
+        // Should complete within reasonable time
+        const start = Date.now();
+        const hierarchy = build_type_hierarchy(largeAnnotationSet);
+        const duration = Date.now() - start;
+
+        expect(hierarchy.base_types.size).toBe(1000);
+        expect(duration).toBeLessThan(1000); // Should complete in under 1 second
+      });
+
+      it("should handle deeply nested type hierarchies", () => {
+        const deepHierarchy: TypeAnnotationReference[] = [];
+
+        // Create a chain of 50 extending types
+        for (let i = 0; i < 50; i++) {
+          const constraint: TypeConstraint = {
+            kind: "extends",
+            constraint_type: {
+              type_name: `BaseType${i - 1}` as SymbolName,
+              certainty: "declared",
+              source: { kind: "annotation", location: mockLocation },
+            },
+          };
+
+          deepHierarchy.push({
+            location: {
+              ...mockLocation,
+              line: i + 1,
+              column: 0,
+              end_line: i + 1,
+              end_column: 10,
+            },
+            type_name: `BaseType${i}` as SymbolName,
+            scope_id: mockScope.id,
+            annotation_kind: "generic",
+            declared_type: mockTypeInfo,
+            annotates_location: mockLocation,
+            constraints: i > 0 ? [constraint] : undefined,
+          });
+        }
+
+        const hierarchy = build_type_hierarchy(deepHierarchy);
+
+        expect(hierarchy.base_types.size).toBe(50);
+        expect(hierarchy.derived_types.size).toBe(49); // All except the root
+      });
+    });
+
+    describe("Malformed Data Edge Cases", () => {
+      it("should handle null/undefined captures gracefully", () => {
+        const malformedCaptures: NormalizedCapture[] = [
+          {
+            category: SemanticCategory.DEFINITION,
+            entity: SemanticEntity.TYPE,
+            text: "", // Empty text - should be filtered out by new error handling
+            node_location: mockLocation,
+            context: {},
+            modifiers: {},
+          },
+        ];
+
+        mockBuildTypeAnnotationMap.mockReturnValue(new Map());
+
+        const result = process_type_annotation_references(
+          malformedCaptures,
+          mockScope,
+          mockScopes,
+          mockFilePath
+        );
+
+        // Empty text captures are now filtered out by improved error handling
+        expect(result).toHaveLength(0);
+      });
+
+      it("should handle missing scope references", () => {
+        const captures: NormalizedCapture[] = [
+          {
+            category: SemanticCategory.DEFINITION,
+            entity: SemanticEntity.TYPE,
+            text: "OrphanType",
+            node_location: mockLocation,
+            context: {},
+            modifiers: {},
+          },
+        ];
+
+        mockBuildTypeAnnotationMap.mockReturnValue(new Map());
+        mockFindContainingScope.mockReturnValue(mockScope);
+
+        const emptyScopes = new Map<ScopeId, LexicalScope>();
+
+        const result = process_type_annotation_references(
+          captures,
+          mockScope,
+          emptyScopes,
+          mockFilePath
+        );
+
+        expect(result).toHaveLength(1);
+        expect(result[0].scope_id).toBe(mockScope.id);
+      });
+
+      it("should handle circular type references in hierarchy", () => {
+        const circularConstraint1: TypeConstraint = {
+          kind: "extends",
+          constraint_type: {
+            type_name: "TypeB" as SymbolName,
+            certainty: "declared",
+            source: { kind: "annotation", location: mockLocation },
+          },
+        };
+
+        const circularConstraint2: TypeConstraint = {
+          kind: "extends",
+          constraint_type: {
+            type_name: "TypeA" as SymbolName,
+            certainty: "declared",
+            source: { kind: "annotation", location: mockLocation },
+          },
+        };
+
+        const circularAnnotations: TypeAnnotationReference[] = [
+          {
+            location: mockLocation,
+            type_name: "TypeA" as SymbolName,
+            scope_id: mockScope.id,
+            annotation_kind: "generic",
+            declared_type: mockTypeInfo,
+            annotates_location: mockLocation,
+            constraints: [circularConstraint1],
+          },
+          {
+            location: {
+              ...mockLocation,
+              line: 2,
+              column: 0,
+              end_line: 2,
+              end_column: 0,
+            },
+            type_name: "TypeB" as SymbolName,
+            scope_id: mockScope.id,
+            annotation_kind: "generic",
+            declared_type: mockTypeInfo,
+            annotates_location: mockLocation,
+            constraints: [circularConstraint2],
+          },
+        ];
+
+        // Should not crash on circular references
+        expect(() => {
+          const hierarchy = build_type_hierarchy(circularAnnotations);
+          expect(hierarchy.derived_types.size).toBe(2);
+          expect(hierarchy.derived_types.get("TypeA" as SymbolName)?.has("TypeB" as SymbolName)).toBe(true);
+          expect(hierarchy.derived_types.get("TypeB" as SymbolName)?.has("TypeA" as SymbolName)).toBe(true);
+        }).not.toThrow();
+      });
+    });
+
+    describe("Boundary Value Testing", () => {
+      it("should handle type names with special characters", () => {
+        const specialTypeNames = [
+          "$SpecialType",
+          "_PrivateType",
+          "Type123",
+          "Type$",
+          "CamelCaseType",
+          "snake_case_type",
+          "CONSTANT_TYPE",
+        ];
+
+        for (const typeName of specialTypeNames) {
+          const captures: NormalizedCapture[] = [
+            {
+              category: SemanticCategory.DEFINITION,
+              entity: SemanticEntity.TYPE,
+              text: typeName,
+              node_location: mockLocation,
+              context: {},
+              modifiers: {},
+            },
+          ];
+
+          mockBuildTypeAnnotationMap.mockReturnValue(new Map());
+
+          const result = process_type_annotation_references(
+            captures,
+            mockScope,
+            mockScopes,
+            mockFilePath
+          );
+
+          expect(result).toHaveLength(1);
+          expect(result[0].type_name).toBe(typeName);
+        }
+      });
+
+      it("should handle all annotation kinds comprehensively", () => {
+        const allAnnotationKinds: TypeAnnotationReference["annotation_kind"][] = [
+          "variable",
+          "parameter",
+          "return",
+          "property",
+          "cast",
+          "generic",
+        ];
+
+        for (const kind of allAnnotationKinds) {
+          const annotation: TypeAnnotationReference = {
+            location: mockLocation,
+            type_name: `${kind}Type` as SymbolName,
+            scope_id: mockScope.id,
+            annotation_kind: kind,
+            declared_type: mockTypeInfo,
+            annotates_location: mockLocation,
+          };
+
+          // All kinds should build hierarchy correctly
+          const hierarchy = build_type_hierarchy([annotation]);
+          expect(hierarchy.base_types.size).toBe(1);
+          expect(hierarchy.base_types.has(`${kind}Type` as SymbolName)).toBe(true);
+        }
+      });
+
+      it("should handle all constraint kinds comprehensively", () => {
+        const constraintKinds: TypeConstraint["kind"][] = ["extends", "implements", "satisfies"];
+
+        for (const kind of constraintKinds) {
+          const constraint: TypeConstraint = {
+            kind,
+            constraint_type: mockTypeInfo,
+          };
+
+          const annotation: TypeAnnotationReference = {
+            location: mockLocation,
+            type_name: "TestType" as SymbolName,
+            scope_id: mockScope.id,
+            annotation_kind: "generic",
+            declared_type: mockTypeInfo,
+            annotates_location: mockLocation,
+            constraints: [constraint],
+          };
+
+          const hierarchy = build_type_hierarchy([annotation]);
+          expect(hierarchy.base_types.size).toBe(1);
+
+          if (kind === "extends") {
+            expect(hierarchy.derived_types.size).toBe(1);
+          } else if (kind === "implements") {
+            expect(hierarchy.implementations.size).toBe(1);
+          } else if (kind === "satisfies") {
+            // satisfies should not create hierarchy relationships
+            expect(hierarchy.derived_types.size).toBe(0);
+            expect(hierarchy.implementations.size).toBe(0);
+          }
+        }
+      });
+    });
+
+    describe("Concurrent Access and State Management", () => {
+      it("should handle concurrent processing of annotations", () => {
+        const captures1: NormalizedCapture[] = [
+          {
+            category: SemanticCategory.DEFINITION,
+            entity: SemanticEntity.TYPE,
+            text: "ConcurrentType1",
+            node_location: mockLocation,
+            context: {},
+            modifiers: {},
+          },
+        ];
+
+        const captures2: NormalizedCapture[] = [
+          {
+            category: SemanticCategory.DEFINITION,
+            entity: SemanticEntity.TYPE,
+            text: "ConcurrentType2",
+            node_location: {
+              ...mockLocation,
+              line: 2,
+              column: 0,
+              end_line: 2,
+              end_column: 0,
+            },
+            context: {},
+            modifiers: {},
+          },
+        ];
+
+        mockBuildTypeAnnotationMap.mockReturnValue(new Map());
+
+        // Process concurrently (simulated)
+        const results = [
+          process_type_annotation_references(captures1, mockScope, mockScopes, mockFilePath),
+          process_type_annotation_references(captures2, mockScope, mockScopes, mockFilePath),
+        ];
+
+        expect(results[0]).toHaveLength(1);
+        expect(results[1]).toHaveLength(1);
+        expect(results[0][0].type_name).toBe("ConcurrentType1");
+        expect(results[1][0].type_name).toBe("ConcurrentType2");
+      });
+
+      it("should maintain immutability of input data", () => {
+        const originalCaptures: NormalizedCapture[] = [
+          {
+            category: SemanticCategory.DEFINITION,
+            entity: SemanticEntity.TYPE,
+            text: "ImmutableType",
+            node_location: mockLocation,
+            context: {},
+            modifiers: {},
+          },
+        ];
+
+        const originalCapturesSnapshot = JSON.stringify(originalCaptures);
+        mockBuildTypeAnnotationMap.mockReturnValue(new Map());
+
+        process_type_annotation_references(
+          originalCaptures,
+          mockScope,
+          mockScopes,
+          mockFilePath
+        );
+
+        // Original data should be unchanged
+        expect(JSON.stringify(originalCaptures)).toBe(originalCapturesSnapshot);
+      });
+    });
+
+    describe("Complex Type Scenarios", () => {
+      it("should handle multiple constraints on single type", () => {
+        const multipleConstraints: TypeConstraint[] = [
+          {
+            kind: "extends",
+            constraint_type: {
+              type_name: "BaseClass" as SymbolName,
+              certainty: "declared",
+              source: { kind: "annotation", location: mockLocation },
+            },
+          },
+          {
+            kind: "implements",
+            constraint_type: {
+              type_name: "Interface1" as SymbolName,
+              certainty: "declared",
+              source: { kind: "annotation", location: mockLocation },
+            },
+          },
+          {
+            kind: "implements",
+            constraint_type: {
+              type_name: "Interface2" as SymbolName,
+              certainty: "declared",
+              source: { kind: "annotation", location: mockLocation },
+            },
+          },
+        ];
+
+        const annotation: TypeAnnotationReference = {
+          location: mockLocation,
+          type_name: "ComplexType" as SymbolName,
+          scope_id: mockScope.id,
+          annotation_kind: "generic",
+          declared_type: mockTypeInfo,
+          annotates_location: mockLocation,
+          constraints: multipleConstraints,
+        };
+
+        const hierarchy = build_type_hierarchy([annotation]);
+
+        expect(hierarchy.derived_types.size).toBe(1);
+        expect(hierarchy.implementations.size).toBe(2);
+        expect(hierarchy.derived_types.get("BaseClass" as SymbolName)?.has("ComplexType" as SymbolName)).toBe(true);
+        expect(hierarchy.implementations.get("Interface1" as SymbolName)?.has("ComplexType" as SymbolName)).toBe(true);
+        expect(hierarchy.implementations.get("Interface2" as SymbolName)?.has("ComplexType" as SymbolName)).toBe(true);
+      });
+
+      it("should handle types with complex nested generics", () => {
+        const nestedGenericType: TypeInfo = {
+          type_name: "Promise<Array<Map<string, T>>>" as SymbolName,
+          certainty: "declared",
+          source: { kind: "annotation", location: mockLocation },
+        };
+
+        const annotation: TypeAnnotationReference = {
+          location: mockLocation,
+          type_name: "Promise<Array<Map<string, T>>>" as SymbolName,
+          scope_id: mockScope.id,
+          annotation_kind: "return",
+          declared_type: nestedGenericType,
+          annotates_location: mockLocation,
+        };
+
+        // Should handle complex nested types without error
+        expect(() => {
+          const hierarchy = build_type_hierarchy([annotation]);
+          const generics = find_generic_parameters([annotation]);
+          const aliases = find_type_aliases([annotation]);
+
+          expect(hierarchy.base_types.size).toBe(1);
+        }).not.toThrow();
+      });
     });
   });
 });
