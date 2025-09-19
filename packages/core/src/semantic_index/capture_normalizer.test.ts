@@ -7,22 +7,31 @@ import type { QueryCapture } from "tree-sitter";
 import type { Language, FilePath } from "@ariadnejs/types";
 import type { NormalizedCapture } from "./capture_types";
 import { SemanticCategory, SemanticEntity } from "./capture_types";
-import { normalize_captures, group_captures_by_category } from "./capture_normalizer";
+import {
+  normalize_captures,
+  group_captures_by_category,
+} from "./capture_normalizer";
 
 // Mock dependencies
-vi.mock("../ast/node_utils", () => ({
+vi.mock("../utils/node_utils", () => ({
   node_to_location: vi.fn((node, filePath) => ({
     file_path: filePath,
-    start: { line: 1, column: 0 },
-    end: { line: 1, column: node.text?.length || 0 },
-  }))
+    line: 1,
+    column: 0,
+    end_line: 1,
+    end_column: node.text?.length || 0,
+  })),
 }));
 
 describe("Capture Normalizer", () => {
   const mockFilePath = "test.js" as FilePath;
 
   // Helper to create mock QueryCapture
-  function createMockCapture(name: string, text: string, nodeType = "identifier"): QueryCapture {
+  function createMockCapture(
+    name: string,
+    text: string,
+    nodeType = "identifier"
+  ): QueryCapture {
     return {
       name,
       node: {
@@ -143,14 +152,16 @@ describe("Capture Normalizer", () => {
           text: "testMethod",
           type: "identifier",
           parent: {
-            children: [{ type: "static" }] // Static modifier
-          }
+            children: [{ type: "static" }], // Static modifier
+          },
         } as any;
 
-        const captures = [{
-          name: "def.method",
-          node: mockNode
-        }] as QueryCapture[];
+        const captures = [
+          {
+            name: "def.method",
+            node: mockNode,
+          },
+        ] as QueryCapture[];
 
         const result = normalize_captures(captures, "javascript", mockFilePath);
 
@@ -167,14 +178,16 @@ describe("Capture Normalizer", () => {
             childForFieldName: (field: string) => {
               if (field === "object") return { text: "obj" };
               return null;
-            }
-          }
+            },
+          },
         } as any;
 
-        const captures = [{
-          name: "ref.method_call",
-          node: mockNode
-        }] as QueryCapture[];
+        const captures = [
+          {
+            name: "ref.method_call",
+            node: mockNode,
+          },
+        ] as QueryCapture[];
 
         const result = normalize_captures(captures, "javascript", mockFilePath);
 
@@ -210,9 +223,13 @@ describe("Capture Normalizer", () => {
         const result = normalize_captures(captures, "javascript", mockFilePath);
 
         expect(result).toHaveLength(3);
-        expect(result.every(r => r.category === SemanticCategory.DEFINITION)).toBe(true);
-        expect(result.every(r => r.entity === SemanticEntity.FUNCTION)).toBe(true);
-        expect(result.map(r => r.text)).toEqual(["func1", "func2", "func3"]);
+        expect(
+          result.every((r) => r.category === SemanticCategory.DEFINITION)
+        ).toBe(true);
+        expect(result.every((r) => r.entity === SemanticEntity.FUNCTION)).toBe(
+          true
+        );
+        expect(result.map((r) => r.text)).toEqual(["func1", "func2", "func3"]);
       });
 
       it("should handle mixed language-specific features", () => {
@@ -227,12 +244,12 @@ describe("Capture Normalizer", () => {
 
         expect(result).toHaveLength(3);
 
-        const categories = result.map(r => r.category);
+        const categories = result.map((r) => r.category);
         expect(categories).toContain(SemanticCategory.DEFINITION);
         expect(categories).toContain(SemanticCategory.TYPE);
         expect(categories).toContain(SemanticCategory.DECORATOR);
 
-        const entities = result.map(r => r.entity);
+        const entities = result.map((r) => r.entity);
         expect(entities).toContain(SemanticEntity.INTERFACE);
         expect(entities).toContain(SemanticEntity.TYPE_ANNOTATION);
         expect(entities).toContain(SemanticEntity.CLASS);
@@ -247,7 +264,7 @@ describe("Capture Normalizer", () => {
 
         const result = normalize_captures(captures, "javascript", mockFilePath);
 
-        expect(result.map(r => r.text)).toEqual(["first", "second", "third"]);
+        expect(result.map((r) => r.text)).toEqual(["first", "second", "third"]);
       });
     });
 
@@ -258,10 +275,12 @@ describe("Capture Normalizer", () => {
       });
 
       it("should handle captures with null nodes gracefully", () => {
-        const captures = [{
-          name: "def.function",
-          node: null
-        }] as any[];
+        const captures = [
+          {
+            name: "def.function",
+            node: null,
+          },
+        ] as any[];
 
         expect(() => {
           normalize_captures(captures, "javascript", mockFilePath);
@@ -269,10 +288,12 @@ describe("Capture Normalizer", () => {
       });
 
       it("should handle captures with malformed nodes", () => {
-        const captures = [{
-          name: "def.function",
-          node: { text: undefined, type: "identifier" }
-        }] as any[];
+        const captures = [
+          {
+            name: "def.function",
+            node: { text: undefined, type: "identifier" },
+          },
+        ] as any[];
 
         const result = normalize_captures(captures, "javascript", mockFilePath);
 
@@ -290,70 +311,130 @@ describe("Capture Normalizer", () => {
         {
           category: SemanticCategory.SCOPE,
           entity: SemanticEntity.FUNCTION,
-          node_location: { file_path: mockFilePath, start: { line: 1, column: 0 }, end: { line: 1, column: 4 } },
+          node_location: {
+            file_path: mockFilePath,
+            line: 1,
+            column: 0,
+            end_line: 1,
+            end_column: 4,
+          },
           text: "func",
           modifiers: {},
         },
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.VARIABLE,
-          node_location: { file_path: mockFilePath, start: { line: 2, column: 0 }, end: { line: 2, column: 3 } },
+          node_location: {
+            file_path: mockFilePath,
+            line: 2,
+            column: 0,
+            end_line: 2,
+            end_column: 3,
+          },
           text: "var",
           modifiers: {},
         },
         {
           category: SemanticCategory.REFERENCE,
           entity: SemanticEntity.CALL,
-          node_location: { file_path: mockFilePath, start: { line: 3, column: 0 }, end: { line: 3, column: 4 } },
+          node_location: {
+            file_path: mockFilePath,
+            line: 3,
+            column: 0,
+            end_line: 3,
+            end_column: 4,
+          },
           text: "call",
           modifiers: {},
         },
         {
           category: SemanticCategory.IMPORT,
           entity: SemanticEntity.IMPORT,
-          node_location: { file_path: mockFilePath, start: { line: 4, column: 0 }, end: { line: 4, column: 6 } },
+          node_location: {
+            file_path: mockFilePath,
+            line: 4,
+            column: 0,
+            end_line: 4,
+            end_column: 6,
+          },
           text: "import",
           modifiers: {},
         },
         {
           category: SemanticCategory.EXPORT,
           entity: SemanticEntity.FUNCTION,
-          node_location: { file_path: mockFilePath, start: { line: 5, column: 0 }, end: { line: 5, column: 6 } },
+          node_location: {
+            file_path: mockFilePath,
+            line: 5,
+            column: 0,
+            end_line: 5,
+            end_column: 6,
+          },
           text: "export",
           modifiers: {},
         },
         {
           category: SemanticCategory.TYPE,
           entity: SemanticEntity.TYPE_ANNOTATION,
-          node_location: { file_path: mockFilePath, start: { line: 6, column: 0 }, end: { line: 6, column: 4 } },
+          node_location: {
+            file_path: mockFilePath,
+            line: 6,
+            column: 0,
+            end_line: 6,
+            end_column: 4,
+          },
           text: "type",
           modifiers: {},
         },
         {
           category: SemanticCategory.ASSIGNMENT,
           entity: SemanticEntity.VARIABLE,
-          node_location: { file_path: mockFilePath, start: { line: 7, column: 0 }, end: { line: 7, column: 6 } },
+          node_location: {
+            file_path: mockFilePath,
+            line: 7,
+            column: 0,
+            end_line: 7,
+            end_column: 6,
+          },
           text: "assign",
           modifiers: {},
         },
         {
           category: SemanticCategory.RETURN,
           entity: SemanticEntity.VARIABLE,
-          node_location: { file_path: mockFilePath, start: { line: 8, column: 0 }, end: { line: 8, column: 6 } },
+          node_location: {
+            file_path: mockFilePath,
+            line: 8,
+            column: 0,
+            end_line: 8,
+            end_column: 6,
+          },
           text: "return",
           modifiers: {},
         },
         {
           category: SemanticCategory.DECORATOR,
           entity: SemanticEntity.CLASS,
-          node_location: { file_path: mockFilePath, start: { line: 9, column: 0 }, end: { line: 9, column: 9 } },
+          node_location: {
+            file_path: mockFilePath,
+            line: 9,
+            column: 0,
+            end_line: 9,
+            end_column: 9,
+          },
           text: "decorator",
           modifiers: {},
         },
         {
           category: SemanticCategory.MODIFIER,
           entity: SemanticEntity.ACCESS_MODIFIER,
-          node_location: { file_path: mockFilePath, start: { line: 10, column: 0 }, end: { line: 10, column: 8 } },
+          node_location: {
+            file_path: mockFilePath,
+            line: 10,
+            column: 0,
+            end_line: 10,
+            end_column: 8,
+          },
           text: "modifier",
           modifiers: {},
         },
@@ -396,14 +477,26 @@ describe("Capture Normalizer", () => {
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.FUNCTION,
-          node_location: { file_path: mockFilePath, start: { line: 11, column: 0 }, end: { line: 11, column: 5 } },
+          node_location: {
+            file_path: mockFilePath,
+            line: 11,
+            column: 0,
+            end_line: 11,
+            end_column: 5,
+          },
           text: "func2",
           modifiers: {},
         },
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.CLASS,
-          node_location: { file_path: mockFilePath, start: { line: 12, column: 0 }, end: { line: 12, column: 5 } },
+          node_location: {
+            file_path: mockFilePath,
+            line: 12,
+            column: 0,
+            end_line: 12,
+            end_column: 5,
+          },
           text: "class",
           modifiers: {},
         },
@@ -412,7 +505,11 @@ describe("Capture Normalizer", () => {
       const grouped = group_captures_by_category(multipleDefinitions);
 
       expect(grouped.definitions).toHaveLength(3);
-      expect(grouped.definitions.map(d => d.text)).toEqual(["var", "func2", "class"]);
+      expect(grouped.definitions.map((d) => d.text)).toEqual([
+        "var",
+        "func2",
+        "class",
+      ]);
     });
 
     it("should handle empty captures array", () => {
@@ -431,7 +528,9 @@ describe("Capture Normalizer", () => {
     });
 
     it("should handle captures with only one category", () => {
-      const onlyDefinitions = sampleCaptures.filter(c => c.category === SemanticCategory.DEFINITION);
+      const onlyDefinitions = sampleCaptures.filter(
+        (c) => c.category === SemanticCategory.DEFINITION
+      );
       const grouped = group_captures_by_category(onlyDefinitions);
 
       expect(grouped.definitions).toHaveLength(1);
@@ -451,21 +550,39 @@ describe("Capture Normalizer", () => {
         {
           category: SemanticCategory.REFERENCE,
           entity: SemanticEntity.CALL,
-          node_location: { file_path: mockFilePath, start: { line: 1, column: 0 }, end: { line: 1, column: 4 } },
+          node_location: {
+            file_path: mockFilePath,
+            line: 1,
+            column: 0,
+            end_line: 1,
+            end_column: 4,
+          },
           text: "first",
           modifiers: {},
         },
         {
           category: SemanticCategory.REFERENCE,
           entity: SemanticEntity.CALL,
-          node_location: { file_path: mockFilePath, start: { line: 2, column: 0 }, end: { line: 2, column: 6 } },
+          node_location: {
+            file_path: mockFilePath,
+            line: 2,
+            column: 0,
+            end_line: 2,
+            end_column: 6,
+          },
           text: "second",
           modifiers: {},
         },
         {
           category: SemanticCategory.REFERENCE,
           entity: SemanticEntity.CALL,
-          node_location: { file_path: mockFilePath, start: { line: 3, column: 0 }, end: { line: 3, column: 5 } },
+          node_location: {
+            file_path: mockFilePath,
+            line: 3,
+            column: 0,
+            end_line: 3,
+            end_column: 5,
+          },
           text: "third",
           modifiers: {},
         },
@@ -473,7 +590,11 @@ describe("Capture Normalizer", () => {
 
       const grouped = group_captures_by_category(multipleRefs);
 
-      expect(grouped.references.map(r => r.text)).toEqual(["first", "second", "third"]);
+      expect(grouped.references.map((r) => r.text)).toEqual([
+        "first",
+        "second",
+        "third",
+      ]);
     });
 
     it("should handle all semantic categories", () => {
@@ -484,7 +605,13 @@ describe("Capture Normalizer", () => {
         const capture: NormalizedCapture = {
           category: category as SemanticCategory,
           entity: SemanticEntity.VARIABLE,
-          node_location: { file_path: mockFilePath, start: { line: 1, column: 0 }, end: { line: 1, column: 4 } },
+          node_location: {
+            file_path: mockFilePath,
+            line: 1,
+            column: 0,
+            end_line: 1,
+            end_column: 4,
+          },
           text: "test",
           modifiers: {},
         };
@@ -492,7 +619,10 @@ describe("Capture Normalizer", () => {
         const grouped = group_captures_by_category([capture]);
 
         // Verify the capture was placed in the correct group
-        const totalCapturesInGroups = Object.values(grouped).reduce((sum, group) => sum + group.length, 0);
+        const totalCapturesInGroups = Object.values(grouped).reduce(
+          (sum, group) => sum + group.length,
+          0
+        );
         expect(totalCapturesInGroups).toBe(1);
       }
     });
@@ -508,7 +638,11 @@ describe("Capture Normalizer", () => {
         createMockCapture("export.default", "testFunc"),
       ];
 
-      const normalized = normalize_captures(captures, "javascript", mockFilePath);
+      const normalized = normalize_captures(
+        captures,
+        "javascript",
+        mockFilePath
+      );
       const grouped = group_captures_by_category(normalized);
 
       expect(grouped.definitions).toHaveLength(2);
@@ -516,7 +650,10 @@ describe("Capture Normalizer", () => {
       expect(grouped.imports).toHaveLength(1);
       expect(grouped.exports).toHaveLength(1);
 
-      expect(grouped.definitions.map(d => d.text)).toEqual(["testFunc", "testVar"]);
+      expect(grouped.definitions.map((d) => d.text)).toEqual([
+        "testFunc",
+        "testVar",
+      ]);
       expect(grouped.references[0].text).toBe("testFunc");
       expect(grouped.imports[0].text).toBe("utils");
       expect(grouped.exports[0].text).toBe("testFunc");
@@ -531,16 +668,22 @@ describe("Capture Normalizer", () => {
           childForFieldName: (field: string) => {
             if (field === "return_type") return { text: "Promise<void>" };
             return null;
-          }
-        }
+          },
+        },
       } as any;
 
-      const captures = [{
-        name: "def.method",
-        node: mockNode
-      }] as QueryCapture[];
+      const captures = [
+        {
+          name: "def.method",
+          node: mockNode,
+        },
+      ] as QueryCapture[];
 
-      const normalized = normalize_captures(captures, "typescript", mockFilePath);
+      const normalized = normalize_captures(
+        captures,
+        "typescript",
+        mockFilePath
+      );
       const grouped = group_captures_by_category(normalized);
 
       expect(grouped.definitions).toHaveLength(1);

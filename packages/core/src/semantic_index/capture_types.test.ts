@@ -245,8 +245,7 @@ describe("Capture Types", () => {
     it("should create valid normalized capture objects", () => {
       const mockLocation: Location = {
         file_path: "test.js" as any,
-        start: { line: 1, column: 0 },
-        end: { line: 1, column: 10 },
+        line: 1, column: 0 , end_line: 1, end_column: 10 ,
       };
 
       const capture: NormalizedCapture = {
@@ -269,8 +268,7 @@ describe("Capture Types", () => {
     it("should allow optional context", () => {
       const mockLocation: Location = {
         file_path: "test.js" as any,
-        start: { line: 1, column: 0 },
-        end: { line: 1, column: 10 },
+        line: 1, column: 0 , end_line: 1, end_column: 10 ,
       };
 
       const capture: NormalizedCapture = {
@@ -481,8 +479,7 @@ describe("Capture Types", () => {
           entity: combo.entity,
           node_location: {
             file_path: "test.js" as any,
-            start: { line: 1, column: 0 },
-            end: { line: 1, column: 4 },
+            line: 1, column: 0 , end_line: 1, end_column: 4 ,
           },
           text: "test",
           modifiers: {},
