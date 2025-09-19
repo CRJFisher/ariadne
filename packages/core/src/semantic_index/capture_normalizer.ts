@@ -8,6 +8,7 @@ import type { NormalizedCapture, LanguageCaptureConfig } from "./capture_types";
 import { JAVASCRIPT_CAPTURE_CONFIG } from "./language_configs/javascript";
 import { TYPESCRIPT_CAPTURE_CONFIG } from "./language_configs/typescript";
 import { PYTHON_CAPTURE_CONFIG } from "./language_configs/python";
+import { RUST_CAPTURE_CONFIG } from "./language_configs/rust";
 import { node_to_location } from "../ast/node_utils";
 
 /**
@@ -17,8 +18,7 @@ const LANGUAGE_CONFIGS: Map<Language, LanguageCaptureConfig> = new Map([
   ["javascript", JAVASCRIPT_CAPTURE_CONFIG],
   ["typescript", TYPESCRIPT_CAPTURE_CONFIG],
   ["python", PYTHON_CAPTURE_CONFIG],
-  // TODO: Add Rust config
-  // ["rust", RUST_CAPTURE_CONFIG],
+  ["rust", RUST_CAPTURE_CONFIG],
 ]);
 
 /**
