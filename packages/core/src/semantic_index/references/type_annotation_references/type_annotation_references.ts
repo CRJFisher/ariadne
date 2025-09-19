@@ -14,7 +14,7 @@ import { location_key } from "@ariadnejs/types";
 import { find_containing_scope } from "../../scope_tree";
 import type { NormalizedCapture } from "../../capture_types";
 import { SemanticEntity } from "../../capture_types";
-import type { TypeInfo } from "../type_tracking/type_tracking";
+import type { TypeInfo } from "../type_tracking/type_info";
 import { build_type_annotation_map } from "../type_tracking/type_tracking";
 
 /**

@@ -177,7 +177,6 @@ describe("Definitions Module", () => {
       const symbol = Array.from(result.symbols.values())[0];
       expect(symbol.name).toBe("TestClass");
       expect(symbol.kind).toBe("class");
-      expect(symbol.type_id).toBeDefined();
 
       // Check type mappings
       const type_id = result.class_types.get(symbol.id);
@@ -201,7 +200,6 @@ describe("Definitions Module", () => {
       const symbol = Array.from(result.symbols.values())[0];
       expect(symbol.name).toBe("TestInterface");
       expect(symbol.kind).toBe("interface");
-      expect(symbol.type_id).toBeDefined();
     });
 
     it("should process enum definitions", () => {
@@ -220,7 +218,6 @@ describe("Definitions Module", () => {
       const symbol = Array.from(result.symbols.values())[0];
       expect(symbol.name).toBe("TestEnum");
       expect(symbol.kind).toBe("enum");
-      expect(symbol.type_id).toBeDefined();
     });
 
     it("should process variable definitions", () => {
@@ -239,7 +236,6 @@ describe("Definitions Module", () => {
       const symbol = Array.from(result.symbols.values())[0];
       expect(symbol.name).toBe("testVariable");
       expect(symbol.kind).toBe("variable");
-      expect(symbol.type_id).toBeUndefined(); // Variables don't get type IDs
     });
 
     it("should handle static modifiers", () => {

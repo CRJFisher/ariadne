@@ -79,18 +79,6 @@ export function process_definitions(
     // Create symbol ID
     const symbol_id = create_symbol_id(name, kind, location);
 
-    // Create TypeId for type symbols
-    let type_id: TypeId | undefined;
-    if (is_type_symbol(kind)) {
-      type_id = create_type_id_for_symbol(kind, name, location);
-      class_types.set(symbol_id, type_id);
-      type_symbols.set(type_id, symbol_id);
-    }
-
-    // For methods, fields and properties, find their containing class
-    // This will be handled in the second pass after all symbols are created
-    let member_of: TypeId | undefined;
-
     // Create symbol definition
     const symbol: SymbolDefinition = {
       id: symbol_id,
@@ -103,9 +91,7 @@ export function process_definitions(
       is_imported: false,
       references: [],
       // Type information
-      type_id,
       is_static: capture.modifiers?.is_static,
-      member_of,
     };
 
     // Store symbol

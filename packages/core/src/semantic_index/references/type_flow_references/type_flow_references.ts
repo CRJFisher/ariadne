@@ -254,8 +254,6 @@ export function track_type_mutations(
  */
 export function build_variable_type_map(
   flows: readonly TypeFlowReference[],
-  symbols: Map<SymbolId, SymbolDefinition>,
-  type_registry?: { resolve_type_info?: (info: TypeInfo) => TypeInfo | undefined }
 ): Map<Location, VariableTypeInfo> {
   const variable_types = new Map<Location, VariableTypeInfo>();
 
@@ -268,33 +266,7 @@ export function build_variable_type_map(
       location: flow.target_location,
       source: flow.flow_type === "assignment" ? "assignment" : "inference",
     };
-
-    // Type resolution will be done in a later phase
-
     variable_types.set(flow.target_location, var_info);
-  }
-
-  // Also add variable declarations from symbols
-  for (const [, symbol] of Array.from(symbols)) {
-    if (symbol.kind === "variable" || symbol.kind === "constant") {
-      if (symbol.value_type) {
-        const var_info: VariableTypeInfo = {
-          variable_name: symbol.name,
-          scope_id: symbol.scope_id,
-          type_info: {
-            type_name: "unknown" as SymbolName,
-            certainty: "declared",
-            source: {
-              kind: "annotation",
-              location: symbol.location,
-            },
-},
-          location: symbol.location,
-          source: "declaration",
-        };
-        variable_types.set(symbol.location, var_info);
-      }
-    }
   }
 
   return variable_types;
@@ -305,7 +277,6 @@ export function build_variable_type_map(
  */
 export function track_constructor_types(
   flows: readonly TypeFlowReference[],
-  _symbols: Map<SymbolId, SymbolDefinition>,
   type_registry?: { name_to_type?: Map<SymbolName, TypeInfo> }
 ): Map<Location, TypeInfo> {
   const constructor_types = new Map<Location, TypeInfo>();

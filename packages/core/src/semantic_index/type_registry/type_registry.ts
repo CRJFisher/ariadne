@@ -13,7 +13,7 @@ import type {
   FilePath,
   ScopeId,
 } from "@ariadnejs/types";
-import type { TypeInfo } from "../references/type_tracking/type_tracking";
+import type { TypeInfo } from "../references/type_tracking/type_info";
 
 /**
  * Central type registry for a file
@@ -43,23 +43,14 @@ export interface FileTypeRegistry {
 }
 
 /**
- * Information about a type member (method, property, field)
+ * Base member information shared by all member types
  */
-export interface MemberInfo {
+interface BaseMemberInfo {
   /** Symbol ID of the member */
   readonly symbol_id: SymbolId;
 
   /** Member name */
   readonly name: SymbolName;
-
-  /** Type of member */
-  readonly member_type: "method" | "property" | "field" | "constructor";
-
-  /** For methods: the return type */
-  readonly return_type?: TypeId;
-
-  /** For properties/fields: the value type */
-  readonly value_type?: TypeId;
 
   /** Whether this is a static member */
   readonly is_static: boolean;
@@ -72,10 +63,51 @@ export interface MemberInfo {
 
   /** Location of the member definition */
   readonly location: Location;
+}
 
-  /** Parameters for methods/constructors */
+/**
+ * Method member information
+ */
+export interface MethodMemberInfo extends BaseMemberInfo {
+  readonly member_type: "method";
+  /** Return type of the method */
+  readonly return_type?: TypeId;
+  /** Method parameters */
   readonly parameters?: ParameterInfo[];
 }
+
+/**
+ * Property member information
+ */
+export interface PropertyMemberInfo extends BaseMemberInfo {
+  readonly member_type: "property";
+  /** Type of the property value */
+  readonly value_type?: TypeId;
+}
+
+/**
+ * Field member information
+ */
+export interface FieldMemberInfo extends BaseMemberInfo {
+  readonly member_type: "field";
+  /** Type of the field value */
+  readonly value_type?: TypeId;
+}
+
+/**
+ * Constructor member information
+ */
+export interface ConstructorMemberInfo extends BaseMemberInfo {
+  readonly member_type: "constructor";
+  /** Constructor parameters */
+  readonly parameters?: ParameterInfo[];
+}
+
+/**
+ * Discriminated union of all member types
+ * Ensures type safety by preventing invalid combinations
+ */
+export type MemberInfo = MethodMemberInfo | PropertyMemberInfo | FieldMemberInfo | ConstructorMemberInfo;
 
 /**
  * Parameter information for methods/constructors
@@ -152,12 +184,12 @@ export interface VariableTypeMap {
  * Detailed variable type information
  */
 export interface VariableTypeInfo {
-  variable_name: SymbolName;
-  scope_id: ScopeId;
-  type_info: TypeInfo;
-  type_id?: TypeId;
-  location: Location;
-  source: "declaration" | "assignment" | "inference";
+  readonly variable_name: SymbolName;
+  readonly scope_id: ScopeId;
+  readonly type_info: TypeInfo;
+  readonly type_id?: TypeId;
+  readonly location: Location;
+  readonly source: "declaration" | "assignment" | "inference";
 }
 
 /**
@@ -205,21 +237,54 @@ export interface TypeResolutionContext {
 }
 
 /**
- * Information about composite types (unions, intersections)
+ * Base composite type information
  */
-export interface CompositeTypeInfo {
+interface BaseCompositeTypeInfo {
   /** Type kind */
   readonly kind: "union" | "intersection" | "tuple" | "array";
-
-  /** Member types */
-  readonly members: readonly TypeId[];
-
-  /** For arrays: element type */
-  readonly element_type?: TypeId;
-
-  /** For tuples: element types in order */
-  readonly elements?: readonly TypeId[];
 }
+
+/**
+ * Union type information
+ */
+export interface UnionTypeInfo extends BaseCompositeTypeInfo {
+  readonly kind: "union";
+  /** Union member types */
+  readonly members: readonly TypeId[];
+}
+
+/**
+ * Intersection type information
+ */
+export interface IntersectionTypeInfo extends BaseCompositeTypeInfo {
+  readonly kind: "intersection";
+  /** Intersection member types */
+  readonly members: readonly TypeId[];
+}
+
+/**
+ * Array type information
+ */
+export interface ArrayTypeInfo extends BaseCompositeTypeInfo {
+  readonly kind: "array";
+  /** Element type of the array */
+  readonly element_type: TypeId;
+}
+
+/**
+ * Tuple type information
+ */
+export interface TupleTypeInfo extends BaseCompositeTypeInfo {
+  readonly kind: "tuple";
+  /** Tuple element types in order */
+  readonly elements: readonly TypeId[];
+}
+
+/**
+ * Discriminated union of all composite types
+ * Ensures proper type-specific field usage
+ */
+export type CompositeTypeInfo = UnionTypeInfo | IntersectionTypeInfo | ArrayTypeInfo | TupleTypeInfo;
 
 /**
  * Builder functions for creating type registries
@@ -277,5 +342,108 @@ export function create_type_context(
     generics: new Map(),
     aliases: new Map(),
     composite_types: new Map(),
+  };
+}
+
+/**
+ * Validation and helper functions
+ */
+
+/**
+ * Create a type narrowing reassignment
+ */
+export function create_narrowing_reassignment(
+  from_type: TypeId,
+  to_type: TypeId,
+  location: Location
+): TypeReassignment {
+  return {
+    from_type,
+    to_type,
+    location,
+    is_narrowing: true,
+    is_widening: false,
+  };
+}
+
+/**
+ * Create a type widening reassignment
+ */
+export function create_widening_reassignment(
+  from_type: TypeId,
+  to_type: TypeId,
+  location: Location
+): TypeReassignment {
+  return {
+    from_type,
+    to_type,
+    location,
+    is_narrowing: false,
+    is_widening: true,
+  };
+}
+
+/**
+ * Create a neutral type reassignment (neither narrowing nor widening)
+ */
+export function create_neutral_reassignment(
+  from_type: TypeId,
+  to_type: TypeId,
+  location: Location
+): TypeReassignment {
+  return {
+    from_type,
+    to_type,
+    location,
+    is_narrowing: false,
+    is_widening: false,
+  };
+}
+
+/**
+ * Validate that a TypeReassignment has consistent flags
+ */
+export function validate_reassignment(reassignment: TypeReassignment): boolean {
+  // Both narrowing and widening cannot be true simultaneously
+  return !(reassignment.is_narrowing && reassignment.is_widening);
+}
+
+/**
+ * Create a union composite type
+ */
+export function create_union_type(members: readonly TypeId[]): UnionTypeInfo {
+  return {
+    kind: "union",
+    members,
+  };
+}
+
+/**
+ * Create an intersection composite type
+ */
+export function create_intersection_type(members: readonly TypeId[]): IntersectionTypeInfo {
+  return {
+    kind: "intersection",
+    members,
+  };
+}
+
+/**
+ * Create an array composite type
+ */
+export function create_array_type(element_type: TypeId): ArrayTypeInfo {
+  return {
+    kind: "array",
+    element_type,
+  };
+}
+
+/**
+ * Create a tuple composite type
+ */
+export function create_tuple_type(elements: readonly TypeId[]): TupleTypeInfo {
+  return {
+    kind: "tuple",
+    elements,
   };
 }

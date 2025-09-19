@@ -734,9 +734,7 @@ describe("Type Flow References", () => {
           },
         ];
 
-        const symbolMap = new Map<SymbolId, SymbolDefinition>();
-
-        const result = build_variable_type_map(flows, symbolMap);
+        const result = build_variable_type_map(flows);
 
         expect(result.size).toBe(1);
         const varInfo = result.get(mockLocation)!;
@@ -746,39 +744,19 @@ describe("Type Flow References", () => {
         expect(varInfo.source).toBe("assignment");
       });
 
-      it("should include variable declarations from symbols", () => {
+      it("should handle empty flows array", () => {
         const flows: TypeFlowReference[] = [];
 
-        const symbolDefinition: SymbolDefinition = {
-          id: "var_symbol" as SymbolId,
-          kind: "variable",
-          name: "declared_var" as SymbolName,
-          location: mockLocation,
-          scope_id: mockScope.id,
-          is_hoisted: false,
-          is_exported: false,
-          is_imported: false,
-          references: [],
-        };
+        const result = build_variable_type_map(flows);
 
-        const symbolMap = new Map<SymbolId, SymbolDefinition>([
-          ["var_symbol" as SymbolId, symbolDefinition],
-        ]);
-
-        const result = build_variable_type_map(flows, symbolMap);
-
-        expect(result.size).toBe(1);
-        const varInfo = result.get(mockLocation)!;
-        expect(varInfo.variable_name).toBe("declared_var");
-        expect(varInfo.type_id).toBe("string_type");
-        expect(varInfo.source).toBe("declaration");
+        expect(result.size).toBe(0);
       });
 
-      it("should resolve type IDs when registry provided", () => {
+      it("should preserve type info without resolution", () => {
         const flows: TypeFlowReference[] = [
           {
             location: mockLocation,
-            name: "resolved_var" as SymbolName,
+            name: "test_var" as SymbolName,
             scope_id: mockScope.id,
             flow_type: "assignment",
             source_type: mockTypeInfo,
@@ -789,50 +767,42 @@ describe("Type Flow References", () => {
           },
         ];
 
-        const typeRegistry = {
-          resolve_type_info: vi.fn().mockReturnValue(mockTypeInfo),
-        };
-
-        const result = build_variable_type_map(flows, new Map(), typeRegistry);
+        const result = build_variable_type_map(flows);
 
         expect(result.size).toBe(1);
         const varInfo = result.get(mockLocation)!;
-        expect(varInfo.type_id).toBe("resolved_type");
-        expect(typeRegistry.resolve_type_info).toHaveBeenCalledWith(
-          mockTypeInfo
-        );
+        expect(varInfo.type_info).toEqual(mockTypeInfo);
+        expect(varInfo.variable_name).toBe("test_var");
+        expect(varInfo.source).toBe("assignment");
       });
 
-      it("should handle constants from symbols", () => {
-        const constantDefinition: SymbolDefinition = {
-          id: "const_symbol" as SymbolId,
-          kind: "constant",
-          is_hoisted: false,
-          is_exported: false,
-          is_imported: false,
-          references: [],
-          name: "CONST_VAR" as SymbolName,
-          location: mockLocation,
-          scope_id: mockScope.id,
-          value_type: mockTypeInfo,
-        };
+      it("should process flows with different source types", () => {
+        const flows: TypeFlowReference[] = [
+          {
+            location: mockLocation,
+            name: "const_var" as SymbolName,
+            scope_id: mockScope.id,
+            flow_type: "parameter",
+            source_type: mockTypeInfo,
+            source_location: mockLocation,
+            target_location: mockLocation,
+            is_narrowing: false,
+            is_widening: false,
+          },
+        ];
 
-        const symbolMap = new Map([
-          ["const_symbol" as SymbolId, constantDefinition],
-        ]);
-
-        const result = build_variable_type_map([], symbolMap);
+        const result = build_variable_type_map(flows);
 
         expect(result.size).toBe(1);
         const varInfo = result.get(mockLocation)!;
-        expect(varInfo.variable_name).toBe("CONST_VAR");
-        expect(varInfo.source).toBe("declaration");
+        expect(varInfo.variable_name).toBe("const_var");
+        expect(varInfo.source).toBe("inference"); // parameter flow_type maps to inference
       });
     });
 
     describe("Edge Cases", () => {
       it("should handle empty flows and symbols", () => {
-        const result = build_variable_type_map([], new Map());
+        const result = build_variable_type_map([]);
         expect(result.size).toBe(0);
       });
 
@@ -854,7 +824,7 @@ describe("Type Flow References", () => {
           ["no_type_symbol" as SymbolId, symbolDefinition],
         ]);
 
-        const result = build_variable_type_map([], symbolMap);
+        const result = build_variable_type_map([]);
         expect(result.size).toBe(0);
       });
 
@@ -871,11 +841,7 @@ describe("Type Flow References", () => {
           scope_id: mockScope.id,
         };
 
-        const symbolMap = new Map([
-          ["func_symbol" as SymbolId, functionDefinition],
-        ]);
-
-        const result = build_variable_type_map([], symbolMap);
+        const result = build_variable_type_map([]);
         expect(result.size).toBe(0);
       });
 
@@ -896,7 +862,7 @@ describe("Type Flow References", () => {
 
         const typeRegistry = {}; // No resolve_type_info
 
-        const result = build_variable_type_map(flows, new Map(), typeRegistry);
+        const result = build_variable_type_map(flows);
 
         expect(result.size).toBe(1);
         const varInfo = result.get(mockLocation)!;
@@ -937,10 +903,10 @@ describe("Type Flow References", () => {
           ]),
         };
 
-        const result = track_constructor_types(flows, new Map(), typeRegistry);
+        const result = track_constructor_types(flows, typeRegistry);
 
         expect(result.size).toBe(1);
-        expect(result.get(mockLocation)).toBe("MyClass_type");
+        expect(result.get(mockLocation)).toEqual(mockTypeInfo);
       });
 
       it("should handle multiple constructor calls", () => {
@@ -992,17 +958,25 @@ describe("Type Flow References", () => {
           ]),
         };
 
-        const result = track_constructor_types(flows, new Map(), typeRegistry);
+        const result = track_constructor_types(flows, typeRegistry);
 
         expect(result.size).toBe(2);
-        expect(result.get(mockLocation)).toBe("Class1_type");
-        expect(result.get(flows[1].target_location)).toBe("Class2_type");
+        expect(result.get(mockLocation)).toEqual(mockTypeInfo);
+        const class2TypeInfo: TypeInfo = {
+          type_name: "string" as SymbolName,
+          certainty: "declared",
+          source: {
+            kind: "annotation",
+            location: mockLocation,
+          }
+        };
+        expect(result.get(flows[1].target_location)).toEqual(class2TypeInfo);
       });
     });
 
     describe("Edge Cases", () => {
       it("should handle empty flows", () => {
-        const result = track_constructor_types([], new Map());
+        const result = track_constructor_types([]);
         expect(result.size).toBe(0);
       });
 
@@ -1025,7 +999,7 @@ describe("Type Flow References", () => {
           },
         ];
 
-        const result = track_constructor_types(flows, new Map());
+        const result = track_constructor_types(flows);
         expect(result.size).toBe(0);
       });
 
@@ -1048,7 +1022,7 @@ describe("Type Flow References", () => {
           },
         ];
 
-        const result = track_constructor_types(flows, new Map());
+        const result = track_constructor_types(flows);
         expect(result.size).toBe(0);
       });
 
@@ -1077,7 +1051,7 @@ describe("Type Flow References", () => {
           ]),
         };
 
-        const result = track_constructor_types(flows, new Map(), typeRegistry);
+        const result = track_constructor_types(flows, typeRegistry);
         expect(result.size).toBe(0);
       });
     });
@@ -1304,7 +1278,7 @@ describe("Type Flow References", () => {
       expect(mutations).toHaveLength(1);
 
       // Build variable type map
-      const typeMap = build_variable_type_map(flows, new Map());
+      const typeMap = build_variable_type_map(flows);
       expect(typeMap.size).toBe(1);
 
       // Find type at location
@@ -1351,7 +1325,7 @@ describe("Type Flow References", () => {
         // Capture original state
         const originalTypeName = flows[0].source_type.type_name;
 
-        track_constructor_types(flows, new Map(), typeRegistry);
+        track_constructor_types(flows, typeRegistry);
 
         // Bug: the function should NOT mutate the input
         // This test should fail with the current implementation
@@ -1383,10 +1357,10 @@ describe("Type Flow References", () => {
           ]),
         };
 
-        const result = track_constructor_types(flows, new Map(), typeRegistry);
+        const result = track_constructor_types(flows, typeRegistry);
 
         expect(result.size).toBe(1);
-        expect(result.get(mockLocation)).toBe("MyClass_type");
+        expect(result.get(mockLocation)).toEqual(mockTypeInfo);
         // The function should work correctly, just without mutations
       });
     });

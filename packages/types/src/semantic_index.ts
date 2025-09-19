@@ -106,35 +106,20 @@ export interface SymbolDefinition {
 
   /** For classes: what it implements */
   readonly implements_interfaces?: readonly SymbolName[];
-
+  
   /** For methods: whether it's static */
   readonly is_static?: boolean;
-
+  
   /** For functions/methods: return type hint */
   readonly return_type_hint?: SymbolName;
-
+  
   /** All references to this symbol */
   readonly references: readonly SymbolReference[];
 
-  // Type information
-  /** For classes, interfaces, type aliases: their TypeId */
-  readonly type_id?: TypeId;
-
-  /** For functions/methods: resolved return type */
-  readonly return_type?: TypeId;
-
-  /** For methods/properties: the type they belong to */
-  readonly member_of?: TypeId;
-
-  /** For variables/properties: their value type */
-  readonly value_type?: TypeId;
-
-  /** For methods: available overloads */
-  readonly overloads?: readonly TypeId[];
 
   /** For classes: member symbols */
   readonly members?: readonly SymbolId[];
-
+  
   /** For classes: static member symbols */
   readonly static_members?: readonly SymbolId[];
 }
