@@ -1,3 +1,10 @@
+/**
+ * Type Registry - DEPRECATED - Moved to symbol_resolution/type_resolution
+ *
+ * This file re-exports from the new location for backward compatibility.
+ * All new imports should use symbol_resolution/type_resolution.
+ */
+
 export {
   FileTypeRegistry,
   TypeMemberMap,

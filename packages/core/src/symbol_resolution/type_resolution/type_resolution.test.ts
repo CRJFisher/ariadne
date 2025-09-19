@@ -157,11 +157,15 @@ describe("Type Resolution Module", () => {
       ).toThrow("Not implemented");
     });
 
-    it("build_type_registry should throw not implemented error", () => {
+    it("build_type_registry should return a GlobalTypeRegistry", () => {
       const type_definitions = new Map<FilePath, LocalTypeDefinition[]>();
-      expect(() =>
-        build_type_registry(type_definitions)
-      ).toThrow("Not implemented");
+      const registry = build_type_registry(type_definitions);
+
+      expect(registry).toBeDefined();
+      expect(registry.types).toBeInstanceOf(Map);
+      expect(registry.type_names).toBeInstanceOf(Map);
+      expect(registry.types.size).toBe(0);
+      expect(registry.type_names.size).toBe(0);
     });
 
     it("resolve_type_members should throw not implemented error", () => {

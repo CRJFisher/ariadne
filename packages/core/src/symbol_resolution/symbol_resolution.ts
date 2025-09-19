@@ -25,6 +25,8 @@ import type {
   MethodResolutionMap,
 } from "./types";
 import { SemanticIndex } from "../semantic_index/semantic_index";
+import { build_global_type_registry } from "./type_resolution/type_registry";
+import type { LocalTypeDefinition } from "./type_resolution/types";
 
 /**
  * Main entry point for symbol resolution
@@ -107,8 +109,8 @@ function phase2_resolve_functions(
  * - Build type -> members mapping for Phase 4
  */
 function phase3_resolve_types(
-  _indices: ReadonlyMap<FilePath, SemanticIndex>,
-  _imports: ImportResolutionMap,
+  indices: ReadonlyMap<FilePath, SemanticIndex>,
+  imports: ImportResolutionMap,
   _functions: FunctionResolutionMap
 ): TypeResolutionMap {
   const symbol_types = new Map<SymbolId, TypeId>();
@@ -116,12 +118,64 @@ function phase3_resolve_types(
   const type_members = new Map<TypeId, Map<SymbolName, SymbolId>>();
   const constructors = new Map<TypeId, SymbolId>();
 
-  // TODO: Implementation
-  // 1. Extract class/interface definitions -> TypeIds
-  // 2. Map symbols to their types (declarations, inference)
-  // 3. Track type flow through function returns
-  // 4. Track type flow through assignments
-  // 5. Build type member mappings
+  // Collect local type definitions from all files
+  const local_types = new Map<FilePath, LocalTypeDefinition[]>();
+  for (const [file_path, index] of indices) {
+    const type_defs: LocalTypeDefinition[] = [];
+
+    // Extract type definitions from symbols
+    for (const [symbol_id, symbol] of index.symbols) {
+      if (symbol.kind === "class" || symbol.kind === "interface" ||
+          symbol.kind === "type_alias" || symbol.kind === "enum") {
+        const type_def: LocalTypeDefinition = {
+          name: symbol.name,
+          kind: symbol.kind === "type_alias" ? "type" : symbol.kind,
+          location: symbol.location,
+          file_path,
+          direct_members: new Map(),
+          extends_names: undefined,  // TODO: Extract from AST
+          implements_names: undefined,  // TODO: Extract from AST
+        };
+        type_defs.push(type_def);
+      }
+    }
+
+    if (type_defs.length > 0) {
+      local_types.set(file_path, type_defs);
+    }
+  }
+
+  // Build global type registry with cross-file resolution
+  const type_registry = build_global_type_registry(local_types, imports.imports);
+
+  // Map symbols to their TypeIds
+  for (const [file_path, index] of indices) {
+    const file_types = type_registry.type_names.get(file_path);
+    if (!file_types) continue;
+
+    for (const [symbol_id, symbol] of index.symbols) {
+      const type_id = file_types.get(symbol.name);
+      if (type_id) {
+        symbol_types.set(symbol_id, type_id);
+
+        // If this is a class, track its constructor
+        if (symbol.kind === "class") {
+          constructors.set(type_id, symbol_id);
+        }
+      }
+    }
+  }
+
+  // Build type member mappings
+  for (const [type_id, type_def] of type_registry.types) {
+    const members = new Map<SymbolName, SymbolId>();
+    for (const [member_name, member_info] of type_def.all_members) {
+      members.set(member_name, member_info.symbol_id);
+    }
+    type_members.set(type_id, members);
+  }
+
+  // TODO: Track type flow through assignments and function returns
 
   return { symbol_types, reference_types, type_members, constructors };
 }
