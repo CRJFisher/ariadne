@@ -309,7 +309,6 @@ describe('Type Registry', () => {
         variable_name: "testVar" as SymbolName,
         scope_id: mockScopeId,
         type_info: {
-          type_id: mockTypeId,
           type_name: "string" as SymbolName,
           certainty: "declared",
           source: {
@@ -332,7 +331,6 @@ describe('Type Registry', () => {
         variable_name: "testVar" as SymbolName,
         scope_id: mockScopeId,
         type_info: {
-          type_id: mockTypeId,
           type_name: "number" as SymbolName,
           certainty: "inferred",
           source: {
@@ -354,7 +352,6 @@ describe('Type Registry', () => {
         variable_name: "testVar" as SymbolName,
         scope_id: mockScopeId,
         type_info: {
-          type_id: mockTypeId,
           type_name: "unknown" as SymbolName,
           certainty: "ambiguous",
           source: {
@@ -494,12 +491,13 @@ describe('Type Registry', () => {
 
       const compositeType: CompositeTypeInfo = {
         kind: "array",
-        members: [],
         element_type: elementType,
       };
 
       expect(compositeType.kind).toBe("array");
-      expect(compositeType.element_type).toBe(elementType);
+      if (compositeType.kind === "array") {
+        expect(compositeType.element_type).toBe(elementType);
+      }
     });
 
     it('should handle tuple type info', () => {
@@ -509,15 +507,16 @@ describe('Type Registry', () => {
 
       const compositeType: CompositeTypeInfo = {
         kind: "tuple",
-        members: [type1, type2, type3],
         elements: [type1, type2, type3],
       };
 
       expect(compositeType.kind).toBe("tuple");
-      expect(compositeType.elements).toHaveLength(3);
-      expect(compositeType.elements![0]).toBe(type1);
-      expect(compositeType.elements![1]).toBe(type2);
-      expect(compositeType.elements![2]).toBe(type3);
+      if (compositeType.kind === "tuple") {
+        expect(compositeType.elements).toHaveLength(3);
+        expect(compositeType.elements[0]).toBe(type1);
+        expect(compositeType.elements[1]).toBe(type2);
+        expect(compositeType.elements[2]).toBe(type3);
+      }
     });
   });
 
@@ -582,7 +581,6 @@ describe('Type Registry', () => {
         variable_name: "trackedVar" as SymbolName,
         scope_id: mockScopeId,
         type_info: {
-          type_id: mockTypeId,
           type_name: "string" as SymbolName,
           certainty: "declared",
           source: {
@@ -602,6 +600,345 @@ describe('Type Registry', () => {
 
       expect(variables.variable_type_info.get(mockLocation)).toBe(variableInfo);
       expect(variables.variable_types.get(mockLocation)).toBe(mockTypeId);
+    });
+  });
+
+  describe('Edge cases and error conditions', () => {
+    describe('Builder functions with edge cases', () => {
+      it('should handle empty file path for registry', () => {
+        const emptyPath = "" as FilePath;
+        const registry = create_empty_registry(emptyPath);
+
+        expect(registry.file_path).toBe(emptyPath);
+        expect(registry.symbol_to_type.size).toBe(0);
+      });
+
+      it('should handle file path with special characters', () => {
+        const specialPath = "/path/with spaces/file-name_123.ts" as FilePath;
+        const registry = create_empty_registry(specialPath);
+
+        expect(registry.file_path).toBe(specialPath);
+      });
+
+      it('should create independent instances from multiple calls', () => {
+        const registry1 = create_empty_registry(mockFilePath);
+        const registry2 = create_empty_registry(mockFilePath);
+
+        // Should be different objects
+        expect(registry1).not.toBe(registry2);
+        expect(registry1.symbol_to_type).not.toBe(registry2.symbol_to_type);
+
+        // Modifying one should not affect the other
+        (registry1 as any).symbol_to_type.set(mockSymbolId, mockTypeId);
+        expect(registry2.symbol_to_type.size).toBe(0);
+      });
+
+      it('should create independent member maps', () => {
+        const map1 = create_empty_member_map();
+        const map2 = create_empty_member_map();
+
+        expect(map1).not.toBe(map2);
+        expect(map1.instance_members).not.toBe(map2.instance_members);
+
+        (map1 as any).instance_members.set(mockTypeId, new Map());
+        expect(map2.instance_members.size).toBe(0);
+      });
+
+      it('should create independent variable maps', () => {
+        const map1 = create_empty_variable_map();
+        const map2 = create_empty_variable_map();
+
+        expect(map1).not.toBe(map2);
+        expect(map1.variable_types).not.toBe(map2.variable_types);
+
+        (map1 as any).variable_types.set(mockLocation, mockTypeId);
+        expect(map2.variable_types.size).toBe(0);
+      });
+
+      it('should create independent type contexts', () => {
+        const context1 = create_type_context(mockFilePath);
+        const context2 = create_type_context(mockFilePath);
+
+        expect(context1).not.toBe(context2);
+        expect(context1.registry).not.toBe(context2.registry);
+        expect(context1.members).not.toBe(context2.members);
+        expect(context1.variables).not.toBe(context2.variables);
+
+        (context1.generics as any).set(mockScopeId, new Map());
+        expect(context2.generics.size).toBe(0);
+      });
+    });
+
+    describe('Complex MemberInfo scenarios', () => {
+      it('should handle member with empty parameters array', () => {
+        const memberInfo: MemberInfo = {
+          symbol_id: mockSymbolId,
+          name: "methodWithoutParams" as SymbolName,
+          member_type: "method",
+          return_type: mockTypeId,
+          is_static: false,
+          is_private: false,
+          is_readonly: false,
+          location: mockLocation,
+          parameters: []
+        };
+
+        expect(memberInfo.parameters).toHaveLength(0);
+        expect(Array.isArray(memberInfo.parameters)).toBe(true);
+      });
+
+      it('should handle member without parameters property', () => {
+        const memberInfo: MemberInfo = {
+          symbol_id: mockSymbolId,
+          name: "propertyMember" as SymbolName,
+          member_type: "property",
+          value_type: mockTypeId,
+          is_static: false,
+          is_private: false,
+          is_readonly: false,
+          location: mockLocation,
+        };
+
+        expect(memberInfo.value_type).toBe(mockTypeId);
+      });
+
+      it('should handle member with complex parameter combinations', () => {
+        const memberInfo: MemberInfo = {
+          symbol_id: mockSymbolId,
+          name: "complexMethod" as SymbolName,
+          member_type: "method",
+          return_type: mockTypeId,
+          is_static: true,
+          is_private: true,
+          is_readonly: false,
+          location: mockLocation,
+          parameters: [
+            {
+              name: "required" as SymbolName,
+              type: mockTypeId,
+              is_optional: false,
+              is_rest: false,
+            },
+            {
+              name: "optional" as SymbolName,
+              type: "string_type" as TypeId,
+              is_optional: true,
+              is_rest: false,
+              default_value: "default",
+            },
+            {
+              name: "rest" as SymbolName,
+              type: "array_type" as TypeId,
+              is_optional: false,
+              is_rest: true,
+            }
+          ]
+        };
+
+        expect(memberInfo.parameters).toHaveLength(3);
+        expect(memberInfo.parameters![0].is_optional).toBe(false);
+        expect(memberInfo.parameters![0].is_rest).toBe(false);
+        expect(memberInfo.parameters![1].is_optional).toBe(true);
+        expect(memberInfo.parameters![1].default_value).toBe("default");
+        expect(memberInfo.parameters![2].is_rest).toBe(true);
+      });
+    });
+
+    describe('Complex InheritanceInfo scenarios', () => {
+      it('should handle inheritance with empty arrays', () => {
+        const inheritanceInfo: InheritanceInfo = {
+          implements_types: [],
+          all_ancestors: [],
+          all_members: new Map()
+        };
+
+        expect(inheritanceInfo.extends_type).toBeUndefined();
+        expect(inheritanceInfo.implements_types).toHaveLength(0);
+        expect(inheritanceInfo.all_ancestors).toHaveLength(0);
+        expect(inheritanceInfo.all_members.size).toBe(0);
+      });
+
+      it('should handle inheritance with large member sets', () => {
+        const members = new Map();
+        for (let i = 0; i < 100; i++) {
+          const memberName = `member${i}` as SymbolName;
+          members.set(memberName, {
+            symbol_id: `symbol_${i}` as SymbolId,
+            name: memberName,
+            member_type: "method" as const,
+            is_static: i % 2 === 0,
+            is_private: i % 3 === 0,
+            is_readonly: i % 5 === 0,
+            location: mockLocation,
+          });
+        }
+
+        const inheritanceInfo: InheritanceInfo = {
+          implements_types: [],
+          all_ancestors: [],
+          all_members: members
+        };
+
+        expect(inheritanceInfo.all_members.size).toBe(100);
+      });
+    });
+
+    describe('Complex CompositeTypeInfo scenarios', () => {
+      it('should handle empty union type', () => {
+        const compositeType: CompositeTypeInfo = {
+          kind: "union",
+          members: [],
+        };
+
+        expect(compositeType.members).toHaveLength(0);
+      });
+
+      it('should handle tuple with mixed types', () => {
+        const types = ["string_type", "number_type", "boolean_type", "undefined_type", "null_type"] as TypeId[];
+
+        const compositeType: CompositeTypeInfo = {
+          kind: "tuple",
+          elements: types,
+        };
+
+        if (compositeType.kind === "tuple") {
+          expect(compositeType.elements).toHaveLength(5);
+          expect(compositeType.elements[0]).toBe("string_type");
+          expect(compositeType.elements[4]).toBe("null_type");
+        }
+      });
+
+      it('should handle large union type', () => {
+        const types: TypeId[] = [];
+        for (let i = 0; i < 50; i++) {
+          types.push(`type_${i}` as TypeId);
+        }
+
+        const compositeType: CompositeTypeInfo = {
+          kind: "union",
+          members: types,
+        };
+
+        expect(compositeType.members).toHaveLength(50);
+      });
+    });
+
+    describe('VariableTypeInfo edge cases', () => {
+      it('should handle variable info without type_id', () => {
+        const variableInfo: VariableTypeInfo = {
+          variable_name: "unknownVar" as SymbolName,
+          scope_id: mockScopeId,
+          type_info: {
+            type_name: "unknown" as SymbolName,
+            certainty: "ambiguous",
+            source: {
+              kind: "assignment",
+              location: mockLocation,
+            }
+          },
+          location: mockLocation,
+          source: "inference"
+        };
+
+        expect(variableInfo.type_id).toBeUndefined();
+        expect(variableInfo.type_info.certainty).toBe("ambiguous");
+      });
+
+      it('should handle variable info with all optional properties', () => {
+        const paramInfo: ParameterInfo = {
+          name: "param" as SymbolName,
+          is_optional: false,
+          is_rest: false,
+        };
+
+        expect(paramInfo.type).toBeUndefined();
+        expect(paramInfo.default_value).toBeUndefined();
+      });
+    });
+
+    describe('TypeReassignment edge cases', () => {
+      it('should handle reassignment with same from and to types', () => {
+        const reassignment: TypeReassignment = {
+          from_type: mockTypeId,
+          to_type: mockTypeId,
+          location: mockLocation,
+          is_narrowing: false,
+          is_widening: false,
+        };
+
+        expect(reassignment.from_type).toBe(reassignment.to_type);
+        expect(reassignment.is_narrowing).toBe(false);
+        expect(reassignment.is_widening).toBe(false);
+      });
+
+      it('should handle contradictory narrowing and widening flags', () => {
+        // This shouldn't happen in practice, but test the data structure
+        const reassignment: TypeReassignment = {
+          from_type: "type1" as TypeId,
+          to_type: "type2" as TypeId,
+          location: mockLocation,
+          is_narrowing: true,
+          is_widening: true,
+        };
+
+        expect(reassignment.is_narrowing).toBe(true);
+        expect(reassignment.is_widening).toBe(true);
+      });
+    });
+
+    describe('Location handling edge cases', () => {
+      it('should handle location with same start and end', () => {
+        const pointLocation: Location = {
+          file_path: mockFilePath,
+          line: 5,
+          column: 10,
+          end_line: 5,
+          end_column: 10
+        };
+
+        const memberInfo: MemberInfo = {
+          symbol_id: mockSymbolId,
+          name: "pointMember" as SymbolName,
+          member_type: "property",
+          value_type: mockTypeId,
+          is_static: false,
+          is_private: false,
+          is_readonly: false,
+          location: pointLocation,
+        };
+
+        expect(memberInfo.location.line).toBe(memberInfo.location.end_line);
+        expect(memberInfo.location.column).toBe(memberInfo.location.end_column);
+      });
+
+      it('should handle location with large line numbers', () => {
+        const largeLocation: Location = {
+          file_path: mockFilePath,
+          line: 999999,
+          column: 1,
+          end_line: 999999,
+          end_column: 100
+        };
+
+        const variableInfo: VariableTypeInfo = {
+          variable_name: "largeLineVar" as SymbolName,
+          scope_id: mockScopeId,
+          type_info: {
+            type_name: "string" as SymbolName,
+            certainty: "declared",
+            source: {
+              kind: "annotation",
+              location: largeLocation,
+            }
+          },
+          type_id: mockTypeId,
+          location: largeLocation,
+          source: "declaration"
+        };
+
+        expect(variableInfo.location.line).toBe(999999);
+        expect(variableInfo.type_info.source.location.line).toBe(999999);
+      });
     });
   });
 });
