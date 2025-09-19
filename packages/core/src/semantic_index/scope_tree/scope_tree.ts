@@ -26,7 +26,7 @@ import { SemanticEntity } from "../capture_types";
 /**
  * Map semantic entity to scope type
  */
-function map_entity_to_scope_type(entity: SemanticEntity): ScopeType {
+export function map_entity_to_scope_type(entity: SemanticEntity): ScopeType {
   switch (entity) {
     case SemanticEntity.MODULE:
       return "module";
@@ -109,7 +109,8 @@ export function build_scope_tree(
     }
 
     // Find parent scope using position containment
-    const parent = find_containing_scope(location, root_scope, scopes);
+    const current_root = scopes.get(root_scope_id)!;
+    const parent = find_containing_scope(location, current_root, scopes);
 
     // Create the scope with parent reference
     const scope: LexicalScope = {
@@ -129,15 +130,12 @@ export function build_scope_tree(
     };
     scopes.set(parent.id, updated_parent);
 
-    // If parent is root, update root_scope reference
-    if (parent.id === root_scope.id) {
-      Object.assign(root_scope, updated_parent);
-    }
-
     scopes.set(scope_id, scope);
   }
 
-  return { root_scope, scopes };
+  // Return the root scope from the scopes map to ensure consistency
+  const final_root_scope = scopes.get(root_scope_id)!;
+  return { root_scope: final_root_scope, scopes };
 }
 
 /**
@@ -153,9 +151,14 @@ export function compute_scope_depth(
 
   while (current_id && !visited.has(current_id)) {
     visited.add(current_id);
-    depth++;
     const parent = scopes.get(current_id);
-    current_id = parent?.parent_id || null;
+    if (parent) {
+      depth++;
+      current_id = parent.parent_id;
+    } else {
+      // Parent doesn't exist in scopes map, stop traversing
+      break;
+    }
   }
   return depth;
 }
@@ -172,7 +175,7 @@ export function find_containing_scope(
   let best_scope = root_scope;
   let best_depth = 0;
 
-  for (const scope of scopes.values()) {
+  for (const scope of Array.from(scopes.values())) {
     if (location_contains(scope.location, node_location)) {
       const depth = compute_scope_depth(scope, scopes);
       if (depth > best_depth) {

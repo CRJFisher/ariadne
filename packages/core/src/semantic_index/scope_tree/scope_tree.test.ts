@@ -20,7 +20,7 @@ import {
   class_scope,
   block_scope,
 } from "@ariadnejs/types";
-import { build_scope_tree, compute_scope_depth, find_containing_scope } from "./scope_tree";
+import { build_scope_tree, compute_scope_depth, find_containing_scope, map_entity_to_scope_type } from "./scope_tree";
 import { SemanticEntity } from "../capture_types";
 import type { NormalizedCapture } from "../capture_types";
 
@@ -407,7 +407,7 @@ describe("Scope Tree Module", () => {
       };
 
       const depth = compute_scope_depth(orphan_scope, scopes);
-      expect(depth).toBe(1); // Will increment once for the nonexistent parent, then stop
+      expect(depth).toBe(0); // Should not increment depth for non-existent parents
     });
 
     it("should prevent infinite loops with circular references", () => {
@@ -840,6 +840,37 @@ describe("Scope Tree Module", () => {
       expect(() => {
         build_scope_tree([], tree, "malformed.ts" as FilePath, "typescript");
       }).not.toThrow();
+    });
+  });
+
+  describe("map_entity_to_scope_type", () => {
+    it("should map all supported semantic entities to scope types", () => {
+      expect(map_entity_to_scope_type(SemanticEntity.MODULE)).toBe("module");
+      expect(map_entity_to_scope_type(SemanticEntity.CLASS)).toBe("class");
+      expect(map_entity_to_scope_type(SemanticEntity.FUNCTION)).toBe("function");
+      expect(map_entity_to_scope_type(SemanticEntity.METHOD)).toBe("method");
+      expect(map_entity_to_scope_type(SemanticEntity.CONSTRUCTOR)).toBe("constructor");
+      expect(map_entity_to_scope_type(SemanticEntity.BLOCK)).toBe("block");
+    });
+
+    it("should default to 'block' for unknown entity types", () => {
+      const unknownEntity = "UNKNOWN_ENTITY" as SemanticEntity;
+      expect(map_entity_to_scope_type(unknownEntity)).toBe("block");
+    });
+
+    it("should handle all semantic entities that could be scopes", () => {
+      // Test entities that might be passed but should default to 'block'
+      expect(map_entity_to_scope_type(SemanticEntity.VARIABLE)).toBe("block");
+      expect(map_entity_to_scope_type(SemanticEntity.CONSTANT)).toBe("block");
+      expect(map_entity_to_scope_type(SemanticEntity.PARAMETER)).toBe("block");
+      expect(map_entity_to_scope_type(SemanticEntity.FIELD)).toBe("block");
+      expect(map_entity_to_scope_type(SemanticEntity.PROPERTY)).toBe("block");
+      expect(map_entity_to_scope_type(SemanticEntity.INTERFACE)).toBe("block");
+      expect(map_entity_to_scope_type(SemanticEntity.ENUM)).toBe("block");
+      expect(map_entity_to_scope_type(SemanticEntity.TYPE_ALIAS)).toBe("block");
+      expect(map_entity_to_scope_type(SemanticEntity.ENUM_MEMBER)).toBe("block");
+      expect(map_entity_to_scope_type(SemanticEntity.NAMESPACE)).toBe("block");
+      expect(map_entity_to_scope_type(SemanticEntity.TYPE_PARAMETER)).toBe("block");
     });
   });
 
