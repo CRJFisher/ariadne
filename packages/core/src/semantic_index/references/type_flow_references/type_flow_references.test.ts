@@ -755,7 +755,6 @@ describe("Type Flow References", () => {
           name: "declared_var" as SymbolName,
           location: mockLocation,
           scope_id: mockScope.id,
-          value_type: mockTypeInfo,
           is_hoisted: false,
           is_exported: false,
           is_imported: false,
