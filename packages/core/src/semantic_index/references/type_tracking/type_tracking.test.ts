@@ -12,11 +12,19 @@ import type {
   ScopeId,
   LexicalScope,
 } from "@ariadnejs/types";
-import { location_key } from "@ariadnejs/types";
+import {
+  location_key,
+  primitive_type_id,
+  builtin_type_id,
+  defined_type_id,
+  TypeCategory,
+  ANY_TYPE,
+  UNKNOWN_TYPE,
+} from "@ariadnejs/types";
 import type { NormalizedCapture } from "../../capture_types";
 import { SemanticEntity, SemanticCategory } from "../../capture_types";
+import type { TypeInfo } from "./type_info";
 import {
-  TypeInfo,
   TypeSource,
   AssignmentContext,
   ReturnContext,
@@ -29,6 +37,28 @@ import {
   connect_return_type,
   connect_type_annotation,
 } from "./type_tracking";
+
+// Helper function to generate TypeId for tests
+function generateTypeId(name: SymbolName, location: Location): TypeId {
+  // Check for primitives
+  if (["string", "number", "boolean", "symbol", "bigint", "undefined", "null"].includes(name)) {
+    return primitive_type_id(name as any);
+  }
+  // Check for built-in types
+  else if (["Date", "RegExp", "Error", "Promise", "Map", "Set", "Array", "Object", "Function"].includes(name)) {
+    return builtin_type_id(name as any);
+  }
+  // Check for special types
+  else if (name === "any") {
+    return ANY_TYPE;
+  } else if (name === "unknown") {
+    return UNKNOWN_TYPE;
+  }
+  // User-defined type
+  else {
+    return defined_type_id(TypeCategory.INTERFACE, name, location);
+  }
+}
 
 describe("Type Tracking", () => {
   const mockFilePath = "test.ts" as FilePath;
@@ -45,7 +75,13 @@ describe("Type Tracking", () => {
     parent_id: null,
     name: "testFunction" as SymbolName,
     type: "function",
-    location: mockLocation,
+    location: {
+      file_path: mockFilePath,
+      line: 1,
+      column: 0,
+      end_line: 10, // Extended to line 10 to include test captures
+      end_column: 10,
+    },
     child_ids: [],
     symbols: new Map(),
   };
@@ -57,6 +93,7 @@ describe("Type Tracking", () => {
   describe("TypeInfo Interface", () => {
     it("should define correct structure with required fields", () => {
       const typeInfo: TypeInfo = {
+        id: generateTypeId("string" as SymbolName, mockLocation),
         type_name: "string" as SymbolName,
         certainty: "declared",
         source: {
@@ -76,6 +113,7 @@ describe("Type Tracking", () => {
 
       for (const certainty of certaintyLevels) {
         const typeInfo: TypeInfo = {
+          id: generateTypeId("test" as SymbolName, mockLocation),
           type_name: "test" as SymbolName,
           certainty,
           source: {
@@ -89,43 +127,30 @@ describe("Type Tracking", () => {
     });
 
     it("should support optional fields", () => {
+      const stringType: TypeInfo = {
+        id: generateTypeId("string" as SymbolName, mockLocation),
+        type_name: "string" as SymbolName,
+        certainty: "declared",
+        source: { kind: "annotation", location: mockLocation },
+      };
+
       const fullTypeInfo: TypeInfo = {
+        id: generateTypeId("ComplexType" as SymbolName, mockLocation),
         type_name: "ComplexType" as SymbolName,
-        type_id: "complex_type_id" as TypeId,
         certainty: "declared",
         source: {
           kind: "annotation",
           location: mockLocation,
         },
-        type_args: [
-          {
-            type_name: "string" as SymbolName,
-            certainty: "declared",
-            source: { kind: "annotation", location: mockLocation },
-          },
-        ],
+        type_params: [stringType],
         is_nullable: true,
         is_array: false,
-        return_type: {
-          type_name: "number" as SymbolName,
-          certainty: "inferred",
-          source: { kind: "return", location: mockLocation },
-        },
-        members: new Map([
-          ["prop" as SymbolName, {
-            type_name: "boolean" as SymbolName,
-            certainty: "declared",
-            source: { kind: "annotation", location: mockLocation },
-          }],
-        ]),
       };
 
-      expect(fullTypeInfo.type_id).toBe("complex_type_id");
-      expect(fullTypeInfo.type_args).toHaveLength(1);
+      expect(fullTypeInfo.id).toBeDefined();
+      expect(fullTypeInfo.type_params).toHaveLength(1);
       expect(fullTypeInfo.is_nullable).toBe(true);
       expect(fullTypeInfo.is_array).toBe(false);
-      expect(fullTypeInfo.return_type).toBeDefined();
-      expect(fullTypeInfo.members?.size).toBe(1);
     });
   });
 
@@ -175,11 +200,13 @@ describe("Type Tracking", () => {
           end_column: 15,
         },
         source_type: {
+          id: generateTypeId("string" as SymbolName, mockLocation),
           type_name: "string" as SymbolName,
           certainty: "inferred",
           source: { kind: "literal", location: mockLocation },
         },
         previous_type: {
+          id: generateTypeId("unknown" as SymbolName, mockLocation),
           type_name: "unknown" as SymbolName,
           certainty: "ambiguous",
           source: { kind: "assignment", location: mockLocation },
@@ -214,6 +241,7 @@ describe("Type Tracking", () => {
         location: mockLocation,
         function_scope_id: mockScope.id,
         returned_type: {
+          id: generateTypeId("number" as SymbolName, mockLocation),
           type_name: "number" as SymbolName,
           certainty: "inferred",
           source: { kind: "return", location: mockLocation },
@@ -705,14 +733,15 @@ describe("Type Tracking", () => {
 
         const result = build_typed_return_map(captures, methodScope, scopes);
 
-        expect(result.size).toBe(2);
+        // FIXED: Now correctly only includes returns within the root scope
+        expect(result.size).toBe(1); // Only the method return (line 5) should be included
 
         const methodContext = result.get(location_key(captures[0].node_location));
         const constructorContext = result.get(location_key(captures[1].node_location));
 
-        // TODO: Investigate scope resolution issue - constructor returns may be resolved to method scope
+        // Only the method context should be found (within scope boundaries)
         expect(methodContext!.function_scope_id).toBe(methodScope.id);
-        expect(constructorContext!.function_scope_id).toBe(methodScope.id);
+        expect(constructorContext).toBeUndefined(); // Outside scope boundaries
       });
     });
 
@@ -785,8 +814,8 @@ describe("Type Tracking", () => {
 
         const result = build_typed_return_map(captures, mockScope, mockScopes);
 
-        // TODO: Implementation includes returns outside function scopes - may need filtering
-        expect(result.size).toBe(1);
+        // FIXED: Now correctly excludes returns outside scope boundaries
+        expect(result.size).toBe(0); // Should be 0 - capture is outside scope
       });
     });
   });
@@ -941,6 +970,7 @@ describe("Type Tracking", () => {
       const constraint: TypeConstraint = {
         kind: "narrowing",
         target_type: {
+          id: generateTypeId("string" as SymbolName, mockLocation),
           type_name: "string" as SymbolName,
           certainty: "declared",
           source: { kind: "annotation", location: mockLocation },
@@ -950,6 +980,7 @@ describe("Type Tracking", () => {
 
       const context: TypedReferenceContext = {
         inferred_type: {
+          id: generateTypeId("any" as SymbolName, mockLocation),
           type_name: "any" as SymbolName,
           certainty: "ambiguous",
           source: { kind: "assignment", location: mockLocation },
@@ -964,11 +995,13 @@ describe("Type Tracking", () => {
           function_scope_id: mockScope.id,
         },
         receiver_type: {
+          id: generateTypeId("MyClass" as SymbolName, mockLocation),
           type_name: "MyClass" as SymbolName,
           certainty: "declared",
           source: { kind: "annotation", location: mockLocation },
         },
         property_type: {
+          id: generateTypeId("number" as SymbolName, mockLocation),
           type_name: "number" as SymbolName,
           certainty: "inferred",
           source: { kind: "assignment", location: mockLocation },
@@ -1005,6 +1038,7 @@ describe("Type Tracking", () => {
         const constraint: TypeConstraint = {
           kind,
           target_type: {
+            id: generateTypeId("string" as SymbolName, mockLocation),
             type_name: "string" as SymbolName,
             certainty: "declared",
             source: { kind: "annotation", location: mockLocation },
@@ -1022,6 +1056,7 @@ describe("Type Tracking", () => {
       const constraint: TypeConstraint = {
         kind: "cast",
         target_type: {
+          id: generateTypeId("number" as SymbolName, mockLocation),
           type_name: "number" as SymbolName,
           certainty: "declared",
           source: { kind: "annotation", location: mockLocation },
@@ -1121,6 +1156,7 @@ describe("Type Tracking", () => {
     describe("Success Cases", () => {
       it("should connect location to type annotation", () => {
         const typeInfo: TypeInfo = {
+          id: generateTypeId("string" as SymbolName, mockLocation),
           type_name: "string" as SymbolName,
           certainty: "declared",
           source: { kind: "annotation", location: mockLocation },
@@ -1266,6 +1302,675 @@ describe("Type Tracking", () => {
       // Array literal won't be automatically inferred without more complex analysis
       const arrayContext = assignmentMap.get(location_key(complexCaptures[1].node_location));
       expect(arrayContext!.source_type).toBeUndefined();
+    });
+
+    it("should handle malformed captures gracefully", () => {
+      const location2: Location = {
+        ...mockLocation,
+        line: 2,
+        column: 0,
+      };
+
+      // Captures with missing required fields
+      const malformedCaptures: NormalizedCapture[] = [
+        {
+          category: SemanticCategory.ASSIGNMENT,
+          entity: SemanticEntity.VARIABLE,
+          text: "",  // Empty text
+          node_location: mockLocation,
+          modifiers: {},
+          context: {},
+        },
+        {
+          category: SemanticCategory.ASSIGNMENT,
+          entity: SemanticEntity.VARIABLE,
+          text: "variable",
+          node_location: location2,
+          modifiers: {},
+          context: {
+            source_node: undefined,  // Undefined source node
+          },
+        },
+      ];
+
+      const assignmentMap = build_typed_assignment_map(malformedCaptures);
+
+      expect(assignmentMap.size).toBe(2);
+
+      const emptyTextContext = assignmentMap.get(location_key(mockLocation));
+      expect(emptyTextContext).toBeDefined();
+      expect(emptyTextContext!.source_type).toBeUndefined(); // Can't infer from empty text
+
+      const nullSourceContext = assignmentMap.get(location_key(location2));
+      expect(nullSourceContext).toBeDefined();
+      expect(nullSourceContext!.source_location).toEqual(location2); // Falls back to node location
+    });
+
+    it("should handle deeply nested scope hierarchies", () => {
+      const grandparentScope: LexicalScope = {
+        id: "grandparent" as ScopeId,
+        parent_id: null,
+        name: "GrandparentClass" as SymbolName,
+        type: "class",
+        location: {
+          file_path: mockFilePath,
+          line: 1,
+          column: 0,
+          end_line: 50,
+          end_column: 0,
+        },
+        child_ids: ["parent" as ScopeId],
+        symbols: new Map(),
+      };
+
+      const parentScope: LexicalScope = {
+        id: "parent" as ScopeId,
+        parent_id: grandparentScope.id,
+        name: "parentMethod" as SymbolName,
+        type: "method",
+        location: {
+          file_path: mockFilePath,
+          line: 10,
+          column: 0,
+          end_line: 30,
+          end_column: 0,
+        },
+        child_ids: ["child" as ScopeId],
+        symbols: new Map(),
+      };
+
+      const childScope: LexicalScope = {
+        id: "child" as ScopeId,
+        parent_id: parentScope.id,
+        name: "innerFunction" as SymbolName,
+        type: "function",
+        location: {
+          file_path: mockFilePath,
+          line: 15,
+          column: 0,
+          end_line: 25,
+          end_column: 0,
+        },
+        child_ids: [],
+        symbols: new Map(),
+      };
+
+      const nestedScopes = new Map([
+        [grandparentScope.id, grandparentScope],
+        [parentScope.id, parentScope],
+        [childScope.id, childScope],
+      ]);
+
+      const deeplyNestedCaptures: NormalizedCapture[] = [
+        {
+          category: SemanticCategory.REFERENCE,
+          entity: SemanticEntity.VARIABLE,
+          text: "nested_return",
+          node_location: {
+            file_path: mockFilePath,
+            line: 20,
+            column: 0,
+            end_line: 20,
+            end_column: 10,
+          },
+          modifiers: {},
+          context: {},
+        },
+      ];
+
+      const returnMap = build_typed_return_map(deeplyNestedCaptures, grandparentScope, nestedScopes);
+
+      expect(returnMap.size).toBe(1);
+      const context = returnMap.get(location_key(deeplyNestedCaptures[0].node_location));
+      expect(context!.function_scope_id).toBe(childScope.id);  // Should find innermost function scope
+    });
+
+    it("should handle complex type annotations with special characters", () => {
+      const complexTypeCaptures: NormalizedCapture[] = [
+        {
+          category: SemanticCategory.DEFINITION,
+          entity: SemanticEntity.TYPE,
+          text: "Map<K extends string, V extends Record<string, any>>",
+          node_location: mockLocation,
+          modifiers: {},
+          context: {},
+        },
+        {
+          category: SemanticCategory.DEFINITION,
+          entity: SemanticEntity.TYPE,
+          text: "(() => void) | null",
+          node_location: {
+            file_path: mockFilePath,
+            line: 2,
+            column: 0,
+            end_line: 2,
+            end_column: 20,
+          },
+          modifiers: { is_optional: true },
+          context: {},
+        },
+      ];
+
+      const typeMap = build_type_annotation_map(complexTypeCaptures);
+
+      expect(typeMap.size).toBe(2);
+
+      const genericType = typeMap.get(location_key(mockLocation));
+      expect(genericType!.type_name).toBe("Map<K extends string, V extends Record<string, any>>");
+      expect(genericType!.is_array).toBe(false);
+
+      const unionType = typeMap.get(location_key(complexTypeCaptures[1].node_location));
+      expect(unionType!.type_name).toBe("(() => void) | null");
+      expect(unionType!.is_nullable).toBe(true);
+    });
+  });
+
+  describe("Private Utility Function Coverage", () => {
+    describe("contains_location boundary conditions", () => {
+      it("should handle exact line and column boundaries", () => {
+        // Create scopes with precise boundaries to test contains_location function
+        const preciseScope: LexicalScope = {
+          id: "precise_scope" as ScopeId,
+          parent_id: null,
+          name: "preciseFunction" as SymbolName,
+          type: "function",
+          location: {
+            file_path: mockFilePath,
+            line: 10,
+            column: 5,
+            end_line: 15,
+            end_column: 20,
+          },
+          child_ids: [],
+          symbols: new Map(),
+        };
+
+        const scopes = new Map([[preciseScope.id, preciseScope]]);
+
+        // Test exact boundary conditions
+        const boundaryCaptures: NormalizedCapture[] = [
+          // Point exactly at start boundary
+          {
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.VARIABLE,
+            text: "start_boundary",
+            node_location: {
+              file_path: mockFilePath,
+              line: 10,
+              column: 5,
+              end_line: 10,
+              end_column: 15,
+            },
+            modifiers: {},
+            context: {},
+          },
+          // Point exactly at end boundary
+          {
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.VARIABLE,
+            text: "end_boundary",
+            node_location: {
+              file_path: mockFilePath,
+              line: 15,
+              column: 20,
+              end_line: 15,
+              end_column: 25,
+            },
+            modifiers: {},
+            context: {},
+          },
+          // Point just before start column on same line
+          {
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.VARIABLE,
+            text: "before_start",
+            node_location: {
+              file_path: mockFilePath,
+              line: 10,
+              column: 4,
+              end_line: 10,
+              end_column: 5,
+            },
+            modifiers: {},
+            context: {},
+          },
+          // Point just after end column on same line
+          {
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.VARIABLE,
+            text: "after_end",
+            node_location: {
+              file_path: mockFilePath,
+              line: 15,
+              column: 21,
+              end_line: 15,
+              end_column: 25,
+            },
+            modifiers: {},
+            context: {},
+          },
+        ];
+
+        const returnMap = build_typed_return_map(boundaryCaptures, preciseScope, scopes);
+
+        // Should include points at exact boundaries
+        expect(returnMap.has(location_key(boundaryCaptures[0].node_location))).toBe(true);
+        expect(returnMap.has(location_key(boundaryCaptures[1].node_location))).toBe(true);
+
+        // Should exclude points outside boundaries
+        expect(returnMap.has(location_key(boundaryCaptures[2].node_location))).toBe(false);
+        expect(returnMap.has(location_key(boundaryCaptures[3].node_location))).toBe(false);
+      });
+
+      it("should handle single-line scopes correctly", () => {
+        const singleLineScope: LexicalScope = {
+          id: "single_line" as ScopeId,
+          parent_id: null,
+          name: "inlineFunction" as SymbolName,
+          type: "function",
+          location: {
+            file_path: mockFilePath,
+            line: 5,
+            column: 10,
+            end_line: 5,
+            end_column: 30,
+          },
+          child_ids: [],
+          symbols: new Map(),
+        };
+
+        const scopes = new Map([[singleLineScope.id, singleLineScope]]);
+
+        const singleLineCaptures: NormalizedCapture[] = [
+          // Point within single line scope
+          {
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.VARIABLE,
+            text: "within_scope",
+            node_location: {
+              file_path: mockFilePath,
+              line: 5,
+              column: 15,
+              end_line: 5,
+              end_column: 20,
+            },
+            modifiers: {},
+            context: {},
+          },
+          // Point before scope on same line
+          {
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.VARIABLE,
+            text: "before_scope",
+            node_location: {
+              file_path: mockFilePath,
+              line: 5,
+              column: 5,
+              end_line: 5,
+              end_column: 8,
+            },
+            modifiers: {},
+            context: {},
+          },
+          // Point after scope on same line
+          {
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.VARIABLE,
+            text: "after_scope",
+            node_location: {
+              file_path: mockFilePath,
+              line: 5,
+              column: 35,
+              end_line: 5,
+              end_column: 40,
+            },
+            modifiers: {},
+            context: {},
+          },
+        ];
+
+        const returnMap = build_typed_return_map(singleLineCaptures, singleLineScope, scopes);
+
+        // Only the point within scope should be included
+        expect(returnMap.size).toBe(1);
+        expect(returnMap.has(location_key(singleLineCaptures[0].node_location))).toBe(true);
+        expect(returnMap.has(location_key(singleLineCaptures[1].node_location))).toBe(false);
+        expect(returnMap.has(location_key(singleLineCaptures[2].node_location))).toBe(false);
+      });
+
+      it("should handle multi-line scopes with complex nesting", () => {
+        const outerScope: LexicalScope = {
+          id: "outer" as ScopeId,
+          parent_id: null,
+          name: "outerFunction" as SymbolName,
+          type: "function",
+          location: {
+            file_path: mockFilePath,
+            line: 1,
+            column: 0,
+            end_line: 50,
+            end_column: 0,
+          },
+          child_ids: ["inner1" as ScopeId, "inner2" as ScopeId],
+          symbols: new Map(),
+        };
+
+        const innerScope1: LexicalScope = {
+          id: "inner1" as ScopeId,
+          parent_id: outerScope.id,
+          name: "innerFunction1" as SymbolName,
+          type: "function",
+          location: {
+            file_path: mockFilePath,
+            line: 10,
+            column: 2,
+            end_line: 20,
+            end_column: 2,
+          },
+          child_ids: [],
+          symbols: new Map(),
+        };
+
+        const innerScope2: LexicalScope = {
+          id: "inner2" as ScopeId,
+          parent_id: outerScope.id,
+          name: "innerFunction2" as SymbolName,
+          type: "function",
+          location: {
+            file_path: mockFilePath,
+            line: 25,
+            column: 2,
+            end_line: 35,
+            end_column: 2,
+          },
+          child_ids: [],
+          symbols: new Map(),
+        };
+
+        const complexScopes = new Map([
+          [outerScope.id, outerScope],
+          [innerScope1.id, innerScope1],
+          [innerScope2.id, innerScope2],
+        ]);
+
+        const complexCaptures: NormalizedCapture[] = [
+          // Point in first inner scope
+          {
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.VARIABLE,
+            text: "in_inner1",
+            node_location: {
+              file_path: mockFilePath,
+              line: 15,
+              column: 5,
+              end_line: 15,
+              end_column: 10,
+            },
+            modifiers: {},
+            context: {},
+          },
+          // Point in second inner scope
+          {
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.VARIABLE,
+            text: "in_inner2",
+            node_location: {
+              file_path: mockFilePath,
+              line: 30,
+              column: 5,
+              end_line: 30,
+              end_column: 10,
+            },
+            modifiers: {},
+            context: {},
+          },
+          // Point in outer scope but not in any inner scope
+          {
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.VARIABLE,
+            text: "in_outer_only",
+            node_location: {
+              file_path: mockFilePath,
+              line: 5,
+              column: 5,
+              end_line: 5,
+              end_column: 10,
+            },
+            modifiers: {},
+            context: {},
+          },
+        ];
+
+        const returnMap = build_typed_return_map(complexCaptures, outerScope, complexScopes);
+
+        expect(returnMap.size).toBe(3);
+
+        // Should find the most specific (innermost) function scope for each point
+        const context1 = returnMap.get(location_key(complexCaptures[0].node_location));
+        const context2 = returnMap.get(location_key(complexCaptures[1].node_location));
+        const context3 = returnMap.get(location_key(complexCaptures[2].node_location));
+
+        expect(context1!.function_scope_id).toBe(innerScope1.id);
+        expect(context2!.function_scope_id).toBe(innerScope2.id);
+        expect(context3!.function_scope_id).toBe(outerScope.id);
+      });
+    });
+
+    describe("generate_type_id edge cases", () => {
+      it("should handle type annotation map with all type categories", () => {
+        const allTypeCaptures: NormalizedCapture[] = [
+          // Primitive types
+          { category: SemanticCategory.DEFINITION, entity: SemanticEntity.TYPE, text: "string", node_location: mockLocation, modifiers: {}, context: {} },
+          { category: SemanticCategory.DEFINITION, entity: SemanticEntity.TYPE, text: "number", node_location: { ...mockLocation, line: 2 }, modifiers: {}, context: {} },
+          { category: SemanticCategory.DEFINITION, entity: SemanticEntity.TYPE, text: "boolean", node_location: { ...mockLocation, line: 3 }, modifiers: {}, context: {} },
+          { category: SemanticCategory.DEFINITION, entity: SemanticEntity.TYPE, text: "symbol", node_location: { ...mockLocation, line: 4 }, modifiers: {}, context: {} },
+          { category: SemanticCategory.DEFINITION, entity: SemanticEntity.TYPE, text: "bigint", node_location: { ...mockLocation, line: 5 }, modifiers: {}, context: {} },
+          { category: SemanticCategory.DEFINITION, entity: SemanticEntity.TYPE, text: "undefined", node_location: { ...mockLocation, line: 6 }, modifiers: {}, context: {} },
+          { category: SemanticCategory.DEFINITION, entity: SemanticEntity.TYPE, text: "null", node_location: { ...mockLocation, line: 7 }, modifiers: {}, context: {} },
+
+          // Built-in types
+          { category: SemanticCategory.DEFINITION, entity: SemanticEntity.TYPE, text: "Date", node_location: { ...mockLocation, line: 8 }, modifiers: {}, context: {} },
+          { category: SemanticCategory.DEFINITION, entity: SemanticEntity.TYPE, text: "RegExp", node_location: { ...mockLocation, line: 9 }, modifiers: {}, context: {} },
+          { category: SemanticCategory.DEFINITION, entity: SemanticEntity.TYPE, text: "Error", node_location: { ...mockLocation, line: 10 }, modifiers: {}, context: {} },
+          { category: SemanticCategory.DEFINITION, entity: SemanticEntity.TYPE, text: "Promise", node_location: { ...mockLocation, line: 11 }, modifiers: {}, context: {} },
+          { category: SemanticCategory.DEFINITION, entity: SemanticEntity.TYPE, text: "Map", node_location: { ...mockLocation, line: 12 }, modifiers: {}, context: {} },
+          { category: SemanticCategory.DEFINITION, entity: SemanticEntity.TYPE, text: "Set", node_location: { ...mockLocation, line: 13 }, modifiers: {}, context: {} },
+          { category: SemanticCategory.DEFINITION, entity: SemanticEntity.TYPE, text: "Array", node_location: { ...mockLocation, line: 14 }, modifiers: {}, context: {} },
+          { category: SemanticCategory.DEFINITION, entity: SemanticEntity.TYPE, text: "Object", node_location: { ...mockLocation, line: 15 }, modifiers: {}, context: {} },
+          { category: SemanticCategory.DEFINITION, entity: SemanticEntity.TYPE, text: "Function", node_location: { ...mockLocation, line: 16 }, modifiers: {}, context: {} },
+
+          // Special types
+          { category: SemanticCategory.DEFINITION, entity: SemanticEntity.TYPE, text: "any", node_location: { ...mockLocation, line: 17 }, modifiers: {}, context: {} },
+          { category: SemanticCategory.DEFINITION, entity: SemanticEntity.TYPE, text: "unknown", node_location: { ...mockLocation, line: 18 }, modifiers: {}, context: {} },
+          { category: SemanticCategory.DEFINITION, entity: SemanticEntity.TYPE, text: "never", node_location: { ...mockLocation, line: 19 }, modifiers: {}, context: {} },
+          { category: SemanticCategory.DEFINITION, entity: SemanticEntity.TYPE, text: "void", node_location: { ...mockLocation, line: 20 }, modifiers: {}, context: {} },
+
+          // User-defined type
+          { category: SemanticCategory.DEFINITION, entity: SemanticEntity.TYPE, text: "MyCustomType", node_location: { ...mockLocation, line: 21 }, modifiers: {}, context: {} },
+        ];
+
+        const typeMap = build_type_annotation_map(allTypeCaptures);
+
+        expect(typeMap.size).toBe(21);
+
+        // Verify each type has proper type_id generation
+        allTypeCaptures.forEach(capture => {
+          const typeInfo = typeMap.get(location_key(capture.node_location));
+          expect(typeInfo).toBeDefined();
+          expect(typeInfo!.type_name).toBe(capture.text);
+          expect(typeInfo!.certainty).toBe("declared");
+        });
+      });
+    });
+
+    describe("infer_type_from_text edge cases", () => {
+      it("should handle all literal inference patterns", () => {
+        const literalTestCaptures: NormalizedCapture[] = [
+          // String literals with different quote styles
+          { category: SemanticCategory.ASSIGNMENT, entity: SemanticEntity.VARIABLE, text: '"double quotes"', node_location: { ...mockLocation, line: 1 }, modifiers: {}, context: {} },
+          { category: SemanticCategory.ASSIGNMENT, entity: SemanticEntity.VARIABLE, text: "'single quotes'", node_location: { ...mockLocation, line: 2 }, modifiers: {}, context: {} },
+          { category: SemanticCategory.ASSIGNMENT, entity: SemanticEntity.VARIABLE, text: "`template literal`", node_location: { ...mockLocation, line: 3 }, modifiers: {}, context: {} },
+
+          // Number literals
+          { category: SemanticCategory.ASSIGNMENT, entity: SemanticEntity.VARIABLE, text: "42", node_location: { ...mockLocation, line: 4 }, modifiers: {}, context: {} },
+          { category: SemanticCategory.ASSIGNMENT, entity: SemanticEntity.VARIABLE, text: "3.14", node_location: { ...mockLocation, line: 5 }, modifiers: {}, context: {} },
+          { category: SemanticCategory.ASSIGNMENT, entity: SemanticEntity.VARIABLE, text: "0", node_location: { ...mockLocation, line: 6 }, modifiers: {}, context: {} },
+
+          // Boolean literals
+          { category: SemanticCategory.ASSIGNMENT, entity: SemanticEntity.VARIABLE, text: "true", node_location: { ...mockLocation, line: 7 }, modifiers: {}, context: {} },
+          { category: SemanticCategory.ASSIGNMENT, entity: SemanticEntity.VARIABLE, text: "false", node_location: { ...mockLocation, line: 8 }, modifiers: {}, context: {} },
+
+          // Null/undefined
+          { category: SemanticCategory.ASSIGNMENT, entity: SemanticEntity.VARIABLE, text: "null", node_location: { ...mockLocation, line: 9 }, modifiers: {}, context: {} },
+          { category: SemanticCategory.ASSIGNMENT, entity: SemanticEntity.VARIABLE, text: "undefined", node_location: { ...mockLocation, line: 10 }, modifiers: {}, context: {} },
+
+          // Non-literal (should not be inferred)
+          { category: SemanticCategory.ASSIGNMENT, entity: SemanticEntity.VARIABLE, text: "variableName", node_location: { ...mockLocation, line: 11 }, modifiers: {}, context: {} },
+        ];
+
+        const assignmentMap = build_typed_assignment_map(literalTestCaptures);
+
+        expect(assignmentMap.size).toBe(11);
+
+        // Check string literals
+        expect(assignmentMap.get(location_key(literalTestCaptures[0].node_location))!.source_type!.type_name).toBe("string");
+        expect(assignmentMap.get(location_key(literalTestCaptures[1].node_location))!.source_type!.type_name).toBe("string");
+        expect(assignmentMap.get(location_key(literalTestCaptures[2].node_location))!.source_type!.type_name).toBe("string");
+
+        // Check number literals
+        expect(assignmentMap.get(location_key(literalTestCaptures[3].node_location))!.source_type!.type_name).toBe("number");
+        expect(assignmentMap.get(location_key(literalTestCaptures[4].node_location))!.source_type!.type_name).toBe("number");
+        expect(assignmentMap.get(location_key(literalTestCaptures[5].node_location))!.source_type!.type_name).toBe("number");
+
+        // Check boolean literals
+        expect(assignmentMap.get(location_key(literalTestCaptures[6].node_location))!.source_type!.type_name).toBe("boolean");
+        expect(assignmentMap.get(location_key(literalTestCaptures[7].node_location))!.source_type!.type_name).toBe("boolean");
+
+        // Check null/undefined
+        expect(assignmentMap.get(location_key(literalTestCaptures[8].node_location))!.source_type!.type_name).toBe("null");
+        expect(assignmentMap.get(location_key(literalTestCaptures[9].node_location))!.source_type!.type_name).toBe("undefined");
+
+        // Check non-literal (should not be inferred)
+        expect(assignmentMap.get(location_key(literalTestCaptures[10].node_location))!.source_type).toBeUndefined();
+      });
+    });
+
+    describe("error conditions and boundary cases", () => {
+      it("should handle captures with undefined context gracefully", () => {
+        const undefinedContextCaptures: NormalizedCapture[] = [
+          {
+            category: SemanticCategory.ASSIGNMENT,
+            entity: SemanticEntity.VARIABLE,
+            text: "variable",
+            node_location: mockLocation,
+            modifiers: {},
+            context: undefined as any,
+          },
+        ];
+
+        const assignmentMap = build_typed_assignment_map(undefinedContextCaptures);
+
+        expect(assignmentMap.size).toBe(1);
+        const context = assignmentMap.get(location_key(mockLocation));
+        expect(context).toBeDefined();
+        expect(context!.source_location).toEqual(mockLocation);
+        expect(context!.source_type).toBeUndefined();
+      });
+
+      it("should handle scopes with circular parent references gracefully", () => {
+        // Create scopes with circular references
+        const scope1: LexicalScope = {
+          id: "scope1" as ScopeId,
+          parent_id: "scope2" as ScopeId,
+          name: "function1" as SymbolName,
+          type: "function",
+          location: {
+            file_path: mockFilePath,
+            line: 1,
+            column: 0,
+            end_line: 10,
+            end_column: 0,
+          },
+          child_ids: [],
+          symbols: new Map(),
+        };
+
+        const scope2: LexicalScope = {
+          id: "scope2" as ScopeId,
+          parent_id: "scope1" as ScopeId,  // Circular reference
+          name: "function2" as SymbolName,
+          type: "function",
+          location: {
+            file_path: mockFilePath,
+            line: 5,
+            column: 0,
+            end_line: 8,
+            end_column: 0,
+          },
+          child_ids: [],
+          symbols: new Map(),
+        };
+
+        const circularScopes = new Map([
+          [scope1.id, scope1],
+          [scope2.id, scope2],
+        ]);
+
+        const captures: NormalizedCapture[] = [
+          {
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.VARIABLE,
+            text: "test",
+            node_location: {
+              file_path: mockFilePath,
+              line: 6,
+              column: 0,
+              end_line: 6,
+              end_column: 5,
+            },
+            modifiers: {},
+            context: {},
+          },
+        ];
+
+        // This should not cause infinite recursion
+        const returnMap = build_typed_return_map(captures, scope1, circularScopes);
+
+        expect(returnMap.size).toBe(1);
+        const context = returnMap.get(location_key(captures[0].node_location));
+        expect(context).toBeDefined();
+        // Should find one of the function scopes despite circular references
+        expect([scope1.id, scope2.id]).toContain(context!.function_scope_id);
+      });
+
+      it("should handle empty scope maps", () => {
+        const captures: NormalizedCapture[] = [
+          {
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.VARIABLE,
+            text: "orphan",
+            node_location: mockLocation,
+            modifiers: {},
+            context: {},
+          },
+        ];
+
+        const emptyScopes = new Map<ScopeId, LexicalScope>();
+        const rootScope: LexicalScope = {
+          id: "root" as ScopeId,
+          parent_id: null,
+          name: "root" as SymbolName,
+          type: "module",
+          location: mockLocation,
+          child_ids: [],
+          symbols: new Map(),
+        };
+
+        const returnMap = build_typed_return_map(captures, rootScope, emptyScopes);
+
+        // Should handle gracefully - when rootScope is not in scopes map, no entries are created
+        expect(returnMap.size).toBe(0);
+      });
     });
   });
 });

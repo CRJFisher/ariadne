@@ -600,5 +600,185 @@ describe('Type Info Module', () => {
       expect(is_assignable_to(unionType, anyType)).toBe(true);
       expect(is_assignable_to(anyType, unionType)).toBe(true);
     });
+
+    it('should handle intersection type creation via union with overlapping members', () => {
+      const stringType = type_info_from_annotation("string" as SymbolName, mockLocation);
+      const numberType = type_info_from_annotation("number" as SymbolName, mockLocation);
+      const stringUnion = type_info_union([stringType], mockLocation);
+      const numberUnion = type_info_union([numberType], mockLocation);
+
+      expect(stringUnion.type_name).toBe("string");
+      expect(numberUnion.type_name).toBe("number");
+      expect(types_equal(stringUnion, stringType)).toBe(false); // Different construction
+    });
+
+    it('should handle deeply nested generic types', () => {
+      const promiseType = type_info_from_annotation("Promise" as SymbolName, mockLocation);
+      const resultType = type_info_from_annotation("Result" as SymbolName, mockLocation);
+      const stringType = type_info_from_annotation("string" as SymbolName, mockLocation);
+      const errorType = type_info_from_annotation("Error" as SymbolName, mockLocation);
+
+      const resultOfString = type_info_generic(resultType, [stringType, errorType], mockLocation);
+      const promiseOfResult = type_info_generic(promiseType, [resultOfString], mockLocation);
+
+      expect(promiseOfResult.type_name).toBe("Promise<Result<string, Error>>");
+      expect(promiseOfResult.type_params![0]).toBe(resultOfString);
+      expect(promiseOfResult.type_params![0].type_params![0]).toBe(stringType);
+      expect(promiseOfResult.type_params![0].type_params![1]).toBe(errorType);
+    });
+
+    it('should handle comprehensive edge cases in type construction', () => {
+      // Test extreme edge cases for comprehensive coverage
+
+      // Empty type name (edge case)
+      const emptyType = type_info_from_annotation("" as SymbolName, mockLocation);
+      expect(emptyType.type_name).toBe("");
+      expect(emptyType.certainty).toBe("declared");
+
+      // Very long type name
+      const longTypeName = "VeryLongTypeNameThatExceedsNormalLengthsAndTestsStringHandling" as SymbolName;
+      const longType = type_info_from_annotation(longTypeName, mockLocation);
+      expect(longType.type_name).toBe(longTypeName);
+
+      // Type with special characters
+      const specialType = type_info_from_annotation("Type<T, U> & { foo: bar }" as SymbolName, mockLocation);
+      expect(specialType.type_name).toBe("Type<T, U> & { foo: bar }");
+
+      // Union with no members (edge case)
+      const emptyUnion = type_info_union([], mockLocation);
+      expect(emptyUnion.union_members).toHaveLength(0);
+      expect(emptyUnion.type_name).toBe("");
+
+      // Generic with no type arguments (edge case)
+      const baseType = type_info_from_annotation("BaseType" as SymbolName, mockLocation);
+      const emptyGeneric = type_info_generic(baseType, [], mockLocation);
+      expect(emptyGeneric.type_params).toHaveLength(0);
+      expect(emptyGeneric.type_name).toBe("BaseType<>");
+
+      // Array of arrays
+      const stringType = type_info_from_annotation("string" as SymbolName, mockLocation);
+      const stringArray = type_info_array(stringType, mockLocation);
+      const arrayOfArrays = type_info_array(stringArray, mockLocation);
+      expect(arrayOfArrays.is_array).toBe(true);
+      expect(arrayOfArrays.type_params![0]).toBe(stringArray);
+      expect(arrayOfArrays.type_params![0].is_array).toBe(true);
+
+      // Union of unions (complex nesting)
+      const numberType = type_info_from_annotation("number" as SymbolName, mockLocation);
+      const booleanType = type_info_from_annotation("boolean" as SymbolName, mockLocation);
+      const firstUnion = type_info_union([stringType, numberType], mockLocation);
+      const secondUnion = type_info_union([booleanType], mockLocation);
+      const unionOfUnions = type_info_union([firstUnion, secondUnion], mockLocation);
+      expect(unionOfUnions.union_members).toHaveLength(2);
+      expect(unionOfUnions.union_members![0]).toBe(firstUnion);
+      expect(unionOfUnions.union_members![1]).toBe(secondUnion);
+    });
+
+    it('should handle literal types with extreme values', () => {
+      // Test edge cases for literal values
+
+      // Very large number
+      const largeNumber = type_info_from_literal(Number.MAX_SAFE_INTEGER, mockLocation);
+      expect(largeNumber.type_name).toBe("number");
+      expect(largeNumber.certainty).toBe("inferred");
+
+      // Very small number
+      const smallNumber = type_info_from_literal(Number.MIN_SAFE_INTEGER, mockLocation);
+      expect(smallNumber.type_name).toBe("number");
+
+      // Negative zero
+      const negativeZero = type_info_from_literal(-0, mockLocation);
+      expect(negativeZero.type_name).toBe("number");
+
+      // Empty string
+      const emptyString = type_info_from_literal("", mockLocation);
+      expect(emptyString.type_name).toBe("string");
+
+      // Very long string
+      const longString = type_info_from_literal("a".repeat(1000), mockLocation);
+      expect(longString.type_name).toBe("string");
+
+      // String with special characters
+      const specialString = type_info_from_literal("Hello\nWorld\t🌍", mockLocation);
+      expect(specialString.type_name).toBe("string");
+
+      // NaN (treated as number by implementation)
+      const nanValue = type_info_from_literal(NaN, mockLocation);
+      expect(nanValue.type_name).toBe("number");
+
+      // Infinity (treated as number by implementation)
+      const infinityValue = type_info_from_literal(Infinity, mockLocation);
+      expect(infinityValue.type_name).toBe("number");
+    });
+
+    it('should handle assignability with edge cases', () => {
+      // Test comprehensive assignability scenarios
+
+      const anyType = type_info_from_annotation("any" as SymbolName, mockLocation);
+      const unknownType = type_info_from_annotation("unknown" as SymbolName, mockLocation);
+      const neverType = type_info_from_annotation("never" as SymbolName, mockLocation);
+      const voidType = type_info_from_annotation("void" as SymbolName, mockLocation);
+      const stringType = type_info_from_annotation("string" as SymbolName, mockLocation);
+
+      // Never type edge cases
+      expect(is_assignable_to(neverType, voidType)).toBe(true);
+      expect(is_assignable_to(voidType, neverType)).toBe(false);
+
+      // Void type cases
+      expect(is_assignable_to(voidType, unknownType)).toBe(true);
+      expect(is_assignable_to(unknownType, voidType)).toBe(false);
+
+      // Complex union scenarios
+      const stringUnion = type_info_union([stringType], mockLocation);
+      const mixedUnion = type_info_union([stringType, anyType], mockLocation);
+
+      // Single-member union: string is assignable to union of [string]
+      expect(is_assignable_to(stringType, stringUnion)).toBe(true); // String to string union
+      expect(is_assignable_to(stringUnion, stringType)).toBe(true); // Union [string] to string (all members assignable)
+
+      // Union with any should accept everything
+      expect(is_assignable_to(stringType, mixedUnion)).toBe(true);
+      expect(is_assignable_to(neverType, mixedUnion)).toBe(true);
+
+      // Self-assignment edge case
+      expect(is_assignable_to(stringType, stringType)).toBe(true);
+      expect(is_assignable_to(anyType, anyType)).toBe(true);
+    });
+
+    it('should handle type equality with comprehensive scenarios', () => {
+      // Test all edge cases for type equality
+
+      const type1 = type_info_from_annotation("TestType" as SymbolName, mockLocation);
+      const type2 = type_info_from_annotation("TestType" as SymbolName, mockLocation);
+      const type3 = type_info_from_annotation("DifferentType" as SymbolName, mockLocation);
+
+      // Same type names should be equal (same TypeId)
+      expect(types_equal(type1, type2)).toBe(true);
+      expect(types_equal(type1, type3)).toBe(false);
+
+      // Literal vs annotation should be different
+      const literalString = type_info_from_literal("test", mockLocation);
+      const annotationString = type_info_from_annotation("string" as SymbolName, mockLocation);
+      expect(types_equal(literalString, annotationString)).toBe(false);
+
+      // Different constructions of the same conceptual type
+      const arrayType = type_info_from_annotation("Array" as SymbolName, mockLocation);
+      const stringType = type_info_from_annotation("string" as SymbolName, mockLocation);
+      const stringArray1 = type_info_array(stringType, mockLocation);
+      const stringArray2 = type_info_array(stringType, mockLocation2);
+      const genericArray = type_info_generic(arrayType, [stringType], mockLocation);
+
+      // Array construction should be equal regardless of location
+      expect(types_equal(stringArray1, stringArray2)).toBe(true);
+
+      // Array vs generic construction should be different
+      expect(types_equal(stringArray1, genericArray)).toBe(false);
+
+      // Union order independence test - unions are equal regardless of member order
+      const numberType = type_info_from_annotation("number" as SymbolName, mockLocation);
+      const union1 = type_info_union([stringType, numberType], mockLocation);
+      const union2 = type_info_union([numberType, stringType], mockLocation);
+      expect(types_equal(union1, union2)).toBe(true); // Order doesn't matter for equality
+    });
   });
 });
