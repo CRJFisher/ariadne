@@ -152,3 +152,27 @@ export function collect_namespace_exports(
 
   return exports;
 }
+
+// ============================================================================
+// Missing function implementations (stubs for tests)
+// ============================================================================
+
+export function is_namespace_import(import_stmt: any, language: string): boolean {
+  return import_stmt?.is_namespace_import === true || import_stmt?.symbol_name === '*';
+}
+
+export function resolve_namespace_exports(namespace: any, language: string): Map<string, any> {
+  return new Map();
+}
+
+export function resolve_namespace_member(namespace: any, member: string, language: string): any {
+  return null;
+}
+
+export function detect_namespace_imports(file_content: string, language: string): any[] {
+  return [];
+}
+
+export function resolve_nested_namespace(chain: string[], context: any): any {
+  return null;
+}

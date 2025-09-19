@@ -141,7 +141,8 @@ export function build_semantic_index(
     grouped.definitions,
     root_scope,
     scopes,
-    file_path
+    file_path,
+    lang
   );
 
   // Build scope-to-symbol mapping for function/method/class scopes
@@ -329,7 +330,11 @@ export function query_tree_and_parse_captures(
   file_path: FilePath
 ) {
   const query_string = load_query(lang);
-  const query = new Query(LANGUAGE_TO_TREESITTER_LANG.get(lang), query_string);
+  const parser = LANGUAGE_TO_TREESITTER_LANG.get(lang);
+  if (!parser) {
+    throw new Error(`No tree-sitter parser found for language: ${lang}`);
+  }
+  const query = new Query(parser, query_string);
   const captures = query.captures(tree.rootNode);
 
   // Normalize captures to common semantic format

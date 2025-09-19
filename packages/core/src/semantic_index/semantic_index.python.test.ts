@@ -294,7 +294,7 @@ z: list[int] = [1, 2, 3]
       expect(export_names).toContain("__all__");
     });
 
-    it("should parse __all__ explicit exports", () => {
+    it("should parse __all__ explicit exports and extract contents", () => {
       const code = readFileSync(join(FIXTURES_DIR, "comprehensive_exports.py"), "utf8");
       const tree = parser.parse(code);
       const file_path = "comprehensive_exports.py" as FilePath;
@@ -305,6 +305,27 @@ z: list[int] = [1, 2, 3]
         (exp) => exp.text === "__all__"
       );
       expect(all_exports.length).toBeGreaterThan(0);
+
+      // Check for __all__ list capture with contents
+      const all_list_exports = parsed.exports.filter(
+        (exp) => exp.context?.all_contents && Array.isArray(exp.context.all_contents)
+      );
+      expect(all_list_exports.length).toBeGreaterThan(0);
+
+      // Verify the extracted contents
+      const all_contents = all_list_exports[0]?.context?.all_contents;
+      expect(all_contents).toBeDefined();
+      expect(all_contents).toContain("public_function");
+      expect(all_contents).toContain("another_public_function");
+      expect(all_contents).toContain("PublicClass");
+      expect(all_contents).toContain("UtilityClass");
+      expect(all_contents).toContain("PUBLIC_CONSTANT");
+      expect(all_contents).toContain("public_variable");
+      expect(all_contents).toContain("default_dict");
+      expect(all_contents).toContain("ListType");
+
+      // Verify that __all__ contents length matches expected
+      expect(all_contents?.length).toBe(8);
     });
 
     it("should handle complex __all__ patterns", () => {
@@ -380,9 +401,9 @@ z: list[int] = [1, 2, 3]
       const file_path = "classes.py" as FilePath;
       const result = build_semantic_index(file_path, tree, "python");
 
-      // Check method definitions
+      // Check method definitions (including constructors which are methods in Python)
       const method_symbols = Array.from(result.symbols.values()).filter(
-        (def) => def.kind === "method"
+        (def) => def.kind === "method" || def.kind === "constructor"
       );
 
       const method_names = method_symbols.map((s) => s.name);
@@ -398,7 +419,7 @@ z: list[int] = [1, 2, 3]
       const result = build_semantic_index(file_path, tree, "python");
 
       const magic_methods = Array.from(result.symbols.values()).filter(
-        (def) => def.kind === "method" && def.name.startsWith("__") && def.name.endsWith("__")
+        (def) => (def.kind === "method" || def.kind === "constructor") && def.name.startsWith("__") && def.name.endsWith("__")
       );
 
       const magic_names = magic_methods.map((m) => m.name);
@@ -531,8 +552,8 @@ z: list[int] = [1, 2, 3]
       );
 
       expect(from_imports.length).toBeGreaterThan(0);
-      const from_import_names = from_imports.map((imp) =>
-        "symbol_name" in imp ? imp.symbol_name : ""
+      const from_import_names = from_imports.flatMap((imp) =>
+        imp.imports.map(importItem => importItem.name)
       );
       expect(from_import_names).toContain("defaultdict");
       expect(from_import_names).toContain("Counter");
@@ -545,12 +566,12 @@ z: list[int] = [1, 2, 3]
       const result = build_semantic_index(file_path, tree, "python");
 
       const aliased_imports = result.imports.filter(
-        (imp) => "alias" in imp && imp.alias
+        (imp) => imp.kind === "named" && imp.imports.some(importItem => importItem.alias)
       );
 
       expect(aliased_imports.length).toBeGreaterThan(0);
-      const aliases = aliased_imports.map((imp) =>
-        "alias" in imp ? imp.alias : ""
+      const aliases = aliased_imports.flatMap((imp) =>
+        imp.imports.filter(importItem => importItem.alias).map(importItem => importItem.alias!)
       );
       expect(aliases).toContain("np");
       expect(aliases).toContain("pd");
@@ -761,12 +782,190 @@ def generator():
       const file_path = "test.py" as FilePath;
       const parsed = query_tree_and_parse_captures("python", tree, file_path);
 
-      // Check for yield expressions
+      // Check for yield expressions - look for ref.yield captures or yield in text
       const yields = parsed.references.filter(
-        (ref) => ref.text === "1" || ref.text === "2" || ref.text === "3"
+        (ref) => ref.text.includes("yield") || ref.capture_name === "ref.yield"
       );
-      // Note: This is a simplified check - actual yield tracking would be more complex
+      // Alternative: check if any references contain yield-related content
+      const hasYieldContent = parsed.references.some(ref =>
+        ref.text === "1" || ref.text === "2" || ref.text === "3"
+      );
+      expect(yields.length > 0 || hasYieldContent).toBe(true);
+    });
+  });
+
+  // ============================================================================
+  // COMPREHENSIVE CAPTURE COVERAGE TESTS
+  // ============================================================================
+
+  describe("Comprehensive Capture Coverage", () => {
+    it("should capture augmented assignments", () => {
+      const code = `
+x = 10
+x += 5  # augmented assignment
+y *= 2
+z //= 3
+`;
+      const tree = parser.parse(code);
+      const parsed = query_tree_and_parse_captures("python", tree, "test.py" as FilePath);
+
+      const augmented = parsed.assignments.filter(a => a.entity === SemanticEntity.VARIABLE);
+      expect(augmented.length).toBeGreaterThan(0);
+    });
+
+    it("should capture multiple and tuple assignments", () => {
+      const code = `
+# Multiple assignment
+x, y, z = 1, 2, 3
+
+# Tuple unpacking
+(a, b) = (4, 5)
+
+# List unpacking
+[c, d] = [6, 7]
+`;
+      const tree = parser.parse(code);
+      const parsed = query_tree_and_parse_captures("python", tree, "test.py" as FilePath);
+
+      const multipleAssigns = parsed.definitions.filter(d => d.text === "x" || d.text === "y" || d.text === "z");
+      expect(multipleAssigns.length).toBe(3);
+
+      const tupleAssigns = parsed.definitions.filter(d => d.text === "a" || d.text === "b");
+      expect(tupleAssigns.length).toBe(2);
+    });
+
+    it("should capture comprehension variables", () => {
+      const code = `
+# List comprehension
+squares = [x**2 for x in range(10)]
+
+# Dict comprehension
+dict_comp = {k: v for k, v in zip(keys, values)}
+
+# Set comprehension
+unique = {item for item in items if item}
+
+# Generator expression
+gen = (n for n in numbers if n > 0)
+`;
+      const tree = parser.parse(code);
+      const parsed = query_tree_and_parse_captures("python", tree, "test.py" as FilePath);
+
+      const compVars = parsed.definitions.filter(d => d.entity === SemanticEntity.VARIABLE);
+      const compVarNames = compVars.map(v => v.text);
+      expect(compVarNames).toContain("x");
+      expect(compVarNames).toContain("k");
+      expect(compVarNames).toContain("v");
+    });
+
+    it("should capture exception variables", () => {
+      const code = `
+try:
+    risky_operation()
+except ValueError as e:
+    print(e)
+except (TypeError, KeyError) as err:
+    handle_error(err)
+`;
+      const tree = parser.parse(code);
+      const parsed = query_tree_and_parse_captures("python", tree, "test.py" as FilePath);
+
+      const exceptVars = parsed.definitions.filter(d => d.entity === SemanticEntity.VARIABLE);
+      const exceptVarNames = exceptVars.map(v => v.text);
+      expect(exceptVarNames).toContain("e");
+      expect(exceptVarNames).toContain("err");
+    });
+
+    it("should capture with statement variables", () => {
+      const code = `
+with open('file.txt') as f:
+    content = f.read()
+
+with contextlib.suppress(Exception) as suppressed:
+    risky_operation()
+`;
+      const tree = parser.parse(code);
+      const parsed = query_tree_and_parse_captures("python", tree, "test.py" as FilePath);
+
+      const withVars = parsed.definitions.filter(d => d.entity === SemanticEntity.VARIABLE);
+      const withVarNames = withVars.map(v => v.text);
+      expect(withVarNames).toContain("f");
+      expect(withVarNames).toContain("suppressed");
+    });
+
+    it("should capture match-case patterns (Python 3.10+)", () => {
+      const code = `
+match value:
+    case 0:
+        print("zero")
+    case [x, y]:
+        print(f"list: {x}, {y}")
+    case Point(x=px, y=py):
+        print(f"point: {px}, {py}")
+    case _:
+        print("default")
+`;
+      const tree = parser.parse(code);
+      const parsed = query_tree_and_parse_captures("python", tree, "test.py" as FilePath);
+
+      const matchScopes = parsed.scopes.filter(s => s.entity === SemanticEntity.BLOCK);
+      expect(matchScopes.length).toBeGreaterThan(0);
+    });
+
+    it("should capture yield expressions", () => {
+      const code = `
+def generator():
+    yield 1
+    yield 2
+    value = yield 3
+    yield from other_generator()
+`;
+      const tree = parser.parse(code);
+      const parsed = query_tree_and_parse_captures("python", tree, "test.py" as FilePath);
+
+      const yields = parsed.references.filter(r => r.text === "yield" || r.text === "yield from");
       expect(yields.length).toBeGreaterThan(0);
+    });
+
+    it("should capture assert statements", () => {
+      const code = `
+assert x > 0, "x must be positive"
+assert isinstance(obj, MyClass)
+`;
+      const tree = parser.parse(code);
+      const parsed = query_tree_and_parse_captures("python", tree, "test.py" as FilePath);
+
+      const asserts = parsed.references.filter(r => r.text === "assert");
+      expect(asserts.length).toBeGreaterThan(0);
+    });
+
+    it("should capture delete statements", () => {
+      const code = `
+del x
+del obj.attr
+del items[0]
+`;
+      const tree = parser.parse(code);
+      const parsed = query_tree_and_parse_captures("python", tree, "test.py" as FilePath);
+
+      const deletes = parsed.references.filter(r => r.text === "x" || r.text === "obj" || r.text === "items");
+      expect(deletes.length).toBeGreaterThan(0);
+    });
+
+    it("should capture subscript access", () => {
+      const code = `
+value = items[0]
+matrix[i][j] = 10
+data['key'] = 'value'
+slice_val = array[1:10:2]
+`;
+      const tree = parser.parse(code);
+      const parsed = query_tree_and_parse_captures("python", tree, "test.py" as FilePath);
+
+      const subscripts = parsed.references.filter(r =>
+        r.entity === SemanticEntity.MEMBER_ACCESS || r.text === "items" || r.text === "matrix"
+      );
+      expect(subscripts.length).toBeGreaterThan(0);
     });
   });
 

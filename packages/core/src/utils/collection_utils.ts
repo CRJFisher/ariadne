@@ -5,7 +5,12 @@
  * Uses type-safe patterns to avoid null/undefined issues
  */
 
-import { get_map_array_or_empty } from '@ariadnejs/types';
+/**
+ * Get array from map or empty array if not found
+ */
+function get_map_array_or_empty<K, V>(map: Map<K, V[]>, key: K): V[] {
+  return map.get(key) || [];
+}
 
 /**
  * Group array items by a key function

@@ -412,6 +412,92 @@ export const RUST_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
     },
   ],
 
+  // pub use patterns
+  [
+    "export.pub_use",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.IMPORT,
+      context: (node) => {
+        // This captures the whole use_declaration node
+        const context: any = {
+          export_type: "reexport",
+          is_pub_use: true
+        };
+
+        // Find visibility modifier
+        for (let i = 0; i < node.childCount; i++) {
+          const child = node.child(i);
+          if (child && child.type === 'visibility_modifier') {
+            const visText = child.text;
+            if (visText === 'pub') {
+              context.visibility_level = 'public';
+            } else if (visText === 'pub(crate)') {
+              context.visibility_level = 'crate';
+            } else if (visText === 'pub(super)') {
+              context.visibility_level = 'super';
+            } else if (visText.startsWith('pub(in ')) {
+              context.visibility_level = 'restricted';
+              context.visibility_path = visText.slice(7, -1); // Extract path from pub(in path)
+            } else if (visText === 'pub(self)') {
+              context.visibility_level = 'self';
+            }
+            break;
+          }
+        }
+
+        return context;
+      },
+    },
+  ],
+  [
+    "export.pub_use.alias",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.IMPORT,
+      context: (node) => ({
+        export_type: "reexport",
+        is_pub_use: true,
+        alias: node.text
+      }),
+    },
+  ],
+  [
+    "export.pub_use.source",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.IMPORT,
+      context: (node) => ({
+        export_type: "reexport",
+        is_pub_use: true,
+        source_module: node.text
+      }),
+    },
+  ],
+  [
+    "export.pub_use.path",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.IMPORT,
+      context: (node) => ({
+        export_type: "reexport",
+        is_pub_use: true,
+        source_module: node.text
+      }),
+    },
+  ],
+  [
+    "export.pub_use.name",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.IMPORT,
+      context: (node) => ({
+        export_type: "reexport",
+        is_pub_use: true
+      }),
+    },
+  ],
+
   // ============================================================================
   // IMPORTS - Rust use system
   // ============================================================================

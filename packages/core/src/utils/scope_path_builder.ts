@@ -33,8 +33,8 @@ export function build_scope_path(
     if (!parent) break;
     
     // Add named scopes (skip global and anonymous blocks)
-    if (parent.metadata?.name && parent.type !== 'global') {
-      path.unshift(parent.metadata.name);
+    if (parent.name && parent.type !== 'global') {
+      path.unshift(parent.name);
     }
     current = parent;
   }
@@ -55,8 +55,8 @@ export function build_full_scope_path(
   const path = build_scope_path(scope, tree);
   
   // Add the scope's own name if it has one
-  if (scope.metadata?.name) {
-    path.push(scope.metadata.name);
+  if (scope.name) {
+    path.push(scope.name);
   }
   
   return path;
@@ -75,7 +75,7 @@ export function get_parent_scope_name(
   if (!scope.parent_id) return undefined;
   
   const parent = tree.nodes.get(scope.parent_id);
-  return parent?.metadata?.name;
+  return parent?.name;
 }
 
 /**

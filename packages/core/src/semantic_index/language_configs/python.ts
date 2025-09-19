@@ -589,6 +589,31 @@ export const PYTHON_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
     },
   ],
   [
+    "export.all.list",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.VARIABLE,
+      context: (node) => {
+        // Extract all string values from the list
+        const all_contents: string[] = [];
+        for (let i = 0; i < node.childCount; i++) {
+          const child = node.child(i);
+          if (child && child.type === 'string') {
+            // Remove quotes from the string literal
+            const text = child.text;
+            const content = text.slice(1, -1); // Remove surrounding quotes
+            all_contents.push(content);
+          }
+        }
+        return {
+          export_type: "explicit_control",
+          is_namespace_export: true,
+          all_contents
+        };
+      },
+    },
+  ],
+  [
     "export.explicit",
     {
       category: SemanticCategory.EXPORT,

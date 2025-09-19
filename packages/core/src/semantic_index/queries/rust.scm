@@ -301,13 +301,35 @@
   name: (identifier) @export.module
 )
 
-; Re-exports (pub use)
+; Re-exports (pub use with alias)
 (use_declaration
-  (visibility_modifier)
+  (visibility_modifier) @export.pub_use.visibility
   argument: (use_as_clause
-    alias: (identifier) @export.reexport
+    path: (_) @export.pub_use.source
+    alias: (identifier) @export.pub_use.alias
   )
-)
+) @export.pub_use
+
+; Re-exports (pub use without alias)
+(use_declaration
+  (visibility_modifier) @export.pub_use.visibility
+  argument: (scoped_identifier) @export.pub_use.path
+) @export.pub_use
+
+; Re-exports (pub use simple identifier)
+(use_declaration
+  (visibility_modifier) @export.pub_use.visibility
+  argument: (identifier) @export.pub_use.name
+) @export.pub_use
+
+; Re-exports (pub use with use_list)
+(use_declaration
+  (visibility_modifier) @export.pub_use.visibility
+  argument: (scoped_use_list
+    path: (_) @export.pub_use.source
+    list: (use_list) @export.pub_use.items
+  )
+) @export.pub_use
 
 ;; ==============================================================================
 ;; MACROS

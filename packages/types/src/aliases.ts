@@ -4,12 +4,10 @@
 
 import type { SymbolName } from "./symbol";
 
-// Basic type aliases
+// Basic type aliases (excluding ones that conflict with branded types)
 export type TypeString = string;
-export type TypeName = SymbolName;
 export type QualifiedName = SymbolName;
 export type VariableName = SymbolName;
-export type ParameterName = SymbolName;
 export type PropertyName = SymbolName;
 export type FieldName = SymbolName;
 export type EnumMemberName = SymbolName;

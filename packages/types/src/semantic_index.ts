@@ -26,7 +26,8 @@ export type SymbolKind =
   | "import"
   | "interface"
   | "enum"
-  | "type_alias";
+  | "type_alias"
+  | "namespace";
 
 /**
  * Reference type - essential for call chain tracking

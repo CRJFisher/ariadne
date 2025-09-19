@@ -53,6 +53,8 @@ export enum SemanticEntity {
   TYPE_ANNOTATION = "type_annotation",
   TYPE_PARAMETERS = "type_parameters",
   TYPE_ASSERTION = "type_assertion",
+  TYPE_CONSTRAINT = "type_constraint",
+  TYPE_ARGUMENT = "type_argument",
 
   // References
   CALL = "call",
@@ -63,10 +65,20 @@ export enum SemanticEntity {
   // Special
   THIS = "this",
   SUPER = "super",
+  IMPORT = "import",
 
   // Modifiers
   ACCESS_MODIFIER = "access_modifier",
   READONLY_MODIFIER = "readonly_modifier",
+  VISIBILITY = "visibility",
+  MUTABILITY = "mutability",
+  REFERENCE = "reference",
+
+  // Expressions and constructs
+  OPERATOR = "operator",
+  ARGUMENT_LIST = "argument_list",
+  LABEL = "label",
+  MACRO = "macro",
 }
 
 /**
@@ -87,6 +99,33 @@ export interface SemanticModifiers {
   is_type_only?: boolean;
   is_side_effect?: boolean;
   is_reexport?: boolean;
+
+  // Rust-specific modifiers
+  is_unsafe?: boolean;
+  is_mutable?: boolean;
+  is_mutable_borrow?: boolean;
+  is_closure?: boolean;
+  is_generic?: boolean;
+  is_method?: boolean;
+  is_associated_function?: boolean;
+  is_constructor?: boolean;
+  is_self?: boolean;
+  is_closure_param?: boolean;
+  visibility_level?: string;
+  visibility_path?: string;
+  is_associated_call?: boolean;
+  is_self_reference?: boolean;
+  is_borrow?: boolean;
+  is_dereference?: boolean;
+  is_lifetime?: boolean;
+  is_trait_method?: boolean;
+  is_reference?: boolean;
+  is_scoped?: boolean;
+  is_signature?: boolean;
+  is_associated?: boolean;
+  is_wildcard?: boolean;
+  match_type?: string;
+  is_pattern_var?: boolean;
 }
 
 /**
@@ -183,6 +222,14 @@ export interface CaptureContext {
   is_parameter_property?: boolean;
   property_type?: string;
   param_type?: string;
+
+  // For Python __all__ exports
+  all_contents?: string[];
+
+  // For Rust pub use statements
+  is_pub_use?: boolean;
+  visibility_level?: string;
+  alias?: string;
 }
 
 /**

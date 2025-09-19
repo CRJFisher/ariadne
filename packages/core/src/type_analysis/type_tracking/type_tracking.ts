@@ -6,13 +6,8 @@
 
 import {
   FileAnalysis,
-  VariableType,
   FunctionSignature,
-  TypeDefinition,
-  TypeGraph,
   ScopeType,
-  TypeString,
-  TypeIndex,
   Language,
   FilePath,
   SourceCode,
@@ -85,7 +80,7 @@ export function build_type_index(analyses: FileAnalysis[]): TypeIndex {
           name: var_name,
           type: type_info.type_name,
           scope_kind: scope_type,
-          location: type_info.location,
+          location: var_scope?.location || { line: 0, column: 0, offset: 0, length: 0 },
         });
       }
     }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { create_incremental_updater } from "..";
+import { create_incremental_updater } from ".";
 
 describe("incremental_updates/updater", () => {
   it("updates whole file", () => {

@@ -90,10 +90,39 @@ export function create_test_context(
   imports_by_file?: Map<FilePath, any>,
   exports_by_file?: Map<FilePath, any>
 ): FileResolutionContext {
+  // Extract classes and methods from the test data structure
+  const classes_by_file = new Map();
+  const methods_by_file = new Map();
+  const functions_by_file = new Map();
+
+  if (definitions_by_file) {
+    for (const [file_path, file_defs] of definitions_by_file) {
+      if (file_defs.classes) {
+        classes_by_file.set(file_path, file_defs.classes);
+      }
+      if (file_defs.methods) {
+        methods_by_file.set(file_path, file_defs.methods);
+      }
+      if (file_defs.functions) {
+        functions_by_file.set(file_path, file_defs.functions);
+      }
+    }
+  }
+
+  // Create a proper DefinitionIndex structure
+  const definitions = {
+    functions: new Map(),
+    functions_by_file,
+    classes: new Map(),
+    classes_by_file,
+    methods: new Map(),
+    methods_by_file,
+  };
+
   return {
     scope_tree,
     language,
-    definitions: definitions_by_file || new Map(),
+    definitions,
     imports_by_file: imports_by_file || new Map(),
     exports_by_file: exports_by_file || new Map(),
   };

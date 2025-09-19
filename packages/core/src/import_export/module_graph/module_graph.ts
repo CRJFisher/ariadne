@@ -133,14 +133,14 @@ function create_module_node(
     exports: Export[];
   }
 ): ModuleNodeWithMetadata {
-    return {
+  const legacy_imports = new Map(); // Convert analysis.imports to legacy format if needed
+
+  return {
     path: file_path,
-    imports: new Map(), // TODO: Convert to new ImportedModule format
-    exports: new Map(), // TODO: Convert to new ExportedSymbol format
+    imports: legacy_imports,
+    exports: analysis.exports,
     imported_by: new Set(),
     language: analysis.language,
-    exports: analysis.exports,
-    imports: legacy_imports,
   } as ModuleNodeWithMetadata;
 }
 

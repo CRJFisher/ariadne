@@ -16,7 +16,7 @@ import { variable_symbol } from "@ariadnejs/types";
 import type { NormalizedCapture } from "../capture_types";
 
 /**
- * Process imports
+ * Process imports with language-specific handling
  */
 export function process_imports(
   import_captures: NormalizedCapture[],
@@ -34,9 +34,14 @@ export function process_imports(
       continue;
     }
 
-    // Get source from normalized capture context
+    // Get source from normalized capture context with validation
     const source = capture.context?.source_module || "";
     const location = capture.node_location;
+
+    // Validate capture has required data
+    if (!capture.text && capture.text !== "") {
+      continue; // Skip if no import name
+    }
 
     // Determine import type based on modifiers and entity
     let import_item: Import;
@@ -66,20 +71,66 @@ export function process_imports(
         language: language,
         node_type: "import_statement",
       };
-    } else if (capture.modifiers.is_namespace) {
-      // Namespace import
+    } else if (capture.modifiers.is_namespace || (language === "python" && capture.text === "*") || (language === "rust" && capture.modifiers.is_wildcard)) {
+      // Namespace import, Python wildcard import, or Rust glob import
+      const modifiers: string[] = [];
+
+      // Mark Python wildcard imports specially
+      if (language === "python" && capture.text === "*") {
+        modifiers.push("wildcard");
+      }
+
+      // Mark Rust glob imports
+      if (language === "rust" && capture.modifiers.is_wildcard) {
+        modifiers.push("glob");
+      }
+
+      // Handle relative imports in Python
+      if (language === "python" && source.startsWith(".")) {
+        modifiers.push("relative");
+      }
+
+      // Handle Rust module paths
+      if (language === "rust") {
+        if (source.startsWith("crate::")) {
+          modifiers.push("crate_relative");
+        } else if (source.startsWith("super::")) {
+          modifiers.push("super_relative");
+        } else if (source.startsWith("self::")) {
+          modifiers.push("self_relative");
+        }
+      }
+
       import_item = {
         kind: "namespace" as const,
         source: source as FilePath,
-        namespace_name: capture.text as any,
+        namespace_name: capture.text === "*" ? "STAR_IMPORT" as any : capture.text as any,
         exports: new Map(),
         location,
-        modifiers: [],
+        modifiers,
         language: language,
         node_type: "import_statement",
       };
-    } else if (capture.context?.import_alias) {
-      // Named import with alias
+    } else if (capture.context?.import_alias && typeof capture.context.import_alias === "string") {
+      // Named import with alias (with validation)
+      const modifiers: string[] = [];
+
+      // Handle relative imports in Python
+      if (language === "python" && source.startsWith(".")) {
+        modifiers.push("relative");
+      }
+
+      // Handle Rust module paths
+      if (language === "rust") {
+        if (source.startsWith("crate::")) {
+          modifiers.push("crate_relative");
+        } else if (source.startsWith("super::")) {
+          modifiers.push("super_relative");
+        } else if (source.startsWith("self::")) {
+          modifiers.push("self_relative");
+        }
+      }
+
       import_item = {
         kind: "named" as const,
         source: source as FilePath,
@@ -92,12 +143,30 @@ export function process_imports(
         ],
         resolved_exports: new Map(),
         location,
-        modifiers: [],
+        modifiers,
         language: language,
         node_type: "import_statement",
       };
     } else {
       // Regular named import
+      const modifiers: string[] = [];
+
+      // Handle relative imports in Python
+      if (language === "python" && source.startsWith(".")) {
+        modifiers.push("relative");
+      }
+
+      // Handle Rust module paths
+      if (language === "rust") {
+        if (source.startsWith("crate::")) {
+          modifiers.push("crate_relative");
+        } else if (source.startsWith("super::")) {
+          modifiers.push("super_relative");
+        } else if (source.startsWith("self::")) {
+          modifiers.push("self_relative");
+        }
+      }
+
       import_item = {
         kind: "named" as const,
         source: source as FilePath,
@@ -109,7 +178,7 @@ export function process_imports(
         ],
         resolved_exports: new Map(),
         location,
-        modifiers: [],
+        modifiers,
         language: language,
         node_type: "import_statement",
       };
@@ -117,26 +186,30 @@ export function process_imports(
 
     imports.push(import_item);
 
-    // Create symbol for imported name
-    const symbol_id = variable_symbol(capture.text, location);
-    const symbol: SymbolDefinition = {
-      id: symbol_id,
-      name: capture.text as SymbolName,
-      kind: "import",
-      location,
-      scope_id: root_scope.id,
-      is_hoisted: false,
-      is_exported: false,
-      is_imported: true,
-      import_source: source as FilePath,
-      references: [],
-    };
+    // Create symbol for imported name (skip for side-effect and wildcard imports)
+    if (!capture.context?.is_side_effect_import &&
+        !(language === "python" && capture.text === "*") &&
+        !(language === "rust" && capture.modifiers?.is_wildcard)) {
+      const symbol_id = variable_symbol(capture.text, location);
+      const symbol: SymbolDefinition = {
+        id: symbol_id,
+        name: capture.text as SymbolName,
+        kind: "import",
+        location,
+        scope_id: root_scope.id,
+        is_hoisted: false,
+        is_exported: false,
+        is_imported: true,
+        import_source: source as FilePath,
+        references: [],
+      };
 
-    (root_scope.symbols as Map<SymbolName, SymbolDefinition>).set(
-      capture.text as SymbolName,
-      symbol
-    );
-    symbols.set(symbol_id, symbol);
+      root_scope.symbols.set(
+        capture.text as SymbolName,
+        symbol
+      );
+      symbols.set(symbol_id, symbol);
+    }
   }
 
   return imports;

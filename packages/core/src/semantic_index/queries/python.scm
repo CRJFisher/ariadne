@@ -307,9 +307,43 @@
     (assignment
       left: (identifier) @export.all
       (#eq? @export.all "__all__")
+      right: (list) @export.all.list
+    )
+  )
+)
+
+; Individual items in __all__ list
+(module
+  (expression_statement
+    (assignment
+      left: (identifier) @_all_var
+      (#eq? @_all_var "__all__")
       right: (list
         (string) @export.explicit
       )
+    )
+  )
+)
+
+; Top-level function definitions (implicit exports)
+(module
+  (function_definition
+    name: (identifier) @export.function
+  )
+)
+
+; Top-level class definitions (implicit exports)
+(module
+  (class_definition
+    name: (identifier) @export.class
+  )
+)
+
+; Top-level variable assignments (implicit exports)
+(module
+  (expression_statement
+    (assignment
+      left: (identifier) @export.variable
     )
   )
 )

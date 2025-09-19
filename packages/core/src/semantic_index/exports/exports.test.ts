@@ -5,10 +5,10 @@
 import { describe, it, expect, beforeEach, beforeAll } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
-const Parser = require("tree-sitter");
-const TypeScript = require("tree-sitter-typescript");
-const Python = require("tree-sitter-python");
-const Rust = require("tree-sitter-rust");
+import Parser from "tree-sitter";
+import TypeScript from "tree-sitter-typescript";
+import Python from "tree-sitter-python";
+import Rust from "tree-sitter-rust";
 import type {
   FilePath,
   SymbolId,
@@ -310,7 +310,7 @@ describe("Exports Module", () => {
               export_source: "./other-module",
               reexports: [
                 { original: "original", alias: "aliased" },
-                { original: "another", alias: null },
+                { original: "another", alias: undefined },
               ],
             },
           },
@@ -782,7 +782,7 @@ describe("Exports Module", () => {
             node_location: base_location,
             modifiers: {},
             context: {
-              export_alias: null, // Null alias
+              export_alias: undefined, // Null alias
             },
           },
         ];
@@ -902,7 +902,7 @@ describe("Exports Module", () => {
               export_source: "./deeply/nested/module",
               reexports: [
                 { original: "original1", alias: "alias1" },
-                { original: "original2", alias: null },
+                { original: "original2", alias: undefined },
                 { original: "original3", alias: "alias3" },
               ],
             },

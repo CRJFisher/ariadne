@@ -53,3 +53,9 @@ export * from "./errors";
 
 // Export TypeInfo from semantic_index (the new one with TypeId)
 export { type TypeInfo } from "./semantic_index";
+
+// Export type kind enum
+export { TypeKind } from "./type_kind";
+
+// Export type aliases
+export * from "./aliases";

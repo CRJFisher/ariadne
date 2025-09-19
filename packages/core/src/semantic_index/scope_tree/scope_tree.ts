@@ -149,7 +149,10 @@ export function compute_scope_depth(
 ): number {
   let depth = 0;
   let current_id = scope.parent_id;
-  while (current_id) {
+  const visited = new Set<ScopeId>(); // Prevent infinite loops
+
+  while (current_id && !visited.has(current_id)) {
+    visited.add(current_id);
     depth++;
     const parent = scopes.get(current_id);
     current_id = parent?.parent_id || null;

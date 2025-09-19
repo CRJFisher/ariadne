@@ -55,7 +55,7 @@ export function build_type_registry(
     if (analysis.classes) {
       for (const class_def of analysis.classes) {
         const is_exported =
-          analysis.exports?.some((e) => e.name === class_def.symbol) ?? false;
+          analysis.exports?.some((e) => e.symbol_name === class_def.symbol) ?? false;
         register_class(builder, class_def, analysis.file_path, is_exported);
       }
     }
