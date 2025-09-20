@@ -76,7 +76,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
           entity: SemanticEntity.VARIABLE,
           category: null,
           text: "string",
-          node_location: create_location(1),
+          node_location: createLocation(1),
           modifiers: {},
           context: null,
         },
@@ -84,7 +84,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
           entity: SemanticEntity.VARIABLE,
           category: null,
           text: "number",
-          node_location: create_location(2),
+          node_location: createLocation(2),
           modifiers: {},
           context: null,
         },
@@ -92,7 +92,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
           entity: SemanticEntity.VARIABLE,
           category: null,
           text: "MyClass",
-          node_location: create_location(3),
+          node_location: createLocation(3),
           modifiers: {},
           context: null,
         },
@@ -100,9 +100,9 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
 
       const result = process_type_annotations(
         captures,
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(3);
@@ -125,16 +125,16 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         entity: SemanticEntity.VARIABLE,
         category: null,
         text,
-        node_location: create_location(i + 1),
+        node_location: createLocation(i + 1),
         modifiers: {},
         context: null,
       }));
 
       const result = process_type_annotations(
         captures,
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(5);
@@ -156,16 +156,16 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         entity: SemanticEntity.VARIABLE,
         category: null,
         text,
-        node_location: create_location(i + 1),
+        node_location: createLocation(i + 1),
         modifiers: {},
         context: null,
       }));
 
       const result = process_type_annotations(
         captures,
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(5);
@@ -187,16 +187,16 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         entity: SemanticEntity.VARIABLE,
         category: null,
         text,
-        node_location: create_location(i + 1),
+        node_location: createLocation(i + 1),
         modifiers: {},
         context: null,
       }));
 
       const result = process_type_annotations(
         captures,
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(5);
@@ -219,16 +219,16 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         entity,
         category: null,
         text: "TestType",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: null,
       };
 
       const result = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(1);
@@ -282,16 +282,16 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         entity: SemanticEntity.TYPE,
         category: null,
         text: "MyClass",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: { extends_class: "BaseClass" },
       };
 
       const result = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(1);
@@ -303,16 +303,16 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         entity: SemanticEntity.TYPE,
         category: null,
         text: "MyClass",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: { implements_interface: "IDisposable" },
       };
 
       const result = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(1);
@@ -324,16 +324,16 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         entity: SemanticEntity.TYPE,
         category: null,
         text: "MyClass",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: { implements_interfaces: ["IFoo", "IBar", "IBaz"] },
       };
 
       const result = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(1);
@@ -345,16 +345,16 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         entity: SemanticEntity.TYPE_PARAMETER,
         category: null,
         text: "T",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: { constraint_type: "BaseType" },
       };
 
       const result = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(1);
@@ -366,16 +366,16 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         entity: SemanticEntity.TYPE_PARAMETER,
         category: null,
         text: "T",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: { constraint_type: "Record<string, unknown>" },
       };
 
       const result = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(1);
@@ -387,16 +387,16 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         entity: SemanticEntity.TYPE_PARAMETER,
         category: null,
         text: "T",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: { constraint_type: "unknown" },
       };
 
       const result = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(1);
@@ -408,7 +408,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         entity: SemanticEntity.TYPE,
         category: null,
         text: "MyClass",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: {
           extends_class: "BaseClass",
@@ -418,9 +418,9 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
 
       const result = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(1);
@@ -434,16 +434,16 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         entity: SemanticEntity.TYPE,
         category: null,
         text: "SimpleType",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: null,
       };
 
       const result = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(1);
@@ -461,16 +461,16 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         entity: SemanticEntity.PARAMETER,
         category: null,
         text: "string",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: { is_optional: true },
         context: null,
       };
 
       const result = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(1);
@@ -483,16 +483,16 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         entity: SemanticEntity.PARAMETER,
         category: null,
         text: "string",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: { is_optional: false },
         context: null,
       };
 
       const result = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(1);
@@ -504,16 +504,16 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         entity: SemanticEntity.PARAMETER,
         category: null,
         text: "string",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: undefined as any,
         context: null,
       };
 
       const result = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(1);
@@ -525,16 +525,16 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         entity: SemanticEntity.PARAMETER,
         category: null,
         text: "string",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: null,
       };
 
       const result = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(1);
@@ -548,27 +548,27 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
 
   describe("Target Location Handling", () => {
     it("should use target location from context when available", () => {
-      const targetLocation = create_location(10, 5);
+      const targetLocation = createLocation(10, 5);
 
       const capture: NormalizedCapture = {
         entity: SemanticEntity.TYPE,
         category: null,
         text: "string",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: { target_location: targetLocation },
       };
 
       const result = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(1);
       expect(result[0].annotates_location).toEqual(targetLocation);
-      expect(result[0].location).toEqual(mock_location);
+      expect(result[0].location).toEqual(mockLocation);
     });
 
     it("should fallback to annotation location when no target", () => {
@@ -576,20 +576,20 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         entity: SemanticEntity.TYPE,
         category: null,
         text: "string",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: null,
       };
 
       const result = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(1);
-      expect(result[0].annotates_location).toEqual(mock_location);
+      expect(result[0].annotates_location).toEqual(mockLocation);
     });
 
     it("should fallback when context exists but no target_location", () => {
@@ -597,20 +597,20 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         entity: SemanticEntity.TYPE,
         category: null,
         text: "string",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: { some_other_field: "value" },
       };
 
       const result = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(1);
-      expect(result[0].annotates_location).toEqual(mock_location);
+      expect(result[0].annotates_location).toEqual(mockLocation);
     });
   });
 
@@ -624,35 +624,35 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         entity: SemanticEntity.VARIABLE,
         category: null,
         text: "string",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: null,
       };
 
       const result = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(1);
-      expect(result[0].scope_id).toBe(mock_scope.id);
+      expect(result[0].scope_id).toBe(mockScope.id);
     });
 
     it("should handle multiple scopes correctly", () => {
       const moduleScope = {
-        ...mock_scope,
+        ...mockScope,
         id: "module_scope" as ScopeId,
         type: "module" as const,
-        location: create_location(1),
+        location: createLocation(1),
       };
 
       const classScope = {
-        ...mock_scope,
+        ...mockScope,
         id: "class_scope" as ScopeId,
         type: "class" as const,
-        location: create_location(10),
+        location: createLocation(10),
       };
 
       const scopes = new Map<ScopeId, LexicalScope>([
@@ -660,7 +660,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         [classScope.id, classScope],
       ]);
 
-      mock_find_containing_scope
+      mockFindContainingScope
         .mockReturnValueOnce(moduleScope)
         .mockReturnValueOnce(classScope);
 
@@ -669,7 +669,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
           entity: SemanticEntity.VARIABLE,
           category: null,
           text: "string",
-          node_location: create_location(2),
+          node_location: createLocation(2),
           modifiers: {},
           context: null,
         },
@@ -677,7 +677,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
           entity: SemanticEntity.PROPERTY,
           category: null,
           text: "number",
-          node_location: create_location(12),
+          node_location: createLocation(12),
           modifiers: {},
           context: null,
         },
@@ -687,7 +687,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         captures,
         moduleScope,
         scopes,
-        mock_file_path
+        mockFilePath
       );
 
       expect(result).toHaveLength(2);
@@ -696,22 +696,22 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
     });
 
     it("should skip annotations when scope not found", () => {
-      mock_find_containing_scope.mockReturnValue(null);
+      mockFindContainingScope.mockReturnValue(null);
 
       const capture: NormalizedCapture = {
         entity: SemanticEntity.VARIABLE,
         category: null,
         text: "string",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: null,
       };
 
       const result = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(0);
@@ -728,18 +728,18 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         expect(() =>
           process_type_annotations(
             null as any,
-            mock_scope,
-            mock_scopes,
-            mock_file_path
+            mockScope,
+            mockScopes,
+            mockFilePath
           )
         ).toThrow("Invalid input: type_captures must be an array");
 
         expect(() =>
           process_type_annotations(
             "not an array" as any,
-            mock_scope,
-            mock_scopes,
-            mock_file_path
+            mockScope,
+            mockScopes,
+            mockFilePath
           )
         ).toThrow("Invalid input: type_captures must be an array");
       });
@@ -749,17 +749,17 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
           process_type_annotations(
             [],
             null as any,
-            mock_scopes,
-            mock_file_path
+            mockScopes,
+            mockFilePath
           )
         ).toThrow("Invalid input: root_scope must have an id");
 
         expect(() =>
           process_type_annotations(
             [],
-            { ...mock_scope, id: undefined } as any,
-            mock_scopes,
-            mock_file_path
+            { ...mockScope, id: undefined } as any,
+            mockScopes,
+            mockFilePath
           )
         ).toThrow("Invalid input: root_scope must have an id");
       });
@@ -768,18 +768,18 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         expect(() =>
           process_type_annotations(
             [],
-            mock_scope,
+            mockScope,
             null as any,
-            mock_file_path
+            mockFilePath
           )
         ).toThrow("Invalid input: scopes must be a Map");
 
         expect(() =>
           process_type_annotations(
             [],
-            mock_scope,
+            mockScope,
             {} as any,
-            mock_file_path
+            mockFilePath
           )
         ).toThrow("Invalid input: scopes must be a Map");
       });
@@ -788,8 +788,8 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         expect(() =>
           process_type_annotations(
             [],
-            mock_scope,
-            mock_scopes,
+            mockScope,
+            mockScopes,
             null as any
           )
         ).toThrow("Invalid input: file_path is required");
@@ -797,8 +797,8 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         expect(() =>
           process_type_annotations(
             [],
-            mock_scope,
-            mock_scopes,
+            mockScope,
+            mockScopes,
             "" as any
           )
         ).toThrow("Invalid input: file_path is required");
@@ -812,7 +812,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
             entity: SemanticEntity.VARIABLE,
             category: null,
             text: "",
-            node_location: mock_location,
+            node_location: mockLocation,
             modifiers: {},
             context: null,
           },
@@ -820,7 +820,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
             entity: SemanticEntity.VARIABLE,
             category: null,
             text: "ValidType",
-            node_location: create_location(2),
+            node_location: createLocation(2),
             modifiers: {},
             context: null,
           },
@@ -828,9 +828,9 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
 
         const result = process_type_annotations(
           captures,
-          mock_scope,
-          mock_scopes,
-          mock_file_path
+          mockScope,
+          mockScopes,
+          mockFilePath
         );
 
         expect(result).toHaveLength(1);
@@ -851,7 +851,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
             entity: SemanticEntity.VARIABLE,
             category: null,
             text: "ValidType",
-            node_location: mock_location,
+            node_location: mockLocation,
             modifiers: {},
             context: null,
           },
@@ -859,9 +859,9 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
 
         const result = process_type_annotations(
           captures,
-          mock_scope,
-          mock_scopes,
-          mock_file_path
+          mockScope,
+          mockScopes,
+          mockFilePath
         );
 
         expect(result).toHaveLength(1);
@@ -876,7 +876,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
             entity: SemanticEntity.VARIABLE,
             category: null,
             text: "ValidType",
-            node_location: mock_location,
+            node_location: mockLocation,
             modifiers: {},
             context: null,
           },
@@ -884,9 +884,9 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
 
         const result = process_type_annotations(
           captures,
-          mock_scope,
-          mock_scopes,
-          mock_file_path
+          mockScope,
+          mockScopes,
+          mockFilePath
         );
 
         expect(result).toHaveLength(1);
@@ -896,18 +896,18 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
       it("should continue processing after scope errors", () => {
         const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-        mock_find_containing_scope
+        mockFindContainingScope
           .mockImplementationOnce(() => {
             throw new Error("Scope error");
           })
-          .mockReturnValueOnce(mock_scope);
+          .mockReturnValueOnce(mockScope);
 
         const captures: NormalizedCapture[] = [
           {
             entity: SemanticEntity.VARIABLE,
             category: null,
             text: "ErrorType",
-            node_location: create_location(1),
+            node_location: createLocation(1),
             modifiers: {},
             context: null,
           },
@@ -915,7 +915,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
             entity: SemanticEntity.VARIABLE,
             category: null,
             text: "ValidType",
-            node_location: create_location(2),
+            node_location: createLocation(2),
             modifiers: {},
             context: null,
           },
@@ -923,9 +923,9 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
 
         const result = process_type_annotations(
           captures,
-          mock_scope,
-          mock_scopes,
-          mock_file_path
+          mockScope,
+          mockScopes,
+          mockFilePath
         );
 
         expect(result).toHaveLength(1);
@@ -951,7 +951,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
           entity: SemanticEntity.TYPE,
           category: SemanticCategory.DEFINITION,
           text: "UserService",
-          node_location: create_location(1),
+          node_location: createLocation(1),
           modifiers: {},
           context: {
             extends_class: "BaseService",
@@ -963,7 +963,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
           entity: SemanticEntity.TYPE_PARAMETER,
           category: null,
           text: "T",
-          node_location: create_location(1, 20),
+          node_location: createLocation(1, 20),
           modifiers: {},
           context: { constraint_type: "User" },
         },
@@ -972,7 +972,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
           entity: SemanticEntity.PROPERTY,
           category: null,
           text: "status",
-          node_location: create_location(3),
+          node_location: createLocation(3),
           modifiers: {},
           context: null,
         },
@@ -981,7 +981,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
           entity: SemanticEntity.PARAMETER,
           category: null,
           text: "Map<string, T[]>",
-          node_location: create_location(5),
+          node_location: createLocation(5),
           modifiers: { is_optional: false },
           context: null,
         },
@@ -990,7 +990,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
           entity: SemanticEntity.PARAMETER,
           category: null,
           text: "options",
-          node_location: create_location(5, 20),
+          node_location: createLocation(5, 20),
           modifiers: { is_optional: true },
           context: null,
         },
@@ -999,7 +999,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
           entity: SemanticEntity.TYPE,
           category: null,
           text: "Promise<Result<T, Error>>",
-          node_location: create_location(5, 50),
+          node_location: createLocation(5, 50),
           modifiers: {},
           context: null,
         },
@@ -1008,7 +1008,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
           entity: SemanticEntity.TYPE_ASSERTION,
           category: null,
           text: "User",
-          node_location: create_location(7),
+          node_location: createLocation(7),
           modifiers: {},
           context: null,
         },
@@ -1016,9 +1016,9 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
 
       const result = process_type_annotations(
         captures,
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(7);
@@ -1074,7 +1074,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
           entity: SemanticEntity.VARIABLE,
           category: null,
           text: "Type1",
-          node_location: create_location(1),
+          node_location: createLocation(1),
           modifiers: {},
           context: null,
         },
@@ -1083,7 +1083,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
           entity: SemanticEntity.VARIABLE,
           category: null,
           text: "",
-          node_location: create_location(2),
+          node_location: createLocation(2),
           modifiers: {},
           context: null,
         },
@@ -1092,7 +1092,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
           entity: SemanticEntity.TYPE,
           category: null,
           text: "Type2",
-          node_location: create_location(3),
+          node_location: createLocation(3),
           modifiers: {},
           context: { extends_class: "Base" },
         },
@@ -1110,7 +1110,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
           entity: SemanticEntity.PARAMETER,
           category: null,
           text: "Type4",
-          node_location: create_location(4),
+          node_location: createLocation(4),
           modifiers: { is_optional: true },
           context: null,
         },
@@ -1121,17 +1121,17 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
           entity: SemanticEntity.TYPE,
           category: null,
           text: "Type5",
-          node_location: create_location(5),
+          node_location: createLocation(5),
           modifiers: {},
-          context: { target_location: create_location(10) },
+          context: { target_location: createLocation(10) },
         },
       ];
 
       const result = process_type_annotations(
         captures,
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       // Should process only valid captures
@@ -1142,7 +1142,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
       expect(result[2].annotation_text).toBe("Type4");
       expect(result[2].is_optional).toBe(true);
       expect(result[3].annotation_text).toBe("Type5");
-      expect(result[3].annotates_location).toEqual(create_location(10));
+      expect(result[3].annotates_location).toEqual(createLocation(10));
 
       consoleWarn.mockRestore();
     });
@@ -1162,16 +1162,16 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         entity: SemanticEntity.VARIABLE,
         category: null,
         text: "string",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: null,
       };
 
       const result = process_type_annotation_references(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(result).toHaveLength(1);
@@ -1186,13 +1186,13 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
   describe("LocalTypeAnnotation Interface", () => {
     it("should correctly type annotation objects", () => {
       const annotation: LocalTypeAnnotation = {
-        location: mock_location,
+        location: mockLocation,
         annotation_text: "string[]",
         annotation_kind: "parameter",
         scope_id: "scope_1" as ScopeId,
         is_optional: true,
         constraint_text: "extends BaseType",
-        annotates_location: mock_location,
+        annotates_location: mockLocation,
       };
 
       expect(annotation.annotation_text).toBe("string[]");
@@ -1200,16 +1200,16 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
       expect(annotation.scope_id).toBe("scope_1");
       expect(annotation.is_optional).toBe(true);
       expect(annotation.constraint_text).toBe("extends BaseType");
-      expect(annotation.annotates_location).toEqual(mock_location);
+      expect(annotation.annotates_location).toEqual(mockLocation);
     });
 
     it("should allow minimal annotation objects", () => {
       const annotation: LocalTypeAnnotation = {
-        location: mock_location,
+        location: mockLocation,
         annotation_text: "number",
         annotation_kind: "variable",
         scope_id: "scope_1" as ScopeId,
-        annotates_location: mock_location,
+        annotates_location: mockLocation,
         // Optional fields can be omitted
       };
 

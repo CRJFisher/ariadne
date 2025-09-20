@@ -25,35 +25,35 @@ vi.mock("../../scope_tree", () => ({
 
 import { find_containing_scope } from "../../scope_tree";
 
-const mock_find_containing_scope = vi.mocked(find_containing_scope);
+const mockFindContainingScope = vi.mocked(find_containing_scope);
 
 describe("Type Annotation References - Bug Fixes", () => {
-  const mock_file_path = "bugfix.ts" as FilePath;
-  const mock_location: Location = {
-    file_path: mock_file_path,
+  const mockFilePath = "bugfix.ts" as FilePath;
+  const mockLocation: Location = {
+    file_path: mockFilePath,
     line: 1,
     column: 0,
     end_line: 1,
     end_column: 10,
   };
 
-  const mock_scope: LexicalScope = {
+  const mockScope: LexicalScope = {
     id: "scope_1" as ScopeId,
     type: "function",
-    location: mock_location,
+    location: mockLocation,
     parent_id: null,
     child_ids: [],
     symbols: new Map(),
     name: "testFunction" as SymbolName,
   };
 
-  const mock_scopes = new Map<ScopeId, LexicalScope>([
-    [mock_scope.id, mock_scope],
+  const mockScopes = new Map<ScopeId, LexicalScope>([
+    [mockScope.id, mockScope],
   ]);
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mock_find_containing_scope.mockReturnValue(mock_scope);
+    mockFindContainingScope.mockReturnValue(mockScope);
   });
 
   describe("Bug Fix 1: Annotation Kind Detection", () => {
@@ -62,16 +62,16 @@ describe("Type Annotation References - Bug Fixes", () => {
         entity: SemanticEntity.CONSTANT,
         category: null,
         text: "MY_CONSTANT",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: null,
       };
 
       const annotations = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(annotations).toHaveLength(1);
@@ -83,16 +83,16 @@ describe("Type Annotation References - Bug Fixes", () => {
         entity: 999 as SemanticEntity, // Unknown entity
         category: null,
         text: "UnknownType",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: null,
       };
 
       const annotations = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(annotations).toHaveLength(1);
@@ -106,16 +106,16 @@ describe("Type Annotation References - Bug Fixes", () => {
         entity: SemanticEntity.TYPE,
         category: null,
         text: "MyClass",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: { extends_class: "BaseClass" },
       };
 
       const annotations = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(annotations).toHaveLength(1);
@@ -127,16 +127,16 @@ describe("Type Annotation References - Bug Fixes", () => {
         entity: SemanticEntity.TYPE,
         category: null,
         text: "MyClass",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: { implements_interface: "IDisposable" },
       };
 
       const annotations = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(annotations).toHaveLength(1);
@@ -148,16 +148,16 @@ describe("Type Annotation References - Bug Fixes", () => {
         entity: SemanticEntity.TYPE,
         category: null,
         text: "MyClass",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: { implements_interfaces: ["IFoo", "IBar"] },
       };
 
       const annotations = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(annotations).toHaveLength(1);
@@ -169,16 +169,16 @@ describe("Type Annotation References - Bug Fixes", () => {
         entity: SemanticEntity.TYPE_PARAMETER,
         category: null,
         text: "T",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: { constraint_type: "Record<string, unknown>" },
       };
 
       const annotations = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(annotations).toHaveLength(1);
@@ -190,16 +190,16 @@ describe("Type Annotation References - Bug Fixes", () => {
         entity: SemanticEntity.TYPE,
         category: null,
         text: "SimpleType",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: null,
       };
 
       const annotations = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(annotations).toHaveLength(1);
@@ -212,9 +212,9 @@ describe("Type Annotation References - Bug Fixes", () => {
       expect(() =>
         process_type_annotations(
           null as any,
-          mock_scope,
-          mock_scopes,
-          mock_file_path
+          mockScope,
+          mockScopes,
+          mockFilePath
         )
       ).toThrow("Invalid input: type_captures must be an array");
     });
@@ -224,8 +224,8 @@ describe("Type Annotation References - Bug Fixes", () => {
         process_type_annotations(
           [],
           null as any,
-          mock_scopes,
-          mock_file_path
+          mockScopes,
+          mockFilePath
         )
       ).toThrow("Invalid input: root_scope must have an id");
     });
@@ -234,9 +234,9 @@ describe("Type Annotation References - Bug Fixes", () => {
       expect(() =>
         process_type_annotations(
           [],
-          mock_scope,
+          mockScope,
           null as any,
-          mock_file_path
+          mockFilePath
         )
       ).toThrow("Invalid input: scopes must be a Map");
     });
@@ -245,22 +245,22 @@ describe("Type Annotation References - Bug Fixes", () => {
       expect(() =>
         process_type_annotations(
           [],
-          mock_scope,
-          mock_scopes,
+          mockScope,
+          mockScopes,
           null as any
         )
       ).toThrow("Invalid input: file_path is required");
     });
 
     it("should skip invalid captures gracefully", () => {
-      const console_warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
       const captures: NormalizedCapture[] = [
         {
           entity: SemanticEntity.TYPE,
           category: null,
           text: "",  // Invalid: empty text
-          node_location: mock_location,
+          node_location: mockLocation,
           modifiers: {},
           context: null,
         },
@@ -268,7 +268,7 @@ describe("Type Annotation References - Bug Fixes", () => {
           entity: SemanticEntity.TYPE,
           category: null,
           text: "GoodType",
-          node_location: mock_location,
+          node_location: mockLocation,
           modifiers: {},
           context: null,
         },
@@ -284,34 +284,34 @@ describe("Type Annotation References - Bug Fixes", () => {
 
       const annotations = process_type_annotations(
         captures,
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(annotations).toHaveLength(1);
       expect(annotations[0].annotation_text).toBe("GoodType");
 
-      console_warn.mockRestore();
+      consoleWarn.mockRestore();
     });
 
     it("should handle missing scope gracefully", () => {
-      mock_find_containing_scope.mockReturnValue(null);
+      mockFindContainingScope.mockReturnValue(null);
 
       const capture: NormalizedCapture = {
         entity: SemanticEntity.TYPE,
         category: null,
         text: "TypeWithNoScope",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: null,
       };
 
       const annotations = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(annotations).toHaveLength(0);
@@ -320,8 +320,8 @@ describe("Type Annotation References - Bug Fixes", () => {
 
   describe("Bug Fix 4: Target Location Context", () => {
     it("should use target location from context when available", () => {
-      const target_location: Location = {
-        ...mock_location,
+      const targetLocation: Location = {
+        ...mockLocation,
         line: 10,
       };
 
@@ -329,20 +329,20 @@ describe("Type Annotation References - Bug Fixes", () => {
         entity: SemanticEntity.TYPE,
         category: null,
         text: "string",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
-        context: { target_location: target_location },
+        context: { target_location: targetLocation },
       };
 
       const annotations = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(annotations).toHaveLength(1);
-      expect(annotations[0].annotates_location).toEqual(target_location);
+      expect(annotations[0].annotates_location).toEqual(targetLocation);
     });
 
     it("should fallback to annotation location when no target context", () => {
@@ -350,20 +350,20 @@ describe("Type Annotation References - Bug Fixes", () => {
         entity: SemanticEntity.TYPE,
         category: null,
         text: "string",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: null,
       };
 
       const annotations = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(annotations).toHaveLength(1);
-      expect(annotations[0].annotates_location).toEqual(mock_location);
+      expect(annotations[0].annotates_location).toEqual(mockLocation);
     });
   });
 
@@ -373,16 +373,16 @@ describe("Type Annotation References - Bug Fixes", () => {
         entity: SemanticEntity.PARAMETER,
         category: null,
         text: "string",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: { is_optional: true },
         context: null,
       };
 
       const annotations = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(annotations).toHaveLength(1);
@@ -394,16 +394,16 @@ describe("Type Annotation References - Bug Fixes", () => {
         entity: SemanticEntity.PARAMETER,
         category: null,
         text: "string",
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: undefined as any,
         context: null,
       };
 
       const annotations = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(annotations).toHaveLength(1);
@@ -418,16 +418,16 @@ describe("Type Annotation References - Bug Fixes", () => {
         entity: SemanticEntity.VARIABLE,
         category: null,
         text: complexType,
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: null,
       };
 
       const annotations = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(annotations).toHaveLength(1);
@@ -440,16 +440,16 @@ describe("Type Annotation References - Bug Fixes", () => {
         entity: SemanticEntity.VARIABLE,
         category: null,
         text: unionType,
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: null,
       };
 
       const annotations = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(annotations).toHaveLength(1);
@@ -462,16 +462,16 @@ describe("Type Annotation References - Bug Fixes", () => {
         entity: SemanticEntity.VARIABLE,
         category: null,
         text: intersectionType,
-        node_location: mock_location,
+        node_location: mockLocation,
         modifiers: {},
         context: null,
       };
 
       const annotations = process_type_annotations(
         [capture],
-        mock_scope,
-        mock_scopes,
-        mock_file_path
+        mockScope,
+        mockScopes,
+        mockFilePath
       );
 
       expect(annotations).toHaveLength(1);

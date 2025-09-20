@@ -61,15 +61,12 @@ describe("Reference Types", () => {
 
       const typeAnnotationRef: TypeAnnotationReference = {
         location: mockLocation,
-        type_name: "string" as any,
+        annotation_text: "string",
         scope_id: "test_scope" as ScopeId,
         annotation_kind: "variable",
-        declared_type: {
-          type_name: "string" as any,
-          certainty: "declared",
-          source: { kind: "annotation", location: mockLocation }
-        },
         annotates_location: mockLocation,
+        is_optional: undefined,
+        constraint_text: undefined,
       };
 
       const processedRefs: ProcessedReferences = {

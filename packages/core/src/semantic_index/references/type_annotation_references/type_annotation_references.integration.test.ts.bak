@@ -25,20 +25,20 @@ vi.mock("../../scope_tree", () => ({
 
 import { find_containing_scope } from "../../scope_tree";
 
-const mock_find_containing_scope = vi.mocked(find_containing_scope);
+const mockFindContainingScope = vi.mocked(find_containing_scope);
 
 describe("Type Annotation References - Integration Tests", () => {
-  const mock_file_path = "test.ts" as FilePath;
+  const mockFilePath = "test.ts" as FilePath;
 
-  const create_location = (line: number, column: number = 0): Location => ({
-    file_path: mock_file_path,
+  const createLocation = (line: number, column: number = 0): Location => ({
+    file_path: mockFilePath,
     line,
     column,
     end_line: line,
     end_column: column + 10,
   });
 
-  const create_scope = (id: string, type: LexicalScope["type"], location: Location): LexicalScope => ({
+  const createScope = (id: string, type: LexicalScope["type"], location: Location): LexicalScope => ({
     id: id as ScopeId,
     type,
     location,
@@ -54,21 +54,21 @@ describe("Type Annotation References - Integration Tests", () => {
 
   describe("Real-World Type Scenario Integration", () => {
     it("should process complex TypeScript-like type annotations", () => {
-      const module_scope = create_scope("module", "module", create_location(1, 0));
-      const class_scope = create_scope("class", "class", create_location(10, 0));
-      const method_scope = create_scope("method", "function", create_location(15, 2));
+      const moduleScope = createScope("module", "module", createLocation(1, 0));
+      const classScope = createScope("class", "class", createLocation(10, 0));
+      const methodScope = createScope("method", "function", createLocation(15, 2));
 
       const scopes = new Map<ScopeId, LexicalScope>([
-        ["module" as ScopeId, module_scope],
-        ["class" as ScopeId, class_scope],
-        ["method" as ScopeId, method_scope],
+        ["module" as ScopeId, moduleScope],
+        ["class" as ScopeId, classScope],
+        ["method" as ScopeId, methodScope],
       ]);
 
       // Setup mock scope finding
-      mock_find_containing_scope.mockImplementation((location) => {
-        if (location.line < 10) return module_scope;
-        if (location.line < 15) return class_scope;
-        return method_scope;
+      mockFindContainingScope.mockImplementation((location) => {
+        if (location.line < 10) return moduleScope;
+        if (location.line < 15) return classScope;
+        return methodScope;
       });
 
       const captures: NormalizedCapture[] = [
@@ -77,7 +77,7 @@ describe("Type Annotation References - Integration Tests", () => {
           entity: SemanticEntity.TYPE,
           category: null,
           text: "MyClass",
-          node_location: create_location(10, 6),
+          node_location: createLocation(10, 6),
           modifiers: {},
           context: {
             extends_class: "BaseClass",
@@ -89,7 +89,7 @@ describe("Type Annotation References - Integration Tests", () => {
           entity: SemanticEntity.TYPE_PARAMETER,
           category: null,
           text: "T",
-          node_location: create_location(10, 14),
+          node_location: createLocation(10, 14),
           modifiers: {},
           context: {
             constraint_type: "BaseModel",
@@ -100,7 +100,7 @@ describe("Type Annotation References - Integration Tests", () => {
           entity: SemanticEntity.PARAMETER,
           category: null,
           text: "Map<string, Array<T>>",
-          node_location: create_location(15, 20),
+          node_location: createLocation(15, 20),
           modifiers: { is_optional: false },
           context: null,
         },
@@ -109,7 +109,7 @@ describe("Type Annotation References - Integration Tests", () => {
           entity: SemanticEntity.TYPE,
           category: null,
           text: "Promise<Result<T, Error>>",
-          node_location: create_location(15, 50),
+          node_location: createLocation(15, 50),
           modifiers: {},
           context: null,
         },
@@ -118,7 +118,7 @@ describe("Type Annotation References - Integration Tests", () => {
           entity: SemanticEntity.PROPERTY,
           category: null,
           text: "string | number | null",
-          node_location: create_location(12, 4),
+          node_location: createLocation(12, 4),
           modifiers: {},
           context: null,
         },
@@ -127,7 +127,7 @@ describe("Type Annotation References - Integration Tests", () => {
           entity: SemanticEntity.TYPE_ASSERTION,
           category: null,
           text: "HTMLDivElement",
-          node_location: create_location(20, 10),
+          node_location: createLocation(20, 10),
           modifiers: {},
           context: null,
         },
@@ -135,9 +135,9 @@ describe("Type Annotation References - Integration Tests", () => {
 
       const annotations = process_type_annotations(
         captures,
-        module_scope,
+        moduleScope,
         scopes,
-        mock_file_path
+        mockFilePath
       );
 
       // Verify all annotations were processed
@@ -179,12 +179,12 @@ describe("Type Annotation References - Integration Tests", () => {
     });
 
     it("should handle inheritance hierarchy syntax extraction", () => {
-      const module_scope = create_scope("module", "module", create_location(1, 0));
+      const moduleScope = createScope("module", "module", createLocation(1, 0));
       const scopes = new Map<ScopeId, LexicalScope>([
-        ["module" as ScopeId, module_scope],
+        ["module" as ScopeId, moduleScope],
       ]);
 
-      mock_find_containing_scope.mockReturnValue(module_scope);
+      mockFindContainingScope.mockReturnValue(moduleScope);
 
       const captures: NormalizedCapture[] = [
         // Base interface
@@ -192,7 +192,7 @@ describe("Type Annotation References - Integration Tests", () => {
           entity: SemanticEntity.TYPE,
           category: null,
           text: "IAnimal",
-          node_location: create_location(2, 0),
+          node_location: createLocation(2, 0),
           modifiers: {},
           context: null,
         },
@@ -201,7 +201,7 @@ describe("Type Annotation References - Integration Tests", () => {
           entity: SemanticEntity.TYPE,
           category: null,
           text: "IMammal",
-          node_location: create_location(6, 0),
+          node_location: createLocation(6, 0),
           modifiers: {},
           context: {
             extends_class: "IAnimal",
@@ -212,7 +212,7 @@ describe("Type Annotation References - Integration Tests", () => {
           entity: SemanticEntity.TYPE,
           category: null,
           text: "Dog",
-          node_location: create_location(10, 0),
+          node_location: createLocation(10, 0),
           modifiers: {},
           context: {
             implements_interfaces: ["IMammal", "IPet"],
@@ -223,7 +223,7 @@ describe("Type Annotation References - Integration Tests", () => {
           entity: SemanticEntity.TYPE,
           category: null,
           text: "GoldenRetriever",
-          node_location: create_location(20, 0),
+          node_location: createLocation(20, 0),
           modifiers: {},
           context: {
             extends_class: "Dog",
@@ -233,9 +233,9 @@ describe("Type Annotation References - Integration Tests", () => {
 
       const annotations = process_type_annotations(
         captures,
-        module_scope,
+        moduleScope,
         scopes,
-        mock_file_path
+        mockFilePath
       );
 
       expect(annotations).toHaveLength(4);
@@ -259,12 +259,12 @@ describe("Type Annotation References - Integration Tests", () => {
     });
 
     it("should handle complex generic constraints syntax", () => {
-      const module_scope = create_scope("module", "module", create_location(1, 0));
+      const moduleScope = createScope("module", "module", createLocation(1, 0));
       const scopes = new Map<ScopeId, LexicalScope>([
-        ["module" as ScopeId, module_scope],
+        ["module" as ScopeId, moduleScope],
       ]);
 
-      mock_find_containing_scope.mockReturnValue(module_scope);
+      mockFindContainingScope.mockReturnValue(moduleScope);
 
       const captures: NormalizedCapture[] = [
         // Generic with extends constraint
@@ -272,7 +272,7 @@ describe("Type Annotation References - Integration Tests", () => {
           entity: SemanticEntity.TYPE_PARAMETER,
           category: null,
           text: "T",
-          node_location: create_location(5, 10),
+          node_location: createLocation(5, 10),
           modifiers: {},
           context: {
             constraint_type: "BaseType",
@@ -283,7 +283,7 @@ describe("Type Annotation References - Integration Tests", () => {
           entity: SemanticEntity.TYPE_PARAMETER,
           category: null,
           text: "K",
-          node_location: create_location(5, 13),
+          node_location: createLocation(5, 13),
           modifiers: {},
           context: {
             constraint_type: "keyof T",
@@ -294,7 +294,7 @@ describe("Type Annotation References - Integration Tests", () => {
           entity: SemanticEntity.TYPE_PARAMETER,
           category: null,
           text: "V",
-          node_location: create_location(5, 16),
+          node_location: createLocation(5, 16),
           modifiers: {},
           context: {
             constraint_type: "Record<string, unknown>",
@@ -304,9 +304,9 @@ describe("Type Annotation References - Integration Tests", () => {
 
       const annotations = process_type_annotations(
         captures,
-        module_scope,
+        moduleScope,
         scopes,
-        mock_file_path
+        mockFilePath
       );
 
       expect(annotations).toHaveLength(3);
@@ -325,12 +325,12 @@ describe("Type Annotation References - Integration Tests", () => {
     });
 
     it("should handle error recovery in syntax extraction", () => {
-      const module_scope = create_scope("module", "module", create_location(1, 0));
+      const moduleScope = createScope("module", "module", createLocation(1, 0));
       const scopes = new Map<ScopeId, LexicalScope>([
-        ["module" as ScopeId, module_scope],
+        ["module" as ScopeId, moduleScope],
       ]);
 
-      mock_find_containing_scope.mockReturnValue(module_scope);
+      mockFindContainingScope.mockReturnValue(moduleScope);
 
       const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
@@ -340,7 +340,7 @@ describe("Type Annotation References - Integration Tests", () => {
           entity: SemanticEntity.VARIABLE,
           category: null,
           text: "ValidType",
-          node_location: create_location(1, 0),
+          node_location: createLocation(1, 0),
           modifiers: {},
           context: null,
         },
@@ -349,7 +349,7 @@ describe("Type Annotation References - Integration Tests", () => {
           entity: SemanticEntity.VARIABLE,
           category: null,
           text: "",
-          node_location: create_location(2, 0),
+          node_location: createLocation(2, 0),
           modifiers: {},
           context: null,
         },
@@ -367,7 +367,7 @@ describe("Type Annotation References - Integration Tests", () => {
           entity: SemanticEntity.PARAMETER,
           category: null,
           text: "string[]",
-          node_location: create_location(3, 0),
+          node_location: createLocation(3, 0),
           modifiers: {},
           context: null,
         },
@@ -375,9 +375,9 @@ describe("Type Annotation References - Integration Tests", () => {
 
       const annotations = process_type_annotations(
         captures,
-        module_scope,
+        moduleScope,
         scopes,
-        mock_file_path
+        mockFilePath
       );
 
       // Should only process valid captures
