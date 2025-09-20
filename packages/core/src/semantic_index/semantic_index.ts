@@ -29,19 +29,17 @@ import {
 } from "./capture_normalizer";
 import { LANGUAGE_TO_TREESITTER_LANG, load_query } from "./query_loader";
 import { NormalizedCapture } from "./capture_types";
-import type {
-  FileTypeRegistry,
-  VariableTypeMap,
-  VariableTypeInfo,
-} from "./type_registry";
-import { build_file_type_registry } from "../symbol_resolution/type_resolution";
 import { extract_type_members, type LocalTypeInfo } from "./type_members";
-import type { TypeInfo } from "./references/type_tracking/type_info";
+import { extract_type_tracking, type LocalTypeTracking } from "./references/type_tracking";
+import { process_type_annotations, type LocalTypeAnnotation } from "./references/type_annotation_references";
+import { extract_type_flow, type LocalTypeFlow } from "./references/type_flow_references";
 
 
 /**
- * Complete semantic index for a file
- * Core data structure for symbol resolution and call chain analysis
+ * Semantic Index - Single-file analysis results
+ *
+ * Contains only local, single-file information extracted
+ * without any cross-file resolution.
  */
 export interface SemanticIndex {
   /** File being indexed */
@@ -74,21 +72,18 @@ export interface SemanticIndex {
     ReadonlyMap<SymbolName, SymbolId>
   >;
 
-  // Type information
-  /** Type registry for the file */
-  readonly type_registry: FileTypeRegistry;
-
-  /** Local type members (single-file only) */
+  // Local type extractions (single-file only, unresolved)
+  /** Local type definitions with direct members only */
   readonly local_types: LocalTypeInfo[];
 
-  /** Variable type tracking */
-  readonly variable_types: VariableTypeMap;
+  /** Local type annotations as syntax strings */
+  readonly local_type_annotations: LocalTypeAnnotation[];
 
-  /** Function return types */
-  readonly function_returns: ReadonlyMap<SymbolId, TypeId>;
+  /** Local type tracking (variable declarations and assignments) */
+  readonly local_type_tracking: LocalTypeTracking;
 
-  /** Constructor type mapping */
-  readonly constructor_types: ReadonlyMap<Location, TypeId>;
+  /** Local type flow (constructor calls and assignment patterns) */
+  readonly local_type_flow: LocalTypeFlow;
 }
 
 /**
@@ -177,42 +172,36 @@ export function build_semantic_index(
   // Process class inheritance and static modifiers
   process_class_metadata(grouped.types, symbols);
 
-  // Phase 6: Build type registry
-  const type_registry = build_file_type_registry(symbols, file_path);
-
-  // Phase 7: Extract local type members
+  // Phase 6: Extract local type members (single-file only)
   const local_types = extract_type_members(symbols, scopes, file_path);
 
-  // Return type resolution happens in symbol_resolution module
-  const function_returns = new Map<SymbolId, TypeId>();
+  // Phase 7: Extract type annotations (unresolved)
+  const local_type_annotations = process_type_annotations(
+    grouped.types,
+    root_scope,
+    scopes,
+    file_path
+  );
 
-  // Type flow analysis now happens in symbol_resolution phase
-  // These maps will be populated during Phase 3 of symbol resolution
-  const variable_type_info = new Map<Location, VariableTypeInfo>();
-  const constructor_type_info = new Map<Location, TypeInfo>();
-  const constructor_types = new Map<Location, TypeId>();
-  // for (const [loc, info] of constructor_type_info) {
-  //   if (info.type_id) {
-  //     constructor_types.set(loc, info.type_id);
-  //   }
-  // }
+  // Phase 8: Extract type tracking (unresolved)
+  const local_type_tracking = extract_type_tracking(
+    grouped.assignments,
+    scopes,
+    file_path
+  );
 
-  // Create variable type map structure
-  // Extract just TypeIds from the detailed info
-  const variable_type_ids = new Map<Location, TypeId>();
-  // TODO: VariableTypeInfo doesn't have type_id field - this needs redesign
-  // for (const [loc, info] of variable_type_info) {
-  //   if (info.type_id) {
-  //     variable_type_ids.set(loc, info.type_id);
-  //   }
-  // }
-
-  const variable_types: VariableTypeMap = {
-    variable_type_info,
-    variable_types: variable_type_ids,
-    reassignments: new Map(),
-    scope_variables: new Map(),
-  };
+  // Phase 9: Extract type flow patterns (unresolved)
+  // Combine relevant captures for type flow analysis
+  const type_flow_captures = [
+    ...grouped.types,
+    ...grouped.assignments,
+    ...grouped.returns,
+  ];
+  const local_type_flow = extract_type_flow(
+    type_flow_captures,
+    scopes,
+    file_path
+  );
 
   return {
     file_path,
@@ -224,12 +213,11 @@ export function build_semantic_index(
     imports,
     exports,
     file_symbols_by_name,
-    // Type information
-    type_registry,
+    // Local type extractions
     local_types,
-    variable_types,
-    function_returns,
-    constructor_types,
+    local_type_annotations,
+    local_type_tracking,
+    local_type_flow,
   };
 }
 

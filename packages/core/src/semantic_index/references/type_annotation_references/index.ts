@@ -5,5 +5,5 @@
  */
 
 // Internal exports for references.ts only
-export { process_type_annotation_references } from "./type_annotation_references";
-export type { TypeAnnotationReference } from "./type_annotation_references";
+export { process_type_annotations } from "./type_annotation_references";
+export type { LocalTypeAnnotation } from "./type_annotation_references";
