@@ -20,7 +20,7 @@ import { defined_type_id, TypeCategory } from "@ariadnejs/types";
 
 describe("Type Registry", () => {
   // Test data setup
-  const createLocation = (
+  const create_location = (
     file: string,
     line: number = 0,
     column: number = 0,
@@ -34,7 +34,7 @@ describe("Type Registry", () => {
     end_column,
   });
 
-  const createLocalTypeDef = (
+  const create_local_type_def = (
     name: string,
     kind: "class" | "interface" | "type" | "enum",
     file: string,
@@ -45,7 +45,7 @@ describe("Type Registry", () => {
   ): LocalTypeDefinition => ({
     name: name as SymbolName,
     kind,
-    location: createLocation(file, line, column, line, column + 100),
+    location: create_location(file, line, column, line, column + 100),
     file_path: file as FilePath,
     direct_members: new Map(),
     extends_names,
@@ -68,7 +68,7 @@ describe("Type Registry", () => {
       const file_path = "test.ts" as FilePath;
 
       type_definitions.set(file_path, [
-        createLocalTypeDef("TestClass", "class", "test.ts"),
+        create_local_type_def("TestClass", "class", "test.ts"),
       ]);
 
       const registry = build_type_registry(type_definitions);
@@ -84,9 +84,9 @@ describe("Type Registry", () => {
       const file_path = "test.ts" as FilePath;
 
       type_definitions.set(file_path, [
-        createLocalTypeDef("TestClass", "class", "test.ts"),
-        createLocalTypeDef("TestInterface", "interface", "test.ts"),
-        createLocalTypeDef("TestEnum", "enum", "test.ts"),
+        create_local_type_def("TestClass", "class", "test.ts"),
+        create_local_type_def("TestInterface", "interface", "test.ts"),
+        create_local_type_def("TestEnum", "enum", "test.ts"),
       ]);
 
       const registry = build_type_registry(type_definitions);
@@ -99,13 +99,13 @@ describe("Type Registry", () => {
       const type_definitions = new Map<FilePath, LocalTypeDefinition[]>();
 
       type_definitions.set("file1.ts" as FilePath, [
-        createLocalTypeDef("ClassA", "class", "file1.ts"),
-        createLocalTypeDef("InterfaceA", "interface", "file1.ts"),
+        create_local_type_def("ClassA", "class", "file1.ts"),
+        create_local_type_def("InterfaceA", "interface", "file1.ts"),
       ]);
 
       type_definitions.set("file2.ts" as FilePath, [
-        createLocalTypeDef("ClassB", "class", "file2.ts"),
-        createLocalTypeDef("TypeB", "type", "file2.ts"),
+        create_local_type_def("ClassB", "class", "file2.ts"),
+        create_local_type_def("TypeB", "type", "file2.ts"),
       ]);
 
       const registry = build_type_registry(type_definitions);
@@ -120,10 +120,10 @@ describe("Type Registry", () => {
       const type_definitions = new Map<FilePath, LocalTypeDefinition[]>();
       const file_path = "test.ts" as FilePath;
 
-      const classDef = createLocalTypeDef("MyClass", "class", "test.ts");
-      const interfaceDef = createLocalTypeDef("MyInterface", "interface", "test.ts");
-      const typeDef = createLocalTypeDef("MyType", "type", "test.ts");
-      const enumDef = createLocalTypeDef("MyEnum", "enum", "test.ts");
+      const classDef = create_local_type_def("MyClass", "class", "test.ts");
+      const interfaceDef = create_local_type_def("MyInterface", "interface", "test.ts");
+      const typeDef = create_local_type_def("MyType", "type", "test.ts");
+      const enumDef = create_local_type_def("MyEnum", "enum", "test.ts");
 
       type_definitions.set(file_path, [classDef, interfaceDef, typeDef, enumDef]);
 
@@ -164,7 +164,7 @@ describe("Type Registry", () => {
       const imports = new Map<FilePath, Map<SymbolName, SymbolId>>();
 
       type_definitions.set("test.ts" as FilePath, [
-        createLocalTypeDef("TestClass", "class", "test.ts"),
+        create_local_type_def("TestClass", "class", "test.ts"),
       ]);
 
       const registry = build_global_type_registry(type_definitions, imports);
@@ -179,8 +179,8 @@ describe("Type Registry", () => {
       const file_path = "test.ts" as FilePath;
 
       type_definitions.set(file_path, [
-        createLocalTypeDef("BaseClass", "class", "test.ts"),
-        createLocalTypeDef(
+        create_local_type_def("BaseClass", "class", "test.ts"),
+        create_local_type_def(
           "DerivedClass",
           "class",
           "test.ts",
@@ -209,8 +209,8 @@ describe("Type Registry", () => {
       const file_path = "test.ts" as FilePath;
 
       type_definitions.set(file_path, [
-        createLocalTypeDef("ITestable", "interface", "test.ts"),
-        createLocalTypeDef(
+        create_local_type_def("ITestable", "interface", "test.ts"),
+        create_local_type_def(
           "TestClass",
           "class",
           "test.ts",
@@ -236,13 +236,13 @@ describe("Type Registry", () => {
       const imports = new Map<FilePath, Map<SymbolName, SymbolId>>();
       const file_path = "test.ts" as FilePath;
 
-      const classDef = createLocalTypeDef("TestClass", "class", "test.ts");
+      const classDef = create_local_type_def("TestClass", "class", "test.ts");
 
       // Add members to the class
       const methodMember: LocalMemberInfo = {
         name: "testMethod" as SymbolName,
         kind: "method",
-        location: createLocation("test.ts", 10, 20, 10, 40),
+        location: create_location("test.ts", 10, 20, 10, 40),
         is_static: false,
         is_optional: false,
       };
@@ -250,7 +250,7 @@ describe("Type Registry", () => {
       const propertyMember: LocalMemberInfo = {
         name: "testProperty" as SymbolName,
         kind: "property",
-        location: createLocation("test.ts", 30, 40, 30, 60),
+        location: create_location("test.ts", 30, 40, 30, 60),
         is_static: false,
         is_optional: true,
       };
@@ -279,8 +279,8 @@ describe("Type Registry", () => {
       const imports = new Map<FilePath, Map<SymbolName, SymbolId>>();
       const file_path = "test.ts" as FilePath;
 
-      const baseDef = createLocalTypeDef("BaseClass", "class", "test.ts");
-      const derivedDef = createLocalTypeDef(
+      const baseDef = create_local_type_def("BaseClass", "class", "test.ts");
+      const derivedDef = create_local_type_def(
         "DerivedClass",
         "class",
         "test.ts",
@@ -291,7 +291,7 @@ describe("Type Registry", () => {
       const baseMember: LocalMemberInfo = {
         name: "baseMethod" as SymbolName,
         kind: "method",
-        location: createLocation("test.ts", 10, 20, 10, 40),
+        location: create_location("test.ts", 10, 20, 10, 40),
         is_static: false,
         is_optional: false,
       };
@@ -301,7 +301,7 @@ describe("Type Registry", () => {
       const derivedMember: LocalMemberInfo = {
         name: "derivedMethod" as SymbolName,
         kind: "method",
-        location: createLocation("test.ts", 30, 40, 30, 60),
+        location: create_location("test.ts", 30, 40, 30, 60),
         is_static: false,
         is_optional: false,
       };
@@ -337,9 +337,9 @@ describe("Type Registry", () => {
       const file_path = "test.ts" as FilePath;
 
       type_definitions.set(file_path, [
-        createLocalTypeDef("GrandParent", "class", "test.ts"),
-        createLocalTypeDef("Parent", "class", "test.ts", ["GrandParent" as SymbolName]),
-        createLocalTypeDef("Child", "class", "test.ts", ["Parent" as SymbolName]),
+        create_local_type_def("GrandParent", "class", "test.ts"),
+        create_local_type_def("Parent", "class", "test.ts", ["GrandParent" as SymbolName]),
+        create_local_type_def("Child", "class", "test.ts", ["Parent" as SymbolName]),
       ]);
 
       const registry = build_global_type_registry(type_definitions, imports);
@@ -364,10 +364,10 @@ describe("Type Registry", () => {
       const file_path = "test.ts" as FilePath;
 
       type_definitions.set(file_path, [
-        createLocalTypeDef("ISerializable", "interface", "test.ts"),
-        createLocalTypeDef("IComparable", "interface", "test.ts"),
-        createLocalTypeDef("IClonable", "interface", "test.ts"),
-        createLocalTypeDef(
+        create_local_type_def("ISerializable", "interface", "test.ts"),
+        create_local_type_def("IComparable", "interface", "test.ts"),
+        create_local_type_def("IClonable", "interface", "test.ts"),
+        create_local_type_def(
           "TestClass",
           "class",
           "test.ts",
@@ -399,8 +399,8 @@ describe("Type Registry", () => {
 
       // Note: In real code this would be invalid, but we should handle it gracefully
       type_definitions.set(file_path, [
-        createLocalTypeDef("ClassA", "class", "test.ts", ["ClassB" as SymbolName]),
-        createLocalTypeDef("ClassB", "class", "test.ts", ["ClassA" as SymbolName]),
+        create_local_type_def("ClassA", "class", "test.ts", ["ClassB" as SymbolName]),
+        create_local_type_def("ClassB", "class", "test.ts", ["ClassA" as SymbolName]),
       ]);
 
       const registry = build_global_type_registry(type_definitions, imports);
@@ -425,7 +425,7 @@ describe("Type Registry", () => {
 
       // Reference non-existent base class
       type_definitions.set(file_path, [
-        createLocalTypeDef(
+        create_local_type_def(
           "DerivedClass",
           "class",
           "test.ts",
@@ -449,11 +449,11 @@ describe("Type Registry", () => {
       const imports = new Map<FilePath, Map<SymbolName, SymbolId>>();
 
       type_definitions.set("file1.ts" as FilePath, [
-        createLocalTypeDef("TestClass", "class", "file1.ts"),
+        create_local_type_def("TestClass", "class", "file1.ts"),
       ]);
 
       type_definitions.set("file2.ts" as FilePath, [
-        createLocalTypeDef("TestClass", "class", "file2.ts"),
+        create_local_type_def("TestClass", "class", "file2.ts"),
       ]);
 
       const registry = build_global_type_registry(type_definitions, imports);
@@ -480,7 +480,7 @@ describe("Type Registry", () => {
 
       const types: LocalTypeDefinition[] = [];
       for (let i = 0; i < 1000; i++) {
-        types.push(createLocalTypeDef(`Type${i}`, "class", "large.ts"));
+        types.push(create_local_type_def(`Type${i}`, "class", "large.ts"));
       }
 
       type_definitions.set("large.ts" as FilePath, types);
@@ -499,9 +499,9 @@ describe("Type Registry", () => {
       const types: LocalTypeDefinition[] = [];
 
       // Create a chain of 10 levels of inheritance
-      types.push(createLocalTypeDef("Level0", "class", "test.ts"));
+      types.push(create_local_type_def("Level0", "class", "test.ts"));
       for (let i = 1; i < 10; i++) {
-        types.push(createLocalTypeDef(
+        types.push(create_local_type_def(
           `Level${i}`,
           "class",
           "test.ts",
@@ -528,7 +528,7 @@ describe("Type Registry", () => {
       const imports = new Map<FilePath, Map<SymbolName, SymbolId>>();
       const file_path = "test.ts" as FilePath;
 
-      const classDef = createLocalTypeDef("EmptyClass", "class", "test.ts");
+      const classDef = create_local_type_def("EmptyClass", "class", "test.ts");
       // Explicitly empty members
       classDef.direct_members.clear();
 
@@ -547,7 +547,7 @@ describe("Type Registry", () => {
       const imports = new Map<FilePath, Map<SymbolName, SymbolId>>();
       const file_path = "test.ts" as FilePath;
 
-      const location = createLocation("test.ts", 42, 10, 42, 84);
+      const location = create_location("test.ts", 42, 10, 42, 84);
       const classDef: LocalTypeDefinition = {
         name: "DetailedClass" as SymbolName,
         kind: "class",

@@ -766,7 +766,9 @@ z = y + 1
       // Check type flows
       const type_flows = result.references.type_flows;
       expect(type_flows).toBeDefined();
-      expect(type_flows.length).toBeGreaterThan(0);
+      if (type_flows) {
+        expect(type_flows.assignments.length).toBeGreaterThan(0);
+      }
     });
 
     it("should handle return statements", () => {

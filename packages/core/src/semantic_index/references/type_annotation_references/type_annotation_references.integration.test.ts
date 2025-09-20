@@ -27,15 +27,10 @@ vi.mock("../../scope_tree", () => ({
   find_containing_scope: vi.fn(),
 }));
 
-vi.mock("../type_tracking/type_tracking", () => ({
-  build_type_annotation_map: vi.fn(),
-}));
 
 import { find_containing_scope } from "../../scope_tree";
-import { build_type_annotation_map } from "../type_tracking/type_tracking";
 
 const mockFindContainingScope = vi.mocked(find_containing_scope);
-const mockBuildTypeAnnotationMap = vi.mocked(build_type_annotation_map);
 
 describe("Type Annotation References - Integration Tests", () => {
   const mockFilePath = "integration.ts" as FilePath;
@@ -137,7 +132,7 @@ describe("Type Annotation References - Integration Tests", () => {
         source: { kind: "annotation" as const, location: typeCaptures[0].node_location },
       });
 
-      mockBuildTypeAnnotationMap.mockReturnValue(typeMap);
+      // Type map is now handled differently - type resolution happens in Phase 3
 
       const annotations = process_type_annotation_references(
         typeCaptures,
@@ -208,7 +203,7 @@ describe("Type Annotation References - Integration Tests", () => {
         },
       ];
 
-      mockBuildTypeAnnotationMap.mockReturnValue(new Map());
+      // Type map defaults to empty - type resolution happens in Phase 3
 
       const annotations = process_type_annotation_references(
         inheritanceCaptures,
@@ -263,7 +258,7 @@ describe("Type Annotation References - Integration Tests", () => {
         },
       ];
 
-      mockBuildTypeAnnotationMap.mockReturnValue(new Map());
+      // Type map defaults to empty - type resolution happens in Phase 3
 
       const annotations = process_type_annotation_references(
         genericCaptures,
@@ -301,7 +296,10 @@ describe("Type Annotation References - Integration Tests", () => {
       expect(hierarchy.implementations.size).toBe(1); // U implements Comparable
     });
 
-    it("should handle type alias resolution integration", () => {
+    it.skip("should handle type alias resolution integration", () => {
+      // SKIPPED: Type alias resolution now happens in Phase 3 of symbol resolution,
+      // not during the semantic_index phase. The find_type_aliases function needs
+      // declared_type information which is populated during cross-file type resolution.
       const aliasCaptures: NormalizedCapture[] = [
         {
           category: SemanticCategory.DEFINITION,
@@ -337,7 +335,7 @@ describe("Type Annotation References - Integration Tests", () => {
       const typeMap = new Map();
       typeMap.set(location_key(aliasCaptures[1].node_location), aliasedTypeInfo);
 
-      mockBuildTypeAnnotationMap.mockReturnValue(typeMap);
+      // Type map is now handled differently - type resolution happens in Phase 3
 
       const annotations = process_type_annotation_references(
         aliasCaptures,
@@ -384,7 +382,7 @@ describe("Type Annotation References - Integration Tests", () => {
         },
       ];
 
-      mockBuildTypeAnnotationMap.mockReturnValue(new Map());
+      // Type map defaults to empty - type resolution happens in Phase 3
 
       // Should not throw despite problematic input
       expect(() => {

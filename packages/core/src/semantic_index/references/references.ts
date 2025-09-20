@@ -13,11 +13,10 @@ import type { NormalizedCapture } from "../capture_types";
 import { SemanticEntity } from "../capture_types";
 
 import { CallReference, process_call_references } from "./call_references/call_references";
-import { process_type_flow_references, TypeFlowReference } from "./type_flow_references/type_flow_references";
+import { extract_type_flow, type LocalTypeFlow } from "./type_flow_references/type_flow_references";
 import { process_return_references, ReturnReference } from "./return_references/return_references";
 import { MemberAccessReference, process_member_access_references } from "./member_access_references/member_access_references";
 import { process_type_annotation_references, TypeAnnotationReference } from "./type_annotation_references/type_annotation_references";
-import { build_type_annotation_map } from "./type_tracking/type_tracking";
 import type { ProcessedReferences } from "./reference_types";
 
 /**
@@ -35,7 +34,7 @@ export function process_references(
 ): ProcessedReferences {
   let calls: CallReference[] = [];
   let type_annotations: TypeAnnotationReference[] = [];
-  let type_flows: TypeFlowReference[] = [];
+  let type_flows: LocalTypeFlow | undefined;
   let return_refs: ReturnReference[] = [];
   let member_accesses: MemberAccessReference[] = [];
 
@@ -65,18 +64,20 @@ export function process_references(
     );
   }
 
-  // 3. Process type flow from assignments
-  if (assignments && assignments.length > 0) {
-    const type_map = type_captures
-      ? build_type_annotation_map(type_captures)
-      : new Map();
+  // 3. Process type flow from all captures
+  // The extract_type_flow function now handles all relevant captures
+  const all_captures = [
+    ...ref_captures,
+    ...(assignments || []),
+    ...(returns || []),
+    ...(type_captures || [])
+  ];
 
-    type_flows = process_type_flow_references(
-      assignments,
-      root_scope,
+  if (all_captures.length > 0) {
+    type_flows = extract_type_flow(
+      all_captures,
       scopes,
-      file_path,
-      type_map
+      file_path
     );
   }
 

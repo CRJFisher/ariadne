@@ -5,5 +5,12 @@
  */
 
 // Internal exports for references.ts only
-export { process_type_flow_references } from "./type_flow_references";
-export type { TypeFlowReference } from "./type_flow_references";
+export { extract_type_flow } from "./type_flow_references";
+export type {
+  LocalTypeFlow,
+  LocalConstructorCall,
+  LocalAssignmentFlow,
+  LocalReturnFlow,
+  LocalCallAssignment,
+  FlowSource
+} from "./type_flow_references";

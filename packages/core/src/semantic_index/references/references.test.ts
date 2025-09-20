@@ -15,7 +15,7 @@ vi.mock("./call_references/call_references", () => ({
 }));
 
 vi.mock("./type_flow_references/type_flow_references", () => ({
-  process_type_flow_references: vi.fn(),
+  extract_type_flow: vi.fn(),
 }));
 
 vi.mock("./return_references/return_references", () => ({
@@ -30,24 +30,18 @@ vi.mock("./type_annotation_references/type_annotation_references", () => ({
   process_type_annotation_references: vi.fn(),
 }));
 
-vi.mock("./type_tracking/type_tracking", () => ({
-  build_type_annotation_map: vi.fn(),
-}));
-
 // Import mocked functions
 import { process_call_references } from "./call_references/call_references";
-import { process_type_flow_references } from "./type_flow_references/type_flow_references";
+import { extract_type_flow } from "./type_flow_references/type_flow_references";
 import { process_return_references } from "./return_references/return_references";
 import { process_member_access_references } from "./member_access_references/member_access_references";
 import { process_type_annotation_references } from "./type_annotation_references/type_annotation_references";
-import { build_type_annotation_map } from "./type_tracking/type_tracking";
 
 const mockProcessCallReferences = vi.mocked(process_call_references);
-const mockProcessTypeFlowReferences = vi.mocked(process_type_flow_references);
+const mockExtractTypeFlow = vi.mocked(extract_type_flow);
 const mockProcessReturnReferences = vi.mocked(process_return_references);
 const mockProcessMemberAccessReferences = vi.mocked(process_member_access_references);
 const mockProcessTypeAnnotationReferences = vi.mocked(process_type_annotation_references);
-const mockBuildTypeAnnotationMap = vi.mocked(build_type_annotation_map);
 
 describe("References Module", () => {
   const mockFilePath = "test.ts" as FilePath;
@@ -97,11 +91,15 @@ describe("References Module", () => {
 
     // Set up default mock return values
     mockProcessCallReferences.mockReturnValue([]);
-    mockProcessTypeFlowReferences.mockReturnValue([]);
+    mockExtractTypeFlow.mockReturnValue({
+      constructor_calls: [],
+      assignments: [],
+      returns: [],
+      call_assignments: [],
+    });
     mockProcessReturnReferences.mockReturnValue([]);
     mockProcessMemberAccessReferences.mockReturnValue([]);
     mockProcessTypeAnnotationReferences.mockReturnValue([]);
-    mockBuildTypeAnnotationMap.mockReturnValue(new Map());
   });
 
   describe("process_references", () => {
@@ -116,7 +114,7 @@ describe("References Module", () => {
 
         expect(result).toEqual({
           calls: [],
-          type_flows: [],
+          type_flows: undefined, // No captures, so extract_type_flow not called
           returns: [],
           member_accesses: [],
           type_annotations: [],
@@ -138,7 +136,12 @@ describe("References Module", () => {
 
         expect(result).toEqual({
           calls: [],
-          type_flows: [],
+          type_flows: {  // extract_type_flow always returns an object
+            constructor_calls: [],
+            assignments: [],
+            returns: [],
+            call_assignments: [],
+          },
           returns: [],
           member_accesses: [],
           type_annotations: [],
@@ -164,7 +167,8 @@ describe("References Module", () => {
         expect(result).toHaveProperty("type_annotations");
 
         expect(Array.isArray(result.calls)).toBe(true);
-        expect(Array.isArray(result.type_flows)).toBe(true);
+        // type_flows is now optional LocalTypeFlow object, not an array
+        expect(result.type_flows === undefined || typeof result.type_flows === 'object').toBe(true);
         expect(Array.isArray(result.returns)).toBe(true);
         expect(Array.isArray(result.member_accesses)).toBe(true);
         expect(Array.isArray(result.type_annotations)).toBe(true);
@@ -509,26 +513,21 @@ describe("References Module", () => {
         ];
 
         const mockTypeMap = new Map();
-        const mockTypeFlowResults = [
-          {
-            location: mockLocation,
-            name: "x" as any,
-            scope_id: "test_scope" as ScopeId,
-            flow_type: "assignment" as const,
-            source_type: {
-              type_name: "number" as any,
-              certainty: "inferred" as const,
-              source: { kind: "assignment" as const, location: mockLocation }
+        const mockTypeFlowResults = {
+          constructor_calls: [],
+          assignments: [
+            {
+              source: { kind: "variable" as const, name: "y" as any },
+              target: "x" as any,
+              location: mockLocation,
+              kind: "direct" as const,
             },
-            source_location: mockLocation,
-            target_location: mockLocation,
-            is_narrowing: false,
-            is_widening: false,
-          },
-        ];
+          ],
+          returns: [],
+          call_assignments: [],
+        };
 
-        mockBuildTypeAnnotationMap.mockReturnValue(mockTypeMap);
-        mockProcessTypeFlowReferences.mockReturnValue(mockTypeFlowResults);
+        mockExtractTypeFlow.mockReturnValue(mockTypeFlowResults);
 
         const result = process_references(
           [],
@@ -541,13 +540,10 @@ describe("References Module", () => {
           mockScopeToSymbol
         );
 
-        expect(mockBuildTypeAnnotationMap).toHaveBeenCalledWith(typeCaptures);
-        expect(mockProcessTypeFlowReferences).toHaveBeenCalledWith(
-          assignments,
-          mockRootScope,
+        expect(mockExtractTypeFlow).toHaveBeenCalledWith(
+          expect.any(Array),
           mockScopes,
-          mockFilePath,
-          mockTypeMap
+          mockFilePath
         );
 
         expect(result.type_flows).toEqual(mockTypeFlowResults);
@@ -558,26 +554,21 @@ describe("References Module", () => {
           createMockCapture(SemanticCategory.ASSIGNMENT, SemanticEntity.VARIABLE, "x = 5"),
         ];
 
-        const mockTypeFlowResults = [
-          {
-            location: mockLocation,
-            name: "x" as any,
-            scope_id: "test_scope" as ScopeId,
-            flow_type: "assignment" as const,
-            source_type: {
-              type_name: "number" as any,
-              certainty: "inferred" as const,
-              source: { kind: "assignment" as const, location: mockLocation }
+        const mockTypeFlowResults = {
+          constructor_calls: [],
+          assignments: [
+            {
+              source: { kind: "variable" as const, name: "y" as any },
+              target: "x" as any,
+              location: mockLocation,
+              kind: "direct" as const,
             },
-            source_location: mockLocation,
-            target_location: mockLocation,
-            is_narrowing: false,
-            is_widening: false,
-          },
-        ];
+          ],
+          returns: [],
+          call_assignments: [],
+        };
 
-        mockBuildTypeAnnotationMap.mockReturnValue(new Map());
-        mockProcessTypeFlowReferences.mockReturnValue(mockTypeFlowResults);
+            mockExtractTypeFlow.mockReturnValue(mockTypeFlowResults);
 
         const result = process_references(
           [],
@@ -590,13 +581,10 @@ describe("References Module", () => {
           mockScopeToSymbol
         );
 
-        expect(mockBuildTypeAnnotationMap).not.toHaveBeenCalled();
-        expect(mockProcessTypeFlowReferences).toHaveBeenCalledWith(
-          assignments,
-          mockRootScope,
+        expect(mockExtractTypeFlow).toHaveBeenCalledWith(
+          expect.any(Array),  // Now called with all captures
           mockScopes,
-          mockFilePath,
-          new Map()
+          mockFilePath
         );
 
         expect(result.type_flows).toEqual(mockTypeFlowResults);
@@ -610,8 +598,9 @@ describe("References Module", () => {
           mockFilePath
         );
 
-        expect(mockProcessTypeFlowReferences).not.toHaveBeenCalled();
-        expect(result.type_flows).toEqual([]);
+        // extract_type_flow is not called when no captures at all
+        expect(mockExtractTypeFlow).not.toHaveBeenCalled();
+        expect(result.type_flows).toBeUndefined();
       });
     });
 
@@ -699,9 +688,14 @@ describe("References Module", () => {
           return [];
         });
 
-        mockProcessTypeFlowReferences.mockImplementation(() => {
+        mockExtractTypeFlow.mockImplementation(() => {
           callOrder.push("type_flows");
-          return [];
+          return {
+            constructor_calls: [],
+            assignments: [],
+            returns: [],
+            call_assignments: [],
+          };
         });
 
         mockProcessReturnReferences.mockImplementation(() => {
@@ -815,23 +809,19 @@ describe("References Module", () => {
           },
         ]);
 
-        mockProcessTypeFlowReferences.mockReturnValue([
-          {
-            location: mockLocation,
-            name: "x" as any,
-            scope_id: "test_scope" as ScopeId,
-            flow_type: "assignment" as const,
-            source_type: {
-              type_name: "number" as any,
-              certainty: "inferred" as const,
-              source: { kind: "assignment" as const, location: mockLocation }
+        mockExtractTypeFlow.mockReturnValue({
+          constructor_calls: [],
+          assignments: [
+            {
+              source: { kind: "literal", value: "5", literal_type: "number" },
+              target: "x" as any,
+              location: mockLocation,
+              kind: "direct" as const,
             },
-            source_location: mockLocation,
-            target_location: mockLocation,
-            is_narrowing: false,
-            is_widening: false,
-          },
-        ]);
+          ],
+          returns: [],
+          call_assignments: [],
+        });
 
         mockProcessReturnReferences.mockReturnValue([
           {
@@ -859,7 +849,8 @@ describe("References Module", () => {
         expect(result.calls).toHaveLength(2);
         expect(result.member_accesses).toHaveLength(3);
         expect(result.type_annotations).toHaveLength(1);
-        expect(result.type_flows).toHaveLength(1);
+        expect(result.type_flows).toBeDefined(); // Now a single LocalTypeFlow object
+        expect(result.type_flows?.assignments).toHaveLength(1);
         expect(result.returns).toHaveLength(1);
 
         // Verify all processors were called with correct arguments
@@ -907,7 +898,7 @@ describe("References Module", () => {
 
         expect(result).toEqual({
           calls: [],
-          type_flows: [],
+          type_flows: undefined, // Empty captures, so extract_type_flow not called
           returns: [],
           member_accesses: [],
           type_annotations: [],
@@ -917,7 +908,7 @@ describe("References Module", () => {
         expect(mockProcessTypeAnnotationReferences).not.toHaveBeenCalled();
         expect(mockProcessCallReferences).not.toHaveBeenCalled();
         expect(mockProcessMemberAccessReferences).not.toHaveBeenCalled();
-        expect(mockProcessTypeFlowReferences).not.toHaveBeenCalled();
+        expect(mockExtractTypeFlow).not.toHaveBeenCalled();
         expect(mockProcessReturnReferences).not.toHaveBeenCalled();
       });
 
@@ -1001,12 +992,10 @@ describe("References Module", () => {
           mockScopeToSymbol
         );
 
-        expect(mockProcessTypeFlowReferences).toHaveBeenCalledWith(
-          assignments,
-          mockRootScope,
+        expect(mockExtractTypeFlow).toHaveBeenCalledWith(
+          expect.any(Array),  // Now called with all captures
           mockScopes,
-          mockFilePath,
-          expect.any(Map)
+          mockFilePath
         );
 
         expect(mockProcessReturnReferences).toHaveBeenCalledWith(

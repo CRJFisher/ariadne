@@ -10,6 +10,7 @@ import type {
   ScopeId,
   LexicalScope,
 } from "@ariadnejs/types";
+import type { TypeInfo } from "../type_tracking/type_info";
 import type { NormalizedCapture } from "../../capture_types";
 import { SemanticEntity, SemanticCategory } from "../../capture_types";
 import {
@@ -96,7 +97,7 @@ describe("Member Access References", () => {
         access_type: "property",
         object: {
           location: mockLocation,
-          type: mockTypeInfo,
+          // type: mockTypeInfo, // Type resolution happens in Phase 3
         },
         property_chain: [
           "obj" as SymbolName,
@@ -125,7 +126,7 @@ describe("Member Access References", () => {
         access_type: "method",
         object: {
           location: mockLocation,
-          type: mockTypeInfo,
+          // type: mockTypeInfo, // Type resolution happens in Phase 3
         },
         is_optional_chain: false,
       };
@@ -142,7 +143,7 @@ describe("Member Access References", () => {
         access_type: "index",
         object: {
           location: mockLocation,
-          type: mockTypeInfo,
+          // type: mockTypeInfo, // Type resolution happens in Phase 3
         },
         is_optional_chain: false,
       };
@@ -496,7 +497,7 @@ describe("Member Access References", () => {
             member_name: "prop1" as SymbolName,
             scope_id: mockScope.id,
             access_type: "property",
-            object: { location: objectLocation1, type: mockTypeInfo },
+            object: { location: objectLocation1 /* type: mockTypeInfo */ },
             is_optional_chain: false,
           },
           {
@@ -504,7 +505,7 @@ describe("Member Access References", () => {
             member_name: "prop2" as SymbolName,
             scope_id: mockScope.id,
             access_type: "property",
-            object: { location: objectLocation1, type: mockTypeInfo },
+            object: { location: objectLocation1 /* type: mockTypeInfo */ },
             is_optional_chain: false,
           },
           {
@@ -676,7 +677,7 @@ describe("Member Access References", () => {
   });
 
   // Type resolution tests removed - resolution happens in symbol_resolution Phase 3
-  /*
+  /* Commented out - needs update for new type tracking architecture
   describe("find_method_calls_on_type", () => {
     describe("Success Cases", () => {
       it("should find method calls on specific type", () => {
@@ -686,16 +687,16 @@ describe("Member Access References", () => {
             member_name: "method1" as SymbolName,
             scope_id: mockScope.id,
             access_type: "method",
-            object: { type: mockTypeInfo },
-            is_optional_chain: false,
+            object: { // type mockTypeInfo },
+            is_optional_chain: false
           },
           {
             location: mockLocation,
             member_name: "prop1" as SymbolName,
             scope_id: mockScope.id,
             access_type: "property",
-            object: { type: mockTypeInfo },
-            is_optional_chain: false,
+            object: { // type mockTypeInfo },
+            is_optional_chain: false
           },
           {
             location: mockLocation,
@@ -730,16 +731,16 @@ describe("Member Access References", () => {
             member_name: "method1" as SymbolName,
             scope_id: mockScope.id,
             access_type: "method",
-            object: { type: mockTypeInfo },
-            is_optional_chain: false,
+            object: { // type mockTypeInfo },
+            is_optional_chain: false
           },
           {
             location: mockLocation,
             member_name: "method2" as SymbolName,
             scope_id: mockScope.id,
             access_type: "method",
-            object: { type: mockTypeInfo },
-            is_optional_chain: false,
+            object: { // type mockTypeInfo },
+            is_optional_chain: false
           },
         ];
 
@@ -769,8 +770,8 @@ describe("Member Access References", () => {
             member_name: "method1" as SymbolName,
             scope_id: mockScope.id,
             access_type: "method",
-            object: { type: mockTypeInfo },
-            is_optional_chain: false,
+            object: { // type mockTypeInfo },
+            is_optional_chain: false
           },
         ];
 
@@ -809,16 +810,16 @@ describe("Member Access References", () => {
             member_name: "prop1" as SymbolName,
             scope_id: mockScope.id,
             access_type: "property",
-            object: { type: mockTypeInfo },
-            is_optional_chain: false,
+            object: { // type mockTypeInfo },
+            is_optional_chain: false
           },
           {
             location: mockLocation,
             member_name: "index1" as SymbolName,
             scope_id: mockScope.id,
             access_type: "index",
-            object: { type: mockTypeInfo },
-            is_optional_chain: false,
+            object: { // type mockTypeInfo },
+            is_optional_chain: false
           },
         ];
 

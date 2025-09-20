@@ -3,7 +3,7 @@ import {
   resolve_types,
   build_type_registry,
   resolve_type_members,
-  track_type_flow,
+  analyze_type_flow,
   resolve_type_annotations,
   resolve_inheritance,
   build_file_type_registry,
@@ -49,8 +49,8 @@ describe("Type Resolution Module", () => {
       expect(resolve_type_members).toBeDefined();
       expect(typeof resolve_type_members).toBe("function");
 
-      expect(track_type_flow).toBeDefined();
-      expect(typeof track_type_flow).toBe("function");
+      expect(analyze_type_flow).toBeDefined();
+      expect(typeof analyze_type_flow).toBe("function");
 
       expect(resolve_type_annotations).toBeDefined();
       expect(typeof resolve_type_annotations).toBe("function");
@@ -74,7 +74,7 @@ describe("Type Resolution Module", () => {
       expect(resolve_types.length).toBe(4); // local_types, imports, functions, file_indices (optional)
       expect(build_type_registry.length).toBe(1); // type_definitions
       expect(resolve_type_members.length).toBe(3); // type_id, local_def, hierarchy
-      expect(track_type_flow.length).toBe(2); // type_flows, resolved_types
+      expect(analyze_type_flow.length).toBe(2); // type_flows, resolved_types
       expect(resolve_type_annotations.length).toBe(2); // annotations, type_names
       expect(resolve_inheritance.length).toBe(2); // type_definitions, type_registry
 
@@ -214,12 +214,12 @@ describe("Type Resolution Module", () => {
       ).toThrow("Not implemented");
     });
 
-    it("track_type_flow should throw not implemented error", () => {
+    it("analyze_type_flow should throw not implemented error", () => {
       const flows: LocalTypeFlow[] = [];
       const resolved_types = new Map<Location, TypeId>();
 
       expect(() =>
-        track_type_flow(flows, resolved_types)
+        analyze_type_flow(flows, resolved_types)
       ).toThrow("Not implemented");
     });
 
@@ -953,7 +953,7 @@ describe("Type Resolution Module", () => {
     });
 
     it.skip("should track type flow through assignments", async () => {
-      // This test will be implemented when track_type_flow is complete
+      // This test will be implemented when analyze_type_flow is complete
       // It should test: variable type changes through assignments
     });
 

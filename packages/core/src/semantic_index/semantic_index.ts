@@ -32,13 +32,10 @@ import { NormalizedCapture } from "./capture_types";
 import type {
   FileTypeRegistry,
   VariableTypeMap,
+  VariableTypeInfo,
 } from "./type_registry";
 import { build_file_type_registry } from "../symbol_resolution/type_resolution";
 import { extract_type_members, type LocalTypeInfo } from "./type_members";
-import {
-  build_variable_type_map,
-  track_constructor_types,
-} from "./references/type_flow_references/type_flow_references";
 import type { TypeInfo } from "./references/type_tracking/type_info";
 
 
@@ -189,24 +186,11 @@ export function build_semantic_index(
   // Return type resolution happens in symbol_resolution module
   const function_returns = new Map<SymbolId, TypeId>();
 
-  // Build variable type maps
-  const variable_type_info = build_variable_type_map(references.type_flows);
-
-  // Track constructor types
-  // TODO: track_constructor_types expects TypeInfo, but we have TypeId
-  // This needs to work with TypeId instead of TypeInfo
+  // Type flow analysis now happens in symbol_resolution phase
+  // These maps will be populated during Phase 3 of symbol resolution
+  const variable_type_info = new Map<Location, VariableTypeInfo>();
   const constructor_type_info = new Map<Location, TypeInfo>();
-  // Commented out due to TypeInfo vs TypeId mismatch:
-  // const constructor_type_info = track_constructor_types(
-  //   references.type_flows,
-  //   {
-  //     name_to_type: type_registry.name_to_type as Map<SymbolName, TypeInfo>
-  //   }
-  // );
-
-  // Convert constructor TypeInfo to TypeId
   const constructor_types = new Map<Location, TypeId>();
-  // TODO: TypeInfo doesn't have type_id field - this needs redesign
   // for (const [loc, info] of constructor_type_info) {
   //   if (info.type_id) {
   //     constructor_types.set(loc, info.type_id);

@@ -6,6 +6,7 @@
  */
 
 // Main API functions
-export {
-  generate_code_graph,
-} from "./code_graph";
+// TODO: Fix - code_graph module doesn't exist
+// export {
+//   generate_code_graph,
+// } from "./code_graph";

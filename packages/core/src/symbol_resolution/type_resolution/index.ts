@@ -44,7 +44,7 @@ export {
 } from "./type_registry_interfaces";
 export { resolve_types } from "./resolve_types";
 export { resolve_type_members } from "./resolve_members";
-export { track_type_flow } from "./type_flow";
+export { analyze_type_flow } from "./type_flow";
 export { resolve_type_annotations } from "./resolve_annotations";
 export { resolve_inheritance } from "./inheritance";
 export {

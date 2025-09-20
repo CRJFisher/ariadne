@@ -33,15 +33,9 @@ vi.mock("../../scope_tree", () => ({
   find_containing_scope: vi.fn(),
 }));
 
-vi.mock("../type_tracking/type_tracking", () => ({
-  build_type_annotation_map: vi.fn(),
-}));
-
 import { find_containing_scope } from "../../scope_tree";
-import { build_type_annotation_map } from "../type_tracking/type_tracking";
 
 const mockFindContainingScope = vi.mocked(find_containing_scope);
-const mockBuildTypeAnnotationMap = vi.mocked(build_type_annotation_map);
 
 describe("Type Annotation References", () => {
   const mockFilePath = "test.ts" as FilePath;
@@ -226,7 +220,7 @@ describe("Type Annotation References", () => {
           [location_key(mockLocation), mockTypeInfo],
         ]);
 
-        mockBuildTypeAnnotationMap.mockReturnValue(typeMap);
+        // Type map is now handled differently - type resolution happens in Phase 3
 
         const result = process_type_annotation_references(
           captures,
@@ -254,7 +248,7 @@ describe("Type Annotation References", () => {
           },
         ];
 
-        mockBuildTypeAnnotationMap.mockReturnValue(new Map());
+        // Type map defaults to empty - type resolution happens in Phase 3
 
         const result = process_type_annotation_references(
           captures,
@@ -280,7 +274,7 @@ describe("Type Annotation References", () => {
           },
         ];
 
-        mockBuildTypeAnnotationMap.mockReturnValue(new Map());
+        // Type map defaults to empty - type resolution happens in Phase 3
 
         const result = process_type_annotation_references(
           captures,
@@ -305,7 +299,7 @@ describe("Type Annotation References", () => {
           },
         ];
 
-        mockBuildTypeAnnotationMap.mockReturnValue(new Map());
+        // Type map defaults to empty - type resolution happens in Phase 3
 
         const result = process_type_annotation_references(
           captures,
@@ -359,7 +353,7 @@ describe("Type Annotation References", () => {
           [location_key(location2), numberType],
         ]);
 
-        mockBuildTypeAnnotationMap.mockReturnValue(typeMap);
+        // Type map is now handled differently - type resolution happens in Phase 3
 
         const result = process_type_annotation_references(
           captures,
@@ -380,7 +374,7 @@ describe("Type Annotation References", () => {
 
     describe("Edge Cases", () => {
       it("should handle empty captures array", () => {
-        mockBuildTypeAnnotationMap.mockReturnValue(new Map());
+        // Type map defaults to empty - type resolution happens in Phase 3
 
         const result = process_type_annotation_references(
           [],
@@ -404,7 +398,7 @@ describe("Type Annotation References", () => {
           },
         ];
 
-        mockBuildTypeAnnotationMap.mockReturnValue(new Map());
+        // Type map defaults to empty - type resolution happens in Phase 3
 
         const result = process_type_annotation_references(
           captures,
@@ -429,7 +423,7 @@ describe("Type Annotation References", () => {
           },
         ];
 
-        mockBuildTypeAnnotationMap.mockReturnValue(new Map());
+        // Type map defaults to empty - type resolution happens in Phase 3
 
         const result = process_type_annotation_references(
           captures,
@@ -1168,7 +1162,7 @@ describe("Type Annotation References", () => {
         [location_key(mockLocation), mockTypeInfo],
       ]);
 
-      mockBuildTypeAnnotationMap.mockReturnValue(typeMap);
+      // Type map is now handled differently - type resolution happens in Phase 3
 
       // Process type annotation references
       const annotations = process_type_annotation_references(
@@ -1296,7 +1290,7 @@ describe("Type Annotation References", () => {
           },
         ];
 
-        mockBuildTypeAnnotationMap.mockReturnValue(new Map());
+        // Type map defaults to empty - type resolution happens in Phase 3
 
         const result = process_type_annotation_references(
           malformedCaptures,
@@ -1321,7 +1315,7 @@ describe("Type Annotation References", () => {
           },
         ];
 
-        mockBuildTypeAnnotationMap.mockReturnValue(new Map());
+        // Type map defaults to empty - type resolution happens in Phase 3
         mockFindContainingScope.mockReturnValue(mockScope);
 
         const emptyScopes = new Map<ScopeId, LexicalScope>();
@@ -1417,7 +1411,7 @@ describe("Type Annotation References", () => {
             },
           ];
 
-          mockBuildTypeAnnotationMap.mockReturnValue(new Map());
+          // Type map defaults to empty - type resolution happens in Phase 3
 
           const result = process_type_annotation_references(
             captures,
@@ -1523,7 +1517,7 @@ describe("Type Annotation References", () => {
           },
         ];
 
-        mockBuildTypeAnnotationMap.mockReturnValue(new Map());
+        // Type map defaults to empty - type resolution happens in Phase 3
 
         // Process concurrently (simulated)
         const results = [
@@ -1550,7 +1544,7 @@ describe("Type Annotation References", () => {
         ];
 
         const originalCapturesSnapshot = JSON.stringify(originalCaptures);
-        mockBuildTypeAnnotationMap.mockReturnValue(new Map());
+        // Type map defaults to empty - type resolution happens in Phase 3
 
         process_type_annotation_references(
           originalCaptures,

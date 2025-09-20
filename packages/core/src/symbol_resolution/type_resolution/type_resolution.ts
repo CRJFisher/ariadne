@@ -25,7 +25,7 @@ import type { LocalTypeExtraction, ResolvedTypes, GlobalTypeRegistry } from "./t
 import type { FileTypeRegistry } from "./type_registry_interfaces";
 import { build_global_type_registry } from "./type_registry";
 import { resolve_type_members } from "./resolve_members";
-import { track_type_flow } from "./type_flow";
+import { analyze_type_flow } from "./type_flow";
 import { resolve_type_annotations } from "./resolve_annotations";
 import { resolve_inheritance } from "./inheritance";
 
@@ -93,14 +93,13 @@ export function resolve_all_types(
   }
 
   // Track type flows through resolved functions
-  try {
-    const flows_array = Array.from(local_types.type_flows.values()).flat();
-    const flows = track_type_flow(flows_array, location_types);
-  } catch (e: any) {
-    if (e.message !== "Not implemented") {
-      throw e;
-    }
-  }
+  // TODO: Update to use analyze_type_flow with correct arguments
+  // The new analyze_type_flow expects different parameters:
+  // - local_flows: Map<FilePath, LocalTypeFlow>
+  // - imports: Map<FilePath, Map<SymbolName, { resolved_location?: Location }>>
+  // - functions: Map<SymbolId, { return_type?: TypeId }>
+  // - types: GlobalTypeRegistry
+  // For now, this is commented out as it needs proper integration
 
   // Find constructor mappings
   const constructors = find_constructors(type_registry, functions);

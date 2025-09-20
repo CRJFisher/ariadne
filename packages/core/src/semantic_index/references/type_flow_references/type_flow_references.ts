@@ -1,5 +1,8 @@
 /**
- * Type Flow References - Track type mutations through assignments
+ * Type Flow References - Local assignment tracking only
+ *
+ * Tracks assignment patterns and flow relationships without
+ * attempting to resolve or propagate types.
  */
 
 import type {
@@ -8,316 +11,251 @@ import type {
   SymbolName,
   ScopeId,
   LexicalScope,
-  LocationKey,
-  SymbolDefinition,
-  SymbolId,
 } from "@ariadnejs/types";
-import { location_key } from "@ariadnejs/types";
 import { find_containing_scope } from "../../scope_tree";
 import type { NormalizedCapture } from "../../capture_types";
-import type { TypeInfo } from "../type_tracking/type_info";
-import type { AssignmentContext } from "../type_tracking/type_tracking";
-import { build_typed_assignment_map } from "../type_tracking/type_tracking";
-import type { VariableTypeInfo } from "../../type_registry/type_registry";
+import { SemanticCategory } from "../../capture_types";
 
 /**
- * Type flow reference - Tracks how types flow through assignments
+ * Local type flow tracking without resolution
  */
-export interface TypeFlowReference {
-  /** Assignment location */
+export interface LocalTypeFlow {
+  /** Constructor calls found in code */
+  readonly constructor_calls: LocalConstructorCall[];
+
+  /** Assignment flows between variables */
+  readonly assignments: LocalAssignmentFlow[];
+
+  /** Return statements and their values */
+  readonly returns: LocalReturnFlow[];
+
+  /** Function call results assigned to variables */
+  readonly call_assignments: LocalCallAssignment[];
+}
+
+export interface LocalConstructorCall {
+  /** Constructor name (unresolved) */
+  readonly class_name: SymbolName;
+
+  /** Location of the new expression */
   readonly location: Location;
 
-  /** Variable/property name */
-  readonly name: SymbolName;
+  /** Target variable if assigned */
+  readonly assigned_to?: SymbolName;
+
+  /** Arguments passed (for signature matching later) */
+  readonly argument_count: number;
 
   /** Containing scope */
   readonly scope_id: ScopeId;
-
-  /** Type of flow */
-  readonly flow_type: "assignment" | "parameter" | "return" | "yield";
-
-  /** Source (right-hand side) type */
-  readonly source_type: TypeInfo;
-
-  /** Target (left-hand side) type before assignment */
-  readonly target_type?: TypeInfo;
-
-  /** Source and target locations */
-  readonly source_location: Location;
-  readonly target_location: Location;
-
-  /** Type narrowing/widening */
-  readonly is_narrowing: boolean;
-  readonly is_widening: boolean;
 }
 
+export interface LocalAssignmentFlow {
+  /** Source variable or expression */
+  readonly source: FlowSource;
+
+  /** Target variable */
+  readonly target: SymbolName;
+
+  /** Assignment location */
+  readonly location: Location;
+
+  /** Assignment kind */
+  readonly kind: "direct" | "destructured" | "spread";
+}
+
+export interface LocalReturnFlow {
+  /** Function containing the return */
+  readonly function_name?: SymbolName;
+
+  /** Return statement location */
+  readonly location: Location;
+
+  /** Returned expression info */
+  readonly value: FlowSource;
+
+  /** Containing scope */
+  readonly scope_id: ScopeId;
+}
+
+export interface LocalCallAssignment {
+  /** Function being called (unresolved) */
+  readonly function_name: SymbolName;
+
+  /** Call location */
+  readonly location: Location;
+
+  /** Variable receiving the result */
+  readonly assigned_to: SymbolName;
+
+  /** Method call info if applicable */
+  readonly method_info?: {
+    readonly object_name: SymbolName;
+    readonly method_name: SymbolName;
+  };
+}
+
+export type FlowSource =
+  | { kind: "variable"; name: SymbolName }
+  | {
+      kind: "literal";
+      value: string;
+      literal_type: "string" | "number" | "boolean";
+    }
+  | { kind: "constructor"; class_name: SymbolName }
+  | { kind: "function_call"; function_name: SymbolName }
+  | { kind: "expression"; text: string };
+
 /**
- * Process type flow references from assignments
+ * Extract type flow patterns without resolution
  */
-export function process_type_flow_references(
-  assignments: NormalizedCapture[],
-  root_scope: LexicalScope,
+export function extract_type_flow(
+  captures: NormalizedCapture[],
   scopes: Map<ScopeId, LexicalScope>,
-  file_path: FilePath,
-  type_annotations?: Map<LocationKey, TypeInfo>
-): TypeFlowReference[] {
-  const flows: TypeFlowReference[] = [];
+  file_path: FilePath
+): LocalTypeFlow {
+  const constructor_calls: LocalConstructorCall[] = [];
+  const assignments: LocalAssignmentFlow[] = [];
+  const returns: LocalReturnFlow[] = [];
+  const call_assignments: LocalCallAssignment[] = [];
 
-  // Build assignment context map
-  const assignment_map = build_typed_assignment_map(assignments);
-
-  for (const capture of assignments) {
-    const scope = find_containing_scope(
-      capture.node_location,
-      root_scope,
-      scopes
-    );
-
-    const assignment_context = assignment_map.get(location_key(capture.node_location));
-
-    if (assignment_context) {
-      const flow = create_type_flow_reference(
-        capture,
-        scope,
-        assignment_context,
-        type_annotations
-      );
-
-      flows.push(flow);
+  // Get root scope - assuming first scope is root if no parent_id
+  let root_scope: LexicalScope | undefined;
+  for (const scope of scopes.values()) {
+    if (!scope.parent_id) {
+      root_scope = scope;
+      break;
     }
   }
 
-  return flows;
+  for (const capture of captures) {
+    // For now, handle basic categories - proper implementation would need
+    // to analyze the captures to determine the correct flow type
+    switch (capture.category) {
+      case SemanticCategory.ASSIGNMENT:
+        assignments.push(extract_assignment_flow(capture));
+        break;
+
+      case SemanticCategory.RETURN:
+        returns.push(extract_return_flow(capture, scopes, root_scope));
+        break;
+
+      case SemanticCategory.REFERENCE:
+        // Check if this is a constructor call or function call
+        // This would need proper analysis of the capture
+        if (is_constructor_call(capture)) {
+          const constructor_scope = root_scope ?
+            find_containing_scope(capture.node_location, root_scope, scopes) :
+            Array.from(scopes.values())[0];
+
+          constructor_calls.push({
+            class_name: extract_class_name(capture),
+            location: capture.node_location,
+            assigned_to: extract_assignment_target(capture),
+            argument_count: count_arguments(capture),
+            scope_id: constructor_scope.id,
+          });
+        } else if (is_function_call(capture) && has_assignment_target(capture)) {
+          call_assignments.push(extract_call_assignment(capture));
+        }
+        break;
+    }
+  }
+
+  return { constructor_calls, assignments, returns, call_assignments };
 }
 
 /**
- * Create a type flow reference
+ * Extract class name from constructor call capture
  */
-function create_type_flow_reference(
-  capture: NormalizedCapture,
-  scope: LexicalScope,
-  assignment_context: AssignmentContext,
-  type_annotations?: Map<LocationKey, TypeInfo>
-): TypeFlowReference {
-  const location = capture.node_location;
-  const name = capture.text as SymbolName;
+function extract_class_name(capture: NormalizedCapture): SymbolName {
+  // The capture text should be the class name for constructor calls
+  return capture.text as SymbolName;
+}
 
-  // Get source type
-  const source_type = assignment_context.source_type || {
-    type_name: "unknown" as SymbolName,
-    certainty: "ambiguous" as const,
-    source: {
-      kind: "assignment",
-      location,
-    },
+/**
+ * Extract assignment target from capture
+ */
+function extract_assignment_target(capture: NormalizedCapture): SymbolName | undefined {
+  // Look for parent assignment node
+  // This would need to analyze the parent node in the AST
+  // For now, return undefined - proper implementation would check parent nodes
+  return undefined;
+}
+
+/**
+ * Count arguments in a function/constructor call
+ */
+function count_arguments(capture: NormalizedCapture): number {
+  // This would need to analyze the arguments node
+  // For now, return 0 - proper implementation would count argument nodes
+  return 0;
+}
+
+/**
+ * Extract assignment flow from capture
+ */
+function extract_assignment_flow(capture: NormalizedCapture): LocalAssignmentFlow {
+  return {
+    source: { kind: "expression", text: capture.text },
+    target: capture.text as SymbolName, // Would need proper target extraction
+    location: capture.node_location,
+    kind: "direct",
   };
+}
 
-  // Get target type from annotations if available
-  let target_type: TypeInfo | undefined;
-  if (type_annotations) {
-    target_type = type_annotations.get(location_key(assignment_context.target_location));
-  }
-
-  // Determine narrowing/widening
-  const is_narrowing = check_type_narrowing(target_type, source_type);
-  const is_widening = check_type_widening(target_type, source_type);
+/**
+ * Extract return flow from capture
+ */
+function extract_return_flow(
+  capture: NormalizedCapture,
+  scopes: Map<ScopeId, LexicalScope>,
+  root_scope: LexicalScope | undefined
+): LocalReturnFlow {
+  const containing_scope = root_scope ?
+    find_containing_scope(capture.node_location, root_scope, scopes) :
+    Array.from(scopes.values())[0];
 
   return {
-    location,
-    name,
-    scope_id: scope.id,
-    flow_type: "assignment",
-    source_type,
-    target_type,
-    source_location: assignment_context.source_location,
-    target_location: assignment_context.target_location,
-    is_narrowing,
-    is_widening,
+    function_name: undefined, // Would need to find containing function
+    location: capture.node_location,
+    value: { kind: "expression", text: capture.text },
+    scope_id: containing_scope.id,
   };
 }
 
 /**
- * Check if assignment narrows the type
+ * Check if capture is a constructor call
  */
-function check_type_narrowing(
-  target: TypeInfo | undefined,
-  source: TypeInfo
-): boolean {
-  if (!target) return false;
+function is_constructor_call(capture: NormalizedCapture): boolean {
+  // Simple heuristic - would need proper implementation
+  return capture.text.charAt(0) === capture.text.charAt(0).toUpperCase();
+}
 
-  // Type narrowing examples:
-  // - any -> specific type
-  // - unknown -> known type
+/**
+ * Check if capture is a function call
+ */
+function is_function_call(capture: NormalizedCapture): boolean {
+  // Would need to check the node type
+  return capture.category === SemanticCategory.REFERENCE;
+}
 
-  if (target.type_name === "any" as SymbolName &&
-      source.type_name !== "any" as SymbolName) {
-    return true;
-  }
-
-  if (target.type_name === "unknown" as SymbolName &&
-      source.type_name !== "unknown" as SymbolName) {
-    return true;
-  }
-
-  // Check certainty improvement (ambiguous -> declared/inferred)
-  if (target.certainty === "ambiguous" &&
-      (source.certainty === "declared" || source.certainty === "inferred")) {
-    return true;
-  }
-
+/**
+ * Check if capture has an assignment target
+ */
+function has_assignment_target(capture: NormalizedCapture): boolean {
+  // Would need to check if this call is part of an assignment
   return false;
 }
 
 /**
- * Check if assignment widens the type
+ * Extract call assignment from capture
  */
-function check_type_widening(
-  target: TypeInfo | undefined,
-  source: TypeInfo
-): boolean {
-  if (!target) return false;
-
-  // Type widening examples:
-  // - specific type -> any
-  // - specific type -> unknown
-
-  if (source.type_name === "any" as SymbolName &&
-      target.type_name !== "any" as SymbolName) {
-    return true;
-  }
-
-  if (source.type_name === "unknown" as SymbolName &&
-      target.type_name !== "unknown" as SymbolName) {
-    return true;
-  }
-
-  // Check certainty degradation (declared/inferred -> ambiguous)
-  if ((target.certainty === "declared" || target.certainty === "inferred") &&
-      source.certainty === "ambiguous") {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Track type mutations for a variable
- */
-export interface TypeMutation {
-  variable: SymbolName;
-  location: Location;
-  old_type?: TypeInfo;
-  new_type: TypeInfo;
-  reason: "assignment" | "narrowing" | "widening" | "cast";
-}
-
-export function track_type_mutations(
-  flows: TypeFlowReference[],
-  variable_name: SymbolName
-): TypeMutation[] {
-  const mutations: TypeMutation[] = [];
-
-  // Filter for specific variable
-  const variable_flows = flows.filter(f => f.name === variable_name);
-
-  // Sort by location
-  variable_flows.sort((a, b) => {
-    if (a.location.line !== b.location.line) {
-      return a.location.line - b.location.line;
-    }
-    return a.location.column - b.location.column;
-  });
-
-  // Build mutation chain
-  for (const flow of variable_flows) {
-    let reason: TypeMutation["reason"] = "assignment";
-    if (flow.is_narrowing) reason = "narrowing";
-    if (flow.is_widening) reason = "widening";
-
-    mutations.push({
-      variable: flow.name,
-      location: flow.location,
-      old_type: flow.target_type,
-      new_type: flow.source_type,
-      reason,
-    });
-  }
-
-  return mutations;
-}
-
-/**
- * Find type at a specific location using type flow
- */
-/**
- * Build a map of variables to their types
- */
-export function build_variable_type_map(
-  flows: readonly TypeFlowReference[],
-): Map<Location, VariableTypeInfo> {
-  const variable_types = new Map<Location, VariableTypeInfo>();
-
-  // Process each type flow
-  for (const flow of flows) {
-    const var_info: VariableTypeInfo = {
-      variable_name: flow.name,
-      scope_id: flow.scope_id,
-      type_info: flow.source_type,
-      location: flow.target_location,
-      source: flow.flow_type === "assignment" ? "assignment" : "inference",
-    };
-    variable_types.set(flow.target_location, var_info);
-  }
-
-  return variable_types;
-}
-
-/**
- * Track type flow through constructor calls
- */
-export function track_constructor_types(
-  flows: readonly TypeFlowReference[],
-  type_registry?: { name_to_type?: Map<SymbolName, TypeInfo> }
-): Map<Location, TypeInfo> {
-  const constructor_types = new Map<Location, TypeInfo>();
-
-  for (const flow of flows) {
-    // Check if source type looks like a constructor
-    if (flow.source_type.source.kind === "construction") {
-      const class_name = flow.source_type.type_name;
-
-      // Find the class type
-      if (type_registry?.name_to_type) {
-        const class_type = type_registry.name_to_type.get(class_name);
-        if (class_type) {
-          constructor_types.set(flow.target_location, class_type);
-        }
-      }
-    }
-  }
-
-  return constructor_types;
-}
-
-export function find_type_at_location(
-  location: Location,
-  flows: TypeFlowReference[]
-): TypeInfo | undefined {
-  // Find most recent assignment before this location
-  const before_location = flows.filter(f => {
-    if (f.target_location.line < location.line) return true;
-    if (f.target_location.line === location.line &&
-        f.target_location.column <= location.column) return true;
-    return false;
-  });
-
-  // Sort by location (most recent first)
-  before_location.sort((a, b) => {
-    if (b.target_location.line !== a.target_location.line) {
-      return b.target_location.line - a.target_location.line;
-    }
-    return b.target_location.column - a.target_location.column;
-  });
-
-  return before_location[0]?.source_type;
+function extract_call_assignment(capture: NormalizedCapture): LocalCallAssignment {
+  return {
+    function_name: capture.text as SymbolName,
+    location: capture.node_location,
+    assigned_to: "unknown" as SymbolName, // Would need proper extraction
+    method_info: undefined,
+  };
 }
