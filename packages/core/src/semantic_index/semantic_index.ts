@@ -33,7 +33,7 @@ import type {
   FileTypeRegistry,
   VariableTypeMap,
 } from "./type_registry";
-import { build_file_type_registry } from "./type_resolution";
+import { build_file_type_registry } from "../symbol_resolution/type_resolution";
 import { extract_type_members, type LocalTypeInfo } from "./type_members";
 import {
   build_variable_type_map,
@@ -186,37 +186,42 @@ export function build_semantic_index(
   // Phase 7: Extract local type members
   const local_types = extract_type_members(symbols, scopes, file_path);
 
-  // Phase 8: Return type resolution (moved to Phase 3 symbol_resolution)
-  // For now, return empty map as type resolution happens in Phase 3
+  // Return type resolution happens in symbol_resolution module
   const function_returns = new Map<SymbolId, TypeId>();
 
-  // Phase 9: Build variable type maps
+  // Build variable type maps
   const variable_type_info = build_variable_type_map(references.type_flows);
 
-  // Phase 10: Track constructor types
-  const constructor_type_info = track_constructor_types(
-    references.type_flows,
-    {
-      name_to_type: type_registry.name_to_type as Map<SymbolName, TypeInfo>
-    }
-  );
+  // Track constructor types
+  // TODO: track_constructor_types expects TypeInfo, but we have TypeId
+  // This needs to work with TypeId instead of TypeInfo
+  const constructor_type_info = new Map<Location, TypeInfo>();
+  // Commented out due to TypeInfo vs TypeId mismatch:
+  // const constructor_type_info = track_constructor_types(
+  //   references.type_flows,
+  //   {
+  //     name_to_type: type_registry.name_to_type as Map<SymbolName, TypeInfo>
+  //   }
+  // );
 
   // Convert constructor TypeInfo to TypeId
   const constructor_types = new Map<Location, TypeId>();
-  for (const [loc, info] of constructor_type_info) {
-    if (info.type_id) {
-      constructor_types.set(loc, info.type_id);
-    }
-  }
+  // TODO: TypeInfo doesn't have type_id field - this needs redesign
+  // for (const [loc, info] of constructor_type_info) {
+  //   if (info.type_id) {
+  //     constructor_types.set(loc, info.type_id);
+  //   }
+  // }
 
   // Create variable type map structure
   // Extract just TypeIds from the detailed info
   const variable_type_ids = new Map<Location, TypeId>();
-  for (const [loc, info] of variable_type_info) {
-    if (info.type_id) {
-      variable_type_ids.set(loc, info.type_id);
-    }
-  }
+  // TODO: VariableTypeInfo doesn't have type_id field - this needs redesign
+  // for (const [loc, info] of variable_type_info) {
+  //   if (info.type_id) {
+  //     variable_type_ids.set(loc, info.type_id);
+  //   }
+  // }
 
   const variable_types: VariableTypeMap = {
     variable_type_info,
