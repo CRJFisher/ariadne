@@ -1,391 +1,298 @@
 /**
- * Type tracking utilities for enhanced reference processing
+ * Type Tracking - Local extraction only
+ *
+ * Extracts type annotations and tracks variable declarations
+ * without attempting any resolution.
  */
 
-import type { Location, FilePath, LocationKey } from "@ariadnejs/types";
+import type { Location, FilePath, LocationKey, SymbolName, ScopeId, LexicalScope } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
-import type {
-  SymbolName,
-  ScopeId,
-  LexicalScope,
-} from "@ariadnejs/types";
 import type { NormalizedCapture } from "../../capture_types";
-
-// Import the canonical TypeInfo interface
-import type { TypeInfo } from './type_info';
+import { SemanticCategory } from "../../capture_types";
 
 /**
- * Source of type information
+ * Local type tracking information extracted from a single file
  */
-export interface TypeSource {
-  kind:
-    | "annotation" // Explicit type annotation
-    | "assignment" // Inferred from assignment
-    | "return" // Inferred from return statement
-    | "literal" // Inferred from literal value
-    | "construction" // Inferred from constructor call
-    | "import"; // Imported type
+export interface LocalTypeTracking {
+  /** Variable/parameter type annotations (unresolved) */
+  readonly annotations: LocalVariableAnnotation[];
 
-  /** Location where type was determined */
-  location: Location;
+  /** Variable declarations and their patterns */
+  readonly declarations: LocalVariableDeclaration[];
 
-  /** For assignments: the source expression */
-  source_location?: Location;
+  /** Assignment patterns for type inference */
+  readonly assignments: LocalAssignment[];
 }
 
 /**
- * Assignment context with type flow
+ * Variable annotation without resolution
  */
-export interface AssignmentContext {
-  /** Target variable/property location */
-  target_location: Location;
+export interface LocalVariableAnnotation {
+  /** Variable or parameter name */
+  readonly name: SymbolName;
 
-  /** Source expression location */
-  source_location: Location;
+  /** Location of the annotation */
+  readonly location: Location;
 
-  /** Inferred type of source */
-  source_type?: TypeInfo;
+  /** Raw annotation text */
+  readonly annotation_text: string;
 
-  /** Previous type of target (if any) */
-  previous_type?: TypeInfo;
-
-  /** Whether this narrows the type */
-  is_narrowing?: boolean;
+  /** Context */
+  readonly kind: "variable" | "parameter" | "const" | "let";
 
   /** Containing scope */
-  scope_id: ScopeId;
+  readonly scope_id: ScopeId;
 }
 
 /**
- * Return statement context
+ * Variable declaration information
  */
-export interface ReturnContext {
-  /** Return statement location */
-  location: Location;
+export interface LocalVariableDeclaration {
+  /** Variable name */
+  readonly name: SymbolName;
 
-  /** Containing function scope */
-  function_scope_id: ScopeId;
+  /** Declaration location */
+  readonly location: Location;
 
-  /** Returned expression type */
-  returned_type?: TypeInfo;
+  /** Declaration kind */
+  readonly kind: "const" | "let" | "var" | "parameter";
 
-  /** Whether in conditional branch */
-  is_conditional?: boolean;
+  /** Optional type annotation (raw text) */
+  readonly type_annotation?: string;
+
+  /** Initializer expression text (for inference) */
+  readonly initializer?: string;
+
+  /** Containing scope */
+  readonly scope_id: ScopeId;
 }
 
 /**
- * Build enhanced assignment map with type context
+ * Assignment information
  */
-export function build_typed_assignment_map(
-  assignments: NormalizedCapture[]
-): Map<LocationKey, AssignmentContext> {
-  // Input validation
-  if (!assignments) {
-    throw new Error("assignments cannot be null or undefined");
-  }
+export interface LocalAssignment {
+  /** Target variable */
+  readonly target: SymbolName;
 
-  if (!Array.isArray(assignments)) {
-    throw new Error("assignments must be an array");
-  }
+  /** Assignment location */
+  readonly location: Location;
 
-  const map = new Map<LocationKey, AssignmentContext>();
+  /** Source expression text */
+  readonly source: string;
 
-  for (const capture of assignments) {
-    const key = location_key(capture.node_location);
+  /** Assignment operator */
+  readonly operator: "=" | "+=" | "-=" | "*=" | "/=";
 
-    // Extract assignment context from capture
-    const context: AssignmentContext = {
-      target_location: capture.node_location,
-      source_location: capture.context?.source_node
-        ? {
-            file_path: capture.node_location.file_path,
-            line: capture.context.source_node.startPosition.row + 1,
-            column: capture.context.source_node.startPosition.column + 1,
-            end_line: capture.context.source_node.endPosition.row + 1,
-            end_column: capture.context.source_node.endPosition.column + 1,
-          }
-        : capture.node_location,
-      source_type: infer_type_from_capture(capture),
-      scope_id: "" as ScopeId, // Will be filled by caller
-    };
-
-    map.set(key, context);
-  }
-
-  return map;
+  /** Containing scope */
+  readonly scope_id: ScopeId;
 }
 
 /**
- * Build return map with type information
+ * Extract type tracking info without resolution
  */
-export function build_typed_return_map(
-  returns: NormalizedCapture[],
-  root_scope: LexicalScope,
-  scopes: Map<ScopeId, LexicalScope>
-): Map<LocationKey, ReturnContext> {
-  // Input validation
-  if (!returns) {
-    throw new Error("returns cannot be null or undefined");
-  }
+export function extract_type_tracking(
+  captures: NormalizedCapture[],
+  scopes: Map<ScopeId, LexicalScope>,
+  file_path: FilePath
+): LocalTypeTracking {
+  const annotations: LocalVariableAnnotation[] = [];
+  const declarations: LocalVariableDeclaration[] = [];
+  const assignments: LocalAssignment[] = [];
 
-  if (!Array.isArray(returns)) {
-    throw new Error("returns must be an array");
-  }
+  for (const capture of captures) {
+    switch (capture.category) {
+      case SemanticCategory.TYPE:
+        // Just extract the text, don't resolve
+        const annotation = extract_annotation_info(capture, scopes);
+        if (annotation) {
+          annotations.push(annotation);
+        }
+        break;
 
-  if (!root_scope) {
-    throw new Error("root_scope cannot be null or undefined");
-  }
+      case SemanticCategory.DEFINITION:
+        const declaration = extract_declaration_info(capture, scopes);
+        if (declaration) {
+          declarations.push(declaration);
+        }
+        break;
 
-  if (!scopes) {
-    throw new Error("scopes cannot be null or undefined");
-  }
-
-  if (!(scopes instanceof Map)) {
-    throw new Error("scopes must be a Map");
-  }
-
-  const map = new Map<LocationKey, ReturnContext>();
-
-  for (const capture of returns) {
-    const key = location_key(capture.node_location);
-
-    // Find containing function scope
-    const function_scope = find_containing_function_scope(
-      capture.node_location,
-      root_scope,
-      scopes
-    );
-
-    if (function_scope) {
-      const context: ReturnContext = {
-        location: capture.node_location,
-        function_scope_id: function_scope.id,
-        returned_type: infer_type_from_capture(capture),
-        is_conditional: false, // Would need control flow analysis
-      };
-
-      map.set(key, context);
+      case SemanticCategory.ASSIGNMENT:
+        const assignment = extract_assignment_info(capture, scopes);
+        if (assignment) {
+          assignments.push(assignment);
+        }
+        break;
     }
   }
 
-  return map;
+  return { annotations, declarations, assignments };
 }
 
 /**
- * Build type annotation map from type captures
- * Keys are LocationKey for universally unique location-based lookups
+ * Extract annotation information from a capture
  */
-export function build_type_annotation_map(
-  type_captures: NormalizedCapture[]
-): Map<LocationKey, TypeInfo> {
-  // Input validation
-  if (!type_captures) {
-    throw new Error("type_captures cannot be null or undefined");
-  }
-
-  if (!Array.isArray(type_captures)) {
-    throw new Error("type_captures must be an array");
-  }
-
-  const map = new Map<LocationKey, TypeInfo>();
-
-  for (const capture of type_captures) {
-    // Skip captures with invalid location or text
-    if (!capture?.node_location || !capture?.text) {
-      continue;
-    }
-
-    const key = location_key(capture.node_location);
-
-    const type_name = capture.text as SymbolName;
-    const type_info: TypeInfo = {
-      type_name,
-      certainty: "declared",
-      source: {
-        kind: "annotation",
-        location: capture.node_location,
-      },
-      // Parse type modifiers from capture modifiers
-      is_nullable: capture.modifiers?.is_optional || false,
-      is_array: capture.text.includes("[]") || capture.text.includes("Array"),
-    };
-
-    map.set(key, type_info);
-  }
-
-  return map;
-}
-
-/**
- * Infer type from a capture's context
- */
-function infer_type_from_capture(
-  capture: NormalizedCapture
-): TypeInfo | undefined {
-  // Check for constructor calls
-  if (capture.context?.construct_target) {
-    const type_name = capture.text as SymbolName;
-    return {
-      type_name,
-      certainty: "inferred",
-      source: {
-        kind: "construction",
-        location: capture.node_location,
-      },
-    };
-  }
-
-  // Try to infer from the text if it looks like a literal
-  const literal_type = infer_type_from_text(capture.text, capture.node_location);
-  if (literal_type) {
-    return literal_type;
-  }
-
-  // Could add more inference rules here
-  return undefined;
-}
-
-/**
- * Infer type from text that looks like a literal
- */
-function infer_type_from_text(text: string, location: Location): TypeInfo | undefined {
-  // Check for string literals
-  if (text.startsWith('"') || text.startsWith("'") || text.startsWith("`")) {
-    const type_name = "string" as SymbolName;
-    return {
-      type_name,
-      certainty: "inferred",
-      source: {
-        kind: "literal",
-        location,
-      },
-    };
-  }
-
-  // Check for numeric literals
-  if (/^\d+(\.\d+)?$/.test(text)) {
-    const type_name = "number" as SymbolName;
-    return {
-      type_name,
-      certainty: "inferred",
-      source: {
-        kind: "literal",
-        location,
-      },
-    };
-  }
-
-  // Check for boolean literals
-  if (text === "true" || text === "false") {
-    const type_name = "boolean" as SymbolName;
-    return {
-      type_name,
-      certainty: "inferred",
-      source: {
-        kind: "literal",
-        location,
-      },
-    };
-  }
-
-  // Check for null/undefined
-  if (text === "null") {
-    const type_name = "null" as SymbolName;
-    return {
-      type_name,
-      certainty: "inferred",
-      source: {
-        kind: "literal",
-        location,
-      },
-    };
-  }
-
-  if (text === "undefined") {
-    const type_name = "undefined" as SymbolName;
-    return {
-      type_name,
-      certainty: "inferred",
-      source: {
-        kind: "literal",
-        location,
-      },
-    };
-  }
-
-  return undefined;
-}
-
-
-/**
- * Find containing function/method/constructor scope
- */
-function find_containing_function_scope(
-  location: Location,
-  root_scope: LexicalScope,
+function extract_annotation_info(
+  capture: NormalizedCapture,
   scopes: Map<ScopeId, LexicalScope>
-): LexicalScope | undefined {
-  // Start from innermost scope - this may return undefined if location is not contained
-  let current: LexicalScope | undefined = find_innermost_scope(location, root_scope, scopes);
-
-  while (current) {
-    if (
-      current.type === "function" ||
-      current.type === "method" ||
-      current.type === "constructor"
-    ) {
-      return current;
-    }
-
-    // Move to parent
-    current = current.parent_id ? scopes.get(current.parent_id) : undefined;
-  }
-
-  return undefined;
-}
-
-/**
- * Find innermost scope containing location
- */
-function find_innermost_scope(
-  location: Location,
-  root_scope: LexicalScope,
-  scopes: Map<ScopeId, LexicalScope>
-): LexicalScope | undefined {
-  // First check if the location is even within the root scope
-  if (!contains_location(root_scope.location, location)) {
+): LocalVariableAnnotation | undefined {
+  if (!capture.text || !capture.node_location) {
     return undefined;
   }
 
-  let current = root_scope;
-  const visited = new Set<ScopeId>(); // Prevent infinite loops
+  // Extract variable name from context
+  const var_name = capture.context?.annotated_var_name || capture.context?.parameter_name;
+  if (!var_name) {
+    return undefined;
+  }
 
-  // Traverse down to find deepest containing scope
-  let changed = true;
-  let iterations = 0;
-  const MAX_ITERATIONS = scopes.size * 2; // Safety limit
+  const scope_id = find_containing_scope_id(capture.node_location, scopes);
+  if (!scope_id) {
+    return undefined;
+  }
 
-  while (changed && iterations < MAX_ITERATIONS) {
-    changed = false;
-    iterations++;
+  return {
+    name: var_name as SymbolName,
+    location: capture.node_location,
+    annotation_text: capture.text,
+    kind: determine_annotation_kind(capture),
+    scope_id,
+  };
+}
 
-    for (const child_id of current.child_ids) {
-      // Skip if we've already visited this scope (circular reference)
-      if (visited.has(child_id)) {
-        continue;
-      }
+/**
+ * Extract declaration information from a capture
+ */
+function extract_declaration_info(
+  capture: NormalizedCapture,
+  scopes: Map<ScopeId, LexicalScope>
+): LocalVariableDeclaration | undefined {
+  if (!capture.text || !capture.node_location) {
+    return undefined;
+  }
 
-      const child = scopes.get(child_id);
-      if (child && contains_location(child.location, location)) {
-        visited.add(current.id);
-        current = child;
-        changed = true;
-        break;
+  const scope_id = find_containing_scope_id(capture.node_location, scopes);
+  if (!scope_id) {
+    return undefined;
+  }
+
+  const context = capture.context || {};
+
+  return {
+    name: capture.text as SymbolName,
+    location: capture.node_location,
+    kind: determine_declaration_kind(capture),
+    type_annotation: context.type_annotation,
+    initializer: context.initializer_text,
+    scope_id,
+  };
+}
+
+/**
+ * Extract assignment information from a capture
+ */
+function extract_assignment_info(
+  capture: NormalizedCapture,
+  scopes: Map<ScopeId, LexicalScope>
+): LocalAssignment | undefined {
+  if (!capture.text || !capture.node_location) {
+    return undefined;
+  }
+
+  const context = capture.context || {};
+  if (!context.source_text) {
+    return undefined;
+  }
+
+  const scope_id = find_containing_scope_id(capture.node_location, scopes);
+  if (!scope_id) {
+    return undefined;
+  }
+
+  return {
+    target: capture.text as SymbolName,
+    location: capture.node_location,
+    source: context.source_text,
+    operator: (context.operator || "=") as LocalAssignment["operator"],
+    scope_id,
+  };
+}
+
+/**
+ * Determine the kind of annotation
+ */
+function determine_annotation_kind(
+  capture: NormalizedCapture
+): LocalVariableAnnotation["kind"] {
+  // Check context for variable declaration type
+  if (capture.context?.declaration_kind === "parameter") {
+    return "parameter";
+  }
+  if (capture.context?.declaration_kind === "const") {
+    return "const";
+  }
+  if (capture.context?.declaration_kind === "let") {
+    return "let";
+  }
+  return "variable";
+}
+
+/**
+ * Determine the kind of declaration
+ */
+function determine_declaration_kind(
+  capture: NormalizedCapture
+): LocalVariableDeclaration["kind"] {
+  // Check context for declaration type
+  const kind = capture.context?.declaration_kind;
+  if (kind === "const" || kind === "let" || kind === "var" || kind === "parameter") {
+    return kind;
+  }
+  return "var"; // Default
+}
+
+/**
+ * Find the containing scope ID for a location
+ */
+function find_containing_scope_id(
+  location: Location,
+  scopes: Map<ScopeId, LexicalScope>
+): ScopeId | undefined {
+  // If no scopes, return undefined
+  if (scopes.size === 0) {
+    return undefined;
+  }
+
+  // Find the innermost scope containing this location
+  let best_scope_id: ScopeId | undefined;
+  let smallest_range = Infinity;
+
+  for (const [scope_id, scope] of scopes) {
+    if (contains_location(scope.location, location)) {
+      const range = location_range_size(scope.location);
+      if (range < smallest_range) {
+        smallest_range = range;
+        best_scope_id = scope_id;
       }
     }
   }
 
-  return current;
+  // If no containing scope found, return the first available scope
+  // This handles cases where the location is slightly outside scope boundaries
+  if (!best_scope_id && scopes.size > 0) {
+    best_scope_id = scopes.keys().next().value;
+  }
+
+  return best_scope_id;
+}
+
+
+/**
+ * Calculate the size of a location range (for finding innermost scope)
+ */
+function location_range_size(location: Location): number {
+  const lines = location.end_line - location.line;
+  const cols = location.end_column - location.column;
+  return lines * 10000 + cols; // Weight lines more than columns
 }
 
 /**
@@ -395,8 +302,6 @@ function contains_location(
   scope_loc: Location,
   point: Location
 ): boolean {
-  // Check if point is within scope boundaries
-
   // Point must be on or after scope start line
   if (point.line < scope_loc.line) {
     return false;
@@ -418,68 +323,4 @@ function contains_location(
   }
 
   return true;
-}
-
-/**
- * Enhanced reference context with type information
- */
-export interface TypedReferenceContext {
-  /** Inferred type at reference location */
-  inferred_type?: TypeInfo;
-
-  /** Assignment context if this is an assignment */
-  assignment_context?: AssignmentContext;
-
-  /** Return context if this is a return statement */
-  return_context?: ReturnContext;
-
-  /** For method calls: receiver type */
-  receiver_type?: TypeInfo;
-
-  /** For property access: property type */
-  property_type?: TypeInfo;
-
-  /** Type constraints from surrounding context */
-  type_constraints?: TypeConstraint[];
-}
-
-/**
- * Type constraint from context
- */
-export interface TypeConstraint {
-  kind: "narrowing" | "widening" | "cast" | "guard";
-  target_type: TypeInfo;
-  condition?: string;
-}
-
-/**
- * Connect assignment to its type context
- */
-export function connect_assignment_type(
-  location: Location,
-  assignment_map: Map<string, AssignmentContext>
-): AssignmentContext | undefined {
-  const key = location_key(location);
-  return assignment_map.get(key);
-}
-
-/**
- * Connect return to its type context
- */
-export function connect_return_type(
-  location: Location,
-  return_map: Map<string, ReturnContext>
-): ReturnContext | undefined {
-  const key = location_key(location);
-  return return_map.get(key);
-}
-
-/**
- * Connect to type annotation
- */
-export function connect_type_annotation(
-  location: Location,
-  type_map: Map<LocationKey, TypeInfo>
-): TypeInfo | undefined {
-  return type_map.get(location_key(location));
 }

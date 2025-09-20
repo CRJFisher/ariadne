@@ -1,10 +1,15 @@
 /**
- * Type Tracking - Internal utilities
+ * Type Tracking - Local extraction only
  *
- * Not exposed publicly. Used internally by reference processors.
+ * Extracts type annotations and variable declarations
+ * without attempting any resolution.
  */
 
-// Only export what's actually used by the reference processors
-export { build_type_annotation_map, build_typed_return_map } from "./type_tracking";
-export type { ReturnContext, TypeSource } from "./type_tracking";
-export type { TypeInfo } from "./type_info";
+// Export the main extraction function and types
+export { extract_type_tracking } from "./type_tracking";
+export type {
+  LocalTypeTracking,
+  LocalVariableAnnotation,
+  LocalVariableDeclaration,
+  LocalAssignment
+} from "./type_tracking";

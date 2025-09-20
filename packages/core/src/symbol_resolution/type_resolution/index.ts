@@ -53,3 +53,9 @@ export {
   build_file_type_registry_with_annotations,
   type TypeRegistryResult
 } from "./type_resolution";
+export {
+  resolve_type_tracking,
+  type ResolvedTypeTracking,
+  type TypeFlowGraph,
+  type TypeFlowEdge
+} from "./track_types";

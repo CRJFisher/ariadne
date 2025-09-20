@@ -245,6 +245,15 @@ export interface CaptureContext {
   is_pub_use?: boolean;
   visibility_level?: string;
   alias?: string;
+
+  // For type tracking
+  annotated_var_name?: string;
+  parameter_name?: string;
+  declaration_kind?: string;
+  type_annotation?: string;
+  initializer_text?: string;
+  source_text?: string;
+  operator?: string;
 }
 
 /**
