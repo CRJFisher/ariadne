@@ -10,6 +10,7 @@ import type {
   SymbolId,
   SymbolName,
   Location,
+  LocationKey,
   SymbolReference,
   TypeId,
 } from "@ariadnejs/types";
@@ -34,8 +35,8 @@ export interface ImportResolutionMap {
  * Maps function call locations to the called function's SymbolId
  */
 export interface FunctionResolutionMap {
-  // Reference location -> resolved function SymbolId
-  readonly function_calls: ReadonlyMap<Location, SymbolId>;
+  // Reference location key -> resolved function SymbolId
+  readonly function_calls: ReadonlyMap<LocationKey, SymbolId>;
 
   // Reverse map for finding all calls to a function
   // Function SymbolId -> call site locations
@@ -50,8 +51,8 @@ export interface TypeResolutionMap {
   // Symbol definition -> its TypeId
   readonly symbol_types: ReadonlyMap<SymbolId, TypeId>;
 
-  // Reference location -> type at that location (for type flow)
-  readonly reference_types: ReadonlyMap<Location, TypeId>;
+  // Reference location key -> type at that location (for type flow)
+  readonly reference_types: ReadonlyMap<LocationKey, TypeId>;
 
   // Type -> members available on that type
   readonly type_members: ReadonlyMap<TypeId, ReadonlyMap<SymbolName, SymbolId>>;
@@ -65,11 +66,11 @@ export interface TypeResolutionMap {
  * Maps method calls and constructor calls to their definitions
  */
 export interface MethodResolutionMap {
-  // Method call location -> resolved method SymbolId
-  readonly method_calls: ReadonlyMap<Location, SymbolId>;
+  // Method call location key -> resolved method SymbolId
+  readonly method_calls: ReadonlyMap<LocationKey, SymbolId>;
 
-  // Constructor call location -> resolved constructor SymbolId
-  readonly constructor_calls: ReadonlyMap<Location, SymbolId>;
+  // Constructor call location key -> resolved constructor SymbolId
+  readonly constructor_calls: ReadonlyMap<LocationKey, SymbolId>;
 
   // Reverse map: method/constructor -> call sites
   readonly calls_to_method: ReadonlyMap<SymbolId, readonly Location[]>;
@@ -84,14 +85,14 @@ export interface MethodResolutionMap {
  * Combines all phase outputs into a unified resolution map
  */
 export interface ResolvedSymbols {
-  // Master map: any reference location -> its resolved SymbolId
-  readonly resolved_references: ReadonlyMap<Location, SymbolId>;
+  // Master map: any reference location key -> its resolved SymbolId
+  readonly resolved_references: ReadonlyMap<LocationKey, SymbolId>;
 
   // Reverse map: SymbolId -> all locations that reference it
   readonly references_to_symbol: ReadonlyMap<SymbolId, readonly Location[]>;
 
   // References we couldn't resolve (with reasons)
-  readonly unresolved_references: ReadonlyMap<Location, SymbolReference>;
+  readonly unresolved_references: ReadonlyMap<LocationKey, SymbolReference>;
 
   // Individual phase results (for debugging/analysis)
   readonly phases: {

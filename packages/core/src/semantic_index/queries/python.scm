@@ -11,8 +11,15 @@
 ; Root scope
 (module) @scope.module
 
-; Function scopes
-(function_definition) @scope.function
+; Function scopes (only top-level or nested, not in classes)
+(module
+  (function_definition) @scope.function
+)
+(function_definition
+  body: (block
+    (function_definition) @scope.function
+  )
+)
 (lambda) @scope.lambda
 
 ; Class scopes
@@ -22,6 +29,15 @@
 (class_definition
   body: (block
     (function_definition) @scope.method
+  )
+)
+
+; Decorated method scopes (property getters, setters, staticmethod, classmethod)
+(class_definition
+  body: (block
+    (decorated_definition
+      definition: (function_definition) @scope.method
+    )
   )
 )
 

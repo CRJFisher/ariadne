@@ -985,7 +985,7 @@ export const PYTHON_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
     {
       category: SemanticCategory.REFERENCE,
       entity: SemanticEntity.CLASS,
-      context: (node) => ({ extends_class: node.text }),
+      context: (node) => ({ extends_class: node.text } as CaptureContext),
     },
   ],
   [
