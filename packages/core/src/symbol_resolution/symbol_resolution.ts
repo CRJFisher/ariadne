@@ -14,6 +14,7 @@ import type {
   FilePath,
   SymbolName,
   TypeId,
+  Language,
 } from "@ariadnejs/types";
 import type {
   ResolutionInput,
@@ -39,6 +40,11 @@ import type {
 } from "./type_resolution/types";
 import type { LocalTypeTracking } from "../semantic_index/references/type_tracking";
 import type { LocalTypeAnnotation as SemanticAnnotation } from "../semantic_index/references/type_annotation_references";
+import {
+  resolve_imports,
+  create_import_resolution_context,
+} from "./import_resolution";
+import type { LanguageImportHandler } from "./import_resolution";
 
 /**
  * Main entry point for symbol resolution
@@ -74,17 +80,15 @@ export function resolve_symbols(input: ResolutionInput): ResolvedSymbols {
  * - Resolve module paths to actual files
  */
 function phase1_resolve_imports(
-  _indices: ReadonlyMap<FilePath, SemanticIndex>
+  indices: ReadonlyMap<FilePath, SemanticIndex>
 ): ImportResolutionMap {
-  const imports = new Map<FilePath, Map<SymbolName, SymbolId>>();
+  // Language handlers will be provided by task 11.91.1.2
+  // For now, create an empty handler map
+  const language_handlers = new Map<Language, LanguageImportHandler>();
+  // TODO: Register language-specific handlers when available
 
-  // TODO: Implementation
-  // 1. For each file's imports
-  // 2. Resolve import path to source file
-  // 3. Match import names to export names
-  // 4. Map imported names to exported symbol IDs
-
-  return { imports };
+  const context = create_import_resolution_context(indices, language_handlers);
+  return resolve_imports(context);
 }
 
 /**
