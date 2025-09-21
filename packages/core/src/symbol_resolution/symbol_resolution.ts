@@ -45,6 +45,7 @@ import {
   create_import_resolution_context,
 } from "./import_resolution";
 import type { LanguageImportHandler } from "./import_resolution";
+import { create_standard_language_handlers } from "./import_resolution/language_handlers";
 
 /**
  * Main entry point for symbol resolution
@@ -82,10 +83,8 @@ export function resolve_symbols(input: ResolutionInput): ResolvedSymbols {
 function phase1_resolve_imports(
   indices: ReadonlyMap<FilePath, SemanticIndex>
 ): ImportResolutionMap {
-  // Language handlers will be provided by task 11.91.1.2
-  // For now, create an empty handler map
-  const language_handlers = new Map<Language, LanguageImportHandler>();
-  // TODO: Register language-specific handlers when available
+  // Create standard language handlers for all supported languages
+  const language_handlers = create_standard_language_handlers();
 
   const context = create_import_resolution_context(indices, language_handlers);
   return resolve_imports(context);

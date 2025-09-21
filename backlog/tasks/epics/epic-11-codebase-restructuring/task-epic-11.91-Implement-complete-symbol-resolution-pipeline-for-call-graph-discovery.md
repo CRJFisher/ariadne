@@ -5,11 +5,27 @@
 **Status**: Created
 **Priority**: Critical
 **Created**: 2025-01-20
-**Estimated Effort**: 6-8 days
+**Estimated Effort**: 7-9 days
+
+## Sub-Tasks
+
+1. **task-epic-11.91.1**: Implement import/export resolution infrastructure (2.5-3 days) ✅ **Completed**
+   - 11.91.1.1: Core import resolution infrastructure (1-1.5 days) ✅ **Completed**
+   - 11.91.1.2: Language-specific import handlers (1-1.5 days) ✅ **Completed**
+
+2. **task-epic-11.91.2**: Implement function call resolution (2-3 days)
+   - 11.91.2.1: Lexical scope resolution infrastructure (1-1.5 days)
+   - 11.91.2.2: Function call resolution with import integration (1-1.5 days)
+
+3. **task-epic-11.91.3**: Enhance method and constructor resolution (2-3 days)
+   - 11.91.3.1: Basic method resolution and type lookup (1-1.5 days)
+   - 11.91.3.2: Inheritance chain resolution and constructor enhancement (1-1.5 days)
+
+4. **task-epic-11.91.4**: Integration testing and performance optimization (2-3 days)
 
 ## Problem Statement
 
-Following the successful completion of task-epic-11.90 (type processing separation), the symbol resolution pipeline now has Phase 3 (Type Resolution) fully implemented. However, Phases 1 and 2 remain unimplemented, preventing complete call graph discovery.
+Following the successful completion of task-epic-11.90 (type processing separation), the symbol resolution pipeline now has Phase 3 (Type Resolution) fully implemented. However, Phases 1 and 2 remain unimplemented, preventing complete symbol resolution and future call graph construction.
 
 ### Current State Analysis
 
@@ -20,27 +36,27 @@ Following the successful completion of task-epic-11.90 (type processing separati
 - ✅ **Type Members Resolution** - Cross-file inheritance and member resolution
 
 **Missing Components**:
-- ❌ **Phase 1: Import/Export Resolution** - Critical for cross-file symbol mapping
+- ✅ **Phase 1: Import/Export Resolution** - Completed with full language support
 - ❌ **Phase 2: Function Call Resolution** - Required for direct function calls
-- ❌ **Call Graph Generation** - Transform resolved data into queryable call graphs
-- ❌ **Call Graph Query API** - Developer-friendly interfaces for call graph analysis
+- ❌ **Enhanced Phase 4: Method/Constructor Resolution** - Improved method resolution with inheritance
+- ❌ **Integration Testing and Data Export** - Comprehensive testing and clean data interfaces
 
-### Call Graph Discovery Requirements
+### Complete Symbol Resolution Requirements
 
-To enable comprehensive call graph discovery, we need:
+To enable comprehensive symbol resolution for future call graph construction, we need:
 
 1. **Import Resolution**: Map imported symbols to their source definitions
-2. **Function Call Resolution**: Resolve function calls via lexical scoping
-3. **Method Call Resolution**: Resolve method calls using type information
-4. **Constructor Call Resolution**: Resolve constructor invocations
-5. **Call Graph Construction**: Build directed graphs from resolved call data
-6. **Query Interface**: Provide APIs for traversing and analyzing call relationships
+2. **Function Call Resolution**: Resolve function calls via lexical scoping and imports
+3. **Method Call Resolution**: Resolve method calls using type information and inheritance
+4. **Constructor Call Resolution**: Resolve constructor invocations with proper type context
+5. **Data Export**: Provide clean interfaces for resolved symbol data
+6. **Integration Testing**: Comprehensive validation across real-world codebases
 
 ## Solution Overview
 
-Implement the remaining phases of the symbol resolution pipeline and build call graph construction on top of the resolved symbol mappings.
+Implement the remaining phases of the symbol resolution pipeline with comprehensive testing and data export capabilities to provide a complete foundation for future call graph construction.
 
-**Note**: This task originally included 6 subtasks but was reduced to 5 by removing the separate call graph query API task and integrating query functionality into the call graph construction system.
+**Note**: This task was restructured to focus on symbol resolution only, with call graph construction separated into future work. The 4 main tasks are further subdivided into 8 focused sub-tasks for better incremental progress.
 
 ### Architecture Overview
 
@@ -51,20 +67,22 @@ semantic_index/               # Single-file extraction (✅ Complete)
 └── type_flow_references/     # Extract constructor calls
 
 symbol_resolution/            # Cross-file resolution
-├── phase1_import_resolution/ # ❌ Import/export mapping
-├── phase2_function_resolution/ # ❌ Function call resolution
-├── phase3_type_resolution/   # ✅ Type tracking & resolution
-├── phase4_method_resolution/ # ⚠️ Depends on phases 1-2
-└── call_graph/              # ❌ Call graph construction & queries
+├── import_resolution/        # ❌ Import/export mapping (11.91.1)
+├── function_resolution/      # ❌ Function call resolution (11.91.2)
+├── type_resolution/          # ✅ Type tracking & resolution (11.90)
+├── method_resolution/        # ❌ Enhanced method/constructor resolution (11.91.3)
+├── integration_tests/        # ❌ End-to-end testing (11.91.4)
+└── data_export/             # ❌ Clean data export interfaces (11.91.4)
 ```
 
 ### Key Technical Challenges
 
-1. **Import Path Resolution**: Handle relative/absolute imports, node_modules, package.json
-2. **Lexical Scope Resolution**: Walk scope chains for function call resolution
-3. **Hoisting Semantics**: Handle JavaScript/TypeScript var/function hoisting
-4. **Type-Based Method Resolution**: Use resolved types to determine method targets
-5. **Call Graph Performance**: Efficient data structures for large codebases
+1. **Import Path Resolution**: Handle relative/absolute imports, node_modules, package.json across languages
+2. **Lexical Scope Resolution**: Walk scope chains for function call resolution with language-specific rules
+3. **Hoisting Semantics**: Handle JavaScript/TypeScript var/function hoisting vs Python/Rust scoping
+4. **Inheritance Resolution**: Method resolution through complex inheritance hierarchies and interfaces
+5. **Performance at Scale**: Efficient resolution algorithms for large codebases (10,000+ files)
+6. **Data Export Design**: Clean, extensible interfaces for future call graph construction
 
 ## Implementation Plan
 
@@ -180,9 +198,9 @@ JavaScript/TypeScript module resolution is complex (package.json, node_modules, 
 
 ### Risk 2: Performance on Large Codebases
 
-Call graph construction can be expensive for large projects.
+Symbol resolution can be expensive for large projects with complex dependencies.
 
-**Mitigation**: Implement incremental resolution and caching strategies.
+**Mitigation**: Implement incremental resolution, caching strategies, and parallel processing.
 
 ### Risk 3: Language-Specific Semantics
 
@@ -193,9 +211,10 @@ Each language has unique call resolution semantics.
 ## Notes
 
 - This task completes the symbol resolution pipeline architecture
-- Enables accurate method call resolution across file boundaries
-- Foundation for advanced IDE features (find references, call hierarchy)
-- Critical for static analysis and refactoring tools
+- Provides comprehensive symbol mappings for all call types (functions, methods, constructors)
+- Enables accurate cross-file symbol resolution across multiple languages
+- Foundation for future call graph construction and advanced IDE features
+- Critical for static analysis, refactoring tools, and dependency analysis
 
 ## References
 
