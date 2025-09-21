@@ -215,11 +215,11 @@ describe("Type Resolution Module", () => {
     });
 
     it("analyze_type_flow should throw not implemented error", () => {
-      const flows: LocalTypeFlow[] = [];
+      const flows: Map<FilePath, LocalTypeFlow> = new Map();
       const resolved_types = new Map<Location, TypeId>();
 
       expect(() =>
-        analyze_type_flow(flows, resolved_types)
+        analyze_type_flow(flows, resolved_types, new Map(), new Map())
       ).toThrow("Not implemented");
     });
 
@@ -252,7 +252,6 @@ describe("Type Resolution Module", () => {
           is_hoisted: false,
           is_exported: false,
           is_imported: false,
-          references: [],
         }],
       ]);
 
@@ -276,7 +275,6 @@ describe("Type Resolution Module", () => {
           is_hoisted: false,
           is_exported: false,
           is_imported: false,
-          references: [],
         }],
       ]);
 
@@ -442,7 +440,6 @@ describe("Type Resolution Module", () => {
             is_hoisted: false,
             is_exported: false,
             is_imported: false,
-            references: [],
           }],
           ["interface1" as SymbolId, {
             id: "interface1" as SymbolId,
@@ -453,7 +450,6 @@ describe("Type Resolution Module", () => {
             is_hoisted: false,
             is_exported: false,
             is_imported: false,
-            references: [],
           }],
           ["enum1" as SymbolId, {
             id: "enum1" as SymbolId,
@@ -464,7 +460,6 @@ describe("Type Resolution Module", () => {
             is_hoisted: false,
             is_exported: false,
             is_imported: false,
-            references: [],
           }],
           ["type1" as SymbolId, {
             id: "type1" as SymbolId,
@@ -475,7 +470,6 @@ describe("Type Resolution Module", () => {
             is_hoisted: false,
             is_exported: false,
             is_imported: false,
-            references: [],
           }],
         ]);
 
@@ -501,8 +495,6 @@ describe("Type Resolution Module", () => {
             is_hoisted: false,
             is_exported: false,
             is_imported: false,
-            references: [],
-            return_type: "TypeId:string" as TypeId,
           }],
         ]);
 
@@ -523,8 +515,6 @@ describe("Type Resolution Module", () => {
             is_hoisted: false,
             is_exported: false,
             is_imported: false,
-            references: [],
-            value_type: "TypeId:number" as TypeId,
           }],
         ]);
 
@@ -545,7 +535,6 @@ describe("Type Resolution Module", () => {
             is_hoisted: false,
             is_exported: false,
             is_imported: false,
-            references: [],
           }],
           ["var1" as SymbolId, {
             id: "var1" as SymbolId,
@@ -556,7 +545,6 @@ describe("Type Resolution Module", () => {
             is_hoisted: false,
             is_exported: false,
             is_imported: false,
-            references: [],
           }],
         ]);
 
@@ -581,7 +569,6 @@ describe("Type Resolution Module", () => {
             is_hoisted: false,
             is_exported: false,
             is_imported: false,
-            references: [],
           }],
         ]);
 
@@ -617,7 +604,6 @@ describe("Type Resolution Module", () => {
             is_hoisted: false,
             is_exported: false,
             is_imported: false,
-            references: [],
           }],
           ["class2" as SymbolId, {
             id: "class2" as SymbolId,
@@ -628,7 +614,6 @@ describe("Type Resolution Module", () => {
             is_hoisted: false,
             is_exported: false,
             is_imported: false,
-            references: [],
           }],
         ]);
 
@@ -652,9 +637,6 @@ describe("Type Resolution Module", () => {
             is_hoisted: false,
             is_exported: true,
             is_imported: false,
-            references: [],
-            return_type: "TypeId:void" as TypeId,
-            value_type: "TypeId:class" as TypeId,
           }],
         ]);
 
@@ -689,7 +671,6 @@ describe("Type Resolution Module", () => {
             is_hoisted: false,
             is_exported: false,
             is_imported: false,
-            references: references,
           }],
         ]);
 
@@ -697,7 +678,6 @@ describe("Type Resolution Module", () => {
 
         // Should not mutate the original symbols
         const originalSymbol = symbols.get("class1" as SymbolId);
-        expect(originalSymbol?.references).toBe(references);
       });
     });
 
@@ -765,7 +745,6 @@ describe("Type Resolution Module", () => {
             is_hoisted: false,
             is_exported: false,
             is_imported: false,
-            references: [],
           });
         }
 

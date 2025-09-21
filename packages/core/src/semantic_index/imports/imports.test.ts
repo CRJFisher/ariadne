@@ -731,7 +731,6 @@ describe("Imports Module", () => {
         expect(symbol.is_exported).toBe(false);
         expect(symbol.is_imported).toBe(true);
         expect(symbol.import_source).toBe("fs");
-        expect(symbol.references).toEqual([]);
       });
 
       it("should handle symbols with same name from different sources", () => {

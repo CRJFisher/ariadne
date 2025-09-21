@@ -112,9 +112,6 @@ export interface SymbolDefinition {
   
   /** For functions/methods: return type hint */
   readonly return_type_hint?: SymbolName;
-  
-  /** All references to this symbol */
-  readonly references: readonly SymbolReference[];
 
 
   /** For classes: member symbols */

@@ -171,7 +171,6 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
         is_hoisted: false,
         is_exported: false,
         is_imported: false,
-        references: [],
       });
     });
 
@@ -187,7 +186,6 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
         is_hoisted: true,
         is_exported: false,
         is_imported: false,
-        references: [],
       });
     });
 

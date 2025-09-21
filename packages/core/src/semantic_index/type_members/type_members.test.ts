@@ -42,7 +42,6 @@ describe("Type Members", () => {
       is_hoisted: false,
       is_exported: false,
       is_imported: false,
-      references: [],
       ...partial,
     } as SymbolDefinition);
 
@@ -298,7 +297,6 @@ describe("Type Members", () => {
           name: "IInterface" as SymbolName,
           location: mockLocation,
           scope_id: "interface_scope" as ScopeId,
-          type_id: "interface_IInterface_type" as TypeId,
         });
 
         const classSymbol: SymbolDefinition = create_symbol_definition({
@@ -307,7 +305,6 @@ describe("Type Members", () => {
           name: "MyClass" as SymbolName,
           location: mockLocation,
           scope_id: "class_scope" as ScopeId,
-          type_id: "class_MyClass_type" as TypeId,
           implements_interfaces: ["IInterface" as SymbolName],
         });
 
@@ -332,7 +329,6 @@ describe("Type Members", () => {
           name: "MyClass" as SymbolName,
           location: mockLocation,
           scope_id: "class_scope" as ScopeId,
-          type_id: "class_MyClass_type" as TypeId,
         });
 
         const methodSymbol: SymbolDefinition = create_symbol_definition({
@@ -429,7 +425,6 @@ describe("Type Members", () => {
           name: "orphanMethod" as SymbolName,
           location: mockLocation,
           scope_id: "orphan_scope" as ScopeId,
-          member_of: "non_existent_type" as any as TypeId,
         });
 
         mockSymbols.set("orphan_method_symbol" as SymbolId, orphanMethodSymbol);
@@ -491,7 +486,6 @@ describe("Type Members", () => {
           name: "doSomething" as SymbolName,
           location: mockLocation,
           scope_id: "interface_scope" as ScopeId,
-          return_type: "boolean",
         });
 
         const propertySignatureSymbol: SymbolDefinition = create_symbol_definition({
@@ -500,7 +494,6 @@ describe("Type Members", () => {
           name: "value" as SymbolName,
           location: mockLocation,
           scope_id: "interface_scope" as ScopeId,
-          value_type: "string",
         });
 
         mockSymbols.set("interface_symbol" as SymbolId, interfaceSymbol);
@@ -580,7 +573,6 @@ describe("Type Members", () => {
           name: "required" as SymbolName,
           location: mockLocation,
           scope_id: "method_scope" as ScopeId,
-          value_type: "string",
         });
 
         const optionalParam: SymbolDefinition = create_symbol_definition({
@@ -589,8 +581,6 @@ describe("Type Members", () => {
           name: "optional" as SymbolName,
           location: mockLocation,
           scope_id: "method_scope" as ScopeId,
-          value_type: "number",
-          is_optional: true,
         });
 
         const restParam: SymbolDefinition = create_symbol_definition({
@@ -599,8 +589,6 @@ describe("Type Members", () => {
           name: "rest" as SymbolName,
           location: mockLocation,
           scope_id: "method_scope" as ScopeId,
-          value_type: "string[]",
-          is_rest: true,
         });
 
         mockSymbols.set("class_symbol" as SymbolId, classSymbol);

@@ -26,6 +26,7 @@ import type {
   LexicalScope,
   Import,
   Export,
+  NamespaceName,
 } from "@ariadnejs/types";
 import { function_symbol, class_symbol, method_symbol, variable_symbol, defined_type_id, TypeCategory } from "@ariadnejs/types";
 import type { SemanticIndex } from "../semantic_index/semantic_index";
@@ -49,27 +50,16 @@ function location(file_path: FilePath, line: number, column: number): Location {
 function symbol_id(kind: string, name: string, loc: Location): SymbolId {
   switch (kind) {
     case "function":
-      return function_symbol(name, loc.file_path, loc);
+      return function_symbol(name as SymbolName, loc);
     case "class":
-      return class_symbol(name, loc.file_path, loc);
+      return class_symbol(name, loc);
     case "method":
-      return method_symbol(name, "UnknownClass", loc.file_path, loc);
+      return method_symbol(name, "UnknownClass", loc);
     case "variable":
       return variable_symbol(name, loc);
     default:
-      return function_symbol(name, loc.file_path, loc); // Default fallback
+      return function_symbol(name as SymbolName, loc); // Default fallback
   }
-}
-
-// Helper to create location objects
-function location(filePath: FilePath, line: number, column: number): Location {
-  return {
-    file_path: filePath,
-    line,
-    column,
-    end_line: line,
-    end_column: column + 10,
-  };
 }
 
 describe("Symbol Resolution Pipeline", () => {
@@ -102,10 +92,10 @@ describe("Symbol Resolution Pipeline", () => {
       scopes: new Map([[rootScopeId, rootScope]]),
       symbols: options.symbols || new Map(),
       references: {
-        function_calls: [],
+        calls: [],
         member_accesses: [],
         returns: [],
-        type_references: [],
+        type_annotations: [],
       },
       imports: options.imports || [],
       exports: options.exports || [],
@@ -167,14 +157,18 @@ describe("Symbol Resolution Pipeline", () => {
           is_hoisted: false,
           is_exported: true,
           is_imported: false,
-          references: [],
         }],
       ]);
       const exportsA: Export[] = [{
         name: "myFunc" as SymbolName,
-        symbol_id: funcSymbolId,
+        symbol: funcSymbolId,
+        symbol_name: "myFunc" as SymbolName,
         location: location(fileA, 1, 0),
         kind: "named",
+        exports: [],
+        modifiers: [],
+        language: "typescript",
+        node_type: "export_statement",
       }];
 
       // File B imports the function
@@ -206,17 +200,26 @@ describe("Symbol Resolution Pipeline", () => {
       const classSymbolId = symbol_id("class", "MyClass", location(fileA, 1, 0));
       const exportsA: Export[] = [{
         name: "default" as SymbolName,
-        symbol_id: classSymbolId,
+        symbol: classSymbolId,
+        symbol_name: "MyClass" as SymbolName,
         location: location(fileA, 1, 0),
         kind: "default",
+        is_declaration: false,
+        modifiers: [],
+        language: "typescript",
+        node_type: "export_statement",
       }];
 
       const fileB = "b.ts" as FilePath;
       const importsB: Import[] = [{
         name: "MyClass" as SymbolName,
-        source: "./a",
+        source: "./a" as FilePath,
         location: location(fileB, 1, 0),
         kind: "default",
+        resolved_export: exportsA[0],
+        modifiers: [],
+        language: "typescript",
+        node_type: "import_statement",
       }];
 
       const indices = new Map<FilePath, SemanticIndex>([
@@ -233,16 +236,21 @@ describe("Symbol Resolution Pipeline", () => {
       const func1 = symbol_id("function", "func1", location(fileA, 1, 0));
       const func2 = symbol_id("function", "func2", location(fileA, 2, 0));
       const exportsA: Export[] = [
-        { name: "func1" as SymbolName, symbol_id: func1, location: location(fileA, 1, 0), kind: "named" },
-        { name: "func2" as SymbolName, symbol_id: func2, location: location(fileA, 2, 0), kind: "named" },
+        { name: "func1" as SymbolName, symbol: func1, symbol_name: "func1" as SymbolName, location: location(fileA, 1, 0), kind: "named", exports: [], modifiers: [], language: "typescript", node_type: "export_statement" },
+        { name: "func2" as SymbolName, symbol: func2, symbol_name: "func2" as SymbolName, location: location(fileA, 2, 0), kind: "named", exports: [], modifiers: [], language: "typescript", node_type: "export_statement" },
       ];
 
       const fileB = "b.ts" as FilePath;
       const importsB: Import[] = [{
         name: "utils" as SymbolName,
-        source: "./a",
+        source: "./a" as FilePath,
         location: location(fileB, 1, 0),
         kind: "namespace",
+        namespace_name: "utils" as NamespaceName,
+        exports: new Map(),
+        modifiers: [],
+        language: "typescript",
+        node_type: "import_statement",
       }];
 
       const indices = new Map<FilePath, SemanticIndex>([
@@ -269,15 +277,17 @@ describe("Symbol Resolution Pipeline", () => {
           is_hoisted: true,
           is_exported: false,
           is_imported: false,
-          references: [],
         }],
       ]);
 
       const index = createTestIndex(filePath, { symbols });
-      index.references.function_calls.push({
+      index.references.calls.push({
         name: "myFunc" as SymbolName,
         location: location(filePath, 5, 10),
         scope_id: "scope:global:test.ts:0:0" as ScopeId,
+        modifiers: [],
+        language: "typescript",
+        node_type: "call_expression",
       });
 
       const indices = new Map([[filePath, index]]);
@@ -303,7 +313,6 @@ describe("Symbol Resolution Pipeline", () => {
           is_hoisted: false,
           is_exported: true,
           is_imported: false,
-          references: [],
         }],
       ]);
 
@@ -356,7 +365,6 @@ describe("Symbol Resolution Pipeline", () => {
           is_hoisted: true, // Important: marked as hoisted
           is_exported: false,
           is_imported: false,
-          references: [],
         }],
       ]);
 
@@ -581,7 +589,6 @@ describe("Symbol Resolution Pipeline", () => {
           is_hoisted: false,
           is_exported: false,
           is_imported: false,
-          references: [],
         }],
       ]);
 
@@ -664,7 +671,6 @@ describe("Symbol Resolution Pipeline", () => {
           is_hoisted: false,
           is_exported: true,
           is_imported: false,
-          references: [],
         }],
       ]);
 

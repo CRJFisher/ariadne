@@ -10,6 +10,7 @@ import type {
   ScopeType,
   LexicalScope,
   Location,
+  ScopeName,
 } from "@ariadnejs/types";
 import {
   scope_string,
@@ -74,7 +75,7 @@ export function build_scope_tree(
     id: root_scope_id,
     parent_id: null,
     name: null,
-    type: "module" as ScopeType,
+    type: "module",
     location: root_location,
     child_ids: [],
     symbols: new Map(),
@@ -116,7 +117,7 @@ export function build_scope_tree(
     const scope: LexicalScope = {
       id: scope_id,
       parent_id: parent.id,
-      name: null,
+      name: null, // TODO: Add support for scope names. So far only Typescript populates CaptureContext.method_name. CaptureContext.function_name and .class_name aren't even defined
       type: scope_type,
       location,
       child_ids: [],

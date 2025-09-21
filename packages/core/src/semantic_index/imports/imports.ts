@@ -201,7 +201,6 @@ export function process_imports(
         is_exported: false,
         is_imported: true,
         import_source: source as FilePath,
-        references: [],
       };
 
       root_scope.symbols.set(

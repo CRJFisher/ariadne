@@ -422,7 +422,6 @@ describe("Exports Module", () => {
           is_hoisted: true,
           is_exported: false,
           is_imported: false,
-          references: [],
         });
         root_scope.symbols.set("_private_function" as SymbolName, {
           id: variable_symbol("_private_function", base_location),
@@ -433,7 +432,6 @@ describe("Exports Module", () => {
           is_hoisted: true,
           is_exported: false,
           is_imported: false,
-          references: [],
         });
         root_scope.symbols.set("__magic__" as SymbolName, {
           id: variable_symbol("__magic__", base_location),
@@ -444,7 +442,6 @@ describe("Exports Module", () => {
           is_hoisted: false,
           is_exported: false,
           is_imported: false,
-          references: [],
         });
         root_scope.symbols.set("PUBLIC_CONSTANT" as SymbolName, {
           id: variable_symbol("PUBLIC_CONSTANT", base_location),
@@ -455,7 +452,6 @@ describe("Exports Module", () => {
           is_hoisted: true,
           is_exported: false,
           is_imported: false,
-          references: [],
         });
 
         symbols.set(variable_symbol("public_function", base_location), {
@@ -467,7 +463,6 @@ describe("Exports Module", () => {
           is_hoisted: true,
           is_exported: false,
           is_imported: false,
-          references: [],
         });
         symbols.set(variable_symbol("_private_function", base_location), {
           id: variable_symbol("_private_function", base_location),
@@ -478,7 +473,6 @@ describe("Exports Module", () => {
           is_hoisted: true,
           is_exported: false,
           is_imported: false,
-          references: [],
         });
         symbols.set(variable_symbol("__magic__", base_location), {
           id: variable_symbol("__magic__", base_location),
@@ -489,7 +483,6 @@ describe("Exports Module", () => {
           is_hoisted: false,
           is_exported: false,
           is_imported: false,
-          references: [],
         });
         symbols.set(variable_symbol("PUBLIC_CONSTANT", base_location), {
           id: variable_symbol("PUBLIC_CONSTANT", base_location),
@@ -500,7 +493,6 @@ describe("Exports Module", () => {
           is_hoisted: true,
           is_exported: false,
           is_imported: false,
-          references: [],
         });
       });
 
