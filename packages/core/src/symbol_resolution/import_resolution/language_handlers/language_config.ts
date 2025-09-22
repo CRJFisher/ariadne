@@ -37,7 +37,7 @@ export const TYPESCRIPT_CONFIG: LanguageConfig = {
 };
 
 export const PYTHON_CONFIG: LanguageConfig = {
-  file_extensions: [".py"],
+  file_extensions: [".py", ".pyi", ".pyw"],
   index_files: ["__init__.py"],
   builtin_modules: new Set([
     "abc", "argparse", "array", "ast", "asyncio", "atexit", "base64",

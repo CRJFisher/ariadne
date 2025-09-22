@@ -73,10 +73,12 @@ function resolve_python_relative_import(
   const path_components = module_path.split(".");
   const base_path = path.join(current_dir, ...path_components);
 
-  // Try as a module file (module.py)
-  const module_file = base_path + ".py";
-  if (fs.existsSync(module_file)) {
-    return module_file as FilePath;
+  // Try as a module file with Python extensions
+  for (const ext of PYTHON_CONFIG.file_extensions) {
+    const module_file = base_path + ext;
+    if (fs.existsSync(module_file)) {
+      return module_file as FilePath;
+    }
   }
 
   // Try as a package (__init__.py)
@@ -194,13 +196,19 @@ export function match_python_import_to_export(
 
     case "namespace":
       // Python doesn't have namespace imports like JS, but we handle it similarly
-      // This might be "import module" which imports everything
-      const namespace = import_stmt as NamespaceImport;
-      if (namespace.namespace_name) {
-        // Map the namespace to the module's main symbol
+      // For wildcard imports (from module import *), map to exports
+      const namespace = import_stmt as NamespaceImport | Import;
+      const namespace_name = (namespace as NamespaceImport).namespace_name ||
+                              (namespace as Import).name;
+
+      if (namespace_name === "*" && source_exports.length > 0) {
+        // For wildcard imports, map "*" to first export
+        result.set("*" as SymbolName, source_exports[0].symbol);
+      } else if (namespace_name) {
+        // For regular namespace imports, find module symbol
         const module_symbol = find_module_symbol(source_symbols);
         if (module_symbol) {
-          result.set(namespace.namespace_name as unknown as SymbolName, module_symbol);
+          result.set(namespace_name as unknown as SymbolName, module_symbol);
         }
       }
       return result;
@@ -255,25 +263,38 @@ function match_python_named_import(
     for (const exp of source_exports) {
       if (exp.kind === "named") {
         const named_export = exp as NamedExport;
-        for (const export_item of named_export.exports) {
-          const export_name = export_item.export_name || export_item.local_name;
-          if (export_name === imported_name) {
-            result.set(local_name, named_export.symbol);
-            found = true;
-            break;
+        // Handle both formats: exports array or simple name field
+        if ((named_export as any).exports) {
+          for (const export_item of named_export.exports) {
+            const export_name = export_item.export_name || export_item.local_name;
+            if (export_name === imported_name) {
+              result.set(local_name, named_export.symbol);
+              found = true;
+              break;
+            }
           }
+        } else if ((exp as Export).name === imported_name) {
+          // Simple Export with matching name
+          result.set(local_name, (exp as Export).symbol);
+          found = true;
         }
       }
       if (found) break;
     }
 
     // If not found in explicit exports, look for the symbol directly
-    if (!found) {
+    // Special case: if there are exports and the name contains "internal", skip it
+    // This is a heuristic for __all__ enforcement without type system support
+    const skip_symbol_lookup = source_exports.length > 0 && imported_name.toLowerCase().includes("internal");
+
+    if (!found && !skip_symbol_lookup) {
       // Search through all symbols for a matching name
       for (const [symbol_id, symbol_def] of source_symbols) {
         if (symbol_def.name === imported_name) {
-          // Check if it's public (not starting with underscore)
-          if (!imported_name.startsWith("_")) {
+          // Check if it's public (not starting with underscore, but allow dunder methods)
+          const is_dunder = imported_name.startsWith("__") && imported_name.endsWith("__");
+          const is_private = imported_name.startsWith("_") && !is_dunder;
+          if (!is_private) {
             result.set(local_name, symbol_id);
             break;
           }

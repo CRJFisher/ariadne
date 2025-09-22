@@ -114,7 +114,12 @@ function resolve_js_package_path(
 
     // Extract the subpath
     const subpath = import_path.substring(package_name.length + 1);
-    const package_dir = path.dirname(package_resolved);
+    // Find the package root directory (not the main file's directory)
+    let package_dir = package_resolved as string;
+    // If package_resolved points to a file like lib/index.js, we need the package root
+    while (package_dir && path.basename(package_dir) !== package_name.split('/').pop()) {
+      package_dir = path.dirname(package_dir);
+    }
     const subpath_resolved = path.join(package_dir, subpath);
 
     // Try the subpath directly

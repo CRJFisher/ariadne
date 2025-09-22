@@ -53,7 +53,8 @@ function create_test_index(
     } as any,
     local_types: [],
     local_type_annotations: [],
-    local_type_flow: { flows: [], declarations: [] },
+    local_type_flow: { constructor_calls: [], assignments: [], returns: [], call_assignments: [] },
+    local_type_tracking: { annotations: [], declarations: [], assignments: [] },
     root_scope_id: "root" as any,
     file_symbols_by_name: new Map(),
   };

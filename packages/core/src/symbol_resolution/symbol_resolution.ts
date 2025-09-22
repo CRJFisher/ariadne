@@ -16,6 +16,7 @@ import {
   type TypeId,
   type Language,
   type LocationKey,
+  type ScopeId,
   location_key,
   parse_location_key,
 } from "@ariadnejs/types";
@@ -346,19 +347,57 @@ function collect_local_types(
       type_annotations.set(file_path, converted_annotations);
     }
 
-    // Convert semantic flow to type resolution flow - simplified
+    // Convert semantic flow to type resolution flow
     if (index.local_type_flow) {
-      const flow: TypeResolutionFlow = {
-        location: index.local_type_flow.constructor_calls[0]?.location || {
-          file_path,
-          line: 0,
-          column: 0,
-          end_line: 0,
-          end_column: 0,
-        },
-        flow_kind: "parameter" as const,
-      };
-      type_flows.set(file_path, [flow]);
+      const flows: TypeResolutionFlow[] = [];
+
+      // Process assignments
+      for (const assignment of index.local_type_flow.assignments) {
+        // For assignments, source is where the value comes from, target is the variable being assigned to
+        // Since we don't have the target variable's definition location, we use the assignment location
+        flows.push({
+          source_location: assignment.location,
+          target_location: assignment.location, // Assignment location serves as both source and target
+          flow_kind: "assignment" as const,
+          scope_id: "" as ScopeId, // Will need to be resolved from assignment context
+        });
+      }
+
+      // Process returns
+      for (const returnFlow of index.local_type_flow.returns) {
+        flows.push({
+          source_location: returnFlow.location,
+          target_location: returnFlow.location, // Return location serves as both
+          flow_kind: "return" as const,
+          scope_id: returnFlow.scope_id,
+        });
+      }
+
+      // Process constructor calls (these are like assignments)
+      for (const constructor of index.local_type_flow.constructor_calls) {
+        if (constructor.assigned_to) {
+          flows.push({
+            source_location: constructor.location,
+            target_location: constructor.location, // Constructor location serves as both
+            flow_kind: "assignment" as const,
+            scope_id: constructor.scope_id,
+          });
+        }
+      }
+
+      // Process call assignments
+      for (const callAssignment of index.local_type_flow.call_assignments) {
+        flows.push({
+          source_location: callAssignment.location,
+          target_location: callAssignment.location, // Call location serves as both
+          flow_kind: "assignment" as const,
+          scope_id: "" as ScopeId, // Will need to be resolved from call context
+        });
+      }
+
+      if (flows.length > 0) {
+        type_flows.set(file_path, flows);
+      }
     }
   }
 

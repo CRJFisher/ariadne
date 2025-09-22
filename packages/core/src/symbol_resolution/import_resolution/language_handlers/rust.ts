@@ -40,9 +40,15 @@ export function resolve_rust_module_path(
   }
 
   // Handle super:: references (parent module)
+  // Count how many consecutive super:: are at the beginning
   if (import_path.startsWith("super::")) {
-    const module_path = import_path.substring(7);
-    return resolve_rust_relative_module(module_path, importing_file, 1);
+    let levels_up = 0;
+    let remaining_path = import_path;
+    while (remaining_path.startsWith("super::")) {
+      levels_up++;
+      remaining_path = remaining_path.substring(7);
+    }
+    return resolve_rust_relative_module(remaining_path, importing_file, levels_up);
   }
 
   // Handle crate:: references (crate root)
@@ -162,6 +168,17 @@ function find_crate_root(file_path: FilePath): FilePath | null {
       }
     }
 
+    // Check for lib.rs or main.rs directly in current directory
+    const direct_lib = path.join(current_dir, "lib.rs");
+    if (fs.existsSync(direct_lib)) {
+      return direct_lib as FilePath;
+    }
+
+    const direct_main = path.join(current_dir, "main.rs");
+    if (fs.existsSync(direct_main)) {
+      return direct_main as FilePath;
+    }
+
     // Check for Cargo.toml to know we're at the crate root
     const cargo_toml = path.join(current_dir, "Cargo.toml");
     if (fs.existsSync(cargo_toml)) {
@@ -198,43 +215,21 @@ function find_rust_module_file(
     return null;
   }
 
-  let current_dir = base_dir;
+  // Build the full directory path for all but the last component
+  const dir_path = path_components.length > 1
+    ? path.join(base_dir, ...path_components.slice(0, -1))
+    : base_dir;
 
-  // Process all but the last component as directories
-  for (let i = 0; i < path_components.length - 1; i++) {
-    const component = path_components[i];
-
-    // Try as a directory first
-    const dir_path = path.join(current_dir, component);
-    if (fs.existsSync(dir_path)) {
-      const stats = fs.statSync(dir_path);
-      if (stats.isDirectory()) {
-        current_dir = dir_path;
-        continue;
-      }
-    }
-
-    // Check if it's a file module (component.rs) - can't navigate into file modules
-    const file_module = path.join(current_dir, component + ".rs");
-    if (fs.existsSync(file_module)) {
-      return null;
-    }
-
-    // Module path not found
-    return null;
-  }
-
-  // Process the last component
   const last_component = path_components[path_components.length - 1];
 
   // Try as a file module (module.rs)
-  const module_file = path.join(current_dir, last_component + ".rs");
+  const module_file = path.join(dir_path, last_component + ".rs");
   if (fs.existsSync(module_file)) {
     return module_file as FilePath;
   }
 
   // Try as a directory module with mod.rs
-  const mod_file = path.join(current_dir, last_component, "mod.rs");
+  const mod_file = path.join(dir_path, last_component, "mod.rs");
   if (fs.existsSync(mod_file)) {
     return mod_file as FilePath;
   }
@@ -263,7 +258,7 @@ function resolve_rust_external_crate(
     }
     visited.add(current_dir);
 
-    // Check if this directory has the crate
+    // Check if this directory has the crate directly
     const crate_dir = path.join(current_dir, crate_name);
     if (fs.existsSync(crate_dir)) {
       const lib_rs = path.join(crate_dir, "src", "lib.rs");
@@ -272,12 +267,22 @@ function resolve_rust_external_crate(
       }
     }
 
+    // Check common workspace member locations
+    const workspace_subdirs = ["libs", "crates", "packages", "members"];
+    for (const subdir of workspace_subdirs) {
+      const workspace_crate_dir = path.join(current_dir, subdir, crate_name);
+      if (fs.existsSync(workspace_crate_dir)) {
+        const lib_rs = path.join(workspace_crate_dir, "src", "lib.rs");
+        if (fs.existsSync(lib_rs)) {
+          return lib_rs as FilePath;
+        }
+      }
+    }
+
     // Check for Cargo.toml to see if we're at workspace root
     const cargo_toml = path.join(current_dir, "Cargo.toml");
     if (fs.existsSync(cargo_toml)) {
-      // Try workspace members pattern
-      const members_pattern = path.join(current_dir, "*", "Cargo.toml");
-      // This is simplified - real implementation would parse Cargo.toml
+      // We're at workspace root, stop searching upward
       break;
     }
 
@@ -314,13 +319,25 @@ export function match_rust_import_to_export(
     case "default":
       // Rust doesn't have default imports, but we might use this
       // for simple "use module" statements
-      const default_import = import_stmt ;
+      const default_import = import_stmt;
       if (default_import.name) {
-        // Find a matching pub item
+        // Find a matching pub item in exports
+        let found = false;
         for (const exp of source_exports) {
-          if (exp.symbol_name === default_import.name) {
+          if (exp.symbol_name === default_import.name || (exp as Export).name === default_import.name) {
             result.set(default_import.name, exp.symbol);
+            found = true;
             break;
+          }
+        }
+
+        // If not found in exports, check for module symbol
+        if (!found) {
+          for (const [symbol_id, symbol_def] of source_symbols) {
+            if (symbol_def.name === default_import.name && (symbol_def.kind as string) === "module") {
+              result.set(default_import.name, symbol_id);
+              break;
+            }
           }
         }
       }
@@ -329,14 +346,14 @@ export function match_rust_import_to_export(
     case "namespace":
       // Rust doesn't have namespace imports like JS
       // but "use module::*" is similar
-      // For now, we'll handle it as importing the module itself
-      const namespace = import_stmt as NamespaceImport;
-      if (namespace.namespace_name) {
-        // Find the module symbol
-        const module_symbol = find_rust_module_symbol(source_symbols);
-        if (module_symbol) {
-          result.set(namespace.namespace_name as unknown as SymbolName, module_symbol);
-        }
+      // For glob imports, we'll map "*" to the first export if available
+      const namespace = import_stmt as NamespaceImport | Import;
+      const namespace_name = (namespace as NamespaceImport).namespace_name ||
+                              (namespace as Import).name;
+
+      if (namespace_name && source_exports.length > 0) {
+        // For glob imports (use module::*), map to first export's symbol
+        result.set(namespace_name as unknown as SymbolName, source_exports[0].symbol);
       }
       return result;
 
@@ -366,12 +383,18 @@ function match_rust_named_import(
     for (const exp of source_exports) {
       if (exp.kind === "named") {
         const named_export = exp as NamedExport;
-        for (const export_item of named_export.exports) {
-          const export_name = export_item.export_name || export_item.local_name;
-          if (export_name === imported_name) {
-            result.set(local_name, named_export.symbol);
-            break;
+        // Handle both formats: exports array or simple name field
+        if ((named_export as any).exports) {
+          for (const export_item of named_export.exports) {
+            const export_name = export_item.export_name || export_item.local_name;
+            if (export_name === imported_name) {
+              result.set(local_name, named_export.symbol);
+              break;
+            }
           }
+        } else if ((exp as Export).name === imported_name) {
+          // Simple Export with matching name
+          result.set(local_name, (exp as Export).symbol);
         }
       } else if (exp.symbol_name === imported_name) {
         // Direct symbol export
@@ -383,20 +406,3 @@ function match_rust_named_import(
   return result;
 }
 
-/**
- * Find the module symbol for a Rust file
- */
-function find_rust_module_symbol(
-  source_symbols: ReadonlyMap<SymbolId, SymbolDefinition>
-): SymbolId | null {
-  // In Rust, modules are represented as namespaces in our type system
-  for (const [symbol_id, symbol_def] of source_symbols) {
-    if (symbol_def.kind === "namespace") {
-      return symbol_id;
-    }
-  }
-
-  // Return first symbol as fallback
-  const first_symbol = source_symbols.keys().next();
-  return first_symbol.done ? null : first_symbol.value;
-}

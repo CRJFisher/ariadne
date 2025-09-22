@@ -14,7 +14,6 @@ export {
 export { match_import_to_export } from "./import_matching";
 export type {
   ImportResolution,
-  ModuleResolution,
   ImportResolutionMap,
   ImportResolutionContext,
 } from "./import_types";
