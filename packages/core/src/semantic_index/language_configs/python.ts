@@ -663,7 +663,7 @@ export const PYTHON_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
             is_generic_call: false,
           };
         }
-        return undefined;
+        return {};
       },
     },
   ],

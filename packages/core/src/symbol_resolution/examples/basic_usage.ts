@@ -9,6 +9,7 @@ import { resolve_symbols } from "../symbol_resolution";
 import { export_symbol_resolution_data, count_total_symbols } from "../data_export";
 import type { ResolutionInput, ResolvedSymbols } from "../types";
 import type { FilePath, SymbolName, SymbolId } from "@ariadnejs/types";
+import { parse_location_key } from "@ariadnejs/types";
 import { SemanticIndex } from "../../semantic_index/semantic_index";
 
 /**
@@ -175,7 +176,8 @@ function find_symbol_dependencies(
   // For each reference location, find what symbols are called from there
   for (const ref_location of references) {
     // Check if there are any calls from this location
-    for (const [location, called_symbol] of resolved_symbols.resolved_references) {
+    for (const [location_key, called_symbol] of resolved_symbols.resolved_references) {
+      const location = parse_location_key(location_key);
       if (location.file_path === ref_location.file_path &&
           Math.abs(location.line - ref_location.line) < 10) {
         dependencies.add(called_symbol);

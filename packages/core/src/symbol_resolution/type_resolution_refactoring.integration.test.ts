@@ -169,7 +169,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
 
     // Add class symbols
     options.classes?.forEach((cls, idx) => {
-      const id = class_symbol(cls.name, file_path, location(file_path, (idx + 1) * 10, 0));
+      const id = class_symbol(cls.name, location(file_path, (idx + 1) * 10, 0));
       symbols.set(id, {
         id,
         name: cls.name,

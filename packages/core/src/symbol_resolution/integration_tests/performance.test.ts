@@ -94,7 +94,7 @@ function generate_large_test_project(num_files: number): Map<FilePath, SemanticI
       for (let i = 0; i < functions_per_file; i++) {
         const func_name = `func_${f}_${i}` as SymbolName;
         const func_location = create_location(file_path, 5 + i * 5, 10);
-        const func_id = function_symbol(func_name, file_path, func_location);
+        const func_id = function_symbol(func_name, func_location);
 
         symbols.set(func_id, {
           id: func_id,
@@ -136,7 +136,7 @@ function generate_large_test_project(num_files: number): Map<FilePath, SemanticI
       for (let i = 0; i < classes_per_file; i++) {
         const class_name = `Class_${f}_${i}` as SymbolName;
         const class_location = create_location(file_path, 30 + i * 10, 10);
-        const class_id = class_symbol(class_name, file_path, class_location);
+        const class_id = class_symbol(class_name, class_location);
 
         symbols.set(class_id, {
           id: class_id,
@@ -156,7 +156,7 @@ function generate_large_test_project(num_files: number): Map<FilePath, SemanticI
         for (let j = 0; j < methods_per_class; j++) {
           const method_name = `method_${j}` as SymbolName;
           const method_location = create_location(file_path, 32 + i * 10 + j * 2, 15);
-          const method_id = method_symbol(method_name, class_name, file_path, method_location);
+          const method_id = method_symbol(method_name, class_name, method_location);
 
           symbols.set(method_id, {
             id: method_id,
@@ -457,7 +457,7 @@ describe("Performance Benchmarks", () => {
         const prev_file_path = i > 0 ? (`src/level_${i - 1}.ts` as FilePath) : null;
 
         const func_location = create_location(file_path, 3, 10);
-        const func_id = function_symbol(`func_${i}` as SymbolName, file_path, func_location);
+        const func_id = function_symbol(`func_${i}` as SymbolName, func_location);
 
         const imports: Import[] = [];
         const exports: Export[] = [];

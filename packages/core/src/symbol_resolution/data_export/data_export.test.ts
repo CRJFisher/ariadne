@@ -60,10 +60,10 @@ function create_test_resolved_symbols(): ResolvedSymbols {
   const file2 = "src/utils.ts" as FilePath;
   const file3 = "src/models.ts" as FilePath;
 
-  const func1 = function_symbol("processData" as SymbolName, file1, create_location(file1, 10, 5));
-  const func2 = function_symbol("formatOutput" as SymbolName, file2, create_location(file2, 5, 10));
-  const class1 = class_symbol("DataModel" as SymbolName, file3, create_location(file3, 1, 0));
-  const method1 = method_symbol("save" as SymbolName, "DataModel", file3, create_location(file3, 5, 2));
+  const func1 = function_symbol("processData" as SymbolName, create_location(file1, 10, 5));
+  const func2 = function_symbol("formatOutput" as SymbolName, create_location(file2, 5, 10));
+  const class1 = class_symbol("DataModel" as SymbolName, create_location(file3, 1, 0));
+  const method1 = method_symbol("save" as SymbolName, "DataModel", create_location(file3, 5, 2));
 
   const type1 = defined_type_id("DataModel", file3, create_location(file3, 1, 0));
 
@@ -377,7 +377,6 @@ describe("Data Export Module", () => {
       // Add the same symbol to multiple locations
       const shared_symbol = function_symbol(
         "shared" as SymbolName,
-        "src/shared.ts" as FilePath,
         create_location("src/shared.ts" as FilePath, 1, 0)
       );
 

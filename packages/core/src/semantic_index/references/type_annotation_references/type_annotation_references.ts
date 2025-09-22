@@ -186,15 +186,8 @@ function determine_annotates_location(
   capture: NormalizedCapture,
   annotation_location: Location
 ): Location {
-  // Check capture.context for target information
-  if (capture.context && typeof capture.context === "object") {
-    const context = capture.context ;
-    if (context.target_location) {
-      return context.target_location;
-    }
-  }
-
-  // Return the annotation location as fallback
+  // For now, just return the annotation location
+  // TODO: Could potentially use context.target_node if needed
   return annotation_location;
 }
 

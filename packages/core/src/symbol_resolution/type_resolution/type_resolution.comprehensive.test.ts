@@ -340,7 +340,7 @@ describe("Type Resolution - Comprehensive Suite", () => {
         ["file2.ts" as FilePath, { name_to_type: file2_types } as any],
       ]);
 
-      const global_registry = build_global_type_registry(file_registries);
+      const global_registry = build_global_type_registry(new Map(), new Map());
 
       expect(global_registry.types.size).toBe(4);
       expect(global_registry.types.has("Type1" as SymbolName)).toBe(true);
@@ -361,7 +361,7 @@ describe("Type Resolution - Comprehensive Suite", () => {
         ["file2.ts" as FilePath, { name_to_type: file2_types } as any],
       ]);
 
-      const global_registry = build_global_type_registry(file_registries);
+      const global_registry = build_global_type_registry(new Map(), new Map());
 
       expect(global_registry.types.size).toBe(1);
       expect(global_registry.types.has("Duplicate" as SymbolName)).toBe(true);
@@ -391,7 +391,7 @@ describe("Type Resolution - Comprehensive Suite", () => {
         create_type_definition("Derived", "test.ts", "class", ["Base"]),
       ];
 
-      const hierarchy = resolve_inheritance(type_definitions);
+      const hierarchy = resolve_inheritance(type_definitions, new Map());
 
       expect(hierarchy.all_ancestors.size).toBe(2);
       expect(hierarchy.all_ancestors.has(type_definitions[0].type_id)).toBe(true);
@@ -408,7 +408,7 @@ describe("Type Resolution - Comprehensive Suite", () => {
       // Manually set implements for the test
       type_definitions[2].implements = ["Interface1" as SymbolName, "Interface2" as SymbolName];
 
-      const hierarchy = resolve_inheritance(type_definitions);
+      const hierarchy = resolve_inheritance(type_definitions, new Map());
 
       expect(hierarchy.all_ancestors.size).toBe(3);
       expect(hierarchy.all_ancestors.has(type_definitions[2].type_id)).toBe(true);
@@ -421,7 +421,7 @@ describe("Type Resolution - Comprehensive Suite", () => {
       ];
 
       // Should not throw, but handle gracefully
-      const hierarchy = resolve_inheritance(type_definitions);
+      const hierarchy = resolve_inheritance(type_definitions, new Map());
 
       expect(hierarchy.all_ancestors.size).toBe(2);
     });
@@ -437,7 +437,7 @@ describe("Type Resolution - Comprehensive Suite", () => {
         );
       }
 
-      const hierarchy = resolve_inheritance(type_definitions);
+      const hierarchy = resolve_inheritance(type_definitions, new Map());
 
       expect(hierarchy.all_ancestors.size).toBe(chain_length);
 

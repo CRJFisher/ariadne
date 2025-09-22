@@ -83,7 +83,7 @@ function create_language_test_file(
   // Create exports
   const exports: Export[] = (content.exports || []).map((exp, i) => {
     const symbol = Array.from(symbols.values()).find(s => s.name === exp.name);
-    const symbol_id = symbol?.id || function_symbol(exp.name as SymbolName, file_path, create_location(file_path, 20 + i, 0));
+    const symbol_id = symbol?.id || function_symbol(exp.name as SymbolName, create_location(file_path, 20 + i, 0));
 
     if (exp.kind === "named") {
       return {
@@ -176,15 +176,15 @@ function create_location(file_path: FilePath, line: number, column: number): Loc
 function create_symbol_id(kind: string, name: string, location: Location): SymbolId {
   switch (kind) {
     case "function":
-      return function_symbol(name as SymbolName, location.file_path, location);
+      return function_symbol(name as SymbolName, location);
     case "class":
-      return class_symbol(name as SymbolName, location.file_path, location);
+      return class_symbol(name as SymbolName, location);
     case "method":
-      return method_symbol(name as SymbolName, "UnknownClass", location.file_path, location);
+      return method_symbol(name as SymbolName, "UnknownClass", location);
     case "variable":
-      return variable_symbol(name as SymbolName, location.file_path, location);
+      return variable_symbol(name as SymbolName, location);
     default:
-      return function_symbol(name as SymbolName, location.file_path, location);
+      return function_symbol(name as SymbolName, location);
   }
 }
 
@@ -523,8 +523,8 @@ describe("Cross-Language Symbol Resolution", () => {
       const ts_file_path = "src/typescript_patterns.ts" as FilePath;
       const root_scope_id = `scope:module:${ts_file_path}:0:0` as ScopeId;
 
-      const generic_class = class_symbol("GenericClass" as SymbolName, ts_file_path, create_location(ts_file_path, 10, 10));
-      const decorator_class = class_symbol("DecoratedClass" as SymbolName, ts_file_path, create_location(ts_file_path, 20, 10));
+      const generic_class = class_symbol("GenericClass" as SymbolName, create_location(ts_file_path, 10, 10));
+      const decorator_class = class_symbol("DecoratedClass" as SymbolName, create_location(ts_file_path, 20, 10));
 
       const ts_file: SemanticIndex = {
         file_path: ts_file_path,
@@ -570,16 +570,26 @@ describe("Cross-Language Symbol Resolution", () => {
         imports: [],
         exports: [
           {
-            kind: "named",
-            name: "GenericClass" as SymbolName,
-            symbol: generic_class,
+            kind: "named" as const,
+            exports: [
+              {
+                local_name: "GenericClass" as SymbolName,
+                is_type_only: false,
+              },
+            ],
             location: create_location(ts_file_path, 10, 0),
+            modifiers: [],
           },
           {
-            kind: "named",
-            name: "DecoratedClass" as SymbolName,
-            symbol: decorator_class,
+            kind: "named" as const,
+            exports: [
+              {
+                local_name: "DecoratedClass" as SymbolName,
+                is_type_only: false,
+              },
+            ],
             location: create_location(ts_file_path, 20, 0),
+            modifiers: [],
           },
         ],
         file_symbols_by_name: new Map(),

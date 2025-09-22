@@ -94,7 +94,7 @@ describe("Constructor Resolution", () => {
 
       const my_class_location = create_location(lib_path, 1, 10);
       const constructor_call_location = create_location(app_path, 5, 20);
-      const my_class_symbol = class_symbol("MyClass" as SymbolName, lib_path, my_class_location);
+      const my_class_symbol = class_symbol("MyClass" as SymbolName, my_class_location);
 
       // Library file - exports class
       const lib_symbols = new Map<SymbolId, SymbolDefinition>([
@@ -125,7 +125,7 @@ describe("Constructor Resolution", () => {
       const app_imports: Import[] = [{
         kind: "named",
         imports: [{ name: "MyClass" as SymbolName, is_type_only: false }],
-        source: "./lib.ts",
+        source: "./lib.ts" as FilePath,
         location: create_location(app_path, 1, 10),
         modifiers: [],
         language: "typescript",
@@ -177,11 +177,11 @@ describe("Constructor Resolution", () => {
 
       // Util exports Logger class
       const logger_location = create_location(util_path, 1, 10);
-      const logger_symbol = class_symbol("Logger" as SymbolName, util_path, logger_location);
+      const logger_symbol = class_symbol("Logger" as SymbolName, logger_location);
 
       // Service exports Database class
       const db_location = create_location(service_path, 1, 10);
-      const db_symbol = class_symbol("Database" as SymbolName, service_path, db_location);
+      const db_symbol = class_symbol("Database" as SymbolName, db_location);
 
       // Constructor call locations
       const logger_call_location = create_location(app_path, 5, 20);
@@ -238,7 +238,7 @@ describe("Constructor Resolution", () => {
           {
             kind: "named",
             imports: [{ name: "Logger" as SymbolName, is_type_only: false }],
-            source: "./util.ts",
+            source: "./util.ts" as FilePath,
             location: create_location(app_path, 1, 10),
             modifiers: [],
             language: "typescript",
@@ -247,7 +247,7 @@ describe("Constructor Resolution", () => {
           {
             kind: "named",
             imports: [{ name: "Database" as SymbolName, is_type_only: false }],
-            source: "./service.ts",
+            source: "./service.ts" as FilePath,
             location: create_location(app_path, 2, 10),
             modifiers: [],
             language: "typescript",
@@ -299,7 +299,7 @@ describe("Constructor Resolution", () => {
       const file_path = "src/local.ts" as FilePath;
       const class_location = create_location(file_path, 1, 10);
       const constructor_call_location = create_location(file_path, 5, 20);
-      const local_class_symbol = class_symbol("LocalClass" as SymbolName, file_path, class_location);
+      const local_class_symbol = class_symbol("LocalClass" as SymbolName, class_location);
 
       const symbols = new Map<SymbolId, SymbolDefinition>([
         [local_class_symbol, {
@@ -347,8 +347,8 @@ describe("Constructor Resolution", () => {
       const local_class_location = create_location(app_path, 10, 10);
       const constructor_call_location = create_location(app_path, 15, 20);
 
-      const imported_utility_symbol = class_symbol("Utility" as SymbolName, lib_path, imported_class_location);
-      const local_utility_symbol = class_symbol("Utility" as SymbolName, app_path, local_class_location);
+      const imported_utility_symbol = class_symbol("Utility" as SymbolName, imported_class_location);
+      const local_utility_symbol = class_symbol("Utility" as SymbolName, local_class_location);
 
       const lib_index = create_test_index(lib_path, {
         symbols: new Map([[imported_utility_symbol, {
@@ -387,7 +387,7 @@ describe("Constructor Resolution", () => {
         imports: [{
           kind: "named",
           imports: [{ name: "Utility" as SymbolName, is_type_only: false }],
-          source: "./lib.ts",
+          source: "./lib.ts" as FilePath,
           location: create_location(app_path, 1, 10),
           modifiers: [],
           language: "typescript",
@@ -458,7 +458,7 @@ describe("Constructor Resolution", () => {
         imports: [{
           kind: "named",
           imports: [{ name: "MissingClass" as SymbolName, is_type_only: false }],
-          source: "./missing.ts",
+          source: "./missing.ts" as FilePath,
           location: create_location(app_path, 1, 10),
           modifiers: [],
           language: "typescript",
@@ -523,7 +523,7 @@ describe("Constructor Resolution", () => {
         imports: [{
           kind: "named",
           imports: [{ name: "notAClass" as SymbolName, is_type_only: false }],
-          source: "./lib.ts",
+          source: "./lib.ts" as FilePath,
           location: create_location(app_path, 1, 10),
           modifiers: [],
           language: "typescript",
@@ -582,7 +582,7 @@ describe("Constructor Resolution", () => {
 
       const class_location = create_location(lib_path, 1, 10);
       const constructor_call_location = create_location(app_path, 5, 20);
-      const complex_class_symbol = class_symbol("ComplexClass" as SymbolName, lib_path, class_location);
+      const complex_class_symbol = class_symbol("ComplexClass" as SymbolName, class_location);
 
       const lib_index = create_test_index(lib_path, {
         symbols: new Map([[complex_class_symbol, {
@@ -611,7 +611,7 @@ describe("Constructor Resolution", () => {
         imports: [{
           kind: "named",
           imports: [{ name: "ComplexClass" as SymbolName, is_type_only: false }],
-          source: "./lib.ts",
+          source: "./lib.ts" as FilePath,
           location: create_location(app_path, 1, 10),
           modifiers: [],
           language: "typescript",

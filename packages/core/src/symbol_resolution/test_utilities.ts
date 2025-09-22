@@ -92,13 +92,13 @@ export function create_test_symbol_id(
 
   switch (kind) {
     case "function":
-      return function_symbol(symbol_name, file as FilePath, location);
+      return function_symbol(symbol_name, location);
     case "class":
-      return class_symbol(symbol_name, file as FilePath, location);
+      return class_symbol(symbol_name, location);
     case "method":
-      return method_symbol(symbol_name, "TestClass" as SymbolName, file as FilePath, location);
+      return method_symbol(symbol_name, "TestClass", location);
     case "variable":
-      return variable_symbol(symbol_name, file as FilePath, location);
+      return variable_symbol(symbol_name, location);
     default:
       throw new Error(`Unknown symbol kind: ${kind}`);
   }
