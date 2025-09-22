@@ -9,8 +9,6 @@ import type {
   FilePath,
   SymbolId,
   SymbolName,
-  Import,
-  Language,
 } from "@ariadnejs/types";
 import type {
   ImportResolutionMap,
@@ -41,18 +39,12 @@ export function resolve_imports(
       }
 
       // Resolve import path to source file
-      // First check if the import already has a resolved_path
-      let source_file: FilePath | null = import_stmt.resolved_path || null;
-
-      // If not resolved, try to resolve it
-      if (!source_file) {
-        source_file = resolve_module_path(
-          import_stmt.source as string,
-          file_path,
-          index.language,
-          context
-        );
-      }
+      const source_file = resolve_module_path(
+        import_stmt.source as string,
+        file_path,
+        index.language,
+        context
+      );
 
       if (!source_file || !context.indices.has(source_file)) {
         // Source file not found or not indexed
@@ -86,93 +78,4 @@ export function resolve_imports(
   }
 
   return { imports: result };
-}
-
-/**
- * Resolve imports for a specific file
- *
- * Useful for incremental resolution or debugging
- */
-export function resolve_file_imports(
-  file_path: FilePath,
-  context: ImportResolutionContext
-): Map<SymbolName, SymbolId> {
-  const file_imports = new Map<SymbolName, SymbolId>();
-
-  const index = context.indices.get(file_path);
-  if (!index) {
-    return file_imports;
-  }
-
-  for (const import_stmt of index.imports) {
-    // Skip side-effect imports
-    if (import_stmt.kind === "side_effect") {
-      continue;
-    }
-
-    // Resolve import path to source file
-    const source_file = resolve_module_path(
-      import_stmt.source,
-      file_path,
-      index.language,
-      context
-    );
-
-    if (!source_file || !context.indices.has(source_file)) {
-      continue;
-    }
-
-    const source_index = context.indices.get(source_file)!;
-
-    // Get language handler for import matching
-    const handler = context.language_handlers.get(index.language);
-    if (!handler) {
-      continue;
-    }
-
-    // Match import to exports
-    const symbol_mappings = handler.match_import_to_export(
-      import_stmt,
-      source_index.exports,
-      source_index.symbols
-    );
-
-    // Add resolved symbols
-    for (const [name, symbol_id] of symbol_mappings) {
-      file_imports.set(name, symbol_id);
-    }
-  }
-
-  return file_imports;
-}
-
-/**
- * Get all files that import from a given file
- *
- * Useful for understanding dependencies and impact analysis
- */
-export function get_importing_files(
-  source_file: FilePath,
-  context: ImportResolutionContext
-): Set<FilePath> {
-  const importing_files = new Set<FilePath>();
-
-  for (const [file_path, index] of context.indices) {
-    for (const import_stmt of index.imports) {
-      // Check if this import could resolve to the source file
-      const resolved_file = resolve_module_path(
-        import_stmt.source,
-        file_path,
-        index.language,
-        context
-      );
-
-      if (resolved_file === source_file) {
-        importing_files.add(file_path);
-        break; // No need to check other imports in this file
-      }
-    }
-  }
-
-  return importing_files;
 }

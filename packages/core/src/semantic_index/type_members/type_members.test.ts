@@ -1030,5 +1030,38 @@ describe("Type Members", () => {
       const derivedMethod = find_direct_member(derivedClass!, "derivedMethod" as SymbolName);
       expect(derivedMethod?.name).toBe("derivedMethod");
     });
+
+    it("should populate symbol_id field in LocalMemberInfo", () => {
+      const methodSymbol: SymbolDefinition = create_symbol_definition({
+        id: "test_method_symbol" as SymbolId,
+        kind: "method",
+        name: "testMethod" as SymbolName,
+        location: mockLocation,
+        scope_id: "method_scope" as ScopeId,
+        return_type_hint: "string" as SymbolName,
+      });
+
+      const classSymbol: SymbolDefinition = create_symbol_definition({
+        id: "test_class_symbol" as SymbolId,
+        kind: "class",
+        name: "TestClass" as SymbolName,
+        location: mockLocation,
+        scope_id: "class_scope" as ScopeId,
+        members: ["test_method_symbol" as SymbolId],
+      });
+
+      mockSymbols.set("test_class_symbol" as SymbolId, classSymbol);
+      mockSymbols.set("test_method_symbol" as SymbolId, methodSymbol);
+
+      const result = extract_type_members(mockSymbols, mockScopes, mockFilePath);
+
+      const classInfo = result[0];
+      const methodInfo = classInfo.direct_members.get("testMethod" as SymbolName);
+
+      // Verify that symbol_id is populated with the original symbol ID
+      expect(methodInfo?.symbol_id).toBe("test_method_symbol");
+      expect(methodInfo?.name).toBe("testMethod");
+      expect(methodInfo?.kind).toBe("method");
+    });
   });
 });

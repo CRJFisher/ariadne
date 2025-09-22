@@ -28,7 +28,7 @@ import {
 } from "@ariadnejs/types";
 import { SemanticIndex } from "../../semantic_index/semantic_index";
 import type { LocalTypeInfo } from "../../semantic_index/type_members";
-import type { LocalTypeFlow } from "../../semantic_index/references/type_flow_references";
+import type { LocalTypeFlowData } from "../../semantic_index/references/type_flow_references";
 import type { CallReference } from "../../semantic_index/references/call_references";
 import type { MemberAccessReference } from "../../semantic_index/references/member_access_references";
 
@@ -44,7 +44,7 @@ function create_test_project(files: Array<{
     calls?: CallReference[];
     member_accesses?: MemberAccessReference[];
     local_types?: LocalTypeInfo[];
-    type_flow?: LocalTypeFlow;
+    type_flow?: LocalTypeFlowData;
   };
 }>): Map<FilePath, SemanticIndex> {
   const indices = new Map<FilePath, SemanticIndex>();
@@ -159,12 +159,10 @@ describe("Complete Symbol Resolution Pipeline", () => {
             ],
             exports: [{
               kind: "named",
-              name: "helper" as SymbolName,
               symbol: helper_symbol,
               symbol_name: "helper" as SymbolName,
               location: create_location(utils_path, 1, 0),
-              exports: [],
-              is_declaration: false,
+              exports: [{ local_name: "helper" as SymbolName, is_type_only: false }],
               modifiers: [],
               language: "typescript",
               node_type: "export_statement",
@@ -179,11 +177,9 @@ describe("Complete Symbol Resolution Pipeline", () => {
             ],
             imports: [{
               kind: "named",
-              name: "helper" as SymbolName,
+              imports: [{ name: "helper" as SymbolName, is_type_only: false }],
               source: "./utils",
               location: create_location(main_path, 1, 10),
-              resolved_export: undefined,
-              resolved_path: utils_path,
               modifiers: [],
               language: "typescript",
               node_type: "import_statement",
@@ -234,12 +230,10 @@ describe("Complete Symbol Resolution Pipeline", () => {
             ],
             exports: [{
               kind: "named",
-              name: "BaseClass" as SymbolName,
               symbol: class_symbol("BaseClass" as SymbolName, base_path, create_location(base_path, 1, 10)),
               symbol_name: "BaseClass" as SymbolName,
               location: create_location(base_path, 1, 0),
-              exports: [],
-              is_declaration: false,
+              exports: [{ local_name: "BaseClass" as SymbolName, is_type_only: false }],
               modifiers: [],
               language: "typescript",
               node_type: "export_statement",
@@ -265,11 +259,9 @@ describe("Complete Symbol Resolution Pipeline", () => {
             ],
             imports: [{
               kind: "named",
-              name: "BaseClass" as SymbolName,
+              imports: [{ name: "BaseClass" as SymbolName, is_type_only: false }],
               source: "./base",
               location: create_location(derived_path, 1, 10),
-              resolved_export: undefined,
-              resolved_path: base_path,
               modifiers: [],
               language: "typescript",
               node_type: "import_statement",
@@ -327,12 +319,10 @@ describe("Complete Symbol Resolution Pipeline", () => {
             ],
             exports: [{
               kind: "named",
-              name: "MyClass" as SymbolName,
               symbol: my_class_symbol,
               symbol_name: "MyClass" as SymbolName,
               location: create_location(class_path, 1, 0),
-              exports: [],
-              is_declaration: false,
+              exports: [{ local_name: "MyClass" as SymbolName, is_type_only: false }],
               modifiers: [],
               language: "typescript",
               node_type: "export_statement",
@@ -355,11 +345,9 @@ describe("Complete Symbol Resolution Pipeline", () => {
             ],
             imports: [{
               kind: "named",
-              name: "MyClass" as SymbolName,
+              imports: [{ name: "MyClass" as SymbolName, is_type_only: false }],
               source: "./classes",
               location: create_location(usage_path, 1, 10),
-              resolved_export: undefined,
-              resolved_path: class_path,
               modifiers: [],
               language: "typescript",
               node_type: "import_statement",
@@ -410,24 +398,20 @@ describe("Complete Symbol Resolution Pipeline", () => {
             exports: [
               {
                 kind: "named",
-                name: "add" as SymbolName,
                 symbol: function_symbol("add" as SymbolName, lib_path, create_location(lib_path, 1, 10)),
                 symbol_name: "add" as SymbolName,
                 location: create_location(lib_path, 1, 0),
-                exports: [],
-                is_declaration: false,
+                exports: [{ local_name: "add" as SymbolName, is_type_only: false }],
                 modifiers: [],
                 language: "typescript",
                 node_type: "export_statement",
               },
               {
                 kind: "named",
-                name: "multiply" as SymbolName,
                 symbol: function_symbol("multiply" as SymbolName, lib_path, create_location(lib_path, 5, 10)),
                 symbol_name: "multiply" as SymbolName,
                 location: create_location(lib_path, 5, 0),
-                exports: [],
-                is_declaration: false,
+                exports: [{ local_name: "multiply" as SymbolName, is_type_only: false }],
                 modifiers: [],
                 language: "typescript",
                 node_type: "export_statement",
@@ -445,22 +429,18 @@ describe("Complete Symbol Resolution Pipeline", () => {
             imports: [
               {
                 kind: "named",
-                name: "add" as SymbolName,
+                imports: [{ name: "add" as SymbolName, is_type_only: false }],
                 source: "../lib/math",
                 location: create_location(service_path, 1, 10),
-                resolved_export: undefined,
-                resolved_path: lib_path,
                 modifiers: [],
                 language: "typescript",
                 node_type: "import_statement",
               },
               {
                 kind: "named",
-                name: "multiply" as SymbolName,
+                imports: [{ name: "multiply" as SymbolName, is_type_only: false }],
                 source: "../lib/math",
                 location: create_location(service_path, 1, 25),
-                resolved_export: undefined,
-                resolved_path: lib_path,
                 modifiers: [],
                 language: "typescript",
                 node_type: "import_statement",
@@ -468,11 +448,9 @@ describe("Complete Symbol Resolution Pipeline", () => {
             ],
             exports: [{
               kind: "default",
-              name: "default" as SymbolName,
               symbol: class_symbol("Calculator" as SymbolName, service_path, create_location(service_path, 3, 10)),
               symbol_name: "Calculator" as SymbolName,
               location: create_location(service_path, 10, 0),
-              exports: [],
               is_declaration: false,
               modifiers: [],
               language: "typescript",
@@ -515,8 +493,6 @@ describe("Complete Symbol Resolution Pipeline", () => {
               name: "Calculator" as SymbolName,
               source: "./services/calculator",
               location: create_location(app_path, 1, 10),
-              resolved_export: undefined,
-              resolved_path: service_path,
               modifiers: [],
               language: "typescript",
               node_type: "import_statement",
@@ -576,11 +552,9 @@ describe("Complete Symbol Resolution Pipeline", () => {
             symbols: [],
             imports: [{
               kind: "named",
-              name: "nonExistent" as SymbolName,
+              imports: [{ name: "nonExistent" as SymbolName, is_type_only: false }],
               source: "./missing",
               location: create_location("src/broken.ts" as FilePath, 1, 10),
-              resolved_export: undefined,
-              resolved_path: null,
               modifiers: [],
               language: "typescript",
               node_type: "import_statement",
@@ -615,23 +589,19 @@ describe("Complete Symbol Resolution Pipeline", () => {
             ],
             imports: [{
               kind: "named",
-              name: "funcB" as SymbolName,
+              imports: [{ name: "funcB" as SymbolName, is_type_only: false }],
               source: "./b",
               location: create_location(a_path, 1, 10),
-              resolved_export: undefined,
-              resolved_path: b_path,
               modifiers: [],
               language: "typescript",
               node_type: "import_statement",
             }],
             exports: [{
               kind: "named",
-              name: "funcA" as SymbolName,
               symbol: function_symbol("funcA" as SymbolName, a_path, create_location(a_path, 3, 10)),
               symbol_name: "funcA" as SymbolName,
               location: create_location(a_path, 3, 0),
-              exports: [],
-              is_declaration: false,
+              exports: [{ local_name: "funcA" as SymbolName, is_type_only: false }],
               modifiers: [],
               language: "typescript",
               node_type: "export_statement",
@@ -646,23 +616,19 @@ describe("Complete Symbol Resolution Pipeline", () => {
             ],
             imports: [{
               kind: "named",
-              name: "funcA" as SymbolName,
+              imports: [{ name: "funcA" as SymbolName, is_type_only: false }],
               source: "./a",
               location: create_location(b_path, 1, 10),
-              resolved_export: undefined,
-              resolved_path: a_path,
               modifiers: [],
               language: "typescript",
               node_type: "import_statement",
             }],
             exports: [{
               kind: "named",
-              name: "funcB" as SymbolName,
               symbol: function_symbol("funcB" as SymbolName, b_path, create_location(b_path, 3, 10)),
               symbol_name: "funcB" as SymbolName,
               location: create_location(b_path, 3, 0),
-              exports: [],
-              is_declaration: false,
+              exports: [{ local_name: "funcB" as SymbolName, is_type_only: false }],
               modifiers: [],
               language: "typescript",
               node_type: "export_statement",

@@ -5,7 +5,7 @@
  * symbol resolution pipeline.
  */
 
-export { resolve_imports, resolve_file_imports, get_importing_files } from "./import_resolver";
+export { resolve_imports } from "./import_resolver";
 export {
   resolve_module_path,
   resolve_relative_path,
@@ -21,7 +21,7 @@ export type {
   LanguageImportHandler,
 } from "./import_types";
 
-import type { Language } from "@ariadnejs/types";
+import type { FilePath, Language } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../semantic_index/semantic_index";
 import type { ImportResolutionContext, LanguageImportHandler } from "./import_types";
 
@@ -41,14 +41,3 @@ export function create_import_resolution_context(
   };
 }
 
-import type { FilePath } from "@ariadnejs/types";
-
-/**
- * Create an empty import resolution context for testing
- */
-export function create_empty_context(): ImportResolutionContext {
-  return {
-    indices: new Map(),
-    language_handlers: new Map(),
-  };
-}

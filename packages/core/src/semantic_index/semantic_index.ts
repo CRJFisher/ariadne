@@ -32,7 +32,7 @@ import { NormalizedCapture } from "./capture_types";
 import { extract_type_members, type LocalTypeInfo } from "./type_members";
 import { extract_type_tracking, type LocalTypeTracking } from "./references/type_tracking";
 import { process_type_annotations, type LocalTypeAnnotation } from "./references/type_annotation_references";
-import { extract_type_flow, type LocalTypeFlow } from "./references/type_flow_references";
+import { extract_type_flow, type LocalTypeFlowData } from "./references/type_flow_references";
 
 
 /**
@@ -83,7 +83,7 @@ export interface SemanticIndex {
   readonly local_type_tracking: LocalTypeTracking;
 
   /** Local type flow (constructor calls and assignment patterns) */
-  readonly local_type_flow: LocalTypeFlow;
+  readonly local_type_flow: LocalTypeFlowData;
 }
 
 /**

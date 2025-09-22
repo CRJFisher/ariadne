@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import type { TypeId, SymbolId, FilePath, SymbolName, Location } from "@ariadnejs/types";
 import type { GlobalTypeRegistry } from "./types";
-import type { LocalTypeFlow } from "../../semantic_index/references/type_flow_references";
+import type { LocalTypeFlowData } from "../../semantic_index/references/type_flow_references";
 import { analyze_type_flow, TypeFlowGraph } from "./type_flow";
 
 describe("analyze_type_flow", () => {
@@ -41,7 +41,7 @@ describe("analyze_type_flow", () => {
   }
 
   it("should resolve constructor types", () => {
-    const local_flows = new Map<FilePath, LocalTypeFlow>();
+    const local_flows = new Map<FilePath, LocalTypeFlowData>();
     const testFilePath = "test.ts" as FilePath;
 
     local_flows.set(testFilePath, {
@@ -87,7 +87,7 @@ describe("analyze_type_flow", () => {
   });
 
   it("should track type flow through assignments", () => {
-    const local_flows = new Map<FilePath, LocalTypeFlow>();
+    const local_flows = new Map<FilePath, LocalTypeFlowData>();
     const testFilePath = "test.ts" as FilePath;
 
     local_flows.set(testFilePath, {
@@ -121,7 +121,7 @@ describe("analyze_type_flow", () => {
   });
 
   it("should handle return statements", () => {
-    const local_flows = new Map<FilePath, LocalTypeFlow>();
+    const local_flows = new Map<FilePath, LocalTypeFlowData>();
     const testFilePath = "test.ts" as FilePath;
 
     local_flows.set(testFilePath, {
@@ -157,7 +157,7 @@ describe("analyze_type_flow", () => {
   });
 
   it("should handle empty flows", () => {
-    const local_flows = new Map<FilePath, LocalTypeFlow>();
+    const local_flows = new Map<FilePath, LocalTypeFlowData>();
     const imports = new Map();
     const functions = new Map();
     const types = create_mock_type_registry();
@@ -171,7 +171,7 @@ describe("analyze_type_flow", () => {
 
   describe("cross-file resolution", () => {
     it("should resolve types through imports", () => {
-      const local_flows = new Map<FilePath, LocalTypeFlow>();
+      const local_flows = new Map<FilePath, LocalTypeFlowData>();
       const testFilePath = "test.ts" as FilePath;
       const importedFilePath = "imported.ts" as FilePath;
 
@@ -242,7 +242,7 @@ describe("analyze_type_flow", () => {
     });
 
     it("should handle function return type tracking", () => {
-      const local_flows = new Map<FilePath, LocalTypeFlow>();
+      const local_flows = new Map<FilePath, LocalTypeFlowData>();
       const testFilePath = "test.ts" as FilePath;
 
       local_flows.set(testFilePath, {
@@ -279,7 +279,7 @@ describe("analyze_type_flow", () => {
     });
 
     it("should handle multiple returns from same function", () => {
-      const local_flows = new Map<FilePath, LocalTypeFlow>();
+      const local_flows = new Map<FilePath, LocalTypeFlowData>();
       const testFilePath = "test.ts" as FilePath;
 
       local_flows.set(testFilePath, {
@@ -327,7 +327,7 @@ describe("analyze_type_flow", () => {
 
   describe("assignment flow tracking", () => {
     it("should track chained assignments", () => {
-      const local_flows = new Map<FilePath, LocalTypeFlow>();
+      const local_flows = new Map<FilePath, LocalTypeFlowData>();
       const testFilePath = "test.ts" as FilePath;
 
       local_flows.set(testFilePath, {
@@ -387,7 +387,7 @@ describe("analyze_type_flow", () => {
     });
 
     it("should handle destructured assignments", () => {
-      const local_flows = new Map<FilePath, LocalTypeFlow>();
+      const local_flows = new Map<FilePath, LocalTypeFlowData>();
       const testFilePath = "test.ts" as FilePath;
 
       local_flows.set(testFilePath, {

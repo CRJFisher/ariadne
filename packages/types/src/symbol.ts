@@ -44,6 +44,12 @@ function symbol_string(symbol: BasicSymbolInfo): SymbolId {
     symbol.location.end_column,
     symbol.name,
   ];
+
+  // Add qualifier if present
+  if (symbol.qualifier) {
+    parts.push(symbol.qualifier);
+  }
+
   return parts.join(":") as SymbolId;
 }
 

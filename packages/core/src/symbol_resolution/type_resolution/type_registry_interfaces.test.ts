@@ -4,6 +4,8 @@ import {
   create_empty_member_map,
   create_empty_variable_map,
   create_type_context,
+  create_test_registry,
+  create_test_context,
   create_narrowing_reassignment,
   create_widening_reassignment,
   create_neutral_reassignment,
@@ -609,8 +611,12 @@ describe("Type Registry Interfaces", () => {
     describe("VariableTypeInfo", () => {
       it("should represent variable with declaration source", () => {
         const typeInfo: TypeInfo = {
-          category: "identifier",
-          name: "string" as SymbolName,
+          type_name: "string" as SymbolName,
+          certainty: "declared",
+          source: {
+            kind: "annotation",
+            location: mockLocation,
+          },
         };
 
         const varInfo: VariableTypeInfo = {
@@ -629,9 +635,12 @@ describe("Type Registry Interfaces", () => {
 
       it("should represent variable with assignment source", () => {
         const typeInfo: TypeInfo = {
-          category: "literal",
-          value: "42",
-          literal_type: "number",
+          type_name: "number" as SymbolName,
+          certainty: "inferred",
+          source: {
+            kind: "literal",
+            location: mockLocation,
+          },
         };
 
         const varInfo: VariableTypeInfo = {
@@ -649,8 +658,13 @@ describe("Type Registry Interfaces", () => {
 
       it("should represent variable with inference source", () => {
         const typeInfo: TypeInfo = {
-          category: "union",
-          types: [],
+          type_name: "string | number" as SymbolName,
+          certainty: "inferred",
+          source: {
+            kind: "assignment",
+            location: mockLocation,
+          },
+          union_members: [],
         };
 
         const varInfo: VariableTypeInfo = {
@@ -669,12 +683,21 @@ describe("Type Registry Interfaces", () => {
 
   describe("Complex Registry Scenarios", () => {
     it("should create a fully populated type context", () => {
-      const context = create_type_context(mockFilePath);
+      const {
+        context,
+        symbol_to_type,
+        name_to_type,
+        defined_types,
+        instance_members,
+        variable_types,
+        reassignments,
+        composite_types,
+      } = create_test_context(mockFilePath);
 
       // Add some data to verify the structures work correctly
-      context.registry.symbol_to_type.set(mockSymbolId, mockTypeId);
-      context.registry.name_to_type.set(mockSymbolName, mockTypeId);
-      context.registry.defined_types.add(mockTypeId);
+      symbol_to_type.set(mockSymbolId, mockTypeId);
+      name_to_type.set(mockSymbolName, mockTypeId);
+      defined_types.add(mockTypeId);
 
       expect(context.registry.symbol_to_type.get(mockSymbolId)).toBe(mockTypeId);
       expect(context.registry.name_to_type.get(mockSymbolName)).toBe(mockTypeId);
@@ -694,35 +717,35 @@ describe("Type Registry Interfaces", () => {
         parameters: [],
       };
       memberMap.set(mockSymbolName, methodMember);
-      context.members.instance_members.set(mockTypeId, memberMap);
+      instance_members.set(mockTypeId, memberMap);
 
       expect(context.members.instance_members.get(mockTypeId)).toBe(memberMap);
 
       // Add variable data
-      context.variables.variable_types.set(mockLocation, mockTypeId);
+      variable_types.set(mockLocation, mockTypeId);
       const reassignment = create_narrowing_reassignment(
         mockTypeId,
         "TypeId:Narrowed" as TypeId,
         mockLocation
       );
-      context.variables.reassignments.set(mockLocation, reassignment);
+      reassignments.set(mockLocation, reassignment);
 
       expect(context.variables.variable_types.get(mockLocation)).toBe(mockTypeId);
       expect(context.variables.reassignments.get(mockLocation)).toBe(reassignment);
 
       // Add composite types
       const unionType = create_union_type([mockTypeId, "TypeId:Other" as TypeId]);
-      context.composite_types.set("TypeId:Union" as TypeId, unionType);
+      composite_types.set("TypeId:Union" as TypeId, unionType);
 
       expect(context.composite_types.get("TypeId:Union" as TypeId)).toBe(unionType);
     });
 
     it("should handle readonly properties correctly", () => {
-      const registry = create_empty_registry(mockFilePath);
+      const { registry, symbol_to_type, defined_types } = create_test_registry(mockFilePath);
 
-      // The maps and sets should be readonly but still allow operations
-      registry.symbol_to_type.set(mockSymbolId, mockTypeId);
-      registry.defined_types.add(mockTypeId);
+      // Use mutable maps to add data, then verify readonly interface can access it
+      symbol_to_type.set(mockSymbolId, mockTypeId);
+      defined_types.add(mockTypeId);
 
       expect(registry.symbol_to_type.get(mockSymbolId)).toBe(mockTypeId);
       expect(registry.defined_types.has(mockTypeId)).toBe(true);

@@ -10,9 +10,11 @@ import type {
   SymbolDefinition,
   Import,
   NamedImport,
+  Export,
+  NamespaceName,
   Language,
 } from "@ariadnejs/types";
-import { variable_symbol } from "@ariadnejs/types";
+import { variable_symbol, create_namespace_name } from "@ariadnejs/types";
 import type { NormalizedCapture } from "../capture_types";
 
 /**
@@ -65,7 +67,6 @@ export function process_imports(
         kind: "default" as const,
         source: source as FilePath,
         name: capture.text as SymbolName,
-        resolved_export: {} , // Will be resolved later
         location,
         modifiers: [],
         language: language,
@@ -104,8 +105,7 @@ export function process_imports(
       import_item = {
         kind: "namespace" as const,
         source: source as FilePath,
-        namespace_name: capture.text === "*" ? "STAR_IMPORT"  : capture.text ,
-        exports: new Map(),
+        namespace_name: create_namespace_name(capture.text === "*" ? "STAR_IMPORT" : capture.text),
         location,
         modifiers,
         language: language,
@@ -141,7 +141,6 @@ export function process_imports(
             is_type_only: capture.modifiers.is_type_only || false,
           },
         ],
-        resolved_exports: new Map(),
         location,
         modifiers,
         language: language,
@@ -176,7 +175,6 @@ export function process_imports(
             is_type_only: capture.modifiers.is_type_only || false,
           },
         ],
-        resolved_exports: new Map(),
         location,
         modifiers,
         language: language,

@@ -13,6 +13,8 @@ import type {
   ScopeId,
   LexicalScope,
   FilePath,
+  LocalMemberInfo,
+  LocalParameterInfo,
 } from "@ariadnejs/types";
 
 /**
@@ -27,29 +29,6 @@ export interface LocalTypeInfo {
   readonly implements_clause?: SymbolName[];  // Just names, not resolved
 }
 
-/**
- * Local member information
- */
-export interface LocalMemberInfo {
-  readonly name: SymbolName;
-  readonly kind: "property" | "method" | "constructor" | "field";
-  readonly location: Location;
-  readonly is_static?: boolean;
-  readonly is_optional?: boolean;
-  readonly type_annotation?: string;  // Raw annotation text
-  readonly parameters?: LocalParameterInfo[];
-}
-
-/**
- * Local parameter information
- */
-export interface LocalParameterInfo {
-  readonly name: SymbolName;
-  readonly type_annotation?: string;  // Raw annotation text
-  readonly is_optional?: boolean;
-  readonly is_rest?: boolean;
-  readonly default_value?: string;
-}
 
 /**
  * Extract type members from symbols (single-file analysis only)
@@ -146,6 +125,7 @@ function create_local_member_info(
     name: symbol.name,
     kind,
     location: symbol.location,
+    symbol_id: symbol.id,
     is_static: symbol.is_static,
     is_optional: false,  // Would need modifiers analysis
     type_annotation: symbol.return_type_hint,  // Use the return_type_hint field if available

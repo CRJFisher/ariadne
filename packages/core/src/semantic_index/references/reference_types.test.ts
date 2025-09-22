@@ -8,7 +8,7 @@ import type { ProcessedReferences } from "./reference_types";
 
 // Import individual reference types for testing
 import type { CallReference } from "./call_references/call_references";
-import type { LocalTypeFlow } from "./type_flow_references/type_flow_references";
+import type { LocalTypeFlowData } from "./type_flow_references/type_flow_references";
 import type { ReturnReference } from "./return_references/return_references";
 import type { MemberAccessReference } from "./member_access_references/member_access_references";
 import type { TypeAnnotationReference } from "./type_annotation_references/type_annotation_references";
@@ -33,7 +33,7 @@ describe("Reference Types", () => {
         call_type: "function",
       };
 
-      const typeFlow: LocalTypeFlow = {
+      const typeFlow: LocalTypeFlowData = {
         constructor_calls: [],
         assignments: [],
         returns: [],

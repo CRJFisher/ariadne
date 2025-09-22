@@ -19,6 +19,25 @@ export function resolve_module_path(
   language: Language,
   context: ImportResolutionContext
 ): FilePath | null {
+  // First try to resolve from indices directly (for testing)
+  if (import_path.startsWith("./") || import_path.startsWith("../")) {
+    const dir = path.dirname(importing_file);
+
+    // Check if any indexed file matches this import
+    const extensions = [".ts", ".tsx", ".js", ".jsx", ".py", ".rs", ""];
+    for (const ext of extensions) {
+      const candidate = path.join(dir, import_path + ext);
+      // Normalize the path (remove ./ and resolve ..)
+      const normalized = path.normalize(candidate);
+
+      // Check if this file exists in indices
+      if (context.indices.has(normalized as FilePath)) {
+        return normalized as FilePath;
+      }
+    }
+  }
+
+  // Fall back to language handler's filesystem-based resolution
   const handler = context.language_handlers.get(language);
   if (!handler) {
     return null;

@@ -8,7 +8,7 @@
 import type { TypeId, SymbolId, Location, FilePath, SymbolName } from "@ariadnejs/types";
 import { variable_symbol, function_symbol } from "@ariadnejs/types";
 import type {
-  LocalTypeFlow,
+  LocalTypeFlowData,
   LocalConstructorCall,
   LocalAssignmentFlow,
   LocalReturnFlow,
@@ -76,7 +76,7 @@ export class TypeFlowGraph {
  * Analyze type flow with resolved context
  */
 export function analyze_type_flow(
-  local_flows: Map<FilePath, LocalTypeFlow>,
+  local_flows: Map<FilePath, LocalTypeFlowData>,
   imports: Map<FilePath, Map<SymbolName, { resolved_location?: Location }>>,
   functions: Map<SymbolId, { return_type?: TypeId }>,
   types: GlobalTypeRegistry

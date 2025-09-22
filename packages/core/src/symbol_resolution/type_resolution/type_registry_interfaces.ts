@@ -415,3 +415,188 @@ export function create_tuple_type(elements: readonly TypeId[]): TupleTypeInfo {
     elements,
   };
 }
+
+// ============================================================================
+// Test Utilities - For handling ReadonlyMap/ReadonlySet in tests
+// ============================================================================
+
+/**
+ * Create a mutable Map for use in tests
+ */
+export function create_mutable_map<K, V>(): Map<K, V> {
+  return new Map<K, V>();
+}
+
+/**
+ * Create a ReadonlyMap from entries for use in tests
+ */
+export function create_readonly_map<K, V>(entries: [K, V][]): ReadonlyMap<K, V> {
+  const map = new Map<K, V>();
+  for (const [key, value] of entries) {
+    map.set(key, value);
+  }
+  return map as ReadonlyMap<K, V>;
+}
+
+/**
+ * Create a mutable Set for use in tests
+ */
+export function create_mutable_set<T>(): Set<T> {
+  return new Set<T>();
+}
+
+/**
+ * Create a ReadonlySet from items for use in tests
+ */
+export function create_readonly_set<T>(items: T[]): ReadonlySet<T> {
+  const set = new Set<T>();
+  for (const item of items) {
+    set.add(item);
+  }
+  return set as ReadonlySet<T>;
+}
+
+/**
+ * Create a test registry with mutable maps that can be modified in tests
+ */
+export function create_test_registry(file_path: FilePath): {
+  registry: FileTypeRegistry;
+  symbol_to_type: Map<SymbolId, TypeId>;
+  name_to_type: Map<SymbolName, TypeId>;
+  defined_types: Set<TypeId>;
+  symbol_types: Map<SymbolId, TypeId>;
+  location_types: Map<Location, TypeId>;
+  return_types: Map<SymbolId, TypeId>;
+} {
+  const symbol_to_type = new Map<SymbolId, TypeId>();
+  const name_to_type = new Map<SymbolName, TypeId>();
+  const defined_types = new Set<TypeId>();
+  const symbol_types = new Map<SymbolId, TypeId>();
+  const location_types = new Map<Location, TypeId>();
+  const return_types = new Map<SymbolId, TypeId>();
+
+  const registry: FileTypeRegistry = {
+    file_path,
+    symbol_to_type: symbol_to_type as ReadonlyMap<SymbolId, TypeId>,
+    name_to_type: name_to_type as ReadonlyMap<SymbolName, TypeId>,
+    defined_types: defined_types as ReadonlySet<TypeId>,
+    symbol_types: symbol_types as ReadonlyMap<SymbolId, TypeId>,
+    location_types: location_types as ReadonlyMap<Location, TypeId>,
+    return_types: return_types as ReadonlyMap<SymbolId, TypeId>,
+  };
+
+  return {
+    registry,
+    symbol_to_type,
+    name_to_type,
+    defined_types,
+    symbol_types,
+    location_types,
+    return_types,
+  };
+}
+
+/**
+ * Create a test context with mutable maps that can be modified in tests
+ */
+export function create_test_context(file_path: FilePath): {
+  context: TypeResolutionContext;
+  // Registry mutables
+  symbol_to_type: Map<SymbolId, TypeId>;
+  name_to_type: Map<SymbolName, TypeId>;
+  defined_types: Set<TypeId>;
+  symbol_types: Map<SymbolId, TypeId>;
+  location_types: Map<Location, TypeId>;
+  return_types: Map<SymbolId, TypeId>;
+  // Member map mutables
+  instance_members: Map<TypeId, ReadonlyMap<SymbolName, MemberInfo>>;
+  static_members: Map<TypeId, ReadonlyMap<SymbolName, MemberInfo>>;
+  constructors: Map<TypeId, MemberInfo>;
+  inheritance: Map<TypeId, InheritanceInfo>;
+  // Variable map mutables
+  variable_type_info: Map<Location, VariableTypeInfo>;
+  variable_types: Map<Location, TypeId>;
+  reassignments: Map<Location, TypeReassignment>;
+  scope_variables: Map<ScopeId, ReadonlyMap<SymbolName, TypeId>>;
+  // Context mutables
+  generics: Map<ScopeId, ReadonlyMap<SymbolName, TypeId>>;
+  aliases: Map<SymbolName, TypeId>;
+  composite_types: Map<TypeId, CompositeTypeInfo>;
+} {
+  // Create mutable maps
+  const symbol_to_type = new Map<SymbolId, TypeId>();
+  const name_to_type = new Map<SymbolName, TypeId>();
+  const defined_types = new Set<TypeId>();
+  const symbol_types = new Map<SymbolId, TypeId>();
+  const location_types = new Map<Location, TypeId>();
+  const return_types = new Map<SymbolId, TypeId>();
+
+  const instance_members = new Map<TypeId, ReadonlyMap<SymbolName, MemberInfo>>();
+  const static_members = new Map<TypeId, ReadonlyMap<SymbolName, MemberInfo>>();
+  const constructors = new Map<TypeId, MemberInfo>();
+  const inheritance = new Map<TypeId, InheritanceInfo>();
+
+  const variable_type_info = new Map<Location, VariableTypeInfo>();
+  const variable_types = new Map<Location, TypeId>();
+  const reassignments = new Map<Location, TypeReassignment>();
+  const scope_variables = new Map<ScopeId, ReadonlyMap<SymbolName, TypeId>>();
+
+  const generics = new Map<ScopeId, ReadonlyMap<SymbolName, TypeId>>();
+  const aliases = new Map<SymbolName, TypeId>();
+  const composite_types = new Map<TypeId, CompositeTypeInfo>();
+
+  // Create readonly interfaces
+  const registry: FileTypeRegistry = {
+    file_path,
+    symbol_to_type: symbol_to_type as ReadonlyMap<SymbolId, TypeId>,
+    name_to_type: name_to_type as ReadonlyMap<SymbolName, TypeId>,
+    defined_types: defined_types as ReadonlySet<TypeId>,
+    symbol_types: symbol_types as ReadonlyMap<SymbolId, TypeId>,
+    location_types: location_types as ReadonlyMap<Location, TypeId>,
+    return_types: return_types as ReadonlyMap<SymbolId, TypeId>,
+  };
+
+  const members: TypeMemberMap = {
+    instance_members: instance_members as ReadonlyMap<TypeId, ReadonlyMap<SymbolName, MemberInfo>>,
+    static_members: static_members as ReadonlyMap<TypeId, ReadonlyMap<SymbolName, MemberInfo>>,
+    constructors: constructors as ReadonlyMap<TypeId, MemberInfo>,
+    inheritance: inheritance as ReadonlyMap<TypeId, InheritanceInfo>,
+  };
+
+  const variables: VariableTypeMap = {
+    variable_type_info: variable_type_info as ReadonlyMap<Location, VariableTypeInfo>,
+    variable_types: variable_types as ReadonlyMap<Location, TypeId>,
+    reassignments: reassignments as ReadonlyMap<Location, TypeReassignment>,
+    scope_variables: scope_variables as ReadonlyMap<ScopeId, ReadonlyMap<SymbolName, TypeId>>,
+  };
+
+  const context: TypeResolutionContext = {
+    registry,
+    members,
+    variables,
+    generics: generics as ReadonlyMap<ScopeId, ReadonlyMap<SymbolName, TypeId>>,
+    aliases: aliases as ReadonlyMap<SymbolName, TypeId>,
+    composite_types: composite_types as ReadonlyMap<TypeId, CompositeTypeInfo>,
+  };
+
+  return {
+    context,
+    symbol_to_type,
+    name_to_type,
+    defined_types,
+    symbol_types,
+    location_types,
+    return_types,
+    instance_members,
+    static_members,
+    constructors,
+    inheritance,
+    variable_type_info,
+    variable_types,
+    reassignments,
+    scope_variables,
+    generics,
+    aliases,
+    composite_types,
+  };
+}

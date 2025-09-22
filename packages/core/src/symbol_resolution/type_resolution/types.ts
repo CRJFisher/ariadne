@@ -12,6 +12,7 @@ import type {
   FilePath,
   SymbolName,
   ScopeId,
+  LocalMemberInfo,
 } from "@ariadnejs/types";
 
 /**
@@ -25,7 +26,7 @@ export interface LocalTypeExtraction {
   readonly type_annotations: Map<FilePath, LocalTypeAnnotation[]>;
 
   // Assignment flows found in each file
-  readonly type_flows: Map<FilePath, LocalTypeFlow[]>;
+  readonly type_flows: Map<FilePath, LocalTypeFlowPattern[]>;
 }
 
 /**
@@ -56,9 +57,9 @@ export interface LocalTypeAnnotation {
 }
 
 /**
- * An assignment or type flow (unresolved)
+ * An assignment or type flow pattern (unresolved)
  */
-export interface LocalTypeFlow {
+export interface LocalTypeFlowPattern {
   readonly source_location: Location;
   readonly target_location: Location;
   readonly flow_kind: "assignment" | "return" | "parameter";
@@ -130,17 +131,9 @@ export interface TypeHierarchyGraph {
   readonly all_descendants: Map<TypeId, Set<TypeId>>;
 }
 
-/**
- * Information about a type member (local extraction)
- */
-export interface LocalMemberInfo {
-  readonly name: SymbolName;
-  readonly kind: "method" | "property" | "getter" | "setter" | "field";
-  readonly location: Location;
-  readonly is_static?: boolean;
-  readonly is_optional?: boolean;
-  readonly type_annotation?: string; // Raw type string if present
-}
+
+// Re-export LocalMemberInfo from shared types
+export type { LocalMemberInfo } from "@ariadnejs/types";
 
 /**
  * Information about a type member (after resolution)
@@ -148,7 +141,7 @@ export interface LocalMemberInfo {
 export interface ResolvedMemberInfo {
   readonly symbol_id: SymbolId;
   readonly name: SymbolName;
-  readonly kind: "method" | "property" | "getter" | "setter" | "field";
+  readonly kind: "method" | "constructor" | "property" | "getter" | "setter" | "field";
   readonly location: Location;
   readonly is_static?: boolean;
   readonly is_optional?: boolean;

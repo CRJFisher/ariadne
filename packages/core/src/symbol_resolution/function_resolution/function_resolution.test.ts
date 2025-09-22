@@ -125,8 +125,10 @@ function create_mock_index(
       assignments: [],
     },
     local_type_flow: {
-      constructors: [],
-      assigned_types: [],
+      constructor_calls: [],
+      assignments: [],
+      returns: [],
+      call_assignments: [],
     },
   };
 }

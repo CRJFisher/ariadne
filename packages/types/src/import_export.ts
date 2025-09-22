@@ -5,7 +5,7 @@
 import { FilePath } from "./common";
 import { SymbolName } from "./symbol";
 import { SymbolId } from "./symbol";
-import { SemanticNode, Resolution } from "./query";
+import { SemanticNode } from "./query";
 
 // ============================================================================
 // Branded Types for Import/Export
@@ -16,6 +16,11 @@ export type ModulePath = string & { __brand: "ModulePath" };
 
 /** Namespace name */
 export type NamespaceName = string & { __brand: "NamespaceName" };
+
+/** Create a NamespaceName from a string */
+export function create_namespace_name(name: string): NamespaceName {
+  return name as NamespaceName;
+}
 
 // ============================================================================
 // Import Types
@@ -45,7 +50,6 @@ export type Import =
 export interface NamedImport extends BaseImport {
   readonly kind: "named";
   readonly imports: readonly NamedImportItem[];
-  readonly resolved_exports: ReadonlyMap<SymbolName, Export>; // Maps each imported name to its export
 }
 
 export interface NamedImportItem {
@@ -60,7 +64,6 @@ export interface NamedImportItem {
 export interface DefaultImport extends BaseImport {
   readonly kind: "default";
   readonly name: SymbolName; // Local name for default export
-  readonly resolved_export: Export; // The actual default export from the module
 }
 
 /**
@@ -69,7 +72,6 @@ export interface DefaultImport extends BaseImport {
 export interface NamespaceImport extends BaseImport {
   readonly kind: "namespace";
   readonly namespace_name: NamespaceName;
-  readonly exports: ReadonlyMap<SymbolName, Export>; // All exports available through this namespace
 }
 
 /**

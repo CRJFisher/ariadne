@@ -283,6 +283,8 @@ describe("Data Export Module", () => {
             reference_types: new Map(),
             type_members: new Map(),
             constructors: new Map(),
+            inheritance_hierarchy: new Map(),
+            interface_implementations: new Map(),
           },
           methods: {
             method_calls: new Map(),
@@ -347,6 +349,8 @@ describe("Data Export Module", () => {
             reference_types: new Map(),
             type_members: new Map(),
             constructors: new Map(),
+            inheritance_hierarchy: new Map(),
+            interface_implementations: new Map(),
           },
           methods: {
             method_calls: new Map(),

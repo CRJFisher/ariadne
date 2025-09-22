@@ -7,7 +7,7 @@
 // Internal exports for references.ts only
 export { extract_type_flow } from "./type_flow_references";
 export type {
-  LocalTypeFlow,
+  LocalTypeFlowData,
   LocalConstructorCall,
   LocalAssignmentFlow,
   LocalReturnFlow,

@@ -13,7 +13,7 @@ import type { NormalizedCapture } from "../capture_types";
 import { SemanticEntity } from "../capture_types";
 
 import { CallReference, process_call_references } from "./call_references/call_references";
-import { extract_type_flow, type LocalTypeFlow } from "./type_flow_references/type_flow_references";
+import { extract_type_flow, type LocalTypeFlowData } from "./type_flow_references/type_flow_references";
 import { process_return_references, ReturnReference } from "./return_references/return_references";
 import { MemberAccessReference, process_member_access_references } from "./member_access_references/member_access_references";
 import { process_type_annotation_references, TypeAnnotationReference } from "./type_annotation_references/type_annotation_references";
@@ -34,7 +34,7 @@ export function process_references(
 ): ProcessedReferences {
   let calls: CallReference[] = [];
   let type_annotations: TypeAnnotationReference[] = [];
-  let type_flows: LocalTypeFlow | undefined;
+  let type_flows: LocalTypeFlowData | undefined;
   let return_refs: ReturnReference[] = [];
   let member_accesses: MemberAccessReference[] = [];
 

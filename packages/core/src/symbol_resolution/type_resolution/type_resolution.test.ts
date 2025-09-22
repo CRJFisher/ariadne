@@ -14,7 +14,7 @@ import type {
   LocalTypeExtraction,
   LocalTypeDefinition,
   LocalTypeAnnotation,
-  LocalTypeFlow,
+  LocalTypeFlowPattern,
   ResolvedTypes,
   GlobalTypeRegistry,
   ResolvedTypeDefinition,
@@ -32,6 +32,7 @@ import type {
   SymbolDefinition,
 } from "@ariadnejs/types";
 import type { ImportResolutionMap, FunctionResolutionMap } from "../types";
+import type { LocalTypeFlowData } from "../../semantic_index/references/type_flow_references";
 
 describe("Type Resolution Module", () => {
   // ============================================================================
@@ -220,7 +221,7 @@ describe("Type Resolution Module", () => {
     });
 
     it("analyze_type_flow should return ResolvedTypeFlow", () => {
-      const flows: Map<FilePath, LocalTypeFlow> = new Map();
+      const flows: Map<FilePath, LocalTypeFlowData> = new Map();
       const imports = new Map<
         FilePath,
         Map<SymbolName, { resolved_location?: Location }>
@@ -989,7 +990,7 @@ describe("Type Resolution Module", () => {
 
     describe("Type Flow Fixtures", () => {
       it("should prepare assignment flow fixture", () => {
-        const assignmentFlow: LocalTypeFlow = {
+        const assignmentFlow: LocalTypeFlowPattern = {
           source_location: {
             file_path: "test.ts" as FilePath,
             line: 5,
@@ -1013,7 +1014,7 @@ describe("Type Resolution Module", () => {
       });
 
       it("should prepare return flow fixture", () => {
-        const returnFlow: LocalTypeFlow = {
+        const returnFlow: LocalTypeFlowPattern = {
           source_location: {} as Location,
           target_location: {} as Location,
           flow_kind: "return",

@@ -70,8 +70,6 @@ function create_language_test_file(
     }],
     source: imp.source,
     location: create_location(file_path, 1, 10),
-    resolved_exports: new Map(),
-    resolved_path: imp.resolved_path || null,
     modifiers: [],
     language,
     node_type: "import_statement",

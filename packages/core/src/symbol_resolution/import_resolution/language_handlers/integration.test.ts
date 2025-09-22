@@ -325,11 +325,11 @@ describe("Language Handler Integration", () => {
       const result = resolve_imports(context);
 
       // Both imports should be resolved
-      const aImports = result.imports.get("/project/a.js" as FilePath);
-      const bImports = result.imports.get("/project/b.js" as FilePath);
+      const a_imports = result.imports.get("/project/a.js" as FilePath);
+      const b_imports = result.imports.get("/project/b.js" as FilePath);
 
-      expect(aImports?.get("funcB" as SymbolName)).toBe("b#funcB");
-      expect(bImports?.get("funcA" as SymbolName)).toBe("a#funcA");
+      expect(a_imports?.get("funcB" as SymbolName)).toBe("b#funcB");
+      expect(b_imports?.get("funcA" as SymbolName)).toBe("a#funcA");
     });
   });
 

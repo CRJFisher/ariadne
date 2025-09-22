@@ -908,10 +908,9 @@ describe("method_resolution", () => {
       (types.type_members as Map<TypeId, Map<SymbolName, SymbolId>>).set(derived_type, new Map());
 
       // Setup inheritance hierarchy
-      (types as any).inheritance_hierarchy =new Map([
-        [derived_type, [base_type]]
-      ]);
-      (types as any).interface_implementations =new Map();
+      (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).clear();
+      (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).set(derived_type, [base_type]);
+      (types.interface_implementations as Map<TypeId, readonly TypeId[]>).clear();
 
       // Import the inheritance resolver
       const { resolve_method_with_inheritance } = await import("./inheritance_resolver");
@@ -956,12 +955,11 @@ describe("method_resolution", () => {
       const type_d = defined_type_id(TypeCategory.CLASS, "D" as SymbolName, test_location);
 
       // D extends C extends B extends A
-      (types as any).inheritance_hierarchy =new Map([
-        [type_b, [type_a]],
-        [type_c, [type_b]],
-        [type_d, [type_c]]
-      ]);
-      (types as any).interface_implementations =new Map();
+      (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).clear();
+      (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).set(type_b, [type_a]);
+      (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).set(type_c, [type_b]);
+      (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).set(type_d, [type_c]);
+      (types.interface_implementations as Map<TypeId, readonly TypeId[]>).clear();
 
       const { build_inheritance_chain } = await import("./inheritance_resolver");
 
@@ -1010,10 +1008,9 @@ describe("method_resolution", () => {
       ]));
 
       // Setup interface implementations
-      (types as any).inheritance_hierarchy =new Map();
-      (types as any).interface_implementations =new Map([
-        [class_type, [interface_type]]
-      ]);
+      (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).clear();
+      (types.interface_implementations as Map<TypeId, readonly TypeId[]>).clear();
+      (types.interface_implementations as Map<TypeId, readonly TypeId[]>).set(class_type, [interface_type]);
 
       const { resolve_method_with_inheritance } = await import("./inheritance_resolver");
 
@@ -1216,10 +1213,9 @@ describe("method_resolution", () => {
       types.symbol_types.set(derived_class_sym, derived_type);
       types.constructors.set(base_type, base_constructor_sym);
 
-      types.inheritance_hierarchy = new Map([
-        [derived_type, [base_type]]
-      ]);
-      types.interface_implementations = new Map();
+      (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).clear();
+      (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).set(derived_type, [base_type]);
+      (types.interface_implementations as Map<TypeId, readonly TypeId[]>).clear();
 
       const { resolve_constructor_calls_enhanced } = await import("./constructor_resolver");
 
@@ -1277,11 +1273,10 @@ describe("method_resolution", () => {
       const class1_type = defined_type_id(TypeCategory.CLASS, "ProcessorA" as SymbolName, test_location);
       const class2_type = defined_type_id(TypeCategory.CLASS, "ProcessorB" as SymbolName, test_location);
 
-      types.interface_implementations = new Map([
-        [class1_type, [interface_type]],
-        [class2_type, [interface_type]]
-      ]);
-      types.inheritance_hierarchy = new Map();
+      (types.interface_implementations as Map<TypeId, readonly TypeId[]>).clear();
+      (types.interface_implementations as Map<TypeId, readonly TypeId[]>).set(class1_type, [interface_type]);
+      (types.interface_implementations as Map<TypeId, readonly TypeId[]>).set(class2_type, [interface_type]);
+      (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).clear();
 
       const { find_interface_implementations } = await import("./interface_resolver");
 
@@ -1307,12 +1302,10 @@ describe("method_resolution", () => {
       const derived_type = defined_type_id(TypeCategory.CLASS, "DerivedClass" as SymbolName, test_location);
 
       // Base implements interface, derived inherits from base
-      types.interface_implementations = new Map([
-        [base_type, [interface_type]]
-      ]);
-      types.inheritance_hierarchy = new Map([
-        [derived_type, [base_type]]
-      ]);
+      (types.interface_implementations as Map<TypeId, readonly TypeId[]>).clear();
+      (types.interface_implementations as Map<TypeId, readonly TypeId[]>).set(base_type, [interface_type]);
+      (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).clear();
+      (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).set(derived_type, [base_type]);
 
       const { type_implements_interface } = await import("./interface_resolver");
 
@@ -1394,10 +1387,10 @@ describe("method_resolution", () => {
       const derived1_method = method_symbol("process", "Derived1", derived1_location);
       const derived2_method = method_symbol("process", "Derived2", derived2_location);
 
-      types.inheritance_hierarchy = new Map([
-        [derived1_type, [base_type]],
-        [derived2_type, [base_type]]
-      ]);
+      (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).clear();
+      (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).set(
+        derived1_type, [base_type]);
+      (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).set(derived2_type, [base_type]);
 
       types.type_members.set(base_type, new Map([
         ["process" as SymbolName, base_method]
@@ -1541,11 +1534,11 @@ describe("method_resolution", () => {
       const type_c = defined_type_id(TypeCategory.CLASS, "C" as SymbolName, test_location);
 
       // Create circular inheritance (should be detected and handled)
-      types.inheritance_hierarchy = new Map([
-        [type_a, [type_b]],
-        [type_b, [type_c]],
-        [type_c, [type_a]]  // Circular reference
-      ]);
+      (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).clear();
+      (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).set(
+        type_a, [type_b]);
+      (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).set(type_b, [type_c]);
+      (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).set(type_c, [type_a]);  // Circular reference
 
       const { build_inheritance_chain } = await import("./inheritance_resolver");
 
@@ -1628,10 +1621,9 @@ describe("method_resolution", () => {
       const interface2_type = defined_type_id(TypeCategory.INTERFACE, "IComparable" as SymbolName, test_location);
       const class_type = defined_type_id(TypeCategory.CLASS, "DataClass" as SymbolName, test_location);
 
-      types.interface_implementations = new Map([
-        [class_type, [interface1_type, interface2_type]]
-      ]);
-      types.inheritance_hierarchy = new Map();
+      (types.interface_implementations as Map<TypeId, readonly TypeId[]>).clear();
+      (types.interface_implementations as Map<TypeId, readonly TypeId[]>).set(class_type, [interface1_type, interface2_type]);
+      (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).clear();
 
       const { get_implemented_interfaces } = await import("./interface_resolver");
 
@@ -1663,14 +1655,12 @@ describe("method_resolution", () => {
       const base_method = method_symbol("process", "BaseProcessor", test_location);
 
       // Base implements interface
-      types.interface_implementations = new Map([
-        [base_type, [interface_type]]
-      ]);
+      (types.interface_implementations as Map<TypeId, readonly TypeId[]>).clear();
+      (types.interface_implementations as Map<TypeId, readonly TypeId[]>).set(base_type, [interface_type]);
 
       // Derived extends Base
-      types.inheritance_hierarchy = new Map([
-        [derived_type, [base_type]]
-      ]);
+      (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).clear();
+      (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).set(derived_type, [base_type]);
 
       // Interface defines method
       types.type_members.set(interface_type, new Map([

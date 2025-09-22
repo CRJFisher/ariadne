@@ -117,14 +117,16 @@ export function build_file_type_registry(
       name_to_type.set(symbol.name, type_id);
     }
 
-    // Handle return types
-    if (symbol.return_type) {
-      return_types.set(symbol_id, symbol.return_type);
+    // Handle return types - use return_type_hint if available
+    if (symbol.return_type_hint) {
+      // Convert return_type_hint to TypeId (simplified for now)
+      const return_type = symbol.return_type_hint as any as TypeId;
+      return_types.set(symbol_id, return_type);
     }
 
-    // Handle variable value types
-    if (symbol.value_type) {
-      symbol_types.set(symbol_id, symbol.value_type);
+    // Handle variable value types - check if symbol has value type in additional properties
+    if ('value_type' in symbol && (symbol as any).value_type) {
+      symbol_types.set(symbol_id, (symbol as any).value_type);
     }
   }
 

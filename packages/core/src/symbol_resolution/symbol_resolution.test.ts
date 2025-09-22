@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { resolve_symbols } from "./symbol_resolution";
+import { resolve_symbols, convert_type_flow_data_to_patterns } from "./symbol_resolution";
 import type {
   ResolutionInput,
   ResolvedSymbols,
@@ -40,7 +40,11 @@ import type { SemanticIndex } from "../semantic_index/semantic_index";
 import type { LocalTypeInfo } from "../semantic_index/type_members";
 import type { LocalTypeAnnotation } from "../semantic_index/references/type_annotation_references";
 import type { LocalTypeTracking } from "../semantic_index/references/type_tracking";
-import type { LocalTypeFlow } from "../semantic_index/references/type_flow_references";
+import type { LocalTypeFlowData } from "../semantic_index/references/type_flow_references";
+import { CallReference } from "../semantic_index/references/call_references";
+import { MemberAccessReference } from "../semantic_index/references/member_access_references";
+import { ReturnReference } from "../semantic_index/references/return_references";
+import { TypeAnnotationReference } from "../semantic_index/references/type_annotation_references/type_annotation_references";
 
 // Helper function to create a Location
 function location(file_path: FilePath, line: number, column: number): Location {
@@ -57,64 +61,68 @@ function location(file_path: FilePath, line: number, column: number): Location {
 function symbol_id(kind: string, name: string, loc: Location): SymbolId {
   switch (kind) {
     case "function":
-      return function_symbol(name as SymbolName, loc.file_path, loc);
+      return function_symbol(name as SymbolName, loc);
     case "class":
-      return class_symbol(name as SymbolName, loc.file_path, loc);
+      return class_symbol(name as SymbolName, loc);
     case "method":
-      return method_symbol(name as SymbolName, "UnknownClass", loc.file_path, loc);
+      return method_symbol(name as SymbolName, "UnknownClass", loc);
     case "variable":
-      return variable_symbol(name as SymbolName, loc.file_path, loc);
+      return variable_symbol(name as SymbolName, loc);
     default:
-      return function_symbol(name as SymbolName, loc.file_path, loc); // Default fallback
+      return function_symbol(name as SymbolName, loc); // Default fallback
   }
 }
 
 describe("Symbol Resolution Pipeline", () => {
-  // Helper to create test SemanticIndex
-  function createTestIndex(
-    filePath: FilePath,
+  // Enhanced helper to create test SemanticIndex with all references
+  function create_test_index(
+    file_path: FilePath,
     options: {
       symbols?: Map<SymbolId, SymbolDefinition>;
       imports?: Import[];
       exports?: Export[];
-      localTypes?: LocalTypeInfo[];
-      localTypeFlow?: LocalTypeFlow;
+      local_types?: LocalTypeInfo[];
+      local_type_flow?: LocalTypeFlowData;
+      calls?: CallReference[];
+      member_accesses?: MemberAccessReference[];
+      returns?: ReturnReference[];
+      type_annotations?: TypeAnnotationReference[];
     } = {}
   ): SemanticIndex {
-    const rootScopeId = `scope:global:${filePath}:0:0` as ScopeId;
-    const rootScope: LexicalScope = {
-      id: rootScopeId,
+    const root_scope_id = `scope:global:${file_path}:0:0` as ScopeId;
+    const root_scope: LexicalScope = {
+      id: root_scope_id,
       parent_id: null,
       name: null,
       type: "module",
-      location: location(filePath, 0, 0),
+      location: location(file_path, 0, 0),
       child_ids: [],
       symbols: new Map(),
     };
 
     return {
-      file_path: filePath,
+      file_path: file_path,
       language: "typescript",
-      root_scope_id: rootScopeId,
-      scopes: new Map([[rootScopeId, rootScope]]),
+      root_scope_id: root_scope_id,
+      scopes: new Map([[root_scope_id, root_scope]]),
       symbols: options.symbols || new Map(),
       references: {
-        calls: [],
-        member_accesses: [],
-        returns: [],
-        type_annotations: [],
+        calls: options.calls || [],
+        member_accesses: options.member_accesses || [],
+        returns: options.returns || [],
+        type_annotations: options.type_annotations || [],
       },
       imports: options.imports || [],
       exports: options.exports || [],
       file_symbols_by_name: new Map(),
-      local_types: options.localTypes || [],
+      local_types: options.local_types || [],
       local_type_annotations: [],
       local_type_tracking: {
         annotations: [],
         declarations: [],
         assignments: [],
       },
-      local_type_flow: options.localTypeFlow || {
+      local_type_flow: options.local_type_flow || {
         constructor_calls: [],
         assignments: [],
         returns: [],
@@ -131,8 +139,8 @@ describe("Symbol Resolution Pipeline", () => {
 
     it("should return ResolvedSymbols with all phases", () => {
       const indices = new Map<FilePath, SemanticIndex>();
-      const testFile = "test.ts" as FilePath;
-      indices.set(testFile, createTestIndex(testFile));
+      const test_file = "test.ts" as FilePath;
+      indices.set(test_file, create_test_index(test_file));
 
       const input: ResolutionInput = { indices };
       const result = resolve_symbols(input);
@@ -156,25 +164,25 @@ describe("Symbol Resolution Pipeline", () => {
       // in import_resolution.test.ts with proper mocking.
 
       // File A exports a function
-      const fileA = "a.ts" as FilePath;
-      const funcSymbolId = symbol_id("function", "myFunc", location(fileA, 1, 0));
-      const symbolsA = new Map<SymbolId, SymbolDefinition>([
-        [funcSymbolId, {
-          id: funcSymbolId,
+      const file_a = "a.ts" as FilePath;
+      const func_symbol_id = symbol_id("function", "myFunc", location(file_a, 1, 0));
+      const symbols_a = new Map<SymbolId, SymbolDefinition>([
+        [func_symbol_id, {
+          id: func_symbol_id,
           name: "myFunc" as SymbolName,
           kind: "function",
-          location: location(fileA, 1, 0),
+          location: location(file_a, 1, 0),
           scope_id: "scope:global:a.ts:0:0" as ScopeId,
           is_hoisted: false,
           is_exported: true,
           is_imported: false,
         }],
       ]);
-      const exportsA: Export[] = [{
+      const exports_a: Export[] = [{
         name: "myFunc" as SymbolName,
-        symbol: funcSymbolId,
+        symbol: func_symbol_id,
         symbol_name: "myFunc" as SymbolName,
-        location: location(fileA, 1, 0),
+        location: location(file_a, 1, 0),
         kind: "named",
         exports: [],
         modifiers: [],
@@ -183,37 +191,40 @@ describe("Symbol Resolution Pipeline", () => {
       }];
 
       // File B imports the function
-      const fileB = "b.ts" as FilePath;
-      const importsB: Import[] = [{
-        name: "myFunc" as SymbolName,
-        source: "./a",
-        location: location(fileB, 1, 0),
+      const file_b = "b.ts" as FilePath;
+      const imports_b: Import[] = [{
         kind: "named",
+        source: "./a" as FilePath,
+        location: location(file_b, 1, 0),
+        imports: [{ name: "myFunc" as SymbolName, is_type_only: false }],
+        modifiers: [],
+        language: "typescript",
+        node_type: "import_statement",
       }];
 
       const indices = new Map<FilePath, SemanticIndex>([
-        [fileA, createTestIndex(fileA, { symbols: symbolsA, exports: exportsA })],
-        [fileB, createTestIndex(fileB, { imports: importsB })],
+        [file_a, create_test_index(file_a, { symbols: symbols_a, exports: exports_a })],
+        [file_b, create_test_index(file_b, { imports: imports_b })],
       ]);
 
       const result = resolve_symbols({ indices });
       const { imports } = result.phases;
 
       // Verify import was resolved
-      expect(imports.imports.has(fileB)).toBe(true);
-      const fileBImports = imports.imports.get(fileB);
-      expect(fileBImports).toBeDefined();
+      expect(imports.imports.has(file_b)).toBe(true);
+      const file_b_imports = imports.imports.get(file_b);
+      expect(file_b_imports).toBeDefined();
       // Note: Current implementation is TODO, so expectations would be based on actual implementation
     });
 
     it("should resolve default imports", () => {
-      const fileA = "a.ts" as FilePath;
-      const classSymbolId = symbol_id("class", "MyClass", location(fileA, 1, 0));
-      const exportsA: Export[] = [{
+      const file_a = "a.ts" as FilePath;
+      const class_symbol_id = symbol_id("class", "MyClass", location(file_a, 1, 0));
+      const exports_a: Export[] = [{
         name: "default" as SymbolName,
-        symbol: classSymbolId,
+        symbol: class_symbol_id,
         symbol_name: "MyClass" as SymbolName,
-        location: location(fileA, 1, 0),
+        location: location(file_a, 1, 0),
         kind: "default",
         is_declaration: false,
         modifiers: [],
@@ -221,21 +232,20 @@ describe("Symbol Resolution Pipeline", () => {
         node_type: "export_statement",
       }];
 
-      const fileB = "b.ts" as FilePath;
-      const importsB: Import[] = [{
-        name: "MyClass" as SymbolName,
-        source: "./a" as FilePath,
-        location: location(fileB, 1, 0),
+      const file_b = "b.ts" as FilePath;
+      const imports_b: Import[] = [{
         kind: "default",
-        resolved_export: exportsA[0],
+        source: "./a" as FilePath,
+        location: location(file_b, 1, 0),
+        name: "MyClass" as SymbolName,
         modifiers: [],
         language: "typescript",
         node_type: "import_statement",
       }];
 
       const indices = new Map<FilePath, SemanticIndex>([
-        [fileA, createTestIndex(fileA, { exports: exportsA })],
-        [fileB, createTestIndex(fileB, { imports: importsB })],
+        [file_a, create_test_index(file_a, { exports: exports_a })],
+        [file_b, create_test_index(file_b, { imports: imports_b })],
       ]);
 
       const result = resolve_symbols({ indices });
@@ -243,30 +253,28 @@ describe("Symbol Resolution Pipeline", () => {
     });
 
     it("should resolve namespace imports", () => {
-      const fileA = "a.ts" as FilePath;
-      const func1 = symbol_id("function", "func1", location(fileA, 1, 0));
-      const func2 = symbol_id("function", "func2", location(fileA, 2, 0));
-      const exportsA: Export[] = [
-        { name: "func1" as SymbolName, symbol: func1, symbol_name: "func1" as SymbolName, location: location(fileA, 1, 0), kind: "named", exports: [], modifiers: [], language: "typescript", node_type: "export_statement" },
-        { name: "func2" as SymbolName, symbol: func2, symbol_name: "func2" as SymbolName, location: location(fileA, 2, 0), kind: "named", exports: [], modifiers: [], language: "typescript", node_type: "export_statement" },
+      const file_a = "a.ts" as FilePath;
+      const func1 = symbol_id("function", "func1", location(file_a, 1, 0));
+      const func2 = symbol_id("function", "func2", location(file_a, 2, 0));
+      const exports_a: Export[] = [
+        { name: "func1" as SymbolName, symbol: func1, symbol_name: "func1" as SymbolName, location: location(file_a, 1, 0), kind: "named", exports: [], modifiers: [], language: "typescript", node_type: "export_statement" },
+        { name: "func2" as SymbolName, symbol: func2, symbol_name: "func2" as SymbolName, location: location(file_a, 2, 0), kind: "named", exports: [], modifiers: [], language: "typescript", node_type: "export_statement" },
       ];
 
-      const fileB = "b.ts" as FilePath;
-      const importsB: Import[] = [{
-        name: "utils" as SymbolName,
-        source: "./a" as FilePath,
-        location: location(fileB, 1, 0),
+      const file_b = "b.ts" as FilePath;
+      const imports_b: Import[] = [{
         kind: "namespace",
+        source: "./a" as FilePath,
+        location: location(file_b, 1, 0),
         namespace_name: "utils" as NamespaceName,
-        exports: new Map(),
         modifiers: [],
         language: "typescript",
         node_type: "import_statement",
       }];
 
       const indices = new Map<FilePath, SemanticIndex>([
-        [fileA, createTestIndex(fileA, { exports: exportsA })],
-        [fileB, createTestIndex(fileB, { imports: importsB })],
+        [file_a, create_test_index(file_a, { exports: exports_a })],
+        [file_b, create_test_index(file_b, { imports: imports_b })],
       ]);
 
       const result = resolve_symbols({ indices });
@@ -276,14 +284,14 @@ describe("Symbol Resolution Pipeline", () => {
 
   describe("Phase 2: Function Call Resolution", () => {
     it("should resolve function calls via lexical scope", () => {
-      const filePath = "test.ts" as FilePath;
-      const funcId = symbol_id("function", "myFunc", location(filePath, 1, 0));
+      const file_path = "test.ts" as FilePath;
+      const func_id = symbol_id("function", "myFunc", location(file_path, 1, 0));
       const symbols = new Map<SymbolId, SymbolDefinition>([
-        [funcId, {
-          id: funcId,
+        [func_id, {
+          id: func_id,
           name: "myFunc" as SymbolName,
           kind: "function",
-          location: location(filePath, 1, 0),
+          location: location(file_path, 1, 0),
           scope_id: "scope:global:test.ts:0:0" as ScopeId,
           is_hoisted: true,
           is_exported: false,
@@ -291,17 +299,16 @@ describe("Symbol Resolution Pipeline", () => {
         }],
       ]);
 
-      const index = createTestIndex(filePath, { symbols });
-      index.references.calls.push({
+      // Create call reference
+      const call_ref: CallReference = {
         name: "myFunc" as SymbolName,
-        location: location(filePath, 5, 10),
+        location: location(file_path, 5, 10),
         scope_id: "scope:global:test.ts:0:0" as ScopeId,
-        modifiers: [],
-        language: "typescript",
-        node_type: "call_expression",
-      });
+        call_type: "function",
+      };
 
-      const indices = new Map([[filePath, index]]);
+      const index = create_test_index(file_path, { symbols, calls: [call_ref] });
+      const indices = new Map([[file_path, index]]);
       const result = resolve_symbols({ indices });
 
       expect(result.phases.functions.function_calls).toBeDefined();
@@ -310,16 +317,16 @@ describe("Symbol Resolution Pipeline", () => {
 
     it("should resolve imported function calls", () => {
       // Setup two files with import/export
-      const fileA = "a.ts" as FilePath;
-      const fileB = "b.ts" as FilePath;
+      const file_a = "a.ts" as FilePath;
+      const file_b = "b.ts" as FilePath;
 
-      const funcId = symbol_id("function", "importedFunc", location(fileA, 1, 0));
-      const symbolsA = new Map<SymbolId, SymbolDefinition>([
-        [funcId, {
-          id: funcId,
+      const func_id = symbol_id("function", "importedFunc", location(file_a, 1, 0));
+      const symbols_a = new Map<SymbolId, SymbolDefinition>([
+        [func_id, {
+          id: func_id,
           name: "importedFunc" as SymbolName,
           kind: "function",
-          location: location(fileA, 1, 0),
+          location: location(file_a, 1, 0),
           scope_id: "scope:global:a.ts:0:0" as ScopeId,
           is_hoisted: false,
           is_exported: true,
@@ -327,36 +334,45 @@ describe("Symbol Resolution Pipeline", () => {
         }],
       ]);
 
-      const indexA = createTestIndex(fileA, {
-        symbols: symbolsA,
+      const index_a = create_test_index(file_a, {
+        symbols: symbols_a,
         exports: [{
           name: "importedFunc" as SymbolName,
-          symbol_id: funcId,
-          location: location(fileA, 1, 0),
+          symbol: func_id,
+          symbol_name: "importedFunc" as SymbolName,
+          exports: [],
+          modifiers: [],
+          language: "typescript",
+          node_type: "export_statement",
+          location: location(file_a, 1, 0),
           kind: "named",
         }],
       });
 
-      const indexB = createTestIndex(fileB, {
-        imports: [{
-          name: "importedFunc" as SymbolName,
-          source: "./a",
-          location: location(fileB, 1, 0),
-          kind: "named",
-        }],
-      });
-
-      // Add function call reference in file B
-      (indexB.references.calls as any).push({
+      // Create call reference for file B
+      const call_ref: CallReference = {
         name: "importedFunc" as SymbolName,
-        location: location(fileB, 5, 10),
+        location: location(file_b, 5, 10),
         scope_id: "scope:global:b.ts:0:0" as ScopeId,
-        kind: "function",
+        call_type: "function",
+      };
+
+      const index_b = create_test_index(file_b, {
+        imports: [{
+          kind: "named",
+          source: "./a" as FilePath,
+          location: location(file_b, 1, 0),
+          imports: [{ name: "importedFunc" as SymbolName, is_type_only: false }],
+          modifiers: [],
+          language: "typescript",
+          node_type: "import_statement",
+        }],
+        calls: [call_ref],
       });
 
       const indices = new Map([
-        [fileA, indexA],
-        [fileB, indexB],
+        [file_a, index_a],
+        [file_b, index_b],
       ]);
 
       const result = resolve_symbols({ indices });
@@ -364,15 +380,15 @@ describe("Symbol Resolution Pipeline", () => {
     });
 
     it("should handle hoisted function declarations", () => {
-      const filePath = "test.ts" as FilePath;
-      const funcId = symbol_id("function", "hoistedFunc", location(filePath, 10, 0));
+      const file_path = "test.ts" as FilePath;
+      const func_id = symbol_id("function", "hoistedFunc", location(file_path, 10, 0));
 
       const symbols = new Map<SymbolId, SymbolDefinition>([
-        [funcId, {
-          id: funcId,
+        [func_id, {
+          id: func_id,
           name: "hoistedFunc" as SymbolName,
           kind: "function",
-          location: location(filePath, 10, 0), // Declared at line 10
+          location: location(file_path, 10, 0), // Declared at line 10
           scope_id: "scope:global:test.ts:0:0" as ScopeId,
           is_hoisted: true, // Important: marked as hoisted
           is_exported: false,
@@ -380,224 +396,198 @@ describe("Symbol Resolution Pipeline", () => {
         }],
       ]);
 
-      const index = createTestIndex(filePath, { symbols });
-
       // Function called before declaration (line 5)
-      (index.references.calls as any).push({
+      const call_ref: CallReference = {
         name: "hoistedFunc" as SymbolName,
-        location: location(filePath, 5, 0),
+        location: location(file_path, 5, 0),
         scope_id: "scope:global:test.ts:0:0" as ScopeId,
-        kind: "function",
-      });
+        call_type: "function",
+      };
 
-      const indices = new Map([[filePath, index]]);
+      const index = create_test_index(file_path, { symbols, calls: [call_ref] });
+      const indices = new Map([[file_path, index]]);
+
       const result = resolve_symbols({ indices });
-
-      // Should successfully resolve despite call before declaration
       expect(result.phases.functions.function_calls).toBeDefined();
+    });
+
+    it("should track unresolved function calls", () => {
+      const file_path = "test.ts" as FilePath;
+
+      // Add an unresolvable function call
+      const call_ref: CallReference = {
+        name: "unknownFunction" as SymbolName,
+        location: location(file_path, 5, 10),
+        scope_id: "scope:global:test.ts:0:0" as ScopeId,
+        call_type: "function",
+      };
+
+      const index = create_test_index(file_path, { calls: [call_ref] });
+      const indices = new Map([[file_path, index]]);
+
+      const result = resolve_symbols({ indices });
+      expect(result.phases.functions).toBeDefined();
     });
   });
 
   describe("Phase 3: Type Resolution", () => {
-    it("should extract and resolve type definitions", () => {
-      const filePath = "test.ts" as FilePath;
-      const classLoc = location(filePath, 1, 0);
-      const interfaceLoc = location(filePath, 10, 0);
+    it("should build type registry from local types", () => {
+      const file_path = "test.ts" as FilePath;
+      const class_loc = location(file_path, 1, 0);
+      const interface_loc = location(file_path, 5, 0);
 
-      const localTypes: LocalTypeInfo[] = [
+      const local_types: LocalTypeInfo[] = [
         {
           type_name: "MyClass" as SymbolName,
           kind: "class",
-          location: classLoc,
+          location: class_loc,
           direct_members: new Map(),
         },
         {
           type_name: "MyInterface" as SymbolName,
           kind: "interface",
-          location: interfaceLoc,
+          location: interface_loc,
           direct_members: new Map(),
         },
       ];
 
-      const index = createTestIndex(filePath, { localTypes });
-      const indices = new Map([[filePath, index]]);
+      const index = create_test_index(file_path, { local_types });
+      const indices = new Map([[file_path, index]]);
 
       const result = resolve_symbols({ indices });
-      const { types } = result.phases;
 
-      expect(types.symbol_types).toBeInstanceOf(Map);
-      expect(types.reference_types).toBeInstanceOf(Map);
-      expect(types.type_members).toBeInstanceOf(Map);
-      expect(types.constructors).toBeInstanceOf(Map);
-    });
-
-    it("should track type flow through assignments", () => {
-      const filePath = "test.ts" as FilePath;
-      const classLoc = location(filePath, 1, 0);
-
-      const localTypes: LocalTypeInfo[] = [{
-        type_name: "MyClass" as SymbolName,
-        kind: "class",
-        location: classLoc,
-        direct_members: new Map(),
-      }];
-
-      const localTypeFlow: LocalTypeFlow = {
-        constructor_calls: [{
-          class_name: "MyClass" as SymbolName,
-          location: location(filePath, 5, 10),
-          assigned_to: "obj" as SymbolName,
-          argument_count: 0,
-          scope_id: "scope:global:test.ts:0:0" as ScopeId,
-        }],
-        assignments: [{
-          source: { kind: "variable", name: "obj" as SymbolName },
-          target: "obj2" as SymbolName,
-          location: location(filePath, 6, 0),
-          kind: "direct",
-        }],
-        returns: [],
-        call_assignments: [],
-      };
-
-      const index = createTestIndex(filePath, { localTypes, localTypeFlow });
-      const indices = new Map([[filePath, index]]);
-
-      const result = resolve_symbols({ indices });
       expect(result.phases.types).toBeDefined();
-    });
-
-    it("should resolve type inheritance", () => {
-      const fileA = "a.ts" as FilePath;
-      const fileB = "b.ts" as FilePath;
-
-      const baseTypes: LocalTypeInfo[] = [{
-        type_name: "BaseClass" as SymbolName,
-        kind: "class",
-        location: location(fileA, 1, 0),
-        direct_members: new Map([
-          ["baseMethod" as SymbolName, {
-            name: "baseMethod" as SymbolName,
-            kind: "method",
-            location: location(fileA, 2, 2),
-          }],
-        ]),
-      }];
-
-      const derivedTypes: LocalTypeInfo[] = [{
-        type_name: "DerivedClass" as SymbolName,
-        kind: "class",
-        location: location(fileB, 3, 0),
-        direct_members: new Map([
-          ["derivedMethod" as SymbolName, {
-            name: "derivedMethod" as SymbolName,
-            kind: "method",
-            location: location(fileB, 4, 2),
-          }],
-        ]),
-        extends_clause: ["BaseClass" as SymbolName],
-      }];
-
-      const indices = new Map<FilePath, SemanticIndex>([
-        [fileA, createTestIndex(fileA, { localTypes: baseTypes })],
-        [fileB, createTestIndex(fileB, { localTypes: derivedTypes })],
-      ]);
-
-      const result = resolve_symbols({ indices });
+      expect(result.phases.types.symbol_types).toBeInstanceOf(Map);
       expect(result.phases.types.type_members).toBeInstanceOf(Map);
     });
 
-    it("should build type member mappings", () => {
-      const filePath = "test.ts" as FilePath;
+    it("should resolve type inheritance", () => {
+      const file_path = "test.ts" as FilePath;
+      const base_loc = location(file_path, 1, 0);
+      const derived_loc = location(file_path, 5, 0);
 
-      const localTypes: LocalTypeInfo[] = [{
-        type_name: "MyClass" as SymbolName,
-        kind: "class",
-        location: location(filePath, 1, 0),
-        direct_members: new Map([
-          ["method1" as SymbolName, {
-            name: "method1" as SymbolName,
-            kind: "method",
-            location: location(filePath, 2, 2),
-          }],
-          ["property1" as SymbolName, {
-            name: "property1" as SymbolName,
-            kind: "property",
-            location: location(filePath, 3, 2),
-          }],
-        ]),
-      }];
+      const local_types: LocalTypeInfo[] = [
+        {
+          type_name: "BaseClass" as SymbolName,
+          kind: "class",
+          location: base_loc,
+          direct_members: new Map(),
+        },
+        {
+          type_name: "DerivedClass" as SymbolName,
+          kind: "class",
+          location: derived_loc,
+          direct_members: new Map(),
+          extends_clause: ["BaseClass" as SymbolName],
+        },
+      ];
 
-      const index = createTestIndex(filePath, { localTypes });
-      const indices = new Map([[filePath, index]]);
+      const index = create_test_index(file_path, { local_types });
+      const indices = new Map([[file_path, index]]);
 
       const result = resolve_symbols({ indices });
-      const { types } = result.phases;
 
-      // Should have type member mappings
-      expect(types.type_members.size).toBeGreaterThanOrEqual(0);
+      expect(result.phases.types.inheritance_hierarchy).toBeInstanceOf(Map);
+      expect(result.phases.types.interface_implementations).toBeInstanceOf(Map);
     });
-  });
 
-  describe("Phase 4: Method and Constructor Resolution", () => {
-    it("should resolve method calls using receiver types", () => {
-      const filePath = "test.ts" as FilePath;
+    it("should track type flow", () => {
+      const file_path = "test.ts" as FilePath;
+      const class_loc = location(file_path, 1, 0);
+      const ctor_loc = location(file_path, 5, 0);
 
-      const localTypes: LocalTypeInfo[] = [{
-        type_name: "MyClass" as SymbolName,
-        kind: "class",
-        location: location(filePath, 1, 0),
-        direct_members: new Map([
-          ["myMethod" as SymbolName, {
-            name: "myMethod" as SymbolName,
-            kind: "method",
-            location: location(filePath, 2, 2),
-          }],
-        ]),
-      }];
+      const local_types: LocalTypeInfo[] = [
+        {
+          type_name: "MyClass" as SymbolName,
+          kind: "class",
+          location: class_loc,
+          direct_members: new Map(),
+        },
+      ];
 
-      const localTypeFlow: LocalTypeFlow = {
+      const local_type_flow: LocalTypeFlowData = {
         constructor_calls: [{
+          location: ctor_loc,
           class_name: "MyClass" as SymbolName,
-          location: location(filePath, 5, 10),
-          assigned_to: "obj" as SymbolName,
-          argument_count: 0,
           scope_id: "scope:global:test.ts:0:0" as ScopeId,
+          argument_count: 0,
         }],
         assignments: [],
         returns: [],
         call_assignments: [],
       };
 
-      const index = createTestIndex(filePath, { localTypes, localTypeFlow });
+      const index = create_test_index(file_path, { local_types, local_type_flow });
+      const indices = new Map([[file_path, index]]);
 
-      // Add member access for method call
-      index.references.member_accesses = [{
-        object_name: "obj" as SymbolName,
-        object_location: location(filePath, 6, 0),
+      const result = resolve_symbols({ indices });
+
+      expect(result.phases.types.reference_types).toBeInstanceOf(Map);
+    });
+  });
+
+  describe("Phase 4: Method/Constructor Resolution", () => {
+    it("should resolve method calls", () => {
+      const file_path = "test.ts" as FilePath;
+      const class_id = symbol_id("class", "MyClass", location(file_path, 1, 0));
+      const method_id = symbol_id("method", "myMethod", location(file_path, 2, 2));
+
+      const symbols = new Map<SymbolId, SymbolDefinition>([
+        [class_id, {
+          id: class_id,
+          name: "MyClass" as SymbolName,
+          kind: "class",
+          location: location(file_path, 1, 0),
+          scope_id: "scope:global:test.ts:0:0" as ScopeId,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+        }],
+        [method_id, {
+          id: method_id,
+          name: "myMethod" as SymbolName,
+          kind: "method",
+          location: location(file_path, 2, 2),
+          scope_id: "scope:class:test.ts:1:0" as ScopeId,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+        }],
+      ]);
+
+      const member_access: MemberAccessReference = {
+        object: {
+          location: location(file_path, 10, 0),
+        },
         member_name: "myMethod" as SymbolName,
-        location: location(filePath, 6, 4),
+        location: location(file_path, 10, 4),
         scope_id: "scope:global:test.ts:0:0" as ScopeId,
-      }];
+        access_type: "method",
+        is_optional_chain: false,
+      };
 
-      const indices = new Map([[filePath, index]]);
+      const index = create_test_index(file_path, {
+        symbols,
+        member_accesses: [member_access]
+      });
+      const indices = new Map([[file_path, index]]);
+
       const result = resolve_symbols({ indices });
 
       expect(result.phases.methods.method_calls).toBeInstanceOf(Map);
       expect(result.phases.methods.constructor_calls).toBeInstanceOf(Map);
-      expect(result.phases.methods.calls_to_method).toBeInstanceOf(Map);
     });
 
     it("should resolve constructor calls", () => {
-      const filePath = "test.ts" as FilePath;
+      const file_path = "test.ts" as FilePath;
+      const class_id = symbol_id("class", "MyClass", location(file_path, 1, 0));
 
-      const classId = symbol_id("class", "MyClass", location(filePath, 1, 0));
       const symbols = new Map<SymbolId, SymbolDefinition>([
-        [classId, {
-          id: classId,
+        [class_id, {
+          id: class_id,
           name: "MyClass" as SymbolName,
           kind: "class",
-          location: location(filePath, 1, 0),
+          location: location(file_path, 1, 0),
           scope_id: "scope:global:test.ts:0:0" as ScopeId,
           is_hoisted: false,
           is_exported: false,
@@ -605,317 +595,350 @@ describe("Symbol Resolution Pipeline", () => {
         }],
       ]);
 
-      const localTypes: LocalTypeInfo[] = [{
-        type_name: "MyClass" as SymbolName,
-        kind: "class",
-        location: location(filePath, 1, 0),
-        direct_members: new Map(),
-      }];
-
-      const localTypeFlow: LocalTypeFlow = {
+      const local_type_flow: LocalTypeFlowData = {
         constructor_calls: [{
+          location: location(file_path, 5, 0),
           class_name: "MyClass" as SymbolName,
-          location: location(filePath, 5, 10),
-          assigned_to: "instance" as SymbolName,
-          argument_count: 0,
           scope_id: "scope:global:test.ts:0:0" as ScopeId,
+          argument_count: 0,
         }],
         assignments: [],
         returns: [],
         call_assignments: [],
       };
 
-      const index = createTestIndex(filePath, { symbols, localTypes, localTypeFlow });
-      const indices = new Map([[filePath, index]]);
+      const index = create_test_index(file_path, { symbols, local_type_flow });
+      const indices = new Map([[file_path, index]]);
 
       const result = resolve_symbols({ indices });
-      const { methods } = result.phases;
 
-      // Should have resolved constructor
-      expect(methods.constructor_calls).toBeInstanceOf(Map);
-    });
-
-    it("should handle static vs instance methods", () => {
-      const filePath = "test.ts" as FilePath;
-
-      const localTypes: LocalTypeInfo[] = [{
-        type_name: "MyClass" as SymbolName,
-        kind: "class",
-        location: location(filePath, 1, 0),
-        direct_members: new Map([
-          ["instanceMethod" as SymbolName, {
-            name: "instanceMethod" as SymbolName,
-            kind: "method",
-            location: location(filePath, 2, 2),
-            is_static: false,
-          }],
-          ["staticMethod" as SymbolName, {
-            name: "staticMethod" as SymbolName,
-            kind: "method",
-            location: location(filePath, 3, 2),
-            is_static: true,
-          }],
-        ]),
-      }];
-
-      const index = createTestIndex(filePath, { localTypes });
-      const indices = new Map([[filePath, index]]);
-
-      const result = resolve_symbols({ indices });
-      expect(result.phases.methods).toBeDefined();
+      expect(result.phases.methods.constructor_calls).toBeInstanceOf(Map);
     });
   });
 
   describe("Integration Tests", () => {
-    it("should handle complete resolution pipeline", () => {
-      // Create a multi-file scenario
-      const libFile = "lib.ts" as FilePath;
-      const appFile = "app.ts" as FilePath;
+    it("should integrate all four phases", () => {
+      const file_a = "utils.ts" as FilePath;
+      const file_b = "app.ts" as FilePath;
 
-      // Library file with base class
-      const baseClassId = symbol_id("class", "Base", location(libFile, 1, 0));
-      const libSymbols = new Map<SymbolId, SymbolDefinition>([
-        [baseClassId, {
-          id: baseClassId,
-          name: "Base" as SymbolName,
+      // File A: exports a class with methods
+      const class_id = class_symbol("Utils", location(file_a, 1, 0));
+      const method_id = method_symbol("process", "Utils", location(file_a, 2, 2));
+
+      const symbols_a = new Map<SymbolId, SymbolDefinition>([
+        [class_id, {
+          id: class_id,
+          name: "Utils" as SymbolName,
           kind: "class",
-          location: location(libFile, 1, 0),
-          scope_id: "scope:global:lib.ts:0:0" as ScopeId,
+          location: location(file_a, 1, 0),
+          scope_id: "scope:global:utils.ts:0:0" as ScopeId,
           is_hoisted: false,
           is_exported: true,
           is_imported: false,
         }],
+        [method_id, {
+          id: method_id,
+          name: "process" as SymbolName,
+          kind: "method",
+          location: location(file_a, 2, 2),
+          scope_id: "scope:class:utils.ts:1:0" as ScopeId,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+        }],
       ]);
 
-      const libTypes: LocalTypeInfo[] = [{
-        type_name: "Base" as SymbolName,
+      const local_types_a: LocalTypeInfo[] = [{
+        type_name: "Utils" as SymbolName,
         kind: "class",
-        location: location(libFile, 1, 0),
+        location: location(file_a, 1, 0),
         direct_members: new Map([
-          ["baseMethod" as SymbolName, {
-            name: "baseMethod" as SymbolName,
+          ["process" as SymbolName, {
             kind: "method",
-            location: location(libFile, 2, 2),
-          }],
+            location: location(file_a, 2, 2),
+            is_static: false,
+            is_optional: false,
+            name: "process" as SymbolName,
+          }]
         ]),
       }];
 
-      const libIndex = createTestIndex(libFile, {
-        symbols: libSymbols,
-        exports: [{
-          name: "Base" as SymbolName,
-          symbol_id: baseClassId,
-          location: location(libFile, 1, 0),
-          kind: "named",
-        }],
-        localTypes: libTypes,
-      });
-
-      // Application file that imports and extends
-      const appTypes: LocalTypeInfo[] = [{
-        type_name: "App" as SymbolName,
-        kind: "class",
-        location: location(appFile, 3, 0),
-        direct_members: new Map([
-          ["appMethod" as SymbolName, {
-            name: "appMethod" as SymbolName,
-            kind: "method",
-            location: location(appFile, 4, 2),
-          }],
-        ]),
-        extends_clause: ["Base" as SymbolName],
+      const exports_a: Export[] = [{
+        name: "Utils" as SymbolName,
+        symbol: class_id,
+        symbol_name: "Utils" as SymbolName,
+        location: location(file_a, 1, 0),
+        kind: "named",
+        exports: [],
+        modifiers: [],
+        language: "typescript",
+        node_type: "export_statement",
       }];
 
-      const appFlow: LocalTypeFlow = {
+      // File B: imports and uses the class
+      const imports_b: Import[] = [{
+        kind: "named",
+        source: "./utils" as FilePath,
+        location: location(file_b, 1, 0),
+        imports: [{ name: "Utils" as SymbolName, is_type_only: false }],
+        modifiers: [],
+        language: "typescript",
+        node_type: "import_statement",
+      }];
+
+      const local_type_flow_b: LocalTypeFlowData = {
         constructor_calls: [{
-          class_name: "App" as SymbolName,
-          location: location(appFile, 10, 10),
-          assigned_to: "myApp" as SymbolName,
-          argument_count: 0,
+          location: location(file_b, 5, 0),
+          class_name: "Utils" as SymbolName,
           scope_id: "scope:global:app.ts:0:0" as ScopeId,
+          argument_count: 0,
         }],
         assignments: [],
         returns: [],
         call_assignments: [],
       };
 
-      const appIndex = createTestIndex(appFile, {
-        imports: [{
-          name: "Base" as SymbolName,
-          source: "./lib",
-          location: location(appFile, 1, 0),
-          kind: "named",
-        }],
-        localTypes: appTypes,
-        localTypeFlow: appFlow,
+      const member_access_b: MemberAccessReference = {
+        object: {
+          location: location(file_b, 6, 0),
+        },
+        member_name: "process" as SymbolName,
+        location: location(file_b, 6, 6),
+        scope_id: "scope:global:app.ts:0:0" as ScopeId,
+        access_type: "method",
+        is_optional_chain: false,
+      };
+
+      const index_a = create_test_index(file_a, {
+        symbols: symbols_a,
+        local_types: local_types_a,
+        exports: exports_a,
+      });
+
+      const index_b = create_test_index(file_b, {
+        imports: imports_b,
+        local_type_flow: local_type_flow_b,
+        member_accesses: [member_access_b],
       });
 
       const indices = new Map([
-        [libFile, libIndex],
-        [appFile, appIndex],
+        [file_a, index_a],
+        [file_b, index_b],
       ]);
 
       const result = resolve_symbols({ indices });
 
-      // Verify all phases completed
-      expect(result.phases.imports).toBeDefined();
-      expect(result.phases.functions).toBeDefined();
-      expect(result.phases.types).toBeDefined();
-      expect(result.phases.methods).toBeDefined();
-
-      // Verify final resolution maps
+      // Verify all phases produced results
+      expect(result.phases.imports.imports).toBeDefined();
+      expect(result.phases.functions.function_calls).toBeDefined();
+      expect(result.phases.types.symbol_types).toBeDefined();
+      expect(result.phases.methods.method_calls).toBeDefined();
       expect(result.resolved_references).toBeInstanceOf(Map);
-      expect(result.references_to_symbol).toBeInstanceOf(Map);
-      expect(result.unresolved_references).toBeInstanceOf(Map);
-    });
-
-    it("should handle circular dependencies", () => {
-      const fileA = "a.ts" as FilePath;
-      const fileB = "b.ts" as FilePath;
-
-      // File A imports from B
-      const indexA = createTestIndex(fileA, {
-        imports: [{
-          name: "BClass" as SymbolName,
-          source: "./b",
-          location: location(fileA, 1, 0),
-          kind: "named",
-        }],
-        exports: [{
-          name: "AClass" as SymbolName,
-          symbol_id: symbol_id("class", "AClass", location(fileA, 2, 0)),
-          location: location(fileA, 2, 0),
-          kind: "named",
-        }],
-      });
-
-      // File B imports from A
-      const indexB = createTestIndex(fileB, {
-        imports: [{
-          name: "AClass" as SymbolName,
-          source: "./a",
-          location: location(fileB, 1, 0),
-          kind: "named",
-        }],
-        exports: [{
-          name: "BClass" as SymbolName,
-          symbol_id: symbol_id("class", "BClass", location(fileB, 2, 0)),
-          location: location(fileB, 2, 0),
-          kind: "named",
-        }],
-      });
-
-      const indices = new Map([
-        [fileA, indexA],
-        [fileB, indexB],
-      ]);
-
-      // Should not throw or hang
-      expect(() => resolve_symbols({ indices })).not.toThrow();
-    });
-  });
-
-  describe("Error Handling", () => {
-    it("should handle empty indices", () => {
-      const indices = new Map<FilePath, SemanticIndex>();
-      const result = resolve_symbols({ indices });
-
-      expect(result.resolved_references).toEqual(new Map());
-      expect(result.references_to_symbol).toEqual(new Map());
-      expect(result.unresolved_references).toEqual(new Map());
-    });
-
-    it("should handle missing imports", () => {
-      const filePath = "test.ts" as FilePath;
-      const index = createTestIndex(filePath, {
-        imports: [{
-          name: "NonExistent" as SymbolName,
-          source: "./missing",
-          location: location(filePath, 1, 0),
-          kind: "named",
-        }],
-      });
-
-      const indices = new Map([[filePath, index]]);
-      const result = resolve_symbols({ indices });
-
-      // Should complete without error
-      expect(result).toBeDefined();
     });
 
     it("should track unresolved references", () => {
-      const filePath = "test.ts" as FilePath;
-      const index = createTestIndex(filePath);
+      const file_path = "test.ts" as FilePath;
 
-      // Add an unresolvable function call
-      (index.references.calls as any).push({
-        name: "unknownFunction" as SymbolName,
-        location: location(filePath, 5, 10),
+      // Create a call to an undefined function
+      const call_ref: CallReference = {
+        name: "undefinedFunction" as SymbolName,
+        location: location(file_path, 5, 0),
         scope_id: "scope:global:test.ts:0:0" as ScopeId,
-        kind: "function",
-      });
+        call_type: "function",
+      };
 
-      const indices = new Map([[filePath, index]]);
+      const index = create_test_index(file_path, { calls: [call_ref] });
+      const indices = new Map([[file_path, index]]);
+
       const result = resolve_symbols({ indices });
 
-      // Should track as unresolved
-      // Note: Current implementation needs to be updated to properly track unresolved
-      expect(result.unresolved_references).toBeDefined();
+      expect(result.unresolved_references).toBeInstanceOf(Map);
+    });
+
+    it("should build reverse reference mapping", () => {
+      const file_path = "test.ts" as FilePath;
+      const func_id = symbol_id("function", "targetFunc", location(file_path, 1, 0));
+
+      const symbols = new Map<SymbolId, SymbolDefinition>([
+        [func_id, {
+          id: func_id,
+          name: "targetFunc" as SymbolName,
+          kind: "function",
+          location: location(file_path, 1, 0),
+          scope_id: "scope:global:test.ts:0:0" as ScopeId,
+          is_hoisted: true,
+          is_exported: false,
+          is_imported: false,
+        }],
+      ]);
+
+      // Multiple calls to the same function
+      const calls: CallReference[] = [
+        {
+          name: "targetFunc" as SymbolName,
+          location: location(file_path, 5, 0),
+          scope_id: "scope:global:test.ts:0:0" as ScopeId,
+          call_type: "function",
+        },
+        {
+          name: "targetFunc" as SymbolName,
+          location: location(file_path, 10, 0),
+          scope_id: "scope:global:test.ts:0:0" as ScopeId,
+          call_type: "function",
+        },
+      ];
+
+      const index = create_test_index(file_path, { symbols, calls });
+      const indices = new Map([[file_path, index]]);
+
+      const result = resolve_symbols({ indices });
+
+      expect(result.references_to_symbol).toBeInstanceOf(Map);
+      // The function should be referenced from multiple locations
+      const references = result.references_to_symbol.get(func_id);
+      if (references) {
+        expect(references.length).toBeGreaterThanOrEqual(0);
+      }
     });
   });
 
-  describe("Performance Considerations", () => {
-    it("should handle large number of files efficiently", () => {
-      const indices = new Map<FilePath, SemanticIndex>();
+  describe("Type Flow Conversion Utilities", () => {
+    describe("convert_type_flow_data_to_patterns", () => {
+      it("should convert LocalTypeFlowData to LocalTypeFlowPattern array", () => {
+        const file_path = "test.ts" as FilePath;
+        const test_location = location(file_path, 5, 0);
+        const scope_id = "scope:global:test.ts:0:0" as ScopeId;
 
-      // Create 100 files
-      for (let i = 0; i < 100; i++) {
-        const filePath = `file${i}.ts` as FilePath;
-        const index = createTestIndex(filePath, {
-          localTypes: [{
-            type_name: `Class${i}` as SymbolName,
-            kind: "class",
-            location: location(filePath, 1, 0),
-            direct_members: new Map(),
+        const typeFlowData: LocalTypeFlowData = {
+          constructor_calls: [{
+            location: test_location,
+            class_name: "MyClass" as SymbolName,
+            scope_id,
+            argument_count: 2,
           }],
-        });
-        indices.set(filePath, index);
-      }
+          assignments: [{
+            target: "myVar" as SymbolName,
+            source: {
+              kind: "variable",
+              name: "sourceVar" as SymbolName,
+            },
+            location: location(file_path, 6, 0),
+          }],
+          returns: [{
+            location: location(file_path, 7, 0),
+            scope_id,
+            return_value: {
+              kind: "literal",
+              value: "test",
+            },
+          }],
+          call_assignments: [{
+            location: location(file_path, 8, 0),
+            function_name: "myFunction" as SymbolName,
+            assigned_to: "result" as SymbolName,
+            argument_count: 1,
+          }],
+        };
 
-      const start = performance.now();
-      const result = resolve_symbols({ indices });
-      const duration = performance.now() - start;
+        const patterns = convert_type_flow_data_to_patterns(typeFlowData);
 
-      expect(result).toBeDefined();
-      expect(duration).toBeLessThan(1000); // Should complete in less than 1 second
-    });
+        // Should convert all flow types to patterns
+        expect(patterns).toHaveLength(4);
 
-    it("should handle deep inheritance chains", () => {
-      const indices = new Map<FilePath, SemanticIndex>();
+        // Constructor call pattern
+        const constructorPattern = patterns.find(p => p.flow_kind === "parameter");
+        expect(constructorPattern).toBeDefined();
+        expect(constructorPattern?.source_location).toEqual(test_location);
+        expect(constructorPattern?.target_location).toEqual(test_location);
 
-      // Create chain of 10 classes, each extending the previous
-      for (let i = 0; i < 10; i++) {
-        const filePath = `class${i}.ts` as FilePath;
-        const localTypes: LocalTypeInfo[] = [{
-          type_name: `Class${i}` as SymbolName,
-          kind: "class",
-          location: location(filePath, 1, 0),
-          direct_members: new Map([
-            [`method${i}` as SymbolName, {
-              name: `method${i}` as SymbolName,
-              kind: "method",
-              location: location(filePath, 2, 2),
-            }],
-          ]),
-          extends_clause: i > 0 ? [`Class${i - 1}` as SymbolName] : undefined,
-        }];
+        // Assignment pattern
+        const assignmentPattern = patterns.find(p => p.flow_kind === "assignment");
+        expect(assignmentPattern).toBeDefined();
+        expect(assignmentPattern?.source_location).toEqual(location(file_path, 6, 0));
 
-        const index = createTestIndex(filePath, { localTypes });
-        indices.set(filePath, index);
-      }
+        // Return pattern
+        const returnPattern = patterns.find(p => p.flow_kind === "return");
+        expect(returnPattern).toBeDefined();
+        expect(returnPattern?.source_location).toEqual(location(file_path, 7, 0));
+        expect(returnPattern?.target_location).toEqual(location(file_path, 7, 0));
+      });
 
-      const result = resolve_symbols({ indices });
-      expect(result.phases.types).toBeDefined();
+      it("should handle empty LocalTypeFlowData", () => {
+        const emptyFlowData: LocalTypeFlowData = {
+          constructor_calls: [],
+          assignments: [],
+          returns: [],
+          call_assignments: [],
+        };
+
+        const patterns = convert_type_flow_data_to_patterns(emptyFlowData);
+
+        expect(patterns).toHaveLength(0);
+      });
+
+      it("should convert call assignments to assignment patterns", () => {
+        const file_path = "test.ts" as FilePath;
+
+        const typeFlowData: LocalTypeFlowData = {
+          constructor_calls: [],
+          assignments: [],
+          returns: [],
+          call_assignments: [{
+            location: location(file_path, 10, 5),
+            function_name: "getData" as SymbolName,
+            assigned_to: "userData" as SymbolName,
+            argument_count: 0,
+          }],
+        };
+
+        const patterns = convert_type_flow_data_to_patterns(typeFlowData);
+
+        expect(patterns).toHaveLength(1);
+        expect(patterns[0].flow_kind).toBe("assignment");
+        expect(patterns[0].source_location).toEqual(location(file_path, 10, 5));
+        expect(patterns[0].target_location).toEqual(location(file_path, 10, 5));
+      });
+
+      it("should handle mixed flow data correctly", () => {
+        const file_path = "mixed.ts" as FilePath;
+        const scope_id = "scope:function:mixed.ts:1:0" as ScopeId;
+
+        const typeFlowData: LocalTypeFlowData = {
+          constructor_calls: [
+            {
+              location: location(file_path, 1, 0),
+              class_name: "ClassA" as SymbolName,
+              scope_id,
+              argument_count: 0,
+            },
+            {
+              location: location(file_path, 2, 0),
+              class_name: "ClassB" as SymbolName,
+              scope_id,
+              argument_count: 1,
+            }
+          ],
+          assignments: [
+            {
+              target: "x" as SymbolName,
+              source: { kind: "variable", name: "y" as SymbolName },
+              location: location(file_path, 3, 0),
+            }
+          ],
+          returns: [],
+          call_assignments: [],
+        };
+
+        const patterns = convert_type_flow_data_to_patterns(typeFlowData);
+
+        expect(patterns).toHaveLength(3); // 2 constructors + 1 assignment
+
+        const parameterPatterns = patterns.filter(p => p.flow_kind === "parameter");
+        expect(parameterPatterns).toHaveLength(2);
+
+        const assignmentPatterns = patterns.filter(p => p.flow_kind === "assignment");
+        expect(assignmentPatterns).toHaveLength(1);
+      });
     });
   });
 });

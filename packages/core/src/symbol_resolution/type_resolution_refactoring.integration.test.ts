@@ -29,7 +29,7 @@ import type { LocalTypeInfo } from "../semantic_index/type_members";
 import type { LocalTypeAnnotation } from "../semantic_index/references/type_annotation_references";
 import type { LocalTypeTracking } from "../semantic_index/references/type_tracking";
 import type {
-  LocalTypeFlow,
+  LocalTypeFlowData,
   LocalConstructorCall,
   LocalAssignmentFlow,
 } from "../semantic_index/references/type_flow_references";
@@ -157,7 +157,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
     };
 
     // Build local type flow
-    const localTypeFlow: LocalTypeFlow = {
+    const localTypeFlow: LocalTypeFlowData = {
       constructor_calls: options.constructorCalls || [],
       assignments: options.assignments || [],
       returns: [],

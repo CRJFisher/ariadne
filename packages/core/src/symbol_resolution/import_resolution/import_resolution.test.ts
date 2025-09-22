@@ -8,17 +8,14 @@
  * - Edge cases and complex scenarios
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import {
   resolve_imports,
-  resolve_file_imports,
-  get_importing_files,
   create_import_resolution_context,
   resolve_relative_path,
   resolve_absolute_path,
   find_file_with_extensions,
   resolve_node_modules_path,
-  create_empty_context,
 } from "./index";
 import type {
   ImportResolutionContext,
@@ -32,6 +29,7 @@ import type {
   Export,
   SymbolDefinition,
   Language,
+  NamespaceName,
 } from "@ariadnejs/types";
 import { SemanticIndex } from "../../semantic_index/semantic_index";
 import * as path from "path";
@@ -72,19 +70,21 @@ class MockLanguageHandler implements LanguageImportHandler {
     if (import_stmt.kind === "namespace" && mappings.size > 0) {
       const result = new Map<SymbolName, SymbolId>();
       const namespace_symbol = mappings.values().next().value;
-      if (namespace_symbol && "name" in import_stmt) {
-        result.set(import_stmt.name, namespace_symbol);
+      if (namespace_symbol && "namespace_name" in import_stmt) {
+        // Convert NamespaceName to SymbolName via unknown
+        result.set(import_stmt.namespace_name as unknown as SymbolName, namespace_symbol);
       }
       return result;
     }
 
     // For named imports, return the mappings directly
-    if (import_stmt.kind === "named" && "names" in import_stmt) {
+    if (import_stmt.kind === "named" && "imports" in import_stmt) {
       const result = new Map<SymbolName, SymbolId>();
-      for (const import_name of import_stmt.names) {
-        const symbol_id = mappings.get(import_name.imported_name);
+      for (const import_item of import_stmt.imports) {
+        const symbol_id = mappings.get(import_item.name);
         if (symbol_id) {
-          result.set(import_name.local_name, symbol_id);
+          const local_name = import_item.alias || import_item.name;
+          result.set(local_name, symbol_id);
         }
       }
       return result;
@@ -123,7 +123,8 @@ function create_test_index(
     local_type_annotations: [],
     local_type_tracking: {
       declarations: [],
-      reassignments: [],
+      assignments: [],
+      annotations: [],
     },
     local_type_flow: {
       constructor_calls: [],
@@ -177,9 +178,9 @@ describe("Import Resolution", () => {
           {
             kind: "named" as const,
             source: "./utils" as FilePath,
-            names: [
-              { imported_name: "processData" as SymbolName, local_name: "processData" as SymbolName },
-              { imported_name: "formatDate" as SymbolName, local_name: "formatDate" as SymbolName },
+            imports: [
+              { name: "processData" as SymbolName, is_type_only: false },
+              { name: "formatDate" as SymbolName, is_type_only: false },
             ],
             location: { file_path: "/src/main.ts" as FilePath, line: 1, column: 0, end_line: 1, end_column: 0 },
             modifiers: [],
@@ -190,7 +191,6 @@ describe("Import Resolution", () => {
             kind: "default" as const,
             source: "./components" as FilePath,
             name: "Button" as SymbolName,
-            resolved_export: {} as any,
             location: { file_path: "/src/main.ts" as FilePath, line: 2, column: 0, end_line: 2, end_column: 0 },
             modifiers: [],
             language: "typescript" as Language,
@@ -211,9 +211,11 @@ describe("Import Resolution", () => {
         [
           {
             kind: "named" as const,
-            names: [
-              { local_name: "processData" as SymbolName, exported_name: "processData" as SymbolName },
-              { local_name: "formatDate" as SymbolName, exported_name: "formatDate" as SymbolName },
+            symbol: "processData_symbol" as SymbolId,
+            symbol_name: "processData" as SymbolName,
+            exports: [
+              { local_name: "processData" as SymbolName, is_type_only: false },
+              { local_name: "formatDate" as SymbolName, is_type_only: false },
             ],
             location: { file_path: "/src/utils.ts" as FilePath, line: 10, column: 0, end_line: 10, end_column: 0 },
             modifiers: [],
@@ -237,11 +239,13 @@ describe("Import Resolution", () => {
         [
           {
             kind: "default" as const,
-            symbol_id: "components:Button" as SymbolId,
+            symbol: "components:Button" as SymbolId,
             location: { file_path: "/src/components.ts" as FilePath, line: 5, column: 0, end_line: 5, end_column: 0 },
             modifiers: [],
             language: "typescript" as Language,
             node_type: "export_statement",
+            is_declaration: false,
+            symbol_name: "Button" as SymbolName,
           },
         ],
         new Map([
@@ -282,7 +286,7 @@ describe("Import Resolution", () => {
       (index.imports as any).push({
         kind: "named",
         source: "./missing" as FilePath,
-        names: [{ imported_name: "missing" as SymbolName, local_name: "missing" as SymbolName }],
+        imports: [{ name: "missing" as SymbolName, is_type_only: false }],
         location: { file_path: "/src/main.ts" as FilePath, line: 3, column: 0, end_line: 3, end_column: 0 },
         modifiers: [],
         language: "typescript" as Language,
@@ -358,119 +362,6 @@ describe("Import Resolution", () => {
     });
   });
 
-  describe("Import File Analysis", () => {
-    it("should resolve imports for a specific file", () => {
-      // Set up context similar to above
-      const path_mappings = new Map<string, FilePath>([["./utils", "/src/utils.ts" as FilePath]]);
-      const symbol_mappings = new Map<string, Map<SymbolName, SymbolId>>([
-        [
-          "./utils:named",
-          new Map([["getData" as SymbolName, "utils:getData" as SymbolId]]),
-        ],
-      ]);
-
-      const mock_handler = new MockLanguageHandler(path_mappings, symbol_mappings);
-
-      const indices = new Map<FilePath, SemanticIndex>();
-      const main_index = create_test_index(
-        "/src/main.ts" as FilePath,
-        [
-          {
-            kind: "named" as const,
-            source: "./utils" as FilePath,
-            names: [{ imported_name: "getData" as SymbolName, local_name: "getData" as SymbolName }],
-            location: { file_path: "/src/main.ts" as FilePath, line: 1, column: 0, end_line: 1, end_column: 0 },
-            modifiers: [],
-            language: "typescript" as Language,
-            node_type: "import_statement",
-          },
-        ],
-        [],
-        new Map(),
-        "typescript" as Language
-      );
-
-      indices.set("/src/main.ts" as FilePath, main_index);
-      indices.set("/src/utils.ts" as FilePath, create_test_index(
-        "/src/utils.ts" as FilePath,
-        [],
-        [],
-        new Map(),
-        "typescript" as Language
-      ));
-
-      const context = create_import_resolution_context(
-        indices,
-        new Map([["typescript" as Language, mock_handler]])
-      );
-
-      const result = resolve_file_imports("/src/main.ts" as FilePath, context);
-      expect(result.get("getData" as SymbolName)).toBe("utils:getData");
-    });
-
-    it("should find files importing from a source", () => {
-      // Set up mock handler that resolves imports
-      const mock_handler: LanguageImportHandler = {
-        resolve_module_path: (import_path, _importing_file) => {
-          if (import_path === "./utils") return "/src/utils.ts" as FilePath;
-          if (import_path === "../utils") return "/src/utils.ts" as FilePath;
-          return null;
-        },
-        match_import_to_export: () => new Map(),
-      };
-
-      const indices = new Map<FilePath, SemanticIndex>();
-
-      // File 1 imports from utils
-      indices.set("/src/main.ts" as FilePath, create_test_index(
-        "/src/main.ts" as FilePath,
-        [
-          {
-            kind: "named" as const,
-            source: "./utils" as FilePath,
-            names: [],
-            location: { file_path: "/src/main.ts" as FilePath, line: 1, column: 0, end_line: 1, end_column: 0 },
-            modifiers: [],
-            language: "typescript" as Language,
-            node_type: "import_statement",
-          },
-        ],
-        [],
-        new Map(),
-        "typescript" as Language
-      ));
-
-      // File 2 imports from utils
-      indices.set("/src/other.ts" as FilePath, create_test_index(
-        "/src/other.ts" as FilePath,
-        [
-          {
-            kind: "default" as const,
-            source: "../utils" as FilePath,
-            name: "utils" as SymbolName,
-            resolved_export: {} as any,
-            location: { file_path: "/src/main.ts" as FilePath, line: 1, column: 0, end_line: 1, end_column: 0 },
-            modifiers: [],
-            language: "typescript" as Language,
-            node_type: "import_statement",
-          },
-        ],
-        [],
-        new Map(),
-        "typescript" as Language
-      ));
-
-      const context = create_import_resolution_context(
-        indices,
-        new Map([["typescript" as Language, mock_handler]])
-      );
-
-      const importing_files = get_importing_files("/src/utils.ts" as FilePath, context);
-      expect(importing_files.has("/src/main.ts" as FilePath)).toBe(true);
-      expect(importing_files.has("/src/other.ts" as FilePath)).toBe(true);
-    });
-  });
-
   describe("Context Creation", () => {
     it("should create an import resolution context with indices and handlers", () => {
       const indices = new Map<FilePath, SemanticIndex>();
@@ -482,12 +373,6 @@ describe("Import Resolution", () => {
       expect(context.language_handlers).toBe(handlers);
     });
 
-    it("should create an empty context", () => {
-      const context = create_empty_context();
-
-      expect(context.indices.size).toBe(0);
-      expect(context.language_handlers.size).toBe(0);
-    });
   });
 
   describe("Namespace Import Resolution", () => {
@@ -506,38 +391,34 @@ describe("Import Resolution", () => {
       const mock_handler = new MockLanguageHandler(path_mappings, symbol_mappings);
 
       const indices = new Map<FilePath, SemanticIndex>();
-      const main_index = {
-        imports: [
+      const main_index = create_test_index(
+        "/src/main.ts" as FilePath,
+        [
           {
             kind: "namespace" as const,
             source: "lodash" as FilePath,
-            name: "_" as SymbolName,
-            location: { line: 1, column: 0, offset: 0 },
+            namespace_name: "_" as NamespaceName,
+            location: { line: 1, column: 0, file_path: "/src/main.ts" as FilePath, end_line: 1, end_column: 0 },
             modifiers: [],
             language: "typescript" as Language,
             node_type: "import_statement",
           },
         ],
-        exports: [],
-        symbols: new Map(),
-        references: new Map(),
-        scope_tree: {} as any,
-        language: "typescript" as Language,
-        file_path: "/src/main.ts" as FilePath,
-      } as SemanticIndex;
+        [],
+        new Map(),
+        "typescript" as Language
+      );
 
       indices.set("/src/main.ts" as FilePath, main_index);
 
       // Create a minimal SemanticIndex for lodash
-      const lodash_index = {
-        imports: [],
-        exports: [],
-        symbols: new Map(),
-        references: new Map(),
-        scope_tree: {} as any,
-        language: "javascript" as Language,
-        file_path: "/node_modules/lodash/index.js" as FilePath,
-      } as SemanticIndex;
+      const lodash_index = create_test_index(
+        "/node_modules/lodash/index.js" as FilePath,
+        [],
+        [],
+        new Map(),
+        "javascript" as Language
+      );
 
       indices.set("/node_modules/lodash/index.js" as FilePath, lodash_index);
 
@@ -561,8 +442,8 @@ describe("Import Resolution", () => {
           {
             kind: "named" as const,
             source: "./utils" as FilePath,
-            names: [{ imported_name: "test" as SymbolName, local_name: "test" as SymbolName }],
-            location: { line: 1, column: 0, offset: 0 },
+            imports: [{ name: "test" as SymbolName, is_type_only: false }],
+            location: { line: 1, column: 0, end_line: 1, end_column: 0, file_path: "/src/main.ts" as FilePath },
             modifiers: [],
             language: "typescript" as Language,
             node_type: "import_statement",
@@ -570,8 +451,28 @@ describe("Import Resolution", () => {
         ],
         exports: [],
         symbols: new Map(),
-        references: new Map(),
-        scope_tree: {} as any,
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
+        root_scope_id: "root" as any,
+        scopes: new Map(),
+        file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: {
+          declarations: [],
+          assignments: [],
+          annotations: [],
+        },
+        local_type_flow: {
+          constructor_calls: [],
+          assignments: [],
+          returns: [],
+          call_assignments: [],
+},
         language: "typescript" as Language,
         file_path: "/src/main.ts" as FilePath,
       } as SemanticIndex;
@@ -597,8 +498,8 @@ describe("Import Resolution", () => {
           {
             kind: "named" as const,
             source: "./utils" as FilePath,
-            names: [{ imported_name: "nonexistent" as SymbolName, local_name: "nonexistent" as SymbolName }],
-            location: { line: 1, column: 0, offset: 0 },
+            imports: [{ name: "nonexistent" as SymbolName, is_type_only: false }],
+            location: { line: 1, column: 0, end_line: 1, end_column: 0, file_path: "/src/main.ts" as FilePath },
             modifiers: [],
             language: "typescript" as Language,
             node_type: "import_statement",
@@ -606,8 +507,28 @@ describe("Import Resolution", () => {
         ],
         exports: [],
         symbols: new Map(),
-        references: new Map(),
-        scope_tree: {} as any,
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
+        root_scope_id: "root" as any,
+        scopes: new Map(),
+        file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: {
+          declarations: [],
+          assignments: [],
+          annotations: [],
+        },
+        local_type_flow: {
+          constructor_calls: [],
+          assignments: [],
+          returns: [],
+          call_assignments: [],
+},
         language: "typescript" as Language,
         file_path: "/src/main.ts" as FilePath,
       } as SemanticIndex;
@@ -617,8 +538,28 @@ describe("Import Resolution", () => {
         imports: [],
         exports: [],
         symbols: new Map(),
-        references: new Map(),
-        scope_tree: {} as any,
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
+        root_scope_id: "root" as any,
+        scopes: new Map(),
+        file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: {
+          declarations: [],
+          assignments: [],
+          annotations: [],
+        },
+        local_type_flow: {
+          constructor_calls: [],
+          assignments: [],
+          returns: [],
+          call_assignments: [],
+},
         language: "typescript" as Language,
         file_path: "/src/utils.ts" as FilePath,
       } as SemanticIndex);
@@ -654,8 +595,8 @@ describe("Import Resolution", () => {
           {
             kind: "named" as const,
             source: "./fileB" as FilePath,
-            names: [{ imported_name: "fromB" as SymbolName, local_name: "fromB" as SymbolName }],
-            location: { line: 1, column: 0, offset: 0 },
+            imports: [{ name: "fromB" as SymbolName, is_type_only: false }],
+            location: { line: 1, column: 0, end_line: 1, end_column: 0, file_path: "/src/fileA.ts" as FilePath },
             modifiers: [],
             language: "typescript" as Language,
             node_type: "import_statement",
@@ -663,8 +604,28 @@ describe("Import Resolution", () => {
         ],
         exports: [],
         symbols: new Map(),
-        references: new Map(),
-        scope_tree: {} as any,
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
+        root_scope_id: "root" as any,
+        scopes: new Map(),
+        file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: {
+          declarations: [],
+          assignments: [],
+          annotations: [],
+        },
+        local_type_flow: {
+          constructor_calls: [],
+          assignments: [],
+          returns: [],
+          call_assignments: [],
+},
         language: "typescript" as Language,
         file_path: "/src/fileA.ts" as FilePath,
       } as SemanticIndex);
@@ -675,8 +636,8 @@ describe("Import Resolution", () => {
           {
             kind: "named" as const,
             source: "./fileA" as FilePath,
-            names: [{ imported_name: "fromA" as SymbolName, local_name: "fromA" as SymbolName }],
-            location: { line: 1, column: 0, offset: 0 },
+            imports: [{ name: "fromA" as SymbolName, is_type_only: false }],
+            location: { line: 1, column: 0, end_line: 1, end_column: 0, file_path: "/src/fileB.ts" as FilePath },
             modifiers: [],
             language: "typescript" as Language,
             node_type: "import_statement",
@@ -684,8 +645,28 @@ describe("Import Resolution", () => {
         ],
         exports: [],
         symbols: new Map(),
-        references: new Map(),
-        scope_tree: {} as any,
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
+        root_scope_id: "root" as any,
+        scopes: new Map(),
+        file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: {
+          declarations: [],
+          assignments: [],
+          annotations: [],
+        },
+        local_type_flow: {
+          constructor_calls: [],
+          assignments: [],
+          returns: [],
+          call_assignments: [],
+},
         language: "typescript" as Language,
         file_path: "/src/fileB.ts" as FilePath,
       } as SemanticIndex);
@@ -723,12 +704,12 @@ describe("Import Resolution", () => {
           {
             kind: "named" as const,
             source: "./utils" as FilePath,
-            names: [
-              { imported_name: "func1" as SymbolName, local_name: "func1" as SymbolName },
-              { imported_name: "func2" as SymbolName, local_name: "func2" as SymbolName },
-              { imported_name: "func3" as SymbolName, local_name: "func3" as SymbolName },
+            imports: [
+              { name: "func1" as SymbolName, is_type_only: false },
+              { name: "func2" as SymbolName, is_type_only: false },
+              { name: "func3" as SymbolName, is_type_only: false },
             ],
-            location: { line: 1, column: 0, offset: 0 },
+            location: { line: 1, column: 0, end_line: 1, end_column: 0, file_path: "/src/main.ts" as FilePath },
             modifiers: [],
             language: "typescript" as Language,
             node_type: "import_statement",
@@ -736,8 +717,28 @@ describe("Import Resolution", () => {
         ],
         exports: [],
         symbols: new Map(),
-        references: new Map(),
-        scope_tree: {} as any,
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
+        root_scope_id: "root" as any,
+        scopes: new Map(),
+        file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: {
+          declarations: [],
+          assignments: [],
+          annotations: [],
+        },
+        local_type_flow: {
+          constructor_calls: [],
+          assignments: [],
+          returns: [],
+          call_assignments: [],
+},
         language: "typescript" as Language,
         file_path: "/src/main.ts" as FilePath,
       } as SemanticIndex;
@@ -747,8 +748,28 @@ describe("Import Resolution", () => {
         imports: [],
         exports: [],
         symbols: new Map(),
-        references: new Map(),
-        scope_tree: {} as any,
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
+        root_scope_id: "root" as any,
+        scopes: new Map(),
+        file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: {
+          declarations: [],
+          assignments: [],
+          annotations: [],
+        },
+        local_type_flow: {
+          constructor_calls: [],
+          assignments: [],
+          returns: [],
+          call_assignments: [],
+},
         language: "typescript" as Language,
         file_path: "/src/utils.ts" as FilePath,
       } as SemanticIndex);
@@ -784,8 +805,8 @@ describe("Import Resolution", () => {
           {
             kind: "named" as const,
             source: "./utils" as FilePath,
-            names: [{ imported_name: "originalName" as SymbolName, local_name: "aliasedName" as SymbolName }],
-            location: { line: 1, column: 0, offset: 0 },
+            imports: [{ name: "originalName" as SymbolName, alias: "aliasedName" as SymbolName, is_type_only: false }],
+            location: { line: 1, column: 0, end_line: 1, end_column: 0, file_path: "/src/main.ts" as FilePath },
             modifiers: [],
             language: "typescript" as Language,
             node_type: "import_statement",
@@ -793,8 +814,28 @@ describe("Import Resolution", () => {
         ],
         exports: [],
         symbols: new Map(),
-        references: new Map(),
-        scope_tree: {} as any,
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
+        root_scope_id: "root" as any,
+        scopes: new Map(),
+        file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: {
+          declarations: [],
+          assignments: [],
+          annotations: [],
+        },
+        local_type_flow: {
+          constructor_calls: [],
+          assignments: [],
+          returns: [],
+          call_assignments: [],
+},
         language: "typescript" as Language,
         file_path: "/src/main.ts" as FilePath,
       } as SemanticIndex;
@@ -804,8 +845,28 @@ describe("Import Resolution", () => {
         imports: [],
         exports: [],
         symbols: new Map(),
-        references: new Map(),
-        scope_tree: {} as any,
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
+        root_scope_id: "root" as any,
+        scopes: new Map(),
+        file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: {
+          declarations: [],
+          assignments: [],
+          annotations: [],
+        },
+        local_type_flow: {
+          constructor_calls: [],
+          assignments: [],
+          returns: [],
+          call_assignments: [],
+},
         language: "typescript" as Language,
         file_path: "/src/utils.ts" as FilePath,
       } as SemanticIndex);
@@ -825,13 +886,6 @@ describe("Import Resolution", () => {
 
   describe("Node Modules Resolution", () => {
     it("should handle node_modules path resolution", () => {
-      // Mock fs module for this test
-      const mock_fs = {
-        existsSync: vi.fn(),
-        readFileSync: vi.fn(),
-        statSync: vi.fn(),
-      };
-
       // This test would need actual mocking of fs module
       // For now, just verify the function exists and returns expected type
       const result = resolve_node_modules_path("lodash", "/src/main.ts" as FilePath);

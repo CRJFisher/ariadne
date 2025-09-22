@@ -27,6 +27,8 @@ import type {
   TypeResolutionMap,
   MethodResolutionMap,
 } from "./types";
+import type { LocalTypeFlowPattern } from "./type_resolution/types";
+import type { LocalTypeFlowData } from "../semantic_index/references/type_flow_references/type_flow_references";
 import { defined_type_id, TypeCategory } from "@ariadnejs/types";
 import { SemanticIndex } from "../semantic_index/semantic_index";
 import {
@@ -40,7 +42,7 @@ import type {
   LocalTypeDefinition,
   LocalTypeExtraction,
   LocalTypeAnnotation as TypeResolutionAnnotation,
-  LocalTypeFlow as TypeResolutionFlow,
+  LocalTypeFlowPattern as TypeResolutionFlow,
   ResolvedMemberInfo,
 } from "./type_resolution/types";
 import type { LocalTypeTracking } from "../semantic_index/references/type_tracking";
@@ -539,4 +541,55 @@ function combine_results(
       methods,
     },
   };
+}
+
+/**
+ * Convert LocalTypeFlowData from semantic_index to LocalTypeFlowPattern array for type_resolution
+ */
+export function convert_type_flow_data_to_patterns(
+  flow_data: LocalTypeFlowData
+): LocalTypeFlowPattern[] {
+  const patterns: LocalTypeFlowPattern[] = [];
+
+  // Convert constructor calls
+  for (const ctor_call of flow_data.constructor_calls) {
+    patterns.push({
+      source_location: ctor_call.location,
+      target_location: ctor_call.location, // Constructor location is both source and target
+      flow_kind: "parameter",
+      scope_id: ctor_call.scope_id,
+    });
+  }
+
+  // Convert assignments
+  for (const assignment of flow_data.assignments) {
+    patterns.push({
+      source_location: assignment.location, // Assignment expression location
+      target_location: assignment.location, // Target variable location (simplified)
+      flow_kind: "assignment",
+      scope_id: "root" as any, // TODO: Proper scope ID mapping needed
+    });
+  }
+
+  // Convert returns
+  for (const return_stmt of flow_data.returns) {
+    patterns.push({
+      source_location: return_stmt.location, // Return expression location
+      target_location: return_stmt.location, // Return location (simplified)
+      flow_kind: "return",
+      scope_id: return_stmt.scope_id,
+    });
+  }
+
+  // Convert call assignments - these become both parameter flows and assignment flows
+  for (const call_assignment of flow_data.call_assignments) {
+    patterns.push({
+      source_location: call_assignment.location, // Call location
+      target_location: call_assignment.location, // Assignment target location (simplified)
+      flow_kind: "assignment",
+      scope_id: "root" as any, // TODO: Proper scope ID mapping needed
+    });
+  }
+
+  return patterns;
 }

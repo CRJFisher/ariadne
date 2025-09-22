@@ -17,9 +17,9 @@ import type { NormalizedCapture } from "../../capture_types";
 import { SemanticCategory } from "../../capture_types";
 
 /**
- * Local type flow tracking without resolution
+ * Local type flow data tracking without resolution
  */
-export interface LocalTypeFlow {
+export interface LocalTypeFlowData {
   /** Constructor calls found in code */
   readonly constructor_calls: LocalConstructorCall[];
 
@@ -113,7 +113,7 @@ export function extract_type_flow(
   captures: NormalizedCapture[],
   scopes: Map<ScopeId, LexicalScope>,
   file_path: FilePath
-): LocalTypeFlow {
+): LocalTypeFlowData {
   const constructor_calls: LocalConstructorCall[] = [];
   const assignments: LocalAssignmentFlow[] = [];
   const returns: LocalReturnFlow[] = [];

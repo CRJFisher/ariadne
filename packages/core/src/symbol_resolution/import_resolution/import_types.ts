@@ -55,8 +55,10 @@ export interface ImportResolutionContext {
  *
  * Each language provides an implementation that handles its specific
  * import semantics and module resolution rules.
+ * 
+ * // TODO: replace this with a language-config object + if statements that route language-specific logic to the correct function
  */
-export interface LanguageImportHandler {
+export interface LanguageImportHandler { 
   /**
    * Resolve an import path to an actual file path
    */
