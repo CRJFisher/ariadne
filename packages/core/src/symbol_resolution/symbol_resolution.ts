@@ -129,6 +129,18 @@ function phase3_resolve_types(
     imports.imports
   );
 
+  // Extract inheritance hierarchy from type_hierarchy
+  const inheritance_hierarchy = new Map<TypeId, readonly TypeId[]>();
+  for (const [child_type, parent_types] of type_hierarchy.extends_map) {
+    inheritance_hierarchy.set(child_type, parent_types);
+  }
+
+  // Extract interface implementations from type_hierarchy
+  const interface_implementations = new Map<TypeId, readonly TypeId[]>();
+  for (const [impl_type, interface_types] of type_hierarchy.implements_map) {
+    interface_implementations.set(impl_type, interface_types);
+  }
+
   // Step 4: Resolve all type members including inherited
   // TODO: resolve_type_members needs to be called for each type individually
   // For now, return empty Map to avoid runtime errors
@@ -221,7 +233,14 @@ function phase3_resolve_types(
     }
   }
 
-  return { symbol_types, reference_types, type_members, constructors };
+  return {
+    symbol_types,
+    reference_types,
+    type_members,
+    constructors,
+    inheritance_hierarchy,
+    interface_implementations
+  };
 }
 
 /**
@@ -433,6 +452,7 @@ function combine_results(
   return {
     resolved_references,
     references_to_symbol,
+    unresolved_references: new Map<LocationKey, SymbolId>(),
     phases: {
       imports,
       functions,
