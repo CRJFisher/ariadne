@@ -52,8 +52,8 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
    * Helper to create a realistic SemanticIndex that mimics
    * what the actual semantic_index module produces.
    */
-  function createSemanticIndex(
-    filePath: FilePath,
+  function create_semantic_index(
+    file_path: FilePath,
     options: {
       classes?: Array<{
         name: SymbolName;
@@ -67,39 +67,39 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
       }>;
       functions?: Array<{
         name: SymbolName;
-        returnType?: string;
+        return_type?: string;
         parameters?: Array<{ name: SymbolName; type?: string }>;
       }>;
       variables?: Array<{
         name: SymbolName;
-        typeAnnotation?: string;
-        initialValue?: string;
+        type_annotation?: string;
+        initial_value?: string;
       }>;
-      constructorCalls?: LocalConstructorCall[];
+      constructor_calls?: LocalConstructorCall[];
       assignments?: LocalAssignmentFlow[];
-      memberAccesses?: Array<any>;
+      member_accesses?: Array<any>;
     } = {}
   ): SemanticIndex {
-    const rootScopeId = `scope:module:${filePath}:0:0` as ScopeId;
-    const rootScope: LexicalScope = {
-      id: rootScopeId,
+    const root_scope_id = `scope:module:${file_path}:0:0` as ScopeId;
+    const root_scope: LexicalScope = {
+      id: root_scope_id,
       parent_id: null,
       name: null,
       type: "module",
-      location: location(filePath, 0, 0),
+      location: location(file_path, 0, 0),
       child_ids: [],
       symbols: new Map(),
     };
 
     // Build local types from classes and interfaces
-    const localTypes: LocalTypeInfo[] = [];
+    const local_types: LocalTypeInfo[] = [];
 
     if (options.classes) {
       options.classes.forEach((cls, idx) => {
-        localTypes.push({
+        local_types.push({
           type_name: cls.name,
           kind: "class",
-          location: location(filePath, (idx + 1) * 10, 0),
+          location: location(file_path, (idx + 1) * 10, 0),
           direct_members: cls.members || new Map(),
           extends_clause: cls.extends ? [cls.extends] : undefined,
           implements_clause: cls.implements,
@@ -109,56 +109,56 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
 
     if (options.interfaces) {
       options.interfaces.forEach((iface, idx) => {
-        localTypes.push({
+        local_types.push({
           type_name: iface.name,
           kind: "interface",
-          location: location(filePath, (idx + 1) * 10 + 100, 0),
+          location: location(file_path, (idx + 1) * 10 + 100, 0),
           direct_members: iface.members || new Map(),
         });
       });
     }
 
     // Build local type annotations from variables
-    const localTypeAnnotations: LocalTypeAnnotation[] = [];
+    const local_type_annotations: LocalTypeAnnotation[] = [];
     if (options.variables) {
       options.variables.forEach((variable, idx) => {
-        if (variable.typeAnnotation) {
-          localTypeAnnotations.push({
-            location: location(filePath, (idx + 1) * 5 + 200, 10),
-            annotation_text: variable.typeAnnotation,
+        if (variable.type_annotation) {
+          local_type_annotations.push({
+            location: location(file_path, (idx + 1) * 5 + 200, 10),
+            annotation_text: variable.type_annotation,
             annotation_kind: "variable",
-            scope_id: rootScopeId,
-            annotates_location: location(filePath, (idx + 1) * 5 + 200, 0),
+            scope_id: root_scope_id,
+            annotates_location: location(file_path, (idx + 1) * 5 + 200, 0),
           });
         }
       });
     }
 
     // Build local type tracking
-    const localTypeTracking: LocalTypeTracking = {
+    const local_type_tracking: LocalTypeTracking = {
       annotations: options.variables
-        ?.filter((v) => v.typeAnnotation)
+        ?.filter((v) => v.type_annotation)
         .map((v, idx) => ({
           name: v.name,
-          location: location(filePath, (idx + 1) * 5 + 200, 10),
-          annotation_text: v.typeAnnotation!,
+          location: location(file_path, (idx + 1) * 5 + 200, 10),
+          annotation_text: v.type_annotation!,
           kind: "variable" as const,
-          scope_id: rootScopeId,
+          scope_id: root_scope_id,
         })) || [],
       declarations: options.variables?.map((v, idx) => ({
         name: v.name,
-        location: location(filePath, (idx + 1) * 5 + 200, 0),
+        location: location(file_path, (idx + 1) * 5 + 200, 0),
         kind: "const" as const,
-        type_annotation: v.typeAnnotation,
-        initializer: v.initialValue,
-        scope_id: rootScopeId,
+        type_annotation: v.type_annotation,
+        initializer: v.initial_value,
+        scope_id: root_scope_id,
       })) || [],
       assignments: [],
     };
 
     // Build local type flow
-    const localTypeFlow: LocalTypeFlowData = {
-      constructor_calls: options.constructorCalls || [],
+    const local_type_flow: LocalTypeFlowData = {
+      constructor_calls: options.constructor_calls || [],
       assignments: options.assignments || [],
       returns: [],
       call_assignments: [],
@@ -169,13 +169,13 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
 
     // Add class symbols
     options.classes?.forEach((cls, idx) => {
-      const id = class_symbol(cls.name, filePath, location(filePath, (idx + 1) * 10, 0));
+      const id = class_symbol(cls.name, file_path, location(file_path, (idx + 1) * 10, 0));
       symbols.set(id, {
         id,
         name: cls.name,
         kind: "class",
-        location: location(filePath, (idx + 1) * 10, 0),
-        scope_id: rootScopeId,
+        location: location(file_path, (idx + 1) * 10, 0),
+        scope_id: root_scope_id,
         is_hoisted: false,
         is_exported: false,
         is_imported: false,
@@ -184,14 +184,14 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
 
     // Add function symbols
     options.functions?.forEach((func, idx) => {
-      const funcLocation = location(filePath, (idx + 1) * 10 + 50, 0);
-      const id = function_symbol(func.name, funcLocation);
+      const func_location = location(file_path, (idx + 1) * 10 + 50, 0);
+      const id = function_symbol(func.name, func_location);
       symbols.set(id, {
         id,
         name: func.name,
         kind: "function",
-        location: location(filePath, (idx + 1) * 10 + 50, 0),
-        scope_id: rootScopeId,
+        location: location(file_path, (idx + 1) * 10 + 50, 0),
+        scope_id: root_scope_id,
         is_hoisted: true,
         is_exported: false,
         is_imported: false,
@@ -199,31 +199,31 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
     });
 
     return {
-      file_path: filePath,
+      file_path: file_path,
       language: "typescript",
-      root_scope_id: rootScopeId,
-      scopes: new Map([[rootScopeId, rootScope]]),
+      root_scope_id: root_scope_id,
+      scopes: new Map([[root_scope_id, root_scope]]),
       symbols,
       references: {
         calls: [],
-        member_accesses: options.memberAccesses || [],
+        member_accesses: options.member_accesses || [],
         returns: [],
         type_annotations: [],
       },
       imports: [],
       exports: [],
       file_symbols_by_name: new Map(),
-      local_types: localTypes,
-      local_type_annotations: localTypeAnnotations,
-      local_type_tracking: localTypeTracking,
-      local_type_flow: localTypeFlow,
+      local_types: local_types,
+      local_type_annotations: local_type_annotations,
+      local_type_tracking: local_type_tracking,
+      local_type_flow: local_type_flow,
     };
   }
 
   describe("Architecture Verification", () => {
     it("should maintain clean separation between extraction and resolution", () => {
       // Create index with only local extraction
-      const index = createSemanticIndex("test.ts" as FilePath, {
+      const index = create_semantic_index("test.ts" as FilePath, {
         classes: [
           {
             name: "TestClass" as SymbolName,
@@ -248,7 +248,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
     });
 
     it("should generate TypeIds only in symbol_resolution phase", () => {
-      const index = createSemanticIndex("test.ts" as FilePath, {
+      const index = create_semantic_index("test.ts" as FilePath, {
         classes: [
           { name: "MyClass" as SymbolName },
         ],
@@ -270,7 +270,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
   describe("Cross-File Type Resolution", () => {
     it("should resolve types across file boundaries", () => {
       // File with base class
-      const baseIndex = createSemanticIndex("base.ts" as FilePath, {
+      const base_index = create_semantic_index("base.ts" as FilePath, {
         classes: [
           {
             name: "BaseClass" as SymbolName,
@@ -282,7 +282,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
       });
 
       // File with derived class
-      const derivedIndex = createSemanticIndex("derived.ts" as FilePath, {
+      const derived_index = create_semantic_index("derived.ts" as FilePath, {
         classes: [
           {
             name: "DerivedClass" as SymbolName,
@@ -295,8 +295,8 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
       });
 
       const indices = new Map<FilePath, SemanticIndex>([
-        ["base.ts" as FilePath, baseIndex],
-        ["derived.ts" as FilePath, derivedIndex],
+        ["base.ts" as FilePath, base_index],
+        ["derived.ts" as FilePath, derived_index],
       ]);
 
       const result = resolve_symbols({ indices });
@@ -307,7 +307,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
     });
 
     it("should resolve interface implementations across files", () => {
-      const interfaceIndex = createSemanticIndex("interface.ts" as FilePath, {
+      const interface_index = create_semantic_index("interface.ts" as FilePath, {
         interfaces: [
           {
             name: "IShape" as SymbolName,
@@ -318,7 +318,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
         ],
       });
 
-      const implIndex = createSemanticIndex("impl.ts" as FilePath, {
+      const impl_index = create_semantic_index("impl.ts" as FilePath, {
         classes: [
           {
             name: "Rectangle" as SymbolName,
@@ -333,8 +333,8 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
       });
 
       const indices = new Map<FilePath, SemanticIndex>([
-        ["interface.ts" as FilePath, interfaceIndex],
-        ["impl.ts" as FilePath, implIndex],
+        ["interface.ts" as FilePath, interface_index],
+        ["impl.ts" as FilePath, impl_index],
       ]);
 
       const result = resolve_symbols({ indices });
@@ -344,7 +344,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
 
   describe("Type Flow Analysis", () => {
     it("should track types through constructor calls and assignments", () => {
-      const index = createSemanticIndex("app.ts" as FilePath, {
+      const index = create_semantic_index("app.ts" as FilePath, {
         classes: [
           {
             name: "Service" as SymbolName,
@@ -357,7 +357,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
           { name: "service" as SymbolName },
           { name: "alias" as SymbolName },
         ],
-        constructorCalls: [
+        constructor_calls: [
           {
             class_name: "Service" as SymbolName,
             location: location("app.ts" as FilePath, 10, 10),
@@ -385,7 +385,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
     });
 
     it("should track type annotations on variables", () => {
-      const index = createSemanticIndex("typed.ts" as FilePath, {
+      const index = create_semantic_index("typed.ts" as FilePath, {
         interfaces: [
           {
             name: "User" as SymbolName,
@@ -398,11 +398,11 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
         variables: [
           {
             name: "user" as SymbolName,
-            typeAnnotation: "User",
+            type_annotation: "User",
           },
           {
             name: "users" as SymbolName,
-            typeAnnotation: "User[]",
+            type_annotation: "User[]",
           },
         ],
       });
@@ -418,7 +418,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
 
   describe("Method Resolution Integration", () => {
     it("should resolve methods using type information", () => {
-      const index = createSemanticIndex("methods.ts" as FilePath, {
+      const index = create_semantic_index("methods.ts" as FilePath, {
         classes: [
           {
             name: "Calculator" as SymbolName,
@@ -428,7 +428,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
             ]),
           },
         ],
-        constructorCalls: [
+        constructor_calls: [
           {
             class_name: "Calculator" as SymbolName,
             location: location("methods.ts" as FilePath, 10, 10),
@@ -450,7 +450,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
         ],
       });
 
-      // Method call references are passed in createSemanticIndex
+      // Method call references are passed in create_semantic_index
       // The memberAccesses were already set in the options
 
       const indices = new Map([["methods.ts" as FilePath, index]]);
@@ -462,7 +462,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
     });
 
     it("should resolve inherited methods", () => {
-      const baseIndex = createSemanticIndex("base.ts" as FilePath, {
+      const base_index = create_semantic_index("base.ts" as FilePath, {
         classes: [
           {
             name: "Animal" as SymbolName,
@@ -473,7 +473,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
         ],
       });
 
-      const derivedIndex = createSemanticIndex("derived.ts" as FilePath, {
+      const derived_index = create_semantic_index("derived.ts" as FilePath, {
         classes: [
           {
             name: "Dog" as SymbolName,
@@ -483,7 +483,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
             ]),
           },
         ],
-        constructorCalls: [
+        constructor_calls: [
           {
             class_name: "Dog" as SymbolName,
             location: location("derived.ts" as FilePath, 20, 10),
@@ -505,11 +505,11 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
         ],
       });
 
-      // Method call to inherited method should be passed in createSemanticIndex
+      // Method call to inherited method should be passed in create_semantic_index
 
       const indices = new Map<FilePath, SemanticIndex>([
-        ["base.ts" as FilePath, baseIndex],
-        ["derived.ts" as FilePath, derivedIndex],
+        ["base.ts" as FilePath, base_index],
+        ["derived.ts" as FilePath, derived_index],
       ]);
 
       const result = resolve_symbols({ indices });
@@ -522,7 +522,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
       const indices = new Map<FilePath, SemanticIndex>();
 
       // Create inheritance chain: A -> B -> C
-      const classA = createSemanticIndex("a.ts" as FilePath, {
+      const class_a = create_semantic_index("a.ts" as FilePath, {
         classes: [
           {
             name: "A" as SymbolName,
@@ -533,7 +533,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
         ],
       });
 
-      const classB = createSemanticIndex("b.ts" as FilePath, {
+      const class_b = create_semantic_index("b.ts" as FilePath, {
         classes: [
           {
             name: "B" as SymbolName,
@@ -545,7 +545,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
         ],
       });
 
-      const classC = createSemanticIndex("c.ts" as FilePath, {
+      const class_c = create_semantic_index("c.ts" as FilePath, {
         classes: [
           {
             name: "C" as SymbolName,
@@ -557,16 +557,16 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
         ],
       });
 
-      indices.set("a.ts" as FilePath, classA);
-      indices.set("b.ts" as FilePath, classB);
-      indices.set("c.ts" as FilePath, classC);
+      indices.set("a.ts" as FilePath, class_a);
+      indices.set("b.ts" as FilePath, class_b);
+      indices.set("c.ts" as FilePath, class_c);
 
       const result = resolve_symbols({ indices });
       expect(result.phases.types).toBeDefined();
     });
 
     it("should handle mixed type annotations and flow", () => {
-      const index = createSemanticIndex("mixed.ts" as FilePath, {
+      const index = create_semantic_index("mixed.ts" as FilePath, {
         interfaces: [
           {
             name: "Config" as SymbolName,
@@ -586,13 +586,13 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
         variables: [
           {
             name: "config" as SymbolName,
-            typeAnnotation: "Config",
+            type_annotation: "Config",
           },
           {
             name: "service" as SymbolName,
           },
         ],
-        constructorCalls: [
+        constructor_calls: [
           {
             class_name: "Service" as SymbolName,
             location: location("mixed.ts" as FilePath, 20, 10),
@@ -613,7 +613,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
     });
 
     it("should handle generic type parameters", () => {
-      const index = createSemanticIndex("generics.ts" as FilePath, {
+      const index = create_semantic_index("generics.ts" as FilePath, {
         classes: [
           {
             name: "Container" as SymbolName,
@@ -626,11 +626,11 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
         variables: [
           {
             name: "stringContainer" as SymbolName,
-            typeAnnotation: "Container<string>",
+            type_annotation: "Container<string>",
           },
           {
             name: "numberContainer" as SymbolName,
-            typeAnnotation: "Container<number>",
+            type_annotation: "Container<number>",
           },
         ],
       });
@@ -652,7 +652,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
       // Create 50 files with various types
       for (let i = 0; i < 50; i++) {
         const filePath = `file${i}.ts` as FilePath;
-        const index = createSemanticIndex(filePath, {
+        const index = create_semantic_index(filePath, {
           classes: [
             {
               name: `Class${i}` as SymbolName,
@@ -708,7 +708,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
         });
       }
 
-      const index = createSemanticIndex("large.ts" as FilePath, {
+      const index = create_semantic_index("large.ts" as FilePath, {
         classes,
         interfaces,
       });
@@ -723,8 +723,8 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
 
   describe("Edge Cases and Error Handling", () => {
     it("should handle empty files gracefully", () => {
-      const emptyIndex = createSemanticIndex("empty.ts" as FilePath, {});
-      const indices = new Map([["empty.ts" as FilePath, emptyIndex]]);
+      const empty_index = create_semantic_index("empty.ts" as FilePath, {});
+      const indices = new Map([["empty.ts" as FilePath, empty_index]]);
 
       const result = resolve_symbols({ indices });
 
@@ -733,7 +733,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
     });
 
     it("should handle circular references without infinite loops", () => {
-      const classA = createSemanticIndex("a.ts" as FilePath, {
+      const class_a = create_semantic_index("a.ts" as FilePath, {
         classes: [
           {
             name: "A" as SymbolName,
@@ -744,7 +744,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
         ],
       });
 
-      const classB = createSemanticIndex("b.ts" as FilePath, {
+      const class_b = create_semantic_index("b.ts" as FilePath, {
         classes: [
           {
             name: "B" as SymbolName,
@@ -756,8 +756,8 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
       });
 
       const indices = new Map<FilePath, SemanticIndex>([
-        ["a.ts" as FilePath, classA],
-        ["b.ts" as FilePath, classB],
+        ["a.ts" as FilePath, class_a],
+        ["b.ts" as FilePath, class_b],
       ]);
 
       // Should not throw or hang
@@ -765,7 +765,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
     });
 
     it("should handle missing base classes gracefully", () => {
-      const index = createSemanticIndex("orphan.ts" as FilePath, {
+      const index = create_semantic_index("orphan.ts" as FilePath, {
         classes: [
           {
             name: "OrphanClass" as SymbolName,

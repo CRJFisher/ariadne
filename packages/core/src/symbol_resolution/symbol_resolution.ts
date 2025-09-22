@@ -51,8 +51,6 @@ import {
   resolve_imports,
   create_import_resolution_context,
 } from "./import_resolution";
-import type { LanguageImportHandler } from "./import_resolution";
-import { create_standard_language_handlers } from "./import_resolution/language_handlers";
 import { phase2_resolve_functions } from "./function_resolution";
 
 /**
@@ -122,10 +120,8 @@ export function resolve_symbols(input: ResolutionInput): ResolvedSymbols {
 function phase1_resolve_imports(
   indices: ReadonlyMap<FilePath, SemanticIndex>
 ): ImportResolutionMap {
-  // Create standard language handlers for all supported languages
-  const language_handlers = create_standard_language_handlers();
-
-  const context = create_import_resolution_context(indices, language_handlers);
+  // Create import resolution context with the new simplified architecture
+  const context = create_import_resolution_context(indices);
   return resolve_imports(context);
 }
 
@@ -360,7 +356,7 @@ function collect_local_types(
           end_line: 0,
           end_column: 0,
         },
-        flow_kind: "constructor" as const,
+        flow_kind: "parameter" as const,
       };
       type_flows.set(file_path, [flow]);
     }
@@ -464,26 +460,46 @@ function phase4_resolve_methods(
       for (const ctor_call of index.local_type_flow.constructor_calls) {
         // Find the type for this constructor
         const type_name = ctor_call.class_name;
-        const file_types = types.symbol_types;
 
-        // Find the class symbol and its TypeId
-        for (const [symbol_id, symbol] of index.symbols) {
-          if (symbol.kind === "class" && symbol.name === type_name) {
-            const type_id = types.symbol_types.get(symbol_id);
-            if (type_id) {
-              const ctor_id = types.constructors.get(type_id);
-              if (ctor_id) {
+        // First try to find in imports (for cross-file constructor calls)
+        const imported_symbol = imports.imports.get(file_path)?.get(type_name);
+        if (imported_symbol) {
+          // Check if this is a class symbol
+          let found_class = false;
+          for (const [other_file_path, other_index] of indices) {
+            if (other_index.symbols.has(imported_symbol)) {
+              const symbol = other_index.symbols.get(imported_symbol);
+              if (symbol?.kind === "class") {
+                found_class = true;
+                // Use the imported symbol as the constructor
                 constructor_calls.set(
                   location_key(ctor_call.location),
-                  ctor_id
+                  imported_symbol
                 );
 
                 // Update reverse mapping
-                const calls = calls_to_method.get(ctor_id) || [];
+                const calls = calls_to_method.get(imported_symbol) || [];
                 calls.push(ctor_call.location);
-                calls_to_method.set(ctor_id, calls);
+                calls_to_method.set(imported_symbol, calls);
+                break;
               }
             }
+          }
+          if (found_class) continue;
+        }
+
+        // Fallback: Look in local symbols (for same-file constructor calls)
+        for (const [symbol_id, symbol] of index.symbols) {
+          if (symbol.kind === "class" && symbol.name === type_name) {
+            constructor_calls.set(
+              location_key(ctor_call.location),
+              symbol_id
+            );
+
+            // Update reverse mapping
+            const calls = calls_to_method.get(symbol_id) || [];
+            calls.push(ctor_call.location);
+            calls_to_method.set(symbol_id, calls);
             break;
           }
         }
@@ -543,53 +559,3 @@ function combine_results(
   };
 }
 
-/**
- * Convert LocalTypeFlowData from semantic_index to LocalTypeFlowPattern array for type_resolution
- */
-export function convert_type_flow_data_to_patterns(
-  flow_data: LocalTypeFlowData
-): LocalTypeFlowPattern[] {
-  const patterns: LocalTypeFlowPattern[] = [];
-
-  // Convert constructor calls
-  for (const ctor_call of flow_data.constructor_calls) {
-    patterns.push({
-      source_location: ctor_call.location,
-      target_location: ctor_call.location, // Constructor location is both source and target
-      flow_kind: "parameter",
-      scope_id: ctor_call.scope_id,
-    });
-  }
-
-  // Convert assignments
-  for (const assignment of flow_data.assignments) {
-    patterns.push({
-      source_location: assignment.location, // Assignment expression location
-      target_location: assignment.location, // Target variable location (simplified)
-      flow_kind: "assignment",
-      scope_id: "root" as any, // TODO: Proper scope ID mapping needed
-    });
-  }
-
-  // Convert returns
-  for (const return_stmt of flow_data.returns) {
-    patterns.push({
-      source_location: return_stmt.location, // Return expression location
-      target_location: return_stmt.location, // Return location (simplified)
-      flow_kind: "return",
-      scope_id: return_stmt.scope_id,
-    });
-  }
-
-  // Convert call assignments - these become both parameter flows and assignment flows
-  for (const call_assignment of flow_data.call_assignments) {
-    patterns.push({
-      source_location: call_assignment.location, // Call location
-      target_location: call_assignment.location, // Assignment target location (simplified)
-      flow_kind: "assignment",
-      scope_id: "root" as any, // TODO: Proper scope ID mapping needed
-    });
-  }
-
-  return patterns;
-}

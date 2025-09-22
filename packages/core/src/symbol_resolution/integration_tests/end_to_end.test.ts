@@ -185,10 +185,10 @@ describe("Complete Symbol Resolution Pipeline", () => {
               node_type: "import_statement",
             }],
             calls: [{
-              kind: "function",
-              name: "helper" as SymbolName,
               location: helper_call_location,
-              arguments_count: 1,
+              name: "helper" as SymbolName,
+              scope_id: `scope:module:${main_path}:0:0` as ScopeId,
+              call_type: "function",
             }],
           }
         }
@@ -208,7 +208,7 @@ describe("Complete Symbol Resolution Pipeline", () => {
       expect(resolved_function).toBe(helper_symbol);
 
       // Verify in combined resolved references
-      expect(resolved_symbols.resolved_references.get(helper_call_location)).toBe(helper_symbol);
+      expect(resolved_symbols.resolved_references.get(helper_call_key)).toBe(helper_symbol);
     });
   });
 
@@ -370,13 +370,14 @@ describe("Complete Symbol Resolution Pipeline", () => {
 
       // Verify constructor call resolution
       const constructor_calls = resolved_symbols.phases.methods.constructor_calls;
+      const constructor_call_key = location_key(constructor_call_location);
 
       // Check that the constructor call is resolved to the class
-      const resolved_constructor = constructor_calls.get(constructor_call_location);
+      const resolved_constructor = constructor_calls.get(constructor_call_key);
       expect(resolved_constructor).toBeDefined();
 
       // Verify in combined resolved references
-      expect(resolved_symbols.resolved_references.has(constructor_call_location)).toBe(true);
+      expect(resolved_symbols.resolved_references.has(constructor_call_key)).toBe(true);
     });
   });
 
@@ -458,16 +459,16 @@ describe("Complete Symbol Resolution Pipeline", () => {
             }],
             calls: [
               {
-                kind: "function",
-                name: "add" as SymbolName,
                 location: create_location(service_path, 6, 20),
-                arguments_count: 2,
+                name: "add" as SymbolName,
+                scope_id: `scope:module:${service_path}:0:0` as ScopeId,
+                call_type: "function",
               },
               {
-                kind: "function",
-                name: "multiply" as SymbolName,
                 location: create_location(service_path, 7, 20),
-                arguments_count: 2,
+                name: "multiply" as SymbolName,
+                scope_id: `scope:module:${service_path}:0:0` as ScopeId,
+                call_type: "function",
               },
             ],
             local_types: [{

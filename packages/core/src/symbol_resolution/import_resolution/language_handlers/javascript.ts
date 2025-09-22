@@ -1,5 +1,5 @@
 /**
- * JavaScript/TypeScript import handler
+ * JavaScript/TypeScript import resolution functions
  *
  * Handles ES6 modules and CommonJS import resolution
  * following Node.js module resolution algorithm.
@@ -20,26 +20,16 @@ import type {
   DefaultExport,
   NamedExport,
 } from "@ariadnejs/types";
-import type { LanguageImportHandler } from "../import_types";
 import {
   find_file_with_extensions,
   resolve_node_modules_path,
 } from "../module_resolver";
-
-/**
- * Create a JavaScript/TypeScript import handler
- */
-export function create_javascript_handler(): LanguageImportHandler {
-  return {
-    resolve_module_path: resolve_js_module_path,
-    match_import_to_export: match_js_import_to_export,
-  };
-}
+import { JAVASCRIPT_CONFIG, TYPESCRIPT_CONFIG } from "./language_config";
 
 /**
  * Resolve JavaScript/TypeScript module paths
  */
-function resolve_js_module_path(
+export function resolve_js_module_path(
   import_path: string,
   importing_file: FilePath
 ): FilePath | null {
@@ -72,8 +62,7 @@ function resolve_js_relative_path(
     const stats = fs.statSync(base_path);
     if (stats.isDirectory()) {
       // Look for index files
-      const index_files = ["index.ts", "index.tsx", "index.js", "index.jsx"];
-      for (const index of index_files) {
+      for (const index of JAVASCRIPT_CONFIG.index_files) {
         const index_path = path.join(base_path, index);
         if (fs.existsSync(index_path)) {
           return index_path as FilePath;
@@ -83,8 +72,7 @@ function resolve_js_relative_path(
   }
 
   // Try with common JS/TS extensions
-  const extensions = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
-  return find_file_with_extensions(base_path, extensions);
+  return find_file_with_extensions(base_path, JAVASCRIPT_CONFIG.file_extensions);
 }
 
 /**
@@ -96,8 +84,7 @@ function resolve_absolute_path(import_path: string): FilePath | null {
   }
 
   // Try with extensions
-  const extensions = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
-  return find_file_with_extensions(import_path, extensions);
+  return find_file_with_extensions(import_path, JAVASCRIPT_CONFIG.file_extensions);
 }
 
 /**
@@ -138,8 +125,7 @@ function resolve_js_package_path(
       }
       // If directory, look for index
       if (stats.isDirectory()) {
-        const index_files = ["index.ts", "index.tsx", "index.js", "index.jsx"];
-        for (const index of index_files) {
+        for (const index of JAVASCRIPT_CONFIG.index_files) {
           const index_path = path.join(subpath_resolved, index);
           if (fs.existsSync(index_path)) {
             return index_path as FilePath;
@@ -149,8 +135,7 @@ function resolve_js_package_path(
     }
 
     // Try with extensions
-    const extensions = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
-    return find_file_with_extensions(subpath_resolved, extensions);
+    return find_file_with_extensions(subpath_resolved, JAVASCRIPT_CONFIG.file_extensions);
   }
 
   // No subpath, just resolve the package itself
@@ -161,16 +146,6 @@ function resolve_js_package_path(
  * Check if a module is a Node.js built-in
  */
 function is_nodejs_builtin(module_name: string): boolean {
-  // Core Node.js modules
-  const builtins = new Set([
-    "assert", "buffer", "child_process", "cluster", "crypto", "dgram",
-    "dns", "domain", "events", "fs", "http", "https", "net", "os",
-    "path", "punycode", "querystring", "readline", "repl", "stream",
-    "string_decoder", "timers", "tls", "tty", "url", "util", "v8",
-    "vm", "zlib", "worker_threads", "inspector", "async_hooks",
-    "http2", "perf_hooks", "process", "console",
-  ]);
-
   // Handle node: prefix
   if (module_name.startsWith("node:")) {
     return true;
@@ -178,13 +153,13 @@ function is_nodejs_builtin(module_name: string): boolean {
 
   // Check if it's in the built-ins set
   const base_module = module_name.split("/")[0];
-  return builtins.has(base_module);
+  return JAVASCRIPT_CONFIG.builtin_modules.has(base_module);
 }
 
 /**
  * Match JavaScript imports to their corresponding exports
  */
-function match_js_import_to_export(
+export function match_js_import_to_export(
   import_stmt: Import,
   source_exports: readonly Export[],
   source_symbols: ReadonlyMap<SymbolId, SymbolDefinition>
@@ -221,6 +196,9 @@ function match_default_import(
 
   // Handle both types - use name field
   const local_name = (import_stmt as Import).name;
+  if (!local_name) {
+    return result;
+  }
 
   // Find the default export
   for (const exp of source_exports) {
@@ -239,7 +217,7 @@ function match_default_import(
 function match_namespace_import(
   import_stmt: NamespaceImport | Import,
   source_exports: readonly Export[],
-  source_symbols: ReadonlyMap<SymbolId, SymbolDefinition>
+  _source_symbols: ReadonlyMap<SymbolId, SymbolDefinition>
 ): Map<SymbolName, SymbolId> {
   const result = new Map<SymbolName, SymbolId>();
 
@@ -258,10 +236,12 @@ function match_namespace_import(
   if (source_exports.length > 0) {
     // Handle both NamespaceImport with namespace_name and Import with name
     const namespace_name = (import_stmt as NamespaceImport).namespace_name ||
-                          ((import_stmt as Import).name as unknown as NamespaceName);
-    // Convert NamespaceName to SymbolName (both are branded strings)
-    const namespace_as_symbol = namespace_name as unknown as SymbolName;
-    result.set(namespace_as_symbol, source_exports[0].symbol);
+                          (import_stmt as Import).name;
+    if (namespace_name) {
+      // Convert to SymbolName - both are branded strings with the same underlying type
+      const namespace_as_symbol = namespace_name as string as SymbolName;
+      result.set(namespace_as_symbol, source_exports[0].symbol);
+    }
   }
 
   return result;
@@ -277,7 +257,8 @@ function match_named_import(
   const result = new Map<SymbolName, SymbolId>();
 
   // Handle both NamedImport with imports array and simple Import with name
-  const import_items = import_stmt.imports || [{ name: (import_stmt as Import).name, alias: undefined }];
+  const import_items = (import_stmt as NamedImport).imports ||
+    ((import_stmt as Import).name ? [{ name: (import_stmt as Import).name, alias: undefined }] : []);
 
   for (const import_item of import_items) {
     const imported_name = import_item.name;

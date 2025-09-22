@@ -1209,9 +1209,9 @@ describe("method_resolution", () => {
       const derived_type = defined_type_id(TypeCategory.CLASS, "Derived" as SymbolName, test_location);
 
       // Setup types and hierarchy
-      types.symbol_types.set(base_class_sym, base_type);
-      types.symbol_types.set(derived_class_sym, derived_type);
-      types.constructors.set(base_type, base_constructor_sym);
+      (types.symbol_types as Map<SymbolId, TypeId>).set(base_class_sym, base_type);
+      (types.symbol_types as Map<SymbolId, TypeId>).set(derived_class_sym, derived_type);
+      (types.constructors as Map<TypeId, SymbolId>).set(base_type, base_constructor_sym);
 
       (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).clear();
       (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).set(derived_type, [base_type]);
@@ -1392,13 +1392,13 @@ describe("method_resolution", () => {
         derived1_type, [base_type]);
       (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).set(derived2_type, [base_type]);
 
-      types.type_members.set(base_type, new Map([
+      (types.type_members as Map<TypeId, ReadonlyMap<SymbolName, SymbolId>>).set(base_type, new Map([
         ["process" as SymbolName, base_method]
       ]));
-      types.type_members.set(derived1_type, new Map([
+      (types.type_members as Map<TypeId, ReadonlyMap<SymbolName, SymbolId>>).set(derived1_type, new Map([
         ["process" as SymbolName, derived1_method]
       ]));
-      types.type_members.set(derived2_type, new Map([
+      (types.type_members as Map<TypeId, ReadonlyMap<SymbolName, SymbolId>>).set(derived2_type, new Map([
         ["process" as SymbolName, derived2_method]
       ]));
 
@@ -1565,7 +1565,7 @@ describe("method_resolution", () => {
       const type_without_members = defined_type_id(TypeCategory.CLASS, "EmptyClass" as SymbolName, test_location);
 
       // Don't set up any type members
-      types.symbol_types.set(class_symbol("EmptyClass", test_location), type_without_members);
+      (types.symbol_types as Map<SymbolId, TypeId>).set(class_symbol("EmptyClass", test_location), type_without_members);
 
       const { get_type_methods } = await import("./type_lookup");
 
@@ -1587,9 +1587,9 @@ describe("method_resolution", () => {
 
       const empty_type = defined_type_id(TypeCategory.CLASS, "EmptyClass" as SymbolName, test_location);
 
-      const { resolve_polymorphic_method_call, CallContext } = await import("./polymorphism_handler");
+      const { resolve_polymorphic_method_call } = await import("./polymorphism_handler");
 
-      const call_context: CallContext = {
+      const call_context = {
         location: test_location,
         receiver_type: empty_type,
         is_static: false
@@ -1663,17 +1663,17 @@ describe("method_resolution", () => {
       (types.inheritance_hierarchy as Map<TypeId, readonly TypeId[]>).set(derived_type, [base_type]);
 
       // Interface defines method
-      types.type_members.set(interface_type, new Map([
+      (types.type_members as Map<TypeId, ReadonlyMap<SymbolName, SymbolId>>).set(interface_type, new Map([
         ["process" as SymbolName, interface_method]
       ]));
 
       // Base implements method
-      types.type_members.set(base_type, new Map([
+      (types.type_members as Map<TypeId, ReadonlyMap<SymbolName, SymbolId>>).set(base_type, new Map([
         ["process" as SymbolName, base_method]
       ]));
 
       // Derived doesn't override
-      types.type_members.set(derived_type, new Map());
+      (types.type_members as Map<TypeId, ReadonlyMap<SymbolName, SymbolId>>).set(derived_type, new Map());
 
       const { resolve_method_with_inheritance } = await import("./inheritance_resolver");
 

@@ -1,5 +1,5 @@
 /**
- * Python import handler
+ * Python import resolution functions
  *
  * Handles Python import statements including relative imports,
  * package imports, and module imports.
@@ -15,25 +15,16 @@ import type {
   Export,
   SymbolDefinition,
   NamedImport,
+  NamespaceImport,
   DefaultImport,
   NamedExport,
 } from "@ariadnejs/types";
-import type { LanguageImportHandler } from "../import_types";
-
-/**
- * Create a Python import handler
- */
-export function create_python_handler(): LanguageImportHandler {
-  return {
-    resolve_module_path: resolve_python_module_path,
-    match_import_to_export: match_python_import_to_export,
-  };
-}
+import { PYTHON_CONFIG } from "./language_config";
 
 /**
  * Resolve Python module paths
  */
-function resolve_python_module_path(
+export function resolve_python_module_path(
   import_path: string,
   importing_file: FilePath
 ): FilePath | null {
@@ -172,31 +163,15 @@ function resolve_python_absolute_import(
  * Check if a module is a Python built-in
  */
 function is_python_builtin(module_name: string): boolean {
-  // Common Python built-in modules
-  const builtins = new Set([
-    "abc", "argparse", "array", "ast", "asyncio", "atexit", "base64",
-    "bisect", "builtins", "calendar", "collections", "configparser",
-    "contextlib", "copy", "csv", "datetime", "decimal", "difflib",
-    "dis", "email", "enum", "errno", "functools", "gc", "getopt",
-    "glob", "gzip", "hashlib", "heapq", "html", "http", "importlib",
-    "inspect", "io", "itertools", "json", "keyword", "linecache",
-    "locale", "logging", "math", "multiprocessing", "operator", "os",
-    "pathlib", "pickle", "platform", "pprint", "queue", "random", "re",
-    "select", "shutil", "signal", "socket", "sqlite3", "statistics",
-    "string", "struct", "subprocess", "sys", "tempfile", "textwrap",
-    "threading", "time", "timeit", "traceback", "types", "typing",
-    "unittest", "urllib", "uuid", "warnings", "weakref", "xml", "zipfile",
-  ]);
-
   // Check base module name (before any dots)
   const base_module = module_name.split(".")[0];
-  return builtins.has(base_module);
+  return PYTHON_CONFIG.builtin_modules.has(base_module);
 }
 
 /**
  * Match Python imports to their corresponding exports
  */
-function match_python_import_to_export(
+export function match_python_import_to_export(
   import_stmt: Import,
   source_exports: readonly Export[],
   source_symbols: ReadonlyMap<SymbolId, SymbolDefinition>
@@ -220,12 +195,12 @@ function match_python_import_to_export(
     case "namespace":
       // Python doesn't have namespace imports like JS, but we handle it similarly
       // This might be "import module" which imports everything
-      const namespace = import_stmt ;
+      const namespace = import_stmt as NamespaceImport;
       if (namespace.namespace_name) {
         // Map the namespace to the module's main symbol
         const module_symbol = find_module_symbol(source_symbols);
         if (module_symbol) {
-          result.set(namespace.namespace_name as SymbolName, module_symbol);
+          result.set(namespace.namespace_name as unknown as SymbolName, module_symbol);
         }
       }
       return result;

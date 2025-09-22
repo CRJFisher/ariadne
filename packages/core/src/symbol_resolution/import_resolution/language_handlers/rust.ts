@@ -1,5 +1,5 @@
 /**
- * Rust import handler
+ * Rust import resolution functions
  *
  * Handles Rust use statements and module resolution
  * including crate dependencies and local modules.
@@ -15,24 +15,15 @@ import type {
   Export,
   SymbolDefinition,
   NamedImport,
+  NamespaceImport,
   NamedExport,
 } from "@ariadnejs/types";
-import type { LanguageImportHandler } from "../import_types";
-
-/**
- * Create a Rust import handler
- */
-export function create_rust_handler(): LanguageImportHandler {
-  return {
-    resolve_module_path: resolve_rust_module_path,
-    match_import_to_export: match_rust_import_to_export,
-  };
-}
+import { RUST_CONFIG } from "./language_config";
 
 /**
  * Resolve Rust module paths
  */
-function resolve_rust_module_path(
+export function resolve_rust_module_path(
   import_path: string,
   importing_file: FilePath
 ): FilePath | null {
@@ -300,16 +291,13 @@ function resolve_rust_external_crate(
  * Check if a crate is from the Rust standard library
  */
 function is_rust_std_crate(crate_name: string): boolean {
-  const std_crates = new Set([
-    "std", "core", "alloc", "proc_macro", "test",
-  ]);
-  return std_crates.has(crate_name);
+  return RUST_CONFIG.builtin_modules.has(crate_name);
 }
 
 /**
  * Match Rust imports to their corresponding exports
  */
-function match_rust_import_to_export(
+export function match_rust_import_to_export(
   import_stmt: Import,
   source_exports: readonly Export[],
   source_symbols: ReadonlyMap<SymbolId, SymbolDefinition>
@@ -342,12 +330,12 @@ function match_rust_import_to_export(
       // Rust doesn't have namespace imports like JS
       // but "use module::*" is similar
       // For now, we'll handle it as importing the module itself
-      const namespace = import_stmt ;
+      const namespace = import_stmt as NamespaceImport;
       if (namespace.namespace_name) {
         // Find the module symbol
         const module_symbol = find_rust_module_symbol(source_symbols);
         if (module_symbol) {
-          result.set(namespace.namespace_name as SymbolName, module_symbol);
+          result.set(namespace.namespace_name as unknown as SymbolName, module_symbol);
         }
       }
       return result;

@@ -6,10 +6,9 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { create_javascript_handler } from "./javascript";
-import { create_python_handler } from "./python";
-import { create_rust_handler } from "./rust";
-import { create_standard_language_handlers } from "./index";
+import { resolve_js_module_path, match_js_import_to_export } from "./javascript";
+import { resolve_python_module_path, match_python_import_to_export } from "./python";
+import { resolve_rust_module_path, match_rust_import_to_export } from "./rust";
 import type {
   FilePath,
   SymbolId,
@@ -24,7 +23,6 @@ import type {
   DefaultExport,
 } from "@ariadnejs/types";
 import * as fs from "fs";
-import * as path from "path";
 
 // Mock fs module
 vi.mock("fs");
@@ -35,8 +33,6 @@ describe("Language Import Handlers", () => {
   });
 
   describe("JavaScript Handler", () => {
-    const handler = create_javascript_handler();
-
     describe("module path resolution", () => {
       it("resolves relative imports", () => {
         const mock_exists = vi.mocked(fs.existsSync);
@@ -44,7 +40,7 @@ describe("Language Import Handlers", () => {
           return p === "/project/src/utils.js";
         });
 
-        const result = handler.resolve_module_path(
+        const result = resolve_js_module_path(
           "./utils",
           "/project/src/main.js" as FilePath
         );
@@ -58,7 +54,7 @@ describe("Language Import Handlers", () => {
           return p === "/project/utils.ts";
         });
 
-        const result = handler.resolve_module_path(
+        const result = resolve_js_module_path(
           "../utils",
           "/project/src/main.ts" as FilePath
         );
@@ -76,7 +72,7 @@ describe("Language Import Handlers", () => {
         });
         mock_stats.mockReturnValue({ isDirectory: () => true } as any);
 
-        const result = handler.resolve_module_path(
+        const result = resolve_js_module_path(
           "./components",
           "/project/src/main.ts" as FilePath
         );
@@ -85,7 +81,7 @@ describe("Language Import Handlers", () => {
       });
 
       it("returns null for Node.js built-in modules", () => {
-        const result = handler.resolve_module_path(
+        const result = resolve_js_module_path(
           "fs",
           "/project/src/main.js" as FilePath
         );
@@ -94,7 +90,7 @@ describe("Language Import Handlers", () => {
       });
 
       it("returns null for node: prefixed modules", () => {
-        const result = handler.resolve_module_path(
+        const result = resolve_js_module_path(
           "node:path",
           "/project/src/main.js" as FilePath
         );
@@ -124,7 +120,7 @@ describe("Language Import Handlers", () => {
 
         const symbols = new Map<SymbolId, SymbolDefinition>();
 
-        const result = handler.match_import_to_export(
+        const result = match_js_import_to_export(
           import_stmt,
           exports,
           symbols
@@ -168,7 +164,7 @@ describe("Language Import Handlers", () => {
 
         const symbols = new Map<SymbolId, SymbolDefinition>();
 
-        const result = handler.match_import_to_export(
+        const result = match_js_import_to_export(
           import_stmt,
           exports,
           symbols
@@ -202,7 +198,7 @@ describe("Language Import Handlers", () => {
 
         const symbols = new Map<SymbolId, SymbolDefinition>();
 
-        const result = handler.match_import_to_export(
+        const result = match_js_import_to_export(
           import_stmt,
           exports,
           symbols
@@ -215,7 +211,7 @@ describe("Language Import Handlers", () => {
   });
 
   describe("Python Handler", () => {
-    const handler = create_python_handler();
+    
 
     describe("module path resolution", () => {
       it("resolves relative imports with single dot", () => {
@@ -224,7 +220,7 @@ describe("Language Import Handlers", () => {
           return p === "/project/package/utils.py";
         });
 
-        const result = handler.resolve_module_path(
+        const result = resolve_python_module_path(
           ".utils",
           "/project/package/main.py" as FilePath
         );
@@ -238,7 +234,7 @@ describe("Language Import Handlers", () => {
           return p === "/project/package/utils.py";
         });
 
-        const result = handler.resolve_module_path(
+        const result = resolve_python_module_path(
           "..utils",
           "/project/package/subpackage/main.py" as FilePath
         );
@@ -252,7 +248,7 @@ describe("Language Import Handlers", () => {
           return p === "/project/package/subpackage/__init__.py";
         });
 
-        const result = handler.resolve_module_path(
+        const result = resolve_python_module_path(
           ".subpackage",
           "/project/package/main.py" as FilePath
         );
@@ -261,7 +257,7 @@ describe("Language Import Handlers", () => {
       });
 
       it("returns null for Python built-in modules", () => {
-        const result = handler.resolve_module_path(
+        const result = resolve_python_module_path(
           "os",
           "/project/main.py" as FilePath
         );
@@ -277,7 +273,7 @@ describe("Language Import Handlers", () => {
                  p === "/project/mypackage/utils.py";
         });
 
-        const result = handler.resolve_module_path(
+        const result = resolve_python_module_path(
           "mypackage.utils",
           "/project/tests/test_main.py" as FilePath
         );
@@ -318,7 +314,7 @@ describe("Language Import Handlers", () => {
           location: { start: { line: 2, column: 0 }, end: { line: 2, column: 10 } },
         } as unknown as SymbolDefinition);
 
-        const result = handler.match_import_to_export(
+        const result = match_python_import_to_export(
           import_stmt,
           exports,
           symbols
@@ -346,7 +342,7 @@ describe("Language Import Handlers", () => {
           location: { start: { line: 1, column: 0 }, end: { line: 1, column: 10 } },
         } as unknown as SymbolDefinition);
 
-        const result = handler.match_import_to_export(
+        const result = match_python_import_to_export(
           import_stmt,
           exports,
           symbols
@@ -359,7 +355,7 @@ describe("Language Import Handlers", () => {
   });
 
   describe("Rust Handler", () => {
-    const handler = create_rust_handler();
+    
 
     describe("module path resolution", () => {
       it("resolves local module files", () => {
@@ -368,7 +364,7 @@ describe("Language Import Handlers", () => {
           return p === "/project/src/utils.rs";
         });
 
-        const result = handler.resolve_module_path(
+        const result = resolve_rust_module_path(
           "utils",
           "/project/src/main.rs" as FilePath
         );
@@ -382,7 +378,7 @@ describe("Language Import Handlers", () => {
           return p === "/project/src/utils/mod.rs";
         });
 
-        const result = handler.resolve_module_path(
+        const result = resolve_rust_module_path(
           "utils",
           "/project/src/main.rs" as FilePath
         );
@@ -396,7 +392,7 @@ describe("Language Import Handlers", () => {
           return p === "/project/src/helper.rs";
         });
 
-        const result = handler.resolve_module_path(
+        const result = resolve_rust_module_path(
           "self::helper",
           "/project/src/main.rs" as FilePath
         );
@@ -410,7 +406,7 @@ describe("Language Import Handlers", () => {
           return p === "/project/utils.rs";
         });
 
-        const result = handler.resolve_module_path(
+        const result = resolve_rust_module_path(
           "super::utils",
           "/project/src/main.rs" as FilePath
         );
@@ -426,7 +422,7 @@ describe("Language Import Handlers", () => {
                  p === "/project/src/utils.rs";
         });
 
-        const result = handler.resolve_module_path(
+        const result = resolve_rust_module_path(
           "crate::utils",
           "/project/src/module/main.rs" as FilePath
         );
@@ -435,7 +431,7 @@ describe("Language Import Handlers", () => {
       });
 
       it("returns null for standard library crates", () => {
-        const result = handler.resolve_module_path(
+        const result = resolve_rust_module_path(
           "std::collections::HashMap",
           "/project/src/main.rs" as FilePath
         );
@@ -444,7 +440,7 @@ describe("Language Import Handlers", () => {
       });
 
       it("returns null for core crate", () => {
-        const result = handler.resolve_module_path(
+        const result = resolve_rust_module_path(
           "core::mem",
           "/project/src/main.rs" as FilePath
         );
@@ -488,7 +484,7 @@ describe("Language Import Handlers", () => {
 
         const symbols = new Map<SymbolId, SymbolDefinition>();
 
-        const result = handler.match_import_to_export(
+        const result = match_rust_import_to_export(
           import_stmt,
           exports,
           symbols
@@ -527,7 +523,7 @@ describe("Language Import Handlers", () => {
 
         const symbols = new Map<SymbolId, SymbolDefinition>();
 
-        const result = handler.match_import_to_export(
+        const result = match_rust_import_to_export(
           import_stmt,
           exports,
           symbols
@@ -539,29 +535,11 @@ describe("Language Import Handlers", () => {
     });
   });
 
-  describe("Standard Language Handlers", () => {
-    it("creates handlers for all supported languages", () => {
-      const handlers = create_standard_language_handlers();
-
-      expect(handlers.has("javascript")).toBe(true);
-      expect(handlers.has("typescript")).toBe(true);
-      expect(handlers.has("python")).toBe(true);
-      expect(handlers.has("rust")).toBe(true);
-    });
-
-    it("uses the same handler for JavaScript and TypeScript", () => {
-      const handlers = create_standard_language_handlers();
-
-      const js_handler = handlers.get("javascript");
-      const ts_handler = handlers.get("typescript");
-
-      expect(js_handler).toBe(ts_handler);
-    });
-  });
+  // Standard Language Handlers tests removed since handler pattern is deprecated
 
   describe("Edge Cases and Error Handling", () => {
     describe("JavaScript/TypeScript Edge Cases", () => {
-      const handler = create_javascript_handler();
+      
 
       it("handles scoped packages correctly", () => {
         const mock_exists = vi.mocked(fs.existsSync);
@@ -581,7 +559,7 @@ describe("Language Import Handlers", () => {
           return "";
         });
 
-        const result = handler.resolve_module_path(
+        const result = resolve_js_module_path(
           "@babel/core",
           "/project/src/main.js" as FilePath
         );
@@ -615,7 +593,7 @@ describe("Language Import Handlers", () => {
           isFile: () => !p.toString().endsWith("/")
         } as any));
 
-        const result = handler.resolve_module_path(
+        const result = resolve_js_module_path(
           "lodash/debounce",
           "/project/src/main.js" as FilePath
         );
@@ -629,7 +607,7 @@ describe("Language Import Handlers", () => {
           return p === "/project/src/utils.mjs";
         });
 
-        const result = handler.resolve_module_path(
+        const result = resolve_js_module_path(
           "./utils",
           "/project/src/main.js" as FilePath
         );
@@ -645,7 +623,7 @@ describe("Language Import Handlers", () => {
           ],
           source: "/project/utils.js" as FilePath,
           location: { start: { line: 1, column: 0 }, end: { line: 1, column: 30 } },
-        } as NamedImport;
+        } as unknown as NamedImport;
 
         const exports: Export[] = [{
           kind: "named",
@@ -653,11 +631,11 @@ describe("Language Import Handlers", () => {
           symbol_name: "other" as SymbolName,
           exports: [{ local_name: "other" as SymbolName, is_type_only: false }],
           location: { start: { line: 1, column: 0 }, end: { line: 1, column: 20 } },
-        } as NamedExport];
+        } as unknown as NamedExport];
 
         const symbols = new Map<SymbolId, SymbolDefinition>();
 
-        const result = handler.match_import_to_export(
+        const result = match_js_import_to_export(
           import_stmt,
           exports,
           symbols
@@ -672,12 +650,12 @@ describe("Language Import Handlers", () => {
           kind: "side_effect",
           source: "./polyfills" as FilePath,
           location: { start: { line: 1, column: 0 }, end: { line: 1, column: 20 } },
-        } as Import;
+        } as unknown as Import;
 
         const exports: Export[] = [];
         const symbols = new Map<SymbolId, SymbolDefinition>();
 
-        const result = handler.match_import_to_export(
+        const result = match_js_import_to_export(
           import_stmt,
           exports,
           symbols
@@ -689,7 +667,7 @@ describe("Language Import Handlers", () => {
     });
 
     describe("Python Edge Cases", () => {
-      const handler = create_python_handler();
+      
 
       it("handles triple dot relative imports", () => {
         const mock_exists = vi.mocked(fs.existsSync);
@@ -697,7 +675,7 @@ describe("Language Import Handlers", () => {
           return p === "/project/package/utils.py";
         });
 
-        const result = handler.resolve_module_path(
+        const result = resolve_python_module_path(
           "...utils",
           "/project/package/subpackage/module/main.py" as FilePath
         );
@@ -711,7 +689,7 @@ describe("Language Import Handlers", () => {
           return p === "/project/package/__init__.py";
         });
 
-        const result = handler.resolve_module_path(
+        const result = resolve_python_module_path(
           ".",
           "/project/package/module.py" as FilePath
         );
@@ -723,7 +701,7 @@ describe("Language Import Handlers", () => {
         const mock_exists = vi.mocked(fs.existsSync);
         mock_exists.mockReturnValue(false);
 
-        const result = handler.resolve_module_path(
+        const result = resolve_python_module_path(
           ".subpackage",
           "/project/package/main.py" as FilePath
         );
@@ -739,7 +717,7 @@ describe("Language Import Handlers", () => {
           ],
           source: "/project/utils.py" as FilePath,
           location: { start: { line: 1, column: 0 }, end: { line: 1, column: 30 } },
-        } as NamedImport;
+        } as unknown as NamedImport;
 
         const exports: Export[] = [];
         const symbols = new Map<SymbolId, SymbolDefinition>();
@@ -748,9 +726,9 @@ describe("Language Import Handlers", () => {
           name: "_private" as SymbolName,
           kind: "function",
           location: { start: { line: 1, column: 0 }, end: { line: 5, column: 1 } },
-        } as SymbolDefinition);
+        } as unknown as SymbolDefinition);
 
-        const result = handler.match_import_to_export(
+        const result = match_python_import_to_export(
           import_stmt,
           exports,
           symbols
@@ -768,7 +746,7 @@ describe("Language Import Handlers", () => {
           return false;
         });
 
-        const result = handler.resolve_module_path(
+        const result = resolve_python_module_path(
           "mypackage.utils",
           "/project/tests/test_utils.py" as FilePath
         );
@@ -778,7 +756,7 @@ describe("Language Import Handlers", () => {
     });
 
     describe("Rust Edge Cases", () => {
-      const handler = create_rust_handler();
+      
 
       it("handles nested module paths", () => {
         const mock_exists = vi.mocked(fs.existsSync);
@@ -800,7 +778,7 @@ describe("Language Import Handlers", () => {
           }
         } as any));
 
-        const result = handler.resolve_module_path(
+        const result = resolve_rust_module_path(
           "utils::helpers::string",
           "/project/src/main.rs" as FilePath
         );
@@ -817,7 +795,7 @@ describe("Language Import Handlers", () => {
           return false;
         });
 
-        const result = handler.resolve_module_path(
+        const result = resolve_rust_module_path(
           "my_crate::utils",
           "/workspace/other_crate/src/main.rs" as FilePath
         );
@@ -834,7 +812,7 @@ describe("Language Import Handlers", () => {
           return false;
         });
 
-        const result = handler.resolve_module_path(
+        const result = resolve_rust_module_path(
           "crate::utils",
           "/project/src/module/submodule.rs" as FilePath
         );
@@ -843,7 +821,7 @@ describe("Language Import Handlers", () => {
       });
 
       it("handles alloc crate as built-in", () => {
-        const result = handler.resolve_module_path(
+        const result = resolve_rust_module_path(
           "alloc::vec::Vec",
           "/project/src/main.rs" as FilePath
         );
@@ -866,7 +844,7 @@ describe("Language Import Handlers", () => {
           symbol_name: "helper" as SymbolName,
           exports: [{ local_name: "helper" as SymbolName, is_type_only: false }],
           location: { start: { line: 1, column: 0 }, end: { line: 5, column: 1 } },
-        } as NamedExport];
+        } as unknown as NamedExport];
 
         const symbols = new Map<SymbolId, SymbolDefinition>();
         symbols.set("utils#module" as SymbolId, {
@@ -874,9 +852,9 @@ describe("Language Import Handlers", () => {
           name: "utils" as SymbolName,
           kind: "module",
           location: { start: { line: 0, column: 0 }, end: { line: 100, column: 0 } },
-        } as SymbolDefinition);
+        } as unknown as SymbolDefinition);
 
-        const result = handler.match_import_to_export(
+        const result = match_rust_import_to_export(
           import_stmt,
           exports,
           symbols
@@ -890,43 +868,43 @@ describe("Language Import Handlers", () => {
 
     describe("Cross-Handler Compatibility", () => {
       it("all handlers handle empty exports array", () => {
-        const handlers = create_standard_language_handlers();
-
         const import_stmt: NamedImport = {
           kind: "named",
           imports: [{ name: "something" as SymbolName, is_type_only: false }],
           source: "/file" as FilePath,
           location: { start: { line: 1, column: 0 }, end: { line: 1, column: 30 } },
-        } as NamedImport;
+        } as unknown as NamedImport;
 
         const empty_exports: Export[] = [];
         const empty_symbols = new Map<SymbolId, SymbolDefinition>();
 
-        for (const [language, handler] of handlers) {
-          const result = handler.match_import_to_export(
-            import_stmt,
-            empty_exports,
-            empty_symbols
-          );
-          expect(result).toBeDefined();
-          expect(result.size).toBe(0);
-        }
+        // Test each language's import matcher
+        const js_result = match_js_import_to_export(import_stmt, empty_exports, empty_symbols);
+        expect(js_result).toBeDefined();
+        expect(js_result.size).toBe(0);
+
+        const py_result = match_python_import_to_export(import_stmt, empty_exports, empty_symbols);
+        expect(py_result).toBeDefined();
+        expect(py_result.size).toBe(0);
+
+        const rust_result = match_rust_import_to_export(import_stmt, empty_exports, empty_symbols);
+        expect(rust_result).toBeDefined();
+        expect(rust_result.size).toBe(0);
       });
 
       it("all handlers handle null path resolution gracefully", () => {
-        const handlers = create_standard_language_handlers();
-
         // Test with a path that shouldn't resolve for any handler
         const mock_exists = vi.mocked(fs.existsSync);
         mock_exists.mockReturnValue(false);
 
-        for (const [language, handler] of handlers) {
-          const result = handler.resolve_module_path(
-            "./non-existent-file",
-            "/project/main" as FilePath
-          );
-          expect(result).toBeNull();
-        }
+        const js_result = resolve_js_module_path("./non-existent-file", "/project/main" as FilePath);
+        expect(js_result).toBeNull();
+
+        const py_result = resolve_python_module_path("./non-existent-file", "/project/main" as FilePath);
+        expect(py_result).toBeNull();
+
+        const rust_result = resolve_rust_module_path("./non-existent-file", "/project/main" as FilePath);
+        expect(rust_result).toBeNull();
       });
     });
   });
