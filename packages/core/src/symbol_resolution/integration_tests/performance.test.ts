@@ -54,17 +54,20 @@ function generate_large_test_project(num_files: number): Map<FilePath, SemanticI
         const prev_file = `src/${module_name}/file_${f - 1}.ts` as FilePath;
         imports.push({
           kind: "named",
-          name: `func_${f - 1}_0` as SymbolName,
-          source_path: `./file_${f - 1}`,
+          imports: [{ name: `func_${f - 1}_0` as SymbolName, is_type_only: false }],
+          source: prev_file,
           location: create_location(file_path, 1, 10),
-          resolved_path: prev_file,
+          modifiers: [],
+          language: "typescript",
+          node_type: "import_statement",
         });
 
         // Add calls to imported functions
         calls.push({
-          kind: "function",
+          call_type: "function" as const,
           name: `func_${f - 1}_0` as SymbolName,
           location: create_location(file_path, 10, 15),
+          scope_id: `scope:module:${file_path}:0:0` as ScopeId,
           arguments_count: 2,
         });
       }
@@ -75,10 +78,12 @@ function generate_large_test_project(num_files: number): Map<FilePath, SemanticI
         const prev_file = `src/${prev_module}/file_0.ts` as FilePath;
         imports.push({
           kind: "named",
-          name: `func_0_0` as SymbolName,
-          source_path: `../${prev_module}/file_0`,
+          imports: [{ name: `func_0_0` as SymbolName, is_type_only: false }],
+          source: `../${prev_module}/file_0.ts`,
           location: create_location(file_path, 2, 10),
-          resolved_path: prev_file,
+          modifiers: [],
+          language: "typescript",
+          node_type: "import_statement",
         });
       }
 
@@ -97,26 +102,33 @@ function generate_large_test_project(num_files: number): Map<FilePath, SemanticI
           name: func_name,
           kind: "function",
           location: func_location,
-          definition_scope: `scope:module:${file_path}:0:0` as ScopeId,
+          scope_id: `scope:module:${file_path}:0:0` as ScopeId,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
         });
 
         // Export first function
         if (i === 0) {
           exports.push({
             kind: "named",
-            name: func_name,
-            symbol_id: func_id,
+            symbol: func_id,
+            symbol_name: func_name,
             location: create_location(file_path, 5 + i * 5, 0),
+            exports: [{ local_name: func_name, is_type_only: false }],
+            modifiers: [],
+            language: "typescript",
+            node_type: "export_statement",
           });
         }
 
         // Add internal function calls
         if (i > 0) {
           calls.push({
-            kind: "function",
-            name: `func_${f}_${i - 1}` as SymbolName,
             location: create_location(file_path, 6 + i * 5, 20),
-            arguments_count: 1,
+            name: `func_${f}_${i - 1}` as SymbolName,
+            scope_id: `scope:module:${file_path}:0:0` as ScopeId,
+            call_type: "function",
           });
         }
       }
@@ -132,7 +144,10 @@ function generate_large_test_project(num_files: number): Map<FilePath, SemanticI
           name: class_name,
           kind: "class",
           location: class_location,
-          definition_scope: `scope:module:${file_path}:0:0` as ScopeId,
+          scope_id: `scope:module:${file_path}:0:0` as ScopeId,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
         });
 
         // Add class to local types
@@ -149,7 +164,10 @@ function generate_large_test_project(num_files: number): Map<FilePath, SemanticI
             name: method_name,
             kind: "method",
             location: method_location,
-            definition_scope: `scope:class:${file_path}:${30 + i * 10}:10` as ScopeId,
+            scope_id: `scope:class:${file_path}:${30 + i * 10}:10` as ScopeId,
+            is_hoisted: false,
+            is_exported: false,
+            is_imported: false,
           });
 
           members.set(method_name, method_id);
@@ -167,10 +185,18 @@ function generate_large_test_project(num_files: number): Map<FilePath, SemanticI
         // Export first class
         if (i === 0) {
           exports.push({
-            kind: "named",
-            name: class_name,
-            symbol_id: class_id,
+            kind: "named" as const,
+            symbol: class_id,
+            symbol_name: class_name,
             location: create_location(file_path, 30 + i * 10, 0),
+            exports: [{
+              local_name: class_name,
+              export_name: class_name,
+              is_type_only: false,
+            }],
+            modifiers: [],
+            language: "typescript",
+            node_type: "export_statement",
           });
         }
       }
@@ -450,19 +476,28 @@ describe("Performance Benchmarks", () => {
 
           // Call imported function
           calls.push({
-            kind: "function",
+            call_type: "function" as const,
             name: `func_${i - 1}` as SymbolName,
             location: create_location(file_path, 5, 15),
+            scope_id: `scope:module:${file_path}:0:0` as ScopeId,
             arguments_count: 0,
           });
         }
 
         // Export current function
         exports.push({
-          kind: "named",
-          name: `func_${i}` as SymbolName,
-          symbol_id: func_id,
+          kind: "named" as const,
+          symbol: func_id,
+          symbol_name: `func_${i}` as SymbolName,
           location: create_location(file_path, 3, 0),
+          exports: [{
+            local_name: `func_${i}` as SymbolName,
+            export_name: `func_${i}` as SymbolName,
+            is_type_only: false,
+          }],
+          modifiers: [],
+          language: "typescript",
+          node_type: "export_statement",
         });
 
         const root_scope_id = `scope:module:${file_path}:0:0` as ScopeId;
@@ -484,7 +519,10 @@ describe("Performance Benchmarks", () => {
             name: `func_${i}` as SymbolName,
             kind: "function",
             location: func_location,
-            definition_scope: root_scope_id,
+            scope_id: root_scope_id,
+            is_hoisted: false,
+            is_exported: false,
+            is_imported: false,
           }]]),
           references: { calls, member_accesses: [], returns: [], type_annotations: [] },
           imports,

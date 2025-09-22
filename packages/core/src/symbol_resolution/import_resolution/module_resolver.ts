@@ -9,9 +9,12 @@ import * as path from "path";
 import * as fs from "fs";
 import type { FilePath, Language } from "@ariadnejs/types";
 import type { ImportResolutionContext } from "./import_types";
+import { resolve_js_module_path } from "./language_handlers/javascript";
+import { resolve_python_module_path } from "./language_handlers/python";
+import { resolve_rust_module_path } from "./language_handlers/rust";
 
 /**
- * Resolve a module path using the appropriate language handler
+ * Resolve a module path using language-specific routing
  */
 export function resolve_module_path(
   import_path: string,
@@ -20,6 +23,13 @@ export function resolve_module_path(
   context: ImportResolutionContext
 ): FilePath | null {
   // First try to resolve from indices directly (for testing)
+
+  // Check for direct path match in indices (for node_modules style imports like "lodash")
+  if (context.indices.has(import_path as FilePath)) {
+    return import_path as FilePath;
+  }
+
+  // Check for relative paths
   if (import_path.startsWith("./") || import_path.startsWith("../")) {
     const dir = path.dirname(importing_file);
 
@@ -37,79 +47,23 @@ export function resolve_module_path(
     }
   }
 
-  // Fall back to language handler's filesystem-based resolution
-  const handler = context.language_handlers.get(language);
-  if (!handler) {
-    return null;
+  // Route to language-specific module resolution
+  if (language === "javascript" || language === "typescript") {
+    return resolve_js_module_path(import_path, importing_file);
   }
 
-  return handler.resolve_module_path(import_path, importing_file);
-}
-
-/**
- * Resolve a relative import path (./module, ../utils)
- */
-export function resolve_relative_path(
-  import_path: string,
-  importing_file: FilePath
-): FilePath | null {
-  if (!import_path.startsWith("./") && !import_path.startsWith("../")) {
-    return null;
+  if (language === "python") {
+    return resolve_python_module_path(import_path, importing_file);
   }
 
-  const dir = path.dirname(importing_file);
-  const resolved = path.resolve(dir, import_path);
-
-  // Check if the resolved path exists
-  if (fs.existsSync(resolved)) {
-    return resolved as FilePath;
-  }
-
-  // Try with various extensions
-  const extensions = [".ts", ".tsx", ".js", ".jsx", ".py", ".rs"];
-  for (const ext of extensions) {
-    const with_ext = resolved + ext;
-    if (fs.existsSync(with_ext)) {
-      return with_ext as FilePath;
-    }
-  }
-
-  // Try index files in directories
-  const index_files = ["index.ts", "index.tsx", "index.js", "index.jsx", "__init__.py", "mod.rs"];
-  for (const index of index_files) {
-    const index_path = path.join(resolved, index);
-    if (fs.existsSync(index_path)) {
-      return index_path as FilePath;
-    }
+  if (language === "rust") {
+    return resolve_rust_module_path(import_path, importing_file);
   }
 
   return null;
 }
 
-/**
- * Resolve an absolute import path
- */
-export function resolve_absolute_path(import_path: string): FilePath | null {
-  if (!import_path.startsWith("/")) {
-    return null;
-  }
 
-  // Check if the path exists
-  if (fs.existsSync(import_path)) {
-    return import_path as FilePath;
-  }
-
-  // Try with various extensions
-  const extensions = [".ts", ".tsx", ".js", ".jsx", ".py", ".rs"];
-  for (const ext of extensions) {
-    const with_ext = import_path + ext;
-    if (fs.existsSync(with_ext)) {
-      return with_ext as FilePath;
-    }
-  }
-
-  return null;
-}
 
 /**
  * Find a file with possible extensions
