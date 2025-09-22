@@ -50,7 +50,7 @@ export interface LocalTypeDefinition {
  */
 export interface LocalTypeAnnotation {
   readonly location: Location;
-  readonly annotation_text: string;  // Raw text like "Foo<Bar>"
+  readonly annotation_text: string; // Raw text like "Foo<Bar>"
   readonly annotation_kind: "variable" | "parameter" | "return" | "property";
   readonly scope_id: ScopeId;
 }
@@ -109,6 +109,12 @@ export interface ResolvedTypeDefinition {
   // Resolved TypeIds
   readonly base_types: TypeId[];
   readonly derived_types: TypeId[];
+
+  // Additional fields for compatibility and enhanced functionality
+  readonly direct_members?: Map<SymbolName, LocalMemberInfo>;
+  readonly inherited_members?: Map<SymbolName, ResolvedMemberInfo>;
+  readonly parent_types?: TypeId[];
+  readonly child_types?: TypeId[];
 }
 
 /**

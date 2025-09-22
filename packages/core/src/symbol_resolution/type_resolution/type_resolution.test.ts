@@ -73,7 +73,7 @@ describe("Type Resolution Module", () => {
       // Verify functions have expected number of parameters
       expect(resolve_types.length).toBe(4); // local_types, imports, functions, file_indices (optional)
       expect(build_type_registry.length).toBe(1); // type_definitions
-      expect(resolve_type_members.length).toBe(3); // type_id, local_def, hierarchy
+      expect(resolve_type_members.length).toBe(4); // type_id, local_def, hierarchy, all_definitions (optional)
       expect(analyze_type_flow.length).toBe(4); // local_flows, imports, functions, types
       expect(resolve_type_annotations.length).toBe(2); // annotations, type_names
       expect(resolve_inheritance.length).toBe(2); // type_definitions, type_registry
@@ -111,7 +111,7 @@ describe("Type Resolution Module", () => {
           line: 1,
           column: 0,
           end_line: 1,
-          end_column: 10
+          end_column: 10,
         },
         file_path: "test.ts" as FilePath,
         direct_members: new Map(),
@@ -221,11 +221,14 @@ describe("Type Resolution Module", () => {
 
     it("analyze_type_flow should return ResolvedTypeFlow", () => {
       const flows: Map<FilePath, LocalTypeFlow> = new Map();
-      const imports = new Map<FilePath, Map<SymbolName, { resolved_location?: Location }>>();
+      const imports = new Map<
+        FilePath,
+        Map<SymbolName, { resolved_location?: Location }>
+      >();
       const functions = new Map<SymbolId, { return_type?: TypeId }>();
       const types: GlobalTypeRegistry = {
         all_types: new Map(),
-        type_names: new Map()
+        type_names: new Map(),
       };
 
       const result = analyze_type_flow(flows, imports, functions, types);
@@ -263,19 +266,25 @@ describe("Type Resolution Module", () => {
 
     it("build_file_type_registry should build registry from symbols", () => {
       const mockSymbols = new Map<SymbolId, SymbolDefinition>([
-        ["class_symbol" as SymbolId, {
-          id: "class_symbol" as SymbolId,
-          kind: "class",
-          name: "MyClass" as SymbolName,
-          location: {} as Location,
-          scope_id: "scope" as ScopeId,
-          is_hoisted: false,
-          is_exported: false,
-          is_imported: false,
-        }],
+        [
+          "class_symbol" as SymbolId,
+          {
+            id: "class_symbol" as SymbolId,
+            kind: "class",
+            name: "MyClass" as SymbolName,
+            location: {} as Location,
+            scope_id: "scope" as ScopeId,
+            is_hoisted: false,
+            is_exported: false,
+            is_imported: false,
+          },
+        ],
       ]);
 
-      const result = build_file_type_registry(mockSymbols, "test.ts" as FilePath);
+      const result = build_file_type_registry(
+        mockSymbols,
+        "test.ts" as FilePath
+      );
 
       expect(result).toBeDefined();
       expect(result.file_path).toBe("test.ts");
@@ -286,19 +295,25 @@ describe("Type Resolution Module", () => {
 
     it("build_file_type_registry_with_annotations should return registry and annotations", () => {
       const mockSymbols = new Map<SymbolId, SymbolDefinition>([
-        ["interface_symbol" as SymbolId, {
-          id: "interface_symbol" as SymbolId,
-          kind: "interface",
-          name: "IService" as SymbolName,
-          location: {} as Location,
-          scope_id: "scope" as ScopeId,
-          is_hoisted: false,
-          is_exported: false,
-          is_imported: false,
-        }],
+        [
+          "interface_symbol" as SymbolId,
+          {
+            id: "interface_symbol" as SymbolId,
+            kind: "interface",
+            name: "IService" as SymbolName,
+            location: {} as Location,
+            scope_id: "scope" as ScopeId,
+            is_hoisted: false,
+            is_exported: false,
+            is_imported: false,
+          },
+        ],
       ]);
 
-      const result = build_file_type_registry_with_annotations(mockSymbols, "test.ts" as FilePath);
+      const result = build_file_type_registry_with_annotations(
+        mockSymbols,
+        "test.ts" as FilePath
+      );
 
       expect(result).toBeDefined();
       expect(result.registry).toBeDefined();
@@ -320,55 +335,70 @@ describe("Type Resolution Module", () => {
       beforeEach(() => {
         mockLocalTypes = {
           type_definitions: new Map([
-            ["test.ts" as FilePath, [
-              {
-                name: "TestClass" as SymbolName,
-                kind: "class",
-                location: {
+            [
+              "test.ts" as FilePath,
+              [
+                {
+                  name: "TestClass" as SymbolName,
+                  kind: "class",
+                  location: {
+                    file_path: "test.ts" as FilePath,
+                    line: 1,
+                    column: 0,
+                    end_line: 10,
+                    end_column: 1,
+                  } as Location,
                   file_path: "test.ts" as FilePath,
-                  line: 1,
-                  column: 0,
-                  end_line: 10,
-                  end_column: 1
-                } as Location,
-                file_path: "test.ts" as FilePath,
-                direct_members: new Map([
-                  ["method" as SymbolName, {
-                    name: "method" as SymbolName,
-                    kind: "method",
-                    location: {} as Location,
-                  }],
-                ]),
-              },
-            ]],
+                  direct_members: new Map([
+                    [
+                      "method" as SymbolName,
+                      {
+                        name: "method" as SymbolName,
+                        kind: "method",
+                        location: {} as Location,
+                      },
+                    ],
+                  ]),
+                },
+              ],
+            ],
           ]),
           type_annotations: new Map([
-            ["test.ts" as FilePath, [
-              {
-                location: {} as Location,
-                annotation_text: "string",
-                annotation_kind: "variable",
-                scope_id: "scope:1" as ScopeId,
-              },
-            ]],
+            [
+              "test.ts" as FilePath,
+              [
+                {
+                  location: {} as Location,
+                  annotation_text: "string",
+                  annotation_kind: "variable",
+                  scope_id: "scope:1" as ScopeId,
+                },
+              ],
+            ],
           ]),
           type_flows: new Map([
-            ["test.ts" as FilePath, [
-              {
-                source_location: {} as Location,
-                target_location: {} as Location,
-                flow_kind: "assignment",
-                scope_id: "scope:1" as ScopeId,
-              },
-            ]],
+            [
+              "test.ts" as FilePath,
+              [
+                {
+                  source_location: {} as Location,
+                  target_location: {} as Location,
+                  flow_kind: "assignment",
+                  scope_id: "scope:1" as ScopeId,
+                },
+              ],
+            ],
           ]),
         };
 
         mockImports = {
           imports: new Map([
-            ["test.ts" as FilePath, new Map([
-              ["ImportedType" as SymbolName, "symbol:imported" as SymbolId],
-            ])],
+            [
+              "test.ts" as FilePath,
+              new Map([
+                ["ImportedType" as SymbolName, "symbol:imported" as SymbolId],
+              ]),
+            ],
           ]),
         };
 
@@ -451,46 +481,58 @@ describe("Type Resolution Module", () => {
     describe("build_file_type_registry with complex scenarios", () => {
       it("should handle multiple type symbols", () => {
         const symbols = new Map<SymbolId, SymbolDefinition>([
-          ["class1" as SymbolId, {
-            id: "class1" as SymbolId,
-            kind: "class",
-            name: "Class1" as SymbolName,
-            location: {} as Location,
-            scope_id: "scope" as ScopeId,
-            is_hoisted: false,
-            is_exported: false,
-            is_imported: false,
-          }],
-          ["interface1" as SymbolId, {
-            id: "interface1" as SymbolId,
-            kind: "interface",
-            name: "Interface1" as SymbolName,
-            location: {} as Location,
-            scope_id: "scope" as ScopeId,
-            is_hoisted: false,
-            is_exported: false,
-            is_imported: false,
-          }],
-          ["enum1" as SymbolId, {
-            id: "enum1" as SymbolId,
-            kind: "enum",
-            name: "Enum1" as SymbolName,
-            location: {} as Location,
-            scope_id: "scope" as ScopeId,
-            is_hoisted: false,
-            is_exported: false,
-            is_imported: false,
-          }],
-          ["type1" as SymbolId, {
-            id: "type1" as SymbolId,
-            kind: "type_alias",
-            name: "Type1" as SymbolName,
-            location: {} as Location,
-            scope_id: "scope" as ScopeId,
-            is_hoisted: false,
-            is_exported: false,
-            is_imported: false,
-          }],
+          [
+            "class1" as SymbolId,
+            {
+              id: "class1" as SymbolId,
+              kind: "class",
+              name: "Class1" as SymbolName,
+              location: {} as Location,
+              scope_id: "scope" as ScopeId,
+              is_hoisted: false,
+              is_exported: false,
+              is_imported: false,
+            },
+          ],
+          [
+            "interface1" as SymbolId,
+            {
+              id: "interface1" as SymbolId,
+              kind: "interface",
+              name: "Interface1" as SymbolName,
+              location: {} as Location,
+              scope_id: "scope" as ScopeId,
+              is_hoisted: false,
+              is_exported: false,
+              is_imported: false,
+            },
+          ],
+          [
+            "enum1" as SymbolId,
+            {
+              id: "enum1" as SymbolId,
+              kind: "enum",
+              name: "Enum1" as SymbolName,
+              location: {} as Location,
+              scope_id: "scope" as ScopeId,
+              is_hoisted: false,
+              is_exported: false,
+              is_imported: false,
+            },
+          ],
+          [
+            "type1" as SymbolId,
+            {
+              id: "type1" as SymbolId,
+              kind: "type_alias",
+              name: "Type1" as SymbolName,
+              location: {} as Location,
+              scope_id: "scope" as ScopeId,
+              is_hoisted: false,
+              is_exported: false,
+              is_imported: false,
+            },
+          ],
         ]);
 
         const result = build_file_type_registry(symbols, "test.ts" as FilePath);
@@ -506,68 +548,84 @@ describe("Type Resolution Module", () => {
 
       it("should handle symbols with return types", () => {
         const symbols = new Map<SymbolId, SymbolDefinition>([
-          ["func1" as SymbolId, {
-            id: "func1" as SymbolId,
-            kind: "function",
-            name: "func1" as SymbolName,
-            location: {} as Location,
-            scope_id: "scope" as ScopeId,
-            is_hoisted: false,
-            is_exported: false,
-            is_imported: false,
-            return_type: "TypeId:string" as TypeId, // Add return_type property
-          } as SymbolDefinition & { return_type: TypeId }],
+          [
+            "func1" as SymbolId,
+            {
+              id: "func1" as SymbolId,
+              kind: "function",
+              name: "func1" as SymbolName,
+              location: {} as Location,
+              scope_id: "scope" as ScopeId,
+              is_hoisted: false,
+              is_exported: false,
+              is_imported: false,
+              return_type: "TypeId:string" as TypeId, // Add return_type property
+            } as SymbolDefinition & { return_type: TypeId },
+          ],
         ]);
 
         const result = build_file_type_registry(symbols, "test.ts" as FilePath);
 
         expect(result.return_types.size).toBe(1);
-        expect(result.return_types.get("func1" as SymbolId)).toBe("TypeId:string" as TypeId);
+        expect(result.return_types.get("func1" as SymbolId)).toBe(
+          "TypeId:string" as TypeId
+        );
       });
 
       it("should handle symbols with value types", () => {
         const symbols = new Map<SymbolId, SymbolDefinition>([
-          ["var1" as SymbolId, {
-            id: "var1" as SymbolId,
-            kind: "variable",
-            name: "var1" as SymbolName,
-            location: {} as Location,
-            scope_id: "scope" as ScopeId,
-            is_hoisted: false,
-            is_exported: false,
-            is_imported: false,
-            value_type: "TypeId:number" as TypeId, // Add value_type property
-          } as SymbolDefinition & { value_type: TypeId }],
+          [
+            "var1" as SymbolId,
+            {
+              id: "var1" as SymbolId,
+              kind: "variable",
+              name: "var1" as SymbolName,
+              location: {} as Location,
+              scope_id: "scope" as ScopeId,
+              is_hoisted: false,
+              is_exported: false,
+              is_imported: false,
+              value_type: "TypeId:number" as TypeId, // Add value_type property
+            } as SymbolDefinition & { value_type: TypeId },
+          ],
         ]);
 
         const result = build_file_type_registry(symbols, "test.ts" as FilePath);
 
         expect(result.symbol_types.size).toBe(1);
-        expect(result.symbol_types.get("var1" as SymbolId)).toBe("TypeId:number" as TypeId);
+        expect(result.symbol_types.get("var1" as SymbolId)).toBe(
+          "TypeId:number" as TypeId
+        );
       });
 
       it("should handle non-type symbols gracefully", () => {
         const symbols = new Map<SymbolId, SymbolDefinition>([
-          ["func1" as SymbolId, {
-            id: "func1" as SymbolId,
-            kind: "function",
-            name: "func1" as SymbolName,
-            location: {} as Location,
-            scope_id: "scope" as ScopeId,
-            is_hoisted: false,
-            is_exported: false,
-            is_imported: false,
-          }],
-          ["var1" as SymbolId, {
-            id: "var1" as SymbolId,
-            kind: "variable",
-            name: "var1" as SymbolName,
-            location: {} as Location,
-            scope_id: "scope" as ScopeId,
-            is_hoisted: false,
-            is_exported: false,
-            is_imported: false,
-          }],
+          [
+            "func1" as SymbolId,
+            {
+              id: "func1" as SymbolId,
+              kind: "function",
+              name: "func1" as SymbolName,
+              location: {} as Location,
+              scope_id: "scope" as ScopeId,
+              is_hoisted: false,
+              is_exported: false,
+              is_imported: false,
+            },
+          ],
+          [
+            "var1" as SymbolId,
+            {
+              id: "var1" as SymbolId,
+              kind: "variable",
+              name: "var1" as SymbolName,
+              location: {} as Location,
+              scope_id: "scope" as ScopeId,
+              is_hoisted: false,
+              is_exported: false,
+              is_imported: false,
+            },
+          ],
         ]);
 
         const result = build_file_type_registry(symbols, "test.ts" as FilePath);
@@ -582,19 +640,25 @@ describe("Type Resolution Module", () => {
     describe("TypeRegistryResult interface", () => {
       it("should have correct structure", () => {
         const symbols = new Map<SymbolId, SymbolDefinition>([
-          ["type1" as SymbolId, {
-            id: "type1" as SymbolId,
-            kind: "interface",
-            name: "ITest" as SymbolName,
-            location: {} as Location,
-            scope_id: "scope" as ScopeId,
-            is_hoisted: false,
-            is_exported: false,
-            is_imported: false,
-          }],
+          [
+            "type1" as SymbolId,
+            {
+              id: "type1" as SymbolId,
+              kind: "interface",
+              name: "ITest" as SymbolName,
+              location: {} as Location,
+              scope_id: "scope" as ScopeId,
+              is_hoisted: false,
+              is_exported: false,
+              is_imported: false,
+            },
+          ],
         ]);
 
-        const result = build_file_type_registry_with_annotations(symbols, "test.ts" as FilePath);
+        const result = build_file_type_registry_with_annotations(
+          symbols,
+          "test.ts" as FilePath
+        );
 
         // Check TypeRegistryResult structure
         expect(result).toHaveProperty("registry");
@@ -610,33 +674,41 @@ describe("Type Resolution Module", () => {
         expect(result.registry).toHaveProperty("return_types");
 
         // Verify annotations map matches registry
-        expect(result.symbol_type_annotations.size).toBe(result.registry.symbol_to_type.size);
+        expect(result.symbol_type_annotations.size).toBe(
+          result.registry.symbol_to_type.size
+        );
       });
     });
 
     describe("Edge cases and error handling", () => {
       it("should handle name collisions (last wins)", () => {
         const symbols = new Map<SymbolId, SymbolDefinition>([
-          ["class1" as SymbolId, {
-            id: "class1" as SymbolId,
-            kind: "class",
-            name: "Duplicate" as SymbolName,
-            location: {} as Location,
-            scope_id: "scope" as ScopeId,
-            is_hoisted: false,
-            is_exported: false,
-            is_imported: false,
-          }],
-          ["class2" as SymbolId, {
-            id: "class2" as SymbolId,
-            kind: "class",
-            name: "Duplicate" as SymbolName,
-            location: {} as Location,
-            scope_id: "scope" as ScopeId,
-            is_hoisted: false,
-            is_exported: false,
-            is_imported: false,
-          }],
+          [
+            "class1" as SymbolId,
+            {
+              id: "class1" as SymbolId,
+              kind: "class",
+              name: "Duplicate" as SymbolName,
+              location: {} as Location,
+              scope_id: "scope" as ScopeId,
+              is_hoisted: false,
+              is_exported: false,
+              is_imported: false,
+            },
+          ],
+          [
+            "class2" as SymbolId,
+            {
+              id: "class2" as SymbolId,
+              kind: "class",
+              name: "Duplicate" as SymbolName,
+              location: {} as Location,
+              scope_id: "scope" as ScopeId,
+              is_hoisted: false,
+              is_exported: false,
+              is_imported: false,
+            },
+          ],
         ]);
 
         const result = build_file_type_registry(symbols, "test.ts" as FilePath);
@@ -650,18 +722,21 @@ describe("Type Resolution Module", () => {
 
       it("should handle mixed symbol kinds", () => {
         const symbols = new Map<SymbolId, SymbolDefinition>([
-          ["mixed" as SymbolId, {
-            id: "mixed" as SymbolId,
-            kind: "class",
-            name: "MixedSymbol" as SymbolName,
-            location: {} as Location,
-            scope_id: "scope" as ScopeId,
-            is_hoisted: false,
-            is_exported: true,
-            is_imported: false,
-            return_type: "TypeId:void" as TypeId,  // Add return_type
-            value_type: "TypeId:MixedSymbol" as TypeId,  // Add value_type
-          } as SymbolDefinition & { return_type: TypeId; value_type: TypeId }],
+          [
+            "mixed" as SymbolId,
+            {
+              id: "mixed" as SymbolId,
+              kind: "class",
+              name: "MixedSymbol" as SymbolName,
+              location: {} as Location,
+              scope_id: "scope" as ScopeId,
+              is_hoisted: false,
+              is_exported: true,
+              is_imported: false,
+              return_type: "TypeId:void" as TypeId, // Add return_type
+              value_type: "TypeId:MixedSymbol" as TypeId, // Add value_type
+            } as SymbolDefinition & { return_type: TypeId; value_type: TypeId },
+          ],
         ]);
 
         const result = build_file_type_registry(symbols, "test.ts" as FilePath);
@@ -684,18 +759,23 @@ describe("Type Resolution Module", () => {
       });
 
       it("should preserve original symbol references", () => {
-        const references = [{ location: {} as Location, name: "ref" as SymbolName }];
+        const references = [
+          { location: {} as Location, name: "ref" as SymbolName },
+        ];
         const symbols = new Map<SymbolId, SymbolDefinition>([
-          ["class1" as SymbolId, {
-            id: "class1" as SymbolId,
-            kind: "class",
-            name: "TestClass" as SymbolName,
-            location: {} as Location,
-            scope_id: "scope" as ScopeId,
-            is_hoisted: false,
-            is_exported: false,
-            is_imported: false,
-          }],
+          [
+            "class1" as SymbolId,
+            {
+              id: "class1" as SymbolId,
+              kind: "class",
+              name: "TestClass" as SymbolName,
+              location: {} as Location,
+              scope_id: "scope" as ScopeId,
+              is_hoisted: false,
+              is_exported: false,
+              is_imported: false,
+            },
+          ],
         ]);
 
         const result = build_file_type_registry(symbols, "test.ts" as FilePath);
@@ -722,7 +802,11 @@ describe("Type Resolution Module", () => {
           calls_to_function: new Map(),
         };
 
-        const result = resolve_types(mockLocalTypes, mockImports, mockFunctions);
+        const result = resolve_types(
+          mockLocalTypes,
+          mockImports,
+          mockFunctions
+        );
 
         expect(result).toBeDefined();
         expect(result.type_registry).toBeDefined();
@@ -744,9 +828,16 @@ describe("Type Resolution Module", () => {
           calls_to_function: new Map(),
         };
 
-        const fileIndices = new Map([["test.ts" as FilePath, { file_path: "test.ts" }]]);
+        const fileIndices = new Map([
+          ["test.ts" as FilePath, { file_path: "test.ts" }],
+        ]);
 
-        const result = resolve_types(mockLocalTypes, mockImports, mockFunctions, fileIndices);
+        const result = resolve_types(
+          mockLocalTypes,
+          mockImports,
+          mockFunctions,
+          fileIndices
+        );
 
         expect(result).toBeDefined();
         expect(result.type_registry).toBeDefined();
@@ -801,23 +892,29 @@ describe("Type Resolution Module", () => {
             line: 10,
             column: 0,
             end_line: 20,
-            end_column: 0
+            end_column: 0,
           },
           file_path: "test.ts" as FilePath,
           direct_members: new Map([
-            ["method1" as SymbolName, {
-              name: "method1" as SymbolName,
-              kind: "method",
-              location: {} as Location,
-              is_static: false,
-            }],
-            ["prop1" as SymbolName, {
-              name: "prop1" as SymbolName,
-              kind: "property",
-              location: {} as Location,
-              is_optional: true,
-              type_annotation: "string",
-            }],
+            [
+              "method1" as SymbolName,
+              {
+                name: "method1" as SymbolName,
+                kind: "method",
+                location: {} as Location,
+                is_static: false,
+              },
+            ],
+            [
+              "prop1" as SymbolName,
+              {
+                name: "prop1" as SymbolName,
+                kind: "property",
+                location: {} as Location,
+                is_optional: true,
+                type_annotation: "string",
+              },
+            ],
           ]),
           extends_names: ["BaseClass" as SymbolName],
           implements_names: ["IFoo" as SymbolName, "IBar" as SymbolName],
@@ -835,18 +932,23 @@ describe("Type Resolution Module", () => {
           location: {} as Location,
           file_path: "service.ts" as FilePath,
           direct_members: new Map([
-            ["process" as SymbolName, {
-              name: "process" as SymbolName,
-              kind: "method",
-              location: {} as Location,
-              type_annotation: "(data: any) => void",
-            }],
+            [
+              "process" as SymbolName,
+              {
+                name: "process" as SymbolName,
+                kind: "method",
+                location: {} as Location,
+                type_annotation: "(data: any) => void",
+              },
+            ],
           ]),
           extends_names: ["IBase" as SymbolName],
         };
 
         expect(interfaceDefinition.kind).toBe("interface");
-        expect(interfaceDefinition.direct_members.has("process" as SymbolName)).toBe(true);
+        expect(
+          interfaceDefinition.direct_members.has("process" as SymbolName)
+        ).toBe(true);
       });
     });
 
@@ -858,22 +960,30 @@ describe("Type Resolution Module", () => {
           location: {} as Location,
           file_path: "test.py" as FilePath,
           direct_members: new Map([
-            ["__init__" as SymbolName, {
-              name: "__init__" as SymbolName,
-              kind: "method",
-              location: {} as Location,
-            }],
-            ["class_method" as SymbolName, {
-              name: "class_method" as SymbolName,
-              kind: "method",
-              location: {} as Location,
-              is_static: true,
-            }],
+            [
+              "__init__" as SymbolName,
+              {
+                name: "__init__" as SymbolName,
+                kind: "method",
+                location: {} as Location,
+              },
+            ],
+            [
+              "class_method" as SymbolName,
+              {
+                name: "class_method" as SymbolName,
+                kind: "method",
+                location: {} as Location,
+                is_static: true,
+              },
+            ],
           ]),
           extends_names: ["BaseClass" as SymbolName],
         };
 
-        expect(pythonClass.direct_members.has("__init__" as SymbolName)).toBe(true);
+        expect(pythonClass.direct_members.has("__init__" as SymbolName)).toBe(
+          true
+        );
       });
     });
 
@@ -885,14 +995,14 @@ describe("Type Resolution Module", () => {
             line: 5,
             column: 0,
             end_line: 6,
-            end_column: 0
+            end_column: 0,
           },
           target_location: {
             file_path: "test.ts" as FilePath,
             line: 1,
             column: 0,
             end_line: 2,
-            end_column: 0
+            end_column: 0,
           },
           flow_kind: "assignment",
           scope_id: "scope:function:test" as ScopeId,

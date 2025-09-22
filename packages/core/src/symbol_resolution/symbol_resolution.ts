@@ -27,18 +27,21 @@ import type {
   TypeResolutionMap,
   MethodResolutionMap,
 } from "./types";
+import { defined_type_id, TypeCategory } from "@ariadnejs/types";
 import { SemanticIndex } from "../semantic_index/semantic_index";
 import {
   build_global_type_registry,
   resolve_type_annotations,
   resolve_inheritance,
   resolve_type_tracking,
+  resolve_type_members,
 } from "./type_resolution";
 import type {
   LocalTypeDefinition,
   LocalTypeExtraction,
   LocalTypeAnnotation as TypeResolutionAnnotation,
   LocalTypeFlow as TypeResolutionFlow,
+  ResolvedMemberInfo,
 } from "./type_resolution/types";
 import type { LocalTypeTracking } from "../semantic_index/references/type_tracking";
 import type { LocalTypeAnnotation as SemanticAnnotation } from "../semantic_index/references/type_annotation_references";
@@ -49,6 +52,36 @@ import {
 import type { LanguageImportHandler } from "./import_resolution";
 import { create_standard_language_handlers } from "./import_resolution/language_handlers";
 import { phase2_resolve_functions } from "./function_resolution";
+
+/**
+ * Create a TypeId from a local type definition
+ */
+function create_type_id(type_def: LocalTypeDefinition): TypeId {
+  const category = kind_to_category(type_def.kind);
+  return defined_type_id(category, type_def.name, type_def.location);
+}
+
+/**
+ * Convert type kind to TypeCategory
+ */
+function kind_to_category(
+  kind: "class" | "interface" | "type" | "enum"
+):
+  | TypeCategory.CLASS
+  | TypeCategory.INTERFACE
+  | TypeCategory.TYPE_ALIAS
+  | TypeCategory.ENUM {
+  switch (kind) {
+    case "class":
+      return TypeCategory.CLASS;
+    case "interface":
+      return TypeCategory.INTERFACE;
+    case "type":
+      return TypeCategory.TYPE_ALIAS;
+    case "enum":
+      return TypeCategory.ENUM;
+  }
+}
 
 /**
  * Main entry point for symbol resolution
@@ -142,9 +175,40 @@ function phase3_resolve_types(
   }
 
   // Step 4: Resolve all type members including inherited
-  // TODO: resolve_type_members needs to be called for each type individually
-  // For now, return empty Map to avoid runtime errors
-  const resolved_members = new Map();
+  const all_type_definitions = new Map<TypeId, LocalTypeDefinition>();
+  const resolved_members = new Map<
+    TypeId,
+    Map<SymbolName, ResolvedMemberInfo>
+  >();
+
+  // Build TypeId -> LocalTypeDefinition map
+  for (const [file_path, defs] of local_extraction.type_definitions) {
+    for (const def of defs) {
+      const type_id = create_type_id(def);
+      all_type_definitions.set(type_id, def);
+    }
+  }
+
+  // Create hierarchy map from TypeHierarchyGraph
+  const hierarchy_map = new Map<TypeId, TypeId[]>();
+  for (const [child_type, parent_types] of type_hierarchy.extends_map) {
+    hierarchy_map.set(child_type, parent_types);
+  }
+  for (const [impl_type, interface_types] of type_hierarchy.implements_map) {
+    const existing = hierarchy_map.get(impl_type) || [];
+    hierarchy_map.set(impl_type, [...existing, ...interface_types]);
+  }
+
+  // Resolve members for each type
+  for (const [type_id, def] of all_type_definitions) {
+    const resolved = resolve_type_members(
+      type_id,
+      def,
+      hierarchy_map,
+      all_type_definitions
+    );
+    resolved_members.set(type_id, resolved.all_members);
+  }
 
   // Step 5: Resolve type annotations to TypeIds
   // Flatten all annotations from all files
@@ -179,7 +243,7 @@ function phase3_resolve_types(
   const type_flow = {
     assignment_types: new Map<Location, TypeId>(),
     flow_edges: [],
-  } ;
+  };
 
   // Build result maps for compatibility
   const symbol_types = new Map<SymbolId, TypeId>();
@@ -188,8 +252,8 @@ function phase3_resolve_types(
   const constructors = new Map<TypeId, SymbolId>();
 
   // Populate symbol_types from type_tracking
-  if (type_tracking && (type_tracking ).variable_types) {
-    for (const [symbol_id, type_id] of (type_tracking ).variable_types) {
+  if (type_tracking && type_tracking.variable_types) {
+    for (const [symbol_id, type_id] of type_tracking.variable_types) {
       symbol_types.set(symbol_id, type_id);
     }
   }
@@ -202,9 +266,9 @@ function phase3_resolve_types(
     }
   }
 
-  if (type_flow && (type_flow ).assignment_types) {
-    for (const [loc, type_id] of (type_flow ).assignment_types) {
-      reference_types.set(loc, type_id);
+  if (type_flow && type_flow.assignment_types) {
+    for (const [loc, type_id] of type_flow.assignment_types) {
+      reference_types.set(location_key(loc), type_id);
     }
   }
 
@@ -239,7 +303,7 @@ function phase3_resolve_types(
     type_members,
     constructors,
     inheritance_hierarchy,
-    interface_implementations
+    interface_implementations,
   };
 }
 
@@ -255,7 +319,7 @@ function collect_local_types(
 
   for (const [file_path, index] of indices) {
     // Convert LocalTypeInfo to LocalTypeDefinition
-    const defs: LocalTypeDefinition[] = index.local_types.map(local_type => ({
+    const defs: LocalTypeDefinition[] = index.local_types.map((local_type) => ({
       name: local_type.type_name,
       kind: local_type.kind,
       location: local_type.location,
@@ -270,20 +334,30 @@ function collect_local_types(
     }
 
     // Convert semantic annotations to type resolution annotations
-    if (index.local_type_annotations && index.local_type_annotations.length > 0) {
-      const converted_annotations: TypeResolutionAnnotation[] = index.local_type_annotations.map(ann => ({
-        location: ann.location,
-        annotation_text: ann.annotation_text,
-        annotation_kind: map_annotation_kind(ann.annotation_kind),
-        scope_id: ann.scope_id,
-      }));
+    if (
+      index.local_type_annotations &&
+      index.local_type_annotations.length > 0
+    ) {
+      const converted_annotations: TypeResolutionAnnotation[] =
+        index.local_type_annotations.map((ann) => ({
+          location: ann.location,
+          annotation_text: ann.annotation_text,
+          annotation_kind: map_annotation_kind(ann.annotation_kind),
+          scope_id: ann.scope_id,
+        }));
       type_annotations.set(file_path, converted_annotations);
     }
 
     // Convert semantic flow to type resolution flow - simplified
     if (index.local_type_flow) {
       const flow: TypeResolutionFlow = {
-        location: index.local_type_flow.constructor_calls[0]?.location || { file_path, line: 0, column: 0, end_line: 0, end_column: 0 },
+        location: index.local_type_flow.constructor_calls[0]?.location || {
+          file_path,
+          line: 0,
+          column: 0,
+          end_line: 0,
+          end_column: 0,
+        },
         flow_kind: "constructor" as const,
       };
       type_flows.set(file_path, [flow]);
@@ -361,7 +435,9 @@ function phase4_resolve_methods(
           continue;
         }
         // Check if this is a method call (member access followed by call)
-        const object_type = types.reference_types.get(location_key(receiver_object));
+        const object_type = types.reference_types.get(
+          location_key(receiver_object)
+        );
 
         if (object_type) {
           // Look up method in resolved type members
@@ -395,7 +471,10 @@ function phase4_resolve_methods(
             if (type_id) {
               const ctor_id = types.constructors.get(type_id);
               if (ctor_id) {
-                constructor_calls.set(location_key(ctor_call.location), ctor_id);
+                constructor_calls.set(
+                  location_key(ctor_call.location),
+                  ctor_id
+                );
 
                 // Update reverse mapping
                 const calls = calls_to_method.get(ctor_id) || [];
