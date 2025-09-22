@@ -247,7 +247,7 @@ function phase3_resolve_types(
   // Build result maps for compatibility
   const symbol_types = new Map<SymbolId, TypeId>();
   const reference_types = new Map<LocationKey, TypeId>();
-  const type_members = new Map<TypeId, Map<SymbolName, SymbolId>>();
+  const type_members = new Map<TypeId, ReadonlyMap<SymbolName, SymbolId>>();
   const constructors = new Map<TypeId, SymbolId>();
 
   // Populate symbol_types from type_tracking
@@ -280,7 +280,7 @@ function phase3_resolve_types(
           member_map.set(member_name, member_info.symbol_id);
         }
       }
-      type_members.set(type_id, member_map);
+      type_members.set(type_id, member_map as ReadonlyMap<SymbolName, SymbolId>);
     }
   }
 
@@ -297,12 +297,12 @@ function phase3_resolve_types(
   }
 
   return {
-    symbol_types,
-    reference_types,
-    type_members,
-    constructors,
-    inheritance_hierarchy,
-    interface_implementations,
+    symbol_types: symbol_types as ReadonlyMap<SymbolId, TypeId>,
+    reference_types: reference_types as ReadonlyMap<LocationKey, TypeId>,
+    type_members: type_members as ReadonlyMap<TypeId, ReadonlyMap<SymbolName, SymbolId>>,
+    constructors: constructors as ReadonlyMap<TypeId, SymbolId>,
+    inheritance_hierarchy: inheritance_hierarchy as ReadonlyMap<TypeId, readonly TypeId[]>,
+    interface_implementations: interface_implementations as ReadonlyMap<TypeId, readonly TypeId[]>,
   };
 }
 

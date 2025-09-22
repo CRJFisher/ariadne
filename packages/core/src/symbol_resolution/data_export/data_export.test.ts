@@ -14,6 +14,7 @@ import {
   export_symbol_resolution_data,
   count_total_symbols,
 } from "./resolution_exporter";
+import { locationMapToKeyMap } from "../test_helpers";
 import type {
   ExportedSymbolResolution,
   ExportedImportMap,
@@ -26,6 +27,7 @@ import type {
   FilePath,
   SymbolId,
   Location,
+  LocationKey,
   SymbolName,
   TypeId,
 } from "@ariadnejs/types";
@@ -66,11 +68,11 @@ function create_test_resolved_symbols(): ResolvedSymbols {
   const type1 = defined_type_id("DataModel", file3, create_location(file3, 1, 0));
 
   // Build import map
-  const imports = new Map<FilePath, Map<SymbolName, SymbolId>>();
+  const imports = new Map<FilePath, ReadonlyMap<SymbolName, SymbolId>>();
   const file1Imports = new Map<SymbolName, SymbolId>();
   file1Imports.set("formatOutput" as SymbolName, func2);
   file1Imports.set("DataModel" as SymbolName, class1);
-  imports.set(file1, file1Imports);
+  imports.set(file1, file1Imports as ReadonlyMap<SymbolName, SymbolId>);
 
   // Build function calls map
   const function_calls = new Map();
@@ -98,10 +100,10 @@ function create_test_resolved_symbols(): ResolvedSymbols {
   const reference_types = new Map<Location, TypeId>();
   reference_types.set(create_location(file1, 12, 10), type1);
 
-  const type_members = new Map<TypeId, Map<SymbolName, SymbolId>>();
+  const type_members = new Map<TypeId, ReadonlyMap<SymbolName, SymbolId>>();
   const members = new Map<SymbolName, SymbolId>();
   members.set("save" as SymbolName, method1);
-  type_members.set(type1, members);
+  type_members.set(type1, members as ReadonlyMap<SymbolName, SymbolId>);
 
   const constructors = new Map<TypeId, SymbolId>();
   constructors.set(type1, class1);
@@ -121,25 +123,27 @@ function create_test_resolved_symbols(): ResolvedSymbols {
   references_to_symbol.set(method1, [create_location(file1, 25, 15)]);
 
   return {
-    resolved_references,
-    references_to_symbol,
-    unresolved_references: new Map(),
+    resolved_references: locationMapToKeyMap(resolved_references),
+    references_to_symbol: references_to_symbol as ReadonlyMap<SymbolId, readonly Location[]>,
+    unresolved_references: new Map() as ReadonlyMap<LocationKey, string>,
     phases: {
-      imports: { imports },
+      imports: { imports: imports as ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> },
       functions: {
-        function_calls,
-        calls_to_function: new Map(),
+        function_calls: locationMapToKeyMap(function_calls),
+        calls_to_function: new Map() as ReadonlyMap<SymbolId, readonly Location[]>,
       },
       types: {
-        symbol_types,
-        reference_types,
-        type_members,
-        constructors,
+        symbol_types: symbol_types as ReadonlyMap<SymbolId, TypeId>,
+        reference_types: locationMapToKeyMap(reference_types),
+        type_members: type_members as ReadonlyMap<TypeId, ReadonlyMap<SymbolName, SymbolId>>,
+        constructors: constructors as ReadonlyMap<TypeId, SymbolId>,
+        inheritance_hierarchy: new Map() as ReadonlyMap<TypeId, readonly TypeId[]>,
+        interface_implementations: new Map() as ReadonlyMap<TypeId, readonly TypeId[]>,
       },
       methods: {
-        method_calls,
-        constructor_calls,
-        calls_to_method: new Map(),
+        method_calls: locationMapToKeyMap(method_calls),
+        constructor_calls: locationMapToKeyMap(constructor_calls),
+        calls_to_method: new Map() as ReadonlyMap<SymbolId, readonly Location[]>,
       },
     },
   };
@@ -312,9 +316,12 @@ describe("Data Export Module", () => {
       const special_imports = new Map<SymbolName, SymbolId>();
       special_imports.set(
         '"quoted"' as SymbolName,
-        function_symbol('"quoted"' as SymbolName, special_file, create_location(special_file, 1, 0))
+        function_symbol('"quoted"' as SymbolName, special_file)
       );
-      resolved_symbols.phases.imports.imports.set(special_file, special_imports);
+      // Create a mutable copy of the imports map
+      const mutableImports = new Map(resolved_symbols.phases.imports.imports);
+      mutableImports.set(special_file, special_imports as ReadonlyMap<SymbolName, SymbolId>);
+      resolved_symbols.phases.imports.imports = mutableImports as ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>;
 
       const csv_export = export_symbol_resolution_data(resolved_symbols, "csv");
 
@@ -374,18 +381,24 @@ describe("Data Export Module", () => {
         create_location("src/shared.ts" as FilePath, 1, 0)
       );
 
-      resolved_symbols.resolved_references.set(
-        create_location("src/main.ts" as FilePath, 30, 10),
+      // Create mutable copies to modify
+      const mutableResolvedRefs = new Map(resolved_symbols.resolved_references);
+      mutableResolvedRefs.set(
+        location_key(create_location("src/main.ts" as FilePath, 30, 10)),
         shared_symbol
       );
-      resolved_symbols.resolved_references.set(
-        create_location("src/utils.ts" as FilePath, 40, 10),
+      mutableResolvedRefs.set(
+        location_key(create_location("src/utils.ts" as FilePath, 40, 10)),
         shared_symbol
       );
-      resolved_symbols.references_to_symbol.set(shared_symbol, [
+      resolved_symbols.resolved_references = mutableResolvedRefs as ReadonlyMap<LocationKey, SymbolId>;
+
+      const mutableRefsToSymbol = new Map(resolved_symbols.references_to_symbol);
+      mutableRefsToSymbol.set(shared_symbol, [
         create_location("src/main.ts" as FilePath, 30, 10),
         create_location("src/utils.ts" as FilePath, 40, 10),
       ]);
+      resolved_symbols.references_to_symbol = mutableRefsToSymbol as ReadonlyMap<SymbolId, readonly Location[]>;
 
       const count = count_total_symbols(resolved_symbols);
       expect(count).toBe(5); // Original 4 + 1 new shared symbol

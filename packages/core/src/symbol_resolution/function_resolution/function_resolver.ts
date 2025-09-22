@@ -72,7 +72,11 @@ export function resolve_function_calls(
     }
   });
 
-  return { function_calls, calls_to_function, resolution_details };
+  return {
+    function_calls: function_calls as ReadonlyMap<LocationKey, SymbolId>,
+    calls_to_function: calls_to_function as ReadonlyMap<SymbolId, readonly Location[]>,
+    resolution_details: resolution_details as ReadonlyMap<LocationKey, FunctionCallResolution>
+  };
 }
 
 /**
