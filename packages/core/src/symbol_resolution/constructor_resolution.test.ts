@@ -103,7 +103,10 @@ describe("Constructor Resolution", () => {
           name: "MyClass" as SymbolName,
           kind: "class",
           location: my_class_location,
-          definition_scope: `scope:module:${lib_path}:0:0` as ScopeId,
+          scope_id: `scope:module:${lib_path}:0:0` as ScopeId,
+          is_hoisted: false,
+          is_exported: true,
+          is_imported: false,
         }],
       ]);
 
@@ -133,7 +136,7 @@ describe("Constructor Resolution", () => {
         constructor_calls: [{
           class_name: "MyClass" as SymbolName,
           location: constructor_call_location,
-          arguments_count: 0,
+          argument_count: 0,
         }],
         assignments: [],
         returns: [],
@@ -190,7 +193,10 @@ describe("Constructor Resolution", () => {
           name: "Logger" as SymbolName,
           kind: "class",
           location: logger_location,
-          definition_scope: `scope:module:${util_path}:0:0` as ScopeId,
+          scope_id: `scope:module:${util_path}:0:0` as ScopeId,
+          is_hoisted: false,
+          is_exported: true,
+          is_imported: false,
         }]]),
         exports: [{
           kind: "named",
@@ -210,7 +216,10 @@ describe("Constructor Resolution", () => {
           name: "Database" as SymbolName,
           kind: "class",
           location: db_location,
-          definition_scope: `scope:module:${service_path}:0:0` as ScopeId,
+          scope_id: `scope:module:${service_path}:0:0` as ScopeId,
+          is_hoisted: false,
+          is_exported: true,
+          is_imported: false,
         }]]),
         exports: [{
           kind: "named",
@@ -250,12 +259,12 @@ describe("Constructor Resolution", () => {
             {
               class_name: "Logger" as SymbolName,
               location: logger_call_location,
-              arguments_count: 1,
+              argument_count: 1,
             },
             {
               class_name: "Database" as SymbolName,
               location: db_call_location,
-              arguments_count: 2,
+              argument_count: 2,
             },
           ],
           assignments: [],
@@ -298,7 +307,10 @@ describe("Constructor Resolution", () => {
           name: "LocalClass" as SymbolName,
           kind: "class",
           location: class_location,
-          definition_scope: `scope:module:${file_path}:0:0` as ScopeId,
+          scope_id: `scope:module:${file_path}:0:0` as ScopeId,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
         }],
       ]);
 
@@ -306,7 +318,7 @@ describe("Constructor Resolution", () => {
         constructor_calls: [{
           class_name: "LocalClass" as SymbolName,
           location: constructor_call_location,
-          arguments_count: 0,
+          argument_count: 0,
         }],
         assignments: [],
         returns: [],
@@ -344,7 +356,10 @@ describe("Constructor Resolution", () => {
           name: "Utility" as SymbolName,
           kind: "class",
           location: imported_class_location,
-          definition_scope: `scope:module:${lib_path}:0:0` as ScopeId,
+          scope_id: `scope:module:${lib_path}:0:0` as ScopeId,
+          is_hoisted: false,
+          is_exported: true,
+          is_imported: false,
         }]]),
         exports: [{
           kind: "named",
@@ -364,7 +379,10 @@ describe("Constructor Resolution", () => {
           name: "Utility" as SymbolName,
           kind: "class",
           location: local_class_location,
-          definition_scope: `scope:module:${app_path}:0:0` as ScopeId,
+          scope_id: `scope:module:${app_path}:0:0` as ScopeId,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
         }]]),
         imports: [{
           kind: "named",
@@ -379,7 +397,7 @@ describe("Constructor Resolution", () => {
           constructor_calls: [{
             class_name: "Utility" as SymbolName,
             location: constructor_call_location,
-            arguments_count: 0,
+            argument_count: 0,
           }],
           assignments: [],
           returns: [],
@@ -411,7 +429,7 @@ describe("Constructor Resolution", () => {
         constructor_calls: [{
           class_name: "NonExistentClass" as SymbolName,
           location: constructor_call_location,
-          arguments_count: 0,
+          argument_count: 0,
         }],
         assignments: [],
         returns: [],
@@ -450,7 +468,7 @@ describe("Constructor Resolution", () => {
           constructor_calls: [{
             class_name: "MissingClass" as SymbolName,
             location: constructor_call_location,
-            arguments_count: 0,
+            argument_count: 0,
           }],
           assignments: [],
           returns: [],
@@ -484,7 +502,10 @@ describe("Constructor Resolution", () => {
           name: "notAClass" as SymbolName,
           kind: "function",
           location: func_location,
-          definition_scope: `scope:module:${lib_path}:0:0` as ScopeId,
+          scope_id: `scope:module:${lib_path}:0:0` as ScopeId,
+          is_hoisted: true,
+          is_exported: false,
+          is_imported: false,
         }]]),
         exports: [{
           kind: "named",
@@ -512,7 +533,7 @@ describe("Constructor Resolution", () => {
           constructor_calls: [{
             class_name: "notAClass" as SymbolName,
             location: constructor_call_location,
-            arguments_count: 0,
+            argument_count: 0,
           }],
           assignments: [],
           returns: [],
@@ -569,7 +590,10 @@ describe("Constructor Resolution", () => {
           name: "ComplexClass" as SymbolName,
           kind: "class",
           location: class_location,
-          definition_scope: `scope:module:${lib_path}:0:0` as ScopeId,
+          scope_id: `scope:module:${lib_path}:0:0` as ScopeId,
+          is_hoisted: false,
+          is_exported: true,
+          is_imported: false,
         }]]),
         exports: [{
           kind: "named",
@@ -597,7 +621,7 @@ describe("Constructor Resolution", () => {
           constructor_calls: [{
             class_name: "ComplexClass" as SymbolName,
             location: constructor_call_location,
-            arguments_count: 3,
+            argument_count: 3,
           }],
           assignments: [],
           returns: [],

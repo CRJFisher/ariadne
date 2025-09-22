@@ -62,7 +62,7 @@ function create_test_project(files: Array<{
         name: sym.name as SymbolName,
         kind: sym.kind,
         location: sym.location,
-        definition_scope: root_scope_id,
+        scope_id: root_scope_id,
       });
     }
 
@@ -356,7 +356,7 @@ describe("Complete Symbol Resolution Pipeline", () => {
               constructor_calls: [{
                 class_name: "MyClass" as SymbolName,
                 location: constructor_call_location,
-                arguments_count: 0,
+                argument_count: 0,
               }],
               assignments: [],
               returns: [],
@@ -502,7 +502,7 @@ describe("Complete Symbol Resolution Pipeline", () => {
               constructor_calls: [{
                 class_name: "Calculator" as SymbolName,
                 location: create_location(app_path, 5, 20),
-                arguments_count: 0,
+                argument_count: 0,
               }],
               assignments: [],
               returns: [],
@@ -564,7 +564,7 @@ describe("Complete Symbol Resolution Pipeline", () => {
               kind: "function",
               name: "nonExistent" as SymbolName,
               location: create_location("src/broken.ts" as FilePath, 3, 10),
-              arguments_count: 0,
+              argument_count: 0,
             }],
           }
         }

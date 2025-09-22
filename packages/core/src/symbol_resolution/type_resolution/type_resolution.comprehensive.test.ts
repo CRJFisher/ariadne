@@ -146,7 +146,7 @@ function create_symbol_definition(props: {
     kind: props.kind as any,
     name: props.name,
     location: props.location,
-    definition_scope: props.scope_id,
+    scope_id: props.scope_id,
     is_hoisted: false,
     is_exported: false,
     is_imported: false,

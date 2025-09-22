@@ -154,7 +154,7 @@ export function create_test_symbol_definition(props: {
     kind: props.kind as any,
     name: create_test_symbol_name(props.name),
     location,
-    definition_scope: props.scope_id || create_test_scope_id("global"),
+    scope_id: props.scope_id || create_test_scope_id("global"),
     is_hoisted: false,
     is_exported: props.is_exported || false,
     is_imported: props.is_imported || false,

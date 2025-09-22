@@ -45,9 +45,6 @@ describe("Reference Types", () => {
         expression: "return value",
         scope_id: "test_scope" as ScopeId,
         function_scope_id: "func_scope" as ScopeId,
-        is_conditional: false,
-        is_async: false,
-        is_yield: false,
       };
 
       const memberAccessRef: MemberAccessReference = {
