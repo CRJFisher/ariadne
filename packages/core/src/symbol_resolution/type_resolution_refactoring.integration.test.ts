@@ -16,7 +16,14 @@ import type {
   ScopeId,
   LexicalScope,
 } from "@ariadnejs/types";
-import { symbol_id, defined_type_id, TypeCategory } from "@ariadnejs/types";
+import {
+  function_symbol,
+  class_symbol,
+  method_symbol,
+  variable_symbol,
+  defined_type_id,
+  TypeCategory
+} from "@ariadnejs/types";
 import type { SemanticIndex } from "../semantic_index/semantic_index";
 import type { LocalTypeInfo } from "../semantic_index/type_members";
 import type { LocalTypeAnnotation } from "../semantic_index/references/type_annotation_references";
@@ -161,7 +168,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
 
     // Add class symbols
     options.classes?.forEach((cls, idx) => {
-      const id = symbol_id("class", cls.name, location(filePath, (idx + 1) * 10, 0));
+      const id = class_symbol(cls.name, filePath, location(filePath, (idx + 1) * 10, 0));
       symbols.set(id, {
         id,
         name: cls.name,
@@ -176,7 +183,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
 
     // Add function symbols
     options.functions?.forEach((func, idx) => {
-      const id = symbol_id("function", func.name, location(filePath, (idx + 1) * 10 + 50, 0));
+      const id = function_symbol(func.name, filePath, location(filePath, (idx + 1) * 10 + 50, 0));
       symbols.set(id, {
         id,
         name: func.name,
@@ -196,10 +203,10 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
       scopes: new Map([[rootScopeId, rootScope]]),
       symbols,
       references: {
-        function_calls: [],
+        calls: [],
         member_accesses: [],
         returns: [],
-        type_references: [],
+        type_annotations: [],
       },
       imports: [],
       exports: [],

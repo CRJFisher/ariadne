@@ -7,6 +7,18 @@
 **Created**: 2025-01-20
 **Estimated Effort**: 2-3 days
 
+## Sub-Tasks
+
+1. **task-epic-11.91.3.1**: Basic method resolution and type lookup (1-1.5 days) ✅ **Completed 2025-01-22**
+   - Actual effort: 0.5 days
+   - Delivered all core functionality
+   - Identified need for fallback resolution strategies
+
+2. **task-epic-11.91.3.2**: Inheritance chain resolution and constructor enhancement (1-1.5 days)
+   - Ready to start
+   - Should leverage fallback strategies from 11.91.3.1
+   - Consider splitting interface/trait resolution into separate task
+
 ## Problem Statement
 
 Phase 4 of the symbol resolution pipeline has a basic implementation but lacks the integration with Phases 1-2 and sophisticated type-based resolution. With import and function resolution now available, method and constructor resolution can be significantly enhanced.
@@ -432,11 +444,14 @@ fixtures/
 
 ## Dependencies
 
-- **Prerequisite**: task-epic-11.91.1 (Import resolution)
-- **Prerequisite**: task-epic-11.91.2 (Function resolution)
+- **Prerequisite**: task-epic-11.91.1 (Import resolution) - must be completed first
+- **Prerequisite**: task-epic-11.91.2 (Function resolution) - must be completed first
 - **Prerequisite**: task-epic-11.90 (Type resolution refactoring) - ✅ Complete
-- **Enables**: Complete call graph construction
-- **Enables**: Advanced IDE features (method hierarchy, implementations)
+- **Sub-task dependencies**:
+  - task-epic-11.91.3.1 (Basic method resolution) can start after prerequisites
+  - task-epic-11.91.3.2 (Inheritance resolution) requires 11.91.3.1 complete
+- **Enables**: task-epic-11.91.4 (Complete symbol resolution testing)
+- **Enables**: Future call graph construction and advanced IDE features
 
 ## Risks and Mitigations
 
@@ -473,3 +488,47 @@ Some calls may be ambiguous between functions and methods.
 - Rust trait system guide
 - TypeScript interface implementation rules
 - Existing type_resolution implementation
+
+## Implementation Progress
+
+### Completed: Sub-task 11.91.3.1 (2025-01-22)
+
+**Modules Created**:
+- `symbol_resolution/method_resolution/` - New module with 5 core files
+- Full test coverage with all tests passing
+
+**Key Achievements**:
+1. ✅ Basic method resolution working for direct type lookups
+2. ✅ Static vs instance method differentiation implemented
+3. ✅ Constructor call resolution functional
+4. ✅ Fallback strategies for missing type information
+
+**Important Discoveries**:
+1. **Receiver Type Resolution**: Static method calls on class names (e.g., `MyClass.staticMethod()`) require special handling through file_symbols_by_name lookup
+2. **Dual Resolution Paths**: Constructors may be stored in either type_members or the separate constructors map
+3. **Type Dependency**: Method resolution heavily depends on complete type information from Phase 3
+
+**Architectural Decisions**:
+- Separated concerns into focused modules (types, lookup, static resolution, main resolver)
+- Implemented multiple fallback strategies for robustness
+- Maintained functional programming style consistent with codebase
+
+### Remaining Work: Sub-task 11.91.3.2
+
+**Ready to Implement**:
+- Inheritance chain traversal
+- Method lookup through base classes
+- Interface method resolution
+- Enhanced constructor matching
+
+**Considerations for 11.91.3.2**:
+1. Build on fallback strategies from 11.91.3.1
+2. May need to split interface/trait resolution into separate task if complex
+3. Should profile performance with deep inheritance chains
+4. Consider caching resolved inheritance chains
+
+**Potential Follow-on Tasks** (not in current scope):
+- Parameter-based method/constructor disambiguation
+- Generic method type parameter resolution
+- Cross-file resolution optimization
+- Method resolution diagnostics/error reporting

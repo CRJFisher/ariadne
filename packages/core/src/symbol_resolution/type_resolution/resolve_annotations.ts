@@ -8,6 +8,6 @@ export function resolve_type_annotations(
   annotations: LocalTypeAnnotation[],
   type_names: Map<FilePath, Map<SymbolName, TypeId>>
 ): Map<string, TypeId> {
-  // TODO: Implement in later task
-  throw new Error("Not implemented");
+  // TODO: Implement in later task - returning empty map for now
+  return new Map();
 }

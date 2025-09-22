@@ -74,7 +74,7 @@ describe("Type Resolution Module", () => {
       expect(resolve_types.length).toBe(4); // local_types, imports, functions, file_indices (optional)
       expect(build_type_registry.length).toBe(1); // type_definitions
       expect(resolve_type_members.length).toBe(3); // type_id, local_def, hierarchy
-      expect(analyze_type_flow.length).toBe(2); // type_flows, resolved_types
+      expect(analyze_type_flow.length).toBe(4); // local_flows, imports, functions, types
       expect(resolve_type_annotations.length).toBe(2); // annotations, type_names
       expect(resolve_inheritance.length).toBe(2); // type_definitions, type_registry
 
@@ -198,7 +198,7 @@ describe("Type Resolution Module", () => {
       expect(registry.type_names.size).toBe(0);
     });
 
-    it("resolve_type_members should throw not implemented error", () => {
+    it("resolve_type_members should return minimal structure", () => {
       const type_id = "TypeId:test" as TypeId;
       const local_def: LocalTypeDefinition = {
         name: "Test" as SymbolName,
@@ -209,36 +209,56 @@ describe("Type Resolution Module", () => {
       };
       const hierarchy = new Map<TypeId, TypeId[]>();
 
-      expect(() =>
-        resolve_type_members(type_id, local_def, hierarchy)
-      ).toThrow("Not implemented");
+      const result = resolve_type_members(type_id, local_def, hierarchy);
+
+      expect(result).toBeDefined();
+      expect(result.type_id).toBe(type_id);
+      expect(result.name).toBe("Test");
+      expect(result.kind).toBe("class");
+      expect(result.direct_members).toBeInstanceOf(Map);
+      expect(result.all_members).toBeInstanceOf(Map);
     });
 
-    it("analyze_type_flow should throw not implemented error", () => {
+    it("analyze_type_flow should return ResolvedTypeFlow", () => {
       const flows: Map<FilePath, LocalTypeFlow> = new Map();
-      const resolved_types = new Map<Location, TypeId>();
+      const imports = new Map<FilePath, Map<SymbolName, { resolved_location?: Location }>>();
+      const functions = new Map<SymbolId, { return_type?: TypeId }>();
+      const types: GlobalTypeRegistry = {
+        all_types: new Map(),
+        type_names: new Map()
+      };
 
-      expect(() =>
-        analyze_type_flow(flows, resolved_types, new Map(), new Map())
-      ).toThrow("Not implemented");
+      const result = analyze_type_flow(flows, imports, functions, types);
+
+      expect(result).toBeDefined();
+      expect(result.flow_graph).toBeDefined();
+      expect(result.constructor_types).toBeInstanceOf(Map);
+      expect(result.inferred_types).toBeInstanceOf(Map);
+      expect(result.return_types).toBeInstanceOf(Map);
     });
 
-    it("resolve_type_annotations should throw not implemented error", () => {
+    it("resolve_type_annotations should return empty map", () => {
       const annotations: LocalTypeAnnotation[] = [];
       const type_names = new Map<FilePath, Map<SymbolName, TypeId>>();
 
-      expect(() =>
-        resolve_type_annotations(annotations, type_names)
-      ).toThrow("Not implemented");
+      const result = resolve_type_annotations(annotations, type_names);
+
+      expect(result).toBeInstanceOf(Map);
+      expect(result.size).toBe(0);
     });
 
-    it("resolve_inheritance should throw not implemented error", () => {
+    it("resolve_inheritance should return empty hierarchy", () => {
       const type_definitions = new Map<FilePath, LocalTypeDefinition[]>();
       const type_registry = new Map<string, TypeId>();
 
-      expect(() =>
-        resolve_inheritance(type_definitions, type_registry)
-      ).toThrow("Not implemented");
+      const result = resolve_inheritance(type_definitions, type_registry);
+
+      expect(result).toBeDefined();
+      expect(result.extends_map).toBeInstanceOf(Map);
+      expect(result.implements_map).toBeInstanceOf(Map);
+      expect(result.all_descendants).toBeInstanceOf(Map);
+      expect(result.all_ancestors).toBeInstanceOf(Map);
+      expect(result.extends_map.size).toBe(0);
     });
 
     it("build_file_type_registry should build registry from symbols", () => {
@@ -495,7 +515,8 @@ describe("Type Resolution Module", () => {
             is_hoisted: false,
             is_exported: false,
             is_imported: false,
-          }],
+            return_type: "TypeId:string" as TypeId, // Add return_type property
+          } as SymbolDefinition & { return_type: TypeId }],
         ]);
 
         const result = build_file_type_registry(symbols, "test.ts" as FilePath);
@@ -515,7 +536,8 @@ describe("Type Resolution Module", () => {
             is_hoisted: false,
             is_exported: false,
             is_imported: false,
-          }],
+            value_type: "TypeId:number" as TypeId, // Add value_type property
+          } as SymbolDefinition & { value_type: TypeId }],
         ]);
 
         const result = build_file_type_registry(symbols, "test.ts" as FilePath);
@@ -637,7 +659,9 @@ describe("Type Resolution Module", () => {
             is_hoisted: false,
             is_exported: true,
             is_imported: false,
-          }],
+            return_type: "TypeId:void" as TypeId,  // Add return_type
+            value_type: "TypeId:MixedSymbol" as TypeId,  // Add value_type
+          } as SymbolDefinition & { return_type: TypeId; value_type: TypeId }],
         ]);
 
         const result = build_file_type_registry(symbols, "test.ts" as FilePath);

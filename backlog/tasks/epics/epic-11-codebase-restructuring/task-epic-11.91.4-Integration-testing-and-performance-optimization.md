@@ -1,6 +1,6 @@
 # Task: Integration Testing and Performance Optimization
 
-**Task ID**: task-epic-11.91.5
+**Task ID**: task-epic-11.91.4
 **Parent**: task-epic-11.91
 **Status**: Created
 **Priority**: Critical
@@ -9,27 +9,26 @@
 
 ## Problem Statement
 
-With all symbol resolution phases and call graph construction implemented, we need comprehensive integration testing and performance optimization to ensure the system works correctly and efficiently across real-world codebases.
+With all symbol resolution phases implemented, we need comprehensive integration testing, performance optimization, and data export capabilities to ensure the system works correctly and efficiently across real-world codebases.
 
 ### Current State
 
-After tasks 11.91.1-11.91.5:
+After tasks 11.91.1-11.91.3:
 - ✅ Import/export resolution (Phase 1)
 - ✅ Function call resolution (Phase 2)
 - ✅ Enhanced method/constructor resolution (Phase 4)
-- ✅ Call graph construction system
-- ✅ Call graph query API
 
 Missing:
 - ❌ End-to-end integration testing
 - ❌ Performance benchmarking and optimization
 - ❌ Real-world codebase validation
 - ❌ Cross-language integration testing
+- ❌ Symbol resolution data export
 - ❌ Documentation and examples
 
 ## Solution Overview
 
-Implement comprehensive testing, performance optimization, and documentation to ensure the complete symbol resolution pipeline is production-ready.
+Implement comprehensive testing, performance optimization, data export capabilities, and documentation to ensure the complete symbol resolution pipeline is production-ready and provides clean interfaces for future call graph construction.
 
 ### Architecture
 
@@ -40,14 +39,18 @@ symbol_resolution/
 │   ├── performance.test.ts       # Performance benchmarks
 │   ├── cross_language.test.ts    # Multi-language scenarios
 │   └── real_world.test.ts        # Real codebase validation
+├── data_export/
+│   ├── export_formats.ts         # JSON/CSV export formats
+│   ├── resolution_exporter.ts    # Export resolved symbol data
+│   └── serialization.ts          # Data serialization utilities
 ├── performance/
 │   ├── profiler.ts               # Performance profiling tools
 │   ├── optimizers.ts             # Performance optimizations
 │   └── benchmarks.ts             # Benchmark utilities
 ├── examples/
 │   ├── basic_usage.ts            # Basic API usage examples
-│   ├── advanced_queries.ts       # Advanced query examples
-│   └── visualization.ts          # Graph visualization examples
+│   ├── data_analysis.ts          # Symbol resolution analysis
+│   └── export_examples.ts        # Data export examples
 └── docs/
     ├── API.md                    # Complete API documentation
     ├── architecture.md           # Architecture overview
@@ -60,7 +63,7 @@ symbol_resolution/
 
 **Module**: `integration_tests/end_to_end.test.ts`
 
-Test complete pipeline from semantic indexing to call graph queries:
+Test complete pipeline from semantic indexing to resolved symbol mappings:
 
 ```typescript
 describe("Complete Symbol Resolution Pipeline", () => {
@@ -90,7 +93,7 @@ describe("Complete Symbol Resolution Pipeline", () => {
 
     // Run complete pipeline
     const semantic_indices = await build_semantic_indices(test_project);
-    const resolved_symbols = resolve_symbols_with_call_graph({
+    const resolved_symbols = resolve_symbols({
       indices: semantic_indices
     });
 
@@ -99,14 +102,11 @@ describe("Complete Symbol Resolution Pipeline", () => {
     expect(main_file_imports?.has("helper" as SymbolName)).toBe(true);
 
     // Verify function call resolution
-    const call_graph = resolved_symbols.call_graphs.get("function_calls")!;
-    const query = create_call_graph_query(call_graph);
-
-    const main_function = find_symbol_by_name("main", semantic_indices);
+    const function_calls = resolved_symbols.phases.functions.function_calls;
+    const helper_call_location = find_call_location("helper", "src/main.ts", semantic_indices);
     const helper_function = find_symbol_by_name("helper", semantic_indices);
 
-    expect(query.get_callees(main_function)).toContain(helper_function);
-    expect(query.is_reachable(main_function, helper_function)).toBe(true);
+    expect(function_calls.get(location_key(helper_call_location))).toBe(helper_function);
   });
 
   it("should resolve method calls through inheritance", async () => {
@@ -115,15 +115,16 @@ describe("Complete Symbol Resolution Pipeline", () => {
     // Test method resolution through inheritance chain
     // Base class -> Derived class -> method calls
 
-    const resolved_symbols = resolve_symbols_with_call_graph({
+    const resolved_symbols = resolve_symbols({
       indices: await build_semantic_indices(test_project)
     });
 
-    const method_graph = resolved_symbols.call_graphs.get("method_calls")!;
-    const query = create_call_graph_query(method_graph);
+    const method_calls = resolved_symbols.phases.methods.method_calls;
+    const base_method = find_symbol_by_name("baseMethod", semantic_indices);
+    const derived_call_location = find_call_location("baseMethod", "src/derived.ts", semantic_indices);
 
     // Verify inherited method calls are resolved correctly
-    // ...test implementation
+    expect(method_calls.get(location_key(derived_call_location))).toBe(base_method);
   });
 
   it("should handle constructor calls with type resolution", async () => {
@@ -156,15 +157,15 @@ describe("Performance Benchmarks", () => {
 
       // Measure symbol resolution
       const resolution_start = performance.now();
-      const resolved_symbols = resolve_symbols_with_call_graph({
+      const resolved_symbols = resolve_symbols({
         indices: semantic_indices
       });
       const resolution_time = performance.now() - resolution_start;
 
-      // Measure call graph construction
-      const graph_start = performance.now();
-      const call_graph = resolved_symbols.call_graphs.get("combined")!;
-      const graph_time = performance.now() - graph_start;
+      // Measure data export (if needed)
+      const export_start = performance.now();
+      const exported_data = export_symbol_resolution_data(resolved_symbols);
+      const export_time = performance.now() - export_start;
 
       const total_time = performance.now() - start_time;
 
@@ -172,7 +173,7 @@ describe("Performance Benchmarks", () => {
       expect(total_time).toBeLessThan(size * 10); // 10ms per file max
       expect(index_time).toBeLessThan(total_time * 0.6); // Indexing < 60%
       expect(resolution_time).toBeLessThan(total_time * 0.3); // Resolution < 30%
-      expect(graph_time).toBeLessThan(total_time * 0.1); // Graph construction < 10%
+      expect(export_time).toBeLessThan(total_time * 0.1); // Export < 10%
 
       // Memory usage checks
       const memory_usage = process.memoryUsage();
@@ -186,35 +187,85 @@ describe("Performance Benchmarks", () => {
     });
   });
 
-  it("should have efficient query performance", async () => {
+  it("should have efficient data access performance", async () => {
     const large_project = generate_large_test_project(5000);
-    const resolved_symbols = resolve_symbols_with_call_graph({
+    const resolved_symbols = resolve_symbols({
       indices: await build_semantic_indices(large_project)
     });
 
-    const call_graph = resolved_symbols.call_graphs.get("combined")!;
-    const query = create_call_graph_query(call_graph);
+    // Test symbol resolution data access performance
+    const random_files = get_random_files(large_project, 100);
 
-    // Test query performance
-    const random_symbols = get_random_symbols(call_graph, 100);
-
-    for (const symbol of random_symbols) {
+    for (const file_path of random_files) {
       const start = performance.now();
 
-      // Common query operations
-      query.get_callees(symbol);
-      query.get_callers(symbol);
-      query.get_all_dependencies(symbol, { max_depth: 3 });
-      query.compute_call_metrics(symbol);
+      // Common data access operations
+      const file_imports = resolved_symbols.phases.imports.imports.get(file_path);
+      const function_calls = Array.from(resolved_symbols.phases.functions.function_calls.entries())
+        .filter(([location, _]) => location.startsWith(file_path));
+      const method_calls = Array.from(resolved_symbols.phases.methods.method_calls.entries())
+        .filter(([location, _]) => location.startsWith(file_path));
 
-      const query_time = performance.now() - start;
-      expect(query_time).toBeLessThan(10); // 10ms per symbol max
+      const access_time = performance.now() - start;
+      expect(access_time).toBeLessThan(5); // 5ms per file max
     }
   });
 });
 ```
 
-### 3. Cross-Language Integration Testing
+### 3. Symbol Resolution Data Export
+
+**Module**: `data_export/resolution_exporter.ts`
+
+Provide clean data export for future call graph construction:
+
+```typescript
+export interface ExportedSymbolResolution {
+  readonly metadata: {
+    readonly export_version: string;
+    readonly timestamp: number;
+    readonly total_files: number;
+    readonly total_symbols: number;
+  };
+  readonly imports: ExportedImportMap;
+  readonly function_calls: ExportedCallMap;
+  readonly method_calls: ExportedCallMap;
+  readonly constructor_calls: ExportedCallMap;
+  readonly symbol_definitions: ExportedSymbolMap;
+}
+
+export function export_symbol_resolution_data(
+  resolved_symbols: ResolvedSymbols,
+  format: "json" | "csv" = "json"
+): string {
+  const exported_data: ExportedSymbolResolution = {
+    metadata: {
+      export_version: "1.0",
+      timestamp: Date.now(),
+      total_files: resolved_symbols.resolved_references.size,
+      total_symbols: count_total_symbols(resolved_symbols)
+    },
+    imports: export_import_mappings(resolved_symbols.phases.imports),
+    function_calls: export_call_mappings(resolved_symbols.phases.functions.function_calls),
+    method_calls: export_call_mappings(resolved_symbols.phases.methods.method_calls),
+    constructor_calls: export_call_mappings(resolved_symbols.phases.methods.constructor_calls),
+    symbol_definitions: export_symbol_definitions(resolved_symbols)
+  };
+
+  return format === "json"
+    ? JSON.stringify(exported_data, null, 2)
+    : convert_to_csv(exported_data);
+}
+
+function export_call_mappings(calls: ReadonlyMap<LocationKey, SymbolId>): ExportedCallMap {
+  return Array.from(calls.entries()).map(([location_key, symbol_id]) => ({
+    call_location: parse_location_key(location_key),
+    resolved_symbol: symbol_id
+  }));
+}
+```
+
+### 4. Cross-Language Integration Testing
 
 **Module**: `integration_tests/cross_language.test.ts`
 
@@ -230,7 +281,7 @@ describe("Cross-Language Symbol Resolution", () => {
     // - .ts files importing from .js files
     // - Type information flow across boundaries
 
-    const resolved_symbols = resolve_symbols_with_call_graph({
+    const resolved_symbols = resolve_symbols({
       indices: await build_semantic_indices(mixed_project)
     });
 
@@ -249,7 +300,7 @@ describe("Cross-Language Symbol Resolution", () => {
 
     // Test each language independently
     for (const [lang, files] of Object.entries(multi_lang_project)) {
-      const resolved_symbols = resolve_symbols_with_call_graph({
+      const resolved_symbols = resolve_symbols({
         indices: await build_semantic_indices(files)
       });
 
@@ -280,7 +331,7 @@ function validate_language_features(
 }
 ```
 
-### 4. Real-World Codebase Validation
+### 5. Real-World Codebase Validation
 
 **Module**: `integration_tests/real_world.test.ts`
 
@@ -306,37 +357,30 @@ describe("Real-World Codebase Validation", () => {
         return;
       }
 
-      const resolved_symbols = resolve_symbols_with_call_graph({
+      const resolved_symbols = resolve_symbols({
         indices: await build_semantic_indices(project_files)
       });
 
       // Basic validation
       expect(resolved_symbols.resolved_references.size).toBeGreaterThan(0);
-      expect(resolved_symbols.call_graphs.size).toBeGreaterThan(0);
+      expect(resolved_symbols.phases.imports.imports.size).toBeGreaterThan(0);
 
-      // Validate call graph structure
-      const combined_graph = resolved_symbols.call_graphs.get("combined")!;
-      const query = create_call_graph_query(combined_graph);
+      // Validate symbol resolution structure
+      const total_function_calls = resolved_symbols.phases.functions.function_calls.size;
+      const total_method_calls = resolved_symbols.phases.methods.method_calls.size;
+      const total_imports = Array.from(resolved_symbols.phases.imports.imports.values())
+        .reduce((sum, file_imports) => sum + file_imports.size, 0);
 
-      // Check for reasonable graph structure
-      const symbols = Array.from(combined_graph.call_edges.keys());
-      expect(symbols.length).toBeGreaterThan(10);
+      expect(total_function_calls + total_method_calls).toBeGreaterThan(0);
+      expect(total_imports).toBeGreaterThan(0);
 
-      // Validate some calls are resolved
-      let resolved_calls = 0;
-      for (const symbol of symbols.slice(0, 10)) {
-        const callees = query.get_callees(symbol);
-        resolved_calls += callees.length;
-      }
-      expect(resolved_calls).toBeGreaterThan(0);
-
-      console.log(`${project.name}: ${symbols.length} symbols, ${resolved_calls} calls resolved`);
+      console.log(`${project.name}: ${total_imports} imports, ${total_function_calls} function calls, ${total_method_calls} method calls resolved`);
     });
   });
 });
 ```
 
-### 5. Performance Optimization
+### 6. Performance Optimization
 
 **Module**: `performance/optimizers.ts`
 
@@ -368,39 +412,38 @@ class CachedImportResolver {
   }
 }
 
-// Optimized call graph construction
-function build_call_graph_optimized(
+// Optimized symbol resolution data processing
+function process_symbol_resolution_optimized(
   resolved_symbols: ResolvedSymbols
-): CallGraph {
-  // Use more efficient data structures
-  const call_edges = new Map<SymbolId, Set<SymbolId>>();
-  const called_by = new Map<SymbolId, Set<SymbolId>>();
+): ProcessedSymbolData {
+  // Use more efficient data structures for common queries
+  const symbol_usage_map = new Map<SymbolId, UsageInfo>();
+  const file_dependency_map = new Map<FilePath, Set<FilePath>>();
 
-  // Batch process all call types together
+  // Batch process all resolution types together
   const all_calls = [
-    ...resolved_symbols.phases.functions.function_calls.entries(),
-    ...resolved_symbols.phases.methods.method_calls.entries(),
-    ...resolved_symbols.phases.methods.constructor_calls.entries()
+    ...Array.from(resolved_symbols.phases.functions.function_calls.entries()).map(([loc, sym]) => ({ location: loc, symbol: sym, type: "function" as const })),
+    ...Array.from(resolved_symbols.phases.methods.method_calls.entries()).map(([loc, sym]) => ({ location: loc, symbol: sym, type: "method" as const })),
+    ...Array.from(resolved_symbols.phases.methods.constructor_calls.entries()).map(([loc, sym]) => ({ location: loc, symbol: sym, type: "constructor" as const }))
   ];
 
-  // Single pass to build all mappings
-  for (const [location, callee_id] of all_calls) {
-    const caller_id = find_containing_function(location, resolved_symbols);
-    if (caller_id) {
-      add_edge_fast(caller_id, callee_id, call_edges, called_by);
-    }
+  // Single pass to build usage analytics
+  for (const { location, symbol, type } of all_calls) {
+    const file_path = parse_location_key(location).file_path;
+    update_symbol_usage(symbol, file_path, type, symbol_usage_map);
+    update_file_dependencies(file_path, symbol, resolved_symbols, file_dependency_map);
   }
 
-  return create_optimized_call_graph(call_edges, called_by);
+  return create_processed_data(symbol_usage_map, file_dependency_map);
 }
 ```
 
-### 6. Memory Usage Optimization
+### 7. Memory Usage Optimization
 
 Monitor and optimize memory usage:
 
 ```typescript
-class MemoryOptimizedCallGraph implements CallGraph {
+class MemoryOptimizedSymbolResolution {
   // Use WeakMap for automatic cleanup
   private readonly weak_cache = new WeakMap<object, any>();
 
@@ -414,15 +457,15 @@ class MemoryOptimizedCallGraph implements CallGraph {
     return this.symbol_intern.get(symbol_string)!;
   }
 
-  // Lazy loading for call sites
-  get_call_sites(caller: SymbolId, callee: SymbolId): readonly Location[] {
-    // Load call sites on demand
-    return this.load_call_sites_lazy(caller, callee);
+  // Lazy loading for resolution details
+  get_resolution_details(location_key: LocationKey): MethodCallResolution | null {
+    // Load resolution details on demand
+    return this.load_resolution_details_lazy(location_key);
   }
 }
 ```
 
-### 7. Documentation and Examples
+### 8. Documentation and Examples
 
 **Module**: `examples/basic_usage.ts`
 
@@ -430,7 +473,7 @@ Comprehensive usage examples:
 
 ```typescript
 /**
- * Basic Symbol Resolution and Call Graph Usage
+ * Basic Symbol Resolution Usage
  */
 
 async function basic_usage_example() {
@@ -438,37 +481,33 @@ async function basic_usage_example() {
   const source_files = await load_source_files("./src");
   const semantic_indices = await build_semantic_indices(source_files);
 
-  // 2. Resolve all symbols and build call graphs
-  const resolved_symbols = resolve_symbols_with_call_graph({
+  // 2. Resolve all symbols
+  const resolved_symbols = resolve_symbols({
     indices: semantic_indices,
     target_files: ["./src/main.ts"] // Optional: focus on specific files
   });
 
-  // 3. Query call graphs
-  const combined_graph = resolved_symbols.call_graphs.get("combined")!;
-  const query = create_call_graph_query(combined_graph);
+  // 3. Analyze resolved symbol data
+  console.log("=== Import Resolution ===");
+  for (const [file_path, imports] of resolved_symbols.phases.imports.imports) {
+    console.log(`${file_path}: ${imports.size} imports resolved`);
+  }
 
-  // Find a specific function
-  const main_function = find_symbol_by_name("main", semantic_indices);
+  console.log("=== Function Call Resolution ===");
+  const function_calls = resolved_symbols.phases.functions.function_calls;
+  console.log(`${function_calls.size} function calls resolved`);
 
-  // Analyze its dependencies
-  const dependencies = query.get_all_dependencies(main_function);
-  console.log(`main() depends on ${dependencies.length} functions`);
+  console.log("=== Method Call Resolution ===");
+  const method_calls = resolved_symbols.phases.methods.method_calls;
+  console.log(`${method_calls.size} method calls resolved`);
 
-  // Find who calls it
-  const callers = query.get_callers(main_function);
-  console.log(`main() is called by ${callers.length} functions`);
+  // 4. Export data for external analysis
+  const exported_data = export_symbol_resolution_data(resolved_symbols, "json");
+  await write_file("symbol_resolution.json", exported_data);
 
-  // Detect cycles
-  const cycles = query.detect_cycles();
-  console.log(`Found ${cycles.length} circular dependencies`);
-
-  // Export for visualization
-  const dot_graph = export_to_dot(combined_graph, {
-    include_file_paths: true,
-    color_by_file: true
-  });
-  await write_file("call_graph.dot", dot_graph);
+  // 5. Generate analysis report
+  const analysis = analyze_symbol_resolution(resolved_symbols);
+  console.log(`Analysis complete: ${analysis.total_symbols} symbols, ${analysis.resolution_rate}% resolved`);
 }
 ```
 
@@ -512,10 +551,10 @@ function measure_performance<T>(
 
 ## Success Criteria
 
-1. **End-to-End Functionality**: Complete pipeline works from source code to call graph queries
+1. **End-to-End Functionality**: Complete pipeline works from source code to resolved symbol mappings
 2. **Performance Targets**:
    - Handle 10,000 files in under 30 seconds
-   - Query response time under 100ms for large graphs
+   - Data access response time under 10ms for large projects
    - Memory usage under 1GB for large projects
 3. **Real-World Validation**: Successfully analyzes popular open-source projects
 4. **Cross-Language Support**: Works correctly for all supported languages
@@ -524,7 +563,7 @@ function measure_performance<T>(
 
 ## Dependencies
 
-- **Prerequisite**: All tasks 11.91.1-11.91.5 completed
+- **Prerequisite**: All tasks 11.91.1-11.91.3 completed
 - **Enables**: Production deployment of symbol resolution system
 - **Enables**: Advanced IDE features and static analysis tools
 
@@ -541,14 +580,14 @@ function measure_performance<T>(
 
 - **Base memory**: < 100MB for runtime
 - **Per-file overhead**: < 1MB per source file
-- **Call graph overhead**: < 10KB per symbol
+- **Resolution data overhead**: < 5KB per symbol
 
-### Query Performance Targets
+### Data Access Performance Targets
 
-- **Direct queries** (get_callees, get_callers): < 1ms
-- **Dependency analysis**: < 10ms for depth 5
-- **Path finding**: < 100ms for typical cases
-- **Cycle detection**: < 1 second for large graphs
+- **Direct lookups** (symbol by location, imports by file): < 1ms
+- **Bulk data access**: < 10ms for file-level queries
+- **Data export**: < 100ms for typical projects
+- **Analysis operations**: < 1 second for large projects
 
 ## Implementation Notes
 

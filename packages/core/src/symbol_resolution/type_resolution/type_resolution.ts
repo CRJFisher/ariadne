@@ -58,39 +58,19 @@ export function resolve_all_types(
   );
 
   // Build type hierarchy with resolved types
-  let type_hierarchy;
-  try {
-    type_hierarchy = resolve_inheritance(
-      local_types.type_definitions,
-      new Map()
-    );
-  } catch (e: any) {
-    if (e.message === "Not implemented") {
-      // Provide empty type hierarchy until implementation is complete
-      type_hierarchy = {
-        extends_map: new Map(),
-        implements_map: new Map(),
-        all_ancestors: new Map(),
-        all_descendants: new Map(),
-      };
-    } else {
-      throw e;
-    }
-  }
+  const type_hierarchy = resolve_inheritance(
+    local_types.type_definitions,
+    new Map()
+  );
 
   // Resolve type annotations with full context
   let symbol_types = new Map<SymbolId, TypeId>();
   let location_types = new Map<Location, TypeId>();
 
-  try {
-    const type_names_map = new Map<FilePath, Map<SymbolName, TypeId>>();
-    const annotations = Array.from(local_types.type_annotations.values()).flat();
-    const result = resolve_type_annotations(annotations, type_names_map);
-  } catch (e: any) {
-    if (e.message !== "Not implemented") {
-      throw e;
-    }
-  }
+  const type_names_map = new Map<FilePath, Map<SymbolName, TypeId>>();
+  const annotations = Array.from(local_types.type_annotations.values()).flat();
+  const annotation_types = resolve_type_annotations(annotations, type_names_map);
+  // TODO: Integrate annotation_types into symbol_types and location_types
 
   // Track type flows through resolved functions
   // TODO: Update to use analyze_type_flow with correct arguments
