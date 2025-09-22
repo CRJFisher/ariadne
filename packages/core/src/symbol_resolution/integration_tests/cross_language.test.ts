@@ -19,6 +19,8 @@ import type {
   Import,
   Export,
   NamedImport,
+  NamedExport,
+  DefaultExport,
   Language,
 } from "@ariadnejs/types";
 import {
@@ -56,7 +58,10 @@ function create_language_test_file(
       name: sym.name as SymbolName,
       kind: sym.kind,
       location,
-      definition_scope: root_scope_id,
+      scope_id: root_scope_id,
+      is_hoisted: false,
+      is_exported: false,
+      is_imported: false,
     });
   }
 
@@ -68,7 +73,7 @@ function create_language_test_file(
       alias: undefined,
       is_type_only: false,
     }],
-    source: imp.source,
+    source: imp.source as FilePath,
     location: create_location(file_path, 1, 10),
     modifiers: [],
     language,
@@ -78,26 +83,43 @@ function create_language_test_file(
   // Create exports
   const exports: Export[] = (content.exports || []).map((exp, i) => {
     const symbol = Array.from(symbols.values()).find(s => s.name === exp.name);
-    return {
-      kind: exp.kind,
-      name: exp.name as SymbolName,
-      symbol: symbol?.id || function_symbol(exp.name as SymbolName, file_path, create_location(file_path, 20 + i, 0)),
-      symbol_name: exp.name as SymbolName,
-      location: create_location(file_path, 20 + i, 0),
-      exports: [],
-      is_declaration: false,
-      modifiers: [],
-      language,
-      node_type: "export_statement",
-    };
+    const symbol_id = symbol?.id || function_symbol(exp.name as SymbolName, file_path, create_location(file_path, 20 + i, 0));
+
+    if (exp.kind === "named") {
+      return {
+        kind: "named" as const,
+        symbol: symbol_id,
+        symbol_name: exp.name as SymbolName,
+        location: create_location(file_path, 20 + i, 0),
+        exports: [{
+          local_name: exp.name as SymbolName,
+          export_name: exp.name as SymbolName,
+          is_type_only: false,
+        }],
+        modifiers: [],
+        language,
+        node_type: "export_statement",
+      } as NamedExport;
+    } else {
+      return {
+        kind: "default" as const,
+        symbol: symbol_id,
+        symbol_name: exp.name as SymbolName,
+        location: create_location(file_path, 20 + i, 0),
+        is_declaration: false,
+        modifiers: [],
+        language,
+        node_type: "export_statement",
+      } as DefaultExport;
+    }
   });
 
   // Create calls
   const calls: CallReference[] = (content.calls || []).map((call, i) => ({
-    kind: call.kind,
-    name: call.name as SymbolName,
     location: create_location(file_path, 30 + i, 15),
-    arguments_count: 0,
+    name: call.name as SymbolName,
+    scope_id: root_scope_id,
+    call_type: call.kind === "function" ? "function" : "method",
   }));
 
   const root_scope: LexicalScope = {
@@ -199,8 +221,11 @@ function create_mixed_js_ts_project(): Map<FilePath, SemanticIndex> {
         { name: "run", kind: "method" },
       ],
       imports: [
-        { name: "processData", source: "./utils", resolved_path: "src/utils.js" as FilePath },
-        { name: "formatOutput", source: "./utils", resolved_path: "src/utils.js" as FilePath },
+        { name: "processData", source: "./utils.js", resolved_path: "src/utils.js" as FilePath },
+        { name: "formatOutput", source: "./utils.js", resolved_path: "src/utils.js" as FilePath },
+      ],
+      exports: [
+        { name: "Application", kind: "named" },
       ],
       calls: [
         { name: "processData", kind: "function" },
@@ -219,7 +244,7 @@ function create_mixed_js_ts_project(): Map<FilePath, SemanticIndex> {
         { name: "startApp", kind: "function" },
       ],
       imports: [
-        { name: "Application", source: "./main", resolved_path: "src/main.ts" as FilePath },
+        { name: "Application", source: "./main.ts", resolved_path: "src/main.ts" as FilePath },
       ],
     }
   );
@@ -418,7 +443,7 @@ describe("Cross-Language Symbol Resolution", () => {
             { name: "modernExport", kind: "function" },
           ],
           imports: [
-            { name: "oldStyleExport", source: "./common", resolved_path: "src/common.js" as FilePath },
+            { name: "oldStyleExport", source: "./common.js", resolved_path: "src/common.js" as FilePath },
           ],
           exports: [
             { name: "modernExport", kind: "default" },
@@ -520,14 +545,20 @@ describe("Cross-Language Symbol Resolution", () => {
             name: "GenericClass" as SymbolName,
             kind: "class",
             location: create_location(ts_file_path, 10, 10),
-            definition_scope: root_scope_id,
+            scope_id: root_scope_id,
+            is_hoisted: false,
+            is_exported: false,
+            is_imported: false,
           }],
           [decorator_class, {
             id: decorator_class,
             name: "DecoratedClass" as SymbolName,
             kind: "class",
             location: create_location(ts_file_path, 20, 10),
-            definition_scope: root_scope_id,
+            scope_id: root_scope_id,
+            is_hoisted: false,
+            is_exported: false,
+            is_imported: false,
           }],
         ]),
         references: {

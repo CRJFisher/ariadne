@@ -228,7 +228,7 @@ describe("Type Resolution Module", () => {
       >();
       const functions = new Map<SymbolId, { return_type?: TypeId }>();
       const types: GlobalTypeRegistry = {
-        all_types: new Map(),
+        types: new Map(),
         type_names: new Map(),
       };
 
@@ -253,9 +253,9 @@ describe("Type Resolution Module", () => {
 
     it("resolve_inheritance should return empty hierarchy", () => {
       const type_definitions = new Map<FilePath, LocalTypeDefinition[]>();
-      const type_registry = new Map<string, TypeId>();
+      const resolved_imports = new Map<FilePath, ReadonlyMap<SymbolName, SymbolId>>();
 
-      const result = resolve_inheritance(type_definitions, type_registry);
+      const result = resolve_inheritance(type_definitions, resolved_imports);
 
       expect(result).toBeDefined();
       expect(result.extends_map).toBeInstanceOf(Map);
@@ -560,8 +560,8 @@ describe("Type Resolution Module", () => {
               is_hoisted: false,
               is_exported: false,
               is_imported: false,
-              return_type: "TypeId:string" as TypeId, // Add return_type property
-            } as SymbolDefinition & { return_type: TypeId },
+              return_type_hint: "string" as SymbolName, // Add return_type_hint property
+            } as SymbolDefinition,
           ],
         ]);
 
@@ -569,7 +569,7 @@ describe("Type Resolution Module", () => {
 
         expect(result.return_types.size).toBe(1);
         expect(result.return_types.get("func1" as SymbolId)).toBe(
-          "TypeId:string" as TypeId
+          "string" as TypeId
         );
       });
 
@@ -734,9 +734,9 @@ describe("Type Resolution Module", () => {
               is_hoisted: false,
               is_exported: true,
               is_imported: false,
-              return_type: "TypeId:void" as TypeId, // Add return_type
-              value_type: "TypeId:MixedSymbol" as TypeId, // Add value_type
-            } as SymbolDefinition & { return_type: TypeId; value_type: TypeId },
+              return_type_hint: "void" as SymbolName, // Add return_type_hint
+              value_type: "MixedSymbol" as TypeId, // Add value_type for symbol_types
+            } as SymbolDefinition & { value_type: TypeId },
           ],
         ]);
 
