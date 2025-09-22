@@ -20,7 +20,7 @@ export function determine_if_static_call(
   context: MethodLookupContext
 ): boolean {
   // 1. Check if member access is explicitly marked as static
-  if ((member_access as any).is_static_access === true) {
+  if ((member_access ).is_static_access === true) {
     return true;
   }
 

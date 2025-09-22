@@ -326,7 +326,7 @@ function match_rust_import_to_export(
     case "default":
       // Rust doesn't have default imports, but we might use this
       // for simple "use module" statements
-      const default_import = import_stmt as any;
+      const default_import = import_stmt ;
       if (default_import.name) {
         // Find a matching pub item
         for (const exp of source_exports) {
@@ -342,7 +342,7 @@ function match_rust_import_to_export(
       // Rust doesn't have namespace imports like JS
       // but "use module::*" is similar
       // For now, we'll handle it as importing the module itself
-      const namespace = import_stmt as any;
+      const namespace = import_stmt ;
       if (namespace.namespace_name) {
         // Find the module symbol
         const module_symbol = find_rust_module_symbol(source_symbols);

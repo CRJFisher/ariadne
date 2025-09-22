@@ -97,9 +97,6 @@ export interface ResolvedSymbols {
   // Reverse map: SymbolId -> all locations that reference it
   readonly references_to_symbol: ReadonlyMap<SymbolId, readonly Location[]>;
 
-  // References we couldn't resolve (with reasons)
-  readonly unresolved_references: ReadonlyMap<LocationKey, SymbolReference>;
-
   // Individual phase results (for debugging/analysis)
   readonly phases: {
     readonly imports: ImportResolutionMap;

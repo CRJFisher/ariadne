@@ -65,7 +65,7 @@ export function process_imports(
         kind: "default" as const,
         source: source as FilePath,
         name: capture.text as SymbolName,
-        resolved_export: {} as any, // Will be resolved later
+        resolved_export: {} , // Will be resolved later
         location,
         modifiers: [],
         language: language,
@@ -104,7 +104,7 @@ export function process_imports(
       import_item = {
         kind: "namespace" as const,
         source: source as FilePath,
-        namespace_name: capture.text === "*" ? "STAR_IMPORT" as any : capture.text as any,
+        namespace_name: capture.text === "*" ? "STAR_IMPORT"  : capture.text ,
         exports: new Map(),
         location,
         modifiers,

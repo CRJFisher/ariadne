@@ -65,7 +65,7 @@ function lookup_inherited_method(
 
     if (method_symbol) {
       return {
-        call_location: null as any, // Will be set by caller
+        call_location: null , // Will be set by caller
         resolved_method: method_symbol,
         receiver_type,
         method_kind: is_static_call ? "static" : "instance",
@@ -106,7 +106,7 @@ function lookup_interface_method(
 
       if (implementation_symbol) {
         return {
-          call_location: null as any,
+          call_location: null ,
           resolved_method: implementation_symbol,
           receiver_type,
           method_kind: is_static_call ? "static" : "instance",

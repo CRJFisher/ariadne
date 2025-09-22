@@ -1,7 +1,5 @@
 /**
  * Type Annotation References - Internal module
- *
- * Not exposed publicly. Used internally by references.ts
  */
 
 // Internal exports for references.ts only

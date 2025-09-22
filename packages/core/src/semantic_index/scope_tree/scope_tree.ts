@@ -74,7 +74,7 @@ export function build_scope_tree(
   const root_scope: LexicalScope = {
     id: root_scope_id,
     parent_id: null,
-    name: null,
+    name: null, // TODO: Add support for scope names.
     type: "module",
     location: root_location,
     child_ids: [],

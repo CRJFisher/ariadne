@@ -58,3 +58,14 @@ export type LocationKey = string & { __brand: "LocationKey" };
 export function location_key(location: Location): LocationKey {
   return `${location.file_path}:${location.line}:${location.column}:${location.end_line}:${location.end_column}` as LocationKey;
 }
+
+export function parse_location_key(key: LocationKey): Location {
+  const parts = key.split(":");
+  return {
+    file_path: parts[0] as FilePath,
+    line: parseInt(parts[1], 10),
+    column: parseInt(parts[2], 10),
+    end_line: parseInt(parts[3], 10),
+    end_column: parseInt(parts[4], 10),
+  };
+}

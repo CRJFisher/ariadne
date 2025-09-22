@@ -81,7 +81,6 @@ export function process_definitions(
       is_hoisted,
       is_exported: false,
       is_imported: false,
-      references: [],
       // Type information
       is_static: capture.modifiers?.is_static,
     };

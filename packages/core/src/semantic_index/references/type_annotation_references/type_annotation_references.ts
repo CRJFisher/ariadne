@@ -147,7 +147,7 @@ function extract_constraint_text(
     return undefined;
   }
 
-  const context = capture.context as any;
+  const context = capture.context ;
   const constraints: string[] = [];
 
   // Extract extends constraint
@@ -188,7 +188,7 @@ function determine_annotates_location(
 ): Location {
   // Check capture.context for target information
   if (capture.context && typeof capture.context === "object") {
-    const context = capture.context as any;
+    const context = capture.context ;
     if (context.target_location) {
       return context.target_location;
     }

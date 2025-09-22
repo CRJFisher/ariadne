@@ -277,7 +277,7 @@ function match_named_import(
   const result = new Map<SymbolName, SymbolId>();
 
   // Handle both NamedImport with imports array and simple Import with name
-  const import_items = (import_stmt as any).imports || [{ name: (import_stmt as Import).name, alias: undefined }];
+  const import_items = import_stmt.imports || [{ name: (import_stmt as Import).name, alias: undefined }];
 
   for (const import_item of import_items) {
     const imported_name = import_item.name;
@@ -288,8 +288,8 @@ function match_named_import(
       if (exp.kind === "named") {
         const named_export = exp as NamedExport;
         // Handle simple Export type with just name/symbol or NamedExport with exports array
-        if ((named_export as any).exports) {
-          for (const export_item of (named_export as any).exports) {
+        if ((named_export ).exports) {
+          for (const export_item of (named_export ).exports) {
             const export_name = export_item.export_name || export_item.local_name;
             if (export_name === imported_name) {
               result.set(local_name, named_export.symbol);

@@ -8,7 +8,7 @@
 import * as path from "path";
 import * as fs from "fs";
 import type { FilePath, Language } from "@ariadnejs/types";
-import type { ImportResolutionContext, LanguageImportHandler } from "./import_types";
+import type { ImportResolutionContext } from "./import_types";
 
 /**
  * Resolve a module path using the appropriate language handler

@@ -18,6 +18,7 @@ import type {
   LexicalScope,
   Import,
   Export,
+  NamedImport,
   Language,
 } from "@ariadnejs/types";
 import {
@@ -61,16 +62,20 @@ function create_language_test_file(
 
   // Create imports with language-specific patterns
   const imports: Import[] = (content.imports || []).map(imp => ({
-    kind: "named",
-    name: imp.name as SymbolName,
+    kind: "named" as const,
+    imports: [{
+      name: imp.name as SymbolName,
+      alias: undefined,
+      is_type_only: false,
+    }],
     source: imp.source,
     location: create_location(file_path, 1, 10),
-    resolved_export: undefined,
+    resolved_exports: new Map(),
     resolved_path: imp.resolved_path || null,
     modifiers: [],
     language,
     node_type: "import_statement",
-  }));
+  } as NamedImport));
 
   // Create exports
   const exports: Export[] = (content.exports || []).map((exp, i) => {

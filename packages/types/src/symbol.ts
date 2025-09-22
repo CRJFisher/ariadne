@@ -5,24 +5,9 @@ export type SymbolName = string & { __brand: "SymbolName" }; // This is the loca
 // TypeId moved to type_id.ts for comprehensive type identification support
 export type TypeName = string & { __brand: "TypeName" }; // Type name
 
-type SymbolKind =
-  | "variable"
-  | "function"
-  | "class"
-  | "method"
-  | "property"
-  | "parameter"
-  | "type"
-  | "interface"
-  | "enum"
-  | "import"
-  | "export"
-  | "namespace"
-  | "module"
-  | "global";
-
-interface SymbolDefinition {
-  readonly kind: SymbolKind;
+// Basic symbol info needed for SymbolId generation
+interface BasicSymbolInfo {
+  readonly kind: string;
   readonly name: SymbolName;
   readonly location: Location;
   readonly qualifier?: SymbolName;
@@ -40,7 +25,7 @@ interface SymbolDefinition {
  *
  * @example
  * ```typescript
- * const symbol: Symbol = {
+ * const symbol: BasicSymbolInfo = {
  *   kind: 'function',
  *   name: 'processData' as SymbolName,
  *   location: { file_path: 'src/utils.ts', line: 10, column: 0, end_line: 20, end_column: 1 }
@@ -49,7 +34,7 @@ interface SymbolDefinition {
  * // Returns: "function:src/utils.ts:10:0:20:1:processData"
  * ```
  */
-function symbol_string(symbol: SymbolDefinition): SymbolId {
+function symbol_string(symbol: BasicSymbolInfo): SymbolId {
   const parts = [
     symbol.kind,
     symbol.location.file_path,

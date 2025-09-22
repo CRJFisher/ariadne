@@ -145,9 +145,9 @@ export function is_ast_node(value: unknown): value is ASTNode {
 export function is_semantic_node(value: unknown): value is SemanticNode {
   return (
     is_ast_node(value) &&
-    (!("name" in value) || typeof (value as any).name === "string") &&
+    (!("name" in value) || typeof (value ).name === "string") &&
     "modifiers" in value &&
-    Array.isArray((value as any).modifiers)
+    Array.isArray((value ).modifiers)
   );
 }
 
@@ -158,9 +158,9 @@ export function is_query_capture(value: unknown): value is QueryCapture {
     "name" in value &&
     "node" in value &&
     "text" in value &&
-    typeof (value as any).name === "string" &&
-    typeof (value as any).text === "string" &&
-    is_ast_node((value as any).node)
+    typeof (value ).name === "string" &&
+    typeof (value ).text === "string" &&
+    is_ast_node((value ).node)
   );
 }
 
@@ -171,7 +171,7 @@ export function is_query_result<T>(value: unknown): value is QueryResult<T> {
     "data" in value &&
     "captures" in value &&
     "metadata" in value &&
-    Array.isArray((value as any).captures)
+    Array.isArray((value ).captures)
   );
 }
 
@@ -191,7 +191,7 @@ export function is_query_error(value: unknown): value is QueryError {
     value !== null &&
     "kind" in value &&
     "message" in value &&
-    typeof (value as any).message === "string"
+    typeof (value ).message === "string"
   );
 }
 

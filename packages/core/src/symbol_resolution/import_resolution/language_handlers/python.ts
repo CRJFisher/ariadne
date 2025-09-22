@@ -220,7 +220,7 @@ function match_python_import_to_export(
     case "namespace":
       // Python doesn't have namespace imports like JS, but we handle it similarly
       // This might be "import module" which imports everything
-      const namespace = import_stmt as any;
+      const namespace = import_stmt ;
       if (namespace.namespace_name) {
         // Map the namespace to the module's main symbol
         const module_symbol = find_module_symbol(source_symbols);

@@ -438,14 +438,9 @@ describe("References Module", () => {
         const mockTypeResults = [
           {
             location: mockLocation,
-            type_name: "string" as any,
+            annotation_text: "string",
             scope_id: "test_scope" as ScopeId,
             annotation_kind: "variable" as const,
-            declared_type: {
-              type_name: "string" as any,
-              certainty: "declared" as const,
-              source: { kind: "annotation" as const, location: mockLocation }
-            },
             annotates_location: mockLocation,
           },
         ];
@@ -755,14 +750,9 @@ describe("References Module", () => {
         mockProcessTypeAnnotationReferences.mockReturnValue([
           {
             location: mockLocation,
-            type_name: "string" as any,
+            annotation_text: "string",
             scope_id: "test_scope" as ScopeId,
             annotation_kind: "variable" as const,
-            declared_type: {
-              type_name: "string" as any,
-              certainty: "declared" as const,
-              source: { kind: "annotation" as const, location: mockLocation }
-            },
             annotates_location: mockLocation,
           },
         ]);

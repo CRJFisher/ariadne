@@ -8,13 +8,16 @@
  * 4. Method/Constructor Resolution - Object-oriented call resolution
  */
 
-import type {
-  Location,
-  SymbolId,
-  FilePath,
-  SymbolName,
-  TypeId,
-  Language,
+import {
+  type Location,
+  type SymbolId,
+  type FilePath,
+  type SymbolName,
+  type TypeId,
+  type Language,
+  type LocationKey,
+  location_key,
+  parse_location_key,
 } from "@ariadnejs/types";
 import type {
   ResolutionInput,
@@ -164,17 +167,17 @@ function phase3_resolve_types(
   const type_flow = {
     assignment_types: new Map<Location, TypeId>(),
     flow_edges: [],
-  } as any;
+  } ;
 
   // Build result maps for compatibility
   const symbol_types = new Map<SymbolId, TypeId>();
-  const reference_types = new Map<Location, TypeId>();
+  const reference_types = new Map<LocationKey, TypeId>();
   const type_members = new Map<TypeId, Map<SymbolName, SymbolId>>();
   const constructors = new Map<TypeId, SymbolId>();
 
   // Populate symbol_types from type_tracking
-  if (type_tracking && (type_tracking as any).variable_types) {
-    for (const [symbol_id, type_id] of (type_tracking as any).variable_types) {
+  if (type_tracking && (type_tracking ).variable_types) {
+    for (const [symbol_id, type_id] of (type_tracking ).variable_types) {
       symbol_types.set(symbol_id, type_id);
     }
   }
@@ -187,8 +190,8 @@ function phase3_resolve_types(
     }
   }
 
-  if (type_flow && (type_flow as any).assignment_types) {
-    for (const [loc, type_id] of (type_flow as any).assignment_types) {
+  if (type_flow && (type_flow ).assignment_types) {
+    for (const [loc, type_id] of (type_flow ).assignment_types) {
       reference_types.set(loc, type_id);
     }
   }
@@ -325,8 +328,8 @@ function phase4_resolve_methods(
   functions: FunctionResolutionMap,
   types: TypeResolutionMap
 ): MethodResolutionMap {
-  const method_calls = new Map<Location, SymbolId>();
-  const constructor_calls = new Map<Location, SymbolId>();
+  const method_calls = new Map<LocationKey, SymbolId>();
+  const constructor_calls = new Map<LocationKey, SymbolId>();
   const calls_to_method = new Map<SymbolId, Location[]>();
 
   // Process method calls using resolved type information
@@ -334,8 +337,12 @@ function phase4_resolve_methods(
     // Process method calls from references
     if (index.references && index.references.member_accesses) {
       for (const member_access of index.references.member_accesses) {
+        const receiver_object = member_access.object?.location;
+        if (!receiver_object) {
+          continue;
+        }
         // Check if this is a method call (member access followed by call)
-        const object_type = types.reference_types.get(member_access.object_location);
+        const object_type = types.reference_types.get(location_key(receiver_object));
 
         if (object_type) {
           // Look up method in resolved type members
@@ -343,7 +350,7 @@ function phase4_resolve_methods(
           if (type_members) {
             const method_id = type_members.get(member_access.member_name);
             if (method_id) {
-              method_calls.set(member_access.location, method_id);
+              method_calls.set(location_key(member_access.location), method_id);
 
               // Update reverse mapping
               const calls = calls_to_method.get(method_id) || [];
@@ -369,7 +376,7 @@ function phase4_resolve_methods(
             if (type_id) {
               const ctor_id = types.constructors.get(type_id);
               if (ctor_id) {
-                constructor_calls.set(ctor_call.location, ctor_id);
+                constructor_calls.set(location_key(ctor_call.location), ctor_id);
 
                 // Update reverse mapping
                 const calls = calls_to_method.get(ctor_id) || [];
@@ -398,7 +405,7 @@ function combine_results(
   methods: MethodResolutionMap
 ): ResolvedSymbols {
   // Merge all resolution maps
-  const resolved_references = new Map<Location, SymbolId>();
+  const resolved_references = new Map<LocationKey, SymbolId>();
 
   // Add function calls
   for (const [loc, id] of functions.function_calls) {
@@ -419,24 +426,13 @@ function combine_results(
   const references_to_symbol = new Map<SymbolId, Location[]>();
   for (const [loc, id] of resolved_references) {
     const locs = references_to_symbol.get(id) || [];
-    locs.push(loc);
+    locs.push(parse_location_key(loc));
     references_to_symbol.set(id, locs);
   }
-
-  // Collect unresolved
-  // const unresolved_references = new Map<Location, SymbolReference>();
-  // for (const index of indices.values()) {
-  //   for (const ref of index.references) {
-  //     if (!resolved_references.has(ref.location)) {
-  //       unresolved_references.set(ref.location, ref);
-  //     }
-  //   }
-  // }
 
   return {
     resolved_references,
     references_to_symbol,
-    unresolved_references: new Map(), // TODO: fix
     phases: {
       imports,
       functions,

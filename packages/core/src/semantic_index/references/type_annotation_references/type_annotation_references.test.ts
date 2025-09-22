@@ -74,27 +74,27 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
       const captures: NormalizedCapture[] = [
         {
           entity: SemanticEntity.VARIABLE,
-          category: null,
+          category: SemanticCategory.TYPE,
           text: "string",
           node_location: create_location(1),
           modifiers: {},
-          context: null,
+          context: undefined,
         },
         {
           entity: SemanticEntity.VARIABLE,
-          category: null,
+          category: SemanticCategory.TYPE,
           text: "number",
           node_location: create_location(2),
           modifiers: {},
-          context: null,
+          context: undefined,
         },
         {
           entity: SemanticEntity.VARIABLE,
-          category: null,
+          category: SemanticCategory.TYPE,
           text: "MyClass",
           node_location: create_location(3),
           modifiers: {},
-          context: null,
+          context: undefined,
         },
       ];
 
@@ -123,11 +123,11 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
 
       const captures: NormalizedCapture[] = complexTypes.map((text, i) => ({
         entity: SemanticEntity.VARIABLE,
-        category: null,
+        category: SemanticCategory.TYPE,
         text,
         node_location: create_location(i + 1),
         modifiers: {},
-        context: null,
+        context: undefined,
       }));
 
       const result = process_type_annotations(
@@ -154,11 +154,11 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
 
       const captures: NormalizedCapture[] = unionIntersectionTypes.map((text, i) => ({
         entity: SemanticEntity.VARIABLE,
-        category: null,
+        category: SemanticCategory.TYPE,
         text,
         node_location: create_location(i + 1),
         modifiers: {},
-        context: null,
+        context: undefined,
       }));
 
       const result = process_type_annotations(
@@ -185,11 +185,11 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
 
       const captures: NormalizedCapture[] = arrayTypes.map((text, i) => ({
         entity: SemanticEntity.VARIABLE,
-        category: null,
+        category: SemanticCategory.TYPE,
         text,
         node_location: create_location(i + 1),
         modifiers: {},
-        context: null,
+        context: undefined,
       }));
 
       const result = process_type_annotations(
@@ -217,11 +217,11 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
     ) => {
       const capture: NormalizedCapture = {
         entity,
-        category: null,
+        category: SemanticCategory.TYPE,
         text: "TestType",
         node_location: mock_location,
         modifiers: {},
-        context: null,
+        context: undefined,
       };
 
       const result = process_type_annotations(
@@ -268,7 +268,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
     });
 
     it("should default unknown entities to variable kind", () => {
-      testEntityMapping(999 as SemanticEntity, "variable");
+      testEntityMapping(999 as unknown as SemanticEntity, "variable");
     });
   });
 
@@ -280,7 +280,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
     it("should extract extends constraints", () => {
       const capture: NormalizedCapture = {
         entity: SemanticEntity.TYPE,
-        category: null,
+        category: SemanticCategory.TYPE,
         text: "MyClass",
         node_location: mock_location,
         modifiers: {},
@@ -301,7 +301,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
     it("should extract implements constraints", () => {
       const capture: NormalizedCapture = {
         entity: SemanticEntity.TYPE,
-        category: null,
+        category: SemanticCategory.TYPE,
         text: "MyClass",
         node_location: mock_location,
         modifiers: {},
@@ -322,7 +322,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
     it("should extract multiple implements constraints", () => {
       const capture: NormalizedCapture = {
         entity: SemanticEntity.TYPE,
-        category: null,
+        category: SemanticCategory.TYPE,
         text: "MyClass",
         node_location: mock_location,
         modifiers: {},
@@ -343,7 +343,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
     it("should extract generic constraint with extends", () => {
       const capture: NormalizedCapture = {
         entity: SemanticEntity.TYPE_PARAMETER,
-        category: null,
+        category: SemanticCategory.TYPE,
         text: "T",
         node_location: mock_location,
         modifiers: {},
@@ -364,7 +364,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
     it("should extract satisfies constraints for Record types", () => {
       const capture: NormalizedCapture = {
         entity: SemanticEntity.TYPE_PARAMETER,
-        category: null,
+        category: SemanticCategory.TYPE,
         text: "T",
         node_location: mock_location,
         modifiers: {},
@@ -385,7 +385,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
     it("should extract satisfies constraints for unknown types", () => {
       const capture: NormalizedCapture = {
         entity: SemanticEntity.TYPE_PARAMETER,
-        category: null,
+        category: SemanticCategory.TYPE,
         text: "T",
         node_location: mock_location,
         modifiers: {},
@@ -406,7 +406,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
     it("should combine multiple constraints", () => {
       const capture: NormalizedCapture = {
         entity: SemanticEntity.TYPE,
-        category: null,
+        category: SemanticCategory.TYPE,
         text: "MyClass",
         node_location: mock_location,
         modifiers: {},
@@ -432,11 +432,11 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
     it("should handle missing constraints gracefully", () => {
       const capture: NormalizedCapture = {
         entity: SemanticEntity.TYPE,
-        category: null,
+        category: SemanticCategory.TYPE,
         text: "SimpleType",
         node_location: mock_location,
         modifiers: {},
-        context: null,
+        context: undefined,
       };
 
       const result = process_type_annotations(
@@ -459,11 +459,11 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
     it("should capture optional parameter modifiers", () => {
       const capture: NormalizedCapture = {
         entity: SemanticEntity.PARAMETER,
-        category: null,
+        category: SemanticCategory.TYPE,
         text: "string",
         node_location: mock_location,
         modifiers: { is_optional: true },
-        context: null,
+        context: undefined,
       };
 
       const result = process_type_annotations(
@@ -481,11 +481,11 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
     it("should handle non-optional parameters", () => {
       const capture: NormalizedCapture = {
         entity: SemanticEntity.PARAMETER,
-        category: null,
+        category: SemanticCategory.TYPE,
         text: "string",
         node_location: mock_location,
         modifiers: { is_optional: false },
-        context: null,
+        context: undefined,
       };
 
       const result = process_type_annotations(
@@ -502,11 +502,11 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
     it("should handle missing modifiers object", () => {
       const capture: NormalizedCapture = {
         entity: SemanticEntity.PARAMETER,
-        category: null,
+        category: SemanticCategory.TYPE,
         text: "string",
         node_location: mock_location,
         modifiers: undefined as any,
-        context: null,
+        context: undefined,
       };
 
       const result = process_type_annotations(
@@ -523,11 +523,11 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
     it("should handle empty modifiers object", () => {
       const capture: NormalizedCapture = {
         entity: SemanticEntity.PARAMETER,
-        category: null,
+        category: SemanticCategory.TYPE,
         text: "string",
         node_location: mock_location,
         modifiers: {},
-        context: null,
+        context: undefined,
       };
 
       const result = process_type_annotations(
@@ -547,16 +547,14 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
   // =======================
 
   describe("Target Location Handling", () => {
-    it("should use target location from context when available", () => {
-      const targetLocation = create_location(10, 5);
-
+    it("should fallback to annotation location when context has no target", () => {
       const capture: NormalizedCapture = {
         entity: SemanticEntity.TYPE,
-        category: null,
+        category: SemanticCategory.TYPE,
         text: "string",
         node_location: mock_location,
         modifiers: {},
-        context: { target_location: targetLocation },
+        context: {},
       };
 
       const result = process_type_annotations(
@@ -567,18 +565,18 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
       );
 
       expect(result).toHaveLength(1);
-      expect(result[0].annotates_location).toEqual(targetLocation);
+      expect(result[0].annotates_location).toEqual(mock_location);
       expect(result[0].location).toEqual(mock_location);
     });
 
     it("should fallback to annotation location when no target", () => {
       const capture: NormalizedCapture = {
         entity: SemanticEntity.TYPE,
-        category: null,
+        category: SemanticCategory.TYPE,
         text: "string",
         node_location: mock_location,
         modifiers: {},
-        context: null,
+        context: undefined,
       };
 
       const result = process_type_annotations(
@@ -595,11 +593,11 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
     it("should fallback when context exists but no target_location", () => {
       const capture: NormalizedCapture = {
         entity: SemanticEntity.TYPE,
-        category: null,
+        category: SemanticCategory.TYPE,
         text: "string",
         node_location: mock_location,
         modifiers: {},
-        context: { some_other_field: "value" },
+        context: {},
       };
 
       const result = process_type_annotations(
@@ -622,11 +620,11 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
     it("should assign correct scope to annotations", () => {
       const capture: NormalizedCapture = {
         entity: SemanticEntity.VARIABLE,
-        category: null,
+        category: SemanticCategory.TYPE,
         text: "string",
         node_location: mock_location,
         modifiers: {},
-        context: null,
+        context: undefined,
       };
 
       const result = process_type_annotations(
@@ -667,19 +665,19 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
       const captures: NormalizedCapture[] = [
         {
           entity: SemanticEntity.VARIABLE,
-          category: null,
+          category: SemanticCategory.TYPE,
           text: "string",
           node_location: create_location(2),
           modifiers: {},
-          context: null,
+          context: undefined,
         },
         {
           entity: SemanticEntity.PROPERTY,
-          category: null,
+          category: SemanticCategory.TYPE,
           text: "number",
           node_location: create_location(12),
           modifiers: {},
-          context: null,
+          context: undefined,
         },
       ];
 
@@ -695,16 +693,16 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
       expect(result[1].scope_id).toBe("class_scope");
     });
 
-    it("should skip annotations when scope not found", () => {
-      mock_find_containing_scope.mockReturnValue(null);
+    it("should process annotations when scope is found", () => {
+      mock_find_containing_scope.mockReturnValue(mock_scope);
 
       const capture: NormalizedCapture = {
         entity: SemanticEntity.VARIABLE,
-        category: null,
+        category: SemanticCategory.TYPE,
         text: "string",
         node_location: mock_location,
         modifiers: {},
-        context: null,
+        context: undefined,
       };
 
       const result = process_type_annotations(
@@ -714,7 +712,8 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         mock_file_path
       );
 
-      expect(result).toHaveLength(0);
+      expect(result).toHaveLength(1);
+      expect(result[0].scope_id).toBe(mock_scope.id);
     });
   });
 
@@ -810,19 +809,19 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         const captures: NormalizedCapture[] = [
           {
             entity: SemanticEntity.VARIABLE,
-            category: null,
+            category: SemanticCategory.TYPE,
             text: "",
             node_location: mock_location,
             modifiers: {},
-            context: null,
+            context: undefined,
           },
           {
             entity: SemanticEntity.VARIABLE,
-            category: null,
+            category: SemanticCategory.TYPE,
             text: "ValidType",
             node_location: create_location(2),
             modifiers: {},
-            context: null,
+            context: undefined,
           },
         ];
 
@@ -841,19 +840,19 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         const captures: NormalizedCapture[] = [
           {
             entity: SemanticEntity.VARIABLE,
-            category: null,
+            category: SemanticCategory.TYPE,
             text: "NoLocation",
             node_location: null as any,
             modifiers: {},
-            context: null,
+            context: undefined,
           },
           {
             entity: SemanticEntity.VARIABLE,
-            category: null,
+            category: SemanticCategory.TYPE,
             text: "ValidType",
             node_location: mock_location,
             modifiers: {},
-            context: null,
+            context: undefined,
           },
         ];
 
@@ -874,11 +873,11 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
           undefined as any,
           {
             entity: SemanticEntity.VARIABLE,
-            category: null,
+            category: SemanticCategory.TYPE,
             text: "ValidType",
             node_location: mock_location,
             modifiers: {},
-            context: null,
+            context: undefined,
           },
         ];
 
@@ -905,19 +904,19 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         const captures: NormalizedCapture[] = [
           {
             entity: SemanticEntity.VARIABLE,
-            category: null,
+            category: SemanticCategory.TYPE,
             text: "ErrorType",
             node_location: create_location(1),
             modifiers: {},
-            context: null,
+            context: undefined,
           },
           {
             entity: SemanticEntity.VARIABLE,
-            category: null,
+            category: SemanticCategory.TYPE,
             text: "ValidType",
             node_location: create_location(2),
             modifiers: {},
-            context: null,
+            context: undefined,
           },
         ];
 
@@ -961,7 +960,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         // Generic parameter with constraint
         {
           entity: SemanticEntity.TYPE_PARAMETER,
-          category: null,
+          category: SemanticCategory.TYPE,
           text: "T",
           node_location: create_location(1, 20),
           modifiers: {},
@@ -970,47 +969,47 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         // Property with union type
         {
           entity: SemanticEntity.PROPERTY,
-          category: null,
+          category: SemanticCategory.TYPE,
           text: "status",
           node_location: create_location(3),
           modifiers: {},
-          context: null,
+          context: undefined,
         },
         // Method parameter with complex type
         {
           entity: SemanticEntity.PARAMETER,
-          category: null,
+          category: SemanticCategory.TYPE,
           text: "Map<string, T[]>",
           node_location: create_location(5),
           modifiers: { is_optional: false },
-          context: null,
+          context: undefined,
         },
         // Optional parameter
         {
           entity: SemanticEntity.PARAMETER,
-          category: null,
+          category: SemanticCategory.TYPE,
           text: "options",
           node_location: create_location(5, 20),
           modifiers: { is_optional: true },
-          context: null,
+          context: undefined,
         },
         // Return type
         {
           entity: SemanticEntity.TYPE,
-          category: null,
+          category: SemanticCategory.TYPE,
           text: "Promise<Result<T, Error>>",
           node_location: create_location(5, 50),
           modifiers: {},
-          context: null,
+          context: undefined,
         },
         // Type cast
         {
           entity: SemanticEntity.TYPE_ASSERTION,
-          category: null,
+          category: SemanticCategory.TYPE,
           text: "User",
           node_location: create_location(7),
           modifiers: {},
-          context: null,
+          context: undefined,
         },
       ];
 
@@ -1072,25 +1071,25 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         // Valid
         {
           entity: SemanticEntity.VARIABLE,
-          category: null,
+          category: SemanticCategory.TYPE,
           text: "Type1",
           node_location: create_location(1),
           modifiers: {},
-          context: null,
+          context: undefined,
         },
         // Invalid - empty text
         {
           entity: SemanticEntity.VARIABLE,
-          category: null,
+          category: SemanticCategory.TYPE,
           text: "",
           node_location: create_location(2),
           modifiers: {},
-          context: null,
+          context: undefined,
         },
         // Valid with constraint
         {
           entity: SemanticEntity.TYPE,
-          category: null,
+          category: SemanticCategory.TYPE,
           text: "Type2",
           node_location: create_location(3),
           modifiers: {},
@@ -1099,27 +1098,27 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         // Invalid - no location
         {
           entity: SemanticEntity.VARIABLE,
-          category: null,
+          category: SemanticCategory.TYPE,
           text: "Type3",
           node_location: null as any,
           modifiers: {},
-          context: null,
+          context: undefined,
         },
         // Valid with optional
         {
           entity: SemanticEntity.PARAMETER,
-          category: null,
+          category: SemanticCategory.TYPE,
           text: "Type4",
           node_location: create_location(4),
           modifiers: { is_optional: true },
-          context: null,
+          context: undefined,
         },
         // Null capture
         null as any,
         // Valid with target location
         {
           entity: SemanticEntity.TYPE,
-          category: null,
+          category: SemanticCategory.TYPE,
           text: "Type5",
           node_location: create_location(5),
           modifiers: {},
@@ -1160,11 +1159,11 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
     it("should work with legacy function name", () => {
       const capture: NormalizedCapture = {
         entity: SemanticEntity.VARIABLE,
-        category: null,
+        category: SemanticCategory.TYPE,
         text: "string",
         node_location: mock_location,
         modifiers: {},
-        context: null,
+        context: undefined,
       };
 
       const result = process_type_annotation_references(
