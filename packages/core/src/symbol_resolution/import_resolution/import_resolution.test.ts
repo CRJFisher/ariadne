@@ -5,9 +5,6 @@
 import { describe, expect, it, beforeEach, vi } from "vitest";
 import {
   resolve_imports,
-  create_import_resolution_context,
-  find_file_with_extensions,
-  resolve_node_modules_path,
 } from "./index";
 import type {
   ImportResolutionContext,
@@ -24,6 +21,7 @@ import type {
 } from "@ariadnejs/types";
 import { SemanticIndex } from "../../semantic_index/semantic_index";
 import * as fs from "fs";
+import { resolve_module_path } from "./module_resolver";
 
 // Mock fs
 vi.mock("fs");
@@ -154,7 +152,7 @@ describe("Import Resolution", () => {
       indices.set("/src/components.ts" as FilePath, components_index);
 
       // Create context
-      context = create_import_resolution_context(indices);
+      context = { indices };
     });
 
     it("should resolve named imports", () => {
@@ -195,7 +193,7 @@ describe("Import Resolution", () => {
 
       const indices = new Map(context.indices);
       indices.set("/src/main.ts" as FilePath, updated_index);
-      const new_context = create_import_resolution_context(indices);
+      const new_context = { indices };
 
       const result = resolve_imports(new_context);
       const main_imports = result.imports.get("/src/main.ts" as FilePath);
@@ -223,34 +221,11 @@ describe("Import Resolution", () => {
       );
       indices.set("/src/app.ts" as FilePath, index);
 
-      const context = create_import_resolution_context(indices);
+      const context = { indices };
       const result = resolve_imports(context);
 
       const app_imports = result.imports.get("/src/app.ts" as FilePath);
       expect(app_imports).toBeUndefined();
-    });
-  });
-
-  describe("Module Path Resolution", () => {
-    it("should try multiple extensions", () => {
-      // Mock fs.existsSync
-      const mock_exists = vi.mocked(fs.existsSync);
-      mock_exists.mockImplementation((p) => {
-        return p === "/project/src/utils.ts";
-      });
-
-      const result = find_file_with_extensions("/project/src/utils", [".ts", ".tsx", ".js"]);
-      expect(result).toBe("/project/src/utils.ts");
-    });
-  });
-
-  describe("Context Creation", () => {
-    it("should create an import resolution context with indices", () => {
-      const indices = new Map<FilePath, SemanticIndex>();
-
-      const context = create_import_resolution_context(indices);
-
-      expect(context.indices).toBe(indices);
     });
   });
 
@@ -295,7 +270,7 @@ describe("Import Resolution", () => {
       );
       indices.set("lodash" as FilePath, lodash_index);
 
-      const context = create_import_resolution_context(indices);
+      const context = { indices };
       const result = resolve_imports(context);
 
       const main_imports = result.imports.get("/src/main.ts" as FilePath);
@@ -326,7 +301,7 @@ describe("Import Resolution", () => {
       );
       indices.set("/src/main.ts" as FilePath, index);
 
-      const context = create_import_resolution_context(indices);
+      const context = { indices };
       const result = resolve_imports(context);
 
       // Should handle gracefully without throwing
@@ -355,7 +330,7 @@ describe("Import Resolution", () => {
       const utils_index = create_test_index("/src/utils.ts" as FilePath, [], []);
       indices.set("/src/utils.ts" as FilePath, utils_index);
 
-      const context = create_import_resolution_context(indices);
+      const context = { indices };
       const result = resolve_imports(context);
 
       const main_imports = result.imports.get("/src/main.ts" as FilePath);
@@ -423,7 +398,7 @@ describe("Import Resolution", () => {
       );
       indices.set("/src/b.ts" as FilePath, file_b);
 
-      const context = create_import_resolution_context(indices);
+      const context = { indices };
 
       // Should not throw or enter infinite loop
       const result = resolve_imports(context);
@@ -493,7 +468,7 @@ describe("Import Resolution", () => {
       );
       indices.set("/src/utils.ts" as FilePath, utils_index);
 
-      const context = create_import_resolution_context(indices);
+      const context = { indices };
       const result = resolve_imports(context);
 
       const main_imports = result.imports.get("/src/main.ts" as FilePath);
@@ -543,7 +518,7 @@ describe("Import Resolution", () => {
       );
       indices.set("/src/utils.ts" as FilePath, utils_index);
 
-      const context = create_import_resolution_context(indices);
+      const context = { indices };
       const result = resolve_imports(context);
 
       const main_imports = result.imports.get("/src/main.ts" as FilePath);
@@ -555,38 +530,4 @@ describe("Import Resolution", () => {
     });
   });
 
-  describe("Node Modules Resolution", () => {
-    it("should handle node_modules path resolution", () => {
-      const mock_exists = vi.mocked(fs.existsSync);
-      const mock_read = vi.mocked(fs.readFileSync);
-
-      mock_exists.mockImplementation((p) => {
-        const path_str = p.toString();
-        return path_str.includes("node_modules/lodash") || path_str.includes("package.json") || path_str.includes("index.js");
-      });
-
-      mock_read.mockImplementation((p) => {
-        if (p.toString().includes("package.json")) {
-          return JSON.stringify({ main: "index.js" });
-        }
-        return "";
-      });
-
-      const result = resolve_node_modules_path("lodash", "/project/src/main.ts" as FilePath);
-      expect(result).toContain("node_modules/lodash");
-    });
-  });
-
-  describe("File Resolution with Extensions", () => {
-    it("should find files with various extensions", () => {
-      const mock_exists = vi.mocked(fs.existsSync);
-
-      mock_exists.mockImplementation((p) => {
-        return p === "/project/src/utils.tsx";
-      });
-
-      const result = find_file_with_extensions("/project/src/utils", [".ts", ".tsx", ".js", ".jsx"]);
-      expect(result).toBe("/project/src/utils.tsx");
-    });
-  });
 });

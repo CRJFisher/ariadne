@@ -14,7 +14,6 @@ import type {
   Import,
   Export,
   SymbolDefinition,
-  NamedImport,
 } from "@ariadnejs/types";
 import * as fs from "fs";
 

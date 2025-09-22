@@ -17,14 +17,9 @@ import type {
   DefaultImport,
   NamespaceImport,
   NamedImport,
-  DefaultExport,
   NamedExport,
 } from "@ariadnejs/types";
-import {
-  find_file_with_extensions,
-  resolve_node_modules_path,
-} from "../module_resolver";
-import { JAVASCRIPT_CONFIG, TYPESCRIPT_CONFIG } from "./language_config";
+import { JAVASCRIPT_CONFIG } from "./language_config";
 
 /**
  * Resolve JavaScript/TypeScript module paths
@@ -72,7 +67,10 @@ function resolve_js_relative_path(
   }
 
   // Try with common JS/TS extensions
-  return find_file_with_extensions(base_path, JAVASCRIPT_CONFIG.file_extensions);
+  return find_file_with_extensions(
+    base_path,
+    JAVASCRIPT_CONFIG.file_extensions
+  );
 }
 
 /**
@@ -84,7 +82,10 @@ function resolve_absolute_path(import_path: string): FilePath | null {
   }
 
   // Try with extensions
-  return find_file_with_extensions(import_path, JAVASCRIPT_CONFIG.file_extensions);
+  return find_file_with_extensions(
+    import_path,
+    JAVASCRIPT_CONFIG.file_extensions
+  );
 }
 
 /**
@@ -107,7 +108,10 @@ function resolve_js_package_path(
   // If the import has a subpath (e.g., "lodash/debounce"), handle it
   if (import_path !== package_name) {
     // First resolve the package location
-    const package_resolved = resolve_node_modules_path(package_name, importing_file);
+    const package_resolved = resolve_node_modules_path(
+      package_name,
+      importing_file
+    );
     if (!package_resolved) {
       return null;
     }
@@ -117,7 +121,10 @@ function resolve_js_package_path(
     // Find the package root directory (not the main file's directory)
     let package_dir = package_resolved as string;
     // If package_resolved points to a file like lib/index.js, we need the package root
-    while (package_dir && path.basename(package_dir) !== package_name.split('/').pop()) {
+    while (
+      package_dir &&
+      path.basename(package_dir) !== package_name.split("/").pop()
+    ) {
       package_dir = path.dirname(package_dir);
     }
     const subpath_resolved = path.join(package_dir, subpath);
@@ -140,7 +147,10 @@ function resolve_js_package_path(
     }
 
     // Try with extensions
-    return find_file_with_extensions(subpath_resolved, JAVASCRIPT_CONFIG.file_extensions);
+    return find_file_with_extensions(
+      subpath_resolved,
+      JAVASCRIPT_CONFIG.file_extensions
+    );
   }
 
   // No subpath, just resolve the package itself
@@ -176,7 +186,11 @@ export function match_js_import_to_export(
       return match_default_import(import_stmt as DefaultImport, source_exports);
 
     case "namespace":
-      return match_namespace_import(import_stmt as NamespaceImport, source_exports, source_symbols);
+      return match_namespace_import(
+        import_stmt as NamespaceImport,
+        source_exports,
+        source_symbols
+      );
 
     case "named":
       return match_named_import(import_stmt as NamedImport, source_exports);
@@ -240,8 +254,9 @@ function match_namespace_import(
   // by mapping it to a synthetic symbol (we'll use the first export if available)
   if (source_exports.length > 0) {
     // Handle both NamespaceImport with namespace_name and Import with name
-    const namespace_name = (import_stmt as NamespaceImport).namespace_name ||
-                          (import_stmt as Import).name;
+    const namespace_name =
+      (import_stmt as NamespaceImport).namespace_name ||
+      (import_stmt as Import).name;
     if (namespace_name) {
       // Convert to SymbolName - both are branded strings with the same underlying type
       const namespace_as_symbol = namespace_name as string as SymbolName;
@@ -262,8 +277,11 @@ function match_named_import(
   const result = new Map<SymbolName, SymbolId>();
 
   // Handle both NamedImport with imports array and simple Import with name
-  const import_items = (import_stmt as NamedImport).imports ||
-    ((import_stmt as Import).name ? [{ name: (import_stmt as Import).name, alias: undefined }] : []);
+  const import_items =
+    (import_stmt as NamedImport).imports ||
+    ((import_stmt as Import).name
+      ? [{ name: (import_stmt as Import).name, alias: undefined }]
+      : []);
 
   for (const import_item of import_items) {
     const imported_name = import_item.name;
@@ -274,9 +292,10 @@ function match_named_import(
       if (exp.kind === "named") {
         const named_export = exp as NamedExport;
         // Handle simple Export type with just name/symbol or NamedExport with exports array
-        if ((named_export ).exports) {
-          for (const export_item of (named_export ).exports) {
-            const export_name = export_item.export_name || export_item.local_name;
+        if (named_export.exports) {
+          for (const export_item of named_export.exports) {
+            const export_name =
+              export_item.export_name || export_item.local_name;
             if (export_name === imported_name) {
               result.set(local_name, named_export.symbol);
               break;
@@ -291,4 +310,80 @@ function match_named_import(
   }
 
   return result;
+}
+
+/**
+ * Resolve node_modules package import
+ *
+ * Basic implementation - real node resolution is more complex
+ * with package.json main field, exports field, etc.
+ */
+export function resolve_node_modules_path(
+  package_name: string,
+  importing_file: FilePath
+): FilePath | null {
+  let current_dir = path.dirname(importing_file);
+
+  // Walk up directory tree looking for node_modules
+  while (current_dir !== path.dirname(current_dir)) {
+    const node_modules = path.join(current_dir, "node_modules");
+    const package_path = path.join(node_modules, package_name);
+
+    if (fs.existsSync(package_path)) {
+      // Try package.json main field
+      const pkg_json_path = path.join(package_path, "package.json");
+      if (fs.existsSync(pkg_json_path)) {
+        try {
+          const pkg = JSON.parse(fs.readFileSync(pkg_json_path, "utf8"));
+          if (pkg.main) {
+            const main_path = path.join(package_path, pkg.main);
+            if (fs.existsSync(main_path)) {
+              return main_path as FilePath;
+            }
+          }
+        } catch {
+          // Ignore parse errors
+        }
+      }
+
+      // Try index files
+      const index_files = ["index.ts", "index.tsx", "index.js", "index.jsx"];
+      for (const index of index_files) {
+        const index_path = path.join(package_path, index);
+        if (fs.existsSync(index_path)) {
+          return index_path as FilePath;
+        }
+      }
+    }
+
+    current_dir = path.dirname(current_dir);
+  }
+
+  return null;
+}
+
+/**
+ * Find a file with possible extensions
+ */
+export function find_file_with_extensions(
+  base_path: string,
+  extensions: readonly string[]
+): FilePath | null {
+  // Check the base path as-is
+  if (fs.existsSync(base_path)) {
+    const stats = fs.statSync(base_path);
+    if (stats.isFile()) {
+      return base_path as FilePath;
+    }
+  }
+
+  // Try each extension
+  for (const ext of extensions) {
+    const with_ext = base_path + ext;
+    if (fs.existsSync(with_ext)) {
+      return with_ext as FilePath;
+    }
+  }
+
+  return null;
 }

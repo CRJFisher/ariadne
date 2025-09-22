@@ -14,9 +14,11 @@ import type { LocalTypeDefinition, LocalMemberInfo, TypeHierarchyGraph } from ".
 // Test utilities
 function createLocation(line: number, column: number): Location {
   return {
+    file_path: "test.ts" as FilePath,
     line,
     column,
-    offset: line * 100 + column,
+    end_line: line,
+    end_column: column,
   };
 }
 

@@ -12,10 +12,7 @@ import type {
   SymbolName,
   TypeId,
 } from "@ariadnejs/types";
-import {
-  location_key,
-  type LocationKey,
-} from "@ariadnejs/types";
+import { type LocationKey } from "@ariadnejs/types";
 import type { ResolvedSymbols } from "../types";
 
 /**
@@ -105,11 +102,13 @@ export function export_symbol_resolution_data(
 /**
  * Create the exported data structure from resolved symbols
  */
-function create_exported_data(resolved_symbols: ResolvedSymbols): ExportedSymbolResolution {
+function create_exported_data(
+  resolved_symbols: ResolvedSymbols
+): ExportedSymbolResolution {
   // Calculate metadata
   const total_files = new Set<FilePath>();
   for (const loc of resolved_symbols.resolved_references.keys()) {
-    total_files.add(loc.file_path);
+    total_files.add(parse_location_key(loc).file_path);
   }
 
   const total_symbols = new Set<SymbolId>();
@@ -126,9 +125,15 @@ function create_exported_data(resolved_symbols: ResolvedSymbols): ExportedSymbol
       total_resolved_references: resolved_symbols.resolved_references.size,
     },
     imports: export_import_mappings(resolved_symbols.phases.imports.imports),
-    function_calls: export_call_mappings(resolved_symbols.phases.functions.function_calls),
-    method_calls: export_call_mappings(resolved_symbols.phases.methods.method_calls),
-    constructor_calls: export_call_mappings(resolved_symbols.phases.methods.constructor_calls),
+    function_calls: export_call_mappings(
+      resolved_symbols.phases.functions.function_calls
+    ),
+    method_calls: export_call_mappings(
+      resolved_symbols.phases.methods.method_calls
+    ),
+    constructor_calls: export_call_mappings(
+      resolved_symbols.phases.methods.constructor_calls
+    ),
     symbol_definitions: export_symbol_definitions(resolved_symbols),
     type_information: export_type_information(resolved_symbols.phases.types),
   };
@@ -186,13 +191,15 @@ function export_call_mappings(
 /**
  * Export symbol definitions with their references
  */
-function export_symbol_definitions(resolved_symbols: ResolvedSymbols): ExportedSymbolMap {
+function export_symbol_definitions(
+  resolved_symbols: ResolvedSymbols
+): ExportedSymbolMap {
   const result: ExportedSymbolMap["symbols"] = [];
 
   for (const [symbol_id, references] of resolved_symbols.references_to_symbol) {
     result.push({
       symbol_id,
-      references: references || [],
+      references: [...(references || [])],
     });
   }
 
@@ -202,7 +209,9 @@ function export_symbol_definitions(resolved_symbols: ResolvedSymbols): ExportedS
 /**
  * Export type information
  */
-function export_type_information(types: ResolvedSymbols["phases"]["types"]): ExportedTypeInfo {
+function export_type_information(
+  types: ResolvedSymbols["phases"]["types"]
+): ExportedTypeInfo {
   const symbol_types: ExportedTypeInfo["symbol_types"] = [];
   const type_members: ExportedTypeInfo["type_members"] = [];
 
@@ -213,7 +222,10 @@ function export_type_information(types: ResolvedSymbols["phases"]["types"]): Exp
 
   // Export type members
   for (const [type_id, members] of types.type_members) {
-    const member_list: Array<{ member_name: SymbolName; member_symbol: SymbolId }> = [];
+    const member_list: Array<{
+      member_name: SymbolName;
+      member_symbol: SymbolId;
+    }> = [];
     for (const [member_name, member_symbol] of members) {
       member_list.push({ member_name, member_symbol });
     }
@@ -251,17 +263,23 @@ function convert_to_csv(data: ExportedSymbolResolution): string {
   // Add metadata header
   csv_lines.push("# Symbol Resolution Export");
   csv_lines.push(`# Version: ${data.metadata.export_version}`);
-  csv_lines.push(`# Timestamp: ${new Date(data.metadata.timestamp).toISOString()}`);
+  csv_lines.push(
+    `# Timestamp: ${new Date(data.metadata.timestamp).toISOString()}`
+  );
   csv_lines.push(`# Files: ${data.metadata.total_files}`);
   csv_lines.push(`# Symbols: ${data.metadata.total_symbols}`);
-  csv_lines.push(`# Resolved References: ${data.metadata.total_resolved_references}`);
+  csv_lines.push(
+    `# Resolved References: ${data.metadata.total_resolved_references}`
+  );
   csv_lines.push("");
 
   // Imports section
   csv_lines.push("## Imports");
   csv_lines.push("File Path,Imported Name,Resolved Symbol");
   for (const imp of data.imports.imports) {
-    csv_lines.push(`"${imp.file_path}","${imp.imported_name}","${imp.resolved_symbol}"`);
+    csv_lines.push(
+      `"${imp.file_path}","${imp.imported_name}","${imp.resolved_symbol}"`
+    );
   }
   csv_lines.push("");
 

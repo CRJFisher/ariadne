@@ -50,7 +50,6 @@ import type { LocalTypeTracking } from "../semantic_index/references/type_tracki
 import type { LocalTypeAnnotation as SemanticAnnotation } from "../semantic_index/references/type_annotation_references";
 import {
   resolve_imports,
-  create_import_resolution_context,
 } from "./import_resolution";
 import { phase2_resolve_functions } from "./function_resolution";
 
@@ -122,8 +121,7 @@ function phase1_resolve_imports(
   indices: ReadonlyMap<FilePath, SemanticIndex>
 ): ImportResolutionMap {
   // Create import resolution context with the new simplified architecture
-  const context = create_import_resolution_context(indices);
-  return resolve_imports(context);
+  return resolve_imports({indices});
 }
 
 /**

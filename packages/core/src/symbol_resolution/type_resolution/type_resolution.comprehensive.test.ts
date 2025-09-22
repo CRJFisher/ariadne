@@ -166,11 +166,10 @@ function create_type_flow_pattern(
   operation: string = "assignment"
 ): LocalTypeFlowPattern {
   return {
-    from_type,
-    to_type,
+    source_location: create_location("test.ts"),
+    target_location: create_location("test.ts"),
     flow_kind: operation as any,
-    location: create_location("test.ts"),
-    confidence: 1.0,
+    scope_id: "scope:0" as ScopeId,
   };
 }
 
@@ -184,12 +183,10 @@ function create_member_info(
 ): LocalMemberInfo {
   return {
     name: name as SymbolName,
-    type_id: type,
+    kind: "property",
     location: create_location("test.ts"),
+    symbol_id: symbol_id("member:" + name),
     is_static,
-    is_private: false,
-    is_method: false,
-    signature: null,
   };
 }
 
@@ -396,9 +393,9 @@ describe("Type Resolution - Comprehensive Suite", () => {
 
       const hierarchy = resolve_inheritance(type_definitions);
 
-      expect(hierarchy.inheritance_chains.size).toBe(2);
-      expect(hierarchy.inheritance_chains.has(type_definitions[0].type_id)).toBe(true);
-      expect(hierarchy.inheritance_chains.has(type_definitions[1].type_id)).toBe(true);
+      expect(hierarchy.all_ancestors.size).toBe(2);
+      expect(hierarchy.all_ancestors.has(type_definitions[0].type_id)).toBe(true);
+      expect(hierarchy.all_ancestors.has(type_definitions[1].type_id)).toBe(true);
     });
 
     it("resolves multiple inheritance", () => {
@@ -413,8 +410,8 @@ describe("Type Resolution - Comprehensive Suite", () => {
 
       const hierarchy = resolve_inheritance(type_definitions);
 
-      expect(hierarchy.inheritance_chains.size).toBe(3);
-      expect(hierarchy.inheritance_chains.has(type_definitions[2].type_id)).toBe(true);
+      expect(hierarchy.all_ancestors.size).toBe(3);
+      expect(hierarchy.all_ancestors.has(type_definitions[2].type_id)).toBe(true);
     });
 
     it("detects circular inheritance", () => {
@@ -426,7 +423,7 @@ describe("Type Resolution - Comprehensive Suite", () => {
       // Should not throw, but handle gracefully
       const hierarchy = resolve_inheritance(type_definitions);
 
-      expect(hierarchy.inheritance_chains.size).toBe(2);
+      expect(hierarchy.all_ancestors.size).toBe(2);
     });
 
     it("handles deep inheritance chains", () => {
@@ -442,11 +439,11 @@ describe("Type Resolution - Comprehensive Suite", () => {
 
       const hierarchy = resolve_inheritance(type_definitions);
 
-      expect(hierarchy.inheritance_chains.size).toBe(chain_length);
+      expect(hierarchy.all_ancestors.size).toBe(chain_length);
 
       // The deepest class should have the longest chain
-      const deepest_chain = hierarchy.inheritance_chains.get(type_definitions[chain_length - 1].type_id);
-      expect(deepest_chain?.length).toBe(chain_length);
+      const deepest_ancestors = hierarchy.all_ancestors.get(type_definitions[chain_length - 1].type_id);
+      expect(deepest_ancestors?.size).toBe(chain_length - 1); // All ancestors except itself
     });
   });
 
@@ -469,8 +466,10 @@ describe("Type Resolution - Comprehensive Suite", () => {
 
       const local_members = new Map([[class_type_id, members]]);
       const hierarchy: TypeHierarchyGraph = {
-        inheritance_chains: new Map([[class_type_id, [class_type_id]]]),
-        implements_relationships: new Map(),
+        extends_map: new Map(),
+        implements_map: new Map(),
+        all_ancestors: new Map([[class_type_id, new Set()]]),
+        all_descendants: new Map(),
       };
 
       const resolved = resolve_inherited_members(local_members, hierarchy);
@@ -511,11 +510,18 @@ describe("Type Resolution - Comprehensive Suite", () => {
       ]);
 
       const hierarchy: TypeHierarchyGraph = {
-        inheritance_chains: new Map([
-          [base_type_id, [base_type_id]],
-          [derived_type_id, [derived_type_id, base_type_id]],
+        extends_map: new Map([
+          [derived_type_id, [base_type_id]],
         ]),
-        implements_relationships: new Map(),
+        implements_map: new Map(),
+        all_ancestors: new Map([
+          [base_type_id, new Set()],
+          [derived_type_id, new Set([base_type_id])],
+        ]),
+        all_descendants: new Map([
+          [base_type_id, new Set([derived_type_id])],
+          [derived_type_id, new Set()],
+        ]),
       };
 
       const resolved = resolve_inherited_members(local_members, hierarchy);
@@ -723,9 +729,9 @@ describe("Type Resolution - Comprehensive Suite", () => {
       const type_annotations: LocalTypeAnnotation[] = [
         {
           location: create_location("test.ts"),
-          type_name: "string" as SymbolName,
-          type_id: primitive_type_id("string"),
-          context: "variable_declaration",
+          annotation_text: "string",
+          annotation_kind: "variable",
+          scope_id: "scope:0" as ScopeId,
         },
       ];
 
@@ -913,7 +919,7 @@ describe("Type Resolution - Comprehensive Suite", () => {
       );
 
       expect(result.global_registry.types.size).toBe(chain_length);
-      expect(result.inheritance_hierarchy.inheritance_chains.size).toBe(chain_length);
+      expect(result.inheritance_hierarchy.all_ancestors.size).toBe(chain_length);
     });
   });
 

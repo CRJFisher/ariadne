@@ -125,7 +125,7 @@ function create_test_resolved_symbols(): ResolvedSymbols {
   return {
     resolved_references: locationMapToKeyMap(resolved_references),
     references_to_symbol: references_to_symbol as ReadonlyMap<SymbolId, readonly Location[]>,
-    unresolved_references: new Map() as ReadonlyMap<LocationKey, string>,
+    unresolved_references: new Map() as ReadonlyMap<LocationKey, SymbolId>,
     phases: {
       imports: { imports: imports as ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> },
       functions: {

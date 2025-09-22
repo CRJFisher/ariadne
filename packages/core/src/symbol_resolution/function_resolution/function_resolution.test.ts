@@ -506,6 +506,9 @@ describe("Function Resolution", () => {
           end_column: 19,
         },
         scope_id: "scope:module" as ScopeId,
+        is_hoisted: true,
+        is_exported: false,
+        is_imported: false,
       };
 
       const innerFuncDef = {
@@ -520,6 +523,9 @@ describe("Function Resolution", () => {
           end_column: 19,
         },
         scope_id: "scope:outer" as ScopeId,
+        is_hoisted: true,
+        is_exported: false,
+        is_imported: false,
       };
 
       const index: SemanticIndex = {
@@ -662,6 +668,9 @@ describe("Function Resolution", () => {
           end_column: 17,
         },
         scope_id: "scope:module" as ScopeId,
+        is_hoisted: true,
+        is_exported: false,
+        is_imported: false,
       };
 
       const localProcessDef = {
@@ -676,6 +685,9 @@ describe("Function Resolution", () => {
           end_column: 17,
         },
         scope_id: "scope:function" as ScopeId,
+        is_hoisted: true,
+        is_exported: false,
+        is_imported: false,
       };
 
       const index: SemanticIndex = {

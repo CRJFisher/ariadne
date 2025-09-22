@@ -31,9 +31,13 @@ function has_decorator(node: SyntaxNode, decorator_name: string): boolean {
   if (!decorated || decorated.type !== "decorated_definition") return false;
 
   // Check decorators
-  const decorators = decorated.children.filter(child => child.type === "decorator");
-  return decorators.some(decorator => {
-    const identifier = decorator.children.find(child => child.type === "identifier");
+  const decorators = decorated.children.filter(
+    (child) => child.type === "decorator"
+  );
+  return decorators.some((decorator) => {
+    const identifier = decorator.children.find(
+      (child) => child.type === "identifier"
+    );
     return identifier?.text === decorator_name;
   });
 }
@@ -55,15 +59,21 @@ function is_private_name(name: string): boolean {
 /**
  * Helper to extract decorator context
  */
-function extract_decorator_context(node: SyntaxNode): CaptureContext | undefined {
+function extract_decorator_context(
+  node: SyntaxNode
+): CaptureContext | undefined {
   if (node.type === "identifier") {
     // Look for the function this decorator is applied to
     let current = node.parent;
     while (current) {
       if (current.type === "decorated_definition") {
-        const func = current.children.find(child => child.type === "function_definition");
+        const func = current.children.find(
+          (child) => child.type === "function_definition"
+        );
         if (func) {
-          const name_node = func.children.find(child => child.type === "identifier");
+          const name_node = func.children.find(
+            (child) => child.type === "identifier"
+          );
           return {
             decorator_name: node.text,
             decorates: name_node?.text,
@@ -118,7 +128,9 @@ function extract_function_modifiers(node: SyntaxNode): SemanticModifiers {
   // Check for async functions
   const func = node.parent;
   if (func && func.type === "function_definition") {
-    const has_async = func.children.some(child => child.type === "async" || child.text === "async");
+    const has_async = func.children.some(
+      (child) => child.type === "async" || child.text === "async"
+    );
     if (has_async) {
       modifiers.is_async = true;
     }
@@ -126,7 +138,7 @@ function extract_function_modifiers(node: SyntaxNode): SemanticModifiers {
 
   // Check for generator functions (functions with yield)
   if (func) {
-    const body = func.children.find(child => child.type === "block");
+    const body = func.children.find((child) => child.type === "block");
     if (body && body.text.includes("yield")) {
       modifiers.is_generator = true;
     }
@@ -309,13 +321,17 @@ export const PYTHON_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
         // Look for class inheritance
         const class_def = node.parent;
         if (class_def && class_def.type === "class_definition") {
-          const heritage = class_def.children.find(child => child.type === "argument_list");
+          const heritage = class_def.children.find(
+            (child) => child.type === "argument_list"
+          );
           if (heritage) {
-            const extends_class = heritage.children.find(child => child.type === "identifier")?.text;
-            return extends_class ? { extends_class } : undefined;
+            const extends_class = heritage.children.find(
+              (child) => child.type === "identifier"
+            )?.text;
+            return extends_class ? { extends_class } : {};
           }
         }
-        return undefined;
+        return {};
       },
     },
   ],
@@ -518,7 +534,7 @@ export const PYTHON_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
     {
       category: SemanticCategory.IMPORT,
       entity: SemanticEntity.MODULE,
-      context: (node) => ({ source_module: node.text.replace(/['"]/g, '') }),
+      context: (node) => ({ source_module: node.text.replace(/['"]/g, "") }),
     },
   ],
   [
@@ -555,7 +571,7 @@ export const PYTHON_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
     {
       category: SemanticCategory.IMPORT,
       entity: SemanticEntity.MODULE,
-      context: (node) => ({ source_module: node.text.replace(/['"]/g, '') }),
+      context: (node) => ({ source_module: node.text.replace(/['"]/g, "") }),
     },
   ],
   [
@@ -584,7 +600,7 @@ export const PYTHON_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
       entity: SemanticEntity.VARIABLE,
       context: () => ({
         export_type: "explicit_control",
-        is_namespace_export: true
+        is_namespace_export: true,
       }),
     },
   ],
@@ -598,7 +614,7 @@ export const PYTHON_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
         const all_contents: string[] = [];
         for (let i = 0; i < node.childCount; i++) {
           const child = node.child(i);
-          if (child && child.type === 'string') {
+          if (child && child.type === "string") {
             // Remove quotes from the string literal
             const text = child.text;
             const content = text.slice(1, -1); // Remove surrounding quotes
@@ -608,7 +624,7 @@ export const PYTHON_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
         return {
           export_type: "explicit_control",
           is_namespace_export: true,
-          all_contents
+          all_contents,
         };
       },
     },

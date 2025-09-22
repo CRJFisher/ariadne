@@ -9,8 +9,6 @@ import type { SyntaxNode } from "tree-sitter";
 import {
   SemanticCategory,
   SemanticEntity,
-  type CaptureMapping,
-  type LanguageCaptureConfig,
 } from "../capture_types";
 import { PYTHON_CAPTURE_CONFIG } from "./python";
 

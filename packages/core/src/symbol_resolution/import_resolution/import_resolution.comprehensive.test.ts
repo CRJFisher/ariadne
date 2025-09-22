@@ -36,6 +36,7 @@ import type {
   NamespaceImport,
   NamedExport,
   DefaultExport,
+  ScopeId,
 } from "@ariadnejs/types";
 import { SemanticIndex } from "../../semantic_index/semantic_index";
 import * as fs from "fs";
@@ -80,14 +81,19 @@ function create_test_index(
     imports,
     exports,
     symbols,
-    scopes: [],
+    scopes: new Map(),
     references: {
-      call_references: [],
-      member_access_references: [],
-      variable_references: [],
-      type_references: [],
+      calls: [],
+      returns: [],
+      member_accesses: [],
+      type_annotations: [],
     },
     local_types: [],
+    local_type_annotations: [],
+    local_type_tracking: { annotations: [], declarations: [], assignments: [] },
+    local_type_flow: { constructor_calls: [], assignments: [], returns: [], call_assignments: [] },
+    root_scope_id: "root" as ScopeId,
+    file_symbols_by_name: new Map(),
   };
 }
 

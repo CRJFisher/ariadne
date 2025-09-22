@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { resolve_imports, create_import_resolution_context } from "../index";
+import { resolve_imports } from "../index";
 import { SemanticIndex } from "../../../semantic_index/semantic_index";
 import type {
   FilePath,
@@ -122,7 +122,7 @@ describe("Language Handler Integration", () => {
       );
 
       // Create context with standard handlers
-      const context = create_import_resolution_context(indices);
+      const context = { indices };
 
       // Resolve imports
       const result = resolve_imports(context);
@@ -189,7 +189,7 @@ describe("Language Handler Integration", () => {
         )
       );
 
-      const context = create_import_resolution_context(indices);
+      const context = { indices };
       const result = resolve_imports(context);
 
       const jsImports = result.imports.get("/project/js/app.js" as FilePath);
@@ -280,7 +280,7 @@ describe("Language Handler Integration", () => {
         )
       );
 
-      const context = create_import_resolution_context(indices);
+      const context = { indices };
       const result = resolve_imports(context);
 
       // Check middleware resolved the import from core
@@ -353,7 +353,7 @@ describe("Language Handler Integration", () => {
         )
       );
 
-      const context = create_import_resolution_context(indices);
+      const context = { indices };
 
       // Should not throw or infinite loop
       const result = resolve_imports(context);
@@ -393,7 +393,7 @@ describe("Language Handler Integration", () => {
         )
       );
 
-      const context = create_import_resolution_context(indices);
+      const context = { indices };
       const result = resolve_imports(context);
 
       // Should have empty or no imports for the file
@@ -462,7 +462,7 @@ describe("Language Handler Integration", () => {
         )
       );
 
-      const context = create_import_resolution_context(indices);
+      const context = { indices };
       const result = resolve_imports(context);
 
       const mainImports = result.imports.get("/project/main.js" as FilePath);
@@ -519,7 +519,7 @@ describe("Language Handler Integration", () => {
         )
       );
 
-      const context = create_import_resolution_context(indices);
+      const context = { indices };
       const result = resolve_imports(context);
 
       // Dynamic imports should still be resolved
@@ -586,7 +586,7 @@ describe("Language Handler Integration", () => {
         );
       }
 
-      const context = create_import_resolution_context(indices);
+      const context = { indices };
       const result = resolve_imports(context);
 
       const duration = performance.now() - start;
@@ -654,7 +654,7 @@ describe("Language Handler Integration", () => {
         indices.set(filePath, create_test_index(filePath, "javascript", imports, exports));
       }
 
-      const context = create_import_resolution_context(indices);
+      const context = { indices };
       const result = resolve_imports(context);
 
       // Verify the chain is resolved correctly

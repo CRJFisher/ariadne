@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { resolve_js_module_path, match_js_import_to_export } from "./javascript";
+import { resolve_js_module_path, match_js_import_to_export, resolve_node_modules_path, find_file_with_extensions } from "./javascript";
 import type {
   FilePath,
   SymbolId,
@@ -1015,6 +1015,41 @@ describe("JavaScript/TypeScript Import Resolution", () => {
 
         expect(result.size).toBe(1);
         expect(result.get("exportedName" as SymbolName)).toBe("utils#localName");
+      });
+    });
+
+    describe("Node Modules Resolution", () => {
+      it("should handle node_modules path resolution", () => {
+        const mock_exists = vi.mocked(fs.existsSync);
+        const mock_read = vi.mocked(fs.readFileSync);
+  
+        mock_exists.mockImplementation((p) => {
+          const path_str = p.toString();
+          return path_str.includes("node_modules/lodash") || path_str.includes("package.json") || path_str.includes("index.js");
+        });
+  
+        mock_read.mockImplementation((p) => {
+          if (p.toString().includes("package.json")) {
+            return JSON.stringify({ main: "index.js" });
+          }
+          return "";
+        });
+  
+        const result = resolve_node_modules_path("lodash", "/project/src/main.ts" as FilePath);
+        expect(result).toContain("node_modules/lodash");
+      });
+    });
+  
+    describe("File Resolution with Extensions", () => {
+      it("should find files with various extensions", () => {
+        const mock_exists = vi.mocked(fs.existsSync);
+  
+        mock_exists.mockImplementation((p) => {
+          return p === "/project/src/utils.tsx";
+        });
+  
+        const result = find_file_with_extensions("/project/src/utils", [".ts", ".tsx", ".js", ".jsx"]);
+        expect(result).toBe("/project/src/utils.tsx");
       });
     });
 

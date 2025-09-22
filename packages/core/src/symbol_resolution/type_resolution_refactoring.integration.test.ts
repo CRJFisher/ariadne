@@ -437,7 +437,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
             scope_id: "scope:module:methods.ts:0:0" as ScopeId,
           },
         ],
-        memberAccesses: [
+        member_accesses: [
           {
             object_name: "calc" as SymbolName,
             object_location: location("methods.ts" as FilePath, 11, 0),
@@ -492,7 +492,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
             scope_id: "scope:module:derived.ts:0:0" as ScopeId,
           },
         ],
-        memberAccesses: [
+        member_accesses: [
           {
             object_name: "myDog" as SymbolName,
             object_location: location("derived.ts" as FilePath, 21, 0),

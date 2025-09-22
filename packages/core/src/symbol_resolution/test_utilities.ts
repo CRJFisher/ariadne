@@ -383,7 +383,7 @@ export function create_test_semantic_index(props: {
     imports: props.imports || [],
     exports: props.exports || [],
     symbols: props.symbols || new Map(),
-    scopes: [],
+    scopes: new Map() as ReadonlyMap<ScopeId, LexicalScope>,
     references: {
       calls: props.calls || [],
       member_accesses: [],

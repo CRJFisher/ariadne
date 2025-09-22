@@ -572,13 +572,13 @@ describe("Cross-Language Symbol Resolution", () => {
           {
             kind: "named",
             name: "GenericClass" as SymbolName,
-            symbol_id: generic_class,
+            symbol: generic_class,
             location: create_location(ts_file_path, 10, 0),
           },
           {
             kind: "named",
             name: "DecoratedClass" as SymbolName,
-            symbol_id: decorator_class,
+            symbol: decorator_class,
             location: create_location(ts_file_path, 20, 0),
           },
         ],

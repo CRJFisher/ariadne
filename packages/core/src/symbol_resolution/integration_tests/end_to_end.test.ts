@@ -277,11 +277,14 @@ describe("Complete Symbol Resolution Pipeline", () => {
               implements_clause: [],
             }],
             member_accesses: [{
-              kind: "method",
-              object_name: "this" as SymbolName,
-              object_location: create_location(derived_path, 8, 10),
+              object: {
+                location: create_location(derived_path, 8, 10),
+              },
               member_name: "baseMethod" as SymbolName,
               location: derived_call_location,
+              scope_id: "scope:0" as ScopeId,
+              access_type: "method" as const,
+              is_optional_chain: false,
             }],
           }
         }
@@ -509,11 +512,14 @@ describe("Complete Symbol Resolution Pipeline", () => {
               call_assignments: [],
             },
             member_accesses: [{
-              kind: "method",
-              object_name: "calc" as SymbolName,
-              object_location: create_location(app_path, 6, 10),
+              object: {
+                location: create_location(app_path, 6, 10),
+              },
               member_name: "calculate" as SymbolName,
               location: create_location(app_path, 6, 15),
+              scope_id: "scope:0" as ScopeId,
+              access_type: "method" as const,
+              is_optional_chain: false,
             }],
           }
         }
@@ -561,10 +567,10 @@ describe("Complete Symbol Resolution Pipeline", () => {
               node_type: "import_statement",
             }],
             calls: [{
-              kind: "function",
               name: "nonExistent" as SymbolName,
               location: create_location("src/broken.ts" as FilePath, 3, 10),
-              argument_count: 0,
+              scope_id: "scope:0" as ScopeId,
+              call_type: "function" as const,
             }],
           }
         }

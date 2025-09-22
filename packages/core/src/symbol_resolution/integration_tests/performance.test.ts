@@ -68,7 +68,6 @@ function generate_large_test_project(num_files: number): Map<FilePath, SemanticI
           name: `func_${f - 1}_0` as SymbolName,
           location: create_location(file_path, 10, 15),
           scope_id: `scope:module:${file_path}:0:0` as ScopeId,
-          argument_count: 2,
         });
       }
 
@@ -468,10 +467,12 @@ describe("Performance Benchmarks", () => {
         if (prev_file_path) {
           imports.push({
             kind: "named",
-            name: `func_${i - 1}` as SymbolName,
-            source_path: `./level_${i - 1}`,
+            imports: [{ name: `func_${i - 1}` as SymbolName, is_type_only: false }],
+            source: `./level_${i - 1}` as FilePath,
             location: create_location(file_path, 1, 10),
-            resolved_path: prev_file_path,
+            language: "javascript",
+            node_type: "import_statement",
+            modifiers: [],
           });
 
           // Call imported function
@@ -480,7 +481,6 @@ describe("Performance Benchmarks", () => {
             name: `func_${i - 1}` as SymbolName,
             location: create_location(file_path, 5, 15),
             scope_id: `scope:module:${file_path}:0:0` as ScopeId,
-            argument_count: 0,
           });
         }
 
