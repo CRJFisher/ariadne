@@ -134,7 +134,8 @@ function resolve_member_access_call(
       member_access.member_name,
       receiver_type,
       is_static_call,
-      context
+      context,
+      member_access.location
     );
   }
 

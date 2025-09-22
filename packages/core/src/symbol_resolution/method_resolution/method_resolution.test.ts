@@ -627,7 +627,7 @@ describe("method_resolution", () => {
         indices: new Map([[file_path, index]])
       };
 
-      const result = resolve_method_on_type("getValue" as SymbolName, class_type, false, context);
+      const result = resolve_method_on_type("getValue" as SymbolName, class_type, false, context, test_location);
       expect(result).not.toBeNull();
       expect(result!.resolved_method).toBe(method_sym);
       expect(result!.method_kind).toBe("instance");
@@ -665,7 +665,7 @@ describe("method_resolution", () => {
         indices: new Map([[file_path, index]])
       };
 
-      const result = resolve_method_on_type("nonExistent" as SymbolName, class_type, false, context);
+      const result = resolve_method_on_type("nonExistent" as SymbolName, class_type, false, context, test_location);
       expect(result).toBeNull();
     });
   });
@@ -936,7 +936,8 @@ describe("method_resolution", () => {
         "baseMethod" as SymbolName,
         derived_type,
         false,
-        context
+        context,
+        test_location
       );
 
       expect(result).not.toBeNull();
@@ -1039,7 +1040,8 @@ describe("method_resolution", () => {
         "doSomething" as SymbolName,
         class_type,
         false,
-        context
+        context,
+        test_location
       );
 
       expect(result).not.toBeNull();
@@ -1703,7 +1705,8 @@ describe("method_resolution", () => {
         "process" as SymbolName,
         derived_type,
         false,
-        context
+        context,
+        test_location
       );
 
       expect(result).not.toBeNull();

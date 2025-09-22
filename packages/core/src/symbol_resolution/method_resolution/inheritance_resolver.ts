@@ -8,6 +8,7 @@ import type {
   SymbolId,
   SymbolName,
   TypeId,
+  Location,
 } from "@ariadnejs/types";
 import type {
   MethodCallResolution,
@@ -22,22 +23,23 @@ export function resolve_method_with_inheritance(
   method_name: SymbolName,
   receiver_type: TypeId,
   is_static_call: boolean,
-  context: MethodLookupContext
+  context: MethodLookupContext,
+  call_location: Location
 ): MethodCallResolution | null {
   // 1. Try direct method lookup first
-  const direct_result = resolve_method_on_type(method_name, receiver_type, is_static_call, context);
+  const direct_result = resolve_method_on_type(method_name, receiver_type, is_static_call, context, call_location);
   if (direct_result) {
     return direct_result;
   }
 
   // 2. Try inheritance chain lookup
-  const inherited_result = lookup_inherited_method(method_name, receiver_type, is_static_call, context);
+  const inherited_result = lookup_inherited_method(method_name, receiver_type, is_static_call, context, call_location);
   if (inherited_result) {
     return inherited_result;
   }
 
   // 3. Try interface/trait method lookup
-  const interface_result = lookup_interface_method(method_name, receiver_type, is_static_call, context);
+  const interface_result = lookup_interface_method(method_name, receiver_type, is_static_call, context, call_location);
   if (interface_result) {
     return interface_result;
   }
@@ -52,7 +54,8 @@ function lookup_inherited_method(
   method_name: SymbolName,
   receiver_type: TypeId,
   is_static_call: boolean,
-  context: MethodLookupContext
+  context: MethodLookupContext,
+  call_location: Location
 ): MethodCallResolution | null {
   const inheritance_chain = build_inheritance_chain(receiver_type, context);
 
@@ -65,7 +68,7 @@ function lookup_inherited_method(
 
     if (method_symbol) {
       return {
-        call_location: null , // Will be set by caller
+        call_location,
         resolved_method: method_symbol,
         receiver_type,
         method_kind: is_static_call ? "static" : "instance",
@@ -84,7 +87,8 @@ function lookup_interface_method(
   method_name: SymbolName,
   receiver_type: TypeId,
   is_static_call: boolean,
-  context: MethodLookupContext
+  context: MethodLookupContext,
+  call_location: Location
 ): MethodCallResolution | null {
   const implemented_interfaces = get_implemented_interfaces(receiver_type, context);
 
@@ -106,7 +110,7 @@ function lookup_interface_method(
 
       if (implementation_symbol) {
         return {
-          call_location: null ,
+          call_location,
           resolved_method: implementation_symbol,
           receiver_type,
           method_kind: is_static_call ? "static" : "instance",

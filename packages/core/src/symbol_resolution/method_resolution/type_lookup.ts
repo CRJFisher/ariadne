@@ -24,7 +24,8 @@ export function resolve_method_on_type(
   method_name: SymbolName,
   receiver_type: TypeId,
   is_static_call: boolean,
-  context: MethodLookupContext
+  context: MethodLookupContext,
+  call_location: Location
 ): MethodCallResolution | null {
   const type_methods = get_type_methods(receiver_type, context);
   if (!type_methods) {
@@ -36,7 +37,7 @@ export function resolve_method_on_type(
 
   if (method_symbol) {
     return {
-      call_location: null , // Will be set by caller
+      call_location,
       resolved_method: method_symbol,
       receiver_type,
       method_kind: is_static_call ? "static" : "instance",

@@ -9,6 +9,7 @@ import type {
   SymbolName,
   TypeId,
   SymbolDefinition,
+  Location,
 } from "@ariadnejs/types";
 import type {
   MethodCallResolution,
@@ -24,7 +25,8 @@ export function lookup_interface_method(
   method_name: SymbolName,
   receiver_type: TypeId,
   is_static_call: boolean,
-  context: MethodLookupContext
+  context: MethodLookupContext,
+  call_location: Location
 ): MethodCallResolution | null {
   const implemented_interfaces = get_implemented_interfaces(receiver_type, context);
 
@@ -45,7 +47,7 @@ export function lookup_interface_method(
 
       if (implementation_symbol) {
         return {
-          call_location: null ,
+          call_location,
           resolved_method: implementation_symbol,
           receiver_type,
           method_kind: is_static_call ? "static" : "instance",
