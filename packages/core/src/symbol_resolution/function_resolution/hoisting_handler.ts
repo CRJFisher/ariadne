@@ -237,6 +237,16 @@ function get_global_symbols(language: Language): Map<SymbolName, BuiltinSymbol> 
       add_builtin(globals, "null", language, "Null value");
       add_builtin(globals, "NaN", language, "Not a number");
       add_builtin(globals, "Infinity", language, "Positive infinity");
+      // Global functions
+      add_builtin(globals, "parseInt", language, "Parse integer from string");
+      add_builtin(globals, "parseFloat", language, "Parse float from string");
+      add_builtin(globals, "isNaN", language, "Check if value is NaN");
+      add_builtin(globals, "isFinite", language, "Check if value is finite");
+      add_builtin(globals, "eval", language, "Evaluate JavaScript code");
+      add_builtin(globals, "encodeURI", language, "Encode URI");
+      add_builtin(globals, "decodeURI", language, "Decode URI");
+      add_builtin(globals, "encodeURIComponent", language, "Encode URI component");
+      add_builtin(globals, "decodeURIComponent", language, "Decode URI component");
       add_builtin(globals, "globalThis", language, "Global object");
       add_builtin(globals, "window", language, "Browser window object");
       add_builtin(globals, "document", language, "Browser document object");

@@ -2,10 +2,16 @@
 
 **Task ID**: task-epic-11.91.2
 **Parent**: task-epic-11.91
-**Status**: Created
+**Status**: Completed
 **Priority**: Critical
 **Created**: 2025-01-20
+**Completed**: 2025-01-22
 **Estimated Effort**: 2-3 days
+
+## Sub-Tasks
+
+1. **task-epic-11.91.2.1**: Lexical scope resolution infrastructure (1-1.5 days) ✅ **Completed**
+2. **task-epic-11.91.2.2**: Function call resolution with import integration (1-1.5 days) ✅ **Completed**
 
 ## Problem Statement
 
@@ -342,8 +348,11 @@ fixtures/
 
 - **Prerequisite**: task-epic-11.91.1 (Import resolution) - must be completed first
 - **Prerequisite**: Semantic index call extraction (✅ available)
-- **Enables**: Enhanced Phase 4 method resolution
-- **Enables**: Complete call graph construction
+- **Sub-task dependencies**:
+  - task-epic-11.91.2.1 (Scope infrastructure) can start independently
+  - task-epic-11.91.2.2 (Function resolution) requires both 11.91.2.1 and 11.91.1 complete
+- **Enables**: task-epic-11.91.3 (Method resolution can build on function resolution patterns)
+- **Enables**: Complete symbol resolution pipeline
 
 ## Risks and Mitigations
 

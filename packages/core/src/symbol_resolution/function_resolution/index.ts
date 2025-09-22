@@ -1,8 +1,8 @@
 /**
- * Function resolution module - Lexical scope resolution infrastructure
+ * Function resolution module - Complete function call resolution
  *
- * Provides scope chain traversal, hoisting handling, and symbol lookup
- * for function call resolution across different programming languages.
+ * Provides scope chain traversal, hoisting handling, symbol lookup,
+ * and function call resolution across different programming languages.
  */
 
 // Core types
@@ -16,6 +16,12 @@ export type {
   ScopeResolutionConfig,
   LanguageSpecificConfig,
 } from "./scope_types";
+
+export type {
+  FunctionCallResolution,
+  FunctionResolutionMap,
+  FunctionResolutionContext,
+} from "./function_types";
 
 // Scope walker functions
 export {
@@ -47,3 +53,21 @@ export {
   find_common_ancestor_scope,
   is_symbol_accessible_from_scope,
 } from "./scope_utilities";
+
+// Import needed types for phase2_resolve_functions
+import type { FilePath } from "@ariadnejs/types";
+import type { SemanticIndex } from "../../semantic_index/semantic_index";
+import type { ImportResolutionMap } from "../types";
+import type { FunctionResolutionMap } from "./function_types";
+import { resolve_function_calls } from "./function_resolver";
+
+// Export main function resolution
+export { resolve_function_calls };
+
+// Integration with symbol_resolution.ts Phase 2
+export function phase2_resolve_functions(
+  indices: ReadonlyMap<FilePath, SemanticIndex>,
+  imports: ImportResolutionMap
+): FunctionResolutionMap {
+  return resolve_function_calls(indices, imports);
+}
