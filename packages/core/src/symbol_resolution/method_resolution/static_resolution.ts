@@ -32,7 +32,7 @@ export function determine_if_static_call(
 
   if (receiver_symbol) {
     const symbol_def = context.current_index.symbols.get(receiver_symbol);
-    if (symbol_def && (symbol_def.kind === "class" || symbol_def.kind === "type")) {
+    if (symbol_def && (symbol_def.kind === "class" || symbol_def.kind === "type_alias" || symbol_def.kind === "interface")) {
       return true; // Calling method on class/type directly
     }
   }

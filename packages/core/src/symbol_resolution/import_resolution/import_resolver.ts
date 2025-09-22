@@ -41,12 +41,18 @@ export function resolve_imports(
       }
 
       // Resolve import path to source file
-      const source_file = resolve_module_path(
-        import_stmt.source,
-        file_path,
-        index.language,
-        context
-      );
+      // First check if the import already has a resolved_path
+      let source_file: FilePath | null = import_stmt.resolved_path || null;
+
+      // If not resolved, try to resolve it
+      if (!source_file) {
+        source_file = resolve_module_path(
+          import_stmt.source as string,
+          file_path,
+          index.language,
+          context
+        );
+      }
 
       if (!source_file || !context.indices.has(source_file)) {
         // Source file not found or not indexed

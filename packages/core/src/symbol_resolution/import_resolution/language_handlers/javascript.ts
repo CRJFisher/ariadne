@@ -214,16 +214,18 @@ function match_js_import_to_export(
  * Match a default import to the default export
  */
 function match_default_import(
-  import_stmt: DefaultImport,
+  import_stmt: DefaultImport | Import,
   source_exports: readonly Export[]
 ): Map<SymbolName, SymbolId> {
   const result = new Map<SymbolName, SymbolId>();
 
+  // Handle both types - use name field
+  const local_name = (import_stmt as Import).name;
+
   // Find the default export
   for (const exp of source_exports) {
     if (exp.kind === "default") {
-      const default_export = exp as DefaultExport;
-      result.set(import_stmt.name, default_export.symbol);
+      result.set(local_name, (exp as Export).symbol);
       break;
     }
   }
@@ -235,7 +237,7 @@ function match_default_import(
  * Match a namespace import to all exports
  */
 function match_namespace_import(
-  import_stmt: NamespaceImport,
+  import_stmt: NamespaceImport | Import,
   source_exports: readonly Export[],
   source_symbols: ReadonlyMap<SymbolId, SymbolDefinition>
 ): Map<SymbolName, SymbolId> {
@@ -254,8 +256,11 @@ function match_namespace_import(
   // For now, we'll just indicate that the namespace was imported
   // by mapping it to a synthetic symbol (we'll use the first export if available)
   if (source_exports.length > 0) {
+    // Handle both NamespaceImport with namespace_name and Import with name
+    const namespace_name = (import_stmt as NamespaceImport).namespace_name ||
+                          ((import_stmt as Import).name as unknown as NamespaceName);
     // Convert NamespaceName to SymbolName (both are branded strings)
-    const namespace_as_symbol = import_stmt.namespace_name as unknown as SymbolName;
+    const namespace_as_symbol = namespace_name as unknown as SymbolName;
     result.set(namespace_as_symbol, source_exports[0].symbol);
   }
 
@@ -266,12 +271,15 @@ function match_namespace_import(
  * Match named imports to named exports
  */
 function match_named_import(
-  import_stmt: NamedImport,
+  import_stmt: NamedImport | Import,
   source_exports: readonly Export[]
 ): Map<SymbolName, SymbolId> {
   const result = new Map<SymbolName, SymbolId>();
 
-  for (const import_item of import_stmt.imports) {
+  // Handle both NamedImport with imports array and simple Import with name
+  const import_items = (import_stmt as any).imports || [{ name: (import_stmt as Import).name, alias: undefined }];
+
+  for (const import_item of import_items) {
     const imported_name = import_item.name;
     const local_name = import_item.alias || import_item.name;
 
@@ -279,12 +287,18 @@ function match_named_import(
     for (const exp of source_exports) {
       if (exp.kind === "named") {
         const named_export = exp as NamedExport;
-        for (const export_item of named_export.exports) {
-          const export_name = export_item.export_name || export_item.local_name;
-          if (export_name === imported_name) {
-            result.set(local_name, named_export.symbol);
-            break;
+        // Handle simple Export type with just name/symbol or NamedExport with exports array
+        if ((named_export as any).exports) {
+          for (const export_item of (named_export as any).exports) {
+            const export_name = export_item.export_name || export_item.local_name;
+            if (export_name === imported_name) {
+              result.set(local_name, named_export.symbol);
+              break;
+            }
           }
+        } else if ((exp as Export).name === imported_name) {
+          // Simple Export with matching name
+          result.set(local_name, (exp as Export).symbol);
         }
       }
     }

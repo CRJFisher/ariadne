@@ -77,6 +77,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
       }>;
       constructorCalls?: LocalConstructorCall[];
       assignments?: LocalAssignmentFlow[];
+      memberAccesses?: Array<any>;
     } = {}
   ): SemanticIndex {
     const rootScopeId = `scope:module:${filePath}:0:0` as ScopeId;
@@ -183,7 +184,8 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
 
     // Add function symbols
     options.functions?.forEach((func, idx) => {
-      const id = function_symbol(func.name, filePath, location(filePath, (idx + 1) * 10 + 50, 0));
+      const funcLocation = location(filePath, (idx + 1) * 10 + 50, 0);
+      const id = function_symbol(func.name, funcLocation);
       symbols.set(id, {
         id,
         name: func.name,
@@ -204,7 +206,7 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
       symbols,
       references: {
         calls: [],
-        member_accesses: [],
+        member_accesses: options.memberAccesses || [],
         returns: [],
         type_annotations: [],
       },
@@ -435,18 +437,21 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
             scope_id: "scope:module:methods.ts:0:0" as ScopeId,
           },
         ],
+        memberAccesses: [
+          {
+            object_name: "calc" as SymbolName,
+            object_location: location("methods.ts" as FilePath, 11, 0),
+            member_name: "add" as SymbolName,
+            location: location("methods.ts" as FilePath, 11, 5),
+            scope_id: "scope:module:methods.ts:0:0" as ScopeId,
+            access_type: "method",
+            is_optional_chain: false,
+          },
+        ],
       });
 
-      // Add method call references
-      index.references.member_accesses = [
-        {
-          object_name: "calc" as SymbolName,
-          object_location: location("methods.ts" as FilePath, 11, 0),
-          member_name: "add" as SymbolName,
-          location: location("methods.ts" as FilePath, 11, 5),
-          scope_id: "scope:module:methods.ts:0:0" as ScopeId,
-        },
-      ];
+      // Method call references are passed in createSemanticIndex
+      // The memberAccesses were already set in the options
 
       const indices = new Map([["methods.ts" as FilePath, index]]);
       const result = resolve_symbols({ indices });
@@ -487,18 +492,20 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
             scope_id: "scope:module:derived.ts:0:0" as ScopeId,
           },
         ],
+        memberAccesses: [
+          {
+            object_name: "myDog" as SymbolName,
+            object_location: location("derived.ts" as FilePath, 21, 0),
+            member_name: "speak" as SymbolName, // Inherited from Animal
+            location: location("derived.ts" as FilePath, 21, 6),
+            scope_id: "scope:module:derived.ts:0:0" as ScopeId,
+            access_type: "method",
+            is_optional_chain: false,
+          },
+        ],
       });
 
-      // Add method call to inherited method
-      derivedIndex.references.member_accesses = [
-        {
-          object_name: "myDog" as SymbolName,
-          object_location: location("derived.ts" as FilePath, 21, 0),
-          member_name: "speak" as SymbolName, // Inherited from Animal
-          location: location("derived.ts" as FilePath, 21, 6),
-          scope_id: "scope:module:derived.ts:0:0" as ScopeId,
-        },
-      ];
+      // Method call to inherited method should be passed in createSemanticIndex
 
       const indices = new Map<FilePath, SemanticIndex>([
         ["base.ts" as FilePath, baseIndex],
