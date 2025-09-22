@@ -15,7 +15,6 @@ import type {
 import { location_key } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../semantic_index/semantic_index";
 import type { MemberAccessReference } from "../../semantic_index/references/member_access_references/member_access_references";
-import type { LocalConstructorCall } from "../../semantic_index/references/type_flow_references/type_flow_references";
 import type {
   ImportResolutionMap,
   FunctionResolutionMap,
@@ -28,6 +27,9 @@ import type {
 } from "./method_types";
 import { resolve_method_on_type, get_type_methods } from "./type_lookup";
 import { determine_if_static_call } from "./static_resolution";
+import { resolve_method_with_inheritance } from "./inheritance_resolver";
+import { resolve_constructor_calls_enhanced } from "./constructor_resolver";
+import { resolve_polymorphic_method_call, CallContext } from "./polymorphism_handler";
 
 /**
  * Resolve all method and constructor calls
@@ -66,8 +68,8 @@ export function resolve_method_calls(
       }
     }
 
-    // Process constructor calls (new Class())
-    const constructor_resolutions = resolve_constructor_calls_basic(index, context);
+    // Process constructor calls with enhanced resolution (new Class(), super(), this())
+    const constructor_resolutions = resolve_constructor_calls_enhanced(index, context);
     for (const resolution of constructor_resolutions) {
       record_constructor_resolution(
         resolution,
@@ -111,13 +113,30 @@ function resolve_member_access_call(
     }
   }
 
-  // Look up method on type
-  const resolution = resolve_method_on_type(
+  // Use enhanced resolution with inheritance and polymorphism
+  const call_context: CallContext = {
+    location: member_access.location,
+    receiver_type,
+    is_static: is_static_call
+  };
+
+  // Try polymorphic resolution first for better override handling
+  let resolution = resolve_polymorphic_method_call(
     member_access.member_name,
     receiver_type,
-    is_static_call,
+    call_context,
     context
   );
+
+  // Fall back to inheritance resolution if polymorphic resolution fails
+  if (!resolution) {
+    resolution = resolve_method_with_inheritance(
+      member_access.member_name,
+      receiver_type,
+      is_static_call,
+      context
+    );
+  }
 
   if (resolution) {
     // Add receiver symbol if available
@@ -182,7 +201,7 @@ function resolve_receiver_symbol_type(
     // Try each symbol to see if it's a class whose type we know
     for (const [name, symbol] of file_symbols) {
       const symbol_def = context.current_index.symbols.get(symbol);
-      if (symbol_def && (symbol_def.kind === "class" || symbol_def.kind === "type")) {
+      if (symbol_def && (symbol_def.kind === "class" || symbol_def.kind === "type_alias" || symbol_def.kind === "interface")) {
         const type_id = context.type_resolution.symbol_types.get(symbol);
         if (type_id) {
           // Check if this type has the method we're looking for
@@ -203,83 +222,6 @@ function resolve_receiver_symbol_type(
   return null;
 }
 
-/**
- * Resolve constructor calls in a file
- */
-function resolve_constructor_calls_basic(
-  index: SemanticIndex,
-  context: MethodLookupContext
-): MethodCallResolution[] {
-  const resolutions: MethodCallResolution[] = [];
-
-  // Process constructor calls from type flow
-  if (index.local_type_flow?.constructor_calls) {
-    for (const ctor_call of index.local_type_flow.constructor_calls) {
-      const resolution = resolve_constructor_call_basic(ctor_call, context);
-      if (resolution) {
-        resolutions.push(resolution);
-      }
-    }
-  }
-
-  return resolutions;
-}
-
-/**
- * Resolve a single constructor call
- */
-function resolve_constructor_call_basic(
-  ctor_call: LocalConstructorCall,
-  context: MethodLookupContext
-): MethodCallResolution | null {
-  // Find the type being constructed
-  const type_name_map = context.current_index.file_symbols_by_name.get(context.current_file);
-  if (!type_name_map) {
-    return null;
-  }
-
-  const type_symbol = type_name_map.get(ctor_call.class_name);
-  if (!type_symbol) {
-    return null;
-  }
-
-  // Get the type ID for this symbol
-  const type_id = context.type_resolution.symbol_types.get(type_symbol);
-  if (!type_id) {
-    return null;
-  }
-
-  // Find constructor method for this type
-  const type_methods = get_type_methods(type_id, context);
-  if (!type_methods) {
-    return null;
-  }
-
-  // Look for constructor (using "constructor" as the standard name)
-  const constructor_symbol = type_methods.constructors.get("constructor" as SymbolName);
-  if (!constructor_symbol) {
-    // Try to get from the type resolution constructors map
-    const ctor_from_types = context.type_resolution.constructors.get(type_id);
-    if (ctor_from_types) {
-      return {
-        call_location: ctor_call.location,
-        resolved_method: ctor_from_types,
-        receiver_type: type_id,
-        method_kind: "constructor",
-        resolution_path: "direct"
-      };
-    }
-    return null;
-  }
-
-  return {
-    call_location: ctor_call.location,
-    resolved_method: constructor_symbol,
-    receiver_type: type_id,
-    method_kind: "constructor",
-    resolution_path: "direct"
-  };
-}
 
 /**
  * Record a method resolution

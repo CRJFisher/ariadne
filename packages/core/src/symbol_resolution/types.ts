@@ -59,6 +59,12 @@ export interface TypeResolutionMap {
 
   // Class TypeId -> constructor SymbolId
   readonly constructors: ReadonlyMap<TypeId, SymbolId>;
+
+  // Type inheritance hierarchy - direct parent relationships
+  readonly inheritance_hierarchy: ReadonlyMap<TypeId, readonly TypeId[]>;
+
+  // Interface implementations - types that implement interfaces
+  readonly interface_implementations: ReadonlyMap<TypeId, readonly TypeId[]>;
 }
 
 /**

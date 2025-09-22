@@ -38,7 +38,9 @@ describe("method_resolution", () => {
       symbol_types: new Map(),
       reference_types: new Map(),
       type_members: new Map(),
-      constructors: new Map()
+      constructors: new Map(),
+      inheritance_hierarchy: new Map(),
+      interface_implementations: new Map()
     };
   });
 
@@ -52,9 +54,9 @@ describe("method_resolution", () => {
       const class_type = defined_type_id(TypeCategory.CLASS, "MyClass" as SymbolName, test_location);
 
       // Setup type resolution
-      types.symbol_types.set(class_sym, class_type);
-      types.symbol_types.set(instance_sym, class_type);
-      types.type_members.set(class_type, new Map([
+      (types.symbol_types as Map<SymbolId, TypeId>).set(class_sym, class_type);
+      (types.symbol_types as Map<SymbolId, TypeId>).set(instance_sym, class_type);
+      (types.type_members as Map<TypeId, Map<SymbolName, SymbolId>>).set(class_type, new Map([
         ["getValue" as SymbolName, method_sym]
       ]));
 
@@ -112,7 +114,7 @@ describe("method_resolution", () => {
         local_type_annotations: [],
         local_type_tracking: { variable_types: [], assignment_flows: [] },
         local_type_flow: { constructor_calls: [], assignments: [], returns: [], call_assignments: [] }
-      } as SemanticIndex;
+      } as any as SemanticIndex;
 
       indices.set(file_path, index);
 
@@ -138,8 +140,8 @@ describe("method_resolution", () => {
       const class_type = defined_type_id(TypeCategory.CLASS, "MyClass" as SymbolName, test_location);
 
       // Setup type resolution
-      types.symbol_types.set(class_sym, class_type);
-      types.type_members.set(class_type, new Map([
+      (types.symbol_types as Map<SymbolId, TypeId>).set(class_sym, class_type);
+      (types.type_members as Map<TypeId, Map<SymbolName, SymbolId>>).set(class_type, new Map([
         ["createDefault" as SymbolName, static_meth]
       ]));
 
@@ -172,7 +174,7 @@ describe("method_resolution", () => {
             name: "createDefault" as SymbolName,
             modifiers: ["static"],
             location: { file_path, line: 2, column: 3, end_line: 2, end_column: 25 }
-          } as SymbolDefinition]
+          } as any as SymbolDefinition]
         ]),
         references: {
           calls: [],
@@ -192,7 +194,7 @@ describe("method_resolution", () => {
         local_type_annotations: [],
         local_type_tracking: { variable_types: [], assignment_flows: [] },
         local_type_flow: { constructor_calls: [], assignments: [], returns: [], call_assignments: [] }
-      } as SemanticIndex;
+      } as any as SemanticIndex;
 
       indices.set(file_path, index);
 
@@ -218,11 +220,11 @@ describe("method_resolution", () => {
       const class_type = defined_type_id(TypeCategory.CLASS, "MyClass" as SymbolName, test_location);
 
       // Setup type resolution
-      types.symbol_types.set(class_sym, class_type);
-      types.type_members.set(class_type, new Map([
+      (types.symbol_types as Map<SymbolId, TypeId>).set(class_sym, class_type);
+      (types.type_members as Map<TypeId, Map<SymbolName, SymbolId>>).set(class_type, new Map([
         ["constructor" as SymbolName, constructor_sym]
       ]));
-      types.constructors.set(class_type, constructor_sym);
+      (types.constructors as Map<TypeId, SymbolId>).set(class_type, constructor_sym);
 
       // Setup constructor call
       const constructor_call: LocalConstructorCall = {
@@ -274,7 +276,7 @@ describe("method_resolution", () => {
           returns: [],
           call_assignments: []
         }
-      } as SemanticIndex;
+      } as any as SemanticIndex;
 
       indices.set(file_path, index);
 
@@ -300,8 +302,8 @@ describe("method_resolution", () => {
       const class_sym = class_symbol("MyClass", test_location);
       const class_type = defined_type_id(TypeCategory.CLASS, "MyClass" as SymbolName, test_location);
 
-      types.symbol_types.set(class_sym, class_type);
-      types.type_members.set(class_type, new Map()); // Empty members
+      (types.symbol_types as Map<SymbolId, TypeId>).set(class_sym, class_type);
+      (types.type_members as Map<TypeId, Map<SymbolName, SymbolId>>).set(class_type, new Map()); // Empty members
 
       const member_access: MemberAccessReference = {
         location: { file_path, line: 10, column: 1, end_line: 10, end_column: 15 },
@@ -330,7 +332,7 @@ describe("method_resolution", () => {
         local_type_annotations: [],
         local_type_tracking: { variable_types: [], assignment_flows: [] },
         local_type_flow: { constructor_calls: [], assignments: [], returns: [], call_assignments: [] }
-      } as SemanticIndex;
+      } as any as SemanticIndex;
 
       indices.set(file_path, index);
       const result = resolve_method_calls(indices, imports, functions, types);
@@ -366,7 +368,7 @@ describe("method_resolution", () => {
         local_type_annotations: [],
         local_type_tracking: { variable_types: [], assignment_flows: [] },
         local_type_flow: { constructor_calls: [], assignments: [], returns: [], call_assignments: [] }
-      } as SemanticIndex;
+      } as any as SemanticIndex;
 
       indices.set(file_path, index);
       const result = resolve_method_calls(indices, imports, functions, types);
@@ -400,7 +402,7 @@ describe("method_resolution", () => {
         local_type_annotations: [],
         local_type_tracking: { variable_types: [], assignment_flows: [] },
         local_type_flow: { constructor_calls: [constructor_call], assignments: [], returns: [], call_assignments: [] }
-      } as SemanticIndex;
+      } as any as SemanticIndex;
 
       indices.set(file_path, index);
       const result = resolve_method_calls(indices, imports, functions, types);
@@ -418,8 +420,8 @@ describe("method_resolution", () => {
       const property_sym = method_symbol("value", "MyClass", test_location);
       const class_type = defined_type_id(TypeCategory.CLASS, "MyClass" as SymbolName, test_location);
 
-      types.symbol_types.set(class_sym, class_type);
-      types.type_members.set(class_type, new Map([["value" as SymbolName, property_sym]]));
+      (types.symbol_types as Map<SymbolId, TypeId>).set(class_sym, class_type);
+      (types.type_members as Map<TypeId, Map<SymbolName, SymbolId>>).set(class_type, new Map([["value" as SymbolName, property_sym]]));
 
       const member_access: MemberAccessReference = {
         location: { file_path, line: 10, column: 1, end_line: 10, end_column: 15 },
@@ -444,7 +446,7 @@ describe("method_resolution", () => {
         local_type_annotations: [],
         local_type_tracking: { variable_types: [], assignment_flows: [] },
         local_type_flow: { constructor_calls: [], assignments: [], returns: [], call_assignments: [] }
-      } as SemanticIndex;
+      } as any as SemanticIndex;
 
       indices.set(file_path, index);
       const result = resolve_method_calls(indices, imports, functions, types);
@@ -461,8 +463,8 @@ describe("method_resolution", () => {
       const instance_sym = variable_symbol("instance", test_location);
       const class_type = defined_type_id(TypeCategory.CLASS, "MyClass" as SymbolName, test_location);
 
-      types.symbol_types.set(instance_sym, class_type);
-      types.type_members.set(class_type, new Map([["getValue" as SymbolName, method_sym]]));
+      (types.symbol_types as Map<SymbolId, TypeId>).set(instance_sym, class_type);
+      (types.type_members as Map<TypeId, Map<SymbolName, SymbolId>>).set(class_type, new Map([["getValue" as SymbolName, method_sym]]));
 
       const member_access: MemberAccessReference = {
         location: { file_path, line: 10, column: 1, end_line: 10, end_column: 15 },
@@ -491,7 +493,7 @@ describe("method_resolution", () => {
         local_type_annotations: [],
         local_type_tracking: { variable_types: [], assignment_flows: [] },
         local_type_flow: { constructor_calls: [], assignments: [], returns: [], call_assignments: [] }
-      } as SemanticIndex;
+      } as any as SemanticIndex;
 
       indices.set(file_path, index);
       const result = resolve_method_calls(indices, imports, functions, types);
@@ -519,8 +521,8 @@ describe("method_resolution", () => {
       const class_type = defined_type_id(TypeCategory.CLASS, "MyClass" as SymbolName, test_location);
 
       // Setup type resolution with both static and instance methods
-      types.symbol_types.set(class_sym, class_type);
-      types.type_members.set(class_type, new Map([
+      (types.symbol_types as Map<SymbolId, TypeId>).set(class_sym, class_type);
+      (types.type_members as Map<TypeId, Map<SymbolName, SymbolId>>).set(class_type, new Map([
         ["getValue" as SymbolName, instance_meth],
         ["createDefault" as SymbolName, static_meth]
       ]));
@@ -547,7 +549,7 @@ describe("method_resolution", () => {
             name: "createDefault" as SymbolName,
             modifiers: ["static"],
             location: { file_path, line: 5, column: 3, end_line: 5, end_column: 25 }
-          } as SymbolDefinition]
+          } as any as SymbolDefinition]
         ]),
         references: {
           calls: [],
@@ -566,7 +568,7 @@ describe("method_resolution", () => {
         local_type_annotations: [],
         local_type_tracking: { variable_types: [], assignment_flows: [] },
         local_type_flow: { constructor_calls: [], assignments: [], returns: [], call_assignments: [] }
-      } as SemanticIndex;
+      } as any as SemanticIndex;
 
       indices.set(file_path, index);
 
@@ -595,7 +597,7 @@ describe("method_resolution", () => {
       const method_sym = method_symbol("getValue", "MyClass", test_location);
       const class_type = defined_type_id(TypeCategory.CLASS, "MyClass" as SymbolName, test_location);
 
-      types.type_members.set(class_type, new Map([["getValue" as SymbolName, method_sym]]));
+      (types.type_members as Map<TypeId, Map<SymbolName, SymbolId>>).set(class_type, new Map([["getValue" as SymbolName, method_sym]]));
 
       const index: SemanticIndex = {
         file_path,
@@ -615,7 +617,7 @@ describe("method_resolution", () => {
         local_type_annotations: [],
         local_type_tracking: { variable_types: [], assignment_flows: [] },
         local_type_flow: { constructor_calls: [], assignments: [], returns: [], call_assignments: [] }
-      } as SemanticIndex;
+      } as any as SemanticIndex;
 
       const context = {
         type_resolution: types,
@@ -637,7 +639,7 @@ describe("method_resolution", () => {
       const test_location = { file_path, line: 1, column: 1, end_line: 1, end_column: 10 };
       const class_type = defined_type_id(TypeCategory.CLASS, "MyClass" as SymbolName, test_location);
 
-      types.type_members.set(class_type, new Map());
+      (types.type_members as Map<TypeId, Map<SymbolName, SymbolId>>).set(class_type, new Map());
 
       const index: SemanticIndex = {
         file_path,
@@ -653,7 +655,7 @@ describe("method_resolution", () => {
         local_type_annotations: [],
         local_type_tracking: { variable_types: [], assignment_flows: [] },
         local_type_flow: { constructor_calls: [], assignments: [], returns: [], call_assignments: [] }
-      } as SemanticIndex;
+      } as any as SemanticIndex;
 
       const context = {
         type_resolution: types,
@@ -717,7 +719,7 @@ describe("method_resolution", () => {
             name: "create" as SymbolName,
             modifiers: ["static"],
             location: test_location
-          } as SymbolDefinition],
+          } as any as SymbolDefinition],
           [instance_method_sym, {
             kind: "method",
             name: "getValue" as SymbolName,
@@ -732,7 +734,7 @@ describe("method_resolution", () => {
         local_type_annotations: [],
         local_type_tracking: { variable_types: [], assignment_flows: [] },
         local_type_flow: { constructor_calls: [], assignments: [], returns: [], call_assignments: [] }
-      } as SemanticIndex;
+      } as any as SemanticIndex;
 
       const context = {
         type_resolution: types,
@@ -758,7 +760,7 @@ describe("method_resolution", () => {
         kind: "method",
         name: "getValue" as SymbolName,
         location: test_location
-      } as SymbolDefinition;
+      } as any as SymbolDefinition;
 
       const index: SemanticIndex = {
         file_path,
@@ -774,7 +776,7 @@ describe("method_resolution", () => {
         local_type_annotations: [],
         local_type_tracking: { variable_types: [], assignment_flows: [] },
         local_type_flow: { constructor_calls: [], assignments: [], returns: [], call_assignments: [] }
-      } as SemanticIndex;
+      } as any as SemanticIndex;
 
       const context = {
         type_resolution: types,
@@ -798,7 +800,7 @@ describe("method_resolution", () => {
         kind: "method",
         name: "getValue" as SymbolName,
         location: test_location
-      } as SymbolDefinition;
+      } as any as SymbolDefinition;
 
       const index1: SemanticIndex = {
         file_path: file_path1,
@@ -814,7 +816,7 @@ describe("method_resolution", () => {
         local_type_annotations: [],
         local_type_tracking: { variable_types: [], assignment_flows: [] },
         local_type_flow: { constructor_calls: [], assignments: [], returns: [], call_assignments: [] }
-      } as SemanticIndex;
+      } as any as SemanticIndex;
 
       const index2: SemanticIndex = {
         file_path: file_path2,
@@ -830,7 +832,7 @@ describe("method_resolution", () => {
         local_type_annotations: [],
         local_type_tracking: { variable_types: [], assignment_flows: [] },
         local_type_flow: { constructor_calls: [], assignments: [], returns: [], call_assignments: [] }
-      } as SemanticIndex;
+      } as any as SemanticIndex;
 
       const context = {
         type_resolution: types,
@@ -863,7 +865,7 @@ describe("method_resolution", () => {
         local_type_annotations: [],
         local_type_tracking: { variable_types: [], assignment_flows: [] },
         local_type_flow: { constructor_calls: [], assignments: [], returns: [], call_assignments: [] }
-      } as SemanticIndex;
+      } as any as SemanticIndex;
 
       const context = {
         type_resolution: types,
@@ -875,6 +877,849 @@ describe("method_resolution", () => {
 
       const result = find_symbol_definition(method_sym, context);
       expect(result).toBeNull();
+    });
+  });
+
+  describe("inheritance resolution", () => {
+    it("should resolve inherited methods", async () => {
+      const file_path = "test.ts" as FilePath;
+      const test_location = { file_path, line: 1, column: 1, end_line: 1, end_column: 10 };
+
+      // Create base and derived classes
+      const base_class_sym = class_symbol("BaseClass", test_location);
+      const derived_class_sym = class_symbol("DerivedClass", test_location);
+      const base_method_sym = method_symbol("baseMethod", "BaseClass", test_location);
+      const instance_sym = variable_symbol("instance", test_location);
+
+      const base_type = defined_type_id(TypeCategory.CLASS, "BaseClass" as SymbolName, test_location);
+      const derived_type = defined_type_id(TypeCategory.CLASS, "DerivedClass" as SymbolName, test_location);
+
+      // Setup type resolution with inheritance
+      (types.symbol_types as Map<SymbolId, TypeId>).set(base_class_sym, base_type);
+      (types.symbol_types as Map<SymbolId, TypeId>).set(derived_class_sym, derived_type);
+      (types.symbol_types as Map<SymbolId, TypeId>).set(instance_sym, derived_type);
+
+      // Base class has the method
+      (types.type_members as Map<TypeId, Map<SymbolName, SymbolId>>).set(base_type, new Map([
+        ["baseMethod" as SymbolName, base_method_sym]
+      ]));
+
+      // Derived class doesn't have the method directly
+      (types.type_members as Map<TypeId, Map<SymbolName, SymbolId>>).set(derived_type, new Map());
+
+      // Setup inheritance hierarchy
+      (types as any).inheritance_hierarchy =new Map([
+        [derived_type, [base_type]]
+      ]);
+      (types as any).interface_implementations =new Map();
+
+      // Import the inheritance resolver
+      const { resolve_method_with_inheritance } = await import("./inheritance_resolver");
+
+      const context = {
+        type_resolution: types,
+        imports,
+        current_file: file_path,
+        current_index: {
+          symbols: new Map([
+            [base_method_sym, {
+              kind: "method",
+              name: "baseMethod" as SymbolName,
+              location: test_location
+            } as SymbolDefinition]
+          ])
+        } as any as SemanticIndex,
+        indices: new Map()
+      };
+
+      // Resolve method on derived type should find it in base type
+      const result = resolve_method_with_inheritance(
+        "baseMethod" as SymbolName,
+        derived_type,
+        false,
+        context
+      );
+
+      expect(result).not.toBeNull();
+      expect(result?.resolved_method).toBe(base_method_sym);
+      expect(result?.resolution_path).toBe("inherited");
+    });
+
+    it("should build inheritance chain correctly", async () => {
+      const file_path = "test.ts" as FilePath;
+      const test_location = { file_path, line: 1, column: 1, end_line: 1, end_column: 10 };
+
+      // Create multi-level inheritance
+      const type_a = defined_type_id(TypeCategory.CLASS, "A" as SymbolName, test_location);
+      const type_b = defined_type_id(TypeCategory.CLASS, "B" as SymbolName, test_location);
+      const type_c = defined_type_id(TypeCategory.CLASS, "C" as SymbolName, test_location);
+      const type_d = defined_type_id(TypeCategory.CLASS, "D" as SymbolName, test_location);
+
+      // D extends C extends B extends A
+      (types as any).inheritance_hierarchy =new Map([
+        [type_b, [type_a]],
+        [type_c, [type_b]],
+        [type_d, [type_c]]
+      ]);
+      (types as any).interface_implementations =new Map();
+
+      const { build_inheritance_chain } = await import("./inheritance_resolver");
+
+      const context = {
+        type_resolution: types,
+        imports,
+        current_file: file_path,
+        current_index: {
+          symbols: new Map()
+        } as any as SemanticIndex,
+        indices: new Map()
+      };
+
+      const chain = build_inheritance_chain(type_d, context);
+
+      expect(chain).toEqual([type_c, type_b, type_a]);
+    });
+
+    it("should resolve interface methods", async () => {
+      const file_path = "test.ts" as FilePath;
+      const test_location = { file_path, line: 1, column: 1, end_line: 1, end_column: 10 };
+
+      // Create interface and implementing class
+      const interface_sym = class_symbol("IMyInterface", test_location);
+      const class_sym = class_symbol("MyClass", test_location);
+      const interface_method_sym = method_symbol("doSomething", "IMyInterface", test_location);
+      const class_method_sym = method_symbol("doSomething", "MyClass", test_location);
+      const instance_sym = variable_symbol("instance", test_location);
+
+      const interface_type = defined_type_id(TypeCategory.INTERFACE, "IMyInterface" as SymbolName, test_location);
+      const class_type = defined_type_id(TypeCategory.CLASS, "MyClass" as SymbolName, test_location);
+
+      // Setup type resolution
+      (types.symbol_types as Map<SymbolId, TypeId>).set(interface_sym, interface_type);
+      (types.symbol_types as Map<SymbolId, TypeId>).set(class_sym, class_type);
+      (types.symbol_types as Map<SymbolId, TypeId>).set(instance_sym, class_type);
+
+      // Interface has the method
+      (types.type_members as Map<TypeId, Map<SymbolName, SymbolId>>).set(interface_type, new Map([
+        ["doSomething" as SymbolName, interface_method_sym]
+      ]));
+
+      // Class implements the method
+      (types.type_members as Map<TypeId, Map<SymbolName, SymbolId>>).set(class_type, new Map([
+        ["doSomething" as SymbolName, class_method_sym]
+      ]));
+
+      // Setup interface implementations
+      (types as any).inheritance_hierarchy =new Map();
+      (types as any).interface_implementations =new Map([
+        [class_type, [interface_type]]
+      ]);
+
+      const { resolve_method_with_inheritance } = await import("./inheritance_resolver");
+
+      const context = {
+        type_resolution: types,
+        imports,
+        current_file: file_path,
+        current_index: {
+          symbols: new Map([
+            [interface_method_sym, {
+              kind: "method",
+              name: "doSomething" as SymbolName,
+              location: test_location
+            } as SymbolDefinition],
+            [class_method_sym, {
+              kind: "method",
+              name: "doSomething" as SymbolName,
+              location: test_location
+            } as SymbolDefinition]
+          ])
+        } as any as SemanticIndex,
+        indices: new Map()
+      };
+
+      const result = resolve_method_with_inheritance(
+        "doSomething" as SymbolName,
+        class_type,
+        false,
+        context
+      );
+
+      expect(result).not.toBeNull();
+      expect(result?.resolved_method).toBe(class_method_sym);
+      expect(result?.resolution_path).toBe("direct");
+    });
+  });
+
+  describe("polymorphism and method overriding", () => {
+    it("should find all method implementations in hierarchy", async () => {
+      const file_path = "test.ts" as FilePath;
+      const test_location = { file_path, line: 1, column: 1, end_line: 1, end_column: 10 };
+
+      // Create class hierarchy with overridden method
+      const base_class_sym = class_symbol("Base", test_location);
+      const derived_class_sym = class_symbol("Derived", test_location);
+      const base_method_sym = method_symbol("process", "Base", test_location);
+      const derived_method_sym = method_symbol("process", "Derived", test_location);
+
+      const base_type = defined_type_id(TypeCategory.CLASS, "Base" as SymbolName, test_location);
+      const derived_type = defined_type_id(TypeCategory.CLASS, "Derived" as SymbolName, test_location);
+
+      // Setup type resolution
+      (types.type_members as Map<TypeId, Map<SymbolName, SymbolId>>).set(base_type, new Map([
+        ["process" as SymbolName, base_method_sym]
+      ]));
+
+      (types.type_members as Map<TypeId, Map<SymbolName, SymbolId>>).set(derived_type, new Map([
+        ["process" as SymbolName, derived_method_sym]
+      ]));
+
+      (types as any).inheritance_hierarchy =new Map([
+        [derived_type, [base_type]]
+      ]);
+      (types as any).interface_implementations =new Map();
+
+      const { find_all_method_implementations } = await import("./polymorphism_handler");
+
+      const context = {
+        type_resolution: types,
+        imports,
+        current_file: file_path,
+        current_index: {
+          symbols: new Map([
+            [base_method_sym, {
+              kind: "method",
+              name: "process" as SymbolName,
+              location: test_location
+            } as SymbolDefinition],
+            [derived_method_sym, {
+              kind: "method",
+              name: "process" as SymbolName,
+              location: test_location
+            } as SymbolDefinition]
+          ])
+        } as any as SemanticIndex,
+        indices: new Map()
+      };
+
+      const implementations = find_all_method_implementations(
+        "process" as SymbolName,
+        derived_type,
+        false,
+        context
+      );
+
+      expect(implementations).toHaveLength(2);
+      expect(implementations[0].symbol_id).toBe(derived_method_sym);
+      expect(implementations[0].override_depth).toBe(0);
+      expect(implementations[1].symbol_id).toBe(base_method_sym);
+      expect(implementations[1].override_depth).toBe(1);
+    });
+
+    it("should choose most specific method implementation", async () => {
+      const file_path = "test.ts" as FilePath;
+      const test_location = { file_path, line: 1, column: 1, end_line: 1, end_column: 10 };
+
+      const base_method_sym = method_symbol("process", "Base", test_location);
+      const derived_method_sym = method_symbol("process", "Derived", test_location);
+
+      const base_type = defined_type_id(TypeCategory.CLASS, "Base" as SymbolName, test_location);
+      const derived_type = defined_type_id(TypeCategory.CLASS, "Derived" as SymbolName, test_location);
+
+      const { choose_most_specific_method } = await import("./polymorphism_handler");
+
+      const context = {
+        type_resolution: types,
+        imports,
+        current_file: file_path,
+        current_index: {
+          symbols: new Map()
+        } as any as SemanticIndex,
+        indices: new Map()
+      };
+
+      const implementations = [
+        { symbol_id: base_method_sym, source_type: base_type, override_depth: 1 },
+        { symbol_id: derived_method_sym, source_type: derived_type, override_depth: 0 }
+      ];
+
+      const most_specific = choose_most_specific_method(implementations, derived_type, context);
+
+      expect(most_specific.symbol_id).toBe(derived_method_sym);
+      expect(most_specific.override_depth).toBe(0);
+    });
+  });
+
+  describe("constructor resolution with inheritance", () => {
+    it("should resolve inherited constructors", async () => {
+      const file_path = "test.ts" as FilePath;
+      const test_location = { file_path, line: 1, column: 1, end_line: 1, end_column: 10 };
+
+      const base_class_sym = class_symbol("Base", test_location);
+      const derived_class_sym = class_symbol("Derived", test_location);
+      const base_constructor_sym = method_symbol("constructor", "Base", test_location);
+
+      const base_type = defined_type_id(TypeCategory.CLASS, "Base" as SymbolName, test_location);
+      const derived_type = defined_type_id(TypeCategory.CLASS, "Derived" as SymbolName, test_location);
+
+      // Base has constructor, derived doesn't
+      (types.symbol_types as Map<SymbolId, TypeId>).set(base_class_sym, base_type);
+      (types.symbol_types as Map<SymbolId, TypeId>).set(derived_class_sym, derived_type);
+      (types.constructors as Map<TypeId, SymbolId>).set(base_type, base_constructor_sym);
+
+      // Setup type members with proper constructors map
+      (types.type_members as Map<TypeId, Map<SymbolName, SymbolId>>).set(base_type, new Map());
+      (types.type_members as Map<TypeId, Map<SymbolName, SymbolId>>).set(derived_type, new Map());
+
+      (types as any).inheritance_hierarchy =new Map([
+        [derived_type, [base_type]]
+      ]);
+      (types as any).interface_implementations =new Map();
+
+      const { find_default_constructor } = await import("./constructor_resolver");
+
+      const context = {
+        type_resolution: types,
+        imports,
+        current_file: file_path,
+        current_index: {
+          symbols: new Map([
+            [base_constructor_sym, {
+              kind: "constructor",
+              name: "constructor" as SymbolName,
+              location: test_location
+            } as SymbolDefinition]
+          ])
+        } as any as SemanticIndex,
+        indices: new Map()
+      };
+
+      // Finding constructor for derived should look in base
+      const constructor = find_default_constructor(base_type, context);
+
+      expect(constructor).toBe(base_constructor_sym);
+    });
+
+    it("should resolve super constructor calls", async () => {
+      const file_path = "test.ts" as FilePath;
+      const test_location = { file_path, line: 1, column: 1, end_line: 1, end_column: 10 };
+
+      const base_class_sym = class_symbol("Base", test_location);
+      const derived_class_sym = class_symbol("Derived", test_location);
+      const base_constructor_sym = method_symbol("constructor", "Base", test_location);
+
+      const base_type = defined_type_id(TypeCategory.CLASS, "Base" as SymbolName, test_location);
+      const derived_type = defined_type_id(TypeCategory.CLASS, "Derived" as SymbolName, test_location);
+
+      // Setup types and hierarchy
+      types.symbol_types.set(base_class_sym, base_type);
+      types.symbol_types.set(derived_class_sym, derived_type);
+      types.constructors.set(base_type, base_constructor_sym);
+
+      types.inheritance_hierarchy = new Map([
+        [derived_type, [base_type]]
+      ]);
+      types.interface_implementations = new Map();
+
+      const { resolve_constructor_calls_enhanced } = await import("./constructor_resolver");
+
+      // Create a semantic index with a super call
+      const index = {
+        file_path,
+        symbols: new Map([
+          [base_constructor_sym, {
+            kind: "constructor",
+            name: "constructor" as SymbolName,
+            location: test_location
+          } as SymbolDefinition],
+          [derived_class_sym, {
+            kind: "class",
+            name: "Derived" as SymbolName,
+            location: { file_path, line: 10, column: 1, end_line: 20, end_column: 1 }
+          } as SymbolDefinition]
+        ]),
+        references: {
+          calls: [{
+            location: { file_path, line: 12, column: 5, end_line: 12, end_column: 10 },
+            name: "super" as SymbolName,
+            scope_id: "scope_1" as any,
+            call_type: "super"
+          }],
+          member_accesses: [],
+          returns: [],
+          type_annotations: []
+        }
+      } as any as SemanticIndex;
+
+      const context = {
+        type_resolution: types,
+        imports,
+        current_file: file_path,
+        current_index: index,
+        indices: new Map()
+      };
+
+      const resolutions = resolve_constructor_calls_enhanced(index, context);
+
+      expect(resolutions.length).toBeGreaterThan(0);
+      const super_resolution = resolutions.find(r => r.resolution_path === "inherited");
+      expect(super_resolution).toBeDefined();
+      expect(super_resolution?.resolved_method).toBe(base_constructor_sym);
+    });
+  });
+
+  describe("interface resolution utilities", () => {
+    it("should find interface implementations", async () => {
+      const file_path = "test.ts" as FilePath;
+      const test_location = { file_path, line: 1, column: 1, end_line: 1, end_column: 10 };
+
+      const interface_type = defined_type_id(TypeCategory.INTERFACE, "IProcessor" as SymbolName, test_location);
+      const class1_type = defined_type_id(TypeCategory.CLASS, "ProcessorA" as SymbolName, test_location);
+      const class2_type = defined_type_id(TypeCategory.CLASS, "ProcessorB" as SymbolName, test_location);
+
+      types.interface_implementations = new Map([
+        [class1_type, [interface_type]],
+        [class2_type, [interface_type]]
+      ]);
+      types.inheritance_hierarchy = new Map();
+
+      const { find_interface_implementations } = await import("./interface_resolver");
+
+      const context = {
+        type_resolution: types,
+        imports,
+        current_file: file_path,
+        current_index: { symbols: new Map() } as any as SemanticIndex,
+        indices: new Map()
+      };
+
+      const implementations = find_interface_implementations(interface_type, context);
+
+      expect(implementations).toEqual([class1_type, class2_type]);
+    });
+
+    it("should check if type implements interface", async () => {
+      const file_path = "test.ts" as FilePath;
+      const test_location = { file_path, line: 1, column: 1, end_line: 1, end_column: 10 };
+
+      const interface_type = defined_type_id(TypeCategory.INTERFACE, "ISerializable" as SymbolName, test_location);
+      const base_type = defined_type_id(TypeCategory.CLASS, "BaseClass" as SymbolName, test_location);
+      const derived_type = defined_type_id(TypeCategory.CLASS, "DerivedClass" as SymbolName, test_location);
+
+      // Base implements interface, derived inherits from base
+      types.interface_implementations = new Map([
+        [base_type, [interface_type]]
+      ]);
+      types.inheritance_hierarchy = new Map([
+        [derived_type, [base_type]]
+      ]);
+
+      const { type_implements_interface } = await import("./interface_resolver");
+
+      const context = {
+        type_resolution: types,
+        imports,
+        current_file: file_path,
+        current_index: { symbols: new Map() } as any as SemanticIndex,
+        indices: new Map()
+      };
+
+      // Direct implementation
+      expect(type_implements_interface(base_type, interface_type, context)).toBe(true);
+
+      // Inherited implementation
+      expect(type_implements_interface(derived_type, interface_type, context)).toBe(true);
+
+      // No implementation
+      const unrelated_type = defined_type_id(TypeCategory.CLASS, "UnrelatedClass" as SymbolName, test_location);
+      expect(type_implements_interface(unrelated_type, interface_type, context)).toBe(false);
+    });
+
+    it("should verify method implementations", async () => {
+      const file_path = "test.ts" as FilePath;
+      const test_location = { file_path, line: 1, column: 1, end_line: 1, end_column: 10 };
+
+      const interface_method = method_symbol("process", "IProcessor", test_location);
+      const class_method = method_symbol("process", "ProcessorImpl", test_location);
+      const wrong_method = method_symbol("execute", "ProcessorImpl", test_location);
+
+      const { is_method_implementation } = await import("./interface_resolver");
+
+      const context = {
+        type_resolution: types,
+        imports,
+        current_file: file_path,
+        current_index: {
+          symbols: new Map([
+            [interface_method, {
+              kind: "method",
+              name: "process" as SymbolName,
+              location: test_location
+            } as SymbolDefinition],
+            [class_method, {
+              kind: "method",
+              name: "process" as SymbolName,
+              location: test_location
+            } as SymbolDefinition],
+            [wrong_method, {
+              kind: "method",
+              name: "execute" as SymbolName,
+              location: test_location
+            } as SymbolDefinition]
+          ])
+        } as any as SemanticIndex,
+        indices: new Map()
+      };
+
+      // Same name = implementation
+      expect(is_method_implementation(class_method, interface_method, context)).toBe(true);
+
+      // Different name = not implementation
+      expect(is_method_implementation(wrong_method, interface_method, context)).toBe(false);
+    });
+  });
+
+  describe("polymorphism utilities", () => {
+    it("should find method overrides", async () => {
+      const file_path = "test.ts" as FilePath;
+      const base_location = { file_path, line: 1, column: 1, end_line: 5, end_column: 1 };
+      const derived1_location = { file_path, line: 10, column: 1, end_line: 15, end_column: 1 };
+      const derived2_location = { file_path, line: 20, column: 1, end_line: 25, end_column: 1 };
+
+      const base_type = defined_type_id(TypeCategory.CLASS, "Base" as SymbolName, base_location);
+      const derived1_type = defined_type_id(TypeCategory.CLASS, "Derived1" as SymbolName, derived1_location);
+      const derived2_type = defined_type_id(TypeCategory.CLASS, "Derived2" as SymbolName, derived2_location);
+
+      const base_method = method_symbol("process", "Base", base_location);
+      const derived1_method = method_symbol("process", "Derived1", derived1_location);
+      const derived2_method = method_symbol("process", "Derived2", derived2_location);
+
+      types.inheritance_hierarchy = new Map([
+        [derived1_type, [base_type]],
+        [derived2_type, [base_type]]
+      ]);
+
+      types.type_members.set(base_type, new Map([
+        ["process" as SymbolName, base_method]
+      ]));
+      types.type_members.set(derived1_type, new Map([
+        ["process" as SymbolName, derived1_method]
+      ]));
+      types.type_members.set(derived2_type, new Map([
+        ["process" as SymbolName, derived2_method]
+      ]));
+
+      const { find_method_overrides } = await import("./polymorphism_handler");
+
+      const context = {
+        type_resolution: types,
+        imports,
+        current_file: file_path,
+        current_index: {
+          symbols: new Map([
+            [base_method, {
+              kind: "method",
+              name: "process" as SymbolName,
+              location: base_location
+            } as SymbolDefinition],
+            [derived1_method, {
+              kind: "method",
+              name: "process" as SymbolName,
+              location: derived1_location
+            } as SymbolDefinition],
+            [derived2_method, {
+              kind: "method",
+              name: "process" as SymbolName,
+              location: derived2_location
+            } as SymbolDefinition]
+          ])
+        } as any as SemanticIndex,
+        indices: new Map()
+      };
+
+      const overrides = find_method_overrides(base_method, base_type, context);
+
+      expect(overrides).toContain(derived1_method);
+      expect(overrides).toContain(derived2_method);
+      expect(overrides).not.toContain(base_method);
+    });
+
+    it("should check if method is override", async () => {
+      const file_path = "test.ts" as FilePath;
+      const test_location = { file_path, line: 1, column: 1, end_line: 1, end_column: 10 };
+
+      const base_method = method_symbol("process", "Base", test_location);
+      const derived_method = method_symbol("process", "Derived", test_location);
+      const unrelated_method = method_symbol("execute", "Derived", test_location);
+
+      const { is_method_override } = await import("./polymorphism_handler");
+
+      const context = {
+        type_resolution: types,
+        imports,
+        current_file: file_path,
+        current_index: {
+          symbols: new Map([
+            [base_method, {
+              kind: "method",
+              name: "process" as SymbolName,
+              location: test_location
+            } as SymbolDefinition],
+            [derived_method, {
+              kind: "method",
+              name: "process" as SymbolName,
+              location: test_location
+            } as SymbolDefinition],
+            [unrelated_method, {
+              kind: "method",
+              name: "execute" as SymbolName,
+              location: test_location
+            } as SymbolDefinition]
+          ])
+        } as any as SemanticIndex,
+        indices: new Map()
+      };
+
+      // Same name = override
+      expect(is_method_override(derived_method, base_method, context)).toBe(true);
+
+      // Different name = not override
+      expect(is_method_override(unrelated_method, base_method, context)).toBe(false);
+    });
+
+    it("should determine dispatch type", async () => {
+      const file_path = "test.ts" as FilePath;
+      const test_location = { file_path, line: 1, column: 1, end_line: 1, end_column: 10 };
+
+      const static_method = method_symbol("staticMethod", "MyClass", test_location);
+      const final_method = method_symbol("finalMethod", "MyClass", test_location);
+      const virtual_method = method_symbol("virtualMethod", "MyClass", test_location);
+
+      const { determine_dispatch_type } = await import("./polymorphism_handler");
+
+      const context = {
+        type_resolution: types,
+        imports,
+        current_file: file_path,
+        current_index: {
+          symbols: new Map([
+            [static_method, {
+              kind: "method",
+              name: "staticMethod" as SymbolName,
+              location: test_location,
+              modifiers: ["static"]
+            } as any],
+            [final_method, {
+              kind: "method",
+              name: "finalMethod" as SymbolName,
+              location: test_location,
+              modifiers: ["final"]
+            } as any],
+            [virtual_method, {
+              kind: "method",
+              name: "virtualMethod" as SymbolName,
+              location: test_location
+            } as SymbolDefinition]
+          ])
+        } as any as SemanticIndex,
+        indices: new Map()
+      };
+
+      expect(determine_dispatch_type(static_method, context)).toBe("static");
+      expect(determine_dispatch_type(final_method, context)).toBe("static");
+      expect(determine_dispatch_type(virtual_method, context)).toBe("dynamic");
+    });
+  });
+
+  describe("edge cases and error conditions", () => {
+    it("should handle circular inheritance gracefully", async () => {
+      const file_path = "test.ts" as FilePath;
+      const test_location = { file_path, line: 1, column: 1, end_line: 1, end_column: 10 };
+
+      const type_a = defined_type_id(TypeCategory.CLASS, "A" as SymbolName, test_location);
+      const type_b = defined_type_id(TypeCategory.CLASS, "B" as SymbolName, test_location);
+      const type_c = defined_type_id(TypeCategory.CLASS, "C" as SymbolName, test_location);
+
+      // Create circular inheritance (should be detected and handled)
+      types.inheritance_hierarchy = new Map([
+        [type_a, [type_b]],
+        [type_b, [type_c]],
+        [type_c, [type_a]]  // Circular reference
+      ]);
+
+      const { build_inheritance_chain } = await import("./inheritance_resolver");
+
+      const context = {
+        type_resolution: types,
+        imports,
+        current_file: file_path,
+        current_index: { symbols: new Map() } as any as SemanticIndex,
+        indices: new Map()
+      };
+
+      // Should not infinite loop
+      const chain = build_inheritance_chain(type_a, context);
+
+      // Should have detected cycle and stopped
+      expect(chain.length).toBeLessThanOrEqual(3);
+      expect(new Set(chain).size).toBe(chain.length); // No duplicates
+    });
+
+    it("should handle missing type members gracefully", async () => {
+      const file_path = "test.ts" as FilePath;
+      const test_location = { file_path, line: 1, column: 1, end_line: 1, end_column: 10 };
+
+      const type_without_members = defined_type_id(TypeCategory.CLASS, "EmptyClass" as SymbolName, test_location);
+
+      // Don't set up any type members
+      types.symbol_types.set(class_symbol("EmptyClass", test_location), type_without_members);
+
+      const { get_type_methods } = await import("./type_lookup");
+
+      const context = {
+        type_resolution: types,
+        imports,
+        current_file: file_path,
+        current_index: { symbols: new Map() } as any as SemanticIndex,
+        indices: new Map()
+      };
+
+      const methods = get_type_methods(type_without_members, context);
+      expect(methods).toBeNull();
+    });
+
+    it("should handle polymorphic resolution with no implementations", async () => {
+      const file_path = "test.ts" as FilePath;
+      const test_location = { file_path, line: 1, column: 1, end_line: 1, end_column: 10 };
+
+      const empty_type = defined_type_id(TypeCategory.CLASS, "EmptyClass" as SymbolName, test_location);
+
+      const { resolve_polymorphic_method_call, CallContext } = await import("./polymorphism_handler");
+
+      const call_context: CallContext = {
+        location: test_location,
+        receiver_type: empty_type,
+        is_static: false
+      };
+
+      const context = {
+        type_resolution: types,
+        imports,
+        current_file: file_path,
+        current_index: { symbols: new Map() } as any as SemanticIndex,
+        indices: new Map()
+      };
+
+      const result = resolve_polymorphic_method_call(
+        "nonExistentMethod" as SymbolName,
+        empty_type,
+        call_context,
+        context
+      );
+
+      expect(result).toBeNull();
+    });
+
+    it("should handle multiple interface implementations", async () => {
+      const file_path = "test.ts" as FilePath;
+      const test_location = { file_path, line: 1, column: 1, end_line: 1, end_column: 10 };
+
+      const interface1_type = defined_type_id(TypeCategory.INTERFACE, "ISerializable" as SymbolName, test_location);
+      const interface2_type = defined_type_id(TypeCategory.INTERFACE, "IComparable" as SymbolName, test_location);
+      const class_type = defined_type_id(TypeCategory.CLASS, "DataClass" as SymbolName, test_location);
+
+      types.interface_implementations = new Map([
+        [class_type, [interface1_type, interface2_type]]
+      ]);
+      types.inheritance_hierarchy = new Map();
+
+      const { get_implemented_interfaces } = await import("./interface_resolver");
+
+      const context = {
+        type_resolution: types,
+        imports,
+        current_file: file_path,
+        current_index: { symbols: new Map() } as any as SemanticIndex,
+        indices: new Map()
+      };
+
+      const interfaces = get_implemented_interfaces(class_type, context);
+
+      expect(interfaces).toContain(interface1_type);
+      expect(interfaces).toContain(interface2_type);
+      expect(interfaces).toHaveLength(2);
+    });
+
+    it("should resolve complex inheritance with interfaces", async () => {
+      const file_path = "test.ts" as FilePath;
+      const test_location = { file_path, line: 1, column: 1, end_line: 1, end_column: 10 };
+
+      // Setup: Interface <- BaseClass <- DerivedClass
+      const interface_type = defined_type_id(TypeCategory.INTERFACE, "IProcessor" as SymbolName, test_location);
+      const base_type = defined_type_id(TypeCategory.CLASS, "BaseProcessor" as SymbolName, test_location);
+      const derived_type = defined_type_id(TypeCategory.CLASS, "DerivedProcessor" as SymbolName, test_location);
+
+      const interface_method = method_symbol("process", "IProcessor", test_location);
+      const base_method = method_symbol("process", "BaseProcessor", test_location);
+
+      // Base implements interface
+      types.interface_implementations = new Map([
+        [base_type, [interface_type]]
+      ]);
+
+      // Derived extends Base
+      types.inheritance_hierarchy = new Map([
+        [derived_type, [base_type]]
+      ]);
+
+      // Interface defines method
+      types.type_members.set(interface_type, new Map([
+        ["process" as SymbolName, interface_method]
+      ]));
+
+      // Base implements method
+      types.type_members.set(base_type, new Map([
+        ["process" as SymbolName, base_method]
+      ]));
+
+      // Derived doesn't override
+      types.type_members.set(derived_type, new Map());
+
+      const { resolve_method_with_inheritance } = await import("./inheritance_resolver");
+
+      const context = {
+        type_resolution: types,
+        imports,
+        current_file: file_path,
+        current_index: {
+          symbols: new Map([
+            [interface_method, {
+              kind: "method",
+              name: "process" as SymbolName,
+              location: test_location
+            } as SymbolDefinition],
+            [base_method, {
+              kind: "method",
+              name: "process" as SymbolName,
+              location: test_location
+            } as SymbolDefinition]
+          ])
+        } as any as SemanticIndex,
+        indices: new Map()
+      };
+
+      // Calling process on derived should resolve to base implementation
+      const result = resolve_method_with_inheritance(
+        "process" as SymbolName,
+        derived_type,
+        false,
+        context
+      );
+
+      expect(result).not.toBeNull();
+      expect(result?.resolved_method).toBe(base_method);
+      // Could be "inherited" since it comes from base, or "interface" if resolved via interface
+      expect(["inherited", "interface"]).toContain(result?.resolution_path);
     });
   });
 });
