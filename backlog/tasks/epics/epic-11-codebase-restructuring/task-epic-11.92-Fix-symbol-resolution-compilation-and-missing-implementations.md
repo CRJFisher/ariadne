@@ -6,12 +6,12 @@
 **Priority**: Critical
 **Created**: 2025-01-22
 **Last Updated**: 2025-01-22
-**Estimated Effort**: 7-9 days (increased due to 292 compilation errors)
+**Estimated Effort**: 7 days (27 sub-tasks totaling ~56 hours)
 **Actual Effort**: 4+ days (ongoing)
 
 ## Executive Summary
 
-The symbol resolution pipeline completed in task-epic-11.91 has critical implementation gaps preventing compilation and correct operation. This task addresses **292 TypeScript compilation errors** (significantly more than initially estimated), implements missing core functions, fixes type mismatches, and restores test coverage. The errors have been analyzed and grouped into 8 new sub-tasks for systematic resolution.
+The symbol resolution pipeline completed in task-epic-11.91 has **169 TypeScript compilation errors** (actual count verified 2025-01-22) preventing build and test execution. However, investigation revealed that core functions (`resolve_inheritance`, `resolve_type_members`) are actually fully implemented contrary to initial assessment. The primary issues are type mismatches, interface inconsistencies, and test infrastructure problems. These have been broken down into **27 focused sub-tasks** across 7 main categories for systematic resolution.
 
 ## Sub-Tasks
 
@@ -20,24 +20,111 @@ The symbol resolution pipeline completed in task-epic-11.91 has critical impleme
 2. **task-epic-11.92.2**: ✅ Implement missing type member resolution (1.5 days) - COMPLETED
 3. **task-epic-11.92.4**: ✅ Fix test failures and complete integration (1 day) - COMPLETED
 
-### Pending (Reorganized based on 292 compilation errors)
-4. **task-epic-11.92.3**: Fix type structure inconsistencies (1 day) - PENDING (Original)
-5. **task-epic-11.92.5**: Fix ReadonlyMap type mismatches (1 day) - PENDING - **CRITICAL**
-6. **task-epic-11.92.6**: Fix interface property mismatches (1.5 days) - PENDING - **CRITICAL**
-7. **task-epic-11.92.7**: Fix function signature mismatches (1 day) - PENDING - **HIGH**
-8. **task-epic-11.92.8**: Fix object literal property errors (0.5 days) - PENDING - **HIGH**
-9. **task-epic-11.92.9**: Fix test infrastructure and mock data (1.5 days) - PENDING - **HIGH**
-10. **task-epic-11.92.10**: Fix module and export issues (0.5 days) - PENDING - **MEDIUM**
-11. **task-epic-11.92.11**: Fix remaining type issues and validation (1 day) - PENDING - **HIGH**
+### Pending Tasks (27 Sub-Tasks Total)
 
-### Recommended Execution Order
-1. task-epic-11.92.8 (Quick wins - 0.5 days)
-2. task-epic-11.92.5 (Unblocks compilation - 1 day)
-3. task-epic-11.92.10 (Enables imports - 0.5 days)
-4. task-epic-11.92.6 (Core fixes - 1.5 days)
-5. task-epic-11.92.7 (Function signatures - 1 day)
-6. task-epic-11.92.9 (Test infrastructure - 1.5 days)
-7. task-epic-11.92.11 (Final cleanup - 1 day)
+#### Main Tasks Overview
+4. **task-epic-11.92.3**: Fix type structure inconsistencies (1 day) - PENDING (Original)
+5. **task-epic-11.92.5**: Fix ReadonlyMap type mismatches (1 day) - **4 sub-tasks**
+6. **task-epic-11.92.6**: Fix interface property mismatches (1.5 days) - **5 sub-tasks**
+7. **task-epic-11.92.7**: Fix function signature mismatches (1 day) - **4 sub-tasks**
+8. **task-epic-11.92.8**: Fix object literal property errors (0.5 days) - **3 sub-tasks**
+9. **task-epic-11.92.9**: Fix test infrastructure and mock data (1.5 days) - **4 sub-tasks**
+10. **task-epic-11.92.10**: Fix module and export issues (0.5 days) - **3 sub-tasks**
+11. **task-epic-11.92.11**: Fix remaining type issues and validation (1 day) - **4 sub-tasks**
+
+### Recommended Execution Order (By Sub-Task)
+
+#### Phase 1: Quick Wins & Critical Infrastructure (Day 1)
+**Morning (4 hours):**
+1. **task-epic-11.92.8.3** - Fix data_export test objects (0.5 hrs) - *2 simple fixes*
+2. **task-epic-11.92.10.1** - Fix type_members exports (1 hr) - *Unblocks 6.5*
+3. **task-epic-11.92.10.3** - Fix fixture module references (1.5 hrs) - *Isolated fix*
+4. **task-epic-11.92.11.2** - Fix type registry issues (1 hr) - *Single error fix*
+
+**Afternoon (4 hours):**
+5. **task-epic-11.92.9.1** - Create comprehensive mock factories (4 hrs) - *CRITICAL: Blocks many tasks*
+
+#### Phase 2: Foundation Utilities & Core Interfaces (Day 2)
+**Morning (4 hours):**
+6. **task-epic-11.92.5.4** - Create ReadonlyMap test utilities (2 hrs) - *Blocks 5.1-5.3*
+7. **task-epic-11.92.6.1** - Fix LocalConstructorCall interface (2 hrs) - *9 quick fixes*
+
+**Afternoon (4 hours):**
+8. **task-epic-11.92.6.2** - Fix SemanticIndex interface compliance (3 hrs) - *High impact*
+9. **task-epic-11.92.8.1** - Fix type_resolution object literals (1 hr) - *Quick wins in high-error file*
+
+#### Phase 3: ReadonlyMap & Interface Alignment (Day 3)
+**Morning (4 hours):**
+10. **task-epic-11.92.5.1** - Fix scope_resolution ReadonlyMap mutations (2 hrs)
+11. **task-epic-11.92.5.2** - Fix data_export ReadonlyMap mutations (1.5 hrs)
+12. **task-epic-11.92.8.2** - Fix function_resolution mock objects (0.5 hrs)
+
+**Afternoon (4 hours):**
+13. **task-epic-11.92.5.3** - Fix type_resolution test ReadonlyMap handling (2.5 hrs) - *Major impact*
+14. **task-epic-11.92.6.3** - Fix SymbolDefinition properties (1.5 hrs)
+
+#### Phase 4: Type Resolution & Import Fixes (Day 4)
+**Morning (4 hours):**
+15. **task-epic-11.92.9.2** - Fix type_resolution test infrastructure (3 hrs) - *Targets 77 errors*
+16. **task-epic-11.92.10.2** - Fix import_resolution imports (1 hr)
+
+**Afternoon (4 hours):**
+17. **task-epic-11.92.6.4** - Fix type_resolution test interfaces (3 hrs) - *Major cleanup*
+18. **task-epic-11.92.6.5** - Align LocalMemberInfo interfaces (1 hr)
+
+#### Phase 5: Function Signatures & Test Setup (Day 5)
+**Morning (4 hours):**
+19. **task-epic-11.92.7.1** - Fix import_resolution function calls (2 hrs) - *24 errors*
+20. **task-epic-11.92.7.2** - Fix query_loader mock functions (1.5 hrs)
+21. **task-epic-11.92.11.3** - Fix decorator type issues (0.5 hrs)
+
+**Afternoon (4 hours):**
+22. **task-epic-11.92.7.3** - Fix type_resolution function arguments (2.5 hrs)
+23. **task-epic-11.92.9.3** - Fix import_resolution test setup (1.5 hrs)
+
+#### Phase 6: Final Fixes & Infrastructure (Day 6)
+**Morning (4 hours):**
+24. **task-epic-11.92.7.4** - Fix language_configs capture mappings (2 hrs)
+25. **task-epic-11.92.11.1** - Fix implicit any types (2 hrs) - *12 errors*
+
+**Afternoon (4 hours):**
+26. **task-epic-11.92.9.4** - Fix integration test infrastructure (3 hrs) - *All integration tests*
+27. **task-epic-11.92.3** - Fix remaining type structure inconsistencies (1 hr)
+
+#### Phase 7: Final Validation (Day 7)
+28. **task-epic-11.92.11.4** - Final type validation pass (3 hrs) - *Complete validation*
+
+### Execution Strategy Notes
+
+**Critical Path Items:**
+- task-epic-11.92.9.1 must be done early (blocks 6+ other tasks)
+- task-epic-11.92.5.4 must precede other ReadonlyMap tasks
+- task-epic-11.92.10.1 unblocks task-epic-11.92.6.5
+
+**Parallelization Opportunities (if multiple developers):**
+- Developer 1: Phase 1 morning tasks + mock factories
+- Developer 2: Module export fixes (10.1, 10.2, 10.3)
+- Developer 3: Quick object literal fixes (8.1, 8.2, 8.3)
+
+**High-Impact Tasks (fix most errors):**
+- task-epic-11.92.9.2: Type resolution infrastructure (77 errors)
+- task-epic-11.92.7.1: Import resolution functions (24 errors)
+- task-epic-11.92.6.2: SemanticIndex compliance (16 errors)
+
+### Effort Summary
+
+**Total Effort**: ~56 hours (7 working days for single developer)
+
+**By Category:**
+- ReadonlyMap fixes (92.5.*): 8 hours
+- Interface properties (92.6.*): 10.5 hours
+- Function signatures (92.7.*): 8 hours
+- Object literals (92.8.*): 4 hours
+- Test infrastructure (92.9.*): 11.5 hours
+- Module/exports (92.10.*): 4 hours
+- Final cleanup (92.11.*): 10 hours
+
+**Parallelization Potential**: 3-4 days with 2 developers working on independent tracks
 
 ## Current State Analysis
 

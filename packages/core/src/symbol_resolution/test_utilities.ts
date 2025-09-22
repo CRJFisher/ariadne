@@ -25,6 +25,7 @@ import type {
   ReExport,
   ScopeId,
   TypeId,
+  LexicalScope,
 } from "@ariadnejs/types";
 import {
   primitive_type_id,
@@ -391,6 +392,20 @@ export function create_test_semantic_index(props: {
       type_annotations: [],
     },
     local_types: props.local_types || [],
+    local_type_annotations: [],
+    local_type_tracking: {
+      annotations: [],
+      declarations: [],
+      assignments: [],
+    },
+    local_type_flow: {
+      constructor_calls: [],
+      assignments: [],
+      returns: [],
+      call_assignments: [],
+    },
+    root_scope_id: "root" as ScopeId,
+    file_symbols_by_name: new Map(),
   };
 }
 
