@@ -4,6 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { readFileSync } from 'fs';
+import type { PathOrFileDescriptor } from 'fs';
 import { join } from 'path';
 import type { Language } from '@ariadnejs/types';
 import JavaScript from 'tree-sitter-javascript';
@@ -382,8 +383,9 @@ describe("Query Loader", () => {
 
     it("should handle mixed success and failure scenarios", () => {
       // Setup: javascript succeeds, typescript fails
-      mockReadFileSync.mockImplementation((path: string) => {
-        if (path.includes('javascript.scm')) {
+      mockReadFileSync.mockImplementation((path: PathOrFileDescriptor) => {
+        const pathStr = path.toString();
+        if (pathStr.includes('javascript.scm')) {
           return 'javascript query';
         }
         throw new Error('File not found');
@@ -502,9 +504,10 @@ describe("Query Loader", () => {
       const jsQuery = '(javascript) @test';
       const tsQuery = '(typescript) @test';
 
-      mockReadFileSync.mockImplementation((path: string) => {
-        if (path.includes('javascript.scm')) return jsQuery;
-        if (path.includes('typescript.scm')) return tsQuery;
+      mockReadFileSync.mockImplementation((path: PathOrFileDescriptor) => {
+        const pathStr = path.toString();
+        if (pathStr.includes('javascript.scm')) return jsQuery;
+        if (pathStr.includes('typescript.scm')) return tsQuery;
         throw new Error('Unexpected path');
       });
 

@@ -12,13 +12,13 @@ import type {
   ScopeId,
   LexicalScope,
   FilePath,
+  LocalMemberInfo,
 } from "@ariadnejs/types";
 import {
   extract_type_members,
   find_direct_type_methods,
   find_direct_member,
   type LocalTypeInfo,
-  type LocalMemberInfo,
 } from "./type_members";
 
 describe("Type Members", () => {

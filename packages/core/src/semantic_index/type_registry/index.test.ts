@@ -52,7 +52,7 @@ describe('Type Registry Index Exports', () => {
     ];
 
     expectedFunctions.forEach(funcName => {
-      expect(typeof moduleExports[funcName]).toBe('function');
+      expect(typeof (moduleExports as any)[funcName]).toBe('function');
     });
   });
 
