@@ -14,7 +14,6 @@ import {
   type FilePath,
   type SymbolName,
   type TypeId,
-  type Language,
   type LocationKey,
   type ScopeId,
   location_key,
@@ -27,10 +26,8 @@ import type {
   TypeResolutionMap,
   MethodResolutionMap,
 } from "./types";
-import type { LocalTypeFlowPattern } from "./type_resolution/types";
-import type { LocalTypeFlowData } from "../semantic_index/references/type_flow_references/type_flow_references";
 import { defined_type_id, TypeCategory } from "@ariadnejs/types";
-import { SemanticIndex } from "../semantic_index/semantic_index";
+import type { SemanticIndex } from "../semantic_index/semantic_index";
 import {
   build_global_type_registry,
   resolve_type_annotations,
@@ -257,7 +254,7 @@ function phase3_resolve_types(
   // Populate reference_types from resolved_annotations
   if (resolved_annotations) {
     for (const [loc_key, type_id] of resolved_annotations) {
-      // Parse location key back to Location if needed
+      // TODO: Parse location key back to Location if needed
       // For now just skip since the types don't match
     }
   }

@@ -195,34 +195,6 @@ export function build_file_type_registry_with_annotations(
 }
 
 /**
- * Resolve a type reference using imports
- */
-function resolve_type_reference(
-  type_name: SymbolName,
-  file_path: FilePath,
-  imports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>
-): TypeId | undefined {
-  // First check local types in same file
-  const local_type = find_local_type(type_name, file_path);
-  if (local_type) return local_type;
-
-  // Then check imports
-  const import_map = imports.get(file_path);
-  if (!import_map) return undefined;
-
-  const imported_symbol = import_map.get(type_name);
-  if (imported_symbol) {
-    // imported_symbol is a SymbolId
-    // We need to create a TypeId from it
-    // For now, return undefined since we don't have the location
-    // This would need access to the symbol's definition location
-    return undefined;
-  }
-
-  return undefined;
-}
-
-/**
  * Find constructors for types
  */
 function find_constructors(
