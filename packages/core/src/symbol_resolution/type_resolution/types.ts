@@ -148,3 +148,6 @@ export interface ResolvedMemberInfo {
   readonly type_id?: TypeId; // Resolved type if available
   readonly inherited_from?: TypeId; // If inherited, which type it came from
 }
+
+// Re-export additional interfaces needed by tests
+export type { FileTypeRegistry } from "./type_registry_interfaces";

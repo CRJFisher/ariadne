@@ -228,7 +228,14 @@ function resolve_source_type(
 ): TypeId | undefined {
   switch (source.kind) {
     case "variable": {
-      const var_symbol = variable_symbol(source.name, { line: 0, column: 0, file_path, end_line: 0, end_column: 0 });
+      const location: Location = {
+        file_path,
+        line: 0,
+        column: 0,
+        end_line: 0,
+        end_column: 0
+      } as const;
+      const var_symbol = variable_symbol(source.name, location);
       return inferred_types.get(var_symbol);
     }
 
@@ -237,7 +244,14 @@ function resolve_source_type(
     }
 
     case "function_call": {
-      const func_symbol = function_symbol(source.function_name, { line: 0, column: 0, file_path, end_line: 0, end_column: 0 });
+      const location: Location = {
+        file_path,
+        line: 0,
+        column: 0,
+        end_line: 0,
+        end_column: 0
+      } as const;
+      const func_symbol = function_symbol(source.function_name, location);
       const func_info = functions.get(func_symbol);
       return func_info?.return_type;
     }
@@ -256,35 +270,31 @@ function resolve_source_type(
  * Create a flow node from a source
  */
 function create_flow_node(source: FlowSource, file_path: FilePath): FlowNode {
+  const location: Location = {
+    file_path,
+    line: 0,
+    column: 0,
+    end_line: 0,
+    end_column: 0
+  } as const;
+
   switch (source.kind) {
     case "variable":
       return {
         kind: "variable",
-        symbol: variable_symbol(source.name, { line: 0, column: 0, file_path, end_line: 0, end_column: 0 }),
+        symbol: variable_symbol(source.name, location),
       };
 
     case "constructor":
       return {
         kind: "constructor",
-        location: {
-          line: 0,
-          column: 0,
-          file_path,
-          end_line: 0,
-          end_column: 0
-        }, // Would need actual location
+        location,
       };
 
     case "function_call":
       return {
         kind: "function_call",
-        location: {
-          line: 0,
-          column: 0,
-          file_path,
-          end_line: 0,
-          end_column: 0
-        }, // Would need actual location
+        location,
       };
 
     case "literal":
