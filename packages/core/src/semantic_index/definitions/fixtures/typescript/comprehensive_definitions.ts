@@ -192,12 +192,12 @@ namespace BasicNamespace {
 }
 
 // Modules (TypeScript modules)
-declare module "external-module" {
-  export interface ExternalInterface {
-    method(): void;
-  }
-  export function externalFunction(): string;
-}
+// declare module "external-module" {
+//   export interface ExternalInterface {
+//     method(): void;
+//   }
+//   export function externalFunction(): string;
+// }
 
 // Parameter properties
 class ParameterProperties {

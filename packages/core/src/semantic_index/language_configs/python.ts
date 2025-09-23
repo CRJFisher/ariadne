@@ -59,9 +59,7 @@ function is_private_name(name: string): boolean {
 /**
  * Helper to extract decorator context
  */
-function extract_decorator_context(
-  node: SyntaxNode
-): CaptureContext | undefined {
+function extract_decorator_context(node: SyntaxNode): CaptureContext {
   if (node.type === "identifier") {
     // Look for the function this decorator is applied to
     let current = node.parent;

@@ -93,7 +93,7 @@ export const TYPESCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
   // ============================================================================
   // JAVASCRIPT FOUNDATION - Start with all JavaScript mappings
   // ============================================================================
-  ...JAVASCRIPT_CAPTURE_CONFIG,
+  ...Array.from(JAVASCRIPT_CAPTURE_CONFIG),
 
   // ============================================================================
   // TYPESCRIPT-SPECIFIC SCOPES

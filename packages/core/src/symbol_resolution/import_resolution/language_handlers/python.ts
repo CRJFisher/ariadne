@@ -289,7 +289,7 @@ function match_python_named_import(
 
     if (!found && !skip_symbol_lookup) {
       // Search through all symbols for a matching name
-      for (const [symbol_id, symbol_def] of source_symbols) {
+      for (const [symbol_id, symbol_def] of Array.from(source_symbols)) {
         if (symbol_def.name === imported_name) {
           // Check if it's public (not starting with underscore, but allow dunder methods)
           const is_dunder = imported_name.startsWith("__") && imported_name.endsWith("__");
@@ -316,7 +316,7 @@ function find_module_symbol(
   source_symbols: ReadonlyMap<SymbolId, SymbolDefinition>
 ): SymbolId | null {
   // Look for __init__ first (for packages)
-  for (const [symbol_id, symbol_def] of source_symbols) {
+  for (const [symbol_id, symbol_def] of Array.from(source_symbols)) {
     if (symbol_def.name === "__init__") {
       return symbol_id;
     }

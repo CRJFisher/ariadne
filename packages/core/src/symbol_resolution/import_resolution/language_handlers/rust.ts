@@ -333,7 +333,7 @@ export function match_rust_import_to_export(
 
         // If not found in exports, check for module symbol
         if (!found) {
-          for (const [symbol_id, symbol_def] of source_symbols) {
+          for (const [symbol_id, symbol_def] of Array.from(source_symbols)) {
             if (symbol_def.name === default_import.name && (symbol_def.kind as string) === "module") {
               result.set(default_import.name, symbol_id);
               break;
