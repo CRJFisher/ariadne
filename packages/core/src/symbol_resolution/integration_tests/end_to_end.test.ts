@@ -18,6 +18,7 @@ import type {
   LexicalScope,
   Import,
   Export,
+  LocalMemberInfo,
 } from "@ariadnejs/types";
 import {
   function_symbol,
@@ -63,6 +64,9 @@ function create_test_project(files: Array<{
         kind: sym.kind,
         location: sym.location,
         scope_id: root_scope_id,
+        is_hoisted: false,
+        is_exported: false,
+        is_imported: false,
       });
     }
 
@@ -136,6 +140,17 @@ function create_location(file_path: FilePath, line: number, column: number): Loc
     column,
     end_line: line,
     end_column: column + 10,
+  };
+}
+
+function create_local_member_info(name: SymbolName, kind: LocalMemberInfo["kind"], location: Location, symbol_id?: SymbolId): LocalMemberInfo {
+  return {
+    name,
+    kind,
+    location,
+    symbol_id,
+    is_static: false,
+    is_optional: false,
   };
 }
 
@@ -243,7 +258,7 @@ describe("Complete Symbol Resolution Pipeline", () => {
               kind: "class",
               location: create_location(base_path, 1, 10),
               direct_members: new Map([
-                ["baseMethod" as SymbolName, method_symbol("baseMethod" as SymbolName, "BaseClass", base_method_location)]
+                ["baseMethod" as SymbolName, create_local_member_info("baseMethod" as SymbolName, "method", base_method_location, method_symbol("baseMethod" as SymbolName, "BaseClass", base_method_location))]
               ]),
               extends_clause: [],
               implements_clause: [],
@@ -271,7 +286,7 @@ describe("Complete Symbol Resolution Pipeline", () => {
               kind: "class",
               location: create_location(derived_path, 3, 10),
               direct_members: new Map([
-                ["derivedMethod" as SymbolName, method_symbol("derivedMethod" as SymbolName, "DerivedClass", create_location(derived_path, 5, 10))]
+                ["derivedMethod" as SymbolName, create_local_member_info("derivedMethod" as SymbolName, "method", create_location(derived_path, 5, 10), method_symbol("derivedMethod" as SymbolName, "DerivedClass", create_location(derived_path, 5, 10)))]
               ]),
               extends_clause: ["BaseClass" as SymbolName],
               implements_clause: [],
@@ -360,6 +375,7 @@ describe("Complete Symbol Resolution Pipeline", () => {
                 class_name: "MyClass" as SymbolName,
                 location: constructor_call_location,
                 argument_count: 0,
+                scope_id: `scope:module:${usage_path}:0:0` as ScopeId,
               }],
               assignments: [],
               returns: [],
@@ -479,7 +495,7 @@ describe("Complete Symbol Resolution Pipeline", () => {
               kind: "class",
               location: create_location(service_path, 3, 10),
               direct_members: new Map([
-                ["calculate" as SymbolName, method_symbol("calculate" as SymbolName, "Calculator", create_location(service_path, 5, 10))]
+                ["calculate" as SymbolName, create_local_member_info("calculate" as SymbolName, "method", create_location(service_path, 5, 10), method_symbol("calculate" as SymbolName, "Calculator", create_location(service_path, 5, 10)))]
               ]),
               extends_clause: [],
               implements_clause: [],
@@ -506,6 +522,7 @@ describe("Complete Symbol Resolution Pipeline", () => {
                 class_name: "Calculator" as SymbolName,
                 location: create_location(app_path, 5, 20),
                 argument_count: 0,
+                scope_id: `scope:module:${app_path}:0:0` as ScopeId,
               }],
               assignments: [],
               returns: [],

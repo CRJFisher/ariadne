@@ -71,8 +71,18 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
 
     it("handles missing import sources gracefully", () => {
       // Test the fix for handling undefined/missing import sources
-      const malformed_import = create_test_named_import("missing", "");
-      malformed_import.source = undefined as any; // Simulate malformed import
+      const malformed_import = {
+        kind: "named" as const,
+        imports: [{
+          name: "missing" as SymbolName,
+          is_type_only: false,
+        }],
+        source: undefined as any, // Simulate malformed import
+        location: { file_path: "src/main.ts" as FilePath, line: 1, column: 0, end_line: 1, end_column: 30 },
+        modifiers: [],
+        language: "typescript" as const,
+        node_type: "import_statement" as const,
+      };
 
       const main_file = create_test_semantic_index({
         file_path: "src/main.ts",

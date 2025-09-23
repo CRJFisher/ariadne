@@ -18,6 +18,7 @@ import type {
   SymbolDefinition,
   Language,
   NamespaceName,
+  ScopeId,
 } from "@ariadnejs/types";
 import { SemanticIndex } from "../../semantic_index/semantic_index";
 import * as fs from "fs";
@@ -33,7 +34,7 @@ function create_test_index(
   file_path: FilePath,
   imports: Import[] = [],
   exports: Export[] = [],
-  symbols: Map<SymbolId, SymbolDefinition> = new Map(),
+  symbols: ReadonlyMap<SymbolId, SymbolDefinition> = new Map(),
   language: Language = "typescript"
 ): SemanticIndex {
   return {
@@ -48,12 +49,12 @@ function create_test_index(
       returns: [],
       member_accesses: [],
       type_annotations: [],
-    } as any,
+    },
     local_types: [],
     local_type_annotations: [],
     local_type_flow: { constructor_calls: [], assignments: [], returns: [], call_assignments: [] },
     local_type_tracking: { annotations: [], declarations: [], assignments: [] },
-    root_scope_id: "root" as any,
+    root_scope_id: "root" as ScopeId,
     file_symbols_by_name: new Map(),
   };
 }

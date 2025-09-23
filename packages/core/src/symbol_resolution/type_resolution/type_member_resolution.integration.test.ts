@@ -10,6 +10,7 @@ import { defined_type_id, TypeCategory } from "@ariadnejs/types";
 import { resolve_inheritance } from "./inheritance";
 import { resolve_type_members } from "./resolve_members";
 import type { LocalTypeDefinition, LocalMemberInfo, TypeHierarchyGraph } from "./types";
+import { createReadonlyMap } from "./test_utilities";
 
 // Test utilities
 function createLocation(line: number, column: number): Location {
@@ -125,7 +126,7 @@ describe("Type Member Resolution Integration", () => {
         ["test.ts" as FilePath, [drawable_def, comparable_def, shape_def, circle_def]],
       ]);
 
-      const resolved_imports = new Map<FilePath, ReadonlyMap<SymbolName, SymbolId>>();
+      const resolved_imports = createReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>();
 
       // Step 1: Resolve inheritance hierarchy
       const inheritance_result = resolve_inheritance(type_definitions, resolved_imports);
@@ -213,10 +214,11 @@ describe("Type Member Resolution Integration", () => {
       ]);
 
       // Mock cross-file import resolution
-      const resolved_imports = new Map<FilePath, ReadonlyMap<SymbolName, SymbolId>>([
-        ["user.ts" as FilePath, new Map([
-          ["BaseService" as SymbolName, "Symbol:base.ts:BaseService" as SymbolId],
-        ])],
+      const userImports = createReadonlyMap([
+        ["BaseService" as SymbolName, "Symbol:base.ts:BaseService" as SymbolId],
+      ]);
+      const resolved_imports = createReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>([
+        ["user.ts" as FilePath, userImports],
       ]);
 
       // Step 1: Resolve inheritance
@@ -271,7 +273,7 @@ describe("Type Member Resolution Integration", () => {
         ["child.ts" as FilePath, [child_def]],
       ]);
 
-      const resolved_imports = new Map<FilePath, ReadonlyMap<SymbolName, SymbolId>>();
+      const resolved_imports = createReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>();
 
       // Step 1: Inheritance resolution should handle gracefully
       const inheritance_result = resolve_inheritance(type_definitions, resolved_imports);
@@ -320,7 +322,7 @@ describe("Type Member Resolution Integration", () => {
         ["test.ts" as FilePath, [a_def, b_def, c_def]],
       ]);
 
-      const resolved_imports = new Map<FilePath, ReadonlyMap<SymbolName, SymbolId>>();
+      const resolved_imports = createReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>();
 
       // Should not crash or hang
       expect(() => {
@@ -409,7 +411,7 @@ describe("Type Member Resolution Integration", () => {
         all_type_definitions.set(`TypeId:${cls.name}` as TypeId, def);
       }
 
-      const resolved_imports = new Map<FilePath, ReadonlyMap<SymbolName, SymbolId>>();
+      const resolved_imports = createReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>();
 
       // Time the complete pipeline
       const start_time = performance.now();
@@ -484,7 +486,7 @@ describe("Type Member Resolution Integration", () => {
         ["test.ts" as FilePath, [writer_def, reader_def, class_def]],
       ]);
 
-      const resolved_imports = new Map<FilePath, ReadonlyMap<SymbolName, SymbolId>>();
+      const resolved_imports = createReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>();
 
       const inheritance_result = resolve_inheritance(type_definitions, resolved_imports);
 

@@ -55,12 +55,13 @@ function create_location(
   };
 }
 
-// Helper function to create test scope
+// Helper function to create test scope with mutable child_ids for testing
 function create_scope(
   id: string,
   type: LexicalScope["type"],
   parent_id: string | null,
-  location: Location
+  location: Location,
+  child_ids: ScopeId[] = []
 ): LexicalScope {
   return {
     id: id as ScopeId,
@@ -68,7 +69,26 @@ function create_scope(
     name: null,
     type,
     location,
-    child_ids: [],
+    child_ids: child_ids as readonly ScopeId[],
+    symbols: new Map(),
+  };
+}
+
+// Helper function to create scope with mutable child_ids that can be modified
+function create_mutable_scope(
+  id: string,
+  type: LexicalScope["type"],
+  parent_id: string | null,
+  location: Location,
+  child_ids: ScopeId[] = []
+): LexicalScope & { child_ids: ScopeId[] } {
+  return {
+    id: id as ScopeId,
+    parent_id: parent_id as ScopeId | null,
+    name: null,
+    type,
+    location,
+    child_ids,
     symbols: new Map(),
   };
 }
@@ -345,16 +365,11 @@ describe("Scope Walker", () => {
 
   describe("collect_descendant_scopes", () => {
     it("should collect all descendant scopes recursively", () => {
-      const global = create_scope("global", "global", null, create_location("test.js", 1, 0, 100, 0));
-      const func1 = create_scope("func1", "function", "global", create_location("test.js", 10, 0, 20, 0));
-      const func2 = create_scope("func2", "function", "global", create_location("test.js", 30, 0, 40, 0));
+      const global = create_scope("global", "global", null, create_location("test.js", 1, 0, 100, 0), ["func1" as ScopeId, "func2" as ScopeId]);
+      const func1 = create_scope("func1", "function", "global", create_location("test.js", 10, 0, 20, 0), ["block1" as ScopeId]);
+      const func2 = create_scope("func2", "function", "global", create_location("test.js", 30, 0, 40, 0), ["block2" as ScopeId]);
       const block1 = create_scope("block1", "block", "func1", create_location("test.js", 12, 0, 18, 0));
       const block2 = create_scope("block2", "block", "func2", create_location("test.js", 32, 0, 38, 0));
-
-      // Set up parent-child relationships
-      global.child_ids.push("func1" as ScopeId, "func2" as ScopeId);
-      func1.child_ids.push("block1" as ScopeId);
-      func2.child_ids.push("block2" as ScopeId);
 
       const scopes = new Map([
         [global.id, global],
@@ -530,12 +545,12 @@ describe("Edge Cases and Error Handling", () => {
   describe("Deep nesting", () => {
     it("should handle deeply nested scopes", () => {
       const scopes = new Map<ScopeId, LexicalScope>();
-      let parent: LexicalScope | null = null;
+      let parent: (LexicalScope & { child_ids: ScopeId[] }) | null = null;
       let deepest: LexicalScope | null = null;
 
       // Create 10 levels of nesting
       for (let i = 0; i < 10; i++) {
-        const scope = create_scope(
+        const scope = create_mutable_scope(
           `scope${i}`,
           i === 0 ? "global" : "block",
           parent?.id || null,
@@ -1045,10 +1060,8 @@ describe("Scope Utilities", () => {
   describe("get_symbols_in_scope", () => {
     it("should get all symbols in a scope", () => {
       const global = create_scope("global", "global", null, create_location("test.js", 1, 0, 100, 0));
-      const func = create_scope("func", "function", "global", create_location("test.js", 10, 0, 20, 0));
+      const func = create_scope("func", "function", "global", create_location("test.js", 10, 0, 20, 0), ["block" as ScopeId]);
       const block = create_scope("block", "block", "func", create_location("test.js", 12, 0, 18, 0));
-
-      func.child_ids.push("block" as ScopeId);
 
       const sym1 = create_symbol("s1", "globalVar", "variable", "global");
       const sym2 = create_symbol("s2", "funcVar", "variable", "func");

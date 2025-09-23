@@ -37,6 +37,7 @@ import {
   method_symbol,
   location_key,
   defined_type_id,
+  TypeCategory,
 } from "@ariadnejs/types";
 
 /**
@@ -63,9 +64,9 @@ function create_test_resolved_symbols(): ResolvedSymbols {
   const func1 = function_symbol("processData" as SymbolName, create_location(file1, 10, 5));
   const func2 = function_symbol("formatOutput" as SymbolName, create_location(file2, 5, 10));
   const class1 = class_symbol("DataModel" as SymbolName, create_location(file3, 1, 0));
-  const method1 = method_symbol("save" as SymbolName, "DataModel", create_location(file3, 5, 2));
+  const method1 = method_symbol("save" as SymbolName, "DataModel" as SymbolName, create_location(file3, 5, 2));
 
-  const type1 = defined_type_id("DataModel", file3, create_location(file3, 1, 0));
+  const type1 = defined_type_id(TypeCategory.CLASS, "DataModel" as SymbolName, create_location(file3, 1, 0));
 
   // Build import map
   const imports = new Map<FilePath, ReadonlyMap<SymbolName, SymbolId>>();
@@ -309,19 +310,41 @@ describe("Data Export Module", () => {
     });
 
     it("should properly escape CSV values", () => {
-      const resolved_symbols = create_test_resolved_symbols();
-
-      // Add an import with quotes in the name
+      // Create test data with special characters directly instead of mutating
       const special_file = 'src/"special".ts' as FilePath;
+      const quoted_symbol = function_symbol('"quoted"' as SymbolName, create_location(special_file, 1, 0));
+
       const special_imports = new Map<SymbolName, SymbolId>();
-      special_imports.set(
-        '"quoted"' as SymbolName,
-        function_symbol('"quoted"' as SymbolName, special_file)
-      );
-      // Create a mutable copy of the imports map
-      const mutableImports = new Map(resolved_symbols.phases.imports.imports);
-      mutableImports.set(special_file, special_imports as ReadonlyMap<SymbolName, SymbolId>);
-      resolved_symbols.phases.imports.imports = mutableImports as ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>;
+      special_imports.set('"quoted"' as SymbolName, quoted_symbol);
+
+      const imports = new Map<FilePath, ReadonlyMap<SymbolName, SymbolId>>();
+      imports.set(special_file, special_imports as ReadonlyMap<SymbolName, SymbolId>);
+
+      const resolved_symbols: ResolvedSymbols = {
+        resolved_references: new Map(),
+        references_to_symbol: new Map(),
+        unresolved_references: new Map(),
+        phases: {
+          imports: { imports: imports as ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> },
+          functions: {
+            function_calls: new Map(),
+            calls_to_function: new Map(),
+          },
+          types: {
+            symbol_types: new Map(),
+            reference_types: new Map(),
+            type_members: new Map(),
+            constructors: new Map(),
+            inheritance_hierarchy: new Map(),
+            interface_implementations: new Map(),
+          },
+          methods: {
+            method_calls: new Map(),
+            constructor_calls: new Map(),
+            calls_to_method: new Map(),
+          },
+        },
+      };
 
       const csv_export = export_symbol_resolution_data(resolved_symbols, "csv");
 
@@ -372,32 +395,37 @@ describe("Data Export Module", () => {
     });
 
     it("should not double-count symbols that appear in multiple places", () => {
-      const resolved_symbols = create_test_resolved_symbols();
+      const base_resolved_symbols = create_test_resolved_symbols();
 
-      // Add the same symbol to multiple locations
+      // Create a new shared symbol
       const shared_symbol = function_symbol(
         "shared" as SymbolName,
         create_location("src/shared.ts" as FilePath, 1, 0)
       );
 
-      // Create mutable copies to modify
-      const mutableResolvedRefs = new Map(resolved_symbols.resolved_references);
-      mutableResolvedRefs.set(
+      // Build new maps with the shared symbol included
+      const resolved_references = new Map(base_resolved_symbols.resolved_references);
+      resolved_references.set(
         location_key(create_location("src/main.ts" as FilePath, 30, 10)),
         shared_symbol
       );
-      mutableResolvedRefs.set(
+      resolved_references.set(
         location_key(create_location("src/utils.ts" as FilePath, 40, 10)),
         shared_symbol
       );
-      resolved_symbols.resolved_references = mutableResolvedRefs as ReadonlyMap<LocationKey, SymbolId>;
 
-      const mutableRefsToSymbol = new Map(resolved_symbols.references_to_symbol);
-      mutableRefsToSymbol.set(shared_symbol, [
+      const references_to_symbol = new Map(base_resolved_symbols.references_to_symbol);
+      references_to_symbol.set(shared_symbol, [
         create_location("src/main.ts" as FilePath, 30, 10),
         create_location("src/utils.ts" as FilePath, 40, 10),
       ]);
-      resolved_symbols.references_to_symbol = mutableRefsToSymbol as ReadonlyMap<SymbolId, readonly Location[]>;
+
+      // Create new resolved symbols object with the shared symbol
+      const resolved_symbols: ResolvedSymbols = {
+        ...base_resolved_symbols,
+        resolved_references: resolved_references as ReadonlyMap<LocationKey, SymbolId>,
+        references_to_symbol: references_to_symbol as ReadonlyMap<SymbolId, readonly Location[]>,
+      };
 
       const count = count_total_symbols(resolved_symbols);
       expect(count).toBe(5); // Original 4 + 1 new shared symbol

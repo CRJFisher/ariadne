@@ -20,6 +20,34 @@ import type { SemanticIndex } from "../../semantic_index/semantic_index";
 import type { MemberAccessReference } from "../../semantic_index/references/member_access_references/member_access_references";
 import type { LocalConstructorCall } from "../../semantic_index/references/type_flow_references/type_flow_references";
 import type { ImportResolutionMap, FunctionResolutionMap, TypeResolutionMap } from "../types";
+import type { ScopeId } from "@ariadnejs/types";
+
+// Helper function to create complete SymbolDefinition objects for tests
+function createTestSymbolDefinition(
+  id: SymbolId,
+  name: SymbolName,
+  kind: SymbolDefinition["kind"],
+  location: Location,
+  options: {
+    scope_id?: ScopeId;
+    is_hoisted?: boolean;
+    is_exported?: boolean;
+    is_imported?: boolean;
+    is_static?: boolean;
+  } = {}
+): SymbolDefinition {
+  return {
+    id,
+    name,
+    kind,
+    location,
+    scope_id: options.scope_id || "scope:module" as ScopeId,
+    is_hoisted: options.is_hoisted || false,
+    is_exported: options.is_exported || false,
+    is_imported: options.is_imported || false,
+    ...(options.is_static !== undefined && { is_static: options.is_static })
+  };
+}
 
 describe("method_resolution", () => {
   let indices: Map<FilePath, SemanticIndex>;
@@ -170,11 +198,16 @@ describe("method_resolution", () => {
             location: { file_path, line: 1, column: 1, end_line: 5, end_column: 1 }
           } as SymbolDefinition],
           [static_meth, {
+            id: static_meth,
             kind: "method",
             name: "createDefault" as SymbolName,
-            modifiers: ["static"],
-            location: { file_path, line: 2, column: 3, end_line: 2, end_column: 25 }
-          } as any as SymbolDefinition]
+            location: { file_path, line: 2, column: 3, end_line: 2, end_column: 25 },
+            scope_id: "scope:module" as ScopeId,
+            is_hoisted: false,
+            is_exported: false,
+            is_imported: false,
+            is_static: true
+          } as SymbolDefinition]
         ]),
         references: {
           calls: [],
@@ -319,11 +352,12 @@ describe("method_resolution", () => {
         language: "typescript",
         root_scope_id: "scope_1" as any,
         scopes: new Map(),
-        symbols: new Map([[class_sym, {
-          kind: "class",
-          name: "MyClass" as SymbolName,
-          location: test_location
-        } as SymbolDefinition]]),
+        symbols: new Map([[class_sym, createTestSymbolDefinition(
+          class_sym,
+          "MyClass" as SymbolName,
+          "class",
+          test_location
+        )]]),
         references: { calls: [], member_accesses: [member_access], returns: [], type_annotations: [] },
         imports: [],
         exports: [],
@@ -545,11 +579,16 @@ describe("method_resolution", () => {
             location: { file_path, line: 3, column: 3, end_line: 3, end_column: 20 }
           } as SymbolDefinition],
           [static_meth, {
+            id: static_meth,
             kind: "method",
             name: "createDefault" as SymbolName,
-            modifiers: ["static"],
-            location: { file_path, line: 5, column: 3, end_line: 5, end_column: 25 }
-          } as any as SymbolDefinition]
+            location: { file_path, line: 5, column: 3, end_line: 5, end_column: 25 },
+            scope_id: "scope:module" as ScopeId,
+            is_hoisted: false,
+            is_exported: false,
+            is_imported: false,
+            is_static: true
+          } as SymbolDefinition]
         ]),
         references: {
           calls: [],
@@ -715,11 +754,16 @@ describe("method_resolution", () => {
             location: test_location
           } as SymbolDefinition],
           [static_method_sym, {
+            id: static_method_sym,
             kind: "method",
             name: "create" as SymbolName,
-            modifiers: ["static"],
-            location: test_location
-          } as any as SymbolDefinition],
+            location: test_location,
+            scope_id: "scope:module" as ScopeId,
+            is_hoisted: false,
+            is_exported: false,
+            is_imported: false,
+            is_static: true
+          } as SymbolDefinition],
           [instance_method_sym, {
             kind: "method",
             name: "getValue" as SymbolName,
@@ -757,10 +801,15 @@ describe("method_resolution", () => {
       const method_sym = method_symbol("getValue", "MyClass", test_location);
 
       const symbol_def: SymbolDefinition = {
+        id: method_sym,
         kind: "method",
         name: "getValue" as SymbolName,
-        location: test_location
-      } as any as SymbolDefinition;
+        location: test_location,
+        scope_id: "scope_1" as ScopeId,
+        is_hoisted: false,
+        is_exported: false,
+        is_imported: false
+      };
 
       const index: SemanticIndex = {
         file_path,
@@ -797,10 +846,15 @@ describe("method_resolution", () => {
       const method_sym = method_symbol("getValue", "MyClass", test_location);
 
       const symbol_def: SymbolDefinition = {
+        id: method_sym,
         kind: "method",
         name: "getValue" as SymbolName,
-        location: test_location
-      } as any as SymbolDefinition;
+        location: test_location,
+        scope_id: "scope_1" as ScopeId,
+        is_hoisted: false,
+        is_exported: false,
+        is_imported: false
+      };
 
       const index1: SemanticIndex = {
         file_path: file_path1,

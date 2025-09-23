@@ -571,6 +571,8 @@ describe("Cross-Language Symbol Resolution", () => {
         exports: [
           {
             kind: "named" as const,
+            symbol: "generic_class_symbol" as SymbolId,
+            symbol_name: "GenericClass" as SymbolName,
             exports: [
               {
                 local_name: "GenericClass" as SymbolName,
@@ -579,9 +581,13 @@ describe("Cross-Language Symbol Resolution", () => {
             ],
             location: create_location(ts_file_path, 10, 0),
             modifiers: [],
+            language: "typescript",
+            node_type: "export_statement",
           },
           {
             kind: "named" as const,
+            symbol: "decorated_class_symbol" as SymbolId,
+            symbol_name: "DecoratedClass" as SymbolName,
             exports: [
               {
                 local_name: "DecoratedClass" as SymbolName,
@@ -590,6 +596,8 @@ describe("Cross-Language Symbol Resolution", () => {
             ],
             location: create_location(ts_file_path, 20, 0),
             modifiers: [],
+            language: "typescript",
+            node_type: "export_statement",
           },
         ],
         file_symbols_by_name: new Map(),

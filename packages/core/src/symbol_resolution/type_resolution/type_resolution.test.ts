@@ -10,6 +10,7 @@ import {
   build_file_type_registry_with_annotations,
   resolve_all_types,
 } from "./index";
+import { createEmptyImportResolutionMap, createReadonlyMap } from "./test_utilities";
 import type {
   LocalTypeExtraction,
   LocalTypeDefinition,
@@ -253,7 +254,7 @@ describe("Type Resolution Module", () => {
 
     it("resolve_inheritance should return empty hierarchy", () => {
       const type_definitions = new Map<FilePath, LocalTypeDefinition[]>();
-      const resolved_imports = new Map<FilePath, ReadonlyMap<SymbolName, SymbolId>>();
+      const resolved_imports = createReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>();
 
       const result = resolve_inheritance(type_definitions, resolved_imports);
 

@@ -19,6 +19,7 @@ import type {
   LexicalScope,
   Import,
   Export,
+  LocalMemberInfo,
 } from "@ariadnejs/types";
 import {
   function_symbol,
@@ -78,7 +79,7 @@ function generate_large_test_project(num_files: number): Map<FilePath, SemanticI
         imports.push({
           kind: "named",
           imports: [{ name: `func_0_0` as SymbolName, is_type_only: false }],
-          source: `../${prev_module}/file_0.ts`,
+          source: `../${prev_module}/file_0.ts` as FilePath,
           location: create_location(file_path, 2, 10),
           modifiers: [],
           language: "typescript",
@@ -150,7 +151,7 @@ function generate_large_test_project(num_files: number): Map<FilePath, SemanticI
         });
 
         // Add class to local types
-        const members = new Map<SymbolName, SymbolId>();
+        const members = new Map<SymbolName, LocalMemberInfo>();
         const methods_per_class = 3;
 
         for (let j = 0; j < methods_per_class; j++) {
@@ -169,7 +170,7 @@ function generate_large_test_project(num_files: number): Map<FilePath, SemanticI
             is_imported: false,
           });
 
-          members.set(method_name, method_id);
+          members.set(method_name, create_local_member_info(method_name, "method", method_location, method_id));
         }
 
         local_types.push({
@@ -259,6 +260,17 @@ function create_location(file_path: FilePath, line: number, column: number): Loc
   };
 }
 
+function create_local_member_info(name: SymbolName, kind: LocalMemberInfo["kind"], location: Location, symbol_id?: SymbolId): LocalMemberInfo {
+  return {
+    name,
+    kind,
+    location,
+    symbol_id,
+    is_static: false,
+    is_optional: false,
+  };
+}
+
 /**
  * Get a random sample of files from the project
  */
@@ -326,7 +338,7 @@ describe("Performance Benchmarks", () => {
       expect(resolved_symbols.phases.functions.function_calls.size).toBeGreaterThan(0);
     });
 
-    it(`should handle ${MEDIUM_PROJECT} files efficiently`, async function () {
+    it(`should handle ${MEDIUM_PROJECT} files efficiently`, async function (this: any) {
       if (IS_CI && MEDIUM_PROJECT > MAX_FILES_IN_CI) {
         this.skip();
       }

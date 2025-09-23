@@ -73,7 +73,7 @@ function create_test_index(
   language: Language,
   imports: Import[] = [],
   exports: Export[] = [],
-  symbols: Map<SymbolId, SymbolDefinition> = new Map()
+  symbols: ReadonlyMap<SymbolId, SymbolDefinition> = new Map()
 ): SemanticIndex {
   return {
     file_path,
@@ -186,11 +186,15 @@ function create_default_export(
 // ============================================================================
 
 describe("Import Resolution - Comprehensive Suite", () => {
-  let mock_fs: typeof fs;
+  let mock_fs: typeof fs & {
+    existsSync: ReturnType<typeof vi.fn>;
+    statSync: ReturnType<typeof vi.fn>;
+    readFileSync: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mock_fs = vi.mocked(fs);
+    mock_fs = vi.mocked(fs) as any;
   });
 
   describe("Core Resolution Algorithm", () => {
@@ -351,7 +355,7 @@ describe("Import Resolution - Comprehensive Suite", () => {
 
   describe("Module Path Resolution", () => {
     it("resolves relative paths correctly", () => {
-      mock_fs.existsSync.mockImplementation((p) => {
+      mock_fs.existsSync.mockImplementation((p: any) => {
         return p === "/project/src/utils.ts";
       });
 
@@ -367,7 +371,7 @@ describe("Import Resolution - Comprehensive Suite", () => {
     });
 
     it("tries multiple file extensions", () => {
-      mock_fs.existsSync.mockImplementation((p) => {
+      mock_fs.existsSync.mockImplementation((p: any) => {
         return p === "/project/src/utils.js";
       });
 
@@ -383,7 +387,7 @@ describe("Import Resolution - Comprehensive Suite", () => {
     });
 
     it("handles parent directory imports", () => {
-      mock_fs.existsSync.mockImplementation((p) => {
+      mock_fs.existsSync.mockImplementation((p: any) => {
         return p === "/project/shared/types.ts";
       });
 
@@ -410,7 +414,7 @@ describe("Import Resolution - Comprehensive Suite", () => {
 
     describe("Path Resolution", () => {
       it("resolves .js files", () => {
-        mock_fs.existsSync.mockImplementation((p) => {
+        mock_fs.existsSync.mockImplementation((p: any) => {
           return p === "/project/src/utils.js";
         });
         mock_fs.statSync.mockReturnValue({
@@ -427,7 +431,7 @@ describe("Import Resolution - Comprehensive Suite", () => {
       });
 
       it("resolves .ts files", () => {
-        mock_fs.existsSync.mockImplementation((p) => {
+        mock_fs.existsSync.mockImplementation((p: any) => {
           return p === "/project/src/utils.ts";
         });
 
@@ -440,7 +444,7 @@ describe("Import Resolution - Comprehensive Suite", () => {
       });
 
       it("handles index files", () => {
-        mock_fs.existsSync.mockImplementation((p) => {
+        mock_fs.existsSync.mockImplementation((p: any) => {
           return p === "/project/src/components" || p === "/project/src/components/index.ts";
         });
         mock_fs.statSync.mockReturnValue({
@@ -510,7 +514,7 @@ describe("Import Resolution - Comprehensive Suite", () => {
       });
 
       it("handles __init__.py files", () => {
-        mock_fs.existsSync.mockImplementation((p) => {
+        mock_fs.existsSync.mockImplementation((p: any) => {
           return p === "/project/src/models/__init__.py";
         });
         mock_fs.statSync.mockReturnValue({
@@ -555,7 +559,7 @@ describe("Import Resolution - Comprehensive Suite", () => {
       });
 
       it("handles mod.rs files", () => {
-        mock_fs.existsSync.mockImplementation((p) => {
+        mock_fs.existsSync.mockImplementation((p: any) => {
           return p === "/project/src/models/mod.rs";
         });
         mock_fs.statSync.mockReturnValue({

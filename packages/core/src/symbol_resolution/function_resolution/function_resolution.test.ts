@@ -121,6 +121,7 @@ function create_mock_index(
     local_types: [],
     local_type_annotations: [],
     local_type_tracking: {
+      annotations: [],
       declarations: [],
       assignments: [],
     },
@@ -626,6 +627,19 @@ describe("Function Resolution", () => {
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: {
+          annotations: [],
+          declarations: [],
+          assignments: [],
+        },
+        local_type_flow: {
+          constructor_calls: [],
+          assignments: [],
+          returns: [],
+          call_assignments: [],
+        },
       };
 
       const indices = new Map([[file_path, index]]);
@@ -770,6 +784,19 @@ describe("Function Resolution", () => {
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: {
+          annotations: [],
+          declarations: [],
+          assignments: [],
+        },
+        local_type_flow: {
+          constructor_calls: [],
+          assignments: [],
+          returns: [],
+          call_assignments: [],
+        },
       };
 
       const indices = new Map([[file_path, index]]);

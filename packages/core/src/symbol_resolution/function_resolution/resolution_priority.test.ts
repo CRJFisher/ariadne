@@ -5,13 +5,14 @@ import type {
   SymbolName,
   Location,
   ScopeId,
-  CallReference,
   SymbolDefinition,
   LexicalScope,
 } from "@ariadnejs/types";
+import type { CallReference } from "../../semantic_index/references/call_references/call_references";
 import type { SemanticIndex } from "../../semantic_index/semantic_index";
 import type { ImportResolutionMap } from "../types";
 import type { FunctionResolutionContext } from "./function_types";
+import { mock_local_type_tracking, mock_local_type_flow } from "../test_factories";
 import {
   try_lexical_resolution,
   try_imported_resolution,
@@ -60,6 +61,9 @@ function create_function_def(
       end_column: 20,
     },
     scope_id,
+    is_hoisted: true,
+    is_exported: false,
+    is_imported: false,
   };
 }
 
@@ -114,6 +118,10 @@ describe("Resolution Priority Functions", () => {
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: mock_local_type_tracking(),
+        local_type_flow: mock_local_type_flow(),
       };
 
       const context: FunctionResolutionContext = {
@@ -169,6 +177,10 @@ describe("Resolution Priority Functions", () => {
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: mock_local_type_tracking(),
+        local_type_flow: mock_local_type_flow(),
       };
 
       const context: FunctionResolutionContext = {
@@ -206,6 +218,9 @@ describe("Resolution Priority Functions", () => {
           end_column: 15,
         },
         scope_id: "scope:module" as ScopeId,
+        is_hoisted: false,
+        is_exported: false,
+        is_imported: false,
       };
 
       const scope = create_scope(
@@ -224,6 +239,10 @@ describe("Resolution Priority Functions", () => {
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: mock_local_type_tracking(),
+        local_type_flow: mock_local_type_flow(),
       };
 
       const context: FunctionResolutionContext = {
@@ -253,6 +272,10 @@ describe("Resolution Priority Functions", () => {
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: mock_local_type_tracking(),
+        local_type_flow: mock_local_type_flow(),
       };
 
       const context: FunctionResolutionContext = {
@@ -299,6 +322,10 @@ describe("Resolution Priority Functions", () => {
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: mock_local_type_tracking(),
+        local_type_flow: mock_local_type_flow(),
       };
 
       const currentIndex: SemanticIndex = {
@@ -311,6 +338,10 @@ describe("Resolution Priority Functions", () => {
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: mock_local_type_tracking(),
+        local_type_flow: mock_local_type_flow(),
       };
 
       const context: FunctionResolutionContext = {
@@ -354,6 +385,10 @@ describe("Resolution Priority Functions", () => {
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: mock_local_type_tracking(),
+        local_type_flow: mock_local_type_flow(),
       };
 
       const context: FunctionResolutionContext = {
@@ -392,6 +427,9 @@ describe("Resolution Priority Functions", () => {
           end_column: 21,
         },
         scope_id: "scope:other" as ScopeId,
+        is_hoisted: false,
+        is_exported: true,
+        is_imported: false,
       };
 
       const otherIndex: SemanticIndex = {
@@ -404,6 +442,10 @@ describe("Resolution Priority Functions", () => {
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: mock_local_type_tracking(),
+        local_type_flow: mock_local_type_flow(),
       };
 
       const currentIndex: SemanticIndex = {
@@ -416,6 +458,10 @@ describe("Resolution Priority Functions", () => {
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: mock_local_type_tracking(),
+        local_type_flow: mock_local_type_flow(),
       };
 
       const context: FunctionResolutionContext = {
@@ -456,6 +502,10 @@ describe("Resolution Priority Functions", () => {
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: mock_local_type_tracking(),
+        local_type_flow: mock_local_type_flow(),
       };
 
       const context: FunctionResolutionContext = {
@@ -493,6 +543,10 @@ describe("Resolution Priority Functions", () => {
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: mock_local_type_tracking(),
+        local_type_flow: mock_local_type_flow(),
       };
 
       const context: FunctionResolutionContext = {
@@ -525,6 +579,10 @@ describe("Resolution Priority Functions", () => {
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: mock_local_type_tracking(),
+        local_type_flow: mock_local_type_flow(),
       };
 
       const context: FunctionResolutionContext = {
@@ -562,6 +620,10 @@ describe("Resolution Priority Functions", () => {
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: mock_local_type_tracking(),
+        local_type_flow: mock_local_type_flow(),
       };
 
       const context: FunctionResolutionContext = {
@@ -615,6 +677,10 @@ describe("Resolution Priority Functions", () => {
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: mock_local_type_tracking(),
+        local_type_flow: mock_local_type_flow(),
       };
 
       const context: FunctionResolutionContext = {
@@ -666,6 +732,10 @@ describe("Resolution Priority Functions", () => {
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: mock_local_type_tracking(),
+        local_type_flow: mock_local_type_flow(),
       };
 
       const currentIndex: SemanticIndex = {
@@ -678,6 +748,10 @@ describe("Resolution Priority Functions", () => {
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
+        local_types: [],
+        local_type_annotations: [],
+        local_type_tracking: mock_local_type_tracking(),
+        local_type_flow: mock_local_type_flow(),
       };
 
       const context: FunctionResolutionContext = {
