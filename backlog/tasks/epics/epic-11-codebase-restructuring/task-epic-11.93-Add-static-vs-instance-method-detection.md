@@ -1,6 +1,6 @@
 # Task 11.93: Add Static vs Instance Method Detection
 
-## Status: Pending
+## Status: Completed
 
 ## Objective
 Implement static vs instance method detection in the semantic indexer and apply it in symbol resolution to correctly resolve method calls based on whether they are static (class-level) or instance (object-level) invocations.

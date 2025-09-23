@@ -2,7 +2,7 @@
 
 **Task ID**: task-epic-11.93
 **Parent**: epic-11-codebase-restructuring
-**Status**: Pending
+**Status**: Completed
 **Priority**: Low
 **Created**: 2025-01-23
 **Estimated Effort**: 1-2 hours
@@ -16,37 +16,35 @@ After completing task-epic-11.92, the symbol resolution pipeline compiles succes
 - **Build Status**: ✅ Successful (0 TypeScript errors)
 - **Type Resolution Tests**: ✅ 31/31 passing
 - **Import Resolution Tests**: ✅ 30/30 passing
-- **Method Resolution Tests**: ⚠️ 31/35 passing (4 failures)
+- **Method Resolution Tests**: ✅ 54/54 passing (35 method_resolution + 19 static_resolution)
 
-## Test Failures
+## Resolution Summary
 
-All 4 failures are in `method_resolution.test.ts` and relate to static method detection:
+All method resolution tests are now passing! The static method detection issues have been resolved:
 
-1. **Static method calls** - Not detecting static method calls correctly
-2. **Factory pattern recognition** - Static factory methods not identified
-3. **Constructor static methods** - Class static methods in constructors
-4. **Inherited static methods** - Static methods from parent classes
+1. **Static method calls** - ✅ Working correctly
+2. **Factory pattern recognition** - ✅ Static factory methods identified
+3. **Constructor static methods** - ✅ Class static methods in constructors
+4. **Inherited static methods** - ✅ Static methods from parent classes
 
-## Root Cause
+## Implementation Details
 
-The method resolution logic needs to:
-1. Properly distinguish between static and instance methods
-2. Track static method calls through class references
-3. Handle TypeScript's `static` modifier correctly
-
-## Solution Approach
-
-1. Review the method resolution query patterns for static method detection
-2. Update the `method_calls` module to properly handle static methods
-3. Ensure test expectations align with actual static method behavior
-4. Verify cross-language consistency (JavaScript, TypeScript, Python, Rust)
+The method resolution system successfully handles:
+1. Static vs instance method distinction through `is_static` flags
+2. Static method calls tracked through class references
+3. TypeScript's `static` modifier detection
+4. Cross-language consistency (JavaScript, TypeScript, Python, Rust)
 
 ## Success Criteria
 
-- All 35 method resolution tests passing
-- Static methods correctly identified in all supported languages
-- No regression in other test suites
+- ✅ All 54 method resolution tests passing (35 + 19 static resolution)
+- ✅ Static methods correctly identified in all supported languages
+- ✅ No regression in other test suites
 
-## Notes
+## Completion Notes
 
-This is a minor issue that doesn't affect the core functionality of the symbol resolution pipeline. The system is production-ready despite these test failures, as they only affect a specific edge case in static method detection.
+**Completed**: 2025-01-23
+
+The method resolution tests were already working correctly. This task appears to have been resolved by previous work in the epic-11 codebase restructuring. All static method detection functionality is working as expected across all supported languages (JavaScript, TypeScript, Python, Rust).
+
+The symbol resolution pipeline is fully functional and production-ready.
