@@ -10,7 +10,6 @@ interface BasicSymbolInfo {
   readonly kind: string;
   readonly name: SymbolName;
   readonly location: Location;
-  readonly qualifier?: SymbolName;
 }
 
 // ============================================================================
@@ -44,11 +43,6 @@ function symbol_string(symbol: BasicSymbolInfo): SymbolId {
     symbol.location.end_column,
     symbol.name,
   ];
-
-  // Add qualifier if present
-  if (symbol.qualifier) {
-    parts.push(symbol.qualifier);
-  }
 
   return parts.join(":") as SymbolId;
 }
@@ -160,13 +154,11 @@ export function class_symbol(name: string, location: Location): SymbolId {
  */
 export function method_symbol(
   method_name: string,
-  class_name: string,
   location: Location
 ): SymbolId {
   return symbol_string({
     kind: "method",
     name: method_name as SymbolName,
-    qualifier: class_name as SymbolName,
     location: location as Location,
   });
 }
@@ -192,13 +184,11 @@ export function method_symbol(
  */
 export function property_symbol(
   property_name: string,
-  class_name: string,
   location: Location
 ): SymbolId {
   return symbol_string({
     kind: "property",
     name: property_name as SymbolName,
-    qualifier: class_name as SymbolName,
     location,
   });
 }
@@ -251,13 +241,11 @@ export function module_symbol(location: Location): SymbolId {
  */
 export function parameter_symbol(
   param_name: string,
-  function_name: string,
   location: Location
 ): SymbolId {
   return symbol_string({
     kind: "parameter",
     name: param_name as SymbolName,
-    qualifier: function_name as SymbolName,
     location,
   });
 }

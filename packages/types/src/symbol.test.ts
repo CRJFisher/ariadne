@@ -36,7 +36,6 @@ describe("Symbol Utilities", () => {
       it("should handle qualified symbols correctly", () => {
         const method_symbol_result = method_symbol(
           "getValue",
-          "MyClass",
           test_location
         );
         // Format: kind:file_path:line:column:end_line:end_column:name:qualifier
