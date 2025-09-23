@@ -389,7 +389,7 @@ function find_symbol_usages(
       if (filePath === def.file_path) continue;
       
       // Find imports using getNodes method
-      const importNodes = graph.getNodes('import') [];
+      const importNodes = graph.getNodes('import');
       for (const imp of importNodes) {
         // Check if this import matches our definition
         // Import nodes have 'name' (local name) and optionally 'source_name' (imported name)
@@ -411,7 +411,7 @@ function find_symbol_usages(
           const importRefs = find_referencesToImport(graph, imp);
           
           // Also find direct references by name in this file
-          const allRefs = graph.getNodes('reference') [];
+          const allRefs = graph.getNodes('reference');
           const nameMatchingRefs = allRefs.filter(ref => ref.name === imp.name);
           
           for (const ref of nameMatchingRefs) {
@@ -688,7 +688,7 @@ function extract_inheritance_from_source(project: Project, def: any): { extends?
         const graph = fileGraphs.get(def.file_path);
         
         if (graph) {
-          const refs = graph.getNodes('reference') [];
+          const refs = graph.getNodes('reference');
           const structRefs = refs.filter(ref => ref.name === def.name);
           
           const implementedTraits: string[] = [];
@@ -740,7 +740,7 @@ function find_dependent_classes_from_source(project: Project, def: any): string[
     const fileGraphs = project.get_all_scope_graphs();
     
     for (const [filePath, graph] of fileGraphs) {
-      const definitions = graph.getNodes('definition') [];
+      const definitions = graph.getNodes('definition');
       const classDefinitions = definitions.filter(d => 
         d.symbol_kind === 'class' || d.symbol_kind === 'struct' || d.symbol_kind === 'interface'
       );

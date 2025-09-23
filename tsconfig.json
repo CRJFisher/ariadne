@@ -10,7 +10,9 @@
     "strict": true,
     "skipLibCheck": true,
     "composite": true,
-    "downlevelIteration": true
+    "downlevelIteration": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "references": [
     { "path": "./packages/types" },
