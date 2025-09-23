@@ -366,6 +366,7 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
       `;
 
       const tree = parser.parse(code);
+
       const index = build_semantic_index(
         "test.ts" as FilePath,
         tree,

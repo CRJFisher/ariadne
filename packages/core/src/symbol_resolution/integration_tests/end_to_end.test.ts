@@ -141,7 +141,7 @@ function create_symbol_id(
     case "class":
       return class_symbol(name as SymbolName, location);
     case "method":
-      return method_symbol(name as SymbolName, "UnknownClass", location);
+      return method_symbol(name as SymbolName, location);
     case "variable":
       return variable_symbol(name as SymbolName, location);
     default:
@@ -331,7 +331,6 @@ describe("Complete Symbol Resolution Pipeline", () => {
                       base_method_location,
                       method_symbol(
                         "baseMethod" as SymbolName,
-                        "BaseClass",
                         base_method_location
                       )
                     ),
@@ -385,7 +384,6 @@ describe("Complete Symbol Resolution Pipeline", () => {
                       create_location(derived_path, 5, 10),
                       method_symbol(
                         "derivedMethod" as SymbolName,
-                        "DerivedClass",
                         create_location(derived_path, 5, 10)
                       )
                     ),
@@ -665,7 +663,6 @@ describe("Complete Symbol Resolution Pipeline", () => {
                       create_location(service_path, 5, 10),
                       method_symbol(
                         "calculate" as SymbolName,
-                        "Calculator",
                         create_location(service_path, 5, 10)
                       )
                     ),

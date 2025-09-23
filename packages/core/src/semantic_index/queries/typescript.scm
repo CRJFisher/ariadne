@@ -409,14 +409,14 @@
 
 ; Type alias exports
 (export_statement
-  declaration: (type_alias_declaration
+  (type_alias_declaration
     name: (type_identifier) @export.type_alias
   )
 )
 
 ; Enum exports
 (export_statement
-  declaration: (enum_declaration
+  (enum_declaration
     name: (identifier) @export.enum
   )
 )

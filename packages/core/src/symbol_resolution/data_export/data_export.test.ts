@@ -79,7 +79,6 @@ function create_test_resolved_symbols(): ResolvedSymbols {
   );
   const method1 = method_symbol(
     "save" as SymbolName,
-    "DataModel" as SymbolName,
     create_location(file3, 5, 2)
   );
 

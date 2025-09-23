@@ -591,6 +591,30 @@ export const TYPESCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
       }),
     },
   ],
+  [
+    "export.type_alias",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.TYPE_ALIAS,
+      modifiers: () => ({ is_exported: true }),
+      context: (node) => ({
+        export_alias: safeNodeText(node),
+        export_kind: "type_alias",
+      }),
+    },
+  ],
+  [
+    "export.enum",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.ENUM,
+      modifiers: () => ({ is_exported: true }),
+      context: (node) => ({
+        export_alias: safeNodeText(node),
+        export_kind: "enum",
+      }),
+    },
+  ],
 
   // ============================================================================
   // TYPE REFERENCES AND USAGE

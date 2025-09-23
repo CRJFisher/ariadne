@@ -58,7 +58,7 @@ function symbol_id(kind: string, name: string, loc: Location): SymbolId {
     case "class":
       return class_symbol(name as SymbolName, loc);
     case "method":
-      return method_symbol(name as SymbolName, "UnknownClass", loc);
+      return method_symbol(name as SymbolName, loc);
     case "variable":
       return variable_symbol(name as SymbolName, loc);
     default:
@@ -715,7 +715,6 @@ describe("Symbol Resolution Pipeline", () => {
       const class_id = class_symbol("Utils", location(file_a, 1, 0));
       const method_id = method_symbol(
         "process",
-        "Utils",
         location(file_a, 2, 2)
       );
 

@@ -102,7 +102,7 @@ export function mock_symbol_definition(
       symbol_id = class_symbol(name, location);
       break;
     case "method":
-      symbol_id = method_symbol(name, "UnknownClass", location);
+      symbol_id = method_symbol(name, location);
       break;
     case "variable":
       symbol_id = variable_symbol(name, location);

@@ -169,6 +169,8 @@ describe("TypeScript Language Configuration", () => {
         "export.type_only",
         "export.type",
         "export.interface",
+        "export.type_alias",
+        "export.enum",
       ];
 
       for (const mapping of typeImportExportMappings) {
@@ -821,6 +823,47 @@ describe("TypeScript Language Configuration", () => {
         expect(context?.export_kind).toBe("interface");
       }
     });
+
+    it("should handle type alias exports", () => {
+      const typeAliasExportConfig =
+        TYPESCRIPT_CAPTURE_CONFIG.get("export.type_alias");
+      expect(typeAliasExportConfig?.modifiers).toBeDefined();
+      expect(typeAliasExportConfig?.context).toBeDefined();
+
+      if (typeof typeAliasExportConfig?.modifiers === "function") {
+        const modifiers = typeAliasExportConfig.modifiers(
+          create_simple_mock_node()
+        );
+        expect(modifiers?.is_exported).toBe(true);
+      }
+
+      if (typeof typeAliasExportConfig?.context === "function") {
+        const mockNode = create_simple_mock_node("identifier", "MyTypeAlias");
+        const context = typeAliasExportConfig.context(mockNode);
+
+        expect(context?.export_alias).toBe("MyTypeAlias");
+        expect(context?.export_kind).toBe("type_alias");
+      }
+    });
+
+    it("should handle enum exports", () => {
+      const enumExportConfig = TYPESCRIPT_CAPTURE_CONFIG.get("export.enum");
+      expect(enumExportConfig?.modifiers).toBeDefined();
+      expect(enumExportConfig?.context).toBeDefined();
+
+      if (typeof enumExportConfig?.modifiers === "function") {
+        const modifiers = enumExportConfig.modifiers(create_simple_mock_node());
+        expect(modifiers?.is_exported).toBe(true);
+      }
+
+      if (typeof enumExportConfig?.context === "function") {
+        const mockNode = create_simple_mock_node("identifier", "MyEnum");
+        const context = enumExportConfig.context(mockNode);
+
+        expect(context?.export_alias).toBe("MyEnum");
+        expect(context?.export_kind).toBe("enum");
+      }
+    });
   });
 
   describe("Type References", () => {
@@ -1035,6 +1078,35 @@ describe("TypeScript Language Configuration", () => {
         expect(context?.is_parameter_property).toBe(true);
         expect(context?.access_modifier).toBe("private");
         expect(context?.property_type).toBe("string");
+      }
+    });
+
+    it("should handle parameter property field definitions", () => {
+      const fieldParamPropertyConfig =
+        TYPESCRIPT_CAPTURE_CONFIG.get("def.field.param_property");
+      expect(fieldParamPropertyConfig?.category).toBe(SemanticCategory.DEFINITION);
+      expect(fieldParamPropertyConfig?.entity).toBe(SemanticEntity.VARIABLE);
+      expect(fieldParamPropertyConfig?.context).toBeDefined();
+
+      if (typeof fieldParamPropertyConfig?.context === "function") {
+        const mockNode = create_simple_mock_node("identifier", "age", {
+          parent: create_simple_mock_node("parent", "parent", {
+            children: [
+              create_simple_mock_node("accessibility_modifier", "public"),
+            ],
+            childForFieldName: (field: string) => {
+              if (field === "type")
+                return create_simple_mock_node("identifier", "number");
+              return null;
+            },
+          }),
+        });
+
+        const context = fieldParamPropertyConfig.context(mockNode);
+
+        expect(context?.is_parameter_property).toBe(true);
+        expect(context?.access_modifier).toBe("public");
+        expect(context?.property_type).toBe("number");
       }
     });
   });

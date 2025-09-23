@@ -192,8 +192,93 @@ function collect_direct_members_from_scopes(
         const member_info = create_local_member_info(member_symbol, symbols);
         type_info.direct_members.set(member_name, member_info);
       }
+
+      // ENHANCEMENT: Collect parameter properties from constructor scope
+      if (symbol.kind === "class") {
+        collect_parameter_property_fields(symbol_id, symbols, scopes, type_info);
+      }
     }
   }
+}
+
+/**
+ * Collect parameter property fields from constructor scope and add them to class members
+ */
+function collect_parameter_property_fields(
+  class_symbol_id: SymbolId,
+  symbols: ReadonlyMap<SymbolId, SymbolDefinition>,
+  scopes: ReadonlyMap<ScopeId, LexicalScope>,
+  type_info: LocalTypeInfo
+): void {
+  // Find the constructor in this class
+  let constructor_symbol: SymbolDefinition | undefined;
+
+  for (const [symbol_id, symbol] of symbols) {
+    if (symbol.kind === "constructor" &&
+        symbol.name === "constructor" &&
+        symbol.location.file_path === type_info.location.file_path) {
+      // Check if this constructor is in the same class by examining scope relationships
+      const constructor_scope = scopes.get(symbol.scope_id);
+      if (constructor_scope) {
+        // Look for the class symbol in parent scopes
+        let current_scope = constructor_scope.parent_scope_id ? scopes.get(constructor_scope.parent_scope_id) : undefined;
+        while (current_scope) {
+          if (current_scope.symbols.has(type_info.type_name) &&
+              current_scope.symbols.get(type_info.type_name)?.id === class_symbol_id) {
+            constructor_symbol = symbol;
+            break;
+          }
+          current_scope = current_scope.parent_scope_id ? scopes.get(current_scope.parent_scope_id) : undefined;
+        }
+        if (constructor_symbol) break;
+      }
+    }
+  }
+
+  if (!constructor_symbol) return;
+
+  // Find the constructor scope
+  const constructor_scope = scopes.get(constructor_symbol.scope_id);
+  if (!constructor_scope) return;
+
+  // Look for variable symbols in constructor scope that are parameter properties
+  for (const [member_name, member_symbol] of constructor_scope.symbols) {
+    if (member_symbol.kind === "variable") {
+      // Check if this variable symbol represents a parameter property
+      // We can identify parameter properties by their location being in constructor parameters
+      // and their symbol ID containing evidence of being a parameter property
+      const is_parameter_property = is_likely_parameter_property(member_symbol, constructor_symbol);
+
+      if (is_parameter_property) {
+        const member_info = create_local_member_info(member_symbol, symbols);
+        // Only add if not already present (direct class members take precedence)
+        if (!type_info.direct_members.has(member_name)) {
+          type_info.direct_members.set(member_name, member_info);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Determine if a variable symbol is likely a parameter property field
+ */
+function is_likely_parameter_property(
+  variable_symbol: SymbolDefinition,
+  constructor_symbol: SymbolDefinition
+): boolean {
+  // Parameter properties are variable symbols that:
+  // 1. Are in the constructor scope
+  // 2. Have locations that are typically in the parameter list
+  // 3. May have special naming patterns from our semantic index
+
+  // Check if the variable is located within the constructor's parameter range
+  const var_line = variable_symbol.location.line;
+  const constructor_line = constructor_symbol.location.line;
+  const constructor_end_line = constructor_symbol.location.end_line || constructor_line;
+
+  // Parameter properties should be defined within constructor parameter range
+  return var_line >= constructor_line && var_line <= constructor_end_line;
 }
 
 /**

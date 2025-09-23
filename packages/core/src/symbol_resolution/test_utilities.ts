@@ -99,7 +99,7 @@ export function create_test_symbol_id(
     case "class":
       return class_symbol(symbol_name, location);
     case "method":
-      return method_symbol(symbol_name, "TestClass", location);
+      return method_symbol(symbol_name, location);
     case "variable":
       return variable_symbol(symbol_name, location);
     default:

@@ -205,7 +205,7 @@ function create_symbol_id(
     case "class":
       return class_symbol(name as SymbolName, location);
     case "method":
-      return method_symbol(name as SymbolName, "UnknownClass", location);
+      return method_symbol(name as SymbolName, location);
     case "variable":
       return variable_symbol(name as SymbolName, location);
     default:

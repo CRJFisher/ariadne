@@ -21,6 +21,7 @@ import {
   class_symbol,
   method_symbol,
   variable_symbol,
+  parameter_symbol,
 } from "@ariadnejs/types";
 import { find_containing_scope } from "../scope_tree";
 import type { NormalizedCapture } from "../capture_types";
@@ -233,7 +234,10 @@ function create_symbol_id(
     case "constructor":
       // Use location info to create a unique method identifier
       // The class name will be determined later in the member relationship pass
-      return method_symbol(name, `${location.file_path}:${location.line}`, location);
+      return method_symbol(name, location);
+    case "parameter":
+      // Parameters need unique IDs to distinguish from parameter properties (which are variables)
+      return parameter_symbol(name, location);
     default:
       return variable_symbol(name, location);
   }

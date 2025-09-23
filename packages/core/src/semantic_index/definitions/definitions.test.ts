@@ -11,19 +11,11 @@ import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
 import type {
   FilePath,
-  SymbolId,
   SymbolName,
   ScopeId,
   LexicalScope,
   Location,
   Language,
-} from "@ariadnejs/types";
-import type { SymbolDefinition } from "@ariadnejs/types/src/semantic_index";
-import {
-  function_symbol,
-  class_symbol,
-  method_symbol,
-  variable_symbol,
 } from "@ariadnejs/types";
 import { process_definitions, map_entity_to_symbol_kind } from "./definitions";
 import { SemanticEntity } from "../capture_types";

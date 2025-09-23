@@ -36,6 +36,7 @@ import type {
   TypeResolutionMap,
 } from "../types";
 import { MethodLookupContext } from "./method_types";
+import { find_default_constructor } from "./constructor_resolver";
 
 // Helper function to create complete SymbolDefinition objects for tests
 function create_test_symbol_definition(
@@ -100,7 +101,7 @@ describe("method_resolution", () => {
         end_column: 10,
       };
       const class_sym = class_symbol("MyClass", test_location);
-      const method_sym = method_symbol("getValue", "MyClass", test_location);
+      const method_sym = method_symbol("getValue", test_location);
       const instance_sym = variable_symbol("instance", test_location);
       const class_type = defined_type_id(
         TypeCategory.CLASS,
@@ -250,7 +251,6 @@ describe("method_resolution", () => {
       const class_sym = class_symbol("MyClass", test_location);
       const static_meth = method_symbol(
         "createDefault",
-        "MyClass",
         test_location
       );
       const class_type = defined_type_id(
@@ -389,7 +389,6 @@ describe("method_resolution", () => {
       const class_sym = class_symbol("MyClass", test_location);
       const constructor_sym = method_symbol(
         "constructor",
-        "MyClass",
         test_location
       );
       const class_type = defined_type_id(
@@ -726,7 +725,7 @@ describe("method_resolution", () => {
         end_column: 10,
       };
       const class_sym = class_symbol("MyClass", test_location);
-      const property_sym = method_symbol("value", "MyClass", test_location);
+      const property_sym = method_symbol("value", test_location);
       const class_type = defined_type_id(
         TypeCategory.CLASS,
         "MyClass" as SymbolName,
@@ -806,8 +805,7 @@ describe("method_resolution", () => {
         end_line: 1,
         end_column: 10,
       };
-      const class_sym = class_symbol("MyClass", test_location);
-      const method_sym = method_symbol("getValue", "MyClass", test_location);
+      const method_sym = method_symbol("getValue", test_location);
       const instance_sym = variable_symbol("instance", test_location);
       const class_type = defined_type_id(
         TypeCategory.CLASS,
@@ -909,10 +907,9 @@ describe("method_resolution", () => {
         end_column: 10,
       };
       const class_sym = class_symbol("MyClass", test_location);
-      const instance_meth = method_symbol("getValue", "MyClass", test_location);
+      const instance_meth = method_symbol("getValue", test_location);
       const static_meth = method_symbol(
         "createDefault",
-        "MyClass",
         test_location
       );
       const class_type = defined_type_id(
@@ -1047,7 +1044,7 @@ describe("method_resolution", () => {
         end_line: 1,
         end_column: 10,
       };
-      const method_sym = method_symbol("getValue", "MyClass", test_location);
+      const method_sym = method_symbol("getValue", test_location);
       const class_type = defined_type_id(
         TypeCategory.CLASS,
         "MyClass" as SymbolName,
@@ -1245,17 +1242,14 @@ describe("method_resolution", () => {
       };
       const constructor_sym = method_symbol(
         "constructor",
-        "MyClass",
         test_location
       );
       const static_method_sym = method_symbol(
         "create",
-        "MyClass",
         test_location
       );
       const instance_method_sym = method_symbol(
         "getValue",
-        "MyClass",
         test_location
       );
 
@@ -1340,7 +1334,7 @@ describe("method_resolution", () => {
         end_line: 1,
         end_column: 10,
       };
-      const method_sym = method_symbol("getValue", "MyClass", test_location);
+      const method_sym = method_symbol("getValue", test_location);
 
       const symbol_def: SymbolDefinition = {
         id: method_sym,
@@ -1401,7 +1395,7 @@ describe("method_resolution", () => {
         end_line: 1,
         end_column: 10,
       };
-      const method_sym = method_symbol("getValue", "MyClass", test_location);
+      const method_sym = method_symbol("getValue", test_location);
 
       const symbol_def: SymbolDefinition = {
         id: method_sym,
@@ -1490,7 +1484,7 @@ describe("method_resolution", () => {
         end_line: 1,
         end_column: 10,
       };
-      const method_sym = method_symbol("getValue", "MyClass", test_location);
+      const method_sym = method_symbol("getValue", test_location);
 
       const index = {
         file_path,
@@ -1547,7 +1541,6 @@ describe("method_resolution", () => {
       const derived_class_sym = class_symbol("DerivedClass", test_location);
       const base_method_sym = method_symbol(
         "baseMethod",
-        "BaseClass",
         test_location
       );
       const instance_sym = variable_symbol("instance", test_location);
@@ -1721,12 +1714,10 @@ describe("method_resolution", () => {
       const class_sym = class_symbol("MyClass", test_location);
       const interface_method_sym = method_symbol(
         "doSomething",
-        "IMyInterface",
         test_location
       );
       const class_method_sym = method_symbol(
         "doSomething",
-        "MyClass",
         test_location
       );
       const instance_sym = variable_symbol("instance", test_location);
@@ -1834,10 +1825,9 @@ describe("method_resolution", () => {
       // Create class hierarchy with overridden method
       const base_class_sym = class_symbol("Base", test_location);
       const derived_class_sym = class_symbol("Derived", test_location);
-      const base_method_sym = method_symbol("process", "Base", test_location);
+      const base_method_sym = method_symbol("process", test_location);
       const derived_method_sym = method_symbol(
         "process",
-        "Derived",
         test_location
       );
 
@@ -1924,10 +1914,9 @@ describe("method_resolution", () => {
         end_column: 10,
       };
 
-      const base_method_sym = method_symbol("process", "Base", test_location);
+      const base_method_sym = method_symbol("process", test_location);
       const derived_method_sym = method_symbol(
         "process",
-        "Derived",
         test_location
       );
 
@@ -1995,7 +1984,6 @@ describe("method_resolution", () => {
       const derived_class_sym = class_symbol("Derived", test_location);
       const base_constructor_sym = method_symbol(
         "constructor",
-        "Base",
         test_location
       );
 
@@ -2040,10 +2028,6 @@ describe("method_resolution", () => {
         interface_implementations: new Map(),
       };
 
-      const { find_default_constructor } = await import(
-        "./constructor_resolver"
-      );
-
       const context = {
         type_resolution: types,
         imports,
@@ -2083,7 +2067,6 @@ describe("method_resolution", () => {
       const derived_class_sym = class_symbol("Derived", test_location);
       const base_constructor_sym = method_symbol(
         "constructor",
-        "Base",
         test_location
       );
 
@@ -2337,17 +2320,14 @@ describe("method_resolution", () => {
 
       const interface_method = method_symbol(
         "process",
-        "IProcessor",
         test_location
       );
       const class_method = method_symbol(
         "process",
-        "ProcessorImpl",
         test_location
       );
       const wrong_method = method_symbol(
         "execute",
-        "ProcessorImpl",
         test_location
       );
 
@@ -2441,15 +2421,13 @@ describe("method_resolution", () => {
         derived2_location
       );
 
-      const base_method = method_symbol("process", "Base", base_location);
+      const base_method = method_symbol("process", base_location);
       const derived1_method = method_symbol(
         "process",
-        "Derived1",
-        derived1_location
+        derived1_location,
       );
       const derived2_method = method_symbol(
         "process",
-        "Derived2",
         derived2_location
       );
 
@@ -2533,11 +2511,10 @@ describe("method_resolution", () => {
         end_column: 10,
       };
 
-      const base_method = method_symbol("process", "Base", test_location);
-      const derived_method = method_symbol("process", "Derived", test_location);
+      const base_method = method_symbol("process", test_location);
+      const derived_method = method_symbol("process", test_location);
       const unrelated_method = method_symbol(
         "execute",
-        "Derived",
         test_location
       );
 
@@ -2601,17 +2578,14 @@ describe("method_resolution", () => {
 
       const static_method = method_symbol(
         "staticMethod",
-        "MyClass",
         test_location
       );
       const final_method = method_symbol(
         "finalMethod",
-        "MyClass",
         test_location
       );
       const virtual_method = method_symbol(
         "virtualMethod",
-        "MyClass",
         test_location
       );
 
@@ -2890,13 +2864,11 @@ describe("method_resolution", () => {
 
       const interface_method = method_symbol(
         "process",
-        "IProcessor",
-        test_location
+        test_location,
       );
       const base_method = method_symbol(
-        "process",
         "BaseProcessor",
-        test_location
+        test_location,
       );
 
       // Base implements interface

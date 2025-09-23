@@ -174,7 +174,6 @@ function generate_large_test_project(
           );
           const method_id = method_symbol(
             method_name,
-            class_name,
             method_location
           );
 
