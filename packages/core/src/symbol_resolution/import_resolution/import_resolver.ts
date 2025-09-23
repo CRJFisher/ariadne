@@ -30,7 +30,7 @@ export function resolve_imports(
 ): ImportResolutionMap {
   const result = new Map<FilePath, Map<SymbolName, SymbolId>>();
 
-  for (const [file_path, index] of context.indices) {
+  for (const [file_path, index] of Array.from(context.indices)) {
     const file_imports = new Map<SymbolName, SymbolId>();
 
     for (const import_stmt of index.imports) {
@@ -68,7 +68,7 @@ export function resolve_imports(
       );
 
       // Add all resolved symbols to the file imports
-      for (const [name, symbol_id] of symbol_mappings) {
+      for (const [name, symbol_id] of Array.from(symbol_mappings)) {
         file_imports.set(name, symbol_id);
       }
     }
