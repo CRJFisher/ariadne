@@ -155,16 +155,16 @@ describe("Type Registry Index Exports", () => {
 
     // Get all function exports
     const indexFunctions = Object.keys(indexExports).filter(
-      (key) => typeof indexExports[key] === "function"
+      (key) => typeof (indexExports as any)[key] === "function"
     );
     const typeRegistryFunctions = Object.keys(typeRegistryExports).filter(
-      (key) => typeof typeRegistryExports[key] === "function"
+      (key) => typeof (typeRegistryExports as any)[key] === "function"
     );
 
     // Index should export all functions from type_registry
     for (const funcName of typeRegistryFunctions) {
       expect(indexFunctions).toContain(funcName);
-      expect(indexExports[funcName]).toBe(typeRegistryExports[funcName]);
+      expect((indexExports as any)[funcName]).toBe((typeRegistryExports as any)[funcName]);
     }
   });
 });

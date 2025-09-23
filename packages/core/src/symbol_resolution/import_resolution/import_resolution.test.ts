@@ -159,7 +159,7 @@ describe("Import Resolution", () => {
     it("should resolve named imports", () => {
       const result = resolve_imports(context);
 
-      const main_imports = result.imports.get("/src/main.ts" as FilePath);
+      const main_imports = result.get("/src/main.ts" as FilePath);
       expect(main_imports).toBeDefined();
       expect(main_imports?.get("processData" as SymbolName)).toBe("processData_symbol");
       expect(main_imports?.get("formatDate" as SymbolName)).toBe("processData_symbol");
@@ -168,7 +168,7 @@ describe("Import Resolution", () => {
     it("should resolve default imports", () => {
       const result = resolve_imports(context);
 
-      const main_imports = result.imports.get("/src/main.ts" as FilePath);
+      const main_imports = result.get("/src/main.ts" as FilePath);
       expect(main_imports).toBeDefined();
       expect(main_imports?.get("Button" as SymbolName)).toBe("components:Button");
     });
@@ -197,7 +197,7 @@ describe("Import Resolution", () => {
       const new_context = { indices };
 
       const result = resolve_imports(new_context);
-      const main_imports = result.imports.get("/src/main.ts" as FilePath);
+      const main_imports = result.get("/src/main.ts" as FilePath);
 
       // Should still resolve other imports
       expect(main_imports?.get("processData" as SymbolName)).toBe("processData_symbol");
@@ -225,7 +225,7 @@ describe("Import Resolution", () => {
       const context = { indices };
       const result = resolve_imports(context);
 
-      const app_imports = result.imports.get("/src/app.ts" as FilePath);
+      const app_imports = result.get("/src/app.ts" as FilePath);
       expect(app_imports).toBeUndefined();
     });
   });
@@ -274,7 +274,7 @@ describe("Import Resolution", () => {
       const context = { indices };
       const result = resolve_imports(context);
 
-      const main_imports = result.imports.get("/src/main.ts" as FilePath);
+      const main_imports = result.get("/src/main.ts" as FilePath);
 
       expect(main_imports?.get("_" as SymbolName)).toBe("lodash:debounce");
     });
@@ -306,7 +306,7 @@ describe("Import Resolution", () => {
       const result = resolve_imports(context);
 
       // Should handle gracefully without throwing
-      expect(result.imports.size).toBe(0);
+      expect(result.size).toBe(0);
     });
 
     it("should handle imports with no matching exports", () => {
@@ -334,7 +334,7 @@ describe("Import Resolution", () => {
       const context = { indices };
       const result = resolve_imports(context);
 
-      const main_imports = result.imports.get("/src/main.ts" as FilePath);
+      const main_imports = result.get("/src/main.ts" as FilePath);
       expect(main_imports?.get("nonExistent" as SymbolName)).toBeUndefined();
     });
 
@@ -472,7 +472,7 @@ describe("Import Resolution", () => {
       const context = { indices };
       const result = resolve_imports(context);
 
-      const main_imports = result.imports.get("/src/main.ts" as FilePath);
+      const main_imports = result.get("/src/main.ts" as FilePath);
 
       expect(main_imports?.size).toBe(3);
       expect(main_imports?.get("func1" as SymbolName)).toBe("utils:func1");
@@ -522,7 +522,7 @@ describe("Import Resolution", () => {
       const context = { indices };
       const result = resolve_imports(context);
 
-      const main_imports = result.imports.get("/src/main.ts" as FilePath);
+      const main_imports = result.get("/src/main.ts" as FilePath);
 
       // The local alias should map to the original symbol ID
       expect(main_imports?.get("aliasedName" as SymbolName)).toBe("utils:originalName");

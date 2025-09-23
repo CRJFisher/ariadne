@@ -23,9 +23,41 @@ import type {
   NamedExport,
 } from "@ariadnejs/types";
 import * as fs from "fs";
+import type { Stats } from "fs";
 
 // Mock fs module
 vi.mock("fs");
+
+// Helper to create proper Stats mock
+function createStatsMock(isDir: boolean): Stats {
+  return {
+    isDirectory: () => isDir,
+    isFile: () => !isDir,
+    atimeMs: 0,
+    mtimeMs: 0,
+    ctimeMs: 0,
+    birthtimeMs: 0,
+    dev: 0,
+    ino: 0,
+    mode: 0,
+    nlink: 0,
+    uid: 0,
+    gid: 0,
+    rdev: 0,
+    size: 0,
+    blksize: 0,
+    blocks: 0,
+    atime: new Date(),
+    mtime: new Date(),
+    ctime: new Date(),
+    birthtime: new Date(),
+    isBlockDevice: () => false,
+    isCharacterDevice: () => false,
+    isSymbolicLink: () => false,
+    isFIFO: () => false,
+    isSocket: () => false,
+  };
+}
 
 describe("JavaScript/TypeScript Import Resolution", () => {
   beforeEach(() => {
@@ -121,10 +153,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
             p === "/project/src/components" ||
             p === "/project/src/components/index.js"
         );
-        mock_stats.mockReturnValue({
-          isDirectory: () => true,
-          isFile: () => false,
-        });
+        mock_stats.mockReturnValue(createStatsMock(true));
 
         const result = resolve_js_module_path(
           "./components",
@@ -143,10 +172,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
             p === "/project/src/components" ||
             p === "/project/src/components/index.ts"
         );
-        mock_stats.mockReturnValue({
-          isDirectory: () => true,
-          isFile: () => false,
-        });
+        mock_stats.mockReturnValue(createStatsMock(true));
 
         const result = resolve_js_module_path(
           "./components",
@@ -165,10 +191,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
             p === "/project/src/components" ||
             p === "/project/src/components/index.tsx"
         );
-        mock_stats.mockReturnValue({
-          isDirectory: () => true,
-          isFile: () => false,
-        });
+        mock_stats.mockReturnValue(createStatsMock(true));
 
         const result = resolve_js_module_path(
           "./components",
@@ -183,10 +206,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
         const mock_stats = vi.mocked(fs.statSync);
 
         mock_exists.mockImplementation((p) => p === "/project/src/empty");
-        mock_stats.mockReturnValue({
-          isDirectory: () => true,
-          isFile: () => false,
-        });
+        mock_stats.mockReturnValue(createStatsMock(true));
 
         const result = resolve_js_module_path(
           "./empty",
@@ -314,12 +334,10 @@ describe("JavaScript/TypeScript Import Resolution", () => {
           JSON.stringify({ main: "index.js" })
         );
 
-        mock_stats.mockImplementation((p) => ({
-          isDirectory: () =>
-            p.toString().includes("node_modules/lodash") &&
-            !p.toString().endsWith(".js"),
-          isFile: () => p.toString().endsWith(".js"),
-        }));
+        mock_stats.mockImplementation((p) => {
+          const isFile = p.toString().endsWith(".js");
+          return createStatsMock(!isFile);
+        });
 
         const result = resolve_js_module_path(
           "lodash/debounce",
@@ -347,10 +365,10 @@ describe("JavaScript/TypeScript Import Resolution", () => {
           JSON.stringify({ main: "lib/index.js" })
         );
 
-        mock_stats.mockImplementation((p) => ({
-          isDirectory: () => false,
-          isFile: () => p.toString().endsWith(".js"),
-        }));
+        mock_stats.mockImplementation((p) => {
+          const isFile = p.toString().endsWith(".js");
+          return createStatsMock(!isFile);
+        });
 
         const result = resolve_js_module_path(
           "@babel/core/lib/parser",

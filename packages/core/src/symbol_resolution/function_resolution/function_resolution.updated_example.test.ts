@@ -14,7 +14,7 @@ import type {
   LocationKey,
   ScopeId,
 } from "@ariadnejs/types";
-import { location_key } from "@ariadnejs/types";
+import { location_key, function_symbol } from "@ariadnejs/types";
 import type { CallReference } from "../../semantic_index/references/call_references/call_references";
 import type { SemanticIndex } from "../../semantic_index/semantic_index";
 import { resolve_function_calls } from "./function_resolver";
@@ -151,9 +151,19 @@ describe("Function Resolution with Mock Factories", () => {
       expect(readonly_symbol_map.size).toBe(2);
 
       // Use in mock semantic index - use ReadonlyMapBuilder for proper interface compatibility
+      const mockLocation: Location = {
+        file_path: test_file,
+        line: 1,
+        column: 0,
+        end_line: 1,
+        end_column: 5
+      };
+      const func1Symbol = function_symbol("func1" as SymbolName, mockLocation);
+      const func2Symbol = function_symbol("func2" as SymbolName, mockLocation);
+
       const symbol_builder = new ReadonlyMapBuilder<SymbolName, SymbolId>()
-        .set("func1" as SymbolName, "symbol:func1")
-        .set("func2" as SymbolName, "symbol:func2");
+        .set("func1" as SymbolName, func1Symbol)
+        .set("func2" as SymbolName, func2Symbol);
 
       const index = mock_semantic_index(test_file, {
         file_symbols_by_name: new Map([
@@ -163,7 +173,7 @@ describe("Function Resolution with Mock Factories", () => {
 
       expect(
         index.file_symbols_by_name.get(test_file)?.get("func1" as SymbolName)
-      ).toBe("symbol:func1");
+      ).toBe(func1Symbol);
     });
   });
 

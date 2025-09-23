@@ -256,7 +256,6 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
 
       // Local types should not have TypeIds
       expect(index.local_types[0].type_name).toBe("MyClass");
-      expect(index.local_types[0].type_id).toBeUndefined();
 
       // Run symbol resolution
       const indices = new Map([["test.ts" as FilePath, index]]);

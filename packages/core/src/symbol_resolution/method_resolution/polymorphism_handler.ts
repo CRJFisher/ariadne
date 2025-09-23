@@ -228,6 +228,11 @@ export function determine_dispatch_type(
     }
   }
 
+  // Also check for is_static field
+  if ('is_static' in method_def && method_def.is_static === true) {
+    return "static";
+  }
+
   // Default to dynamic dispatch for virtual methods
   return "dynamic";
 }

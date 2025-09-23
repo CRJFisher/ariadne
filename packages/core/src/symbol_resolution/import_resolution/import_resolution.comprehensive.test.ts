@@ -364,14 +364,14 @@ describe("Import Resolution - Comprehensive Suite", () => {
       const context = create_import_resolution_context(indices);
       const result = resolve_imports(context);
 
-      expect(result.imports.size).toBe(0);
+      expect(result.size).toBe(0);
     });
 
     it("handles imports with missing source field", () => {
       const malformed_import: Import = {
         kind: "named",
         imports: [{ name: "test" as SymbolName, is_type_only: false }],
-        source: undefined,
+        source: "" as FilePath, // Empty source to simulate malformed import
         location: create_location("src/main.ts" as FilePath, 1, 0),
         modifiers: [],
         language: "typescript",
@@ -388,7 +388,7 @@ describe("Import Resolution - Comprehensive Suite", () => {
       const context = create_import_resolution_context(indices);
       const result = resolve_imports(context);
 
-      expect(result.imports.size).toBe(0);
+      expect(result.size).toBe(0);
     });
   });
 
@@ -712,8 +712,8 @@ describe("Import Resolution - Comprehensive Suite", () => {
       const context = create_import_resolution_context(indices);
       const result = resolve_imports(context);
 
-      expect(result.imports.size).toBe(1);
-      expect(result.imports.has(js_index.file_path)).toBe(true);
+      expect(result.size).toBe(1);
+      expect(result.has(js_index.file_path)).toBe(true);
     });
 
     it("handles TypeScript importing JavaScript", () => {
@@ -743,8 +743,8 @@ describe("Import Resolution - Comprehensive Suite", () => {
       const context = create_import_resolution_context(indices);
       const result = resolve_imports(context);
 
-      expect(result.imports.size).toBe(1);
-      expect(result.imports.has(ts_index.file_path)).toBe(true);
+      expect(result.size).toBe(1);
+      expect(result.has(ts_index.file_path)).toBe(true);
     });
   });
 
@@ -777,7 +777,7 @@ describe("Import Resolution - Comprehensive Suite", () => {
       const result = resolve_imports(context);
 
       // Should resolve both imports despite circular dependency
-      expect(result.imports.size).toBe(2);
+      expect(result.size).toBe(2);
     });
 
     it("handles export name mismatches", () => {
@@ -808,7 +808,7 @@ describe("Import Resolution - Comprehensive Suite", () => {
       const result = resolve_imports(context);
 
       // Import should not resolve due to name mismatch
-      expect(result.imports.size).toBe(0);
+      expect(result.size).toBe(0);
     });
 
     it("handles files with no exports", () => {
@@ -833,7 +833,7 @@ describe("Import Resolution - Comprehensive Suite", () => {
       const context = create_import_resolution_context(indices);
       const result = resolve_imports(context);
 
-      expect(result.imports.size).toBe(0);
+      expect(result.size).toBe(0);
     });
 
     it("handles files with many exports", () => {
@@ -866,8 +866,8 @@ describe("Import Resolution - Comprehensive Suite", () => {
       const context = create_import_resolution_context(indices);
       const result = resolve_imports(context);
 
-      expect(result.imports.size).toBe(1);
-      const resolved_imports = result.imports.get(main_index.file_path)!;
+      expect(result.size).toBe(1);
+      const resolved_imports = result.get(main_index.file_path)!;
       expect(resolved_imports.size).toBe(50); // All 50 imports should resolve
     });
   });
@@ -912,7 +912,7 @@ describe("Import Resolution - Comprehensive Suite", () => {
       expect(duration).toBeLessThan(100);
 
       // Should resolve 99 import relationships (files 1-99 import from previous file)
-      expect(result.imports.size).toBe(99);
+      expect(result.size).toBe(99);
     });
 
     it("handles deep import chains", () => {
@@ -943,7 +943,7 @@ describe("Import Resolution - Comprehensive Suite", () => {
       const result = resolve_imports(context);
 
       // Should resolve all chain links
-      expect(result.imports.size).toBe(chain_length - 1);
+      expect(result.size).toBe(chain_length - 1);
     });
 
     it("handles wide import fan-out", () => {
@@ -979,8 +979,8 @@ describe("Import Resolution - Comprehensive Suite", () => {
       const context = create_import_resolution_context(indices);
       const result = resolve_imports(context);
 
-      expect(result.imports.size).toBe(1);
-      const resolved_imports = result.imports.get(main_file.file_path)!;
+      expect(result.size).toBe(1);
+      const resolved_imports = result.get(main_file.file_path)!;
       expect(resolved_imports.size).toBe(fan_out);
     });
   });

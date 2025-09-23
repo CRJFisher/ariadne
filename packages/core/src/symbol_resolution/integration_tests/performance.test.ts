@@ -7,7 +7,10 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { resolve_symbols } from "../symbol_resolution";
-import { export_symbol_resolution_data, count_total_symbols } from "../data_export";
+import {
+  export_symbol_resolution_data,
+  count_total_symbols,
+} from "../data_export";
 import type { ResolutionInput } from "../types";
 import type {
   FilePath,
@@ -34,7 +37,9 @@ import type { CallReference } from "../../semantic_index/references/call_referen
 /**
  * Generate a large test project with specified number of files
  */
-function generate_large_test_project(num_files: number): Map<FilePath, SemanticIndex> {
+function generate_large_test_project(
+  num_files: number
+): Map<FilePath, SemanticIndex> {
   const indices = new Map<FilePath, SemanticIndex>();
   const files_per_module = 10;
   const modules = Math.ceil(num_files / files_per_module);
@@ -42,7 +47,11 @@ function generate_large_test_project(num_files: number): Map<FilePath, SemanticI
   for (let m = 0; m < modules; m++) {
     const module_name = `module_${m}`;
 
-    for (let f = 0; f < files_per_module && (m * files_per_module + f) < num_files; f++) {
+    for (
+      let f = 0;
+      f < files_per_module && m * files_per_module + f < num_files;
+      f++
+    ) {
       const file_path = `src/${module_name}/file_${f}.ts` as FilePath;
       const symbols = new Map<SymbolId, SymbolDefinition>();
       const imports: Import[] = [];
@@ -55,7 +64,9 @@ function generate_large_test_project(num_files: number): Map<FilePath, SemanticI
         const prev_file = `src/${module_name}/file_${f - 1}.ts` as FilePath;
         imports.push({
           kind: "named",
-          imports: [{ name: `func_${f - 1}_0` as SymbolName, is_type_only: false }],
+          imports: [
+            { name: `func_${f - 1}_0` as SymbolName, is_type_only: false },
+          ],
           source: prev_file,
           location: create_location(file_path, 1, 10),
           modifiers: [],
@@ -156,8 +167,16 @@ function generate_large_test_project(num_files: number): Map<FilePath, SemanticI
 
         for (let j = 0; j < methods_per_class; j++) {
           const method_name = `method_${j}` as SymbolName;
-          const method_location = create_location(file_path, 32 + i * 10 + j * 2, 15);
-          const method_id = method_symbol(method_name, class_name, method_location);
+          const method_location = create_location(
+            file_path,
+            32 + i * 10 + j * 2,
+            15
+          );
+          const method_id = method_symbol(
+            method_name,
+            class_name,
+            method_location
+          );
 
           symbols.set(method_id, {
             id: method_id,
@@ -170,7 +189,15 @@ function generate_large_test_project(num_files: number): Map<FilePath, SemanticI
             is_imported: false,
           });
 
-          members.set(method_name, create_local_member_info(method_name, "method", method_location, method_id));
+          members.set(
+            method_name,
+            create_local_member_info(
+              method_name,
+              "method",
+              method_location,
+              method_id
+            )
+          );
         }
 
         local_types.push({
@@ -189,11 +216,13 @@ function generate_large_test_project(num_files: number): Map<FilePath, SemanticI
             symbol: class_id,
             symbol_name: class_name,
             location: create_location(file_path, 30 + i * 10, 0),
-            exports: [{
-              local_name: class_name,
-              export_name: class_name,
-              is_type_only: false,
-            }],
+            exports: [
+              {
+                local_name: class_name,
+                export_name: class_name,
+                is_type_only: false,
+              },
+            ],
             modifiers: [],
             language: "typescript",
             node_type: "export_statement",
@@ -250,7 +279,11 @@ function generate_large_test_project(num_files: number): Map<FilePath, SemanticI
   return indices;
 }
 
-function create_location(file_path: FilePath, line: number, column: number): Location {
+function create_location(
+  file_path: FilePath,
+  line: number,
+  column: number
+): Location {
   return {
     file_path,
     line,
@@ -260,7 +293,12 @@ function create_location(file_path: FilePath, line: number, column: number): Loc
   };
 }
 
-function create_local_member_info(name: SymbolName, kind: LocalMemberInfo["kind"], location: Location, symbol_id?: SymbolId): LocalMemberInfo {
+function create_local_member_info(
+  name: SymbolName,
+  kind: LocalMemberInfo["kind"],
+  location: Location,
+  symbol_id?: SymbolId
+): LocalMemberInfo {
   return {
     name,
     kind,
@@ -274,7 +312,10 @@ function create_local_member_info(name: SymbolName, kind: LocalMemberInfo["kind"
 /**
  * Get a random sample of files from the project
  */
-function get_random_files(indices: Map<FilePath, SemanticIndex>, count: number): FilePath[] {
+function get_random_files(
+  indices: Map<FilePath, SemanticIndex>,
+  count: number
+): FilePath[] {
   const all_files = Array.from(indices.keys());
   const sample: FilePath[] = [];
 
@@ -311,7 +352,10 @@ describe("Performance Benchmarks", () => {
 
       // Measure data export
       const export_start = performance.now();
-      const exported_data = export_symbol_resolution_data(resolved_symbols, "json");
+      const exported_data = export_symbol_resolution_data(
+        resolved_symbols,
+        "json"
+      );
       const export_time = performance.now() - export_start;
 
       const total_time = performance.now() - start_time;
@@ -327,15 +371,23 @@ describe("Performance Benchmarks", () => {
 
       // Log performance metrics
       console.log(`${SMALL_PROJECT} files performance:`);
-      console.log(`  Total: ${total_time.toFixed(2)}ms (${(total_time / SMALL_PROJECT).toFixed(2)}ms per file)`);
+      console.log(
+        `  Total: ${total_time.toFixed(2)}ms (${(
+          total_time / SMALL_PROJECT
+        ).toFixed(2)}ms per file)`
+      );
       console.log(`  Resolution: ${resolution_time.toFixed(2)}ms`);
       console.log(`  Export: ${export_time.toFixed(2)}ms`);
-      console.log(`  Memory: ${(memory_usage.heapUsed / 1024 / 1024).toFixed(2)}MB`);
+      console.log(
+        `  Memory: ${(memory_usage.heapUsed / 1024 / 1024).toFixed(2)}MB`
+      );
 
       // Verify resolution quality
       expect(resolved_symbols.resolved_references.size).toBeGreaterThan(0);
-      expect(resolved_symbols.phases.imports.imports.size).toBeGreaterThan(0);
-      expect(resolved_symbols.phases.functions.function_calls.size).toBeGreaterThan(0);
+      expect(resolved_symbols.phases.imports.size).toBeGreaterThan(0);
+      expect(
+        resolved_symbols.phases.functions.function_calls.size
+      ).toBeGreaterThan(0);
     });
 
     it(`should handle ${MEDIUM_PROJECT} files efficiently`, async function (this: any) {
@@ -356,7 +408,11 @@ describe("Performance Benchmarks", () => {
 
       // Log performance metrics
       console.log(`${MEDIUM_PROJECT} files performance:`);
-      console.log(`  Total: ${total_time.toFixed(2)}ms (${(total_time / MEDIUM_PROJECT).toFixed(2)}ms per file)`);
+      console.log(
+        `  Total: ${total_time.toFixed(2)}ms (${(
+          total_time / MEDIUM_PROJECT
+        ).toFixed(2)}ms per file)`
+      );
 
       // Verify results
       const total_symbols = count_total_symbols(resolved_symbols);
@@ -376,7 +432,11 @@ describe("Performance Benchmarks", () => {
       expect(total_time).toBeLessThan(LARGE_PROJECT * 20); // 20ms per file max
 
       console.log(`${LARGE_PROJECT} files performance:`);
-      console.log(`  Total: ${total_time.toFixed(2)}ms (${(total_time / LARGE_PROJECT).toFixed(2)}ms per file)`);
+      console.log(
+        `  Total: ${total_time.toFixed(2)}ms (${(
+          total_time / LARGE_PROJECT
+        ).toFixed(2)}ms per file)`
+      );
     });
   });
 
@@ -395,10 +455,10 @@ describe("Performance Benchmarks", () => {
         const start = performance.now();
 
         // Common data access operations
-        const file_imports = resolved_symbols.phases.imports.imports.get(file_path);
-        const function_calls_count = Array.from(resolved_symbols.phases.functions.function_calls.entries())
-          .filter(([location_key]) => location_key.startsWith(file_path))
-          .length;
+        const file_imports = resolved_symbols.phases.imports.get(file_path);
+        const function_calls_count = Array.from(
+          resolved_symbols.phases.functions.function_calls.entries()
+        ).filter(([location_key]) => location_key.startsWith(file_path)).length;
 
         const access_time = performance.now() - start;
         access_times.push(access_time);
@@ -407,7 +467,8 @@ describe("Performance Benchmarks", () => {
         expect(access_time).toBeLessThan(5); // 5ms per file max
       }
 
-      const avg_access_time = access_times.reduce((a, b) => a + b, 0) / access_times.length;
+      const avg_access_time =
+        access_times.reduce((a, b) => a + b, 0) / access_times.length;
       console.log(`Average file access time: ${avg_access_time.toFixed(2)}ms`);
       expect(avg_access_time).toBeLessThan(2); // Average should be under 2ms
     });
@@ -419,7 +480,10 @@ describe("Performance Benchmarks", () => {
 
       // Measure JSON export performance
       const json_start = performance.now();
-      const json_export = export_symbol_resolution_data(resolved_symbols, "json");
+      const json_export = export_symbol_resolution_data(
+        resolved_symbols,
+        "json"
+      );
       const json_time = performance.now() - json_start;
 
       // Measure CSV export performance
@@ -428,8 +492,16 @@ describe("Performance Benchmarks", () => {
       const csv_time = performance.now() - csv_start;
 
       console.log(`Export performance for ${project_size} files:`);
-      console.log(`  JSON: ${json_time.toFixed(2)}ms (${(json_export.length / 1024).toFixed(2)}KB)`);
-      console.log(`  CSV: ${csv_time.toFixed(2)}ms (${(csv_export.length / 1024).toFixed(2)}KB)`);
+      console.log(
+        `  JSON: ${json_time.toFixed(2)}ms (${(
+          json_export.length / 1024
+        ).toFixed(2)}KB)`
+      );
+      console.log(
+        `  CSV: ${csv_time.toFixed(2)}ms (${(csv_export.length / 1024).toFixed(
+          2
+        )}KB)`
+      );
 
       // Export should be fast even for large projects
       expect(json_time).toBeLessThan(project_size * 2); // 2ms per file max
@@ -452,7 +524,9 @@ describe("Performance Benchmarks", () => {
       const final_memory = process.memoryUsage().heapUsed;
       const memory_used = (final_memory - initial_memory) / 1024 / 1024; // MB
 
-      console.log(`Memory usage for ${project_size} files: ${memory_used.toFixed(2)}MB`);
+      console.log(
+        `Memory usage for ${project_size} files: ${memory_used.toFixed(2)}MB`
+      );
       console.log(`  Per file: ${(memory_used / project_size).toFixed(2)}MB`);
 
       // Memory usage should be reasonable
@@ -466,10 +540,14 @@ describe("Performance Benchmarks", () => {
 
       for (let i = 0; i < depth; i++) {
         const file_path = `src/level_${i}.ts` as FilePath;
-        const prev_file_path = i > 0 ? (`src/level_${i - 1}.ts` as FilePath) : null;
+        const prev_file_path =
+          i > 0 ? (`src/level_${i - 1}.ts` as FilePath) : null;
 
         const func_location = create_location(file_path, 3, 10);
-        const func_id = function_symbol(`func_${i}` as SymbolName, func_location);
+        const func_id = function_symbol(
+          `func_${i}` as SymbolName,
+          func_location
+        );
 
         const imports: Import[] = [];
         const exports: Export[] = [];
@@ -479,7 +557,9 @@ describe("Performance Benchmarks", () => {
         if (prev_file_path) {
           imports.push({
             kind: "named",
-            imports: [{ name: `func_${i - 1}` as SymbolName, is_type_only: false }],
+            imports: [
+              { name: `func_${i - 1}` as SymbolName, is_type_only: false },
+            ],
             source: `./level_${i - 1}` as FilePath,
             location: create_location(file_path, 1, 10),
             language: "javascript",
@@ -502,11 +582,13 @@ describe("Performance Benchmarks", () => {
           symbol: func_id,
           symbol_name: `func_${i}` as SymbolName,
           location: create_location(file_path, 3, 0),
-          exports: [{
-            local_name: `func_${i}` as SymbolName,
-            export_name: `func_${i}` as SymbolName,
-            is_type_only: false,
-          }],
+          exports: [
+            {
+              local_name: `func_${i}` as SymbolName,
+              export_name: `func_${i}` as SymbolName,
+              is_type_only: false,
+            },
+          ],
           modifiers: [],
           language: "typescript",
           node_type: "export_statement",
@@ -517,33 +599,57 @@ describe("Performance Benchmarks", () => {
           file_path,
           language: "typescript",
           root_scope_id,
-          scopes: new Map([[root_scope_id, {
-            id: root_scope_id,
-            parent_id: null,
-            name: null,
-            type: "module",
-            location: create_location(file_path, 0, 0),
-            child_ids: [],
-            symbols: new Map(),
-          }]]),
-          symbols: new Map([[func_id, {
-            id: func_id,
-            name: `func_${i}` as SymbolName,
-            kind: "function",
-            location: func_location,
-            scope_id: root_scope_id,
-            is_hoisted: false,
-            is_exported: false,
-            is_imported: false,
-          }]]),
-          references: { calls, member_accesses: [], returns: [], type_annotations: [] },
+          scopes: new Map([
+            [
+              root_scope_id,
+              {
+                id: root_scope_id,
+                parent_id: null,
+                name: null,
+                type: "module",
+                location: create_location(file_path, 0, 0),
+                child_ids: [],
+                symbols: new Map(),
+              },
+            ],
+          ]),
+          symbols: new Map([
+            [
+              func_id,
+              {
+                id: func_id,
+                name: `func_${i}` as SymbolName,
+                kind: "function",
+                location: func_location,
+                scope_id: root_scope_id,
+                is_hoisted: false,
+                is_exported: false,
+                is_imported: false,
+              },
+            ],
+          ]),
+          references: {
+            calls,
+            member_accesses: [],
+            returns: [],
+            type_annotations: [],
+          },
           imports,
           exports,
           file_symbols_by_name: new Map(),
           local_types: [],
           local_type_annotations: [],
-          local_type_tracking: { annotations: [], declarations: [], assignments: [] },
-          local_type_flow: { constructor_calls: [], assignments: [], returns: [], call_assignments: [] },
+          local_type_tracking: {
+            annotations: [],
+            declarations: [],
+            assignments: [],
+          },
+          local_type_flow: {
+            constructor_calls: [],
+            assignments: [],
+            returns: [],
+            call_assignments: [],
+          },
         };
 
         indices.set(file_path, index);
@@ -553,14 +659,20 @@ describe("Performance Benchmarks", () => {
       const resolved_symbols = resolve_symbols({ indices });
       const resolution_time = performance.now() - start_time;
 
-      console.log(`Deep dependency chain (${depth} levels): ${resolution_time.toFixed(2)}ms`);
+      console.log(
+        `Deep dependency chain (${depth} levels): ${resolution_time.toFixed(
+          2
+        )}ms`
+      );
 
       // Should handle deep chains efficiently
       expect(resolution_time).toBeLessThan(depth * 10); // 10ms per level max
 
       // Verify all imports are resolved
-      expect(resolved_symbols.phases.imports.imports.size).toBe(depth - 1);
-      expect(resolved_symbols.phases.functions.function_calls.size).toBeGreaterThan(0);
+      expect(resolved_symbols.phases.imports.size).toBe(depth - 1);
+      expect(
+        resolved_symbols.phases.functions.function_calls.size
+      ).toBeGreaterThan(0);
     });
   });
 });

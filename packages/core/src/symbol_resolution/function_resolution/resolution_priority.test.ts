@@ -125,7 +125,7 @@ describe("Resolution Priority Functions", () => {
 
       const context: FunctionResolutionContext = {
         indices: new Map([[file_path, index]]),
-        imports: { imports: new Map() },
+        imports: new Map(),
         file_path,
         file_index: index,
         file_imports: new Map(),
@@ -184,7 +184,7 @@ describe("Resolution Priority Functions", () => {
 
       const context: FunctionResolutionContext = {
         indices: new Map([[file_path, index]]),
-        imports: { imports: new Map() },
+        imports: new Map(),
         file_path,
         file_index: index,
         file_imports: new Map(),
@@ -246,7 +246,7 @@ describe("Resolution Priority Functions", () => {
 
       const context: FunctionResolutionContext = {
         indices: new Map([[file_path, index]]),
-        imports: { imports: new Map() },
+        imports: new Map(),
         file_path,
         file_index: index,
         file_imports: new Map(),
@@ -279,7 +279,7 @@ describe("Resolution Priority Functions", () => {
 
       const context: FunctionResolutionContext = {
         indices: new Map([[file_path, index]]),
-        imports: { imports: new Map() },
+        imports: new Map(),
         file_path,
         file_index: index,
         file_imports: new Map(),
@@ -348,7 +348,7 @@ describe("Resolution Priority Functions", () => {
           [file_path, currentIndex],
           [other_file, otherIndex],
         ]),
-        imports: { imports: new Map() },
+        imports: new Map(),
         file_path,
         file_index: currentIndex,
         file_imports: new Map([
@@ -392,7 +392,7 @@ describe("Resolution Priority Functions", () => {
 
       const context: FunctionResolutionContext = {
         indices: new Map([[file_path, index]]),
-        imports: { imports: new Map() },
+        imports: new Map(),
         file_path,
         file_index: index,
         file_imports: new Map(), // No imports
@@ -468,7 +468,7 @@ describe("Resolution Priority Functions", () => {
           [file_path, currentIndex],
           [other_file, otherIndex],
         ]),
-        imports: { imports: new Map() },
+        imports: new Map(),
         file_path,
         file_index: currentIndex,
         file_imports: new Map([["importedVar" as SymbolName, "sym:importedVar" as SymbolId]]),
@@ -509,7 +509,7 @@ describe("Resolution Priority Functions", () => {
 
       const context: FunctionResolutionContext = {
         indices: new Map([[file_path, index]]),
-        imports: { imports: new Map() },
+        imports: new Map(),
         file_path,
         file_index: index,
         file_imports: new Map(),
@@ -550,7 +550,7 @@ describe("Resolution Priority Functions", () => {
 
       const context: FunctionResolutionContext = {
         indices: new Map([[file_path, index]]),
-        imports: { imports: new Map() },
+        imports: new Map(),
         file_path,
         file_index: index,
         file_imports: new Map(),
@@ -586,7 +586,7 @@ describe("Resolution Priority Functions", () => {
 
       const context: FunctionResolutionContext = {
         indices: new Map([[file_path, index]]),
-        imports: { imports: new Map() },
+        imports: new Map(),
         file_path,
         file_index: index,
         file_imports: new Map(),
@@ -627,7 +627,7 @@ describe("Resolution Priority Functions", () => {
 
       const context: FunctionResolutionContext = {
         indices: new Map([[file_path, index]]),
-        imports: { imports: new Map() },
+        imports: new Map(),
         file_path,
         file_index: index,
         file_imports: new Map(),
@@ -684,7 +684,7 @@ describe("Resolution Priority Functions", () => {
 
       const context: FunctionResolutionContext = {
         indices: new Map([[file_path, index]]),
-        imports: { imports: new Map() },
+        imports: new Map(),
         file_path,
         file_index: index,
         file_imports: new Map(),
@@ -758,7 +758,7 @@ describe("Resolution Priority Functions", () => {
           [file_path, currentIndex],
           [other_file, otherIndex],
         ]),
-        imports: { imports: new Map() },
+        imports: new Map(),
         file_path,
         file_index: currentIndex,
         file_imports: new Map([["console" as SymbolName, "sym:console" as SymbolId]]),

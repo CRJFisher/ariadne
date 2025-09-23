@@ -124,7 +124,7 @@ function create_exported_data(
       total_symbols: total_symbols.size,
       total_resolved_references: resolved_symbols.resolved_references.size,
     },
-    imports: export_import_mappings(resolved_symbols.phases.imports.imports),
+    imports: export_import_mappings(resolved_symbols.phases.imports),
     function_calls: export_call_mappings(
       resolved_symbols.phases.functions.function_calls
     ),

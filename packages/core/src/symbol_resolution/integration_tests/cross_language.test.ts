@@ -40,7 +40,10 @@ function create_language_test_file(
   file_path: FilePath,
   language: Language,
   content: {
-    symbols: Array<{ name: string; kind: "function" | "class" | "method" | "variable" }>;
+    symbols: Array<{
+      name: string;
+      kind: "function" | "class" | "method" | "variable";
+    }>;
     imports?: Array<{ name: string; source: string; resolved_path?: FilePath }>;
     exports?: Array<{ name: string; kind: "named" | "default" }>;
     calls?: Array<{ name: string; kind: "function" | "method" }>;
@@ -66,24 +69,36 @@ function create_language_test_file(
   }
 
   // Create imports with language-specific patterns
-  const imports: Import[] = (content.imports || []).map(imp => ({
-    kind: "named" as const,
-    imports: [{
-      name: imp.name as SymbolName,
-      alias: undefined,
-      is_type_only: false,
-    }],
-    source: imp.source as FilePath,
-    location: create_location(file_path, 1, 10),
-    modifiers: [],
-    language,
-    node_type: "import_statement",
-  } as NamedImport));
+  const imports: Import[] = (content.imports || []).map(
+    (imp) =>
+      ({
+        kind: "named" as const,
+        imports: [
+          {
+            name: imp.name as SymbolName,
+            alias: undefined,
+            is_type_only: false,
+          },
+        ],
+        source: imp.source as FilePath,
+        location: create_location(file_path, 1, 10),
+        modifiers: [],
+        language,
+        node_type: "import_statement",
+      } as NamedImport)
+  );
 
   // Create exports
   const exports: Export[] = (content.exports || []).map((exp, i) => {
-    const symbol = Array.from(symbols.values()).find(s => s.name === exp.name);
-    const symbol_id = symbol?.id || function_symbol(exp.name as SymbolName, create_location(file_path, 20 + i, 0));
+    const symbol = Array.from(symbols.values()).find(
+      (s) => s.name === exp.name
+    );
+    const symbol_id =
+      symbol?.id ||
+      function_symbol(
+        exp.name as SymbolName,
+        create_location(file_path, 20 + i, 0)
+      );
 
     if (exp.kind === "named") {
       return {
@@ -91,11 +106,13 @@ function create_language_test_file(
         symbol: symbol_id,
         symbol_name: exp.name as SymbolName,
         location: create_location(file_path, 20 + i, 0),
-        exports: [{
-          local_name: exp.name as SymbolName,
-          export_name: exp.name as SymbolName,
-          is_type_only: false,
-        }],
+        exports: [
+          {
+            local_name: exp.name as SymbolName,
+            export_name: exp.name as SymbolName,
+            is_type_only: false,
+          },
+        ],
         modifiers: [],
         language,
         node_type: "export_statement",
@@ -163,7 +180,11 @@ function create_language_test_file(
   };
 }
 
-function create_location(file_path: FilePath, line: number, column: number): Location {
+function create_location(
+  file_path: FilePath,
+  line: number,
+  column: number
+): Location {
   return {
     file_path,
     line,
@@ -173,7 +194,11 @@ function create_location(file_path: FilePath, line: number, column: number): Loc
   };
 }
 
-function create_symbol_id(kind: string, name: string, location: Location): SymbolId {
+function create_symbol_id(
+  kind: string,
+  name: string,
+  location: Location
+): SymbolId {
   switch (kind) {
     case "function":
       return function_symbol(name as SymbolName, location);
@@ -221,12 +246,18 @@ function create_mixed_js_ts_project(): Map<FilePath, SemanticIndex> {
         { name: "run", kind: "method" },
       ],
       imports: [
-        { name: "processData", source: "./utils.js", resolved_path: "src/utils.js" as FilePath },
-        { name: "formatOutput", source: "./utils.js", resolved_path: "src/utils.js" as FilePath },
+        {
+          name: "processData",
+          source: "./utils.js",
+          resolved_path: "src/utils.js" as FilePath,
+        },
+        {
+          name: "formatOutput",
+          source: "./utils.js",
+          resolved_path: "src/utils.js" as FilePath,
+        },
       ],
-      exports: [
-        { name: "Application", kind: "named" },
-      ],
+      exports: [{ name: "Application", kind: "named" }],
       calls: [
         { name: "processData", kind: "function" },
         { name: "formatOutput", kind: "function" },
@@ -240,11 +271,13 @@ function create_mixed_js_ts_project(): Map<FilePath, SemanticIndex> {
     "src/consumer.js" as FilePath,
     "javascript",
     {
-      symbols: [
-        { name: "startApp", kind: "function" },
-      ],
+      symbols: [{ name: "startApp", kind: "function" }],
       imports: [
-        { name: "Application", source: "./main.ts", resolved_path: "src/main.ts" as FilePath },
+        {
+          name: "Application",
+          source: "./main.ts",
+          resolved_path: "src/main.ts" as FilePath,
+        },
       ],
     }
   );
@@ -256,7 +289,10 @@ function create_mixed_js_ts_project(): Map<FilePath, SemanticIndex> {
 /**
  * Create test projects for different languages
  */
-function create_language_test_projects(): Map<string, Map<FilePath, SemanticIndex>> {
+function create_language_test_projects(): Map<
+  string,
+  Map<FilePath, SemanticIndex>
+> {
   const projects = new Map<string, Map<FilePath, SemanticIndex>>();
 
   // JavaScript project with various module patterns
@@ -282,14 +318,14 @@ function create_language_test_projects(): Map<string, Map<FilePath, SemanticInde
         { name: "assist", kind: "method" },
       ],
       imports: [
-        { name: "initialize", source: "./index", resolved_path: "src/index.js" as FilePath },
+        {
+          name: "initialize",
+          source: "./index",
+          resolved_path: "src/index.js" as FilePath,
+        },
       ],
-      exports: [
-        { name: "Helper", kind: "named" },
-      ],
-      calls: [
-        { name: "initialize", kind: "function" },
-      ],
+      exports: [{ name: "Helper", kind: "named" }],
+      calls: [{ name: "initialize", kind: "function" }],
     })
   );
   projects.set("javascript", js_project);
@@ -303,9 +339,7 @@ function create_language_test_projects(): Map<string, Map<FilePath, SemanticInde
         { name: "DataModel", kind: "class" },
         { name: "process", kind: "method" },
       ],
-      exports: [
-        { name: "DataModel", kind: "named" },
-      ],
+      exports: [{ name: "DataModel", kind: "named" }],
     })
   );
   ts_project.set(
@@ -316,11 +350,13 @@ function create_language_test_projects(): Map<string, Map<FilePath, SemanticInde
         { name: "execute", kind: "method" },
       ],
       imports: [
-        { name: "DataModel", source: "./types", resolved_path: "src/types.ts" as FilePath },
+        {
+          name: "DataModel",
+          source: "./types",
+          resolved_path: "src/types.ts" as FilePath,
+        },
       ],
-      exports: [
-        { name: "Service", kind: "default" },
-      ],
+      exports: [{ name: "Service", kind: "default" }],
     })
   );
   projects.set("typescript", ts_project);
@@ -335,9 +371,7 @@ function create_language_test_projects(): Map<string, Map<FilePath, SemanticInde
         { name: "save", kind: "method" },
         { name: "load", kind: "method" },
       ],
-      exports: [
-        { name: "BaseModel", kind: "named" },
-      ],
+      exports: [{ name: "BaseModel", kind: "named" }],
     })
   );
   py_project.set(
@@ -348,11 +382,13 @@ function create_language_test_projects(): Map<string, Map<FilePath, SemanticInde
         { name: "validate_input", kind: "function" },
       ],
       imports: [
-        { name: "BaseModel", source: ".models", resolved_path: "src/models.py" as FilePath },
+        {
+          name: "BaseModel",
+          source: ".models",
+          resolved_path: "src/models.py" as FilePath,
+        },
       ],
-      calls: [
-        { name: "save", kind: "method" },
-      ],
+      calls: [{ name: "save", kind: "method" }],
     })
   );
   projects.set("python", py_project);
@@ -377,16 +413,20 @@ function create_language_test_projects(): Map<string, Map<FilePath, SemanticInde
   rs_project.set(
     "src/main.rs" as FilePath,
     create_language_test_file("src/main.rs" as FilePath, "rust", {
-      symbols: [
-        { name: "main", kind: "function" },
-      ],
+      symbols: [{ name: "main", kind: "function" }],
       imports: [
-        { name: "Calculator", source: "crate::lib", resolved_path: "src/lib.rs" as FilePath },
-        { name: "add", source: "crate::lib", resolved_path: "src/lib.rs" as FilePath },
+        {
+          name: "Calculator",
+          source: "crate::lib",
+          resolved_path: "src/lib.rs" as FilePath,
+        },
+        {
+          name: "add",
+          source: "crate::lib",
+          resolved_path: "src/lib.rs" as FilePath,
+        },
       ],
-      calls: [
-        { name: "add", kind: "function" },
-      ],
+      calls: [{ name: "add", kind: "function" }],
     })
   );
   projects.set("rust", rs_project);
@@ -395,25 +435,30 @@ function create_language_test_projects(): Map<string, Map<FilePath, SemanticInde
 }
 
 describe("Cross-Language Symbol Resolution", () => {
-
   describe("JavaScript/TypeScript mixed projects", () => {
     it("should handle JavaScript and TypeScript interoperability", () => {
       const mixed_project = create_mixed_js_ts_project();
       const resolved_symbols = resolve_symbols({ indices: mixed_project });
 
       // Verify TypeScript can import from JavaScript
-      const ts_imports = resolved_symbols.phases.imports.imports.get("src/main.ts" as FilePath);
+      const ts_imports = resolved_symbols.phases.imports.get(
+        "src/main.ts" as FilePath
+      );
       expect(ts_imports).toBeDefined();
       expect(ts_imports?.has("processData" as SymbolName)).toBe(true);
       expect(ts_imports?.has("formatOutput" as SymbolName)).toBe(true);
 
       // Verify JavaScript can import from TypeScript
-      const js_imports = resolved_symbols.phases.imports.imports.get("src/consumer.js" as FilePath);
+      const js_imports = resolved_symbols.phases.imports.get(
+        "src/consumer.js" as FilePath
+      );
       expect(js_imports).toBeDefined();
       expect(js_imports?.has("Application" as SymbolName)).toBe(true);
 
       // Verify function calls are resolved across language boundaries
-      expect(resolved_symbols.phases.functions.function_calls.size).toBeGreaterThan(0);
+      expect(
+        resolved_symbols.phases.functions.function_calls.size
+      ).toBeGreaterThan(0);
     });
 
     it("should handle CommonJS and ES6 module patterns", () => {
@@ -424,12 +469,8 @@ describe("Cross-Language Symbol Resolution", () => {
         "src/common.js" as FilePath,
         "javascript",
         {
-          symbols: [
-            { name: "oldStyleExport", kind: "function" },
-          ],
-          exports: [
-            { name: "oldStyleExport", kind: "named" },
-          ],
+          symbols: [{ name: "oldStyleExport", kind: "function" }],
+          exports: [{ name: "oldStyleExport", kind: "named" }],
         }
       );
       indices.set(commonjs_file.file_path, commonjs_file);
@@ -439,18 +480,16 @@ describe("Cross-Language Symbol Resolution", () => {
         "src/modern.js" as FilePath,
         "javascript",
         {
-          symbols: [
-            { name: "modernExport", kind: "function" },
-          ],
+          symbols: [{ name: "modernExport", kind: "function" }],
           imports: [
-            { name: "oldStyleExport", source: "./common.js", resolved_path: "src/common.js" as FilePath },
+            {
+              name: "oldStyleExport",
+              source: "./common.js",
+              resolved_path: "src/common.js" as FilePath,
+            },
           ],
-          exports: [
-            { name: "modernExport", kind: "default" },
-          ],
-          calls: [
-            { name: "oldStyleExport", kind: "function" },
-          ],
+          exports: [{ name: "modernExport", kind: "default" }],
+          calls: [{ name: "oldStyleExport", kind: "function" }],
         }
       );
       indices.set(es6_file.file_path, es6_file);
@@ -458,11 +497,15 @@ describe("Cross-Language Symbol Resolution", () => {
       const resolved_symbols = resolve_symbols({ indices });
 
       // Verify imports are resolved
-      const modern_imports = resolved_symbols.phases.imports.imports.get("src/modern.js" as FilePath);
+      const modern_imports = resolved_symbols.phases.imports.get(
+        "src/modern.js" as FilePath
+      );
       expect(modern_imports?.has("oldStyleExport" as SymbolName)).toBe(true);
 
       // Verify function calls are resolved
-      expect(resolved_symbols.phases.functions.function_calls.size).toBeGreaterThan(0);
+      expect(
+        resolved_symbols.phases.functions.function_calls.size
+      ).toBeGreaterThan(0);
     });
   });
 
@@ -474,17 +517,22 @@ describe("Cross-Language Symbol Resolution", () => {
         const resolved_symbols = resolve_symbols({ indices: project });
 
         // Verify basic resolution works for each language
-        expect(resolved_symbols.resolved_references.size).toBeGreaterThanOrEqual(0);
+        expect(
+          resolved_symbols.resolved_references.size
+        ).toBeGreaterThanOrEqual(0);
 
         // Check language-specific import resolution
-        const has_imports = Array.from(resolved_symbols.phases.imports.imports.values())
-          .some(file_imports => file_imports.size > 0);
+        const has_imports = Array.from(
+          resolved_symbols.phases.imports.values()
+        ).some((file_imports) => file_imports.size > 0);
 
         // Log language-specific results
         console.log(`${language} resolution:`);
         console.log(`  Files: ${project.size}`);
         console.log(`  Imports resolved: ${has_imports}`);
-        console.log(`  Function calls: ${resolved_symbols.phases.functions.function_calls.size}`);
+        console.log(
+          `  Function calls: ${resolved_symbols.phases.functions.function_calls.size}`
+        );
       }
     });
 
@@ -513,7 +561,7 @@ describe("Cross-Language Symbol Resolution", () => {
       const resolved_symbols = resolve_symbols({ indices });
 
       // JavaScript functions should be recognized
-      expect(resolved_symbols.phases.imports.imports.size).toBeGreaterThanOrEqual(0);
+      expect(resolved_symbols.phases.imports.size).toBeGreaterThanOrEqual(0);
     });
 
     it("should handle TypeScript-specific patterns", () => {
@@ -523,43 +571,60 @@ describe("Cross-Language Symbol Resolution", () => {
       const ts_file_path = "src/typescript_patterns.ts" as FilePath;
       const root_scope_id = `scope:module:${ts_file_path}:0:0` as ScopeId;
 
-      const generic_class = class_symbol("GenericClass" as SymbolName, create_location(ts_file_path, 10, 10));
-      const decorator_class = class_symbol("DecoratedClass" as SymbolName, create_location(ts_file_path, 20, 10));
+      const generic_class = class_symbol(
+        "GenericClass" as SymbolName,
+        create_location(ts_file_path, 10, 10)
+      );
+      const decorator_class = class_symbol(
+        "DecoratedClass" as SymbolName,
+        create_location(ts_file_path, 20, 10)
+      );
 
       const ts_file: SemanticIndex = {
         file_path: ts_file_path,
         language: "typescript",
         root_scope_id,
-        scopes: new Map([[root_scope_id, {
-          id: root_scope_id,
-          parent_id: null,
-          name: null,
-          type: "module",
-          location: create_location(ts_file_path, 0, 0),
-          child_ids: [],
-          symbols: new Map(),
-        }]]),
+        scopes: new Map([
+          [
+            root_scope_id,
+            {
+              id: root_scope_id,
+              parent_id: null,
+              name: null,
+              type: "module",
+              location: create_location(ts_file_path, 0, 0),
+              child_ids: [],
+              symbols: new Map(),
+            },
+          ],
+        ]),
         symbols: new Map([
-          [generic_class, {
-            id: generic_class,
-            name: "GenericClass" as SymbolName,
-            kind: "class",
-            location: create_location(ts_file_path, 10, 10),
-            scope_id: root_scope_id,
-            is_hoisted: false,
-            is_exported: false,
-            is_imported: false,
-          }],
-          [decorator_class, {
-            id: decorator_class,
-            name: "DecoratedClass" as SymbolName,
-            kind: "class",
-            location: create_location(ts_file_path, 20, 10),
-            scope_id: root_scope_id,
-            is_hoisted: false,
-            is_exported: false,
-            is_imported: false,
-          }],
+          [
+            generic_class,
+            {
+              id: generic_class,
+              name: "GenericClass" as SymbolName,
+              kind: "class",
+              location: create_location(ts_file_path, 10, 10),
+              scope_id: root_scope_id,
+              is_hoisted: false,
+              is_exported: false,
+              is_imported: false,
+            },
+          ],
+          [
+            decorator_class,
+            {
+              id: decorator_class,
+              name: "DecoratedClass" as SymbolName,
+              kind: "class",
+              location: create_location(ts_file_path, 20, 10),
+              scope_id: root_scope_id,
+              is_hoisted: false,
+              is_exported: false,
+              is_imported: false,
+            },
+          ],
         ]),
         references: {
           calls: [],
@@ -637,7 +702,9 @@ describe("Cross-Language Symbol Resolution", () => {
       const resolved_symbols = resolve_symbols({ indices });
 
       // TypeScript-specific features should be handled
-      expect(resolved_symbols.phases.types.symbol_types.size).toBeGreaterThanOrEqual(0);
+      expect(
+        resolved_symbols.phases.types.symbol_types.size
+      ).toBeGreaterThanOrEqual(0);
     });
 
     it("should handle Python-specific patterns", () => {
@@ -666,7 +733,7 @@ describe("Cross-Language Symbol Resolution", () => {
       const resolved_symbols = resolve_symbols({ indices });
 
       // Python patterns should be recognized
-      expect(resolved_symbols.phases.imports.imports.size).toBeGreaterThanOrEqual(0);
+      expect(resolved_symbols.phases.imports.size).toBeGreaterThanOrEqual(0);
     });
 
     it("should handle Rust-specific patterns", () => {
@@ -682,9 +749,7 @@ describe("Cross-Language Symbol Resolution", () => {
             { name: "new", kind: "function" },
             { name: "associated_func", kind: "function" },
           ],
-          exports: [
-            { name: "MyStruct", kind: "named" },
-          ],
+          exports: [{ name: "MyStruct", kind: "named" }],
         }
       );
       indices.set(rs_file.file_path, rs_file);
@@ -692,7 +757,7 @@ describe("Cross-Language Symbol Resolution", () => {
       const resolved_symbols = resolve_symbols({ indices });
 
       // Rust patterns should be recognized
-      expect(resolved_symbols.phases.imports.imports.size).toBeGreaterThanOrEqual(0);
+      expect(resolved_symbols.phases.imports.size).toBeGreaterThanOrEqual(0);
     });
   });
 
@@ -708,15 +773,24 @@ describe("Cross-Language Symbol Resolution", () => {
 
       const test_cases = [
         { lang: "javascript", path: "./utils", expected: "src/utils.js" },
-        { lang: "typescript", path: "@app/core", expected: "node_modules/@app/core/index.ts" },
+        {
+          lang: "typescript",
+          path: "@app/core",
+          expected: "node_modules/@app/core/index.ts",
+        },
         { lang: "python", path: ".utils", expected: "utils.py" },
         { lang: "rust", path: "crate::utils", expected: "src/utils.rs" },
       ];
 
       for (const test of test_cases) {
-        const file_ext = test.lang === "javascript" ? "js" :
-                        test.lang === "typescript" ? "ts" :
-                        test.lang === "python" ? "py" : "rs";
+        const file_ext =
+          test.lang === "javascript"
+            ? "js"
+            : test.lang === "typescript"
+            ? "ts"
+            : test.lang === "python"
+            ? "py"
+            : "rs";
 
         const file_path = `src/test.${file_ext}` as FilePath;
         const file = create_language_test_file(

@@ -7,9 +7,7 @@
 
 import { describe, it, expect } from "vitest";
 import { resolve_symbols } from "./symbol_resolution";
-import type {
-  ResolutionInput,
-} from "./types";
+import type { ResolutionInput } from "./types";
 import type {
   FilePath,
   SymbolId,
@@ -29,7 +27,7 @@ import {
   method_symbol,
   variable_symbol,
   defined_type_id,
-  TypeCategory
+  TypeCategory,
 } from "@ariadnejs/types";
 import type { SemanticIndex } from "../semantic_index/semantic_index";
 import type { LocalTypeInfo } from "../semantic_index/type_members";
@@ -160,45 +158,59 @@ describe("Symbol Resolution Pipeline", () => {
 
       // File A exports a function
       const file_a = "a.ts" as FilePath;
-      const func_symbol_id = symbol_id("function", "myFunc", location(file_a, 1, 0));
+      const func_symbol_id = symbol_id(
+        "function",
+        "myFunc",
+        location(file_a, 1, 0)
+      );
       const symbols_a = new Map<SymbolId, SymbolDefinition>([
-        [func_symbol_id, {
-          id: func_symbol_id,
-          name: "myFunc" as SymbolName,
-          kind: "function",
-          location: location(file_a, 1, 0),
-          scope_id: "scope:global:a.ts:0:0" as ScopeId,
-          is_hoisted: false,
-          is_exported: true,
-          is_imported: false,
-        }],
+        [
+          func_symbol_id,
+          {
+            id: func_symbol_id,
+            name: "myFunc" as SymbolName,
+            kind: "function",
+            location: location(file_a, 1, 0),
+            scope_id: "scope:global:a.ts:0:0" as ScopeId,
+            is_hoisted: false,
+            is_exported: true,
+            is_imported: false,
+          },
+        ],
       ]);
-      const exports_a: Export[] = [{
-        name: "myFunc" as SymbolName,
-        symbol: func_symbol_id,
-        symbol_name: "myFunc" as SymbolName,
-        location: location(file_a, 1, 0),
-        kind: "named",
-        exports: [],
-        modifiers: [],
-        language: "typescript",
-        node_type: "export_statement",
-      }];
+      const exports_a: Export[] = [
+        {
+          name: "myFunc" as SymbolName,
+          symbol: func_symbol_id,
+          symbol_name: "myFunc" as SymbolName,
+          location: location(file_a, 1, 0),
+          kind: "named",
+          exports: [],
+          modifiers: [],
+          language: "typescript",
+          node_type: "export_statement",
+        },
+      ];
 
       // File B imports the function
       const file_b = "b.ts" as FilePath;
-      const imports_b: Import[] = [{
-        kind: "named",
-        source: "./a" as FilePath,
-        location: location(file_b, 1, 0),
-        imports: [{ name: "myFunc" as SymbolName, is_type_only: false }],
-        modifiers: [],
-        language: "typescript",
-        node_type: "import_statement",
-      }];
+      const imports_b: Import[] = [
+        {
+          kind: "named",
+          source: "./a" as FilePath,
+          location: location(file_b, 1, 0),
+          imports: [{ name: "myFunc" as SymbolName, is_type_only: false }],
+          modifiers: [],
+          language: "typescript",
+          node_type: "import_statement",
+        },
+      ];
 
       const indices = new Map<FilePath, SemanticIndex>([
-        [file_a, create_test_index(file_a, { symbols: symbols_a, exports: exports_a })],
+        [
+          file_a,
+          create_test_index(file_a, { symbols: symbols_a, exports: exports_a }),
+        ],
         [file_b, create_test_index(file_b, { imports: imports_b })],
       ]);
 
@@ -206,37 +218,45 @@ describe("Symbol Resolution Pipeline", () => {
       const { imports } = result.phases;
 
       // Verify import was resolved
-      expect(imports.imports.has(file_b)).toBe(true);
-      const file_b_imports = imports.imports.get(file_b);
+      expect(imports.has(file_b)).toBe(true);
+      const file_b_imports = imports.get(file_b);
       expect(file_b_imports).toBeDefined();
       // Note: Current implementation is TODO, so expectations would be based on actual implementation
     });
 
     it("should resolve default imports", () => {
       const file_a = "a.ts" as FilePath;
-      const class_symbol_id = symbol_id("class", "MyClass", location(file_a, 1, 0));
-      const exports_a: Export[] = [{
-        name: "default" as SymbolName,
-        symbol: class_symbol_id,
-        symbol_name: "MyClass" as SymbolName,
-        location: location(file_a, 1, 0),
-        kind: "default",
-        is_declaration: false,
-        modifiers: [],
-        language: "typescript",
-        node_type: "export_statement",
-      }];
+      const class_symbol_id = symbol_id(
+        "class",
+        "MyClass",
+        location(file_a, 1, 0)
+      );
+      const exports_a: Export[] = [
+        {
+          name: "default" as SymbolName,
+          symbol: class_symbol_id,
+          symbol_name: "MyClass" as SymbolName,
+          location: location(file_a, 1, 0),
+          kind: "default",
+          is_declaration: false,
+          modifiers: [],
+          language: "typescript",
+          node_type: "export_statement",
+        },
+      ];
 
       const file_b = "b.ts" as FilePath;
-      const imports_b: Import[] = [{
-        kind: "default",
-        source: "./a" as FilePath,
-        location: location(file_b, 1, 0),
-        name: "MyClass" as SymbolName,
-        modifiers: [],
-        language: "typescript",
-        node_type: "import_statement",
-      }];
+      const imports_b: Import[] = [
+        {
+          kind: "default",
+          source: "./a" as FilePath,
+          location: location(file_b, 1, 0),
+          name: "MyClass" as SymbolName,
+          modifiers: [],
+          language: "typescript",
+          node_type: "import_statement",
+        },
+      ];
 
       const indices = new Map<FilePath, SemanticIndex>([
         [file_a, create_test_index(file_a, { exports: exports_a })],
@@ -252,20 +272,42 @@ describe("Symbol Resolution Pipeline", () => {
       const func1 = symbol_id("function", "func1", location(file_a, 1, 0));
       const func2 = symbol_id("function", "func2", location(file_a, 2, 0));
       const exports_a: Export[] = [
-        { name: "func1" as SymbolName, symbol: func1, symbol_name: "func1" as SymbolName, location: location(file_a, 1, 0), kind: "named", exports: [], modifiers: [], language: "typescript", node_type: "export_statement" },
-        { name: "func2" as SymbolName, symbol: func2, symbol_name: "func2" as SymbolName, location: location(file_a, 2, 0), kind: "named", exports: [], modifiers: [], language: "typescript", node_type: "export_statement" },
+        {
+          name: "func1" as SymbolName,
+          symbol: func1,
+          symbol_name: "func1" as SymbolName,
+          location: location(file_a, 1, 0),
+          kind: "named",
+          exports: [],
+          modifiers: [],
+          language: "typescript",
+          node_type: "export_statement",
+        },
+        {
+          name: "func2" as SymbolName,
+          symbol: func2,
+          symbol_name: "func2" as SymbolName,
+          location: location(file_a, 2, 0),
+          kind: "named",
+          exports: [],
+          modifiers: [],
+          language: "typescript",
+          node_type: "export_statement",
+        },
       ];
 
       const file_b = "b.ts" as FilePath;
-      const imports_b: Import[] = [{
-        kind: "namespace",
-        source: "./a" as FilePath,
-        location: location(file_b, 1, 0),
-        namespace_name: "utils" as NamespaceName,
-        modifiers: [],
-        language: "typescript",
-        node_type: "import_statement",
-      }];
+      const imports_b: Import[] = [
+        {
+          kind: "namespace",
+          source: "./a" as FilePath,
+          location: location(file_b, 1, 0),
+          namespace_name: "utils" as NamespaceName,
+          modifiers: [],
+          language: "typescript",
+          node_type: "import_statement",
+        },
+      ];
 
       const indices = new Map<FilePath, SemanticIndex>([
         [file_a, create_test_index(file_a, { exports: exports_a })],
@@ -273,25 +315,32 @@ describe("Symbol Resolution Pipeline", () => {
       ]);
 
       const result = resolve_symbols({ indices });
-      expect(result.phases.imports.imports).toBeDefined();
+      expect(result.phases.imports).toBeDefined();
     });
   });
 
   describe("Phase 2: Function Call Resolution", () => {
     it("should resolve function calls via lexical scope", () => {
       const file_path = "test.ts" as FilePath;
-      const func_id = symbol_id("function", "myFunc", location(file_path, 1, 0));
+      const func_id = symbol_id(
+        "function",
+        "myFunc",
+        location(file_path, 1, 0)
+      );
       const symbols = new Map<SymbolId, SymbolDefinition>([
-        [func_id, {
-          id: func_id,
-          name: "myFunc" as SymbolName,
-          kind: "function",
-          location: location(file_path, 1, 0),
-          scope_id: "scope:global:test.ts:0:0" as ScopeId,
-          is_hoisted: true,
-          is_exported: false,
-          is_imported: false,
-        }],
+        [
+          func_id,
+          {
+            id: func_id,
+            name: "myFunc" as SymbolName,
+            kind: "function",
+            location: location(file_path, 1, 0),
+            scope_id: "scope:global:test.ts:0:0" as ScopeId,
+            is_hoisted: true,
+            is_exported: false,
+            is_imported: false,
+          },
+        ],
       ]);
 
       // Create call reference
@@ -302,7 +351,10 @@ describe("Symbol Resolution Pipeline", () => {
         call_type: "function",
       };
 
-      const index = create_test_index(file_path, { symbols, calls: [call_ref] });
+      const index = create_test_index(file_path, {
+        symbols,
+        calls: [call_ref],
+      });
       const indices = new Map([[file_path, index]]);
       const result = resolve_symbols({ indices });
 
@@ -315,33 +367,42 @@ describe("Symbol Resolution Pipeline", () => {
       const file_a = "a.ts" as FilePath;
       const file_b = "b.ts" as FilePath;
 
-      const func_id = symbol_id("function", "importedFunc", location(file_a, 1, 0));
+      const func_id = symbol_id(
+        "function",
+        "importedFunc",
+        location(file_a, 1, 0)
+      );
       const symbols_a = new Map<SymbolId, SymbolDefinition>([
-        [func_id, {
-          id: func_id,
-          name: "importedFunc" as SymbolName,
-          kind: "function",
-          location: location(file_a, 1, 0),
-          scope_id: "scope:global:a.ts:0:0" as ScopeId,
-          is_hoisted: false,
-          is_exported: true,
-          is_imported: false,
-        }],
+        [
+          func_id,
+          {
+            id: func_id,
+            name: "importedFunc" as SymbolName,
+            kind: "function",
+            location: location(file_a, 1, 0),
+            scope_id: "scope:global:a.ts:0:0" as ScopeId,
+            is_hoisted: false,
+            is_exported: true,
+            is_imported: false,
+          },
+        ],
       ]);
 
       const index_a = create_test_index(file_a, {
         symbols: symbols_a,
-        exports: [{
-          name: "importedFunc" as SymbolName,
-          symbol: func_id,
-          symbol_name: "importedFunc" as SymbolName,
-          exports: [],
-          modifiers: [],
-          language: "typescript",
-          node_type: "export_statement",
-          location: location(file_a, 1, 0),
-          kind: "named",
-        }],
+        exports: [
+          {
+            name: "importedFunc" as SymbolName,
+            symbol: func_id,
+            symbol_name: "importedFunc" as SymbolName,
+            exports: [],
+            modifiers: [],
+            language: "typescript",
+            node_type: "export_statement",
+            location: location(file_a, 1, 0),
+            kind: "named",
+          },
+        ],
       });
 
       // Create call reference for file B
@@ -353,15 +414,19 @@ describe("Symbol Resolution Pipeline", () => {
       };
 
       const index_b = create_test_index(file_b, {
-        imports: [{
-          kind: "named",
-          source: "./a" as FilePath,
-          location: location(file_b, 1, 0),
-          imports: [{ name: "importedFunc" as SymbolName, is_type_only: false }],
-          modifiers: [],
-          language: "typescript",
-          node_type: "import_statement",
-        }],
+        imports: [
+          {
+            kind: "named",
+            source: "./a" as FilePath,
+            location: location(file_b, 1, 0),
+            imports: [
+              { name: "importedFunc" as SymbolName, is_type_only: false },
+            ],
+            modifiers: [],
+            language: "typescript",
+            node_type: "import_statement",
+          },
+        ],
         calls: [call_ref],
       });
 
@@ -376,19 +441,26 @@ describe("Symbol Resolution Pipeline", () => {
 
     it("should handle hoisted function declarations", () => {
       const file_path = "test.ts" as FilePath;
-      const func_id = symbol_id("function", "hoistedFunc", location(file_path, 10, 0));
+      const func_id = symbol_id(
+        "function",
+        "hoistedFunc",
+        location(file_path, 10, 0)
+      );
 
       const symbols = new Map<SymbolId, SymbolDefinition>([
-        [func_id, {
-          id: func_id,
-          name: "hoistedFunc" as SymbolName,
-          kind: "function",
-          location: location(file_path, 10, 0), // Declared at line 10
-          scope_id: "scope:global:test.ts:0:0" as ScopeId,
-          is_hoisted: true, // Important: marked as hoisted
-          is_exported: false,
-          is_imported: false,
-        }],
+        [
+          func_id,
+          {
+            id: func_id,
+            name: "hoistedFunc" as SymbolName,
+            kind: "function",
+            location: location(file_path, 10, 0), // Declared at line 10
+            scope_id: "scope:global:test.ts:0:0" as ScopeId,
+            is_hoisted: true, // Important: marked as hoisted
+            is_exported: false,
+            is_imported: false,
+          },
+        ],
       ]);
 
       // Function called before declaration (line 5)
@@ -399,7 +471,10 @@ describe("Symbol Resolution Pipeline", () => {
         call_type: "function",
       };
 
-      const index = create_test_index(file_path, { symbols, calls: [call_ref] });
+      const index = create_test_index(file_path, {
+        symbols,
+        calls: [call_ref],
+      });
       const indices = new Map([[file_path, index]]);
 
       const result = resolve_symbols({ indices });
@@ -501,18 +576,23 @@ describe("Symbol Resolution Pipeline", () => {
       ];
 
       const local_type_flow: LocalTypeFlowData = {
-        constructor_calls: [{
-          location: ctor_loc,
-          class_name: "MyClass" as SymbolName,
-          scope_id: "scope:global:test.ts:0:0" as ScopeId,
-          argument_count: 0,
-        }],
+        constructor_calls: [
+          {
+            location: ctor_loc,
+            class_name: "MyClass" as SymbolName,
+            scope_id: "scope:global:test.ts:0:0" as ScopeId,
+            argument_count: 0,
+          },
+        ],
         assignments: [],
         returns: [],
         call_assignments: [],
       };
 
-      const index = create_test_index(file_path, { local_types, local_type_flow });
+      const index = create_test_index(file_path, {
+        local_types,
+        local_type_flow,
+      });
       const indices = new Map([[file_path, index]]);
 
       const result = resolve_symbols({ indices });
@@ -525,29 +605,39 @@ describe("Symbol Resolution Pipeline", () => {
     it("should resolve method calls", () => {
       const file_path = "test.ts" as FilePath;
       const class_id = symbol_id("class", "MyClass", location(file_path, 1, 0));
-      const method_id = symbol_id("method", "myMethod", location(file_path, 2, 2));
+      const method_id = symbol_id(
+        "method",
+        "myMethod",
+        location(file_path, 2, 2)
+      );
 
       const symbols = new Map<SymbolId, SymbolDefinition>([
-        [class_id, {
-          id: class_id,
-          name: "MyClass" as SymbolName,
-          kind: "class",
-          location: location(file_path, 1, 0),
-          scope_id: "scope:global:test.ts:0:0" as ScopeId,
-          is_hoisted: false,
-          is_exported: false,
-          is_imported: false,
-        }],
-        [method_id, {
-          id: method_id,
-          name: "myMethod" as SymbolName,
-          kind: "method",
-          location: location(file_path, 2, 2),
-          scope_id: "scope:class:test.ts:1:0" as ScopeId,
-          is_hoisted: false,
-          is_exported: false,
-          is_imported: false,
-        }],
+        [
+          class_id,
+          {
+            id: class_id,
+            name: "MyClass" as SymbolName,
+            kind: "class",
+            location: location(file_path, 1, 0),
+            scope_id: "scope:global:test.ts:0:0" as ScopeId,
+            is_hoisted: false,
+            is_exported: false,
+            is_imported: false,
+          },
+        ],
+        [
+          method_id,
+          {
+            id: method_id,
+            name: "myMethod" as SymbolName,
+            kind: "method",
+            location: location(file_path, 2, 2),
+            scope_id: "scope:class:test.ts:1:0" as ScopeId,
+            is_hoisted: false,
+            is_exported: false,
+            is_imported: false,
+          },
+        ],
       ]);
 
       const member_access: MemberAccessReference = {
@@ -563,7 +653,7 @@ describe("Symbol Resolution Pipeline", () => {
 
       const index = create_test_index(file_path, {
         symbols,
-        member_accesses: [member_access]
+        member_accesses: [member_access],
       });
       const indices = new Map([[file_path, index]]);
 
@@ -578,25 +668,30 @@ describe("Symbol Resolution Pipeline", () => {
       const class_id = symbol_id("class", "MyClass", location(file_path, 1, 0));
 
       const symbols = new Map<SymbolId, SymbolDefinition>([
-        [class_id, {
-          id: class_id,
-          name: "MyClass" as SymbolName,
-          kind: "class",
-          location: location(file_path, 1, 0),
-          scope_id: "scope:global:test.ts:0:0" as ScopeId,
-          is_hoisted: false,
-          is_exported: false,
-          is_imported: false,
-        }],
+        [
+          class_id,
+          {
+            id: class_id,
+            name: "MyClass" as SymbolName,
+            kind: "class",
+            location: location(file_path, 1, 0),
+            scope_id: "scope:global:test.ts:0:0" as ScopeId,
+            is_hoisted: false,
+            is_exported: false,
+            is_imported: false,
+          },
+        ],
       ]);
 
       const local_type_flow: LocalTypeFlowData = {
-        constructor_calls: [{
-          location: location(file_path, 5, 0),
-          class_name: "MyClass" as SymbolName,
-          scope_id: "scope:global:test.ts:0:0" as ScopeId,
-          argument_count: 0,
-        }],
+        constructor_calls: [
+          {
+            location: location(file_path, 5, 0),
+            class_name: "MyClass" as SymbolName,
+            scope_id: "scope:global:test.ts:0:0" as ScopeId,
+            argument_count: 0,
+          },
+        ],
         assignments: [],
         returns: [],
         call_assignments: [],
@@ -618,76 +713,97 @@ describe("Symbol Resolution Pipeline", () => {
 
       // File A: exports a class with methods
       const class_id = class_symbol("Utils", location(file_a, 1, 0));
-      const method_id = method_symbol("process", "Utils", location(file_a, 2, 2));
+      const method_id = method_symbol(
+        "process",
+        "Utils",
+        location(file_a, 2, 2)
+      );
 
       const symbols_a = new Map<SymbolId, SymbolDefinition>([
-        [class_id, {
-          id: class_id,
-          name: "Utils" as SymbolName,
-          kind: "class",
-          location: location(file_a, 1, 0),
-          scope_id: "scope:global:utils.ts:0:0" as ScopeId,
-          is_hoisted: false,
-          is_exported: true,
-          is_imported: false,
-        }],
-        [method_id, {
-          id: method_id,
-          name: "process" as SymbolName,
-          kind: "method",
-          location: location(file_a, 2, 2),
-          scope_id: "scope:class:utils.ts:1:0" as ScopeId,
-          is_hoisted: false,
-          is_exported: false,
-          is_imported: false,
-        }],
-      ]);
-
-      const local_types_a: LocalTypeInfo[] = [{
-        type_name: "Utils" as SymbolName,
-        kind: "class",
-        location: location(file_a, 1, 0),
-        direct_members: new Map([
-          ["process" as SymbolName, {
+        [
+          class_id,
+          {
+            id: class_id,
+            name: "Utils" as SymbolName,
+            kind: "class",
+            location: location(file_a, 1, 0),
+            scope_id: "scope:global:utils.ts:0:0" as ScopeId,
+            is_hoisted: false,
+            is_exported: true,
+            is_imported: false,
+          },
+        ],
+        [
+          method_id,
+          {
+            id: method_id,
+            name: "process" as SymbolName,
             kind: "method",
             location: location(file_a, 2, 2),
-            is_static: false,
-            is_optional: false,
-            name: "process" as SymbolName,
-          }]
-        ]),
-      }];
+            scope_id: "scope:class:utils.ts:1:0" as ScopeId,
+            is_hoisted: false,
+            is_exported: false,
+            is_imported: false,
+          },
+        ],
+      ]);
 
-      const exports_a: Export[] = [{
-        name: "Utils" as SymbolName,
-        symbol: class_id,
-        symbol_name: "Utils" as SymbolName,
-        location: location(file_a, 1, 0),
-        kind: "named",
-        exports: [],
-        modifiers: [],
-        language: "typescript",
-        node_type: "export_statement",
-      }];
+      const local_types_a: LocalTypeInfo[] = [
+        {
+          type_name: "Utils" as SymbolName,
+          kind: "class",
+          location: location(file_a, 1, 0),
+          direct_members: new Map([
+            [
+              "process" as SymbolName,
+              {
+                kind: "method",
+                location: location(file_a, 2, 2),
+                is_static: false,
+                is_optional: false,
+                name: "process" as SymbolName,
+              },
+            ],
+          ]),
+        },
+      ];
+
+      const exports_a: Export[] = [
+        {
+          name: "Utils" as SymbolName,
+          symbol: class_id,
+          symbol_name: "Utils" as SymbolName,
+          location: location(file_a, 1, 0),
+          kind: "named",
+          exports: [],
+          modifiers: [],
+          language: "typescript",
+          node_type: "export_statement",
+        },
+      ];
 
       // File B: imports and uses the class
-      const imports_b: Import[] = [{
-        kind: "named",
-        source: "./utils" as FilePath,
-        location: location(file_b, 1, 0),
-        imports: [{ name: "Utils" as SymbolName, is_type_only: false }],
-        modifiers: [],
-        language: "typescript",
-        node_type: "import_statement",
-      }];
+      const imports_b: Import[] = [
+        {
+          kind: "named",
+          source: "./utils" as FilePath,
+          location: location(file_b, 1, 0),
+          imports: [{ name: "Utils" as SymbolName, is_type_only: false }],
+          modifiers: [],
+          language: "typescript",
+          node_type: "import_statement",
+        },
+      ];
 
       const local_type_flow_b: LocalTypeFlowData = {
-        constructor_calls: [{
-          location: location(file_b, 5, 0),
-          class_name: "Utils" as SymbolName,
-          scope_id: "scope:global:app.ts:0:0" as ScopeId,
-          argument_count: 0,
-        }],
+        constructor_calls: [
+          {
+            location: location(file_b, 5, 0),
+            class_name: "Utils" as SymbolName,
+            scope_id: "scope:global:app.ts:0:0" as ScopeId,
+            argument_count: 0,
+          },
+        ],
         assignments: [],
         returns: [],
         call_assignments: [],
@@ -724,7 +840,7 @@ describe("Symbol Resolution Pipeline", () => {
       const result = resolve_symbols({ indices });
 
       // Verify all phases produced results
-      expect(result.phases.imports.imports).toBeDefined();
+      expect(result.phases.imports).toBeDefined();
       expect(result.phases.functions.function_calls).toBeDefined();
       expect(result.phases.types.symbol_types).toBeDefined();
       expect(result.phases.methods.method_calls).toBeDefined();
@@ -752,19 +868,26 @@ describe("Symbol Resolution Pipeline", () => {
 
     it("should build reverse reference mapping", () => {
       const file_path = "test.ts" as FilePath;
-      const func_id = symbol_id("function", "targetFunc", location(file_path, 1, 0));
+      const func_id = symbol_id(
+        "function",
+        "targetFunc",
+        location(file_path, 1, 0)
+      );
 
       const symbols = new Map<SymbolId, SymbolDefinition>([
-        [func_id, {
-          id: func_id,
-          name: "targetFunc" as SymbolName,
-          kind: "function",
-          location: location(file_path, 1, 0),
-          scope_id: "scope:global:test.ts:0:0" as ScopeId,
-          is_hoisted: true,
-          is_exported: false,
-          is_imported: false,
-        }],
+        [
+          func_id,
+          {
+            id: func_id,
+            name: "targetFunc" as SymbolName,
+            kind: "function",
+            location: location(file_path, 1, 0),
+            scope_id: "scope:global:test.ts:0:0" as ScopeId,
+            is_hoisted: true,
+            is_exported: false,
+            is_imported: false,
+          },
+        ],
       ]);
 
       // Multiple calls to the same function
@@ -796,5 +919,4 @@ describe("Symbol Resolution Pipeline", () => {
       }
     });
   });
-
 });

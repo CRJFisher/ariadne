@@ -23,9 +23,41 @@ import type {
   ScopeId,
 } from "@ariadnejs/types";
 import * as fs from "fs";
+import type { Stats } from "fs";
 
 // Mock fs module
 vi.mock("fs");
+
+// Helper to create proper Stats mock
+function createStatsMock(isDir: boolean): Stats {
+  return {
+    isDirectory: () => isDir,
+    isFile: () => !isDir,
+    atimeMs: 0,
+    mtimeMs: 0,
+    ctimeMs: 0,
+    birthtimeMs: 0,
+    dev: 0,
+    ino: 0,
+    mode: 0,
+    nlink: 0,
+    uid: 0,
+    gid: 0,
+    rdev: 0,
+    size: 0,
+    blksize: 0,
+    blocks: 0,
+    atime: new Date(),
+    mtime: new Date(),
+    ctime: new Date(),
+    birthtime: new Date(),
+    isBlockDevice: () => false,
+    isCharacterDevice: () => false,
+    isSymbolicLink: () => false,
+    isFIFO: () => false,
+    isSocket: () => false,
+  };
+}
 
 /**
  * Helper to create a semantic index with imports and exports
@@ -150,7 +182,7 @@ describe("Language Handler Integration", () => {
       const result = resolve_imports(context);
 
       // Should resolve the TypeScript import to the JavaScript export
-      const mainImports = result.imports.get(
+      const mainImports = result.get(
         "/project/src/main.ts" as FilePath
       );
       expect(mainImports).toBeDefined();
@@ -234,7 +266,7 @@ describe("Language Handler Integration", () => {
       const context = { indices };
       const result = resolve_imports(context);
 
-      const jsImports = result.imports.get("/project/js/app.js" as FilePath);
+      const jsImports = result.get("/project/js/app.js" as FilePath);
       expect(jsImports?.get("Config" as SymbolName)).toBe("types#Config");
     });
   });
@@ -362,7 +394,7 @@ describe("Language Handler Integration", () => {
       const result = resolve_imports(context);
 
       // Check middleware resolved the import from core
-      const middlewareImports = result.imports.get(
+      const middlewareImports = result.get(
         "/project/src/middleware.js" as FilePath
       );
       expect(middlewareImports?.get("process" as SymbolName)).toBe(
@@ -477,8 +509,8 @@ describe("Language Handler Integration", () => {
       const result = resolve_imports(context);
 
       // Both imports should be resolved
-      const a_imports = result.imports.get("/project/a.js" as FilePath);
-      const b_imports = result.imports.get("/project/b.js" as FilePath);
+      const a_imports = result.get("/project/a.js" as FilePath);
+      const b_imports = result.get("/project/b.js" as FilePath);
 
       expect(a_imports?.get("funcB" as SymbolName)).toBe("b#funcB");
       expect(b_imports?.get("funcA" as SymbolName)).toBe("a#funcA");
@@ -523,7 +555,7 @@ describe("Language Handler Integration", () => {
       const result = resolve_imports(context);
 
       // Should have empty or no imports for the file
-      const mainImports = result.imports.get("/project/main.js" as FilePath);
+      const mainImports = result.get("/project/main.js" as FilePath);
       expect(mainImports?.size ?? 0).toBe(0);
     });
 
@@ -611,7 +643,7 @@ describe("Language Handler Integration", () => {
       const context = { indices };
       const result = resolve_imports(context);
 
-      const mainImports = result.imports.get("/project/main.js" as FilePath);
+      const mainImports = result.get("/project/main.js" as FilePath);
       expect(mainImports?.get("debounce" as SymbolName)).toBe(
         "lodash#debounce"
       );
@@ -687,7 +719,7 @@ describe("Language Handler Integration", () => {
       const result = resolve_imports(context);
 
       // Dynamic imports should still be resolved
-      const mainImportMap = result.imports.get("/project/main.js" as FilePath);
+      const mainImportMap = result.get("/project/main.js" as FilePath);
       expect(mainImportMap?.get("LazyModule" as SymbolName)).toBe(
         "lazy#default"
       );
@@ -709,10 +741,7 @@ describe("Language Handler Integration", () => {
         return false;
       });
 
-      mockStats.mockReturnValue({
-        isDirectory: () => false,
-        isFile: () => true,
-      });
+      mockStats.mockReturnValue(createStatsMock(false));
 
       const indices = new Map<FilePath, SemanticIndex>();
 
@@ -785,7 +814,7 @@ describe("Language Handler Integration", () => {
 
       // Verify imports are resolved
       for (let i = 0; i < FILE_COUNT - 1; i++) {
-        const fileImports = result.imports.get(
+        const fileImports = result.get(
           `/project/file${i}.js` as FilePath
         );
         expect(fileImports?.get(`func${i + 1}` as SymbolName)).toBe(
@@ -808,10 +837,7 @@ describe("Language Handler Integration", () => {
         return false;
       });
 
-      mockStats.mockReturnValue({
-        isDirectory: () => false,
-        isFile: () => true,
-      });
+      mockStats.mockReturnValue(createStatsMock(false));
 
       const indices = new Map<FilePath, SemanticIndex>();
       const DEPTH = 20;
@@ -885,7 +911,7 @@ describe("Language Handler Integration", () => {
       for (let i = 0; i < DEPTH - 1; i++) {
         const fileName = String.fromCharCode(65 + i);
         const nextFileName = String.fromCharCode(66 + i);
-        const fileImports = result.imports.get(
+        const fileImports = result.get(
           `/project/${fileName}.js` as FilePath
         );
         expect(fileImports?.get(`func${nextFileName}` as SymbolName)).toBe(

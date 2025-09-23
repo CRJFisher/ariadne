@@ -43,7 +43,11 @@ import {
 /**
  * Helper function to create a test location
  */
-function create_location(file: FilePath, line: number, column: number): Location {
+function create_location(
+  file: FilePath,
+  line: number,
+  column: number
+): Location {
   return {
     file_path: file,
     line,
@@ -61,12 +65,29 @@ function create_test_resolved_symbols(): ResolvedSymbols {
   const file2 = "src/utils.ts" as FilePath;
   const file3 = "src/models.ts" as FilePath;
 
-  const func1 = function_symbol("processData" as SymbolName, create_location(file1, 10, 5));
-  const func2 = function_symbol("formatOutput" as SymbolName, create_location(file2, 5, 10));
-  const class1 = class_symbol("DataModel" as SymbolName, create_location(file3, 1, 0));
-  const method1 = method_symbol("save" as SymbolName, "DataModel" as SymbolName, create_location(file3, 5, 2));
+  const func1 = function_symbol(
+    "processData" as SymbolName,
+    create_location(file1, 10, 5)
+  );
+  const func2 = function_symbol(
+    "formatOutput" as SymbolName,
+    create_location(file2, 5, 10)
+  );
+  const class1 = class_symbol(
+    "DataModel" as SymbolName,
+    create_location(file3, 1, 0)
+  );
+  const method1 = method_symbol(
+    "save" as SymbolName,
+    "DataModel" as SymbolName,
+    create_location(file3, 5, 2)
+  );
 
-  const type1 = defined_type_id(TypeCategory.CLASS, "DataModel" as SymbolName, create_location(file3, 1, 0));
+  const type1 = defined_type_id(
+    TypeCategory.CLASS,
+    "DataModel" as SymbolName,
+    create_location(file3, 1, 0)
+  );
 
   // Build import map
   const imports = new Map<FilePath, ReadonlyMap<SymbolName, SymbolId>>();
@@ -77,14 +98,8 @@ function create_test_resolved_symbols(): ResolvedSymbols {
 
   // Build function calls map
   const function_calls = new Map();
-  function_calls.set(
-    location_key(create_location(file1, 15, 20)),
-    func2
-  );
-  function_calls.set(
-    location_key(create_location(file1, 20, 10)),
-    func1
-  );
+  function_calls.set(location_key(create_location(file1, 15, 20)), func2);
+  function_calls.set(location_key(create_location(file1, 20, 10)), func1);
 
   // Build method calls map
   const method_calls = new Map<Location, SymbolId>();
@@ -125,26 +140,44 @@ function create_test_resolved_symbols(): ResolvedSymbols {
 
   return {
     resolved_references: locationMapToKeyMap(resolved_references),
-    references_to_symbol: references_to_symbol as ReadonlyMap<SymbolId, readonly Location[]>,
+    references_to_symbol: references_to_symbol as ReadonlyMap<
+      SymbolId,
+      readonly Location[]
+    >,
     unresolved_references: new Map() as ReadonlyMap<LocationKey, SymbolId>,
     phases: {
-      imports: { imports: imports as ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> },
+      imports: imports,
       functions: {
         function_calls: locationMapToKeyMap(function_calls),
-        calls_to_function: new Map() as ReadonlyMap<SymbolId, readonly Location[]>,
+        calls_to_function: new Map() as ReadonlyMap<
+          SymbolId,
+          readonly Location[]
+        >,
       },
       types: {
         symbol_types: symbol_types as ReadonlyMap<SymbolId, TypeId>,
         reference_types: locationMapToKeyMap(reference_types),
-        type_members: type_members as ReadonlyMap<TypeId, ReadonlyMap<SymbolName, SymbolId>>,
+        type_members: type_members as ReadonlyMap<
+          TypeId,
+          ReadonlyMap<SymbolName, SymbolId>
+        >,
         constructors: constructors as ReadonlyMap<TypeId, SymbolId>,
-        inheritance_hierarchy: new Map() as ReadonlyMap<TypeId, readonly TypeId[]>,
-        interface_implementations: new Map() as ReadonlyMap<TypeId, readonly TypeId[]>,
+        inheritance_hierarchy: new Map() as ReadonlyMap<
+          TypeId,
+          readonly TypeId[]
+        >,
+        interface_implementations: new Map() as ReadonlyMap<
+          TypeId,
+          readonly TypeId[]
+        >,
       },
       methods: {
         method_calls: locationMapToKeyMap(method_calls),
         constructor_calls: locationMapToKeyMap(constructor_calls),
-        calls_to_method: new Map() as ReadonlyMap<SymbolId, readonly Location[]>,
+        calls_to_method: new Map() as ReadonlyMap<
+          SymbolId,
+          readonly Location[]
+        >,
       },
     },
   };
@@ -154,7 +187,10 @@ describe("Data Export Module", () => {
   describe("export_symbol_resolution_data", () => {
     it("should export data in JSON format", () => {
       const resolved_symbols = create_test_resolved_symbols();
-      const json_export = export_symbol_resolution_data(resolved_symbols, "json");
+      const json_export = export_symbol_resolution_data(
+        resolved_symbols,
+        "json"
+      );
 
       expect(json_export).toBeTruthy();
       expect(() => JSON.parse(json_export)).not.toThrow();
@@ -172,18 +208,21 @@ describe("Data Export Module", () => {
 
     it("should export imports correctly", () => {
       const resolved_symbols = create_test_resolved_symbols();
-      const json_export = export_symbol_resolution_data(resolved_symbols, "json");
+      const json_export = export_symbol_resolution_data(
+        resolved_symbols,
+        "json"
+      );
       const parsed: ExportedSymbolResolution = JSON.parse(json_export);
 
       expect(parsed.imports).toBeDefined();
-      expect(parsed.imports.imports).toHaveLength(2);
+      expect(parsed.imports).toHaveLength(2);
 
       const import_entries = parsed.imports.imports;
       const has_format_output = import_entries.some(
-        imp => imp.imported_name === "formatOutput"
+        (imp) => imp.imported_name === "formatOutput"
       );
       const has_data_model = import_entries.some(
-        imp => imp.imported_name === "DataModel"
+        (imp) => imp.imported_name === "DataModel"
       );
 
       expect(has_format_output).toBe(true);
@@ -192,7 +231,10 @@ describe("Data Export Module", () => {
 
     it("should export function calls correctly", () => {
       const resolved_symbols = create_test_resolved_symbols();
-      const json_export = export_symbol_resolution_data(resolved_symbols, "json");
+      const json_export = export_symbol_resolution_data(
+        resolved_symbols,
+        "json"
+      );
       const parsed: ExportedSymbolResolution = JSON.parse(json_export);
 
       expect(parsed.function_calls).toBeDefined();
@@ -205,7 +247,10 @@ describe("Data Export Module", () => {
 
     it("should export method calls correctly", () => {
       const resolved_symbols = create_test_resolved_symbols();
-      const json_export = export_symbol_resolution_data(resolved_symbols, "json");
+      const json_export = export_symbol_resolution_data(
+        resolved_symbols,
+        "json"
+      );
       const parsed: ExportedSymbolResolution = JSON.parse(json_export);
 
       expect(parsed.method_calls).toBeDefined();
@@ -218,7 +263,10 @@ describe("Data Export Module", () => {
 
     it("should export constructor calls correctly", () => {
       const resolved_symbols = create_test_resolved_symbols();
-      const json_export = export_symbol_resolution_data(resolved_symbols, "json");
+      const json_export = export_symbol_resolution_data(
+        resolved_symbols,
+        "json"
+      );
       const parsed: ExportedSymbolResolution = JSON.parse(json_export);
 
       expect(parsed.constructor_calls).toBeDefined();
@@ -231,7 +279,10 @@ describe("Data Export Module", () => {
 
     it("should export type information correctly", () => {
       const resolved_symbols = create_test_resolved_symbols();
-      const json_export = export_symbol_resolution_data(resolved_symbols, "json");
+      const json_export = export_symbol_resolution_data(
+        resolved_symbols,
+        "json"
+      );
       const parsed: ExportedSymbolResolution = JSON.parse(json_export);
 
       expect(parsed.type_information).toBeDefined();
@@ -245,7 +296,10 @@ describe("Data Export Module", () => {
 
     it("should export symbol definitions with references", () => {
       const resolved_symbols = create_test_resolved_symbols();
-      const json_export = export_symbol_resolution_data(resolved_symbols, "json");
+      const json_export = export_symbol_resolution_data(
+        resolved_symbols,
+        "json"
+      );
       const parsed: ExportedSymbolResolution = JSON.parse(json_export);
 
       expect(parsed.symbol_definitions).toBeDefined();
@@ -278,7 +332,7 @@ describe("Data Export Module", () => {
         references_to_symbol: new Map(),
         unresolved_references: new Map(),
         phases: {
-          imports: { imports: new Map() },
+          imports: new Map(),
           functions: {
             function_calls: new Map(),
             calls_to_function: new Map(),
@@ -305,27 +359,33 @@ describe("Data Export Module", () => {
       expect(parsed.metadata.total_files).toBe(0);
       expect(parsed.metadata.total_symbols).toBe(0);
       expect(parsed.metadata.total_resolved_references).toBe(0);
-      expect(parsed.imports.imports).toHaveLength(0);
+      expect(parsed.imports).toHaveLength(0);
       expect(parsed.function_calls.calls).toHaveLength(0);
     });
 
     it("should properly escape CSV values", () => {
       // Create test data with special characters directly instead of mutating
       const special_file = 'src/"special".ts' as FilePath;
-      const quoted_symbol = function_symbol('"quoted"' as SymbolName, create_location(special_file, 1, 0));
+      const quoted_symbol = function_symbol(
+        '"quoted"' as SymbolName,
+        create_location(special_file, 1, 0)
+      );
 
       const special_imports = new Map<SymbolName, SymbolId>();
       special_imports.set('"quoted"' as SymbolName, quoted_symbol);
 
       const imports = new Map<FilePath, ReadonlyMap<SymbolName, SymbolId>>();
-      imports.set(special_file, special_imports as ReadonlyMap<SymbolName, SymbolId>);
+      imports.set(
+        special_file,
+        special_imports as ReadonlyMap<SymbolName, SymbolId>
+      );
 
       const resolved_symbols: ResolvedSymbols = {
         resolved_references: new Map(),
         references_to_symbol: new Map(),
         unresolved_references: new Map(),
         phases: {
-          imports: { imports: imports as ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> },
+          imports: imports,
           functions: {
             function_calls: new Map(),
             calls_to_function: new Map(),
@@ -350,8 +410,8 @@ describe("Data Export Module", () => {
 
       // Check that special characters are present in CSV
       // Note: CSV escaping might be different from expected
-      expect(csv_export).toContain('special');
-      expect(csv_export).toContain('quoted');
+      expect(csv_export).toContain("special");
+      expect(csv_export).toContain("quoted");
     });
   });
 
@@ -369,7 +429,7 @@ describe("Data Export Module", () => {
         references_to_symbol: new Map(),
         unresolved_references: new Map(),
         phases: {
-          imports: { imports: new Map() },
+          imports: new Map(),
           functions: {
             function_calls: new Map(),
             calls_to_function: new Map(),
@@ -404,7 +464,9 @@ describe("Data Export Module", () => {
       );
 
       // Build new maps with the shared symbol included
-      const resolved_references = new Map(base_resolved_symbols.resolved_references);
+      const resolved_references = new Map(
+        base_resolved_symbols.resolved_references
+      );
       resolved_references.set(
         location_key(create_location("src/main.ts" as FilePath, 30, 10)),
         shared_symbol
@@ -414,7 +476,9 @@ describe("Data Export Module", () => {
         shared_symbol
       );
 
-      const references_to_symbol = new Map(base_resolved_symbols.references_to_symbol);
+      const references_to_symbol = new Map(
+        base_resolved_symbols.references_to_symbol
+      );
       references_to_symbol.set(shared_symbol, [
         create_location("src/main.ts" as FilePath, 30, 10),
         create_location("src/utils.ts" as FilePath, 40, 10),
@@ -423,8 +487,14 @@ describe("Data Export Module", () => {
       // Create new resolved symbols object with the shared symbol
       const resolved_symbols: ResolvedSymbols = {
         ...base_resolved_symbols,
-        resolved_references: resolved_references as ReadonlyMap<LocationKey, SymbolId>,
-        references_to_symbol: references_to_symbol as ReadonlyMap<SymbolId, readonly Location[]>,
+        resolved_references: resolved_references as ReadonlyMap<
+          LocationKey,
+          SymbolId
+        >,
+        references_to_symbol: references_to_symbol as ReadonlyMap<
+          SymbolId,
+          readonly Location[]
+        >,
       };
 
       const count = count_total_symbols(resolved_symbols);
@@ -435,7 +505,10 @@ describe("Data Export Module", () => {
   describe("Location key handling", () => {
     it("should correctly handle LocationKey in function calls map", () => {
       const resolved_symbols = create_test_resolved_symbols();
-      const json_export = export_symbol_resolution_data(resolved_symbols, "json");
+      const json_export = export_symbol_resolution_data(
+        resolved_symbols,
+        "json"
+      );
       const parsed: ExportedSymbolResolution = JSON.parse(json_export);
 
       // Verify that LocationKey-based maps are correctly converted
@@ -455,14 +528,20 @@ describe("Data Export Module", () => {
       // The function_calls map uses LocationKey
       // The method_calls map uses Location
       // Both should be handled correctly
-      const json_export = export_symbol_resolution_data(resolved_symbols, "json");
+      const json_export = export_symbol_resolution_data(
+        resolved_symbols,
+        "json"
+      );
       const parsed: ExportedSymbolResolution = JSON.parse(json_export);
 
       expect(parsed.function_calls.calls).toHaveLength(2);
       expect(parsed.method_calls.calls).toHaveLength(1);
 
       // Both should have proper location objects
-      for (const call of [...parsed.function_calls.calls, ...parsed.method_calls.calls]) {
+      for (const call of [
+        ...parsed.function_calls.calls,
+        ...parsed.method_calls.calls,
+      ]) {
         expect(call.call_location.file_path).toBeDefined();
         expect(call.call_location.line).toBeGreaterThanOrEqual(0);
         expect(call.call_location.column).toBeGreaterThanOrEqual(0);

@@ -6,7 +6,10 @@
  */
 
 import { resolve_symbols } from "../symbol_resolution";
-import { export_symbol_resolution_data, count_total_symbols } from "../data_export";
+import {
+  export_symbol_resolution_data,
+  count_total_symbols,
+} from "../data_export";
 import type { ResolutionInput, ResolvedSymbols } from "../types";
 import type { FilePath, SymbolName, SymbolId } from "@ariadnejs/types";
 import { parse_location_key } from "@ariadnejs/types";
@@ -35,8 +38,12 @@ async function basic_usage_example() {
   console.log("=== Resolution Results ===");
   console.log(`Total files analyzed: ${semantic_indices.size}`);
   console.log(`Total symbols found: ${count_total_symbols(resolved_symbols)}`);
-  console.log(`Resolved references: ${resolved_symbols.resolved_references.size}`);
-  console.log(`Unresolved references: ${resolved_symbols.unresolved_references.size}`);
+  console.log(
+    `Resolved references: ${resolved_symbols.resolved_references.size}`
+  );
+  console.log(
+    `Unresolved references: ${resolved_symbols.unresolved_references.size}`
+  );
 
   // Step 4: Explore phase-specific results
   analyze_import_resolution(resolved_symbols);
@@ -58,7 +65,7 @@ async function basic_usage_example() {
 function analyze_import_resolution(resolved_symbols: ResolvedSymbols) {
   console.log("\n=== Import Resolution Analysis ===");
 
-  const imports = resolved_symbols.phases.imports.imports;
+  const imports = resolved_symbols.phases.imports;
   let total_imports = 0;
 
   for (const [file_path, file_imports] of imports) {
@@ -107,7 +114,7 @@ function analyze_function_calls(resolved_symbols: ResolvedSymbols) {
 
   // Find functions that are never called
   const all_functions = new Set<SymbolId>();
-  for (const indices of resolved_symbols.phases.imports.imports.values()) {
+  for (const indices of resolved_symbols.phases.imports.values()) {
     for (const symbol_id of indices.values()) {
       // Check if it's a function symbol
       if (symbol_id.includes("function:")) {
@@ -117,11 +124,14 @@ function analyze_function_calls(resolved_symbols: ResolvedSymbols) {
   }
 
   const called_functions = new Set(function_calls.values());
-  const uncalled_functions = Array.from(all_functions)
-    .filter(fn => !called_functions.has(fn));
+  const uncalled_functions = Array.from(all_functions).filter(
+    (fn) => !called_functions.has(fn)
+  );
 
   if (uncalled_functions.length > 0) {
-    console.log(`\nFound ${uncalled_functions.length} potentially unused functions`);
+    console.log(
+      `\nFound ${uncalled_functions.length} potentially unused functions`
+    );
   }
 }
 
@@ -147,7 +157,10 @@ function analyze_method_calls(resolved_symbols: ResolvedSymbols) {
     const match = symbol_id.match(/method:([^:]+):/);
     if (match) {
       const class_name = match[1];
-      class_method_calls.set(class_name, (class_method_calls.get(class_name) || 0) + 1);
+      class_method_calls.set(
+        class_name,
+        (class_method_calls.get(class_name) || 0) + 1
+      );
     }
   }
 
@@ -176,10 +189,15 @@ function find_symbol_dependencies(
   // For each reference location, find what symbols are called from there
   for (const ref_location of references) {
     // Check if there are any calls from this location
-    for (const [location_key, called_symbol] of resolved_symbols.resolved_references) {
+    for (const [
+      location_key,
+      called_symbol,
+    ] of resolved_symbols.resolved_references) {
       const location = parse_location_key(location_key);
-      if (location.file_path === ref_location.file_path &&
-          Math.abs(location.line - ref_location.line) < 10) {
+      if (
+        location.file_path === ref_location.file_path &&
+        Math.abs(location.line - ref_location.line) < 10
+      ) {
         dependencies.add(called_symbol);
       }
     }
@@ -198,14 +216,16 @@ function generate_call_graph(resolved_symbols: ResolvedSymbols): CallGraphData {
   const edges: Array<{ from: SymbolId; to: SymbolId }> = [];
 
   // Add all function calls as edges
-  for (const [location_key, called_symbol] of resolved_symbols.phases.functions.function_calls) {
+  for (const [location_key, called_symbol] of resolved_symbols.phases.functions
+    .function_calls) {
     // Find the calling symbol (would need more context in real implementation)
     // For now, we'll just add the called symbol as a node
     nodes.add(called_symbol);
   }
 
   // Add all method calls as edges
-  for (const [location, called_symbol] of resolved_symbols.phases.methods.method_calls) {
+  for (const [location, called_symbol] of resolved_symbols.phases.methods
+    .method_calls) {
     nodes.add(called_symbol);
   }
 
@@ -232,12 +252,14 @@ function generate_call_graph(resolved_symbols: ResolvedSymbols): CallGraphData {
  *
  * Shows how to identify circular import dependencies.
  */
-function detect_circular_dependencies(resolved_symbols: ResolvedSymbols): CircularDependency[] {
+function detect_circular_dependencies(
+  resolved_symbols: ResolvedSymbols
+): CircularDependency[] {
   const circular_deps: CircularDependency[] = [];
   const import_graph = new Map<FilePath, Set<FilePath>>();
 
   // Build import graph
-  for (const [file_path, file_imports] of resolved_symbols.phases.imports.imports) {
+  for (const [file_path, file_imports] of resolved_symbols.phases.imports) {
     const imported_files = new Set<FilePath>();
 
     for (const symbol_id of file_imports.values()) {
@@ -359,17 +381,24 @@ async function load_source_files(directory: string): Promise<any[]> {
   return [];
 }
 
-async function build_semantic_indices(source_files: any[]): Promise<Map<FilePath, SemanticIndex>> {
+async function build_semantic_indices(
+  source_files: any[]
+): Promise<Map<FilePath, SemanticIndex>> {
   // Implementation would build semantic indices from source files
   return new Map();
 }
 
-async function save_exported_data(filename: string, data: string): Promise<void> {
+async function save_exported_data(
+  filename: string,
+  data: string
+): Promise<void> {
   // Implementation would save data to file
   console.log(`Would save ${data.length} bytes to ${filename}`);
 }
 
-function calculate_max_degree(edges: Array<{ from: SymbolId; to: SymbolId }>): number {
+function calculate_max_degree(
+  edges: Array<{ from: SymbolId; to: SymbolId }>
+): number {
   const degree_map = new Map<SymbolId, number>();
 
   for (const edge of edges) {

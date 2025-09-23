@@ -38,7 +38,7 @@ import type {
 import { MethodLookupContext } from "./method_types";
 
 // Helper function to create complete SymbolDefinition objects for tests
-function createTestSymbolDefinition(
+function create_test_symbol_definition(
   id: SymbolId,
   name: SymbolName,
   kind: SymbolDefinition["kind"],
@@ -49,6 +49,7 @@ function createTestSymbolDefinition(
     is_exported?: boolean;
     is_imported?: boolean;
     is_static?: boolean;
+    modifiers?: string[];
   } = {}
 ): SymbolDefinition {
   return {
@@ -61,6 +62,7 @@ function createTestSymbolDefinition(
     is_exported: options.is_exported || false,
     is_imported: options.is_imported || false,
     ...(options.is_static !== undefined && { is_static: options.is_static }),
+    ...(options.modifiers && { modifiers: options.modifiers }),
   };
 }
 
@@ -286,6 +288,7 @@ describe("method_resolution", () => {
           },
         },
         is_optional_chain: false,
+        is_static: true,
       } as MemberAccessReference;
 
       // Setup semantic index
@@ -558,7 +561,7 @@ describe("method_resolution", () => {
         symbols: new Map([
           [
             class_sym,
-            createTestSymbolDefinition(
+            create_test_symbol_definition(
               class_sym,
               "MyClass" as SymbolName,
               "class",
@@ -1193,7 +1196,7 @@ describe("method_resolution", () => {
         access_type: "method",
         object: {},
         is_optional_chain: false,
-        is_static_access: true,
+        is_static: true,
       } as MemberAccessReference;
 
       const context: MethodLookupContext = {
@@ -2624,7 +2627,7 @@ describe("method_resolution", () => {
           symbols: new Map([
             [
               static_method,
-              createTestSymbolDefinition(
+              create_test_symbol_definition(
                 static_method,
                 "staticMethod" as SymbolName,
                 "method",
@@ -2634,16 +2637,17 @@ describe("method_resolution", () => {
             ],
             [
               final_method,
-              createTestSymbolDefinition(
+              create_test_symbol_definition(
                 final_method,
                 "finalMethod" as SymbolName,
                 "method",
-                test_location
+                test_location,
+                { modifiers: ["final"] }
               ),
             ],
             [
               virtual_method,
-              createTestSymbolDefinition(
+              create_test_symbol_definition(
                 virtual_method,
                 "virtualMethod" as SymbolName,
                 "method",

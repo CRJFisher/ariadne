@@ -70,13 +70,10 @@ export function get_type_methods(
 
     switch (symbol_def.kind) {
       case "method":
-        // Check for static modifier if it exists on this symbol type
-        if ('modifiers' in symbol_def && Array.isArray(symbol_def.modifiers)) {
-          if (symbol_def.modifiers.includes("static")) {
-            static_methods.set(member_name, member_symbol);
-          } else {
-            methods.set(member_name, member_symbol);
-          }
+        // Check for static modifier - either in modifiers array or is_static field
+        if (('modifiers' in symbol_def && Array.isArray(symbol_def.modifiers) && symbol_def.modifiers.includes("static")) ||
+            ('is_static' in symbol_def && symbol_def.is_static === true)) {
+          static_methods.set(member_name, member_symbol);
         } else {
           methods.set(member_name, member_symbol);
         }

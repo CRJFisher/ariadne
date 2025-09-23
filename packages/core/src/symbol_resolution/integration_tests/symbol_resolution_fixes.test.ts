@@ -60,12 +60,10 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
       const result = resolve_symbols({ indices });
 
       // Should successfully resolve imports
-      expect(result.phases.imports.imports.size).toBeGreaterThan(0);
-      expect(result.phases.imports.imports.has(main_file.file_path)).toBe(true);
+      expect(result.phases.imports.size).toBeGreaterThan(0);
+      expect(result.phases.imports.has(main_file.file_path)).toBe(true);
 
-      const resolved_imports = result.phases.imports.imports.get(
-        main_file.file_path
-      );
+      const resolved_imports = result.phases.imports.get(main_file.file_path);
       expect(resolved_imports).toBeDefined();
       expect(resolved_imports!.size).toBe(2);
     });
@@ -80,7 +78,7 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
             is_type_only: false,
           },
         ],
-        source: undefined, // Simulate malformed import
+        source: "" as FilePath, // Simulate malformed import with empty source
         location: {
           file_path: "src/main.ts" as FilePath,
           line: 1,
@@ -104,7 +102,7 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
       // Should not crash and should handle gracefully
       const result = resolve_symbols({ indices });
 
-      expect(result.phases.imports.imports.size).toBe(0); // No imports resolved
+      expect(result.phases.imports.size).toBe(0); // No imports resolved
       expect(result.phases.functions).toBeDefined(); // Other phases still work
     });
 
@@ -138,15 +136,15 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
       const result = resolve_symbols({ indices });
 
       // Should resolve imports across language boundaries
-      expect(result.phases.imports.imports.size).toBe(2); // ts and consumer files have imports
+      expect(result.phases.imports.size).toBe(2); // ts and consumer files have imports
 
       // Verify TypeScript can import from JavaScript
-      const ts_imports = result.phases.imports.imports.get(ts_file.file_path);
+      const ts_imports = result.phases.imports.get(ts_file.file_path);
       expect(ts_imports).toBeDefined();
       expect(ts_imports!.has("processData" as SymbolName)).toBe(true);
 
       // Verify JavaScript can import from TypeScript
-      const consumer_imports = result.phases.imports.imports.get(
+      const consumer_imports = result.phases.imports.get(
         consumer_file.file_path
       );
       expect(consumer_imports).toBeDefined();
@@ -308,7 +306,7 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
           file_path: "src/malformed.ts",
           language: "typescript",
           imports: [
-            { ...create_test_named_import("missing", ""), source: null },
+            { ...create_test_named_import("missing", ""), source: "" as FilePath },
           ],
         }),
 
@@ -348,19 +346,17 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
       const result2 = resolve_symbols({ indices: project });
 
       // Results should be consistent
-      expect(result1.phases.imports.imports.size).toBe(
-        result2.phases.imports.imports.size
-      );
+      expect(result1.phases.imports.size).toBe(result2.phases.imports.size);
       expect(result1.phases.functions.function_calls.size).toBe(
         result2.phases.functions.function_calls.size
       );
 
       // Check that the same files have imports resolved
-      for (const file_path of result1.phases.imports.imports.keys()) {
-        expect(result2.phases.imports.imports.has(file_path)).toBe(true);
+      for (const file_path of result1.phases.imports.keys()) {
+        expect(result2.phases.imports.has(file_path)).toBe(true);
 
-        const imports1 = result1.phases.imports.imports.get(file_path)!;
-        const imports2 = result2.phases.imports.imports.get(file_path)!;
+        const imports1 = result1.phases.imports.get(file_path)!;
+        const imports2 = result2.phases.imports.get(file_path)!;
         expect(imports1.size).toBe(imports2.size);
       }
     });
@@ -374,7 +370,7 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
 
       // Phase 1: Import Resolution
       expect(result.phases.imports).toBeDefined();
-      expect(result.phases.imports.imports.size).toBeGreaterThan(0);
+      expect(result.phases.imports.size).toBeGreaterThan(0);
 
       // Phase 2: Function Resolution
       expect(result.phases.functions).toBeDefined();
@@ -390,9 +386,10 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
       expect(result.phases.methods.method_calls).toBeDefined();
 
       // Verify integration - imports should feed into other phases
-      const import_count = Array.from(
-        result.phases.imports.imports.values()
-      ).reduce((sum, imports) => sum + imports.size, 0);
+      const import_count = Array.from(result.phases.imports.values()).reduce(
+        (sum, imports) => sum + imports.size,
+        0
+      );
 
       expect(import_count).toBeGreaterThan(0);
     });
@@ -439,17 +436,17 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
       const result = resolve_symbols({ indices });
 
       // Should handle this realistic scenario correctly
-      expect(result.phases.imports.imports.size).toBe(2); // components and app have imports
+      expect(result.phases.imports.size).toBe(2); // components and app have imports
 
       // Verify specific import resolutions
-      const component_imports = result.phases.imports.imports.get(
+      const component_imports = result.phases.imports.get(
         components_file.file_path
       );
       expect(component_imports).toBeDefined();
       expect(component_imports!.has("debounce" as SymbolName)).toBe(true);
       expect(component_imports!.has("format" as SymbolName)).toBe(true); // aliased import
 
-      const app_imports = result.phases.imports.imports.get(app_file.file_path);
+      const app_imports = result.phases.imports.get(app_file.file_path);
       expect(app_imports).toBeDefined();
       expect(app_imports!.has("Button" as SymbolName)).toBe(true);
       expect(app_imports!.has("throttle" as SymbolName)).toBe(true);

@@ -36,18 +36,24 @@ import type { MemberAccessReference } from "../../semantic_index/references/memb
 /**
  * Helper to create a test project with multiple files
  */
-function create_test_project(files: Array<{
-  path: FilePath;
-  content: {
-    symbols: Array<{ name: string; kind: "function" | "class" | "method" | "variable"; location: Location }>;
-    imports?: Import[];
-    exports?: Export[];
-    calls?: CallReference[];
-    member_accesses?: MemberAccessReference[];
-    local_types?: LocalTypeInfo[];
-    type_flow?: LocalTypeFlowData;
-  };
-}>): Map<FilePath, SemanticIndex> {
+function create_test_project(
+  files: Array<{
+    path: FilePath;
+    content: {
+      symbols: Array<{
+        name: string;
+        kind: "function" | "class" | "method" | "variable";
+        location: Location;
+      }>;
+      imports?: Import[];
+      exports?: Export[];
+      calls?: CallReference[];
+      member_accesses?: MemberAccessReference[];
+      local_types?: LocalTypeInfo[];
+      type_flow?: LocalTypeFlowData;
+    };
+  }>
+): Map<FilePath, SemanticIndex> {
   const indices = new Map<FilePath, SemanticIndex>();
 
   for (const file of files) {
@@ -76,7 +82,13 @@ function create_test_project(files: Array<{
       parent_id: null,
       name: null,
       type: "module",
-      location: { file_path: path, line: 0, column: 0, end_line: 0, end_column: 0 },
+      location: {
+        file_path: path,
+        line: 0,
+        column: 0,
+        end_line: 0,
+        end_column: 0,
+      },
       child_ids: [],
       symbols: new Map(),
     };
@@ -118,7 +130,11 @@ function create_test_project(files: Array<{
   return indices;
 }
 
-function create_symbol_id(kind: string, name: string, location: Location): SymbolId {
+function create_symbol_id(
+  kind: string,
+  name: string,
+  location: Location
+): SymbolId {
   switch (kind) {
     case "function":
       return function_symbol(name as SymbolName, location);
@@ -133,7 +149,11 @@ function create_symbol_id(kind: string, name: string, location: Location): Symbo
   }
 }
 
-function create_location(file_path: FilePath, line: number, column: number): Location {
+function create_location(
+  file_path: FilePath,
+  line: number,
+  column: number
+): Location {
   return {
     file_path,
     line,
@@ -143,7 +163,12 @@ function create_location(file_path: FilePath, line: number, column: number): Loc
   };
 }
 
-function create_local_member_info(name: SymbolName, kind: LocalMemberInfo["kind"], location: Location, symbol_id?: SymbolId): LocalMemberInfo {
+function create_local_member_info(
+  name: SymbolName,
+  kind: LocalMemberInfo["kind"],
+  location: Location,
+  symbol_id?: SymbolId
+): LocalMemberInfo {
   return {
     name,
     kind,
@@ -155,7 +180,6 @@ function create_local_member_info(name: SymbolName, kind: LocalMemberInfo["kind"
 }
 
 describe("Complete Symbol Resolution Pipeline", () => {
-
   describe("Cross-file function call resolution", () => {
     it("should resolve function calls through imports correctly", async () => {
       const utils_path = "src/utils.ts" as FilePath;
@@ -163,67 +187,89 @@ describe("Complete Symbol Resolution Pipeline", () => {
 
       const helper_location = create_location(utils_path, 2, 10);
       const helper_call_location = create_location(main_path, 5, 20);
-      const helper_symbol = function_symbol("helper" as SymbolName, helper_location);
+      const helper_symbol = function_symbol(
+        "helper" as SymbolName,
+        helper_location
+      );
 
       const test_project = create_test_project([
         {
           path: utils_path,
           content: {
             symbols: [
-              { name: "helper", kind: "function", location: helper_location }
+              { name: "helper", kind: "function", location: helper_location },
             ],
-            exports: [{
-              kind: "named",
-              symbol: helper_symbol,
-              symbol_name: "helper" as SymbolName,
-              location: create_location(utils_path, 1, 0),
-              exports: [{ local_name: "helper" as SymbolName, is_type_only: false }],
-              modifiers: [],
-              language: "typescript",
-              node_type: "export_statement",
-            }],
-          }
+            exports: [
+              {
+                kind: "named",
+                symbol: helper_symbol,
+                symbol_name: "helper" as SymbolName,
+                location: create_location(utils_path, 1, 0),
+                exports: [
+                  { local_name: "helper" as SymbolName, is_type_only: false },
+                ],
+                modifiers: [],
+                language: "typescript",
+                node_type: "export_statement",
+              },
+            ],
+          },
         },
         {
           path: main_path,
           content: {
             symbols: [
-              { name: "main", kind: "function", location: create_location(main_path, 4, 10) }
+              {
+                name: "main",
+                kind: "function",
+                location: create_location(main_path, 4, 10),
+              },
             ],
-            imports: [{
-              kind: "named",
-              imports: [{ name: "helper" as SymbolName, is_type_only: false }],
-              source: "./utils" as FilePath,
-              location: create_location(main_path, 1, 10),
-              modifiers: [],
-              language: "typescript",
-              node_type: "import_statement",
-            }],
-            calls: [{
-              location: helper_call_location,
-              name: "helper" as SymbolName,
-              scope_id: `scope:module:${main_path}:0:0` as ScopeId,
-              call_type: "function",
-            }],
-          }
-        }
+            imports: [
+              {
+                kind: "named",
+                imports: [
+                  { name: "helper" as SymbolName, is_type_only: false },
+                ],
+                source: "./utils" as FilePath,
+                location: create_location(main_path, 1, 10),
+                modifiers: [],
+                language: "typescript",
+                node_type: "import_statement",
+              },
+            ],
+            calls: [
+              {
+                location: helper_call_location,
+                name: "helper" as SymbolName,
+                scope_id: `scope:module:${main_path}:0:0` as ScopeId,
+                call_type: "function",
+              },
+            ],
+          },
+        },
       ]);
 
       const resolved_symbols = resolve_symbols({ indices: test_project });
 
       // Verify import resolution
-      const main_file_imports = resolved_symbols.phases.imports.imports.get(main_path);
+      const main_file_imports = resolved_symbols.phases.imports.get(main_path);
       expect(main_file_imports).toBeDefined();
       expect(main_file_imports?.has("helper" as SymbolName)).toBe(true);
-      expect(main_file_imports?.get("helper" as SymbolName)).toBe(helper_symbol);
+      expect(main_file_imports?.get("helper" as SymbolName)).toBe(
+        helper_symbol
+      );
 
       // Verify function call resolution
       const helper_call_key = location_key(helper_call_location);
-      const resolved_function = resolved_symbols.phases.functions.function_calls.get(helper_call_key);
+      const resolved_function =
+        resolved_symbols.phases.functions.function_calls.get(helper_call_key);
       expect(resolved_function).toBe(helper_symbol);
 
       // Verify in combined resolved references
-      expect(resolved_symbols.resolved_references.get(helper_call_key)).toBe(helper_symbol);
+      expect(resolved_symbols.resolved_references.get(helper_call_key)).toBe(
+        helper_symbol
+      );
     });
   });
 
@@ -240,69 +286,129 @@ describe("Complete Symbol Resolution Pipeline", () => {
           path: base_path,
           content: {
             symbols: [
-              { name: "BaseClass", kind: "class", location: create_location(base_path, 1, 10) },
-              { name: "baseMethod", kind: "method", location: base_method_location },
+              {
+                name: "BaseClass",
+                kind: "class",
+                location: create_location(base_path, 1, 10),
+              },
+              {
+                name: "baseMethod",
+                kind: "method",
+                location: base_method_location,
+              },
             ],
-            exports: [{
-              kind: "named",
-              symbol: class_symbol("BaseClass" as SymbolName, create_location(base_path, 1, 10)),
-              symbol_name: "BaseClass" as SymbolName,
-              location: create_location(base_path, 1, 0),
-              exports: [{ local_name: "BaseClass" as SymbolName, is_type_only: false }],
-              modifiers: [],
-              language: "typescript",
-              node_type: "export_statement",
-            }],
-            local_types: [{
-              type_name: "BaseClass" as SymbolName,
-              kind: "class",
-              location: create_location(base_path, 1, 10),
-              direct_members: new Map([
-                ["baseMethod" as SymbolName, create_local_member_info("baseMethod" as SymbolName, "method", base_method_location, method_symbol("baseMethod" as SymbolName, "BaseClass", base_method_location))]
-              ]),
-              extends_clause: [],
-              implements_clause: [],
-            }],
-          }
+            exports: [
+              {
+                kind: "named",
+                symbol: class_symbol(
+                  "BaseClass" as SymbolName,
+                  create_location(base_path, 1, 10)
+                ),
+                symbol_name: "BaseClass" as SymbolName,
+                location: create_location(base_path, 1, 0),
+                exports: [
+                  {
+                    local_name: "BaseClass" as SymbolName,
+                    is_type_only: false,
+                  },
+                ],
+                modifiers: [],
+                language: "typescript",
+                node_type: "export_statement",
+              },
+            ],
+            local_types: [
+              {
+                type_name: "BaseClass" as SymbolName,
+                kind: "class",
+                location: create_location(base_path, 1, 10),
+                direct_members: new Map([
+                  [
+                    "baseMethod" as SymbolName,
+                    create_local_member_info(
+                      "baseMethod" as SymbolName,
+                      "method",
+                      base_method_location,
+                      method_symbol(
+                        "baseMethod" as SymbolName,
+                        "BaseClass",
+                        base_method_location
+                      )
+                    ),
+                  ],
+                ]),
+                extends_clause: [],
+                implements_clause: [],
+              },
+            ],
+          },
         },
         {
           path: derived_path,
           content: {
             symbols: [
-              { name: "DerivedClass", kind: "class", location: create_location(derived_path, 3, 10) },
-              { name: "derivedMethod", kind: "method", location: create_location(derived_path, 5, 10) },
-            ],
-            imports: [{
-              kind: "named",
-              imports: [{ name: "BaseClass" as SymbolName, is_type_only: false }],
-              source: "./base" as FilePath,
-              location: create_location(derived_path, 1, 10),
-              modifiers: [],
-              language: "typescript",
-              node_type: "import_statement",
-            }],
-            local_types: [{
-              type_name: "DerivedClass" as SymbolName,
-              kind: "class",
-              location: create_location(derived_path, 3, 10),
-              direct_members: new Map([
-                ["derivedMethod" as SymbolName, create_local_member_info("derivedMethod" as SymbolName, "method", create_location(derived_path, 5, 10), method_symbol("derivedMethod" as SymbolName, "DerivedClass", create_location(derived_path, 5, 10)))]
-              ]),
-              extends_clause: ["BaseClass" as SymbolName],
-              implements_clause: [],
-            }],
-            member_accesses: [{
-              object: {
-                location: create_location(derived_path, 8, 10),
+              {
+                name: "DerivedClass",
+                kind: "class",
+                location: create_location(derived_path, 3, 10),
               },
-              member_name: "baseMethod" as SymbolName,
-              location: derived_call_location,
-              scope_id: "scope:0" as ScopeId,
-              access_type: "method" as const,
-              is_optional_chain: false,
-            }],
-          }
-        }
+              {
+                name: "derivedMethod",
+                kind: "method",
+                location: create_location(derived_path, 5, 10),
+              },
+            ],
+            imports: [
+              {
+                kind: "named",
+                imports: [
+                  { name: "BaseClass" as SymbolName, is_type_only: false },
+                ],
+                source: "./base" as FilePath,
+                location: create_location(derived_path, 1, 10),
+                modifiers: [],
+                language: "typescript",
+                node_type: "import_statement",
+              },
+            ],
+            local_types: [
+              {
+                type_name: "DerivedClass" as SymbolName,
+                kind: "class",
+                location: create_location(derived_path, 3, 10),
+                direct_members: new Map([
+                  [
+                    "derivedMethod" as SymbolName,
+                    create_local_member_info(
+                      "derivedMethod" as SymbolName,
+                      "method",
+                      create_location(derived_path, 5, 10),
+                      method_symbol(
+                        "derivedMethod" as SymbolName,
+                        "DerivedClass",
+                        create_location(derived_path, 5, 10)
+                      )
+                    ),
+                  ],
+                ]),
+                extends_clause: ["BaseClass" as SymbolName],
+                implements_clause: [],
+              },
+            ],
+            member_accesses: [
+              {
+                object: {
+                  location: create_location(derived_path, 8, 10),
+                },
+                member_name: "baseMethod" as SymbolName,
+                location: derived_call_location,
+                scope_id: "scope:0" as ScopeId,
+                access_type: "method" as const,
+                is_optional_chain: false,
+              },
+            ],
+          },
+        },
       ]);
 
       const resolved_symbols = resolve_symbols({ indices: test_project });
@@ -326,7 +432,10 @@ describe("Complete Symbol Resolution Pipeline", () => {
 
       const my_class_location = create_location(class_path, 1, 10);
       const constructor_call_location = create_location(usage_path, 4, 20);
-      const my_class_symbol = class_symbol("MyClass" as SymbolName, my_class_location);
+      const my_class_symbol = class_symbol(
+        "MyClass" as SymbolName,
+        my_class_location
+      );
 
       const test_project = create_test_project([
         {
@@ -335,60 +444,77 @@ describe("Complete Symbol Resolution Pipeline", () => {
             symbols: [
               { name: "MyClass", kind: "class", location: my_class_location },
             ],
-            exports: [{
-              kind: "named",
-              symbol: my_class_symbol,
-              symbol_name: "MyClass" as SymbolName,
-              location: create_location(class_path, 1, 0),
-              exports: [{ local_name: "MyClass" as SymbolName, is_type_only: false }],
-              modifiers: [],
-              language: "typescript",
-              node_type: "export_statement",
-            }],
-            local_types: [{
-              type_name: "MyClass" as SymbolName,
-              kind: "class",
-              location: my_class_location,
-              direct_members: new Map(),
-              extends_clause: [],
-              implements_clause: [],
-            }],
-          }
+            exports: [
+              {
+                kind: "named",
+                symbol: my_class_symbol,
+                symbol_name: "MyClass" as SymbolName,
+                location: create_location(class_path, 1, 0),
+                exports: [
+                  { local_name: "MyClass" as SymbolName, is_type_only: false },
+                ],
+                modifiers: [],
+                language: "typescript",
+                node_type: "export_statement",
+              },
+            ],
+            local_types: [
+              {
+                type_name: "MyClass" as SymbolName,
+                kind: "class",
+                location: my_class_location,
+                direct_members: new Map(),
+                extends_clause: [],
+                implements_clause: [],
+              },
+            ],
+          },
         },
         {
           path: usage_path,
           content: {
             symbols: [
-              { name: "useClass", kind: "function", location: create_location(usage_path, 3, 10) },
+              {
+                name: "useClass",
+                kind: "function",
+                location: create_location(usage_path, 3, 10),
+              },
             ],
-            imports: [{
-              kind: "named",
-              imports: [{ name: "MyClass" as SymbolName, is_type_only: false }],
-              source: "./classes" as FilePath,
-              location: create_location(usage_path, 1, 10),
-              modifiers: [],
-              language: "typescript",
-              node_type: "import_statement",
-            }],
+            imports: [
+              {
+                kind: "named",
+                imports: [
+                  { name: "MyClass" as SymbolName, is_type_only: false },
+                ],
+                source: "./classes" as FilePath,
+                location: create_location(usage_path, 1, 10),
+                modifiers: [],
+                language: "typescript",
+                node_type: "import_statement",
+              },
+            ],
             type_flow: {
-              constructor_calls: [{
-                class_name: "MyClass" as SymbolName,
-                location: constructor_call_location,
-                argument_count: 0,
-                scope_id: `scope:module:${usage_path}:0:0` as ScopeId,
-              }],
+              constructor_calls: [
+                {
+                  class_name: "MyClass" as SymbolName,
+                  location: constructor_call_location,
+                  argument_count: 0,
+                  scope_id: `scope:module:${usage_path}:0:0` as ScopeId,
+                },
+              ],
               assignments: [],
               returns: [],
               call_assignments: [],
             },
-          }
-        }
+          },
+        },
       ]);
 
       const resolved_symbols = resolve_symbols({ indices: test_project });
 
       // Verify constructor call resolution
-      const constructor_calls = resolved_symbols.phases.methods.constructor_calls;
+      const constructor_calls =
+        resolved_symbols.phases.methods.constructor_calls;
       const constructor_call_key = location_key(constructor_call_location);
 
       // Check that the constructor call is resolved to the class
@@ -396,7 +522,9 @@ describe("Complete Symbol Resolution Pipeline", () => {
       expect(resolved_constructor).toBeDefined();
 
       // Verify in combined resolved references
-      expect(resolved_symbols.resolved_references.has(constructor_call_key)).toBe(true);
+      expect(
+        resolved_symbols.resolved_references.has(constructor_call_key)
+      ).toBe(true);
     });
   });
 
@@ -412,39 +540,65 @@ describe("Complete Symbol Resolution Pipeline", () => {
           path: lib_path,
           content: {
             symbols: [
-              { name: "add", kind: "function", location: create_location(lib_path, 1, 10) },
-              { name: "multiply", kind: "function", location: create_location(lib_path, 5, 10) },
+              {
+                name: "add",
+                kind: "function",
+                location: create_location(lib_path, 1, 10),
+              },
+              {
+                name: "multiply",
+                kind: "function",
+                location: create_location(lib_path, 5, 10),
+              },
             ],
             exports: [
               {
                 kind: "named",
-                symbol: function_symbol("add" as SymbolName, create_location(lib_path, 1, 10)),
+                symbol: function_symbol(
+                  "add" as SymbolName,
+                  create_location(lib_path, 1, 10)
+                ),
                 symbol_name: "add" as SymbolName,
                 location: create_location(lib_path, 1, 0),
-                exports: [{ local_name: "add" as SymbolName, is_type_only: false }],
+                exports: [
+                  { local_name: "add" as SymbolName, is_type_only: false },
+                ],
                 modifiers: [],
                 language: "typescript",
                 node_type: "export_statement",
               },
               {
                 kind: "named",
-                symbol: function_symbol("multiply" as SymbolName, create_location(lib_path, 5, 10)),
+                symbol: function_symbol(
+                  "multiply" as SymbolName,
+                  create_location(lib_path, 5, 10)
+                ),
                 symbol_name: "multiply" as SymbolName,
                 location: create_location(lib_path, 5, 0),
-                exports: [{ local_name: "multiply" as SymbolName, is_type_only: false }],
+                exports: [
+                  { local_name: "multiply" as SymbolName, is_type_only: false },
+                ],
                 modifiers: [],
                 language: "typescript",
                 node_type: "export_statement",
               },
             ],
-          }
+          },
         },
         {
           path: service_path,
           content: {
             symbols: [
-              { name: "Calculator", kind: "class", location: create_location(service_path, 3, 10) },
-              { name: "calculate", kind: "method", location: create_location(service_path, 5, 10) },
+              {
+                name: "Calculator",
+                kind: "class",
+                location: create_location(service_path, 3, 10),
+              },
+              {
+                name: "calculate",
+                kind: "method",
+                location: create_location(service_path, 5, 10),
+              },
             ],
             imports: [
               {
@@ -458,7 +612,9 @@ describe("Complete Symbol Resolution Pipeline", () => {
               },
               {
                 kind: "named",
-                imports: [{ name: "multiply" as SymbolName, is_type_only: false }],
+                imports: [
+                  { name: "multiply" as SymbolName, is_type_only: false },
+                ],
                 source: "../lib/math" as FilePath,
                 location: create_location(service_path, 1, 25),
                 modifiers: [],
@@ -466,16 +622,21 @@ describe("Complete Symbol Resolution Pipeline", () => {
                 node_type: "import_statement",
               },
             ],
-            exports: [{
-              kind: "default",
-              symbol: class_symbol("Calculator" as SymbolName, create_location(service_path, 3, 10)),
-              symbol_name: "Calculator" as SymbolName,
-              location: create_location(service_path, 10, 0),
-              is_declaration: false,
-              modifiers: [],
-              language: "typescript",
-              node_type: "export_statement",
-            }],
+            exports: [
+              {
+                kind: "default",
+                symbol: class_symbol(
+                  "Calculator" as SymbolName,
+                  create_location(service_path, 3, 10)
+                ),
+                symbol_name: "Calculator" as SymbolName,
+                location: create_location(service_path, 10, 0),
+                is_declaration: false,
+                modifiers: [],
+                language: "typescript",
+                node_type: "export_statement",
+              },
+            ],
             calls: [
               {
                 location: create_location(service_path, 6, 20),
@@ -490,56 +651,80 @@ describe("Complete Symbol Resolution Pipeline", () => {
                 call_type: "function",
               },
             ],
-            local_types: [{
-              type_name: "Calculator" as SymbolName,
-              kind: "class",
-              location: create_location(service_path, 3, 10),
-              direct_members: new Map([
-                ["calculate" as SymbolName, create_local_member_info("calculate" as SymbolName, "method", create_location(service_path, 5, 10), method_symbol("calculate" as SymbolName, "Calculator", create_location(service_path, 5, 10)))]
-              ]),
-              extends_clause: [],
-              implements_clause: [],
-            }],
-          }
+            local_types: [
+              {
+                type_name: "Calculator" as SymbolName,
+                kind: "class",
+                location: create_location(service_path, 3, 10),
+                direct_members: new Map([
+                  [
+                    "calculate" as SymbolName,
+                    create_local_member_info(
+                      "calculate" as SymbolName,
+                      "method",
+                      create_location(service_path, 5, 10),
+                      method_symbol(
+                        "calculate" as SymbolName,
+                        "Calculator",
+                        create_location(service_path, 5, 10)
+                      )
+                    ),
+                  ],
+                ]),
+                extends_clause: [],
+                implements_clause: [],
+              },
+            ],
+          },
         },
         {
           path: app_path,
           content: {
             symbols: [
-              { name: "main", kind: "function", location: create_location(app_path, 4, 10) },
+              {
+                name: "main",
+                kind: "function",
+                location: create_location(app_path, 4, 10),
+              },
             ],
-            imports: [{
-              kind: "default",
-              name: "Calculator" as SymbolName,
-              source: "./services/calculator" as FilePath,
-              location: create_location(app_path, 1, 10),
-              modifiers: [],
-              language: "typescript",
-              node_type: "import_statement",
-            }],
+            imports: [
+              {
+                kind: "default",
+                name: "Calculator" as SymbolName,
+                source: "./services/calculator" as FilePath,
+                location: create_location(app_path, 1, 10),
+                modifiers: [],
+                language: "typescript",
+                node_type: "import_statement",
+              },
+            ],
             type_flow: {
-              constructor_calls: [{
-                class_name: "Calculator" as SymbolName,
-                location: create_location(app_path, 5, 20),
-                argument_count: 0,
-                scope_id: `scope:module:${app_path}:0:0` as ScopeId,
-              }],
+              constructor_calls: [
+                {
+                  class_name: "Calculator" as SymbolName,
+                  location: create_location(app_path, 5, 20),
+                  argument_count: 0,
+                  scope_id: `scope:module:${app_path}:0:0` as ScopeId,
+                },
+              ],
               assignments: [],
               returns: [],
               call_assignments: [],
             },
-            member_accesses: [{
-              object: {
-                location: create_location(app_path, 6, 10),
+            member_accesses: [
+              {
+                object: {
+                  location: create_location(app_path, 6, 10),
+                },
+                member_name: "calculate" as SymbolName,
+                location: create_location(app_path, 6, 15),
+                scope_id: "scope:0" as ScopeId,
+                access_type: "method" as const,
+                is_optional_chain: false,
               },
-              member_name: "calculate" as SymbolName,
-              location: create_location(app_path, 6, 15),
-              scope_id: "scope:0" as ScopeId,
-              access_type: "method" as const,
-              is_optional_chain: false,
-            }],
-          }
-        }
+            ],
+          },
+        },
       ]);
 
       const resolved_symbols = resolve_symbols({ indices: test_project });
@@ -548,16 +733,20 @@ describe("Complete Symbol Resolution Pipeline", () => {
       expect(resolved_symbols.resolved_references.size).toBeGreaterThan(0);
 
       // Verify imports are resolved
-      const service_imports = resolved_symbols.phases.imports.imports.get(service_path);
+      const service_imports = resolved_symbols.phases.imports.get(service_path);
       expect(service_imports?.size).toBe(2);
       expect(service_imports?.has("add" as SymbolName)).toBe(true);
       expect(service_imports?.has("multiply" as SymbolName)).toBe(true);
 
       // Verify function calls are resolved
-      expect(resolved_symbols.phases.functions.function_calls.size).toBeGreaterThan(0);
+      expect(
+        resolved_symbols.phases.functions.function_calls.size
+      ).toBeGreaterThan(0);
 
       // Verify constructor calls are resolved
-      expect(resolved_symbols.phases.methods.constructor_calls.size).toBeGreaterThan(0);
+      expect(
+        resolved_symbols.phases.methods.constructor_calls.size
+      ).toBeGreaterThan(0);
 
       // Verify the complete pipeline processed all phases
       expect(resolved_symbols.phases.imports).toBeDefined();
@@ -574,30 +763,39 @@ describe("Complete Symbol Resolution Pipeline", () => {
           path: "src/broken.ts" as FilePath,
           content: {
             symbols: [],
-            imports: [{
-              kind: "named",
-              imports: [{ name: "nonExistent" as SymbolName, is_type_only: false }],
-              source: "./missing" as FilePath,
-              location: create_location("src/broken.ts" as FilePath, 1, 10),
-              modifiers: [],
-              language: "typescript",
-              node_type: "import_statement",
-            }],
-            calls: [{
-              name: "nonExistent" as SymbolName,
-              location: create_location("src/broken.ts" as FilePath, 3, 10),
-              scope_id: "scope:0" as ScopeId,
-              call_type: "function" as const,
-            }],
-          }
-        }
+            imports: [
+              {
+                kind: "named",
+                imports: [
+                  { name: "nonExistent" as SymbolName, is_type_only: false },
+                ],
+                source: "./missing" as FilePath,
+                location: create_location("src/broken.ts" as FilePath, 1, 10),
+                modifiers: [],
+                language: "typescript",
+                node_type: "import_statement",
+              },
+            ],
+            calls: [
+              {
+                name: "nonExistent" as SymbolName,
+                location: create_location("src/broken.ts" as FilePath, 3, 10),
+                scope_id: "scope:0" as ScopeId,
+                call_type: "function" as const,
+              },
+            ],
+          },
+        },
       ]);
 
       const resolved_symbols = resolve_symbols({ indices: test_project });
 
       // Should handle gracefully without throwing
       expect(resolved_symbols).toBeDefined();
-      expect(resolved_symbols.phases.imports.imports.get("src/broken.ts" as FilePath)?.size || 0).toBe(0);
+      expect(
+        resolved_symbols.phases.imports.get("src/broken.ts" as FilePath)
+          ?.size || 0
+      ).toBe(0);
     });
 
     it("should handle circular imports", () => {
@@ -609,64 +807,94 @@ describe("Complete Symbol Resolution Pipeline", () => {
           path: a_path,
           content: {
             symbols: [
-              { name: "funcA", kind: "function", location: create_location(a_path, 3, 10) },
+              {
+                name: "funcA",
+                kind: "function",
+                location: create_location(a_path, 3, 10),
+              },
             ],
-            imports: [{
-              kind: "named",
-              imports: [{ name: "funcB" as SymbolName, is_type_only: false }],
-              source: "./b" as FilePath,
-              location: create_location(a_path, 1, 10),
-              modifiers: [],
-              language: "typescript",
-              node_type: "import_statement",
-            }],
-            exports: [{
-              kind: "named",
-              symbol: function_symbol("funcA" as SymbolName, create_location(a_path, 3, 10)),
-              symbol_name: "funcA" as SymbolName,
-              location: create_location(a_path, 3, 0),
-              exports: [{ local_name: "funcA" as SymbolName, is_type_only: false }],
-              modifiers: [],
-              language: "typescript",
-              node_type: "export_statement",
-            }],
-          }
+            imports: [
+              {
+                kind: "named",
+                imports: [{ name: "funcB" as SymbolName, is_type_only: false }],
+                source: "./b" as FilePath,
+                location: create_location(a_path, 1, 10),
+                modifiers: [],
+                language: "typescript",
+                node_type: "import_statement",
+              },
+            ],
+            exports: [
+              {
+                kind: "named",
+                symbol: function_symbol(
+                  "funcA" as SymbolName,
+                  create_location(a_path, 3, 10)
+                ),
+                symbol_name: "funcA" as SymbolName,
+                location: create_location(a_path, 3, 0),
+                exports: [
+                  { local_name: "funcA" as SymbolName, is_type_only: false },
+                ],
+                modifiers: [],
+                language: "typescript",
+                node_type: "export_statement",
+              },
+            ],
+          },
         },
         {
           path: b_path,
           content: {
             symbols: [
-              { name: "funcB", kind: "function", location: create_location(b_path, 3, 10) },
+              {
+                name: "funcB",
+                kind: "function",
+                location: create_location(b_path, 3, 10),
+              },
             ],
-            imports: [{
-              kind: "named",
-              imports: [{ name: "funcA" as SymbolName, is_type_only: false }],
-              source: "./a" as FilePath,
-              location: create_location(b_path, 1, 10),
-              modifiers: [],
-              language: "typescript",
-              node_type: "import_statement",
-            }],
-            exports: [{
-              kind: "named",
-              symbol: function_symbol("funcB" as SymbolName, create_location(b_path, 3, 10)),
-              symbol_name: "funcB" as SymbolName,
-              location: create_location(b_path, 3, 0),
-              exports: [{ local_name: "funcB" as SymbolName, is_type_only: false }],
-              modifiers: [],
-              language: "typescript",
-              node_type: "export_statement",
-            }],
-          }
-        }
+            imports: [
+              {
+                kind: "named",
+                imports: [{ name: "funcA" as SymbolName, is_type_only: false }],
+                source: "./a" as FilePath,
+                location: create_location(b_path, 1, 10),
+                modifiers: [],
+                language: "typescript",
+                node_type: "import_statement",
+              },
+            ],
+            exports: [
+              {
+                kind: "named",
+                symbol: function_symbol(
+                  "funcB" as SymbolName,
+                  create_location(b_path, 3, 10)
+                ),
+                symbol_name: "funcB" as SymbolName,
+                location: create_location(b_path, 3, 0),
+                exports: [
+                  { local_name: "funcB" as SymbolName, is_type_only: false },
+                ],
+                modifiers: [],
+                language: "typescript",
+                node_type: "export_statement",
+              },
+            ],
+          },
+        },
       ]);
 
       const resolved_symbols = resolve_symbols({ indices: test_project });
 
       // Should handle circular imports without infinite loops
       expect(resolved_symbols).toBeDefined();
-      expect(resolved_symbols.phases.imports.imports.get(a_path)?.has("funcB" as SymbolName)).toBe(true);
-      expect(resolved_symbols.phases.imports.imports.get(b_path)?.has("funcA" as SymbolName)).toBe(true);
+      expect(
+        resolved_symbols.phases.imports.get(a_path)?.has("funcB" as SymbolName)
+      ).toBe(true);
+      expect(
+        resolved_symbols.phases.imports.get(b_path)?.has("funcA" as SymbolName)
+      ).toBe(true);
     });
   });
 });

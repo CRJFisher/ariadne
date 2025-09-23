@@ -650,7 +650,7 @@ describe("Type Registry", () => {
         expect(registry1.symbol_to_type).not.toBe(registry2.symbol_to_type);
 
         // Modifying one should not affect the other
-        registry1.symbol_to_type.set(mockSymbolId, mockTypeId);
+        (registry1.symbol_to_type as Map<SymbolId, TypeId>).set(mockSymbolId, mockTypeId);
         expect(registry2.symbol_to_type.size).toBe(0);
       });
 
@@ -661,7 +661,7 @@ describe("Type Registry", () => {
         expect(map1).not.toBe(map2);
         expect(map1.instance_members).not.toBe(map2.instance_members);
 
-        map1.instance_members.set(mockTypeId, new Map());
+        (map1.instance_members as Map<TypeId, ReadonlyMap<SymbolName, MemberInfo>>).set(mockTypeId, new Map());
         expect(map2.instance_members.size).toBe(0);
       });
 
@@ -672,7 +672,7 @@ describe("Type Registry", () => {
         expect(map1).not.toBe(map2);
         expect(map1.variable_types).not.toBe(map2.variable_types);
 
-        map1.variable_types.set(mockLocation, mockTypeId);
+        (map1.variable_types as Map<Location, TypeId>).set(mockLocation, mockTypeId);
         expect(map2.variable_types.size).toBe(0);
       });
 
@@ -685,7 +685,7 @@ describe("Type Registry", () => {
         expect(context1.members).not.toBe(context2.members);
         expect(context1.variables).not.toBe(context2.variables);
 
-        context1.generics.set(mockScopeId, new Map());
+        (context1.generics as Map<ScopeId, ReadonlyMap<SymbolName, TypeId>>).set(mockScopeId, new Map());
         expect(context2.generics.size).toBe(0);
       });
     });

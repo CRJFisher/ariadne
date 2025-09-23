@@ -269,7 +269,7 @@ function create_type_id_from_symbol(
 }
 
 /**
- * Convert ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> to format expected by analyze_type_flow
+ * Convert ImportResolutionMap to format expected by analyze_type_flow
  */
 function prepare_imports_for_flow(
   imports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>

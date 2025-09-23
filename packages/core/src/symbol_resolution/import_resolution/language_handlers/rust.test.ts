@@ -16,9 +16,41 @@ import type {
   SymbolDefinition,
 } from "@ariadnejs/types";
 import * as fs from "fs";
+import type { Stats } from "fs";
 
 // Mock fs module
 vi.mock("fs");
+
+// Helper to create proper Stats mock
+function createStatsMock(isDir: boolean): Stats {
+  return {
+    isDirectory: () => isDir,
+    isFile: () => !isDir,
+    atimeMs: 0,
+    mtimeMs: 0,
+    ctimeMs: 0,
+    birthtimeMs: 0,
+    dev: 0,
+    ino: 0,
+    mode: 0,
+    nlink: 0,
+    uid: 0,
+    gid: 0,
+    rdev: 0,
+    size: 0,
+    blksize: 0,
+    blocks: 0,
+    atime: new Date(),
+    mtime: new Date(),
+    ctime: new Date(),
+    birthtime: new Date(),
+    isBlockDevice: () => false,
+    isCharacterDevice: () => false,
+    isSymbolicLink: () => false,
+    isFIFO: () => false,
+    isSocket: () => false,
+  };
+}
 
 describe("Rust Import Resolution", () => {
   beforeEach(() => {
@@ -79,11 +111,11 @@ describe("Rust Import Resolution", () => {
             p === "/project/src/utils/helpers/string.rs"
         );
 
-        mock_stats.mockImplementation((p) => ({
-          isDirectory: () =>
-            p === "/project/src/utils" || p === "/project/src/utils/helpers",
-          isFile: () => p === "/project/src/utils/helpers/string.rs",
-        }));
+        mock_stats.mockImplementation((p) => {
+          const isFile = p === "/project/src/utils/helpers/string.rs";
+          const isDir = p === "/project/src/utils" || p === "/project/src/utils/helpers";
+          return createStatsMock(isDir && !isFile);
+        });
 
         const result = resolve_rust_module_path(
           "utils::helpers::string",
