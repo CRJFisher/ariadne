@@ -41,15 +41,15 @@
 ;; DEFINITIONS - Basic symbols
 ;; ==============================================================================
 
-; Struct definitions
-(struct_item
-  name: (type_identifier) @def.struct
-)
-
-; Struct with generics
+; Struct with generics (must come first to match before general pattern)
 (struct_item
   name: (type_identifier) @def.struct.generic
   type_parameters: (type_parameters)
+)
+
+; Struct definitions (general)
+(struct_item
+  name: (type_identifier) @def.struct
 )
 
 ; Struct fields
@@ -57,7 +57,13 @@
   name: (field_identifier) @def.field
 )
 
-; Enum definitions
+; Enum with generics (must come first)
+(enum_item
+  name: (type_identifier) @def.enum.generic
+  type_parameters: (type_parameters)
+)
+
+; Enum definitions (general)
 (enum_item
   name: (type_identifier) @def.enum
 )
@@ -67,9 +73,10 @@
   name: (identifier) @def.enum_variant
 )
 
-; Function definitions
+; Generic functions (must come first)
 (function_item
-  name: (identifier) @def.function
+  name: (identifier) @def.function.generic
+  type_parameters: (type_parameters)
 )
 
 ; Async functions (identified by modifiers)
@@ -80,10 +87,9 @@
   name: (identifier) @def.function.async
 )
 
-; Generic functions
+; Function definitions (general)
 (function_item
-  name: (identifier) @def.function.generic
-  type_parameters: (type_parameters)
+  name: (identifier) @def.function
 )
 
 ; Methods in impl blocks (with self parameter)
@@ -120,7 +126,13 @@
   )
 )
 
-; Trait definitions
+; Generic traits (must come first)
+(trait_item
+  name: (type_identifier) @def.trait.generic
+  type_parameters: (type_parameters)
+)
+
+; Trait definitions (general)
 (trait_item
   name: (type_identifier) @def.trait
 )
@@ -204,9 +216,10 @@
   (type_identifier) @def.type_param
 )
 
-; Constrained type parameters
+; Constrained type parameters (e.g., T: Clone)
 (constrained_type_parameter
-  (type_identifier) @def.type_param.constrained
+  left: (type_identifier) @def.type_param.constrained
+  bounds: (trait_bounds) @constraint.bounds
 )
 
 ; Const parameters
@@ -214,13 +227,56 @@
   name: (identifier) @def.const_param
 )
 
-; Lifetime parameters
+; Lifetime parameters in type parameters
 (type_parameters
   (lifetime) @lifetime.param
 )
 
-; Lifetime references
-(lifetime) @lifetime.ref
+; Lifetime parameters in type arguments
+(type_arguments
+  (lifetime) @lifetime.param
+)
+
+; Lifetime references in types
+(reference_type
+  (lifetime) @lifetime.ref
+)
+
+; Lifetimes in trait bounds
+(trait_bounds
+  (lifetime) @lifetime.ref
+)
+
+;; ==============================================================================
+;; WHERE CLAUSES AND CONSTRAINTS
+;; ==============================================================================
+
+; Where clause
+(where_clause) @constraint.where_clause
+
+; Where predicates with type bounds
+(where_predicate
+  left: (type_identifier) @constraint.type
+  bounds: (trait_bounds) @constraint.bounds
+)
+
+; Lifetime where predicates
+(where_predicate
+  left: (lifetime) @constraint.lifetime
+  bounds: (trait_bounds) @constraint.bounds
+)
+
+; Trait bounds in where clauses
+(trait_bounds
+  (type_identifier) @constraint.trait
+)
+
+; Generic trait bounds
+(trait_bounds
+  (generic_type
+    type: (type_identifier) @constraint.trait.generic
+  )
+)
 
 ;; ==============================================================================
 ;; IMPORTS
@@ -252,6 +308,15 @@
 (use_declaration
   argument: (use_list
     (identifier) @import.list.item
+  )
+)
+
+; Scoped use lists (e.g., std::fmt::{Display, Formatter})
+(use_declaration
+  argument: (scoped_use_list
+    list: (use_list
+      (identifier) @import.list.item
+    )
   )
 )
 

@@ -134,6 +134,7 @@ export const RUST_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
     {
       category: SemanticCategory.DEFINITION,
       entity: SemanticEntity.FUNCTION,
+      modifiers: () => ({ is_generic: true }),
       },
   ],
   [
@@ -171,12 +172,32 @@ export const RUST_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
       modifiers: () => ({ is_static: true })},
   ],
 
+  // Generic traits
+  [
+    "def.trait.generic",
+    {
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.INTERFACE,
+      modifiers: () => ({ is_generic: true }),
+    },
+  ],
+
   // Trait definitions
   [
     "def.trait",
     {
       category: SemanticCategory.DEFINITION,
       entity: SemanticEntity.INTERFACE,
+    },
+  ],
+
+  // Associated types in traits
+  [
+    "def.associated_type",
+    {
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.TYPE_ALIAS,
+      modifiers: () => ({ is_associated_type: true }),
     },
   ],
 
@@ -248,6 +269,7 @@ export const RUST_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
     {
       category: SemanticCategory.DEFINITION,
       entity: SemanticEntity.PARAMETER,
+      modifiers: () => ({ is_closure_param: true }),
       },
   ],
 
@@ -399,6 +421,15 @@ export const RUST_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
     {
       category: SemanticCategory.IMPORT,
       entity: SemanticEntity.IMPORT,
+      context: () => ({ import_alias: true }),
+    },
+  ],
+  [
+    "import.wildcard",
+    {
+      category: SemanticCategory.IMPORT,
+      entity: SemanticEntity.IMPORT,
+      modifiers: () => ({ is_wildcard: true }),
     },
   ],
   [
@@ -540,6 +571,7 @@ export const RUST_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
   ["lifetime.param", {
     category: SemanticCategory.DEFINITION,
     entity: SemanticEntity.TYPE_PARAMETER,
+    modifiers: () => ({ is_lifetime: true }),
     },
   ],
 
@@ -601,9 +633,36 @@ export const RUST_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
     },
   ],
 
-  ["generic.constraint", {
+  // Type constraints and bounds
+  ["constraint.where_clause", {
     category: SemanticCategory.TYPE,
     entity: SemanticEntity.TYPE_CONSTRAINT,
+    },
+  ],
+  ["constraint.type", {
+    category: SemanticCategory.TYPE,
+    entity: SemanticEntity.TYPE_PARAMETER,
+    },
+  ],
+  ["constraint.bounds", {
+    category: SemanticCategory.TYPE,
+    entity: SemanticEntity.TYPE_CONSTRAINT,
+    },
+  ],
+  ["constraint.trait", {
+    category: SemanticCategory.TYPE,
+    entity: SemanticEntity.TYPE_CONSTRAINT,
+    },
+  ],
+  ["constraint.trait.generic", {
+    category: SemanticCategory.TYPE,
+    entity: SemanticEntity.TYPE_CONSTRAINT,
+    },
+  ],
+  ["constraint.lifetime", {
+    category: SemanticCategory.TYPE,
+    entity: SemanticEntity.TYPE_PARAMETER,
+    modifiers: () => ({ is_lifetime: true }),
     },
   ],
 
@@ -628,11 +687,13 @@ export const RUST_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
   ["def.struct.generic", {
     category: SemanticCategory.DEFINITION,
     entity: SemanticEntity.CLASS,
+    modifiers: () => ({ is_generic: true }),
     },
   ],
   ["def.enum.generic", {
     category: SemanticCategory.DEFINITION,
     entity: SemanticEntity.ENUM,
+    modifiers: () => ({ is_generic: true }),
     },
   ],
 
@@ -652,6 +713,7 @@ export const RUST_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
   ["def.trait_method", {
     category: SemanticCategory.DEFINITION,
     entity: SemanticEntity.METHOD,
+    modifiers: () => ({ is_trait_method: true }),
     },
   ],
 
@@ -664,6 +726,14 @@ export const RUST_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
   ["def.type_param.constrained", {
     category: SemanticCategory.DEFINITION,
     entity: SemanticEntity.TYPE_PARAMETER,
+    },
+  ],
+
+  // Const generic parameters
+  ["def.const_param", {
+    category: SemanticCategory.DEFINITION,
+    entity: SemanticEntity.PARAMETER,
+    modifiers: () => ({ is_const_generic: true }),
     },
   ],
 
