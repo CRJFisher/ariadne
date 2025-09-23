@@ -21,7 +21,7 @@ export interface MethodCallResolution {
   readonly resolved_method: SymbolId;
   readonly receiver_type: TypeId;
   readonly method_kind: "instance" | "static" | "constructor";
-  readonly resolution_path: "direct" | "inherited" | "interface" | "trait";
+  readonly resolution_path: "direct" | "inherited" | "interface" | "trait" | "parameter_property";
   readonly receiver_symbol?: SymbolId;
 }
 
@@ -54,4 +54,28 @@ export interface TypeMethodMap {
   readonly methods: ReadonlyMap<SymbolName, SymbolId>;
   readonly static_methods: ReadonlyMap<SymbolName, SymbolId>;
   readonly constructors: ReadonlyMap<SymbolName, SymbolId>;
+}
+
+/**
+ * Type member mapping including fields/properties
+ */
+export interface TypeMemberMap {
+  readonly type_id: TypeId;
+  readonly methods: ReadonlyMap<SymbolName, SymbolId>;
+  readonly static_methods: ReadonlyMap<SymbolName, SymbolId>;
+  readonly constructors: ReadonlyMap<SymbolName, SymbolId>;
+  readonly fields: ReadonlyMap<SymbolName, SymbolId>;
+  readonly static_fields: ReadonlyMap<SymbolName, SymbolId>;
+}
+
+/**
+ * Resolution result for property access
+ */
+export interface PropertyAccessResolution {
+  readonly access_location: Location;
+  readonly resolved_field: SymbolId;
+  readonly receiver_type: TypeId;
+  readonly field_kind: "instance" | "static";
+  readonly resolution_path: "direct" | "inherited" | "parameter_property";
+  readonly receiver_symbol?: SymbolId;
 }

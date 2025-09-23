@@ -23,8 +23,9 @@ import type {
   MethodCallResolution,
   MethodResolutionMap,
   MethodLookupContext,
+  PropertyAccessResolution,
 } from "./method_types";
-import { resolve_method_on_type, get_type_methods } from "./type_lookup";
+import { resolve_method_on_type, get_type_methods, resolve_property_on_type, find_symbol_definition } from "./type_lookup";
 import { determine_if_static_call } from "./static_resolution";
 import { resolve_method_with_inheritance } from "./inheritance_resolver";
 import { resolve_constructor_calls_enhanced } from "./constructor_resolver";
@@ -53,17 +54,44 @@ export function resolve_method_calls(
       indices,
     };
 
-    // Process member access calls (obj.method())
+    // Process all member access references (both methods and properties)
     for (const member_access of index.references.member_accesses) {
-      const resolution = resolve_member_access_call(member_access, context);
-      if (resolution) {
-        record_method_resolution(
-          resolution,
-          member_access.location,
-          method_calls,
-          calls_to_method,
-          resolution_details
-        );
+      if (member_access.access_type === "method") {
+        // Process method calls (obj.method())
+        const resolution = resolve_member_access_call(member_access, context);
+        if (resolution) {
+          record_method_resolution(
+            resolution,
+            member_access.location,
+            method_calls,
+            calls_to_method,
+            resolution_details
+          );
+        }
+      } else if (member_access.access_type === "property") {
+        // Process property access (obj.property) - Enhanced for enum members
+        const property_resolution = resolve_member_property_access(member_access, context);
+        if (property_resolution) {
+          record_property_resolution(
+            property_resolution,
+            member_access.location,
+            method_calls, // Property access creates trackable "call" relationships
+            calls_to_method,
+            resolution_details
+          );
+        } else {
+          // Try enum member access resolution if property resolution failed
+          const enum_resolution = resolve_enum_member_access(member_access, context);
+          if (enum_resolution) {
+            record_property_resolution(
+              enum_resolution,
+              member_access.location,
+              method_calls,
+              calls_to_method,
+              resolution_details
+            );
+          }
+        }
       }
     }
 
@@ -89,10 +117,8 @@ function resolve_member_access_call(
   member_access: MemberAccessReference,
   context: MethodLookupContext
 ): MethodCallResolution | null {
-  // Only process method calls
-  if (member_access.access_type !== "method") {
-    return null;
-  }
+  // This function now only handles method calls
+  // Property access is handled by resolve_member_property_access
 
   // Get receiver type from type flow
   const receiver_type = get_receiver_type(member_access, context);
@@ -150,6 +176,148 @@ function resolve_member_access_call(
 }
 
 /**
+ * Resolve a member access as a property access
+ */
+function resolve_member_property_access(
+  member_access: MemberAccessReference,
+  context: MethodLookupContext
+): PropertyAccessResolution | null {
+  // Get receiver type from type flow
+  const receiver_type = get_receiver_type(member_access, context);
+  if (!receiver_type) {
+    return null;
+  }
+
+  // Determine if this is a static access
+  const is_static_access = determine_if_static_call(member_access, context);
+
+  // Resolve property on the type
+  const property_resolution = resolve_property_on_type(
+    member_access.member_name,
+    receiver_type,
+    is_static_access,
+    context,
+    member_access.location
+  );
+
+  if (property_resolution) {
+    // Add receiver symbol if available
+    const receiver_symbol = get_receiver_symbol(member_access, context);
+    if (receiver_symbol) {
+      return { ...property_resolution, receiver_symbol };
+    }
+    return property_resolution;
+  }
+
+  return null;
+}
+
+/**
+ * Resolve enum member access (e.g., Status.Active)
+ */
+function resolve_enum_member_access(
+  member_access: MemberAccessReference,
+  context: MethodLookupContext
+): PropertyAccessResolution | null {
+  // Look for enum symbol in current file
+  const file_symbols = context.current_index.file_symbols_by_name.get(context.current_file);
+  if (!file_symbols) {
+    return null;
+  }
+
+  // Try to find enum symbol by the object name
+  const object_name = member_access.object.location ?
+    extract_object_name(member_access, context) :
+    null;
+
+  const enum_symbol_id = object_name ? file_symbols.get(object_name as SymbolName) : null;
+
+  if (!enum_symbol_id) {
+    // Try imports for the enum
+    const imports = context.imports.get(context.current_file);
+    if (imports) {
+      const object_name = extract_object_name(member_access, context);
+      if (object_name) {
+        const imported_enum = imports.get(object_name as SymbolName);
+        if (imported_enum) {
+          return resolve_enum_member_on_symbol(imported_enum, member_access, context);
+        }
+      }
+    }
+    return null;
+  }
+
+  return resolve_enum_member_on_symbol(enum_symbol_id, member_access, context);
+}
+
+/**
+ * Extract object name from member access
+ */
+function extract_object_name(
+  member_access: MemberAccessReference,
+  context: MethodLookupContext
+): string | null {
+  if (!member_access.object.location) {
+    return null;
+  }
+
+  // Find the symbol at the object location
+  const symbol = find_symbol_at_location(member_access.object.location, context.current_index);
+  if (!symbol) {
+    return null;
+  }
+
+  const symbol_def = context.current_index.symbols.get(symbol);
+  return symbol_def?.name || null;
+}
+
+/**
+ * Resolve enum member on a specific enum symbol
+ */
+function resolve_enum_member_on_symbol(
+  enum_symbol_id: SymbolId,
+  member_access: MemberAccessReference,
+  context: MethodLookupContext
+): PropertyAccessResolution | null {
+  // Check if this is actually an enum
+  const enum_symbol = find_symbol_definition(enum_symbol_id, context);
+  if (!enum_symbol || enum_symbol.kind !== "enum") {
+    return null;
+  }
+
+  // Get the enum's type ID
+  const enum_type_id = context.type_resolution.symbol_types.get(enum_symbol_id);
+  if (!enum_type_id) {
+    return null;
+  }
+
+  // Look for the enum member in type members
+  const type_members = context.type_resolution.type_members.get(enum_type_id);
+  if (!type_members) {
+    return null;
+  }
+
+  const member_symbol_id = type_members.get(member_access.member_name);
+  if (!member_symbol_id) {
+    return null;
+  }
+
+  // Verify this is actually an enum member
+  const member_symbol = find_symbol_definition(member_symbol_id, context);
+  if (!member_symbol || member_symbol.kind !== "variable") {
+    return null;
+  }
+
+  return {
+    access_location: member_access.location,
+    resolved_field: member_symbol_id,
+    receiver_type: enum_type_id,
+    field_kind: "static", // Enum members are always static
+    resolution_path: "direct"
+  };
+}
+
+/**
  * Get the type of the receiver object
  */
 function get_receiver_type(
@@ -199,7 +367,7 @@ function resolve_receiver_symbol_type(
   const file_symbols = context.current_index.file_symbols_by_name.get(context.current_file);
   if (file_symbols) {
     // Try each symbol to see if it's a class whose type we know
-    for (const [name, symbol] of file_symbols) {
+    for (const [, symbol] of file_symbols) {
       const symbol_def = context.current_index.symbols.get(symbol);
       if (symbol_def && (symbol_def.kind === "class" || symbol_def.kind === "type_alias" || symbol_def.kind === "interface")) {
         const type_id = context.type_resolution.symbol_types.get(symbol);
@@ -245,6 +413,38 @@ function record_method_resolution(
   const call_locations = calls_to_method.get(resolution.resolved_method) || [];
   call_locations.push(location);
   calls_to_method.set(resolution.resolved_method, call_locations);
+}
+
+/**
+ * Record a property access resolution
+ */
+function record_property_resolution(
+  resolution: PropertyAccessResolution,
+  location: Location,
+  method_calls: Map<LocationKey, SymbolId>, // Property access creates trackable relationships
+  calls_to_method: Map<SymbolId, Location[]>,
+  resolution_details: Map<LocationKey, MethodCallResolution>
+): void {
+  const location_key_val = location_key(location);
+
+  // Convert property resolution to method resolution format for tracking
+  // This allows property access to be tracked in call graphs
+  const method_resolution: MethodCallResolution = {
+    call_location: location,
+    resolved_method: resolution.resolved_field, // Track the field as if it were a method
+    receiver_type: resolution.receiver_type,
+    method_kind: resolution.field_kind === "static" ? "static" : "instance",
+    resolution_path: resolution.resolution_path,
+    receiver_symbol: resolution.receiver_symbol
+  };
+
+  method_calls.set(location_key_val, resolution.resolved_field);
+  resolution_details.set(location_key_val, method_resolution);
+
+  // Update reverse mapping - property access creates "usage" relationship
+  const call_locations = calls_to_method.get(resolution.resolved_field) || [];
+  call_locations.push(location);
+  calls_to_method.set(resolution.resolved_field, call_locations);
 }
 
 /**

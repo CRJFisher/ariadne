@@ -1137,8 +1137,9 @@ describe("Definitions Module", () => {
       );
       const symbol = Array.from(result.symbols.values())[0];
 
-      // Should handle gracefully - treat non-boolean as truthy
-      expect(typeof symbol.is_static).toBe("string");
+      // Should handle gracefully - preserve boolean value
+      expect(typeof symbol.is_static).toBe("boolean");
+      expect(symbol.is_static).toBe(true);
     });
 
     it("should handle deeply nested scope hierarchies", () => {

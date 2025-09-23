@@ -221,14 +221,14 @@ function collect_parameter_property_fields(
       const constructor_scope = scopes.get(symbol.scope_id);
       if (constructor_scope) {
         // Look for the class symbol in parent scopes
-        let current_scope = constructor_scope.parent_scope_id ? scopes.get(constructor_scope.parent_scope_id) : undefined;
+        let current_scope = constructor_scope.parent_id ? scopes.get(constructor_scope.parent_id) : undefined;
         while (current_scope) {
           if (current_scope.symbols.has(type_info.type_name) &&
               current_scope.symbols.get(type_info.type_name)?.id === class_symbol_id) {
             constructor_symbol = symbol;
             break;
           }
-          current_scope = current_scope.parent_scope_id ? scopes.get(current_scope.parent_scope_id) : undefined;
+          current_scope = current_scope.parent_id ? scopes.get(current_scope.parent_id) : undefined;
         }
         if (constructor_symbol) break;
       }
