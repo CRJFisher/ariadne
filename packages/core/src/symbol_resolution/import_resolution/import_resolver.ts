@@ -11,7 +11,6 @@ import type {
   SymbolName,
 } from "@ariadnejs/types";
 import type {
-  ImportResolutionMap,
   ImportResolutionContext,
 } from "./import_types";
 import { resolve_module_path } from "./module_resolver";
@@ -27,7 +26,7 @@ import { match_import_to_export } from "./import_matching";
  */
 export function resolve_imports(
   context: ImportResolutionContext
-): ImportResolutionMap {
+): ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> {
   const result = new Map<FilePath, Map<SymbolName, SymbolId>>();
 
   for (const [file_path, index] of Array.from(context.indices)) {
@@ -78,5 +77,5 @@ export function resolve_imports(
     }
   }
 
-  return { imports: result };
+  return result;
 }

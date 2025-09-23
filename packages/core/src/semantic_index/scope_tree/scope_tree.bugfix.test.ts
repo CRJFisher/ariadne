@@ -4,19 +4,20 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
+import type { Tree } from "tree-sitter";
 import type {
   FilePath,
   ScopeId,
   LexicalScope,
   Location,
 } from "@ariadnejs/types";
+import { module_scope, function_scope, class_scope } from "@ariadnejs/types";
 import {
-  module_scope,
-  function_scope,
-  class_scope,
-} from "@ariadnejs/types";
-import { build_scope_tree, compute_scope_depth, find_containing_scope } from "./scope_tree";
-import { SemanticEntity } from "../capture_types";
+  build_scope_tree,
+  compute_scope_depth,
+  find_containing_scope,
+} from "./scope_tree";
+import { SemanticEntity, SemanticCategory } from "../capture_types";
 import type { NormalizedCapture } from "../capture_types";
 
 describe("Scope Tree Bug Fixes", () => {
@@ -252,7 +253,11 @@ describe("Scope Tree Bug Fixes", () => {
         end_column: 15,
       };
 
-      const containing_scope = find_containing_scope(test_location, root_scope, scopes);
+      const containing_scope = find_containing_scope(
+        test_location,
+        root_scope,
+        scopes
+      );
 
       // Should return the method scope (deepest/most specific)
       expect(containing_scope.type).toBe("method");
@@ -269,18 +274,18 @@ describe("Scope Tree Bug Fixes", () => {
           startIndex: 0,
           endIndex: 200,
         },
-      } as any;
+      } as any as Tree;
 
       const captures: NormalizedCapture[] = [
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.METHOD,
           text: "testMethod",
           node_location: { ...base_location, line: 5, end_line: 10 },
           modifiers: {},
         },
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.CONSTRUCTOR,
           text: "constructor",
           node_location: { ...base_location, line: 12, end_line: 15 },
@@ -288,11 +293,20 @@ describe("Scope Tree Bug Fixes", () => {
         },
       ];
 
-      const result = build_scope_tree(captures, mockTree, file_path, "typescript");
+      const result = build_scope_tree(
+        captures,
+        mockTree,
+        file_path,
+        "typescript"
+      );
 
       // Find the created scopes
-      const method_scope = Array.from(result.scopes.values()).find(s => s.type === "method");
-      const constructor_scope = Array.from(result.scopes.values()).find(s => s.type === "constructor");
+      const method_scope = Array.from(result.scopes.values()).find(
+        (s) => s.type === "method"
+      );
+      const constructor_scope = Array.from(result.scopes.values()).find(
+        (s) => s.type === "constructor"
+      );
 
       expect(method_scope).toBeDefined();
       expect(constructor_scope).toBeDefined();
@@ -313,11 +327,11 @@ describe("Scope Tree Bug Fixes", () => {
           startIndex: 0,
           endIndex: 200,
         },
-      } as any;
+      } as any as Tree;
 
       const captures: NormalizedCapture[] = [
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.FUNCTION,
           text: "testFunction",
           node_location: { ...base_location, line: 5, end_line: 10 },
@@ -325,7 +339,12 @@ describe("Scope Tree Bug Fixes", () => {
         },
       ];
 
-      const result = build_scope_tree(captures, mockTree, file_path, "typescript");
+      const result = build_scope_tree(
+        captures,
+        mockTree,
+        file_path,
+        "typescript"
+      );
 
       // The root scope returned should be identical to the one in the map
       const root_from_map = result.scopes.get(result.root_scope.id);
@@ -347,21 +366,21 @@ describe("Scope Tree Bug Fixes", () => {
           startIndex: 0,
           endIndex: 200,
         },
-      } as any;
+      } as any as Tree;
 
       // Two scopes with exactly the same location
       const identical_location = { ...base_location, line: 5, end_line: 10 };
 
       const captures: NormalizedCapture[] = [
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.FUNCTION,
           text: "func1",
           node_location: identical_location,
           modifiers: {},
         },
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.BLOCK,
           text: "block1",
           node_location: identical_location,
@@ -382,7 +401,7 @@ describe("Scope Tree Bug Fixes", () => {
           startIndex: 0,
           endIndex: 200,
         },
-      } as any;
+      } as any as Tree;
 
       const zero_length_location: Location = {
         file_path,
@@ -394,7 +413,7 @@ describe("Scope Tree Bug Fixes", () => {
 
       const captures: NormalizedCapture[] = [
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.FUNCTION,
           text: "zeroLength",
           node_location: zero_length_location,

@@ -7,11 +7,11 @@ import type {
   LocationKey,
   SymbolId,
   FilePath,
+  SymbolName,
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
 import type { CallReference } from "../../semantic_index/references/call_references/call_references";
 import type { SemanticIndex } from "../../semantic_index/semantic_index";
-import type { ImportResolutionMap } from "../types";
 import type {
   FunctionCallResolution,
   FunctionResolutionMap,
@@ -29,14 +29,14 @@ import {
  */
 export function resolve_function_calls(
   indices: ReadonlyMap<FilePath, SemanticIndex>,
-  imports: ImportResolutionMap
+  imports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>
 ): FunctionResolutionMap {
   const function_calls = new Map<LocationKey, SymbolId>();
   const calls_to_function = new Map<SymbolId, Location[]>();
   const resolution_details = new Map<LocationKey, FunctionCallResolution>();
 
   indices.forEach((index, file_path) => {
-    const file_imports = imports.imports.get(file_path) || new Map();
+    const file_imports = imports.get(file_path) || new Map();
     const context: FunctionResolutionContext = {
       indices,
       imports,

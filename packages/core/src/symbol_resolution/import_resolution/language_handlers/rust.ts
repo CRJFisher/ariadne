@@ -48,7 +48,11 @@ export function resolve_rust_module_path(
       levels_up++;
       remaining_path = remaining_path.substring(7);
     }
-    return resolve_rust_relative_module(remaining_path, importing_file, levels_up);
+    return resolve_rust_relative_module(
+      remaining_path,
+      importing_file,
+      levels_up
+    );
   }
 
   // Handle crate:: references (crate root)
@@ -67,7 +71,11 @@ export function resolve_rust_module_path(
     }
 
     // Check if it might be an external crate (by trying to resolve it as such)
-    const external_result = resolve_rust_external_crate(crate_name, import_path, importing_file);
+    const external_result = resolve_rust_external_crate(
+      crate_name,
+      import_path,
+      importing_file
+    );
     if (external_result) {
       return external_result;
     }
@@ -106,7 +114,10 @@ function resolve_rust_relative_module(
     }
     // Or it might be named after the directory
     const parent_name = path.basename(current_dir);
-    const parent_file = path.join(path.dirname(current_dir), parent_name + ".rs");
+    const parent_file = path.join(
+      path.dirname(current_dir),
+      parent_name + ".rs"
+    );
     if (fs.existsSync(parent_file)) {
       return parent_file as FilePath;
     }
@@ -203,7 +214,6 @@ function resolve_rust_local_module(
   return find_rust_module_file(current_dir, [module_name]);
 }
 
-
 /**
  * Find a Rust module file given a base directory and module path components
  */
@@ -216,9 +226,10 @@ function find_rust_module_file(
   }
 
   // Build the full directory path for all but the last component
-  const dir_path = path_components.length > 1
-    ? path.join(base_dir, ...path_components.slice(0, -1))
-    : base_dir;
+  const dir_path =
+    path_components.length > 1
+      ? path.join(base_dir, ...path_components.slice(0, -1))
+      : base_dir;
 
   const last_component = path_components[path_components.length - 1];
 
@@ -314,7 +325,10 @@ export function match_rust_import_to_export(
 
   switch (import_stmt.kind) {
     case "named":
-      return match_rust_named_import(import_stmt as NamedImport, source_exports);
+      return match_rust_named_import(
+        import_stmt as NamedImport,
+        source_exports
+      );
 
     case "default":
       // Rust doesn't have default imports, but we might use this
@@ -324,7 +338,10 @@ export function match_rust_import_to_export(
         // Find a matching pub item in exports
         let found = false;
         for (const exp of source_exports) {
-          if (exp.symbol_name === default_import.name || (exp as Export).name === default_import.name) {
+          if (
+            exp.symbol_name === default_import.name ||
+            (exp as Export).name === default_import.name
+          ) {
             result.set(default_import.name, exp.symbol);
             found = true;
             break;
@@ -334,7 +351,10 @@ export function match_rust_import_to_export(
         // If not found in exports, check for module symbol
         if (!found) {
           for (const [symbol_id, symbol_def] of Array.from(source_symbols)) {
-            if (symbol_def.name === default_import.name && (symbol_def.kind as string) === "module") {
+            if (
+              symbol_def.name === default_import.name &&
+              (symbol_def.kind as string) === "module"
+            ) {
               result.set(default_import.name, symbol_id);
               break;
             }
@@ -348,12 +368,16 @@ export function match_rust_import_to_export(
       // but "use module::*" is similar
       // For glob imports, we'll map "*" to the first export if available
       const namespace = import_stmt as NamespaceImport | Import;
-      const namespace_name = (namespace as NamespaceImport).namespace_name ||
-                              (namespace as Import).name;
+      const namespace_name =
+        (namespace as NamespaceImport).namespace_name ||
+        (namespace as Import).name;
 
       if (namespace_name && source_exports.length > 0) {
         // For glob imports (use module::*), map to first export's symbol
-        result.set(namespace_name as unknown as SymbolName, source_exports[0].symbol);
+        result.set(
+          namespace_name as unknown as SymbolName,
+          source_exports[0].symbol
+        );
       }
       return result;
 
@@ -384,9 +408,10 @@ function match_rust_named_import(
       if (exp.kind === "named") {
         const named_export = exp as NamedExport;
         // Handle both formats: exports array or simple name field
-        if ((named_export as any).exports) {
+        if (named_export.exports) {
           for (const export_item of named_export.exports) {
-            const export_name = export_item.export_name || export_item.local_name;
+            const export_name =
+              export_item.export_name || export_item.local_name;
             if (export_name === imported_name) {
               result.set(local_name, named_export.symbol);
               break;
@@ -405,4 +430,3 @@ function match_rust_named_import(
 
   return result;
 }
-

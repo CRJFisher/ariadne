@@ -24,9 +24,7 @@ import {
   build_file_type_registry_with_annotations,
   resolve_all_types,
 } from "./index";
-import {
-  build_global_type_registry,
-} from "./type_registry";
+import { build_global_type_registry } from "./type_registry";
 import {
   create_union_type,
   create_intersection_type,
@@ -60,6 +58,7 @@ import type {
   SymbolName,
   ScopeId,
   SymbolDefinition,
+  SymbolKind,
 } from "@ariadnejs/types";
 import {
   primitive_type_id,
@@ -68,7 +67,7 @@ import {
   TypeCategory,
   function_symbol,
 } from "@ariadnejs/types";
-import type { ImportResolutionMap, FunctionResolutionMap } from "../types";
+import type { FunctionResolutionMap } from "../types";
 
 // ============================================================================
 // Test Utilities
@@ -119,7 +118,7 @@ function create_type_definition(
     location: create_location(file),
     file_path: file as FilePath,
     direct_members,
-    extends_names: extends_types.map(t => t as SymbolName),
+    extends_names: extends_types.map((t) => t as SymbolName),
     implements_names: [],
   };
 }
@@ -129,7 +128,7 @@ function create_type_definition(
  */
 function create_symbol_definition(props: {
   id: SymbolId;
-  kind: string;
+  kind: SymbolKind;
   name: SymbolName;
   location: Location;
   scope_id: ScopeId;
@@ -140,7 +139,7 @@ function create_symbol_definition(props: {
 }): SymbolDefinition {
   return {
     id: props.id,
-    kind: props.kind as any,
+    kind: props.kind,
     name: props.name,
     location: props.location,
     scope_id: props.scope_id,
@@ -160,12 +159,12 @@ function create_symbol_definition(props: {
 function create_type_flow_pattern(
   from_type: TypeId,
   to_type: TypeId,
-  operation: string = "assignment"
+  operation: "parameter" | "return" | "assignment" = "assignment"
 ): LocalTypeFlowPattern {
   return {
     source_location: create_location("test.ts"),
     target_location: create_location("test.ts"),
-    flow_kind: operation as any,
+    flow_kind: operation,
     scope_id: "scope:0" as ScopeId,
   };
 }
@@ -239,7 +238,9 @@ describe("Type Resolution - Comprehensive Suite", () => {
       const registry = build_file_type_registry(symbols, "test.ts" as FilePath);
 
       expect(registry.return_types.size).toBe(1);
-      expect(registry.return_types.get("func1" as SymbolId)).toBe("string" as TypeId);
+      expect(registry.return_types.get("func1" as SymbolId)).toBe(
+        "string" as TypeId
+      );
     });
 
     it("handles class inheritance", () => {
@@ -343,7 +344,10 @@ describe("Type Resolution - Comprehensive Suite", () => {
         ["file2.ts" as FilePath, file2_types],
       ]);
 
-      const global_registry = build_global_type_registry(local_types, new Map());
+      const global_registry = build_global_type_registry(
+        local_types,
+        new Map()
+      );
 
       expect(global_registry.types.size).toBe(4);
 
@@ -372,15 +376,26 @@ describe("Type Resolution - Comprehensive Suite", () => {
         ["file2.ts" as FilePath, file2_types],
       ]);
 
-      const global_registry = build_global_type_registry(local_types, new Map());
+      const global_registry = build_global_type_registry(
+        local_types,
+        new Map()
+      );
 
       expect(global_registry.types.size).toBe(2); // Two separate types with same name
 
       // Check that both files have their type definitions
       expect(global_registry.type_names.has("file1.ts" as FilePath)).toBe(true);
       expect(global_registry.type_names.has("file2.ts" as FilePath)).toBe(true);
-      expect(global_registry.type_names.get("file1.ts" as FilePath)?.has("Duplicate" as SymbolName)).toBe(true);
-      expect(global_registry.type_names.get("file2.ts" as FilePath)?.has("Duplicate" as SymbolName)).toBe(true);
+      expect(
+        global_registry.type_names
+          .get("file1.ts" as FilePath)
+          ?.has("Duplicate" as SymbolName)
+      ).toBe(true);
+      expect(
+        global_registry.type_names
+          .get("file2.ts" as FilePath)
+          ?.has("Duplicate" as SymbolName)
+      ).toBe(true);
     });
 
     it("creates type registry entries correctly", () => {
@@ -411,8 +426,16 @@ describe("Type Resolution - Comprehensive Suite", () => {
         new Map()
       );
 
-      const base_type_id = defined_type_id(TypeCategory.CLASS, type_definitions[0].name, type_definitions[0].location);
-      const derived_type_id = defined_type_id(TypeCategory.CLASS, type_definitions[1].name, type_definitions[1].location);
+      const base_type_id = defined_type_id(
+        TypeCategory.CLASS,
+        type_definitions[0].name,
+        type_definitions[0].location
+      );
+      const derived_type_id = defined_type_id(
+        TypeCategory.CLASS,
+        type_definitions[1].name,
+        type_definitions[1].location
+      );
 
       expect(hierarchy.all_ancestors.size).toBe(2);
       expect(hierarchy.all_ancestors.has(base_type_id)).toBe(true);
@@ -423,20 +446,35 @@ describe("Type Resolution - Comprehensive Suite", () => {
       const type_definitions = [
         create_type_definition("Interface1", "test.ts", "interface"),
         create_type_definition("Interface2", "test.ts", "interface"),
-        create_type_definition("MultiImpl", "test.ts", "class", [], []),
+        {
+          ...create_type_definition("MultiImpl", "test.ts", "class", [], []),
+          implements_names: [
+            "Interface1" as SymbolName,
+            "Interface2" as SymbolName,
+          ],
+        },
       ];
-
-      // Manually set implements for the test
-      (type_definitions[2] as any).implements_names = ["Interface1" as SymbolName, "Interface2" as SymbolName];
 
       const hierarchy = resolve_inheritance(
         new Map([["test.ts" as FilePath, type_definitions]]),
         new Map()
       );
 
-      const interface1_type_id = defined_type_id(TypeCategory.INTERFACE, type_definitions[0].name, type_definitions[0].location);
-      const interface2_type_id = defined_type_id(TypeCategory.INTERFACE, type_definitions[1].name, type_definitions[1].location);
-      const multi_impl_type_id = defined_type_id(TypeCategory.CLASS, type_definitions[2].name, type_definitions[2].location);
+      const interface1_type_id = defined_type_id(
+        TypeCategory.INTERFACE,
+        type_definitions[0].name,
+        type_definitions[0].location
+      );
+      const interface2_type_id = defined_type_id(
+        TypeCategory.INTERFACE,
+        type_definitions[1].name,
+        type_definitions[1].location
+      );
+      const multi_impl_type_id = defined_type_id(
+        TypeCategory.CLASS,
+        type_definitions[2].name,
+        type_definitions[2].location
+      );
 
       expect(hierarchy.all_ancestors.size).toBe(3);
       expect(hierarchy.all_ancestors.has(multi_impl_type_id)).toBe(true);
@@ -462,7 +500,7 @@ describe("Type Resolution - Comprehensive Suite", () => {
       const type_definitions = [];
 
       for (let i = 0; i < chain_length; i++) {
-        const extends_types = i === 0 ? [] : [`Class${i-1}`];
+        const extends_types = i === 0 ? [] : [`Class${i - 1}`];
         type_definitions.push(
           create_type_definition(`Class${i}`, "test.ts", "class", extends_types)
         );
@@ -517,8 +555,8 @@ describe("Type Resolution - Comprehensive Suite", () => {
 
       const class_members = local_members.get(class_type_id)!;
       expect(class_members.length).toBe(2);
-      expect(class_members.some(m => m.name === "method1")).toBe(true);
-      expect(class_members.some(m => m.name === "property1")).toBe(true);
+      expect(class_members.some((m) => m.name === "method1")).toBe(true);
+      expect(class_members.some((m) => m.name === "property1")).toBe(true);
     });
 
     it("resolves inherited members", () => {
@@ -548,9 +586,7 @@ describe("Type Resolution - Comprehensive Suite", () => {
       ]);
 
       const hierarchy: TypeHierarchyGraph = {
-        extends_map: new Map([
-          [derived_type_id, [base_type_id]],
-        ]),
+        extends_map: new Map([[derived_type_id, [base_type_id]]]),
         implements_map: new Map(),
         all_ancestors: new Map([
           [base_type_id, new Set()],
@@ -567,8 +603,12 @@ describe("Type Resolution - Comprehensive Suite", () => {
 
       const base_class_members = local_members.get(base_type_id)!;
       const derived_class_members = local_members.get(derived_type_id)!;
-      expect(base_class_members.some(m => m.name === "baseMethod")).toBe(true);
-      expect(derived_class_members.some(m => m.name === "derivedMethod")).toBe(true);
+      expect(base_class_members.some((m) => m.name === "baseMethod")).toBe(
+        true
+      );
+      expect(
+        derived_class_members.some((m) => m.name === "derivedMethod")
+      ).toBe(true);
     });
 
     it("handles member access resolution", () => {
@@ -592,7 +632,9 @@ describe("Type Resolution - Comprehensive Suite", () => {
       const resolved_members = new Map([[object_type, members]]);
 
       // Test simple member lookup
-      const method_member = resolved_members.get(object_type)?.find(m => m.name === "testMethod");
+      const method_member = resolved_members
+        .get(object_type)
+        ?.find((m) => m.name === "testMethod");
       expect(method_member).toBeDefined();
       expect(method_member?.name).toBe("testMethod");
       expect(method_member?.type_id).toBe(primitive_type_id("string"));
@@ -619,7 +661,9 @@ describe("Type Resolution - Comprehensive Suite", () => {
       const resolved_members = new Map([[class_type, members]]);
 
       // Test simple static member lookup
-      const static_member = resolved_members.get(class_type)?.find(m => m.name === "staticMethod");
+      const static_member = resolved_members
+        .get(class_type)
+        ?.find((m) => m.name === "staticMethod");
       expect(static_member).toBeDefined();
       expect(static_member?.is_static).toBe(true);
     });
@@ -699,8 +743,16 @@ describe("Type Resolution - Comprehensive Suite", () => {
     });
 
     it("creates intersection types", () => {
-      const interface1 = defined_type_id(TypeCategory.INTERFACE, "Interface1" as SymbolName, create_location("test.ts"));
-      const interface2 = defined_type_id(TypeCategory.INTERFACE, "Interface2" as SymbolName, create_location("test.ts"));
+      const interface1 = defined_type_id(
+        TypeCategory.INTERFACE,
+        "Interface1" as SymbolName,
+        create_location("test.ts")
+      );
+      const interface2 = defined_type_id(
+        TypeCategory.INTERFACE,
+        "Interface2" as SymbolName,
+        create_location("test.ts")
+      );
 
       const intersection = create_intersection_type([interface1, interface2]);
 
@@ -739,8 +791,20 @@ describe("Type Resolution - Comprehensive Suite", () => {
   describe("Full Type Resolution Integration", () => {
     it("resolves complete type information", () => {
       const type_definitions = [
-        create_type_definition("BaseClass", "test.ts", "class", [], ["baseMethod"]),
-        create_type_definition("DerivedClass", "test.ts", "class", ["BaseClass"], ["derivedMethod"]),
+        create_type_definition(
+          "BaseClass",
+          "test.ts",
+          "class",
+          [],
+          ["baseMethod"]
+        ),
+        create_type_definition(
+          "DerivedClass",
+          "test.ts",
+          "class",
+          ["BaseClass"],
+          ["derivedMethod"]
+        ),
       ];
 
       const type_annotations: LocalTypeAnnotation[] = [
@@ -766,10 +830,10 @@ describe("Type Resolution - Comprehensive Suite", () => {
         type_flows: new Map([["test.ts" as FilePath, type_flow_patterns]]),
       };
 
-      const import_resolution_map: ImportResolutionMap = { imports: new Map() };
+      const import_resolution_map: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> = new Map();
       const function_resolution_map: FunctionResolutionMap = {
         function_calls: new Map(),
-        calls_to_function: new Map()
+        calls_to_function: new Map(),
       };
 
       const result = resolve_types(
@@ -795,31 +859,40 @@ describe("Type Resolution - Comprehensive Suite", () => {
       ];
 
       const file2_types = [
-        create_type_definition("Implementation", "file2.ts", "class", [], []),
+        {
+          ...create_type_definition("Implementation", "file2.ts", "class", [], []),
+          implements_names: ["SharedInterface" as SymbolName],
+        },
       ];
-      // Set implements manually
-      (file2_types[0] as any).implements_names = ["SharedInterface" as SymbolName];
 
       const extraction: LocalTypeExtraction = {
         type_definitions: new Map([
           ["file1.ts" as FilePath, file1_types],
-          ["file2.ts" as FilePath, file2_types]
+          ["file2.ts" as FilePath, file2_types],
         ]),
         type_annotations: new Map(),
         type_flows: new Map(),
       };
 
-      const import_resolution_map: ImportResolutionMap = { imports: new Map() };
+      const import_resolution_map: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> = new Map();
       const function_resolution_map: FunctionResolutionMap = {
         function_calls: new Map(),
-        calls_to_function: new Map()
+        calls_to_function: new Map(),
       };
 
-      const result = resolve_types(extraction, import_resolution_map, function_resolution_map);
+      const result = resolve_types(
+        extraction,
+        import_resolution_map,
+        function_resolution_map
+      );
 
       // Check that types are properly registered
-      const file1_registry = result.type_registry.type_names.get("file1.ts" as FilePath);
-      const file2_registry = result.type_registry.type_names.get("file2.ts" as FilePath);
+      const file1_registry = result.type_registry.type_names.get(
+        "file1.ts" as FilePath
+      );
+      const file2_registry = result.type_registry.type_names.get(
+        "file2.ts" as FilePath
+      );
       expect(file1_registry?.has("SharedInterface" as SymbolName)).toBe(true);
       expect(file2_registry?.has("Implementation" as SymbolName)).toBe(true);
     });
@@ -839,7 +912,7 @@ describe("Type Resolution - Comprehensive Suite", () => {
 
       const result = resolve_types(
         extraction,
-        { imports: new Map() },
+        new Map() as ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>,
         { function_calls: new Map(), calls_to_function: new Map() }
       );
 
@@ -848,9 +921,11 @@ describe("Type Resolution - Comprehensive Suite", () => {
     });
 
     it("handles malformed type definitions", () => {
-      const malformed_type = create_type_definition("Malformed", "test.ts");
-      // Create invalid circular reference
-      (malformed_type as any).extends_names = ["Malformed" as SymbolName];
+      const malformed_type = {
+        ...create_type_definition("Malformed", "test.ts"),
+        // Create invalid circular reference
+        extends_names: ["Malformed" as SymbolName],
+      };
 
       const extraction: LocalTypeExtraction = {
         type_definitions: new Map([["test.ts" as FilePath, [malformed_type]]]),
@@ -861,7 +936,7 @@ describe("Type Resolution - Comprehensive Suite", () => {
       // Should not throw, but handle gracefully
       const result = resolve_types(
         extraction,
-        { imports: new Map() },
+        new Map() as ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>,
         { function_calls: new Map(), calls_to_function: new Map() }
       );
 
@@ -875,7 +950,13 @@ describe("Type Resolution - Comprehensive Suite", () => {
       const type_definitions = [];
       for (let i = 0; i < 1000; i++) {
         type_definitions.push(
-          create_type_definition(`Type${i}`, "test.ts", "class", [], [`member${i}`])
+          create_type_definition(
+            `Type${i}`,
+            "test.ts",
+            "class",
+            [],
+            [`member${i}`]
+          )
         );
       }
 
@@ -887,7 +968,7 @@ describe("Type Resolution - Comprehensive Suite", () => {
 
       const result = resolve_types(
         extraction,
-        { imports: new Map() },
+        new Map() as ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>,
         { function_calls: new Map(), calls_to_function: new Map() }
       );
 
@@ -905,7 +986,7 @@ describe("Type Resolution - Comprehensive Suite", () => {
       const type_definitions = [];
 
       for (let i = 0; i < chain_length; i++) {
-        const extends_types = i === 0 ? [] : [`Chain${i-1}`];
+        const extends_types = i === 0 ? [] : [`Chain${i - 1}`];
         type_definitions.push(
           create_type_definition(`Chain${i}`, "test.ts", "class", extends_types)
         );
@@ -919,7 +1000,7 @@ describe("Type Resolution - Comprehensive Suite", () => {
 
       const result = resolve_types(
         extraction,
-        { imports: new Map() },
+        new Map() as ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>,
         { function_calls: new Map(), calls_to_function: new Map() }
       );
 
@@ -953,7 +1034,7 @@ describe("Type Resolution - Comprehensive Suite", () => {
 
       const result = resolve_types(
         extraction,
-        { imports: new Map() },
+        new Map() as ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>,
         { function_calls: new Map(), calls_to_function: new Map() }
       );
 
@@ -981,19 +1062,21 @@ describe("Type Resolution - Comprehensive Suite", () => {
         }
 
         const extraction: LocalTypeExtraction = {
-          type_definitions: new Map([["test.ts" as FilePath, type_definitions]]),
+          type_definitions: new Map([
+            ["test.ts" as FilePath, type_definitions],
+          ]),
           type_annotations: new Map(),
           type_flows: new Map(),
         };
 
         resolve_types(
           extraction,
-          { imports: new Map() },
+          new Map() as ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>,
           { function_calls: new Map(), calls_to_function: new Map() }
         );
 
         const end_time = performance.now();
-        total_duration += (end_time - start_time);
+        total_duration += end_time - start_time;
       }
 
       // Should maintain reasonable performance across batches

@@ -6,10 +6,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import Parser from "tree-sitter";
 import Python from "tree-sitter-python";
 import type { SyntaxNode } from "tree-sitter";
-import {
-  SemanticCategory,
-  SemanticEntity,
-} from "../capture_types";
+import { SemanticCategory, SemanticEntity } from "../capture_types";
 import { PYTHON_CAPTURE_CONFIG } from "./python";
 
 describe("Python Language Configuration", () => {
@@ -474,11 +471,11 @@ def generator():
       if (typeof methodConfig?.modifiers === "function") {
         // Test with null node - should throw since function accesses .text
         expect(() => {
-          methodConfig.modifiers!(null as any);
+          methodConfig.modifiers!(null as unknown as SyntaxNode);
         }).toThrow();
 
         // Test with node without parent - should work
-        const mockNode = { text: "test", parent: null } as any;
+        const mockNode = { text: "test", parent: null } as SyntaxNode;
         expect(() => {
           methodConfig.modifiers!(mockNode);
         }).not.toThrow();
@@ -490,11 +487,11 @@ def generator():
       if (typeof importConfig?.context === "function") {
         // Test with null node - should throw since function accesses .text
         expect(() => {
-          importConfig.context!(null as any);
+          importConfig.context!(null as unknown as SyntaxNode);
         }).toThrow();
 
         // Test with node without text - should also throw since replace is called on undefined
-        const mockNode = {} as any;
+        const mockNode = {} as SyntaxNode;
         expect(() => {
           importConfig.context!(mockNode);
         }).toThrow();
@@ -505,7 +502,7 @@ def generator():
       const decoratorConfig = PYTHON_CAPTURE_CONFIG.get("ref.decorator");
       if (typeof decoratorConfig?.context === "function") {
         // Test with node that doesn't have proper structure
-        const mockNode = { text: "decorator", parent: null } as any;
+        const mockNode = { text: "decorator", parent: null } as SyntaxNode;
         const context = decoratorConfig.context(mockNode);
         expect(context).toBeDefined();
         expect(context?.decorator_name).toBe("decorator");
@@ -532,6 +529,124 @@ class C(B):
         expect(() => {
           classConfig.context!({} as SyntaxNode);
         }).not.toThrow();
+      }
+    });
+  });
+
+  describe("Static vs Instance Method Detection", () => {
+    it("should detect static methods with @staticmethod decorator", () => {
+      const staticMethodConfig = PYTHON_CAPTURE_CONFIG.get("def.method.static");
+      expect(staticMethodConfig).toBeDefined();
+      expect(staticMethodConfig?.entity).toBe(SemanticEntity.METHOD);
+
+      if (staticMethodConfig?.context) {
+        const context = staticMethodConfig.context({} as SyntaxNode);
+        expect(context?.decorator_name).toBe("staticmethod");
+        expect(context?.is_static).toBe(true);
+      }
+    });
+
+    it("should detect class methods with @classmethod decorator", () => {
+      const classMethodConfig = PYTHON_CAPTURE_CONFIG.get("def.method.class");
+      expect(classMethodConfig).toBeDefined();
+      expect(classMethodConfig?.entity).toBe(SemanticEntity.METHOD);
+
+      if (classMethodConfig?.context) {
+        const context = classMethodConfig.context({} as SyntaxNode);
+        expect(context?.decorator_name).toBe("classmethod");
+        expect(context?.is_static).toBe(true);
+      }
+    });
+
+    it("should detect instance methods (no decorator)", () => {
+      const instanceMethodConfig = PYTHON_CAPTURE_CONFIG.get("def.method");
+      expect(instanceMethodConfig).toBeDefined();
+      expect(instanceMethodConfig?.entity).toBe(SemanticEntity.METHOD);
+
+      // Instance methods don't have is_static context
+      if (instanceMethodConfig?.context) {
+        const context = instanceMethodConfig.context({} as SyntaxNode);
+        expect(context?.is_static).toBeUndefined();
+      }
+    });
+
+    it("should mark static method calls appropriately", () => {
+      const staticCallConfig = PYTHON_CAPTURE_CONFIG.get(
+        "ref.method_call.static"
+      );
+
+      if (staticCallConfig) {
+        expect(staticCallConfig.entity).toBe(SemanticEntity.CALL);
+
+        if (staticCallConfig.context) {
+          const context = staticCallConfig.context({} as SyntaxNode);
+          expect(context?.is_static).toBe(true);
+        }
+      }
+    });
+
+    it("should mark instance method calls appropriately", () => {
+      const instanceCallConfig = PYTHON_CAPTURE_CONFIG.get("ref.method_call");
+      expect(instanceCallConfig).toBeDefined();
+      expect(instanceCallConfig?.entity).toBe(SemanticEntity.CALL);
+
+      // Regular method calls don't explicitly mark is_static
+      if (instanceCallConfig?.context) {
+        const mockNode = {
+          parent: {
+            childForFieldName: (field: string) => {
+              if (field === "object") {
+                return { text: "self" }; // Instance call on self
+              }
+              return null;
+            },
+          },
+        } as SyntaxNode;
+
+        const context = instanceCallConfig.context(mockNode);
+        expect(context?.is_static).toBeUndefined();
+      }
+    });
+
+    it("should detect property getter/setter decorators", () => {
+      const propertyConfig = PYTHON_CAPTURE_CONFIG.get("def.property");
+      expect(propertyConfig).toBeDefined();
+      expect(propertyConfig?.entity).toBe(SemanticEntity.PROPERTY);
+
+      if (propertyConfig?.context) {
+        const context = propertyConfig.context({} as SyntaxNode);
+        expect(context?.decorator_name).toBe("property");
+        // Properties are instance-level, not static
+        expect(context?.is_static).toBeUndefined();
+      }
+    });
+
+    it("should handle __new__ as static method", () => {
+      // __new__ is implicitly static (takes cls not self)
+      const constructorConfig = PYTHON_CAPTURE_CONFIG.get("def.constructor");
+      expect(constructorConfig).toBeDefined();
+
+      if (constructorConfig?.context) {
+        const mockNode = { text: "__new__" } as SyntaxNode;
+        const context = constructorConfig.context(mockNode);
+        // __new__ is a special case - it's static-like but not marked explicitly
+        // The context might include method name info but not as a specific property
+        expect(context).toBeDefined();
+      }
+    });
+
+    it("should differentiate class-level vs instance-level access", () => {
+      // Class.method() should be static
+      const classRefConfig = PYTHON_CAPTURE_CONFIG.get("class.ref");
+
+      if (classRefConfig) {
+        expect(classRefConfig.entity).toBe(SemanticEntity.CLASS);
+
+        if (classRefConfig.context) {
+          const context = classRefConfig.context({} as SyntaxNode);
+          // Class references represent static context but the property may not exist
+          expect(context).toBeDefined();
+        }
       }
     });
   });

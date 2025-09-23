@@ -26,7 +26,7 @@ import type {
 } from "@ariadnejs/types";
 import { variable_symbol } from "@ariadnejs/types";
 import { process_imports } from "./imports";
-import { SemanticEntity } from "../capture_types";
+import { SemanticEntity, SemanticCategory } from "../capture_types";
 import type { NormalizedCapture } from "../capture_types";
 import { query_tree_and_parse_captures } from "../semantic_index";
 
@@ -67,7 +67,7 @@ describe("Imports Module", () => {
       it("should process basic named imports", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "readFile",
             node_location: { ...base_location, line: 3 },
@@ -78,7 +78,13 @@ describe("Imports Module", () => {
           },
         ];
 
-        const result = process_imports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_imports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const import_item = result[0] as NamedImport;
@@ -92,7 +98,7 @@ describe("Imports Module", () => {
       it("should process named imports with aliases", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "join",
             node_location: base_location,
@@ -104,7 +110,13 @@ describe("Imports Module", () => {
           },
         ];
 
-        const result = process_imports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_imports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const import_item = result[0] as NamedImport;
@@ -116,7 +128,7 @@ describe("Imports Module", () => {
       it("should handle type-only imports", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "Interface",
             node_location: base_location,
@@ -129,7 +141,13 @@ describe("Imports Module", () => {
           },
         ];
 
-        const result = process_imports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_imports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const import_item = result[0] as NamedImport;
@@ -139,7 +157,7 @@ describe("Imports Module", () => {
       it("should create symbols for imported names", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "readFile",
             node_location: base_location,
@@ -167,7 +185,7 @@ describe("Imports Module", () => {
       it("should process default imports", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "React",
             node_location: base_location,
@@ -180,7 +198,13 @@ describe("Imports Module", () => {
           },
         ];
 
-        const result = process_imports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_imports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const import_item = result[0] as DefaultImport;
@@ -193,7 +217,7 @@ describe("Imports Module", () => {
       it("should create symbols for default imports", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "React",
             node_location: base_location,
@@ -219,7 +243,7 @@ describe("Imports Module", () => {
       it("should process namespace imports", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "utils",
             node_location: base_location,
@@ -232,7 +256,13 @@ describe("Imports Module", () => {
           },
         ];
 
-        const result = process_imports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_imports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const import_item = result[0] as NamespaceImport;
@@ -245,7 +275,7 @@ describe("Imports Module", () => {
       it("should handle Python wildcard imports", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "*",
             node_location: base_location,
@@ -256,7 +286,13 @@ describe("Imports Module", () => {
           },
         ];
 
-        const result = process_imports(captures, root_scope, symbols, file_path, "python");
+        const result = process_imports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "python"
+        );
 
         expect(result.length).toBe(1);
         const import_item = result[0] as NamespaceImport;
@@ -268,7 +304,7 @@ describe("Imports Module", () => {
       it("should handle Rust glob imports", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "*",
             node_location: base_location,
@@ -281,7 +317,13 @@ describe("Imports Module", () => {
           },
         ];
 
-        const result = process_imports(captures, root_scope, symbols, file_path, "rust");
+        const result = process_imports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "rust"
+        );
 
         expect(result.length).toBe(1);
         const import_item = result[0] as NamespaceImport;
@@ -292,7 +334,7 @@ describe("Imports Module", () => {
       it("should not create symbols for wildcard imports", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "*",
             node_location: base_location,
@@ -314,7 +356,7 @@ describe("Imports Module", () => {
       it("should process side effect imports", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "polyfill",
             node_location: base_location,
@@ -326,7 +368,13 @@ describe("Imports Module", () => {
           },
         ];
 
-        const result = process_imports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_imports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const import_item = result[0] as SideEffectImport;
@@ -338,7 +386,7 @@ describe("Imports Module", () => {
       it("should not create symbols for side effect imports", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "polyfill",
             node_location: base_location,
@@ -362,7 +410,7 @@ describe("Imports Module", () => {
         it("should handle relative imports", () => {
           const captures: NormalizedCapture[] = [
             {
-              category: "import" as any,
+              category: SemanticCategory.IMPORT,
               entity: SemanticEntity.VARIABLE,
               text: "module",
               node_location: base_location,
@@ -373,7 +421,13 @@ describe("Imports Module", () => {
             },
           ];
 
-          const result = process_imports(captures, root_scope, symbols, file_path, "python");
+          const result = process_imports(
+            captures,
+            root_scope,
+            symbols,
+            file_path,
+            "python"
+          );
 
           expect(result.length).toBe(1);
           const import_item = result[0] as NamedImport;
@@ -383,7 +437,7 @@ describe("Imports Module", () => {
         it("should handle namespace imports with relative paths", () => {
           const captures: NormalizedCapture[] = [
             {
-              category: "import" as any,
+              category: SemanticCategory.IMPORT,
               entity: SemanticEntity.VARIABLE,
               text: "utils",
               node_location: base_location,
@@ -396,7 +450,13 @@ describe("Imports Module", () => {
             },
           ];
 
-          const result = process_imports(captures, root_scope, symbols, file_path, "python");
+          const result = process_imports(
+            captures,
+            root_scope,
+            symbols,
+            file_path,
+            "python"
+          );
 
           expect(result.length).toBe(1);
           const import_item = result[0] as NamespaceImport;
@@ -408,7 +468,7 @@ describe("Imports Module", () => {
         it("should handle crate-relative imports", () => {
           const captures: NormalizedCapture[] = [
             {
-              category: "import" as any,
+              category: SemanticCategory.IMPORT,
               entity: SemanticEntity.VARIABLE,
               text: "module",
               node_location: base_location,
@@ -419,7 +479,13 @@ describe("Imports Module", () => {
             },
           ];
 
-          const result = process_imports(captures, root_scope, symbols, file_path, "rust");
+          const result = process_imports(
+            captures,
+            root_scope,
+            symbols,
+            file_path,
+            "rust"
+          );
 
           expect(result.length).toBe(1);
           const import_item = result[0] as NamedImport;
@@ -429,7 +495,7 @@ describe("Imports Module", () => {
         it("should handle super-relative imports", () => {
           const captures: NormalizedCapture[] = [
             {
-              category: "import" as any,
+              category: SemanticCategory.IMPORT,
               entity: SemanticEntity.VARIABLE,
               text: "module",
               node_location: base_location,
@@ -440,7 +506,13 @@ describe("Imports Module", () => {
             },
           ];
 
-          const result = process_imports(captures, root_scope, symbols, file_path, "rust");
+          const result = process_imports(
+            captures,
+            root_scope,
+            symbols,
+            file_path,
+            "rust"
+          );
 
           expect(result.length).toBe(1);
           const import_item = result[0] as NamedImport;
@@ -450,7 +522,7 @@ describe("Imports Module", () => {
         it("should handle self-relative imports", () => {
           const captures: NormalizedCapture[] = [
             {
-              category: "import" as any,
+              category: SemanticCategory.IMPORT,
               entity: SemanticEntity.VARIABLE,
               text: "module",
               node_location: base_location,
@@ -461,7 +533,13 @@ describe("Imports Module", () => {
             },
           ];
 
-          const result = process_imports(captures, root_scope, symbols, file_path, "rust");
+          const result = process_imports(
+            captures,
+            root_scope,
+            symbols,
+            file_path,
+            "rust"
+          );
 
           expect(result.length).toBe(1);
           const import_item = result[0] as NamedImport;
@@ -474,7 +552,7 @@ describe("Imports Module", () => {
       it("should skip captures marked to skip", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "included",
             node_location: base_location,
@@ -484,7 +562,7 @@ describe("Imports Module", () => {
             },
           },
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "skipped",
             node_location: { ...base_location, line: 2 },
@@ -496,7 +574,13 @@ describe("Imports Module", () => {
           },
         ];
 
-        const result = process_imports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_imports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         expect(result[0].source).toBe("fs");
@@ -505,7 +589,13 @@ describe("Imports Module", () => {
 
     describe("Error Handling", () => {
       it("should handle empty captures array", () => {
-        const result = process_imports([], root_scope, symbols, file_path, "typescript");
+        const result = process_imports(
+          [],
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(0);
         expect(symbols.size).toBe(0);
@@ -515,7 +605,7 @@ describe("Imports Module", () => {
       it("should handle missing source module gracefully", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "testImport",
             node_location: base_location,
@@ -526,7 +616,13 @@ describe("Imports Module", () => {
           },
         ];
 
-        const result = process_imports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_imports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const import_item = result[0] as NamedImport;
@@ -536,7 +632,7 @@ describe("Imports Module", () => {
       it("should handle malformed context data", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "testImport",
             node_location: base_location,
@@ -544,23 +640,29 @@ describe("Imports Module", () => {
             context: {
               source_module: "fs",
               import_alias: undefined, // Undefined alias
-            } as any,
+            },
           },
         ];
 
         expect(() => {
-          process_imports(captures, root_scope, symbols, file_path, "typescript");
+          process_imports(
+            captures,
+            root_scope,
+            symbols,
+            file_path,
+            "typescript"
+          );
         }).not.toThrow();
       });
 
       it("should handle missing modifiers", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "testImport",
             node_location: base_location,
-            modifiers: {} as any, // Empty object instead of undefined
+            modifiers: {}, // Empty object instead of undefined
             context: {
               source_module: "fs",
             },
@@ -568,14 +670,20 @@ describe("Imports Module", () => {
         ];
 
         expect(() => {
-          process_imports(captures, root_scope, symbols, file_path, "typescript");
+          process_imports(
+            captures,
+            root_scope,
+            symbols,
+            file_path,
+            "typescript"
+          );
         }).not.toThrow();
       });
 
       it("should handle null or undefined import names", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "",
             node_location: base_location,
@@ -585,9 +693,9 @@ describe("Imports Module", () => {
             },
           },
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
-            text: null as any,
+            text: null as unknown as string,
             node_location: { ...base_location, line: 2 },
             modifiers: {},
             context: {
@@ -597,7 +705,13 @@ describe("Imports Module", () => {
         ];
 
         expect(() => {
-          process_imports(captures, root_scope, symbols, file_path, "typescript");
+          process_imports(
+            captures,
+            root_scope,
+            symbols,
+            file_path,
+            "typescript"
+          );
         }).not.toThrow();
       });
     });
@@ -607,7 +721,7 @@ describe("Imports Module", () => {
         const captures: NormalizedCapture[] = [
           // Named import
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "readFile",
             node_location: { ...base_location, line: 1 },
@@ -618,7 +732,7 @@ describe("Imports Module", () => {
           },
           // Default import
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "React",
             node_location: { ...base_location, line: 2 },
@@ -629,7 +743,7 @@ describe("Imports Module", () => {
           },
           // Namespace import
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "utils",
             node_location: { ...base_location, line: 3 },
@@ -640,7 +754,7 @@ describe("Imports Module", () => {
           },
           // Side effect import
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "polyfill",
             node_location: { ...base_location, line: 4 },
@@ -652,11 +766,17 @@ describe("Imports Module", () => {
           },
         ];
 
-        const result = process_imports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_imports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(4);
 
-        const kinds = result.map(i => i.kind);
+        const kinds = result.map((i) => i.kind);
         expect(kinds).toContain("named");
         expect(kinds).toContain("default");
         expect(kinds).toContain("namespace");
@@ -669,7 +789,7 @@ describe("Imports Module", () => {
       it("should handle complex aliased imports", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "join",
             node_location: base_location,
@@ -680,7 +800,7 @@ describe("Imports Module", () => {
             },
           },
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "join",
             node_location: { ...base_location, line: 2 },
@@ -692,7 +812,13 @@ describe("Imports Module", () => {
           },
         ];
 
-        const result = process_imports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_imports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(2);
 
@@ -711,7 +837,7 @@ describe("Imports Module", () => {
       it("should set correct symbol properties", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "readFile",
             node_location: base_location,
@@ -736,7 +862,7 @@ describe("Imports Module", () => {
       it("should handle symbols with same name from different sources", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "join",
             node_location: { ...base_location, line: 1 },
@@ -746,7 +872,7 @@ describe("Imports Module", () => {
             },
           },
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "join",
             node_location: { ...base_location, line: 2 },
@@ -832,7 +958,7 @@ describe("Imports Module", () => {
         if (captures.imports && captures.imports.length > 0) {
           expect(result.length).toBeGreaterThan(0);
 
-          const import_kinds = new Set(result.map(i => i.kind));
+          const import_kinds = new Set(result.map((i) => i.kind));
           expect(import_kinds.size).toBeGreaterThan(0);
         } else {
           // If no imports captured, that's also valid
@@ -926,8 +1052,9 @@ describe("Imports Module", () => {
 
     it("should process moderately large files without performance issues", () => {
       // Generate a file with many imports
-      const large_code = Array.from({ length: 100 }, (_, i) =>
-        `import { func${i} } from "./module${i}";`
+      const large_code = Array.from(
+        { length: 100 },
+        (_, i) => `import { func${i} } from "./module${i}";`
       ).join("\n");
 
       const tree = typescript_parser.parse(large_code);
@@ -978,7 +1105,7 @@ describe("Imports Module", () => {
     it("should not add duplicate modifiers for Rust module paths", () => {
       const captures: NormalizedCapture[] = [
         {
-          category: "import" as any,
+          category: SemanticCategory.IMPORT,
           entity: SemanticEntity.VARIABLE,
           text: "utils",
           node_location: base_location,
@@ -991,13 +1118,21 @@ describe("Imports Module", () => {
         },
       ];
 
-      const result = process_imports(captures, root_scope, symbols, file_path, "rust");
+      const result = process_imports(
+        captures,
+        root_scope,
+        symbols,
+        file_path,
+        "rust"
+      );
 
       expect(result.length).toBe(1);
       const import_item = result[0] as NamespaceImport;
 
       // Should only have "crate_relative" once, not twice
-      const crate_relative_count = import_item.modifiers.filter(m => m === "crate_relative").length;
+      const crate_relative_count = import_item.modifiers.filter(
+        (m) => m === "crate_relative"
+      ).length;
       expect(crate_relative_count).toBe(1);
       expect(import_item.modifiers).toEqual(["crate_relative"]);
     });
@@ -1005,7 +1140,7 @@ describe("Imports Module", () => {
     it("should handle empty capture text gracefully without unsafe casting", () => {
       const captures: NormalizedCapture[] = [
         {
-          category: "import" as any,
+          category: SemanticCategory.IMPORT,
           entity: SemanticEntity.VARIABLE,
           text: "",
           node_location: base_location,
@@ -1021,7 +1156,13 @@ describe("Imports Module", () => {
       }).not.toThrow();
 
       // Should still create import but with empty name
-      const result = process_imports(captures, root_scope, symbols, file_path, "typescript");
+      const result = process_imports(
+        captures,
+        root_scope,
+        symbols,
+        file_path,
+        "typescript"
+      );
       expect(result.length).toBe(1);
       expect(result[0].kind).toBe("named");
     });
@@ -1029,14 +1170,14 @@ describe("Imports Module", () => {
     it("should handle null import alias gracefully", () => {
       const captures: NormalizedCapture[] = [
         {
-          category: "import" as any,
+          category: SemanticCategory.IMPORT,
           entity: SemanticEntity.VARIABLE,
           text: "join",
           node_location: base_location,
           modifiers: {},
           context: {
             source_module: "path",
-            import_alias: null as any,
+            import_alias: null as unknown as string,
           },
         },
       ];
@@ -1049,18 +1190,24 @@ describe("Imports Module", () => {
     it("should handle invalid source module gracefully", () => {
       const captures: NormalizedCapture[] = [
         {
-          category: "import" as any,
+          category: SemanticCategory.IMPORT,
           entity: SemanticEntity.VARIABLE,
           text: "readFile",
           node_location: base_location,
           modifiers: {},
           context: {
-            source_module: null as any,
+            source_module: null as unknown as string,
           },
         },
       ];
 
-      const result = process_imports(captures, root_scope, symbols, file_path, "typescript");
+      const result = process_imports(
+        captures,
+        root_scope,
+        symbols,
+        file_path,
+        "typescript"
+      );
       expect(result.length).toBe(1);
       expect(result[0].source).toBe("");
     });
@@ -1068,7 +1215,7 @@ describe("Imports Module", () => {
     it("should not add duplicate modifiers for multiple Rust module path checks", () => {
       const captures: NormalizedCapture[] = [
         {
-          category: "import" as any,
+          category: SemanticCategory.IMPORT,
           entity: SemanticEntity.VARIABLE,
           text: "module",
           node_location: base_location,
@@ -1079,13 +1226,21 @@ describe("Imports Module", () => {
         },
       ];
 
-      const result = process_imports(captures, root_scope, symbols, file_path, "rust");
+      const result = process_imports(
+        captures,
+        root_scope,
+        symbols,
+        file_path,
+        "rust"
+      );
 
       expect(result.length).toBe(1);
       const import_item = result[0] as NamedImport;
 
       // Should only have "super_relative" once, not multiple times
-      const super_relative_count = import_item.modifiers.filter(m => m === "super_relative").length;
+      const super_relative_count = import_item.modifiers.filter(
+        (m) => m === "super_relative"
+      ).length;
       expect(super_relative_count).toBe(1);
       expect(import_item.modifiers).toEqual(["super_relative"]);
     });
@@ -1093,7 +1248,7 @@ describe("Imports Module", () => {
     it("should properly handle scope symbols without unsafe casting", () => {
       const captures: NormalizedCapture[] = [
         {
-          category: "import" as any,
+          category: SemanticCategory.IMPORT,
           entity: SemanticEntity.VARIABLE,
           text: "testImport",
           node_location: base_location,
@@ -1120,26 +1275,35 @@ describe("Imports Module", () => {
 
   describe("Performance and Memory", () => {
     it("should handle large numbers of imports efficiently", () => {
-      const many_captures: NormalizedCapture[] = Array.from({ length: 1000 }, (_, i) => ({
-        category: "import" as any,
-        entity: SemanticEntity.VARIABLE,
-        text: `import_${i}`,
-        node_location: { ...base_location, line: i + 1 },
-        modifiers: {},
-        context: {
-          source_module: `./module_${i}`,
-        },
-      }));
+      const many_captures: NormalizedCapture[] = Array.from(
+        { length: 1000 },
+        (_, i) => ({
+          category: SemanticCategory.IMPORT,
+          entity: SemanticEntity.VARIABLE,
+          text: `import_${i}`,
+          node_location: { ...base_location, line: i + 1 },
+          modifiers: {},
+          context: {
+            source_module: `./module_${i}`,
+          },
+        })
+      );
 
       const start_time = Date.now();
-      const result = process_imports(many_captures, root_scope, symbols, file_path, "typescript");
+      const result = process_imports(
+        many_captures,
+        root_scope,
+        symbols,
+        file_path,
+        "typescript"
+      );
       const end_time = Date.now();
 
       expect(result.length).toBe(1000);
       expect(end_time - start_time).toBeLessThan(2000); // Should complete in reasonable time
 
       // Verify all imports are correctly processed
-      const import_sources = result.map(i => i.source);
+      const import_sources = result.map((i) => i.source);
       for (let i = 0; i < 1000; i++) {
         expect(import_sources).toContain(`./module_${i}`);
       }
@@ -1153,7 +1317,7 @@ describe("Imports Module", () => {
       const complex_captures: NormalizedCapture[] = [
         // Multiple named imports
         ...Array.from({ length: 50 }, (_, i) => ({
-          category: "import" as any,
+          category: SemanticCategory.IMPORT,
           entity: SemanticEntity.VARIABLE,
           text: `named_${i}`,
           node_location: { ...base_location, line: i + 1 },
@@ -1164,7 +1328,7 @@ describe("Imports Module", () => {
         })),
         // Multiple default imports
         ...Array.from({ length: 10 }, (_, i) => ({
-          category: "import" as any,
+          category: SemanticCategory.IMPORT,
           entity: SemanticEntity.VARIABLE,
           text: `Default${i}`,
           node_location: { ...base_location, line: i + 100 },
@@ -1175,7 +1339,7 @@ describe("Imports Module", () => {
         })),
         // Multiple namespace imports
         ...Array.from({ length: 10 }, (_, i) => ({
-          category: "import" as any,
+          category: SemanticCategory.IMPORT,
           entity: SemanticEntity.VARIABLE,
           text: `ns${i}`,
           node_location: { ...base_location, line: i + 200 },
@@ -1186,13 +1350,19 @@ describe("Imports Module", () => {
         })),
       ];
 
-      const result = process_imports(complex_captures, root_scope, symbols, file_path, "typescript");
+      const result = process_imports(
+        complex_captures,
+        root_scope,
+        symbols,
+        file_path,
+        "typescript"
+      );
 
       expect(result.length).toBe(70); // 50 named + 10 default + 10 namespace imports
 
-      const named_imports = result.filter(i => i.kind === "named");
-      const default_imports = result.filter(i => i.kind === "default");
-      const namespace_imports = result.filter(i => i.kind === "namespace");
+      const named_imports = result.filter((i) => i.kind === "named");
+      const default_imports = result.filter((i) => i.kind === "default");
+      const namespace_imports = result.filter((i) => i.kind === "namespace");
 
       expect(named_imports.length).toBe(50);
       expect(default_imports.length).toBe(10);
@@ -1208,9 +1378,9 @@ describe("Imports Module", () => {
       it("should skip captures with undefined text", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
-            text: undefined as any,
+            text: undefined as unknown as string,
             node_location: base_location,
             modifiers: {},
             context: {
@@ -1219,7 +1389,13 @@ describe("Imports Module", () => {
           },
         ];
 
-        const result = process_imports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_imports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(0);
         expect(symbols.size).toBe(0);
@@ -1229,9 +1405,9 @@ describe("Imports Module", () => {
       it("should skip captures with null text", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
-            text: null as any,
+            text: null as unknown as string,
             node_location: base_location,
             modifiers: {},
             context: {
@@ -1240,7 +1416,13 @@ describe("Imports Module", () => {
           },
         ];
 
-        const result = process_imports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_imports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(0);
         expect(symbols.size).toBe(0);
@@ -1250,7 +1432,7 @@ describe("Imports Module", () => {
       it("should process captures with empty string text", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "",
             node_location: base_location,
@@ -1261,7 +1443,13 @@ describe("Imports Module", () => {
           },
         ];
 
-        const result = process_imports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_imports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const import_item = result[0] as NamedImport;
@@ -1272,9 +1460,9 @@ describe("Imports Module", () => {
       it("should process captures with non-string text types as strings", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
-            text: 123 as any,
+            text: 123 as unknown as string,
             node_location: base_location,
             modifiers: {},
             context: {
@@ -1282,9 +1470,9 @@ describe("Imports Module", () => {
             },
           },
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
-            text: {} as any,
+            text: {} as unknown as string,
             node_location: { ...base_location, line: 2 },
             modifiers: {},
             context: {
@@ -1292,9 +1480,9 @@ describe("Imports Module", () => {
             },
           },
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
-            text: [] as any,
+            text: [] as unknown as string,
             node_location: { ...base_location, line: 3 },
             modifiers: {},
             context: {
@@ -1303,7 +1491,13 @@ describe("Imports Module", () => {
           },
         ];
 
-        const result = process_imports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_imports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         // Non-string truthy values are processed (converted to strings)
         expect(result.length).toBe(3);
@@ -1321,7 +1515,7 @@ describe("Imports Module", () => {
       it("should only process aliases when they are strings", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "validImport",
             node_location: base_location,
@@ -1333,7 +1527,13 @@ describe("Imports Module", () => {
           },
         ];
 
-        const result = process_imports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_imports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const import_item = result[0] as NamedImport;
@@ -1345,7 +1545,7 @@ describe("Imports Module", () => {
       it("should treat non-string aliases as regular imports", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "importName",
             node_location: base_location,
@@ -1357,7 +1557,7 @@ describe("Imports Module", () => {
             },
           },
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "importName2",
             node_location: { ...base_location, line: 2 },
@@ -1369,7 +1569,7 @@ describe("Imports Module", () => {
             },
           },
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "importName3",
             node_location: { ...base_location, line: 3 },
@@ -1381,7 +1581,7 @@ describe("Imports Module", () => {
             },
           },
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "importName4",
             node_location: { ...base_location, line: 4 },
@@ -1394,7 +1594,13 @@ describe("Imports Module", () => {
           },
         ];
 
-        const result = process_imports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_imports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(4);
 
@@ -1403,14 +1609,16 @@ describe("Imports Module", () => {
           expect(import_item.kind).toBe("named");
           const namedImport = import_item as NamedImport;
           expect(namedImport.imports[0].alias).toBeUndefined();
-          expect(namedImport.imports[0].name).toBe(`importName${index === 0 ? '' : index + 1}`);
+          expect(namedImport.imports[0].name).toBe(
+            `importName${index === 0 ? "" : index + 1}`
+          );
         });
       });
 
       it("should handle null alias as regular import", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "testImport",
             node_location: base_location,
@@ -1418,12 +1626,18 @@ describe("Imports Module", () => {
             context: {
               source_module: "fs",
               // @ts-ignore - Testing invalid properties
-              import_alias: null, // Null - should be treated as regular import
+              import_alias: null as unknown as string, // Null - should be treated as regular import
             },
           },
         ];
 
-        const result = process_imports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_imports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const import_item = result[0] as NamedImport;
@@ -1435,7 +1649,7 @@ describe("Imports Module", () => {
       it("should handle undefined alias as regular import", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "testImport",
             node_location: base_location,
@@ -1447,7 +1661,13 @@ describe("Imports Module", () => {
           },
         ];
 
-        const result = process_imports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_imports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const import_item = result[0] as NamedImport;
@@ -1459,7 +1679,7 @@ describe("Imports Module", () => {
       it("should handle empty string alias as regular import", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "testImport",
             node_location: base_location,
@@ -1471,7 +1691,13 @@ describe("Imports Module", () => {
           },
         ];
 
-        const result = process_imports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_imports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const import_item = result[0] as NamedImport;
@@ -1486,7 +1712,7 @@ describe("Imports Module", () => {
         const captures: NormalizedCapture[] = [
           // Valid capture
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "validImport",
             node_location: { ...base_location, line: 1 },
@@ -1497,9 +1723,9 @@ describe("Imports Module", () => {
           },
           // Invalid text (null)
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
-            text: null as any,
+            text: null as unknown as string,
             node_location: { ...base_location, line: 2 },
             modifiers: {},
             context: {
@@ -1508,7 +1734,7 @@ describe("Imports Module", () => {
           },
           // Valid capture with alias
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "anotherImport",
             node_location: { ...base_location, line: 3 },
@@ -1520,9 +1746,9 @@ describe("Imports Module", () => {
           },
           // Invalid text (undefined)
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
-            text: undefined as any,
+            text: undefined as unknown as string,
             node_location: { ...base_location, line: 4 },
             modifiers: {},
             context: {
@@ -1531,13 +1757,19 @@ describe("Imports Module", () => {
           },
         ];
 
-        const result = process_imports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_imports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(2); // Only valid captures processed
         expect(symbols.size).toBe(2);
         expect(root_scope.symbols.size).toBe(2);
 
-        const sources = result.map(i => i.source);
+        const sources = result.map((i) => i.source);
         expect(sources).toContain("fs");
         expect(sources).toContain("url");
         expect(sources).not.toContain("path");
@@ -1547,7 +1779,7 @@ describe("Imports Module", () => {
       it("should maintain proper symbol creation with validation", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "import" as any,
+            category: SemanticCategory.IMPORT,
             entity: SemanticEntity.VARIABLE,
             text: "validImport",
             node_location: base_location,
@@ -1566,7 +1798,9 @@ describe("Imports Module", () => {
         expect(symbols.size).toBe(initial_symbols_size + 1);
         expect(root_scope.symbols.size).toBe(initial_scope_size + 1);
 
-        const symbol = Array.from(symbols.values()).find(s => s.name === "validImport");
+        const symbol = Array.from(symbols.values()).find(
+          (s) => s.name === "validImport"
+        );
         expect(symbol).toBeDefined();
         expect(symbol?.kind).toBe("import");
         expect(symbol?.is_imported).toBe(true);

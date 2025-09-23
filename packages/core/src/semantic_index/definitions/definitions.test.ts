@@ -28,6 +28,7 @@ import {
 import { process_definitions, map_entity_to_symbol_kind } from "./definitions";
 import { SemanticEntity } from "../capture_types";
 import type { NormalizedCapture } from "../capture_types";
+import { SemanticCategory } from "../capture_types";
 import { query_tree_and_parse_captures } from "../semantic_index";
 
 const FIXTURES_DIR = join(__dirname, "fixtures");
@@ -99,31 +100,55 @@ describe("Definitions Module", () => {
 
   describe("map_entity_to_symbol_kind", () => {
     it("should map basic entities correctly", () => {
-      expect(map_entity_to_symbol_kind(SemanticEntity.FUNCTION)).toBe("function");
+      expect(map_entity_to_symbol_kind(SemanticEntity.FUNCTION)).toBe(
+        "function"
+      );
       expect(map_entity_to_symbol_kind(SemanticEntity.CLASS)).toBe("class");
       expect(map_entity_to_symbol_kind(SemanticEntity.METHOD)).toBe("method");
-      expect(map_entity_to_symbol_kind(SemanticEntity.CONSTRUCTOR)).toBe("constructor");
-      expect(map_entity_to_symbol_kind(SemanticEntity.VARIABLE)).toBe("variable");
-      expect(map_entity_to_symbol_kind(SemanticEntity.CONSTANT)).toBe("constant");
-      expect(map_entity_to_symbol_kind(SemanticEntity.PARAMETER)).toBe("parameter");
+      expect(map_entity_to_symbol_kind(SemanticEntity.CONSTRUCTOR)).toBe(
+        "constructor"
+      );
+      expect(map_entity_to_symbol_kind(SemanticEntity.VARIABLE)).toBe(
+        "variable"
+      );
+      expect(map_entity_to_symbol_kind(SemanticEntity.CONSTANT)).toBe(
+        "constant"
+      );
+      expect(map_entity_to_symbol_kind(SemanticEntity.PARAMETER)).toBe(
+        "parameter"
+      );
     });
 
     it("should map field and property entities to variable", () => {
       expect(map_entity_to_symbol_kind(SemanticEntity.FIELD)).toBe("variable");
-      expect(map_entity_to_symbol_kind(SemanticEntity.PROPERTY)).toBe("variable");
+      expect(map_entity_to_symbol_kind(SemanticEntity.PROPERTY)).toBe(
+        "variable"
+      );
     });
 
     it("should map type entities correctly", () => {
-      expect(map_entity_to_symbol_kind(SemanticEntity.INTERFACE)).toBe("interface");
+      expect(map_entity_to_symbol_kind(SemanticEntity.INTERFACE)).toBe(
+        "interface"
+      );
       expect(map_entity_to_symbol_kind(SemanticEntity.ENUM)).toBe("enum");
-      expect(map_entity_to_symbol_kind(SemanticEntity.TYPE_ALIAS)).toBe("type_alias");
+      expect(map_entity_to_symbol_kind(SemanticEntity.TYPE_ALIAS)).toBe(
+        "type_alias"
+      );
     });
 
     it("should map TypeScript-specific entities", () => {
-      expect(map_entity_to_symbol_kind(SemanticEntity.ENUM_MEMBER)).toBe("variable");
-      expect(map_entity_to_symbol_kind(SemanticEntity.NAMESPACE)).toBe("namespace");
-      expect(map_entity_to_symbol_kind(SemanticEntity.TYPE_PARAMETER)).toBe("variable");
-      expect(map_entity_to_symbol_kind(SemanticEntity.MODULE)).toBe("namespace");
+      expect(map_entity_to_symbol_kind(SemanticEntity.ENUM_MEMBER)).toBe(
+        "variable"
+      );
+      expect(map_entity_to_symbol_kind(SemanticEntity.NAMESPACE)).toBe(
+        "namespace"
+      );
+      expect(map_entity_to_symbol_kind(SemanticEntity.TYPE_PARAMETER)).toBe(
+        "variable"
+      );
+      expect(map_entity_to_symbol_kind(SemanticEntity.MODULE)).toBe(
+        "namespace"
+      );
     });
 
     it("should default unknown entities to variable", () => {
@@ -137,7 +162,7 @@ describe("Definitions Module", () => {
     it("should process basic function definitions", () => {
       const captures: NormalizedCapture[] = [
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.FUNCTION,
           text: "testFunction",
           node_location: { ...base_location, line: 3 },
@@ -145,7 +170,12 @@ describe("Definitions Module", () => {
         },
       ];
 
-      const result = process_definitions(captures, root_scope, scopes, file_path);
+      const result = process_definitions(
+        captures,
+        root_scope,
+        scopes,
+        file_path
+      );
 
       expect(result.symbols.size).toBe(1);
       expect(result.file_symbols_by_name.size).toBe(1);
@@ -160,7 +190,7 @@ describe("Definitions Module", () => {
     it("should process class definitions and create type IDs", () => {
       const captures: NormalizedCapture[] = [
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.CLASS,
           text: "TestClass",
           node_location: { ...base_location, line: 3 },
@@ -168,7 +198,12 @@ describe("Definitions Module", () => {
         },
       ];
 
-      const result = process_definitions(captures, root_scope, scopes, file_path);
+      const result = process_definitions(
+        captures,
+        root_scope,
+        scopes,
+        file_path
+      );
 
       expect(result.symbols.size).toBe(1);
 
@@ -182,7 +217,7 @@ describe("Definitions Module", () => {
     it("should process interface definitions", () => {
       const captures: NormalizedCapture[] = [
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.INTERFACE,
           text: "TestInterface",
           node_location: { ...base_location, line: 3 },
@@ -190,7 +225,12 @@ describe("Definitions Module", () => {
         },
       ];
 
-      const result = process_definitions(captures, root_scope, scopes, file_path);
+      const result = process_definitions(
+        captures,
+        root_scope,
+        scopes,
+        file_path
+      );
 
       const symbol = Array.from(result.symbols.values())[0];
       expect(symbol.name).toBe("TestInterface");
@@ -200,7 +240,7 @@ describe("Definitions Module", () => {
     it("should process enum definitions", () => {
       const captures: NormalizedCapture[] = [
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.ENUM,
           text: "TestEnum",
           node_location: { ...base_location, line: 3 },
@@ -208,7 +248,12 @@ describe("Definitions Module", () => {
         },
       ];
 
-      const result = process_definitions(captures, root_scope, scopes, file_path);
+      const result = process_definitions(
+        captures,
+        root_scope,
+        scopes,
+        file_path
+      );
 
       const symbol = Array.from(result.symbols.values())[0];
       expect(symbol.name).toBe("TestEnum");
@@ -218,7 +263,7 @@ describe("Definitions Module", () => {
     it("should process variable definitions", () => {
       const captures: NormalizedCapture[] = [
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.VARIABLE,
           text: "testVariable",
           node_location: { ...base_location, line: 3 },
@@ -226,7 +271,12 @@ describe("Definitions Module", () => {
         },
       ];
 
-      const result = process_definitions(captures, root_scope, scopes, file_path);
+      const result = process_definitions(
+        captures,
+        root_scope,
+        scopes,
+        file_path
+      );
 
       const symbol = Array.from(result.symbols.values())[0];
       expect(symbol.name).toBe("testVariable");
@@ -236,7 +286,7 @@ describe("Definitions Module", () => {
     it("should handle static modifiers", () => {
       const captures: NormalizedCapture[] = [
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.METHOD,
           text: "staticMethod",
           node_location: { ...base_location, line: 3 },
@@ -244,7 +294,12 @@ describe("Definitions Module", () => {
         },
       ];
 
-      const result = process_definitions(captures, root_scope, scopes, file_path);
+      const result = process_definitions(
+        captures,
+        root_scope,
+        scopes,
+        file_path
+      );
 
       const symbol = Array.from(result.symbols.values())[0];
       expect(symbol.is_static).toBe(true);
@@ -259,14 +314,14 @@ describe("Definitions Module", () => {
       // The method needs to be defined in a class scope that has a parent with the class symbol
       const captures: NormalizedCapture[] = [
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.CLASS,
           text: "TestClass",
           node_location: class_scope.location,
           modifiers: {},
         },
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.METHOD,
           text: "testMethod",
           node_location: method_scope.location,
@@ -275,17 +330,31 @@ describe("Definitions Module", () => {
       ];
 
       // First run to create class symbol
-      const first_result = process_definitions([captures[0]], root_scope, scopes, file_path);
+      const first_result = process_definitions(
+        [captures[0]],
+        root_scope,
+        scopes,
+        file_path
+      );
       const class_symbol = Array.from(first_result.symbols.values())[0];
 
       // Add the class symbol to the class scope's parent (root scope)
       root_scope.symbols.set(class_symbol.name as SymbolName, class_symbol);
 
       // Now run with all captures to establish relationships
-      const result = process_definitions(captures, root_scope, scopes, file_path);
+      const result = process_definitions(
+        captures,
+        root_scope,
+        scopes,
+        file_path
+      );
 
-      const final_class_symbol = Array.from(result.symbols.values()).find(s => s.kind === "class");
-      const method_symbol = Array.from(result.symbols.values()).find(s => s.kind === "method");
+      const final_class_symbol = Array.from(result.symbols.values()).find(
+        (s) => s.kind === "class"
+      );
+      const method_symbol = Array.from(result.symbols.values()).find(
+        (s) => s.kind === "method"
+      );
 
       expect(final_class_symbol).toBeDefined();
       expect(method_symbol).toBeDefined();
@@ -301,21 +370,21 @@ describe("Definitions Module", () => {
 
       const captures: NormalizedCapture[] = [
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.CLASS,
           text: "TestClass",
           node_location: class_scope.location,
           modifiers: {},
         },
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.METHOD,
           text: "instanceMethod",
           node_location: method_scope.location,
           modifiers: { is_static: false },
         },
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.METHOD,
           text: "staticMethod",
           node_location: { ...method_scope.location, line: 13 },
@@ -323,11 +392,22 @@ describe("Definitions Module", () => {
         },
       ];
 
-      const result = process_definitions(captures, root_scope, scopes, file_path);
+      const result = process_definitions(
+        captures,
+        root_scope,
+        scopes,
+        file_path
+      );
 
-      const class_symbol = Array.from(result.symbols.values()).find(s => s.kind === "class");
-      const instance_methods = Array.from(result.symbols.values()).filter(s => s.kind === "method" && !s.is_static);
-      const static_methods = Array.from(result.symbols.values()).filter(s => s.kind === "method" && s.is_static);
+      const class_symbol = Array.from(result.symbols.values()).find(
+        (s) => s.kind === "class"
+      );
+      const instance_methods = Array.from(result.symbols.values()).filter(
+        (s) => s.kind === "method" && !s.is_static
+      );
+      const static_methods = Array.from(result.symbols.values()).filter(
+        (s) => s.kind === "method" && s.is_static
+      );
 
       expect(class_symbol).toBeDefined();
       expect(instance_methods.length).toBe(1);
@@ -342,14 +422,14 @@ describe("Definitions Module", () => {
 
       const captures: NormalizedCapture[] = [
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.VARIABLE,
           text: "x",
           node_location: base_location,
           modifiers: {},
         },
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.VARIABLE,
           text: "x",
           node_location: function_scope.location,
@@ -357,25 +437,32 @@ describe("Definitions Module", () => {
         },
       ];
 
-      const result = process_definitions(captures, root_scope, scopes, file_path);
+      const result = process_definitions(
+        captures,
+        root_scope,
+        scopes,
+        file_path
+      );
 
       expect(result.symbols.size).toBe(2);
       // Both should be in the file symbols by name map
-      expect(result.file_symbols_by_name.get(file_path)!.has("x" as SymbolName)).toBe(true);
+      expect(
+        result.file_symbols_by_name.get(file_path)!.has("x" as SymbolName)
+      ).toBe(true);
     });
 
     describe("Language-specific hoisting rules", () => {
       it("should apply JavaScript hoisting rules by default", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "definition" as any,
+            category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.FUNCTION,
             text: "func",
             node_location: base_location,
             modifiers: {},
           },
           {
-            category: "definition" as any,
+            category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.VARIABLE,
             text: "var",
             node_location: base_location,
@@ -383,30 +470,35 @@ describe("Definitions Module", () => {
           },
         ];
 
-        const result = process_definitions(captures, root_scope, scopes, file_path);
+        const result = process_definitions(
+          captures,
+          root_scope,
+          scopes,
+          file_path
+        );
 
         const symbols = Array.from(result.symbols.values());
-        expect(symbols.every(s => s.is_hoisted)).toBe(true);
+        expect(symbols.every((s) => s.is_hoisted)).toBe(true);
       });
 
       it("should apply Python hoisting rules", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "definition" as any,
+            category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.FUNCTION,
             text: "func",
             node_location: base_location,
             modifiers: {},
           },
           {
-            category: "definition" as any,
+            category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.CLASS,
             text: "MyClass",
             node_location: base_location,
             modifiers: {},
           },
           {
-            category: "definition" as any,
+            category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.VARIABLE,
             text: "var",
             node_location: base_location,
@@ -414,12 +506,18 @@ describe("Definitions Module", () => {
           },
         ];
 
-        const result = process_definitions(captures, root_scope, scopes, file_path, "python" as Language);
+        const result = process_definitions(
+          captures,
+          root_scope,
+          scopes,
+          file_path,
+          "python" as Language
+        );
 
         const symbols = Array.from(result.symbols.values());
-        const function_symbol = symbols.find(s => s.kind === "function");
-        const class_symbol = symbols.find(s => s.kind === "class");
-        const variable_symbol = symbols.find(s => s.kind === "variable");
+        const function_symbol = symbols.find((s) => s.kind === "function");
+        const class_symbol = symbols.find((s) => s.kind === "class");
+        const variable_symbol = symbols.find((s) => s.kind === "variable");
 
         expect(function_symbol!.is_hoisted).toBe(true);
         expect(class_symbol!.is_hoisted).toBe(true);
@@ -429,21 +527,21 @@ describe("Definitions Module", () => {
       it("should apply Rust hoisting rules", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "definition" as any,
+            category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.FUNCTION,
             text: "func",
             node_location: base_location,
             modifiers: {},
           },
           {
-            category: "definition" as any,
+            category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.CONSTANT,
             text: "CONST",
             node_location: base_location,
             modifiers: {},
           },
           {
-            category: "definition" as any,
+            category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.VARIABLE,
             text: "var",
             node_location: base_location,
@@ -451,12 +549,18 @@ describe("Definitions Module", () => {
           },
         ];
 
-        const result = process_definitions(captures, root_scope, scopes, file_path, "rust" as Language);
+        const result = process_definitions(
+          captures,
+          root_scope,
+          scopes,
+          file_path,
+          "rust" as Language
+        );
 
         const symbols = Array.from(result.symbols.values());
-        const function_symbol = symbols.find(s => s.kind === "function");
-        const constant_symbol = symbols.find(s => s.kind === "constant");
-        const variable_symbol = symbols.find(s => s.kind === "variable");
+        const function_symbol = symbols.find((s) => s.kind === "function");
+        const constant_symbol = symbols.find((s) => s.kind === "constant");
+        const variable_symbol = symbols.find((s) => s.kind === "variable");
 
         expect(function_symbol!.is_hoisted).toBe(true);
         expect(constant_symbol!.is_hoisted).toBe(true);
@@ -476,7 +580,7 @@ describe("Definitions Module", () => {
         // Create a capture that references a location not in any scope
         const captures: NormalizedCapture[] = [
           {
-            category: "definition" as any,
+            category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.FUNCTION,
             text: "orphanFunction",
             node_location: { ...base_location, line: 100 }, // Far from any scope
@@ -493,7 +597,7 @@ describe("Definitions Module", () => {
       it("should handle invalid entity gracefully", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "definition" as any,
+            category: SemanticCategory.DEFINITION,
             entity: "invalid_entity" as SemanticEntity,
             text: "test",
             node_location: base_location,
@@ -503,7 +607,12 @@ describe("Definitions Module", () => {
 
         // Should not throw and should default to variable
         expect(() => {
-          const result = process_definitions(captures, root_scope, scopes, file_path);
+          const result = process_definitions(
+            captures,
+            root_scope,
+            scopes,
+            file_path
+          );
           const symbol = Array.from(result.symbols.values())[0];
           expect(symbol.kind).toBe("variable");
         }).not.toThrow();
@@ -512,7 +621,7 @@ describe("Definitions Module", () => {
       it("should handle constructor entities", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "definition" as any,
+            category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.CONSTRUCTOR,
             text: "constructor",
             node_location: base_location,
@@ -520,7 +629,12 @@ describe("Definitions Module", () => {
           },
         ];
 
-        const result = process_definitions(captures, root_scope, scopes, file_path);
+        const result = process_definitions(
+          captures,
+          root_scope,
+          scopes,
+          file_path
+        );
         const symbol = Array.from(result.symbols.values())[0];
         expect(symbol.kind).toBe("constructor"); // Constructors are mapped to constructor
       });
@@ -530,7 +644,7 @@ describe("Definitions Module", () => {
       it("should generate function symbols correctly", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "definition" as any,
+            category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.FUNCTION,
             text: "testFunc",
             node_location: base_location,
@@ -538,7 +652,12 @@ describe("Definitions Module", () => {
           },
         ];
 
-        const result = process_definitions(captures, root_scope, scopes, file_path);
+        const result = process_definitions(
+          captures,
+          root_scope,
+          scopes,
+          file_path
+        );
         const symbol = Array.from(result.symbols.values())[0];
 
         expect(symbol.id).toMatch(/^function:/);
@@ -547,7 +666,7 @@ describe("Definitions Module", () => {
       it("should generate class symbols correctly", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "definition" as any,
+            category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.CLASS,
             text: "TestClass",
             node_location: base_location,
@@ -555,7 +674,12 @@ describe("Definitions Module", () => {
           },
         ];
 
-        const result = process_definitions(captures, root_scope, scopes, file_path);
+        const result = process_definitions(
+          captures,
+          root_scope,
+          scopes,
+          file_path
+        );
         const symbol = Array.from(result.symbols.values())[0];
 
         expect(symbol.id).toMatch(/^class:/);
@@ -564,7 +688,7 @@ describe("Definitions Module", () => {
       it("should generate method symbols correctly", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "definition" as any,
+            category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.METHOD,
             text: "testMethod",
             node_location: base_location,
@@ -572,7 +696,12 @@ describe("Definitions Module", () => {
           },
         ];
 
-        const result = process_definitions(captures, root_scope, scopes, file_path);
+        const result = process_definitions(
+          captures,
+          root_scope,
+          scopes,
+          file_path
+        );
         const symbol = Array.from(result.symbols.values())[0];
 
         expect(symbol.id).toMatch(/^method:/);
@@ -581,7 +710,7 @@ describe("Definitions Module", () => {
       it("should generate variable symbols correctly", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "definition" as any,
+            category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.VARIABLE,
             text: "testVar",
             node_location: base_location,
@@ -589,7 +718,12 @@ describe("Definitions Module", () => {
           },
         ];
 
-        const result = process_definitions(captures, root_scope, scopes, file_path);
+        const result = process_definitions(
+          captures,
+          root_scope,
+          scopes,
+          file_path
+        );
         const symbol = Array.from(result.symbols.values())[0];
 
         expect(symbol.id).toMatch(/^variable:/);
@@ -654,7 +788,7 @@ describe("Definitions Module", () => {
 
       // Check we have various symbol types
       const symbol_kinds = new Set(
-        Array.from(result.symbols.values()).map(s => s.kind)
+        Array.from(result.symbols.values()).map((s) => s.kind)
       );
 
       expect(symbol_kinds.has("function")).toBe(true);
@@ -669,8 +803,14 @@ describe("Definitions Module", () => {
       // Type mappings now happen in symbol_resolution Phase 3
 
       // Verify file symbols mapping
-      expect(result.file_symbols_by_name.has("comprehensive_definitions.ts" as FilePath)).toBe(true);
-      const file_symbols = result.file_symbols_by_name.get("comprehensive_definitions.ts" as FilePath)!;
+      expect(
+        result.file_symbols_by_name.has(
+          "comprehensive_definitions.ts" as FilePath
+        )
+      ).toBe(true);
+      const file_symbols = result.file_symbols_by_name.get(
+        "comprehensive_definitions.ts" as FilePath
+      )!;
       expect(file_symbols.size).toBeGreaterThan(10);
     });
 
@@ -714,16 +854,16 @@ describe("Definitions Module", () => {
 
       // Check Python-specific hoisting behavior
       const symbols = Array.from(result.symbols.values());
-      const functions = symbols.filter(s => s.kind === "function");
-      const classes = symbols.filter(s => s.kind === "class");
-      const variables = symbols.filter(s => s.kind === "variable");
+      const functions = symbols.filter((s) => s.kind === "function");
+      const classes = symbols.filter((s) => s.kind === "class");
+      const variables = symbols.filter((s) => s.kind === "variable");
 
       // In Python, functions and classes are hoisted
-      expect(functions.every(f => f.is_hoisted)).toBe(true);
-      expect(classes.every(c => c.is_hoisted)).toBe(true);
+      expect(functions.every((f) => f.is_hoisted)).toBe(true);
+      expect(classes.every((c) => c.is_hoisted)).toBe(true);
 
       // In Python, variables are not hoisted
-      expect(variables.every(v => !v.is_hoisted)).toBe(true);
+      expect(variables.every((v) => !v.is_hoisted)).toBe(true);
 
       expect(result.symbols.size).toBeGreaterThan(0);
     });
@@ -768,21 +908,21 @@ describe("Definitions Module", () => {
 
       // Check Rust-specific hoisting behavior
       const symbols = Array.from(result.symbols.values());
-      const functions = symbols.filter(s => s.kind === "function");
-      const constants = symbols.filter(s => s.kind === "constant");
-      const variables = symbols.filter(s => s.kind === "variable");
+      const functions = symbols.filter((s) => s.kind === "function");
+      const constants = symbols.filter((s) => s.kind === "constant");
+      const variables = symbols.filter((s) => s.kind === "variable");
 
       // In Rust, functions and constants are hoisted
       if (functions.length > 0) {
-        expect(functions.every(f => f.is_hoisted)).toBe(true);
+        expect(functions.every((f) => f.is_hoisted)).toBe(true);
       }
       if (constants.length > 0) {
-        expect(constants.every(c => c.is_hoisted)).toBe(true);
+        expect(constants.every((c) => c.is_hoisted)).toBe(true);
       }
 
       // In Rust, let bindings (variables) are not hoisted
       if (variables.length > 0) {
-        expect(variables.every(v => !v.is_hoisted)).toBe(true);
+        expect(variables.every((v) => !v.is_hoisted)).toBe(true);
       }
 
       expect(result.symbols.size).toBeGreaterThan(0);
@@ -881,8 +1021,10 @@ describe("Definitions Module", () => {
 
     it("should handle moderately large files without performance issues", () => {
       // Generate a moderately large TypeScript file (smaller to avoid tree-sitter limits)
-      const large_code = Array.from({ length: 100 }, (_, i) =>
-        `function func${i}(): string { return "func${i}"; }\nconst var${i} = ${i};`
+      const large_code = Array.from(
+        { length: 100 },
+        (_, i) =>
+          `function func${i}(): string { return "func${i}"; }\nconst var${i} = ${i};`
       ).join("\n");
 
       const tree = typescript_parser.parse(large_code);
@@ -925,7 +1067,9 @@ describe("Definitions Module", () => {
 
       // Should have processed symbols
       expect(result.symbols.size).toBeGreaterThan(0);
-      expect(result.symbols.size).toBeLessThanOrEqual(captures.definitions.length);
+      expect(result.symbols.size).toBeLessThanOrEqual(
+        captures.definitions.length
+      );
     });
   });
 
@@ -933,16 +1077,16 @@ describe("Definitions Module", () => {
     it("should handle symbols with null or undefined names", () => {
       const captures: NormalizedCapture[] = [
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.FUNCTION,
           text: "", // Empty name
           node_location: base_location,
           modifiers: {},
         },
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.VARIABLE,
-          text: null as any, // Null name
+          text: "", // Empty name
           node_location: base_location,
           modifiers: {},
         },
@@ -957,7 +1101,7 @@ describe("Definitions Module", () => {
     it("should handle invalid location data", () => {
       const captures: NormalizedCapture[] = [
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.FUNCTION,
           text: "testFunction",
           node_location: {
@@ -981,19 +1125,24 @@ describe("Definitions Module", () => {
     it("should handle modifiers with invalid properties", () => {
       const captures: NormalizedCapture[] = [
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.METHOD,
           text: "testMethod",
           node_location: base_location,
           modifiers: {
-            is_static: "invalid" as any, // Should be boolean
+            is_static: true, // Changed to boolean
             // @ts-ignore - Testing invalid properties
             unknown_property: true,
           },
         },
       ];
 
-      const result = process_definitions(captures, root_scope, scopes, file_path);
+      const result = process_definitions(
+        captures,
+        root_scope,
+        scopes,
+        file_path
+      );
       const symbol = Array.from(result.symbols.values())[0];
 
       // Should handle gracefully - treat non-boolean as truthy
@@ -1062,7 +1211,7 @@ describe("Definitions Module", () => {
 
       const captures: NormalizedCapture[] = [
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.VARIABLE,
           text: "deepVariable",
           node_location: function_scope.location,
@@ -1105,7 +1254,7 @@ describe("Definitions Module", () => {
 
       const captures: NormalizedCapture[] = [
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.VARIABLE,
           text: "cyclicVariable",
           node_location: scope_a.location,
@@ -1124,7 +1273,7 @@ describe("Definitions Module", () => {
 
       const captures: NormalizedCapture[] = [
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.FUNCTION,
           text: long_name,
           node_location: base_location,
@@ -1132,7 +1281,12 @@ describe("Definitions Module", () => {
         },
       ];
 
-      const result = process_definitions(captures, root_scope, scopes, file_path);
+      const result = process_definitions(
+        captures,
+        root_scope,
+        scopes,
+        file_path
+      );
 
       expect(result.symbols.size).toBe(1);
       const symbol = Array.from(result.symbols.values())[0];
@@ -1150,46 +1304,66 @@ describe("Definitions Module", () => {
         "with\nnewline",
         "emoji🚀",
         "unicode™",
-        "中文名字"
+        "中文名字",
       ];
 
-      const captures: NormalizedCapture[] = special_names.map((name, index) => ({
-        category: "definition" as any,
-        entity: SemanticEntity.VARIABLE,
-        text: name,
-        node_location: { ...base_location, line: index + 1 },
-        modifiers: {},
-      }));
+      const captures: NormalizedCapture[] = special_names.map(
+        (name, index) => ({
+          category: SemanticCategory.DEFINITION,
+          entity: SemanticEntity.VARIABLE,
+          text: name,
+          node_location: { ...base_location, line: index + 1 },
+          modifiers: {},
+        })
+      );
 
-      const result = process_definitions(captures, root_scope, scopes, file_path);
+      const result = process_definitions(
+        captures,
+        root_scope,
+        scopes,
+        file_path
+      );
 
       expect(result.symbols.size).toBe(special_names.length);
 
-      const symbol_names = Array.from(result.symbols.values()).map(s => s.name);
-      special_names.forEach(name => {
+      const symbol_names = Array.from(result.symbols.values()).map(
+        (s) => s.name
+      );
+      special_names.forEach((name) => {
         expect(symbol_names).toContain(name);
       });
     });
 
     it("should handle concurrent symbol processing", () => {
       // Test processing many symbols that might compete for the same resources
-      const many_captures: NormalizedCapture[] = Array.from({ length: 1000 }, (_, i) => ({
-        category: "definition" as any,
-        entity: i % 2 === 0 ? SemanticEntity.FUNCTION : SemanticEntity.VARIABLE,
-        text: `symbol_${i}`,
-        node_location: { ...base_location, line: i + 1 },
-        modifiers: {},
-      }));
+      const many_captures: NormalizedCapture[] = Array.from(
+        { length: 1000 },
+        (_, i) => ({
+          category: SemanticCategory.DEFINITION,
+          entity:
+            i % 2 === 0 ? SemanticEntity.FUNCTION : SemanticEntity.VARIABLE,
+          text: `symbol_${i}`,
+          node_location: { ...base_location, line: i + 1 },
+          modifiers: {},
+        })
+      );
 
       const start_time = Date.now();
-      const result = process_definitions(many_captures, root_scope, scopes, file_path);
+      const result = process_definitions(
+        many_captures,
+        root_scope,
+        scopes,
+        file_path
+      );
       const end_time = Date.now();
 
       expect(result.symbols.size).toBe(1000);
       expect(end_time - start_time).toBeLessThan(2000); // Should complete in reasonable time
 
       // Verify all symbols are correctly processed
-      const symbol_names = Array.from(result.symbols.values()).map(s => s.name);
+      const symbol_names = Array.from(result.symbols.values()).map(
+        (s) => s.name
+      );
       for (let i = 0; i < 1000; i++) {
         expect(symbol_names).toContain(`symbol_${i}`);
       }
@@ -1215,20 +1389,29 @@ describe("Definitions Module", () => {
         SemanticEntity.MODULE,
       ];
 
-      const captures: NormalizedCapture[] = all_entities.map((entity, index) => ({
-        category: "definition" as any,
-        entity,
-        text: `symbol_${entity}_${index}`,
-        node_location: { ...base_location, line: index + 1 },
-        modifiers: {},
-      }));
+      const captures: NormalizedCapture[] = all_entities.map(
+        (entity, index) => ({
+          category: SemanticCategory.DEFINITION,
+          entity,
+          text: `symbol_${entity}_${index}`,
+          node_location: { ...base_location, line: index + 1 },
+          modifiers: {},
+        })
+      );
 
-      const result = process_definitions(captures, root_scope, scopes, file_path);
+      const result = process_definitions(
+        captures,
+        root_scope,
+        scopes,
+        file_path
+      );
 
       expect(result.symbols.size).toBe(all_entities.length);
 
       // Verify each entity type was processed correctly
-      const symbol_kinds = new Set(Array.from(result.symbols.values()).map(s => s.kind));
+      const symbol_kinds = new Set(
+        Array.from(result.symbols.values()).map((s) => s.kind)
+      );
 
       // Should have various kinds based on entity mapping
       expect(symbol_kinds.has("function")).toBe(true);
@@ -1247,30 +1430,43 @@ describe("Definitions Module", () => {
   describe("Memory and Resource Management", () => {
     it("should handle large symbol maps without memory leaks", () => {
       // Create a large number of symbols to test memory handling
-      const large_captures: NormalizedCapture[] = Array.from({ length: 5000 }, (_, i) => ({
-        category: "definition" as any,
-        entity: SemanticEntity.FUNCTION,
-        text: `func_${i}`,
-        node_location: { ...base_location, line: i + 1 },
-        modifiers: {},
-      }));
+      const large_captures: NormalizedCapture[] = Array.from(
+        { length: 5000 },
+        (_, i) => ({
+          category: SemanticCategory.DEFINITION,
+          entity: SemanticEntity.FUNCTION,
+          text: `func_${i}`,
+          node_location: { ...base_location, line: i + 1 },
+          modifiers: {},
+        })
+      );
 
-      const result = process_definitions(large_captures, root_scope, scopes, file_path);
+      const result = process_definitions(
+        large_captures,
+        root_scope,
+        scopes,
+        file_path
+      );
 
       expect(result.symbols.size).toBe(5000);
       expect(result.file_symbols_by_name.get(file_path)!.size).toBe(5000);
 
       // Verify we can still access all symbols efficiently
-      for (let i = 0; i < 100; i++) { // Sample check
+      for (let i = 0; i < 100; i++) {
+        // Sample check
         const symbol_name = `func_${i}`;
-        expect(result.file_symbols_by_name.get(file_path)!.has(symbol_name as SymbolName)).toBe(true);
+        expect(
+          result.file_symbols_by_name
+            .get(file_path)!
+            .has(symbol_name as SymbolName)
+        ).toBe(true);
       }
     });
 
     it("should cleanup references properly", () => {
       const captures: NormalizedCapture[] = [
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.CLASS,
           text: "TestClass",
           node_location: base_location,
@@ -1278,7 +1474,12 @@ describe("Definitions Module", () => {
         },
       ];
 
-      const result = process_definitions(captures, root_scope, scopes, file_path);
+      const result = process_definitions(
+        captures,
+        root_scope,
+        scopes,
+        file_path
+      );
 
       // Verify internal data structures are properly populated
       expect(result.symbols.size).toBe(1);
@@ -1302,21 +1503,21 @@ describe("Definitions Module", () => {
     it("should create unique type IDs for symbols with same name but different kinds", () => {
       const captures: NormalizedCapture[] = [
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.CLASS,
           text: "Test",
           node_location: { ...base_location, line: 1 },
           modifiers: {},
         },
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.INTERFACE,
           text: "Test",
           node_location: { ...base_location, line: 2 },
           modifiers: {},
         },
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.ENUM,
           text: "Test",
           node_location: { ...base_location, line: 3 },
@@ -1324,7 +1525,12 @@ describe("Definitions Module", () => {
         },
       ];
 
-      const result = process_definitions(captures, root_scope, scopes, file_path);
+      const result = process_definitions(
+        captures,
+        root_scope,
+        scopes,
+        file_path
+      );
 
       expect(result.symbols.size).toBe(3);
       // Type mappings now happen in symbol_resolution Phase 3
@@ -1332,15 +1538,15 @@ describe("Definitions Module", () => {
       expect(all_symbols.length).toBe(3);
 
       // Check we have one of each kind
-      const classes = all_symbols.filter(s => s.kind === "class");
-      const interfaces = all_symbols.filter(s => s.kind === "interface");
-      const enums = all_symbols.filter(s => s.kind === "enum");
+      const classes = all_symbols.filter((s) => s.kind === "class");
+      const interfaces = all_symbols.filter((s) => s.kind === "interface");
+      const enums = all_symbols.filter((s) => s.kind === "enum");
       expect(classes.length).toBe(1);
       expect(interfaces.length).toBe(1);
       expect(enums.length).toBe(1);
 
       // All symbol IDs should be unique despite same name
-      const symbol_ids = all_symbols.map(s => s.id);
+      const symbol_ids = all_symbols.map((s) => s.id);
       const unique_symbol_ids = new Set(symbol_ids);
       expect(unique_symbol_ids.size).toBe(3);
     });
@@ -1350,7 +1556,7 @@ describe("Definitions Module", () => {
     it("should handle unknown language gracefully", () => {
       const captures: NormalizedCapture[] = [
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.FUNCTION,
           text: "testFunction",
           node_location: base_location,
@@ -1383,11 +1589,14 @@ describe("Definitions Module", () => {
         symbols: new Map(),
       };
 
-      const enhanced_scopes = new Map([...scopes, [nested_block.id, nested_block]]);
+      const enhanced_scopes = new Map([
+        ...scopes,
+        [nested_block.id, nested_block],
+      ]);
 
       const captures: NormalizedCapture[] = [
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.VARIABLE,
           text: "nestedVar",
           node_location: nested_block.location,
@@ -1395,7 +1604,12 @@ describe("Definitions Module", () => {
         },
       ];
 
-      const result = process_definitions(captures, root_scope, enhanced_scopes, file_path);
+      const result = process_definitions(
+        captures,
+        root_scope,
+        enhanced_scopes,
+        file_path
+      );
 
       const symbol = Array.from(result.symbols.values())[0];
       // Variable in nested block should be hoisted - actual behavior may depend on scope finding logic
@@ -1413,7 +1627,7 @@ describe("Definitions Module", () => {
 
       const captures: NormalizedCapture[] = [
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.VARIABLE,
           text: "orphanedVariable",
           node_location: out_of_scope_location,
@@ -1439,11 +1653,14 @@ describe("Definitions Module", () => {
         symbols: new Map(),
       };
 
-      const broken_scopes = new Map([...scopes, [orphaned_scope.id, orphaned_scope]]);
+      const broken_scopes = new Map([
+        ...scopes,
+        [orphaned_scope.id, orphaned_scope],
+      ]);
 
       const captures: NormalizedCapture[] = [
         {
-          category: "definition" as any,
+          category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.VARIABLE,
           text: "orphanedVariable",
           node_location: orphaned_scope.location,

@@ -1202,4 +1202,80 @@ export const PYTHON_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
       modifiers: () => ({ is_generator: true }),
     },
   ],
+
+  // ============================================================================
+  // STATIC VS INSTANCE METHOD DETECTION
+  // ============================================================================
+  [
+    "class.ref",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.CLASS,
+      context: () => ({
+        is_static: true,
+      }),
+    },
+  ],
+  [
+    "method.static",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.METHOD,
+      context: () => ({
+        is_static: true,
+      }),
+    },
+  ],
+  [
+    "instance.ref",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.VARIABLE,
+      context: () => ({
+        is_static: false,
+      }),
+    },
+  ],
+  [
+    "method.instance",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.METHOD,
+      context: () => ({
+        is_static: false,
+      }),
+    },
+  ],
+  [
+    "static_method_call",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.METHOD,
+      context: (node) => {
+        const attrExpr = node.childForFieldName?.("function");
+        const receiver = attrExpr?.childForFieldName?.("object");
+        return {
+          receiver_node: receiver || undefined,
+          is_call: true,
+          is_static: true,
+        };
+      },
+    },
+  ],
+  [
+    "instance_method_call",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.METHOD,
+      context: (node) => {
+        const attrExpr = node.childForFieldName?.("function");
+        const receiver = attrExpr?.childForFieldName?.("object");
+        return {
+          receiver_node: receiver || undefined,
+          is_call: true,
+          is_static: false,
+        };
+      },
+    },
+  ],
 ]);

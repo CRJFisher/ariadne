@@ -17,7 +17,6 @@ import type {
 import { location_key } from "@ariadnejs/types";
 import type { CallReference } from "../../semantic_index/references/call_references/call_references";
 import type { SemanticIndex } from "../../semantic_index/semantic_index";
-import type { ImportResolutionMap } from "../types";
 import { resolve_function_calls } from "./function_resolver";
 import type { FunctionResolutionMap } from "./function_types";
 
@@ -95,7 +94,9 @@ describe("Function Resolution with Mock Factories", () => {
       // Verify the result
       const call_key = location_key(call_location);
       expect(result.function_calls.get(call_key)).toBe(func_symbol.id);
-      expect(result.calls_to_function.get(func_symbol.id)).toEqual([call_location]);
+      expect(result.calls_to_function.get(func_symbol.id)).toEqual([
+        call_location,
+      ]);
     });
   });
 
@@ -120,10 +121,12 @@ describe("Function Resolution with Mock Factories", () => {
 
       // Verify resolution
       const call_key = location_key(scenario.call_reference.location);
-      expect(result.function_calls.get(call_key)).toBe(scenario.function_symbol.id);
-      expect(result.calls_to_function.get(scenario.function_symbol.id)).toEqual([
-        scenario.call_reference.location,
-      ]);
+      expect(result.function_calls.get(call_key)).toBe(
+        scenario.function_symbol.id
+      );
+      expect(result.calls_to_function.get(scenario.function_symbol.id)).toEqual(
+        [scenario.call_reference.location]
+      );
     });
   });
 
@@ -142,19 +145,25 @@ describe("Function Resolution with Mock Factories", () => {
       const readonly_symbol_map = readonly_map_from_entries(entries);
 
       // This works without mutation errors
-      expect(readonly_symbol_map.get("func1" as SymbolName)).toBe("symbol:func1");
+      expect(readonly_symbol_map.get("func1" as SymbolName)).toBe(
+        "symbol:func1"
+      );
       expect(readonly_symbol_map.size).toBe(2);
 
       // Use in mock semantic index - use ReadonlyMapBuilder for proper interface compatibility
       const symbol_builder = new ReadonlyMapBuilder<SymbolName, SymbolId>()
-        .set("func1" as SymbolName, "symbol:func1" as any)
-        .set("func2" as SymbolName, "symbol:func2" as any);
+        .set("func1" as SymbolName, "symbol:func1")
+        .set("func2" as SymbolName, "symbol:func2");
 
       const index = mock_semantic_index(test_file, {
-        file_symbols_by_name: new Map([[test_file, symbol_builder.build_mutable()]]),
+        file_symbols_by_name: new Map([
+          [test_file, symbol_builder.build_mutable()],
+        ]),
       });
 
-      expect(index.file_symbols_by_name.get(test_file)?.get("func1" as SymbolName)).toBe("symbol:func1");
+      expect(
+        index.file_symbols_by_name.get(test_file)?.get("func1" as SymbolName)
+      ).toBe("symbol:func1");
     });
   });
 
@@ -196,7 +205,8 @@ describe("Function Resolution with Mock Factories", () => {
       // BEFORE: Each test manually creates complex nested objects
       // AFTER: Clean, declarative test structure
 
-      const { index, function_symbol, call_reference } = create_function_scenario(test_file);
+      const { index, function_symbol, call_reference } =
+        create_function_scenario(test_file);
 
       // Test data is properly structured
       expect(index.file_path).toBe(test_file);

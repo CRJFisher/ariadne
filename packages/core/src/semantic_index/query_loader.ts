@@ -117,6 +117,13 @@ function get_queries_dir(): string {
  * Validate that a language is supported
  */
 function validate_language(language: Language): void {
+  // Check for null/undefined/empty inputs
+  if (language == null || (language as string) === "") {
+    throw new Error(
+      `Invalid language: ${language}. Language cannot be null, undefined, or empty.`
+    );
+  }
+
   if (!SUPPORTED_LANGUAGES.includes(language)) {
     throw new Error(
       `Unsupported language: ${language}. Supported languages: ${SUPPORTED_LANGUAGES.join(
@@ -199,28 +206,19 @@ export function load_query(language: Language): string {
  * Check if a query exists for a language (efficient version)
  */
 export function has_query(language: Language): boolean {
-  try {
-    // Check cache first
-    if (query_cache.has(language)) {
-      return true;
-    }
+  // Validate language support (this will throw for invalid inputs)
+  validate_language(language);
 
-    // Validate language support (but don't throw)
-    if (
-      !SUPPORTED_LANGUAGES.includes(language) ||
-      !LANGUAGE_TO_TREESITTER_LANG.has(language)
-    ) {
-      return false;
-    }
-
-    // Check file existence without loading
-    const queries_dir = get_queries_dir();
-    const query_path = join(queries_dir, `${language}.scm`);
-
-    return existsSync(query_path);
-  } catch {
-    return false;
+  // Check cache first
+  if (query_cache.has(language)) {
+    return true;
   }
+
+  // Check file existence without loading
+  const queries_dir = get_queries_dir();
+  const query_path = join(queries_dir, `${language}.scm`);
+
+  return existsSync(query_path);
 }
 
 /**

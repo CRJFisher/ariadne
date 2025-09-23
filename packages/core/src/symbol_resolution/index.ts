@@ -12,7 +12,6 @@ export { resolve_symbols } from './symbol_resolution';
 export type {
   ResolvedSymbols,
   ResolutionInput,
-  ImportResolutionMap,
   FunctionResolutionMap,
   TypeResolutionMap,
   MethodResolutionMap,

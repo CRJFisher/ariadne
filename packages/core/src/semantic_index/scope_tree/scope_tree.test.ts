@@ -4,6 +4,7 @@
 
 import { describe, it, expect, beforeEach, beforeAll } from "vitest";
 import Parser from "tree-sitter";
+import type { Tree } from "tree-sitter";
 import TypeScript from "tree-sitter-typescript";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
@@ -20,8 +21,13 @@ import {
   class_scope,
   block_scope,
 } from "@ariadnejs/types";
-import { build_scope_tree, compute_scope_depth, find_containing_scope, map_entity_to_scope_type } from "./scope_tree";
-import { SemanticEntity } from "../capture_types";
+import {
+  build_scope_tree,
+  compute_scope_depth,
+  find_containing_scope,
+  map_entity_to_scope_type,
+} from "./scope_tree";
+import { SemanticEntity, SemanticCategory } from "../capture_types";
 import type { NormalizedCapture } from "../capture_types";
 
 describe("Scope Tree Module", () => {
@@ -48,7 +54,7 @@ describe("Scope Tree Module", () => {
           startIndex: 0,
           endIndex: 100,
         },
-      } as any;
+      } as unknown as Tree;
 
       const result = build_scope_tree([], mockTree, file_path, "typescript");
 
@@ -67,11 +73,11 @@ describe("Scope Tree Module", () => {
           startIndex: 0,
           endIndex: 100,
         },
-      } as any;
+      } as unknown as Tree;
 
       const captures: NormalizedCapture[] = [
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.FUNCTION,
           text: "testFunction",
           node_location: { ...base_location, line: 2, end_line: 5 },
@@ -79,7 +85,12 @@ describe("Scope Tree Module", () => {
         },
       ];
 
-      const result = build_scope_tree(captures, mockTree, file_path, "typescript");
+      const result = build_scope_tree(
+        captures,
+        mockTree,
+        file_path,
+        "typescript"
+      );
 
       expect(result.scopes.size).toBe(2); // root + function
       expect(result.root_scope.child_ids.length).toBe(1);
@@ -100,25 +111,25 @@ describe("Scope Tree Module", () => {
           startIndex: 0,
           endIndex: 200,
         },
-      } as any;
+      } as unknown as Tree;
 
       const captures: NormalizedCapture[] = [
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.CLASS,
           text: "TestClass",
           node_location: { ...base_location, line: 2, end_line: 15 },
           modifiers: {},
         },
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.METHOD,
           text: "testMethod",
           node_location: { ...base_location, line: 5, end_line: 10 },
           modifiers: {},
         },
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.BLOCK,
           text: "block",
           node_location: { ...base_location, line: 7, end_line: 9 },
@@ -126,14 +137,25 @@ describe("Scope Tree Module", () => {
         },
       ];
 
-      const result = build_scope_tree(captures, mockTree, file_path, "typescript");
+      const result = build_scope_tree(
+        captures,
+        mockTree,
+        file_path,
+        "typescript"
+      );
 
       expect(result.scopes.size).toBe(4); // root + class + method + block
 
       // Find scopes by type
-      const class_scope = Array.from(result.scopes.values()).find(s => s.type === "class");
-      const method_scope = Array.from(result.scopes.values()).find(s => s.type === "method");
-      const block_scope = Array.from(result.scopes.values()).find(s => s.type === "block");
+      const class_scope = Array.from(result.scopes.values()).find(
+        (s) => s.type === "class"
+      );
+      const method_scope = Array.from(result.scopes.values()).find(
+        (s) => s.type === "method"
+      );
+      const block_scope = Array.from(result.scopes.values()).find(
+        (s) => s.type === "block"
+      );
 
       expect(class_scope).toBeDefined();
       expect(method_scope).toBeDefined();
@@ -153,39 +175,39 @@ describe("Scope Tree Module", () => {
           startIndex: 0,
           endIndex: 500,
         },
-      } as any;
+      } as unknown as Tree;
 
       const captures: NormalizedCapture[] = [
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.FUNCTION,
           text: "func",
           node_location: { ...base_location, line: 2, end_line: 5 },
           modifiers: {},
         },
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.CLASS,
           text: "Class",
           node_location: { ...base_location, line: 10, end_line: 20 },
           modifiers: {},
         },
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.METHOD,
           text: "method",
           node_location: { ...base_location, line: 12, end_line: 15 },
           modifiers: {},
         },
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.CONSTRUCTOR,
           text: "constructor",
           node_location: { ...base_location, line: 16, end_line: 18 },
           modifiers: {},
         },
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.BLOCK,
           text: "block",
           node_location: { ...base_location, line: 25, end_line: 30 },
@@ -193,9 +215,14 @@ describe("Scope Tree Module", () => {
         },
       ];
 
-      const result = build_scope_tree(captures, mockTree, file_path, "typescript");
+      const result = build_scope_tree(
+        captures,
+        mockTree,
+        file_path,
+        "typescript"
+      );
 
-      const scope_types = Array.from(result.scopes.values()).map(s => s.type);
+      const scope_types = Array.from(result.scopes.values()).map((s) => s.type);
       expect(scope_types).toContain("module");
       expect(scope_types).toContain("function");
       expect(scope_types).toContain("class");
@@ -212,26 +239,26 @@ describe("Scope Tree Module", () => {
           startIndex: 0,
           endIndex: 200,
         },
-      } as any;
+      } as unknown as Tree;
 
       // Out of order captures
       const captures: NormalizedCapture[] = [
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.FUNCTION,
           text: "func2",
           node_location: { ...base_location, line: 10, end_line: 15 },
           modifiers: {},
         },
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.FUNCTION,
           text: "func1",
           node_location: { ...base_location, line: 5, end_line: 8 },
           modifiers: {},
         },
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.BLOCK,
           text: "block",
           node_location: { ...base_location, line: 6, end_line: 7 },
@@ -239,16 +266,23 @@ describe("Scope Tree Module", () => {
         },
       ];
 
-      const result = build_scope_tree(captures, mockTree, file_path, "typescript");
+      const result = build_scope_tree(
+        captures,
+        mockTree,
+        file_path,
+        "typescript"
+      );
 
       // Should process in correct order: func1, block (inside func1), func2
       expect(result.scopes.size).toBe(4); // root + 2 functions + block
 
       // The block should be a child of func1, not func2
-      const func1_scope = Array.from(result.scopes.values()).find(s =>
-        s.type === "function" && s.location.line === 5
+      const func1_scope = Array.from(result.scopes.values()).find(
+        (s) => s.type === "function" && s.location.line === 5
       );
-      const block_scope = Array.from(result.scopes.values()).find(s => s.type === "block");
+      const block_scope = Array.from(result.scopes.values()).find(
+        (s) => s.type === "block"
+      );
 
       expect(block_scope!.parent_id).toBe(func1_scope!.id);
     });
@@ -261,18 +295,18 @@ describe("Scope Tree Module", () => {
           startIndex: 0,
           endIndex: 100,
         },
-      } as any;
+      } as unknown as Tree;
 
       const captures: NormalizedCapture[] = [
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.MODULE,
           text: "module",
           node_location: base_location,
           modifiers: {},
         },
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.FUNCTION,
           text: "func",
           node_location: { ...base_location, line: 2 },
@@ -280,7 +314,12 @@ describe("Scope Tree Module", () => {
         },
       ];
 
-      const result = build_scope_tree(captures, mockTree, file_path, "typescript");
+      const result = build_scope_tree(
+        captures,
+        mockTree,
+        file_path,
+        "typescript"
+      );
 
       // Should only have root + function, module capture should be skipped
       expect(result.scopes.size).toBe(2);
@@ -294,18 +333,18 @@ describe("Scope Tree Module", () => {
           startIndex: 0,
           endIndex: 100,
         },
-      } as any;
+      } as unknown as Tree;
 
       const captures: NormalizedCapture[] = [
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.FUNCTION,
           text: "func2",
           node_location: { ...base_location, line: 5, column: 20, end_line: 8 },
           modifiers: {},
         },
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.FUNCTION,
           text: "func1",
           node_location: { ...base_location, line: 5, column: 10, end_line: 7 },
@@ -313,7 +352,12 @@ describe("Scope Tree Module", () => {
         },
       ];
 
-      const result = build_scope_tree(captures, mockTree, file_path, "typescript");
+      const result = build_scope_tree(
+        captures,
+        mockTree,
+        file_path,
+        "typescript"
+      );
 
       expect(result.scopes.size).toBe(3); // root + 2 functions
 
@@ -386,9 +430,15 @@ describe("Scope Tree Module", () => {
     });
 
     it("should compute correct depth for nested scopes", () => {
-      const class_scope = Array.from(scopes.values()).find(s => s.type === "class")!;
-      const method_scope = Array.from(scopes.values()).find(s => s.type === "method")!;
-      const block_scope = Array.from(scopes.values()).find(s => s.type === "block")!;
+      const class_scope = Array.from(scopes.values()).find(
+        (s) => s.type === "class"
+      )!;
+      const method_scope = Array.from(scopes.values()).find(
+        (s) => s.type === "method"
+      )!;
+      const block_scope = Array.from(scopes.values()).find(
+        (s) => s.type === "block"
+      )!;
 
       expect(compute_scope_depth(class_scope, scopes)).toBe(1);
       expect(compute_scope_depth(method_scope, scopes)).toBe(2);
@@ -525,7 +575,11 @@ describe("Scope Tree Module", () => {
         end_column: 10,
       };
 
-      const containing_scope = find_containing_scope(location, root_scope, scopes);
+      const containing_scope = find_containing_scope(
+        location,
+        root_scope,
+        scopes
+      );
       expect(containing_scope.type).toBe("module");
     });
 
@@ -538,7 +592,11 @@ describe("Scope Tree Module", () => {
         end_column: 10,
       };
 
-      const containing_scope = find_containing_scope(location, root_scope, scopes);
+      const containing_scope = find_containing_scope(
+        location,
+        root_scope,
+        scopes
+      );
       expect(containing_scope.type).toBe("class");
     });
 
@@ -551,7 +609,11 @@ describe("Scope Tree Module", () => {
         end_column: 15,
       };
 
-      const containing_scope = find_containing_scope(location, root_scope, scopes);
+      const containing_scope = find_containing_scope(
+        location,
+        root_scope,
+        scopes
+      );
       expect(containing_scope.type).toBe("method");
     });
 
@@ -565,7 +627,11 @@ describe("Scope Tree Module", () => {
         end_column: 5,
       };
 
-      const containing_scope = find_containing_scope(start_location, root_scope, scopes);
+      const containing_scope = find_containing_scope(
+        start_location,
+        root_scope,
+        scopes
+      );
       expect(containing_scope.type).toBe("class");
     });
 
@@ -578,7 +644,11 @@ describe("Scope Tree Module", () => {
         end_column: 10,
       };
 
-      const containing_scope = find_containing_scope(location, root_scope, scopes);
+      const containing_scope = find_containing_scope(
+        location,
+        root_scope,
+        scopes
+      );
       expect(containing_scope.type).toBe("module");
     });
 
@@ -592,7 +662,11 @@ describe("Scope Tree Module", () => {
         end_column: 10,
       };
 
-      const containing_scope = find_containing_scope(location, root_scope, empty_scopes);
+      const containing_scope = find_containing_scope(
+        location,
+        root_scope,
+        empty_scopes
+      );
       expect(containing_scope).toBe(root_scope);
     });
   });
@@ -606,11 +680,11 @@ describe("Scope Tree Module", () => {
           startIndex: 0,
           endIndex: 100,
         },
-      } as any;
+      } as unknown as Tree;
 
       const captures: NormalizedCapture[] = [
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: "invalid_entity" as SemanticEntity,
           text: "invalid",
           node_location: base_location,
@@ -631,11 +705,11 @@ describe("Scope Tree Module", () => {
           startIndex: 0,
           endIndex: 100,
         },
-      } as any;
+      } as unknown as Tree;
 
       const captures: NormalizedCapture[] = [
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.FUNCTION,
           text: "func",
           node_location: {
@@ -662,33 +736,43 @@ describe("Scope Tree Module", () => {
           startIndex: 0,
           endIndex: 10000,
         },
-      } as any;
+      } as unknown as Tree;
 
       // Create 100 nested scopes
-      const captures: NormalizedCapture[] = Array.from({ length: 100 }, (_, i) => ({
-        category: "scope" as any,
-        entity: SemanticEntity.BLOCK,
-        text: `block_${i}`,
-        node_location: {
-          file_path,
-          line: i + 2,
-          column: i,
-          end_line: 100 - i,
-          end_column: 50,
-        },
-        modifiers: {},
-      }));
+      const captures: NormalizedCapture[] = Array.from(
+        { length: 100 },
+        (_, i) => ({
+          category: SemanticCategory.SCOPE,
+          entity: SemanticEntity.BLOCK,
+          text: `block_${i}`,
+          node_location: {
+            file_path,
+            line: i + 2,
+            column: i,
+            end_line: 100 - i,
+            end_column: 50,
+          },
+          modifiers: {},
+        })
+      );
 
-      const result = build_scope_tree(captures, mockTree, file_path, "typescript");
+      const result = build_scope_tree(
+        captures,
+        mockTree,
+        file_path,
+        "typescript"
+      );
 
       expect(result.scopes.size).toBe(101); // root + 100 blocks
 
       // Check that we can compute depth without issues
-      const deepest_scope = Array.from(result.scopes.values()).reduce((deepest, scope) => {
-        const depth = compute_scope_depth(scope, result.scopes);
-        const deepest_depth = compute_scope_depth(deepest, result.scopes);
-        return depth > deepest_depth ? scope : deepest;
-      });
+      const deepest_scope = Array.from(result.scopes.values()).reduce(
+        (deepest, scope) => {
+          const depth = compute_scope_depth(scope, result.scopes);
+          const deepest_depth = compute_scope_depth(deepest, result.scopes);
+          return depth > deepest_depth ? scope : deepest;
+        }
+      );
 
       const max_depth = compute_scope_depth(deepest_scope, result.scopes);
       expect(max_depth).toBeGreaterThan(0);
@@ -703,11 +787,11 @@ describe("Scope Tree Module", () => {
           startIndex: 0,
           endIndex: 200,
         },
-      } as any;
+      } as unknown as Tree;
 
       const captures: NormalizedCapture[] = [
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.FUNCTION,
           text: "outer",
           node_location: {
@@ -720,7 +804,7 @@ describe("Scope Tree Module", () => {
           modifiers: {},
         },
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.FUNCTION,
           text: "inner",
           node_location: {
@@ -734,15 +818,20 @@ describe("Scope Tree Module", () => {
         },
       ];
 
-      const result = build_scope_tree(captures, mockTree, file_path, "typescript");
+      const result = build_scope_tree(
+        captures,
+        mockTree,
+        file_path,
+        "typescript"
+      );
 
       expect(result.scopes.size).toBe(3); // root + outer + inner
 
-      const outer_scope = Array.from(result.scopes.values()).find(s =>
-        s.type === "function" && s.location.line === 2
+      const outer_scope = Array.from(result.scopes.values()).find(
+        (s) => s.type === "function" && s.location.line === 2
       );
-      const inner_scope = Array.from(result.scopes.values()).find(s =>
-        s.type === "function" && s.location.line === 5
+      const inner_scope = Array.from(result.scopes.values()).find(
+        (s) => s.type === "function" && s.location.line === 5
       );
 
       expect(outer_scope!.parent_id).toBe(result.root_scope.id);
@@ -784,7 +873,7 @@ describe("Scope Tree Module", () => {
       // Create mock captures that would come from tree-sitter queries
       const captures: NormalizedCapture[] = [
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.CLASS,
           text: "TestClass",
           node_location: {
@@ -797,7 +886,7 @@ describe("Scope Tree Module", () => {
           modifiers: {},
         },
         {
-          category: "scope" as any,
+          category: SemanticCategory.SCOPE,
           entity: SemanticEntity.METHOD,
           text: "method",
           node_location: {
@@ -811,7 +900,12 @@ describe("Scope Tree Module", () => {
         },
       ];
 
-      const result = build_scope_tree(captures, tree, "test.ts" as FilePath, "typescript");
+      const result = build_scope_tree(
+        captures,
+        tree,
+        "test.ts" as FilePath,
+        "typescript"
+      );
 
       expect(result.scopes.size).toBeGreaterThanOrEqual(3); // root + class + method
       expect(result.root_scope.type).toBe("module");
@@ -821,7 +915,12 @@ describe("Scope Tree Module", () => {
       const code = "";
       const tree = typescript_parser.parse(code);
 
-      const result = build_scope_tree([], tree, "empty.ts" as FilePath, "typescript");
+      const result = build_scope_tree(
+        [],
+        tree,
+        "empty.ts" as FilePath,
+        "typescript"
+      );
 
       expect(result.scopes.size).toBe(1); // Only root scope
       expect(result.root_scope.type).toBe("module");
@@ -847,9 +946,13 @@ describe("Scope Tree Module", () => {
     it("should map all supported semantic entities to scope types", () => {
       expect(map_entity_to_scope_type(SemanticEntity.MODULE)).toBe("module");
       expect(map_entity_to_scope_type(SemanticEntity.CLASS)).toBe("class");
-      expect(map_entity_to_scope_type(SemanticEntity.FUNCTION)).toBe("function");
+      expect(map_entity_to_scope_type(SemanticEntity.FUNCTION)).toBe(
+        "function"
+      );
       expect(map_entity_to_scope_type(SemanticEntity.METHOD)).toBe("method");
-      expect(map_entity_to_scope_type(SemanticEntity.CONSTRUCTOR)).toBe("constructor");
+      expect(map_entity_to_scope_type(SemanticEntity.CONSTRUCTOR)).toBe(
+        "constructor"
+      );
       expect(map_entity_to_scope_type(SemanticEntity.BLOCK)).toBe("block");
     });
 
@@ -868,9 +971,13 @@ describe("Scope Tree Module", () => {
       expect(map_entity_to_scope_type(SemanticEntity.INTERFACE)).toBe("block");
       expect(map_entity_to_scope_type(SemanticEntity.ENUM)).toBe("block");
       expect(map_entity_to_scope_type(SemanticEntity.TYPE_ALIAS)).toBe("block");
-      expect(map_entity_to_scope_type(SemanticEntity.ENUM_MEMBER)).toBe("block");
+      expect(map_entity_to_scope_type(SemanticEntity.ENUM_MEMBER)).toBe(
+        "block"
+      );
       expect(map_entity_to_scope_type(SemanticEntity.NAMESPACE)).toBe("block");
-      expect(map_entity_to_scope_type(SemanticEntity.TYPE_PARAMETER)).toBe("block");
+      expect(map_entity_to_scope_type(SemanticEntity.TYPE_PARAMETER)).toBe(
+        "block"
+      );
     });
   });
 
@@ -883,25 +990,33 @@ describe("Scope Tree Module", () => {
           startIndex: 0,
           endIndex: 100000,
         },
-      } as any;
+      } as unknown as Tree;
 
       // Create 1000 scopes
-      const captures: NormalizedCapture[] = Array.from({ length: 1000 }, (_, i) => ({
-        category: "scope" as any,
-        entity: SemanticEntity.FUNCTION,
-        text: `func_${i}`,
-        node_location: {
-          file_path,
-          line: i + 2,
-          column: 0,
-          end_line: i + 3,
-          end_column: 50,
-        },
-        modifiers: {},
-      }));
+      const captures: NormalizedCapture[] = Array.from(
+        { length: 1000 },
+        (_, i) => ({
+          category: SemanticCategory.SCOPE,
+          entity: SemanticEntity.FUNCTION,
+          text: `func_${i}`,
+          node_location: {
+            file_path,
+            line: i + 2,
+            column: 0,
+            end_line: i + 3,
+            end_column: 50,
+          },
+          modifiers: {},
+        })
+      );
 
       const start_time = Date.now();
-      const result = build_scope_tree(captures, mockTree, file_path, "typescript");
+      const result = build_scope_tree(
+        captures,
+        mockTree,
+        file_path,
+        "typescript"
+      );
       const end_time = Date.now();
 
       expect(end_time - start_time).toBeLessThan(2000); // Should complete in reasonable time
@@ -968,7 +1083,11 @@ describe("Scope Tree Module", () => {
       };
 
       const start_time = Date.now();
-      const containing_scope = find_containing_scope(test_location, root_scope, scopes);
+      const containing_scope = find_containing_scope(
+        test_location,
+        root_scope,
+        scopes
+      );
       const end_time = Date.now();
 
       expect(end_time - start_time).toBeLessThan(100); // Should be very fast

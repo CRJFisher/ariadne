@@ -72,7 +72,7 @@ export function process_exports(
     const primary = captures[0];
     if (!primary) continue;
 
-    const location =  primary.node_location;
+    const location = primary.node_location;
 
     // Handle re-exports first (they are more specific than namespace exports)
     const is_reexport = captures.some(
@@ -80,11 +80,13 @@ export function process_exports(
     );
     if (is_reexport) {
       // Look for export_source in captures, prioritizing context.is_reexport over modifiers.is_reexport
-      const source_capture = captures.find(
-        (c) => c.context?.export_source && c.context?.is_reexport
-      ) || captures.find(
-        (c) => c.context?.export_source && c.modifiers?.is_reexport
-      );
+      const source_capture =
+        captures.find(
+          (c) => c.context?.export_source && c.context?.is_reexport
+        ) ||
+        captures.find(
+          (c) => c.context?.export_source && c.modifiers?.is_reexport
+        );
       const source = source_capture?.context?.export_source || "";
       const reexports =
         captures.find((c) => c.context?.reexports)?.context?.reexports || [];
@@ -218,8 +220,8 @@ export function process_exports(
       // Symbol export information should be tracked separately if needed
       // const symbol = symbols.get(symbol_id);
       // if (symbol) {
-      //   (symbol as any).is_exported = true;
-      //   (symbol as any).exported_as = export_alias || symbol_name;
+      //   (symbol ).is_exported = true;
+      //   (symbol ).exported_as = export_alias || symbol_name;
       // }
     }
   }
@@ -227,8 +229,9 @@ export function process_exports(
   // Generate implicit exports for languages that support them
   if (language === "python") {
     // Check for __all__ definition to control star imports
-    const all_list_captures = export_captures.filter((c) =>
-      c.context?.export_type === "explicit_control" && c.context?.all_contents
+    const all_list_captures = export_captures.filter(
+      (c) =>
+        c.context?.export_type === "explicit_control" && c.context?.all_contents
     );
 
     // Extract __all__ contents if present
@@ -238,7 +241,7 @@ export function process_exports(
       const all_contents = all_capture.context?.all_contents;
       if (all_contents && Array.isArray(all_contents)) {
         for (const name of all_contents) {
-          if (typeof name === 'string') {
+          if (typeof name === "string") {
             explicit_star_exports.add(name as SymbolName);
           }
         }
@@ -313,9 +316,9 @@ export function process_exports(
 
       // Note: Avoid mutating symbol objects directly
       // Symbol export information should be tracked separately if needed
-      // (symbol as any).is_exported = true;
-      // (symbol as any).is_implicit_export = true;
-      // (symbol as any).exported_as = symbol_name;
+      // (symbol ).is_exported = true;
+      // (symbol ).is_implicit_export = true;
+      // (symbol ).exported_as = symbol_name;
     }
   }
 
@@ -340,11 +343,13 @@ export function process_exports(
           symbol: variable_symbol(exportedName, capture.node_location),
           symbol_name: exportedName as SymbolName,
           source: sourceName as FilePath,
-          exports: [{
-            source_name: sourceName as SymbolName,
-            export_name: exportedName as SymbolName,
-            is_type_only: false,
-          }],
+          exports: [
+            {
+              source_name: sourceName as SymbolName,
+              export_name: exportedName as SymbolName,
+              is_type_only: false,
+            },
+          ],
           location: capture.node_location,
           modifiers,
           language,

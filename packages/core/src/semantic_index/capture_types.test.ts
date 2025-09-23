@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from "vitest";
 import type { SyntaxNode } from "tree-sitter";
-import type { Location } from "@ariadnejs/types";
+import type { FilePath, Location } from "@ariadnejs/types";
 import {
   SemanticCategory,
   SemanticEntity,
@@ -244,8 +244,11 @@ describe("Capture Types", () => {
   describe("NormalizedCapture Interface", () => {
     it("should create valid normalized capture objects", () => {
       const mockLocation: Location = {
-        file_path: "test.js" as any,
-        line: 1, column: 0 , end_line: 1, end_column: 10 ,
+        file_path: "test.js" as FilePath,
+        line: 1,
+        column: 0,
+        end_line: 1,
+        end_column: 10,
       };
 
       const capture: NormalizedCapture = {
@@ -267,8 +270,11 @@ describe("Capture Types", () => {
 
     it("should allow optional context", () => {
       const mockLocation: Location = {
-        file_path: "test.js" as any,
-        line: 1, column: 0 , end_line: 1, end_column: 10 ,
+        file_path: "test.js" as FilePath,
+        line: 1,
+        column: 0,
+        end_line: 1,
+        end_column: 10,
       };
 
       const capture: NormalizedCapture = {
@@ -373,7 +379,9 @@ describe("Capture Types", () => {
         category: SemanticCategory.DEFINITION,
         entity: SemanticEntity.METHOD,
         modifiers: (node: SyntaxNode) => {
-          const hasStatic = node.parent?.children?.some((child: any) => child.type === "static");
+          const hasStatic = node.parent?.children?.some(
+            (child: any) => child.type === "static"
+          );
           return { is_static: Boolean(hasStatic) };
         },
         context: (node: SyntaxNode) => {
@@ -392,7 +400,7 @@ describe("Capture Types", () => {
             return null;
           },
         },
-      } as any;
+      } as SyntaxNode;
 
       const modifiers = mapping.modifiers!(mockNode);
       const context = mapping.context!(mockNode);
@@ -438,13 +446,18 @@ describe("Capture Types", () => {
             category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.METHOD,
             modifiers: (node: SyntaxNode) => ({
-              is_static: node.parent?.children?.some((c: any) => c.type === "static") || false,
-              is_async: node.parent?.children?.some((c: any) => c.type === "async") || false,
+              is_static:
+                node.parent?.children?.some((c: any) => c.type === "static") ||
+                false,
+              is_async:
+                node.parent?.children?.some((c: any) => c.type === "async") ||
+                false,
             }),
             context: (node: SyntaxNode) => ({
               method_name: node.text,
               access_modifier: node.parent?.children?.find((c: any) =>
-                ["public", "private", "protected"].includes(c.type))?.type,
+                ["public", "private", "protected"].includes(c.type)
+              )?.type,
             }),
           },
         ],
@@ -461,14 +474,26 @@ describe("Capture Types", () => {
     it("should ensure semantic categories and entities are compatible", () => {
       // Test that common combinations work
       const validCombinations = [
-        { category: SemanticCategory.DEFINITION, entity: SemanticEntity.FUNCTION },
+        {
+          category: SemanticCategory.DEFINITION,
+          entity: SemanticEntity.FUNCTION,
+        },
         { category: SemanticCategory.DEFINITION, entity: SemanticEntity.CLASS },
-        { category: SemanticCategory.DEFINITION, entity: SemanticEntity.VARIABLE },
+        {
+          category: SemanticCategory.DEFINITION,
+          entity: SemanticEntity.VARIABLE,
+        },
         { category: SemanticCategory.REFERENCE, entity: SemanticEntity.CALL },
-        { category: SemanticCategory.REFERENCE, entity: SemanticEntity.MEMBER_ACCESS },
+        {
+          category: SemanticCategory.REFERENCE,
+          entity: SemanticEntity.MEMBER_ACCESS,
+        },
         { category: SemanticCategory.SCOPE, entity: SemanticEntity.MODULE },
         { category: SemanticCategory.SCOPE, entity: SemanticEntity.FUNCTION },
-        { category: SemanticCategory.TYPE, entity: SemanticEntity.TYPE_ANNOTATION },
+        {
+          category: SemanticCategory.TYPE,
+          entity: SemanticEntity.TYPE_ANNOTATION,
+        },
         { category: SemanticCategory.IMPORT, entity: SemanticEntity.IMPORT },
         { category: SemanticCategory.EXPORT, entity: SemanticEntity.FUNCTION },
       ];
@@ -478,8 +503,11 @@ describe("Capture Types", () => {
           category: combo.category,
           entity: combo.entity,
           node_location: {
-            file_path: "test.js" as any,
-            line: 1, column: 0 , end_line: 1, end_column: 4 ,
+            file_path: "test.js" as FilePath,
+            line: 1,
+            column: 0,
+            end_line: 1,
+            end_column: 4,
           },
           text: "test",
           modifiers: {},

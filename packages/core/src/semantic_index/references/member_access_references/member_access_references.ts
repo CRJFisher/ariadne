@@ -6,12 +6,13 @@ import type {
   Location,
   FilePath,
   SymbolName,
+  SymbolId,
   ScopeId,
   LexicalScope,
 } from "@ariadnejs/types";
 import { node_to_location } from "../../../utils/node_utils";
 import { find_containing_scope } from "../../scope_tree";
-import type { NormalizedCapture } from "../../capture_types";
+import type { CaptureContext, NormalizedCapture } from "../../capture_types";
 import { SemanticEntity } from "../../capture_types";
 
 /**
@@ -44,6 +45,9 @@ export interface MemberAccessReference {
 
   /** For computed property access */
   readonly computed_key?: Location;
+
+  /** Whether this is a static access (on a class/type) vs instance */
+  readonly is_static?: boolean;
 }
 
 /**
@@ -256,6 +260,9 @@ function create_member_access_reference(
     return validate_symbol_name(String(p));
   });
 
+  // Determine if this is a static access
+  const is_static = determine_static_access(capture, context);
+
   return {
     location,
     member_name,
@@ -265,7 +272,35 @@ function create_member_access_reference(
     property_chain,
     is_optional_chain: detect_optional_chaining(context, member_name),
     computed_key: get_computed_key_location(context, file_path, member_name),
+    is_static,
   };
+}
+
+/**
+ * Determine if this is a static access
+ */
+function determine_static_access(
+  _capture: NormalizedCapture,
+  context?: CaptureContext
+): boolean {
+  // Check context for explicit static flag
+  if (context?.is_static !== undefined) {
+    return context.is_static;
+  }
+
+  // Check for associated function flag (Rust)
+  if (context && 'is_associated_function' in context && context.is_associated_function) {
+    return true;
+  }
+
+  // Language-specific checks based on decorator name
+  if (context?.decorator_name === "staticmethod" ||
+      context?.decorator_name === "classmethod") {
+    return true;  // Python static/class methods
+  }
+
+  // Default to false (will be determined during resolution if needed)
+  return false;
 }
 
 /**

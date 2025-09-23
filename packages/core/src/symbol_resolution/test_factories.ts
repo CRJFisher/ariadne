@@ -40,7 +40,6 @@ import type { LocalTypeTracking } from "../semantic_index/references/type_tracki
 import type { LocalTypeFlowData } from "../semantic_index/references/type_flow_references";
 import type {
   ResolutionInput,
-  ImportResolutionMap,
   FunctionResolutionMap,
   TypeResolutionMap,
   MethodResolutionMap,
@@ -466,10 +465,8 @@ export function mock_resolution_input(
 /**
  * Create an empty ImportResolutionMap for testing
  */
-export function mock_import_resolution_map(): ImportResolutionMap {
-  return {
-    imports: new Map(),
-  };
+export function mock_import_resolution_map(): ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> {
+  return new Map();
 }
 
 /**

@@ -54,20 +54,5 @@ export {
   is_symbol_accessible_from_scope,
 } from "./scope_utilities";
 
-// Import needed types for phase2_resolve_functions
-import type { FilePath } from "@ariadnejs/types";
-import type { SemanticIndex } from "../../semantic_index/semantic_index";
-import type { ImportResolutionMap } from "../types";
-import type { FunctionResolutionMap } from "./function_types";
-import { resolve_function_calls } from "./function_resolver";
-
 // Export main function resolution
-export { resolve_function_calls };
-
-// Integration with symbol_resolution.ts Phase 2
-export function phase2_resolve_functions(
-  indices: ReadonlyMap<FilePath, SemanticIndex>,
-  imports: ImportResolutionMap
-): FunctionResolutionMap {
-  return resolve_function_calls(indices, imports);
-}
+export { resolve_function_calls }from "./function_resolver";

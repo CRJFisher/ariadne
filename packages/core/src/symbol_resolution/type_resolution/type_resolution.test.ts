@@ -10,7 +10,7 @@ import {
   build_file_type_registry_with_annotations,
   resolve_all_types,
 } from "./index";
-import { createEmptyImportResolutionMap, createReadonlyMap } from "./test_utilities";
+import { createReadonlyMap } from "./test_utilities";
 import type {
   LocalTypeExtraction,
   LocalTypeDefinition,
@@ -32,7 +32,7 @@ import type {
   ScopeId,
   SymbolDefinition,
 } from "@ariadnejs/types";
-import type { ImportResolutionMap, FunctionResolutionMap } from "../types";
+import type { FunctionResolutionMap } from "../types";
 import type { LocalTypeFlowData } from "../../semantic_index/references/type_flow_references";
 
 describe("Type Resolution Module", () => {
@@ -158,7 +158,7 @@ describe("Type Resolution Module", () => {
 
   describe("Placeholder Implementations", () => {
     let mockLocalTypes: LocalTypeExtraction;
-    let mockImports: ImportResolutionMap;
+    let mockImports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>;
     let mockFunctions: FunctionResolutionMap;
 
     beforeEach(() => {
@@ -168,9 +168,7 @@ describe("Type Resolution Module", () => {
         type_flows: new Map(),
       };
 
-      mockImports = {
-        imports: new Map(),
-      };
+      mockImports = new Map();
 
       mockFunctions = {
         function_calls: new Map(),
@@ -331,7 +329,7 @@ describe("Type Resolution Module", () => {
   describe("Migrated Type Resolution Functions", () => {
     describe("resolve_all_types", () => {
       let mockLocalTypes: LocalTypeExtraction;
-      let mockImports: ImportResolutionMap;
+      let mockImports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>;
       let mockFunctions: FunctionResolutionMap;
 
       beforeEach(() => {
@@ -393,16 +391,14 @@ describe("Type Resolution Module", () => {
           ]),
         };
 
-        mockImports = {
-          imports: new Map([
+        mockImports = new Map([
             [
               "test.ts" as FilePath,
               new Map([
                 ["ImportedType" as SymbolName, "symbol:imported" as SymbolId],
               ]),
             ],
-          ]),
-        };
+          ]);
 
         mockFunctions = {
           function_calls: new Map(),
@@ -448,9 +444,7 @@ describe("Type Resolution Module", () => {
           type_flows: new Map(),
         };
 
-        const emptyImports: ImportResolutionMap = {
-          imports: new Map(),
-        };
+        const emptyImports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> = new Map();
 
         const result = resolve_all_types(
           emptyLocalTypes,
@@ -795,9 +789,7 @@ describe("Type Resolution Module", () => {
           type_flows: new Map(),
         };
 
-        const mockImports: ImportResolutionMap = {
-          imports: new Map(),
-        };
+        const mockImports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> = new Map();
 
         const mockFunctions: FunctionResolutionMap = {
           function_calls: new Map(),
@@ -821,9 +813,7 @@ describe("Type Resolution Module", () => {
           type_flows: new Map(),
         };
 
-        const mockImports: ImportResolutionMap = {
-          imports: new Map(),
-        };
+        const mockImports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> = new Map();
 
         const mockFunctions: FunctionResolutionMap = {
           function_calls: new Map(),

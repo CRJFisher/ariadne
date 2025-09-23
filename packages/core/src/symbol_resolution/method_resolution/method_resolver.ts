@@ -16,7 +16,6 @@ import { location_key } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../semantic_index/semantic_index";
 import type { MemberAccessReference } from "../../semantic_index/references/member_access_references/member_access_references";
 import type {
-  ImportResolutionMap,
   FunctionResolutionMap,
   TypeResolutionMap,
 } from "../types";
@@ -36,7 +35,7 @@ import { resolve_polymorphic_method_call, CallContext } from "./polymorphism_han
  */
 export function resolve_method_calls(
   indices: ReadonlyMap<FilePath, SemanticIndex>,
-  imports: ImportResolutionMap,
+  imports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>,
   functions: FunctionResolutionMap,
   types: TypeResolutionMap
 ): MethodResolutionMap {

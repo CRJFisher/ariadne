@@ -10,7 +10,6 @@ import type {
 } from "@ariadnejs/types";
 import type { CallReference } from "../../semantic_index/references/call_references/call_references";
 import type { SemanticIndex } from "../../semantic_index/semantic_index";
-import type { ImportResolutionMap } from "../types";
 import type { FunctionResolutionContext } from "./function_types";
 import { mock_local_type_tracking, mock_local_type_flow } from "../test_factories";
 import {

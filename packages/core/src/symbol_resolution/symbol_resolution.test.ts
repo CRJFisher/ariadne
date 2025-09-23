@@ -5,15 +5,10 @@
  * Tests each phase independently and the integration of all phases.
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { resolve_symbols } from "./symbol_resolution";
 import type {
   ResolutionInput,
-  ResolvedSymbols,
-  ImportResolutionMap,
-  FunctionResolutionMap,
-  TypeResolutionMap,
-  MethodResolutionMap,
 } from "./types";
 import type {
   FilePath,

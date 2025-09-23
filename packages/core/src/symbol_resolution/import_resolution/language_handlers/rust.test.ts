@@ -41,7 +41,9 @@ describe("Rust Import Resolution", () => {
 
       it("resolves module directories with mod.rs", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) => p === "/project/src/utils/mod.rs");
+        mock_exists.mockImplementation(
+          (p) => p === "/project/src/utils/mod.rs"
+        );
 
         const result = resolve_rust_module_path(
           "utils",
@@ -53,8 +55,9 @@ describe("Rust Import Resolution", () => {
 
       it("prefers .rs files over mod.rs when both exist", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/src/utils.rs" || p === "/project/src/utils/mod.rs"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/project/src/utils.rs" || p === "/project/src/utils/mod.rs"
         );
 
         const result = resolve_rust_module_path(
@@ -69,17 +72,18 @@ describe("Rust Import Resolution", () => {
         const mock_exists = vi.mocked(fs.existsSync);
         const mock_stats = vi.mocked(fs.statSync);
 
-        mock_exists.mockImplementation((p) =>
-          p === "/project/src/utils" ||
-          p === "/project/src/utils/helpers" ||
-          p === "/project/src/utils/helpers/string.rs"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/project/src/utils" ||
+            p === "/project/src/utils/helpers" ||
+            p === "/project/src/utils/helpers/string.rs"
         );
 
         mock_stats.mockImplementation((p) => ({
           isDirectory: () =>
             p === "/project/src/utils" || p === "/project/src/utils/helpers",
-          isFile: () => p === "/project/src/utils/helpers/string.rs"
-        } as any));
+          isFile: () => p === "/project/src/utils/helpers/string.rs",
+        }));
 
         const result = resolve_rust_module_path(
           "utils::helpers::string",
@@ -91,8 +95,8 @@ describe("Rust Import Resolution", () => {
 
       it("handles module paths with multiple separators", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/src/api/v1/endpoints/users.rs"
+        mock_exists.mockImplementation(
+          (p) => p === "/project/src/api/v1/endpoints/users.rs"
         );
 
         const result = resolve_rust_module_path(
@@ -119,8 +123,8 @@ describe("Rust Import Resolution", () => {
 
       it("resolves nested self:: references", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/src/utils/helpers.rs"
+        mock_exists.mockImplementation(
+          (p) => p === "/project/src/utils/helpers.rs"
         );
 
         const result = resolve_rust_module_path(
@@ -133,8 +137,8 @@ describe("Rust Import Resolution", () => {
 
       it("resolves self:: from submodules", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/src/utils/helper.rs"
+        mock_exists.mockImplementation(
+          (p) => p === "/project/src/utils/helper.rs"
         );
 
         const result = resolve_rust_module_path(
@@ -173,8 +177,8 @@ describe("Rust Import Resolution", () => {
 
       it("resolves super:: with nested paths", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/shared/common.rs"
+        mock_exists.mockImplementation(
+          (p) => p === "/project/shared/common.rs"
         );
 
         const result = resolve_rust_module_path(
@@ -187,9 +191,7 @@ describe("Rust Import Resolution", () => {
 
       it("handles super:: from deeply nested modules", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/src/shared.rs"
-        );
+        mock_exists.mockImplementation((p) => p === "/project/src/shared.rs");
 
         const result = resolve_rust_module_path(
           "super::super::shared",
@@ -203,10 +205,11 @@ describe("Rust Import Resolution", () => {
     describe("crate:: References", () => {
       it("resolves crate:: from lib.rs root", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/src" ||
-          p === "/project/src/lib.rs" ||
-          p === "/project/src/utils.rs"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/project/src" ||
+            p === "/project/src/lib.rs" ||
+            p === "/project/src/utils.rs"
         );
 
         const result = resolve_rust_module_path(
@@ -219,10 +222,11 @@ describe("Rust Import Resolution", () => {
 
       it("resolves crate:: from main.rs root", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/src" ||
-          p === "/project/src/main.rs" ||
-          p === "/project/src/utils.rs"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/project/src" ||
+            p === "/project/src/main.rs" ||
+            p === "/project/src/utils.rs"
         );
 
         const result = resolve_rust_module_path(
@@ -235,10 +239,11 @@ describe("Rust Import Resolution", () => {
 
       it("resolves nested crate:: paths", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/src" ||
-          p === "/project/src/lib.rs" ||
-          p === "/project/src/api/handlers/auth.rs"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/project/src" ||
+            p === "/project/src/lib.rs" ||
+            p === "/project/src/api/handlers/auth.rs"
         );
 
         const result = resolve_rust_module_path(
@@ -251,9 +256,8 @@ describe("Rust Import Resolution", () => {
 
       it("handles crate:: without src directory", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/lib.rs" ||
-          p === "/project/utils.rs"
+        mock_exists.mockImplementation(
+          (p) => p === "/project/lib.rs" || p === "/project/utils.rs"
         );
 
         const result = resolve_rust_module_path(
@@ -298,7 +302,7 @@ describe("Rust Import Resolution", () => {
           "serde::Serialize",
           "tokio::runtime::Runtime",
           "async_trait::async_trait",
-          "futures::future::Future"
+          "futures::future::Future",
         ];
 
         for (const external of externals) {
@@ -323,10 +327,11 @@ describe("Rust Import Resolution", () => {
     describe("Workspace Members", () => {
       it("resolves workspace member crates", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/workspace/Cargo.toml" ||
-          p === "/workspace/my_crate" ||
-          p === "/workspace/my_crate/src/lib.rs"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/workspace/Cargo.toml" ||
+            p === "/workspace/my_crate" ||
+            p === "/workspace/my_crate/src/lib.rs"
         );
 
         const result = resolve_rust_module_path(
@@ -339,10 +344,11 @@ describe("Rust Import Resolution", () => {
 
       it("handles workspace with multiple members", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/workspace/Cargo.toml" ||
-          p === "/workspace/crate_a" ||
-          p === "/workspace/crate_a/src/lib.rs"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/workspace/Cargo.toml" ||
+            p === "/workspace/crate_a" ||
+            p === "/workspace/crate_a/src/lib.rs"
         );
 
         const result = resolve_rust_module_path(
@@ -355,10 +361,11 @@ describe("Rust Import Resolution", () => {
 
       it("handles workspace members with custom paths", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/workspace/Cargo.toml" ||
-          p === "/workspace/libs/my_lib" ||
-          p === "/workspace/libs/my_lib/src/lib.rs"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/workspace/Cargo.toml" ||
+            p === "/workspace/libs/my_lib" ||
+            p === "/workspace/libs/my_lib/src/lib.rs"
         );
 
         const result = resolve_rust_module_path(
@@ -397,8 +404,8 @@ describe("Rust Import Resolution", () => {
 
       it("handles complex nested paths", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/src/domain/models/user/validation.rs"
+        mock_exists.mockImplementation(
+          (p) => p === "/project/src/domain/models/user/validation.rs"
         );
 
         const result = resolve_rust_module_path(
@@ -411,8 +418,8 @@ describe("Rust Import Resolution", () => {
 
       it("handles paths with underscores", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/src/test_utils/mock_data.rs"
+        mock_exists.mockImplementation(
+          (p) => p === "/project/src/test_utils/mock_data.rs"
         );
 
         const result = resolve_rust_module_path(
@@ -425,8 +432,8 @@ describe("Rust Import Resolution", () => {
 
       it("handles paths with numbers", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/src/api/v2/handlers.rs"
+        mock_exists.mockImplementation(
+          (p) => p === "/project/src/api/v2/handlers.rs"
         );
 
         const result = resolve_rust_module_path(
@@ -472,7 +479,7 @@ describe("Rust Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -486,7 +493,7 @@ describe("Rust Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
           {
@@ -498,7 +505,7 @@ describe("Rust Import Resolution", () => {
               line: 5,
               column: 0,
               end_line: 5,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];
@@ -523,7 +530,7 @@ describe("Rust Import Resolution", () => {
             {
               name: "OldName" as SymbolName,
               alias: "NewName" as SymbolName,
-              is_type_only: false
+              is_type_only: false,
             },
           ],
           source: "/project/src/utils.rs" as FilePath,
@@ -532,7 +539,7 @@ describe("Rust Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -546,7 +553,7 @@ describe("Rust Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];
@@ -577,7 +584,7 @@ describe("Rust Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 40
+            end_column: 40,
           },
         } as unknown as Import;
 
@@ -591,7 +598,7 @@ describe("Rust Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
           {
@@ -603,7 +610,7 @@ describe("Rust Import Resolution", () => {
               line: 2,
               column: 0,
               end_line: 2,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
           {
@@ -615,7 +622,7 @@ describe("Rust Import Resolution", () => {
               line: 3,
               column: 0,
               end_line: 3,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];
@@ -647,7 +654,7 @@ describe("Rust Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -661,7 +668,7 @@ describe("Rust Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];
@@ -691,7 +698,7 @@ describe("Rust Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 20
+            end_column: 20,
           },
         } as unknown as Import;
 
@@ -705,24 +712,27 @@ describe("Rust Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 5,
-              end_column: 1
+              end_column: 1,
             },
           } as unknown as Export,
         ];
 
         const symbols = new Map<SymbolId, SymbolDefinition>();
-        symbols.set("utils#module" as SymbolId, {
-          symbol_id: "utils#module" as SymbolId,
-          name: "utils" as SymbolName,
-          kind: "module",
-          location: {
-            file_path: "/project/utils.rs" as FilePath,
-            line: 0,
-            column: 0,
-            end_line: 100,
-            end_column: 0
-          },
-        } as unknown as SymbolDefinition);
+        symbols.set(
+          "utils#module" as SymbolId,
+          {
+            symbol_id: "utils#module" as SymbolId,
+            name: "utils" as SymbolName,
+            kind: "module",
+            location: {
+              file_path: "/project/utils.rs" as FilePath,
+              line: 0,
+              column: 0,
+              end_line: 100,
+              end_column: 0,
+            },
+          } as unknown as SymbolDefinition
+        );
 
         const result = match_rust_import_to_export(
           import_stmt,
@@ -744,7 +754,7 @@ describe("Rust Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 20
+            end_column: 20,
           },
         } as unknown as Import;
 
@@ -765,16 +775,14 @@ describe("Rust Import Resolution", () => {
       it("matches pub use re-exports", () => {
         const import_stmt: Import = {
           kind: "named",
-          imports: [
-            { name: "ReExported" as SymbolName, is_type_only: false },
-          ],
+          imports: [{ name: "ReExported" as SymbolName, is_type_only: false }],
           source: "/project/src/lib.rs" as FilePath,
           location: {
             file_path: "/project/src/main.rs" as FilePath,
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -788,7 +796,7 @@ describe("Rust Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 30
+              end_column: 30,
             },
           } as unknown as Export,
         ];
@@ -817,7 +825,7 @@ describe("Rust Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -831,7 +839,7 @@ describe("Rust Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 25
+              end_column: 25,
             },
           } as unknown as Export,
         ];
@@ -845,7 +853,9 @@ describe("Rust Import Resolution", () => {
         );
 
         expect(result.size).toBe(1);
-        expect(result.get("CrateVisible" as SymbolName)).toBe("internal#CrateVisible");
+        expect(result.get("CrateVisible" as SymbolName)).toBe(
+          "internal#CrateVisible"
+        );
       });
     });
 
@@ -863,7 +873,7 @@ describe("Rust Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 40
+            end_column: 40,
           },
         } as unknown as Import;
 
@@ -877,7 +887,7 @@ describe("Rust Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 5,
-              end_column: 1
+              end_column: 1,
             },
           } as unknown as Export,
           {
@@ -889,7 +899,7 @@ describe("Rust Import Resolution", () => {
               line: 7,
               column: 0,
               end_line: 10,
-              end_column: 1
+              end_column: 1,
             },
           } as unknown as Export,
         ];
@@ -904,7 +914,9 @@ describe("Rust Import Resolution", () => {
 
         expect(result.size).toBe(2);
         expect(result.get("MyTrait" as SymbolName)).toBe("traits#MyTrait");
-        expect(result.get("AnotherTrait" as SymbolName)).toBe("traits#AnotherTrait");
+        expect(result.get("AnotherTrait" as SymbolName)).toBe(
+          "traits#AnotherTrait"
+        );
       });
 
       it("matches type alias imports", () => {
@@ -920,7 +932,7 @@ describe("Rust Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -934,7 +946,7 @@ describe("Rust Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 40
+              end_column: 40,
             },
           } as unknown as Export,
           {
@@ -946,7 +958,7 @@ describe("Rust Import Resolution", () => {
               line: 2,
               column: 0,
               end_line: 2,
-              end_column: 40
+              end_column: 40,
             },
           } as unknown as Export,
         ];
@@ -976,7 +988,7 @@ describe("Rust Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -990,7 +1002,7 @@ describe("Rust Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];
@@ -1009,16 +1021,14 @@ describe("Rust Import Resolution", () => {
       it("handles empty exports array", () => {
         const import_stmt: Import = {
           kind: "named",
-          imports: [
-            { name: "Something" as SymbolName, is_type_only: false },
-          ],
+          imports: [{ name: "Something" as SymbolName, is_type_only: false }],
           source: "/project/src/module.rs" as FilePath,
           location: {
             file_path: "/project/src/main.rs" as FilePath,
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -1036,14 +1046,14 @@ describe("Rust Import Resolution", () => {
 
       it("handles unknown import kind gracefully", () => {
         const import_stmt: Import = {
-          kind: "unknown" as any,
+          kind: "unknown",
           source: "/project/src/module.rs" as FilePath,
           location: {
             file_path: "/project/src/main.rs" as FilePath,
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -1069,24 +1079,27 @@ describe("Rust Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 20
+            end_column: 20,
           },
         } as unknown as Import;
 
         const exports: Export[] = [];
         const symbols = new Map<SymbolId, SymbolDefinition>();
-        symbols.set("module#module" as SymbolId, {
-          symbol_id: "module#module" as SymbolId,
-          name: "module" as SymbolName,
-          kind: "module",
-          location: {
-            file_path: "/project/src/module.rs" as FilePath,
-            line: 0,
-            column: 0,
-            end_line: 100,
-            end_column: 0
-          },
-        } as unknown as SymbolDefinition);
+        symbols.set(
+          "module#module" as SymbolId,
+          {
+            symbol_id: "module#module" as SymbolId,
+            name: "module" as SymbolName,
+            kind: "module",
+            location: {
+              file_path: "/project/src/module.rs" as FilePath,
+              line: 0,
+              column: 0,
+              end_line: 100,
+              end_column: 0,
+            },
+          } as unknown as SymbolDefinition
+        );
 
         const result = match_rust_import_to_export(
           import_stmt,
@@ -1101,16 +1114,14 @@ describe("Rust Import Resolution", () => {
       it("handles macro imports", () => {
         const import_stmt: Import = {
           kind: "named",
-          imports: [
-            { name: "my_macro" as SymbolName, is_type_only: false },
-          ],
+          imports: [{ name: "my_macro" as SymbolName, is_type_only: false }],
           source: "/project/src/macros.rs" as FilePath,
           location: {
             file_path: "/project/src/main.rs" as FilePath,
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -1124,7 +1135,7 @@ describe("Rust Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 5,
-              end_column: 1
+              end_column: 1,
             },
           } as unknown as Export,
         ];
@@ -1154,7 +1165,7 @@ describe("Rust Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 40
+            end_column: 40,
           },
         } as unknown as Import;
 
@@ -1168,7 +1179,7 @@ describe("Rust Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 30
+              end_column: 30,
             },
           } as unknown as Export,
           {
@@ -1180,7 +1191,7 @@ describe("Rust Import Resolution", () => {
               line: 2,
               column: 0,
               end_line: 2,
-              end_column: 35
+              end_column: 35,
             },
           } as unknown as Export,
         ];
@@ -1195,7 +1206,9 @@ describe("Rust Import Resolution", () => {
 
         expect(result.size).toBe(2);
         expect(result.get("CONSTANT" as SymbolName)).toBe("constants#CONSTANT");
-        expect(result.get("STATIC_VAR" as SymbolName)).toBe("constants#STATIC_VAR");
+        expect(result.get("STATIC_VAR" as SymbolName)).toBe(
+          "constants#STATIC_VAR"
+        );
       });
     });
   });

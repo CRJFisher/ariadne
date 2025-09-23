@@ -3,14 +3,17 @@
  */
 
 import { describe, it, expect } from "vitest";
-import type { ScopeId, LexicalScope, FilePath } from "@ariadnejs/types";
+import type { ScopeId, LexicalScope, FilePath, SymbolName } from "@ariadnejs/types";
 import type { NormalizedCapture } from "../../capture_types";
 import { SemanticCategory, SemanticEntity } from "../../capture_types";
 import { extract_type_flow } from "./type_flow_references";
 
 describe("extract_type_flow", () => {
   // Helper to create a basic scope
-  function create_mock_scope(id: string = "scope-1", type: LexicalScope["type"] = "module"): Map<ScopeId, LexicalScope> {
+  function create_mock_scope(
+    id: string = "scope-1",
+    type: LexicalScope["type"] = "module"
+  ): Map<ScopeId, LexicalScope> {
     const scopes = new Map<ScopeId, LexicalScope>();
     const root_scope: LexicalScope = {
       id: id as ScopeId,
@@ -20,9 +23,11 @@ describe("extract_type_flow", () => {
       location: {
         line: 0,
         column: 0,
-        file_path: id.includes("test.ts") ? "test.ts" as FilePath : "unknown.ts" as FilePath,
+        file_path: id.includes("test.ts")
+          ? ("test.ts" as FilePath)
+          : ("unknown.ts" as FilePath),
         end_line: 100,
-        end_column: 0
+        end_column: 0,
       },
       child_ids: [],
       symbols: new Map(),
@@ -42,7 +47,7 @@ describe("extract_type_flow", () => {
           column: 10,
           file_path: "test.ts" as FilePath,
           end_line: 1,
-          end_column: 17
+          end_column: 17,
         },
         modifiers: {},
         context: undefined, // "1",
@@ -60,7 +65,7 @@ describe("extract_type_flow", () => {
       column: 10,
       file_path: "test.ts" as FilePath,
       end_line: 1,
-      end_column: 17
+      end_column: 17,
     });
 
     // No type resolution should occur
@@ -79,7 +84,7 @@ describe("extract_type_flow", () => {
           column: 5,
           file_path: "test.ts" as FilePath,
           end_line: 2,
-          end_column: 17
+          end_column: 17,
         },
         modifiers: {},
         context: undefined, // "2",
@@ -97,7 +102,7 @@ describe("extract_type_flow", () => {
       column: 5,
       file_path: "test.ts" as FilePath,
       end_line: 2,
-      end_column: 17
+      end_column: 17,
     });
 
     // No type info should be attached
@@ -116,7 +121,7 @@ describe("extract_type_flow", () => {
           column: 8,
           file_path: "test.ts" as FilePath,
           end_line: 3,
-          end_column: 19
+          end_column: 19,
         },
         modifiers: {},
         context: undefined, // "3",
@@ -133,7 +138,7 @@ describe("extract_type_flow", () => {
       column: 8,
       file_path: "test.ts" as FilePath,
       end_line: 3,
-      end_column: 19
+      end_column: 19,
     });
     expect(flow.returns[0].value.kind).toBe("expression");
 
@@ -152,7 +157,7 @@ describe("extract_type_flow", () => {
           column: 0,
           file_path: "test.ts" as FilePath,
           end_line: 4,
-          end_column: 12
+          end_column: 12,
         },
         modifiers: {},
         context: undefined, // "4",
@@ -177,7 +182,7 @@ describe("extract_type_flow", () => {
           column: 10,
           file_path: "test.ts" as FilePath,
           end_line: 1,
-          end_column: 17
+          end_column: 17,
         },
         modifiers: {},
         context: undefined, // "1",
@@ -191,7 +196,7 @@ describe("extract_type_flow", () => {
           column: 5,
           file_path: "test.ts" as FilePath,
           end_line: 2,
-          end_column: 17
+          end_column: 17,
         },
         modifiers: {},
         context: undefined, // "2",
@@ -205,7 +210,7 @@ describe("extract_type_flow", () => {
           column: 8,
           file_path: "test.ts" as FilePath,
           end_line: 3,
-          end_column: 19
+          end_column: 19,
         },
         modifiers: {},
         context: undefined, // "3",
@@ -232,7 +237,7 @@ describe("extract_type_flow", () => {
           column: 0,
           file_path: "test.ts" as FilePath,
           end_line: 1,
-          end_column: 9
+          end_column: 9,
         },
         modifiers: {},
         context: undefined, // "1",
@@ -275,7 +280,7 @@ describe("extract_type_flow", () => {
           column: 0,
           file_path: "test.ts" as FilePath,
           end_line: 100,
-          end_column: 0
+          end_column: 0,
         },
         child_ids: ["child" as ScopeId],
         symbols: new Map(),
@@ -285,14 +290,14 @@ describe("extract_type_flow", () => {
       const childScope: LexicalScope = {
         id: "child" as ScopeId,
         parent_id: "parent" as ScopeId,
-        name: "innerFunction" as any,
+        name: "innerFunction" as SymbolName,
         type: "function",
         location: {
           line: 10,
           column: 0,
           file_path: "test.ts" as FilePath,
           end_line: 20,
-          end_column: 0
+          end_column: 0,
         },
         child_ids: [],
         symbols: new Map(),
@@ -311,7 +316,7 @@ describe("extract_type_flow", () => {
             column: 4,
             file_path: "test.ts" as FilePath,
             end_line: 15,
-            end_column: 15
+            end_column: 15,
           },
           modifiers: {},
           context: undefined,
@@ -335,7 +340,7 @@ describe("extract_type_flow", () => {
             column: 0,
             file_path: "test.ts" as FilePath,
             end_line: 1,
-            end_column: 13
+            end_column: 13,
           },
           modifiers: {},
           context: undefined,
@@ -353,7 +358,7 @@ describe("extract_type_flow", () => {
     it("should distinguish constructor calls from regular function calls", () => {
       const captures: NormalizedCapture[] = [
         {
-          text: "MyClass",  // Capitalized - constructor
+          text: "MyClass", // Capitalized - constructor
           category: SemanticCategory.REFERENCE,
           entity: SemanticEntity.CALL,
           node_location: {
@@ -361,13 +366,13 @@ describe("extract_type_flow", () => {
             column: 0,
             file_path: "test.ts" as FilePath,
             end_line: 1,
-            end_column: 7
+            end_column: 7,
           },
           modifiers: {},
           context: undefined,
         },
         {
-          text: "myFunction",  // lowercase - regular function
+          text: "myFunction", // lowercase - regular function
           category: SemanticCategory.REFERENCE,
           entity: SemanticEntity.CALL,
           node_location: {
@@ -375,7 +380,7 @@ describe("extract_type_flow", () => {
             column: 0,
             file_path: "test.ts" as FilePath,
             end_line: 2,
-            end_column: 10
+            end_column: 10,
           },
           modifiers: {},
           context: undefined,
@@ -403,7 +408,7 @@ describe("extract_type_flow", () => {
             column: 10,
             file_path: "test.ts" as FilePath,
             end_line: 1,
-            end_column: 16
+            end_column: 16,
           },
           modifiers: {},
           context: undefined,
@@ -418,7 +423,7 @@ describe("extract_type_flow", () => {
             column: 0,
             file_path: "test.ts" as FilePath,
             end_line: 2,
-            end_column: 4
+            end_column: 4,
           },
           modifiers: {},
           context: undefined,
@@ -433,7 +438,7 @@ describe("extract_type_flow", () => {
             column: 0,
             file_path: "test.ts" as FilePath,
             end_line: 3,
-            end_column: 6
+            end_column: 6,
           },
           modifiers: {},
           context: undefined,
@@ -448,7 +453,7 @@ describe("extract_type_flow", () => {
             column: 2,
             file_path: "test.ts" as FilePath,
             end_line: 4,
-            end_column: 6
+            end_column: 6,
           },
           modifiers: {},
           context: undefined,
@@ -470,7 +475,7 @@ describe("extract_type_flow", () => {
       // Add only a non-root scope
       const nonRootScope: LexicalScope = {
         id: "child" as ScopeId,
-        parent_id: "missing" as ScopeId,  // Parent doesn't exist
+        parent_id: "missing" as ScopeId, // Parent doesn't exist
         name: null,
         type: "function",
         location: {
@@ -478,7 +483,7 @@ describe("extract_type_flow", () => {
           column: 0,
           file_path: "test.ts" as FilePath,
           end_line: 100,
-          end_column: 0
+          end_column: 0,
         },
         child_ids: [],
         symbols: new Map(),
@@ -496,7 +501,7 @@ describe("extract_type_flow", () => {
             column: 0,
             file_path: "test.ts" as FilePath,
             end_line: 5,
-            end_column: 9
+            end_column: 9,
           },
           modifiers: {},
           context: undefined,

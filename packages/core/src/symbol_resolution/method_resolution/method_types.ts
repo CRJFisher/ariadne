@@ -11,7 +11,7 @@ import type {
   FilePath,
 } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../semantic_index/semantic_index";
-import type { ImportResolutionMap, TypeResolutionMap, FunctionResolutionMap } from "../types";
+import type { TypeResolutionMap } from "../types";
 
 /**
  * Resolution result for a single method call
@@ -40,7 +40,7 @@ export interface MethodResolutionMap {
  */
 export interface MethodLookupContext {
   readonly type_resolution: TypeResolutionMap;
-  readonly imports: ImportResolutionMap;
+  readonly imports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>;
   readonly current_file: FilePath;
   readonly current_index: SemanticIndex;
   readonly indices: ReadonlyMap<FilePath, SemanticIndex>;

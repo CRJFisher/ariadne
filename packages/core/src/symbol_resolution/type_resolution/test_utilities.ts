@@ -7,7 +7,6 @@
 
 import type {
   TypeResolutionMap,
-  ImportResolutionMap,
   FunctionResolutionMap,
   MethodResolutionMap,
 } from "../types";
@@ -105,15 +104,13 @@ export class ImportResolutionMapBuilder {
     return this;
   }
 
-  build(): ImportResolutionMap {
+  build(): ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> {
     const readonly_imports = new Map<FilePath, ReadonlyMap<SymbolName, SymbolId>>();
     for (const [filePath, fileImports] of this.imports) {
       readonly_imports.set(filePath, fileImports as ReadonlyMap<SymbolName, SymbolId>);
     }
 
-    return {
-      imports: readonly_imports as ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>,
-    };
+    return readonly_imports;
   }
 }
 
@@ -194,7 +191,7 @@ export function createEmptyTypeResolutionMap(): TypeResolutionMap {
 /**
  * Create an empty ImportResolutionMap
  */
-export function createEmptyImportResolutionMap(): ImportResolutionMap {
+export function createEmptyImportResolutionMap(): ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> {
   return new ImportResolutionMapBuilder().build();
 }
 
@@ -215,7 +212,7 @@ export function createEmptyMethodResolutionMap(): MethodResolutionMap {
 /**
  * Create a simple ImportResolutionMap with no imports for a file
  */
-export function createEmptyFileImports(filePath: FilePath): ImportResolutionMap {
+export function createEmptyFileImports(filePath: FilePath): ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> {
   return new ImportResolutionMapBuilder()
     .addFileImports(filePath, new Map())
     .build();

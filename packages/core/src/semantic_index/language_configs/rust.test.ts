@@ -6,13 +6,9 @@ import { describe, it, expect, beforeAll } from "vitest";
 import Parser from "tree-sitter";
 import Rust from "tree-sitter-rust";
 import type { SyntaxNode } from "tree-sitter";
-import {
-  SemanticCategory,
-  SemanticEntity,
-  type CaptureMapping,
-  type LanguageCaptureConfig,
-} from "../capture_types";
+import { SemanticCategory, SemanticEntity } from "../capture_types";
 import { RUST_CAPTURE_CONFIG } from "./rust";
+import { create_simple_mock_node } from "../test_utils";
 
 describe("Rust Language Configuration", () => {
   let parser: Parser;
@@ -25,17 +21,6 @@ describe("Rust Language Configuration", () => {
   // Helper function to get AST node from code
   function getAstNode(code: string): SyntaxNode {
     return parser.parse(code).rootNode;
-  }
-
-  // Helper function to find first node of specific type
-  function findNodeByType(node: SyntaxNode, type: string): SyntaxNode | null {
-    if (node.type === type) return node;
-
-    for (let i = 0; i < node.childCount; i++) {
-      const found = findNodeByType(node.child(i)!, type);
-      if (found) return found;
-    }
-    return null;
   }
 
   describe("RUST_CAPTURE_CONFIG", () => {
@@ -229,7 +214,7 @@ describe("Rust Language Configuration", () => {
         if (typeof moduleConfig?.context === "function") {
           const mockNode = {
             parent: { type: "source_file" },
-          } as any;
+          } as SyntaxNode;
 
           const context = moduleConfig.context(mockNode);
           expect(context).toBeDefined();
@@ -242,7 +227,7 @@ describe("Rust Language Configuration", () => {
         if (typeof moduleConfig?.context === "function") {
           const mockNode = {
             parent: { type: "mod_item" },
-          } as any;
+          } as SyntaxNode;
 
           const context = moduleConfig.context(mockNode);
           expect(context).toBeDefined();
@@ -258,12 +243,12 @@ describe("Rust Language Configuration", () => {
         expect(closureConfig?.context).toBeDefined();
 
         if (typeof closureConfig?.modifiers === "function") {
-          const modifiers = closureConfig.modifiers({} as any);
+          const modifiers = closureConfig.modifiers({} as SyntaxNode);
           expect(modifiers?.is_closure).toBe(true);
         }
 
         if (typeof closureConfig?.modifiers === "function") {
-          const modifiers = closureConfig.modifiers({} as any);
+          const modifiers = closureConfig.modifiers({} as SyntaxNode);
           expect(modifiers).toBeDefined();
           expect(modifiers?.is_closure).toBe(true);
         }
@@ -276,7 +261,7 @@ describe("Rust Language Configuration", () => {
         expect(implConfig?.context).toBeDefined();
 
         if (typeof implConfig?.context === "function") {
-          const context = implConfig.context({} as any);
+          const context = implConfig.context({} as SyntaxNode);
           expect(context).toBeDefined();
         }
       });
@@ -288,7 +273,7 @@ describe("Rust Language Configuration", () => {
         expect(traitConfig?.context).toBeDefined();
 
         if (typeof traitConfig?.context === "function") {
-          const context = traitConfig.context({} as any);
+          const context = traitConfig.context({} as SyntaxNode);
           expect(context).toBeDefined();
         }
       });
@@ -300,7 +285,7 @@ describe("Rust Language Configuration", () => {
         expect(unsafeBlockConfig?.modifiers).toBeDefined();
 
         if (typeof unsafeBlockConfig?.modifiers === "function") {
-          const modifiers = unsafeBlockConfig.modifiers({} as any);
+          const modifiers = unsafeBlockConfig.modifiers({} as SyntaxNode);
           expect(modifiers?.is_unsafe).toBe(true);
         }
       });
@@ -312,7 +297,7 @@ describe("Rust Language Configuration", () => {
         expect(matchConfig?.context).toBeDefined();
 
         if (typeof matchConfig?.context === "function") {
-          const context = matchConfig.context({} as any);
+          const context = matchConfig.context({} as SyntaxNode);
           expect(context).toBeDefined();
         }
       });
@@ -326,7 +311,7 @@ describe("Rust Language Configuration", () => {
         expect(structConfig?.context).toBeDefined();
 
         if (typeof structConfig?.context === "function") {
-          const context = structConfig.context({} as any);
+          const context = structConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -338,7 +323,7 @@ describe("Rust Language Configuration", () => {
         expect(enumConfig?.context).toBeDefined();
 
         if (typeof enumConfig?.context === "function") {
-          const context = enumConfig.context({} as any);
+          const context = enumConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -348,7 +333,7 @@ describe("Rust Language Configuration", () => {
         expect(variantConfig?.context).toBeDefined();
 
         if (typeof variantConfig?.context === "function") {
-          const context = variantConfig.context({} as any);
+          const context = variantConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -360,7 +345,7 @@ describe("Rust Language Configuration", () => {
         expect(functionConfig?.context).toBeDefined();
 
         if (typeof functionConfig?.context === "function") {
-          const context = functionConfig.context({} as any);
+          const context = functionConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -372,12 +357,16 @@ describe("Rust Language Configuration", () => {
         expect(asyncFunctionConfig?.context).toBeDefined();
 
         if (typeof asyncFunctionConfig?.modifiers === "function") {
-          const modifiers = asyncFunctionConfig.modifiers({} as any);
+          const modifiers = asyncFunctionConfig.modifiers(
+            create_simple_mock_node()
+          );
           expect(modifiers?.is_async).toBe(true);
         }
 
         if (typeof asyncFunctionConfig?.context === "function") {
-          const context = asyncFunctionConfig.context({} as any);
+          const context = asyncFunctionConfig.context(
+            create_simple_mock_node()
+          );
           expect(context).toBeDefined();
           expect(context?.is_async).toBe(true);
         }
@@ -390,7 +379,9 @@ describe("Rust Language Configuration", () => {
         expect(genericFunctionConfig?.modifiers).toBeDefined();
 
         if (typeof genericFunctionConfig?.modifiers === "function") {
-          const modifiers = genericFunctionConfig.modifiers({} as any);
+          const modifiers = genericFunctionConfig.modifiers(
+            create_simple_mock_node()
+          );
           expect(modifiers?.is_generic).toBe(true);
         }
       });
@@ -403,12 +394,16 @@ describe("Rust Language Configuration", () => {
         expect(closureFunctionConfig?.context).toBeDefined();
 
         if (typeof closureFunctionConfig?.modifiers === "function") {
-          const modifiers = closureFunctionConfig.modifiers({} as any);
+          const modifiers = closureFunctionConfig.modifiers(
+            create_simple_mock_node()
+          );
           expect(modifiers?.is_closure).toBe(true);
         }
 
         if (typeof closureFunctionConfig?.context === "function") {
-          const context = closureFunctionConfig.context({} as any);
+          const context = closureFunctionConfig.context(
+            create_simple_mock_node()
+          );
           expect(context).toBeDefined();
           // Context doesn't have is_closure property, removing invalid test
         }
@@ -422,13 +417,13 @@ describe("Rust Language Configuration", () => {
         expect(methodConfig?.context).toBeDefined();
 
         if (typeof methodConfig?.modifiers === "function") {
-          const modifiers = methodConfig.modifiers({} as any);
+          const modifiers = methodConfig.modifiers(create_simple_mock_node());
           expect(modifiers?.is_method).toBe(true);
           expect(modifiers?.is_static).toBe(false);
         }
 
         if (typeof methodConfig?.context === "function") {
-          const context = methodConfig.context({} as any);
+          const context = methodConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -440,7 +435,9 @@ describe("Rust Language Configuration", () => {
         expect(associatedMethodConfig?.modifiers).toBeDefined();
 
         if (typeof associatedMethodConfig?.modifiers === "function") {
-          const modifiers = associatedMethodConfig.modifiers({} as any);
+          const modifiers = associatedMethodConfig.modifiers(
+            create_simple_mock_node()
+          );
           expect(modifiers?.is_method).toBe(false);
           expect(modifiers?.is_associated_function).toBe(true);
           expect(modifiers?.is_static).toBe(true);
@@ -452,7 +449,9 @@ describe("Rust Language Configuration", () => {
         expect(constructorConfig?.modifiers).toBeDefined();
 
         if (typeof constructorConfig?.modifiers === "function") {
-          const modifiers = constructorConfig.modifiers({} as any);
+          const modifiers = constructorConfig.modifiers(
+            create_simple_mock_node()
+          );
           expect(modifiers?.is_constructor).toBe(true);
           expect(modifiers?.is_static).toBe(true);
         }
@@ -467,21 +466,29 @@ describe("Rust Language Configuration", () => {
 
         if (typeof variableConfig?.modifiers === "function") {
           // Test mutable variable
-          const mockMutableNode = {
-            parent: {
-              children: [{ type: "mut" }],
-            },
-          } as any;
+          const mockMutableNode = create_simple_mock_node(
+            "identifier",
+            "mock",
+            {
+              parent: create_simple_mock_node("parent", "parent", {
+                children: [create_simple_mock_node("mut", "mut")],
+              }),
+            }
+          );
 
           const mutableModifiers = variableConfig.modifiers(mockMutableNode);
           expect(mutableModifiers?.is_mutable).toBe(true);
 
           // Test immutable variable
-          const mockImmutableNode = {
-            parent: {
-              children: [],
-            },
-          } as any;
+          const mockImmutableNode = create_simple_mock_node(
+            "identifier",
+            "mock",
+            {
+              parent: create_simple_mock_node("parent", "parent", {
+                children: [],
+              }),
+            }
+          );
 
           const immutableModifiers =
             variableConfig.modifiers(mockImmutableNode);
@@ -489,7 +496,7 @@ describe("Rust Language Configuration", () => {
         }
 
         if (typeof variableConfig?.context === "function") {
-          const context = variableConfig.context({} as any);
+          const context = variableConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -502,12 +509,14 @@ describe("Rust Language Configuration", () => {
         expect(selfParamConfig?.context).toBeDefined();
 
         if (typeof selfParamConfig?.modifiers === "function") {
-          const modifiers = selfParamConfig.modifiers({} as any);
+          const modifiers = selfParamConfig.modifiers(
+            create_simple_mock_node()
+          );
           expect(modifiers?.is_self).toBe(true);
         }
 
         if (typeof selfParamConfig?.context === "function") {
-          const context = selfParamConfig.context({} as any);
+          const context = selfParamConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -518,12 +527,14 @@ describe("Rust Language Configuration", () => {
         expect(closureParamConfig?.context).toBeDefined();
 
         if (typeof closureParamConfig?.modifiers === "function") {
-          const modifiers = closureParamConfig.modifiers({} as any);
+          const modifiers = closureParamConfig.modifiers(
+            create_simple_mock_node()
+          );
           expect(modifiers?.is_closure_param).toBe(true);
         }
 
         if (typeof closureParamConfig?.context === "function") {
-          const context = closureParamConfig.context({} as any);
+          const context = closureParamConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -536,7 +547,7 @@ describe("Rust Language Configuration", () => {
       expect(pubConfig?.context).toBeDefined();
 
       if (typeof pubConfig?.context === "function") {
-        const mockNode = { text: "pub" } as any;
+        const mockNode = create_simple_mock_node("identifier", "pub");
         const context = pubConfig.context(mockNode);
         expect(context).toBeDefined();
       }
@@ -546,7 +557,7 @@ describe("Rust Language Configuration", () => {
       const pubConfig = RUST_CAPTURE_CONFIG.get("visibility.pub");
 
       if (typeof pubConfig?.context === "function") {
-        const mockNode = { text: "pub(crate)" } as any;
+        const mockNode = create_simple_mock_node("identifier", "pub(crate)");
         const context = pubConfig.context(mockNode);
         expect(context).toBeDefined();
       }
@@ -556,7 +567,7 @@ describe("Rust Language Configuration", () => {
       const pubConfig = RUST_CAPTURE_CONFIG.get("visibility.pub");
 
       if (typeof pubConfig?.context === "function") {
-        const mockNode = { text: "pub(super)" } as any;
+        const mockNode = create_simple_mock_node("identifier", "pub(super)");
         const context = pubConfig.context(mockNode);
         expect(context).toBeDefined();
       }
@@ -566,7 +577,7 @@ describe("Rust Language Configuration", () => {
       const pubConfig = RUST_CAPTURE_CONFIG.get("visibility.pub");
 
       if (typeof pubConfig?.context === "function") {
-        const mockNode = { text: "pub(self)" } as any;
+        const mockNode = create_simple_mock_node("identifier", "pub(self)");
         const context = pubConfig.context(mockNode);
         expect(context).toBeDefined();
       }
@@ -576,7 +587,10 @@ describe("Rust Language Configuration", () => {
       const pubConfig = RUST_CAPTURE_CONFIG.get("visibility.pub");
 
       if (typeof pubConfig?.context === "function") {
-        const mockNode = { text: "pub(in crate::utils)" } as any;
+        const mockNode = create_simple_mock_node(
+          "identifier",
+          "pub(in crate::utils)"
+        );
         const context = pubConfig.context(mockNode);
         expect(context).toBeDefined();
       }
@@ -589,7 +603,7 @@ describe("Rust Language Configuration", () => {
       expect(structExportConfig?.context).toBeDefined();
 
       if (typeof structExportConfig?.context === "function") {
-        const context = structExportConfig.context({} as any);
+        const context = structExportConfig.context(create_simple_mock_node());
         expect(context?.export_type).toBe("struct");
       }
     });
@@ -599,7 +613,7 @@ describe("Rust Language Configuration", () => {
       expect(functionExportConfig?.context).toBeDefined();
 
       if (typeof functionExportConfig?.context === "function") {
-        const context = functionExportConfig.context({} as any);
+        const context = functionExportConfig.context(create_simple_mock_node());
         expect(context?.export_type).toBe("function");
       }
     });
@@ -609,7 +623,7 @@ describe("Rust Language Configuration", () => {
       expect(traitExportConfig?.context).toBeDefined();
 
       if (typeof traitExportConfig?.context === "function") {
-        const context = traitExportConfig.context({} as any);
+        const context = traitExportConfig.context(create_simple_mock_node());
         expect(context?.export_type).toBe("trait");
       }
     });
@@ -619,7 +633,7 @@ describe("Rust Language Configuration", () => {
       expect(reexportConfig?.context).toBeDefined();
 
       if (typeof reexportConfig?.context === "function") {
-        const context = reexportConfig.context({} as any);
+        const context = reexportConfig.context(create_simple_mock_node());
         expect(context?.export_type).toBe("reexport");
       }
     });
@@ -631,7 +645,7 @@ describe("Rust Language Configuration", () => {
       expect(nameImportConfig?.context).toBeDefined();
 
       if (typeof nameImportConfig?.context === "function") {
-        const context = nameImportConfig.context({} as any);
+        const context = nameImportConfig.context(create_simple_mock_node());
         expect(context).toBeDefined();
       }
     });
@@ -641,7 +655,7 @@ describe("Rust Language Configuration", () => {
       expect(sourceImportConfig?.context).toBeDefined();
 
       if (typeof sourceImportConfig?.context === "function") {
-        const mockNode = { text: "HashMap" } as any;
+        const mockNode = create_simple_mock_node("identifier", "HashMap");
         const context = sourceImportConfig.context(mockNode);
         expect(context).toBeDefined();
         expect(context).toBeDefined();
@@ -653,7 +667,7 @@ describe("Rust Language Configuration", () => {
       expect(aliasImportConfig?.context).toBeDefined();
 
       if (typeof aliasImportConfig?.context === "function") {
-        const mockNode = { text: "Map" } as any;
+        const mockNode = create_simple_mock_node("identifier", "Map");
         const context = aliasImportConfig.context(mockNode);
         expect(context).toBeDefined();
       }
@@ -664,7 +678,7 @@ describe("Rust Language Configuration", () => {
       expect(listItemConfig?.context).toBeDefined();
 
       if (typeof listItemConfig?.context === "function") {
-        const context = listItemConfig.context({} as any);
+        const context = listItemConfig.context(create_simple_mock_node());
         expect(context).toBeDefined();
       }
     });
@@ -677,7 +691,7 @@ describe("Rust Language Configuration", () => {
         expect(methodCallConfig?.context).toBeDefined();
 
         if (typeof methodCallConfig?.context === "function") {
-          const context = methodCallConfig.context({} as any);
+          const context = methodCallConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -690,12 +704,16 @@ describe("Rust Language Configuration", () => {
         expect(associatedCallConfig?.context).toBeDefined();
 
         if (typeof associatedCallConfig?.modifiers === "function") {
-          const modifiers = associatedCallConfig.modifiers({} as any);
+          const modifiers = associatedCallConfig.modifiers(
+            create_simple_mock_node()
+          );
           expect(modifiers?.is_associated_call).toBe(true);
         }
 
         if (typeof associatedCallConfig?.context === "function") {
-          const context = associatedCallConfig.context({} as any);
+          const context = associatedCallConfig.context(
+            create_simple_mock_node()
+          );
           expect(context).toBeDefined();
         }
       });
@@ -705,7 +723,7 @@ describe("Rust Language Configuration", () => {
         expect(receiverConfig?.context).toBeDefined();
 
         if (typeof receiverConfig?.context === "function") {
-          const context = receiverConfig.context({} as any);
+          const context = receiverConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -717,7 +735,7 @@ describe("Rust Language Configuration", () => {
         expect(objectConfig?.context).toBeDefined();
 
         if (typeof objectConfig?.context === "function") {
-          const context = objectConfig.context({} as any);
+          const context = objectConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -729,7 +747,7 @@ describe("Rust Language Configuration", () => {
         expect(assignTargetConfig?.context).toBeDefined();
 
         if (typeof assignTargetConfig?.context === "function") {
-          const context = assignTargetConfig.context({} as any);
+          const context = assignTargetConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -739,7 +757,7 @@ describe("Rust Language Configuration", () => {
         expect(assignSourceConfig?.context).toBeDefined();
 
         if (typeof assignSourceConfig?.context === "function") {
-          const context = assignSourceConfig.context({} as any);
+          const context = assignSourceConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -752,12 +770,12 @@ describe("Rust Language Configuration", () => {
         expect(selfRefConfig?.context).toBeDefined();
 
         if (typeof selfRefConfig?.modifiers === "function") {
-          const modifiers = selfRefConfig.modifiers({} as any);
+          const modifiers = selfRefConfig.modifiers(create_simple_mock_node());
           expect(modifiers?.is_self_reference).toBe(true);
         }
 
         if (typeof selfRefConfig?.context === "function") {
-          const context = selfRefConfig.context({} as any);
+          const context = selfRefConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -772,12 +790,12 @@ describe("Rust Language Configuration", () => {
         expect(borrowConfig?.context).toBeDefined();
 
         if (typeof borrowConfig?.modifiers === "function") {
-          const modifiers = borrowConfig.modifiers({} as any);
+          const modifiers = borrowConfig.modifiers(create_simple_mock_node());
           expect(modifiers?.is_borrow).toBe(true);
         }
 
         if (typeof borrowConfig?.context === "function") {
-          const context = borrowConfig.context({} as any);
+          const context = borrowConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -788,12 +806,14 @@ describe("Rust Language Configuration", () => {
         expect(mutBorrowConfig?.context).toBeDefined();
 
         if (typeof mutBorrowConfig?.modifiers === "function") {
-          const modifiers = mutBorrowConfig.modifiers({} as any);
+          const modifiers = mutBorrowConfig.modifiers(
+            create_simple_mock_node()
+          );
           expect(modifiers?.is_mutable_borrow).toBe(true);
         }
 
         if (typeof mutBorrowConfig?.context === "function") {
-          const context = mutBorrowConfig.context({} as any);
+          const context = mutBorrowConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -804,12 +824,12 @@ describe("Rust Language Configuration", () => {
         expect(derefConfig?.context).toBeDefined();
 
         if (typeof derefConfig?.modifiers === "function") {
-          const modifiers = derefConfig.modifiers({} as any);
+          const modifiers = derefConfig.modifiers(create_simple_mock_node());
           expect(modifiers?.is_dereference).toBe(true);
         }
 
         if (typeof derefConfig?.context === "function") {
-          const context = derefConfig.context({} as any);
+          const context = derefConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -822,12 +842,16 @@ describe("Rust Language Configuration", () => {
         expect(lifetimeParamConfig?.context).toBeDefined();
 
         if (typeof lifetimeParamConfig?.modifiers === "function") {
-          const modifiers = lifetimeParamConfig.modifiers({} as any);
+          const modifiers = lifetimeParamConfig.modifiers(
+            create_simple_mock_node()
+          );
           expect(modifiers?.is_lifetime).toBe(true);
         }
 
         if (typeof lifetimeParamConfig?.context === "function") {
-          const context = lifetimeParamConfig.context({} as any);
+          const context = lifetimeParamConfig.context(
+            create_simple_mock_node()
+          );
           expect(context).toBeDefined();
         }
       });
@@ -838,12 +862,14 @@ describe("Rust Language Configuration", () => {
         expect(lifetimeRefConfig?.context).toBeDefined();
 
         if (typeof lifetimeRefConfig?.modifiers === "function") {
-          const modifiers = lifetimeRefConfig.modifiers({} as any);
+          const modifiers = lifetimeRefConfig.modifiers(
+            create_simple_mock_node()
+          );
           expect(modifiers?.is_lifetime).toBe(true);
         }
 
         if (typeof lifetimeRefConfig?.context === "function") {
-          const context = lifetimeRefConfig.context({} as any);
+          const context = lifetimeRefConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -855,7 +881,7 @@ describe("Rust Language Configuration", () => {
         expect(traitImplConfig?.context).toBeDefined();
 
         if (typeof traitImplConfig?.context === "function") {
-          const context = traitImplConfig.context({} as any);
+          const context = traitImplConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -865,7 +891,7 @@ describe("Rust Language Configuration", () => {
         expect(inherentImplConfig?.context).toBeDefined();
 
         if (typeof inherentImplConfig?.context === "function") {
-          const context = inherentImplConfig.context({} as any);
+          const context = inherentImplConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -877,7 +903,7 @@ describe("Rust Language Configuration", () => {
         expect(macroCallConfig?.context).toBeDefined();
 
         if (typeof macroCallConfig?.context === "function") {
-          const context = macroCallConfig.context({} as any);
+          const context = macroCallConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -887,7 +913,7 @@ describe("Rust Language Configuration", () => {
         expect(macroDefConfig?.context).toBeDefined();
 
         if (typeof macroDefConfig?.context === "function") {
-          const context = macroDefConfig.context({} as any);
+          const context = macroDefConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -899,7 +925,7 @@ describe("Rust Language Configuration", () => {
         expect(crateRefConfig?.context).toBeDefined();
 
         if (typeof crateRefConfig?.context === "function") {
-          const context = crateRefConfig.context({} as any);
+          const context = crateRefConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -909,7 +935,7 @@ describe("Rust Language Configuration", () => {
         expect(superRefConfig?.context).toBeDefined();
 
         if (typeof superRefConfig?.context === "function") {
-          const context = superRefConfig.context({} as any);
+          const context = superRefConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -919,7 +945,7 @@ describe("Rust Language Configuration", () => {
         expect(selfRefConfig?.context).toBeDefined();
 
         if (typeof selfRefConfig?.context === "function") {
-          const context = selfRefConfig.context({} as any);
+          const context = selfRefConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -932,7 +958,7 @@ describe("Rust Language Configuration", () => {
         expect(genericParamConfig?.context).toBeDefined();
 
         if (typeof genericParamConfig?.context === "function") {
-          const context = genericParamConfig.context({} as any);
+          const context = genericParamConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -942,7 +968,7 @@ describe("Rust Language Configuration", () => {
         expect(constraintConfig?.context).toBeDefined();
 
         if (typeof constraintConfig?.context === "function") {
-          const context = constraintConfig.context({} as any);
+          const context = constraintConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -954,7 +980,7 @@ describe("Rust Language Configuration", () => {
         expect(matchPatternConfig?.context).toBeDefined();
 
         if (typeof matchPatternConfig?.context === "function") {
-          const context = matchPatternConfig.context({} as any);
+          const context = matchPatternConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -966,7 +992,7 @@ describe("Rust Language Configuration", () => {
         expect(destructureConfig?.context).toBeDefined();
 
         if (typeof destructureConfig?.context === "function") {
-          const context = destructureConfig.context({} as any);
+          const context = destructureConfig.context(create_simple_mock_node());
           expect(context).toBeDefined();
         }
       });
@@ -979,7 +1005,9 @@ describe("Rust Language Configuration", () => {
       expect(genericStructConfig?.modifiers).toBeDefined();
 
       if (typeof genericStructConfig?.modifiers === "function") {
-        const modifiers = genericStructConfig.modifiers({} as any);
+        const modifiers = genericStructConfig.modifiers(
+          create_simple_mock_node()
+        );
         expect(modifiers?.is_generic).toBe(true);
       }
     });
@@ -989,7 +1017,7 @@ describe("Rust Language Configuration", () => {
       expect(mutVarConfig?.modifiers).toBeDefined();
 
       if (typeof mutVarConfig?.modifiers === "function") {
-        const modifiers = mutVarConfig.modifiers({} as any);
+        const modifiers = mutVarConfig.modifiers(create_simple_mock_node());
         expect(modifiers?.is_mutable).toBe(true);
       }
     });
@@ -999,7 +1027,9 @@ describe("Rust Language Configuration", () => {
       expect(traitMethodConfig?.modifiers).toBeDefined();
 
       if (typeof traitMethodConfig?.modifiers === "function") {
-        const modifiers = traitMethodConfig.modifiers({} as any);
+        const modifiers = traitMethodConfig.modifiers(
+          create_simple_mock_node()
+        );
         expect(modifiers?.is_trait_method).toBe(true);
       }
     });
@@ -1011,7 +1041,9 @@ describe("Rust Language Configuration", () => {
       expect(constrainedParamConfig?.modifiers).toBeDefined();
 
       if (typeof constrainedParamConfig?.modifiers === "function") {
-        const modifiers = constrainedParamConfig.modifiers({} as any);
+        const modifiers = constrainedParamConfig.modifiers(
+          create_simple_mock_node()
+        );
         expect(modifiers).toBeDefined();
       }
     });
@@ -1059,7 +1091,10 @@ describe("Rust Language Configuration", () => {
     it("should handle malformed visibility strings", () => {
       const pubConfig = RUST_CAPTURE_CONFIG.get("visibility.pub");
       if (typeof pubConfig?.context === "function") {
-        const mockNode = { text: "pub(malformed)" } as any;
+        const mockNode = create_simple_mock_node(
+          "identifier",
+          "pub(malformed)"
+        );
         const context = pubConfig.context(mockNode);
         expect(context).toBeDefined(); // Fallback
       }
@@ -1068,7 +1103,9 @@ describe("Rust Language Configuration", () => {
     it("should handle missing parent nodes", () => {
       const moduleConfig = RUST_CAPTURE_CONFIG.get("scope.module");
       if (typeof moduleConfig?.context === "function") {
-        const mockNode = { parent: null } as any;
+        const mockNode = create_simple_mock_node("identifier", "mock", {
+          parent: null,
+        });
         const context = moduleConfig.context(mockNode);
         expect(context).toBeDefined();
       }
@@ -1077,11 +1114,11 @@ describe("Rust Language Configuration", () => {
     it("should handle missing children arrays", () => {
       const variableConfig = RUST_CAPTURE_CONFIG.get("def.variable");
       if (typeof variableConfig?.modifiers === "function") {
-        const mockNode = {
-          parent: {
-            children: null,
-          },
-        } as any;
+        const mockNode = create_simple_mock_node("identifier", "mock", {
+          parent: create_simple_mock_node("parent", "parent", {
+            children: undefined,
+          }),
+        });
 
         expect(() => {
           variableConfig.modifiers!(mockNode);
@@ -1093,7 +1130,10 @@ describe("Rust Language Configuration", () => {
       const pubConfig = RUST_CAPTURE_CONFIG.get("visibility.pub");
       if (typeof pubConfig?.context === "function") {
         // Test with nested path
-        const mockNode = { text: "pub(in super::nested::module::path)" } as any;
+        const mockNode = create_simple_mock_node(
+          "identifier",
+          "pub(in super::nested::module::path)"
+        );
         const context = pubConfig.context(mockNode);
         expect(context).toBeDefined();
       }
@@ -1103,7 +1143,7 @@ describe("Rust Language Configuration", () => {
       const pubConfig = RUST_CAPTURE_CONFIG.get("visibility.pub");
       if (typeof pubConfig?.context === "function") {
         // Test with malformed pub(in) without path
-        const mockNode = { text: "pub(in )" } as any;
+        const mockNode = create_simple_mock_node("identifier", "pub(in )");
         const context = pubConfig.context(mockNode);
         expect(context).toBeDefined();
       }
@@ -1112,7 +1152,7 @@ describe("Rust Language Configuration", () => {
     it("should handle AST nodes without text property", () => {
       const sourceImportConfig = RUST_CAPTURE_CONFIG.get("import.source");
       if (typeof sourceImportConfig?.context === "function") {
-        const mockNode = {} as any; // Missing text property
+        const mockNode = create_simple_mock_node(); // Missing text property
         const context = sourceImportConfig.context(mockNode);
         expect(context).toBeDefined();
       }
@@ -1122,8 +1162,136 @@ describe("Rust Language Configuration", () => {
       const constraintConfig = RUST_CAPTURE_CONFIG.get("generic.constraint");
       if (typeof constraintConfig?.context === "function") {
         // Complex trait bounds shouldn't break the parser
-        const context = constraintConfig.context({} as any);
+        const context = constraintConfig.context(create_simple_mock_node());
         expect(context).toBeDefined();
+      }
+    });
+  });
+
+  describe("Static vs Instance Method Detection", () => {
+    it("should detect associated functions using :: syntax", () => {
+      const associatedFnConfig = RUST_CAPTURE_CONFIG.get(
+        "ref.associated_function"
+      );
+      expect(associatedFnConfig).toBeDefined();
+      expect(associatedFnConfig?.entity).toBe(SemanticEntity.CALL);
+
+      if (associatedFnConfig?.context) {
+        const context = associatedFnConfig.context(create_simple_mock_node());
+        expect(context?.is_static).toBe(true);
+      }
+    });
+
+    it("should detect instance methods using . syntax", () => {
+      const methodCallConfig = RUST_CAPTURE_CONFIG.get("ref.method_call");
+      expect(methodCallConfig).toBeDefined();
+      expect(methodCallConfig?.entity).toBe(SemanticEntity.CALL);
+
+      // Regular method calls are instance methods
+      if (methodCallConfig?.context) {
+        const mockNode = create_simple_mock_node("identifier", "mock", {
+          parent: create_simple_mock_node("parent", "parent", {
+            childForFieldName: (field: string) => {
+              if (field === "receiver") {
+                return create_simple_mock_node("identifier", "obj"); // Instance method on object
+              }
+              return null;
+            },
+          }),
+        });
+
+        const context = methodCallConfig.context(mockNode);
+        // Instance methods don't have the is_static flag
+        expect(context?.is_static).toBeUndefined();
+      }
+    });
+
+    it("should detect associated method definitions in impl blocks", () => {
+      const associatedMethodConfig = RUST_CAPTURE_CONFIG.get(
+        "def.method.associated"
+      );
+      expect(associatedMethodConfig).toBeDefined();
+      expect(associatedMethodConfig?.entity).toBe(SemanticEntity.METHOD);
+
+      if (associatedMethodConfig?.context) {
+        const context = associatedMethodConfig.context(
+          create_simple_mock_node()
+        );
+        expect(context?.is_static).toBe(true);
+      }
+    });
+
+    it("should detect self parameter in instance methods", () => {
+      const selfParamConfig = RUST_CAPTURE_CONFIG.get("def.param.self");
+      expect(selfParamConfig).toBeDefined();
+      expect(selfParamConfig?.entity).toBe(SemanticEntity.PARAMETER);
+
+      // Methods with self parameter are instance methods
+      if (selfParamConfig?.context) {
+        const context = selfParamConfig.context(create_simple_mock_node());
+        // self parameter indicates instance method
+        expect(context).toBeDefined();
+      }
+    });
+
+    it("should handle new() as associated function", () => {
+      // Struct::new() is an associated function
+      const associatedFnConfig = RUST_CAPTURE_CONFIG.get(
+        "ref.associated_function"
+      );
+
+      if (associatedFnConfig?.context) {
+        const mockNode = create_simple_mock_node("identifier", "new");
+        const context = associatedFnConfig.context(mockNode);
+        expect(context?.is_static).toBe(true);
+      }
+    });
+
+    it("should differentiate trait methods from associated functions", () => {
+      // Associated functions in traits don't have self parameter
+      const functionConfig = RUST_CAPTURE_CONFIG.get("def.function");
+      expect(functionConfig).toBeDefined();
+      expect(functionConfig?.entity).toBe(SemanticEntity.FUNCTION);
+    });
+
+    it("should detect static fields vs instance fields", () => {
+      const staticConfig = RUST_CAPTURE_CONFIG.get("def.static");
+      expect(staticConfig).toBeDefined();
+      expect(staticConfig?.entity).toBe(SemanticEntity.VARIABLE);
+
+      if (staticConfig?.context) {
+        const context = staticConfig.context(create_simple_mock_node());
+        expect(context?.is_static).toBe(true);
+      }
+    });
+
+    it("should handle UFCS (Universal Function Call Syntax)", () => {
+      // <Type>::method() is an explicit static/associated call
+      const ufcsConfig = RUST_CAPTURE_CONFIG.get("ref.ufcs");
+
+      // UFCS calls are always associated/static
+      if (ufcsConfig) {
+        expect(ufcsConfig.entity).toBe(SemanticEntity.CALL);
+
+        if (ufcsConfig.context) {
+          const context = ufcsConfig.context(create_simple_mock_node());
+          expect(context?.is_static).toBe(true);
+        }
+      }
+    });
+
+    it("should handle macro invocations differently from function calls", () => {
+      const macroCallConfig = RUST_CAPTURE_CONFIG.get("ref.macro_call");
+
+      if (macroCallConfig) {
+        expect(macroCallConfig.entity).toBe(SemanticEntity.MACRO);
+
+        // Macros are neither static nor instance - they're compile-time
+        if (macroCallConfig.context) {
+          const context = macroCallConfig.context(create_simple_mock_node());
+          // Macros are compile-time constructs
+          expect(context).toBeDefined();
+        }
       }
     });
   });

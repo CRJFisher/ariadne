@@ -3,7 +3,14 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { FilePath, ScopeId, LexicalScope, SymbolId, Location } from "@ariadnejs/types";
+import type {
+  FilePath,
+  ScopeId,
+  LexicalScope,
+  SymbolId,
+  SymbolName,
+  Location,
+} from "@ariadnejs/types";
 import type { NormalizedCapture } from "../capture_types";
 import { SemanticCategory, SemanticEntity } from "../capture_types";
 import { process_references } from "./references";
@@ -40,8 +47,12 @@ import { process_type_annotation_references } from "./type_annotation_references
 const mockProcessCallReferences = vi.mocked(process_call_references);
 const mockExtractTypeFlow = vi.mocked(extract_type_flow);
 const mockProcessReturnReferences = vi.mocked(process_return_references);
-const mockProcessMemberAccessReferences = vi.mocked(process_member_access_references);
-const mockProcessTypeAnnotationReferences = vi.mocked(process_type_annotation_references);
+const mockProcessMemberAccessReferences = vi.mocked(
+  process_member_access_references
+);
+const mockProcessTypeAnnotationReferences = vi.mocked(
+  process_type_annotation_references
+);
 
 describe("References Module", () => {
   const mockFilePath = "test.ts" as FilePath;
@@ -123,8 +134,16 @@ describe("References Module", () => {
 
       it("should return empty results when captures don't match expected entities", () => {
         const nonMatchingCaptures = [
-          createMockCapture(SemanticCategory.DEFINITION, SemanticEntity.VARIABLE, "var"),
-          createMockCapture(SemanticCategory.SCOPE, SemanticEntity.FUNCTION, "func"),
+          createMockCapture(
+            SemanticCategory.DEFINITION,
+            SemanticEntity.VARIABLE,
+            "var"
+          ),
+          createMockCapture(
+            SemanticCategory.SCOPE,
+            SemanticEntity.FUNCTION,
+            "func"
+          ),
         ];
 
         const result = process_references(
@@ -136,7 +155,8 @@ describe("References Module", () => {
 
         expect(result).toEqual({
           calls: [],
-          type_flows: {  // extract_type_flow always returns an object
+          type_flows: {
+            // extract_type_flow always returns an object
             constructor_calls: [],
             assignments: [],
             returns: [],
@@ -168,7 +188,10 @@ describe("References Module", () => {
 
         expect(Array.isArray(result.calls)).toBe(true);
         // type_flows is now optional LocalTypeFlow object, not an array
-        expect(result.type_flows === undefined || typeof result.type_flows === 'object').toBe(true);
+        expect(
+          result.type_flows === undefined ||
+            typeof result.type_flows === "object"
+        ).toBe(true);
         expect(Array.isArray(result.returns)).toBe(true);
         expect(Array.isArray(result.member_accesses)).toBe(true);
         expect(Array.isArray(result.type_annotations)).toBe(true);
@@ -178,13 +201,17 @@ describe("References Module", () => {
     describe("Call Reference Processing", () => {
       it("should process CALL entity captures", () => {
         const callCaptures = [
-          createMockCapture(SemanticCategory.REFERENCE, SemanticEntity.CALL, "func()"),
+          createMockCapture(
+            SemanticCategory.REFERENCE,
+            SemanticEntity.CALL,
+            "func()"
+          ),
         ];
 
         const mockCallResults = [
           {
             location: mockLocation,
-            name: "func" as any,
+            name: "func" as SymbolName,
             scope_id: "test_scope" as ScopeId,
             call_type: "function" as const,
           },
@@ -216,13 +243,17 @@ describe("References Module", () => {
 
       it("should process SUPER entity captures", () => {
         const superCaptures = [
-          createMockCapture(SemanticCategory.REFERENCE, SemanticEntity.SUPER, "super.method()"),
+          createMockCapture(
+            SemanticCategory.REFERENCE,
+            SemanticEntity.SUPER,
+            "super.method()"
+          ),
         ];
 
         const mockCallResults = [
           {
             location: mockLocation,
-            name: "method" as any,
+            name: "method" as SymbolName,
             scope_id: "test_scope" as ScopeId,
             call_type: "super" as const,
           },
@@ -254,20 +285,28 @@ describe("References Module", () => {
 
       it("should combine CALL and SUPER captures", () => {
         const mixedCaptures = [
-          createMockCapture(SemanticCategory.REFERENCE, SemanticEntity.CALL, "func()"),
-          createMockCapture(SemanticCategory.REFERENCE, SemanticEntity.SUPER, "super.method()"),
+          createMockCapture(
+            SemanticCategory.REFERENCE,
+            SemanticEntity.CALL,
+            "func()"
+          ),
+          createMockCapture(
+            SemanticCategory.REFERENCE,
+            SemanticEntity.SUPER,
+            "super.method()"
+          ),
         ];
 
         const mockCallResults = [
           {
             location: mockLocation,
-            name: "func" as any,
+            name: "func" as SymbolName,
             scope_id: "test_scope" as ScopeId,
             call_type: "function" as const,
           },
           {
             location: mockLocation,
-            name: "method" as any,
+            name: "method" as SymbolName,
             scope_id: "test_scope" as ScopeId,
             call_type: "super" as const,
           },
@@ -293,13 +332,17 @@ describe("References Module", () => {
     describe("Member Access Processing", () => {
       it("should process MEMBER_ACCESS entity captures", () => {
         const memberCaptures = [
-          createMockCapture(SemanticCategory.REFERENCE, SemanticEntity.MEMBER_ACCESS, "obj.prop"),
+          createMockCapture(
+            SemanticCategory.REFERENCE,
+            SemanticEntity.MEMBER_ACCESS,
+            "obj.prop"
+          ),
         ];
 
         const mockMemberResults = [
           {
             location: mockLocation,
-            member_name: "prop" as any,
+            member_name: "prop" as SymbolName,
             scope_id: "test_scope" as ScopeId,
             access_type: "property" as const,
             object: {},
@@ -328,13 +371,17 @@ describe("References Module", () => {
 
       it("should process PROPERTY entity captures", () => {
         const propertyCaptures = [
-          createMockCapture(SemanticCategory.REFERENCE, SemanticEntity.PROPERTY, "property"),
+          createMockCapture(
+            SemanticCategory.REFERENCE,
+            SemanticEntity.PROPERTY,
+            "property"
+          ),
         ];
 
         const mockMemberResults = [
           {
             location: mockLocation,
-            member_name: "property" as any,
+            member_name: "property" as SymbolName,
             scope_id: "test_scope" as ScopeId,
             access_type: "property" as const,
             object: {},
@@ -356,13 +403,17 @@ describe("References Module", () => {
 
       it("should process METHOD entity captures", () => {
         const methodCaptures = [
-          createMockCapture(SemanticCategory.REFERENCE, SemanticEntity.METHOD, "method"),
+          createMockCapture(
+            SemanticCategory.REFERENCE,
+            SemanticEntity.METHOD,
+            "method"
+          ),
         ];
 
         const mockMemberResults = [
           {
             location: mockLocation,
-            member_name: "method" as any,
+            member_name: "method" as SymbolName,
             scope_id: "test_scope" as ScopeId,
             access_type: "method" as const,
             object: {},
@@ -384,15 +435,27 @@ describe("References Module", () => {
 
       it("should combine all member access related captures", () => {
         const mixedMemberCaptures = [
-          createMockCapture(SemanticCategory.REFERENCE, SemanticEntity.MEMBER_ACCESS, "obj.prop"),
-          createMockCapture(SemanticCategory.REFERENCE, SemanticEntity.PROPERTY, "property"),
-          createMockCapture(SemanticCategory.REFERENCE, SemanticEntity.METHOD, "method"),
+          createMockCapture(
+            SemanticCategory.REFERENCE,
+            SemanticEntity.MEMBER_ACCESS,
+            "obj.prop"
+          ),
+          createMockCapture(
+            SemanticCategory.REFERENCE,
+            SemanticEntity.PROPERTY,
+            "property"
+          ),
+          createMockCapture(
+            SemanticCategory.REFERENCE,
+            SemanticEntity.METHOD,
+            "method"
+          ),
         ];
 
         const mockMemberResults = [
           {
             location: mockLocation,
-            member_name: "prop" as any,
+            member_name: "prop" as SymbolName,
             scope_id: "test_scope" as ScopeId,
             access_type: "property" as const,
             object: {},
@@ -400,7 +463,7 @@ describe("References Module", () => {
           },
           {
             location: mockLocation,
-            member_name: "property" as any,
+            member_name: "property" as SymbolName,
             scope_id: "test_scope" as ScopeId,
             access_type: "property" as const,
             object: {},
@@ -408,7 +471,7 @@ describe("References Module", () => {
           },
           {
             location: mockLocation,
-            member_name: "method" as any,
+            member_name: "method" as SymbolName,
             scope_id: "test_scope" as ScopeId,
             access_type: "method" as const,
             object: {},
@@ -432,7 +495,11 @@ describe("References Module", () => {
     describe("Type Annotation Processing", () => {
       it("should process type annotations when type_captures provided", () => {
         const typeCaptures = [
-          createMockCapture(SemanticCategory.TYPE, SemanticEntity.TYPE_ANNOTATION, "string"),
+          createMockCapture(
+            SemanticCategory.TYPE,
+            SemanticEntity.TYPE_ANNOTATION,
+            "string"
+          ),
         ];
 
         const mockTypeResults = [
@@ -500,11 +567,19 @@ describe("References Module", () => {
     describe("Type Flow Processing", () => {
       it("should process type flows when assignments provided", () => {
         const assignments = [
-          createMockCapture(SemanticCategory.ASSIGNMENT, SemanticEntity.VARIABLE, "x = 5"),
+          createMockCapture(
+            SemanticCategory.ASSIGNMENT,
+            SemanticEntity.VARIABLE,
+            "x = 5"
+          ),
         ];
 
         const typeCaptures = [
-          createMockCapture(SemanticCategory.TYPE, SemanticEntity.TYPE_ANNOTATION, "number"),
+          createMockCapture(
+            SemanticCategory.TYPE,
+            SemanticEntity.TYPE_ANNOTATION,
+            "number"
+          ),
         ];
 
         const mockTypeMap = new Map();
@@ -512,8 +587,8 @@ describe("References Module", () => {
           constructor_calls: [],
           assignments: [
             {
-              source: { kind: "variable" as const, name: "y" as any },
-              target: "x" as any,
+              source: { kind: "variable" as const, name: "y" as SymbolName },
+              target: "x" as SymbolName,
               location: mockLocation,
               kind: "direct" as const,
             },
@@ -546,15 +621,19 @@ describe("References Module", () => {
 
       it("should build empty type map when no type_captures provided", () => {
         const assignments = [
-          createMockCapture(SemanticCategory.ASSIGNMENT, SemanticEntity.VARIABLE, "x = 5"),
+          createMockCapture(
+            SemanticCategory.ASSIGNMENT,
+            SemanticEntity.VARIABLE,
+            "x = 5"
+          ),
         ];
 
         const mockTypeFlowResults = {
           constructor_calls: [],
           assignments: [
             {
-              source: { kind: "variable" as const, name: "y" as any },
-              target: "x" as any,
+              source: { kind: "variable" as const, name: "y" as SymbolName },
+              target: "x" as SymbolName,
               location: mockLocation,
               kind: "direct" as const,
             },
@@ -563,7 +642,7 @@ describe("References Module", () => {
           call_assignments: [],
         };
 
-            mockExtractTypeFlow.mockReturnValue(mockTypeFlowResults);
+        mockExtractTypeFlow.mockReturnValue(mockTypeFlowResults);
 
         const result = process_references(
           [],
@@ -577,7 +656,7 @@ describe("References Module", () => {
         );
 
         expect(mockExtractTypeFlow).toHaveBeenCalledWith(
-          expect.any(Array),  // Now called with all captures
+          expect.any(Array), // Now called with all captures
           mockScopes,
           mockFilePath
         );
@@ -602,7 +681,11 @@ describe("References Module", () => {
     describe("Return Processing", () => {
       it("should process returns when provided", () => {
         const returns = [
-          createMockCapture(SemanticCategory.RETURN, SemanticEntity.VARIABLE, "return x"),
+          createMockCapture(
+            SemanticCategory.RETURN,
+            SemanticEntity.VARIABLE,
+            "return x"
+          ),
         ];
 
         const mockReturnResults = [
@@ -654,17 +737,37 @@ describe("References Module", () => {
     describe("Processing Order", () => {
       it("should process type annotations first", () => {
         const refCaptures = [
-          createMockCapture(SemanticCategory.REFERENCE, SemanticEntity.CALL, "func()"),
-          createMockCapture(SemanticCategory.REFERENCE, SemanticEntity.MEMBER_ACCESS, "obj.prop"),
+          createMockCapture(
+            SemanticCategory.REFERENCE,
+            SemanticEntity.CALL,
+            "func()"
+          ),
+          createMockCapture(
+            SemanticCategory.REFERENCE,
+            SemanticEntity.MEMBER_ACCESS,
+            "obj.prop"
+          ),
         ];
         const typeCaptures = [
-          createMockCapture(SemanticCategory.TYPE, SemanticEntity.TYPE_ANNOTATION, "string"),
+          createMockCapture(
+            SemanticCategory.TYPE,
+            SemanticEntity.TYPE_ANNOTATION,
+            "string"
+          ),
         ];
         const assignments = [
-          createMockCapture(SemanticCategory.ASSIGNMENT, SemanticEntity.VARIABLE, "x = 5"),
+          createMockCapture(
+            SemanticCategory.ASSIGNMENT,
+            SemanticEntity.VARIABLE,
+            "x = 5"
+          ),
         ];
         const returns = [
-          createMockCapture(SemanticCategory.RETURN, SemanticEntity.VARIABLE, "return x"),
+          createMockCapture(
+            SemanticCategory.RETURN,
+            SemanticEntity.VARIABLE,
+            "return x"
+          ),
         ];
 
         // Track call order
@@ -724,23 +827,55 @@ describe("References Module", () => {
     describe("Complex Integration Scenarios", () => {
       it("should handle all reference types together", () => {
         const refCaptures = [
-          createMockCapture(SemanticCategory.REFERENCE, SemanticEntity.CALL, "func()"),
-          createMockCapture(SemanticCategory.REFERENCE, SemanticEntity.SUPER, "super.method()"),
-          createMockCapture(SemanticCategory.REFERENCE, SemanticEntity.MEMBER_ACCESS, "obj.prop"),
-          createMockCapture(SemanticCategory.REFERENCE, SemanticEntity.PROPERTY, "property"),
-          createMockCapture(SemanticCategory.REFERENCE, SemanticEntity.METHOD, "method"),
+          createMockCapture(
+            SemanticCategory.REFERENCE,
+            SemanticEntity.CALL,
+            "func()"
+          ),
+          createMockCapture(
+            SemanticCategory.REFERENCE,
+            SemanticEntity.SUPER,
+            "super.method()"
+          ),
+          createMockCapture(
+            SemanticCategory.REFERENCE,
+            SemanticEntity.MEMBER_ACCESS,
+            "obj.prop"
+          ),
+          createMockCapture(
+            SemanticCategory.REFERENCE,
+            SemanticEntity.PROPERTY,
+            "property"
+          ),
+          createMockCapture(
+            SemanticCategory.REFERENCE,
+            SemanticEntity.METHOD,
+            "method"
+          ),
         ];
 
         const typeCaptures = [
-          createMockCapture(SemanticCategory.TYPE, SemanticEntity.TYPE_ANNOTATION, "string"),
+          createMockCapture(
+            SemanticCategory.TYPE,
+            SemanticEntity.TYPE_ANNOTATION,
+            "string"
+          ),
         ];
 
         const assignments = [
-          createMockCapture(SemanticCategory.ASSIGNMENT, SemanticEntity.VARIABLE, "x = 5"),
+          createMockCapture(
+            SemanticCategory.ASSIGNMENT,
+            SemanticEntity.VARIABLE,
+            "x = 5"
+          ),
         ];
 
         const returns = [
-          createMockCapture(SemanticCategory.RETURN, SemanticEntity.VARIABLE, "return x"),
+          createMockCapture(
+            SemanticCategory.RETURN,
+            SemanticEntity.VARIABLE,
+            "return x"
+          ),
         ];
 
         // Setup mock results
@@ -757,13 +892,13 @@ describe("References Module", () => {
         mockProcessCallReferences.mockReturnValue([
           {
             location: mockLocation,
-            name: "func" as any,
+            name: "func" as SymbolName,
             scope_id: "test_scope" as ScopeId,
             call_type: "function" as const,
           },
           {
             location: mockLocation,
-            name: "method" as any,
+            name: "method" as SymbolName,
             scope_id: "test_scope" as ScopeId,
             call_type: "super" as const,
           },
@@ -772,7 +907,7 @@ describe("References Module", () => {
         mockProcessMemberAccessReferences.mockReturnValue([
           {
             location: mockLocation,
-            member_name: "prop" as any,
+            member_name: "prop" as SymbolName,
             scope_id: "test_scope" as ScopeId,
             access_type: "property" as const,
             object: {},
@@ -780,7 +915,7 @@ describe("References Module", () => {
           },
           {
             location: mockLocation,
-            member_name: "property" as any,
+            member_name: "property" as SymbolName,
             scope_id: "test_scope" as ScopeId,
             access_type: "property" as const,
             object: {},
@@ -788,7 +923,7 @@ describe("References Module", () => {
           },
           {
             location: mockLocation,
-            member_name: "method" as any,
+            member_name: "method" as SymbolName,
             scope_id: "test_scope" as ScopeId,
             access_type: "method" as const,
             object: {},
@@ -801,7 +936,7 @@ describe("References Module", () => {
           assignments: [
             {
               source: { kind: "literal", value: "5", literal_type: "number" },
-              target: "x" as any,
+              target: "x" as SymbolName,
               location: mockLocation,
               kind: "direct" as const,
             },
@@ -898,7 +1033,11 @@ describe("References Module", () => {
 
       it("should handle processor errors gracefully", () => {
         const refCaptures = [
-          createMockCapture(SemanticCategory.REFERENCE, SemanticEntity.CALL, "func()"),
+          createMockCapture(
+            SemanticCategory.REFERENCE,
+            SemanticEntity.CALL,
+            "func()"
+          ),
         ];
 
         mockProcessCallReferences.mockImplementation(() => {
@@ -924,7 +1063,11 @@ describe("References Module", () => {
       it("should handle required parameters correctly", () => {
         // Test that required parameters are properly passed through
         const refCaptures = [
-          createMockCapture(SemanticCategory.REFERENCE, SemanticEntity.CALL, "func()"),
+          createMockCapture(
+            SemanticCategory.REFERENCE,
+            SemanticEntity.CALL,
+            "func()"
+          ),
         ];
 
         process_references(
@@ -945,16 +1088,32 @@ describe("References Module", () => {
 
       it("should pass through all optional parameters when provided", () => {
         const refCaptures = [
-          createMockCapture(SemanticCategory.REFERENCE, SemanticEntity.CALL, "func()"),
+          createMockCapture(
+            SemanticCategory.REFERENCE,
+            SemanticEntity.CALL,
+            "func()"
+          ),
         ];
         const assignments = [
-          createMockCapture(SemanticCategory.ASSIGNMENT, SemanticEntity.VARIABLE, "x = 5"),
+          createMockCapture(
+            SemanticCategory.ASSIGNMENT,
+            SemanticEntity.VARIABLE,
+            "x = 5"
+          ),
         ];
         const typeCaptures = [
-          createMockCapture(SemanticCategory.TYPE, SemanticEntity.TYPE_ANNOTATION, "string"),
+          createMockCapture(
+            SemanticCategory.TYPE,
+            SemanticEntity.TYPE_ANNOTATION,
+            "string"
+          ),
         ];
         const returns = [
-          createMockCapture(SemanticCategory.RETURN, SemanticEntity.VARIABLE, "return x"),
+          createMockCapture(
+            SemanticCategory.RETURN,
+            SemanticEntity.VARIABLE,
+            "return x"
+          ),
         ];
 
         process_references(
@@ -977,7 +1136,7 @@ describe("References Module", () => {
         );
 
         expect(mockExtractTypeFlow).toHaveBeenCalledWith(
-          expect.any(Array),  // Now called with all captures
+          expect.any(Array), // Now called with all captures
           mockScopes,
           mockFilePath
         );

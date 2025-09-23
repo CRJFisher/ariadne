@@ -135,7 +135,9 @@ function resolve_python_absolute_import(
     // Check if this looks like a project root
     // (has setup.py, pyproject.toml, or is a git root)
     const has_setup = fs.existsSync(path.join(search_dir, "setup.py"));
-    const has_pyproject = fs.existsSync(path.join(search_dir, "pyproject.toml"));
+    const has_pyproject = fs.existsSync(
+      path.join(search_dir, "pyproject.toml")
+    );
     const has_git = fs.existsSync(path.join(search_dir, ".git"));
 
     if (has_setup || has_pyproject || has_git) {
@@ -188,18 +190,26 @@ export function match_python_import_to_export(
     case "default":
       // In Python context, a default import is like "import module"
       // We need to find the module's main symbol (usually __init__ or the module itself)
-      return match_python_module_import(import_stmt as DefaultImport, source_symbols);
+      return match_python_module_import(
+        import_stmt as DefaultImport,
+        source_symbols
+      );
 
     case "named":
       // "from module import name1, name2"
-      return match_python_named_import(import_stmt as NamedImport, source_exports, source_symbols);
+      return match_python_named_import(
+        import_stmt as NamedImport,
+        source_exports,
+        source_symbols
+      );
 
     case "namespace":
       // Python doesn't have namespace imports like JS, but we handle it similarly
       // For wildcard imports (from module import *), map to exports
       const namespace = import_stmt as NamespaceImport | Import;
-      const namespace_name = (namespace as NamespaceImport).namespace_name ||
-                              (namespace as Import).name;
+      const namespace_name =
+        (namespace as NamespaceImport).namespace_name ||
+        (namespace as Import).name;
 
       if (namespace_name === "*" && source_exports.length > 0) {
         // For wildcard imports, map "*" to first export
@@ -264,9 +274,10 @@ function match_python_named_import(
       if (exp.kind === "named") {
         const named_export = exp as NamedExport;
         // Handle both formats: exports array or simple name field
-        if ((named_export as any).exports) {
+        if (named_export.exports) {
           for (const export_item of named_export.exports) {
-            const export_name = export_item.export_name || export_item.local_name;
+            const export_name =
+              export_item.export_name || export_item.local_name;
             if (export_name === imported_name) {
               result.set(local_name, named_export.symbol);
               found = true;
@@ -285,14 +296,17 @@ function match_python_named_import(
     // If not found in explicit exports, look for the symbol directly
     // Special case: if there are exports and the name contains "internal", skip it
     // This is a heuristic for __all__ enforcement without type system support
-    const skip_symbol_lookup = source_exports.length > 0 && imported_name.toLowerCase().includes("internal");
+    const skip_symbol_lookup =
+      source_exports.length > 0 &&
+      imported_name.toLowerCase().includes("internal");
 
     if (!found && !skip_symbol_lookup) {
       // Search through all symbols for a matching name
       for (const [symbol_id, symbol_def] of Array.from(source_symbols)) {
         if (symbol_def.name === imported_name) {
           // Check if it's public (not starting with underscore, but allow dunder methods)
-          const is_dunder = imported_name.startsWith("__") && imported_name.endsWith("__");
+          const is_dunder =
+            imported_name.startsWith("__") && imported_name.endsWith("__");
           const is_private = imported_name.startsWith("_") && !is_dunder;
           if (!is_private) {
             result.set(local_name, symbol_id);

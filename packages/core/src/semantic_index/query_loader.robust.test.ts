@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import type { Language } from "@ariadnejs/types";
 import {
   load_query,
   has_query,
@@ -74,7 +75,7 @@ describe("Robust Query Loading", () => {
     });
 
     it("should handle non-existent languages gracefully", () => {
-      expect(has_query("nonexistent" as any)).toBe(false);
+      expect(has_query("nonexistent" as unknown as Language)).toBe(false);
     });
   });
 

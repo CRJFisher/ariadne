@@ -16,19 +16,33 @@ import { find_symbol_definition } from "./type_lookup";
  * Determine if a member access is a static call
  */
 export function determine_if_static_call(
-  _member_access: MemberAccessReference,
-  _context: MethodLookupContext
+  member_access: MemberAccessReference,
+  context: MethodLookupContext
 ): boolean {
-  // Check if receiver is a type identifier rather than instance
-  // For now, we can't determine static access from MemberAccessReference alone
-  // This would require additional context from the semantic index
+  // 1. Use explicit static flag if available
+  if (member_access.is_static !== undefined) {
+    return member_access.is_static;
+  }
 
-  // TODO: Implement proper static detection once we have:
-  // - Symbol resolution at object locations
-  // - Type information for the receiver
+  // 2. Check if object location points to a class/type symbol
+  // Note: object_symbol field was removed, need to resolve from location
 
-  // Default to instance method for now
-  return false;
+  // 3. Fall back to heuristics if needed
+  if (member_access.object.location) {
+    // Try to resolve symbol at location
+    const symbol = find_symbol_at_location(
+      member_access.object.location,
+      context
+    );
+    if (symbol) {
+      const def = context.current_index.symbols.get(symbol);
+      return def?.kind === "class" ||
+             def?.kind === "type_alias" ||
+             def?.kind === "interface";
+    }
+  }
+
+  return false;  // Default to instance
 }
 
 /**
@@ -47,11 +61,9 @@ export function get_method_kind(
     return "constructor";
   }
 
-  // Check for static modifier if it exists on this symbol type
-  if ('modifiers' in symbol_def && Array.isArray(symbol_def.modifiers)) {
-    if (symbol_def.modifiers.includes("static")) {
-      return "static";
-    }
+  // Check for static flag
+  if (symbol_def.is_static) {
+    return "static";
   }
 
   return "instance";

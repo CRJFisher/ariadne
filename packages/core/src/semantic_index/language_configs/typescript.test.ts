@@ -14,6 +14,7 @@ import {
 } from "../capture_types";
 import { TYPESCRIPT_CAPTURE_CONFIG } from "./typescript";
 import { JAVASCRIPT_CAPTURE_CONFIG } from "./javascript";
+import { create_simple_mock_node } from "../test_utils";
 
 describe("TypeScript Language Configuration", () => {
   let parser: Parser;
@@ -186,7 +187,10 @@ describe("TypeScript Language Configuration", () => {
         expect(interfaceConfig?.context).toBeDefined();
 
         if (typeof interfaceConfig?.context === "function") {
-          const mockNode = { text: "TestInterface" } as any;
+          const mockNode = create_simple_mock_node(
+            "identifier",
+            "TestInterface"
+          );
           const context = interfaceConfig.context(mockNode);
           expect(context?.type_name).toBe("TestInterface");
         }
@@ -199,7 +203,10 @@ describe("TypeScript Language Configuration", () => {
         expect(paramTypeConfig?.context).toBeDefined();
 
         if (typeof paramTypeConfig?.context === "function") {
-          const mockNode = { text: "string | number" } as any;
+          const mockNode = create_simple_mock_node(
+            "identifier",
+            "string | number"
+          );
           const context = paramTypeConfig.context(mockNode);
           expect(context?.annotation_type).toBe("string | number");
         }
@@ -212,12 +219,13 @@ describe("TypeScript Language Configuration", () => {
         expect(methodConfig?.context).toBeDefined();
 
         if (typeof methodConfig?.context === "function") {
-          const mockNode = {
-            text: "testMethod",
-            parent: {
-              children: [{ type: "accessibility_modifier", text: "private" }],
-            },
-          } as any;
+          const mockNode = create_simple_mock_node("identifier", "testMethod", {
+            parent: create_simple_mock_node("parent", "parent", {
+              children: [
+                create_simple_mock_node("accessibility_modifier", "private"),
+              ],
+            }),
+          });
 
           const context = methodConfig.context(mockNode);
           expect(context?.access_modifier).toBe("private");
@@ -231,12 +239,15 @@ describe("TypeScript Language Configuration", () => {
         expect(fieldConfig?.context).toBeDefined();
 
         if (typeof fieldConfig?.context === "function") {
-          const mockNode = {
-            text: "staticField",
-            parent: {
-              children: [{ type: "static" }],
-            },
-          } as any;
+          const mockNode = create_simple_mock_node(
+            "identifier",
+            "staticField",
+            {
+              parent: create_simple_mock_node("parent", "parent", {
+                children: [create_simple_mock_node("static", "static")],
+              }),
+            }
+          );
 
           const context = fieldConfig.context(mockNode);
           expect(context?.is_static).toBe(true);
@@ -250,12 +261,15 @@ describe("TypeScript Language Configuration", () => {
         expect(fieldConfig?.context).toBeDefined();
 
         if (typeof fieldConfig?.context === "function") {
-          const mockNode = {
-            text: "readonlyField",
-            parent: {
-              children: [{ type: "readonly" }],
-            },
-          } as any;
+          const mockNode = create_simple_mock_node(
+            "identifier",
+            "readonlyField",
+            {
+              parent: create_simple_mock_node("parent", "parent", {
+                children: [create_simple_mock_node("readonly", "readonly")],
+              }),
+            }
+          );
 
           const context = fieldConfig.context(mockNode);
           expect(context).toBeDefined();
@@ -269,12 +283,15 @@ describe("TypeScript Language Configuration", () => {
         expect(methodConfig?.context).toBeDefined();
 
         if (typeof methodConfig?.context === "function") {
-          const mockNode = {
-            text: "asyncMethod",
-            parent: {
-              children: [{ type: "async" }],
-            },
-          } as any;
+          const mockNode = create_simple_mock_node(
+            "identifier",
+            "asyncMethod",
+            {
+              parent: create_simple_mock_node("parent", "parent", {
+                children: [create_simple_mock_node("async", "async")],
+              }),
+            }
+          );
 
           const context = methodConfig.context(mockNode);
           expect(context?.is_async).toBe(true);
@@ -290,15 +307,19 @@ describe("TypeScript Language Configuration", () => {
         expect(interfaceConfig?.context).toBeDefined();
 
         if (typeof interfaceConfig?.context === "function") {
-          const mockNode = {
-            text: "GenericInterface",
-            parent: {
-              childForFieldName: (field: string) => {
-                if (field === "type_parameters") return { text: "<T, U>" };
-                return null;
-              },
-            },
-          } as any;
+          const mockNode = create_simple_mock_node(
+            "identifier",
+            "GenericInterface",
+            {
+              parent: create_simple_mock_node("parent", "parent", {
+                childForFieldName: (field: string) => {
+                  if (field === "type_parameters")
+                    return create_simple_mock_node("identifier", "<T, U>");
+                  return null;
+                },
+              }),
+            }
+          );
 
           const context = interfaceConfig.context(mockNode);
           expect(context?.type_name).toBe("GenericInterface");
@@ -313,16 +334,24 @@ describe("TypeScript Language Configuration", () => {
         expect(typeAliasConfig?.context).toBeDefined();
 
         if (typeof typeAliasConfig?.context === "function") {
-          const mockNode = {
-            text: "StringOrNumber",
-            parent: {
-              childForFieldName: (field: string) => {
-                if (field === "value") return { text: "string | number" };
-                if (field === "type_parameters") return { text: "<T>" };
-                return null;
-              },
-            },
-          } as any;
+          const mockNode = create_simple_mock_node(
+            "identifier",
+            "StringOrNumber",
+            {
+              parent: create_simple_mock_node("parent", "parent", {
+                childForFieldName: (field: string) => {
+                  if (field === "value")
+                    return create_simple_mock_node(
+                      "identifier",
+                      "string | number"
+                    );
+                  if (field === "type_parameters")
+                    return create_simple_mock_node("identifier", "<T>");
+                  return null;
+                },
+              }),
+            }
+          );
 
           const context = typeAliasConfig.context(mockNode);
           expect(context).toBeDefined();
@@ -337,7 +366,7 @@ describe("TypeScript Language Configuration", () => {
         expect(enumConfig?.context).toBeDefined();
 
         if (typeof enumConfig?.context === "function") {
-          const mockNode = { text: "Color" } as any;
+          const mockNode = create_simple_mock_node("identifier", "Color");
           const context = enumConfig.context(mockNode);
           expect(context?.type_name).toBe("Color");
         }
@@ -349,15 +378,15 @@ describe("TypeScript Language Configuration", () => {
         expect(enumMemberConfig?.context).toBeDefined();
 
         if (typeof enumMemberConfig?.context === "function") {
-          const mockNode = {
-            text: "Red",
-            parent: {
+          const mockNode = create_simple_mock_node("identifier", "Red", {
+            parent: create_simple_mock_node("parent", "parent", {
               childForFieldName: (field: string) => {
-                if (field === "value") return { text: "0" };
+                if (field === "value")
+                  return create_simple_mock_node("identifier", "0");
                 return null;
               },
-            },
-          } as any;
+            }),
+          });
 
           const context = enumMemberConfig.context(mockNode);
           expect(context?.type_name).toBe("Red");
@@ -371,16 +400,17 @@ describe("TypeScript Language Configuration", () => {
         expect(typeParamConfig?.context).toBeDefined();
 
         if (typeof typeParamConfig?.context === "function") {
-          const mockNode = {
-            text: "T",
-            parent: {
+          const mockNode = create_simple_mock_node("identifier", "T", {
+            parent: create_simple_mock_node("parent", "parent", {
               childForFieldName: (field: string) => {
-                if (field === "constraint") return { text: "string" };
-                if (field === "default_type") return { text: "never" };
+                if (field === "constraint")
+                  return create_simple_mock_node("identifier", "string");
+                if (field === "default_type")
+                  return create_simple_mock_node("identifier", "never");
                 return null;
               },
-            },
-          } as any;
+            }),
+          });
 
           const context = typeParamConfig.context(mockNode);
           expect(context?.constraint_type).toBe("string");
@@ -395,7 +425,10 @@ describe("TypeScript Language Configuration", () => {
         expect(classTypeParamsConfig?.context).toBeDefined();
 
         if (typeof classTypeParamsConfig?.context === "function") {
-          const mockNode = { text: "<T extends string, U = number>" } as any;
+          const mockNode = create_simple_mock_node(
+            "identifier",
+            "<T extends string, U = number>"
+          );
           const context = classTypeParamsConfig.context(mockNode);
 
           expect(context?.type_params).toBe("<T extends string, U = number>");
@@ -410,7 +443,10 @@ describe("TypeScript Language Configuration", () => {
         expect(functionTypeParamsConfig?.context).toBeDefined();
 
         if (typeof functionTypeParamsConfig?.context === "function") {
-          const mockNode = { text: "<T, U extends T>" } as any;
+          const mockNode = create_simple_mock_node(
+            "identifier",
+            "<T, U extends T>"
+          );
           const context = functionTypeParamsConfig.context(mockNode);
 
           expect(context?.type_params).toBe("<T, U extends T>");
@@ -427,7 +463,10 @@ describe("TypeScript Language Configuration", () => {
         expect(paramTypeConfig?.context).toBeDefined();
 
         if (typeof paramTypeConfig?.context === "function") {
-          const mockNode = { text: "string | undefined" } as any;
+          const mockNode = create_simple_mock_node(
+            "identifier",
+            "string | undefined"
+          );
           const context = paramTypeConfig.context(mockNode);
 
           expect(context?.annotation_type).toBe("string | undefined");
@@ -439,7 +478,7 @@ describe("TypeScript Language Configuration", () => {
         const paramTypeConfig = TYPESCRIPT_CAPTURE_CONFIG.get("param.type");
 
         if (typeof paramTypeConfig?.context === "function") {
-          const mockNode = { text: "Array<T>" } as any;
+          const mockNode = create_simple_mock_node("identifier", "Array<T>");
           const context = paramTypeConfig.context(mockNode);
 
           expect(context?.annotation_type).toBe("Array<T>");
@@ -456,7 +495,10 @@ describe("TypeScript Language Configuration", () => {
         expect(returnTypeConfig?.context).toBeDefined();
 
         if (typeof returnTypeConfig?.context === "function") {
-          const mockNode = { text: "Promise<string>" } as any;
+          const mockNode = create_simple_mock_node(
+            "identifier",
+            "Promise<string>"
+          );
           const context = returnTypeConfig.context(mockNode);
 
           expect(context?.annotation_type).toBe("Promise<string>");
@@ -472,7 +514,7 @@ describe("TypeScript Language Configuration", () => {
         expect(methodReturnTypeConfig?.context).toBeDefined();
 
         if (typeof methodReturnTypeConfig?.context === "function") {
-          const mockNode = { text: "void" } as any;
+          const mockNode = create_simple_mock_node("identifier", "void");
           const context = methodReturnTypeConfig.context(mockNode);
 
           expect(context?.annotation_type).toBe("void");
@@ -488,7 +530,7 @@ describe("TypeScript Language Configuration", () => {
         expect(propertyTypeConfig?.context).toBeDefined();
 
         if (typeof propertyTypeConfig?.context === "function") {
-          const mockNode = { text: "string?" } as any;
+          const mockNode = create_simple_mock_node("identifier", "string?");
           const context = propertyTypeConfig.context(mockNode);
 
           expect(context?.annotation_type).toBe("string?");
@@ -501,7 +543,7 @@ describe("TypeScript Language Configuration", () => {
         expect(fieldTypeConfig?.context).toBeDefined();
 
         if (typeof fieldTypeConfig?.context === "function") {
-          const mockNode = { text: "number" } as any;
+          const mockNode = create_simple_mock_node("identifier", "number");
           const context = fieldTypeConfig.context(mockNode);
 
           expect(context?.annotation_type).toBe("number");
@@ -516,7 +558,10 @@ describe("TypeScript Language Configuration", () => {
         expect(varTypeConfig?.context).toBeDefined();
 
         if (typeof varTypeConfig?.context === "function") {
-          const mockNode = { text: "readonly [1, 2, 3] as const" } as any;
+          const mockNode = create_simple_mock_node(
+            "identifier",
+            "readonly [1, 2, 3] as const"
+          );
           const context = varTypeConfig.context(mockNode);
 
           expect(context?.annotation_type).toBe("readonly [1, 2, 3] as const");
@@ -532,7 +577,7 @@ describe("TypeScript Language Configuration", () => {
       expect(methodAccessConfig?.context).toBeDefined();
 
       if (typeof methodAccessConfig?.context === "function") {
-        const mockNode = { text: "private" } as any;
+        const mockNode = create_simple_mock_node("identifier", "private");
         const context = methodAccessConfig.context(mockNode);
 
         expect(context?.modifier).toBe("private");
@@ -545,7 +590,7 @@ describe("TypeScript Language Configuration", () => {
       expect(fieldAccessConfig?.context).toBeDefined();
 
       if (typeof fieldAccessConfig?.context === "function") {
-        const mockNode = { text: "protected" } as any;
+        const mockNode = create_simple_mock_node("identifier", "protected");
         const context = fieldAccessConfig.context(mockNode);
 
         expect(context?.modifier).toBe("protected");
@@ -558,7 +603,7 @@ describe("TypeScript Language Configuration", () => {
       expect(readonlyConfig?.context).toBeDefined();
 
       if (typeof readonlyConfig?.context === "function") {
-        const context = readonlyConfig.context({} as any);
+        const context = readonlyConfig.context(create_simple_mock_node());
 
         expect(context?.modifier).toBe("readonly");
         expect(context?.applies_to).toBe("field");
@@ -570,7 +615,7 @@ describe("TypeScript Language Configuration", () => {
       expect(paramAccessConfig?.context).toBeDefined();
 
       if (typeof paramAccessConfig?.context === "function") {
-        const mockNode = { text: "public" } as any;
+        const mockNode = create_simple_mock_node("identifier", "public");
         const context = paramAccessConfig.context(mockNode);
 
         expect(context?.modifier).toBe("public");
@@ -587,9 +632,10 @@ describe("TypeScript Language Configuration", () => {
       expect(classDecoratorConfig?.context).toBeDefined();
 
       if (typeof classDecoratorConfig?.context === "function") {
-        const mockNode = {
-          text: "@Component({ selector: 'app-test' })",
-        } as any;
+        const mockNode = create_simple_mock_node(
+          "identifier",
+          "@Component({ selector: 'app-test' })"
+        );
         const context = classDecoratorConfig.context(mockNode);
 
         expect(context?.decorator_name).toBe(
@@ -605,7 +651,7 @@ describe("TypeScript Language Configuration", () => {
       expect(methodDecoratorConfig?.context).toBeDefined();
 
       if (typeof methodDecoratorConfig?.context === "function") {
-        const mockNode = { text: "@Override" } as any;
+        const mockNode = create_simple_mock_node("identifier", "@Override");
         const context = methodDecoratorConfig.context(mockNode);
 
         expect(context?.decorator_name).toBe("@Override");
@@ -619,7 +665,7 @@ describe("TypeScript Language Configuration", () => {
       expect(propertyDecoratorConfig?.context).toBeDefined();
 
       if (typeof propertyDecoratorConfig?.context === "function") {
-        const mockNode = { text: "@Input()" } as any;
+        const mockNode = create_simple_mock_node("identifier", "@Input()");
         const context = propertyDecoratorConfig.context(mockNode);
 
         expect(context?.decorator_name).toBe("@Input()");
@@ -635,7 +681,7 @@ describe("TypeScript Language Configuration", () => {
       expect(implementsConfig?.context).toBeDefined();
 
       if (typeof implementsConfig?.context === "function") {
-        const mockNode = { text: "Serializable" } as any;
+        const mockNode = create_simple_mock_node("identifier", "Serializable");
         const context = implementsConfig.context(mockNode);
 
         expect(context?.implements_interface).toBe("Serializable");
@@ -647,33 +693,50 @@ describe("TypeScript Language Configuration", () => {
       expect(classConfig?.context).toBeDefined();
 
       if (typeof classConfig?.context === "function") {
-        const mockNode = {
-          text: "MyClass",
-          parent: {
+        const mockNode = create_simple_mock_node("identifier", "MyClass", {
+          parent: create_simple_mock_node("parent", "parent", {
             childForFieldName: (field: string) => {
-              if (field === "type_parameters") return { text: "<T>" };
+              if (field === "type_parameters")
+                return create_simple_mock_node("identifier", "<T>");
               if (field === "class_heritage") {
-                return {
-                  childForFieldName: (field: string) => {
-                    if (field === "extends_clause")
-                      return { text: "BaseClass" };
-                    if (field === "implements_clause") {
-                      return {
-                        children: [
-                          { type: "type_identifier", text: "Interface1" },
-                          { type: "type_identifier", text: "Interface2" },
-                        ],
-                      };
-                    }
-                    return null;
-                  },
-                };
+                return create_simple_mock_node(
+                  "class_heritage",
+                  "class_heritage",
+                  {
+                    childForFieldName: (field: string) => {
+                      if (field === "extends_clause")
+                        return create_simple_mock_node(
+                          "identifier",
+                          "BaseClass"
+                        );
+                      if (field === "implements_clause") {
+                        return create_simple_mock_node(
+                          "implements_clause",
+                          "implements_clause",
+                          {
+                            children: [
+                              create_simple_mock_node(
+                                "type_identifier",
+                                "Interface1"
+                              ),
+                              create_simple_mock_node(
+                                "type_identifier",
+                                "Interface2"
+                              ),
+                            ],
+                          }
+                        );
+                      }
+                      return null;
+                    },
+                  }
+                );
               }
               return null;
             },
-            children: [{ type: "abstract" }],
-          },
-        } as any;
+            children: [create_simple_mock_node("abstract", "abstract")],
+          }),
+        });
 
         const context = classConfig.context(mockNode);
 
@@ -694,12 +757,14 @@ describe("TypeScript Language Configuration", () => {
       expect(typeOnlyImportConfig?.context).toBeDefined();
 
       if (typeof typeOnlyImportConfig?.modifiers === "function") {
-        const modifiers = typeOnlyImportConfig.modifiers({} as any);
+        const modifiers = typeOnlyImportConfig.modifiers(
+          create_simple_mock_node()
+        );
         expect(modifiers?.is_type_only).toBe(true);
       }
 
       if (typeof typeOnlyImportConfig?.context === "function") {
-        const context = typeOnlyImportConfig.context({} as any);
+        const context = typeOnlyImportConfig.context(create_simple_mock_node());
         expect(context?.import_kind).toBe("type_only");
       }
     });
@@ -709,7 +774,7 @@ describe("TypeScript Language Configuration", () => {
       expect(typeImportConfig?.context).toBeDefined();
 
       if (typeof typeImportConfig?.context === "function") {
-        const mockNode = { text: "MyType" } as any;
+        const mockNode = create_simple_mock_node("identifier", "MyType");
         const context = typeImportConfig.context(mockNode);
 
         expect(context?.import_kind).toBe("type");
@@ -723,12 +788,14 @@ describe("TypeScript Language Configuration", () => {
       expect(typeOnlyExportConfig?.context).toBeDefined();
 
       if (typeof typeOnlyExportConfig?.modifiers === "function") {
-        const modifiers = typeOnlyExportConfig.modifiers({} as any);
+        const modifiers = typeOnlyExportConfig.modifiers(
+          create_simple_mock_node()
+        );
         expect(modifiers?.is_type_only).toBe(true);
       }
 
       if (typeof typeOnlyExportConfig?.context === "function") {
-        const context = typeOnlyExportConfig.context({} as any);
+        const context = typeOnlyExportConfig.context(create_simple_mock_node());
         expect(context?.export_kind).toBe("type_only");
       }
     });
@@ -740,12 +807,14 @@ describe("TypeScript Language Configuration", () => {
       expect(interfaceExportConfig?.context).toBeDefined();
 
       if (typeof interfaceExportConfig?.modifiers === "function") {
-        const modifiers = interfaceExportConfig.modifiers({} as any);
+        const modifiers = interfaceExportConfig.modifiers(
+          create_simple_mock_node()
+        );
         expect(modifiers?.is_exported).toBe(true);
       }
 
       if (typeof interfaceExportConfig?.context === "function") {
-        const mockNode = { text: "MyInterface" } as any;
+        const mockNode = create_simple_mock_node("identifier", "MyInterface");
         const context = interfaceExportConfig.context(mockNode);
 
         expect(context?.export_alias).toBe("MyInterface");
@@ -761,16 +830,18 @@ describe("TypeScript Language Configuration", () => {
       expect(genericTypeRefConfig?.context).toBeDefined();
 
       if (typeof genericTypeRefConfig?.context === "function") {
-        const mockNode = {
-          text: "Array",
-          parent: {
+        const mockNode = create_simple_mock_node("identifier", "Array", {
+          parent: create_simple_mock_node("parent", "parent", {
             childForFieldName: (field: string) => {
               if (field === "type_arguments")
-                return { text: "<string, number>" };
+                return create_simple_mock_node(
+                  "identifier",
+                  "<string, number>"
+                );
               return null;
             },
-          },
-        } as any;
+          }),
+        });
 
         const context = genericTypeRefConfig.context(mockNode);
 
@@ -787,23 +858,29 @@ describe("TypeScript Language Configuration", () => {
       expect(genericConstructorConfig?.context).toBeDefined();
 
       if (typeof genericConstructorConfig?.context === "function") {
-        const mockNode = {
-          text: "Map",
-          parent: {
+        const mockNode = create_simple_mock_node("identifier", "Map", {
+          parent: create_simple_mock_node("parent", "parent", {
             childForFieldName: (field: string) => {
               if (field === "type_arguments")
-                return { text: "<string, number>" };
+                return create_simple_mock_node(
+                  "identifier",
+                  "<string, number>"
+                );
               return null;
             },
-            parent: {
-              type: "variable_declarator",
-              childForFieldName: (field: string) => {
-                if (field === "name") return { text: "myMap" };
-                return null;
-              },
-            },
-          },
-        } as any;
+            parent: create_simple_mock_node(
+              "variable_declarator",
+              "variable_declarator",
+              {
+                childForFieldName: (field: string) => {
+                  if (field === "name")
+                    return create_simple_mock_node("identifier", "myMap");
+                  return null;
+                },
+              }
+            ),
+          }),
+        });
 
         const context = genericConstructorConfig.context(mockNode);
 
@@ -820,15 +897,15 @@ describe("TypeScript Language Configuration", () => {
       expect(genericCallConfig?.context).toBeDefined();
 
       if (typeof genericCallConfig?.context === "function") {
-        const mockNode = {
-          text: "identity",
-          parent: {
+        const mockNode = create_simple_mock_node("identifier", "identity", {
+          parent: create_simple_mock_node("parent", "parent", {
             childForFieldName: (field: string) => {
-              if (field === "type_arguments") return { text: "<string>" };
+              if (field === "type_arguments")
+                return create_simple_mock_node("identifier", "<string>");
               return null;
             },
-          },
-        } as any;
+          }),
+        });
 
         const context = genericCallConfig.context(mockNode);
 
@@ -844,15 +921,15 @@ describe("TypeScript Language Configuration", () => {
       expect(castValueConfig?.context).toBeDefined();
 
       if (typeof castValueConfig?.context === "function") {
-        const mockNode = {
-          text: "someValue",
-          parent: {
+        const mockNode = create_simple_mock_node("identifier", "someValue", {
+          parent: create_simple_mock_node("parent", "parent", {
             childForFieldName: (field: string) => {
-              if (field === "type") return { text: "string" };
+              if (field === "type")
+                return create_simple_mock_node("identifier", "string");
               return null;
             },
-          },
-        } as any;
+          }),
+        });
 
         const context = castValueConfig.context(mockNode);
 
@@ -866,15 +943,15 @@ describe("TypeScript Language Configuration", () => {
       expect(castTypeConfig?.context).toBeDefined();
 
       if (typeof castTypeConfig?.context === "function") {
-        const mockNode = {
-          text: "string",
-          parent: {
+        const mockNode = create_simple_mock_node("identifier", "string", {
+          parent: create_simple_mock_node("parent", "parent", {
             childForFieldName: (field: string) => {
-              if (field === "expression") return { text: "someValue" };
+              if (field === "expression")
+                return create_simple_mock_node("identifier", "someValue");
               return null;
             },
-          },
-        } as any;
+          }),
+        });
 
         const context = castTypeConfig.context(mockNode);
 
@@ -890,7 +967,7 @@ describe("TypeScript Language Configuration", () => {
       expect(typeofConfig?.context).toBeDefined();
 
       if (typeof typeofConfig?.context === "function") {
-        const mockNode = { text: "myVariable" } as any;
+        const mockNode = create_simple_mock_node("identifier", "myVariable");
         const context = typeofConfig.context(mockNode);
 
         expect(context?.typeof_target).toBe("myVariable");
@@ -906,20 +983,26 @@ describe("TypeScript Language Configuration", () => {
       expect(optionalParamConfig?.context).toBeDefined();
 
       if (typeof optionalParamConfig?.modifiers === "function") {
-        const modifiers = optionalParamConfig.modifiers({} as any);
+        const modifiers = optionalParamConfig.modifiers(
+          create_simple_mock_node()
+        );
         expect(modifiers?.is_optional).toBe(true);
       }
 
       if (typeof optionalParamConfig?.context === "function") {
-        const mockNode = {
-          text: "optionalParam",
-          parent: {
-            childForFieldName: (field: string) => {
-              if (field === "type") return { text: "string" };
-              return null;
-            },
-          },
-        } as any;
+        const mockNode = create_simple_mock_node(
+          "identifier",
+          "optionalParam",
+          {
+            parent: create_simple_mock_node("parent", "parent", {
+              childForFieldName: (field: string) => {
+                if (field === "type")
+                  return create_simple_mock_node("identifier", "string");
+                return null;
+              },
+            }),
+          }
+        );
 
         const context = optionalParamConfig.context(mockNode);
 
@@ -933,19 +1016,19 @@ describe("TypeScript Language Configuration", () => {
       expect(paramPropertyConfig?.context).toBeDefined();
 
       if (typeof paramPropertyConfig?.context === "function") {
-        const mockNode = {
-          text: "name",
-          parent: {
+        const mockNode = create_simple_mock_node("identifier", "name", {
+          parent: create_simple_mock_node("parent", "parent", {
             children: [
-              { type: "accessibility_modifier", text: "private" },
-              { type: "readonly" },
+              create_simple_mock_node("accessibility_modifier", "private"),
+              create_simple_mock_node("readonly", "readonly"),
             ],
             childForFieldName: (field: string) => {
-              if (field === "type") return { text: "string" };
+              if (field === "type")
+                return create_simple_mock_node("identifier", "string");
               return null;
             },
-          },
-        } as any;
+          }),
+        });
 
         const context = paramPropertyConfig.context(mockNode);
 
@@ -963,7 +1046,10 @@ describe("TypeScript Language Configuration", () => {
       expect(typeAliasValueConfig?.context).toBeDefined();
 
       if (typeof typeAliasValueConfig?.context === "function") {
-        const mockNode = { text: "T extends string ? U | V : T & W" } as any;
+        const mockNode = create_simple_mock_node(
+          "identifier",
+          "T extends string ? U | V : T & W"
+        );
         const context = typeAliasValueConfig.context(mockNode);
 
         expect(context).toBeDefined();
@@ -975,7 +1061,10 @@ describe("TypeScript Language Configuration", () => {
         TYPESCRIPT_CAPTURE_CONFIG.get("type.alias.value");
 
       if (typeof typeAliasValueConfig?.context === "function") {
-        const mockNode = { text: "{ [K in keyof T]: T[K] }" } as any;
+        const mockNode = create_simple_mock_node(
+          "identifier",
+          "{ [K in keyof T]: T[K] }"
+        );
         const context = typeAliasValueConfig.context(mockNode);
 
         expect(context).toBeDefined();
@@ -1008,7 +1097,7 @@ describe("TypeScript Language Configuration", () => {
           interfaceConfig.context!(undefined as any);
         }).toThrow();
 
-        const result = interfaceConfig.context({} as any);
+        const result = interfaceConfig.context(create_simple_mock_node());
         expect(result).toBeDefined();
       }
     });
@@ -1016,7 +1105,9 @@ describe("TypeScript Language Configuration", () => {
     it("should handle missing parent nodes", () => {
       const typeAliasConfig = TYPESCRIPT_CAPTURE_CONFIG.get("def.type_alias");
       if (typeof typeAliasConfig?.context === "function") {
-        const mockNode = { text: "MyType", parent: null } as any;
+        const mockNode = create_simple_mock_node("identifier", "MyType", {
+          parent: null,
+        });
 
         expect(() => {
           typeAliasConfig.context!(mockNode);
@@ -1027,13 +1118,12 @@ describe("TypeScript Language Configuration", () => {
     it("should handle missing childForFieldName methods", () => {
       const classConfig = TYPESCRIPT_CAPTURE_CONFIG.get("def.class");
       if (typeof classConfig?.context === "function") {
-        const mockNode = {
-          text: "MyClass",
-          parent: {
+        const mockNode = create_simple_mock_node("identifier", "MyClass", {
+          parent: create_simple_mock_node("parent", "parent", {
             // Missing childForFieldName method
             children: [],
-          },
-        } as any;
+          }),
+        });
 
         expect(() => {
           classConfig.context!(mockNode);
@@ -1046,7 +1136,7 @@ describe("TypeScript Language Configuration", () => {
         TYPESCRIPT_CAPTURE_CONFIG.get("class.type_params");
       if (typeof classTypeParamsConfig?.context === "function") {
         // Test with malformed type parameters
-        const mockNode = { text: "<<T,," } as any;
+        const mockNode = create_simple_mock_node("identifier", "<<T,,");
         const context = classTypeParamsConfig.context(mockNode);
 
         expect(context?.type_params).toBe("<<T,,");
@@ -1056,12 +1146,11 @@ describe("TypeScript Language Configuration", () => {
     it("should handle invalid access modifier structures", () => {
       const methodConfig = TYPESCRIPT_CAPTURE_CONFIG.get("def.method");
       if (typeof methodConfig?.context === "function") {
-        const mockNode = {
-          text: "method",
-          parent: {
-            children: null, // Invalid children structure
-          },
-        } as any;
+        const mockNode = create_simple_mock_node("identifier", "method", {
+          parent: create_simple_mock_node("parent", "parent", {
+            children: undefined, // Invalid children structure
+          }),
+        });
 
         expect(() => {
           methodConfig.context!(mockNode);
@@ -1073,25 +1162,112 @@ describe("TypeScript Language Configuration", () => {
       const genericTypeRefConfig =
         TYPESCRIPT_CAPTURE_CONFIG.get("ref.type.generic");
       if (typeof genericTypeRefConfig?.context === "function") {
-        const mockNode = {
-          text: "ComplexType",
-          parent: {
+        const mockNode = create_simple_mock_node("identifier", "ComplexType", {
+          parent: create_simple_mock_node("parent", "parent", {
             childForFieldName: (field: string) => {
               if (field === "type_arguments") {
-                return {
-                  text: "<Map<string, Array<Promise<T | U>>>, WeakMap<K, V>>",
-                };
+                return create_simple_mock_node(
+                  "identifier",
+                  "<Map<string, Array<Promise<T | U>>>, WeakMap<K, V>>"
+                );
               }
               return null;
             },
-          },
-        } as any;
+          }),
+        });
 
         const context = genericTypeRefConfig.context(mockNode);
 
         expect(context?.type_name).toBe("ComplexType");
         expect(context?.is_generic).toBe(true);
       }
+    });
+  });
+
+  describe("Static vs Instance Method Detection", () => {
+    it("should detect static method calls on capitalized identifiers", () => {
+      const config = TYPESCRIPT_CAPTURE_CONFIG;
+      const mapping = config.get("static_method_call");
+
+      expect(mapping).toBeDefined();
+      expect(mapping?.category).toBe(SemanticCategory.REFERENCE);
+      expect(mapping?.entity).toBe(SemanticEntity.METHOD);
+
+      // Create a real node from TypeScript code
+      const code = "MyClass.staticMethod()";
+      const tree = parser.parse(code);
+      const callNode = tree.rootNode.child(0); // The call_expression
+
+      if (mapping?.context && callNode) {
+        const context = mapping.context(callNode);
+        expect(context?.is_static).toBe(true);
+        expect(context?.is_call).toBe(true);
+      }
+    });
+
+    it("should detect instance method calls on lowercase identifiers", () => {
+      const config = TYPESCRIPT_CAPTURE_CONFIG;
+      const mapping = config.get("instance_method_call");
+
+      expect(mapping).toBeDefined();
+      expect(mapping?.category).toBe(SemanticCategory.REFERENCE);
+      expect(mapping?.entity).toBe(SemanticEntity.METHOD);
+
+      // Create a real node from TypeScript code
+      const code = "instance.method()";
+      const tree = parser.parse(code);
+      const callNode = tree.rootNode.child(0); // The call_expression
+
+      if (mapping?.context && callNode) {
+        const context = mapping.context(callNode);
+        expect(context?.is_static).toBe(false);
+        expect(context?.is_call).toBe(true);
+      }
+    });
+
+    it("should mark class references as static context", () => {
+      const config = TYPESCRIPT_CAPTURE_CONFIG;
+      const mapping = config.get("class.ref");
+
+      expect(mapping).toBeDefined();
+      expect(mapping?.category).toBe(SemanticCategory.REFERENCE);
+      expect(mapping?.entity).toBe(SemanticEntity.CLASS);
+
+      const mockNode = create_simple_mock_node("identifier", "MyClass");
+      const context = mapping?.context?.(mockNode);
+      expect(context?.is_static).toBe(true);
+    });
+
+    it("should mark method.static captures as static", () => {
+      const config = TYPESCRIPT_CAPTURE_CONFIG;
+      const mapping = config.get("method.static");
+
+      expect(mapping).toBeDefined();
+      const mockNode = create_simple_mock_node("identifier", "staticMethod");
+      const context = mapping?.context?.(mockNode);
+      expect(context?.is_static).toBe(true);
+    });
+
+    it("should mark instance references as non-static", () => {
+      const config = TYPESCRIPT_CAPTURE_CONFIG;
+      const mapping = config.get("instance.ref");
+
+      expect(mapping).toBeDefined();
+      expect(mapping?.entity).toBe(SemanticEntity.VARIABLE);
+
+      const mockNode = create_simple_mock_node("identifier", "instance");
+      const context = mapping?.context?.(mockNode);
+      expect(context?.is_static).toBe(false);
+    });
+
+    it("should mark method.instance captures as non-static", () => {
+      const config = TYPESCRIPT_CAPTURE_CONFIG;
+      const mapping = config.get("method.instance");
+
+      expect(mapping).toBeDefined();
+      const mockNode = create_simple_mock_node("identifier", "instanceMethod");
+      const context = mapping?.context?.(mockNode);
+      expect(context?.is_static).toBe(false);
     });
   });
 });

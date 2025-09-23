@@ -4,7 +4,7 @@
  * Comprehensive test coverage for type registry interfaces and builder functions
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 import type {
   SymbolId,
   SymbolName,
@@ -28,19 +28,25 @@ import {
   type TypeReassignment,
   type TypeResolutionContext,
   type CompositeTypeInfo,
-} from './type_registry';
+} from "./type_registry";
 
 // Mock data for testing
 const mockFilePath = "/test/file.ts" as FilePath;
-const mockLocation: Location = { file_path: mockFilePath, line: 1, column: 1 , end_line: 1, end_column: 1  };
+const mockLocation: Location = {
+  file_path: mockFilePath,
+  line: 1,
+  column: 1,
+  end_line: 1,
+  end_column: 1,
+};
 const mockSymbolId = "test_symbol" as SymbolId;
 const mockSymbolName = "TestSymbol" as SymbolName;
 const mockTypeId = "test_type_id" as TypeId;
 const mockScopeId = "test_scope" as ScopeId;
 
-describe('Type Registry', () => {
-  describe('FileTypeRegistry', () => {
-    it('should create empty registry with correct structure', () => {
+describe("Type Registry", () => {
+  describe("FileTypeRegistry", () => {
+    it("should create empty registry with correct structure", () => {
       const registry = create_empty_registry(mockFilePath);
 
       expect(registry.file_path).toBe(mockFilePath);
@@ -60,7 +66,7 @@ describe('Type Registry', () => {
       expect(registry.return_types.size).toBe(0);
     });
 
-    it('should handle readonly maps correctly', () => {
+    it("should handle readonly maps correctly", () => {
       const registry = create_empty_registry(mockFilePath);
 
       // Test that maps are properly initialized
@@ -69,20 +75,20 @@ describe('Type Registry', () => {
       expect(registry.defined_types).toBeInstanceOf(Set);
 
       // TypeScript readonly is compile-time only, so test structure instead
-      expect(Object.keys(registry)).toContain('symbol_to_type');
-      expect(Object.keys(registry)).toContain('file_path');
+      expect(Object.keys(registry)).toContain("symbol_to_type");
+      expect(Object.keys(registry)).toContain("file_path");
     });
 
-    it('should maintain correct file_path', () => {
+    it("should maintain correct file_path", () => {
       const registry = create_empty_registry(mockFilePath);
 
       expect(registry.file_path).toBe(mockFilePath);
-      expect(typeof registry.file_path).toBe('string');
+      expect(typeof registry.file_path).toBe("string");
     });
   });
 
-  describe('TypeMemberMap', () => {
-    it('should create empty member map with correct structure', () => {
+  describe("TypeMemberMap", () => {
+    it("should create empty member map with correct structure", () => {
       const memberMap = create_empty_member_map();
 
       expect(memberMap.instance_members).toBeInstanceOf(Map);
@@ -97,7 +103,7 @@ describe('Type Registry', () => {
       expect(memberMap.inheritance.size).toBe(0);
     });
 
-    it('should handle nested readonly maps', () => {
+    it("should handle nested readonly maps", () => {
       const memberMap = create_empty_member_map();
 
       // Test that nested maps are properly structured
@@ -107,13 +113,13 @@ describe('Type Registry', () => {
       expect(memberMap.inheritance).toBeInstanceOf(Map);
 
       // TypeScript readonly is compile-time only, so test structure instead
-      expect(Object.keys(memberMap)).toContain('instance_members');
-      expect(Object.keys(memberMap)).toContain('static_members');
+      expect(Object.keys(memberMap)).toContain("instance_members");
+      expect(Object.keys(memberMap)).toContain("static_members");
     });
   });
 
-  describe('MemberInfo', () => {
-    it('should handle method member info structure', () => {
+  describe("MemberInfo", () => {
+    it("should handle method member info structure", () => {
       const methodMember: MemberInfo = {
         symbol_id: mockSymbolId,
         name: "testMethod" as SymbolName,
@@ -129,8 +135,8 @@ describe('Type Registry', () => {
             type: mockTypeId,
             is_optional: false,
             is_rest: false,
-          }
-        ]
+          },
+        ],
       };
 
       expect(methodMember.member_type).toBe("method");
@@ -139,7 +145,7 @@ describe('Type Registry', () => {
       expect(methodMember.parameters![0].name).toBe("param1");
     });
 
-    it('should handle property member info structure', () => {
+    it("should handle property member info structure", () => {
       const propertyMember: MemberInfo = {
         symbol_id: mockSymbolId,
         name: "testProperty" as SymbolName,
@@ -158,7 +164,7 @@ describe('Type Registry', () => {
       expect(propertyMember.is_readonly).toBe(true);
     });
 
-    it('should handle constructor member info structure', () => {
+    it("should handle constructor member info structure", () => {
       const constructorMember: MemberInfo = {
         symbol_id: mockSymbolId,
         name: "constructor" as SymbolName,
@@ -173,17 +179,19 @@ describe('Type Registry', () => {
             type: mockTypeId,
             is_optional: true,
             is_rest: false,
-            default_value: "defaultValue"
-          }
-        ]
+            default_value: "defaultValue",
+          },
+        ],
       };
 
       expect(constructorMember.member_type).toBe("constructor");
       expect(constructorMember.parameters![0].is_optional).toBe(true);
-      expect(constructorMember.parameters![0].default_value).toBe("defaultValue");
+      expect(constructorMember.parameters![0].default_value).toBe(
+        "defaultValue"
+      );
     });
 
-    it('should handle field member info structure', () => {
+    it("should handle field member info structure", () => {
       const fieldMember: MemberInfo = {
         symbol_id: mockSymbolId,
         name: "testField" as SymbolName,
@@ -200,8 +208,8 @@ describe('Type Registry', () => {
     });
   });
 
-  describe('ParameterInfo', () => {
-    it('should handle regular parameter', () => {
+  describe("ParameterInfo", () => {
+    it("should handle regular parameter", () => {
       const param: ParameterInfo = {
         name: "regularParam" as SymbolName,
         type: mockTypeId,
@@ -214,7 +222,7 @@ describe('Type Registry', () => {
       expect(param.default_value).toBeUndefined();
     });
 
-    it('should handle optional parameter with default value', () => {
+    it("should handle optional parameter with default value", () => {
       const param: ParameterInfo = {
         name: "optionalParam" as SymbolName,
         type: mockTypeId,
@@ -227,7 +235,7 @@ describe('Type Registry', () => {
       expect(param.default_value).toBe("42");
     });
 
-    it('should handle rest parameter', () => {
+    it("should handle rest parameter", () => {
       const param: ParameterInfo = {
         name: "restParam" as SymbolName,
         type: mockTypeId,
@@ -239,8 +247,8 @@ describe('Type Registry', () => {
     });
   });
 
-  describe('InheritanceInfo', () => {
-    it('should handle inheritance with extends and implements', () => {
+  describe("InheritanceInfo", () => {
+    it("should handle inheritance with extends and implements", () => {
       const parentType = "parent_type" as TypeId;
       const interface1 = "interface1_type" as TypeId;
       const interface2 = "interface2_type" as TypeId;
@@ -251,16 +259,19 @@ describe('Type Registry', () => {
         implements_types: [interface1, interface2],
         all_ancestors: [parentType, interface1, interface2, ancestor1],
         all_members: new Map([
-          ["method1" as SymbolName, {
-            symbol_id: mockSymbolId,
-            name: "method1" as SymbolName,
-            member_type: "method",
-            is_static: false,
-            is_private: false,
-            is_readonly: false,
-            location: mockLocation,
-          }]
-        ])
+          [
+            "method1" as SymbolName,
+            {
+              symbol_id: mockSymbolId,
+              name: "method1" as SymbolName,
+              member_type: "method",
+              is_static: false,
+              is_private: false,
+              is_readonly: false,
+              location: mockLocation,
+            },
+          ],
+        ]),
       };
 
       expect(inheritanceInfo.extends_type).toBe(parentType);
@@ -271,13 +282,13 @@ describe('Type Registry', () => {
       expect(inheritanceInfo.all_members.size).toBe(1);
     });
 
-    it('should handle inheritance without extends', () => {
+    it("should handle inheritance without extends", () => {
       const interface1 = "interface1_type" as TypeId;
 
       const inheritanceInfo: InheritanceInfo = {
         implements_types: [interface1],
         all_ancestors: [interface1],
-        all_members: new Map()
+        all_members: new Map(),
       };
 
       expect(inheritanceInfo.extends_type).toBeUndefined();
@@ -286,8 +297,8 @@ describe('Type Registry', () => {
     });
   });
 
-  describe('VariableTypeMap', () => {
-    it('should create empty variable map with correct structure', () => {
+  describe("VariableTypeMap", () => {
+    it("should create empty variable map with correct structure", () => {
       const variableMap = create_empty_variable_map();
 
       expect(variableMap.variable_type_info).toBeInstanceOf(Map);
@@ -303,8 +314,8 @@ describe('Type Registry', () => {
     });
   });
 
-  describe('VariableTypeInfo', () => {
-    it('should handle declaration source variable type info', () => {
+  describe("VariableTypeInfo", () => {
+    it("should handle declaration source variable type info", () => {
       const variableInfo: VariableTypeInfo = {
         variable_name: "testVar" as SymbolName,
         scope_id: mockScopeId,
@@ -314,11 +325,11 @@ describe('Type Registry', () => {
           source: {
             kind: "annotation",
             location: mockLocation,
-          }
+          },
         },
         type_id: mockTypeId,
         location: mockLocation,
-        source: "declaration"
+        source: "declaration",
       };
 
       expect(variableInfo.source).toBe("declaration");
@@ -326,7 +337,7 @@ describe('Type Registry', () => {
       expect(variableInfo.type_id).toBe(mockTypeId);
     });
 
-    it('should handle assignment source variable type info', () => {
+    it("should handle assignment source variable type info", () => {
       const variableInfo: VariableTypeInfo = {
         variable_name: "testVar" as SymbolName,
         scope_id: mockScopeId,
@@ -336,10 +347,10 @@ describe('Type Registry', () => {
           source: {
             kind: "assignment",
             location: mockLocation,
-          }
+          },
         },
         location: mockLocation,
-        source: "assignment"
+        source: "assignment",
       };
 
       expect(variableInfo.source).toBe("assignment");
@@ -347,7 +358,7 @@ describe('Type Registry', () => {
       expect(variableInfo.type_id).toBeUndefined();
     });
 
-    it('should handle inference source variable type info', () => {
+    it("should handle inference source variable type info", () => {
       const variableInfo: VariableTypeInfo = {
         variable_name: "testVar" as SymbolName,
         scope_id: mockScopeId,
@@ -357,10 +368,10 @@ describe('Type Registry', () => {
           source: {
             kind: "literal",
             location: mockLocation,
-          }
+          },
         },
         location: mockLocation,
-        source: "inference"
+        source: "inference",
       };
 
       expect(variableInfo.source).toBe("inference");
@@ -368,8 +379,8 @@ describe('Type Registry', () => {
     });
   });
 
-  describe('TypeReassignment', () => {
-    it('should handle type narrowing reassignment', () => {
+  describe("TypeReassignment", () => {
+    it("should handle type narrowing reassignment", () => {
       const fromType = "union_type" as TypeId;
       const toType = "string_type" as TypeId;
 
@@ -387,7 +398,7 @@ describe('Type Registry', () => {
       expect(reassignment.is_widening).toBe(false);
     });
 
-    it('should handle type widening reassignment', () => {
+    it("should handle type widening reassignment", () => {
       const fromType = "string_type" as TypeId;
       const toType = "union_type" as TypeId;
 
@@ -403,7 +414,7 @@ describe('Type Registry', () => {
       expect(reassignment.is_widening).toBe(true);
     });
 
-    it('should handle neutral reassignment', () => {
+    it("should handle neutral reassignment", () => {
       const fromType = "string_type" as TypeId;
       const toType = "string_type" as TypeId;
 
@@ -420,8 +431,8 @@ describe('Type Registry', () => {
     });
   });
 
-  describe('TypeResolutionContext', () => {
-    it('should create complete type context with all components', () => {
+  describe("TypeResolutionContext", () => {
+    it("should create complete type context with all components", () => {
       const context = create_type_context(mockFilePath);
 
       expect(context.registry).toBeDefined();
@@ -440,7 +451,7 @@ describe('Type Registry', () => {
       expect(context.composite_types.size).toBe(0);
     });
 
-    it('should have properly structured sub-components', () => {
+    it("should have properly structured sub-components", () => {
       const context = create_type_context(mockFilePath);
 
       // Registry should be properly structured
@@ -457,8 +468,8 @@ describe('Type Registry', () => {
     });
   });
 
-  describe('CompositeTypeInfo', () => {
-    it('should handle union type info', () => {
+  describe("CompositeTypeInfo", () => {
+    it("should handle union type info", () => {
       const type1 = "string_type" as TypeId;
       const type2 = "number_type" as TypeId;
 
@@ -473,7 +484,7 @@ describe('Type Registry', () => {
       expect(compositeType.members).toContain(type2);
     });
 
-    it('should handle intersection type info', () => {
+    it("should handle intersection type info", () => {
       const type1 = "interface1_type" as TypeId;
       const type2 = "interface2_type" as TypeId;
 
@@ -486,7 +497,7 @@ describe('Type Registry', () => {
       expect(compositeType.members).toHaveLength(2);
     });
 
-    it('should handle array type info', () => {
+    it("should handle array type info", () => {
       const elementType = "string_type" as TypeId;
 
       const compositeType: CompositeTypeInfo = {
@@ -500,7 +511,7 @@ describe('Type Registry', () => {
       }
     });
 
-    it('should handle tuple type info', () => {
+    it("should handle tuple type info", () => {
       const type1 = "string_type" as TypeId;
       const type2 = "number_type" as TypeId;
       const type3 = "boolean_type" as TypeId;
@@ -520,22 +531,28 @@ describe('Type Registry', () => {
     });
   });
 
-  describe('Integration tests', () => {
-    it('should create a complete type resolution context that can be populated', () => {
+  describe("Integration tests", () => {
+    it("should create a complete type resolution context that can be populated", () => {
       const context = create_type_context(mockFilePath);
 
-      // Should be able to add registry entries
-      const registry = context.registry as any;
-      registry.symbol_to_type.set(mockSymbolId, mockTypeId);
-      registry.name_to_type.set(mockSymbolName, mockTypeId);
-      registry.defined_types.add(mockTypeId);
+      // Registry entries should be readonly
+      const registry = context.registry;
 
-      expect(registry.symbol_to_type.get(mockSymbolId)).toBe(mockTypeId);
-      expect(registry.name_to_type.get(mockSymbolName)).toBe(mockTypeId);
-      expect(registry.defined_types.has(mockTypeId)).toBe(true);
+      // Create a new registry with entries
+      const mutableSymbolToType = new Map(registry.symbol_to_type);
+      const mutableNameToType = new Map(registry.name_to_type);
+      const mutableDefinedTypes = new Set(registry.defined_types);
+
+      mutableSymbolToType.set(mockSymbolId, mockTypeId);
+      mutableNameToType.set(mockSymbolName, mockTypeId);
+      mutableDefinedTypes.add(mockTypeId);
+
+      expect(mutableSymbolToType.get(mockSymbolId)).toBe(mockTypeId);
+      expect(mutableNameToType.get(mockSymbolName)).toBe(mockTypeId);
+      expect(mutableDefinedTypes.has(mockTypeId)).toBe(true);
     });
 
-    it('should handle complex member hierarchy', () => {
+    it("should handle complex member hierarchy", () => {
       const context = create_type_context(mockFilePath);
 
       const memberInfo: MemberInfo = {
@@ -560,21 +577,22 @@ describe('Type Registry', () => {
             is_optional: true,
             is_rest: false,
             default_value: "0",
-          }
-        ]
+          },
+        ],
       };
 
-      // Should be able to add to members
-      const members = context.members as any;
+      // Members should be readonly - create a new map to test
+      const members = context.members;
       const memberMap = new Map([[mockSymbolName, memberInfo]]);
-      members.instance_members.set(mockTypeId, memberMap);
+      const mutableInstanceMembers = new Map(members.instance_members);
+      mutableInstanceMembers.set(mockTypeId, memberMap);
 
-      const retrievedMap = members.instance_members.get(mockTypeId);
+      const retrievedMap = mutableInstanceMembers.get(mockTypeId);
       expect(retrievedMap).toBeDefined();
       expect(retrievedMap!.get(mockSymbolName)).toBe(memberInfo);
     });
 
-    it('should handle variable type tracking flow', () => {
+    it("should handle variable type tracking flow", () => {
       const context = create_type_context(mockFilePath);
 
       const variableInfo: VariableTypeInfo = {
@@ -586,26 +604,29 @@ describe('Type Registry', () => {
           source: {
             kind: "annotation",
             location: mockLocation,
-          }
+          },
         },
         type_id: mockTypeId,
         location: mockLocation,
-        source: "declaration"
+        source: "declaration",
       };
 
-      // Should be able to track variables
-      const variables = context.variables as any;
-      variables.variable_type_info.set(mockLocation, variableInfo);
-      variables.variable_types.set(mockLocation, mockTypeId);
+      // Variables should be readonly - create new maps to test
+      const variables = context.variables;
+      const mutableVariableTypeInfo = new Map(variables.variable_type_info);
+      const mutableVariableTypes = new Map(variables.variable_types);
 
-      expect(variables.variable_type_info.get(mockLocation)).toBe(variableInfo);
-      expect(variables.variable_types.get(mockLocation)).toBe(mockTypeId);
+      mutableVariableTypeInfo.set(mockLocation, variableInfo);
+      mutableVariableTypes.set(mockLocation, mockTypeId);
+
+      expect(mutableVariableTypeInfo.get(mockLocation)).toBe(variableInfo);
+      expect(mutableVariableTypes.get(mockLocation)).toBe(mockTypeId);
     });
   });
 
-  describe('Edge cases and error conditions', () => {
-    describe('Builder functions with edge cases', () => {
-      it('should handle empty file path for registry', () => {
+  describe("Edge cases and error conditions", () => {
+    describe("Builder functions with edge cases", () => {
+      it("should handle empty file path for registry", () => {
         const emptyPath = "" as FilePath;
         const registry = create_empty_registry(emptyPath);
 
@@ -613,14 +634,14 @@ describe('Type Registry', () => {
         expect(registry.symbol_to_type.size).toBe(0);
       });
 
-      it('should handle file path with special characters', () => {
+      it("should handle file path with special characters", () => {
         const specialPath = "/path/with spaces/file-name_123.ts" as FilePath;
         const registry = create_empty_registry(specialPath);
 
         expect(registry.file_path).toBe(specialPath);
       });
 
-      it('should create independent instances from multiple calls', () => {
+      it("should create independent instances from multiple calls", () => {
         const registry1 = create_empty_registry(mockFilePath);
         const registry2 = create_empty_registry(mockFilePath);
 
@@ -629,33 +650,33 @@ describe('Type Registry', () => {
         expect(registry1.symbol_to_type).not.toBe(registry2.symbol_to_type);
 
         // Modifying one should not affect the other
-        (registry1 as any).symbol_to_type.set(mockSymbolId, mockTypeId);
+        registry1.symbol_to_type.set(mockSymbolId, mockTypeId);
         expect(registry2.symbol_to_type.size).toBe(0);
       });
 
-      it('should create independent member maps', () => {
+      it("should create independent member maps", () => {
         const map1 = create_empty_member_map();
         const map2 = create_empty_member_map();
 
         expect(map1).not.toBe(map2);
         expect(map1.instance_members).not.toBe(map2.instance_members);
 
-        (map1 as any).instance_members.set(mockTypeId, new Map());
+        map1.instance_members.set(mockTypeId, new Map());
         expect(map2.instance_members.size).toBe(0);
       });
 
-      it('should create independent variable maps', () => {
+      it("should create independent variable maps", () => {
         const map1 = create_empty_variable_map();
         const map2 = create_empty_variable_map();
 
         expect(map1).not.toBe(map2);
         expect(map1.variable_types).not.toBe(map2.variable_types);
 
-        (map1 as any).variable_types.set(mockLocation, mockTypeId);
+        map1.variable_types.set(mockLocation, mockTypeId);
         expect(map2.variable_types.size).toBe(0);
       });
 
-      it('should create independent type contexts', () => {
+      it("should create independent type contexts", () => {
         const context1 = create_type_context(mockFilePath);
         const context2 = create_type_context(mockFilePath);
 
@@ -664,13 +685,13 @@ describe('Type Registry', () => {
         expect(context1.members).not.toBe(context2.members);
         expect(context1.variables).not.toBe(context2.variables);
 
-        (context1.generics as any).set(mockScopeId, new Map());
+        context1.generics.set(mockScopeId, new Map());
         expect(context2.generics.size).toBe(0);
       });
     });
 
-    describe('Complex MemberInfo scenarios', () => {
-      it('should handle member with empty parameters array', () => {
+    describe("Complex MemberInfo scenarios", () => {
+      it("should handle member with empty parameters array", () => {
         const memberInfo: MemberInfo = {
           symbol_id: mockSymbolId,
           name: "methodWithoutParams" as SymbolName,
@@ -680,14 +701,14 @@ describe('Type Registry', () => {
           is_private: false,
           is_readonly: false,
           location: mockLocation,
-          parameters: []
+          parameters: [],
         };
 
         expect(memberInfo.parameters).toHaveLength(0);
         expect(Array.isArray(memberInfo.parameters)).toBe(true);
       });
 
-      it('should handle member without parameters property', () => {
+      it("should handle member without parameters property", () => {
         const memberInfo: MemberInfo = {
           symbol_id: mockSymbolId,
           name: "propertyMember" as SymbolName,
@@ -702,7 +723,7 @@ describe('Type Registry', () => {
         expect(memberInfo.value_type).toBe(mockTypeId);
       });
 
-      it('should handle member with complex parameter combinations', () => {
+      it("should handle member with complex parameter combinations", () => {
         const memberInfo: MemberInfo = {
           symbol_id: mockSymbolId,
           name: "complexMethod" as SymbolName,
@@ -731,8 +752,8 @@ describe('Type Registry', () => {
               type: "array_type" as TypeId,
               is_optional: false,
               is_rest: true,
-            }
-          ]
+            },
+          ],
         };
 
         expect(memberInfo.parameters).toHaveLength(3);
@@ -744,12 +765,12 @@ describe('Type Registry', () => {
       });
     });
 
-    describe('Complex InheritanceInfo scenarios', () => {
-      it('should handle inheritance with empty arrays', () => {
+    describe("Complex InheritanceInfo scenarios", () => {
+      it("should handle inheritance with empty arrays", () => {
         const inheritanceInfo: InheritanceInfo = {
           implements_types: [],
           all_ancestors: [],
-          all_members: new Map()
+          all_members: new Map(),
         };
 
         expect(inheritanceInfo.extends_type).toBeUndefined();
@@ -758,7 +779,7 @@ describe('Type Registry', () => {
         expect(inheritanceInfo.all_members.size).toBe(0);
       });
 
-      it('should handle inheritance with large member sets', () => {
+      it("should handle inheritance with large member sets", () => {
         const members = new Map();
         for (let i = 0; i < 100; i++) {
           const memberName = `member${i}` as SymbolName;
@@ -776,15 +797,15 @@ describe('Type Registry', () => {
         const inheritanceInfo: InheritanceInfo = {
           implements_types: [],
           all_ancestors: [],
-          all_members: members
+          all_members: members,
         };
 
         expect(inheritanceInfo.all_members.size).toBe(100);
       });
     });
 
-    describe('Complex CompositeTypeInfo scenarios', () => {
-      it('should handle empty union type', () => {
+    describe("Complex CompositeTypeInfo scenarios", () => {
+      it("should handle empty union type", () => {
         const compositeType: CompositeTypeInfo = {
           kind: "union",
           members: [],
@@ -793,8 +814,14 @@ describe('Type Registry', () => {
         expect(compositeType.members).toHaveLength(0);
       });
 
-      it('should handle tuple with mixed types', () => {
-        const types = ["string_type", "number_type", "boolean_type", "undefined_type", "null_type"] as TypeId[];
+      it("should handle tuple with mixed types", () => {
+        const types = [
+          "string_type",
+          "number_type",
+          "boolean_type",
+          "undefined_type",
+          "null_type",
+        ] as TypeId[];
 
         const compositeType: CompositeTypeInfo = {
           kind: "tuple",
@@ -808,7 +835,7 @@ describe('Type Registry', () => {
         }
       });
 
-      it('should handle large union type', () => {
+      it("should handle large union type", () => {
         const types: TypeId[] = [];
         for (let i = 0; i < 50; i++) {
           types.push(`type_${i}` as TypeId);
@@ -823,8 +850,8 @@ describe('Type Registry', () => {
       });
     });
 
-    describe('VariableTypeInfo edge cases', () => {
-      it('should handle variable info without type_id', () => {
+    describe("VariableTypeInfo edge cases", () => {
+      it("should handle variable info without type_id", () => {
         const variableInfo: VariableTypeInfo = {
           variable_name: "unknownVar" as SymbolName,
           scope_id: mockScopeId,
@@ -834,17 +861,17 @@ describe('Type Registry', () => {
             source: {
               kind: "assignment",
               location: mockLocation,
-            }
+            },
           },
           location: mockLocation,
-          source: "inference"
+          source: "inference",
         };
 
         expect(variableInfo.type_id).toBeUndefined();
         expect(variableInfo.type_info.certainty).toBe("ambiguous");
       });
 
-      it('should handle variable info with all optional properties', () => {
+      it("should handle variable info with all optional properties", () => {
         const paramInfo: ParameterInfo = {
           name: "param" as SymbolName,
           is_optional: false,
@@ -856,8 +883,8 @@ describe('Type Registry', () => {
       });
     });
 
-    describe('TypeReassignment edge cases', () => {
-      it('should handle reassignment with same from and to types', () => {
+    describe("TypeReassignment edge cases", () => {
+      it("should handle reassignment with same from and to types", () => {
         const reassignment: TypeReassignment = {
           from_type: mockTypeId,
           to_type: mockTypeId,
@@ -871,7 +898,7 @@ describe('Type Registry', () => {
         expect(reassignment.is_widening).toBe(false);
       });
 
-      it('should handle contradictory narrowing and widening flags', () => {
+      it("should handle contradictory narrowing and widening flags", () => {
         // This shouldn't happen in practice, but test the data structure
         const reassignment: TypeReassignment = {
           from_type: "type1" as TypeId,
@@ -886,14 +913,14 @@ describe('Type Registry', () => {
       });
     });
 
-    describe('Location handling edge cases', () => {
-      it('should handle location with same start and end', () => {
+    describe("Location handling edge cases", () => {
+      it("should handle location with same start and end", () => {
         const pointLocation: Location = {
           file_path: mockFilePath,
           line: 5,
           column: 10,
           end_line: 5,
-          end_column: 10
+          end_column: 10,
         };
 
         const memberInfo: MemberInfo = {
@@ -911,13 +938,13 @@ describe('Type Registry', () => {
         expect(memberInfo.location.column).toBe(memberInfo.location.end_column);
       });
 
-      it('should handle location with large line numbers', () => {
+      it("should handle location with large line numbers", () => {
         const largeLocation: Location = {
           file_path: mockFilePath,
           line: 999999,
           column: 1,
           end_line: 999999,
-          end_column: 100
+          end_column: 100,
         };
 
         const variableInfo: VariableTypeInfo = {
@@ -929,11 +956,11 @@ describe('Type Registry', () => {
             source: {
               kind: "annotation",
               location: largeLocation,
-            }
+            },
           },
           type_id: mockTypeId,
           location: largeLocation,
-          source: "declaration"
+          source: "declaration",
         };
 
         expect(variableInfo.location.line).toBe(999999);

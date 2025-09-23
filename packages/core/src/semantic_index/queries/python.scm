@@ -409,6 +409,20 @@
   arguments: (argument_list)
 ) @constructor_call
 
+; Static method call - object is a class identifier (capitalized)
+(call
+  function: (attribute
+    object: (identifier) @class.ref
+    attribute: (identifier) @method.static)
+  (#match? @class.ref "^[A-Z]")) @static_method_call
+
+; Instance method call - object is lowercase/instance
+(call
+  function: (attribute
+    object: (identifier) @instance.ref
+    attribute: (identifier) @method.instance)
+  (#not-match? @instance.ref "^[A-Z]")) @instance_method_call
+
 ; Attribute access
 (attribute
   object: (identifier) @ref.object

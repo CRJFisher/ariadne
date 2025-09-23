@@ -630,6 +630,20 @@
   property: (property_identifier) @ref.property.optional
 ) @member_access.optional
 
+; Static method call - object is a class identifier (capitalized)
+(call_expression
+  function: (member_expression
+    object: (identifier) @class.ref
+    property: (property_identifier) @method.static)
+  (#match? @class.ref "^[A-Z]")) @static_method_call
+
+; Instance method call - object is lowercase/instance
+(call_expression
+  function: (member_expression
+    object: (identifier) @instance.ref
+    property: (property_identifier) @method.instance)
+  (#not-match? @instance.ref "^[A-Z]")) @instance_method_call
+
 ; Type references (TypeScript)
 (type_identifier) @ref.type
 

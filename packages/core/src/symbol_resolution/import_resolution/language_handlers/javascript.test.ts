@@ -6,7 +6,12 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { resolve_js_module_path, match_js_import_to_export, resolve_node_modules_path, find_file_with_extensions } from "./javascript";
+import {
+  resolve_js_module_path,
+  match_js_import_to_export,
+  resolve_node_modules_path,
+  find_file_with_extensions,
+} from "./javascript";
 import type {
   FilePath,
   SymbolId,
@@ -67,7 +72,9 @@ describe("JavaScript/TypeScript Import Resolution", () => {
 
       it("resolves TypeScript extensions (.ts, .tsx)", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) => p === "/project/src/Component.tsx");
+        mock_exists.mockImplementation(
+          (p) => p === "/project/src/Component.tsx"
+        );
 
         const result = resolve_js_module_path(
           "./Component",
@@ -91,8 +98,8 @@ describe("JavaScript/TypeScript Import Resolution", () => {
 
       it("prefers .ts over .js when both exist", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/src/utils.ts" || p === "/project/src/utils.js"
+        mock_exists.mockImplementation(
+          (p) => p === "/project/src/utils.ts" || p === "/project/src/utils.js"
         );
 
         const result = resolve_js_module_path(
@@ -109,14 +116,15 @@ describe("JavaScript/TypeScript Import Resolution", () => {
         const mock_exists = vi.mocked(fs.existsSync);
         const mock_stats = vi.mocked(fs.statSync);
 
-        mock_exists.mockImplementation((p) =>
-          p === "/project/src/components" ||
-          p === "/project/src/components/index.js"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/project/src/components" ||
+            p === "/project/src/components/index.js"
         );
         mock_stats.mockReturnValue({
           isDirectory: () => true,
-          isFile: () => false
-        } as any);
+          isFile: () => false,
+        });
 
         const result = resolve_js_module_path(
           "./components",
@@ -130,14 +138,15 @@ describe("JavaScript/TypeScript Import Resolution", () => {
         const mock_exists = vi.mocked(fs.existsSync);
         const mock_stats = vi.mocked(fs.statSync);
 
-        mock_exists.mockImplementation((p) =>
-          p === "/project/src/components" ||
-          p === "/project/src/components/index.ts"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/project/src/components" ||
+            p === "/project/src/components/index.ts"
         );
         mock_stats.mockReturnValue({
           isDirectory: () => true,
-          isFile: () => false
-        } as any);
+          isFile: () => false,
+        });
 
         const result = resolve_js_module_path(
           "./components",
@@ -151,14 +160,15 @@ describe("JavaScript/TypeScript Import Resolution", () => {
         const mock_exists = vi.mocked(fs.existsSync);
         const mock_stats = vi.mocked(fs.statSync);
 
-        mock_exists.mockImplementation((p) =>
-          p === "/project/src/components" ||
-          p === "/project/src/components/index.tsx"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/project/src/components" ||
+            p === "/project/src/components/index.tsx"
         );
         mock_stats.mockReturnValue({
           isDirectory: () => true,
-          isFile: () => false
-        } as any);
+          isFile: () => false,
+        });
 
         const result = resolve_js_module_path(
           "./components",
@@ -175,8 +185,8 @@ describe("JavaScript/TypeScript Import Resolution", () => {
         mock_exists.mockImplementation((p) => p === "/project/src/empty");
         mock_stats.mockReturnValue({
           isDirectory: () => true,
-          isFile: () => false
-        } as any);
+          isFile: () => false,
+        });
 
         const result = resolve_js_module_path(
           "./empty",
@@ -244,11 +254,12 @@ describe("JavaScript/TypeScript Import Resolution", () => {
         const mock_exists = vi.mocked(fs.existsSync);
         const mock_read_file = vi.mocked(fs.readFileSync);
 
-        mock_exists.mockImplementation((p) =>
-          p === "/project/node_modules" ||
-          p === "/project/node_modules/lodash" ||
-          p === "/project/node_modules/lodash/package.json" ||
-          p === "/project/node_modules/lodash/index.js"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/project/node_modules" ||
+            p === "/project/node_modules/lodash" ||
+            p === "/project/node_modules/lodash/package.json" ||
+            p === "/project/node_modules/lodash/index.js"
         );
 
         mock_read_file.mockImplementation(() =>
@@ -267,10 +278,11 @@ describe("JavaScript/TypeScript Import Resolution", () => {
         const mock_exists = vi.mocked(fs.existsSync);
         const mock_read_file = vi.mocked(fs.readFileSync);
 
-        mock_exists.mockImplementation((p) =>
-          p === "/project/node_modules/@babel/core" ||
-          p === "/project/node_modules/@babel/core/package.json" ||
-          p === "/project/node_modules/@babel/core/lib/index.js"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/project/node_modules/@babel/core" ||
+            p === "/project/node_modules/@babel/core/package.json" ||
+            p === "/project/node_modules/@babel/core/lib/index.js"
         );
 
         mock_read_file.mockImplementation(() =>
@@ -290,11 +302,12 @@ describe("JavaScript/TypeScript Import Resolution", () => {
         const mock_read_file = vi.mocked(fs.readFileSync);
         const mock_stats = vi.mocked(fs.statSync);
 
-        mock_exists.mockImplementation((p) =>
-          p === "/project/node_modules/lodash" ||
-          p === "/project/node_modules/lodash/package.json" ||
-          p === "/project/node_modules/lodash/index.js" ||
-          p === "/project/node_modules/lodash/debounce.js"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/project/node_modules/lodash" ||
+            p === "/project/node_modules/lodash/package.json" ||
+            p === "/project/node_modules/lodash/index.js" ||
+            p === "/project/node_modules/lodash/debounce.js"
         );
 
         mock_read_file.mockImplementation(() =>
@@ -302,9 +315,11 @@ describe("JavaScript/TypeScript Import Resolution", () => {
         );
 
         mock_stats.mockImplementation((p) => ({
-          isDirectory: () => p.toString().includes("node_modules/lodash") && !p.toString().endsWith(".js"),
-          isFile: () => p.toString().endsWith(".js")
-        } as any));
+          isDirectory: () =>
+            p.toString().includes("node_modules/lodash") &&
+            !p.toString().endsWith(".js"),
+          isFile: () => p.toString().endsWith(".js"),
+        }));
 
         const result = resolve_js_module_path(
           "lodash/debounce",
@@ -319,12 +334,13 @@ describe("JavaScript/TypeScript Import Resolution", () => {
         const mock_read_file = vi.mocked(fs.readFileSync);
         const mock_stats = vi.mocked(fs.statSync);
 
-        mock_exists.mockImplementation((p) =>
-          p === "/project/node_modules/@babel/core" ||
-          p === "/project/node_modules/@babel/core/package.json" ||
-          p === "/project/node_modules/@babel/core/lib/index.js" ||
-          p === "/project/node_modules/@babel/core/lib/parser" ||
-          p === "/project/node_modules/@babel/core/lib/parser.js"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/project/node_modules/@babel/core" ||
+            p === "/project/node_modules/@babel/core/package.json" ||
+            p === "/project/node_modules/@babel/core/lib/index.js" ||
+            p === "/project/node_modules/@babel/core/lib/parser" ||
+            p === "/project/node_modules/@babel/core/lib/parser.js"
         );
 
         mock_read_file.mockImplementation(() =>
@@ -333,8 +349,8 @@ describe("JavaScript/TypeScript Import Resolution", () => {
 
         mock_stats.mockImplementation((p) => ({
           isDirectory: () => false,
-          isFile: () => p.toString().endsWith(".js")
-        } as any));
+          isFile: () => p.toString().endsWith(".js"),
+        }));
 
         const result = resolve_js_module_path(
           "@babel/core/lib/parser",
@@ -348,10 +364,11 @@ describe("JavaScript/TypeScript Import Resolution", () => {
         const mock_exists = vi.mocked(fs.existsSync);
         const mock_read_file = vi.mocked(fs.readFileSync);
 
-        mock_exists.mockImplementation((p) =>
-          p === "/project/node_modules/lodash" ||
-          p === "/project/node_modules/lodash/package.json" ||
-          p === "/project/node_modules/lodash/index.js"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/project/node_modules/lodash" ||
+            p === "/project/node_modules/lodash/package.json" ||
+            p === "/project/node_modules/lodash/index.js"
         );
 
         mock_read_file.mockImplementation(() =>
@@ -369,9 +386,10 @@ describe("JavaScript/TypeScript Import Resolution", () => {
       it("handles packages without package.json", () => {
         const mock_exists = vi.mocked(fs.existsSync);
 
-        mock_exists.mockImplementation((p) =>
-          p === "/project/node_modules/simple" ||
-          p === "/project/node_modules/simple/index.js"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/project/node_modules/simple" ||
+            p === "/project/node_modules/simple/index.js"
         );
 
         const result = resolve_js_module_path(
@@ -386,10 +404,11 @@ describe("JavaScript/TypeScript Import Resolution", () => {
         const mock_exists = vi.mocked(fs.existsSync);
         const mock_read_file = vi.mocked(fs.readFileSync);
 
-        mock_exists.mockImplementation((p) =>
-          p === "/project/node_modules/broken" ||
-          p === "/project/node_modules/broken/package.json" ||
-          p === "/project/node_modules/broken/index.ts"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/project/node_modules/broken" ||
+            p === "/project/node_modules/broken/package.json" ||
+            p === "/project/node_modules/broken/index.ts"
         );
 
         mock_read_file.mockImplementation(() => "invalid json{");
@@ -466,7 +485,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -479,7 +498,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];
@@ -502,7 +521,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -515,7 +534,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];
@@ -537,7 +556,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -551,7 +570,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];
@@ -578,7 +597,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -592,7 +611,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
           {
@@ -604,7 +623,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
               line: 2,
               column: 0,
               end_line: 2,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];
@@ -625,7 +644,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
             {
               name: "originalName" as SymbolName,
               alias: "aliasedName" as SymbolName,
-              is_type_only: false
+              is_type_only: false,
             },
           ],
           source: "/project/utils.js" as FilePath,
@@ -634,7 +653,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -648,7 +667,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];
@@ -658,7 +677,9 @@ describe("JavaScript/TypeScript Import Resolution", () => {
         const result = match_js_import_to_export(import_stmt, exports, symbols);
 
         expect(result.size).toBe(1);
-        expect(result.get("aliasedName" as SymbolName)).toBe("utils#originalName");
+        expect(result.get("aliasedName" as SymbolName)).toBe(
+          "utils#originalName"
+        );
       });
 
       it("handles type-only imports", () => {
@@ -674,7 +695,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 40
+            end_column: 40,
           },
         } as unknown as Import;
 
@@ -688,7 +709,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
           {
@@ -700,7 +721,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
               line: 2,
               column: 0,
               end_line: 2,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];
@@ -711,22 +732,22 @@ describe("JavaScript/TypeScript Import Resolution", () => {
 
         expect(result.size).toBe(2);
         expect(result.get("MyType" as SymbolName)).toBe("types#MyType");
-        expect(result.get("MyInterface" as SymbolName)).toBe("types#MyInterface");
+        expect(result.get("MyInterface" as SymbolName)).toBe(
+          "types#MyInterface"
+        );
       });
 
       it("returns empty map for non-existent named exports", () => {
         const import_stmt: Import = {
           kind: "named",
-          imports: [
-            { name: "nonExistent" as SymbolName, is_type_only: false },
-          ],
+          imports: [{ name: "nonExistent" as SymbolName, is_type_only: false }],
           source: "/project/utils.js" as FilePath,
           location: {
             file_path: "/project/main.js" as FilePath,
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -740,7 +761,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];
@@ -765,7 +786,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -779,7 +800,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];
@@ -805,7 +826,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -819,7 +840,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
           {
@@ -831,7 +852,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
               line: 2,
               column: 0,
               end_line: 2,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];
@@ -855,7 +876,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -878,7 +899,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 20
+            end_column: 20,
           },
         } as unknown as Import;
 
@@ -892,7 +913,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];
@@ -913,7 +934,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 20
+            end_column: 20,
           },
         } as unknown as Import;
 
@@ -930,16 +951,14 @@ describe("JavaScript/TypeScript Import Resolution", () => {
       it("handles exports array in NamedExport", () => {
         const import_stmt: Import = {
           kind: "named",
-          imports: [
-            { name: "foo" as SymbolName, is_type_only: false },
-          ],
+          imports: [{ name: "foo" as SymbolName, is_type_only: false }],
           source: "/project/utils.js" as FilePath,
           location: {
             file_path: "/project/main.js" as FilePath,
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -951,7 +970,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
               {
                 local_name: "foo" as SymbolName,
                 export_name: "foo" as SymbolName,
-                is_type_only: false
+                is_type_only: false,
               },
             ],
             location: {
@@ -959,7 +978,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as NamedExport,
         ];
@@ -984,7 +1003,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -996,7 +1015,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
               {
                 local_name: "localName" as SymbolName,
                 export_name: "exportedName" as SymbolName,
-                is_type_only: false
+                is_type_only: false,
               },
             ],
             location: {
@@ -1004,7 +1023,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as NamedExport,
         ];
@@ -1014,7 +1033,9 @@ describe("JavaScript/TypeScript Import Resolution", () => {
         const result = match_js_import_to_export(import_stmt, exports, symbols);
 
         expect(result.size).toBe(1);
-        expect(result.get("exportedName" as SymbolName)).toBe("utils#localName");
+        expect(result.get("exportedName" as SymbolName)).toBe(
+          "utils#localName"
+        );
       });
     });
 
@@ -1022,33 +1043,45 @@ describe("JavaScript/TypeScript Import Resolution", () => {
       it("should handle node_modules path resolution", () => {
         const mock_exists = vi.mocked(fs.existsSync);
         const mock_read = vi.mocked(fs.readFileSync);
-  
+
         mock_exists.mockImplementation((p) => {
           const path_str = p.toString();
-          return path_str.includes("node_modules/lodash") || path_str.includes("package.json") || path_str.includes("index.js");
+          return (
+            path_str.includes("node_modules/lodash") ||
+            path_str.includes("package.json") ||
+            path_str.includes("index.js")
+          );
         });
-  
+
         mock_read.mockImplementation((p) => {
           if (p.toString().includes("package.json")) {
             return JSON.stringify({ main: "index.js" });
           }
           return "";
         });
-  
-        const result = resolve_node_modules_path("lodash", "/project/src/main.ts" as FilePath);
+
+        const result = resolve_node_modules_path(
+          "lodash",
+          "/project/src/main.ts" as FilePath
+        );
         expect(result).toContain("node_modules/lodash");
       });
     });
-  
+
     describe("File Resolution with Extensions", () => {
       it("should find files with various extensions", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-  
+
         mock_exists.mockImplementation((p) => {
           return p === "/project/src/utils.tsx";
         });
-  
-        const result = find_file_with_extensions("/project/src/utils", [".ts", ".tsx", ".js", ".jsx"]);
+
+        const result = find_file_with_extensions("/project/src/utils", [
+          ".ts",
+          ".tsx",
+          ".js",
+          ".jsx",
+        ]);
         expect(result).toBe("/project/src/utils.tsx");
       });
     });
@@ -1064,7 +1097,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -1078,7 +1111,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];
@@ -1093,16 +1126,14 @@ describe("JavaScript/TypeScript Import Resolution", () => {
       it("handles empty exports array", () => {
         const import_stmt: Import = {
           kind: "named",
-          imports: [
-            { name: "foo" as SymbolName, is_type_only: false },
-          ],
+          imports: [{ name: "foo" as SymbolName, is_type_only: false }],
           source: "/project/utils.js" as FilePath,
           location: {
             file_path: "/project/main.js" as FilePath,
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -1116,14 +1147,14 @@ describe("JavaScript/TypeScript Import Resolution", () => {
 
       it("handles unknown import kind gracefully", () => {
         const import_stmt: Import = {
-          kind: "unknown" as any,
+          kind: "unknown",
           source: "/project/utils.js" as FilePath,
           location: {
             file_path: "/project/main.js" as FilePath,
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -1145,7 +1176,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -1158,7 +1189,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];
@@ -1181,7 +1212,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as NamespaceImport;
 
@@ -1195,7 +1226,7 @@ describe("JavaScript/TypeScript Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];

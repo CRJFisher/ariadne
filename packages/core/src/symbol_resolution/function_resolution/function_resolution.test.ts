@@ -10,9 +10,7 @@ import type {
 import { location_key } from "@ariadnejs/types";
 import type { CallReference } from "../../semantic_index/references/call_references/call_references";
 import type { SemanticIndex } from "../../semantic_index/semantic_index";
-import type { ImportResolutionMap } from "../types";
 import { resolve_function_calls } from "./function_resolver";
-import type { FunctionResolutionMap } from "./function_types";
 
 // Helper function to create a SymbolId for a built-in function
 // This matches the format used by hoisting_handler.ts
@@ -79,9 +77,7 @@ function create_mock_index(
             end_column: 1,
           },
           child_ids: ["scope:function" as ScopeId],
-          symbols: new Map([
-            ["testFunc" as SymbolName, testFuncDef],
-          ]),
+          symbols: new Map([["testFunc" as SymbolName, testFuncDef]]),
         },
       ],
       [
@@ -99,9 +95,7 @@ function create_mock_index(
             end_column: 1,
           },
           child_ids: [],
-          symbols: new Map([
-            ["localFunc" as SymbolName, localFuncDef],
-          ]),
+          symbols: new Map([["localFunc" as SymbolName, localFuncDef]]),
         },
       ],
     ]),
@@ -159,9 +153,10 @@ describe("Function Resolution", () => {
         [file_path, create_mock_index(file_path, calls)],
       ]);
 
-      const imports: ImportResolutionMap = {
-        imports: new Map(),
-      };
+      const imports: ReadonlyMap<
+        FilePath,
+        ReadonlyMap<SymbolName, SymbolId>
+      > = new Map();
 
       const result = resolve_function_calls(indices, imports);
 
@@ -169,9 +164,9 @@ describe("Function Resolution", () => {
       expect(result.function_calls.get(location_key(call_location))).toBe(
         "sym:localFunc" as SymbolId
       );
-      expect(result.calls_to_function.get("sym:localFunc" as SymbolId)).toEqual([
-        call_location,
-      ]);
+      expect(result.calls_to_function.get("sym:localFunc" as SymbolId)).toEqual(
+        [call_location]
+      );
     });
 
     it("should resolve imported function calls", () => {
@@ -224,14 +219,17 @@ describe("Function Resolution", () => {
         ],
       ]);
 
-      const imports: ImportResolutionMap = {
-        imports: new Map([
-          [
-            file_path,
-            new Map([["importedFunc" as SymbolName, "sym:importedFunc" as SymbolId]]),
-          ],
-        ]),
-      };
+      const imports: ReadonlyMap<
+        FilePath,
+        ReadonlyMap<SymbolName, SymbolId>
+      > = new Map([
+        [
+          file_path,
+          new Map([
+            ["importedFunc" as SymbolName, "sym:importedFunc" as SymbolId],
+          ]),
+        ],
+      ]);
 
       const result = resolve_function_calls(indices, imports);
 
@@ -264,9 +262,10 @@ describe("Function Resolution", () => {
         [file_path, create_mock_index(file_path, calls)],
       ]);
 
-      const imports: ImportResolutionMap = {
-        imports: new Map(),
-      };
+      const imports: ReadonlyMap<
+        FilePath,
+        ReadonlyMap<SymbolName, SymbolId>
+      > = new Map();
 
       const result = resolve_function_calls(indices, imports);
 
@@ -320,15 +319,20 @@ describe("Function Resolution", () => {
         [file_path, create_mock_index(file_path, calls)],
       ]);
 
-      const imports: ImportResolutionMap = {
-        imports: new Map(),
-      };
+      const imports: ReadonlyMap<
+        FilePath,
+        ReadonlyMap<SymbolName, SymbolId>
+      > = new Map();
 
       const result = resolve_function_calls(indices, imports);
 
       expect(result.function_calls.size).toBe(3);
-      expect(result.calls_to_function.get("sym:testFunc" as SymbolId)?.length).toBe(2);
-      expect(result.calls_to_function.get("sym:localFunc" as SymbolId)?.length).toBe(1);
+      expect(
+        result.calls_to_function.get("sym:testFunc" as SymbolId)?.length
+      ).toBe(2);
+      expect(
+        result.calls_to_function.get("sym:localFunc" as SymbolId)?.length
+      ).toBe(1);
     });
 
     it("should ignore method and constructor calls", () => {
@@ -376,9 +380,10 @@ describe("Function Resolution", () => {
         [file_path, create_mock_index(file_path, calls)],
       ]);
 
-      const imports: ImportResolutionMap = {
-        imports: new Map(),
-      };
+      const imports: ReadonlyMap<
+        FilePath,
+        ReadonlyMap<SymbolName, SymbolId>
+      > = new Map();
 
       const result = resolve_function_calls(indices, imports);
 
@@ -409,9 +414,10 @@ describe("Function Resolution", () => {
         [file_path, create_mock_index(file_path, calls)],
       ]);
 
-      const imports: ImportResolutionMap = {
-        imports: new Map(),
-      };
+      const imports: ReadonlyMap<
+        FilePath,
+        ReadonlyMap<SymbolName, SymbolId>
+      > = new Map();
 
       const result = resolve_function_calls(indices, imports);
 
@@ -439,15 +445,16 @@ describe("Function Resolution", () => {
         },
       ];
 
-      const index = create_mock_index(file_path, calls);
+      let index = create_mock_index(file_path, calls);
       // Override language to Python
-      (index as any).language = "python";
+      index = { ...index, language: "python" };
 
       const indices = new Map([[file_path, index]]);
 
-      const imports: ImportResolutionMap = {
-        imports: new Map(),
-      };
+      const imports: ReadonlyMap<
+        FilePath,
+        ReadonlyMap<SymbolName, SymbolId>
+      > = new Map();
 
       const result = resolve_function_calls(indices, imports);
 
@@ -479,13 +486,16 @@ describe("Function Resolution", () => {
         [file_path, create_mock_index(file_path, calls)],
       ]);
 
-      const imports: ImportResolutionMap = {
-        imports: new Map(),
-      };
+      const imports: ReadonlyMap<
+        FilePath,
+        ReadonlyMap<SymbolName, SymbolId>
+      > = new Map();
 
       const result = resolve_function_calls(indices, imports);
 
-      const details = result.resolution_details.get(location_key(call_location));
+      const details = result.resolution_details.get(
+        location_key(call_location)
+      );
       expect(details).toBeDefined();
       expect(details?.resolution_method).toBe("lexical");
       expect(details?.resolved_function).toBe("sym:localFunc" as SymbolId);
@@ -643,7 +653,10 @@ describe("Function Resolution", () => {
       };
 
       const indices = new Map([[file_path, index]]);
-      const imports: ImportResolutionMap = { imports: new Map() };
+      const imports: ReadonlyMap<
+        FilePath,
+        ReadonlyMap<SymbolName, SymbolId>
+      > = new Map();
 
       const result = resolve_function_calls(indices, imports);
 
@@ -655,7 +668,9 @@ describe("Function Resolution", () => {
         end_line: 5,
         end_column: 14,
       });
-      expect(result.function_calls.get(innerCall)).toBe("sym:innerFunc" as SymbolId);
+      expect(result.function_calls.get(innerCall)).toBe(
+        "sym:innerFunc" as SymbolId
+      );
 
       // innerFunc calling outerFunc should resolve through parent scope
       const outerCall = location_key({
@@ -665,7 +680,9 @@ describe("Function Resolution", () => {
         end_line: 6,
         end_column: 14,
       });
-      expect(result.function_calls.get(outerCall)).toBe("sym:outerFunc" as SymbolId);
+      expect(result.function_calls.get(outerCall)).toBe(
+        "sym:outerFunc" as SymbolId
+      );
     });
 
     it("should handle functions with same name in different scopes", () => {
@@ -800,7 +817,10 @@ describe("Function Resolution", () => {
       };
 
       const indices = new Map([[file_path, index]]);
-      const imports: ImportResolutionMap = { imports: new Map() };
+      const imports: ReadonlyMap<
+        FilePath,
+        ReadonlyMap<SymbolName, SymbolId>
+      > = new Map();
 
       const result = resolve_function_calls(indices, imports);
 
@@ -812,7 +832,9 @@ describe("Function Resolution", () => {
         end_line: 7,
         end_column: 12,
       });
-      expect(result.function_calls.get(localCall)).toBe("sym:process:local" as SymbolId);
+      expect(result.function_calls.get(localCall)).toBe(
+        "sym:process:local" as SymbolId
+      );
 
       // Call in module scope should resolve to global function
       const globalCall = location_key({
@@ -822,12 +844,14 @@ describe("Function Resolution", () => {
         end_line: 15,
         end_column: 12,
       });
-      expect(result.function_calls.get(globalCall)).toBe("sym:process:global" as SymbolId);
+      expect(result.function_calls.get(globalCall)).toBe(
+        "sym:process:global" as SymbolId
+      );
     });
 
     it("should handle Rust-specific functions and macros", () => {
       const file_path = "test.rs" as FilePath;
-      const index = create_mock_index(file_path, [
+      let index = create_mock_index(file_path, [
         {
           location: {
             file_path,
@@ -841,10 +865,13 @@ describe("Function Resolution", () => {
           call_type: "function",
         },
       ]);
-      (index as any).language = "rust";
+      index = { ...index, language: "rust" };
 
       const indices = new Map([[file_path, index]]);
-      const imports: ImportResolutionMap = { imports: new Map() };
+      const imports: ReadonlyMap<
+        FilePath,
+        ReadonlyMap<SymbolName, SymbolId>
+      > = new Map();
 
       const result = resolve_function_calls(indices, imports);
 
@@ -855,12 +882,17 @@ describe("Function Resolution", () => {
         end_line: 5,
         end_column: 13,
       });
-      expect(result.function_calls.get(call)).toBe("builtin:rust:println!" as SymbolId);
+      expect(result.function_calls.get(call)).toBe(
+        "builtin:rust:println!" as SymbolId
+      );
     });
 
     it("should handle empty indices gracefully", () => {
       const indices = new Map<FilePath, SemanticIndex>();
-      const imports: ImportResolutionMap = { imports: new Map() };
+      const imports: ReadonlyMap<
+        FilePath,
+        ReadonlyMap<SymbolName, SymbolId>
+      > = new Map();
 
       const result = resolve_function_calls(indices, imports);
 
@@ -874,7 +906,10 @@ describe("Function Resolution", () => {
       const index = create_mock_index(file_path, []);
 
       const indices = new Map([[file_path, index]]);
-      const imports: ImportResolutionMap = { imports: new Map() };
+      const imports: ReadonlyMap<
+        FilePath,
+        ReadonlyMap<SymbolName, SymbolId>
+      > = new Map();
 
       const result = resolve_function_calls(indices, imports);
 
@@ -913,7 +948,10 @@ describe("Function Resolution", () => {
 
       const index = create_mock_index(file_path, calls);
       const indices = new Map([[file_path, index]]);
-      const imports: ImportResolutionMap = { imports: new Map() };
+      const imports: ReadonlyMap<
+        FilePath,
+        ReadonlyMap<SymbolName, SymbolId>
+      > = new Map();
 
       const result = resolve_function_calls(indices, imports);
 
@@ -952,15 +990,16 @@ describe("Function Resolution", () => {
         [file_path, create_mock_index(file_path, calls)],
       ]);
 
-      const imports: ImportResolutionMap = {
-        imports: new Map([
-          [
-            file_path,
-            // Import maps to a symbol that doesn't exist in any index
-            new Map([["missingFunc" as SymbolName, "sym:missing" as SymbolId]]),
-          ],
-        ]),
-      };
+      const imports: ReadonlyMap<
+        FilePath,
+        ReadonlyMap<SymbolName, SymbolId>
+      > = new Map([
+        [
+          file_path,
+          // Import maps to a symbol that doesn't exist in any index
+          new Map([["missingFunc" as SymbolName, "sym:missing" as SymbolId]]),
+        ],
+      ]);
 
       const result = resolve_function_calls(indices, imports);
 
@@ -997,11 +1036,11 @@ describe("Function Resolution", () => {
         },
       ];
 
-      const index = create_mock_index(file_path, calls);
-      (index as any).language = "typescript";
+      let index = create_mock_index(file_path, calls);
+      index = { ...index, language: "typescript" };
 
       const indices = new Map([[file_path, index]]);
-      const imports: ImportResolutionMap = { imports: new Map() };
+      const imports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> = new Map();
 
       const result = resolve_function_calls(indices, imports);
 
@@ -1020,8 +1059,12 @@ describe("Function Resolution", () => {
         end_line: 6,
         end_column: 11,
       });
-      expect(result.function_calls.get(numberCall)).toBe("builtin:typescript:Number" as SymbolId);
-      expect(result.function_calls.get(stringCall)).toBe("builtin:typescript:String" as SymbolId);
+      expect(result.function_calls.get(numberCall)).toBe(
+        "builtin:typescript:Number" as SymbolId
+      );
+      expect(result.function_calls.get(stringCall)).toBe(
+        "builtin:typescript:String" as SymbolId
+      );
     });
   });
 });

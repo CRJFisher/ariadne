@@ -23,7 +23,6 @@ import {
 import type {
   ResolutionInput,
   ResolvedSymbols,
-  ImportResolutionMap,
   FunctionResolutionMap,
   TypeResolutionMap,
   MethodResolutionMap,
@@ -51,7 +50,7 @@ import type { LocalTypeAnnotation as SemanticAnnotation } from "../semantic_inde
 import {
   resolve_imports,
 } from "./import_resolution";
-import { phase2_resolve_functions } from "./function_resolution";
+import { resolve_function_calls } from "./function_resolution";
 
 /**
  * Create a TypeId from a local type definition
@@ -96,7 +95,7 @@ export function resolve_symbols(input: ResolutionInput): ResolvedSymbols {
   // Phase 2: Resolve function calls
   // Creates: call_location -> function_symbol_id
   // Using the implementation from function_resolution module
-  const functions = phase2_resolve_functions(indices, imports);
+  const functions = resolve_function_calls(indices, imports);
 
   // Phase 3: Resolve types
   // Creates: symbol_id -> type_id, location -> type_id
@@ -119,7 +118,7 @@ export function resolve_symbols(input: ResolutionInput): ResolvedSymbols {
  */
 function phase1_resolve_imports(
   indices: ReadonlyMap<FilePath, SemanticIndex>
-): ImportResolutionMap {
+): ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> {
   // Create import resolution context with the new simplified architecture
   return resolve_imports({indices});
 }
@@ -141,7 +140,7 @@ function phase1_resolve_imports(
  */
 function phase3_resolve_types(
   indices: ReadonlyMap<FilePath, SemanticIndex>,
-  imports: ImportResolutionMap,
+  imports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>,
   functions: FunctionResolutionMap
 ): TypeResolutionMap {
   // Step 1: Collect all local type information from indices
@@ -150,13 +149,13 @@ function phase3_resolve_types(
   // Step 2: Build global type registry with TypeIds
   const type_registry = build_global_type_registry(
     local_extraction.type_definitions,
-    imports.imports
+    imports
   );
 
   // Step 3: Resolve type inheritance hierarchy
   const type_hierarchy = resolve_inheritance(
     local_extraction.type_definitions,
-    imports.imports
+    imports
   );
 
   // Extract inheritance hierarchy from type_hierarchy
@@ -452,7 +451,7 @@ function collect_type_tracking(
  */
 function phase4_resolve_methods(
   indices: ReadonlyMap<FilePath, SemanticIndex>,
-  imports: ImportResolutionMap,
+  imports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>,
   functions: FunctionResolutionMap,
   types: TypeResolutionMap
 ): MethodResolutionMap {
@@ -499,7 +498,7 @@ function phase4_resolve_methods(
         const type_name = ctor_call.class_name;
 
         // First try to find in imports (for cross-file constructor calls)
-        const imported_symbol = imports.imports.get(file_path)?.get(type_name);
+        const imported_symbol = imports.get(file_path)?.get(type_name);
         if (imported_symbol) {
           // Check if this is a class symbol
           let found_class = false;
@@ -552,7 +551,7 @@ function phase4_resolve_methods(
  */
 function combine_results(
   indices: ReadonlyMap<FilePath, SemanticIndex>,
-  imports: ImportResolutionMap,
+  imports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>,
   functions: FunctionResolutionMap,
   types: TypeResolutionMap,
   methods: MethodResolutionMap

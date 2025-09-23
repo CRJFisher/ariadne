@@ -53,7 +53,12 @@ function create_test_index(
     local_types: [],
     local_type_annotations: [],
     local_type_tracking: { annotations: [], declarations: [], assignments: [] },
-    local_type_flow: { constructor_calls: [], assignments: [], returns: [], call_assignments: [] },
+    local_type_flow: {
+      constructor_calls: [],
+      assignments: [],
+      returns: [],
+      call_assignments: [],
+    },
     root_scope_id: "root" as ScopeId,
     file_symbols_by_name: new Map(),
   };
@@ -71,24 +76,33 @@ describe("Language Handler Integration", () => {
 
       // Mock file system
       mockExists.mockImplementation((p) => {
-        return p === "/project/src/utils.js" ||
-               p === "/project/src/main.ts";
+        return p === "/project/src/utils.js" || p === "/project/src/main.ts";
       });
 
       // Create indices
       const indices = new Map<FilePath, SemanticIndex>();
 
       // JavaScript file with exports
-      const jsExports: Export[] = [{
-        kind: "named",
-        symbol: "utils#helper" as SymbolId,
-        symbol_name: "helper" as SymbolName,
-        exports: [{ local_name: "helper" as SymbolName, is_type_only: false }],
-        location: { file_path: "/project/src/utils.js" as FilePath, line: 1, column: 0, end_line: 1, end_column: 20 },
-        modifiers: [],
-        language: "javascript",
-        node_type: "export_statement",
-      } as NamedExport];
+      const jsExports: Export[] = [
+        {
+          kind: "named",
+          symbol: "utils#helper" as SymbolId,
+          symbol_name: "helper" as SymbolName,
+          exports: [
+            { local_name: "helper" as SymbolName, is_type_only: false },
+          ],
+          location: {
+            file_path: "/project/src/utils.js" as FilePath,
+            line: 1,
+            column: 0,
+            end_line: 1,
+            end_column: 20,
+          },
+          modifiers: [],
+          language: "javascript",
+          node_type: "export_statement",
+        } as NamedExport,
+      ];
 
       indices.set(
         "/project/src/utils.js" as FilePath,
@@ -101,15 +115,23 @@ describe("Language Handler Integration", () => {
       );
 
       // TypeScript file importing from JavaScript
-      const tsImports: Import[] = [{
-        kind: "named",
-        imports: [{ name: "helper" as SymbolName, is_type_only: false }],
-        source: "./utils" as FilePath,
-        location: { file_path: "/project/src/main.ts" as FilePath, line: 1, column: 0, end_line: 1, end_column: 30 },
-        modifiers: [],
-        language: "typescript",
-        node_type: "import_statement",
-      } as NamedImport];
+      const tsImports: Import[] = [
+        {
+          kind: "named",
+          imports: [{ name: "helper" as SymbolName, is_type_only: false }],
+          source: "./utils" as FilePath,
+          location: {
+            file_path: "/project/src/main.ts" as FilePath,
+            line: 1,
+            column: 0,
+            end_line: 1,
+            end_column: 30,
+          },
+          modifiers: [],
+          language: "typescript",
+          node_type: "import_statement",
+        } as NamedImport,
+      ];
 
       indices.set(
         "/project/src/main.ts" as FilePath,
@@ -128,7 +150,9 @@ describe("Language Handler Integration", () => {
       const result = resolve_imports(context);
 
       // Should resolve the TypeScript import to the JavaScript export
-      const mainImports = result.imports.get("/project/src/main.ts" as FilePath);
+      const mainImports = result.imports.get(
+        "/project/src/main.ts" as FilePath
+      );
       expect(mainImports).toBeDefined();
       expect(mainImports?.get("helper" as SymbolName)).toBe("utils#helper");
     });
@@ -143,7 +167,7 @@ describe("Language Handler Integration", () => {
           "/project/shared/types.ts",
           "/project/python/analyzer.py",
           "/project/rust/src/lib.rs",
-          "/project/js/app.js"
+          "/project/js/app.js",
         ];
         return validPaths.includes(p as string);
       });
@@ -157,16 +181,26 @@ describe("Language Handler Integration", () => {
           "/project/shared/types.ts" as FilePath,
           "typescript",
           [],
-          [{
-            kind: "named",
-            symbol: "types#Config" as SymbolId,
-            symbol_name: "Config" as SymbolName,
-            exports: [{ local_name: "Config" as SymbolName, is_type_only: true }],
-            location: { file_path: "/project/shared/types.ts" as FilePath, line: 1, column: 0, end_line: 5, end_column: 1 },
-            modifiers: [],
-            language: "typescript",
-            node_type: "export_statement",
-          } as NamedExport]
+          [
+            {
+              kind: "named",
+              symbol: "types#Config" as SymbolId,
+              symbol_name: "Config" as SymbolName,
+              exports: [
+                { local_name: "Config" as SymbolName, is_type_only: true },
+              ],
+              location: {
+                file_path: "/project/shared/types.ts" as FilePath,
+                line: 1,
+                column: 0,
+                end_line: 5,
+                end_column: 1,
+              },
+              modifiers: [],
+              language: "typescript",
+              node_type: "export_statement",
+            } as NamedExport,
+          ]
         )
       );
 
@@ -176,15 +210,23 @@ describe("Language Handler Integration", () => {
         create_test_index(
           "/project/js/app.js" as FilePath,
           "javascript",
-          [{
-            kind: "named",
-            imports: [{ name: "Config" as SymbolName, is_type_only: true }],
-            source: "../shared/types" as FilePath,
-            location: { file_path: "/project/js/app.js" as FilePath, line: 1, column: 0, end_line: 1, end_column: 40 },
-            modifiers: [],
-            language: "javascript",
-            node_type: "import_statement",
-          } as NamedImport],
+          [
+            {
+              kind: "named",
+              imports: [{ name: "Config" as SymbolName, is_type_only: true }],
+              source: "../shared/types" as FilePath,
+              location: {
+                file_path: "/project/js/app.js" as FilePath,
+                line: 1,
+                column: 0,
+                end_line: 1,
+                end_column: 40,
+              },
+              modifiers: [],
+              language: "javascript",
+              node_type: "import_statement",
+            } as NamedImport,
+          ],
           []
         )
       );
@@ -206,7 +248,7 @@ describe("Language Handler Integration", () => {
           "/project/src/core.js",
           "/project/src/middleware.js",
           "/project/src/index.js",
-          "/project/src/app.js"
+          "/project/src/app.js",
         ].includes(p as string);
       });
 
@@ -219,16 +261,26 @@ describe("Language Handler Integration", () => {
           "/project/src/core.js" as FilePath,
           "javascript",
           [],
-          [{
-            kind: "named",
-            symbol: "core#process" as SymbolId,
-            symbol_name: "process" as SymbolName,
-            exports: [{ local_name: "process" as SymbolName, is_type_only: false }],
-            location: { file_path: "/project/src/core.js" as FilePath, line: 1, column: 0, end_line: 10, end_column: 1 },
-            modifiers: [],
-            language: "javascript",
-            node_type: "export_statement",
-          } as NamedExport]
+          [
+            {
+              kind: "named",
+              symbol: "core#process" as SymbolId,
+              symbol_name: "process" as SymbolName,
+              exports: [
+                { local_name: "process" as SymbolName, is_type_only: false },
+              ],
+              location: {
+                file_path: "/project/src/core.js" as FilePath,
+                line: 1,
+                column: 0,
+                end_line: 10,
+                end_column: 1,
+              },
+              modifiers: [],
+              language: "javascript",
+              node_type: "export_statement",
+            } as NamedExport,
+          ]
         )
       );
 
@@ -238,25 +290,43 @@ describe("Language Handler Integration", () => {
         create_test_index(
           "/project/src/middleware.js" as FilePath,
           "javascript",
-          [{
-            kind: "named",
-            imports: [{ name: "process" as SymbolName, is_type_only: false }],
-            source: "./core" as FilePath,
-            location: { file_path: "/project/src/middleware.js" as FilePath, line: 1, column: 0, end_line: 1, end_column: 30 },
-            modifiers: [],
-            language: "javascript",
-            node_type: "import_statement",
-          } as NamedImport],
-          [{
-            kind: "named",
-            symbol: "middleware#process" as SymbolId,
-            symbol_name: "process" as SymbolName,
-            exports: [{ local_name: "process" as SymbolName, is_type_only: false }],
-            location: { file_path: "/project/src/middleware.js" as FilePath, line: 2, column: 0, end_line: 2, end_column: 20 },
-            modifiers: [],
-            language: "javascript",
-            node_type: "export_statement",
-          } as NamedExport]
+          [
+            {
+              kind: "named",
+              imports: [{ name: "process" as SymbolName, is_type_only: false }],
+              source: "./core" as FilePath,
+              location: {
+                file_path: "/project/src/middleware.js" as FilePath,
+                line: 1,
+                column: 0,
+                end_line: 1,
+                end_column: 30,
+              },
+              modifiers: [],
+              language: "javascript",
+              node_type: "import_statement",
+            } as NamedImport,
+          ],
+          [
+            {
+              kind: "named",
+              symbol: "middleware#process" as SymbolId,
+              symbol_name: "process" as SymbolName,
+              exports: [
+                { local_name: "process" as SymbolName, is_type_only: false },
+              ],
+              location: {
+                file_path: "/project/src/middleware.js" as FilePath,
+                line: 2,
+                column: 0,
+                end_line: 2,
+                end_column: 20,
+              },
+              modifiers: [],
+              language: "javascript",
+              node_type: "export_statement",
+            } as NamedExport,
+          ]
         )
       );
 
@@ -267,16 +337,24 @@ describe("Language Handler Integration", () => {
           "/project/src/index.js" as FilePath,
           "javascript",
           [],
-          [{
-            kind: "namespace",
-            symbol: "index#all" as SymbolId,
-            symbol_name: "*" as SymbolName,
-            source: "./middleware" as FilePath,
-            location: { file_path: "/project/src/index.js" as FilePath, line: 1, column: 0, end_line: 1, end_column: 30 },
-            modifiers: [],
-            language: "javascript",
-            node_type: "export_statement",
-          } as any] // Using namespace export
+          [
+            {
+              kind: "namespace",
+              symbol: "index#all" as SymbolId,
+              symbol_name: "*" as SymbolName,
+              source: "./middleware" as FilePath,
+              location: {
+                file_path: "/project/src/index.js" as FilePath,
+                line: 1,
+                column: 0,
+                end_line: 1,
+                end_column: 30,
+              },
+              modifiers: [],
+              language: "javascript",
+              node_type: "export_statement",
+            },
+          ] // Using namespace export
         )
       );
 
@@ -284,8 +362,12 @@ describe("Language Handler Integration", () => {
       const result = resolve_imports(context);
 
       // Check middleware resolved the import from core
-      const middlewareImports = result.imports.get("/project/src/middleware.js" as FilePath);
-      expect(middlewareImports?.get("process" as SymbolName)).toBe("core#process");
+      const middlewareImports = result.imports.get(
+        "/project/src/middleware.js" as FilePath
+      );
+      expect(middlewareImports?.get("process" as SymbolName)).toBe(
+        "core#process"
+      );
     });
 
     it("handles circular imports gracefully", () => {
@@ -303,25 +385,43 @@ describe("Language Handler Integration", () => {
         create_test_index(
           "/project/a.js" as FilePath,
           "javascript",
-          [{
-            kind: "named",
-            imports: [{ name: "funcB" as SymbolName, is_type_only: false }],
-            source: "./b" as FilePath,
-            location: { file_path: "/project/a.js" as FilePath, line: 1, column: 0, end_line: 1, end_column: 30 },
-            modifiers: [],
-            language: "javascript",
-            node_type: "import_statement",
-          } as NamedImport],
-          [{
-            kind: "named",
-            symbol: "a#funcA" as SymbolId,
-            symbol_name: "funcA" as SymbolName,
-            exports: [{ local_name: "funcA" as SymbolName, is_type_only: false }],
-            location: { file_path: "/project/a.js" as FilePath, line: 2, column: 0, end_line: 5, end_column: 1 },
-            modifiers: [],
-            language: "javascript",
-            node_type: "export_statement",
-          } as NamedExport]
+          [
+            {
+              kind: "named",
+              imports: [{ name: "funcB" as SymbolName, is_type_only: false }],
+              source: "./b" as FilePath,
+              location: {
+                file_path: "/project/a.js" as FilePath,
+                line: 1,
+                column: 0,
+                end_line: 1,
+                end_column: 30,
+              },
+              modifiers: [],
+              language: "javascript",
+              node_type: "import_statement",
+            } as NamedImport,
+          ],
+          [
+            {
+              kind: "named",
+              symbol: "a#funcA" as SymbolId,
+              symbol_name: "funcA" as SymbolName,
+              exports: [
+                { local_name: "funcA" as SymbolName, is_type_only: false },
+              ],
+              location: {
+                file_path: "/project/a.js" as FilePath,
+                line: 2,
+                column: 0,
+                end_line: 5,
+                end_column: 1,
+              },
+              modifiers: [],
+              language: "javascript",
+              node_type: "export_statement",
+            } as NamedExport,
+          ]
         )
       );
 
@@ -331,25 +431,43 @@ describe("Language Handler Integration", () => {
         create_test_index(
           "/project/b.js" as FilePath,
           "javascript",
-          [{
-            kind: "named",
-            imports: [{ name: "funcA" as SymbolName, is_type_only: false }],
-            source: "./a" as FilePath,
-            location: { file_path: "/project/b.js" as FilePath, line: 1, column: 0, end_line: 1, end_column: 30 },
-            modifiers: [],
-            language: "javascript",
-            node_type: "import_statement",
-          } as NamedImport],
-          [{
-            kind: "named",
-            symbol: "b#funcB" as SymbolId,
-            symbol_name: "funcB" as SymbolName,
-            exports: [{ local_name: "funcB" as SymbolName, is_type_only: false }],
-            location: { file_path: "/project/b.js" as FilePath, line: 2, column: 0, end_line: 5, end_column: 1 },
-            modifiers: [],
-            language: "javascript",
-            node_type: "export_statement",
-          } as NamedExport]
+          [
+            {
+              kind: "named",
+              imports: [{ name: "funcA" as SymbolName, is_type_only: false }],
+              source: "./a" as FilePath,
+              location: {
+                file_path: "/project/b.js" as FilePath,
+                line: 1,
+                column: 0,
+                end_line: 1,
+                end_column: 30,
+              },
+              modifiers: [],
+              language: "javascript",
+              node_type: "import_statement",
+            } as NamedImport,
+          ],
+          [
+            {
+              kind: "named",
+              symbol: "b#funcB" as SymbolId,
+              symbol_name: "funcB" as SymbolName,
+              exports: [
+                { local_name: "funcB" as SymbolName, is_type_only: false },
+              ],
+              location: {
+                file_path: "/project/b.js" as FilePath,
+                line: 2,
+                column: 0,
+                end_line: 5,
+                end_column: 1,
+              },
+              modifiers: [],
+              language: "javascript",
+              node_type: "export_statement",
+            } as NamedExport,
+          ]
         )
       );
 
@@ -380,15 +498,23 @@ describe("Language Handler Integration", () => {
         create_test_index(
           "/project/main.js" as FilePath,
           "javascript",
-          [{
-            kind: "named",
-            imports: [{ name: "missing" as SymbolName, is_type_only: false }],
-            source: "./does-not-exist" as FilePath,
-            location: { file_path: "/project/main.js" as FilePath, line: 1, column: 0, end_line: 1, end_column: 40 },
-            modifiers: [],
-            language: "javascript",
-            node_type: "import_statement",
-          } as NamedImport],
+          [
+            {
+              kind: "named",
+              imports: [{ name: "missing" as SymbolName, is_type_only: false }],
+              source: "./does-not-exist" as FilePath,
+              location: {
+                file_path: "/project/main.js" as FilePath,
+                line: 1,
+                column: 0,
+                end_line: 1,
+                end_column: 40,
+              },
+              modifiers: [],
+              language: "javascript",
+              node_type: "import_statement",
+            } as NamedImport,
+          ],
           []
         )
       );
@@ -430,16 +556,26 @@ describe("Language Handler Integration", () => {
           "/project/node_modules/lodash/index.js" as FilePath,
           "javascript",
           [],
-          [{
-            kind: "named",
-            symbol: "lodash#debounce" as SymbolId,
-            symbol_name: "debounce" as SymbolName,
-            exports: [{ local_name: "debounce" as SymbolName, is_type_only: false }],
-            location: { file_path: "/project/node_modules/lodash/index.js" as FilePath, line: 1, column: 0, end_line: 10, end_column: 1 },
-            modifiers: [],
-            language: "javascript",
-            node_type: "export_statement",
-          } as NamedExport]
+          [
+            {
+              kind: "named",
+              symbol: "lodash#debounce" as SymbolId,
+              symbol_name: "debounce" as SymbolName,
+              exports: [
+                { local_name: "debounce" as SymbolName, is_type_only: false },
+              ],
+              location: {
+                file_path: "/project/node_modules/lodash/index.js" as FilePath,
+                line: 1,
+                column: 0,
+                end_line: 10,
+                end_column: 1,
+              },
+              modifiers: [],
+              language: "javascript",
+              node_type: "export_statement",
+            } as NamedExport,
+          ]
         )
       );
 
@@ -449,15 +585,25 @@ describe("Language Handler Integration", () => {
         create_test_index(
           "/project/main.js" as FilePath,
           "javascript",
-          [{
-            kind: "named",
-            imports: [{ name: "debounce" as SymbolName, is_type_only: false }],
-            source: "lodash" as FilePath,
-            location: { file_path: "/project/main.js" as FilePath, line: 1, column: 0, end_line: 1, end_column: 30 },
-            modifiers: [],
-            language: "javascript",
-            node_type: "import_statement",
-          } as NamedImport],
+          [
+            {
+              kind: "named",
+              imports: [
+                { name: "debounce" as SymbolName, is_type_only: false },
+              ],
+              source: "lodash" as FilePath,
+              location: {
+                file_path: "/project/main.js" as FilePath,
+                line: 1,
+                column: 0,
+                end_line: 1,
+                end_column: 30,
+              },
+              modifiers: [],
+              language: "javascript",
+              node_type: "import_statement",
+            } as NamedImport,
+          ],
           []
         )
       );
@@ -466,7 +612,9 @@ describe("Language Handler Integration", () => {
       const result = resolve_imports(context);
 
       const mainImports = result.imports.get("/project/main.js" as FilePath);
-      expect(mainImports?.get("debounce" as SymbolName)).toBe("lodash#debounce");
+      expect(mainImports?.get("debounce" as SymbolName)).toBe(
+        "lodash#debounce"
+      );
     });
 
     it("handles dynamic imports", () => {
@@ -484,30 +632,46 @@ describe("Language Handler Integration", () => {
           "/project/lazy.js" as FilePath,
           "javascript",
           [],
-          [{
-            kind: "default",
-            symbol: "lazy#default" as SymbolId,
-            symbol_name: "default" as SymbolName,
-            is_declaration: true,
-            location: { file_path: "/project/lazy.js" as FilePath, line: 1, column: 0, end_line: 5, end_column: 1 },
-            modifiers: [],
-            language: "javascript",
-            node_type: "export_statement",
-          } as DefaultExport]
+          [
+            {
+              kind: "default",
+              symbol: "lazy#default" as SymbolId,
+              symbol_name: "default" as SymbolName,
+              is_declaration: true,
+              location: {
+                file_path: "/project/lazy.js" as FilePath,
+                line: 1,
+                column: 0,
+                end_line: 5,
+                end_column: 1,
+              },
+              modifiers: [],
+              language: "javascript",
+              node_type: "export_statement",
+            } as DefaultExport,
+          ]
         )
       );
 
       // Main file with dynamic import
-      const mainImports: Import[] = [{
-        kind: "default",
-        name: "LazyModule" as SymbolName,
-        source: "./lazy" as FilePath,
-        is_dynamic: true,
-        location: { file_path: "/project/main.js" as FilePath, line: 3, column: 0, end_line: 3, end_column: 40 },
-        modifiers: [],
-        language: "javascript",
-        node_type: "import_statement",
-      } as DefaultImport & { is_dynamic: boolean }];
+      const mainImports: Import[] = [
+        {
+          kind: "default",
+          name: "LazyModule" as SymbolName,
+          source: "./lazy" as FilePath,
+          is_dynamic: true,
+          location: {
+            file_path: "/project/main.js" as FilePath,
+            line: 3,
+            column: 0,
+            end_line: 3,
+            end_column: 40,
+          },
+          modifiers: [],
+          language: "javascript",
+          node_type: "import_statement",
+        } as DefaultImport & { is_dynamic: boolean },
+      ];
 
       indices.set(
         "/project/main.js" as FilePath,
@@ -524,7 +688,9 @@ describe("Language Handler Integration", () => {
 
       // Dynamic imports should still be resolved
       const mainImportMap = result.imports.get("/project/main.js" as FilePath);
-      expect(mainImportMap?.get("LazyModule" as SymbolName)).toBe("lazy#default");
+      expect(mainImportMap?.get("LazyModule" as SymbolName)).toBe(
+        "lazy#default"
+      );
     });
   });
 
@@ -545,8 +711,8 @@ describe("Language Handler Integration", () => {
 
       mockStats.mockReturnValue({
         isDirectory: () => false,
-        isFile: () => true
-      } as any);
+        isFile: () => true,
+      });
 
       const indices = new Map<FilePath, SemanticIndex>();
 
@@ -558,27 +724,50 @@ describe("Language Handler Integration", () => {
         const filePath = `/project/file${i}.js` as FilePath;
 
         // Each file imports from the next file (except last)
-        const imports: Import[] = i < FILE_COUNT - 1 ? [{
-          kind: "named",
-          imports: [{ name: `func${i + 1}` as SymbolName, is_type_only: false }],
-          source: `./file${i + 1}` as FilePath,
-          location: { file_path: `/project/file${i + 1}.js` as FilePath, line: 1, column: 0, end_line: 1, end_column: 30 },
-          modifiers: [],
-          language: "javascript",
-          node_type: "import_statement",
-        } as NamedImport] : [];
+        const imports: Import[] =
+          i < FILE_COUNT - 1
+            ? [
+                {
+                  kind: "named",
+                  imports: [
+                    { name: `func${i + 1}` as SymbolName, is_type_only: false },
+                  ],
+                  source: `./file${i + 1}` as FilePath,
+                  location: {
+                    file_path: `/project/file${i + 1}.js` as FilePath,
+                    line: 1,
+                    column: 0,
+                    end_line: 1,
+                    end_column: 30,
+                  },
+                  modifiers: [],
+                  language: "javascript",
+                  node_type: "import_statement",
+                } as NamedImport,
+              ]
+            : [];
 
         // Each file exports a function
-        const exports: Export[] = [{
-          kind: "named",
-          symbol: `file${i}#func${i}` as SymbolId,
-          symbol_name: `func${i}` as SymbolName,
-          exports: [{ local_name: `func${i}` as SymbolName, is_type_only: false }],
-          location: { file_path: filePath, line: 2, column: 0, end_line: 5, end_column: 1 },
-          modifiers: [],
-          language: "javascript",
-          node_type: "export_statement",
-        } as NamedExport];
+        const exports: Export[] = [
+          {
+            kind: "named",
+            symbol: `file${i}#func${i}` as SymbolId,
+            symbol_name: `func${i}` as SymbolName,
+            exports: [
+              { local_name: `func${i}` as SymbolName, is_type_only: false },
+            ],
+            location: {
+              file_path: filePath,
+              line: 2,
+              column: 0,
+              end_line: 5,
+              end_column: 1,
+            },
+            modifiers: [],
+            language: "javascript",
+            node_type: "export_statement",
+          } as NamedExport,
+        ];
 
         indices.set(
           filePath,
@@ -596,9 +785,12 @@ describe("Language Handler Integration", () => {
 
       // Verify imports are resolved
       for (let i = 0; i < FILE_COUNT - 1; i++) {
-        const fileImports = result.imports.get(`/project/file${i}.js` as FilePath);
-        expect(fileImports?.get(`func${i + 1}` as SymbolName))
-          .toBe(`file${i + 1}#func${i + 1}`);
+        const fileImports = result.imports.get(
+          `/project/file${i}.js` as FilePath
+        );
+        expect(fileImports?.get(`func${i + 1}` as SymbolName)).toBe(
+          `file${i + 1}#func${i + 1}`
+        );
       }
     });
 
@@ -618,8 +810,8 @@ describe("Language Handler Integration", () => {
 
       mockStats.mockReturnValue({
         isDirectory: () => false,
-        isFile: () => true
-      } as any);
+        isFile: () => true,
+      });
 
       const indices = new Map<FilePath, SemanticIndex>();
       const DEPTH = 20;
@@ -630,28 +822,60 @@ describe("Language Handler Integration", () => {
         const nextFileName = String.fromCharCode(66 + i); // B, C, D, ...
         const filePath = `/project/${fileName}.js` as FilePath;
 
-        const imports: Import[] = i < DEPTH - 1 ? [{
-          kind: "named",
-          imports: [{ name: `func${nextFileName}` as SymbolName, is_type_only: false }],
-          source: `./${nextFileName}` as FilePath,
-          location: { file_path: `/project/${fileName}.js` as FilePath, line: 1, column: 0, end_line: 1, end_column: 30 },
-          modifiers: [],
-          language: "javascript",
-          node_type: "import_statement",
-        } as NamedImport] : [];
+        const imports: Import[] =
+          i < DEPTH - 1
+            ? [
+                {
+                  kind: "named",
+                  imports: [
+                    {
+                      name: `func${nextFileName}` as SymbolName,
+                      is_type_only: false,
+                    },
+                  ],
+                  source: `./${nextFileName}` as FilePath,
+                  location: {
+                    file_path: `/project/${fileName}.js` as FilePath,
+                    line: 1,
+                    column: 0,
+                    end_line: 1,
+                    end_column: 30,
+                  },
+                  modifiers: [],
+                  language: "javascript",
+                  node_type: "import_statement",
+                } as NamedImport,
+              ]
+            : [];
 
-        const exports: Export[] = [{
-          kind: "named",
-          symbol: `${fileName}#func${fileName}` as SymbolId,
-          symbol_name: `func${fileName}` as SymbolName,
-          exports: [{ local_name: `func${fileName}` as SymbolName, is_type_only: false }],
-          location: { file_path: filePath, line: 2, column: 0, end_line: 5, end_column: 1 },
-          modifiers: [],
-          language: "javascript",
-          node_type: "export_statement",
-        } as NamedExport];
+        const exports: Export[] = [
+          {
+            kind: "named",
+            symbol: `${fileName}#func${fileName}` as SymbolId,
+            symbol_name: `func${fileName}` as SymbolName,
+            exports: [
+              {
+                local_name: `func${fileName}` as SymbolName,
+                is_type_only: false,
+              },
+            ],
+            location: {
+              file_path: filePath,
+              line: 2,
+              column: 0,
+              end_line: 5,
+              end_column: 1,
+            },
+            modifiers: [],
+            language: "javascript",
+            node_type: "export_statement",
+          } as NamedExport,
+        ];
 
-        indices.set(filePath, create_test_index(filePath, "javascript", imports, exports));
+        indices.set(
+          filePath,
+          create_test_index(filePath, "javascript", imports, exports)
+        );
       }
 
       const context = { indices };
@@ -661,9 +885,12 @@ describe("Language Handler Integration", () => {
       for (let i = 0; i < DEPTH - 1; i++) {
         const fileName = String.fromCharCode(65 + i);
         const nextFileName = String.fromCharCode(66 + i);
-        const fileImports = result.imports.get(`/project/${fileName}.js` as FilePath);
-        expect(fileImports?.get(`func${nextFileName}` as SymbolName))
-          .toBe(`${nextFileName}#func${nextFileName}`);
+        const fileImports = result.imports.get(
+          `/project/${fileName}.js` as FilePath
+        );
+        expect(fileImports?.get(`func${nextFileName}` as SymbolName)).toBe(
+          `${nextFileName}#func${nextFileName}`
+        );
       }
     });
   });

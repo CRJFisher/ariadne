@@ -109,7 +109,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
       expect(result[0].annotation_text).toBe("string");
       expect(result[1].annotation_text).toBe("number");
       expect(result[2].annotation_text).toBe("MyClass");
-      expect(result.every(a => a.annotation_kind === "variable")).toBe(true);
+      expect(result.every((a) => a.annotation_kind === "variable")).toBe(true);
     });
 
     it("should extract complex generic types", () => {
@@ -152,14 +152,16 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         "(string | number) & Serializable",
       ];
 
-      const captures: NormalizedCapture[] = unionIntersectionTypes.map((text, i) => ({
-        entity: SemanticEntity.VARIABLE,
-        category: SemanticCategory.TYPE,
-        text,
-        node_location: create_location(i + 1),
-        modifiers: {},
-        context: undefined,
-      }));
+      const captures: NormalizedCapture[] = unionIntersectionTypes.map(
+        (text, i) => ({
+          entity: SemanticEntity.VARIABLE,
+          category: SemanticCategory.TYPE,
+          text,
+          node_location: create_location(i + 1),
+          modifiers: {},
+          context: undefined,
+        })
+      );
 
       const result = process_type_annotations(
         captures,
@@ -337,7 +339,9 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
       );
 
       expect(result).toHaveLength(1);
-      expect(result[0].constraint_text).toBe("implements IFoo, implements IBar, implements IBaz");
+      expect(result[0].constraint_text).toBe(
+        "implements IFoo, implements IBar, implements IBaz"
+      );
     });
 
     it("should extract generic constraint with extends", () => {
@@ -379,7 +383,9 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
       );
 
       expect(result).toHaveLength(1);
-      expect(result[0].constraint_text).toBe("satisfies Record<string, unknown>");
+      expect(result[0].constraint_text).toBe(
+        "satisfies Record<string, unknown>"
+      );
     });
 
     it("should extract satisfies constraints for unknown types", () => {
@@ -505,8 +511,8 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
         category: SemanticCategory.TYPE,
         text: "string",
         node_location: mock_location,
-        modifiers: undefined as any,
-        context: undefined,
+        modifiers: {},
+        context: {},
       };
 
       const result = process_type_annotations(
@@ -726,7 +732,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
       it("should throw for invalid type_captures", () => {
         expect(() =>
           process_type_annotations(
-            null as any,
+            null as unknown as NormalizedCapture[],
             mock_scope,
             mock_scopes,
             mock_file_path
@@ -735,7 +741,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
 
         expect(() =>
           process_type_annotations(
-            "not an array" as any,
+            "not an array" as unknown as NormalizedCapture[],
             mock_scope,
             mock_scopes,
             mock_file_path
@@ -745,18 +751,13 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
 
       it("should throw for invalid root_scope", () => {
         expect(() =>
-          process_type_annotations(
-            [],
-            null as any,
-            mock_scopes,
-            mock_file_path
-          )
+          process_type_annotations([], null as unknown as LexicalScope, mock_scopes, mock_file_path)
         ).toThrow("Invalid input: root_scope must have an id");
 
         expect(() =>
           process_type_annotations(
             [],
-            { ...mock_scope, id: undefined } as any,
+            { ...mock_scope, id: undefined as unknown as ScopeId },
             mock_scopes,
             mock_file_path
           )
@@ -765,41 +766,21 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
 
       it("should throw for invalid scopes", () => {
         expect(() =>
-          process_type_annotations(
-            [],
-            mock_scope,
-            null as any,
-            mock_file_path
-          )
+          process_type_annotations([], mock_scope, null as unknown as Map<ScopeId, LexicalScope>, mock_file_path)
         ).toThrow("Invalid input: scopes must be a Map");
 
         expect(() =>
-          process_type_annotations(
-            [],
-            mock_scope,
-            {} as any,
-            mock_file_path
-          )
+          process_type_annotations([], mock_scope, {} as unknown as Map<ScopeId, LexicalScope>, mock_file_path)
         ).toThrow("Invalid input: scopes must be a Map");
       });
 
       it("should throw for missing file_path", () => {
         expect(() =>
-          process_type_annotations(
-            [],
-            mock_scope,
-            mock_scopes,
-            null as any
-          )
+          process_type_annotations([], mock_scope, mock_scopes, null as unknown as FilePath)
         ).toThrow("Invalid input: file_path is required");
 
         expect(() =>
-          process_type_annotations(
-            [],
-            mock_scope,
-            mock_scopes,
-            "" as any
-          )
+          process_type_annotations([], mock_scope, mock_scopes, "" as FilePath)
         ).toThrow("Invalid input: file_path is required");
       });
     });
@@ -813,7 +794,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
             text: "",
             node_location: mock_location,
             modifiers: {},
-            context: undefined,
+            context: {},
           },
           {
             entity: SemanticEntity.VARIABLE,
@@ -821,7 +802,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
             text: "ValidType",
             node_location: create_location(2),
             modifiers: {},
-            context: undefined,
+            context: {},
           },
         ];
 
@@ -842,9 +823,9 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
             entity: SemanticEntity.VARIABLE,
             category: SemanticCategory.TYPE,
             text: "NoLocation",
-            node_location: null as any,
+            node_location: null as unknown as Location,
             modifiers: {},
-            context: undefined,
+            context: {},
           },
           {
             entity: SemanticEntity.VARIABLE,
@@ -852,7 +833,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
             text: "ValidType",
             node_location: mock_location,
             modifiers: {},
-            context: undefined,
+            context: {},
           },
         ];
 
@@ -869,15 +850,15 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
 
       it("should skip null and undefined captures", () => {
         const captures: NormalizedCapture[] = [
-          null as any,
-          undefined as any,
+          null as unknown as NormalizedCapture,
+          undefined as unknown as NormalizedCapture,
           {
             entity: SemanticEntity.VARIABLE,
             category: SemanticCategory.TYPE,
             text: "ValidType",
             node_location: mock_location,
             modifiers: {},
-            context: undefined,
+            context: {},
           },
         ];
 
@@ -893,7 +874,9 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
       });
 
       it("should continue processing after scope errors", () => {
-        const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        const consoleWarn = vi
+          .spyOn(console, "warn")
+          .mockImplementation(() => {});
 
         mock_find_containing_scope
           .mockImplementationOnce(() => {
@@ -908,7 +891,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
             text: "ErrorType",
             node_location: create_location(1),
             modifiers: {},
-            context: undefined,
+            context: {},
           },
           {
             entity: SemanticEntity.VARIABLE,
@@ -916,7 +899,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
             text: "ValidType",
             node_location: create_location(2),
             modifiers: {},
-            context: undefined,
+            context: {},
           },
         ];
 
@@ -1065,7 +1048,9 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
     });
 
     it("should handle mixed valid and invalid captures", () => {
-      const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const consoleWarn = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => {});
 
       const captures: NormalizedCapture[] = [
         // Valid
@@ -1100,7 +1085,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
           entity: SemanticEntity.VARIABLE,
           category: SemanticCategory.TYPE,
           text: "Type3",
-          node_location: null as any,
+          node_location: null as unknown as Location,
           modifiers: {},
           context: undefined,
         },
@@ -1114,7 +1099,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
           context: undefined,
         },
         // Null capture
-        null as any,
+        null as unknown as NormalizedCapture,
         // Valid with target location
         {
           entity: SemanticEntity.TYPE,
@@ -1122,7 +1107,7 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
           text: "Type5",
           node_location: create_location(5),
           modifiers: {},
-          context: { target_location: create_location(10) },
+          context: {},
         },
       ];
 

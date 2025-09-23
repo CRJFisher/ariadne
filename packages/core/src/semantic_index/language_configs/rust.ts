@@ -863,4 +863,81 @@ export const RUST_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
     entity: SemanticEntity.PARAMETER,
     },
   ],
+
+  // ============================================================================
+  // STATIC VS INSTANCE METHOD DETECTION
+  // ============================================================================
+  [
+    "class.ref",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.TYPE,
+      context: () => ({
+        is_static: true,
+      }),
+    },
+  ],
+  [
+    "method.static",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.METHOD,
+      context: () => ({
+        is_static: true,
+      }),
+    },
+  ],
+  [
+    "instance.ref",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.VARIABLE,
+      context: () => ({
+        is_static: false,
+      }),
+    },
+  ],
+  [
+    "method.instance",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.METHOD,
+      context: () => ({
+        is_static: false,
+      }),
+    },
+  ],
+  [
+    "static_method_call",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.METHOD,
+      context: (node) => {
+        const scopedId = node.childForFieldName?.("function");
+        const receiver = scopedId?.childForFieldName?.("path");
+        return {
+          receiver_node: receiver || undefined,
+          is_call: true,
+          is_static: true,
+          is_associated_function: true,
+        };
+      },
+    },
+  ],
+  [
+    "instance_method_call",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.METHOD,
+      context: (node) => {
+        const fieldExpr = node.childForFieldName?.("function");
+        const receiver = fieldExpr?.childForFieldName?.("value");
+        return {
+          receiver_node: receiver || undefined,
+          is_call: true,
+          is_static: false,
+        };
+      },
+    },
+  ],
 ]);

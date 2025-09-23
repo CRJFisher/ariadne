@@ -1,13 +1,14 @@
 import type { LocalTypeExtraction, ResolvedTypes } from "./types";
-import type { ImportResolutionMap, FunctionResolutionMap } from "../types";
+import type { FunctionResolutionMap } from "../types";
 import { resolve_all_types } from "./type_resolution";
+import { FilePath, SymbolName, SymbolId } from "@ariadnejs/types";
 
 /**
  * Main entry point for type resolution
  */
 export function resolve_types(
   local_types: LocalTypeExtraction,
-  imports: ImportResolutionMap,
+  imports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>,
   functions: FunctionResolutionMap,
   file_indices?: Map<string, any>
 ): ResolvedTypes {

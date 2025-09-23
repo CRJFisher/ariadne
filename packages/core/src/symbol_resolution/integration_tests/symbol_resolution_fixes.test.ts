@@ -33,7 +33,6 @@ import type {
 } from "@ariadnejs/types";
 
 describe("Symbol Resolution Fixes - Integration Tests", () => {
-
   describe("Import Resolution Fixes", () => {
     it("handles imports with proper source field structure", () => {
       // Test the fix for imports using 'source' field instead of 'source_path'
@@ -49,7 +48,7 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
         [], // exports
         [
           { name: "add", source: "src/utils.ts" },
-          { name: "multiply", source: "src/utils.ts" }
+          { name: "multiply", source: "src/utils.ts" },
         ]
       );
 
@@ -64,7 +63,9 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
       expect(result.phases.imports.imports.size).toBeGreaterThan(0);
       expect(result.phases.imports.imports.has(main_file.file_path)).toBe(true);
 
-      const resolved_imports = result.phases.imports.imports.get(main_file.file_path);
+      const resolved_imports = result.phases.imports.imports.get(
+        main_file.file_path
+      );
       expect(resolved_imports).toBeDefined();
       expect(resolved_imports!.size).toBe(2);
     });
@@ -73,12 +74,20 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
       // Test the fix for handling undefined/missing import sources
       const malformed_import = {
         kind: "named" as const,
-        imports: [{
-          name: "missing" as SymbolName,
-          is_type_only: false,
-        }],
-        source: undefined as any, // Simulate malformed import
-        location: { file_path: "src/main.ts" as FilePath, line: 1, column: 0, end_line: 1, end_column: 30 },
+        imports: [
+          {
+            name: "missing" as SymbolName,
+            is_type_only: false,
+          },
+        ],
+        source: undefined, // Simulate malformed import
+        location: {
+          file_path: "src/main.ts" as FilePath,
+          line: 1,
+          column: 0,
+          end_line: 1,
+          end_column: 30,
+        },
         modifiers: [],
         language: "typescript" as const,
         node_type: "import_statement" as const,
@@ -137,7 +146,9 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
       expect(ts_imports!.has("processData" as SymbolName)).toBe(true);
 
       // Verify JavaScript can import from TypeScript
-      const consumer_imports = result.phases.imports.imports.get(consumer_file.file_path);
+      const consumer_imports = result.phases.imports.imports.get(
+        consumer_file.file_path
+      );
       expect(consumer_imports).toBeDefined();
       expect(consumer_imports!.has("Application" as SymbolName)).toBe(true);
     });
@@ -156,8 +167,12 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
       expect(export_with_proper_structure.kind).toBe("named");
       expect(export_with_proper_structure.exports).toBeDefined();
       expect(export_with_proper_structure.exports.length).toBe(1);
-      expect(export_with_proper_structure.exports[0].local_name).toBe("testFunction");
-      expect(export_with_proper_structure.exports[0].export_name).toBe("testFunction");
+      expect(export_with_proper_structure.exports[0].local_name).toBe(
+        "testFunction"
+      );
+      expect(export_with_proper_structure.exports[0].export_name).toBe(
+        "testFunction"
+      );
       expect(export_with_proper_structure.exports[0].is_type_only).toBe(false);
 
       const file = create_test_semantic_index({
@@ -219,7 +234,9 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
       expect(result.phases.types.symbol_types).toBeDefined();
 
       // Check if the function symbol has a type assigned
-      const function_type = result.phases.types.symbol_types.get(function_symbol.id);
+      const function_type = result.phases.types.symbol_types.get(
+        function_symbol.id
+      );
       expect(function_type).toBeDefined();
     });
 
@@ -255,7 +272,9 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
 
       // Check that both class symbols have types assigned
       const base_type = result.phases.types.symbol_types.get(base_class.id);
-      const derived_type = result.phases.types.symbol_types.get(derived_class.id);
+      const derived_type = result.phases.types.symbol_types.get(
+        derived_class.id
+      );
       expect(base_type).toBeDefined();
       expect(derived_type).toBeDefined();
     });
@@ -270,8 +289,8 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
 
       expect(setup_time).toBeLessThan(50); // Setup should be fast
 
-      const { result: resolution, duration: resolution_time } = time_execution(() =>
-        resolve_symbols({ indices: project })
+      const { result: resolution, duration: resolution_time } = time_execution(
+        () => resolve_symbols({ indices: project })
       );
 
       expect(resolution_time).toBeLessThan(100); // Resolution should be reasonably fast
@@ -288,7 +307,9 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
         create_test_semantic_index({
           file_path: "src/malformed.ts",
           language: "typescript",
-          imports: [{ ...create_test_named_import("missing", ""), source: null as any }],
+          imports: [
+            { ...create_test_named_import("missing", ""), source: null },
+          ],
         }),
 
         // File with empty exports
@@ -308,7 +329,7 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
       ];
 
       const indices = new Map();
-      problematic_files.forEach(file => {
+      problematic_files.forEach((file) => {
         indices.set(file.file_path, file);
       });
 
@@ -327,8 +348,12 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
       const result2 = resolve_symbols({ indices: project });
 
       // Results should be consistent
-      expect(result1.phases.imports.imports.size).toBe(result2.phases.imports.imports.size);
-      expect(result1.phases.functions.function_calls.size).toBe(result2.phases.functions.function_calls.size);
+      expect(result1.phases.imports.imports.size).toBe(
+        result2.phases.imports.imports.size
+      );
+      expect(result1.phases.functions.function_calls.size).toBe(
+        result2.phases.functions.function_calls.size
+      );
 
       // Check that the same files have imports resolved
       for (const file_path of result1.phases.imports.imports.keys()) {
@@ -365,8 +390,9 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
       expect(result.phases.methods.method_calls).toBeDefined();
 
       // Verify integration - imports should feed into other phases
-      const import_count = Array.from(result.phases.imports.imports.values())
-        .reduce((sum, imports) => sum + imports.size, 0);
+      const import_count = Array.from(
+        result.phases.imports.imports.values()
+      ).reduce((sum, imports) => sum + imports.size, 0);
 
       expect(import_count).toBeGreaterThan(0);
     });
@@ -385,7 +411,11 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
         ["Button"], // exports
         [
           { name: "debounce", source: "src/utils/helpers.ts" },
-          { name: "formatDate", source: "src/utils/helpers.ts", alias: "format" }
+          {
+            name: "formatDate",
+            source: "src/utils/helpers.ts",
+            alias: "format",
+          },
         ],
         ["Button", "handleClick"]
       );
@@ -395,7 +425,7 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
         ["App"], // exports
         [
           { name: "Button", source: "src/components/Button.tsx" },
-          { name: "throttle", source: "src/utils/helpers.ts" }
+          { name: "throttle", source: "src/utils/helpers.ts" },
         ],
         ["App", "render"]
       );
@@ -412,7 +442,9 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
       expect(result.phases.imports.imports.size).toBe(2); // components and app have imports
 
       // Verify specific import resolutions
-      const component_imports = result.phases.imports.imports.get(components_file.file_path);
+      const component_imports = result.phases.imports.imports.get(
+        components_file.file_path
+      );
       expect(component_imports).toBeDefined();
       expect(component_imports!.has("debounce" as SymbolName)).toBe(true);
       expect(component_imports!.has("format" as SymbolName)).toBe(true); // aliased import

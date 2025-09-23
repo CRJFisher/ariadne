@@ -388,6 +388,20 @@
   )
 )
 
+; Static method call (associated function) - uses ::
+(call_expression
+  function: (scoped_identifier
+    path: (identifier) @class.ref
+    name: (identifier) @method.static)
+) @static_method_call
+
+; Instance method call - uses .
+(call_expression
+  function: (field_expression
+    value: (_) @instance.ref
+    field: (field_identifier) @method.instance)
+) @instance_method_call
+
 ; Generic function calls
 (call_expression
   function: (generic_function

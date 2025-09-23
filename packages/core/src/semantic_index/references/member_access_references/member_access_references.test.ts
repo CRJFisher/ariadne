@@ -21,6 +21,7 @@ import {
   group_by_object,
   find_property_chains,
 } from "./member_access_references";
+import { create_mock_node } from "../../test_utils";
 
 // Mock dependencies
 vi.mock("../../../utils/node_utils", () => ({
@@ -177,6 +178,34 @@ describe("Member Access References", () => {
       expect(minimalAccess.object.location).toBeUndefined();
       // Type resolution happens in symbol_resolution Phase 3
     });
+
+    it("should support static method detection fields", () => {
+      const staticAccess: MemberAccessReference = {
+        location: mockLocation,
+        member_name: "staticMethod" as SymbolName,
+        scope_id: mockScope.id,
+        access_type: "method",
+        object: {},
+        is_optional_chain: false,
+        is_static: true,
+      };
+
+      expect(staticAccess.is_static).toBe(true);
+    });
+
+    it("should support instance method detection fields", () => {
+      const instanceAccess: MemberAccessReference = {
+        location: mockLocation,
+        member_name: "instanceMethod" as SymbolName,
+        scope_id: mockScope.id,
+        access_type: "method",
+        object: {},
+        is_optional_chain: false,
+        is_static: false,
+      };
+
+      expect(instanceAccess.is_static).toBe(false);
+    });
   });
 
   describe("process_member_access_references", () => {
@@ -255,12 +284,7 @@ describe("Member Access References", () => {
       });
 
       it("should include receiver object location", () => {
-        const mockReceiver = {
-          start_line: 1,
-          start_column: 0,
-          end_line: 1,
-          end_column: 5,
-        };
+        const mockReceiver = create_mock_node("identifier", "obj", 1, 0, 1, 5);
 
         const captures: NormalizedCapture[] = [
           {
@@ -270,7 +294,7 @@ describe("Member Access References", () => {
             node_location: mockLocation,
             modifiers: {},
             context: {
-              receiver_node: mockReceiver as any,
+              receiver_node: mockReceiver,
             },
           },
         ];
@@ -317,6 +341,121 @@ describe("Member Access References", () => {
           "nested",
           "finalProp",
         ]);
+      });
+
+      it("should detect static method calls from context", () => {
+        const captures: NormalizedCapture[] = [
+          {
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.METHOD,
+            text: "staticMethod",
+            node_location: mockLocation,
+            modifiers: {},
+            context: {
+              is_static: true,
+            },
+          },
+        ];
+
+        const result = process_member_access_references(
+          captures,
+          mockScope,
+          mockScopes,
+          mockFilePath
+        );
+
+        expect(result).toHaveLength(1);
+        expect(result[0].member_name).toBe("staticMethod");
+        expect(result[0].access_type).toBe("method");
+        expect(result[0].is_static).toBe(true);
+      });
+
+      it("should detect instance method calls from context", () => {
+        const captures: NormalizedCapture[] = [
+          {
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.METHOD,
+            text: "instanceMethod",
+            node_location: mockLocation,
+            modifiers: {},
+            context: {
+              is_static: false,
+            },
+          },
+        ];
+
+        const result = process_member_access_references(
+          captures,
+          mockScope,
+          mockScopes,
+          mockFilePath
+        );
+
+        expect(result).toHaveLength(1);
+        expect(result[0].member_name).toBe("instanceMethod");
+        expect(result[0].access_type).toBe("method");
+        expect(result[0].is_static).toBe(false);
+      });
+
+      it("should detect static access from Python decorators", () => {
+        const captures: NormalizedCapture[] = [
+          {
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.METHOD,
+            text: "staticmethod_python",
+            node_location: mockLocation,
+            modifiers: {},
+            context: {
+              decorator_name: "staticmethod",
+            },
+          },
+          {
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.METHOD,
+            text: "classmethod_python",
+            node_location: mockLocation,
+            modifiers: {},
+            context: {
+              decorator_name: "classmethod",
+            },
+          },
+        ];
+
+        const result = process_member_access_references(
+          captures,
+          mockScope,
+          mockScopes,
+          mockFilePath
+        );
+
+        expect(result).toHaveLength(2);
+        expect(result[0].is_static).toBe(true);
+        expect(result[1].is_static).toBe(true);
+      });
+
+      it("should detect Rust associated functions", () => {
+        const captures: NormalizedCapture[] = [
+          {
+            category: SemanticCategory.REFERENCE,
+            entity: SemanticEntity.METHOD,
+            text: "associated_func",
+            node_location: mockLocation,
+            modifiers: {},
+            context: {
+              is_static: true,
+            },
+          },
+        ];
+
+        const result = process_member_access_references(
+          captures,
+          mockScope,
+          mockScopes,
+          mockFilePath
+        );
+
+        expect(result).toHaveLength(1);
+        expect(result[0].is_static).toBe(true);
       });
 
       it("should handle multiple access types", () => {
@@ -1230,12 +1369,7 @@ describe("Member Access References", () => {
 
   describe("Integration Tests", () => {
     it("should process complete member access analysis pipeline", () => {
-      const mockReceiver = {
-        start_line: 1,
-        start_column: 0,
-        end_line: 1,
-        end_column: 3,
-      };
+      const mockReceiver = create_mock_node("identifier", "obj", 1, 0, 1, 3);
 
       const captures: NormalizedCapture[] = [
         {
@@ -1245,7 +1379,7 @@ describe("Member Access References", () => {
           node_location: mockLocation,
           modifiers: {},
           context: {
-            receiver_node: mockReceiver as any,
+            receiver_node: mockReceiver,
             property_chain: ["obj", "nested", "myProperty"],
           },
         },
@@ -1260,7 +1394,7 @@ describe("Member Access References", () => {
           },
           modifiers: {},
           context: {
-            receiver_node: mockReceiver as any,
+            receiver_node: mockReceiver,
           },
         },
       ];
@@ -1292,12 +1426,7 @@ describe("Member Access References", () => {
   describe("Bug Fixes and Improvements", () => {
     describe("Access Type Detection Bug Fix", () => {
       it("should correctly detect method access for MEMBER_ACCESS entities with call context", () => {
-        const mockReceiver = {
-          start_line: 1,
-          start_column: 0,
-          end_line: 1,
-          end_column: 3,
-        };
+        const mockReceiver = create_mock_node("identifier", "obj", 1, 0, 1, 3);
 
         const captures: NormalizedCapture[] = [
           {
@@ -1307,7 +1436,7 @@ describe("Member Access References", () => {
             node_location: mockLocation,
             modifiers: {},
             context: {
-              receiver_node: mockReceiver as any,
+              receiver_node: mockReceiver,
             },
           },
         ];
@@ -1325,12 +1454,7 @@ describe("Member Access References", () => {
       });
 
       it("should correctly detect index access for MEMBER_ACCESS entities with bracket notation", () => {
-        const mockReceiver = {
-          start_line: 1,
-          start_column: 0,
-          end_line: 1,
-          end_column: 3,
-        };
+        const mockReceiver = create_mock_node("identifier", "obj", 1, 0, 1, 3);
 
         const captures: NormalizedCapture[] = [
           {
@@ -1340,7 +1464,7 @@ describe("Member Access References", () => {
             node_location: mockLocation,
             modifiers: {},
             context: {
-              receiver_node: mockReceiver as any,
+              receiver_node: mockReceiver,
             },
           },
         ];
@@ -1525,7 +1649,7 @@ describe("Member Access References", () => {
       it("should validate function inputs and throw on invalid parameters", () => {
         expect(() => {
           process_member_access_references(
-            null as any,
+            null as unknown as NormalizedCapture[],
             mockScope,
             mockScopes,
             mockFilePath
@@ -1533,21 +1657,11 @@ describe("Member Access References", () => {
         }).toThrow("captures must be an array");
 
         expect(() => {
-          process_member_access_references(
-            [],
-            null as any,
-            mockScopes,
-            mockFilePath
-          );
+          process_member_access_references([], null as unknown as LexicalScope, mockScopes, mockFilePath);
         }).toThrow("root_scope is required");
 
         expect(() => {
-          process_member_access_references(
-            [],
-            mockScope,
-            null as any,
-            mockFilePath
-          );
+          process_member_access_references([], mockScope, null as unknown as Map<ScopeId, LexicalScope>, mockFilePath);
         }).toThrow("scopes must be a Map");
 
         expect(() => {
@@ -1562,13 +1676,13 @@ describe("Member Access References", () => {
 
       it("should validate inputs for utility functions", () => {
         expect(() => {
-          group_by_object(null as any);
+          group_by_object(null as unknown as MemberAccessReference[]);
         }).toThrow("accesses must be an array");
 
         // Type resolution tests removed - resolution happens in symbol_resolution Phase 3
         /*
         expect(() => {
-          find_method_calls_on_type(null as any, "TestType" as SymbolName);
+          find_method_calls_on_type(null , "TestType" as SymbolName);
         }).toThrow("accesses must be an array");
 
         expect(() => {
@@ -1577,24 +1691,19 @@ describe("Member Access References", () => {
         */
 
         expect(() => {
-          find_property_chains(null as any);
+          find_property_chains(null as unknown as MemberAccessReference[]);
         }).toThrow("accesses must be an array");
 
         // Null dereference detection removed - requires type resolution
         /*
         expect(() => {
-          find_potential_null_dereferences(null as any);
+          find_potential_null_dereferences(null );
         }).toThrow("accesses must be an array");
         */
       });
 
       it("should handle property chain validation and convert types to strings", () => {
-        const mockReceiver = {
-          start_line: 1,
-          start_column: 0,
-          end_line: 1,
-          end_column: 3,
-        };
+        const mockReceiver = create_mock_node("identifier", "obj", 1, 0, 1, 3);
 
         const captures: NormalizedCapture[] = [
           {
@@ -1628,12 +1737,7 @@ describe("Member Access References", () => {
 
     describe("Optional Chaining Detection", () => {
       it("should detect optional chaining from context", () => {
-        const mockReceiver = {
-          start_line: 1,
-          start_column: 0,
-          end_line: 1,
-          end_column: 3,
-        };
+        const mockReceiver = create_mock_node("identifier", "obj", 1, 0, 1, 3);
 
         const captures: NormalizedCapture[] = [
           {
@@ -1643,7 +1747,7 @@ describe("Member Access References", () => {
             node_location: mockLocation,
             modifiers: {},
             context: {
-              receiver_node: mockReceiver as any,
+              receiver_node: mockReceiver,
             },
           },
         ];
@@ -1660,16 +1764,11 @@ describe("Member Access References", () => {
       });
 
       it("should detect optional chaining with alternative context flags", () => {
-        const mockReceiver = {
-          start_line: 1,
-          start_column: 0,
-          end_line: 1,
-          end_column: 3,
-        };
+        const mockReceiver = create_mock_node("identifier", "obj", 1, 0, 1, 3);
 
         const testCases = [
-          { receiver_node: mockReceiver as any },
-          { receiver_node: mockReceiver as any },
+          { receiver_node: mockReceiver },
+          { receiver_node: mockReceiver },
         ];
 
         for (const context of testCases) {
@@ -1698,19 +1797,9 @@ describe("Member Access References", () => {
 
     describe("Computed Key Detection", () => {
       it("should detect computed key location from context", () => {
-        const mockReceiver = {
-          start_line: 1,
-          start_column: 0,
-          end_line: 1,
-          end_column: 3,
-        };
+        const mockReceiver = create_mock_node("identifier", "obj", 1, 0, 1, 3);
 
-        const mockComputedKeyNode = {
-          start_line: 2,
-          start_column: 5,
-          end_line: 2,
-          end_column: 10,
-        };
+        const mockComputedKeyNode = create_mock_node("string", "key", 2, 5, 2, 10);
 
         const captures: NormalizedCapture[] = [
           {
@@ -1720,8 +1809,8 @@ describe("Member Access References", () => {
             node_location: mockLocation,
             modifiers: {},
             context: {
-              receiver_node: mockReceiver as any,
-              computed_key_node: mockComputedKeyNode as any,
+              receiver_node: mockReceiver,
+              computed_key_node: mockComputedKeyNode,
               is_computed: true,
               bracket_notation: true,
             },
@@ -1779,7 +1868,7 @@ describe("Member Access References", () => {
             modifiers: {},
             context: {},
           },
-          null as any, // Malformed capture
+          null as unknown as NormalizedCapture, // Malformed capture
           {
             category: SemanticCategory.REFERENCE,
             entity: SemanticEntity.MEMBER_ACCESS,
@@ -1813,7 +1902,7 @@ describe("Member Access References", () => {
             object: { location: mockLocation },
             is_optional_chain: false,
           },
-          null as any,
+          null as unknown as MemberAccessReference,
           {
             location: mockLocation,
             member_name: "anotherValidProp" as SymbolName,
@@ -1837,12 +1926,7 @@ describe("Member Access References", () => {
     });
 
     it("should demonstrate all bug fixes working together", () => {
-      const mockReceiver = {
-        start_line: 1,
-        start_column: 0,
-        end_line: 1,
-        end_column: 3,
-      };
+      const mockReceiver = create_mock_node("identifier", "obj", 1, 0, 1, 3);
 
       const captures: NormalizedCapture[] = [
         // Method call via MEMBER_ACCESS entity (bug fix: access type detection)
@@ -1853,7 +1937,7 @@ describe("Member Access References", () => {
           node_location: mockLocation,
           modifiers: {},
           context: {
-            receiver_node: mockReceiver as any,
+            receiver_node: mockReceiver,
             is_generic_call: false,
             property_chain: ["obj", "service", "methodCall"],
           },
@@ -1869,7 +1953,7 @@ describe("Member Access References", () => {
           },
           modifiers: {},
           context: {
-            receiver_node: mockReceiver as any,
+            receiver_node: mockReceiver,
           },
         },
       ];

@@ -22,7 +22,7 @@ import {
   method_symbol,
   variable_symbol,
   defined_type_id,
-  TypeCategory
+  TypeCategory,
 } from "@ariadnejs/types";
 import type { SemanticIndex } from "../semantic_index/semantic_index";
 import type { LocalTypeInfo } from "../semantic_index/type_members";
@@ -136,23 +136,25 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
 
     // Build local type tracking
     const local_type_tracking: LocalTypeTracking = {
-      annotations: options.variables
-        ?.filter((v) => v.type_annotation)
-        .map((v, idx) => ({
+      annotations:
+        options.variables
+          ?.filter((v) => v.type_annotation)
+          .map((v, idx) => ({
+            name: v.name,
+            location: location(file_path, (idx + 1) * 5 + 200, 10),
+            annotation_text: v.type_annotation!,
+            kind: "variable" as const,
+            scope_id: root_scope_id,
+          })) || [],
+      declarations:
+        options.variables?.map((v, idx) => ({
           name: v.name,
-          location: location(file_path, (idx + 1) * 5 + 200, 10),
-          annotation_text: v.type_annotation!,
-          kind: "variable" as const,
+          location: location(file_path, (idx + 1) * 5 + 200, 0),
+          kind: "const" as const,
+          type_annotation: v.type_annotation,
+          initializer: v.initial_value,
           scope_id: root_scope_id,
         })) || [],
-      declarations: options.variables?.map((v, idx) => ({
-        name: v.name,
-        location: location(file_path, (idx + 1) * 5 + 200, 0),
-        kind: "const" as const,
-        type_annotation: v.type_annotation,
-        initializer: v.initial_value,
-        scope_id: root_scope_id,
-      })) || [],
       assignments: [],
     };
 
@@ -249,14 +251,12 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
 
     it("should generate TypeIds only in symbol_resolution phase", () => {
       const index = create_semantic_index("test.ts" as FilePath, {
-        classes: [
-          { name: "MyClass" as SymbolName },
-        ],
+        classes: [{ name: "MyClass" as SymbolName }],
       });
 
       // Local types should not have TypeIds
       expect(index.local_types[0].type_name).toBe("MyClass");
-      expect((index.local_types[0] as any).type_id).toBeUndefined();
+      expect(index.local_types[0].type_id).toBeUndefined();
 
       // Run symbol resolution
       const indices = new Map([["test.ts" as FilePath, index]]);
@@ -275,7 +275,10 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
           {
             name: "BaseClass" as SymbolName,
             members: new Map([
-              ["baseMethod" as SymbolName, { name: "baseMethod", kind: "method" }],
+              [
+                "baseMethod" as SymbolName,
+                { name: "baseMethod", kind: "method" },
+              ],
             ]),
           },
         ],
@@ -288,7 +291,10 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
             name: "DerivedClass" as SymbolName,
             extends: "BaseClass" as SymbolName,
             members: new Map([
-              ["derivedMethod" as SymbolName, { name: "derivedMethod", kind: "method" }],
+              [
+                "derivedMethod" as SymbolName,
+                { name: "derivedMethod", kind: "method" },
+              ],
             ]),
           },
         ],
@@ -307,16 +313,19 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
     });
 
     it("should resolve interface implementations across files", () => {
-      const interface_index = create_semantic_index("interface.ts" as FilePath, {
-        interfaces: [
-          {
-            name: "IShape" as SymbolName,
-            members: new Map([
-              ["area" as SymbolName, { name: "area", kind: "method" }],
-            ]),
-          },
-        ],
-      });
+      const interface_index = create_semantic_index(
+        "interface.ts" as FilePath,
+        {
+          interfaces: [
+            {
+              name: "IShape" as SymbolName,
+              members: new Map([
+                ["area" as SymbolName, { name: "area", kind: "method" }],
+              ]),
+            },
+          ],
+        }
+      );
 
       const impl_index = create_semantic_index("impl.ts" as FilePath, {
         classes: [
@@ -390,8 +399,14 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
           {
             name: "User" as SymbolName,
             members: new Map([
-              ["name" as SymbolName, { name: "name", kind: "property", type: "string" }],
-              ["age" as SymbolName, { name: "age", kind: "property", type: "number" }],
+              [
+                "name" as SymbolName,
+                { name: "name", kind: "property", type: "string" },
+              ],
+              [
+                "age" as SymbolName,
+                { name: "age", kind: "property", type: "number" },
+              ],
             ]),
           },
         ],
@@ -579,7 +594,10 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
           {
             name: "Service" as SymbolName,
             members: new Map([
-              ["configure" as SymbolName, { name: "configure", kind: "method" }],
+              [
+                "configure" as SymbolName,
+                { name: "configure", kind: "method" },
+              ],
             ]),
           },
         ],
@@ -640,8 +658,12 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
 
       // Verify generic annotations were captured
       expect(index.local_type_annotations).toHaveLength(2);
-      expect(index.local_type_annotations[0].annotation_text).toBe("Container<string>");
-      expect(index.local_type_annotations[1].annotation_text).toBe("Container<number>");
+      expect(index.local_type_annotations[0].annotation_text).toBe(
+        "Container<string>"
+      );
+      expect(index.local_type_annotations[1].annotation_text).toBe(
+        "Container<number>"
+      );
     });
   });
 
@@ -656,9 +678,12 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
           classes: [
             {
               name: `Class${i}` as SymbolName,
-              extends: i > 0 ? `Class${i - 1}` as SymbolName : undefined,
+              extends: i > 0 ? (`Class${i - 1}` as SymbolName) : undefined,
               members: new Map([
-                [`method${i}` as SymbolName, { name: `method${i}`, kind: "method" }],
+                [
+                  `method${i}` as SymbolName,
+                  { name: `method${i}`, kind: "method" },
+                ],
               ]),
             },
           ],
@@ -666,7 +691,10 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
             {
               name: `Interface${i}` as SymbolName,
               members: new Map([
-                [`prop${i}` as SymbolName, { name: `prop${i}`, kind: "property" }],
+                [
+                  `prop${i}` as SymbolName,
+                  { name: `prop${i}`, kind: "property" },
+                ],
               ]),
             },
           ],
@@ -697,7 +725,10 @@ describe("Type Resolution Refactoring - End-to-End Integration", () => {
         classes.push({
           name: `Class${i}` as SymbolName,
           members: new Map([
-            [`method${i}` as SymbolName, { name: `method${i}`, kind: "method" }],
+            [
+              `method${i}` as SymbolName,
+              { name: `method${i}`, kind: "method" },
+            ],
           ]),
         });
         interfaces.push({

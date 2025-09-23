@@ -276,7 +276,7 @@ describe("Semantic Index - JavaScript", () => {
       );
       const tree = parser.parse(code);
       const result = build_semantic_index(
-        "imports_exports.js" as any,
+        "imports_exports.js" as FilePath,
         tree,
         "javascript" as Language
       );
@@ -345,7 +345,7 @@ describe("Semantic Index - JavaScript", () => {
 
       const tree = parser.parse(code);
       const result = build_semantic_index(
-        "test.js" as any,
+        "test.js" as FilePath,
         tree,
         "javascript" as Language
       );
@@ -589,7 +589,7 @@ describe("Semantic Index - JavaScript", () => {
       const tree = parser.parse(code);
       const { build_semantic_index } = await import("./semantic_index");
       const result = build_semantic_index(
-        "test.js" as any,
+        "test.js" as FilePath,
         tree,
         "javascript" as Language
       );

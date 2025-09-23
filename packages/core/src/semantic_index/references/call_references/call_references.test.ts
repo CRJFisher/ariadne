@@ -15,6 +15,7 @@ import type {
   Location,
 } from "@ariadnejs/types";
 import type { NormalizedCapture } from "../../capture_types";
+import { create_mock_node } from "../../test_utils";
 import { SemanticEntity, SemanticCategory } from "../../capture_types";
 import {
   CallReference,
@@ -99,7 +100,7 @@ describe("Call References", () => {
     });
 
     it("should process method calls", () => {
-      const receiverNode = { start_line: 1, start_column: 0 };
+      const receiverNode = create_mock_node("identifier", "obj", 1, 0, 1, 3);
       const captures: NormalizedCapture[] = [
         {
           entity: SemanticEntity.CALL,
@@ -108,7 +109,7 @@ describe("Call References", () => {
           node_location: mockLocation,
           modifiers: {},
           context: {
-            receiver_node: receiverNode as any,
+            receiver_node: receiverNode,
           },
         },
       ];
@@ -132,7 +133,7 @@ describe("Call References", () => {
     });
 
     it("should process constructor calls", () => {
-      const constructTarget = { start_line: 1, start_column: 5 };
+      const constructTarget = create_mock_node("identifier", "MyClass", 1, 5, 1, 12);
       const captures: NormalizedCapture[] = [
         {
           entity: SemanticEntity.CALL,
@@ -141,7 +142,7 @@ describe("Call References", () => {
           node_location: mockLocation,
           modifiers: {},
           context: {
-            construct_target: constructTarget as any,
+            construct_target: constructTarget,
           },
         },
       ];
@@ -201,7 +202,7 @@ describe("Call References", () => {
           node_location: mockLocation,
           modifiers: {},
           context: {
-            receiver_node: {} as any,
+            receiver_node: create_mock_node("identifier", "MyClass", 1, 0, 1, 7),
             is_static: true,
           },
         },
@@ -274,7 +275,7 @@ describe("Call References", () => {
         {
           entity: SemanticEntity.CALL,
           category: SemanticCategory.REFERENCE,
-          text: null as any, // Invalid text
+          text: null as unknown as string, // Invalid text
           node_location: mockLocation,
           modifiers: {},
           context: {},
@@ -309,7 +310,7 @@ describe("Call References", () => {
 
     it("should handle missing containing scope", () => {
       const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-      mockFindContainingScope.mockReturnValue(undefined as any);
+      mockFindContainingScope.mockReturnValue(undefined as unknown as LexicalScope);
 
       const captures: NormalizedCapture[] = [
         {
@@ -349,7 +350,7 @@ describe("Call References", () => {
           node_location: mockLocation,
           modifiers: {},
           context: {
-            receiver_node: {} as any,
+            receiver_node: create_mock_node("identifier", "obj", 1, 0, 1, 3),
           },
         },
       ];
@@ -582,7 +583,7 @@ describe("Call References", () => {
       const malformedSymbol = {
         kind: "class",
         name: "MyClass",
-        methods: "not_an_array" as any,
+        methods: "not_an_array" ,
       } as ClassSymbol;
 
       const symbols = new Map<SymbolId, Symbol>([[classId, malformedSymbol]]);

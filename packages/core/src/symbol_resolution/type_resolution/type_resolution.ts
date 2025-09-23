@@ -16,12 +16,14 @@ import type {
   SymbolName,
   SymbolDefinition,
 } from "@ariadnejs/types";
-import {
-  defined_type_id,
-  TypeCategory,
-} from "@ariadnejs/types";
-import type { ImportResolutionMap, FunctionResolutionMap } from "../types";
-import type { LocalTypeExtraction, ResolvedTypes, GlobalTypeRegistry, LocalTypeFlowPattern } from "./types";
+import { defined_type_id, TypeCategory } from "@ariadnejs/types";
+import type { FunctionResolutionMap } from "../types";
+import type {
+  LocalTypeExtraction,
+  ResolvedTypes,
+  GlobalTypeRegistry,
+  LocalTypeFlowPattern,
+} from "./types";
 import type { FileTypeRegistry } from "./type_registry_interfaces";
 import { build_global_type_registry } from "./type_registry";
 import { resolve_type_members } from "./resolve_members";
@@ -34,7 +36,7 @@ import type {
   LocalReturnFlow,
   LocalConstructorCall,
   LocalCallAssignment,
-  FlowSource
+  FlowSource,
 } from "../../semantic_index/references/type_flow_references";
 
 /**
@@ -42,10 +44,10 @@ import type {
  * This ensures is_type_symbol and create_type_id_from_symbol stay in sync
  */
 const TYPE_SYMBOL_MAPPINGS = {
-  "class": TypeCategory.CLASS,
-  "interface": TypeCategory.INTERFACE,
-  "type_alias": TypeCategory.TYPE_ALIAS,
-  "enum": TypeCategory.ENUM,
+  class: TypeCategory.CLASS,
+  interface: TypeCategory.INTERFACE,
+  type_alias: TypeCategory.TYPE_ALIAS,
+  enum: TypeCategory.ENUM,
 } as const;
 
 type TypeSymbolKind = keyof typeof TYPE_SYMBOL_MAPPINGS;
@@ -55,14 +57,14 @@ type TypeSymbolKind = keyof typeof TYPE_SYMBOL_MAPPINGS;
  */
 export function resolve_all_types(
   local_types: LocalTypeExtraction,
-  imports: ImportResolutionMap,
+  imports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>,
   functions: FunctionResolutionMap,
   file_indices: Map<FilePath, any> // SemanticIndex type
 ): ResolvedTypes {
   // Build the global type registry with resolved imports
   const type_registry = build_global_type_registry(
     local_types.type_definitions,
-    imports.imports // Extract the actual map from ImportResolutionMap
+    imports
   );
 
   // Build type hierarchy with resolved types
@@ -77,7 +79,10 @@ export function resolve_all_types(
 
   const type_names_map = new Map<FilePath, Map<SymbolName, TypeId>>();
   const annotations = Array.from(local_types.type_annotations.values()).flat();
-  const annotation_types = resolve_type_annotations(annotations, type_names_map);
+  const annotation_types = resolve_type_annotations(
+    annotations,
+    type_names_map
+  );
   // TODO: Integrate annotation_types into symbol_types and location_types
 
   // Track type flows through resolved functions
@@ -141,13 +146,13 @@ export function build_file_type_registry(
     // Handle return types - use return_type_hint if available
     if (symbol.return_type_hint) {
       // Convert return_type_hint to TypeId (simplified for now)
-      const return_type = symbol.return_type_hint as any as TypeId;
+      const return_type = symbol.return_type_hint as unknown as TypeId;
       return_types.set(symbol_id, return_type);
     }
 
     // Handle variable value types - check if symbol has value type in additional properties
-    if ('value_type' in symbol && (symbol as any).value_type) {
-      symbol_types.set(symbol_id, (symbol as any).value_type);
+    if ("value_type" in symbol && symbol.value_type) {
+      symbol_types.set(symbol_id, symbol.value_type as TypeId);
     }
   }
 
@@ -195,14 +200,14 @@ export function build_file_type_registry_with_annotations(
 function resolve_type_reference(
   type_name: SymbolName,
   file_path: FilePath,
-  imports: ImportResolutionMap
+  imports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>
 ): TypeId | undefined {
   // First check local types in same file
   const local_type = find_local_type(type_name, file_path);
   if (local_type) return local_type;
 
   // Then check imports
-  const import_map = imports.imports.get(file_path);
+  const import_map = imports.get(file_path);
   if (!import_map) return undefined;
 
   const imported_symbol = import_map.get(type_name);
@@ -247,28 +252,38 @@ function find_local_type(
 /**
  * Check if a symbol represents a type
  */
-function is_type_symbol(symbol: SymbolDefinition): symbol is SymbolDefinition & { kind: TypeSymbolKind } {
+function is_type_symbol(
+  symbol: SymbolDefinition
+): symbol is SymbolDefinition & { kind: TypeSymbolKind } {
   return symbol.kind in TYPE_SYMBOL_MAPPINGS;
 }
 
 /**
  * Create a TypeId from a symbol definition
  */
-function create_type_id_from_symbol(symbol: SymbolDefinition & { kind: TypeSymbolKind }): TypeId {
+function create_type_id_from_symbol(
+  symbol: SymbolDefinition & { kind: TypeSymbolKind }
+): TypeId {
   const category = TYPE_SYMBOL_MAPPINGS[symbol.kind];
   return defined_type_id(category, symbol.name, symbol.location);
 }
 
 /**
- * Convert ImportResolutionMap to format expected by analyze_type_flow
+ * Convert ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> to format expected by analyze_type_flow
  */
 function prepare_imports_for_flow(
-  imports: ImportResolutionMap
+  imports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>
 ): Map<FilePath, Map<SymbolName, { resolved_location?: Location }>> {
-  const result = new Map<FilePath, Map<SymbolName, { resolved_location?: Location }>>();
+  const result = new Map<
+    FilePath,
+    Map<SymbolName, { resolved_location?: Location }>
+  >();
 
-  for (const [file_path, import_map] of imports.imports) {
-    const file_imports = new Map<SymbolName, { resolved_location?: Location }>();
+  for (const [file_path, import_map] of imports) {
+    const file_imports = new Map<
+      SymbolName,
+      { resolved_location?: Location }
+    >();
 
     for (const [symbol_name, symbol_id] of import_map) {
       // For now, we don't have location resolution for imports
@@ -325,11 +340,12 @@ function convert_flows_for_analysis(
           const assignment: LocalAssignmentFlow = {
             source: {
               kind: "variable",
-              name: `source_${pattern.source_location.line}_${pattern.source_location.column}` as SymbolName
+              name: `source_${pattern.source_location.line}_${pattern.source_location.column}` as SymbolName,
             } as FlowSource,
-            target: `target_${pattern.target_location.line}_${pattern.target_location.column}` as SymbolName,
+            target:
+              `target_${pattern.target_location.line}_${pattern.target_location.column}` as SymbolName,
             location: pattern.target_location,
-            kind: "direct"
+            kind: "direct",
           };
           assignments.push(assignment);
           break;
@@ -337,13 +353,14 @@ function convert_flows_for_analysis(
         case "return":
           // Convert return pattern to LocalReturnFlow
           const returnFlow: LocalReturnFlow = {
-            function_name: `func_${pattern.source_location.line}_${pattern.source_location.column}` as SymbolName,
+            function_name:
+              `func_${pattern.source_location.line}_${pattern.source_location.column}` as SymbolName,
             location: pattern.source_location,
             value: {
               kind: "variable",
-              name: `return_value_${pattern.source_location.line}_${pattern.source_location.column}` as SymbolName
+              name: `return_value_${pattern.source_location.line}_${pattern.source_location.column}` as SymbolName,
             } as FlowSource,
-            scope_id: pattern.scope_id
+            scope_id: pattern.scope_id,
           };
           returns.push(returnFlow);
           break;
@@ -355,18 +372,19 @@ function convert_flows_for_analysis(
           const paramAssignment: LocalAssignmentFlow = {
             source: {
               kind: "variable",
-              name: `param_${pattern.source_location.line}_${pattern.source_location.column}` as SymbolName
+              name: `param_${pattern.source_location.line}_${pattern.source_location.column}` as SymbolName,
             } as FlowSource,
-            target: `param_target_${pattern.target_location.line}_${pattern.target_location.column}` as SymbolName,
+            target:
+              `param_target_${pattern.target_location.line}_${pattern.target_location.column}` as SymbolName,
             location: pattern.target_location,
-            kind: "direct"
+            kind: "direct",
           };
           assignments.push(paramAssignment);
           break;
 
         default:
           // Handle any future flow_kind values
-          console.warn(`Unknown flow_kind: ${(pattern as any).flow_kind}`);
+          console.warn(`Unknown flow_kind: ${pattern.flow_kind}`);
           break;
       }
     }
@@ -375,7 +393,7 @@ function convert_flows_for_analysis(
       constructor_calls,
       assignments,
       returns,
-      call_assignments
+      call_assignments,
     };
 
     result.set(file_path, flow_data);

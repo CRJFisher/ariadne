@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import type { FilePath, SymbolId, Location, ScopeId } from "@ariadnejs/types";
+import type { FilePath, SymbolId, Location, ScopeId, SymbolName } from "@ariadnejs/types";
 import type { ProcessedReferences } from "./reference_types";
 
 // Import individual reference types for testing
@@ -28,7 +28,7 @@ describe("Reference Types", () => {
     it("should properly structure all reference types", () => {
       const callRef: CallReference = {
         location: mockLocation,
-        name: "testCall" as any,
+        name: "testCall" as SymbolName,
         scope_id: "test_scope" as ScopeId,
         call_type: "function",
       };
@@ -49,7 +49,7 @@ describe("Reference Types", () => {
 
       const memberAccessRef: MemberAccessReference = {
         location: mockLocation,
-        member_name: "member" as any,
+        member_name: "member" as SymbolName,
         scope_id: "test_scope" as ScopeId,
         access_type: "property",
         object: {},

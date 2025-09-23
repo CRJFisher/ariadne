@@ -11,7 +11,6 @@ import type {
   SymbolName,
   Location,
   LocationKey,
-  SymbolReference,
   TypeId,
 } from "@ariadnejs/types";
 import { SemanticIndex } from "../semantic_index/semantic_index";
@@ -19,16 +18,6 @@ import { SemanticIndex } from "../semantic_index/semantic_index";
 // ============================================================================
 // Resolution Maps - Core output types
 // ============================================================================
-
-/**
- * Phase 1: Import/Export Resolution
- * Maps imported symbol names to their actual SymbolIds from source modules
- */
-export interface ImportResolutionMap {
-  // For each file, map imported names to their resolved symbol IDs
-  // file_path -> (imported_name -> resolved_symbol_id)
-  readonly imports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>;
-}
 
 /**
  * Phase 2: Function Call Resolution
@@ -102,7 +91,7 @@ export interface ResolvedSymbols {
 
   // Individual phase results (for debugging/analysis)
   readonly phases: {
-    readonly imports: ImportResolutionMap;
+    readonly imports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>;
     readonly functions: FunctionResolutionMap;
     readonly types: TypeResolutionMap;
     readonly methods: MethodResolutionMap;

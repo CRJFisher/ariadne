@@ -11,6 +11,7 @@ import {
   normalize_captures,
   group_captures_by_category,
 } from "./capture_normalizer";
+import { create_mock_node as create_mock_node } from "./test_utils";
 
 // Mock dependencies
 vi.mock("../utils/node_utils", () => ({
@@ -27,21 +28,14 @@ describe("Capture Normalizer", () => {
   const mockFilePath = "test.js" as FilePath;
 
   // Helper to create mock QueryCapture
-  function createMockCapture(
+  function create_mock_capture(
     name: string,
     text: string,
     nodeType = "identifier"
   ): QueryCapture {
     return {
       name,
-      node: {
-        text,
-        type: nodeType,
-        startPosition: { row: 0, column: 0 },
-        endPosition: { row: 0, column: text.length },
-        children: [],
-        parent: null,
-      } as any,
+      node: create_mock_node(nodeType, text, 0, 0),
     };
   }
 
@@ -49,8 +43,8 @@ describe("Capture Normalizer", () => {
     describe("Language Support", () => {
       it("should normalize JavaScript captures", () => {
         const captures = [
-          createMockCapture("def.function", "testFunc"),
-          createMockCapture("ref.call", "testFunc"),
+          create_mock_capture("def.function", "testFunc"),
+          create_mock_capture("ref.call", "testFunc"),
         ];
 
         const result = normalize_captures(captures, "javascript", mockFilePath);
@@ -64,8 +58,8 @@ describe("Capture Normalizer", () => {
 
       it("should normalize TypeScript captures", () => {
         const captures = [
-          createMockCapture("def.interface", "TestInterface"),
-          createMockCapture("param.type", "string"),
+          create_mock_capture("def.interface", "TestInterface"),
+          create_mock_capture("param.type", "string"),
         ];
 
         const result = normalize_captures(captures, "typescript", mockFilePath);
@@ -79,8 +73,8 @@ describe("Capture Normalizer", () => {
 
       it("should normalize Python captures", () => {
         const captures = [
-          createMockCapture("def.function", "test_func"),
-          createMockCapture("ref.self", "self"),
+          create_mock_capture("def.function", "test_func"),
+          create_mock_capture("ref.self", "self"),
         ];
 
         const result = normalize_captures(captures, "python", mockFilePath);
@@ -94,8 +88,8 @@ describe("Capture Normalizer", () => {
 
       it("should normalize Rust captures", () => {
         const captures = [
-          createMockCapture("def.struct", "TestStruct"),
-          createMockCapture("ownership.borrow", "&value"),
+          create_mock_capture("def.struct", "TestStruct"),
+          create_mock_capture("ownership.borrow", "&value"),
         ];
 
         const result = normalize_captures(captures, "rust", mockFilePath);
@@ -108,7 +102,7 @@ describe("Capture Normalizer", () => {
       });
 
       it("should throw error for unsupported language", () => {
-        const captures = [createMockCapture("def.function", "test")];
+        const captures = [create_mock_capture("def.function", "test")];
 
         expect(() => {
           normalize_captures(captures, "unsupported" as Language, mockFilePath);
@@ -119,8 +113,8 @@ describe("Capture Normalizer", () => {
     describe("Capture Processing", () => {
       it("should skip unmapped captures", () => {
         const captures = [
-          createMockCapture("def.function", "testFunc"), // This will be mapped
-          createMockCapture("unknown.capture", "unknown"), // This won't be mapped
+          create_mock_capture("def.function", "testFunc"), // This will be mapped
+          create_mock_capture("unknown.capture", "unknown"), // This won't be mapped
         ];
 
         const result = normalize_captures(captures, "javascript", mockFilePath);
@@ -130,7 +124,7 @@ describe("Capture Normalizer", () => {
       });
 
       it("should include node location", () => {
-        const captures = [createMockCapture("def.function", "testFunc")];
+        const captures = [create_mock_capture("def.function", "testFunc")];
 
         const result = normalize_captures(captures, "javascript", mockFilePath);
 
@@ -139,7 +133,7 @@ describe("Capture Normalizer", () => {
       });
 
       it("should include node text", () => {
-        const captures = [createMockCapture("def.function", "testFunc")];
+        const captures = [create_mock_capture("def.function", "testFunc")];
 
         const result = normalize_captures(captures, "javascript", mockFilePath);
 
@@ -154,7 +148,7 @@ describe("Capture Normalizer", () => {
           parent: {
             children: [{ type: "static" }], // Static modifier
           },
-        } as any;
+        };
 
         const captures = [
           {
@@ -180,7 +174,7 @@ describe("Capture Normalizer", () => {
               return null;
             },
           },
-        } as any;
+        };
 
         const captures = [
           {
@@ -196,7 +190,7 @@ describe("Capture Normalizer", () => {
       });
 
       it("should handle empty modifiers gracefully", () => {
-        const captures = [createMockCapture("def.variable", "testVar")];
+        const captures = [create_mock_capture("def.variable", "testVar")];
 
         const result = normalize_captures(captures, "javascript", mockFilePath);
 
@@ -204,7 +198,7 @@ describe("Capture Normalizer", () => {
       });
 
       it("should handle undefined context gracefully", () => {
-        const captures = [createMockCapture("def.function", "testFunc")];
+        const captures = [create_mock_capture("def.function", "testFunc")];
 
         const result = normalize_captures(captures, "javascript", mockFilePath);
 
@@ -215,9 +209,9 @@ describe("Capture Normalizer", () => {
     describe("Complex Scenarios", () => {
       it("should handle multiple captures of same type", () => {
         const captures = [
-          createMockCapture("def.function", "func1"),
-          createMockCapture("def.function", "func2"),
-          createMockCapture("def.function", "func3"),
+          create_mock_capture("def.function", "func1"),
+          create_mock_capture("def.function", "func2"),
+          create_mock_capture("def.function", "func3"),
         ];
 
         const result = normalize_captures(captures, "javascript", mockFilePath);
@@ -235,9 +229,9 @@ describe("Capture Normalizer", () => {
       it("should handle mixed language-specific features", () => {
         // Test TypeScript-specific features
         const captures = [
-          createMockCapture("def.interface", "ITest"),
-          createMockCapture("param.type", "string"),
-          createMockCapture("decorator.class", "@Component"),
+          create_mock_capture("def.interface", "ITest"),
+          create_mock_capture("param.type", "string"),
+          create_mock_capture("decorator.class", "@Component"),
         ];
 
         const result = normalize_captures(captures, "typescript", mockFilePath);
@@ -257,9 +251,9 @@ describe("Capture Normalizer", () => {
 
       it("should preserve capture order", () => {
         const captures = [
-          createMockCapture("def.function", "first"),
-          createMockCapture("def.variable", "second"),
-          createMockCapture("ref.call", "third"),
+          create_mock_capture("def.function", "first"),
+          create_mock_capture("def.variable", "second"),
+          create_mock_capture("ref.call", "third"),
         ];
 
         const result = normalize_captures(captures, "javascript", mockFilePath);
@@ -278,9 +272,9 @@ describe("Capture Normalizer", () => {
         const captures = [
           {
             name: "def.function",
-            node: null,
+            node: create_mock_node("identifier", "testFunc"),
           },
-        ] as any[];
+        ];
 
         expect(() => {
           normalize_captures(captures, "javascript", mockFilePath);
@@ -291,9 +285,9 @@ describe("Capture Normalizer", () => {
         const captures = [
           {
             name: "def.function",
-            node: { text: undefined, type: "identifier" },
+            node: create_mock_node("identifier", "testFunc"),
           },
-        ] as any[];
+        ];
 
         const result = normalize_captures(captures, "javascript", mockFilePath);
 
@@ -631,11 +625,11 @@ describe("Capture Normalizer", () => {
   describe("Integration Tests", () => {
     it("should work end-to-end with normalize_captures and group_captures_by_category", () => {
       const captures = [
-        createMockCapture("def.function", "testFunc"),
-        createMockCapture("def.variable", "testVar"),
-        createMockCapture("ref.call", "testFunc"),
-        createMockCapture("import.named", "utils"),
-        createMockCapture("export.default", "testFunc"),
+        create_mock_capture("def.function", "testFunc"),
+        create_mock_capture("def.variable", "testVar"),
+        create_mock_capture("ref.call", "testFunc"),
+        create_mock_capture("import.named", "utils"),
+        create_mock_capture("export.default", "testFunc"),
       ];
 
       const normalized = normalize_captures(
@@ -670,7 +664,7 @@ describe("Capture Normalizer", () => {
             return null;
           },
         },
-      } as any;
+      };
 
       const captures = [
         {

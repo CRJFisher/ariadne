@@ -6,7 +6,10 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { resolve_python_module_path, match_python_import_to_export } from "./python";
+import {
+  resolve_python_module_path,
+  match_python_import_to_export,
+} from "./python";
 import type {
   FilePath,
   SymbolId,
@@ -29,7 +32,9 @@ describe("Python Import Resolution", () => {
     describe("Relative Imports", () => {
       it("resolves single dot relative imports", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) => p === "/project/package/utils.py");
+        mock_exists.mockImplementation(
+          (p) => p === "/project/package/utils.py"
+        );
 
         const result = resolve_python_module_path(
           ".utils",
@@ -41,7 +46,9 @@ describe("Python Import Resolution", () => {
 
       it("resolves double dot relative imports", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) => p === "/project/package/utils.py");
+        mock_exists.mockImplementation(
+          (p) => p === "/project/package/utils.py"
+        );
 
         const result = resolve_python_module_path(
           "..utils",
@@ -53,7 +60,9 @@ describe("Python Import Resolution", () => {
 
       it("resolves triple dot relative imports", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) => p === "/project/package/utils.py");
+        mock_exists.mockImplementation(
+          (p) => p === "/project/package/utils.py"
+        );
 
         const result = resolve_python_module_path(
           "...utils",
@@ -65,7 +74,9 @@ describe("Python Import Resolution", () => {
 
       it("resolves many-level relative imports", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) => p === "/project/a/shared/utils.py");
+        mock_exists.mockImplementation(
+          (p) => p === "/project/a/shared/utils.py"
+        );
 
         const result = resolve_python_module_path(
           "....shared.utils",
@@ -77,8 +88,8 @@ describe("Python Import Resolution", () => {
 
       it("resolves package imports with __init__.py", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/package/subpackage/__init__.py"
+        mock_exists.mockImplementation(
+          (p) => p === "/project/package/subpackage/__init__.py"
         );
 
         const result = resolve_python_module_path(
@@ -91,8 +102,8 @@ describe("Python Import Resolution", () => {
 
       it("resolves empty relative imports (from . import)", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/package/__init__.py"
+        mock_exists.mockImplementation(
+          (p) => p === "/project/package/__init__.py"
         );
 
         const result = resolve_python_module_path(
@@ -105,8 +116,8 @@ describe("Python Import Resolution", () => {
 
       it("resolves parent package imports (from .. import)", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/package/__init__.py"
+        mock_exists.mockImplementation(
+          (p) => p === "/project/package/__init__.py"
         );
 
         const result = resolve_python_module_path(
@@ -131,8 +142,8 @@ describe("Python Import Resolution", () => {
 
       it("resolves nested package imports", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/package/sub1/sub2/module.py"
+        mock_exists.mockImplementation(
+          (p) => p === "/project/package/sub1/sub2/module.py"
         );
 
         const result = resolve_python_module_path(
@@ -147,9 +158,9 @@ describe("Python Import Resolution", () => {
     describe("Absolute Imports", () => {
       it("resolves absolute imports from project root with setup.py", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/setup.py" ||
-          p === "/project/mypackage/utils.py"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/project/setup.py" || p === "/project/mypackage/utils.py"
         );
 
         const result = resolve_python_module_path(
@@ -162,9 +173,10 @@ describe("Python Import Resolution", () => {
 
       it("resolves absolute imports from project root with pyproject.toml", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/pyproject.toml" ||
-          p === "/project/src/mypackage/utils.py"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/project/pyproject.toml" ||
+            p === "/project/src/mypackage/utils.py"
         );
 
         const result = resolve_python_module_path(
@@ -177,9 +189,9 @@ describe("Python Import Resolution", () => {
 
       it("resolves absolute imports from project root with __init__.py", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/__init__.py" ||
-          p === "/project/mypackage/module.py"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/project/__init__.py" || p === "/project/mypackage/module.py"
         );
 
         const result = resolve_python_module_path(
@@ -192,9 +204,9 @@ describe("Python Import Resolution", () => {
 
       it("resolves package __init__.py files", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/setup.py" ||
-          p === "/project/mypackage/__init__.py"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/project/setup.py" || p === "/project/mypackage/__init__.py"
         );
 
         const result = resolve_python_module_path(
@@ -207,9 +219,10 @@ describe("Python Import Resolution", () => {
 
       it("walks up directory tree to find project root", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/workspace/project/setup.py" ||
-          p === "/workspace/project/lib/utils.py"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/workspace/project/setup.py" ||
+            p === "/workspace/project/lib/utils.py"
         );
 
         const result = resolve_python_module_path(
@@ -222,9 +235,10 @@ describe("Python Import Resolution", () => {
 
       it("handles complex package structures", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/setup.py" ||
-          p === "/project/app/api/v1/endpoints/users.py"
+        mock_exists.mockImplementation(
+          (p) =>
+            p === "/project/setup.py" ||
+            p === "/project/app/api/v1/endpoints/users.py"
         );
 
         const result = resolve_python_module_path(
@@ -238,7 +252,15 @@ describe("Python Import Resolution", () => {
 
     describe("Built-in Modules", () => {
       it("returns null for Python built-in modules", () => {
-        const builtins = ["os", "sys", "json", "re", "datetime", "math", "random"];
+        const builtins = [
+          "os",
+          "sys",
+          "json",
+          "re",
+          "datetime",
+          "math",
+          "random",
+        ];
 
         for (const builtin of builtins) {
           const result = resolve_python_module_path(
@@ -251,8 +273,13 @@ describe("Python Import Resolution", () => {
 
       it("returns null for standard library modules", () => {
         const stdlib = [
-          "collections", "itertools", "functools",
-          "typing", "pathlib", "subprocess", "threading"
+          "collections",
+          "itertools",
+          "functools",
+          "typing",
+          "pathlib",
+          "subprocess",
+          "threading",
         ];
 
         for (const module of stdlib) {
@@ -266,8 +293,11 @@ describe("Python Import Resolution", () => {
 
       it("returns null for nested standard library imports", () => {
         const nested = [
-          "os.path", "urllib.parse", "collections.abc",
-          "unittest.mock", "xml.etree.ElementTree"
+          "os.path",
+          "urllib.parse",
+          "collections.abc",
+          "unittest.mock",
+          "xml.etree.ElementTree",
         ];
 
         for (const module of nested) {
@@ -283,8 +313,8 @@ describe("Python Import Resolution", () => {
     describe("Edge Cases", () => {
       it("handles packages without __init__.py (namespace packages)", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/namespace_pkg/module.py"
+        mock_exists.mockImplementation(
+          (p) => p === "/project/namespace_pkg/module.py"
         );
 
         const result = resolve_python_module_path(
@@ -309,8 +339,8 @@ describe("Python Import Resolution", () => {
 
       it("handles mixed relative and absolute module paths", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/pkg/sub/deep/module.py"
+        mock_exists.mockImplementation(
+          (p) => p === "/project/pkg/sub/deep/module.py"
         );
 
         const result = resolve_python_module_path(
@@ -361,8 +391,8 @@ describe("Python Import Resolution", () => {
 
       it("prefers .py over .pyi when both exist", () => {
         const mock_exists = vi.mocked(fs.existsSync);
-        mock_exists.mockImplementation((p) =>
-          p === "/project/module.py" || p === "/project/module.pyi"
+        mock_exists.mockImplementation(
+          (p) => p === "/project/module.py" || p === "/project/module.pyi"
         );
 
         const result = resolve_python_module_path(
@@ -390,7 +420,7 @@ describe("Python Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 40
+            end_column: 40,
           },
         } as unknown as Import;
 
@@ -404,24 +434,27 @@ describe("Python Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];
 
         const symbols = new Map<SymbolId, SymbolDefinition>();
-        symbols.set("utils#Class1" as SymbolId, {
-          symbol_id: "utils#Class1" as SymbolId,
-          name: "Class1" as SymbolName,
-          kind: "class",
-          location: {
-            file_path: "/project/utils.py" as FilePath,
-            line: 5,
-            column: 0,
-            end_line: 10,
-            end_column: 1
-          },
-        } as unknown as SymbolDefinition);
+        symbols.set(
+          "utils#Class1" as SymbolId,
+          {
+            symbol_id: "utils#Class1" as SymbolId,
+            name: "Class1" as SymbolName,
+            kind: "class",
+            location: {
+              file_path: "/project/utils.py" as FilePath,
+              line: 5,
+              column: 0,
+              end_line: 10,
+              end_column: 1,
+            },
+          } as unknown as SymbolDefinition
+        );
 
         const result = match_python_import_to_export(
           import_stmt,
@@ -441,7 +474,7 @@ describe("Python Import Resolution", () => {
             {
               name: "original_name" as SymbolName,
               alias: "new_name" as SymbolName,
-              is_type_only: false
+              is_type_only: false,
             },
           ],
           source: "/project/utils.py" as FilePath,
@@ -450,24 +483,27 @@ describe("Python Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 40
+            end_column: 40,
           },
         } as unknown as Import;
 
         const exports: Export[] = [];
         const symbols = new Map<SymbolId, SymbolDefinition>();
-        symbols.set("utils#original_name" as SymbolId, {
-          symbol_id: "utils#original_name" as SymbolId,
-          name: "original_name" as SymbolName,
-          kind: "function",
-          location: {
-            file_path: "/project/utils.py" as FilePath,
-            line: 1,
-            column: 0,
-            end_line: 3,
-            end_column: 1
-          },
-        } as unknown as SymbolDefinition);
+        symbols.set(
+          "utils#original_name" as SymbolId,
+          {
+            symbol_id: "utils#original_name" as SymbolId,
+            name: "original_name" as SymbolName,
+            kind: "function",
+            location: {
+              file_path: "/project/utils.py" as FilePath,
+              line: 1,
+              column: 0,
+              end_line: 3,
+              end_column: 1,
+            },
+          } as unknown as SymbolDefinition
+        );
 
         const result = match_python_import_to_export(
           import_stmt,
@@ -476,22 +512,22 @@ describe("Python Import Resolution", () => {
         );
 
         expect(result.size).toBe(1);
-        expect(result.get("new_name" as SymbolName)).toBe("utils#original_name");
+        expect(result.get("new_name" as SymbolName)).toBe(
+          "utils#original_name"
+        );
       });
 
       it("matches __all__ exports when available", () => {
         const import_stmt: Import = {
           kind: "named",
-          imports: [
-            { name: "public_func" as SymbolName, is_type_only: false },
-          ],
+          imports: [{ name: "public_func" as SymbolName, is_type_only: false }],
           source: "/project/module.py" as FilePath,
           location: {
             file_path: "/project/main.py" as FilePath,
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -505,7 +541,7 @@ describe("Python Import Resolution", () => {
               line: 10,
               column: 0,
               end_line: 10,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];
@@ -519,7 +555,9 @@ describe("Python Import Resolution", () => {
         );
 
         expect(result.size).toBe(1);
-        expect(result.get("public_func" as SymbolName)).toBe("module#public_func");
+        expect(result.get("public_func" as SymbolName)).toBe(
+          "module#public_func"
+        );
       });
 
       it("does not match private symbols (starting with _)", () => {
@@ -535,36 +573,42 @@ describe("Python Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 50
+            end_column: 50,
           },
         } as unknown as Import;
 
         const exports: Export[] = [];
         const symbols = new Map<SymbolId, SymbolDefinition>();
-        symbols.set("module#_private_func" as SymbolId, {
-          symbol_id: "module#_private_func" as SymbolId,
-          name: "_private_func" as SymbolName,
-          kind: "function",
-          location: {
-            file_path: "/project/module.py" as FilePath,
-            line: 1,
-            column: 0,
-            end_line: 3,
-            end_column: 1
-          },
-        } as unknown as SymbolDefinition);
-        symbols.set("module#__very_private" as SymbolId, {
-          symbol_id: "module#__very_private" as SymbolId,
-          name: "__very_private" as SymbolName,
-          kind: "function",
-          location: {
-            file_path: "/project/module.py" as FilePath,
-            line: 5,
-            column: 0,
-            end_line: 7,
-            end_column: 1
-          },
-        } as unknown as SymbolDefinition);
+        symbols.set(
+          "module#_private_func" as SymbolId,
+          {
+            symbol_id: "module#_private_func" as SymbolId,
+            name: "_private_func" as SymbolName,
+            kind: "function",
+            location: {
+              file_path: "/project/module.py" as FilePath,
+              line: 1,
+              column: 0,
+              end_line: 3,
+              end_column: 1,
+            },
+          } as unknown as SymbolDefinition
+        );
+        symbols.set(
+          "module#__very_private" as SymbolId,
+          {
+            symbol_id: "module#__very_private" as SymbolId,
+            name: "__very_private" as SymbolName,
+            kind: "function",
+            location: {
+              file_path: "/project/module.py" as FilePath,
+              line: 5,
+              column: 0,
+              end_line: 7,
+              end_column: 1,
+            },
+          } as unknown as SymbolDefinition
+        );
 
         const result = match_python_import_to_export(
           import_stmt,
@@ -578,33 +622,34 @@ describe("Python Import Resolution", () => {
       it("matches dunder methods like __init__", () => {
         const import_stmt: Import = {
           kind: "named",
-          imports: [
-            { name: "__init__" as SymbolName, is_type_only: false },
-          ],
+          imports: [{ name: "__init__" as SymbolName, is_type_only: false }],
           source: "/project/module.py" as FilePath,
           location: {
             file_path: "/project/main.py" as FilePath,
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
         const exports: Export[] = [];
         const symbols = new Map<SymbolId, SymbolDefinition>();
-        symbols.set("module#__init__" as SymbolId, {
-          symbol_id: "module#__init__" as SymbolId,
-          name: "__init__" as SymbolName,
-          kind: "function",
-          location: {
-            file_path: "/project/module.py" as FilePath,
-            line: 1,
-            column: 0,
-            end_line: 3,
-            end_column: 1
-          },
-        } as unknown as SymbolDefinition);
+        symbols.set(
+          "module#__init__" as SymbolId,
+          {
+            symbol_id: "module#__init__" as SymbolId,
+            name: "__init__" as SymbolName,
+            kind: "function",
+            location: {
+              file_path: "/project/module.py" as FilePath,
+              line: 1,
+              column: 0,
+              end_line: 3,
+              end_column: 1,
+            },
+          } as unknown as SymbolDefinition
+        );
 
         const result = match_python_import_to_export(
           import_stmt,
@@ -630,7 +675,7 @@ describe("Python Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 50
+            end_column: 50,
           },
         } as unknown as Import;
 
@@ -644,24 +689,27 @@ describe("Python Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];
 
         const symbols = new Map<SymbolId, SymbolDefinition>();
-        symbols.set("module#also_exists" as SymbolId, {
-          symbol_id: "module#also_exists" as SymbolId,
-          name: "also_exists" as SymbolName,
-          kind: "variable",
-          location: {
-            file_path: "/project/module.py" as FilePath,
-            line: 10,
-            column: 0,
-            end_line: 10,
-            end_column: 15
-          },
-        } as unknown as SymbolDefinition);
+        symbols.set(
+          "module#also_exists" as SymbolId,
+          {
+            symbol_id: "module#also_exists" as SymbolId,
+            name: "also_exists" as SymbolName,
+            kind: "variable",
+            location: {
+              file_path: "/project/module.py" as FilePath,
+              line: 10,
+              column: 0,
+              end_line: 10,
+              end_column: 15,
+            },
+          } as unknown as SymbolDefinition
+        );
 
         const result = match_python_import_to_export(
           import_stmt,
@@ -671,7 +719,9 @@ describe("Python Import Resolution", () => {
 
         expect(result.size).toBe(2);
         expect(result.get("exists" as SymbolName)).toBe("module#exists");
-        expect(result.get("also_exists" as SymbolName)).toBe("module#also_exists");
+        expect(result.get("also_exists" as SymbolName)).toBe(
+          "module#also_exists"
+        );
         expect(result.has("not_exists" as SymbolName)).toBe(false);
       });
     });
@@ -687,24 +737,27 @@ describe("Python Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 20
+            end_column: 20,
           },
         } as unknown as Import;
 
         const exports: Export[] = [];
         const symbols = new Map<SymbolId, SymbolDefinition>();
-        symbols.set("utils#__init__" as SymbolId, {
-          symbol_id: "utils#__init__" as SymbolId,
-          name: "__init__" as SymbolName,
-          kind: "function",
-          location: {
-            file_path: "/project/utils.py" as FilePath,
-            line: 1,
-            column: 0,
-            end_line: 1,
-            end_column: 10
-          },
-        } as unknown as SymbolDefinition);
+        symbols.set(
+          "utils#__init__" as SymbolId,
+          {
+            symbol_id: "utils#__init__" as SymbolId,
+            name: "__init__" as SymbolName,
+            kind: "function",
+            location: {
+              file_path: "/project/utils.py" as FilePath,
+              line: 1,
+              column: 0,
+              end_line: 1,
+              end_column: 10,
+            },
+          } as unknown as SymbolDefinition
+        );
 
         const result = match_python_import_to_export(
           import_stmt,
@@ -726,24 +779,27 @@ describe("Python Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 20
+            end_column: 20,
           },
         } as unknown as Import;
 
         const exports: Export[] = [];
         const symbols = new Map<SymbolId, SymbolDefinition>();
-        symbols.set("numpy#__init__" as SymbolId, {
-          symbol_id: "numpy#__init__" as SymbolId,
-          name: "__init__" as SymbolName,
-          kind: "function",
-          location: {
-            file_path: "/project/numpy.py" as FilePath,
-            line: 1,
-            column: 0,
-            end_line: 1,
-            end_column: 10
-          },
-        } as unknown as SymbolDefinition);
+        symbols.set(
+          "numpy#__init__" as SymbolId,
+          {
+            symbol_id: "numpy#__init__" as SymbolId,
+            name: "__init__" as SymbolName,
+            kind: "function",
+            location: {
+              file_path: "/project/numpy.py" as FilePath,
+              line: 1,
+              column: 0,
+              end_line: 1,
+              end_column: 10,
+            },
+          } as unknown as SymbolDefinition
+        );
 
         const result = match_python_import_to_export(
           import_stmt,
@@ -765,24 +821,27 @@ describe("Python Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 20
+            end_column: 20,
           },
         } as unknown as Import;
 
         const exports: Export[] = [];
         const symbols = new Map<SymbolId, SymbolDefinition>();
-        symbols.set("simple#module" as SymbolId, {
-          symbol_id: "simple#module" as SymbolId,
-          name: "simple" as SymbolName,
-          kind: "module",
-          location: {
-            file_path: "/project/simple.py" as FilePath,
-            line: 0,
-            column: 0,
-            end_line: 100,
-            end_column: 0
-          },
-        } as unknown as SymbolDefinition);
+        symbols.set(
+          "simple#module" as SymbolId,
+          {
+            symbol_id: "simple#module" as SymbolId,
+            name: "simple" as SymbolName,
+            kind: "module",
+            location: {
+              file_path: "/project/simple.py" as FilePath,
+              line: 0,
+              column: 0,
+              end_line: 100,
+              end_column: 0,
+            },
+          } as unknown as SymbolDefinition
+        );
 
         const result = match_python_import_to_export(
           import_stmt,
@@ -806,7 +865,7 @@ describe("Python Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -820,7 +879,7 @@ describe("Python Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
           {
@@ -832,7 +891,7 @@ describe("Python Import Resolution", () => {
               line: 3,
               column: 0,
               end_line: 3,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];
@@ -858,24 +917,27 @@ describe("Python Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
         const exports: Export[] = [];
         const symbols = new Map<SymbolId, SymbolDefinition>();
-        symbols.set("module#public_func" as SymbolId, {
-          symbol_id: "module#public_func" as SymbolId,
-          name: "public_func" as SymbolName,
-          kind: "function",
-          location: {
-            file_path: "/project/module.py" as FilePath,
-            line: 1,
-            column: 0,
-            end_line: 3,
-            end_column: 1
-          },
-        } as unknown as SymbolDefinition);
+        symbols.set(
+          "module#public_func" as SymbolId,
+          {
+            symbol_id: "module#public_func" as SymbolId,
+            name: "public_func" as SymbolName,
+            kind: "function",
+            location: {
+              file_path: "/project/module.py" as FilePath,
+              line: 1,
+              column: 0,
+              end_line: 3,
+              end_column: 1,
+            },
+          } as unknown as SymbolDefinition
+        );
 
         const result = match_python_import_to_export(
           import_stmt,
@@ -898,7 +960,7 @@ describe("Python Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -912,7 +974,7 @@ describe("Python Import Resolution", () => {
               line: 1,
               column: 0,
               end_line: 1,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];
@@ -931,16 +993,14 @@ describe("Python Import Resolution", () => {
       it("handles empty exports and symbols", () => {
         const import_stmt: Import = {
           kind: "named",
-          imports: [
-            { name: "something" as SymbolName, is_type_only: false },
-          ],
+          imports: [{ name: "something" as SymbolName, is_type_only: false }],
           source: "/project/module.py" as FilePath,
           location: {
             file_path: "/project/main.py" as FilePath,
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -958,14 +1018,14 @@ describe("Python Import Resolution", () => {
 
       it("handles unknown import kind gracefully", () => {
         const import_stmt: Import = {
-          kind: "unknown" as any,
+          kind: "unknown",
           source: "/project/module.py" as FilePath,
           location: {
             file_path: "/project/main.py" as FilePath,
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 30
+            end_column: 30,
           },
         } as unknown as Import;
 
@@ -995,24 +1055,27 @@ describe("Python Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 50
+            end_column: 50,
           },
         } as unknown as Import;
 
         const exports: Export[] = [];
         const symbols = new Map<SymbolId, SymbolDefinition>();
-        symbols.set("typing_extensions#List" as SymbolId, {
-          symbol_id: "typing_extensions#List" as SymbolId,
-          name: "List" as SymbolName,
-          kind: "class",
-          location: {
-            file_path: "/project/typing_extensions.py" as FilePath,
-            line: 1,
-            column: 0,
-            end_line: 1,
-            end_column: 20
-          },
-        } as unknown as SymbolDefinition);
+        symbols.set(
+          "typing_extensions#List" as SymbolId,
+          {
+            symbol_id: "typing_extensions#List" as SymbolId,
+            name: "List" as SymbolName,
+            kind: "class",
+            location: {
+              file_path: "/project/typing_extensions.py" as FilePath,
+              line: 1,
+              column: 0,
+              end_line: 1,
+              end_column: 20,
+            },
+          } as unknown as SymbolDefinition
+        );
 
         const result = match_python_import_to_export(
           import_stmt,
@@ -1037,7 +1100,7 @@ describe("Python Import Resolution", () => {
             line: 1,
             column: 0,
             end_line: 1,
-            end_column: 50
+            end_column: 50,
           },
         } as unknown as Import;
 
@@ -1051,24 +1114,27 @@ describe("Python Import Resolution", () => {
               line: 10,
               column: 0,
               end_line: 10,
-              end_column: 20
+              end_column: 20,
             },
           } as unknown as Export,
         ];
 
         const symbols = new Map<SymbolId, SymbolDefinition>();
-        symbols.set("module#internal_func" as SymbolId, {
-          symbol_id: "module#internal_func" as SymbolId,
-          name: "internal_func" as SymbolName,
-          kind: "function",
-          location: {
-            file_path: "/project/module.py" as FilePath,
-            line: 20,
-            column: 0,
-            end_line: 22,
-            end_column: 1
-          },
-        } as unknown as SymbolDefinition);
+        symbols.set(
+          "module#internal_func" as SymbolId,
+          {
+            symbol_id: "module#internal_func" as SymbolId,
+            name: "internal_func" as SymbolName,
+            kind: "function",
+            location: {
+              file_path: "/project/module.py" as FilePath,
+              line: 20,
+              column: 0,
+              end_line: 22,
+              end_column: 1,
+            },
+          } as unknown as SymbolDefinition
+        );
 
         const result = match_python_import_to_export(
           import_stmt,
@@ -1077,7 +1143,9 @@ describe("Python Import Resolution", () => {
         );
 
         expect(result.size).toBe(1);
-        expect(result.get("public_api" as SymbolName)).toBe("module#public_api");
+        expect(result.get("public_api" as SymbolName)).toBe(
+          "module#public_api"
+        );
         expect(result.has("internal_func" as SymbolName)).toBe(false);
       });
     });

@@ -3,7 +3,14 @@
  */
 
 import { describe, it, expect } from "vitest";
-import type { TypeId, SymbolId, FilePath, SymbolName, Location } from "@ariadnejs/types";
+import type {
+  TypeId,
+  SymbolId,
+  FilePath,
+  SymbolName,
+  Location,
+  ScopeId,
+} from "@ariadnejs/types";
 import type { GlobalTypeRegistry } from "./types";
 import type { LocalTypeFlowData } from "../../semantic_index/references/type_flow_references";
 import { analyze_type_flow, TypeFlowGraph } from "./type_flow";
@@ -17,7 +24,10 @@ describe("analyze_type_flow", () => {
     // Add a test type
     const testFilePath = "test.ts" as FilePath;
     const testTypeMap = new Map<SymbolName, TypeId>();
-    testTypeMap.set("MyClass" as SymbolName, "type:MyClass:test.ts:1:0" as TypeId);
+    testTypeMap.set(
+      "MyClass" as SymbolName,
+      "type:MyClass:test.ts:1:0" as TypeId
+    );
     type_names.set(testFilePath, testTypeMap);
 
     types.set("type:MyClass:test.ts:1:0" as TypeId, {
@@ -29,7 +39,7 @@ describe("analyze_type_flow", () => {
         column: 0,
         file_path: testFilePath,
         end_line: 1,
-        end_column: 7
+        end_column: 7,
       },
       file_path: testFilePath,
       all_members: new Map(),
@@ -53,11 +63,11 @@ describe("analyze_type_flow", () => {
             column: 5,
             file_path: testFilePath,
             end_line: 10,
-            end_column: 12
+            end_column: 12,
           },
           assigned_to: "obj" as SymbolName,
           argument_count: 0,
-          scope_id: "scope-1" as any,
+          scope_id: "scope-1" as ScopeId,
         },
       ],
       assignments: [],
@@ -101,7 +111,7 @@ describe("analyze_type_flow", () => {
             column: 0,
             file_path: testFilePath,
             end_line: 20,
-            end_column: 5
+            end_column: 5,
           },
           kind: "direct",
         },
@@ -135,10 +145,10 @@ describe("analyze_type_flow", () => {
             column: 4,
             file_path: testFilePath,
             end_line: 30,
-            end_column: 10
+            end_column: 10,
           },
           value: { kind: "literal", value: "true", literal_type: "boolean" },
-          scope_id: "scope-2" as any,
+          scope_id: "scope-2" as ScopeId,
         },
       ],
       call_assignments: [],
@@ -184,11 +194,11 @@ describe("analyze_type_flow", () => {
               column: 10,
               file_path: testFilePath,
               end_line: 5,
-              end_column: 23
+              end_column: 23,
             },
             assigned_to: "instance" as SymbolName,
             argument_count: 0,
-            scope_id: "scope-1" as any,
+            scope_id: "scope-1" as ScopeId,
           },
         ],
         assignments: [],
@@ -197,44 +207,58 @@ describe("analyze_type_flow", () => {
       });
 
       // Set up imports map
-      const imports = new Map<FilePath, Map<SymbolName, { resolved_location?: Location }>>();
-      const fileImports = new Map<SymbolName, { resolved_location?: Location }>();
+      const imports = new Map<
+        FilePath,
+        Map<SymbolName, { resolved_location?: Location }>
+      >();
+      const fileImports = new Map<
+        SymbolName,
+        { resolved_location?: Location }
+      >();
       fileImports.set("ImportedClass" as SymbolName, {
         resolved_location: {
           line: 1,
           column: 0,
           file_path: importedFilePath,
           end_line: 1,
-          end_column: 13
-        }
+          end_column: 13,
+        },
       });
       imports.set(testFilePath, fileImports);
 
       // Set up type registry with imported type
       const types: GlobalTypeRegistry = {
         types: new Map([
-          ["type:ImportedClass:imported.ts:1:0" as TypeId, {
-            type_id: "type:ImportedClass:imported.ts:1:0" as TypeId,
-            name: "ImportedClass" as SymbolName,
-            kind: "class",
-            definition_location: {
-              line: 1,
-              column: 0,
+          [
+            "type:ImportedClass:imported.ts:1:0" as TypeId,
+            {
+              type_id: "type:ImportedClass:imported.ts:1:0" as TypeId,
+              name: "ImportedClass" as SymbolName,
+              kind: "class",
+              definition_location: {
+                line: 1,
+                column: 0,
+                file_path: importedFilePath,
+                end_line: 1,
+                end_column: 13,
+              },
               file_path: importedFilePath,
-              end_line: 1,
-              end_column: 13
+              all_members: new Map(),
+              base_types: [],
+              derived_types: [],
             },
-            file_path: importedFilePath,
-            all_members: new Map(),
-            base_types: [],
-            derived_types: [],
-          }]
+          ],
         ]),
         type_names: new Map(),
       };
 
       const functions = new Map();
-      const resolved = analyze_type_flow(local_flows, imports, functions, types);
+      const resolved = analyze_type_flow(
+        local_flows,
+        imports,
+        functions,
+        types
+      );
 
       // Should resolve imported type
       expect(resolved.constructor_types.size).toBe(1);
@@ -257,7 +281,7 @@ describe("analyze_type_flow", () => {
               column: 0,
               file_path: testFilePath,
               end_line: 10,
-              end_column: 7
+              end_column: 7,
             },
             assigned_to: "user" as SymbolName,
             method_info: undefined,
@@ -272,7 +296,12 @@ describe("analyze_type_flow", () => {
       });
 
       const types = create_mock_type_registry();
-      const resolved = analyze_type_flow(local_flows, imports, functions, types);
+      const resolved = analyze_type_flow(
+        local_flows,
+        imports,
+        functions,
+        types
+      );
 
       // Function call assignment tracking is implemented but not fully tested
       expect(resolved.inferred_types.size).toBe(0); // Currently 0 due to function symbol resolution
@@ -293,10 +322,10 @@ describe("analyze_type_flow", () => {
               column: 2,
               file_path: testFilePath,
               end_line: 10,
-              end_column: 8
+              end_column: 8,
             },
             value: { kind: "variable", name: "x" as SymbolName },
-            scope_id: "scope-1" as any,
+            scope_id: "scope-1" as ScopeId,
           },
           {
             function_name: "getValue" as SymbolName,
@@ -305,10 +334,10 @@ describe("analyze_type_flow", () => {
               column: 2,
               file_path: testFilePath,
               end_line: 15,
-              end_column: 8
+              end_column: 8,
             },
             value: { kind: "variable", name: "y" as SymbolName },
-            scope_id: "scope-1" as any,
+            scope_id: "scope-1" as ScopeId,
           },
         ],
         call_assignments: [],
@@ -318,7 +347,12 @@ describe("analyze_type_flow", () => {
       const functions = new Map();
       const types = create_mock_type_registry();
 
-      const resolved = analyze_type_flow(local_flows, imports, functions, types);
+      const resolved = analyze_type_flow(
+        local_flows,
+        imports,
+        functions,
+        types
+      );
 
       // Multiple returns should be tracked (though union types not yet implemented)
       expect(resolved.return_types.size).toBeLessThanOrEqual(1); // Only tracks first for now
@@ -339,11 +373,11 @@ describe("analyze_type_flow", () => {
               column: 0,
               file_path: testFilePath,
               end_line: 1,
-              end_column: 7
+              end_column: 7,
             },
             assigned_to: "a" as SymbolName,
             argument_count: 0,
-            scope_id: "scope-1" as any,
+            scope_id: "scope-1" as ScopeId,
           },
         ],
         assignments: [
@@ -355,7 +389,7 @@ describe("analyze_type_flow", () => {
               column: 0,
               file_path: testFilePath,
               end_line: 2,
-              end_column: 1
+              end_column: 1,
             },
             kind: "direct",
           },
@@ -367,7 +401,7 @@ describe("analyze_type_flow", () => {
               column: 0,
               file_path: testFilePath,
               end_line: 3,
-              end_column: 1
+              end_column: 1,
             },
             kind: "direct",
           },
@@ -380,7 +414,12 @@ describe("analyze_type_flow", () => {
       const functions = new Map();
       const types = create_mock_type_registry();
 
-      const resolved = analyze_type_flow(local_flows, imports, functions, types);
+      const resolved = analyze_type_flow(
+        local_flows,
+        imports,
+        functions,
+        types
+      );
 
       // Should track type through chain of assignments
       expect(resolved.inferred_types.size).toBeGreaterThanOrEqual(1);
@@ -401,7 +440,7 @@ describe("analyze_type_flow", () => {
               column: 0,
               file_path: testFilePath,
               end_line: 1,
-              end_column: 4
+              end_column: 4,
             },
             kind: "destructured",
           },
@@ -414,7 +453,12 @@ describe("analyze_type_flow", () => {
       const functions = new Map();
       const types = create_mock_type_registry();
 
-      const resolved = analyze_type_flow(local_flows, imports, functions, types);
+      const resolved = analyze_type_flow(
+        local_flows,
+        imports,
+        functions,
+        types
+      );
 
       // Destructured assignments should be tracked
       expect(resolved.flow_graph).toBeDefined();
@@ -432,10 +476,13 @@ describe("TypeFlowGraph", () => {
         column: 0,
         file_path: "test.ts" as FilePath,
         end_line: 1,
-        end_column: 7
-      }
+        end_column: 7,
+      },
     };
-    const target = { kind: "variable" as const, symbol: "var:x:test.ts:1:0" as SymbolId };
+    const target = {
+      kind: "variable" as const,
+      symbol: "var:x:test.ts:1:0" as SymbolId,
+    };
     const typeId = "type:MyClass:test.ts:1:0" as TypeId;
 
     graph.add_flow(source, target, typeId);
@@ -448,9 +495,18 @@ describe("TypeFlowGraph", () => {
   it("should propagate types transitively", () => {
     const graph = new TypeFlowGraph();
 
-    const node1 = { kind: "variable" as const, symbol: "var:a:test.ts:1:0" as SymbolId };
-    const node2 = { kind: "variable" as const, symbol: "var:b:test.ts:2:0" as SymbolId };
-    const node3 = { kind: "variable" as const, symbol: "var:c:test.ts:3:0" as SymbolId };
+    const node1 = {
+      kind: "variable" as const,
+      symbol: "var:a:test.ts:1:0" as SymbolId,
+    };
+    const node2 = {
+      kind: "variable" as const,
+      symbol: "var:b:test.ts:2:0" as SymbolId,
+    };
+    const node3 = {
+      kind: "variable" as const,
+      symbol: "var:c:test.ts:3:0" as SymbolId,
+    };
     const typeId = "type:MyClass:test.ts:1:0" as TypeId;
 
     graph.add_flow(node1, node2, typeId);
@@ -466,9 +522,30 @@ describe("TypeFlowGraph", () => {
   it("should handle multiple type flows to same node", () => {
     const graph = new TypeFlowGraph();
 
-    const source1 = { kind: "constructor" as const, location: { line: 1, column: 0, file_path: "test.ts" as FilePath, end_line: 1, end_column: 7 } };
-    const source2 = { kind: "constructor" as const, location: { line: 2, column: 0, file_path: "test.ts" as FilePath, end_line: 2, end_column: 7 } };
-    const target = { kind: "variable" as const, symbol: "var:x:test.ts:3:0" as SymbolId };
+    const source1 = {
+      kind: "constructor" as const,
+      location: {
+        line: 1,
+        column: 0,
+        file_path: "test.ts" as FilePath,
+        end_line: 1,
+        end_column: 7,
+      },
+    };
+    const source2 = {
+      kind: "constructor" as const,
+      location: {
+        line: 2,
+        column: 0,
+        file_path: "test.ts" as FilePath,
+        end_line: 2,
+        end_column: 7,
+      },
+    };
+    const target = {
+      kind: "variable" as const,
+      symbol: "var:x:test.ts:3:0" as SymbolId,
+    };
 
     const typeId1 = "type:ClassA:test.ts:1:0" as TypeId;
     const typeId2 = "type:ClassB:test.ts:2:0" as TypeId;
@@ -488,8 +565,14 @@ describe("TypeFlowGraph", () => {
   it("should handle cyclic dependencies", () => {
     const graph = new TypeFlowGraph();
 
-    const node1 = { kind: "variable" as const, symbol: "var:a:test.ts:1:0" as SymbolId };
-    const node2 = { kind: "variable" as const, symbol: "var:b:test.ts:2:0" as SymbolId };
+    const node1 = {
+      kind: "variable" as const,
+      symbol: "var:a:test.ts:1:0" as SymbolId,
+    };
+    const node2 = {
+      kind: "variable" as const,
+      symbol: "var:b:test.ts:2:0" as SymbolId,
+    };
     const typeId = "type:MyClass:test.ts:1:0" as TypeId;
 
     // Create a cycle

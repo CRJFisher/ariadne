@@ -977,4 +977,80 @@ export const TYPESCRIPT_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
       },
     },
   ],
+
+  // ============================================================================
+  // STATIC VS INSTANCE METHOD DETECTION
+  // ============================================================================
+  [
+    "class.ref",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.CLASS,
+      context: () => ({
+        is_static: true,
+      }),
+    },
+  ],
+  [
+    "method.static",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.METHOD,
+      context: () => ({
+        is_static: true,
+      }),
+    },
+  ],
+  [
+    "instance.ref",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.VARIABLE,
+      context: () => ({
+        is_static: false,
+      }),
+    },
+  ],
+  [
+    "method.instance",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.METHOD,
+      context: () => ({
+        is_static: false,
+      }),
+    },
+  ],
+  [
+    "static_method_call",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.METHOD,
+      context: (node) => {
+        const memberExpr = node.childForFieldName?.("function");
+        const receiver = memberExpr?.childForFieldName?.("object");
+        return {
+          receiver_node: receiver || undefined,
+          is_call: true,
+          is_static: true,
+        };
+      },
+    },
+  ],
+  [
+    "instance_method_call",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.METHOD,
+      context: (node) => {
+        const memberExpr = node.childForFieldName?.("function");
+        const receiver = memberExpr?.childForFieldName?.("object");
+        return {
+          receiver_node: receiver || undefined,
+          is_call: true,
+          is_static: false,
+        };
+      },
+    },
+  ],
 ]);

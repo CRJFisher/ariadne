@@ -27,7 +27,7 @@ import type {
 } from "@ariadnejs/types";
 import { variable_symbol } from "@ariadnejs/types";
 import { process_exports } from "./exports";
-import { SemanticEntity } from "../capture_types";
+import { SemanticEntity, SemanticCategory } from "../capture_types";
 import type { NormalizedCapture } from "../capture_types";
 import { query_tree_and_parse_captures } from "../semantic_index";
 
@@ -58,76 +58,94 @@ describe("Exports Module", () => {
       parent_id: null,
       child_ids: [],
       symbols: new Map([
-        ["testFunction" as SymbolName, {
-          id: variable_symbol("testFunction", base_location),
-          name: "testFunction" as SymbolName,
-          kind: "function" as SymbolKind,
-          location: base_location,
-          scope_id: "scope_0" as ScopeId,
-          is_hoisted: true,
-          is_exported: false,
-          is_imported: false,
-          references: [],
-        }],
-        ["TestClass" as SymbolName, {
-          id: variable_symbol("TestClass", base_location),
-          name: "TestClass" as SymbolName,
-          kind: "class" as SymbolKind,
-          location: base_location,
-          scope_id: "scope_0" as ScopeId,
-          is_hoisted: true,
-          is_exported: false,
-          is_imported: false,
-          references: [],
-        }],
-        ["testVar" as SymbolName, {
-          id: variable_symbol("testVar", base_location),
-          name: "testVar" as SymbolName,
-          kind: "variable" as SymbolKind,
-          location: base_location,
-          scope_id: "scope_0" as ScopeId,
-          is_hoisted: false,
-          is_exported: false,
-          is_imported: false,
-          references: [],
-        }],
+        [
+          "testFunction" as SymbolName,
+          {
+            id: variable_symbol("testFunction", base_location),
+            name: "testFunction" as SymbolName,
+            kind: "function" as SymbolKind,
+            location: base_location,
+            scope_id: "scope_0" as ScopeId,
+            is_hoisted: true,
+            is_exported: false,
+            is_imported: false,
+            references: [],
+          },
+        ],
+        [
+          "TestClass" as SymbolName,
+          {
+            id: variable_symbol("TestClass", base_location),
+            name: "TestClass" as SymbolName,
+            kind: "class" as SymbolKind,
+            location: base_location,
+            scope_id: "scope_0" as ScopeId,
+            is_hoisted: true,
+            is_exported: false,
+            is_imported: false,
+            references: [],
+          },
+        ],
+        [
+          "testVar" as SymbolName,
+          {
+            id: variable_symbol("testVar", base_location),
+            name: "testVar" as SymbolName,
+            kind: "variable" as SymbolKind,
+            location: base_location,
+            scope_id: "scope_0" as ScopeId,
+            is_hoisted: false,
+            is_exported: false,
+            is_imported: false,
+            references: [],
+          },
+        ],
       ]),
     };
 
     symbols = new Map([
-      [variable_symbol("testFunction", base_location), {
-        id: variable_symbol("testFunction", base_location),
-        name: "testFunction" as SymbolName,
-        kind: "function",
-        location: base_location,
-        scope_id: root_scope.id,
-        is_hoisted: true,
-        is_exported: false,
-        is_imported: false,
-        references: [],
-      }],
-      [variable_symbol("TestClass", base_location), {
-        id: variable_symbol("TestClass", base_location),
-        name: "TestClass" as SymbolName,
-        kind: "class",
-        location: base_location,
-        scope_id: root_scope.id,
-        is_hoisted: true,
-        is_exported: false,
-        is_imported: false,
-        references: [],
-      }],
-      [variable_symbol("testVar", base_location), {
-        id: variable_symbol("testVar", base_location),
-        name: "testVar" as SymbolName,
-        kind: "variable",
-        location: base_location,
-        scope_id: root_scope.id,
-        is_hoisted: false,
-        is_exported: false,
-        is_imported: false,
-        references: [],
-      }],
+      [
+        variable_symbol("testFunction", base_location),
+        {
+          id: variable_symbol("testFunction", base_location),
+          name: "testFunction" as SymbolName,
+          kind: "function",
+          location: base_location,
+          scope_id: root_scope.id,
+          is_hoisted: true,
+          is_exported: false,
+          is_imported: false,
+          references: [],
+        },
+      ],
+      [
+        variable_symbol("TestClass", base_location),
+        {
+          id: variable_symbol("TestClass", base_location),
+          name: "TestClass" as SymbolName,
+          kind: "class",
+          location: base_location,
+          scope_id: root_scope.id,
+          is_hoisted: true,
+          is_exported: false,
+          is_imported: false,
+          references: [],
+        },
+      ],
+      [
+        variable_symbol("testVar", base_location),
+        {
+          id: variable_symbol("testVar", base_location),
+          name: "testVar" as SymbolName,
+          kind: "variable",
+          location: base_location,
+          scope_id: root_scope.id,
+          is_hoisted: false,
+          is_exported: false,
+          is_imported: false,
+          references: [],
+        },
+      ],
     ]);
   });
 
@@ -136,7 +154,7 @@ describe("Exports Module", () => {
       it("should process basic named exports", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "testVar",
             node_location: { ...base_location, line: 3 },
@@ -144,7 +162,13 @@ describe("Exports Module", () => {
           },
         ];
 
-        const result = process_exports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_exports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const export_item = result[0] as NamedExport;
@@ -158,7 +182,7 @@ describe("Exports Module", () => {
       it("should process named exports with aliases", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "testVar",
             node_location: base_location,
@@ -169,7 +193,13 @@ describe("Exports Module", () => {
           },
         ];
 
-        const result = process_exports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_exports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const export_item = result[0] as NamedExport;
@@ -182,7 +212,7 @@ describe("Exports Module", () => {
       it("should handle type-only exports", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "TestClass",
             node_location: base_location,
@@ -192,7 +222,13 @@ describe("Exports Module", () => {
           },
         ];
 
-        const result = process_exports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_exports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const export_item = result[0] as NamedExport;
@@ -202,7 +238,7 @@ describe("Exports Module", () => {
       it("should not mutate original symbol objects", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "testVar",
             node_location: base_location,
@@ -210,13 +246,15 @@ describe("Exports Module", () => {
           },
         ];
 
-        const original_symbol = symbols.get(variable_symbol("testVar", base_location))!;
-        const original_is_exported = (original_symbol as any).is_exported;
+        const original_symbol = symbols.get(
+          variable_symbol("testVar", base_location)
+        )!;
+        const original_is_exported = original_symbol.is_exported;
 
         process_exports(captures, root_scope, symbols, file_path, "typescript");
 
         // Symbols should not be mutated - export information is tracked in the Export objects
-        expect((original_symbol as any).is_exported).toBe(original_is_exported);
+        expect(original_symbol.is_exported).toBe(original_is_exported);
       });
     });
 
@@ -224,7 +262,7 @@ describe("Exports Module", () => {
       it("should process default exports", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.FUNCTION,
             text: "testFunction",
             node_location: base_location,
@@ -234,7 +272,13 @@ describe("Exports Module", () => {
           },
         ];
 
-        const result = process_exports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_exports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const export_item = result[0] as DefaultExport;
@@ -246,7 +290,7 @@ describe("Exports Module", () => {
       it("should handle default exports with is_declaration flag", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.CLASS,
             text: "TestClass",
             node_location: base_location,
@@ -257,7 +301,13 @@ describe("Exports Module", () => {
           },
         ];
 
-        const result = process_exports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_exports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const export_item = result[0] as DefaultExport;
@@ -270,7 +320,7 @@ describe("Exports Module", () => {
       it("should process basic re-exports", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "reexported",
             node_location: base_location,
@@ -285,7 +335,13 @@ describe("Exports Module", () => {
           },
         ];
 
-        const result = process_exports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_exports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const export_item = result[0] as ReExport;
@@ -298,7 +354,7 @@ describe("Exports Module", () => {
       it("should process re-exports with aliases", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "reexported",
             node_location: base_location,
@@ -316,7 +372,13 @@ describe("Exports Module", () => {
           },
         ];
 
-        const result = process_exports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_exports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const export_item = result[0] as ReExport;
@@ -330,7 +392,7 @@ describe("Exports Module", () => {
       it("should handle single re-export with alias", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "reexported",
             node_location: base_location,
@@ -346,7 +408,13 @@ describe("Exports Module", () => {
           },
         ];
 
-        const result = process_exports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_exports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const export_item = result[0] as ReExport;
@@ -360,7 +428,7 @@ describe("Exports Module", () => {
       it("should process namespace exports", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "*",
             node_location: base_location,
@@ -374,7 +442,13 @@ describe("Exports Module", () => {
           },
         ];
 
-        const result = process_exports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_exports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const export_item = result[0] as NamespaceExport;
@@ -386,7 +460,7 @@ describe("Exports Module", () => {
       it("should process namespace exports with aliases", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "*",
             node_location: base_location,
@@ -401,7 +475,13 @@ describe("Exports Module", () => {
           },
         ];
 
-        const result = process_exports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_exports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const export_item = result[0] as NamespaceExport;
@@ -497,12 +577,18 @@ describe("Exports Module", () => {
       });
 
       it("should create implicit exports for all top-level symbols", () => {
-        const result = process_exports([], root_scope, symbols, file_path, "python");
+        const result = process_exports(
+          [],
+          root_scope,
+          symbols,
+          file_path,
+          "python"
+        );
 
         // Should have implicit exports for all symbols in root scope
         expect(result.length).toBeGreaterThan(4);
 
-        const symbol_names = result.map(e => e.symbol_name);
+        const symbol_names = result.map((e) => e.symbol_name);
         expect(symbol_names).toContain("public_function");
         expect(symbol_names).toContain("_private_function");
         expect(symbol_names).toContain("__magic__");
@@ -510,17 +596,33 @@ describe("Exports Module", () => {
       });
 
       it("should mark private symbols with private modifier", () => {
-        const result = process_exports([], root_scope, symbols, file_path, "python");
+        const result = process_exports(
+          [],
+          root_scope,
+          symbols,
+          file_path,
+          "python"
+        );
 
-        const private_export = result.find(e => e.symbol_name === "_private_function") as NamedExport;
+        const private_export = result.find(
+          (e) => e.symbol_name === "_private_function"
+        ) as NamedExport;
         expect(private_export.modifiers).toContain("private");
         expect(private_export.modifiers).toContain("implicit");
       });
 
       it("should mark magic symbols with magic modifier", () => {
-        const result = process_exports([], root_scope, symbols, file_path, "python");
+        const result = process_exports(
+          [],
+          root_scope,
+          symbols,
+          file_path,
+          "python"
+        );
 
-        const magic_export = result.find(e => e.symbol_name === "__magic__") as NamedExport;
+        const magic_export = result.find(
+          (e) => e.symbol_name === "__magic__"
+        ) as NamedExport;
         expect(magic_export.modifiers).toContain("magic");
         expect(magic_export.modifiers).toContain("implicit");
       });
@@ -528,7 +630,7 @@ describe("Exports Module", () => {
       it("should handle __all__ definition for star exports", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "__all__",
             node_location: base_location,
@@ -536,10 +638,18 @@ describe("Exports Module", () => {
           },
         ];
 
-        const result = process_exports(captures, root_scope, symbols, file_path, "python");
+        const result = process_exports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "python"
+        );
 
         // Should still create implicit exports for all symbols
-        const implicit_exports = result.filter(e => e.modifiers?.includes("implicit"));
+        const implicit_exports = result.filter((e) =>
+          e.modifiers?.includes("implicit")
+        );
         expect(implicit_exports.length).toBeGreaterThan(0);
 
         // Check that the function handles __all__ (actual behavior may vary based on implementation details)
@@ -547,19 +657,29 @@ describe("Exports Module", () => {
       });
 
       it("should mark non-private symbols as star exportable when no __all__", () => {
-        const result = process_exports([], root_scope, symbols, file_path, "python");
+        const result = process_exports(
+          [],
+          root_scope,
+          symbols,
+          file_path,
+          "python"
+        );
 
-        const public_export = result.find(e => e.symbol_name === "public_function") as NamedExport;
+        const public_export = result.find(
+          (e) => e.symbol_name === "public_function"
+        ) as NamedExport;
         expect(public_export.modifiers).toContain("star_exportable");
 
-        const private_export = result.find(e => e.symbol_name === "_private_function") as NamedExport;
+        const private_export = result.find(
+          (e) => e.symbol_name === "_private_function"
+        ) as NamedExport;
         expect(private_export.modifiers).not.toContain("star_exportable");
       });
 
       it("should not create duplicate exports for explicitly exported symbols", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.FUNCTION,
             text: "public_function",
             node_location: base_location,
@@ -567,9 +687,17 @@ describe("Exports Module", () => {
           },
         ];
 
-        const result = process_exports(captures, root_scope, symbols, file_path, "python");
+        const result = process_exports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "python"
+        );
 
-        const public_exports = result.filter(e => e.symbol_name === "public_function");
+        const public_exports = result.filter(
+          (e) => e.symbol_name === "public_function"
+        );
         // Should have only one export for public_function (explicit), plus implicit exports for others
         expect(public_exports.length).toBe(1);
         expect(public_exports[0].modifiers).not.toContain("implicit");
@@ -580,7 +708,7 @@ describe("Exports Module", () => {
       it("should handle pub use re-exports", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "public_item",
             node_location: base_location,
@@ -592,7 +720,13 @@ describe("Exports Module", () => {
           },
         ];
 
-        const result = process_exports(captures, root_scope, symbols, file_path, "rust");
+        const result = process_exports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "rust"
+        );
 
         // Since we changed the context structure, this will likely be processed as a named export
         expect(result.length).toBeGreaterThanOrEqual(1);
@@ -603,7 +737,7 @@ describe("Exports Module", () => {
       it("should handle different pub visibility levels", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "crate_item",
             node_location: base_location,
@@ -614,7 +748,13 @@ describe("Exports Module", () => {
           },
         ];
 
-        const result = process_exports(captures, root_scope, symbols, file_path, "rust");
+        const result = process_exports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "rust"
+        );
 
         // Since we changed the context structure, this will likely be processed as a named export
         expect(result.length).toBeGreaterThanOrEqual(1);
@@ -624,7 +764,13 @@ describe("Exports Module", () => {
 
       it("should not create implicit exports", () => {
         // Rust has no implicit exports - only explicit pub items
-        const result = process_exports([], root_scope, symbols, file_path, "rust");
+        const result = process_exports(
+          [],
+          root_scope,
+          symbols,
+          file_path,
+          "rust"
+        );
 
         // Should have no exports for Rust without explicit pub declarations
         expect(result.length).toBe(0);
@@ -635,21 +781,21 @@ describe("Exports Module", () => {
       it("should group captures by line number", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "first",
             node_location: { ...base_location, line: 5 },
             modifiers: {},
           },
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "second",
             node_location: { ...base_location, line: 5 }, // Same line
             modifiers: {},
           },
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "third",
             node_location: { ...base_location, line: 6 }, // Different line
@@ -657,7 +803,13 @@ describe("Exports Module", () => {
           },
         ];
 
-        const result = process_exports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_exports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         // Should process each capture as separate export since they're not re-exports or namespace exports
         expect(result.length).toBe(3);
@@ -666,14 +818,14 @@ describe("Exports Module", () => {
       it("should skip captures marked to skip", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "included",
             node_location: base_location,
             modifiers: {},
           },
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "skipped",
             node_location: { ...base_location, line: 2 },
@@ -684,7 +836,13 @@ describe("Exports Module", () => {
           },
         ];
 
-        const result = process_exports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_exports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         expect(result[0].symbol_name).toBe("included");
@@ -695,7 +853,7 @@ describe("Exports Module", () => {
       it("should use existing symbol IDs when available", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "testVar",
             node_location: base_location,
@@ -703,7 +861,13 @@ describe("Exports Module", () => {
           },
         ];
 
-        const result = process_exports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_exports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const export_item = result[0] as NamedExport;
@@ -716,7 +880,7 @@ describe("Exports Module", () => {
       it("should create new symbol IDs when not found", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "newVar",
             node_location: base_location,
@@ -724,7 +888,13 @@ describe("Exports Module", () => {
           },
         ];
 
-        const result = process_exports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_exports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const export_item = result[0] as NamedExport;
@@ -736,7 +906,13 @@ describe("Exports Module", () => {
 
     describe("Error Handling", () => {
       it("should handle empty captures array", () => {
-        const result = process_exports([], root_scope, symbols, file_path, "typescript");
+        const result = process_exports(
+          [],
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(0);
       });
@@ -744,7 +920,7 @@ describe("Exports Module", () => {
       it("should handle missing export source gracefully", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "reexported",
             node_location: base_location,
@@ -758,7 +934,13 @@ describe("Exports Module", () => {
           },
         ];
 
-        const result = process_exports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_exports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const export_item = result[0] as ReExport;
@@ -768,7 +950,7 @@ describe("Exports Module", () => {
       it("should handle malformed context data", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "testVar",
             node_location: base_location,
@@ -780,46 +962,64 @@ describe("Exports Module", () => {
         ];
 
         expect(() => {
-          process_exports(captures, root_scope, symbols, file_path, "typescript");
+          process_exports(
+            captures,
+            root_scope,
+            symbols,
+            file_path,
+            "typescript"
+          );
         }).not.toThrow();
       });
 
       it("should handle missing modifiers", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "testVar",
             node_location: base_location,
-            modifiers: undefined as any,
+            modifiers: {},
           },
         ];
 
         expect(() => {
-          process_exports(captures, root_scope, symbols, file_path, "typescript");
+          process_exports(
+            captures,
+            root_scope,
+            symbols,
+            file_path,
+            "typescript"
+          );
         }).not.toThrow();
       });
 
       it("should handle null or undefined symbol names", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "",
             node_location: base_location,
             modifiers: {},
           },
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
-            text: null as any,
+            text: null as unknown as string,
             node_location: { ...base_location, line: 2 },
             modifiers: {},
           },
         ];
 
         expect(() => {
-          process_exports(captures, root_scope, symbols, file_path, "typescript");
+          process_exports(
+            captures,
+            root_scope,
+            symbols,
+            file_path,
+            "typescript"
+          );
         }).not.toThrow();
       });
     });
@@ -829,7 +1029,7 @@ describe("Exports Module", () => {
         const captures: NormalizedCapture[] = [
           // Named export
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "namedExport",
             node_location: { ...base_location, line: 1 },
@@ -837,7 +1037,7 @@ describe("Exports Module", () => {
           },
           // Default export
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.FUNCTION,
             text: "defaultExport",
             node_location: { ...base_location, line: 2 },
@@ -845,7 +1045,7 @@ describe("Exports Module", () => {
           },
           // Re-export
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "reexported",
             node_location: { ...base_location, line: 3 },
@@ -858,7 +1058,7 @@ describe("Exports Module", () => {
           },
           // Namespace export
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "*",
             node_location: { ...base_location, line: 4 },
@@ -870,11 +1070,17 @@ describe("Exports Module", () => {
           },
         ];
 
-        const result = process_exports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_exports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(4);
 
-        const kinds = result.map(e => e.kind);
+        const kinds = result.map((e) => e.kind);
         expect(kinds).toContain("named");
         expect(kinds).toContain("default");
         expect(kinds).toContain("reexport");
@@ -884,7 +1090,7 @@ describe("Exports Module", () => {
       it("should handle deeply nested re-export scenarios", () => {
         const captures: NormalizedCapture[] = [
           {
-            category: "export" as any,
+            category: SemanticCategory.EXPORT,
             entity: SemanticEntity.VARIABLE,
             text: "complex",
             node_location: base_location,
@@ -901,7 +1107,13 @@ describe("Exports Module", () => {
           },
         ];
 
-        const result = process_exports(captures, root_scope, symbols, file_path, "typescript");
+        const result = process_exports(
+          captures,
+          root_scope,
+          symbols,
+          file_path,
+          "typescript"
+        );
 
         expect(result.length).toBe(1);
         const export_item = result[0] as ReExport;
@@ -971,8 +1183,10 @@ describe("Exports Module", () => {
         if (captures.exports && captures.exports.length > 0) {
           expect(result.length).toBeGreaterThan(0);
 
-          const export_kinds = new Set(result.map(e => e.kind));
-          expect(export_kinds.has("named") || export_kinds.has("default")).toBe(true);
+          const export_kinds = new Set(result.map((e) => e.kind));
+          expect(export_kinds.has("named") || export_kinds.has("default")).toBe(
+            true
+          );
         } else {
           // If no exports captured, that's also valid
           expect(result.length).toBe(0);
@@ -1011,164 +1225,206 @@ describe("Exports Module", () => {
         parent_id: null,
         child_ids: [],
         symbols: new Map([
-          ["public_function" as SymbolName, {
-            id: variable_symbol("public_function", base_location),
-            name: "public_function" as SymbolName,
-            kind: "function" as SymbolKind,
-            location: base_location,
-            scope_id: "scope_0" as ScopeId,
-            is_hoisted: true,
-            is_exported: false,
-            is_imported: false,
-            references: [],
-          }],
-          ["_private_function" as SymbolName, {
-            id: variable_symbol("_private_function", base_location),
-            name: "_private_function" as SymbolName,
-            kind: "function" as SymbolKind,
-            location: base_location,
-            scope_id: "scope_0" as ScopeId,
-            is_hoisted: true,
-            is_exported: false,
-            is_imported: false,
-            references: [],
-          }],
-          ["PublicClass" as SymbolName, {
-            id: variable_symbol("PublicClass", base_location),
-            name: "PublicClass" as SymbolName,
-            kind: "class" as SymbolKind,
-            location: base_location,
-            scope_id: "scope_0" as ScopeId,
-            is_hoisted: true,
-            is_exported: false,
-            is_imported: false,
-            references: [],
-          }],
-          ["_PrivateClass" as SymbolName, {
-            id: variable_symbol("_PrivateClass", base_location),
-            name: "_PrivateClass" as SymbolName,
-            kind: "class" as SymbolKind,
-            location: base_location,
-            scope_id: "scope_0" as ScopeId,
-            is_hoisted: true,
-            is_exported: false,
-            is_imported: false,
-            references: [],
-          }],
-          ["PUBLIC_CONSTANT" as SymbolName, {
-            id: variable_symbol("PUBLIC_CONSTANT", base_location),
-            name: "PUBLIC_CONSTANT" as SymbolName,
-            kind: "constant" as SymbolKind,
-            location: base_location,
-            scope_id: "scope_0" as ScopeId,
-            is_hoisted: true,
-            is_exported: false,
-            is_imported: false,
-            references: [],
-          }],
-          ["_private_variable" as SymbolName, {
-            id: variable_symbol("_private_variable", base_location),
-            name: "_private_variable" as SymbolName,
-            kind: "variable" as SymbolKind,
-            location: base_location,
-            scope_id: "scope_0" as ScopeId,
-            is_hoisted: false,
-            is_exported: false,
-            is_imported: false,
-            references: [],
-          }],
-          ["__version__" as SymbolName, {
-            id: variable_symbol("__version__", base_location),
-            name: "__version__" as SymbolName,
-            kind: "variable" as SymbolKind,
-            location: base_location,
-            scope_id: "scope_0" as ScopeId,
-            is_hoisted: false,
-            is_exported: false,
-            is_imported: false,
-            references: [],
-          }],
+          [
+            "public_function" as SymbolName,
+            {
+              id: variable_symbol("public_function", base_location),
+              name: "public_function" as SymbolName,
+              kind: "function" as SymbolKind,
+              location: base_location,
+              scope_id: "scope_0" as ScopeId,
+              is_hoisted: true,
+              is_exported: false,
+              is_imported: false,
+              references: [],
+            },
+          ],
+          [
+            "_private_function" as SymbolName,
+            {
+              id: variable_symbol("_private_function", base_location),
+              name: "_private_function" as SymbolName,
+              kind: "function" as SymbolKind,
+              location: base_location,
+              scope_id: "scope_0" as ScopeId,
+              is_hoisted: true,
+              is_exported: false,
+              is_imported: false,
+              references: [],
+            },
+          ],
+          [
+            "PublicClass" as SymbolName,
+            {
+              id: variable_symbol("PublicClass", base_location),
+              name: "PublicClass" as SymbolName,
+              kind: "class" as SymbolKind,
+              location: base_location,
+              scope_id: "scope_0" as ScopeId,
+              is_hoisted: true,
+              is_exported: false,
+              is_imported: false,
+              references: [],
+            },
+          ],
+          [
+            "_PrivateClass" as SymbolName,
+            {
+              id: variable_symbol("_PrivateClass", base_location),
+              name: "_PrivateClass" as SymbolName,
+              kind: "class" as SymbolKind,
+              location: base_location,
+              scope_id: "scope_0" as ScopeId,
+              is_hoisted: true,
+              is_exported: false,
+              is_imported: false,
+              references: [],
+            },
+          ],
+          [
+            "PUBLIC_CONSTANT" as SymbolName,
+            {
+              id: variable_symbol("PUBLIC_CONSTANT", base_location),
+              name: "PUBLIC_CONSTANT" as SymbolName,
+              kind: "constant" as SymbolKind,
+              location: base_location,
+              scope_id: "scope_0" as ScopeId,
+              is_hoisted: true,
+              is_exported: false,
+              is_imported: false,
+              references: [],
+            },
+          ],
+          [
+            "_private_variable" as SymbolName,
+            {
+              id: variable_symbol("_private_variable", base_location),
+              name: "_private_variable" as SymbolName,
+              kind: "variable" as SymbolKind,
+              location: base_location,
+              scope_id: "scope_0" as ScopeId,
+              is_hoisted: false,
+              is_exported: false,
+              is_imported: false,
+              references: [],
+            },
+          ],
+          [
+            "__version__" as SymbolName,
+            {
+              id: variable_symbol("__version__", base_location),
+              name: "__version__" as SymbolName,
+              kind: "variable" as SymbolKind,
+              location: base_location,
+              scope_id: "scope_0" as ScopeId,
+              is_hoisted: false,
+              is_exported: false,
+              is_imported: false,
+              references: [],
+            },
+          ],
         ]),
       };
 
       const test_symbols = new Map([
-        [variable_symbol("public_function", base_location), {
-          id: variable_symbol("public_function", base_location),
-          name: "public_function" as SymbolName,
-          kind: "function" as SymbolKind,
-          location: base_location,
-          scope_id: test_root_scope.id,
-          is_hoisted: true,
-          is_exported: false,
-          is_imported: false,
-          references: [],
-        }],
-        [variable_symbol("_private_function", base_location), {
-          id: variable_symbol("_private_function", base_location),
-          name: "_private_function" as SymbolName,
-          kind: "function" as SymbolKind,
-          location: base_location,
-          scope_id: test_root_scope.id,
-          is_hoisted: true,
-          is_exported: false,
-          is_imported: false,
-          references: [],
-        }],
-        [variable_symbol("PublicClass", base_location), {
-          id: variable_symbol("PublicClass", base_location),
-          name: "PublicClass" as SymbolName,
-          kind: "class" as SymbolKind,
-          location: base_location,
-          scope_id: test_root_scope.id,
-          is_hoisted: true,
-          is_exported: false,
-          is_imported: false,
-          references: [],
-        }],
-        [variable_symbol("_PrivateClass", base_location), {
-          id: variable_symbol("_PrivateClass", base_location),
-          name: "_PrivateClass" as SymbolName,
-          kind: "class" as SymbolKind,
-          location: base_location,
-          scope_id: test_root_scope.id,
-          is_hoisted: true,
-          is_exported: false,
-          is_imported: false,
-          references: [],
-        }],
-        [variable_symbol("PUBLIC_CONSTANT", base_location), {
-          id: variable_symbol("PUBLIC_CONSTANT", base_location),
-          name: "PUBLIC_CONSTANT" as SymbolName,
-          kind: "constant" as SymbolKind,
-          location: base_location,
-          scope_id: test_root_scope.id,
-          is_hoisted: true,
-          is_exported: false,
-          is_imported: false,
-          references: [],
-        }],
-        [variable_symbol("_private_variable", base_location), {
-          id: variable_symbol("_private_variable", base_location),
-          name: "_private_variable" as SymbolName,
-          kind: "variable" as SymbolKind,
-          location: base_location,
-          scope_id: test_root_scope.id,
-          is_hoisted: false,
-          is_exported: false,
-          is_imported: false,
-          references: [],
-        }],
-        [variable_symbol("__version__", base_location), {
-          id: variable_symbol("__version__", base_location),
-          name: "__version__" as SymbolName,
-          kind: "variable" as SymbolKind,
-          location: base_location,
-          scope_id: test_root_scope.id,
-          is_hoisted: false,
-          is_exported: false,
-          is_imported: false,
-          references: [],
-        }],
+        [
+          variable_symbol("public_function", base_location),
+          {
+            id: variable_symbol("public_function", base_location),
+            name: "public_function" as SymbolName,
+            kind: "function" as SymbolKind,
+            location: base_location,
+            scope_id: test_root_scope.id,
+            is_hoisted: true,
+            is_exported: false,
+            is_imported: false,
+            references: [],
+          },
+        ],
+        [
+          variable_symbol("_private_function", base_location),
+          {
+            id: variable_symbol("_private_function", base_location),
+            name: "_private_function" as SymbolName,
+            kind: "function" as SymbolKind,
+            location: base_location,
+            scope_id: test_root_scope.id,
+            is_hoisted: true,
+            is_exported: false,
+            is_imported: false,
+            references: [],
+          },
+        ],
+        [
+          variable_symbol("PublicClass", base_location),
+          {
+            id: variable_symbol("PublicClass", base_location),
+            name: "PublicClass" as SymbolName,
+            kind: "class" as SymbolKind,
+            location: base_location,
+            scope_id: test_root_scope.id,
+            is_hoisted: true,
+            is_exported: false,
+            is_imported: false,
+            references: [],
+          },
+        ],
+        [
+          variable_symbol("_PrivateClass", base_location),
+          {
+            id: variable_symbol("_PrivateClass", base_location),
+            name: "_PrivateClass" as SymbolName,
+            kind: "class" as SymbolKind,
+            location: base_location,
+            scope_id: test_root_scope.id,
+            is_hoisted: true,
+            is_exported: false,
+            is_imported: false,
+            references: [],
+          },
+        ],
+        [
+          variable_symbol("PUBLIC_CONSTANT", base_location),
+          {
+            id: variable_symbol("PUBLIC_CONSTANT", base_location),
+            name: "PUBLIC_CONSTANT" as SymbolName,
+            kind: "constant" as SymbolKind,
+            location: base_location,
+            scope_id: test_root_scope.id,
+            is_hoisted: true,
+            is_exported: false,
+            is_imported: false,
+            references: [],
+          },
+        ],
+        [
+          variable_symbol("_private_variable", base_location),
+          {
+            id: variable_symbol("_private_variable", base_location),
+            name: "_private_variable" as SymbolName,
+            kind: "variable" as SymbolKind,
+            location: base_location,
+            scope_id: test_root_scope.id,
+            is_hoisted: false,
+            is_exported: false,
+            is_imported: false,
+            references: [],
+          },
+        ],
+        [
+          variable_symbol("__version__", base_location),
+          {
+            id: variable_symbol("__version__", base_location),
+            name: "__version__" as SymbolName,
+            kind: "variable" as SymbolKind,
+            location: base_location,
+            scope_id: test_root_scope.id,
+            is_hoisted: false,
+            is_exported: false,
+            is_imported: false,
+            references: [],
+          },
+        ],
       ]);
 
       const result = process_exports(
@@ -1182,18 +1438,22 @@ describe("Exports Module", () => {
       // Should have implicit exports for all symbols
       expect(result.length).toBeGreaterThan(5);
 
-      const symbol_names = result.map(e => e.symbol_name);
+      const symbol_names = result.map((e) => e.symbol_name);
       expect(symbol_names).toContain("public_function");
       expect(symbol_names).toContain("_private_function");
       expect(symbol_names).toContain("PublicClass");
       expect(symbol_names).toContain("__version__");
 
       // Check modifiers
-      const private_export = result.find(e => e.symbol_name === "_private_function") as NamedExport;
+      const private_export = result.find(
+        (e) => e.symbol_name === "_private_function"
+      ) as NamedExport;
       expect(private_export.modifiers).toContain("private");
       expect(private_export.modifiers).toContain("implicit");
 
-      const magic_export = result.find(e => e.symbol_name === "__version__") as NamedExport;
+      const magic_export = result.find(
+        (e) => e.symbol_name === "__version__"
+      ) as NamedExport;
       expect(magic_export.modifiers).toContain("magic");
       expect(magic_export.modifiers).toContain("implicit");
     });
@@ -1279,8 +1539,10 @@ describe("Exports Module", () => {
 
     it("should process moderately large files without performance issues", () => {
       // Generate a file with many exports
-      const large_code = Array.from({ length: 100 }, (_, i) =>
-        `export const var${i} = ${i};\nexport function func${i}() { return ${i}; }`
+      const large_code = Array.from(
+        { length: 100 },
+        (_, i) =>
+          `export const var${i} = ${i};\nexport function func${i}() { return ${i}; }`
       ).join("\n");
 
       const tree = typescript_parser.parse(large_code);
@@ -1327,23 +1589,32 @@ describe("Exports Module", () => {
 
   describe("Performance and Memory", () => {
     it("should handle large numbers of exports efficiently", () => {
-      const many_captures: NormalizedCapture[] = Array.from({ length: 1000 }, (_, i) => ({
-        category: "export" as any,
-        entity: SemanticEntity.VARIABLE,
-        text: `export_${i}`,
-        node_location: { ...base_location, line: i + 1 },
-        modifiers: {},
-      }));
+      const many_captures: NormalizedCapture[] = Array.from(
+        { length: 1000 },
+        (_, i) => ({
+          category: SemanticCategory.EXPORT,
+          entity: SemanticEntity.VARIABLE,
+          text: `export_${i}`,
+          node_location: { ...base_location, line: i + 1 },
+          modifiers: {},
+        })
+      );
 
       const start_time = Date.now();
-      const result = process_exports(many_captures, root_scope, symbols, file_path, "typescript");
+      const result = process_exports(
+        many_captures,
+        root_scope,
+        symbols,
+        file_path,
+        "typescript"
+      );
       const end_time = Date.now();
 
       expect(result.length).toBe(1000);
       expect(end_time - start_time).toBeLessThan(2000); // Should complete in reasonable time
 
       // Verify all exports are correctly processed
-      const symbol_names = result.map(e => e.symbol_name);
+      const symbol_names = result.map((e) => e.symbol_name);
       for (let i = 0; i < 1000; i++) {
         expect(symbol_names).toContain(`export_${i}`);
       }
@@ -1354,7 +1625,7 @@ describe("Exports Module", () => {
       const complex_captures: NormalizedCapture[] = [
         // Multiple re-exports from same source
         ...Array.from({ length: 50 }, (_, i) => ({
-          category: "export" as any,
+          category: SemanticCategory.EXPORT,
           entity: SemanticEntity.VARIABLE,
           text: `reexport_${i}`,
           node_location: { ...base_location, line: 1 },
@@ -1367,7 +1638,7 @@ describe("Exports Module", () => {
         })),
         // Multiple namespace exports
         ...Array.from({ length: 10 }, (_, i) => ({
-          category: "export" as any,
+          category: SemanticCategory.EXPORT,
           entity: SemanticEntity.VARIABLE,
           text: "*",
           node_location: { ...base_location, line: i + 100 },
@@ -1380,13 +1651,19 @@ describe("Exports Module", () => {
         })),
       ];
 
-      const result = process_exports(complex_captures, root_scope, symbols, file_path, "typescript");
+      const result = process_exports(
+        complex_captures,
+        root_scope,
+        symbols,
+        file_path,
+        "typescript"
+      );
 
       // The actual number may be different due to grouping by line number
       expect(result.length).toBeGreaterThan(10);
 
-      const re_exports = result.filter(e => e.kind === "reexport");
-      const namespace_exports = result.filter(e => e.kind === "namespace");
+      const re_exports = result.filter((e) => e.kind === "reexport");
+      const namespace_exports = result.filter((e) => e.kind === "namespace");
 
       expect(re_exports.length).toBeGreaterThan(0);
       expect(namespace_exports.length).toBeGreaterThan(0);

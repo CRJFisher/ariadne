@@ -10,6 +10,7 @@ import type {
   FilePath,
   SymbolId,
   SymbolName,
+  SymbolKind,
   Location,
   Language,
   Import,
@@ -18,6 +19,7 @@ import type {
   NamedImport,
   DefaultImport,
   NamespaceImport,
+  NamespaceName,
   SideEffectImport,
   NamedExport,
   DefaultExport,
@@ -121,7 +123,7 @@ export function create_test_scope_id(scope: string): ScopeId {
  */
 export function create_test_symbol_definition(props: {
   id?: SymbolId;
-  kind: string;
+  kind: SymbolKind;
   name: string;
   file?: string;
   line?: number;
@@ -142,17 +144,19 @@ export function create_test_symbol_definition(props: {
     props.column || 0
   );
 
-  const symbol_id = props.id || create_test_symbol_id(
-    props.kind as any,
-    props.name,
-    props.file,
-    props.line,
-    props.column
-  );
+  const symbol_id =
+    props.id ||
+    create_test_symbol_id(
+      props.kind as "function" | "class" | "method" | "variable",
+      props.name,
+      props.file,
+      props.line,
+      props.column
+    );
 
   return {
     id: symbol_id,
-    kind: props.kind as any,
+    kind: props.kind,
     name: create_test_symbol_name(props.name),
     location,
     scope_id: props.scope_id || create_test_scope_id("global"),
@@ -243,11 +247,13 @@ export function create_test_named_import(
 ): NamedImport {
   return {
     kind: "named",
-    imports: [{
-      name: create_test_symbol_name(name),
-      alias: alias ? create_test_symbol_name(alias) : undefined,
-      is_type_only: false,
-    }],
+    imports: [
+      {
+        name: create_test_symbol_name(name),
+        alias: alias ? create_test_symbol_name(alias) : undefined,
+        is_type_only: false,
+      },
+    ],
     source: create_test_file_path(source),
     location: create_test_location(file),
     modifiers: [],
@@ -287,7 +293,7 @@ export function create_test_namespace_import(
 ): NamespaceImport {
   return {
     kind: "namespace",
-    namespace_name: namespace_name as any,
+    namespace_name: namespace_name as NamespaceName,
     source: create_test_file_path(source),
     location: create_test_location(file),
     modifiers: [],
@@ -329,11 +335,15 @@ export function create_test_named_export(
     symbol: symbol_id || create_test_symbol_id("function", local_name, file),
     symbol_name: create_test_symbol_name(local_name),
     location: create_test_location(file),
-    exports: [{
-      local_name: create_test_symbol_name(local_name),
-      export_name: export_name ? create_test_symbol_name(export_name) : create_test_symbol_name(local_name),
-      is_type_only: false,
-    }],
+    exports: [
+      {
+        local_name: create_test_symbol_name(local_name),
+        export_name: export_name
+          ? create_test_symbol_name(export_name)
+          : create_test_symbol_name(local_name),
+        is_type_only: false,
+      },
+    ],
     modifiers: [],
     language,
     node_type: "export_statement",
@@ -421,24 +431,39 @@ export function create_test_js_file(
   const symbols = new Map<SymbolId, SymbolDefinition>();
 
   // Add function symbols
-  functions.forEach(func_name => {
-    const symbol = create_test_function_symbol(func_name, file_path, undefined, exports.includes(func_name));
+  functions.forEach((func_name) => {
+    const symbol = create_test_function_symbol(
+      func_name,
+      file_path,
+      undefined,
+      exports.includes(func_name)
+    );
     symbols.set(symbol.id, symbol);
   });
 
   // Add export symbols if not already added
-  exports.forEach(export_name => {
+  exports.forEach((export_name) => {
     if (!functions.includes(export_name)) {
-      const symbol = create_test_function_symbol(export_name, file_path, undefined, true);
+      const symbol = create_test_function_symbol(
+        export_name,
+        file_path,
+        undefined,
+        true
+      );
       symbols.set(symbol.id, symbol);
     }
   });
 
-  const export_list = exports.map(name =>
-    create_test_named_export(name, name, Array.from(symbols.values()).find(s => s.name === name)?.id, file_path)
+  const export_list = exports.map((name) =>
+    create_test_named_export(
+      name,
+      name,
+      Array.from(symbols.values()).find((s) => s.name === name)?.id,
+      file_path
+    )
   );
 
-  const import_list = imports.map(imp =>
+  const import_list = imports.map((imp) =>
     create_test_named_import(imp.name, imp.source, imp.alias, file_path)
   );
 
@@ -462,17 +487,34 @@ export function create_test_python_file(
 ): SemanticIndex {
   const symbols = new Map<SymbolId, SymbolDefinition>();
 
-  functions.forEach(func_name => {
-    const symbol = create_test_function_symbol(func_name, file_path, undefined, exports.includes(func_name));
+  functions.forEach((func_name) => {
+    const symbol = create_test_function_symbol(
+      func_name,
+      file_path,
+      undefined,
+      exports.includes(func_name)
+    );
     symbols.set(symbol.id, symbol);
   });
 
-  const export_list = exports.map(name =>
-    create_test_named_export(name, name, Array.from(symbols.values()).find(s => s.name === name)?.id, file_path, "python")
+  const export_list = exports.map((name) =>
+    create_test_named_export(
+      name,
+      name,
+      Array.from(symbols.values()).find((s) => s.name === name)?.id,
+      file_path,
+      "python"
+    )
   );
 
-  const import_list = imports.map(imp =>
-    create_test_named_import(imp.name, imp.source, undefined, file_path, "python")
+  const import_list = imports.map((imp) =>
+    create_test_named_import(
+      imp.name,
+      imp.source,
+      undefined,
+      file_path,
+      "python"
+    )
   );
 
   return create_test_semantic_index({
@@ -495,16 +537,27 @@ export function create_test_rust_file(
 ): SemanticIndex {
   const symbols = new Map<SymbolId, SymbolDefinition>();
 
-  functions.forEach(func_name => {
-    const symbol = create_test_function_symbol(func_name, file_path, undefined, exports.includes(func_name));
+  functions.forEach((func_name) => {
+    const symbol = create_test_function_symbol(
+      func_name,
+      file_path,
+      undefined,
+      exports.includes(func_name)
+    );
     symbols.set(symbol.id, symbol);
   });
 
-  const export_list = exports.map(name =>
-    create_test_named_export(name, name, Array.from(symbols.values()).find(s => s.name === name)?.id, file_path, "rust")
+  const export_list = exports.map((name) =>
+    create_test_named_export(
+      name,
+      name,
+      Array.from(symbols.values()).find((s) => s.name === name)?.id,
+      file_path,
+      "rust"
+    )
   );
 
-  const import_list = imports.map(imp =>
+  const import_list = imports.map((imp) =>
     create_test_named_import(imp.name, imp.source, undefined, file_path, "rust")
   );
 
@@ -531,13 +584,21 @@ export function create_test_type_id(
 ): TypeId {
   switch (category) {
     case "primitive":
-      return primitive_type_id(name as any);
+      return primitive_type_id(name as "string" | "number" | "boolean" | "undefined" | "null" | "bigint" | "symbol");
     case "builtin":
-      return builtin_type_id(name as any);
+      return builtin_type_id(name as "Array" | "Map" | "Set" | "Date" | "RegExp" | "Error" | "Promise" | "Object" | "Function");
     case "class":
-      return defined_type_id(TypeCategory.CLASS, name as SymbolName, create_test_location(file || "test.ts"));
+      return defined_type_id(
+        TypeCategory.CLASS,
+        name as SymbolName,
+        create_test_location(file || "test.ts")
+      );
     case "interface":
-      return defined_type_id(TypeCategory.INTERFACE, name as SymbolName, create_test_location(file || "test.ts"));
+      return defined_type_id(
+        TypeCategory.INTERFACE,
+        name as SymbolName,
+        create_test_location(file || "test.ts")
+      );
     default:
       throw new Error(`Unknown type category: ${category}`);
   }
@@ -550,16 +611,18 @@ export function create_test_type_id(
 /**
  * Create a simple multi-file project for testing
  */
-export function create_test_project(files: Array<{
-  path: string;
-  language: Language;
-  exports?: string[];
-  imports?: Array<{ name: string; source: string; alias?: string }>;
-  functions?: string[];
-}>): Map<FilePath, SemanticIndex> {
+export function create_test_project(
+  files: Array<{
+    path: string;
+    language: Language;
+    exports?: string[];
+    imports?: Array<{ name: string; source: string; alias?: string }>;
+    functions?: string[];
+  }>
+): Map<FilePath, SemanticIndex> {
   const indices = new Map<FilePath, SemanticIndex>();
 
-  files.forEach(file => {
+  files.forEach((file) => {
     let index: SemanticIndex;
 
     switch (file.language) {
@@ -601,7 +664,10 @@ export function create_test_project(files: Array<{
 /**
  * Create a cross-language project for integration testing
  */
-export function create_test_cross_language_project(): Map<FilePath, SemanticIndex> {
+export function create_test_cross_language_project(): Map<
+  FilePath,
+  SemanticIndex
+> {
   return create_test_project([
     {
       path: "src/utils.js",
@@ -622,9 +688,7 @@ export function create_test_cross_language_project(): Map<FilePath, SemanticInde
     {
       path: "src/consumer.js",
       language: "javascript",
-      imports: [
-        { name: "Application", source: "./main.ts" },
-      ],
+      imports: [{ name: "Application", source: "./main.ts" }],
       functions: ["startApp"],
     },
     {
@@ -658,11 +722,15 @@ export function create_test_large_project(
 
   for (let i = 0; i < file_count; i++) {
     const file_path = `src/file${i}.ts`;
-    const functions = Array.from({ length: functions_per_file }, (_, j) => `func${i}_${j}`);
+    const functions = Array.from(
+      { length: functions_per_file },
+      (_, j) => `func${i}_${j}`
+    );
 
-    const imports = interconnected && i > 0 ? [
-      { name: `func${i-1}_0`, source: `./file${i-1}.ts` }
-    ] : [];
+    const imports =
+      interconnected && i > 0
+        ? [{ name: `func${i - 1}_0`, source: `./file${i - 1}.ts` }]
+        : [];
 
     const exports = functions.slice(0, Math.ceil(functions_per_file / 2)); // Export half
 
@@ -676,7 +744,10 @@ export function create_test_large_project(
 /**
  * Time a function execution
  */
-export function time_execution<T>(fn: () => T): { result: T; duration: number } {
+export function time_execution<T>(fn: () => T): {
+  result: T;
+  duration: number;
+} {
   const start = performance.now();
   const result = fn();
   const end = performance.now();
@@ -698,17 +769,25 @@ export function assert_maps_equal<K, V>(
   const prefix = message ? `${message}: ` : "";
 
   if (actual.size !== expected.size) {
-    throw new Error(`${prefix}Map sizes differ. Expected ${expected.size}, got ${actual.size}`);
+    throw new Error(
+      `${prefix}Map sizes differ. Expected ${expected.size}, got ${actual.size}`
+    );
   }
 
   for (const [key, expectedValue] of expected) {
     if (!actual.has(key)) {
-      throw new Error(`${prefix}Expected key ${String(key)} not found in actual map`);
+      throw new Error(
+        `${prefix}Expected key ${String(key)} not found in actual map`
+      );
     }
 
     const actualValue = actual.get(key);
     if (actualValue !== expectedValue) {
-      throw new Error(`${prefix}Value mismatch for key ${String(key)}. Expected ${String(expectedValue)}, got ${String(actualValue)}`);
+      throw new Error(
+        `${prefix}Value mismatch for key ${String(key)}. Expected ${String(
+          expectedValue
+        )}, got ${String(actualValue)}`
+      );
     }
   }
 }
@@ -730,7 +809,11 @@ export function assert_map_contains<K, V>(
 
     const actualValue = map.get(key);
     if (actualValue !== value) {
-      throw new Error(`${prefix}Value mismatch for key ${String(key)}. Expected ${String(value)}, got ${String(actualValue)}`);
+      throw new Error(
+        `${prefix}Value mismatch for key ${String(key)}. Expected ${String(
+          value
+        )}, got ${String(actualValue)}`
+      );
     }
   }
 }
@@ -747,7 +830,9 @@ export function assert_array_contains<T>(
 
   for (const item of expected) {
     if (!array.includes(item)) {
-      throw new Error(`${prefix}Expected item ${String(item)} not found in array`);
+      throw new Error(
+        `${prefix}Expected item ${String(item)} not found in array`
+      );
     }
   }
 }
@@ -760,7 +845,9 @@ export function create_fs_mock(existing_files: string[]) {
     existsSync: (path: string) => existing_files.includes(path),
     statSync: (path: string) => ({
       isFile: () => existing_files.includes(path),
-      isDirectory: () => !existing_files.includes(path) && existing_files.some(f => f.startsWith(path + "/")),
+      isDirectory: () =>
+        !existing_files.includes(path) &&
+        existing_files.some((f) => f.startsWith(path + "/")),
     }),
   };
 }
