@@ -64,6 +64,13 @@ export const RUST_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
     },
   ],
   [
+    "scope.interface",
+    {
+      category: SemanticCategory.SCOPE,
+      entity: SemanticEntity.INTERFACE,
+    },
+  ],
+  [
     "scope.block",
     {
       category: SemanticCategory.SCOPE,
@@ -191,6 +198,25 @@ export const RUST_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
     },
   ],
 
+  // Interface definitions (trait as interface)
+  [
+    "def.interface",
+    {
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.INTERFACE,
+    },
+  ],
+
+  // Generic interface definitions
+  [
+    "def.interface.generic",
+    {
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.INTERFACE,
+      modifiers: () => ({ is_generic: true }),
+    },
+  ],
+
   // Associated types in traits
   [
     "def.associated_type",
@@ -198,6 +224,16 @@ export const RUST_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
       category: SemanticCategory.DEFINITION,
       entity: SemanticEntity.TYPE_ALIAS,
       modifiers: () => ({ is_associated_type: true }),
+    },
+  ],
+
+  // Associated types in trait implementations
+  [
+    "def.associated_type.impl",
+    {
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.TYPE_ALIAS,
+      modifiers: () => ({ is_associated_type: true, is_trait_impl: true }),
     },
   ],
 
@@ -717,10 +753,42 @@ export const RUST_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
     },
   ],
 
+  // Trait methods with default implementation
+  ["def.trait_method.default", {
+    category: SemanticCategory.DEFINITION,
+    entity: SemanticEntity.METHOD,
+    modifiers: () => ({ is_trait_method: true, has_default_impl: true }),
+    },
+  ],
+
+  // Associated constants in traits
+  ["def.associated_const", {
+    category: SemanticCategory.DEFINITION,
+    entity: SemanticEntity.CONSTANT,
+    modifiers: () => ({ is_associated: true }),
+    },
+  ],
+
   // Type parameters
   ["def.type_param", {
     category: SemanticCategory.DEFINITION,
     entity: SemanticEntity.TYPE_PARAMETER,
+    },
+  ],
+
+  // Trait implementation methods
+  ["def.trait_impl_method", {
+    category: SemanticCategory.DEFINITION,
+    entity: SemanticEntity.METHOD,
+    modifiers: () => ({ is_trait_impl: true, is_static: false }),
+    },
+  ],
+
+  // Associated functions in trait implementations
+  ["def.trait_impl_method.associated", {
+    category: SemanticCategory.DEFINITION,
+    entity: SemanticEntity.METHOD,
+    modifiers: () => ({ is_trait_impl: true, is_static: true }),
     },
   ],
   ["def.type_param.constrained", {
@@ -897,6 +965,40 @@ export const RUST_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
   ["ref.type.path", {
     category: SemanticCategory.REFERENCE,
     entity: SemanticEntity.MODULE,
+    },
+  ],
+
+  // Trait implementations
+  ["impl.trait_impl", {
+    category: SemanticCategory.DEFINITION,
+    entity: SemanticEntity.CLASS,
+    modifiers: () => ({ is_trait_impl: true }),
+    },
+  ],
+
+  ["impl.trait_impl.generic", {
+    category: SemanticCategory.DEFINITION,
+    entity: SemanticEntity.CLASS,
+    modifiers: () => ({ is_trait_impl: true, is_generic: true }),
+    },
+  ],
+
+  ["impl.trait", {
+    category: SemanticCategory.REFERENCE,
+    entity: SemanticEntity.INTERFACE,
+    },
+  ],
+
+  ["impl.type", {
+    category: SemanticCategory.REFERENCE,
+    entity: SemanticEntity.TYPE,
+    },
+  ],
+
+  ["impl.type.generic", {
+    category: SemanticCategory.REFERENCE,
+    entity: SemanticEntity.TYPE,
+    modifiers: () => ({ is_generic: true }),
     },
   ],
 

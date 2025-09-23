@@ -92,8 +92,49 @@
   name: (identifier) @def.function
 )
 
-; Methods in impl blocks (with self parameter)
+; Trait implementations
 (impl_item
+  trait: (type_identifier) @impl.trait
+  type: (type_identifier) @impl.type
+) @impl.trait_impl
+
+; Trait implementations with generic type
+(impl_item
+  trait: (type_identifier) @impl.trait
+  type: (generic_type
+    type: (type_identifier) @impl.type.generic
+  )
+) @impl.trait_impl.generic
+
+; Methods in trait implementations (with self parameter)
+(impl_item
+  trait: (_)
+  body: (declaration_list
+    (function_item
+      name: (identifier) @def.trait_impl_method
+      parameters: (parameters
+        (self_parameter)
+      )
+    )
+  )
+)
+
+; Associated functions in trait implementations
+(impl_item
+  trait: (_)
+  body: (declaration_list
+    (function_item
+      name: (identifier) @def.trait_impl_method.associated
+      parameters: (parameters
+        (parameter)
+      )
+    )
+  )
+)
+
+; Methods in regular impl blocks (with self parameter)
+(impl_item
+  type: (_)
   body: (declaration_list
     (function_item
       name: (identifier) @def.method
@@ -104,8 +145,9 @@
   )
 )
 
-; Associated functions in impl blocks (no self parameter)
+; Associated functions in regular impl blocks (no self parameter)
 (impl_item
+  type: (_)
   body: (declaration_list
     (function_item
       name: (identifier) @def.method.associated
@@ -126,18 +168,18 @@
   )
 )
 
-; Generic traits (must come first)
+; Generic traits (must come first) - captured as interfaces
 (trait_item
-  name: (type_identifier) @def.trait.generic
+  name: (type_identifier) @def.interface.generic
   type_parameters: (type_parameters)
-)
+) @scope.interface
 
-; Trait definitions (general)
+; Trait definitions (general) - captured as interfaces
 (trait_item
-  name: (type_identifier) @def.trait
-)
+  name: (type_identifier) @def.interface
+) @scope.interface
 
-; Trait methods
+; Trait methods (signatures without body)
 (trait_item
   body: (declaration_list
     (function_signature_item
@@ -146,9 +188,41 @@
   )
 )
 
-; Associated types
-(associated_type
-  name: (type_identifier) @def.associated_type
+; Trait methods with default implementation
+(trait_item
+  body: (declaration_list
+    (function_item
+      name: (identifier) @def.trait_method.default
+    )
+  )
+)
+
+; Associated types in traits
+(trait_item
+  body: (declaration_list
+    (associated_type
+      name: (type_identifier) @def.associated_type
+    )
+  )
+)
+
+; Associated types in trait implementations
+(impl_item
+  trait: (_)
+  body: (declaration_list
+    (type_item
+      name: (type_identifier) @def.associated_type.impl
+    )
+  )
+)
+
+; Associated constants in traits
+(trait_item
+  body: (declaration_list
+    (const_item
+      name: (identifier) @def.associated_const
+    )
+  )
 )
 
 ; Type aliases
