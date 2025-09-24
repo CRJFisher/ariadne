@@ -51,7 +51,9 @@ export function process_references(
   // 2. Process call references
   const call_captures = ref_captures.filter(c =>
     c.entity === SemanticEntity.CALL ||
-    c.entity === SemanticEntity.SUPER
+    c.entity === SemanticEntity.SUPER ||
+    c.entity === SemanticEntity.FUNCTION ||
+    c.entity === SemanticEntity.METHOD
   );
 
   if (call_captures.length > 0) {

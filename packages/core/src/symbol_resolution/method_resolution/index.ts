@@ -47,3 +47,10 @@ export {
   determine_dispatch_type,
   type CallContext
 } from "./polymorphism_handler";
+
+// Rust ownership semantics
+export {
+  resolve_ownership_receiver_type,
+  should_use_ownership_semantics,
+  get_smart_pointer_methods
+} from "./ownership_resolver";

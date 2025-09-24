@@ -38,6 +38,75 @@
 (match_arm) @scope.match_arm
 
 ;; ==============================================================================
+;; PATTERN MATCHING
+;; ==============================================================================
+
+; Match expressions with value and body
+(match_expression
+  value: (_) @match.value) @match.expression
+
+; Match arms with patterns and values
+(match_arm
+  pattern: (_) @pattern.definition
+  value: (_) @pattern.value) @pattern.match_arm
+
+; Pattern variables in match arms - simplified capture
+(match_arm
+  (identifier) @variable.pattern)
+
+; Struct pattern destructuring
+(struct_pattern
+  type: (type_identifier) @pattern.struct_type) @pattern.struct_destructure
+
+; Tuple pattern destructuring
+(tuple_pattern) @pattern.tuple_destructure
+
+; Or patterns (pattern | pattern)
+(or_pattern) @pattern.or
+
+; Range patterns
+(range_pattern) @pattern.range
+
+; Ref patterns
+(ref_pattern) @pattern.ref
+
+; Mut patterns
+(mut_pattern) @pattern.mut
+
+; Slice patterns
+(slice_pattern) @pattern.slice
+
+; If-let expressions
+(if_expression
+  condition: (let_condition
+    pattern: (_) @pattern.if_let
+    value: (_) @pattern.if_let_value)) @control_flow.if_let
+
+; While-let expressions
+(while_expression
+  condition: (let_condition
+    pattern: (_) @pattern.while_let
+    value: (_) @pattern.while_let_value)) @control_flow.while_let
+
+; Let-else statements
+(let_declaration
+  pattern: (_) @pattern.let_else_pattern
+  value: (_) @pattern.let_else_value
+  alternative: (_) @pattern.let_else_alternative) @pattern.let_else
+
+; Pattern in for loops
+(for_expression
+  pattern: (_) @pattern.for_loop
+  value: (_) @pattern.for_loop_iterable) @pattern.for_loop_pattern
+
+; Function parameters with patterns
+(parameter
+  pattern: (tuple_pattern) @pattern.param_destructure) @pattern.param_tuple
+
+(parameter
+  pattern: (struct_pattern) @pattern.param_destructure) @pattern.param_struct
+
+;; ==============================================================================
 ;; DEFINITIONS - Basic symbols
 ;; ==============================================================================
 

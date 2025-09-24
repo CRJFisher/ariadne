@@ -34,6 +34,8 @@ import {
   resolve_inheritance,
   resolve_type_tracking,
   resolve_type_members,
+  resolve_rust_reference_types,
+  resolve_ownership_operations,
 } from "./type_resolution";
 import type {
   LocalTypeDefinition,
@@ -263,6 +265,35 @@ function phase3_resolve_types(
     for (const [loc, type_id] of type_flow.assignment_types) {
       reference_types.set(location_key(loc), type_id);
     }
+  }
+
+  // Step 8: Process Rust ownership semantics for each file
+  for (const [file_path, index] of indices) {
+    // Resolve Rust reference types (&T, &mut T)
+    const rust_reference_types = resolve_rust_reference_types(
+      index,
+      { symbol_types, reference_types, type_members, constructors, inheritance_hierarchy, interface_implementations },
+      file_path
+    );
+
+    // Merge Rust reference types into the main reference_types map
+    for (const [loc_key, type_id] of rust_reference_types) {
+      reference_types.set(loc_key, type_id);
+    }
+
+    // Process ownership operations (borrow, deref, smart pointer methods)
+    const ownership_operations = resolve_ownership_operations(index, {
+      symbol_types,
+      reference_types,
+      type_members,
+      constructors,
+      inheritance_hierarchy,
+      interface_implementations
+    });
+
+    // Store ownership operations for later use in method resolution
+    // Note: This would typically be stored in a separate map, but for now
+    // we'll just ensure the processing happens
   }
 
   // Populate type_members from resolved_members

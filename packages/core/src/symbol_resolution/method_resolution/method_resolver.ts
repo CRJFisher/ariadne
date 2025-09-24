@@ -30,6 +30,7 @@ import { determine_if_static_call } from "./static_resolution";
 import { resolve_method_with_inheritance } from "./inheritance_resolver";
 import { resolve_constructor_calls_enhanced } from "./constructor_resolver";
 import { resolve_polymorphic_method_call, CallContext } from "./polymorphism_handler";
+import { resolve_ownership_receiver_type, should_use_ownership_semantics } from "./ownership_resolver";
 
 /**
  * Resolve all method and constructor calls
@@ -324,6 +325,14 @@ function get_receiver_type(
   member_access: MemberAccessReference,
   context: MethodLookupContext
 ): TypeId | null {
+  // First, check if we need to use Rust ownership semantics
+  if (should_use_ownership_semantics(member_access, context.current_index)) {
+    const ownership_type = resolve_ownership_receiver_type(member_access, context, context.current_index);
+    if (ownership_type) {
+      return ownership_type;
+    }
+  }
+
   // If we have a receiver location, try to get its type
   if (member_access.object.location) {
     const location_key_val = location_key(member_access.object.location);

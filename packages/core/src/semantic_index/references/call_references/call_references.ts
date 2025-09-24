@@ -126,7 +126,10 @@ export function process_call_references(
 
   // Filter for call-related entities
   const call_captures = captures.filter(
-    (c) => c.entity === SemanticEntity.CALL || c.entity === SemanticEntity.SUPER
+    (c) => c.entity === SemanticEntity.CALL ||
+           c.entity === SemanticEntity.SUPER ||
+           c.entity === SemanticEntity.FUNCTION ||
+           c.entity === SemanticEntity.METHOD
   );
 
   for (const capture of call_captures) {

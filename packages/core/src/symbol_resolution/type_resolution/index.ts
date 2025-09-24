@@ -59,3 +59,13 @@ export {
   type TypeFlowGraph,
   type TypeFlowEdge
 } from "./track_types";
+
+// Rust-specific type resolution
+export {
+  resolve_rust_reference_types,
+  resolve_ownership_operations,
+  is_rust_reference_type,
+  is_rust_smart_pointer_type,
+  get_rust_reference_methods,
+  type OwnershipOperation
+} from "./rust_type_resolver";
