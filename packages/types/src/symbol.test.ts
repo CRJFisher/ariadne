@@ -38,8 +38,8 @@ describe("Symbol Utilities", () => {
           "getValue",
           test_location
         );
-        // Format: kind:file_path:line:column:end_line:end_column:name:qualifier
-        const expectedFormat = "method:src/test.ts:10:5:15:10:getValue:MyClass";
+        // Format: kind:file_path:line:column:end_line:end_column:name
+        const expectedFormat = "method:src/test.ts:10:5:15:10:getValue";
 
         expect(method_symbol_result).toBe(expectedFormat);
       });

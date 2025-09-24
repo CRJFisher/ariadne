@@ -267,8 +267,8 @@ function find_trait_method_implementations(
   // Find all trait implementations for this type across all files
   for (const [file_path, index] of context.indices) {
     // Look for trait implementation definitions
-    for (const definition of index.definitions) {
-      if (definition.entity !== "class" || !definition.modifiers?.is_trait_impl) {
+    for (const [symbol_id, definition] of index.symbols) {
+      if (definition.kind !== "class" || !('modifiers' in definition) || !definition.modifiers?.includes('is_trait_impl')) {
         continue;
       }
 
@@ -358,32 +358,31 @@ function find_methods_in_impl_block(
   const methods: SymbolId[] = [];
 
   // Look for method definitions in the same scope as the impl
-  for (const definition of index.definitions) {
-    if (definition.entity !== "method") {
+  for (const [method_symbol_id, definition] of index.symbols) {
+    if (definition.kind !== "method") {
       continue;
     }
 
     // Check if method name matches
-    if (definition.text !== method_name) {
+    if (definition.name !== method_name) {
       continue;
     }
 
     // Check if static/instance matches
-    const method_is_static = definition.modifiers?.is_static || false;
+    const method_is_static = ('is_static' in definition && definition.is_static) ||
+                            ('modifiers' in definition && definition.modifiers?.includes('static')) || false;
     if (method_is_static !== is_static) {
       continue;
     }
 
     // Check if this method is in a trait impl (has is_trait_impl modifier)
-    if (!definition.modifiers?.is_trait_impl) {
+    if (!('modifiers' in definition) || !definition.modifiers?.includes('is_trait_impl')) {
       continue;
     }
 
     // For a more precise match, we'd check if the method is in the same impl block
     // For now, include all trait impl methods with matching name/staticness
-    if (definition.symbol_id) {
-      methods.push(definition.symbol_id);
-    }
+    methods.push(method_symbol_id);
   }
 
   return methods;

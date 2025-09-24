@@ -173,6 +173,9 @@ describe("Type Resolution Module", () => {
       mockFunctions = {
         function_calls: new Map(),
         calls_to_function: new Map(),
+        closure_calls: new Map(),
+        higher_order_calls: new Map(),
+        function_pointer_calls: new Map(),
       };
     });
 
@@ -403,6 +406,9 @@ describe("Type Resolution Module", () => {
         mockFunctions = {
           function_calls: new Map(),
           calls_to_function: new Map(),
+          closure_calls: new Map(),
+          higher_order_calls: new Map(),
+          function_pointer_calls: new Map(),
         };
       });
 
@@ -794,6 +800,9 @@ describe("Type Resolution Module", () => {
         const mockFunctions: FunctionResolutionMap = {
           function_calls: new Map(),
           calls_to_function: new Map(),
+          closure_calls: new Map(),
+          higher_order_calls: new Map(),
+          function_pointer_calls: new Map(),
         };
 
         const result = resolve_types(
@@ -818,6 +827,9 @@ describe("Type Resolution Module", () => {
         const mockFunctions: FunctionResolutionMap = {
           function_calls: new Map(),
           calls_to_function: new Map(),
+          closure_calls: new Map(),
+          higher_order_calls: new Map(),
+          function_pointer_calls: new Map(),
         };
 
         const fileIndices = new Map([

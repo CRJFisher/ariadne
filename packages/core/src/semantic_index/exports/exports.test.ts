@@ -1193,8 +1193,7 @@ describe("Exports Module", () => {
         }
       } catch (error) {
         // If fixture doesn't exist, skip this test
-        console.warn("Fixture file not found, skipping integration test");
-        expect(true).toBe(true); // Pass the test
+        console.log("Fixture file not found, skipping integration test");
       }
     });
 
