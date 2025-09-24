@@ -903,6 +903,22 @@
 ) @type.smart_pointer
   (#match? @type.smart_pointer.name "^(Box|Rc|Arc|RefCell|Weak|Mutex|RwLock)$")
 
+; Specific smart pointer patterns for better matching
+(generic_type
+  type: (type_identifier) @type.box
+  (#match? @type.box "^Box$")
+) @type.box
+
+(generic_type
+  type: (type_identifier) @type.rc
+  (#match? @type.rc "^Rc$")
+) @type.rc
+
+(generic_type
+  type: (type_identifier) @type.arc
+  (#match? @type.arc "^Arc$")
+) @type.arc
+
 ; Box::new() calls (smart pointer allocation)
 (call_expression
   function: (scoped_identifier
