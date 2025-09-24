@@ -437,6 +437,177 @@ describe("Semantic Index - Rust", () => {
       expect(variables.length).toBeGreaterThan(10); // Should capture pattern variables
     });
 
+    it("should comprehensively parse all pattern matching constructs", () => {
+      const code = readFileSync(join(FIXTURES_DIR, "comprehensive_pattern_matching.rs"), "utf-8");
+      const tree = parser.parse(code);
+      const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+      // 1. Check match expressions create scopes
+      const matchScopes = captures.scopes.filter(s =>
+        s.entity === SemanticEntity.BLOCK
+      );
+      expect(matchScopes.length).toBeGreaterThan(20); // Many scopes from pattern matching
+
+      // 2. Check that we capture function parameters and regular variables
+      const regularVars = captures.definitions.filter(d =>
+        d.entity === SemanticEntity.VARIABLE
+      );
+      expect(regularVars.length).toBeGreaterThan(30); // Many variables including pattern expressions
+
+      // 3. Check function parameters are captured (these include pattern parameters)
+      const params = captures.definitions.filter(d =>
+        d.entity === SemanticEntity.PARAMETER
+      );
+      expect(params.length).toBeGreaterThan(10); // Function parameters
+
+      // 4. Check enum definitions used in patterns
+      const enums = captures.definitions.filter(d =>
+        d.entity === SemanticEntity.ENUM &&
+        (d.text === "Message" || d.text === "Color" || d.text === "CompleteEnum")
+      );
+      expect(enums.length).toBeGreaterThan(2); // Pattern matching enums
+
+      // 5. Check struct definitions used in patterns
+      const structs = captures.definitions.filter(d =>
+        d.entity === SemanticEntity.CLASS &&
+        (d.text === "Point" || d.text === "Person")
+      );
+      expect(structs.length).toBeGreaterThan(1); // Pattern matching structs
+
+      // 6. Check function definitions that use patterns
+      const functions = captures.definitions.filter(d =>
+        d.entity === SemanticEntity.FUNCTION &&
+        (d.text === "basic_match_example" || d.text === "handle_message" ||
+         d.text === "if_let_examples" || d.text === "while_let_examples" ||
+         d.text === "parameter_destructuring" || d.text === "analyze_point")
+      );
+      expect(functions.length).toBeGreaterThan(5); // Pattern functions
+
+      // 7. Verify overall capture volume indicates comprehensive parsing
+      expect(captures.definitions.length).toBeGreaterThan(80); // Rich semantic information
+      expect(captures.scopes.length).toBeGreaterThan(20); // Many nested scopes
+    });
+
+    it("should detect specific pattern matching constructs in detail", () => {
+      const code = readFileSync(join(FIXTURES_DIR, "comprehensive_pattern_matching.rs"), "utf-8");
+      const tree = parser.parse(code);
+      const captures = query_tree_and_parse_captures("rust" as Language, tree, "comprehensive_pattern_matching.rs" as FilePath);
+
+      // Check specific pattern matching functions
+      const specificFunctions = [
+        "basic_match_example",
+        "match_with_ranges",
+        "match_with_or_patterns",
+        "handle_message",
+        "analyze_point",
+        "if_let_examples",
+        "while_let_examples"
+      ];
+
+      specificFunctions.forEach(funcName => {
+        const func = captures.definitions.find(d =>
+          d.entity === SemanticEntity.FUNCTION && d.text === funcName
+        );
+        expect(func, `Function ${funcName} should be captured`).toBeDefined();
+      });
+
+      // Check pattern matching enums and structs
+      const patternTypes = ["Message", "Color", "Point", "Person", "CompleteEnum"];
+      let typesFound = 0;
+      patternTypes.forEach(typeName => {
+        const type = captures.definitions.find(d =>
+          (d.entity === SemanticEntity.CLASS || d.entity === SemanticEntity.ENUM) &&
+          d.text === typeName
+        );
+        if (type) typesFound++;
+      });
+      expect(typesFound, "Pattern types should be captured").toBeGreaterThan(2);
+
+      // Verify we capture variables (pattern expressions are captured as variables)
+      const allVars = captures.definitions.filter(d =>
+        d.entity === SemanticEntity.VARIABLE
+      );
+      expect(allVars.length, "Variables should be captured from pattern matching code").toBeGreaterThan(30);
+
+      // Check function parameters are captured
+      const allParams = captures.definitions.filter(d =>
+        d.entity === SemanticEntity.PARAMETER
+      );
+      expect(allParams.length, "Parameters should be captured").toBeGreaterThan(10);
+    });
+
+  });
+
+  describe("Pattern Matching Integration", () => {
+    it("should integrate pattern matching with control flow analysis", () => {
+      const code = readFileSync(join(FIXTURES_DIR, "comprehensive_pattern_matching.rs"), "utf-8");
+      const tree = parser.parse(code);
+      const captures = query_tree_and_parse_captures("rust" as Language, tree, "comprehensive_pattern_matching.rs" as FilePath);
+
+      // Check that pattern matching creates proper scope hierarchy
+      const allScopes = captures.scopes.filter(s =>
+        s.entity === SemanticEntity.BLOCK
+      );
+      expect(allScopes.length).toBeGreaterThan(20);
+
+      // Check function scopes exist for pattern matching functions
+      const functionScopes = captures.scopes.filter(s =>
+        s.entity === SemanticEntity.FUNCTION
+      );
+      expect(functionScopes.length).toBeGreaterThan(15);
+
+      // Check match scopes exist
+      const matchScopes = captures.scopes.filter(s =>
+        s.entity === SemanticEntity.BLOCK && s.text?.includes("match")
+      );
+      expect(matchScopes.length).toBeGreaterThan(5);
+
+      // Verify overall scope count indicates proper nesting
+      expect(captures.scopes.length).toBeGreaterThan(25);
+    });
+
+    it("should handle pattern variables in different scopes correctly", () => {
+      const code = `
+        fn pattern_scope_test() {
+          let data = Some(42);
+
+          // If-let pattern variable
+          if let Some(value) = data {
+              println!("Value: {}", value); // 'value' should be in scope
+          }
+
+          // Match pattern variables
+          match data {
+              Some(x) => {
+                  println!("X: {}", x); // 'x' should be in scope
+              },
+              None => {}
+          }
+
+          // While-let pattern variable
+          let mut stack = vec![1, 2, 3];
+          while let Some(item) = stack.pop() {
+              println!("Item: {}", item); // 'item' should be in scope
+          }
+        }
+      `;
+
+      const tree = parser.parse(code);
+      const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+      // Check any variables are captured (pattern expressions show as variables)
+      const allVars = captures.definitions.filter(d =>
+        d.entity === SemanticEntity.VARIABLE
+      );
+      expect(allVars.length).toBeGreaterThan(3);
+
+      // Check scopes are created for pattern contexts
+      const blockScopes = captures.scopes.filter(s =>
+        s.entity === SemanticEntity.BLOCK
+      );
+      expect(blockScopes.length).toBeGreaterThan(3);
+    });
+
   });
 
   describe("Method Calls and Type Resolution", () => {

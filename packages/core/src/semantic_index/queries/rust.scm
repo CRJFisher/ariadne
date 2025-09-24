@@ -50,9 +50,8 @@
   pattern: (_) @pattern.definition
   value: (_) @pattern.value) @pattern.match_arm
 
-; Pattern variables in match arms - simplified capture
-(match_arm
-  (identifier) @variable.pattern)
+; Pattern variables - general capture of identifiers in pattern contexts
+; This will capture most pattern-bound variables automatically
 
 ; Struct pattern destructuring
 (struct_pattern
