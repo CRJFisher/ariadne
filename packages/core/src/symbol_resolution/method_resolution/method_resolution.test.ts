@@ -79,6 +79,9 @@ describe("method_resolution", () => {
     functions = {
       function_calls: new Map(),
       calls_to_function: new Map(),
+      closure_calls: new Map(),
+      higher_order_calls: new Map(),
+      function_pointer_calls: new Map(),
     };
     types = {
       symbol_types: new Map(),

@@ -28,7 +28,8 @@ export type SymbolKind =
   | "enum"
   | "type"
   | "type_alias"
-  | "namespace";
+  | "namespace"
+  | "module";
 
 /**
  * Reference type - essential for call chain tracking

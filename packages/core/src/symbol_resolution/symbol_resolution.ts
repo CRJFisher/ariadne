@@ -470,6 +470,10 @@ export function phase3_resolve_types(
     constructors: constructors as ReadonlyMap<TypeId, SymbolId>,
     inheritance_hierarchy: inheritance_hierarchy as ReadonlyMap<TypeId, readonly TypeId[]>,
     interface_implementations: interface_implementations as ReadonlyMap<TypeId, readonly TypeId[]>,
+    // Additional properties for test compatibility
+    type_definitions: local_extraction.type_definitions,
+    type_flow_edges: type_flow?.flow_edges || [],
+    type_registry: type_registry,
   };
 }
 

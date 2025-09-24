@@ -59,6 +59,11 @@ export interface TypeResolutionMap {
 
   // Interface implementations - types that implement interfaces
   readonly interface_implementations: ReadonlyMap<TypeId, readonly TypeId[]>;
+
+  // Additional properties for compatibility with tests and legacy code
+  readonly type_definitions?: ReadonlyMap<FilePath, readonly any[]>;
+  readonly type_flow_edges?: readonly any[];
+  readonly type_registry?: any;
 }
 
 /**
@@ -74,6 +79,9 @@ export interface MethodResolutionMap {
 
   // Reverse map: method/constructor -> call sites
   readonly calls_to_method: ReadonlyMap<SymbolId, readonly Location[]>;
+
+  // Resolution details for debugging and analysis
+  readonly resolution_details: ReadonlyMap<LocationKey, any>;
 }
 
 // ============================================================================

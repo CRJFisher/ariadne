@@ -188,6 +188,7 @@ function create_test_resolved_symbols(): ResolvedSymbols {
           SymbolId,
           readonly Location[]
         >,
+        resolution_details: new Map(),
       },
     },
   };
@@ -362,6 +363,7 @@ describe("Data Export Module", () => {
             method_calls: new Map(),
             constructor_calls: new Map(),
             calls_to_method: new Map(),
+            resolution_details: new Map(),
           },
         },
       };
@@ -418,6 +420,7 @@ describe("Data Export Module", () => {
             method_calls: new Map(),
             constructor_calls: new Map(),
             calls_to_method: new Map(),
+            resolution_details: new Map(),
           },
         },
       };
@@ -465,6 +468,7 @@ describe("Data Export Module", () => {
             method_calls: new Map(),
             constructor_calls: new Map(),
             calls_to_method: new Map(),
+            resolution_details: new Map(),
           },
         },
       };

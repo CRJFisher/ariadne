@@ -91,8 +91,8 @@ export function resolve_pattern_aware_method_calls(
         const call_location = parse_location_key(call_key);
         if (call_location && !existing_calls.some(loc =>
           loc.file_path === call_location.file_path &&
-          loc.start_line === call_location.start_line &&
-          loc.start_column === call_location.start_column)) {
+          loc.line === call_location.line &&
+          loc.column === call_location.column)) {
           existing_calls.push(call_location);
           calls_to_method.set(enhanced_resolution.resolved_method, existing_calls);
         }
@@ -113,8 +113,8 @@ export function resolve_pattern_aware_method_calls(
       const await_location = parse_location_key(await_key);
       if (await_location && !existing_calls.some(loc =>
         loc.file_path === await_location.file_path &&
-        loc.start_line === await_location.start_line &&
-        loc.start_column === await_location.start_column)) {
+        loc.line === await_location.line &&
+        loc.column === await_location.column)) {
         existing_calls.push(await_location);
         calls_to_method.set(await_resolution.resolved_method, existing_calls);
       }
@@ -256,7 +256,7 @@ function find_pattern_receiver_symbol(
   pattern_info: PatternMatchInfo,
   index: SemanticIndex
 ): SymbolId | undefined {
-  return find_symbol_at_location(index, method_call.receiver_location);
+  return find_symbol_at_location(index, method_call.receiver_location) ?? undefined;
 }
 
 /**
@@ -310,8 +310,8 @@ function find_symbol_at_location(
 
 function locations_match(loc1: Location, loc2: Location): boolean {
   return loc1.file_path === loc2.file_path &&
-         loc1.start_line === loc2.start_line &&
-         loc1.start_column === loc2.start_column;
+         loc1.line === loc2.line &&
+         loc1.column === loc2.column;
 }
 
 function parse_location_key(loc_key: LocationKey): Location | null {

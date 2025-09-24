@@ -20,7 +20,7 @@ import { location_key } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../semantic_index/semantic_index";
 import type { MemberAccessReference } from "../../semantic_index/references/member_access_references/member_access_references";
 import type { MethodLookupContext } from "./method_types";
-import type { SemanticCapture } from "../../semantic_index/capture_types";
+import type { NormalizedCapture } from "../../semantic_index/capture_types";
 
 /**
  * Resolve receiver type through Rust ownership operations
@@ -248,6 +248,6 @@ interface OwnershipContext {
   operation_type: "borrow" | "dereference" | "smart_pointer";
   is_mutable?: boolean;
   method_name?: string;
-  capture: SemanticCapture;
+  capture: NormalizedCapture;
   target_location: Location;
 }
