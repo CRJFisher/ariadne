@@ -155,6 +155,34 @@
   name: (identifier) @def.function.async
 )
 
+; Const functions
+(function_item
+  (function_modifiers "const")
+  name: (identifier) @def.function.const
+)
+
+; Unsafe const functions (const unsafe order)
+(function_item
+  (function_modifiers "const" "unsafe")
+  name: (identifier) @def.function.unsafe
+)
+
+(function_item
+  (function_modifiers "const" "unsafe")
+  name: (identifier) @def.function.const
+)
+
+; Unsafe const functions (unsafe const order)
+(function_item
+  (function_modifiers "unsafe" "const")
+  name: (identifier) @def.function.unsafe
+)
+
+(function_item
+  (function_modifiers "unsafe" "const")
+  name: (identifier) @def.function.const
+)
+
 ; Unsafe functions (identified by modifiers)
 (function_item
   (function_modifiers
@@ -340,10 +368,19 @@
 ; Closure expressions
 (closure_expression) @def.function.closure
 
-; Closure parameters
+; Closure parameters - simple identifiers
 (closure_expression
   parameters: (closure_parameters
     (identifier) @def.param.closure
+  )
+)
+
+; Closure parameters with type annotations
+(closure_expression
+  parameters: (closure_parameters
+    (parameter
+      pattern: (identifier) @def.param.closure
+    )
   )
 )
 
@@ -429,6 +466,46 @@
 (trait_bounds
   (lifetime) @lifetime.ref
 )
+
+;; ==============================================================================
+;; FUNCTION TYPES AND HIGHER-ORDER PATTERNS
+;; ==============================================================================
+
+; Function pointer types
+(function_type
+  "fn" @type.function_keyword
+  parameters: (parameters) @type.function_params
+  return_type: (_)? @type.function_return
+) @type.function_pointer
+
+; Trait object function types (Fn, FnMut, FnOnce)
+(generic_type
+  type: (type_identifier) @type.trait_name
+  (#match? @type.trait_name "^(Fn|FnMut|FnOnce)$")
+) @type.function_trait
+
+; Higher-order function calls (map, filter, fold, etc.)
+(call_expression
+  function: (field_expression
+    value: (_) @call.receiver
+    field: (field_identifier) @call.method
+    (#match? @call.method "^(map|filter|fold|for_each|find|any|all|collect|flat_map|filter_map|take|skip|take_while|skip_while)$")
+  )
+) @call.higher_order
+
+; Functions returning impl Trait
+(function_item
+  return_type: (abstract_type) @return.impl_trait
+) @def.function.returns_impl
+
+; Functions accepting impl Trait parameters
+(function_item
+  parameters: (parameters
+    (parameter
+      type: (abstract_type) @param.impl_trait
+    )
+  )
+) @def.function.accepts_impl
 
 ;; ==============================================================================
 ;; WHERE CLAUSES AND CONSTRAINTS
