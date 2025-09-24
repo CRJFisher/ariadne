@@ -48,6 +48,7 @@ import {
   type ClosureTypeInfo,
   type HigherOrderCallInfo,
 } from "./type_resolution";
+import { analyze_integrated_type_flow } from "./type_flow_integration";
 import type {
   LocalTypeDefinition,
   LocalTypeExtraction,
@@ -236,21 +237,13 @@ function phase3_resolve_types(
     type_registry
   );
 
-  // Step 7: Analyze type flow
-  // Convert type_flows from array format to single flow
-  const type_flows_map = new Map<FilePath, TypeResolutionFlow>();
-  for (const [file_path, flows] of local_extraction.type_flows) {
-    if (flows && flows.length > 0) {
-      type_flows_map.set(file_path, flows[0]);
-    }
-  }
-
-  // Note: analyze_type_flow expects different parameters than what we have
-  // This is a temporary workaround until the interfaces are aligned
-  const type_flow = {
-    assignment_types: new Map<Location, TypeId>(),
-    flow_edges: [],
-  };
+  // Step 7: Analyze type flow - Using integrated implementation
+  const type_flow = analyze_integrated_type_flow(
+    local_extraction,
+    imports,
+    functions,
+    type_registry
+  );
 
   // Build result maps for compatibility
   const symbol_types = new Map<SymbolId, TypeId>();
@@ -273,9 +266,20 @@ function phase3_resolve_types(
     }
   }
 
-  if (type_flow && type_flow.assignment_types) {
+  // Merge type flow results
+  if (type_flow?.assignment_types) {
     for (const [loc, type_id] of type_flow.assignment_types) {
       reference_types.set(location_key(loc), type_id);
+    }
+  }
+  // Add flow edge handling
+  if (type_flow?.flow_edges) {
+    // Process flow edges if needed in future
+  }
+  // Add inferred types
+  if (type_flow?.inferred_types) {
+    for (const [symbol_id, type_id] of type_flow.inferred_types) {
+      symbol_types.set(symbol_id, type_id);
     }
   }
 
