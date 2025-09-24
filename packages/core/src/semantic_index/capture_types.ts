@@ -126,6 +126,20 @@ export interface SemanticModifiers {
   is_wildcard?: boolean;
   match_type?: string;
   is_pattern_var?: boolean;
+
+  // Additional pattern matching modifiers
+  is_destructuring?: boolean;
+  pattern_type?: string;
+
+  // Smart pointer modifiers
+  is_smart_pointer?: boolean;
+  is_smart_pointer_allocation?: boolean;
+  is_smart_pointer_method?: boolean;
+
+  // Trait implementation modifiers
+  is_trait_impl?: boolean;
+  has_default_impl?: boolean;
+  is_associated_type?: boolean;
 }
 
 /**
