@@ -154,6 +154,8 @@ export function map_entity_to_symbol_kind(entity: SemanticEntity): SymbolKind {
       return "variable"; // Type parameters are treated as variables
     case SemanticEntity.MODULE:
       return "namespace"; // Modules are similar to namespaces
+    case SemanticEntity.MACRO:
+      return "function"; // Macros are compile-time functions
     default:
       // Log unknown entities for debugging
       console.warn(`Unknown semantic entity: ${entity}, defaulting to 'variable'`);
@@ -186,7 +188,8 @@ function check_is_hoisted_entity(
       entity === SemanticEntity.INTERFACE || // traits
       entity === SemanticEntity.TYPE_ALIAS ||
       entity === SemanticEntity.CONSTANT ||
-      entity === SemanticEntity.MODULE
+      entity === SemanticEntity.MODULE ||
+      entity === SemanticEntity.MACRO // Macros are hoisted and available throughout their scope
       // Rust variables (let bindings) are NOT hoisted - must be defined before use
       // Static items are hoisted but handled separately
     );

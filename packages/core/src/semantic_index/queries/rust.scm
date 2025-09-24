@@ -817,22 +817,53 @@
 ;; MACROS
 ;; ==============================================================================
 
-; Macro definitions
+; Macro definitions (declarative)
 (macro_definition
-  name: (identifier) @def.macro
-)
+  name: (identifier) @def.macro) @macro.definition
 
 ; Macro invocations
 (macro_invocation
-  macro: (identifier) @ref.macro
-)
+  macro: (identifier) @ref.macro) @call.macro_invocation
 
 ; Scoped macro invocations
 (macro_invocation
   macro: (scoped_identifier
     name: (identifier) @ref.macro.scoped
+  )) @call.scoped_macro_invocation
+
+; Built-in macro invocations
+(macro_invocation
+  macro: (identifier) @ref.macro.builtin
+  (#match? @ref.macro.builtin "^(println|eprintln|print|eprint|vec|panic|assert|debug_assert|format|write|writeln|todo|unimplemented|unreachable|compile_error|include|include_str|include_bytes|concat|stringify|env|option_env|cfg|column|file|line|module_path|assert_eq|assert_ne|debug_assert_eq|debug_assert_ne|matches|dbg|try|join|select)$")
+) @call.builtin_macro_invocation
+
+; Async macro invocations (tokio::select!, tokio::join!, etc.)
+(macro_invocation
+  macro: (scoped_identifier
+    path: (identifier) @async.crate
+    name: (identifier) @ref.macro.async
   )
-)
+  (#eq? @async.crate "tokio")
+  (#match? @ref.macro.async "^(select|join|spawn|timeout)$")
+) @call.async_macro_invocation
+
+; Attribute macros
+(attribute_item
+  (attribute) @attribute.content) @attribute.macro
+
+; Derive macros - simplified pattern
+(attribute_item
+  (attribute
+    (identifier) @derive.name
+    (token_tree) @derive.arguments)
+  (#eq? @derive.name "derive")) @derive.attribute
+
+; Procedural macro usage
+(attribute_item
+  (attribute
+    (scoped_identifier
+      path: (identifier) @proc_macro.crate
+      name: (identifier) @proc_macro.name)) @proc_macro.attribute)
 
 ;; ==============================================================================
 ;; OWNERSHIP AND REFERENCES
