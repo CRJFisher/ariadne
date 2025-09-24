@@ -64,8 +64,12 @@ export {
 export {
   resolve_rust_reference_types,
   resolve_ownership_operations,
+  resolve_pattern_matching,
+  resolve_pattern_conditional_calls,
+  integrate_pattern_matching_into_type_resolution,
   is_rust_reference_type,
   is_rust_smart_pointer_type,
   get_rust_reference_methods,
-  type OwnershipOperation
+  type OwnershipOperation,
+  type PatternMatchInfo
 } from "./rust_type_resolver";

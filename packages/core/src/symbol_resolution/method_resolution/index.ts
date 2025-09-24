@@ -54,3 +54,8 @@ export {
   should_use_ownership_semantics,
   get_smart_pointer_methods
 } from "./ownership_resolver";
+
+// Pattern-aware method resolution for Rust
+export {
+  resolve_pattern_aware_method_calls
+} from "./pattern_aware_resolver";

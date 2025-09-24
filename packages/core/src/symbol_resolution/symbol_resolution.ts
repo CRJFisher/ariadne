@@ -36,6 +36,7 @@ import {
   resolve_type_members,
   resolve_rust_reference_types,
   resolve_ownership_operations,
+  integrate_pattern_matching_into_type_resolution,
 } from "./type_resolution";
 import type {
   LocalTypeDefinition,
@@ -50,6 +51,7 @@ import {
   resolve_imports,
 } from "./import_resolution";
 import { resolve_function_calls } from "./function_resolution";
+import { resolve_pattern_aware_method_calls } from "./method_resolution";
 
 /**
  * Create a TypeId from a local type definition
@@ -267,12 +269,14 @@ function phase3_resolve_types(
     }
   }
 
-  // Step 8: Process Rust ownership semantics for each file
+  // Step 8: Process Rust ownership semantics and pattern matching for each file
+  let current_type_resolution = { symbol_types, reference_types, type_members, constructors, inheritance_hierarchy, interface_implementations };
+
   for (const [file_path, index] of indices) {
     // Resolve Rust reference types (&T, &mut T)
     const rust_reference_types = resolve_rust_reference_types(
       index,
-      { symbol_types, reference_types, type_members, constructors, inheritance_hierarchy, interface_implementations },
+      current_type_resolution,
       file_path
     );
 
@@ -282,14 +286,28 @@ function phase3_resolve_types(
     }
 
     // Process ownership operations (borrow, deref, smart pointer methods)
-    const ownership_operations = resolve_ownership_operations(index, {
-      symbol_types,
-      reference_types,
-      type_members,
-      constructors,
-      inheritance_hierarchy,
-      interface_implementations
-    });
+    const ownership_operations = resolve_ownership_operations(index, current_type_resolution);
+
+    // Integrate pattern matching information into type resolution
+    const enhanced_type_resolution = integrate_pattern_matching_into_type_resolution(index, current_type_resolution);
+
+    // Update current resolution with pattern matching enhancements
+    if (enhanced_type_resolution.symbol_types !== current_type_resolution.symbol_types) {
+      // Copy enhanced symbol types back to main maps
+      for (const [sym_id, type_id] of enhanced_type_resolution.symbol_types) {
+        symbol_types.set(sym_id, type_id);
+      }
+    }
+
+    if (enhanced_type_resolution.reference_types !== current_type_resolution.reference_types) {
+      // Copy enhanced reference types back to main maps
+      for (const [loc_key, type_id] of enhanced_type_resolution.reference_types) {
+        reference_types.set(loc_key, type_id);
+      }
+    }
+
+    // Update current_type_resolution for next iteration
+    current_type_resolution = { symbol_types, reference_types, type_members, constructors, inheritance_hierarchy, interface_implementations };
 
     // Store ownership operations for later use in method resolution
     // Note: This would typically be stored in a separate map, but for now
@@ -494,7 +512,7 @@ function collect_type_tracking(
 /**
  * Phase 4: Method and Constructor Resolution
  *
- * Can now use fully resolved types from Phase 3
+ * Can now use fully resolved types from Phase 3, including pattern matching information
  */
 function phase4_resolve_methods(
   indices: ReadonlyMap<FilePath, SemanticIndex>,
@@ -590,7 +608,24 @@ function phase4_resolve_methods(
     }
   }
 
-  return { method_calls, constructor_calls, calls_to_method };
+  // Create base resolution map
+  const base_resolution: MethodResolutionMap = {
+    method_calls,
+    constructor_calls,
+    calls_to_method,
+    resolution_details: new Map() // Initialize empty resolution details
+  };
+
+  // Apply pattern-aware enhancements for Rust code
+  const enhanced_resolution = resolve_pattern_aware_method_calls(
+    indices,
+    imports,
+    functions,
+    types,
+    base_resolution
+  );
+
+  return enhanced_resolution;
 }
 
 /**
