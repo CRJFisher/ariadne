@@ -26,6 +26,7 @@ export type SymbolKind =
   | "import"
   | "interface"
   | "enum"
+  | "type"
   | "type_alias"
   | "namespace";
 

@@ -143,6 +143,8 @@ export function map_entity_to_symbol_kind(entity: SemanticEntity): SymbolKind {
       return "interface";
     case SemanticEntity.ENUM:
       return "enum";
+    case SemanticEntity.TYPE:
+      return "type";
     case SemanticEntity.TYPE_ALIAS:
       return "type_alias";
     // TypeScript-specific entities

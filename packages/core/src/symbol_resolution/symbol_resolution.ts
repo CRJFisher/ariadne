@@ -41,6 +41,10 @@ import {
   resolve_ownership_operations,
   integrate_pattern_matching_into_type_resolution,
   resolve_rust_async_types,
+  resolve_const_generics,
+  resolve_associated_types,
+  resolve_unsafe_contexts,
+  resolve_loop_constructs,
   type ClosureTypeInfo,
   type HigherOrderCallInfo,
 } from "./type_resolution";
@@ -326,6 +330,54 @@ function phase3_resolve_types(
     // Merge async types into reference_types map
     for (const [loc_key, type_id] of rust_async_types) {
       reference_types.set(loc_key, type_id);
+    }
+
+    // Resolve const generics
+    const const_generic_types = resolve_const_generics(
+      index,
+      current_type_resolution,
+      file_path
+    );
+
+    // Merge const generic types into reference_types map
+    for (const [loc_key, type_id] of const_generic_types) {
+      reference_types.set(loc_key, type_id);
+    }
+
+    // Resolve associated types from traits and impls
+    const associated_types = resolve_associated_types(
+      index,
+      current_type_resolution,
+      file_path
+    );
+
+    // Merge associated types into reference_types map
+    for (const [loc_key, type_id] of associated_types) {
+      reference_types.set(loc_key, type_id);
+    }
+
+    // Resolve unsafe contexts for type safety analysis
+    const unsafe_contexts = resolve_unsafe_contexts(
+      index,
+      current_type_resolution,
+      file_path
+    );
+
+    // Note: unsafe contexts could be stored in a separate map for method resolution
+    // For now, we just ensure the processing happens to track unsafe boundaries
+
+    // Resolve loop constructs and their iterator types
+    const loop_constructs = resolve_loop_constructs(
+      index,
+      current_type_resolution,
+      file_path
+    );
+
+    // Merge loop iterator types into reference_types map where available
+    for (const [loc_key, loop_info] of loop_constructs) {
+      if (loop_info.iterator_type) {
+        reference_types.set(loc_key, loop_info.iterator_type);
+      }
     }
 
     // Resolve higher-order function calls

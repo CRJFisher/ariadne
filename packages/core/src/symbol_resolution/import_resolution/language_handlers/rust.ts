@@ -569,6 +569,13 @@ function match_rust_named_import_enhanced(
       continue;
     }
 
+    // Check for macro imports specifically
+    const macro_match = find_macro_export(imported_name, source_exports, source_symbols);
+    if (macro_match) {
+      result.set(local_name, macro_match);
+      continue;
+    }
+
     // Then look for direct exports with visibility check
     let found = false;
     for (const exp of source_exports) {
@@ -627,6 +634,52 @@ function find_pub_use_reexport(
     }
   }
   return null;
+}
+
+/**
+ * Find macro export by name
+ * Handles declarative macros (macro_rules!) and procedural macros
+ */
+function find_macro_export(
+  name: SymbolName,
+  source_exports: readonly Export[],
+  source_symbols: ReadonlyMap<SymbolId, SymbolDefinition>
+): SymbolId | null {
+  // First look for exported macros
+  for (const exp of source_exports) {
+    if (is_visible_rust_export(exp) && (exp.symbol_name === name || (exp as any).name === name)) {
+      // Check if the symbol is actually a macro
+      const symbol = source_symbols.get(exp.symbol);
+      if (symbol && is_macro_symbol(symbol)) {
+        return exp.symbol;
+      }
+    }
+  }
+
+  // Then look for non-exported macros (for local/crate usage)
+  for (const [symbol_id, symbol] of source_symbols) {
+    if (symbol.name === name && is_macro_symbol(symbol)) {
+      return symbol_id;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Check if a symbol definition represents a macro
+ */
+function is_macro_symbol(symbol: SymbolDefinition): boolean {
+  // Macros are mapped to function symbols with special handling
+  // We need to check if this function symbol was originally a macro
+  return symbol.kind === "function" && (
+    // Check if the symbol has macro-specific modifiers or metadata
+    (symbol as any).is_macro === true ||
+    // Or if it was defined at the module level with macro-like characteristics
+    symbol.name.endsWith("!") || // Some macros might include the ! in the name
+    // Additional macro detection logic can be added here
+    false
+  );
 }
 
 /**

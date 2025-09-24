@@ -16,9 +16,10 @@ import type { SemanticIndex } from "../../semantic_index/semantic_index";
  * Resolution result for a single function call
  */
 export interface FunctionCallResolution {
-  readonly call_location: Location;
+  readonly call_location?: Location;
   readonly resolved_function: SymbolId;
-  readonly resolution_method: "lexical" | "imported" | "global" | "builtin";
+  readonly resolution_strategy: "lexical" | "imported" | "global" | "builtin" | "builtin_macro" | "lexical_macro" | "imported_macro";
+  readonly confidence: "high" | "medium" | "low";
   readonly scope_chain?: readonly ScopeId[];
   readonly import_source?: FilePath;
 
@@ -33,6 +34,13 @@ export interface FunctionCallResolution {
     readonly returns_impl_trait: boolean;
     readonly closure_capture_kind?: "move" | "borrow" | "mut_borrow";
     readonly function_trait_kind?: "Fn" | "FnMut" | "FnOnce";
+  };
+
+  // Rust macro-specific information
+  readonly macro_info?: {
+    readonly is_builtin: boolean;
+    readonly macro_kind: "builtin" | "declarative" | "procedural" | "derive" | "imported";
+    readonly macro_name: SymbolName;
   };
 }
 

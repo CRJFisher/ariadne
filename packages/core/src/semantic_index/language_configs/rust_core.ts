@@ -542,6 +542,153 @@ export const RUST_CORE_MAPPINGS = new Map<string, CaptureMapping>([
       entity: SemanticEntity.FUNCTION,
     },
   ],
+  [
+    "export.trait",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.INTERFACE,
+    },
+  ],
+  [
+    "export.module",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.MODULE,
+    },
+  ],
+  // pub use re-exports
+  [
+    "export.pub_use",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.VARIABLE,
+      context: () => ({ is_pub_use: true }),
+    },
+  ],
+  [
+    "export.pub_use.name",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.VARIABLE,
+      context: () => ({ is_pub_use: true }),
+    },
+  ],
+  [
+    "export.pub_use.alias",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.VARIABLE,
+      context: (node) => ({
+        export_alias: node.text,
+        alias: node.text,
+        is_pub_use: true,
+      }),
+    },
+  ],
+  [
+    "export.pub_use.original_name",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.VARIABLE,
+      context: (node) => ({
+        original_name: node.text,
+        source_module: node.text,
+        is_pub_use: true,
+      }),
+    },
+  ],
+  [
+    "export.pub_use.simple",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.VARIABLE,
+      context: () => ({ is_pub_use: true }),
+    },
+  ],
+  [
+    "export.pub_use.aliased",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.VARIABLE,
+      context: () => ({ is_pub_use: true }),
+    },
+  ],
+  [
+    "export.pub_use.list",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.VARIABLE,
+      context: () => ({ is_pub_use: true }),
+    },
+  ],
+  [
+    "export.pub_use.item",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.VARIABLE,
+      context: () => ({ is_pub_use: true }),
+    },
+  ],
+  [
+    "export.pub_use.wildcard",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.VARIABLE,
+      context: () => ({ is_pub_use: true }),
+      modifiers: () => ({ is_wildcard: true }),
+    },
+  ],
+  [
+    "export.pub_use.any_visibility",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.VARIABLE,
+      context: () => ({ is_pub_use: true }),
+    },
+  ],
+  [
+    "export.pub_use.source",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.VARIABLE,
+    },
+  ],
+  [
+    "export.pub_use.path",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.MODULE,
+    },
+  ],
+  [
+    "export.pub_use.source_path",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.MODULE,
+    },
+  ],
+  [
+    "export.pub_use.visibility",
+    {
+      category: SemanticCategory.MODIFIER,
+      entity: SemanticEntity.VARIABLE,
+    },
+  ],
+  [
+    "export.pub_use.visibility.any",
+    {
+      category: SemanticCategory.MODIFIER,
+      entity: SemanticEntity.VARIABLE,
+    },
+  ],
+  [
+    "export.pub_use.wildcard_path",
+    {
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.MODULE,
+      modifiers: () => ({ is_wildcard: true }),
+    },
+  ],
 
   // ============================================================================
   // IMPORTS - Rust use system
@@ -550,7 +697,7 @@ export const RUST_CORE_MAPPINGS = new Map<string, CaptureMapping>([
     "import.name",
     {
       category: SemanticCategory.IMPORT,
-      entity: SemanticEntity.IDENTIFIER,
+      entity: SemanticEntity.VARIABLE,
     },
   ],
   [
@@ -558,6 +705,80 @@ export const RUST_CORE_MAPPINGS = new Map<string, CaptureMapping>([
     {
       category: SemanticCategory.IMPORT,
       entity: SemanticEntity.MODULE,
+    },
+  ],
+  [
+    "import.source",
+    {
+      category: SemanticCategory.IMPORT,
+      entity: SemanticEntity.VARIABLE,
+    },
+  ],
+  [
+    "import.alias",
+    {
+      category: SemanticCategory.IMPORT,
+      entity: SemanticEntity.VARIABLE,
+      context: (node) => ({
+        import_alias: node.text,
+      }),
+    },
+  ],
+  [
+    "import.wildcard",
+    {
+      category: SemanticCategory.IMPORT,
+      entity: SemanticEntity.VARIABLE,
+      modifiers: () => ({ is_wildcard: true }),
+    },
+  ],
+  [
+    "import.base_path",
+    {
+      category: SemanticCategory.IMPORT,
+      entity: SemanticEntity.MODULE,
+    },
+  ],
+  [
+    "import.nested_path",
+    {
+      category: SemanticCategory.IMPORT,
+      entity: SemanticEntity.MODULE,
+    },
+  ],
+  [
+    "import.self",
+    {
+      category: SemanticCategory.IMPORT,
+      entity: SemanticEntity.VARIABLE,
+      modifiers: () => ({ is_self: true }),
+    },
+  ],
+  [
+    "import.extern_crate",
+    {
+      category: SemanticCategory.IMPORT,
+      entity: SemanticEntity.MODULE,
+      modifiers: () => ({ is_extern_crate: true }),
+    },
+  ],
+  [
+    "import.extern_crate.original",
+    {
+      category: SemanticCategory.IMPORT,
+      entity: SemanticEntity.MODULE,
+      modifiers: () => ({ is_extern_crate: true }),
+    },
+  ],
+  [
+    "import.extern_crate.alias",
+    {
+      category: SemanticCategory.IMPORT,
+      entity: SemanticEntity.MODULE,
+      context: (node) => ({
+        import_alias: node.text,
+      }),
+      modifiers: () => ({ is_extern_crate: true }),
     },
   ],
 
@@ -775,6 +996,121 @@ export const RUST_CORE_MAPPINGS = new Map<string, CaptureMapping>([
         is_static_access: true,
         receiver_type: "static",
       }),
+    },
+  ],
+
+  // ============================================================================
+  // TYPES AND TYPE PARAMETERS
+  // ============================================================================
+  [
+    "type.function_pointer",
+    {
+      category: SemanticCategory.TYPE,
+      entity: SemanticEntity.TYPE,
+      modifiers: () => ({ is_function_pointer: true }),
+    },
+  ],
+  [
+    "def.type_param",
+    {
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.TYPE_PARAMETER,
+    },
+  ],
+  [
+    "def.type_param.constrained",
+    {
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.TYPE_PARAMETER,
+      modifiers: () => ({ has_bounds: true }),
+    },
+  ],
+  [
+    "def.const_param",
+    {
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.CONSTANT,
+      modifiers: () => ({ is_const_generic: true }),
+    },
+  ],
+
+  // ============================================================================
+  // LIFETIMES
+  // ============================================================================
+  [
+    "lifetime.param",
+    {
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.TYPE_PARAMETER,
+      modifiers: () => ({ is_lifetime: true }),
+    },
+  ],
+  [
+    "lifetime.ref",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.TYPE_PARAMETER,
+      modifiers: () => ({ is_lifetime: true }),
+    },
+  ],
+  [
+    "constraint.lifetime",
+    {
+      category: SemanticCategory.TYPE,
+      entity: SemanticEntity.TYPE_PARAMETER,
+      modifiers: () => ({ is_lifetime: true, in_constraint: true }),
+    },
+  ],
+
+  // ============================================================================
+  // REFERENCE AND SMART POINTER TYPES
+  // ============================================================================
+  [
+    "type.reference",
+    {
+      category: SemanticCategory.TYPE,
+      entity: SemanticEntity.TYPE,
+      modifiers: () => ({ is_reference: true }),
+    },
+  ],
+  [
+    "type.reference.mut",
+    {
+      category: SemanticCategory.TYPE,
+      entity: SemanticEntity.TYPE,
+      modifiers: () => ({ is_reference: true, is_mutable: true }),
+    },
+  ],
+  [
+    "type.smart_pointer",
+    {
+      category: SemanticCategory.TYPE,
+      entity: SemanticEntity.TYPE,
+      modifiers: () => ({ is_smart_pointer: true }),
+    },
+  ],
+  [
+    "type.box",
+    {
+      category: SemanticCategory.TYPE,
+      entity: SemanticEntity.TYPE,
+      modifiers: () => ({ is_smart_pointer: true, pointer_type: "Box" }),
+    },
+  ],
+  [
+    "type.rc",
+    {
+      category: SemanticCategory.TYPE,
+      entity: SemanticEntity.TYPE,
+      modifiers: () => ({ is_smart_pointer: true, pointer_type: "Rc" }),
+    },
+  ],
+  [
+    "type.arc",
+    {
+      category: SemanticCategory.TYPE,
+      entity: SemanticEntity.TYPE,
+      modifiers: () => ({ is_smart_pointer: true, pointer_type: "Arc" }),
     },
   ],
 ]);

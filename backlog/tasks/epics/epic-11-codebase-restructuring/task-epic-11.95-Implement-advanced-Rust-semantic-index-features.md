@@ -1,46 +1,55 @@
 # task-epic-11.95 - Implement Advanced Rust Semantic Index Features
 
 ## Status
-- **Status**: `Open`
+- **Status**: `In Progress`
 - **Assignee**: Unassigned
 - **Priority**: `Medium`
 - **Size**: `XL`
 
 ## Description
-Implement comprehensive Rust semantic index support for advanced language features. Currently 20 of 28 Rust tests are failing due to missing tree-sitter query patterns for Rust-specific constructs.
+Implement comprehensive Rust semantic index support for advanced language features. Significant progress made - 87 of 117 Rust tests now passing (up from 85 initially). 30 tests still failing, primarily related to advanced features.
 
-## Current Failing Tests
-### Traits and Generics (2 failures)
-- `should parse trait definitions and implementations` - trait methods not detected
-- `should parse generic types and constraints` - generic structs not marked with `is_generic`
+## Current Failing Tests (30 remaining)
+### Functions and Closures (1 failure)
+- `should parse function pointer types` - function pointer type references not captured
 
-### Functions and Closures (2 failures)
-- `should parse function definitions` - generic functions not detected
-- `should parse closures` - closure parameters not captured
+### Modules and Visibility (4 failures)
+- `should comprehensively parse all module and visibility features` - extern crates not captured
+- `should handle edge cases in module and visibility patterns` - complex import patterns
+- `should validate specific module system semantics` - nested re-exports
+- `should handle complex edge cases and corner cases` - self imports
 
-### Modules and Visibility (2 failures)
-- `should parse use statements and imports` - "Display" import not found
-- `should parse re-exports and pub use statements` - pub use captures missing
+### Ownership and References (4 failures)
+- `should parse comprehensive ownership patterns` - reference/dereference operators
+- `should parse reference types in function signatures` - function parameter references
+- `should parse Box smart pointers comprehensively` - Box type detection
+- `should parse Rc smart pointers with cloning` - Rc/Arc smart pointer types
 
-### Ownership and Pattern Matching (3 failures)
-- `should parse lifetime annotations` - lifetime parameters not captured
-- `should parse pattern matching constructs` - match scopes not detected
-- `should parse references and dereferences` - reference operators not captured
+### Generics and Associated Types (7 failures)
+- Const generics with complex parameters
+- Associated types with complex bounds
+- Associated types and constants in traits
+- Trait implementations with associated types
+- Supertrait relationships
+- Operator overloading through traits
+- Associated type implementations
 
-### Advanced Features (10 failures)
-- Smart pointer types not detected
-- Method calls with receivers missing
-- Async functions and blocks not captured
-- Const generics and associated types missing
-- Macro definitions and invocations not found
-- Extern crate declarations missing
-- Try expressions and await not captured
-- Visibility modifiers not detected
-- Unsafe blocks and functions missing
-- Loop variables and iterators not captured
+### Async/Await (14 failures)
+- Async closures and complex closure patterns
+- Tokio spawn and task creation patterns
+- Additional async-related patterns
 
-### Type System Integration (1 failure)
-- `should build type registry with Rust types` - method members not properly registered
+## Progress Made
+- ✅ Basic trait definitions and implementations working
+- ✅ Generic functions and types properly detected
+- ✅ Import statements and aliased imports working
+- ✅ Re-exports and pub use statements fixed
+- ✅ Basic lifetime annotations working
+- ✅ Pattern matching constructs captured
+- ✅ Macro definitions and invocations working
+- ✅ Visibility modifiers properly detected
+- ✅ Unsafe blocks and functions captured
+- ✅ Loop constructs and iterators working
 
 ## Root Cause Analysis
 The failures indicate missing tree-sitter query patterns in `src/semantic_index/queries/rust.scm` for:

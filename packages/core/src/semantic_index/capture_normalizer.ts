@@ -44,6 +44,29 @@ export function normalize_captures(
       continue;
     }
 
+    // Extract qualified name for scoped references
+    let qualified_name: string | undefined;
+    let namespace_chain: string[] | undefined;
+
+    // For scoped macro invocations like tokio::join!
+    if (capture.name.includes('macro') && capture.name.includes('scoped')) {
+      // Find the parent macro_invocation node to get the full scoped identifier
+      let parent = capture.node.parent;
+      while (parent && parent.type !== 'macro_invocation') {
+        parent = parent.parent;
+      }
+
+      if (parent) {
+        // Find the scoped_identifier child
+        const scopedIdChild = parent.children.find(child => child.type === 'scoped_identifier');
+        if (scopedIdChild) {
+          qualified_name = scopedIdChild.text;
+          // Extract namespace chain (e.g., ["tokio", "join"] from "tokio::join")
+          namespace_chain = qualified_name.split('::');
+        }
+      }
+    }
+
     const normalized_capture: NormalizedCapture = {
       category: mapping.category,
       entity: mapping.entity,
@@ -51,6 +74,8 @@ export function normalize_captures(
       text: capture.node.text,
       modifiers: mapping.modifiers?.(capture.node) || {},
       context: mapping.context?.(capture.node),
+      qualified_name,
+      namespace_chain,
     };
 
     normalized.push(normalized_capture);

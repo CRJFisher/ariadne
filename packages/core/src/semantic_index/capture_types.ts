@@ -144,12 +144,17 @@ export interface SemanticModifiers {
 
   // Function-specific modifiers
   is_const?: boolean;
+  is_const_generic?: boolean;
   is_move?: boolean;
   returns_impl_trait?: boolean;
   accepts_impl_trait?: boolean;
   is_function_pointer?: boolean;
   is_function_trait?: boolean;
   is_higher_order?: boolean;
+
+  // Loop-specific modifiers
+  is_loop?: boolean;
+  loop_type?: string;
 }
 
 /**
@@ -164,6 +169,12 @@ export interface NormalizedCapture {
 
   // Additional context based on category
   context?: CaptureContext;
+
+  // For scoped references (e.g., tokio::join!, std::fmt::Display)
+  qualified_name?: string;
+
+  // For namespace chains
+  namespace_chain?: string[];
 }
 
 /**

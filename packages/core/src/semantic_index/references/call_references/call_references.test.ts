@@ -99,6 +99,34 @@ describe("Call References", () => {
       });
     });
 
+    it("should process macro calls", () => {
+      const captures: NormalizedCapture[] = [
+        {
+          entity: SemanticEntity.MACRO,
+          category: SemanticCategory.REFERENCE,
+          text: "println",
+          node_location: mockLocation,
+          modifiers: {},
+          context: {},
+        },
+      ];
+
+      const calls = process_call_references(
+        captures,
+        mockScope,
+        new Map(),
+        mockFilePath
+      );
+
+      expect(calls).toHaveLength(1);
+      expect(calls[0]).toMatchObject({
+        name: "println",
+        call_type: "macro",
+        scope_id: mockScope.id,
+        location: mockLocation,
+      });
+    });
+
     it("should process method calls", () => {
       const receiverNode = create_mock_node("identifier", "obj", 1, 0, 1, 3);
       const captures: NormalizedCapture[] = [

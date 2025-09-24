@@ -53,7 +53,8 @@ export function process_references(
     c.entity === SemanticEntity.CALL ||
     c.entity === SemanticEntity.SUPER ||
     c.entity === SemanticEntity.FUNCTION ||
-    c.entity === SemanticEntity.METHOD
+    c.entity === SemanticEntity.METHOD ||
+    c.entity === SemanticEntity.MACRO
   );
 
   if (call_captures.length > 0) {

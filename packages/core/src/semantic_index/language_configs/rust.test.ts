@@ -42,6 +42,9 @@ describe("Rust Language Configuration", () => {
         "scope.interface",
         "scope.block",
         "scope.block.unsafe",
+        "scope.for",
+        "scope.while",
+        "scope.loop",
         "scope.match",
       ];
 
@@ -115,6 +118,8 @@ describe("Rust Language Configuration", () => {
         "def.param",
         "def.param.self",
         "def.param.closure",
+        "def.const_param",
+        "def.type_param",
       ];
 
       for (const mapping of variableDefinitions) {
@@ -188,6 +193,7 @@ describe("Rust Language Configuration", () => {
       const referenceMappings = [
         "ref.call",
         "ref.method_call",
+        "ref.method_call.chained",
         "ref.associated_function",
         "ref.receiver",
         "ref.type",
@@ -234,8 +240,10 @@ describe("Rust Language Configuration", () => {
         "lifetime.ref",
         "impl.trait",
         "impl.inherent",
-        "macro.call",
-        "macro.definition",
+        "def.macro",
+        "ref.macro",
+        "ref.macro.scoped",
+        "ref.macro.builtin",
         "module.crate_ref",
         "module.super_ref",
         "module.self_ref",
@@ -1304,24 +1312,100 @@ describe("Rust Language Configuration", () => {
     });
 
     describe("Macros", () => {
-      it("should handle macro calls", () => {
-        const macroCallConfig = RUST_CAPTURE_CONFIG.get("macro.call");
-        // Context functions are optional for some mappings
+      it("should handle macro definitions", () => {
+        const macroDefConfig = RUST_CAPTURE_CONFIG.get("def.macro");
+        expect(macroDefConfig).toBeDefined();
+        expect(macroDefConfig?.category).toBe(SemanticCategory.DEFINITION);
+        expect(macroDefConfig?.entity).toBe(SemanticEntity.MACRO);
+      });
 
-        if (typeof macroCallConfig?.context === "function") {
-          const context = macroCallConfig.context(create_simple_mock_node());
-          expect(context).toBeDefined();
+      it("should handle macro invocations", () => {
+        const macroCallConfig = RUST_CAPTURE_CONFIG.get("ref.macro");
+        expect(macroCallConfig).toBeDefined();
+        expect(macroCallConfig?.category).toBe(SemanticCategory.REFERENCE);
+        expect(macroCallConfig?.entity).toBe(SemanticEntity.MACRO);
+      });
+
+      it("should handle scoped macro invocations", () => {
+        const scopedMacroConfig = RUST_CAPTURE_CONFIG.get("ref.macro.scoped");
+        expect(scopedMacroConfig).toBeDefined();
+        expect(scopedMacroConfig?.category).toBe(SemanticCategory.REFERENCE);
+        expect(scopedMacroConfig?.entity).toBe(SemanticEntity.MACRO);
+      });
+
+      it("should handle built-in macro invocations", () => {
+        const builtinMacroConfig = RUST_CAPTURE_CONFIG.get("ref.macro.builtin");
+        expect(builtinMacroConfig).toBeDefined();
+        expect(builtinMacroConfig?.category).toBe(SemanticCategory.REFERENCE);
+        expect(builtinMacroConfig?.entity).toBe(SemanticEntity.MACRO);
+
+        // Built-in macros should have the is_builtin modifier
+        if (typeof builtinMacroConfig?.modifiers === "function") {
+          const modifiers = builtinMacroConfig.modifiers(create_simple_mock_node());
+          expect(modifiers?.is_builtin).toBe(true);
         }
       });
 
-      it("should handle macro definitions", () => {
-        const macroDefConfig = RUST_CAPTURE_CONFIG.get("macro.definition");
-        // Context functions are optional for some mappings
+      it("should parse macro definitions in real code", () => {
+        const code = `
+          macro_rules! create_function {
+            ($func_name:ident) => {
+              fn $func_name() {
+                println!("Generated function");
+              }
+            };
+          }
+        `;
+        const tree = parser.parse(code);
+        const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
 
-        if (typeof macroDefConfig?.context === "function") {
-          const context = macroDefConfig.context(create_simple_mock_node());
-          expect(context).toBeDefined();
-        }
+        // Should capture macro definition
+        const macroDefs = captures.definitions.filter(c => c.entity === SemanticEntity.MACRO);
+        expect(macroDefs.length).toBeGreaterThan(0);
+        expect(macroDefs.some(d => d.text === "create_function")).toBe(true);
+      });
+
+      it("should parse macro invocations in real code", () => {
+        const code = `
+          macro_rules! test_macro { () => {} }
+
+          fn main() {
+            test_macro!();
+            println!("Hello, world!");
+            vec![1, 2, 3];
+            std::println!("Scoped macro");
+          }
+        `;
+        const tree = parser.parse(code);
+        const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+        // Should capture macro invocations
+        const macroRefs = captures.references.filter(c => c.entity === SemanticEntity.MACRO);
+        expect(macroRefs.length).toBeGreaterThan(0);
+
+        // Should include user-defined, built-in, and scoped macros
+        const macroNames = macroRefs.map(r => r.text);
+        expect(macroNames).toContain("test_macro");
+        expect(macroNames).toContain("println");
+        expect(macroNames).toContain("vec");
+      });
+
+      it("should parse attribute and derive macros", () => {
+        const code = `
+          #[derive(Debug, Clone)]
+          #[serde(rename = "custom")]
+          struct MyStruct {
+            field: i32,
+          }
+        `;
+        const tree = parser.parse(code);
+        const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+        // Should capture attribute macros (derive, custom attributes)
+        // Note: These might be captured as decorators or modifiers depending on implementation
+        const decorators = captures.decorators.length;
+        const modifiers = captures.modifiers.length;
+        expect(decorators + modifiers).toBeGreaterThan(0);
       });
     });
 
@@ -1828,7 +1912,7 @@ describe("Rust Language Configuration", () => {
     it("should detect instance methods using . syntax", () => {
       const methodCallConfig = RUST_CAPTURE_CONFIG.get("ref.method_call");
       expect(methodCallConfig).toBeDefined();
-      expect(methodCallConfig?.entity).toBe(SemanticEntity.METHOD);
+      expect(methodCallConfig?.entity).toBe(SemanticEntity.CALL);
 
       // Regular method calls are instance methods
       if (methodCallConfig?.context) {
@@ -1924,18 +2008,21 @@ describe("Rust Language Configuration", () => {
     });
 
     it("should handle macro invocations differently from function calls", () => {
-      const macroCallConfig = RUST_CAPTURE_CONFIG.get("ref.macro_call");
+      const macroCallConfig = RUST_CAPTURE_CONFIG.get("ref.macro");
+      const functionCallConfig = RUST_CAPTURE_CONFIG.get("ref.call");
 
-      if (macroCallConfig) {
-        expect(macroCallConfig.entity).toBe(SemanticEntity.MACRO);
+      // Verify macro config exists and is correct
+      expect(macroCallConfig).toBeDefined();
+      expect(macroCallConfig?.entity).toBe(SemanticEntity.MACRO);
+      expect(macroCallConfig?.category).toBe(SemanticCategory.REFERENCE);
 
-        // Macros are neither static nor instance - they're compile-time
-        if (macroCallConfig.context) {
-          const context = macroCallConfig.context(create_simple_mock_node());
-          // Macros are compile-time constructs
-          expect(context).toBeDefined();
-        }
-      }
+      // Verify function config exists and is different
+      expect(functionCallConfig).toBeDefined();
+      expect(functionCallConfig?.entity).toBe(SemanticEntity.FUNCTION);
+      expect(functionCallConfig?.category).toBe(SemanticCategory.REFERENCE);
+
+      // Macros and functions should be different entities
+      expect(macroCallConfig?.entity).not.toBe(functionCallConfig?.entity);
     });
   });
 
@@ -2913,7 +3000,7 @@ describe("Rust Language Configuration", () => {
 
         // Should capture higher-order method calls
         const higherOrderCalls = captures.references.filter(c =>
-          c.entity === SemanticEntity.METHOD && c.modifiers?.is_higher_order
+          c.entity === SemanticEntity.CALL && c.modifiers?.is_higher_order
         );
         expect(higherOrderCalls.length).toBeGreaterThan(0);
 
@@ -2976,10 +3063,331 @@ describe("Rust Language Configuration", () => {
 
         // Should capture higher-order method calls
         const higherOrderCalls = captures.references.filter(c =>
-          c.entity === SemanticEntity.METHOD && c.modifiers?.is_higher_order
+          c.entity === SemanticEntity.CALL && c.modifiers?.is_higher_order
         );
         expect(higherOrderCalls.length).toBeGreaterThan(0);
       });
     });
   });
+
+  describe("Advanced Rust Constructs Validation", () => {
+    describe("Loop Scope Mappings", () => {
+      it("should capture for loop scopes with proper modifiers", () => {
+        const code = `
+          fn test_loops() {
+            for i in 0..10 {
+              println!("{}", i);
+            }
+
+            while true {
+              break;
+            }
+
+            loop {
+              continue;
+            }
+          }
+        `;
+        const tree = parser.parse(code);
+        const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+        // Should capture for loop scope
+        const forLoops = captures.scopes.filter(s =>
+          s.entity === SemanticEntity.BLOCK &&
+          s.modifiers?.is_loop === true &&
+          s.modifiers?.loop_type === "for"
+        );
+        expect(forLoops.length).toBe(1);
+
+        // Should capture while loop scope
+        const whileLoops = captures.scopes.filter(s =>
+          s.entity === SemanticEntity.BLOCK &&
+          s.modifiers?.is_loop === true &&
+          s.modifiers?.loop_type === "while"
+        );
+        expect(whileLoops.length).toBe(1);
+
+        // Should capture infinite loop scope
+        const loops = captures.scopes.filter(s =>
+          s.entity === SemanticEntity.BLOCK &&
+          s.modifiers?.is_loop === true &&
+          s.modifiers?.loop_type === "loop"
+        );
+        expect(loops.length).toBe(1);
+      });
+    });
+
+    describe("Const Generics", () => {
+      it("should capture const generic parameters correctly", () => {
+        const code = `
+          struct Array<T, const N: usize> {
+            data: [T; N],
+          }
+
+          impl<T, const N: usize> Array<T, N> {
+            const fn new() -> Self {
+              Array { data: [T::default(); N] }
+            }
+
+            const fn size() -> usize {
+              N
+            }
+          }
+
+          fn use_array<const SIZE: usize>() -> Array<i32, SIZE> {
+            Array::new()
+          }
+        `;
+        const tree = parser.parse(code);
+        const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+        // Should capture const generic parameters
+        const constParams = captures.definitions.filter(d =>
+          d.entity === SemanticEntity.CONSTANT &&
+          d.modifiers?.is_const_generic === true
+        );
+        expect(constParams.length).toBeGreaterThanOrEqual(3); // N appears twice, SIZE once
+
+        // Should have proper names
+        const paramNames = constParams.map(p => p.text);
+        expect(paramNames).toContain("N");
+        expect(paramNames).toContain("SIZE");
+      });
+    });
+
+    describe("Associated Types", () => {
+      it("should capture associated type definitions and implementations", () => {
+        const code = `
+          trait Container {
+            type Item;
+            type Error;
+          }
+
+          impl<T> Container for Vec<T> {
+            type Item = T;
+            type Error = String;
+          }
+
+          trait Iterator {
+            type Item;
+
+            fn next(&mut self) -> Option<Self::Item>;
+          }
+        `;
+        const tree = parser.parse(code);
+        const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+        // Should capture trait associated types
+        const traitAssocTypes = captures.definitions.filter(d =>
+          d.entity === SemanticEntity.TYPE &&
+          d.modifiers?.is_associated_type === true &&
+          !d.modifiers?.is_trait_impl
+        );
+        expect(traitAssocTypes.length).toBeGreaterThanOrEqual(3); // Item, Error, Item from Iterator
+
+        // Should capture impl associated types
+        const implAssocTypes = captures.definitions.filter(d =>
+          d.entity === SemanticEntity.TYPE &&
+          d.modifiers?.is_associated_type === true &&
+          d.modifiers?.is_trait_impl === true
+        );
+        expect(implAssocTypes.length).toBeGreaterThanOrEqual(2); // Item = T, Error = String
+      });
+    });
+
+    describe("Unsafe Blocks", () => {
+      it("should capture unsafe block scopes with proper modifiers", () => {
+        const code = `
+          unsafe fn dangerous_function() -> *mut i32 {
+            std::ptr::null_mut()
+          }
+
+          fn safe_wrapper() {
+            unsafe {
+              let ptr = dangerous_function();
+              *ptr = 42;
+            }
+
+            let result = unsafe {
+              let ptr = dangerous_function();
+              *ptr
+            };
+          }
+        `;
+        const tree = parser.parse(code);
+        const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+        // Should capture unsafe functions
+        const unsafeFunctions = captures.definitions.filter(d =>
+          d.entity === SemanticEntity.FUNCTION &&
+          d.modifiers?.is_unsafe === true
+        );
+        expect(unsafeFunctions.length).toBeGreaterThanOrEqual(1);
+
+        // Should capture unsafe blocks
+        const unsafeBlocks = captures.scopes.filter(s =>
+          s.entity === SemanticEntity.BLOCK &&
+          s.modifiers?.is_unsafe === true
+        );
+        expect(unsafeBlocks.length).toBeGreaterThanOrEqual(2); // Two unsafe blocks
+      });
+    });
+
+    describe("Method Call References", () => {
+      it("should capture method calls with receivers and chaining", () => {
+        const code = `
+          struct Calculator {
+            value: i32,
+          }
+
+          impl Calculator {
+            fn new(value: i32) -> Self {
+              Calculator { value }
+            }
+
+            fn add(&mut self, other: i32) -> &mut Self {
+              self.value += other;
+              self
+            }
+
+            fn multiply(&mut self, factor: i32) -> &mut Self {
+              self.value *= factor;
+              self
+            }
+
+            fn result(&self) -> i32 {
+              self.value
+            }
+          }
+
+          fn test_methods() {
+            let mut calc = Calculator::new(10);
+
+            // Method chaining
+            calc.add(5).multiply(2).add(3);
+
+            // Regular method call
+            let result = calc.result();
+
+            // Associated function call
+            let another = Calculator::new(20);
+          }
+        `;
+        const tree = parser.parse(code);
+        const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+        // Should capture method calls
+        const methodCalls = captures.references.filter(r =>
+          r.entity === SemanticEntity.CALL &&
+          r.context?.is_method_call === true
+        );
+        expect(methodCalls.length).toBeGreaterThanOrEqual(5); // add, multiply, add, result calls
+
+        // Should capture chained method calls
+        const chainedCalls = captures.references.filter(r =>
+          r.entity === SemanticEntity.CALL &&
+          r.context?.is_chained_call === true
+        );
+        expect(chainedCalls.length).toBeGreaterThanOrEqual(1);
+
+        // Should capture associated function calls
+        const associatedCalls = captures.references.filter(r =>
+          r.entity === SemanticEntity.CALL &&
+          r.modifiers?.is_associated_call === true
+        );
+        expect(associatedCalls.length).toBeGreaterThanOrEqual(2); // Two new() calls
+
+        // Should capture method receivers
+        const receivers = captures.references.filter(r =>
+          r.entity === SemanticEntity.VARIABLE &&
+          r.text === "calc"
+        );
+        expect(receivers.length).toBeGreaterThanOrEqual(1);
+      });
+    });
+
+    describe("Integration Tests", () => {
+      it("should handle complex combinations of advanced constructs", () => {
+        const code = `
+          use std::collections::HashMap;
+
+          unsafe trait UnsafeContainer<T, const N: usize> {
+            type Item = T;
+            type Storage;
+
+            unsafe fn get_unchecked(&self, index: usize) -> &T;
+          }
+
+          struct ArrayContainer<T, const N: usize> {
+            data: [T; N],
+          }
+
+          unsafe impl<T, const N: usize> UnsafeContainer<T, N> for ArrayContainer<T, N> {
+            type Storage = [T; N];
+
+            unsafe fn get_unchecked(&self, index: usize) -> &T {
+              self.data.get_unchecked(index)
+            }
+          }
+
+          fn process_data<T, const SIZE: usize>(container: &ArrayContainer<T, SIZE>)
+          where
+            T: Clone + std::fmt::Debug,
+          {
+            for i in 0..SIZE {
+              unsafe {
+                let item = container.get_unchecked(i);
+                println!("{:?}", item);
+              }
+            }
+
+            let mut map = HashMap::new();
+
+            while map.len() < SIZE {
+              map.insert(map.len(), map.len() * 2);
+            }
+
+            loop {
+              if map.is_empty() {
+                break;
+              }
+              map.clear();
+            }
+          }
+        `;
+        const tree = parser.parse(code);
+        const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+        // Should capture all types of scopes
+        const unsafeBlocks = captures.scopes.filter(s => s.modifiers?.is_unsafe);
+        const forLoops = captures.scopes.filter(s => s.modifiers?.loop_type === "for");
+        const whileLoops = captures.scopes.filter(s => s.modifiers?.loop_type === "while");
+        const infiniteLoops = captures.scopes.filter(s => s.modifiers?.loop_type === "loop");
+
+        expect(unsafeBlocks.length).toBeGreaterThan(0);
+        expect(forLoops.length).toBeGreaterThan(0);
+        expect(whileLoops.length).toBeGreaterThan(0);
+        expect(infiniteLoops.length).toBeGreaterThan(0);
+
+        // Should capture const generics
+        const constGenerics = captures.definitions.filter(d =>
+          d.modifiers?.is_const_generic
+        );
+        expect(constGenerics.length).toBeGreaterThan(0);
+
+        // Should capture associated types
+        const associatedTypes = captures.definitions.filter(d =>
+          d.modifiers?.is_associated_type
+        );
+        expect(associatedTypes.length).toBeGreaterThan(0);
+
+        // Should capture method calls
+        const methodCalls = captures.references.filter(r =>
+          r.entity === SemanticEntity.CALL
+        );
+        expect(methodCalls.length).toBeGreaterThan(0);
+      });
+    });
+  });
 });
+

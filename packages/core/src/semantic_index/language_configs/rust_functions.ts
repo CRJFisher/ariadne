@@ -66,6 +66,48 @@ export const RUST_FUNCTION_MAPPINGS = new Map<string, CaptureMapping>([
     },
   ],
 
+  // Closure definitions
+  [
+    "def.function.closure",
+    {
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.FUNCTION,
+      modifiers: () => ({ is_closure: true }),
+    },
+  ],
+  [
+    "def.function.async_closure",
+    {
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.FUNCTION,
+      modifiers: () => ({ is_closure: true, is_async: true }),
+    },
+  ],
+  [
+    "def.function.async_move_closure",
+    {
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.FUNCTION,
+      modifiers: () => ({ is_closure: true, is_async: true, is_move: true }),
+    },
+  ],
+  [
+    "def.function.closure.async",
+    {
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.FUNCTION,
+      modifiers: () => ({ is_closure: true, is_async: true }),
+    },
+  ],
+  [
+    "def.function.closure.move",
+    {
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.FUNCTION,
+      modifiers: () => ({ is_closure: true, is_move: true }),
+    },
+  ],
+
   // Closure parameters
   [
     "def.param.closure",

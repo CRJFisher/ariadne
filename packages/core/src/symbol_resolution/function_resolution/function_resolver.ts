@@ -50,10 +50,12 @@ export function resolve_function_calls(
       file_imports,
     };
 
-    // Process all function call references in this file
+    // Process all function and macro call references in this file
     for (const call_ref of index.references.calls) {
-      if (call_ref.call_type === "function") {
-        const resolution = resolve_single_function_call(call_ref, context);
+      if (call_ref.call_type === "function" || call_ref.call_type === "macro") {
+        const resolution = call_ref.call_type === "macro"
+          ? resolve_single_macro_call(call_ref, context)
+          : resolve_single_function_call(call_ref, context);
 
         if (resolution) {
           const location_key_val = location_key(call_ref.location);
@@ -127,6 +129,149 @@ function resolve_single_function_call(
   }
 
   return null; // Unresolved
+}
+
+/**
+ * Resolve a single macro call using Rust-specific macro resolution strategies
+ */
+function resolve_single_macro_call(
+  call_ref: CallReference,
+  context: FunctionResolutionContext
+): FunctionCallResolution | null {
+  const macro_name = call_ref.name;
+
+  // Macro resolution priority order
+  const macro_strategies = [
+    () => try_builtin_macro_resolution(macro_name, call_ref, context),
+    () => try_lexical_macro_resolution(macro_name, call_ref, context),
+    () => try_imported_macro_resolution(macro_name, call_ref, context),
+  ];
+
+  for (const strategy of macro_strategies) {
+    const result = strategy();
+    if (result) {
+      // Enhance the result with macro-specific information
+      return enhance_with_macro_info(result, context, call_ref);
+    }
+  }
+
+  return null; // Unresolved macro
+}
+
+/**
+ * Try built-in macro resolution (println!, vec!, etc.)
+ */
+function try_builtin_macro_resolution(
+  macro_name: SymbolName,
+  call_ref: CallReference,
+  context: FunctionResolutionContext
+): FunctionCallResolution | null {
+  const builtin_macros = new Set([
+    'println', 'eprintln', 'print', 'eprint', 'vec', 'panic', 'assert',
+    'debug_assert', 'format', 'write', 'writeln', 'todo', 'unimplemented',
+    'unreachable', 'compile_error', 'include', 'include_str', 'include_bytes',
+    'concat', 'stringify', 'env', 'option_env', 'cfg', 'column', 'file',
+    'line', 'module_path', 'assert_eq', 'assert_ne', 'debug_assert_eq',
+    'debug_assert_ne', 'matches', 'dbg', 'try'
+  ]);
+
+  if (builtin_macros.has(macro_name)) {
+    // Create a synthetic symbol ID for built-in macros
+    const builtin_symbol_id = `builtin_macro_${macro_name}_${context.file_path}` as SymbolId;
+
+    return {
+      resolved_function: builtin_symbol_id,
+      resolution_strategy: 'builtin_macro',
+      confidence: 'high',
+      macro_info: {
+        is_builtin: true,
+        macro_kind: 'builtin',
+        macro_name,
+      },
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Try lexical macro resolution (macro_rules! definitions in current scope)
+ */
+function try_lexical_macro_resolution(
+  macro_name: SymbolName,
+  call_ref: CallReference,
+  context: FunctionResolutionContext
+): FunctionCallResolution | null {
+  // Look for macro definitions in the current file
+  for (const [symbol_id, symbol] of context.file_index.symbols) {
+    if (symbol.kind === 'function' && symbol.name === macro_name) {
+      // Check if this symbol was created from a macro definition
+      // (We map macros to function symbols in definitions.ts)
+
+      // TODO: Add more sophisticated macro scope checking
+      // For now, if we find a macro with the same name, assume it's a match
+      return {
+        resolved_function: symbol_id,
+        resolution_strategy: 'lexical_macro',
+        confidence: 'high',
+        macro_info: {
+          is_builtin: false,
+          macro_kind: 'declarative',
+          macro_name,
+        },
+      };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Try imported macro resolution (use statements with macros)
+ */
+function try_imported_macro_resolution(
+  macro_name: SymbolName,
+  call_ref: CallReference,
+  context: FunctionResolutionContext
+): FunctionCallResolution | null {
+  // Check if this macro was imported
+  const imported_symbol = context.file_imports.get(macro_name);
+  if (imported_symbol) {
+    // Verify the imported symbol is actually a macro
+    for (const [, index] of context.indices) {
+      const symbol = index.symbols.get(imported_symbol);
+      if (symbol?.kind === 'function') {
+        // Assume imported function-like symbols could be macros
+        return {
+          resolved_function: imported_symbol,
+          resolution_strategy: 'imported_macro',
+          confidence: 'medium',
+          macro_info: {
+            is_builtin: false,
+            macro_kind: 'imported',
+            macro_name,
+          },
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Enhance macro resolution with macro-specific information
+ */
+function enhance_with_macro_info(
+  base_resolution: FunctionCallResolution,
+  context: FunctionResolutionContext,
+  call_ref: CallReference
+): FunctionCallResolution {
+  return {
+    ...base_resolution,
+    // Macro calls don't have Rust function info in the same way
+    rust_function_info: undefined,
+  };
 }
 
 /**

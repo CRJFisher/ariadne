@@ -53,14 +53,15 @@ export function try_lexical_resolution(
     is_function_symbol(lookup_result.symbol_id, context.file_index.symbols)
   ) {
     // Map resolution methods - "hoisted" is considered "lexical" in function resolution context
-    const resolution_method: FunctionCallResolution["resolution_method"] =
+    const resolution_strategy: FunctionCallResolution["resolution_strategy"] =
       lookup_result.resolution_method === "hoisted" ? "lexical" :
       lookup_result.resolution_method === "global" ? "global" : "lexical";
 
     return {
       call_location: call_ref.location,
       resolved_function: lookup_result.symbol_id,
-      resolution_method,
+      resolution_strategy,
+      confidence: "high",
       scope_chain: build_scope_chain_ids(call_scope, context.file_index.scopes),
     };
   }
@@ -93,7 +94,8 @@ export function try_imported_resolution(
     return {
       call_location: call_ref.location,
       resolved_function: imported_symbol,
-      resolution_method: "imported",
+      resolution_strategy: "imported",
+      confidence: "high",
       import_source: source_file,
     };
   }
@@ -118,7 +120,8 @@ export function try_global_resolution(
     return {
       call_location: call_ref.location,
       resolved_function: global_symbol,
-      resolution_method: "global",
+      resolution_strategy: "global",
+      confidence: "medium",
     };
   }
 

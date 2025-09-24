@@ -29,7 +29,7 @@ export interface CallReference {
   readonly scope_id: ScopeId;
 
   /** Type of call */
-  readonly call_type: "function" | "method" | "constructor" | "super";
+  readonly call_type: "function" | "method" | "constructor" | "super" | "macro";
 
   /** For method calls: receiver location */
   readonly receiver?: {
@@ -132,7 +132,8 @@ export function process_call_references(
     (c) => (c.entity === SemanticEntity.CALL) ||
            (c.entity === SemanticEntity.SUPER) ||
            (c.entity === SemanticEntity.FUNCTION && c.category === SemanticCategory.REFERENCE) ||
-           (c.entity === SemanticEntity.METHOD && c.category === SemanticCategory.REFERENCE)
+           (c.entity === SemanticEntity.METHOD && c.category === SemanticCategory.REFERENCE) ||
+           (c.entity === SemanticEntity.MACRO && c.category === SemanticCategory.REFERENCE)
   );
 
   for (const capture of call_captures) {
@@ -202,6 +203,8 @@ function create_call_reference(
     call_type = "method";
   } else if (capture.entity === SemanticEntity.SUPER) {
     call_type = "super";
+  } else if (capture.entity === SemanticEntity.MACRO) {
+    call_type = "macro";
   }
 
   // Build receiver info for method calls
