@@ -48,7 +48,6 @@ export { analyze_type_flow } from "./type_flow";
 export { resolve_type_annotations } from "./resolve_annotations";
 export { resolve_inheritance } from "./inheritance";
 export {
-  resolve_all_types,
   build_file_type_registry,
   build_file_type_registry_with_annotations,
   type TypeRegistryResult
