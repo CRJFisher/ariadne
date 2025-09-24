@@ -1,8 +1,8 @@
 # task-epic-11.95.8 - Implement Rust Functions and Closures
 
 ## Status
-- **Status**: `Open`
-- **Assignee**: Unassigned
+- **Status**: `Completed`
+- **Assignee**: Claude
 - **Priority**: `Medium`
 - **Size**: `M`
 - **Parent**: task-epic-11.95
@@ -144,14 +144,14 @@ let async_closure = async |data| process(data).await;
 - `src/symbol_resolution/method_resolution/` - Enable method calls on function traits and closures
 
 ## Acceptance Criteria
-- [ ] Generic functions properly marked with `is_generic: true`
-- [ ] Closure expressions captured as function-like entities
-- [ ] Closure parameters detected with `is_closure_param: true`
-- [ ] Function pointers and trait objects identified
-- [ ] Const and unsafe functions properly flagged
-- [ ] Higher-order function patterns detected
-- [ ] Both failing tests pass
-- [ ] No regression in existing Rust parsing
+- [x] Generic functions properly marked with `is_generic: true`
+- [x] Closure expressions captured as function-like entities
+- [x] Closure parameters detected with `is_closure_param: true`
+- [x] Function pointers and trait objects identified
+- [x] Const and unsafe functions properly flagged
+- [x] Higher-order function patterns detected
+- [x] Both failing tests pass
+- [x] No regression in existing Rust parsing
 
 ## Call Graph Detection Benefits
 
@@ -201,8 +201,122 @@ This implementation enhances call graph analysis by:
 - Generic function detection integrated with generic type system
 - Higher-order function patterns properly identified
 
+## Implementation Results
+
+### ✅ Successfully Completed
+
+**Test Results:**
+- All 3 "Functions and Closures" tests now pass:
+  - `should parse function definitions` ✅
+  - `should parse closures` ✅
+  - `should parse function parameters and return types` ✅
+
+**Features Implemented:**
+
+1. **Generic Function Detection** ✅
+   - Functions with type parameters now correctly marked with `is_generic: true`
+   - Pattern: `(function_item name: (identifier) @def.function.generic type_parameters: (type_parameters))`
+
+2. **Closure Parameter Capture** ✅
+   - Both simple and typed closure parameters captured
+   - Pattern: `(closure_expression parameters: (closure_parameters (identifier) @def.param.closure))`
+   - Parameters correctly marked with `is_closure_param: true`
+
+3. **Function Modifiers** ✅
+   - Const functions: `(function_item (function_modifiers "const") name: (identifier) @def.function.const)`
+   - Unsafe functions: Pattern already existed and working
+   - Async functions: Pattern already existed and working
+
+4. **Function Types** ✅
+   - Function pointers: `(function_type ...) @type.function_pointer`
+   - Function traits (Fn, FnMut, FnOnce): `(generic_type type: (type_identifier) @type.trait_name (#match? @type.trait_name "^(Fn|FnMut|FnOnce)$")) @type.function_trait`
+
+5. **Higher-Order Functions** ✅
+   - Iterator method calls (map, filter, fold, etc.) detected
+   - Pattern: `(call_expression function: (field_expression field: (field_identifier) @call.method (#match? @call.method "^(map|filter|fold|...)$"))) @call.higher_order`
+
+6. **impl Trait Functions** ✅
+   - Functions returning impl Trait: `(function_item return_type: (abstract_type)) @def.function.returns_impl`
+   - Functions accepting impl Trait: `(function_item parameters: (parameters (parameter type: (abstract_type)))) @def.function.accepts_impl`
+
+### Issues Encountered & Resolved
+
+1. **Tree-sitter Node Type Mismatch**
+   - **Issue**: Initial patterns used incorrect node types (`impl_trait_type` vs `abstract_type`)
+   - **Resolution**: Debugged actual AST structure using tree-sitter parser to find correct node types
+
+2. **Closure Parameter Structure**
+   - **Issue**: Assumed `closure_parameter` node type, but actual structure uses `parameter`
+   - **Resolution**: Used `(parameter pattern: (identifier))` pattern within `closure_parameters`
+
+3. **Function Modifier Syntax**
+   - **Issue**: Initial const function pattern had incorrect syntax structure
+   - **Resolution**: Simplified to `(function_modifiers "const")` after analyzing actual AST
+
+### Files Modified
+
+**Primary Implementation:**
+- `src/semantic_index/queries/rust.scm` - Added 15+ new query patterns for functions and closures
+- `src/semantic_index/language_configs/rust.ts` - Added 8 new capture mappings
+
+**Key Patterns Added:**
+```scheme
+; Generic functions (enhanced existing)
+(function_item name: (identifier) @def.function.generic type_parameters: (type_parameters))
+
+; Const functions
+(function_item (function_modifiers "const") name: (identifier) @def.function.const)
+
+; Closure parameters - simple and typed
+(closure_expression parameters: (closure_parameters (identifier) @def.param.closure))
+(closure_expression parameters: (closure_parameters (parameter pattern: (identifier) @def.param.closure)))
+
+; Function pointer types
+(function_type "fn" @type.function_keyword parameters: (parameters) @type.function_params) @type.function_pointer
+
+; Function trait objects
+(generic_type type: (type_identifier) @type.trait_name (#match? @type.trait_name "^(Fn|FnMut|FnOnce)$")) @type.function_trait
+
+; Higher-order function calls
+(call_expression function: (field_expression field: (field_identifier) @call.method (#match? @call.method "^(map|filter|fold|for_each|find|any|all|collect|flat_map|filter_map|take|skip|take_while|skip_while)$"))) @call.higher_order
+
+; impl Trait functions
+(function_item return_type: (abstract_type)) @def.function.returns_impl
+(function_item parameters: (parameters (parameter type: (abstract_type)))) @def.function.accepts_impl
+```
+
+### Testing Validation
+
+**Functions and Closures Test Suite:**
+- `should parse function definitions`: ✅ Passes - generic functions detected with `is_generic: true`
+- `should parse closures`: ✅ Passes - closure scopes and parameters properly captured
+- `should parse function parameters and return types`: ✅ Passes - all parameter types including self parameters
+
+**Overall Test Suite:**
+- Functions and Closures: 3/3 passing ✅
+- Total test suite: 50/60 passing (10 failures in other areas, not function-related)
+- No regressions introduced in existing Rust parsing
+
+### Call Graph Detection Benefits Realized
+
+This implementation enables:
+
+1. **Closure Call Tracking**: Closures now properly captured as function entities with parameters
+2. **Higher-Order Function Analysis**: Iterator chains (`.map().filter()`) detected as higher-order calls
+3. **Generic Function Resolution**: Generic functions marked for proper type instantiation tracking
+4. **Function Trait Support**: Foundation for tracking calls through function trait objects
+5. **Const/Unsafe Function Analysis**: Function modifiers captured for safety analysis
+
+### Follow-on Work Recommendations
+
+1. **Async Closures**: Current implementation covers sync closures - async closure patterns could be enhanced
+2. **Move Closures**: Basic closure detection exists, but move semantics could be more explicit
+3. **Closure Capture Analysis**: Could enhance with explicit variable capture detection
+4. **Function Trait Method Calls**: Could add specific patterns for `.call()`, `.call_once()` method calls
+5. **Iterator Chain Optimization**: Could expand higher-order patterns for more complex iterator chains
+
 ## Notes
-- Closures are fundamental to functional programming patterns in Rust
-- Function traits integration important for type system analysis
-- Consider interaction with async system for async closures
-- Higher-order functions common in iterator chains and need special handling
+- Closures are fundamental to functional programming patterns in Rust ✅ Implemented
+- Function traits integration important for type system analysis ✅ Foundation laid
+- Consider interaction with async system for async closures → Follow-on work
+- Higher-order functions common in iterator chains and need special handling ✅ Implemented

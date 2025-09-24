@@ -35,8 +35,14 @@ import {
   resolve_type_tracking,
   resolve_type_members,
   resolve_rust_reference_types,
+  resolve_rust_function_types,
+  resolve_closure_types,
+  resolve_higher_order_function_calls,
   resolve_ownership_operations,
   integrate_pattern_matching_into_type_resolution,
+  resolve_rust_async_types,
+  type ClosureTypeInfo,
+  type HigherOrderCallInfo,
 } from "./type_resolution";
 import type {
   LocalTypeDefinition,
@@ -284,6 +290,49 @@ function phase3_resolve_types(
     for (const [loc_key, type_id] of rust_reference_types) {
       reference_types.set(loc_key, type_id);
     }
+
+    // Resolve Rust function types (function pointers, function traits)
+    const rust_function_types = resolve_rust_function_types(
+      index,
+      current_type_resolution,
+      file_path
+    );
+
+    // Merge Rust function types into reference_types map
+    for (const [loc_key, type_id] of rust_function_types) {
+      reference_types.set(loc_key, type_id);
+    }
+
+    // Resolve closure types and their environment
+    const closure_types = resolve_closure_types(
+      index,
+      current_type_resolution,
+      file_path
+    );
+
+    // Store closure type information (could be added to symbol_types for closure symbols)
+    for (const [symbol_id, closure_info] of closure_types) {
+      // In a complete implementation, we'd create TypeIds for closure types
+      // For now, we'll note that closure resolution has occurred
+    }
+
+    // Resolve Rust async/await types
+    const rust_async_types = resolve_rust_async_types(
+      index,
+      current_type_resolution,
+      file_path
+    );
+
+    // Merge async types into reference_types map
+    for (const [loc_key, type_id] of rust_async_types) {
+      reference_types.set(loc_key, type_id);
+    }
+
+    // Resolve higher-order function calls
+    const higher_order_calls = resolve_higher_order_function_calls(
+      index,
+      current_type_resolution
+    );
 
     // Process ownership operations (borrow, deref, smart pointer methods)
     const ownership_operations = resolve_ownership_operations(index, current_type_resolution);

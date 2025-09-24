@@ -234,10 +234,23 @@ describe("Capture Types", () => {
         is_closure_param: true,
         visibility_level: "public",
         visibility_path: "crate::utils",
+        // Function-specific modifiers
+        is_const: true,
+        is_move: true,
+        returns_impl_trait: true,
+        accepts_impl_trait: true,
+        is_function_pointer: true,
+        is_function_trait: true,
+        is_higher_order: true,
       };
 
       expect(rustModifiers.is_unsafe).toBe(true);
       expect(rustModifiers.visibility_level).toBe("public");
+      // Test function-specific modifiers
+      expect(rustModifiers.is_const).toBe(true);
+      expect(rustModifiers.returns_impl_trait).toBe(true);
+      expect(rustModifiers.is_function_pointer).toBe(true);
+      expect(rustModifiers.is_higher_order).toBe(true);
     });
   });
 

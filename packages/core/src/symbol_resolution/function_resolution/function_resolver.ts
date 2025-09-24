@@ -35,6 +35,11 @@ export function resolve_function_calls(
   const calls_to_function = new Map<SymbolId, Location[]>();
   const resolution_details = new Map<LocationKey, FunctionCallResolution>();
 
+  // Rust-specific resolution maps
+  const closure_calls = new Map<LocationKey, SymbolId>();
+  const higher_order_calls = new Map<LocationKey, SymbolId>();
+  const function_pointer_calls = new Map<LocationKey, SymbolId>();
+
   indices.forEach((index, file_path) => {
     const file_imports = imports.get(file_path) || new Map();
     const context: FunctionResolutionContext = {
@@ -56,6 +61,19 @@ export function resolve_function_calls(
           function_calls.set(location_key_val, resolution.resolved_function);
           resolution_details.set(location_key_val, resolution);
 
+          // Track Rust-specific function calls
+          if (resolution.rust_function_info) {
+            if (resolution.rust_function_info.is_closure_call) {
+              closure_calls.set(location_key_val, resolution.resolved_function);
+            }
+            if (resolution.rust_function_info.is_higher_order_call) {
+              higher_order_calls.set(location_key_val, resolution.resolved_function);
+            }
+            if (resolution.rust_function_info.function_trait_kind) {
+              function_pointer_calls.set(location_key_val, resolution.resolved_function);
+            }
+          }
+
           // Update reverse mapping
           const call_locations = calls_to_function.get(
             resolution.resolved_function
@@ -75,7 +93,10 @@ export function resolve_function_calls(
   return {
     function_calls: function_calls as ReadonlyMap<LocationKey, SymbolId>,
     calls_to_function: calls_to_function as ReadonlyMap<SymbolId, readonly Location[]>,
-    resolution_details: resolution_details as ReadonlyMap<LocationKey, FunctionCallResolution>
+    resolution_details: resolution_details as ReadonlyMap<LocationKey, FunctionCallResolution>,
+    closure_calls: closure_calls as ReadonlyMap<LocationKey, SymbolId>,
+    higher_order_calls: higher_order_calls as ReadonlyMap<LocationKey, SymbolId>,
+    function_pointer_calls: function_pointer_calls as ReadonlyMap<LocationKey, SymbolId>,
   };
 }
 
@@ -99,9 +120,92 @@ function resolve_single_function_call(
   for (const strategy of resolution_strategies) {
     const result = strategy();
     if (result) {
-      return result;
+      // Enhance the result with Rust-specific information
+      const enhanced_result = enhance_with_rust_info(result, context, call_ref);
+      return enhanced_result;
     }
   }
 
   return null; // Unresolved
+}
+
+/**
+ * Extract Rust-specific function information from resolved symbols
+ */
+function extract_rust_function_info(
+  symbol_id: SymbolId,
+  context: FunctionResolutionContext,
+  call_ref: CallReference
+): FunctionCallResolution['rust_function_info'] {
+  // Find the symbol in any of the indices
+  for (const [file_path, index] of context.indices) {
+    const symbol = index.symbols.get(symbol_id);
+    if (symbol && (symbol.kind === 'function' || symbol.kind === 'method')) {
+      const is_closure = symbol.modifiers?.is_closure ?? false;
+      const is_higher_order = symbol.modifiers?.is_higher_order ?? false;
+      const is_const = symbol.modifiers?.is_const ?? false;
+      const is_async = symbol.modifiers?.is_async ?? false;
+      const is_unsafe = symbol.modifiers?.is_unsafe ?? false;
+      const accepts_impl_trait = symbol.modifiers?.accepts_impl_trait ?? false;
+      const returns_impl_trait = symbol.modifiers?.returns_impl_trait ?? false;
+      const is_move = symbol.modifiers?.is_move ?? false;
+      const is_function_trait = symbol.modifiers?.is_function_trait ?? false;
+
+      // Determine closure capture kind
+      let closure_capture_kind: 'move' | 'borrow' | 'mut_borrow' | undefined;
+      if (is_closure) {
+        if (is_move) {
+          closure_capture_kind = 'move';
+        } else {
+          // Default to borrow for non-move closures
+          closure_capture_kind = 'borrow';
+        }
+      }
+
+      // Determine function trait kind based on call pattern
+      let function_trait_kind: 'Fn' | 'FnMut' | 'FnOnce' | undefined;
+      if (is_function_trait || is_higher_order) {
+        // Analyze the call pattern to determine trait type
+        // For now, default to Fn - this could be enhanced with more sophisticated analysis
+        function_trait_kind = 'Fn';
+        if (is_move) {
+          function_trait_kind = 'FnOnce';
+        }
+      }
+
+      return {
+        is_closure_call: is_closure,
+        is_higher_order_call: is_higher_order,
+        is_const_function: is_const,
+        is_async_function: is_async,
+        is_unsafe_function: is_unsafe,
+        accepts_impl_trait,
+        returns_impl_trait,
+        closure_capture_kind,
+        function_trait_kind,
+      };
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * Enhance function resolution with Rust-specific information
+ */
+function enhance_with_rust_info(
+  base_resolution: FunctionCallResolution,
+  context: FunctionResolutionContext,
+  call_ref: CallReference
+): FunctionCallResolution {
+  const rust_info = extract_rust_function_info(
+    base_resolution.resolved_function,
+    context,
+    call_ref
+  );
+
+  return {
+    ...base_resolution,
+    rust_function_info: rust_info,
+  };
 }

@@ -274,3 +274,209 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+// Additional comprehensive async/await patterns for semantic index testing
+
+// Async move blocks
+pub async fn async_move_patterns() {
+    let data = vec![1, 2, 3, 4, 5];
+
+    // Basic async move block
+    let future1 = async move {
+        let sum: i32 = data.iter().sum();
+        sum * 2
+    };
+
+    // Async move block with captured variables
+    let multiplier = 10;
+    let future2 = async move {
+        let result = future1.await;
+        result * multiplier
+    };
+
+    let final_result = future2.await;
+    println!("Async move result: {}", final_result);
+}
+
+// Complex await expressions
+pub async fn complex_await_expressions() {
+    // Chained method calls after await
+    let result1 = fetch_data("url").await.unwrap().to_uppercase();
+
+    // Await with try operator
+    let result2 = fetch_data("url").await?;
+
+    // Nested await expressions
+    let result3 = process_async(
+        fetch_data("inner").await?,
+        |x| async { x.len() }.await
+    ).await;
+
+    // Await on complex expressions
+    let result4 = (async {
+        tokio::time::sleep(Duration::from_millis(10)).await;
+        42
+    }).await;
+
+    // Await with pattern matching
+    match fetch_data("pattern").await {
+        Ok(data) => println!("Got data: {}", data),
+        Err(e) => eprintln!("Error: {:?}", e),
+    }
+}
+
+// Try expressions with async/await
+pub async fn try_with_await_patterns() -> Result<String, Box<dyn std::error::Error>> {
+    // Try operator on await expression
+    let data = fetch_data("test").await?;
+
+    // Complex try-await chains
+    let processed = process_async(data, |x| x.to_uppercase()).await?;
+
+    // Try operator in async block
+    let result = async {
+        let step1 = fetch_data("step1").await?;
+        let step2 = process_async(step1, |x| format!("processed: {}", x)).await?;
+        Ok::<String, Box<dyn std::error::Error>>(step2)
+    }.await?;
+
+    Ok(result)
+}
+
+// Async closures (experimental feature)
+pub async fn async_closure_patterns() {
+    // Basic async closure
+    let async_closure = |x: i32| async move {
+        tokio::time::sleep(Duration::from_millis(x as u64)).await;
+        x * 2
+    };
+
+    // Async closure with complex body
+    let complex_async_closure = |data: Vec<i32>| async move {
+        let mut results = Vec::new();
+        for item in data {
+            let processed = async { item * item }.await;
+            results.push(processed);
+        }
+        results
+    };
+
+    // Using async closures
+    let result1 = async_closure(100).await;
+    let result2 = complex_async_closure(vec![1, 2, 3, 4]).await;
+
+    println!("Async closure results: {}, {:?}", result1, result2);
+}
+
+// Nested async blocks
+pub async fn nested_async_blocks() {
+    let outer_result = async {
+        let inner_result = async {
+            tokio::time::sleep(Duration::from_millis(10)).await;
+            "inner"
+        }.await;
+
+        let another_inner = async move {
+            let data = vec![1, 2, 3];
+            data.len()
+        }.await;
+
+        format!("{}-{}", inner_result, another_inner)
+    }.await;
+
+    println!("Nested async result: {}", outer_result);
+}
+
+// Async blocks in different contexts
+pub async fn async_blocks_in_contexts() {
+    // Async block as function argument
+    tokio::spawn(async {
+        println!("Spawned async block");
+    });
+
+    // Async block in match expression
+    let value = 42;
+    match value {
+        42 => {
+            let result = async {
+                tokio::time::sleep(Duration::from_millis(1)).await;
+                "matched"
+            }.await;
+            println!("Match result: {}", result);
+        },
+        _ => {}
+    }
+
+    // Async block in if condition (unusual but valid)
+    if async { true }.await {
+        println!("Async condition was true");
+    }
+
+    // Async block assigned to variable
+    let future_var = async {
+        let computation = async { 1 + 1 }.await;
+        computation * 10
+    };
+    let var_result = future_var.await;
+    println!("Variable async result: {}", var_result);
+}
+
+// Complex try-await-error patterns
+pub async fn complex_error_handling() -> Result<(), Box<dyn std::error::Error>> {
+    // Try with await in loop
+    for i in 0..3 {
+        let data = fetch_data(&format!("item-{}", i)).await?;
+        println!("Loop item {}: {}", i, data);
+    }
+
+    // Try with await in iterator chain
+    let results: Result<Vec<_>, _> = (0..5)
+        .map(|i| async move {
+            fetch_data(&format!("async-{}", i)).await
+        })
+        .collect::<Vec<_>>()
+        .into_iter()
+        .map(|f| async { f.await })
+        .collect::<Vec<_>>()
+        .into_iter()
+        .map(|f| f)
+        .collect();
+
+    // Multiple ? operators in sequence
+    let chain_result = fetch_data("first").await?
+        .parse::<i32>()?
+        .to_string();
+
+    println!("Chain result: {}", chain_result);
+    Ok(())
+}
+
+// Async function variations
+pub async fn async_with_generics<T: Send + 'static>(item: T) -> T {
+    tokio::task::spawn_blocking(move || item).await.unwrap()
+}
+
+pub async fn async_with_lifetimes<'a>(data: &'a str) -> &'a str {
+    tokio::time::sleep(Duration::from_millis(1)).await;
+    data
+}
+
+pub async fn async_with_where_clause<T>() -> T
+where
+    T: Default + Send + 'static,
+{
+    tokio::task::spawn_blocking(|| T::default()).await.unwrap()
+}
+
+// Async unsafe functions
+pub async unsafe fn async_unsafe_function() -> i32 {
+    tokio::time::sleep(Duration::from_millis(1)).await;
+    // Unsafe operations would go here
+    42
+}
+
+// Async extern functions
+pub async extern "C" fn async_extern_function() -> i32 {
+    tokio::time::sleep(Duration::from_millis(1)).await;
+    42
+}

@@ -63,6 +63,9 @@ export {
 // Rust-specific type resolution
 export {
   resolve_rust_reference_types,
+  resolve_rust_function_types,
+  resolve_closure_types,
+  resolve_higher_order_function_calls,
   resolve_ownership_operations,
   resolve_pattern_matching,
   resolve_pattern_conditional_calls,
@@ -71,5 +74,7 @@ export {
   is_rust_smart_pointer_type,
   get_rust_reference_methods,
   type OwnershipOperation,
-  type PatternMatchInfo
+  type PatternMatchInfo,
+  type ClosureTypeInfo,
+  type HigherOrderCallInfo
 } from "./rust_type_resolver";

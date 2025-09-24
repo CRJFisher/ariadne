@@ -34,6 +34,7 @@ export enum SemanticEntity {
   METHOD = "method",
   CONSTRUCTOR = "constructor",
   BLOCK = "block",
+  CLOSURE = "closure",
   INTERFACE = "interface",
   ENUM = "enum",
   NAMESPACE = "namespace",
@@ -140,6 +141,15 @@ export interface SemanticModifiers {
   is_trait_impl?: boolean;
   has_default_impl?: boolean;
   is_associated_type?: boolean;
+
+  // Function-specific modifiers
+  is_const?: boolean;
+  is_move?: boolean;
+  returns_impl_trait?: boolean;
+  accepts_impl_trait?: boolean;
+  is_function_pointer?: boolean;
+  is_function_trait?: boolean;
+  is_higher_order?: boolean;
 }
 
 /**

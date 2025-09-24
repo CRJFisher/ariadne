@@ -19,10 +19,19 @@ import type { TypeResolutionMap } from "../types";
 export interface MethodCallResolution {
   readonly call_location: Location;
   readonly resolved_method: SymbolId;
-  readonly receiver_type: TypeId;
-  readonly method_kind: "instance" | "static" | "constructor";
-  readonly resolution_path: "direct" | "inherited" | "interface" | "trait" | "parameter_property";
+  readonly receiver_type?: TypeId;
+  readonly method_name?: SymbolName;
+  readonly method_kind?: "instance" | "static" | "constructor";
+  readonly resolution_method?: "lexical" | "imported" | "global" | "builtin" | "pattern_aware" | "higher_order";
+  readonly resolution_path?: "direct" | "inherited" | "interface" | "trait" | "parameter_property";
   readonly receiver_symbol?: SymbolId;
+
+  // Rust-specific resolution information
+  readonly closure_info?: {
+    readonly closure_parameter?: SymbolId;
+    readonly expected_trait: 'Fn' | 'FnMut' | 'FnOnce';
+    readonly is_compatible: boolean;
+  };
 }
 
 /**

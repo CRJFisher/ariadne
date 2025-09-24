@@ -21,6 +21,19 @@ export interface FunctionCallResolution {
   readonly resolution_method: "lexical" | "imported" | "global" | "builtin";
   readonly scope_chain?: readonly ScopeId[];
   readonly import_source?: FilePath;
+
+  // Rust-specific function call information
+  readonly rust_function_info?: {
+    readonly is_closure_call: boolean;
+    readonly is_higher_order_call: boolean;
+    readonly is_const_function: boolean;
+    readonly is_async_function: boolean;
+    readonly is_unsafe_function: boolean;
+    readonly accepts_impl_trait: boolean;
+    readonly returns_impl_trait: boolean;
+    readonly closure_capture_kind?: "move" | "borrow" | "mut_borrow";
+    readonly function_trait_kind?: "Fn" | "FnMut" | "FnOnce";
+  };
 }
 
 /**
@@ -30,6 +43,11 @@ export interface FunctionResolutionMap {
   readonly function_calls: ReadonlyMap<LocationKey, SymbolId>;
   readonly calls_to_function: ReadonlyMap<SymbolId, readonly Location[]>;
   readonly resolution_details: ReadonlyMap<LocationKey, FunctionCallResolution>;
+
+  // Rust-specific resolution maps
+  readonly closure_calls: ReadonlyMap<LocationKey, SymbolId>;
+  readonly higher_order_calls: ReadonlyMap<LocationKey, SymbolId>;
+  readonly function_pointer_calls: ReadonlyMap<LocationKey, SymbolId>;
 }
 
 /**

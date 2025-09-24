@@ -86,6 +86,14 @@ export function process_definitions(
       is_static: capture.modifiers?.is_static,
       is_generic: capture.modifiers?.is_generic,
       is_lifetime: capture.modifiers?.is_lifetime,
+      // Function-specific modifiers
+      is_const: capture.modifiers?.is_const,
+      is_move: capture.modifiers?.is_move,
+      returns_impl_trait: capture.modifiers?.returns_impl_trait,
+      accepts_impl_trait: capture.modifiers?.accepts_impl_trait,
+      is_function_pointer: capture.modifiers?.is_function_pointer,
+      is_function_trait: capture.modifiers?.is_function_trait,
+      is_higher_order: capture.modifiers?.is_higher_order,
     };
 
     // Store symbol

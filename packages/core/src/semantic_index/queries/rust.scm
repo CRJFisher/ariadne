@@ -210,6 +210,22 @@
   )
 ) @impl.trait_impl.generic
 
+; Async methods in trait implementations (with self parameter)
+(impl_item
+  trait: (_)
+  body: (declaration_list
+    (function_item
+      (function_modifiers
+        "async"
+      )
+      name: (identifier) @def.trait_impl_method.async
+      parameters: (parameters
+        (self_parameter)
+      )
+    )
+  )
+)
+
 ; Methods in trait implementations (with self parameter)
 (impl_item
   trait: (_)
@@ -367,6 +383,20 @@
 
 ; Closure expressions
 (closure_expression) @def.function.closure
+
+; Async closures (experimental feature)
+; Pattern: |args| async { ... }
+(closure_expression
+  body: (async_block) @async.block
+) @def.function.async_closure
+
+; Async move closures
+; Pattern: |args| async move { ... }
+(closure_expression
+  body: (async_block
+    "move" @async.move_modifier
+  )
+) @def.function.async_move_closure
 
 ; Closure parameters - simple identifiers
 (closure_expression

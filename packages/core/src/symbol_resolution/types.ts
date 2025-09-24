@@ -30,6 +30,11 @@ export interface FunctionResolutionMap {
   // Reverse map for finding all calls to a function
   // Function SymbolId -> call site locations
   readonly calls_to_function: ReadonlyMap<SymbolId, readonly Location[]>;
+
+  // Rust-specific resolution maps
+  readonly closure_calls: ReadonlyMap<LocationKey, SymbolId>;
+  readonly higher_order_calls: ReadonlyMap<LocationKey, SymbolId>;
+  readonly function_pointer_calls: ReadonlyMap<LocationKey, SymbolId>;
 }
 
 /**

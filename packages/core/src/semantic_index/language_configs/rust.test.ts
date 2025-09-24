@@ -87,6 +87,11 @@ describe("Rust Language Configuration", () => {
         "def.function.async",
         "def.function.generic",
         "def.function.closure",
+        "def.function.closure.move",
+        "def.function.closure.async",
+        "def.function.const",
+        "def.function.returns_impl",
+        "def.function.accepts_impl",
         "def.method",
         "def.method.associated",
         "def.constructor",
@@ -138,6 +143,18 @@ describe("Rust Language Configuration", () => {
         "export.function",
         "export.trait",
         "export.reexport",
+        "export.pub_use",
+        "export.pub_use.alias",
+        "export.pub_use.source",
+        "export.pub_use.path",
+        "export.pub_use.name",
+        "export.pub_use.aliased",
+        "export.pub_use.simple",
+        "export.pub_use.list",
+        "export.pub_use.wildcard",
+        "export.pub_use.any_visibility",
+        "export.pub_use.item",
+        "export.pub_use.original_name",
       ];
 
       for (const mapping of exportMappings) {
@@ -154,6 +171,9 @@ describe("Rust Language Configuration", () => {
         "import.source",
         "import.alias",
         "import.list.item",
+        "import.wildcard",
+        "import.extern_crate",
+        "import.simple",
       ];
 
       for (const mapping of importMappings) {
@@ -175,6 +195,7 @@ describe("Rust Language Configuration", () => {
         "ref.field",
         "ref.self",
         "ref.identifier",
+        "call.higher_order",
       ];
 
       for (const mapping of referenceMappings) {
@@ -207,6 +228,8 @@ describe("Rust Language Configuration", () => {
         "smart_pointer.method_call",
         "type.reference",
         "type.reference.mut",
+        "type.function_pointer",
+        "type.function_trait",
         "lifetime.param",
         "lifetime.ref",
         "impl.trait",
@@ -447,6 +470,78 @@ describe("Rust Language Configuration", () => {
           // Context doesn't have is_closure property, removing invalid test
         }
       });
+
+      it("should handle const function modifiers", () => {
+        const constFunctionConfig = RUST_CAPTURE_CONFIG.get(
+          "def.function.const"
+        );
+        expect(constFunctionConfig?.modifiers).toBeDefined();
+
+        if (typeof constFunctionConfig?.modifiers === "function") {
+          const modifiers = constFunctionConfig.modifiers(
+            create_simple_mock_node()
+          );
+          expect(modifiers?.is_const).toBe(true);
+        }
+      });
+
+      it("should handle move closure modifiers", () => {
+        const moveClosureConfig = RUST_CAPTURE_CONFIG.get(
+          "def.function.closure.move"
+        );
+        expect(moveClosureConfig?.modifiers).toBeDefined();
+
+        if (typeof moveClosureConfig?.modifiers === "function") {
+          const modifiers = moveClosureConfig.modifiers(
+            create_simple_mock_node()
+          );
+          expect(modifiers?.is_closure).toBe(true);
+          expect(modifiers?.is_move).toBe(true);
+        }
+      });
+
+      it("should handle async closure modifiers", () => {
+        const asyncClosureConfig = RUST_CAPTURE_CONFIG.get(
+          "def.function.closure.async"
+        );
+        expect(asyncClosureConfig?.modifiers).toBeDefined();
+
+        if (typeof asyncClosureConfig?.modifiers === "function") {
+          const modifiers = asyncClosureConfig.modifiers(
+            create_simple_mock_node()
+          );
+          expect(modifiers?.is_closure).toBe(true);
+          expect(modifiers?.is_async).toBe(true);
+        }
+      });
+
+      it("should handle functions returning impl Trait", () => {
+        const returnsImplConfig = RUST_CAPTURE_CONFIG.get(
+          "def.function.returns_impl"
+        );
+        expect(returnsImplConfig?.modifiers).toBeDefined();
+
+        if (typeof returnsImplConfig?.modifiers === "function") {
+          const modifiers = returnsImplConfig.modifiers(
+            create_simple_mock_node()
+          );
+          expect(modifiers?.returns_impl_trait).toBe(true);
+        }
+      });
+
+      it("should handle functions accepting impl Trait", () => {
+        const acceptsImplConfig = RUST_CAPTURE_CONFIG.get(
+          "def.function.accepts_impl"
+        );
+        expect(acceptsImplConfig?.modifiers).toBeDefined();
+
+        if (typeof acceptsImplConfig?.modifiers === "function") {
+          const modifiers = acceptsImplConfig.modifiers(
+            create_simple_mock_node()
+          );
+          expect(modifiers?.accepts_impl_trait).toBe(true);
+        }
+      });
     });
 
     describe("Method Definitions", () => {
@@ -583,12 +678,15 @@ describe("Rust Language Configuration", () => {
   describe("Rust Visibility System", () => {
     it("should parse public visibility", () => {
       const pubConfig = RUST_CAPTURE_CONFIG.get("visibility.pub");
-      // Context functions are optional for some mappings
+      expect(pubConfig).toBeDefined();
+      expect(pubConfig?.category).toBe(SemanticCategory.MODIFIER);
+      expect(pubConfig?.entity).toBe(SemanticEntity.VISIBILITY);
 
       if (typeof pubConfig?.context === "function") {
         const mockNode = create_simple_mock_node("identifier", "pub");
         const context = pubConfig.context(mockNode);
         expect(context).toBeDefined();
+        expect(context?.visibility_level).toBe("public");
       }
     });
 
@@ -599,6 +697,7 @@ describe("Rust Language Configuration", () => {
         const mockNode = create_simple_mock_node("identifier", "pub(crate)");
         const context = pubConfig.context(mockNode);
         expect(context).toBeDefined();
+        expect(context?.visibility_level).toBe("crate");
       }
     });
 
@@ -609,6 +708,7 @@ describe("Rust Language Configuration", () => {
         const mockNode = create_simple_mock_node("identifier", "pub(super)");
         const context = pubConfig.context(mockNode);
         expect(context).toBeDefined();
+        expect(context?.visibility_level).toBe("super");
       }
     });
 
@@ -619,10 +719,11 @@ describe("Rust Language Configuration", () => {
         const mockNode = create_simple_mock_node("identifier", "pub(self)");
         const context = pubConfig.context(mockNode);
         expect(context).toBeDefined();
+        expect(context?.visibility_level).toBe("self");
       }
     });
 
-    it("should parse restricted visibility", () => {
+    it("should parse restricted visibility with path", () => {
       const pubConfig = RUST_CAPTURE_CONFIG.get("visibility.pub");
 
       if (typeof pubConfig?.context === "function") {
@@ -632,6 +733,23 @@ describe("Rust Language Configuration", () => {
         );
         const context = pubConfig.context(mockNode);
         expect(context).toBeDefined();
+        expect(context?.visibility_level).toBe("restricted");
+        expect(context?.visibility_path).toBe("crate::utils");
+      }
+    });
+
+    it("should handle complex restricted visibility paths", () => {
+      const pubConfig = RUST_CAPTURE_CONFIG.get("visibility.pub");
+
+      if (typeof pubConfig?.context === "function") {
+        const mockNode = create_simple_mock_node(
+          "identifier",
+          "pub(in crate::module::submodule)"
+        );
+        const context = pubConfig.context(mockNode);
+        expect(context).toBeDefined();
+        expect(context?.visibility_level).toBe("restricted");
+        expect(context?.visibility_path).toBe("crate::module::submodule");
       }
     });
   });
@@ -675,6 +793,72 @@ describe("Rust Language Configuration", () => {
         const context = reexportConfig.context(create_simple_mock_node());
         expect(context?.export_type).toBe("reexport");
       }
+    });
+
+    describe("Pub Use Exports", () => {
+      it("should handle basic pub use exports", () => {
+        const pubUseConfig = RUST_CAPTURE_CONFIG.get("export.pub_use");
+        expect(pubUseConfig).toBeDefined();
+        expect(pubUseConfig?.category).toBe(SemanticCategory.EXPORT);
+        expect(pubUseConfig?.entity).toBe(SemanticEntity.IMPORT);
+
+        // Context function exists and is callable (detailed testing is done in integration tests)
+        if (typeof pubUseConfig?.context === "function") {
+          expect(pubUseConfig.context).toBeInstanceOf(Function);
+        }
+      });
+
+      it("should handle aliased pub use exports", () => {
+        const aliasedConfig = RUST_CAPTURE_CONFIG.get("export.pub_use.aliased");
+        expect(aliasedConfig).toBeDefined();
+        expect(aliasedConfig?.category).toBe(SemanticCategory.EXPORT);
+        expect(aliasedConfig?.entity).toBe(SemanticEntity.REEXPORT);
+
+        // Context function exists and is callable (detailed testing is done in integration tests)
+        if (typeof aliasedConfig?.context === "function") {
+          expect(aliasedConfig.context).toBeInstanceOf(Function);
+        }
+      });
+
+      it("should handle pub(crate) use exports", () => {
+        const pubUseConfig = RUST_CAPTURE_CONFIG.get("export.pub_use");
+
+        if (typeof pubUseConfig?.context === "function") {
+          const mockNode = create_simple_mock_node("use_declaration", "pub(crate) use internal::helper;");
+          const context = pubUseConfig.context(mockNode);
+          expect(context?.is_pub_use).toBe(true);
+          expect(context?.visibility_level).toBe("crate");
+        }
+      });
+
+      it("should handle pub(super) use exports", () => {
+        const pubUseConfig = RUST_CAPTURE_CONFIG.get("export.pub_use");
+
+        if (typeof pubUseConfig?.context === "function") {
+          const mockNode = create_simple_mock_node("use_declaration", "pub(super) use parent::function;");
+          const context = pubUseConfig.context(mockNode);
+          expect(context?.is_pub_use).toBe(true);
+          expect(context?.visibility_level).toBe("super");
+        }
+      });
+
+      it("should validate pub use pattern configurations", () => {
+        const pubUsePatterns = [
+          "export.pub_use.simple",
+          "export.pub_use.list",
+          "export.pub_use.wildcard",
+          "export.pub_use.any_visibility",
+          "export.pub_use.item",
+          "export.pub_use.original_name",
+        ];
+
+        for (const pattern of pubUsePatterns) {
+          const config = RUST_CAPTURE_CONFIG.get(pattern);
+          expect(config).toBeDefined();
+          expect(config?.category).toBe(SemanticCategory.EXPORT);
+          expect(config?.entity).toBe(SemanticEntity.REEXPORT);
+        }
+      });
     });
   });
 
@@ -720,6 +904,39 @@ describe("Rust Language Configuration", () => {
         const context = listItemConfig.context(create_simple_mock_node());
         expect(context).toBeDefined();
       }
+    });
+
+    it("should handle wildcard imports", () => {
+      const wildcardConfig = RUST_CAPTURE_CONFIG.get("import.wildcard");
+      expect(wildcardConfig).toBeDefined();
+      expect(wildcardConfig?.category).toBe(SemanticCategory.IMPORT);
+      expect(wildcardConfig?.entity).toBe(SemanticEntity.IMPORT);
+
+      // Check that wildcard imports have the is_wildcard modifier
+      if (typeof wildcardConfig?.modifiers === "function") {
+        const modifiers = wildcardConfig.modifiers(create_simple_mock_node());
+        expect(modifiers?.is_wildcard).toBe(true);
+      }
+    });
+
+    it("should handle extern crate imports", () => {
+      const externCrateConfig = RUST_CAPTURE_CONFIG.get("import.extern_crate");
+      expect(externCrateConfig).toBeDefined();
+      expect(externCrateConfig?.category).toBe(SemanticCategory.IMPORT);
+      expect(externCrateConfig?.entity).toBe(SemanticEntity.MODULE);
+
+      // Check that extern crate imports have the is_extern_crate modifier
+      if (typeof externCrateConfig?.modifiers === "function") {
+        const modifiers = externCrateConfig.modifiers(create_simple_mock_node());
+        expect(modifiers?.is_extern_crate).toBe(true);
+      }
+    });
+
+    it("should handle simple imports", () => {
+      const simpleImportConfig = RUST_CAPTURE_CONFIG.get("import.simple");
+      expect(simpleImportConfig).toBeDefined();
+      expect(simpleImportConfig?.category).toBe(SemanticCategory.IMPORT);
+      expect(simpleImportConfig?.entity).toBe(SemanticEntity.IMPORT);
     });
   });
 
@@ -1024,6 +1241,42 @@ describe("Rust Language Configuration", () => {
         if (typeof methodConfig?.modifiers === "function") {
           const modifiers = methodConfig.modifiers(create_simple_mock_node());
           expect(modifiers?.is_smart_pointer_method).toBe(true);
+        }
+      });
+
+      it("should handle function pointer types", () => {
+        const functionPtrConfig = RUST_CAPTURE_CONFIG.get("type.function_pointer");
+        expect(functionPtrConfig?.modifiers).toBeDefined();
+        expect(functionPtrConfig?.category).toBe(SemanticCategory.TYPE);
+        expect(functionPtrConfig?.entity).toBe(SemanticEntity.TYPE);
+
+        if (typeof functionPtrConfig?.modifiers === "function") {
+          const modifiers = functionPtrConfig.modifiers(create_simple_mock_node());
+          expect(modifiers?.is_function_pointer).toBe(true);
+        }
+      });
+
+      it("should handle function trait types", () => {
+        const functionTraitConfig = RUST_CAPTURE_CONFIG.get("type.function_trait");
+        expect(functionTraitConfig?.modifiers).toBeDefined();
+        expect(functionTraitConfig?.category).toBe(SemanticCategory.TYPE);
+        expect(functionTraitConfig?.entity).toBe(SemanticEntity.TYPE);
+
+        if (typeof functionTraitConfig?.modifiers === "function") {
+          const modifiers = functionTraitConfig.modifiers(create_simple_mock_node());
+          expect(modifiers?.is_function_trait).toBe(true);
+        }
+      });
+
+      it("should handle higher-order function calls", () => {
+        const higherOrderConfig = RUST_CAPTURE_CONFIG.get("call.higher_order");
+        expect(higherOrderConfig?.modifiers).toBeDefined();
+        expect(higherOrderConfig?.category).toBe(SemanticCategory.REFERENCE);
+        expect(higherOrderConfig?.entity).toBe(SemanticEntity.METHOD);
+
+        if (typeof higherOrderConfig?.modifiers === "function") {
+          const modifiers = higherOrderConfig.modifiers(create_simple_mock_node());
+          expect(modifiers?.is_higher_order).toBe(true);
         }
       });
     });
@@ -2507,6 +2760,225 @@ describe("Rust Language Configuration", () => {
           s.entity === SemanticEntity.BLOCK && s.modifiers?.match_type === "match"
         );
         expect(matchScopes.length).toBeGreaterThanOrEqual(2);
+// Temporary file for function tests - will append to main test file
+    describe("Function and Closure Integration Tests", () => {
+      it("should parse const functions with proper modifiers", () => {
+        const code = `
+          pub const fn max(a: i32, b: i32) -> i32 {
+            if a > b { a } else { b }
+          }
+
+          const fn min(a: i32, b: i32) -> i32 {
+            if a < b { a } else { b }
+          }
+        `;
+        const tree = parser.parse(code);
+        const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+        // Should capture const functions
+        const constFunctions = captures.definitions.filter(c =>
+          c.entity === SemanticEntity.FUNCTION && c.modifiers?.is_const
+        );
+        expect(constFunctions.length).toBe(2);
+        expect(constFunctions.some(f => f.text === "max")).toBe(true);
+        expect(constFunctions.some(f => f.text === "min")).toBe(true);
+      });
+
+      it("should parse functions returning impl Trait", () => {
+        const code = `
+          fn returns_display() -> impl std::fmt::Display {
+            42
+          }
+
+          fn returns_iterator() -> impl Iterator<Item = i32> {
+            vec![1, 2, 3].into_iter()
+          }
+        `;
+        const tree = parser.parse(code);
+        const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+        // Should capture functions returning impl Trait
+        const implReturnFunctions = captures.definitions.filter(c =>
+          c.entity === SemanticEntity.FUNCTION && c.modifiers?.returns_impl_trait
+        );
+        expect(implReturnFunctions.length).toBe(2);
+        expect(implReturnFunctions.some(f => f.text === "returns_display")).toBe(true);
+        expect(implReturnFunctions.some(f => f.text === "returns_iterator")).toBe(true);
+      });
+
+      it("should parse functions accepting impl Trait parameters", () => {
+        const code = `
+          fn print_display(item: impl std::fmt::Display) {
+            println!("{}", item);
+          }
+
+          fn process_iter(iter: impl Iterator<Item = i32>) -> i32 {
+            iter.sum()
+          }
+        `;
+        const tree = parser.parse(code);
+        const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+        // Should capture functions accepting impl Trait
+        const implAcceptFunctions = captures.definitions.filter(c =>
+          c.entity === SemanticEntity.FUNCTION && c.modifiers?.accepts_impl_trait
+        );
+        expect(implAcceptFunctions.length).toBe(2);
+        expect(implAcceptFunctions.some(f => f.text === "print_display")).toBe(true);
+        expect(implAcceptFunctions.some(f => f.text === "process_iter")).toBe(true);
+      });
+
+      it("should parse advanced closure patterns with parameters", () => {
+        const code = `
+          fn closure_examples() {
+            // Simple closure with inferred types
+            let add = |x, y| x + y;
+
+            // Closure with explicit types
+            let multiply = |x: i32, y: i32| -> i32 { x * y };
+
+            // Closure capturing environment
+            let factor = 10;
+            let scale = |x| x * factor;
+          }
+        `;
+        const tree = parser.parse(code);
+        const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+        // Should capture closure definitions
+        const closures = captures.definitions.filter(c =>
+          c.entity === SemanticEntity.FUNCTION && c.modifiers?.is_closure
+        );
+        expect(closures.length).toBe(3);
+
+        // Should capture closure parameters
+        const closureParams = captures.definitions.filter(c =>
+          c.entity === SemanticEntity.PARAMETER && c.modifiers?.is_closure_param
+        );
+        expect(closureParams.length).toBeGreaterThan(0);
+      });
+
+      it("should parse function pointer types", () => {
+        const code = `
+          fn function_pointers() {
+            let f: fn(i32, i32) -> i32 = |x, y| x + y;
+            let g: fn() = || println!("Hello");
+          }
+        `;
+        const tree = parser.parse(code);
+        const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+        // Should capture function pointer types
+        const functionPointers = captures.types.filter(c =>
+          c.modifiers?.is_function_pointer
+        );
+        expect(functionPointers.length).toBeGreaterThanOrEqual(1);
+      });
+
+      it("should parse function trait types", () => {
+        const code = `
+          fn trait_functions() {
+            let f: Box<dyn Fn(i32) -> i32> = Box::new(|x| x * 2);
+            let g: Box<dyn FnMut() -> ()> = Box::new(|| {});
+            let h: Box<dyn FnOnce(String)> = Box::new(|s| println!("{}", s));
+          }
+        `;
+        const tree = parser.parse(code);
+        const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+        // Should capture function trait types
+        const functionTraits = captures.types.filter(c =>
+          c.modifiers?.is_function_trait
+        );
+        expect(functionTraits.length).toBeGreaterThanOrEqual(1);
+      });
+
+      it("should parse higher-order function calls", () => {
+        const code = `
+          fn higher_order_examples() {
+            let numbers = vec![1, 2, 3, 4, 5];
+
+            let doubled: Vec<i32> = numbers.iter()
+              .map(|x| x * 2)
+              .filter(|&x| x > 4)
+              .collect();
+
+            let sum = numbers.iter().fold(0, |acc, x| acc + x);
+
+            numbers.iter().for_each(|x| println!("{}", x));
+          }
+        `;
+        const tree = parser.parse(code);
+        const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+        // Should capture higher-order method calls
+        const higherOrderCalls = captures.references.filter(c =>
+          c.entity === SemanticEntity.METHOD && c.modifiers?.is_higher_order
+        );
+        expect(higherOrderCalls.length).toBeGreaterThan(0);
+
+        // Check for specific higher-order methods
+        const methodNames = higherOrderCalls.map(c => c.text);
+        expect(methodNames.some(name => name === "map" || name === "filter" || name === "fold" || name === "for_each")).toBe(true);
+      });
+
+      it("should comprehensively parse all advanced function patterns", () => {
+        const code = `
+          // Const generic function
+          pub const fn factorial<const N: usize>() -> usize {
+            if N == 0 { 1 } else { N * factorial::<{N-1}>() }
+          }
+
+          // Function with complex impl Trait
+          fn complex_impl_trait<T>(items: impl Iterator<Item = T>) -> impl Iterator<Item = T>
+          where
+            T: Clone + std::fmt::Debug,
+          {
+            items.filter(|_| true)
+          }
+
+          // Advanced closure patterns
+          fn advanced_closures() {
+            let data = vec![1, 2, 3];
+
+            // Move closure
+            let processor = move || {
+              data.iter().map(|x| x * 2).collect::<Vec<_>>()
+            };
+
+            // Complex higher-order chain
+            let result = data.iter()
+              .enumerate()
+              .filter_map(|(i, x)| if i % 2 == 0 { Some(x) } else { None })
+              .fold(0, |acc, x| acc + x);
+          }
+        `;
+        const tree = parser.parse(code);
+        const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+        // Should capture various function types
+        const functions = captures.definitions.filter(c => c.entity === SemanticEntity.FUNCTION);
+        expect(functions.length).toBeGreaterThan(0);
+
+        // Should have const function
+        const constFunctions = functions.filter(f => f.modifiers?.is_const);
+        expect(constFunctions.length).toBeGreaterThanOrEqual(1);
+
+        // Should have impl trait functions
+        const implTraitFunctions = functions.filter(f =>
+          f.modifiers?.returns_impl_trait || f.modifiers?.accepts_impl_trait
+        );
+        expect(implTraitFunctions.length).toBeGreaterThanOrEqual(1);
+
+        // Should capture closures
+        const closures = functions.filter(f => f.modifiers?.is_closure);
+        expect(closures.length).toBeGreaterThanOrEqual(1);
+
+        // Should capture higher-order method calls
+        const higherOrderCalls = captures.references.filter(c =>
+          c.entity === SemanticEntity.METHOD && c.modifiers?.is_higher_order
+        );
+        expect(higherOrderCalls.length).toBeGreaterThan(0);
       });
     });
   });

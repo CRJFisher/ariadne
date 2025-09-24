@@ -13,7 +13,7 @@ import type {
 import { node_to_location } from "../../../utils/node_utils";
 import { find_containing_scope } from "../../scope_tree";
 import type { NormalizedCapture, CaptureContext } from "../../capture_types";
-import { SemanticEntity } from "../../capture_types";
+import { SemanticEntity, SemanticCategory } from "../../capture_types";
 
 /**
  * Call reference - Represents a function/method/constructor call
@@ -48,6 +48,9 @@ export interface CallReference {
 
   /** For method calls: whether the receiver is static */
   readonly is_static_call?: boolean;
+
+  /** Whether this is a higher-order function call (e.g., map, filter, fold) */
+  readonly is_higher_order?: boolean;
 
   // Note: Resolution happens in symbol_resolution Phase 3, not here
 }
@@ -124,12 +127,12 @@ export function process_call_references(
   const calls: CallReference[] = [];
   const errors: InvalidCaptureError[] = [];
 
-  // Filter for call-related entities
+  // Filter for call-related entities (only references, not definitions)
   const call_captures = captures.filter(
-    (c) => c.entity === SemanticEntity.CALL ||
-           c.entity === SemanticEntity.SUPER ||
-           c.entity === SemanticEntity.FUNCTION ||
-           c.entity === SemanticEntity.METHOD
+    (c) => (c.entity === SemanticEntity.CALL) ||
+           (c.entity === SemanticEntity.SUPER) ||
+           (c.entity === SemanticEntity.FUNCTION && c.category === SemanticCategory.REFERENCE) ||
+           (c.entity === SemanticEntity.METHOD && c.category === SemanticCategory.REFERENCE)
   );
 
   for (const capture of call_captures) {
@@ -261,6 +264,7 @@ function create_call_reference(
     containing_function,
     super_class: context ? extract_super_class(context) : undefined,
     is_static_call,
+    is_higher_order: capture.modifiers?.is_higher_order,
   };
 }
 

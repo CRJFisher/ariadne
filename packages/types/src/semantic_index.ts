@@ -122,9 +122,18 @@ export interface SymbolDefinition {
 
   /** For classes: member symbols */
   readonly members?: readonly SymbolId[];
-  
+
   /** For classes: static member symbols */
   readonly static_members?: readonly SymbolId[];
+
+  /** Function-specific modifiers */
+  readonly is_const?: boolean;
+  readonly is_move?: boolean;
+  readonly returns_impl_trait?: boolean;
+  readonly accepts_impl_trait?: boolean;
+  readonly is_function_pointer?: boolean;
+  readonly is_function_trait?: boolean;
+  readonly is_higher_order?: boolean;
 }
 
 /**

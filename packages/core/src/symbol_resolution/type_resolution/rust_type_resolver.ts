@@ -194,6 +194,160 @@ export function is_rust_smart_pointer_type(type_id: TypeId): boolean {
 }
 
 /**
+ * Check if a type is a Rust Future type
+ */
+export function is_rust_future_type(type_id: TypeId): boolean {
+  const type_str = type_id.toString();
+  return type_str.includes('Future') ||
+         type_str.includes('Pin<') ||
+         type_str.includes('impl Future') ||
+         type_str.includes('dyn Future');
+}
+
+/**
+ * Extract the output type from a Future type
+ * For Future<Output = T>, extracts T
+ */
+export function extract_future_output_type(future_type_id: TypeId): TypeId | null {
+  const type_str = future_type_id.toString();
+
+  // Match patterns like Future<Output = T> or impl Future<Output = T>
+  // Handle nested generics by counting angle brackets
+  const output_match = type_str.match(/Future<Output\s*=\s*(.+)>$/);
+  if (output_match) {
+    return extract_balanced_generic_content(output_match[1]) as TypeId;
+  }
+
+  // Match simpler patterns like Future<T>
+  const simple_match = type_str.match(/Future<(.+)>$/);
+  if (simple_match) {
+    return extract_balanced_generic_content(simple_match[1]) as TypeId;
+  }
+
+  return null;
+}
+
+/**
+ * Extract content from balanced angle brackets, handling nested generics
+ */
+function extract_balanced_generic_content(content: string): string {
+  let depth = 0;
+  let result = '';
+
+  for (let i = 0; i < content.length; i++) {
+    const char = content[i];
+    if (char === '<') {
+      depth++;
+      result += char;
+    } else if (char === '>') {
+      if (depth > 0) {
+        depth--;
+        result += char;
+      } else {
+        // This is the closing bracket for the outer Future<>
+        break;
+      }
+    } else {
+      result += char;
+    }
+  }
+
+  return result.trim();
+}
+
+/**
+ * Resolve async/await specific type information
+ */
+export function resolve_rust_async_types(
+  index: SemanticIndex,
+  type_resolution: TypeResolutionMap,
+  file_path: FilePath
+): Map<LocationKey, TypeId> {
+  const async_types = new Map<LocationKey, TypeId>();
+
+  if (!appears_to_be_rust_code(index)) {
+    return async_types;
+  }
+
+  const all_references = index.references?.all_references;
+  if (!all_references || !Array.isArray(all_references)) {
+    return async_types;
+  }
+
+  // Process await expressions
+  for (const ref of all_references) {
+    if (ref.modifiers?.is_await && ref.location) {
+      const await_type = resolve_await_expression_type(ref, type_resolution);
+      if (await_type) {
+        async_types.set(location_key(ref.location), await_type);
+      }
+    }
+
+    // Process async function calls
+    if (ref.modifiers?.is_async && ref.location) {
+      const async_return_type = resolve_async_function_return_type(ref, type_resolution);
+      if (async_return_type) {
+        async_types.set(location_key(ref.location), async_return_type);
+      }
+    }
+  }
+
+  return async_types;
+}
+
+/**
+ * Resolve the type of an await expression
+ * For `future.await`, returns the output type of the Future
+ */
+function resolve_await_expression_type(
+  await_ref: SemanticCapture,
+  type_resolution: TypeResolutionMap
+): TypeId | null {
+  // The await expression should have context about the target being awaited
+  if (await_ref.context?.await_target) {
+    // Try to find the type of the awaited expression
+    const target_location_key = location_key(await_ref.location);
+    const future_type = type_resolution.reference_types.get(target_location_key);
+
+    if (future_type && is_rust_future_type(future_type)) {
+      return extract_future_output_type(future_type);
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Resolve the return type of an async function call
+ * Async functions return Future<Output = T> where T is the declared return type
+ */
+function resolve_async_function_return_type(
+  async_ref: SemanticCapture,
+  type_resolution: TypeResolutionMap
+): TypeId | null {
+  // For async functions, we need to wrap the return type in a Future
+  // This is a simplified approach - in practice we'd need to analyze the function signature
+
+  if (async_ref.text && async_ref.text.includes('async')) {
+    // Create a synthetic Future type
+    // In a complete implementation, this would be more sophisticated
+    return `Future<${async_ref.text}>` as TypeId;
+  }
+
+  return null;
+}
+
+/**
+ * Get Future trait methods available on Future types
+ */
+export function get_future_trait_methods(type_id: TypeId): string[] {
+  if (is_rust_future_type(type_id)) {
+    return ['map', 'then', 'and_then', 'or_else', 'boxed', 'fuse'];
+  }
+  return [];
+}
+
+/**
  * Get the methods available on a Rust reference type
  */
 export function get_rust_reference_methods(type_id: TypeId): string[] {
@@ -518,6 +672,30 @@ function call_is_in_pattern_scope(call_location: Location, pattern_info: Pattern
 /**
  * Integrate pattern matching information into the main type resolution
  */
+/**
+ * Type information for closures
+ */
+export interface ClosureTypeInfo {
+  symbol_id: SymbolId;
+  is_move: boolean;
+  is_async: boolean;
+  captured_variables: SymbolId[];
+  parameter_types: TypeId[];
+  return_type?: TypeId;
+  inferred_trait: 'Fn' | 'FnMut' | 'FnOnce';
+}
+
+/**
+ * Information about higher-order function calls
+ */
+export interface HigherOrderCallInfo {
+  location: Location;
+  method_name: string;
+  receiver_type?: TypeId;
+  closure_parameter?: SymbolId;
+  expected_closure_trait: 'Fn' | 'FnMut' | 'FnOnce';
+}
+
 export function integrate_pattern_matching_into_type_resolution(
   index: SemanticIndex,
   type_resolution: TypeResolutionMap
@@ -554,4 +732,252 @@ export function integrate_pattern_matching_into_type_resolution(
     symbol_types: enhanced_symbol_types as ReadonlyMap<SymbolId, TypeId>,
     reference_types: enhanced_reference_types as ReadonlyMap<LocationKey, TypeId>
   };
+}
+
+/**
+ * Resolve Rust function types including closures, function pointers, and function traits
+ */
+export function resolve_rust_function_types(
+  index: SemanticIndex,
+  type_resolution: TypeResolutionMap,
+  file_path: FilePath
+): Map<LocationKey, TypeId> {
+  const function_types = new Map<LocationKey, TypeId>();
+
+  if (!appears_to_be_rust_code(index)) {
+    return function_types;
+  }
+
+  const all_references = index.references?.all_references;
+  if (!all_references || !Array.isArray(all_references)) {
+    return function_types;
+  }
+
+  // Process function pointer types (fn(T) -> U)
+  for (const type_capture of all_references) {
+    if (type_capture.modifiers?.is_function_pointer && type_capture.location) {
+      const location_key_val = location_key(type_capture.location);
+      const func_pointer_type = resolve_function_pointer_type(type_capture, type_resolution);
+      if (func_pointer_type) {
+        function_types.set(location_key_val, func_pointer_type);
+      }
+    }
+
+    // Process function trait types (Fn, FnMut, FnOnce)
+    if (type_capture.modifiers?.is_function_trait && type_capture.location) {
+      const location_key_val = location_key(type_capture.location);
+      const func_trait_type = resolve_function_trait_type(type_capture, type_resolution);
+      if (func_trait_type) {
+        function_types.set(location_key_val, func_trait_type);
+      }
+    }
+  }
+
+  return function_types;
+}
+
+/**
+ * Resolve closure types and their captured environment
+ */
+export function resolve_closure_types(
+  index: SemanticIndex,
+  type_resolution: TypeResolutionMap,
+  file_path: FilePath
+): Map<SymbolId, ClosureTypeInfo> {
+  const closure_types = new Map<SymbolId, ClosureTypeInfo>();
+
+  if (!appears_to_be_rust_code(index)) {
+    return closure_types;
+  }
+
+  // Find closure definitions
+  for (const [symbol_id, symbol] of index.symbols) {
+    if (symbol.kind === 'function' && symbol.modifiers?.is_closure) {
+      const closure_info: ClosureTypeInfo = {
+        symbol_id,
+        is_move: symbol.modifiers.is_move ?? false,
+        is_async: symbol.modifiers.is_async ?? false,
+        captured_variables: find_captured_variables(symbol_id, index),
+        parameter_types: extract_closure_parameter_types(symbol_id, index, type_resolution),
+        return_type: extract_closure_return_type(symbol_id, index, type_resolution),
+        inferred_trait: infer_closure_trait(symbol.modifiers),
+      };
+      closure_types.set(symbol_id, closure_info);
+    }
+  }
+
+  return closure_types;
+}
+
+/**
+ * Resolve higher-order function calls and their type implications
+ */
+export function resolve_higher_order_function_calls(
+  index: SemanticIndex,
+  type_resolution: TypeResolutionMap
+): Map<LocationKey, HigherOrderCallInfo> {
+  const higher_order_calls = new Map<LocationKey, HigherOrderCallInfo>();
+
+  if (!appears_to_be_rust_code(index)) {
+    return higher_order_calls;
+  }
+
+  const all_references = index.references?.all_references;
+  if (!all_references) {
+    return higher_order_calls;
+  }
+
+  // Find higher-order method calls (map, filter, fold, etc.)
+  for (const ref of all_references) {
+    if (ref.modifiers?.is_higher_order && ref.location) {
+      const call_info: HigherOrderCallInfo = {
+        location: ref.location,
+        method_name: ref.text,
+        receiver_type: resolve_receiver_type(ref, type_resolution),
+        closure_parameter: find_closure_parameter_at_call(ref, index),
+        expected_closure_trait: infer_expected_closure_trait(ref.text),
+      };
+      higher_order_calls.set(location_key(ref.location), call_info);
+    }
+  }
+
+  return higher_order_calls;
+}
+
+/**
+ * Resolve function pointer type
+ */
+function resolve_function_pointer_type(
+  func_pointer_capture: SemanticCapture,
+  type_resolution: TypeResolutionMap
+): TypeId | null {
+  // Function pointers have the form fn(T1, T2) -> R
+  // For now, create a synthetic type ID for function pointers
+  // In a complete implementation, this would parse the type signature
+  return func_pointer_capture.text ?
+    `fn_pointer:${func_pointer_capture.text}` as TypeId : null;
+}
+
+/**
+ * Resolve function trait type (Fn, FnMut, FnOnce)
+ */
+function resolve_function_trait_type(
+  func_trait_capture: SemanticCapture,
+  type_resolution: TypeResolutionMap
+): TypeId | null {
+  // Function traits have the form Fn(T1, T2) -> R
+  return func_trait_capture.text ?
+    `fn_trait:${func_trait_capture.text}` as TypeId : null;
+}
+
+/**
+ * Find variables captured by a closure
+ */
+function find_captured_variables(
+  closure_symbol_id: SymbolId,
+  index: SemanticIndex
+): SymbolId[] {
+  const captured: SymbolId[] = [];
+
+  // In a complete implementation, this would analyze the closure body
+  // to find variables from outer scopes that are used
+  // For now, return empty array
+  return captured;
+}
+
+/**
+ * Extract closure parameter types
+ */
+function extract_closure_parameter_types(
+  closure_symbol_id: SymbolId,
+  index: SemanticIndex,
+  type_resolution: TypeResolutionMap
+): TypeId[] {
+  const param_types: TypeId[] = [];
+
+  // Look for parameters of this closure
+  for (const [symbol_id, symbol] of index.symbols) {
+    if (symbol.kind === 'parameter' &&
+        symbol.modifiers?.is_closure_param &&
+        symbol.scope_id) {
+      const param_type = type_resolution.symbol_types.get(symbol_id);
+      if (param_type) {
+        param_types.push(param_type);
+      }
+    }
+  }
+
+  return param_types;
+}
+
+/**
+ * Extract closure return type
+ */
+function extract_closure_return_type(
+  closure_symbol_id: SymbolId,
+  index: SemanticIndex,
+  type_resolution: TypeResolutionMap
+): TypeId | undefined {
+  // In a complete implementation, this would analyze return expressions
+  // or explicit return type annotations
+  return undefined;
+}
+
+/**
+ * Infer closure trait (Fn, FnMut, FnOnce) from modifiers
+ */
+function infer_closure_trait(
+  modifiers: any
+): 'Fn' | 'FnMut' | 'FnOnce' {
+  if (modifiers?.is_move) {
+    return 'FnOnce';
+  }
+  // Default to Fn for immutable closures
+  // More sophisticated analysis would check for mutable captures
+  return 'Fn';
+}
+
+/**
+ * Resolve receiver type for method calls
+ */
+function resolve_receiver_type(
+  method_ref: SemanticCapture,
+  type_resolution: TypeResolutionMap
+): TypeId | undefined {
+  // In a complete implementation, this would find the receiver object
+  // and resolve its type
+  return undefined;
+}
+
+/**
+ * Find closure parameter at a higher-order function call site
+ */
+function find_closure_parameter_at_call(
+  call_ref: SemanticCapture,
+  index: SemanticIndex
+): SymbolId | undefined {
+  // Look for closure expressions near this call location
+  // This would need to analyze the call's arguments
+  return undefined;
+}
+
+/**
+ * Infer expected closure trait for higher-order functions
+ */
+function infer_expected_closure_trait(
+  method_name: string
+): 'Fn' | 'FnMut' | 'FnOnce' {
+  // Common higher-order method patterns
+  const once_methods = ['find', 'any', 'all', 'position'];
+  const mut_methods = ['for_each'];
+
+  if (once_methods.includes(method_name)) {
+    return 'FnOnce';
+  }
+  if (mut_methods.includes(method_name)) {
+    return 'FnMut';
+  }
+
+  // Default to Fn for map, filter, etc.
+  return 'Fn';
 }
