@@ -11,9 +11,9 @@ import type {
   FilePath,
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
-import type { SemanticIndex } from "../../semantic_index/semantic_index";
-import type { TypeResolutionMap } from "../types";
-import type { SemanticCapture } from "../../semantic_index/capture_types";
+import type { SemanticIndex } from "../../../semantic_index/semantic_index";
+import type { TypeResolutionMap } from "../../types";
+import type { NormalizedCapture } from "../../../semantic_index/capture_types";
 import {
   appears_to_be_rust_code,
   extract_smart_pointer_name
@@ -70,7 +70,7 @@ export function resolve_rust_reference_types(
  * Resolve the inner type of a reference type
  */
 function resolve_reference_inner_type(
-  reference_capture: SemanticCapture,
+  reference_capture: NormalizedCapture,
   type_resolution: TypeResolutionMap
 ): TypeId | null {
   // In a full implementation, we would need to parse the type annotation
@@ -95,7 +95,7 @@ function resolve_reference_inner_type(
  * Resolve smart pointer type information
  */
 function resolve_smart_pointer_type(
-  smart_ptr_capture: SemanticCapture,
+  smart_ptr_capture: NormalizedCapture,
   type_resolution: TypeResolutionMap
 ): TypeId | null {
   // For smart pointers like Box<T>, Rc<T>, we need to identify the smart pointer type

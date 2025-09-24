@@ -34,7 +34,7 @@ import {
   get_future_trait_methods,
   type PatternMatchInfo,
   type HigherOrderCallInfo
-} from "../type_resolution/rust_type_resolver";
+} from "../type_resolution/rust_types/rust_type_resolver";
 
 /**
  * Enhanced method resolution that considers pattern matching contexts

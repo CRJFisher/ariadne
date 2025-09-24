@@ -9,8 +9,8 @@ import type {
   LocationKey,
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
-import type { SemanticIndex } from "../../semantic_index/semantic_index";
-import type { TypeResolutionMap } from "../types";
+import type { SemanticIndex } from "../../../semantic_index/semantic_index";
+import type { TypeResolutionMap } from "../../types";
 import {
   appears_to_be_rust_code
 } from "./rust_type_utils";

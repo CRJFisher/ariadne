@@ -9,24 +9,24 @@ import type {
   TypeId,
   FilePath,
 } from "@ariadnejs/types";
-import type { SemanticIndex } from "../../semantic_index/semantic_index";
-import type { TypeResolutionMap } from "../types";
+import type { SemanticIndex } from "../../../semantic_index/semantic_index";
+import type { TypeResolutionMap } from "../../types";
 
 // Import all specialized modules
 export * from "./rust_type_utils";
-export * from "./rust_reference_types";
-export * from "./rust_ownership_ops";
-export * from "./rust_async_types";
-export * from "./rust_pattern_matching";
-export * from "./rust_function_types";
-export * from "./rust_advanced_types";
+export * from "./reference_types";
+export * from "./ownership_ops";
+export * from "./async_types";
+export * from "./pattern_matching";
+export * from "./function_types";
+export * from "./advanced_types";
 
 // Import key functions for the coordinator
-import { resolve_rust_reference_types } from "./rust_reference_types";
-import { resolve_rust_async_types } from "./rust_async_types";
-import { integrate_pattern_matching_into_type_resolution } from "./rust_pattern_matching";
-import { resolve_rust_function_types } from "./rust_function_types";
-import { resolve_const_generics, resolve_associated_types } from "./rust_advanced_types";
+import { resolve_rust_reference_types } from "./reference_types";
+import { resolve_rust_async_types } from "./async_types";
+import { integrate_pattern_matching_into_type_resolution } from "./pattern_matching";
+import { resolve_rust_function_types } from "./function_types";
+import { resolve_const_generics, resolve_associated_types } from "./advanced_types";
 import { appears_to_be_rust_code } from "./rust_type_utils";
 
 /**

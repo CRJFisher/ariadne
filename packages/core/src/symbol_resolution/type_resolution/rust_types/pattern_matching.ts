@@ -11,10 +11,10 @@ import type {
   SymbolId,
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
-import type { SemanticIndex } from "../../semantic_index/semantic_index";
-import type { TypeResolutionMap } from "../types";
-import type { SemanticCapture } from "../../semantic_index/capture_types";
-import { SemanticEntity, SemanticCategory } from "../../semantic_index/capture_types";
+import type { SemanticIndex } from "../../../semantic_index/semantic_index";
+import type { TypeResolutionMap } from "../../types";
+import type { NormalizedCapture } from "../../../semantic_index/capture_types";
+import { SemanticEntity, SemanticCategory } from "../../../semantic_index/capture_types";
 import {
   appears_to_be_rust_code,
   locations_are_near
@@ -116,8 +116,8 @@ export function resolve_pattern_matching(
  * Find variables bound by a pattern
  */
 function find_pattern_bound_variables(
-  pattern_ref: SemanticCapture,
-  all_references: SemanticCapture[]
+  pattern_ref: NormalizedCapture,
+  all_references: NormalizedCapture[]
 ): SymbolId[] {
   const bound_vars: SymbolId[] = [];
 
@@ -140,8 +140,8 @@ function find_pattern_bound_variables(
  * Find variables bound by struct destructuring
  */
 function find_struct_destructure_variables(
-  struct_pattern: SemanticCapture,
-  all_references: SemanticCapture[]
+  struct_pattern: NormalizedCapture,
+  all_references: NormalizedCapture[]
 ): SymbolId[] {
   const bound_vars: SymbolId[] = [];
 
@@ -165,8 +165,8 @@ function find_struct_destructure_variables(
  * Find variables bound by tuple destructuring
  */
 function find_tuple_destructure_variables(
-  tuple_pattern: SemanticCapture,
-  all_references: SemanticCapture[]
+  tuple_pattern: NormalizedCapture,
+  all_references: NormalizedCapture[]
 ): SymbolId[] {
   const bound_vars: SymbolId[] = [];
 
@@ -190,8 +190,8 @@ function find_tuple_destructure_variables(
  * Resolve the type being matched in if-let expressions
  */
 function resolve_if_let_matched_type(
-  if_let_pattern: SemanticCapture,
-  all_references: SemanticCapture[],
+  if_let_pattern: NormalizedCapture,
+  all_references: NormalizedCapture[],
   type_resolution: TypeResolutionMap
 ): TypeId | undefined {
   // Look for the corresponding if_let_value capture
@@ -216,8 +216,8 @@ function resolve_if_let_matched_type(
  * Resolve the type being matched in while-let expressions
  */
 function resolve_while_let_matched_type(
-  while_let_pattern: SemanticCapture,
-  all_references: SemanticCapture[],
+  while_let_pattern: NormalizedCapture,
+  all_references: NormalizedCapture[],
   type_resolution: TypeResolutionMap
 ): TypeId | undefined {
   // Look for the corresponding while_let_value capture

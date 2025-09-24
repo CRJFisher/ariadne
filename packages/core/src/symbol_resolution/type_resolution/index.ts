@@ -5,11 +5,49 @@
  * after imports and functions have been resolved.
  */
 
+// Core types
 export * from "./types";
+
+// Type Registry Module
 export {
-  build_type_registry,
-  build_global_type_registry
+  build_global_type_registry,
+  build_type_registry
 } from "./type_registry";
+
+// Inheritance Module
+export {
+  resolve_inheritance
+} from "./inheritance";
+
+// Type Annotations Module
+export {
+  resolve_type_annotations
+} from "./type_annotations";
+
+// Type Tracking Module
+export {
+  resolve_type_tracking
+} from "./type_tracking";
+export type {
+  ResolvedTypeTracking,
+  TypeFlowGraph,
+  TypeFlowEdge
+} from "./type_tracking";
+
+// Type Flow Module
+export {
+  analyze_type_flow
+} from "./type_flow";
+
+// Type Members Module
+export {
+  resolve_type_members
+} from "./type_members";
+
+// Rust Types Module
+export * from "./rust_types";
+
+// Legacy exports (to be removed in future)
 export {
   FileTypeRegistry,
   VariableTypeMap,
@@ -42,24 +80,20 @@ export {
   create_array_type,
   create_tuple_type,
 } from "./type_registry_interfaces";
+
 export { resolve_types } from "./resolve_types";
-export { resolve_type_members } from "./resolve_members";
-export { analyze_type_flow } from "./type_flow";
-export { resolve_type_annotations } from "./resolve_annotations";
-export { resolve_inheritance } from "./inheritance";
+
+// Re-export from old locations for backward compatibility
+
 export {
   build_file_type_registry,
   build_file_type_registry_with_annotations,
   type TypeRegistryResult
 } from "./type_resolution";
-export {
-  resolve_type_tracking,
-  type ResolvedTypeTracking,
-  type TypeFlowGraph,
-  type TypeFlowEdge
-} from "./track_types";
 
-// Rust-specific type resolution
+// These are now exported from ./type_tracking above
+
+// Old Rust exports from rust_type_resolver
 export {
   resolve_rust_reference_types,
   resolve_rust_function_types,
@@ -81,4 +115,4 @@ export {
   type PatternMatchInfo,
   type ClosureTypeInfo,
   type HigherOrderCallInfo
-} from "./rust_type_resolver";
+} from "./rust_types/rust_type_resolver";

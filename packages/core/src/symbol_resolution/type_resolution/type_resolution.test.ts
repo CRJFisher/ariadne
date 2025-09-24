@@ -8,7 +8,6 @@ import {
   resolve_inheritance,
   build_file_type_registry,
   build_file_type_registry_with_annotations,
-  resolve_all_types,
 } from "./index";
 import { createReadonlyMap } from "./test_utilities";
 import type {
@@ -60,9 +59,7 @@ describe("Type Resolution Module", () => {
       expect(resolve_inheritance).toBeDefined();
       expect(typeof resolve_inheritance).toBe("function");
 
-      // New functions from type_resolution.ts
-      expect(resolve_all_types).toBeDefined();
-      expect(typeof resolve_all_types).toBe("function");
+      // resolve_all_types has been deprecated - functionality moved to phase3_resolve_types
 
       expect(build_file_type_registry).toBeDefined();
       expect(typeof build_file_type_registry).toBe("function");
@@ -80,8 +77,7 @@ describe("Type Resolution Module", () => {
       expect(resolve_type_annotations.length).toBe(2); // annotations, type_names
       expect(resolve_inheritance.length).toBe(2); // type_definitions, type_registry
 
-      // New functions from type_resolution.ts
-      expect(resolve_all_types.length).toBe(4); // local_types, imports, functions, file_indices
+      // resolve_all_types has been deprecated - functionality moved to phase3_resolve_types
       expect(build_file_type_registry.length).toBe(2); // symbols, file_path
       expect(build_file_type_registry_with_annotations.length).toBe(2); // symbols, file_path
     });
@@ -413,7 +409,7 @@ describe("Type Resolution Module", () => {
       });
 
       it("should return complete ResolvedTypes structure", () => {
-        const result = resolve_all_types(
+        const result = resolve_types(
           mockLocalTypes,
           mockImports,
           mockFunctions,
@@ -431,7 +427,7 @@ describe("Type Resolution Module", () => {
       });
 
       it("should process type definitions from local types", () => {
-        const result = resolve_all_types(
+        const result = resolve_types(
           mockLocalTypes,
           mockImports,
           mockFunctions,
@@ -452,7 +448,7 @@ describe("Type Resolution Module", () => {
 
         const emptyImports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> = new Map();
 
-        const result = resolve_all_types(
+        const result = resolve_types(
           emptyLocalTypes,
           emptyImports,
           mockFunctions,
@@ -465,7 +461,7 @@ describe("Type Resolution Module", () => {
       });
 
       it("should provide empty type hierarchy when inheritance resolution is not implemented", () => {
-        const result = resolve_all_types(
+        const result = resolve_types(
           mockLocalTypes,
           mockImports,
           mockFunctions,

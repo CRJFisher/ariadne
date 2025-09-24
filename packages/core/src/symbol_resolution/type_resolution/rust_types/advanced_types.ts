@@ -11,9 +11,9 @@ import type {
   FilePath,
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
-import type { SemanticIndex } from "../../semantic_index/semantic_index";
-import type { TypeResolutionMap } from "../types";
-import type { SemanticCapture } from "../../semantic_index/capture_types";
+import type { SemanticIndex } from "../../../semantic_index/semantic_index";
+import type { TypeResolutionMap } from "../../types";
+import type { NormalizedCapture } from "../../../semantic_index/capture_types";
 import {
   appears_to_be_rust_code,
   create_builtin_type_id,
@@ -234,7 +234,7 @@ function resolve_const_generic_type(
  * Resolve const generic from reference usage
  */
 function resolve_const_generic_from_reference(
-  ref: SemanticCapture,
+  ref: NormalizedCapture,
   type_resolution: TypeResolutionMap,
   file_path: FilePath
 ): TypeId | undefined {
@@ -267,7 +267,7 @@ function resolve_associated_type_from_symbol(
  * Resolve associated type from reference/usage
  */
 function resolve_associated_type_from_reference(
-  ref: SemanticCapture,
+  ref: NormalizedCapture,
   type_resolution: TypeResolutionMap,
   index: SemanticIndex,
   file_path: FilePath

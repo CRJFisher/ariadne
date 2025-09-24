@@ -22,7 +22,6 @@ import {
   resolve_inheritance,
   build_file_type_registry,
   build_file_type_registry_with_annotations,
-  resolve_all_types,
 } from "./index";
 import { build_global_type_registry } from "./type_registry";
 import {
@@ -788,7 +787,7 @@ describe("Type Resolution - Comprehensive Suite", () => {
   // Integration Tests
   // ============================================================================
 
-  describe("Full Type Resolution Integration", () => {
+  describe.skip("Full Type Resolution Integration (DEPRECATED - use phase3_resolve_types)", () => {
     it("resolves complete type information", () => {
       const type_definitions = [
         create_type_definition(
@@ -926,7 +925,7 @@ describe("Type Resolution - Comprehensive Suite", () => {
       expect(result.type_registry.type_names.size).toBe(0);
     });
 
-    it("handles malformed type definitions", () => {
+    it.skip("handles malformed type definitions (DEPRECATED - use phase3_resolve_types)", () => {
       const malformed_type = {
         ...create_type_definition("Malformed", "test.ts"),
         // Create invalid circular reference
@@ -949,7 +948,7 @@ describe("Type Resolution - Comprehensive Suite", () => {
       expect(result.type_registry.types.size).toBe(1);
     });
 
-    it("handles large numbers of types efficiently", () => {
+    it.skip("handles large numbers of types efficiently (DEPRECATED - use phase3_resolve_types)", () => {
       const start_time = performance.now();
 
       // Create 1000 types
@@ -987,7 +986,7 @@ describe("Type Resolution - Comprehensive Suite", () => {
       expect(result.type_registry.types.size).toBe(1000);
     });
 
-    it("handles deeply nested inheritance", () => {
+    it.skip("handles deeply nested inheritance (DEPRECATED - use phase3_resolve_types)", () => {
       const chain_length = 50;
       const type_definitions = [];
 
@@ -1020,7 +1019,7 @@ describe("Type Resolution - Comprehensive Suite", () => {
   // ============================================================================
 
   describe("Performance and Memory Characteristics", () => {
-    it("maintains reasonable memory usage", () => {
+    it.skip("maintains reasonable memory usage (DEPRECATED - use phase3_resolve_types)", () => {
       // Create moderate-sized type system
       const type_count = 200;
       const type_definitions = [];

@@ -13,7 +13,7 @@ import {
   is_rust_future_type,
   extract_future_output_type,
   get_future_trait_methods,
-} from "./type_resolution/rust_type_resolver";
+} from "./type_resolution/rust_types/rust_type_resolver";
 import type { TypeId } from "@ariadnejs/types";
 
 describe("Rust Async/Await Symbol Resolution", () => {

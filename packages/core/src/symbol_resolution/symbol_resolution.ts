@@ -169,7 +169,7 @@ function phase1_resolve_imports(
  *
  * Replaces: `type_resolution.ts::resolve_all_types` and related functions
  */
-function phase3_resolve_types(
+export function phase3_resolve_types(
   indices: ReadonlyMap<FilePath, SemanticIndex>,
   imports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>,
   functions: FunctionResolutionMap
@@ -484,6 +484,11 @@ function collect_local_types(
   const type_flows = new Map<FilePath, TypeResolutionFlow[]>();
 
   for (const [file_path, index] of indices) {
+    // Skip if no local types in this file
+    if (!index.local_types || !Array.isArray(index.local_types)) {
+      continue;
+    }
+
     // Convert LocalTypeInfo to LocalTypeDefinition
     const defs: LocalTypeDefinition[] = index.local_types.map((local_type) => ({
       name: local_type.type_name,

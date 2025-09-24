@@ -11,9 +11,9 @@ import type {
   FilePath,
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
-import type { SemanticIndex } from "../../semantic_index/semantic_index";
-import type { TypeResolutionMap } from "../types";
-import type { SemanticCapture } from "../../semantic_index/capture_types";
+import type { SemanticIndex } from "../../../semantic_index/semantic_index";
+import type { TypeResolutionMap } from "../../types";
+import type { NormalizedCapture } from "../../../semantic_index/capture_types";
 import {
   appears_to_be_rust_code,
   is_rust_future_type,
@@ -88,7 +88,7 @@ export function resolve_rust_async_types(
  * For `future.await`, returns the output type of the Future
  */
 function resolve_await_expression_type(
-  await_ref: SemanticCapture,
+  await_ref: NormalizedCapture,
   type_resolution: TypeResolutionMap
 ): TypeId | null {
   // The await expression should have context about the target being awaited
@@ -110,7 +110,7 @@ function resolve_await_expression_type(
  * Async functions return Future<Output = T> where T is the declared return type
  */
 function resolve_async_function_return_type(
-  async_ref: SemanticCapture,
+  async_ref: NormalizedCapture,
   type_resolution: TypeResolutionMap
 ): TypeId | null {
   // For async functions, we need to wrap the return type in a Future

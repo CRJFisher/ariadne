@@ -12,9 +12,9 @@ import type {
   SymbolId,
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
-import type { SemanticIndex } from "../../semantic_index/semantic_index";
-import type { TypeResolutionMap } from "../types";
-import type { SemanticCapture } from "../../semantic_index/capture_types";
+import type { SemanticIndex } from "../../../semantic_index/semantic_index";
+import type { TypeResolutionMap } from "../../types";
+import type { NormalizedCapture } from "../../../semantic_index/capture_types";
 import {
   appears_to_be_rust_code
 } from "./rust_type_utils";
@@ -157,7 +157,7 @@ export function resolve_higher_order_function_calls(
  * Resolve function pointer type
  */
 function resolve_function_pointer_type(
-  func_pointer_capture: SemanticCapture,
+  func_pointer_capture: NormalizedCapture,
   type_resolution: TypeResolutionMap
 ): TypeId | null {
   // Function pointers have the form fn(T1, T2) -> R
@@ -171,7 +171,7 @@ function resolve_function_pointer_type(
  * Resolve function trait type (Fn, FnMut, FnOnce)
  */
 function resolve_function_trait_type(
-  func_trait_capture: SemanticCapture,
+  func_trait_capture: NormalizedCapture,
   type_resolution: TypeResolutionMap
 ): TypeId | null {
   // Function traits have the form Fn(T1, T2) -> R
@@ -250,7 +250,7 @@ function infer_closure_trait(
  * Resolve receiver type for method calls
  */
 function resolve_receiver_type(
-  method_ref: SemanticCapture,
+  method_ref: NormalizedCapture,
   type_resolution: TypeResolutionMap
 ): TypeId | undefined {
   // In a complete implementation, this would find the receiver object
@@ -262,7 +262,7 @@ function resolve_receiver_type(
  * Find closure parameter at a higher-order function call site
  */
 function find_closure_parameter_at_call(
-  call_ref: SemanticCapture,
+  call_ref: NormalizedCapture,
   index: SemanticIndex
 ): SymbolId | undefined {
   // Look for closure expressions near this call location

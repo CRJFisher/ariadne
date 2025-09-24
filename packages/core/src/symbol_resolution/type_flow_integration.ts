@@ -103,10 +103,12 @@ function prepare_functions_for_flow(
   // Extract function return types from function calls
   // This is a simplified implementation - would need more sophisticated
   // function signature analysis in production
-  for (const [location, function_id] of functions.function_calls) {
-    // For now, we don't have return type information
-    // This would need to be extracted from function definitions
-    result.set(function_id, { return_type: undefined });
+  if (functions.function_calls) {
+    for (const [location, function_id] of functions.function_calls) {
+      // For now, we don't have return type information
+      // This would need to be extracted from function definitions
+      result.set(function_id, { return_type: undefined });
+    }
   }
 
   return result;
