@@ -33,7 +33,7 @@ export const RUST_CORE_MAPPINGS = new Map<string, CaptureMapping>([
     "scope.closure",
     {
       category: SemanticCategory.SCOPE,
-      entity: SemanticEntity.CLOSURE,
+      entity: SemanticEntity.FUNCTION,
       modifiers: () => ({ is_closure: true }),
     },
   ],
@@ -71,6 +71,38 @@ export const RUST_CORE_MAPPINGS = new Map<string, CaptureMapping>([
     {
       category: SemanticCategory.SCOPE,
       entity: SemanticEntity.BLOCK,
+    },
+  ],
+  [
+    "scope.block.unsafe",
+    {
+      category: SemanticCategory.SCOPE,
+      entity: SemanticEntity.BLOCK,
+      modifiers: () => ({ is_unsafe: true }),
+    },
+  ],
+  [
+    "scope.for",
+    {
+      category: SemanticCategory.SCOPE,
+      entity: SemanticEntity.BLOCK,
+      modifiers: () => ({ is_loop: true, loop_type: "for" }),
+    },
+  ],
+  [
+    "scope.while",
+    {
+      category: SemanticCategory.SCOPE,
+      entity: SemanticEntity.BLOCK,
+      modifiers: () => ({ is_loop: true, loop_type: "while" }),
+    },
+  ],
+  [
+    "scope.loop",
+    {
+      category: SemanticCategory.SCOPE,
+      entity: SemanticEntity.BLOCK,
+      modifiers: () => ({ is_loop: true, loop_type: "loop" }),
     },
   ],
 
@@ -240,6 +272,14 @@ export const RUST_CORE_MAPPINGS = new Map<string, CaptureMapping>([
       entity: SemanticEntity.PARAMETER,
     },
   ],
+  [
+    "def.param.self",
+    {
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.PARAMETER,
+      modifiers: () => ({ is_self: true }),
+    },
+  ],
 
   // Loop variables
   [
@@ -300,8 +340,8 @@ export const RUST_CORE_MAPPINGS = new Map<string, CaptureMapping>([
     "def.const_param",
     {
       category: SemanticCategory.DEFINITION,
-      entity: SemanticEntity.PARAMETER,
-      modifiers: () => ({ is_const: true }),
+      entity: SemanticEntity.CONSTANT,
+      modifiers: () => ({ is_const_generic: true }),
     },
   ],
 
@@ -355,8 +395,16 @@ export const RUST_CORE_MAPPINGS = new Map<string, CaptureMapping>([
     "def.associated_type",
     {
       category: SemanticCategory.DEFINITION,
-      entity: SemanticEntity.TYPE_ALIAS,
-      modifiers: () => ({ is_associated: true }),
+      entity: SemanticEntity.TYPE,
+      modifiers: () => ({ is_associated_type: true }),
+    },
+  ],
+  [
+    "def.associated_type.impl",
+    {
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.TYPE,
+      modifiers: () => ({ is_associated_type: true, is_trait_impl: true }),
     },
   ],
 
@@ -380,14 +428,93 @@ export const RUST_CORE_MAPPINGS = new Map<string, CaptureMapping>([
   ],
 
   // ============================================================================
+  // TYPE CONSTRAINTS
+  // ============================================================================
+  [
+    "constraint.where_clause",
+    {
+      category: SemanticCategory.TYPE,
+      entity: SemanticEntity.TYPE_CONSTRAINT,
+    },
+  ],
+  [
+    "constraint.bounds",
+    {
+      category: SemanticCategory.TYPE,
+      entity: SemanticEntity.TYPE_CONSTRAINT,
+    },
+  ],
+  [
+    "constraint.type",
+    {
+      category: SemanticCategory.TYPE,
+      entity: SemanticEntity.TYPE_PARAMETER,
+    },
+  ],
+  [
+    "constraint.trait",
+    {
+      category: SemanticCategory.TYPE,
+      entity: SemanticEntity.TYPE_CONSTRAINT,
+    },
+  ],
+  [
+    "constraint.trait.generic",
+    {
+      category: SemanticCategory.TYPE,
+      entity: SemanticEntity.TYPE_CONSTRAINT,
+    },
+  ],
+  [
+    "constraint.lifetime",
+    {
+      category: SemanticCategory.TYPE,
+      entity: SemanticEntity.TYPE_PARAMETER,
+      modifiers: () => ({ is_lifetime: true }),
+    },
+  ],
+
+  // ============================================================================
   // RUST VISIBILITY SYSTEM
   // ============================================================================
   [
-    "visibility.pub",
+    "visibility.public",
     {
       category: SemanticCategory.MODIFIER,
-      entity: SemanticEntity.MODIFIER,
+      entity: SemanticEntity.VISIBILITY,
       modifiers: () => ({ visibility_level: "public" }),
+    },
+  ],
+  [
+    "visibility.crate",
+    {
+      category: SemanticCategory.MODIFIER,
+      entity: SemanticEntity.VISIBILITY,
+      modifiers: () => ({ visibility_level: "crate" }),
+    },
+  ],
+  [
+    "visibility.super",
+    {
+      category: SemanticCategory.MODIFIER,
+      entity: SemanticEntity.VISIBILITY,
+      modifiers: () => ({ visibility_level: "super" }),
+    },
+  ],
+  [
+    "visibility.restricted",
+    {
+      category: SemanticCategory.MODIFIER,
+      entity: SemanticEntity.VISIBILITY,
+      modifiers: () => ({ visibility_level: "restricted" }),
+    },
+  ],
+  [
+    "visibility.self",
+    {
+      category: SemanticCategory.MODIFIER,
+      entity: SemanticEntity.VISIBILITY,
+      modifiers: () => ({ visibility_level: "self" }),
     },
   ],
 
@@ -440,6 +567,49 @@ export const RUST_CORE_MAPPINGS = new Map<string, CaptureMapping>([
 
   // Function and method calls
   [
+    "ref.call",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.CALL,
+    },
+  ],
+  [
+    "ref.method_call",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.CALL,
+      context: (node) => {
+        // Find the receiver for method calls
+        const parent = node.parent;
+        if (parent?.type === "call_expression") {
+          const fieldExpr = parent.children.find(
+            (child) => child.type === "field_expression"
+          );
+          if (fieldExpr) {
+            const receiver = fieldExpr.children.find(
+              (child) => child.type !== "field_identifier" && child.type !== "."
+            );
+            if (receiver) {
+              return {
+                receiver_node: receiver,
+                is_method_call: true,
+              };
+            }
+          }
+        }
+        return { is_method_call: true };
+      },
+    },
+  ],
+  [
+    "ref.method_call.chained",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.CALL,
+      context: () => ({ is_chained_call: true }),
+    },
+  ],
+  [
     "call.function",
     {
       category: SemanticCategory.REFERENCE,
@@ -454,6 +624,52 @@ export const RUST_CORE_MAPPINGS = new Map<string, CaptureMapping>([
     },
   ],
   [
+    "method.instance",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.METHOD,
+    },
+  ],
+  [
+    "method.static",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.METHOD,
+      modifiers: () => ({ is_static: true }),
+    },
+  ],
+  [
+    "call.receiver",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.VARIABLE,
+    },
+  ],
+  [
+    "call.method",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.METHOD,
+      modifiers: () => ({ is_higher_order: true }),
+    },
+  ],
+  [
+    "call.higher_order",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.CALL,
+      modifiers: () => ({ is_higher_order: true }),
+    },
+  ],
+  [
+    "smart_pointer.method_call",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.CALL,
+      modifiers: () => ({ is_smart_pointer_method: true }),
+    },
+  ],
+  [
     "call.constructor",
     {
       category: SemanticCategory.REFERENCE,
@@ -462,6 +678,28 @@ export const RUST_CORE_MAPPINGS = new Map<string, CaptureMapping>([
   ],
 
   // Variable and field access
+  [
+    "ref.receiver",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.VARIABLE,
+    },
+  ],
+  [
+    "ref.associated_function",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.CALL,
+      modifiers: () => ({ is_associated_call: true }),
+    },
+  ],
+  [
+    "ref.object",
+    {
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.VARIABLE,
+    },
+  ],
   [
     "ref.variable",
     {
