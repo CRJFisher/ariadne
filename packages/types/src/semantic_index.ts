@@ -109,7 +109,13 @@ export interface SymbolDefinition {
   
   /** For methods: whether it's static */
   readonly is_static?: boolean;
-  
+
+  /** For generics: whether it has generic parameters */
+  readonly is_generic?: boolean;
+
+  /** For lifetimes: whether it's a lifetime parameter */
+  readonly is_lifetime?: boolean;
+
   /** For functions/methods: return type hint */
   readonly return_type_hint?: SymbolName;
 

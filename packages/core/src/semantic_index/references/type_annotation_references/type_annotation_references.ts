@@ -125,6 +125,7 @@ function determine_annotation_kind(
       return "property";
     case SemanticEntity.TYPE_PARAMETER:
     case SemanticEntity.TYPE:
+    case SemanticEntity.TYPE_CONSTRAINT:
       return "generic";
     case SemanticEntity.TYPE_ASSERTION:
       return "cast";

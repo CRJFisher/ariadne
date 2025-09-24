@@ -63,12 +63,19 @@ export function resolve_polymorphic_method_call(
     context
   );
 
+  // Determine resolution path including trait implementations
+  const resolution_path = determine_resolution_path(
+    most_specific,
+    receiver_type,
+    context
+  );
+
   return {
     call_location: call_context.location,
     resolved_method: most_specific.symbol_id,
     receiver_type,
     method_kind: call_context.is_static ? "static" : "instance",
-    resolution_path: most_specific.source_type === receiver_type ? "direct" : "inherited"
+    resolution_path
   };
 }
 
@@ -98,6 +105,15 @@ export function find_all_method_implementations(
       }
     }
   });
+
+  // Also check for trait implementations (Rust-specific)
+  const trait_implementations = find_trait_method_implementations(
+    method_name,
+    receiver_type,
+    is_static,
+    context
+  );
+  implementations.push(...trait_implementations);
 
   return implementations;
 }
@@ -235,4 +251,140 @@ export function determine_dispatch_type(
 
   // Default to dynamic dispatch for virtual methods
   return "dynamic";
+}
+
+/**
+ * Find trait method implementations for a given type (Rust-specific)
+ */
+function find_trait_method_implementations(
+  method_name: SymbolName,
+  receiver_type: TypeId,
+  is_static: boolean,
+  context: MethodLookupContext
+): MethodImplementation[] {
+  const implementations: MethodImplementation[] = [];
+
+  // Find all trait implementations for this type across all files
+  for (const [file_path, index] of context.indices) {
+    // Look for trait implementation definitions
+    for (const definition of index.definitions) {
+      if (definition.entity !== "class" || !definition.modifiers?.is_trait_impl) {
+        continue;
+      }
+
+      // Check if this impl is for our receiver type
+      if (!is_impl_for_type(definition, receiver_type, context)) {
+        continue;
+      }
+
+      // Look for methods in this impl block with matching name
+      const impl_methods = find_methods_in_impl_block(
+        definition,
+        method_name,
+        is_static,
+        index
+      );
+
+      for (const method_symbol of impl_methods) {
+        implementations.push({
+          symbol_id: method_symbol,
+          source_type: receiver_type,
+          override_depth: 1000 // Trait impls have lower priority than direct methods
+        });
+      }
+    }
+  }
+
+  return implementations;
+}
+
+/**
+ * Determine the resolution path for a method implementation
+ */
+function determine_resolution_path(
+  implementation: MethodImplementation,
+  receiver_type: TypeId,
+  context: MethodLookupContext
+): "direct" | "inherited" | "interface" | "trait" | "parameter_property" {
+  // Check if this is a trait implementation
+  const method_def = find_method_definition(implementation.symbol_id, context);
+  if (method_def && method_def.modifiers?.is_trait_impl) {
+    return "trait";
+  }
+
+  // Check if this is a trait method (defined in trait)
+  if (method_def && method_def.modifiers?.is_trait_method) {
+    return "interface";
+  }
+
+  // Standard resolution path logic
+  if (implementation.source_type === receiver_type) {
+    return "direct";
+  } else {
+    return "inherited";
+  }
+}
+
+/**
+ * Check if an impl definition is for a specific type
+ */
+function is_impl_for_type(
+  impl_definition: any,
+  target_type: TypeId,
+  context: MethodLookupContext
+): boolean {
+  // This would need more sophisticated matching based on the impl's type information
+  // For now, use a simplified approach that would need enhancement
+
+  // Get the type name from the type registry
+  const type_info = context.type_resolution.type_registry?.get(target_type);
+  if (!type_info) {
+    return false;
+  }
+
+  // Simple name matching - this could be enhanced with proper type resolution
+  return impl_definition.text?.includes(type_info.name) || false;
+}
+
+/**
+ * Find methods in an impl block with specific name
+ */
+function find_methods_in_impl_block(
+  impl_definition: any,
+  method_name: SymbolName,
+  is_static: boolean,
+  index: any
+): SymbolId[] {
+  const methods: SymbolId[] = [];
+
+  // Look for method definitions in the same scope as the impl
+  for (const definition of index.definitions) {
+    if (definition.entity !== "method") {
+      continue;
+    }
+
+    // Check if method name matches
+    if (definition.text !== method_name) {
+      continue;
+    }
+
+    // Check if static/instance matches
+    const method_is_static = definition.modifiers?.is_static || false;
+    if (method_is_static !== is_static) {
+      continue;
+    }
+
+    // Check if this method is in a trait impl (has is_trait_impl modifier)
+    if (!definition.modifiers?.is_trait_impl) {
+      continue;
+    }
+
+    // For a more precise match, we'd check if the method is in the same impl block
+    // For now, include all trait impl methods with matching name/staticness
+    if (definition.symbol_id) {
+      methods.push(definition.symbol_id);
+    }
+  }
+
+  return methods;
 }

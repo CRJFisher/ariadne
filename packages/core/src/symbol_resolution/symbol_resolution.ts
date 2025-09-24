@@ -320,6 +320,25 @@ function collect_local_types(
       direct_members: local_type.direct_members,
       extends_names: local_type.extends_clause,
       implements_names: local_type.implements_clause,
+      // Rust-specific features
+      is_generic: local_type.is_generic,
+      type_parameters: local_type.type_parameters ? local_type.type_parameters.map(tp => ({
+        name: tp.name,
+        location: tp.location,
+        bounds: tp.bounds,
+        default_type: tp.default_type,
+      })) : undefined,
+      lifetime_parameters: local_type.lifetime_parameters ? local_type.lifetime_parameters.map(lp => ({
+        name: lp.name,
+        location: lp.location,
+        bounds: lp.bounds,
+      })) : undefined,
+      where_constraints: local_type.where_constraints ? local_type.where_constraints.map(wc => ({
+        type_name: wc.type_name,
+        constraint_kind: wc.constraint_kind,
+        bound_names: wc.bound_names,
+        location: wc.location,
+      })) : undefined,
     }));
 
     if (defs.length > 0) {

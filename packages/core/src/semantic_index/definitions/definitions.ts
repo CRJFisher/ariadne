@@ -84,6 +84,8 @@ export function process_definitions(
       is_imported: false,
       // Type information
       is_static: capture.modifiers?.is_static,
+      is_generic: capture.modifiers?.is_generic,
+      is_lifetime: capture.modifiers?.is_lifetime,
     };
 
     // Store symbol

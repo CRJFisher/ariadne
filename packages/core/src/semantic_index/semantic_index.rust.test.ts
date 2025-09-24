@@ -657,4 +657,490 @@ loop {
       // expect(circleType?.direct_members.has("draw" as SymbolName)).toBe(true); // Trait method not in direct members
     });
   });
+
+  describe("Advanced Generics and Lifetimes", () => {
+    it("should parse advanced generic structures with complex constraints", () => {
+      const code = readFileSync(join(FIXTURES_DIR, "advanced_generics_lifetimes.rs"), "utf-8");
+      const tree = parser.parse(code);
+      const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+      // Check advanced generic structs
+      const advancedGenericStructs = captures.definitions.filter(c =>
+        c.entity === SemanticEntity.CLASS && c.modifiers?.is_generic
+      );
+      expect(advancedGenericStructs.some(s => s.text === "AdvancedContainer")).toBe(true);
+      expect(advancedGenericStructs.some(s => s.text === "Matrix")).toBe(true);
+      expect(advancedGenericStructs.some(s => s.text === "SelfRef")).toBe(true);
+
+      // Check generic enums
+      const genericEnums = captures.definitions.filter(c =>
+        c.entity === SemanticEntity.ENUM && c.modifiers?.is_generic
+      );
+      expect(genericEnums.some(e => e.text === "ComplexResult")).toBe(true);
+
+      // Check generic functions
+      const genericFunctions = captures.definitions.filter(c =>
+        c.entity === SemanticEntity.FUNCTION && c.modifiers?.is_generic
+      );
+      expect(genericFunctions.some(f => f.text === "process_with_closure")).toBe(true);
+      expect(genericFunctions.some(f => f.text === "complex_generic_function")).toBe(true);
+      expect(genericFunctions.some(f => f.text === "ultimate_generic_function")).toBe(true);
+
+      // Check generic traits
+      const genericTraits = captures.definitions.filter(c =>
+        c.entity === SemanticEntity.INTERFACE && c.modifiers?.is_generic
+      );
+      expect(genericTraits.some(t => t.text === "AdvancedIterator")).toBe(true);
+      expect(genericTraits.some(t => t.text === "GenericLifetimeTrait")).toBe(true);
+    });
+
+    it("should parse const generics with complex parameters", () => {
+      const code = readFileSync(join(FIXTURES_DIR, "advanced_generics_lifetimes.rs"), "utf-8");
+      const tree = parser.parse(code);
+      const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+      // Check const generic parameters
+      const constParams = captures.definitions.filter(c =>
+        c.entity === SemanticEntity.PARAMETER && c.text && ["ROWS", "COLS", "OTHER_COLS"].includes(c.text)
+      );
+      expect(constParams.length).toBeGreaterThan(0);
+
+      // Check Matrix struct with const generics
+      const matrixStruct = captures.definitions.find(c =>
+        c.entity === SemanticEntity.CLASS && c.text === "Matrix"
+      );
+      expect(matrixStruct).toBeDefined();
+      expect(matrixStruct?.modifiers?.is_generic).toBe(true);
+    });
+
+    it("should parse advanced lifetime structures with multiple parameters", () => {
+      const code = readFileSync(join(FIXTURES_DIR, "advanced_generics_lifetimes.rs"), "utf-8");
+      const tree = parser.parse(code);
+      const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+      // Check lifetime parameters
+      const lifetimeParams = captures.definitions.filter(c =>
+        c.entity === SemanticEntity.TYPE_PARAMETER && c.modifiers?.is_lifetime
+      );
+      expect(lifetimeParams.length).toBeGreaterThan(5); // Should have multiple lifetime parameters
+
+      // Check specific lifetime structures
+      const multiLifetimeStruct = captures.definitions.find(c =>
+        c.entity === SemanticEntity.CLASS && c.text === "MultiLifetime"
+      );
+      expect(multiLifetimeStruct).toBeDefined();
+
+      const boundedLifetimeStruct = captures.definitions.find(c =>
+        c.entity === SemanticEntity.CLASS && c.text === "BoundedLifetime"
+      );
+      expect(boundedLifetimeStruct).toBeDefined();
+
+      const phantomLifetimeStruct = captures.definitions.find(c =>
+        c.entity === SemanticEntity.CLASS && c.text === "PhantomLifetime"
+      );
+      expect(phantomLifetimeStruct).toBeDefined();
+    });
+
+    it("should parse combined generic and lifetime structures", () => {
+      const code = readFileSync(join(FIXTURES_DIR, "advanced_generics_lifetimes.rs"), "utf-8");
+      const tree = parser.parse(code);
+      const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+      // Check structures with both generics and lifetimes
+      const combinedStruct = captures.definitions.find(c =>
+        c.entity === SemanticEntity.CLASS && c.text === "GenericLifetimeStruct"
+      );
+      expect(combinedStruct).toBeDefined();
+      expect(combinedStruct?.modifiers?.is_generic).toBe(true);
+
+      // Check functions with combined constraints
+      const ultimateFunction = captures.definitions.find(c =>
+        c.entity === SemanticEntity.FUNCTION && c.text === "ultimate_generic_function"
+      );
+      expect(ultimateFunction).toBeDefined();
+      expect(ultimateFunction?.modifiers?.is_generic).toBe(true);
+
+      const complexLifetimeFunction = captures.definitions.find(c =>
+        c.entity === SemanticEntity.FUNCTION && c.text === "complex_lifetime_function"
+      );
+      expect(complexLifetimeFunction).toBeDefined();
+      expect(complexLifetimeFunction?.modifiers?.is_generic).toBe(true);
+    });
+
+    it("should parse where clauses and complex type constraints", () => {
+      const code = readFileSync(join(FIXTURES_DIR, "advanced_generics_lifetimes.rs"), "utf-8");
+      const tree = parser.parse(code);
+      const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+      // Check where clause constraints
+      const whereConstraints = captures.types.filter(c =>
+        c.entity === SemanticEntity.TYPE_CONSTRAINT
+      );
+      expect(whereConstraints.length).toBeGreaterThan(10); // Should have many where clause constraints
+
+      // Check trait bounds in constraints
+      const traitConstraints = whereConstraints.filter(c =>
+        c.text && ["Clone", "Debug", "Display", "PartialEq", "Send", "Sync"].includes(c.text)
+      );
+      expect(traitConstraints.length).toBeGreaterThan(5);
+
+      // Check lifetime constraints
+      const lifetimeConstraints = captures.types.filter(c =>
+        c.entity === SemanticEntity.TYPE_PARAMETER && c.modifiers?.is_lifetime
+      );
+      expect(lifetimeConstraints.length).toBeGreaterThan(3);
+    });
+
+    it("should parse higher-ranked trait bounds (HRTB)", () => {
+      const code = readFileSync(join(FIXTURES_DIR, "advanced_generics_lifetimes.rs"), "utf-8");
+      const tree = parser.parse(code);
+      const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+      // Check function with HRTB
+      const hrtbFunction = captures.definitions.find(c =>
+        c.entity === SemanticEntity.FUNCTION && c.text === "process_with_closure"
+      );
+      expect(hrtbFunction).toBeDefined();
+      expect(hrtbFunction?.modifiers?.is_generic).toBe(true);
+
+      // Check trait with HRTB methods
+      const lifetimeProcessorTrait = captures.definitions.find(c =>
+        c.entity === SemanticEntity.INTERFACE && c.text === "LifetimeProcessor"
+      );
+      expect(lifetimeProcessorTrait).toBeDefined();
+    });
+
+    it("should parse associated types with complex bounds", () => {
+      const code = readFileSync(join(FIXTURES_DIR, "advanced_generics_lifetimes.rs"), "utf-8");
+      const tree = parser.parse(code);
+      const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+      // Check traits with associated types
+      const traitsWithAssocTypes = captures.definitions.filter(c =>
+        c.entity === SemanticEntity.INTERFACE &&
+        ["AdvancedIterator", "Validator", "GenericLifetimeTrait"].includes(c.text || "")
+      );
+      expect(traitsWithAssocTypes.length).toBeGreaterThanOrEqual(3);
+
+      // Check associated type definitions
+      const assocTypes = captures.definitions.filter(c =>
+        c.entity === SemanticEntity.TYPE_ALIAS &&
+        ["Error", "State", "Input", "Output"].includes(c.text || "")
+      );
+      expect(assocTypes.length).toBeGreaterThan(4);
+    });
+
+    it("should build comprehensive type registry with advanced generics", () => {
+      const code = readFileSync(join(FIXTURES_DIR, "advanced_generics_lifetimes.rs"), "utf-8");
+      const tree = parser.parse(code);
+      const index = build_semantic_index("test.rs" as FilePath, tree, "rust" as Language);
+
+      // Check advanced generic types are registered
+      const advancedContainerType = index.local_types.find(t => t.type_name === "AdvancedContainer");
+      expect(advancedContainerType).toBeDefined();
+
+      const matrixType = index.local_types.find(t => t.type_name === "Matrix");
+      expect(matrixType).toBeDefined();
+
+      // Check that multiple generic types are registered
+      expect(index.local_types.length).toBeGreaterThan(10); // Should have many advanced generic types
+
+      // Check that generic parameters are tracked
+      expect(index.symbols.size).toBeGreaterThan(50); // Should have many symbols from complex generic code
+
+      // Check that lifetime-bound types are registered
+      const multiLifetimeType = index.local_types.find(t => t.type_name === "MultiLifetime");
+      expect(multiLifetimeType).toBeDefined();
+
+      const genericLifetimeStructType = index.local_types.find(t => t.type_name === "GenericLifetimeStruct");
+      expect(genericLifetimeStructType).toBeDefined();
+    });
+
+    it("should handle generic trait implementations with complex bounds", () => {
+      const code = readFileSync(join(FIXTURES_DIR, "advanced_generics_lifetimes.rs"), "utf-8");
+      const tree = parser.parse(code);
+      const index = build_semantic_index("test.rs" as FilePath, tree, "rust" as FilePath);
+
+      // Check that trait implementations are captured
+      const traitImpls = Array.from(index.symbols.values()).filter(s =>
+        s.kind === "method" && ["process", "try_next", "validate"].includes(s.name)
+      );
+      expect(traitImpls.length).toBeGreaterThan(3);
+
+      // Check that generic methods are captured
+      const genericMethods = Array.from(index.symbols.values()).filter(s =>
+        s.kind === "method" && ["new", "multiply", "batch_process"].includes(s.name)
+      );
+      expect(genericMethods.length).toBeGreaterThan(2);
+    });
+  });
+
+  describe("Comprehensive Trait System", () => {
+    it("should parse all trait definition types", () => {
+      const code = readFileSync(join(FIXTURES_DIR, "comprehensive_trait_system.rs"), "utf-8");
+      const tree = parser.parse(code);
+      const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+      // Check basic trait definitions
+      const traits = captures.definitions.filter(c => c.entity === SemanticEntity.INTERFACE);
+      const expectedTraits = [
+        "Drawable", "Describable", "Iterator", "Numeric", "Container",
+        "Converter", "Parser", "Shape", "PrintableShape", "Database",
+        "Processor", "Marker", "AsyncProcessor", "StringProcessor"
+      ];
+
+      expectedTraits.forEach(traitName => {
+        expect(traits.some(t => t.text === traitName)).toBe(true);
+      });
+
+      // Check that traits are captured as interface entities
+      expect(traits.length).toBeGreaterThan(10);
+
+      // Check generic traits have proper modifiers
+      const genericTraits = traits.filter(t => t.modifiers?.is_generic);
+      expect(genericTraits.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it("should parse trait methods with proper modifiers", () => {
+      const code = readFileSync(join(FIXTURES_DIR, "comprehensive_trait_system.rs"), "utf-8");
+      const tree = parser.parse(code);
+      const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+      // Check trait methods are marked with is_trait_method
+      const traitMethods = captures.definitions.filter(c =>
+        c.entity === SemanticEntity.METHOD && c.modifiers?.is_trait_method
+      );
+
+      const expectedTraitMethods = [
+        "draw", "area", "name", "description", "next", "collect_vec",
+        "add", "is_zero", "insert", "get", "len", "is_empty",
+        "convert", "parse", "perimeter", "connect", "process"
+      ];
+
+      expectedTraitMethods.forEach(methodName => {
+        expect(traitMethods.some(m => m.text === methodName)).toBe(true);
+      });
+
+      expect(traitMethods.length).toBeGreaterThan(15);
+
+      // Check default implementations are marked properly
+      const defaultMethods = captures.definitions.filter(c =>
+        c.entity === SemanticEntity.METHOD &&
+        c.modifiers?.is_trait_method &&
+        c.modifiers?.has_default_impl
+      );
+      expect(defaultMethods.length).toBeGreaterThan(3);
+    });
+
+    it("should parse associated types and constants", () => {
+      const code = readFileSync(join(FIXTURES_DIR, "comprehensive_trait_system.rs"), "utf-8");
+      const tree = parser.parse(code);
+      const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+      // Check associated types
+      const associatedTypes = captures.definitions.filter(c =>
+        c.entity === SemanticEntity.TYPE_ALIAS && c.modifiers?.is_associated_type
+      );
+
+      const expectedAssocTypes = ["Item", "Error", "Output", "Connection", "Transaction", "Row"];
+      expectedAssocTypes.forEach(typeName => {
+        expect(associatedTypes.some(t => t.text === typeName)).toBe(true);
+      });
+
+      // Check associated constants
+      const associatedConstants = captures.definitions.filter(c =>
+        c.entity === SemanticEntity.CONSTANT && c.modifiers?.is_associated
+      );
+
+      const expectedConstants = ["ZERO", "ONE", "MAX_CONNECTIONS", "TIMEOUT_SECONDS"];
+      expectedConstants.forEach(constName => {
+        expect(associatedConstants.some(c => c.text === constName)).toBe(true);
+      });
+
+      expect(associatedTypes.length).toBeGreaterThan(5);
+      expect(associatedConstants.length).toBeGreaterThan(3);
+    });
+
+    it("should parse trait implementations", () => {
+      const code = readFileSync(join(FIXTURES_DIR, "comprehensive_trait_system.rs"), "utf-8");
+      const tree = parser.parse(code);
+      const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+      // Check trait implementation methods
+      const traitImplMethods = captures.definitions.filter(c =>
+        c.entity === SemanticEntity.METHOD && c.modifiers?.is_trait_impl
+      );
+      expect(traitImplMethods.length).toBeGreaterThan(10);
+
+      // Check specific implementations exist
+      const drawMethods = traitImplMethods.filter(m => m.text === "draw");
+      expect(drawMethods.length).toBeGreaterThanOrEqual(2); // Circle and Rectangle
+
+      const areaMethods = traitImplMethods.filter(m => m.text === "area");
+      expect(areaMethods.length).toBeGreaterThanOrEqual(2);
+
+      // Check associated functions in implementations
+      const associatedFunctions = captures.definitions.filter(c =>
+        c.entity === SemanticEntity.METHOD &&
+        c.modifiers?.is_trait_impl &&
+        c.modifiers?.is_static
+      );
+      expect(associatedFunctions.length).toBeGreaterThan(0);
+    });
+
+    it("should parse generic trait implementations", () => {
+      const code = readFileSync(join(FIXTURES_DIR, "comprehensive_trait_system.rs"), "utf-8");
+      const tree = parser.parse(code);
+      const index = build_semantic_index("test.rs" as FilePath, tree, "rust" as Language);
+
+      // Check that generic trait implementations are tracked
+      const containerImpl = Array.from(index.symbols.values()).filter(s =>
+        s.kind === "method" && s.name === "insert"
+      );
+      expect(containerImpl.length).toBeGreaterThan(0);
+
+      const iteratorImpl = Array.from(index.symbols.values()).filter(s =>
+        s.kind === "method" && s.name === "next"
+      );
+      expect(iteratorImpl.length).toBeGreaterThan(0);
+
+      // Check blanket implementations
+      const numericImpl = Array.from(index.symbols.values()).filter(s =>
+        s.kind === "method" && s.name === "add"
+      );
+      expect(numericImpl.length).toBeGreaterThan(0);
+    });
+
+    it("should handle complex trait bounds and where clauses", () => {
+      const code = readFileSync(join(FIXTURES_DIR, "comprehensive_trait_system.rs"), "utf-8");
+      const tree = parser.parse(code);
+      const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+      // Check functions with trait bounds
+      const boundedFunctions = captures.definitions.filter(c =>
+        c.entity === SemanticEntity.FUNCTION &&
+        ["draw_shapes", "print_shapes", "process_iterator", "parse_and_process"].includes(c.text || "")
+      );
+      expect(boundedFunctions.length).toBeGreaterThanOrEqual(4);
+
+      // Check type constraints in where clauses
+      const typeConstraints = captures.types.filter(c =>
+        c.entity === SemanticEntity.TYPE_CONSTRAINT
+      );
+      expect(typeConstraints.length).toBeGreaterThan(10);
+    });
+
+    it("should parse supertrait relationships", () => {
+      const code = readFileSync(join(FIXTURES_DIR, "comprehensive_trait_system.rs"), "utf-8");
+      const tree = parser.parse(code);
+      const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+      // Check that Shape trait exists (has supertraits)
+      const shapeTrait = captures.definitions.find(c =>
+        c.entity === SemanticEntity.INTERFACE && c.text === "Shape"
+      );
+      expect(shapeTrait).toBeDefined();
+
+      // Check that PrintableShape trait exists (multiple supertraits)
+      const printableShapeTrait = captures.definitions.find(c =>
+        c.entity === SemanticEntity.INTERFACE && c.text === "PrintableShape"
+      );
+      expect(printableShapeTrait).toBeDefined();
+
+      // Check trait implementations for supertrait methods
+      const shapeImpls = captures.definitions.filter(c =>
+        c.entity === SemanticEntity.METHOD &&
+        c.modifiers?.is_trait_impl &&
+        ["perimeter", "description"].includes(c.text || "")
+      );
+      expect(shapeImpls.length).toBeGreaterThan(1);
+    });
+
+    it("should parse operator overloading through traits", () => {
+      const code = readFileSync(join(FIXTURES_DIR, "comprehensive_trait_system.rs"), "utf-8");
+      const tree = parser.parse(code);
+      const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+      // Check Add trait implementation
+      const addImpl = captures.definitions.filter(c =>
+        c.entity === SemanticEntity.METHOD &&
+        c.modifiers?.is_trait_impl &&
+        c.text === "add"
+      );
+      expect(addImpl.length).toBeGreaterThan(0);
+
+      // Check Index trait implementation
+      const indexImpl = captures.definitions.filter(c =>
+        c.entity === SemanticEntity.METHOD &&
+        c.modifiers?.is_trait_impl &&
+        c.text === "index"
+      );
+      expect(indexImpl.length).toBeGreaterThan(0);
+    });
+
+    it("should build comprehensive type registry with trait information", () => {
+      const code = readFileSync(join(FIXTURES_DIR, "comprehensive_trait_system.rs"), "utf-8");
+      const tree = parser.parse(code);
+      const index = build_semantic_index("test.rs" as FilePath, tree, "rust" as Language);
+
+      // Check that trait types are registered
+      const traits = index.local_types.filter(t =>
+        ["Drawable", "Container", "Iterator", "Shape"].includes(t.type_name)
+      );
+      expect(traits.length).toBeGreaterThan(3);
+
+      // Check that implementation types are registered
+      const impls = index.local_types.filter(t =>
+        ["Circle", "Rectangle", "Vec2D", "NumberIterator"].includes(t.type_name)
+      );
+      expect(impls.length).toBeGreaterThan(3);
+
+      // Check total symbol count (should be substantial)
+      expect(index.symbols.size).toBeGreaterThan(100);
+
+      // Check that methods from different implementations are tracked
+      const methods = Array.from(index.symbols.values()).filter(s => s.kind === "method");
+      expect(methods.length).toBeGreaterThan(30);
+    });
+
+    it("should handle associated type implementations", () => {
+      const code = readFileSync(join(FIXTURES_DIR, "comprehensive_trait_system.rs"), "utf-8");
+      const tree = parser.parse(code);
+      const captures = query_tree_and_parse_captures("rust" as Language, tree, "test.rs" as FilePath);
+
+      // Check associated type implementations in trait impls
+      const assocTypeImpls = captures.definitions.filter(c =>
+        c.entity === SemanticEntity.TYPE_ALIAS &&
+        c.modifiers?.is_associated_type &&
+        c.modifiers?.is_trait_impl
+      );
+      expect(assocTypeImpls.length).toBeGreaterThan(3);
+
+      // Check that associated types like "Item = i32" are captured
+      const itemAssoc = assocTypeImpls.filter(t => t.text === "Item");
+      expect(itemAssoc.length).toBeGreaterThan(0);
+
+      const errorAssoc = assocTypeImpls.filter(t => t.text === "Error");
+      expect(errorAssoc.length).toBeGreaterThan(0);
+    });
+
+    it("should handle trait objects and dynamic dispatch patterns", () => {
+      const code = readFileSync(join(FIXTURES_DIR, "comprehensive_trait_system.rs"), "utf-8");
+      const tree = parser.parse(code);
+      const index = build_semantic_index("test.rs" as FilePath, tree, "rust" as Language);
+
+      // Check functions that work with trait objects
+      const traitObjectFunctions = Array.from(index.symbols.values()).filter(s =>
+        s.kind === "function" &&
+        ["draw_mixed_shapes", "describe_shapes", "complex_trait_interaction"].includes(s.name)
+      );
+      expect(traitObjectFunctions.length).toBeGreaterThanOrEqual(3);
+
+      // Check that Box<dyn Trait> patterns are handled in type system
+      const references = index.references;
+      // Just verify the structure exists, call tracking is handled elsewhere
+      expect(references).toBeDefined();
+      expect(references.calls).toBeDefined();
+    });
+  });
 });

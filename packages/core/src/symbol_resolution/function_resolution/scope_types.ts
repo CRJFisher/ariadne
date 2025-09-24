@@ -27,8 +27,10 @@ export interface ScopeResolutionContext {
 export interface SymbolLookupResult {
   readonly symbol_id: SymbolId;
   readonly scope_id: ScopeId;
-  readonly resolution_method: "lexical" | "hoisted" | "global";
-  readonly visibility: "local" | "closure" | "global";
+  readonly resolution_method: "lexical" | "hoisted" | "global" | "trait" | "associated";
+  readonly visibility: "local" | "closure" | "global" | "trait";
+  /** For trait method lookups, which trait provides this symbol */
+  readonly trait_context?: SymbolId;
 }
 
 /**
@@ -69,6 +71,10 @@ export interface ScopeAnalysis {
   readonly function_scope: ScopeId | null;
   /** Module/global scope for the file */
   readonly module_scope: ScopeId;
+  /** Trait scope containing the location (Rust-specific) */
+  readonly trait_scope?: ScopeId | null;
+  /** Implementation scope containing the location (Rust-specific) */
+  readonly impl_scope?: ScopeId | null;
 }
 
 /**
@@ -116,5 +122,8 @@ export interface LanguageSpecificConfig {
   readonly rust?: {
     readonly include_std: boolean;
     readonly include_core: boolean;
+    readonly include_trait_methods: boolean;
+    readonly include_associated_types: boolean;
+    readonly respect_trait_bounds: boolean;
   };
 }

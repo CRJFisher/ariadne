@@ -68,7 +68,7 @@ export function build_global_type_registry(
     }
   }
 
-  // Phase 2: Resolve inheritance relationships
+  // Phase 2: Resolve inheritance relationships and trait implementations
   const hierarchy = resolve_type_hierarchy(
     local_types,
     types,
@@ -90,6 +90,9 @@ export function build_global_type_registry(
       type_def.base_types.push(...impl_types);
     }
   }
+
+  // Phase 2.5: Resolve trait implementations (Rust-specific)
+  resolve_trait_implementations(types, local_types, type_names, resolved_imports);
 
   // Phase 3: Build complete member maps with inheritance
   resolve_all_members(types, local_types, hierarchy);
@@ -334,6 +337,65 @@ function resolve_all_members(
           };
           resolved_type.all_members.set(member_name, inherited_member);
         }
+      }
+    }
+  }
+}
+
+/**
+ * Resolve trait implementations for Rust types
+ */
+function resolve_trait_implementations(
+  resolved_types: Map<TypeId, ResolvedTypeDefinition>,
+  local_types: Map<FilePath, LocalTypeDefinition[]>,
+  type_names: Map<FilePath, Map<SymbolName, TypeId>>,
+  resolved_imports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>
+): void {
+  // This function processes Rust trait implementations
+  // It looks for types with trait bounds and associated types
+
+  for (const [file_path, type_defs] of local_types) {
+    for (const type_def of type_defs) {
+      const type_id = create_type_id(type_def);
+      const resolved_type = resolved_types.get(type_id);
+      if (!resolved_type) continue;
+
+      // Handle Rust-specific trait features
+      if (type_def.is_generic && type_def.type_parameters) {
+        // Add type parameter information to the resolved type
+        resolved_type.is_generic = true;
+        resolved_type.type_parameters = type_def.type_parameters.map(param => ({
+          name: param.name,
+          location: param.location,
+          bounds: param.bounds?.map(bound => ({
+            type_name: bound.type_name,
+            constraint_kind: bound.constraint_kind,
+            bound_types: [], // Would be resolved with proper trait resolution
+            bound_names: bound.bound_names,
+            location: bound.location,
+          })),
+          default_type: undefined, // Would be resolved to TypeId
+        }));
+      }
+
+      if (type_def.where_constraints) {
+        // Add where clause constraints
+        resolved_type.where_constraints = type_def.where_constraints.map(constraint => ({
+          type_name: constraint.type_name,
+          constraint_kind: constraint.constraint_kind,
+          bound_types: [], // Would be resolved with proper trait resolution
+          bound_names: constraint.bound_names,
+          location: constraint.location,
+        }));
+      }
+
+      if (type_def.lifetime_parameters) {
+        // Add lifetime parameters
+        resolved_type.lifetime_parameters = type_def.lifetime_parameters.map(lifetime => ({
+          name: lifetime.name,
+          location: lifetime.location,
+          bounds: lifetime.bounds,
+        }));
       }
     }
   }

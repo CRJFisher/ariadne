@@ -44,6 +44,41 @@ export interface LocalTypeDefinition {
   // Names only - not resolved
   readonly extends_names?: SymbolName[];
   readonly implements_names?: SymbolName[];
+
+  // Rust-specific features
+  readonly is_generic?: boolean;
+  readonly type_parameters?: TypeParameter[];
+  readonly lifetime_parameters?: LifetimeParameter[];
+  readonly where_constraints?: TypeConstraint[];
+}
+
+/**
+ * Rust type parameter (e.g., T in Vec<T>)
+ */
+export interface TypeParameter {
+  readonly name: SymbolName;
+  readonly location: Location;
+  readonly bounds?: TypeConstraint[];
+  readonly default_type?: string;
+}
+
+/**
+ * Rust lifetime parameter (e.g., 'a in &'a str)
+ */
+export interface LifetimeParameter {
+  readonly name: SymbolName; // e.g., "a" for 'a
+  readonly location: Location;
+  readonly bounds?: SymbolName[]; // Other lifetimes this must outlive
+}
+
+/**
+ * Type constraint (e.g., T: Clone + Send in where clauses)
+ */
+export interface TypeConstraint {
+  readonly type_name: SymbolName;
+  readonly constraint_kind: "trait_bound" | "lifetime_bound" | "type_equality";
+  readonly bound_names: SymbolName[];
+  readonly location: Location;
 }
 
 /**
@@ -116,6 +151,42 @@ export interface ResolvedTypeDefinition {
   readonly inherited_members?: Map<SymbolName, ResolvedMemberInfo>;
   readonly parent_types?: TypeId[];
   readonly child_types?: TypeId[];
+
+  // Rust-specific features (resolved)
+  readonly is_generic?: boolean;
+  readonly type_parameters?: ResolvedTypeParameter[];
+  readonly lifetime_parameters?: ResolvedLifetimeParameter[];
+  readonly where_constraints?: ResolvedTypeConstraint[];
+}
+
+/**
+ * Resolved type parameter with bound TypeIds
+ */
+export interface ResolvedTypeParameter {
+  readonly name: SymbolName;
+  readonly location: Location;
+  readonly bounds?: ResolvedTypeConstraint[];
+  readonly default_type?: TypeId;
+}
+
+/**
+ * Resolved lifetime parameter
+ */
+export interface ResolvedLifetimeParameter {
+  readonly name: SymbolName;
+  readonly location: Location;
+  readonly bounds?: SymbolName[];
+}
+
+/**
+ * Resolved type constraint with TypeIds
+ */
+export interface ResolvedTypeConstraint {
+  readonly type_name: SymbolName;
+  readonly constraint_kind: "trait_bound" | "lifetime_bound" | "type_equality";
+  readonly bound_types?: TypeId[]; // Resolved trait/type bounds
+  readonly bound_names: SymbolName[]; // Original names for debugging
+  readonly location: Location;
 }
 
 /**

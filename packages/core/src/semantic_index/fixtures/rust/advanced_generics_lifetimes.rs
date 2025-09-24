@@ -1,198 +1,395 @@
-// Advanced generics, lifetimes, and type constraints
+// Advanced generics and lifetimes for comprehensive testing
 
 use std::fmt::{Debug, Display};
 use std::marker::PhantomData;
+use std::collections::HashMap;
 
-// Generic struct with lifetime and constraints
-pub struct Container<'a, T, U>
-where
-    T: Clone + Debug,
-    U: Display,
-{
-    data: &'a T,
-    metadata: U,
-    _phantom: PhantomData<T>,
-}
+// ============================================================================
+// ADVANCED GENERICS
+// ============================================================================
 
-// Multiple lifetime parameters
-pub struct BorrowChecker<'a, 'b, 'c> {
-    first: &'a str,
-    second: &'b mut String,
-    third: &'c [u8],
-}
-
-// Higher-rank trait bounds (HRTB)
-pub fn higher_rank<F>(f: F) -> String
-where
-    F: for<'a> Fn(&'a str) -> &'a str,
-{
-    f("test").to_string()
-}
-
-// Associated types in generics
-pub trait Iterator<T> {
-    type Item;
-    type Error = String;
-
-    fn next(&mut self) -> Result<Option<Self::Item>, Self::Error>;
-}
-
-// Generic implementation with where clause
-impl<'a, T, U> Container<'a, T, U>
+// Generic struct with multiple type parameters and where clause
+pub struct AdvancedContainer<T, U, V>
 where
     T: Clone + Debug + Send + Sync,
-    U: Display + Default,
+    U: Display + PartialEq,
+    V: Default + Into<String>,
 {
-    pub fn new(data: &'a T) -> Self {
-        Container {
+    primary: T,
+    secondary: U,
+    metadata: V,
+    phantom: PhantomData<(T, U, V)>,
+}
+
+// Generic enum with complex constraints
+pub enum ComplexResult<T, E, M>
+where
+    T: Clone + Debug,
+    E: std::error::Error + Send + Sync + 'static,
+    M: Default + Clone,
+{
+    Success(T, M),
+    Error(E),
+    Partial(T, E, M),
+    Empty,
+}
+
+// Const generics with complex expressions
+pub struct Matrix<T, const ROWS: usize, const COLS: usize>
+where
+    T: Copy + Default + std::ops::Add<Output = T>,
+{
+    data: [[T; COLS]; ROWS],
+}
+
+impl<T, const ROWS: usize, const COLS: usize> Matrix<T, ROWS, COLS>
+where
+    T: Copy + Default + std::ops::Add<Output = T> + std::ops::Mul<Output = T>,
+{
+    pub fn new() -> Self {
+        Matrix {
+            data: [[T::default(); COLS]; ROWS],
+        }
+    }
+
+    pub fn multiply<const OTHER_COLS: usize>(
+        &self,
+        other: &Matrix<T, COLS, OTHER_COLS>,
+    ) -> Matrix<T, ROWS, OTHER_COLS> {
+        Matrix::new()
+    }
+}
+
+// Generic trait with associated types and complex bounds
+pub trait AdvancedIterator<Item>
+where
+    Item: Clone + Debug,
+{
+    type Error: std::error::Error;
+    type State: Default + Clone;
+
+    fn try_next(&mut self) -> Result<Option<Item>, Self::Error>;
+    fn state(&self) -> &Self::State;
+    fn reset(&mut self);
+
+    // Default implementation with where clause
+    fn collect_all<C>(&mut self) -> Result<C, Self::Error>
+    where
+        C: Default + Extend<Item>,
+        Item: Clone,
+    {
+        let mut collection = C::default();
+        while let Some(item) = self.try_next()? {
+            collection.extend(std::iter::once(item));
+        }
+        Ok(collection)
+    }
+}
+
+// Higher-ranked trait bounds (HRTB)
+pub fn process_with_closure<F, T>(data: Vec<T>, processor: F) -> Vec<String>
+where
+    F: for<'a> Fn(&'a T) -> &'a str,
+    T: Debug,
+{
+    data.iter().map(|item| processor(item).to_string()).collect()
+}
+
+// Self-referential generic types
+pub struct SelfRef<T>
+where
+    T: Clone,
+{
+    value: T,
+    reference: Option<Box<SelfRef<T>>>,
+}
+
+impl<T> SelfRef<T>
+where
+    T: Clone + Debug,
+{
+    pub fn new(value: T) -> Self {
+        SelfRef {
+            value,
+            reference: None,
+        }
+    }
+
+    pub fn link(&mut self, other: SelfRef<T>) {
+        self.reference = Some(Box::new(other));
+    }
+}
+
+// Generic function with complex where clause and multiple type parameters
+pub fn complex_generic_function<T, U, V, W>(
+    input: T,
+    transformer: U,
+    validator: V,
+) -> Result<W, Box<dyn std::error::Error>>
+where
+    T: Clone + Debug + Send,
+    U: Fn(T) -> Result<V::Output, V::Error>,
+    V: Validator<Input = T>,
+    V::Output: Into<W>,
+    V::Error: std::error::Error + 'static,
+    W: Debug + Clone,
+{
+    let validated = validator.validate(input.clone())?;
+    let result = transformer(input)?;
+    Ok(result.into())
+}
+
+// Generic trait with associated types
+pub trait Validator {
+    type Input;
+    type Output;
+    type Error: std::error::Error;
+
+    fn validate(&self, input: Self::Input) -> Result<Self::Output, Self::Error>;
+}
+
+// ============================================================================
+// ADVANCED LIFETIMES
+// ============================================================================
+
+// Multiple lifetime parameters with constraints
+pub struct MultiLifetime<'a, 'b, T>
+where
+    'a: 'b,  // lifetime bound: 'a outlives 'b
+    T: 'a,   // type bound: T must live at least as long as 'a
+{
+    primary: &'a T,
+    secondary: &'b str,
+    backup: Option<&'a T>,
+}
+
+impl<'a, 'b, T> MultiLifetime<'a, 'b, T>
+where
+    'a: 'b,
+    T: 'a + Clone + Debug,
+{
+    pub fn new(primary: &'a T, secondary: &'b str) -> Self {
+        MultiLifetime {
+            primary,
+            secondary,
+            backup: None,
+        }
+    }
+
+    pub fn with_backup(mut self, backup: &'a T) -> Self {
+        self.backup = Some(backup);
+        self
+    }
+
+    // Method with lifetime parameters
+    pub fn compare<'c>(&self, other: &'c T) -> bool
+    where
+        'a: 'c,
+        T: PartialEq,
+    {
+        self.primary == other
+    }
+}
+
+// Struct with lifetime bounds in where clause
+pub struct BoundedLifetime<'a, T>
+where
+    T: 'a + Clone,
+{
+    data: &'a [T],
+    cache: HashMap<usize, T>,
+}
+
+impl<'a, T> BoundedLifetime<'a, T>
+where
+    T: 'a + Clone + Debug + std::hash::Hash + Eq,
+{
+    pub fn new(data: &'a [T]) -> Self {
+        BoundedLifetime {
             data,
-            metadata: U::default(),
+            cache: HashMap::new(),
+        }
+    }
+
+    pub fn get_cached(&mut self, index: usize) -> Option<&T> {
+        if !self.cache.contains_key(&index) {
+            if let Some(item) = self.data.get(index) {
+                self.cache.insert(index, item.clone());
+            }
+        }
+        self.cache.get(&index)
+    }
+}
+
+// Function with complex lifetime relationships
+pub fn complex_lifetime_function<'a, 'b, T>(
+    primary: &'a T,
+    secondary: &'b T,
+    condition: bool,
+) -> &'a T
+where
+    'b: 'a,  // 'b outlives 'a
+    T: Clone + Debug,
+{
+    if condition {
+        primary
+    } else {
+        // This is safe because 'b: 'a
+        unsafe { std::mem::transmute(secondary) }
+    }
+}
+
+// Higher-ranked lifetime bounds in trait
+pub trait LifetimeProcessor {
+    fn process<'a>(&self, input: &'a str) -> &'a str;
+
+    // Method with HRTB
+    fn process_all<F>(&self, inputs: Vec<String>, processor: F) -> Vec<String>
+    where
+        F: for<'a> Fn(&'a str) -> &'a str;
+}
+
+// Implementation with lifetime parameters
+impl<'data> LifetimeProcessor for BoundedLifetime<'data, String> {
+    fn process<'a>(&self, input: &'a str) -> &'a str {
+        &input[..std::cmp::min(input.len(), 10)]
+    }
+
+    fn process_all<F>(&self, inputs: Vec<String>, processor: F) -> Vec<String>
+    where
+        F: for<'a> Fn(&'a str) -> &'a str,
+    {
+        inputs.iter().map(|s| processor(s).to_string()).collect()
+    }
+}
+
+// Struct with phantom lifetime
+pub struct PhantomLifetime<'a, T> {
+    data: T,
+    _phantom: PhantomData<&'a ()>,
+}
+
+impl<'a, T> PhantomLifetime<'a, T>
+where
+    T: Clone + 'a,
+{
+    pub fn new(data: T) -> Self {
+        PhantomLifetime {
+            data,
             _phantom: PhantomData,
         }
     }
 
-    pub fn get_data(&self) -> &T {
-        self.data
-    }
-
-    pub fn transform<V, F>(&self, f: F) -> V
+    pub fn with_lifetime_bound<'b>(self) -> PhantomLifetime<'b, T>
     where
-        F: Fn(&T) -> V,
-        V: Debug,
+        'a: 'b,
     {
-        f(self.data)
-    }
-}
-
-// Const generics
-pub struct FixedArray<T, const N: usize> {
-    data: [T; N],
-}
-
-impl<T: Default + Copy, const N: usize> FixedArray<T, N> {
-    pub fn new() -> Self {
-        FixedArray {
-            data: [T::default(); N],
-        }
-    }
-
-    pub fn get(&self, index: usize) -> Option<&T> {
-        self.data.get(index)
-    }
-}
-
-// Type aliases with generics
-pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-pub type HashMap<K, V> = std::collections::HashMap<K, V>;
-
-// Trait objects and dynamic dispatch
-pub trait Drawable {
-    fn draw(&self);
-}
-
-pub struct Canvas {
-    objects: Vec<Box<dyn Drawable + Send + Sync>>,
-}
-
-impl Canvas {
-    pub fn new() -> Self {
-        Canvas {
-            objects: Vec::new(),
-        }
-    }
-
-    pub fn add_object(&mut self, obj: Box<dyn Drawable + Send + Sync>) {
-        self.objects.push(obj);
-    }
-
-    pub fn render(&self) {
-        for obj in &self.objects {
-            obj.draw();
+        PhantomLifetime {
+            data: self.data,
+            _phantom: PhantomData,
         }
     }
 }
 
-// Generic enum with associated data
-pub enum Either<L, R> {
-    Left(L),
-    Right(R),
+// ============================================================================
+// COMBINED GENERICS AND LIFETIMES
+// ============================================================================
+
+// Generic struct with both type parameters and lifetimes
+pub struct GenericLifetimeStruct<'a, 'b, T, U>
+where
+    'a: 'b,
+    T: 'a + Clone + Debug,
+    U: 'b + Display + PartialEq,
+{
+    primary_data: &'a [T],
+    secondary_data: &'b U,
+    processor: Box<dyn Fn(&T) -> String + 'a>,
 }
 
-impl<L, R> Either<L, R> {
-    pub fn is_left(&self) -> bool {
-        matches!(self, Either::Left(_))
+impl<'a, 'b, T, U> GenericLifetimeStruct<'a, 'b, T, U>
+where
+    'a: 'b,
+    T: 'a + Clone + Debug + Send + Sync,
+    U: 'b + Display + PartialEq + Clone,
+{
+    pub fn new(
+        primary_data: &'a [T],
+        secondary_data: &'b U,
+        processor: Box<dyn Fn(&T) -> String + 'a>,
+    ) -> Self {
+        GenericLifetimeStruct {
+            primary_data,
+            secondary_data,
+            processor,
+        }
     }
 
-    pub fn map_left<T, F>(self, f: F) -> Either<T, R>
+    pub fn process_with_lifetime<'c, V>(&self, external: &'c V) -> Vec<String>
     where
-        F: FnOnce(L) -> T,
+        'a: 'c,
+        V: Debug + Clone,
     {
-        match self {
-            Either::Left(l) => Either::Left(f(l)),
-            Either::Right(r) => Either::Right(r),
-        }
+        self.primary_data
+            .iter()
+            .map(|item| (self.processor)(item))
+            .collect()
     }
 }
 
-// Lifetime bounds in generics
-pub fn longest<'a, T>(x: &'a T, y: &'a T) -> &'a T
+// Generic trait with lifetime parameters and associated types
+pub trait GenericLifetimeTrait<'a, T>
 where
-    T: PartialOrd,
+    T: 'a + Clone,
 {
-    if x > y { x } else { y }
-}
+    type Output: 'a + Clone + Debug;
+    type Error: std::error::Error + Send + Sync + 'static;
 
-// Self type in traits
-pub trait Builder {
-    type Output;
+    fn process(&self, input: &'a T) -> Result<Self::Output, Self::Error>;
 
-    fn new() -> Self;
-    fn build(self) -> Self::Output;
-    fn chain(self) -> Self
+    fn batch_process<I>(&self, inputs: I) -> Vec<Result<Self::Output, Self::Error>>
     where
-        Self: Sized;
+        I: IntoIterator<Item = &'a T>;
 }
 
-// Generic functions with multiple constraints
-pub fn complex_function<T, U, V>(
-    input: T,
-    converter: U,
-    processor: V,
-) -> String
+// Complex implementation with where clauses
+impl<'a, T, U> GenericLifetimeTrait<'a, T> for GenericLifetimeStruct<'a, '_, T, U>
 where
-    T: Clone + Debug + Send,
-    U: Fn(T) -> String + Send + Sync,
-    V: Fn(String) -> String + 'static,
+    T: 'a + Clone + Debug + Send + Sync + std::hash::Hash,
+    U: Display + PartialEq + Clone,
 {
-    let converted = converter(input);
-    processor(converted)
+    type Output = String;
+    type Error = Box<dyn std::error::Error + Send + Sync>;
+
+    fn process(&self, input: &'a T) -> Result<Self::Output, Self::Error> {
+        Ok((self.processor)(input))
+    }
+
+    fn batch_process<I>(&self, inputs: I) -> Vec<Result<Self::Output, Self::Error>>
+    where
+        I: IntoIterator<Item = &'a T>,
+    {
+        inputs
+            .into_iter()
+            .map(|input| self.process(input))
+            .collect()
+    }
 }
 
-// Async trait (requires async_trait crate in practice)
-#[async_trait::async_trait]
-pub trait AsyncProcessor {
-    type Item;
-    type Error;
-
-    async fn process(&mut self, item: Self::Item) -> Result<(), Self::Error>;
-}
-
-// GAT (Generic Associated Types) - Rust 1.65+
-pub trait LendingIterator {
-    type Item<'a> where Self: 'a;
-
-    fn next(&mut self) -> Option<Self::Item<'_>>;
-}
-
-// Complex type bounds with lifetimes
-pub fn process_with_bounds<'a, 'b, T, F>(
-    data: &'a mut T,
-    processor: F,
-) -> &'a T
+// Function with complex generic and lifetime constraints
+pub fn ultimate_generic_function<'a, 'b, T, U, V, F>(
+    data: &'a [T],
+    context: &'b U,
+    transformer: F,
+) -> Result<Vec<V>, Box<dyn std::error::Error + Send + Sync>>
 where
-    T: Debug + Clone + 'b,
-    F: for<'c> Fn(&'c mut T) -> &'c T,
-    'b: 'a,
+    'a: 'b,
+    T: 'a + Clone + Debug + Send + Sync + std::hash::Hash + Eq,
+    U: 'b + Display + Clone + Send + Sync,
+    V: Clone + Debug + Send + Sync,
+    F: Fn(&'a T, &'b U) -> Result<V, Box<dyn std::error::Error + Send + Sync>> + Send + Sync,
 {
-    processor(data)
+    data.iter()
+        .map(|item| transformer(item, context))
+        .collect()
 }

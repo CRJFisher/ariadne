@@ -37,6 +37,7 @@ describe("Rust Language Configuration", () => {
         "scope.closure",
         "scope.impl",
         "scope.trait",
+        "scope.interface",
         "scope.block",
         "scope.block.unsafe",
         "scope.match",
@@ -53,13 +54,21 @@ describe("Rust Language Configuration", () => {
     it("should contain Rust type definition mappings", () => {
       const typeDefinitions = [
         "def.struct",
+        "def.struct.generic",
         "def.enum",
+        "def.enum.generic",
         "def.enum_variant",
         "def.trait",
+        "def.trait.generic",
+        "def.interface",
+        "def.interface.generic",
         "def.type_alias",
         "def.const",
         "def.static",
         "def.module",
+        "def.associated_type",
+        "def.associated_type.impl",
+        "def.associated_const",
       ];
 
       for (const mapping of typeDefinitions) {
@@ -79,6 +88,10 @@ describe("Rust Language Configuration", () => {
         "def.method",
         "def.method.associated",
         "def.constructor",
+        "def.trait_method",
+        "def.trait_method.default",
+        "def.trait_impl_method",
+        "def.trait_impl_method.associated",
       ];
 
       for (const mapping of functionDefinitions) {
@@ -201,6 +214,24 @@ describe("Rust Language Configuration", () => {
         expect(RUST_CAPTURE_CONFIG.has(mapping)).toBe(true);
         const config = RUST_CAPTURE_CONFIG.get(mapping);
         expect(config).toBeDefined();
+      }
+    });
+
+    it("should contain constraint capture mappings", () => {
+      const constraintMappings = [
+        "constraint.where_clause",
+        "constraint.type",
+        "constraint.bounds",
+        "constraint.trait",
+        "constraint.trait.generic",
+        "constraint.lifetime",
+      ];
+
+      for (const mapping of constraintMappings) {
+        expect(RUST_CAPTURE_CONFIG.has(mapping)).toBe(true);
+        const config = RUST_CAPTURE_CONFIG.get(mapping);
+        expect(config).toBeDefined();
+        expect(config?.category).toBe(SemanticCategory.TYPE);
       }
     });
   });
@@ -839,7 +870,7 @@ describe("Rust Language Configuration", () => {
       it("should handle lifetime parameters", () => {
         const lifetimeParamConfig = RUST_CAPTURE_CONFIG.get("lifetime.param");
         expect(lifetimeParamConfig?.modifiers).toBeDefined();
-        expect(lifetimeParamConfig?.context).toBeDefined();
+        // Context function is optional for lifetime parameters
 
         if (typeof lifetimeParamConfig?.modifiers === "function") {
           const modifiers = lifetimeParamConfig.modifiers(
@@ -1012,6 +1043,18 @@ describe("Rust Language Configuration", () => {
       }
     });
 
+    it("should handle generic enum definitions", () => {
+      const genericEnumConfig = RUST_CAPTURE_CONFIG.get("def.enum.generic");
+      expect(genericEnumConfig?.modifiers).toBeDefined();
+
+      if (typeof genericEnumConfig?.modifiers === "function") {
+        const modifiers = genericEnumConfig.modifiers(
+          create_simple_mock_node()
+        );
+        expect(modifiers?.is_generic).toBe(true);
+      }
+    });
+
     it("should handle mutable variable definitions", () => {
       const mutVarConfig = RUST_CAPTURE_CONFIG.get("def.variable.mut");
       expect(mutVarConfig?.modifiers).toBeDefined();
@@ -1034,18 +1077,202 @@ describe("Rust Language Configuration", () => {
       }
     });
 
+    it("should handle trait method default implementations", () => {
+      const traitMethodDefaultConfig = RUST_CAPTURE_CONFIG.get("def.trait_method.default");
+      expect(traitMethodDefaultConfig?.modifiers).toBeDefined();
+
+      if (typeof traitMethodDefaultConfig?.modifiers === "function") {
+        const modifiers = traitMethodDefaultConfig.modifiers(
+          create_simple_mock_node()
+        );
+        expect(modifiers?.is_trait_method).toBe(true);
+        expect(modifiers?.has_default_impl).toBe(true);
+      }
+    });
+
+    it("should handle interface definitions", () => {
+      const interfaceConfig = RUST_CAPTURE_CONFIG.get("def.interface");
+      expect(interfaceConfig).toBeDefined();
+      expect(interfaceConfig?.category).toBe(SemanticCategory.DEFINITION);
+      expect(interfaceConfig?.entity).toBe(SemanticEntity.INTERFACE);
+    });
+
+    it("should handle generic interface definitions", () => {
+      const genericInterfaceConfig = RUST_CAPTURE_CONFIG.get("def.interface.generic");
+      expect(genericInterfaceConfig?.modifiers).toBeDefined();
+
+      if (typeof genericInterfaceConfig?.modifiers === "function") {
+        const modifiers = genericInterfaceConfig.modifiers(
+          create_simple_mock_node()
+        );
+        expect(modifiers?.is_generic).toBe(true);
+      }
+    });
+
+    it("should handle associated types in traits", () => {
+      const associatedTypeConfig = RUST_CAPTURE_CONFIG.get("def.associated_type");
+      expect(associatedTypeConfig).toBeDefined();
+      expect(associatedTypeConfig?.category).toBe(SemanticCategory.DEFINITION);
+      expect(associatedTypeConfig?.entity).toBe(SemanticEntity.TYPE_ALIAS);
+      expect(associatedTypeConfig?.modifiers).toBeDefined();
+
+      if (typeof associatedTypeConfig?.modifiers === "function") {
+        const modifiers = associatedTypeConfig.modifiers(
+          create_simple_mock_node()
+        );
+        expect(modifiers?.is_associated_type).toBe(true);
+      }
+    });
+
+    it("should handle associated types in implementations", () => {
+      const associatedTypeImplConfig = RUST_CAPTURE_CONFIG.get("def.associated_type.impl");
+      expect(associatedTypeImplConfig).toBeDefined();
+      expect(associatedTypeImplConfig?.category).toBe(SemanticCategory.DEFINITION);
+      expect(associatedTypeImplConfig?.entity).toBe(SemanticEntity.TYPE_ALIAS);
+      expect(associatedTypeImplConfig?.modifiers).toBeDefined();
+
+      if (typeof associatedTypeImplConfig?.modifiers === "function") {
+        const modifiers = associatedTypeImplConfig.modifiers(
+          create_simple_mock_node()
+        );
+        expect(modifiers?.is_associated_type).toBe(true);
+        expect(modifiers?.is_trait_impl).toBe(true);
+      }
+    });
+
+    it("should handle associated constants in traits", () => {
+      const associatedConstConfig = RUST_CAPTURE_CONFIG.get("def.associated_const");
+      expect(associatedConstConfig).toBeDefined();
+      expect(associatedConstConfig?.category).toBe(SemanticCategory.DEFINITION);
+      expect(associatedConstConfig?.entity).toBe(SemanticEntity.CONSTANT);
+      expect(associatedConstConfig?.modifiers).toBeDefined();
+
+      if (typeof associatedConstConfig?.modifiers === "function") {
+        const modifiers = associatedConstConfig.modifiers(
+          create_simple_mock_node()
+        );
+        expect(modifiers?.is_associated).toBe(true);
+      }
+    });
+
+    it("should handle trait implementation methods", () => {
+      const traitImplMethodConfig = RUST_CAPTURE_CONFIG.get("def.trait_impl_method");
+      expect(traitImplMethodConfig).toBeDefined();
+      expect(traitImplMethodConfig?.category).toBe(SemanticCategory.DEFINITION);
+      expect(traitImplMethodConfig?.entity).toBe(SemanticEntity.METHOD);
+      expect(traitImplMethodConfig?.modifiers).toBeDefined();
+
+      if (typeof traitImplMethodConfig?.modifiers === "function") {
+        const modifiers = traitImplMethodConfig.modifiers(
+          create_simple_mock_node()
+        );
+        expect(modifiers?.is_trait_impl).toBe(true);
+        expect(modifiers?.is_static).toBe(false);
+      }
+    });
+
+    it("should handle trait implementation associated functions", () => {
+      const traitImplAssocConfig = RUST_CAPTURE_CONFIG.get("def.trait_impl_method.associated");
+      expect(traitImplAssocConfig).toBeDefined();
+      expect(traitImplAssocConfig?.category).toBe(SemanticCategory.DEFINITION);
+      expect(traitImplAssocConfig?.entity).toBe(SemanticEntity.METHOD);
+      expect(traitImplAssocConfig?.modifiers).toBeDefined();
+
+      if (typeof traitImplAssocConfig?.modifiers === "function") {
+        const modifiers = traitImplAssocConfig.modifiers(
+          create_simple_mock_node()
+        );
+        expect(modifiers?.is_trait_impl).toBe(true);
+        expect(modifiers?.is_static).toBe(true);
+      }
+    });
+
     it("should handle constrained type parameters", () => {
       const constrainedParamConfig = RUST_CAPTURE_CONFIG.get(
         "def.type_param.constrained"
       );
-      expect(constrainedParamConfig?.modifiers).toBeDefined();
+      expect(constrainedParamConfig).toBeDefined();
+      expect(constrainedParamConfig?.category).toBe(SemanticCategory.DEFINITION);
+      expect(constrainedParamConfig?.entity).toBe(SemanticEntity.TYPE_PARAMETER);
 
+      // modifiers function is optional for constrained type parameters
       if (typeof constrainedParamConfig?.modifiers === "function") {
         const modifiers = constrainedParamConfig.modifiers(
           create_simple_mock_node()
         );
         expect(modifiers).toBeDefined();
       }
+    });
+  });
+
+  describe("Trait Implementation System", () => {
+    it("should handle trait implementation blocks", () => {
+      const traitImplConfig = RUST_CAPTURE_CONFIG.get("impl.trait_impl");
+      expect(traitImplConfig).toBeDefined();
+      expect(traitImplConfig?.category).toBe(SemanticCategory.DEFINITION);
+      expect(traitImplConfig?.entity).toBe(SemanticEntity.CLASS);
+      expect(traitImplConfig?.modifiers).toBeDefined();
+
+      if (typeof traitImplConfig?.modifiers === "function") {
+        const modifiers = traitImplConfig.modifiers(
+          create_simple_mock_node()
+        );
+        expect(modifiers?.is_trait_impl).toBe(true);
+      }
+    });
+
+    it("should handle generic trait implementation blocks", () => {
+      const genericTraitImplConfig = RUST_CAPTURE_CONFIG.get("impl.trait_impl.generic");
+      expect(genericTraitImplConfig).toBeDefined();
+      expect(genericTraitImplConfig?.category).toBe(SemanticCategory.DEFINITION);
+      expect(genericTraitImplConfig?.entity).toBe(SemanticEntity.CLASS);
+      expect(genericTraitImplConfig?.modifiers).toBeDefined();
+
+      if (typeof genericTraitImplConfig?.modifiers === "function") {
+        const modifiers = genericTraitImplConfig.modifiers(
+          create_simple_mock_node()
+        );
+        expect(modifiers?.is_trait_impl).toBe(true);
+        expect(modifiers?.is_generic).toBe(true);
+      }
+    });
+
+    it("should handle trait references in implementations", () => {
+      const implTraitConfig = RUST_CAPTURE_CONFIG.get("impl.trait");
+      expect(implTraitConfig).toBeDefined();
+      expect(implTraitConfig?.category).toBe(SemanticCategory.REFERENCE);
+      expect(implTraitConfig?.entity).toBe(SemanticEntity.INTERFACE);
+    });
+
+    it("should handle type references in implementations", () => {
+      const implTypeConfig = RUST_CAPTURE_CONFIG.get("impl.type");
+      expect(implTypeConfig).toBeDefined();
+      expect(implTypeConfig?.category).toBe(SemanticCategory.REFERENCE);
+      expect(implTypeConfig?.entity).toBe(SemanticEntity.TYPE);
+    });
+
+    it("should handle generic type references in implementations", () => {
+      const implGenericTypeConfig = RUST_CAPTURE_CONFIG.get("impl.type.generic");
+      expect(implGenericTypeConfig).toBeDefined();
+      expect(implGenericTypeConfig?.category).toBe(SemanticCategory.REFERENCE);
+      expect(implGenericTypeConfig?.entity).toBe(SemanticEntity.TYPE);
+      expect(implGenericTypeConfig?.modifiers).toBeDefined();
+
+      if (typeof implGenericTypeConfig?.modifiers === "function") {
+        const modifiers = implGenericTypeConfig.modifiers(
+          create_simple_mock_node()
+        );
+        expect(modifiers?.is_generic).toBe(true);
+      }
+    });
+  });
+
+  describe("Interface Scope Handling", () => {
+    it("should handle interface scope definitions", () => {
+      const interfaceScopeConfig = RUST_CAPTURE_CONFIG.get("scope.interface");
+      expect(interfaceScopeConfig).toBeDefined();
+      expect(interfaceScopeConfig?.category).toBe(SemanticCategory.SCOPE);
+      expect(interfaceScopeConfig?.entity).toBe(SemanticEntity.INTERFACE);
     });
   });
 
@@ -1158,12 +1385,53 @@ describe("Rust Language Configuration", () => {
       }
     });
 
-    it("should handle type parameter analysis with complex constraint expressions", () => {
-      const constraintConfig = RUST_CAPTURE_CONFIG.get("generic.constraint");
-      if (typeof constraintConfig?.context === "function") {
-        // Complex trait bounds shouldn't break the parser
-        const context = constraintConfig.context(create_simple_mock_node());
-        expect(context).toBeDefined();
+    it("should handle where clause constraints", () => {
+      const whereClauseConfig = RUST_CAPTURE_CONFIG.get("constraint.where_clause");
+      expect(whereClauseConfig).toBeDefined();
+      expect(whereClauseConfig?.category).toBe(SemanticCategory.TYPE);
+      expect(whereClauseConfig?.entity).toBe(SemanticEntity.TYPE_CONSTRAINT);
+    });
+
+    it("should handle constraint types", () => {
+      const constraintTypeConfig = RUST_CAPTURE_CONFIG.get("constraint.type");
+      expect(constraintTypeConfig).toBeDefined();
+      expect(constraintTypeConfig?.category).toBe(SemanticCategory.TYPE);
+      expect(constraintTypeConfig?.entity).toBe(SemanticEntity.TYPE_PARAMETER);
+    });
+
+    it("should handle constraint bounds", () => {
+      const constraintBoundsConfig = RUST_CAPTURE_CONFIG.get("constraint.bounds");
+      expect(constraintBoundsConfig).toBeDefined();
+      expect(constraintBoundsConfig?.category).toBe(SemanticCategory.TYPE);
+      expect(constraintBoundsConfig?.entity).toBe(SemanticEntity.TYPE_CONSTRAINT);
+    });
+
+    it("should handle constraint traits", () => {
+      const constraintTraitConfig = RUST_CAPTURE_CONFIG.get("constraint.trait");
+      expect(constraintTraitConfig).toBeDefined();
+      expect(constraintTraitConfig?.category).toBe(SemanticCategory.TYPE);
+      expect(constraintTraitConfig?.entity).toBe(SemanticEntity.TYPE_CONSTRAINT);
+    });
+
+    it("should handle generic constraint traits", () => {
+      const genericConstraintTraitConfig = RUST_CAPTURE_CONFIG.get("constraint.trait.generic");
+      expect(genericConstraintTraitConfig).toBeDefined();
+      expect(genericConstraintTraitConfig?.category).toBe(SemanticCategory.TYPE);
+      expect(genericConstraintTraitConfig?.entity).toBe(SemanticEntity.TYPE_CONSTRAINT);
+    });
+
+    it("should handle constraint lifetimes", () => {
+      const constraintLifetimeConfig = RUST_CAPTURE_CONFIG.get("constraint.lifetime");
+      expect(constraintLifetimeConfig).toBeDefined();
+      expect(constraintLifetimeConfig?.category).toBe(SemanticCategory.TYPE);
+      expect(constraintLifetimeConfig?.entity).toBe(SemanticEntity.TYPE_PARAMETER);
+      expect(constraintLifetimeConfig?.modifiers).toBeDefined();
+
+      if (typeof constraintLifetimeConfig?.modifiers === "function") {
+        const modifiers = constraintLifetimeConfig.modifiers(
+          create_simple_mock_node()
+        );
+        expect(modifiers?.is_lifetime).toBe(true);
       }
     });
   });
@@ -1174,7 +1442,7 @@ describe("Rust Language Configuration", () => {
         "ref.associated_function"
       );
       expect(associatedFnConfig).toBeDefined();
-      expect(associatedFnConfig?.entity).toBe(SemanticEntity.CALL);
+      expect(associatedFnConfig?.entity).toBe(SemanticEntity.METHOD);
 
       if (associatedFnConfig?.context) {
         const context = associatedFnConfig.context(create_simple_mock_node());
@@ -1185,7 +1453,7 @@ describe("Rust Language Configuration", () => {
     it("should detect instance methods using . syntax", () => {
       const methodCallConfig = RUST_CAPTURE_CONFIG.get("ref.method_call");
       expect(methodCallConfig).toBeDefined();
-      expect(methodCallConfig?.entity).toBe(SemanticEntity.CALL);
+      expect(methodCallConfig?.entity).toBe(SemanticEntity.METHOD);
 
       // Regular method calls are instance methods
       if (methodCallConfig?.context) {

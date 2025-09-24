@@ -173,7 +173,13 @@ export function build_semantic_index(
   process_class_metadata(grouped.types, symbols);
 
   // Phase 6: Extract local type members (single-file only)
-  const local_types = extract_type_members(symbols, scopes, file_path);
+  const local_types = extract_type_members(
+    symbols,
+    scopes,
+    file_path,
+    grouped.definitions,
+    grouped.types
+  );
 
   // Phase 7: Extract type annotations (unresolved)
   const local_type_annotations = process_type_annotations(
