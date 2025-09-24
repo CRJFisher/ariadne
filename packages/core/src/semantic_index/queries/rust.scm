@@ -371,10 +371,24 @@
   pattern: (identifier) @def.loop_var
 )
 
-; Module definitions
+; Module definitions with body
 (mod_item
   name: (identifier) @def.module
-)
+  body: (declaration_list) @module.body
+) @module.inline
+
+; Module declarations without body (external file)
+(mod_item
+  name: (identifier) @def.module
+  !body
+) @module.external
+
+; Public module definitions
+(mod_item
+  (visibility_modifier) @module.visibility
+  name: (identifier) @def.module.public
+) @module.public
+
 
 ;; ==============================================================================
 ;; GENERICS AND LIFETIMES
@@ -451,55 +465,150 @@
 ;; IMPORTS
 ;; ==============================================================================
 
-; Simple use statements
+; Simple use statements with full path - capturing the last identifier as the import name
 (use_declaration
   argument: (scoped_identifier
-    name: (identifier) @import.name
+    (identifier) @import.name
   )
-)
+) @import.declaration
 
-; Use with alias
+; Simple use statements without path (e.g., use self)
+(use_declaration
+  argument: (identifier) @import.name
+) @import.declaration
+
+; Use with alias (scoped path)
 (use_declaration
   argument: (use_as_clause
-    path: (scoped_identifier
+    (scoped_identifier
       name: (identifier) @import.source
     )
-    alias: (identifier) @import.alias
+    "as"
+    (identifier) @import.alias
   )
-)
+) @import.declaration.aliased
+
+; Use with alias (simple identifier)
+(use_declaration
+  argument: (use_as_clause
+    (identifier) @import.source
+    "as"
+    (identifier) @import.alias
+  )
+) @import.declaration.aliased
 
 ; Wildcard imports
 (use_declaration
   argument: (use_wildcard) @import.wildcard
-)
+) @import.wildcard.declaration
 
-; Use lists
+; Use lists (e.g., use module::{A, B, C})
 (use_declaration
   argument: (use_list
-    (identifier) @import.list.item
+    (identifier) @import.name
   )
-)
+) @import.list.declaration
 
-; Scoped use lists (e.g., std::fmt::{Display, Formatter})
+; Scoped use lists with simple items (e.g., std::fmt::{Display, Formatter})
+(use_declaration
+  argument: (scoped_use_list
+    path: (_) @import.base_path
+    list: (use_list
+      (identifier) @import.name
+    )
+  )
+) @import.scoped_list.declaration
+
+; Scoped use lists with scoped items
+(use_declaration
+  argument: (scoped_use_list
+    path: (_) @import.base_path
+    list: (use_list
+      (scoped_identifier
+        name: (identifier) @import.name
+      )
+    )
+  )
+) @import.scoped_list.declaration
+
+; Scoped use lists with aliases
+(use_declaration
+  argument: (scoped_use_list
+    path: (_) @import.base_path
+    list: (use_list
+      (use_as_clause
+        (identifier) @import.source
+        "as"
+        (identifier) @import.alias
+      )
+    )
+  )
+) @import.scoped_list.declaration
+
+; Nested use lists (e.g., use std::{collections::{HashMap, HashSet}})
 (use_declaration
   argument: (scoped_use_list
     list: (use_list
-      (identifier) @import.list.item
+      (scoped_use_list
+        path: (_) @import.nested_path
+        list: (use_list
+          (identifier) @import.name
+        )
+      )
     )
   )
-)
+) @import.nested.declaration
 
-; External crates
+; Self imports in use lists (e.g., use std::fmt::{self, Display})
+(use_declaration
+  argument: (scoped_use_list
+    list: (use_list
+      (self) @import.self
+    )
+  )
+) @import.self.declaration
+
+; External crates (with or without alias)
 (extern_crate_declaration
-  name: (identifier) @import.extern_crate
-)
+  (identifier) @import.extern_crate
+) @import.extern_crate.declaration
+
+; External crates with alias specifically
+(extern_crate_declaration
+  (identifier) @import.extern_crate.original
+  "as"
+  (identifier) @import.extern_crate.alias
+) @import.extern_crate.aliased
 
 ;; ==============================================================================
 ;; VISIBILITY MODIFIERS
 ;; ==============================================================================
 
-; Visibility modifiers
-(visibility_modifier) @visibility.pub
+; Public visibility (plain pub)
+(visibility_modifier
+  "pub"
+) @visibility.public
+
+; Crate visibility - pub(crate)
+(visibility_modifier
+  (crate) @visibility.scope.crate
+) @visibility.crate
+
+; Super visibility - pub(super)
+(visibility_modifier
+  (super) @visibility.scope.super
+) @visibility.super
+
+; Path visibility - pub(in path::to::module)
+(visibility_modifier
+  "in"
+  (scoped_identifier) @visibility.scope.path
+) @visibility.restricted
+
+; Self visibility - pub(self) (equivalent to private)
+(visibility_modifier
+  (self) @visibility.scope.self
+) @visibility.self
 
 ;; ==============================================================================
 ;; EXPORTS (public items)
@@ -535,35 +644,67 @@
   name: (identifier) @export.module
 )
 
-; Re-exports (pub use with alias)
+; Re-exports (pub use with alias - scoped)
 (use_declaration
   (visibility_modifier) @export.pub_use.visibility
   argument: (use_as_clause
-    path: (_) @export.pub_use.source
-    alias: (identifier) @export.pub_use.alias
+    (scoped_identifier
+      name: (identifier) @export.pub_use.original_name
+    ) @export.pub_use.source
+    "as"
+    (identifier) @export.pub_use.alias
   )
-) @export.pub_use
+) @export.pub_use.aliased
 
-; Re-exports (pub use without alias)
+; Re-exports (pub use simple alias)
 (use_declaration
   (visibility_modifier) @export.pub_use.visibility
-  argument: (scoped_identifier) @export.pub_use.path
+  argument: (use_as_clause
+    (identifier) @export.pub_use.original_name
+    "as"
+    (identifier) @export.pub_use.alias
+  )
+) @export.pub_use.aliased
+
+; Re-exports (pub use with scoped path)
+(use_declaration
+  (visibility_modifier) @export.pub_use.visibility
+  argument: (scoped_identifier
+    name: (identifier) @export.pub_use.name
+  ) @export.pub_use.path
 ) @export.pub_use
 
 ; Re-exports (pub use simple identifier)
 (use_declaration
   (visibility_modifier) @export.pub_use.visibility
   argument: (identifier) @export.pub_use.name
-) @export.pub_use
+) @export.pub_use.simple
 
 ; Re-exports (pub use with use_list)
 (use_declaration
   (visibility_modifier) @export.pub_use.visibility
   argument: (scoped_use_list
-    path: (_) @export.pub_use.source
-    list: (use_list) @export.pub_use.items
+    path: (_) @export.pub_use.source_path
+    list: (use_list
+      (identifier) @export.pub_use.item
+    )
   )
-) @export.pub_use
+) @export.pub_use.list
+
+; Re-exports (pub use with wildcard)
+(use_declaration
+  (visibility_modifier) @export.pub_use.visibility
+  argument: (use_wildcard
+    (scoped_identifier) @export.pub_use.wildcard_path
+  )
+) @export.pub_use.wildcard
+
+; Re-exports with any visibility modifier
+; This captures all pub use including pub(crate) use, pub(super) use, etc.
+(use_declaration
+  (visibility_modifier) @export.pub_use.visibility.any
+  argument: (_) @export.pub_use.item
+) @export.pub_use.any_visibility
 
 ;; ==============================================================================
 ;; MACROS
