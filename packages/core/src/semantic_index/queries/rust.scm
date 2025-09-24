@@ -352,6 +352,25 @@
   pattern: (identifier) @def.loop_var
 )
 
+; Loop variables in tuple patterns
+(for_expression
+  pattern: (tuple_pattern
+    (identifier) @def.loop_var
+  )
+)
+
+; Loop variables in while-let patterns
+(while_expression
+  condition: (let_condition
+    pattern: (_) @while_let_pattern
+  )
+)
+
+; Variables in while-let conditions
+(let_condition
+  pattern: (identifier) @def.loop_var
+)
+
 ; Module definitions
 (mod_item
   name: (identifier) @def.module
@@ -717,15 +736,11 @@
 )
 
 
-; Try operator
-(try_expression
-  (_) @ref.try
-)
+; Try operator - capture the whole expression to include "?"
+(try_expression) @ref.try
 
 ; Await expressions
-(await_expression
-  (_) @ref.await
-)
+(await_expression) @ref.await
 
 ; General identifier references
 (identifier) @ref.identifier
