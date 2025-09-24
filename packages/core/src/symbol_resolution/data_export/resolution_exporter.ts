@@ -169,20 +169,25 @@ function export_call_mappings(
   const result: ExportedCallMap["calls"] = [];
 
   for (const [location_key_or_location, resolved_symbol] of calls) {
-    // Handle both LocationKey and Location types
-    let location: Location;
-    if (typeof location_key_or_location === "string") {
-      // It's a LocationKey, parse it back to Location
-      location = parse_location_key(location_key_or_location as LocationKey);
-    } else {
-      // It's already a Location
-      location = location_key_or_location as Location;
-    }
+    try {
+      // Handle both LocationKey and Location types
+      let location: Location;
+      if (typeof location_key_or_location === "string") {
+        // It's a LocationKey, parse it back to Location
+        location = parse_location_key(location_key_or_location as LocationKey);
+      } else {
+        // It's already a Location
+        location = location_key_or_location as Location;
+      }
 
-    result.push({
-      call_location: location,
-      resolved_symbol,
-    });
+      result.push({
+        call_location: location,
+        resolved_symbol,
+      });
+    } catch (error) {
+      // Skip invalid LocationKeys to avoid breaking the entire export
+      console.warn(`Skipping invalid location key: ${location_key_or_location}`, error);
+    }
   }
 
   return { calls: result };
@@ -237,20 +242,33 @@ function export_type_information(
 
 /**
  * Parse LocationKey back to Location
- * Format: "file_path:line:column"
+ * Format: "file_path:line:column:end_line:end_column"
  */
 function parse_location_key(key: LocationKey): Location {
   const parts = key.split(":");
-  const line = parseInt(parts[parts.length - 2], 10);
-  const column = parseInt(parts[parts.length - 1], 10);
-  const file_path = parts.slice(0, -2).join(":") as FilePath;
+  if (parts.length < 5) {
+    throw new Error(`Invalid LocationKey format: ${key}. Expected format: "file_path:line:column:end_line:end_column"`);
+  }
+
+  const line = parseInt(parts[parts.length - 4], 10);
+  const column = parseInt(parts[parts.length - 3], 10);
+  const end_line = parseInt(parts[parts.length - 2], 10);
+  const end_column = parseInt(parts[parts.length - 1], 10);
+
+  // Check for NaN values and provide better error message
+  if (isNaN(line) || isNaN(column) || isNaN(end_line) || isNaN(end_column)) {
+    throw new Error(`Invalid LocationKey format: ${key}. Unable to parse numeric values.`);
+  }
+
+  // Handle file paths that may contain colons
+  const file_path = parts.slice(0, -4).join(":") as FilePath;
 
   return {
     file_path,
     line,
     column,
-    end_line: line,
-    end_column: column,
+    end_line,
+    end_column,
   };
 }
 

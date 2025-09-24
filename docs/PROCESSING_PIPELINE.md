@@ -10,6 +10,16 @@ The processing pipeline follows a **three-phase architecture**:
 
 This architecture enables parallelization while maintaining cross-file consistency through a carefully orchestrated enrichment phase that bridges local and global analysis.
 
+## Major Architectural Changes (2024)
+
+**Consolidated Type Resolution**: Previously scattered type resolution functionality has been unified into a single coordinated pipeline in Phase 3. This eliminates duplication, improves consistency, and provides comprehensive testing infrastructure.
+
+**Key Changes:**
+- All 8 type resolution features now processed in `symbol_resolution::phase3_resolve_types`
+- Unified TypeId system ensures consistency across all type-related operations
+- Single-pass processing improves performance
+- Comprehensive testing infrastructure validates cross-language consistency
+
 ## Phase 1: Per-File Analysis (Parallel)
 
 Each file is analyzed independently to extract local information. This phase can be fully parallelized across CPU cores.
@@ -172,56 +182,69 @@ Combines per-file analyses to build global understanding. This phase runs sequen
 
 **Outputs:** `TypeRegistry`, `ClassHierarchy`, method resolution order, virtual method tables
 
-### Layer 7: Cross-File Type Resolution
+### Layer 7: Consolidated Type Resolution
 
-**Dependencies:** Type Registry, Module Graph, Class Hierarchy
+**Dependencies:** Module Graph, All per-file semantic data
 
 **Processing:**
 
-- Resolve types across file boundaries
-- Propagate types through data flow
-- Resolve namespace members
-- Handle generic type instantiation
-- Resolve union/intersection types
-- Expand type aliases
+**CONSOLIDATED PIPELINE (2024)**: All type resolution now handled in a unified 8-step process:
+
+1. **Data Collection**: Extract local type information from semantic indices
+2. **Type Registry**: Build global registry with unique TypeIds
+3. **Inheritance Resolution**: Construct complete type hierarchy graphs
+4. **Type Members**: Resolve all members including inherited ones
+5. **Type Annotations**: Map annotations to concrete TypeIds
+6. **Type Tracking**: Track variable types across scopes
+7. **Type Flow Analysis**: Analyze type flow through assignments and calls
+8. **Constructor Discovery**: Map constructors to their types
 
 **Modules:**
 
-Type resolution is handled by:
+- `/scope_analysis/symbol_resolution::phase3_resolve_types` - **Unified type resolution pipeline**
+- `/scope_analysis/symbol_resolution/test_utilities/` - **Comprehensive testing infrastructure**
 
-- `/type_analysis/type_registry` - Type storage and lookup (absorbs type_resolution)
-- `/type_analysis/type_propagation` - Type flow analysis
-- `/type_analysis/generic_resolution` - Generic type instantiation
-- `/import_export/namespace_resolution` - Namespace member resolver
-- `/ast/member_access` - Member access expressions for namespace resolution
+**Key Benefits:**
+- **Consistency**: All features use same TypeId system
+- **Performance**: Single-pass processing eliminates duplication
+- **Maintainability**: Unified pipeline easier to test and debug
 
-**Outputs:** resolved types, generic instantiations, type compatibility matrix
+**Outputs:** `TypeResolutionMap` containing all resolved type information, inheritance hierarchies, member mappings, and type flow analysis
 
 ### Layer 8: Global Symbol Resolution
 
-**Dependencies:** Type Resolution, Module Graph, Class Hierarchy, All per-file symbols
+**Dependencies:** Consolidated Type Resolution (Layer 7), Module Graph, All per-file symbols
 
 **Processing:**
 
-- Build global symbol table from all file analyses
+- Integrate type resolution results with symbol resolution
 - Create unique SymbolIds for all entities (functions, classes, methods, variables)
 - Map exports to their symbol definitions
 - Resolve imports to exported symbols across files
 - Track symbol visibility (public/private/protected/internal)
-- Build symbol reference maps
+- Build symbol reference maps with type information
 - Handle cross-file symbol accessibility
 
 **Modules:**
 
-- `/scope_analysis/symbol_resolution` - Core symbol resolution
-- `/scope_analysis/symbol_resolution/global_symbol_table` - Global symbol table builder
-- `/utils/symbol_construction` - Symbol ID creation utilities
-- `/utils/scope_path_builder` - Scope path extraction
+- `/scope_analysis/symbol_resolution` - **Four-phase unified pipeline**
+  - Phase 1: Import/Export Resolution
+  - Phase 2: Function Call Resolution
+  - **Phase 3: Consolidated Type Resolution (8 features)**
+  - Phase 4: Method/Constructor Resolution
+
+**Integration Notes:**
+
+The symbol resolution system now integrates all type information from the consolidated pipeline, ensuring:
+- Consistent TypeIds across all resolution phases
+- Type-aware symbol resolution for method calls
+- Enhanced cross-file reference resolution with type context
 
 **Outputs:**
 
-- `GlobalSymbolTable` - Unified symbol definitions
-- Symbol-to-entity mappings
+- `ResolvedSymbols` - Complete symbol and type resolution data
+- Integrated symbol-to-type mappings
+- Cross-file reference resolution with type information
 - Export/import resolution maps
 - Symbol visibility index
 - Cross-file reference tracking

@@ -142,7 +142,7 @@ describe("Resolution Priority Functions", () => {
 
       expect(result).not.toBeNull();
       expect(result?.resolved_function).toBe("sym:localFunc" as SymbolId);
-      expect(result?.resolution_method).toBe("lexical");
+      expect(result?.resolution_strategy).toBe("lexical");
     });
 
     it("should resolve function in parent scope", () => {
@@ -367,7 +367,7 @@ describe("Resolution Priority Functions", () => {
 
       expect(result).not.toBeNull();
       expect(result?.resolved_function).toBe("sym:importedFunc" as SymbolId);
-      expect(result?.resolution_method).toBe("imported");
+      expect(result?.resolution_strategy).toBe("imported");
       expect(result?.import_source).toBe(other_file);
     });
 
@@ -526,7 +526,7 @@ describe("Resolution Priority Functions", () => {
 
       expect(result).not.toBeNull();
       expect(result?.resolved_function).toBe("builtin:javascript:setTimeout" as SymbolId);
-      expect(result?.resolution_method).toBe("global");
+      expect(result?.resolution_strategy).toBe("global");
     });
 
     it("should resolve Python global functions", () => {
@@ -562,7 +562,7 @@ describe("Resolution Priority Functions", () => {
 
       expect(result).not.toBeNull();
       expect(result?.resolved_function).toBe("builtin:python:print" as SymbolId);
-      expect(result?.resolution_method).toBe("global");
+      expect(result?.resolution_strategy).toBe("global");
     });
 
     it("should return null for unknown global", () => {

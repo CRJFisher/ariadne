@@ -48,13 +48,21 @@ function create_location(
   line: number,
   column: number
 ): Location {
-  return {
+  const loc = {
     file_path: file,
     line,
     column,
     end_line: line,
     end_column: column + 10,
   };
+
+  // Debug: check if any properties are undefined
+  if (!file || line === undefined || column === undefined) {
+    console.error("Invalid location parameters:", { file, line, column });
+    throw new Error(`Invalid location parameters: file=${file}, line=${line}, column=${column}`);
+  }
+
+  return loc;
 }
 
 /**
@@ -96,9 +104,9 @@ function create_test_resolved_symbols(): ResolvedSymbols {
   imports.set(file1, file1Imports as ReadonlyMap<SymbolName, SymbolId>);
 
   // Build function calls map
-  const function_calls = new Map();
-  function_calls.set(location_key(create_location(file1, 15, 20)), func2);
-  function_calls.set(location_key(create_location(file1, 20, 10)), func1);
+  const function_calls = new Map<Location, SymbolId>();
+  function_calls.set(create_location(file1, 15, 20), func2);
+  function_calls.set(create_location(file1, 20, 10), func1);
 
   // Build method calls map
   const method_calls = new Map<Location, SymbolId>();
@@ -152,6 +160,9 @@ function create_test_resolved_symbols(): ResolvedSymbols {
           SymbolId,
           readonly Location[]
         >,
+        closure_calls: new Map() as ReadonlyMap<LocationKey, SymbolId>,
+        higher_order_calls: new Map() as ReadonlyMap<LocationKey, SymbolId>,
+        function_pointer_calls: new Map() as ReadonlyMap<LocationKey, SymbolId>,
       },
       types: {
         symbol_types: symbol_types as ReadonlyMap<SymbolId, TypeId>,
@@ -214,7 +225,7 @@ describe("Data Export Module", () => {
       const parsed: ExportedSymbolResolution = JSON.parse(json_export);
 
       expect(parsed.imports).toBeDefined();
-      expect(parsed.imports).toHaveLength(2);
+      expect(parsed.imports.imports).toHaveLength(2);
 
       const import_entries = parsed.imports.imports;
       const has_format_output = import_entries.some(
@@ -237,7 +248,7 @@ describe("Data Export Module", () => {
       const parsed: ExportedSymbolResolution = JSON.parse(json_export);
 
       expect(parsed.function_calls).toBeDefined();
-      expect(parsed.function_calls.calls).toHaveLength(2);
+      expect(parsed.function_calls.calls).toHaveLength(2); // Both function calls should be exported
 
       const calls = parsed.function_calls.calls;
       expect(calls[0].call_location).toBeDefined();
@@ -335,6 +346,9 @@ describe("Data Export Module", () => {
           functions: {
             function_calls: new Map(),
             calls_to_function: new Map(),
+            closure_calls: new Map(),
+            higher_order_calls: new Map(),
+            function_pointer_calls: new Map(),
           },
           types: {
             symbol_types: new Map(),
@@ -358,7 +372,7 @@ describe("Data Export Module", () => {
       expect(parsed.metadata.total_files).toBe(0);
       expect(parsed.metadata.total_symbols).toBe(0);
       expect(parsed.metadata.total_resolved_references).toBe(0);
-      expect(parsed.imports).toHaveLength(0);
+      expect(parsed.imports.imports).toHaveLength(0);
       expect(parsed.function_calls.calls).toHaveLength(0);
     });
 
@@ -388,6 +402,9 @@ describe("Data Export Module", () => {
           functions: {
             function_calls: new Map(),
             calls_to_function: new Map(),
+            closure_calls: new Map(),
+            higher_order_calls: new Map(),
+            function_pointer_calls: new Map(),
           },
           types: {
             symbol_types: new Map(),
@@ -432,6 +449,9 @@ describe("Data Export Module", () => {
           functions: {
             function_calls: new Map(),
             calls_to_function: new Map(),
+            closure_calls: new Map(),
+            higher_order_calls: new Map(),
+            function_pointer_calls: new Map(),
           },
           types: {
             symbol_types: new Map(),

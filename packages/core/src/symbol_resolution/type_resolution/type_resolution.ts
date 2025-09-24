@@ -1,11 +1,22 @@
 /**
  * Type Resolution
  *
- * Resolves all type references using resolved imports and functions.
- * This module has access to:
- * - Resolved imports
- * - Resolved function signatures
- * - Complete file index map
+ * @deprecated This module contains legacy type resolution functions.
+ *
+ * **CONSOLIDATED ARCHITECTURE (2024)**:
+ * Type resolution has been consolidated into `symbol_resolution.ts::phase3_resolve_types`.
+ * The new unified pipeline handles all 8 type resolution features in a coordinated way:
+ * - Data Collection, Type Registry, Inheritance Resolution
+ * - Type Members, Annotations, Tracking, Flow Analysis, Constructor Discovery
+ *
+ * Use `phase3_resolve_types` instead of individual functions in this file.
+ *
+ * Legacy functionality:
+ * - Resolves all type references using resolved imports and functions.
+ * - This module has access to:
+ *   - Resolved imports
+ *   - Resolved function signatures
+ *   - Complete file index map
  */
 
 import type {
@@ -54,6 +65,12 @@ type TypeSymbolKind = keyof typeof TYPE_SYMBOL_MAPPINGS;
 
 /**
  * Main type resolution entry point
+ */
+/**
+ * @deprecated Use `symbol_resolution.ts::phase3_resolve_types` instead.
+ *
+ * This function has been superseded by the consolidated type resolution pipeline
+ * which handles all 8 type resolution features in a unified, tested way.
  */
 export function resolve_all_types(
   local_types: LocalTypeExtraction,

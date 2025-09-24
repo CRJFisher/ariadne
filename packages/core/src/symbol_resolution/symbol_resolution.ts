@@ -1,11 +1,17 @@
 /**
- * Symbol Resolution - Four-phase pipeline
+ * Symbol Resolution - Four-phase consolidated pipeline
  *
  * Resolves all symbol references through incremental phases:
  * 1. Import/Export Resolution - Cross-file symbol mapping
  * 2. Function Call Resolution - Direct function calls via lexical scope
- * 3. Type Resolution - Type tracking and flow analysis
+ * 3. Type Resolution - **CONSOLIDATED (2024)**: Unified pipeline handling all 8 type features:
+ *    - Data Collection, Type Registry, Inheritance Resolution
+ *    - Type Members, Annotations, Tracking, Flow Analysis, Constructor Discovery
  * 4. Method/Constructor Resolution - Object-oriented call resolution
+ *
+ * **Architectural Note**: Phase 3 consolidates previously scattered type resolution
+ * functionality into a single, tested, coordinated pipeline for improved consistency
+ * and maintainability.
  */
 
 import {
@@ -145,10 +151,23 @@ function phase1_resolve_imports(
  */
 
 /**
- * Phase 3: Type Resolution
+ * Phase 3: Consolidated Type Resolution
  *
- * Resolves all type-related information using imports and functions.
- * This phase integrates all refactored type modules.
+ * **UNIFIED PIPELINE (2024)**: Handles all 8 type resolution features in a coordinated way:
+ *
+ * 1. **Data Collection**: Extract local type information from semantic indices
+ * 2. **Type Registry**: Build global registry with unique TypeIds
+ * 3. **Inheritance Resolution**: Construct complete type hierarchy graphs
+ * 4. **Type Members**: Resolve all members including inherited ones
+ * 5. **Type Annotations**: Map annotations to concrete TypeIds
+ * 6. **Type Tracking**: Track variable types across scopes
+ * 7. **Type Flow Analysis**: Analyze type flow through assignments and calls
+ * 8. **Constructor Discovery**: Map constructors to their types
+ *
+ * This consolidates functionality previously scattered across multiple modules,
+ * providing better consistency, performance, and comprehensive testing.
+ *
+ * Replaces: `type_resolution.ts::resolve_all_types` and related functions
  */
 function phase3_resolve_types(
   indices: ReadonlyMap<FilePath, SemanticIndex>,

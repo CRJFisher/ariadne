@@ -11,6 +11,7 @@ This package provides the core functionality for building a scope graph of your 
 - **AST Parsing**: Uses tree-sitter to parse source code into an Abstract Syntax Tree
 - **Scope Resolution**: Builds a scope graph tracking definitions, references, imports, and lexical scopes
 - **Cross-file Symbol Resolution**: Find definitions and references across multiple files
+- **Consolidated Type Resolution**: Unified pipeline handling type registry, inheritance, annotations, tracking, flow analysis, and member resolution
 - **Call Graph Analysis**: Build complete function call graphs with cross-file import resolution
 - **Class Inheritance Analysis**: Track class hierarchies, interface implementations, and trait relationships
 - **Incremental Parsing**: Efficiently handles file edits by reusing unchanged AST portions

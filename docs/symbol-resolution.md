@@ -1,23 +1,26 @@
 # Symbol Resolution
 
-This document explains how symbol resolution works across files, including finding definitions and references.
+This document explains how the consolidated symbol and type resolution system works across files, including finding definitions, references, and type relationships.
 
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Single File Resolution](#single-file-resolution)
-3. [Cross-file Resolution](#cross-file-resolution)
-4. [Import/Export Handling](#importexport-handling)
-5. [Special Cases](#special-cases)
-6. [API Functions](#api-functions)
-7. [Examples](#examples)
+2. [Consolidated Architecture](#consolidated-architecture)
+3. [Single File Resolution](#single-file-resolution)
+4. [Cross-file Resolution](#cross-file-resolution)
+5. [Type Resolution Pipeline](#type-resolution-pipeline)
+6. [Import/Export Handling](#importexport-handling)
+7. [Special Cases](#special-cases)
+8. [API Functions](#api-functions)
+9. [Examples](#examples)
 
 ## Overview
 
-Symbol resolution is the process of connecting references to their definitions. The system supports:
+Symbol resolution is the process of connecting references to their definitions and resolving type relationships. The consolidated system supports:
 
 - **Local resolution**: Finding symbols within the same file
 - **Cross-file resolution**: Following imports to find symbols in other files
+- **Type resolution**: Resolving type relationships, inheritance, and member access
 - **Bidirectional search**: Finding all references to a definition or the definition of a reference
 
 ### Resolution Flow
@@ -45,6 +48,58 @@ Check imports/exports
     ▼         ▼
 Search other files
 ```
+
+## Consolidated Architecture
+
+### Four-Phase Pipeline
+
+The symbol resolution system processes code through four coordinated phases:
+
+```text
+Phase 1: Import/Export Resolution → Cross-file symbol mapping
+Phase 2: Function Call Resolution → Direct function calls via lexical scope
+Phase 3: Type Resolution → Unified type system processing
+Phase 4: Method/Constructor Resolution → Object-oriented call resolution
+```
+
+### Phase 3: Consolidated Type Resolution
+
+Phase 3 now handles all type-related resolution in a unified pipeline:
+
+```typescript
+function phase3_resolve_types(
+  indices: ReadonlyMap<FilePath, SemanticIndex>,
+  imports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>,
+  functions: FunctionResolutionMap
+): TypeResolutionMap
+```
+
+**8 Integrated Features:**
+
+1. **Data Collection**: Extract local type information from semantic indices
+2. **Type Registry**: Build global registry with unique TypeIds for all types
+3. **Inheritance Resolution**: Construct complete type hierarchy graphs
+4. **Type Members**: Resolve all members including inherited ones
+5. **Type Annotations**: Map type annotations to concrete TypeIds
+6. **Type Tracking**: Track variable types across scopes and assignments
+7. **Type Flow Analysis**: Analyze type flow through assignments, calls, and returns
+8. **Constructor Discovery**: Map constructor calls to their corresponding types
+
+**Key Benefits:**
+
+- **Consistency**: All type features use the same TypeId system and registry
+- **Completeness**: Inheritance data enhances member resolution
+- **Performance**: Single-pass processing reduces redundant work
+- **Maintainability**: Unified pipeline is easier to test and debug
+
+### Testing Infrastructure
+
+The consolidated system includes comprehensive testing:
+
+- **End-to-end validation**: Tests all 8 features working together
+- **Cross-language consistency**: Validates behavior across JavaScript, TypeScript, Python, and Rust
+- **Edge case coverage**: Handles circular dependencies, diamond inheritance, and malformed input
+- **Integration testing**: Verifies proper data flow between modules
 
 ## Single File Resolution
 
@@ -187,6 +242,95 @@ function find_all_references(
   return all_refs;
 }
 ```
+
+## Type Resolution Pipeline
+
+### Unified Processing Flow
+
+The consolidated type resolution pipeline processes all type-related information in a coordinated sequence:
+
+```text
+Input: SemanticIndex + Imports + Functions
+         │
+         ▼
+┌──────────────────┐
+│ Data Extraction  │ → LocalTypeExtraction
+└──────────────────┘
+         │
+         ▼
+┌──────────────────┐
+│ Type Registry    │ → GlobalTypeRegistry
+└──────────────────┘
+         │
+         ▼
+┌──────────────────┐
+│ Inheritance      │ → TypeHierarchyGraph
+└──────────────────┘
+         │
+         ▼
+┌──────────────────┐
+│ Type Members     │ → ResolvedMemberInfo
+└──────────────────┘
+         │
+         ▼
+┌──────────────────┐
+│ Annotations      │ → LocationKey → TypeId
+└──────────────────┘
+         │
+         ▼
+┌──────────────────┐
+│ Type Tracking    │ → SymbolId → TypeId
+└──────────────────┘
+         │
+         ▼
+┌──────────────────┐
+│ Flow Analysis    │ → TypeFlowAnalysis
+└──────────────────┘
+         │
+         ▼
+┌──────────────────┐
+│ Result           │ → TypeResolutionMap
+│ Consolidation    │
+└──────────────────┘
+```
+
+### Data Dependencies
+
+Each phase depends on previous phases' outputs:
+
+- **Type Registry**: No dependencies (first phase)
+- **Inheritance**: Uses Type Registry for TypeId lookup
+- **Type Members**: Uses Type Registry + Inheritance hierarchy
+- **Annotations**: Uses Type Registry for type name resolution
+- **Type Tracking**: Uses Type Registry for TypeId mapping
+- **Flow Analysis**: Uses Type Registry + Function resolution data
+- **Consolidation**: Uses outputs from all phases
+
+### Error Handling
+
+The pipeline handles errors gracefully:
+
+```typescript
+// Example error recovery in type registry
+try {
+  const type_registry = build_global_type_registry(definitions, imports);
+} catch (error) {
+  if (error instanceof CircularDependencyError) {
+    // Continue with partial registry, log warning
+    return build_partial_registry(definitions);
+  }
+  throw error; // Re-throw unrecoverable errors
+}
+```
+
+### Cross-Language Support
+
+The unified pipeline ensures consistent behavior across languages:
+
+- **TypeScript**: Full type support including conditional and mapped types
+- **JavaScript**: Inferred types with JSDoc annotation support
+- **Python**: Class hierarchy with multiple inheritance support
+- **Rust**: Trait implementations, lifetimes, and associated types
 
 ## Import/Export Handling
 

@@ -497,7 +497,7 @@ describe("Function Resolution", () => {
         location_key(call_location)
       );
       expect(details).toBeDefined();
-      expect(details?.resolution_method).toBe("lexical");
+      expect(details?.resolution_strategy).toBe("lexical");
       expect(details?.resolved_function).toBe("sym:localFunc" as SymbolId);
       expect(details?.call_location).toEqual(call_location);
       expect(details?.scope_chain).toContain("scope:function" as ScopeId);
