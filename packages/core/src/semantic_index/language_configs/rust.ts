@@ -222,7 +222,7 @@ export const RUST_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
     "def.associated_type",
     {
       category: SemanticCategory.DEFINITION,
-      entity: SemanticEntity.TYPE_ALIAS,
+      entity: SemanticEntity.TYPE,
       modifiers: () => ({ is_associated_type: true }),
     },
   ],
@@ -232,7 +232,7 @@ export const RUST_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
     "def.associated_type.impl",
     {
       category: SemanticCategory.DEFINITION,
-      entity: SemanticEntity.TYPE_ALIAS,
+      entity: SemanticEntity.TYPE,
       modifiers: () => ({ is_associated_type: true, is_trait_impl: true }),
     },
   ],
@@ -588,18 +588,60 @@ export const RUST_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
   ["ownership.borrow", {
     category: SemanticCategory.REFERENCE,
     entity: SemanticEntity.OPERATOR,
+    modifiers: () => ({ is_borrow: true }),
     },
   ],
 
   ["ownership.borrow_mut", {
     category: SemanticCategory.REFERENCE,
     entity: SemanticEntity.OPERATOR,
-    modifiers: () => ({ is_mutable_borrow: true  })},
+    modifiers: () => ({ is_borrow: true, is_mutable_borrow: true  })},
   ],
 
   ["ownership.deref", {
     category: SemanticCategory.REFERENCE,
     entity: SemanticEntity.OPERATOR,
+    modifiers: () => ({ is_dereference: true }),
+    },
+  ],
+
+  // Smart pointer types
+  ["type.smart_pointer", {
+    category: SemanticCategory.TYPE,
+    entity: SemanticEntity.TYPE,
+    modifiers: () => ({ is_smart_pointer: true }),
+    },
+  ],
+  ["type.smart_pointer.name", {
+    category: SemanticCategory.TYPE,
+    entity: SemanticEntity.TYPE,
+    modifiers: () => ({ is_smart_pointer: true }),
+    },
+  ],
+  ["smart_pointer.allocation", {
+    category: SemanticCategory.REFERENCE,
+    entity: SemanticEntity.CALL,
+    modifiers: () => ({ is_smart_pointer_allocation: true }),
+    },
+  ],
+  ["smart_pointer.method_call", {
+    category: SemanticCategory.REFERENCE,
+    entity: SemanticEntity.METHOD,
+    modifiers: () => ({ is_smart_pointer_method: true }),
+    },
+  ],
+
+  // Reference types
+  ["type.reference", {
+    category: SemanticCategory.TYPE,
+    entity: SemanticEntity.TYPE,
+    modifiers: () => ({ is_reference: true }),
+    },
+  ],
+  ["type.reference.mut", {
+    category: SemanticCategory.TYPE,
+    entity: SemanticEntity.TYPE,
+    modifiers: () => ({ is_reference: true, is_mutable: true }),
     },
   ],
 
@@ -797,11 +839,104 @@ export const RUST_CAPTURE_CONFIG: LanguageCaptureConfig = new Map<
     },
   ],
 
-  // Const generic parameters
+  // Loop variables
+  ["def.loop_var", {
+    category: SemanticCategory.DEFINITION,
+    entity: SemanticEntity.VARIABLE,
+    modifiers: () => ({ is_loop_variable: true }),
+    },
+  ],
+
+  // Const parameters (for const generics)
   ["def.const_param", {
     category: SemanticCategory.DEFINITION,
-    entity: SemanticEntity.PARAMETER,
+    entity: SemanticEntity.CONSTANT,
     modifiers: () => ({ is_const_generic: true }),
+    },
+  ],
+
+  // Export patterns for pub use
+  ["export.pub_use", {
+    category: SemanticCategory.EXPORT,
+    entity: SemanticEntity.REEXPORT,
+    modifiers: () => ({ is_pub_use: true }),
+    },
+  ],
+  ["export.pub_use.source", {
+    category: SemanticCategory.EXPORT,
+    entity: SemanticEntity.REEXPORT,
+    },
+  ],
+  ["export.pub_use.alias", {
+    category: SemanticCategory.EXPORT,
+    entity: SemanticEntity.REEXPORT,
+    },
+  ],
+  ["export.pub_use.path", {
+    category: SemanticCategory.EXPORT,
+    entity: SemanticEntity.REEXPORT,
+    },
+  ],
+  ["export.pub_use.name", {
+    category: SemanticCategory.EXPORT,
+    entity: SemanticEntity.REEXPORT,
+    },
+  ],
+
+  // Async blocks
+  ["scope.block.async", {
+    category: SemanticCategory.SCOPE,
+    entity: SemanticEntity.BLOCK,
+    modifiers: () => ({ is_async: true }),
+    },
+  ],
+
+  // Unsafe functions
+  ["def.function.unsafe", {
+    category: SemanticCategory.DEFINITION,
+    entity: SemanticEntity.FUNCTION,
+    modifiers: () => ({ is_unsafe: true }),
+    },
+  ],
+
+  // Extern crates
+  ["import.extern_crate", {
+    category: SemanticCategory.IMPORT,
+    entity: SemanticEntity.MODULE,
+    modifiers: () => ({ is_extern_crate: true }),
+    },
+  ],
+
+  // Macro definitions
+  ["def.macro", {
+    category: SemanticCategory.DEFINITION,
+    entity: SemanticEntity.MACRO,
+    },
+  ],
+
+  // Macro invocations
+  ["ref.macro", {
+    category: SemanticCategory.REFERENCE,
+    entity: SemanticEntity.MACRO,
+    },
+  ],
+  ["ref.macro.scoped", {
+    category: SemanticCategory.REFERENCE,
+    entity: SemanticEntity.MACRO,
+    },
+  ],
+
+  // Try and await expressions
+  ["ref.try", {
+    category: SemanticCategory.REFERENCE,
+    entity: SemanticEntity.OPERATOR,
+    modifiers: () => ({ is_try: true }),
+    },
+  ],
+  ["ref.await", {
+    category: SemanticCategory.REFERENCE,
+    entity: SemanticEntity.OPERATOR,
+    modifiers: () => ({ is_await: true }),
     },
   ],
 

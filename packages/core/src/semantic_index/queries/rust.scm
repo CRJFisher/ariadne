@@ -87,6 +87,14 @@
   name: (identifier) @def.function.async
 )
 
+; Unsafe functions (identified by modifiers)
+(function_item
+  (function_modifiers
+    "unsafe"
+  )
+  name: (identifier) @def.function.unsafe
+)
+
 ; Function definitions (general)
 (function_item
   name: (identifier) @def.function
@@ -492,6 +500,63 @@
 )
 
 ;; ==============================================================================
+;; OWNERSHIP AND REFERENCES
+;; ==============================================================================
+
+; Reference expressions (borrow) - matches all references
+(reference_expression
+  value: (_) @ref.borrowed
+) @ownership.borrow
+
+; Mutable reference expressions (mutable borrow)
+(reference_expression
+  (mutable_specifier)
+  value: (_) @ref.borrowed.mut
+) @ownership.borrow_mut
+
+; Dereference expressions
+(unary_expression
+  (_) @ref.dereferenced
+) @ownership.deref
+
+; Reference types
+(reference_type
+  type: (_) @type.inner
+) @type.reference
+
+; Mutable reference types
+(reference_type
+  (mutable_specifier)
+  type: (_) @type.inner.mut
+) @type.reference.mut
+
+; Smart pointer types (Box, Rc, Arc, RefCell, Weak)
+(generic_type
+  type: (type_identifier) @type.smart_pointer.name
+  type_arguments: (type_arguments) @type.smart_pointer.args
+) @type.smart_pointer
+  (#match? @type.smart_pointer.name "^(Box|Rc|Arc|RefCell|Weak|Mutex|RwLock)$")
+
+; Box::new() calls (smart pointer allocation)
+(call_expression
+  function: (scoped_identifier
+    path: (identifier) @box.module
+    name: (identifier) @box.function
+  )
+  (#eq? @box.module "Box")
+  (#eq? @box.function "new")
+) @smart_pointer.allocation
+
+; Smart pointer method calls (clone, as_ref, as_mut, etc.)
+(call_expression
+  function: (field_expression
+    value: (_) @smart_pointer.instance
+    field: (field_identifier) @smart_pointer.method
+  )
+  (#match? @smart_pointer.method "^(clone|as_ref|as_mut|get|get_mut|borrow|borrow_mut|try_borrow|try_borrow_mut|lock|try_lock|read|write|try_read|try_write)$")
+) @smart_pointer.method_call
+
+;; ==============================================================================
 ;; REFERENCES AND CALLS
 ;; ==============================================================================
 
@@ -583,16 +648,6 @@
   (_)? @ref.return
 )
 
-; References and dereferences
-(reference_expression
-  "&"
-  (_) @ref.borrowed
-)
-
-(unary_expression
-  "*"
-  (_) @ref.dereferenced
-)
 
 ; Try operator
 (try_expression
