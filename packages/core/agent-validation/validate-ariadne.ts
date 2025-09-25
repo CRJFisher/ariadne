@@ -3,7 +3,6 @@
  * Outputs Ariadne's API methods and call graph in YAML format for validation
  */
 
-import { Project } from "../src/index";
 import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
@@ -33,7 +32,6 @@ interface ValidationOutput {
 }
 
 function main() {
-  const project = new Project();
   
   // Analyze Ariadne's source
   const srcDir = path.join(__dirname, "../src");
