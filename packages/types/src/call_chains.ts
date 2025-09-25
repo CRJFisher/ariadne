@@ -4,8 +4,9 @@
 
 import { SymbolId } from "./symbol";
 import { SymbolName } from "./symbol";
-import { Location } from "./common";
-import { CallInfo } from "./calls";
+import { Location, type LocationKey } from "./common";
+import type { ScopeId } from "./scopes";
+import type { SymbolDefinition } from "./semantic_index";
 
 /**
  * Node in a call graph representing a function/method
@@ -13,17 +14,8 @@ import { CallInfo } from "./calls";
 export interface FunctionNode {
   readonly symbol_id: SymbolId;
   readonly name: SymbolName;
-  readonly enclosed_calls: readonly EnclosedCall[];
+  readonly enclosed_calls: readonly CallReference[];
   readonly location: Location;
-}
-
-/**
- * Edge in a call graph representing a call relationship
- */
-export interface EnclosedCall {
-  readonly location: Location;
-  // readonly scope_id: ScopeId; // TODO: implement so we can see more context for the call e.g. if/else block, loops etc
-  readonly call: CallInfo;
 }
 
 /**
@@ -32,4 +24,59 @@ export interface EnclosedCall {
 export interface CallGraph {
   readonly nodes: ReadonlyMap<SymbolId, FunctionNode>;
   readonly entry_points: readonly SymbolId[];
+}
+/**
+ * Call reference - Represents a function/method/constructor call
+ */
+
+export interface CallReference {
+  /** Reference location */
+  readonly location: Location;
+
+  /** Name being called */
+  readonly name: SymbolName;
+
+  /** Containing scope */
+  readonly scope_id: ScopeId;
+
+  /** Type of call */
+  readonly call_type: "function" | "method" | "constructor" | "super" | "macro";
+
+  /** For method calls: receiver location */
+  readonly receiver?: {
+    readonly location?: Location;
+    readonly name?: SymbolName; // Receiver identifier name if available
+  };
+
+  /** For constructor calls: the instance being created */
+  readonly construct_target?: Location;
+
+  /** Containing function for call chain tracking */
+  readonly containing_function?: SymbolId;
+
+  /** For super calls: parent class */
+  readonly super_class?: SymbolName;
+
+  /** For method calls: whether the receiver is static */
+  readonly is_static_call?: boolean;
+
+  /** Whether this is a higher-order function call (e.g., map, filter, fold) */
+  readonly is_higher_order?: boolean;
+} // ============================================================================
+// Complete Resolution Result
+// ============================================================================
+/**
+ * Complete symbol resolution result
+ * Combines all phase outputs into a unified resolution map
+ */
+
+export interface ResolvedSymbols {
+  // Master map: any reference location key -> its resolved SymbolId
+  readonly resolved_references: ReadonlyMap<LocationKey, SymbolId>;
+
+  // Reverse map: SymbolId -> all locations that reference it
+  readonly references_to_symbol: ReadonlyMap<SymbolId, readonly Location[]>;
+
+  readonly references: CallReference[];
+  readonly definitions: ReadonlyMap<SymbolId, SymbolDefinition>;
 }

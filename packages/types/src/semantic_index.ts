@@ -121,7 +121,6 @@ export interface SymbolDefinition {
   /** For functions/methods: return type hint */
   readonly return_type_hint?: SymbolName;
 
-
   /** For classes: member symbols */
   readonly members?: readonly SymbolId[];
 
