@@ -2,7 +2,6 @@
  * Definitions - Process symbol definitions
  */
 
-import type { SyntaxNode } from "tree-sitter";
 import type {
   FilePath,
   SymbolId,
@@ -24,8 +23,10 @@ import {
   parameter_symbol,
 } from "@ariadnejs/types";
 import { find_containing_scope } from "../scope_tree";
-import type { NormalizedCapture } from "../capture_types";
-import { SemanticEntity } from "../capture_types";
+import {
+  type NormalizedCapture,
+  SemanticEntity,
+} from "../../parse_and_query_code/capture_types";
 
 /**
  * Process symbol definitions
@@ -54,7 +55,8 @@ export function process_definitions(
       continue; // Skip invalid captures
     }
 
-    const scope = find_containing_scope(location, root_scope, scopes) || root_scope;
+    const scope =
+      find_containing_scope(location, root_scope, scopes) || root_scope;
     const name = (capture.text || "").trim() as SymbolName;
     if (!name) {
       continue; // Skip empty names
@@ -160,7 +162,9 @@ export function map_entity_to_symbol_kind(entity: SemanticEntity): SymbolKind {
       return "function"; // Macros are compile-time functions
     default:
       // Log unknown entities for debugging
-      console.warn(`Unknown semantic entity: ${entity}, defaulting to 'variable'`);
+      console.warn(
+        `Unknown semantic entity: ${entity}, defaulting to 'variable'`
+      );
       return "variable";
   }
 }
@@ -176,8 +180,7 @@ function check_is_hoisted_entity(
   // Python hoisting rules
   if (language === "python") {
     return (
-      entity === SemanticEntity.FUNCTION ||
-      entity === SemanticEntity.CLASS
+      entity === SemanticEntity.FUNCTION || entity === SemanticEntity.CLASS
       // Python variables are NOT hoisted - must be defined before use
     );
   }

@@ -18,10 +18,10 @@ import type { NormalizedCapture } from "../../capture_types";
 import { create_mock_node } from "../../test_utils";
 import { SemanticEntity, SemanticCategory } from "../../capture_types";
 import {
-  CallReference,
   InvalidCaptureError,
   process_call_references,
 } from "./call_references";
+import { CallReference } from "@ariadnejs/types/src/call_chains";
 
 // Mock dependencies
 vi.mock("../../../utils/node_utils", () => ({
@@ -38,7 +38,7 @@ vi.mock("../../scope_tree", () => ({
   find_containing_scope: vi.fn(),
 }));
 
-import { node_to_location } from "../../../utils/node_utils";
+import { node_to_location } from "../../node_utils";
 import { find_containing_scope } from "../../scope_tree";
 
 const mockNodeToLocation = vi.mocked(node_to_location);
@@ -161,7 +161,14 @@ describe("Call References", () => {
     });
 
     it("should process constructor calls", () => {
-      const constructTarget = create_mock_node("identifier", "MyClass", 1, 5, 1, 12);
+      const constructTarget = create_mock_node(
+        "identifier",
+        "MyClass",
+        1,
+        5,
+        1,
+        12
+      );
       const captures: NormalizedCapture[] = [
         {
           entity: SemanticEntity.CALL,
@@ -230,7 +237,14 @@ describe("Call References", () => {
           node_location: mockLocation,
           modifiers: {},
           context: {
-            receiver_node: create_mock_node("identifier", "MyClass", 1, 0, 1, 7),
+            receiver_node: create_mock_node(
+              "identifier",
+              "MyClass",
+              1,
+              0,
+              1,
+              7
+            ),
             is_static: true,
           },
         },
@@ -338,7 +352,9 @@ describe("Call References", () => {
 
     it("should handle missing containing scope", () => {
       const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-      mockFindContainingScope.mockReturnValue(undefined as unknown as LexicalScope);
+      mockFindContainingScope.mockReturnValue(
+        undefined as unknown as LexicalScope
+      );
 
       const captures: NormalizedCapture[] = [
         {

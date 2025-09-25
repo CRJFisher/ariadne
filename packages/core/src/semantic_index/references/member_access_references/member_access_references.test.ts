@@ -39,7 +39,7 @@ vi.mock("../../scope_tree", () => ({
 }));
 
 import { find_containing_scope } from "../../scope_tree";
-import { node_to_location } from "../../../utils/node_utils";
+import { node_to_location } from "../../node_utils";
 
 const mockNodeToLocation = vi.mocked(node_to_location);
 const mockFindContainingScope = vi.mocked(find_containing_scope);
@@ -1657,11 +1657,21 @@ describe("Member Access References", () => {
         }).toThrow("captures must be an array");
 
         expect(() => {
-          process_member_access_references([], null as unknown as LexicalScope, mockScopes, mockFilePath);
+          process_member_access_references(
+            [],
+            null as unknown as LexicalScope,
+            mockScopes,
+            mockFilePath
+          );
         }).toThrow("root_scope is required");
 
         expect(() => {
-          process_member_access_references([], mockScope, null as unknown as Map<ScopeId, LexicalScope>, mockFilePath);
+          process_member_access_references(
+            [],
+            mockScope,
+            null as unknown as Map<ScopeId, LexicalScope>,
+            mockFilePath
+          );
         }).toThrow("scopes must be a Map");
 
         expect(() => {
@@ -1799,7 +1809,14 @@ describe("Member Access References", () => {
       it("should detect computed key location from context", () => {
         const mockReceiver = create_mock_node("identifier", "obj", 1, 0, 1, 3);
 
-        const mockComputedKeyNode = create_mock_node("string", "key", 2, 5, 2, 10);
+        const mockComputedKeyNode = create_mock_node(
+          "string",
+          "key",
+          2,
+          5,
+          2,
+          10
+        );
 
         const captures: NormalizedCapture[] = [
           {

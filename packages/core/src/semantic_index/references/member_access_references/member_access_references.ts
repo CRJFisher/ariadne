@@ -10,7 +10,7 @@ import type {
   ScopeId,
   LexicalScope,
 } from "@ariadnejs/types";
-import { node_to_location } from "../../../utils/node_utils";
+import { node_to_location } from "../../node_utils";
 import { find_containing_scope } from "../../scope_tree";
 import type { CaptureContext, NormalizedCapture } from "../../capture_types";
 import { SemanticEntity } from "../../capture_types";
@@ -289,14 +289,20 @@ function determine_static_access(
   }
 
   // Check for associated function flag (Rust)
-  if (context && 'is_associated_function' in context && context.is_associated_function) {
+  if (
+    context &&
+    "is_associated_function" in context &&
+    context.is_associated_function
+  ) {
     return true;
   }
 
   // Language-specific checks based on decorator name
-  if (context?.decorator_name === "staticmethod" ||
-      context?.decorator_name === "classmethod") {
-    return true;  // Python static/class methods
+  if (
+    context?.decorator_name === "staticmethod" ||
+    context?.decorator_name === "classmethod"
+  ) {
+    return true; // Python static/class methods
   }
 
   // Default to false (will be determined during resolution if needed)
@@ -345,7 +351,6 @@ export function group_by_object(
   return Array.from(groups.values());
 }
 
-
 /**
  * Find property chains (e.g., obj.prop1.prop2.method())
  */
@@ -377,4 +382,3 @@ export function find_property_chains(
 
   return chains;
 }
-

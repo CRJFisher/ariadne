@@ -4549,12 +4549,14 @@ loop {
       it("should capture method calls with different receiver types", () => {
         // Test method call references
         const methodCalls = advancedParsedResult.references.filter(
+          // TODO: check for method_name instead?
           (r) => r.entity === SemanticEntity.CALL && r.context?.is_method_call
         );
         expect(methodCalls.length).toBeGreaterThan(50); // Many method calls in fixture
 
         // Test chained method calls
         const chainedCalls = advancedParsedResult.references.filter(
+          // TODO: check for property_chain instead?
           (r) => r.entity === SemanticEntity.CALL && r.context?.is_chained_call
         );
         expect(chainedCalls.length).toBeGreaterThan(5);

@@ -12,7 +12,7 @@ import { JAVASCRIPT_CAPTURE_CONFIG } from "./language_configs/javascript";
 import { TYPESCRIPT_CAPTURE_CONFIG } from "./language_configs/typescript";
 import { PYTHON_CAPTURE_CONFIG } from "./language_configs/python";
 import { RUST_CAPTURE_CONFIG } from "./language_configs/rust";
-import { node_to_location } from "../utils/node_utils";
+import { node_to_location } from "../semantic_index/node_utils";
 
 /**
  * Language configuration map

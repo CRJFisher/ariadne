@@ -10,7 +10,7 @@ import type {
   LexicalScope,
   Location,
 } from "@ariadnejs/types";
-import { node_to_location } from "../../../utils/node_utils";
+import { node_to_location } from "../../node_utils";
 import { find_containing_scope } from "../../scope_tree";
 import {
   SemanticEntity,
@@ -18,46 +18,7 @@ import {
   NormalizedCapture,
   CaptureContext,
 } from "../../../parse_and_query_code/capture_types";
-
-/**
- * Call reference - Represents a function/method/constructor call
- */
-export interface CallReference {
-  /** Reference location */
-  readonly location: Location;
-
-  /** Name being called */
-  readonly name: SymbolName;
-
-  /** Containing scope */
-  readonly scope_id: ScopeId;
-
-  /** Type of call */
-  readonly call_type: "function" | "method" | "constructor" | "super" | "macro";
-
-  /** For method calls: receiver location */
-  readonly receiver?: {
-    readonly location?: Location;
-    readonly name?: SymbolName; // Receiver identifier name if available
-  };
-
-  /** For constructor calls: the instance being created */
-  readonly construct_target?: Location;
-
-  /** Containing function for call chain tracking */
-  readonly containing_function?: SymbolId;
-
-  /** For super calls: parent class */
-  readonly super_class?: SymbolName;
-
-  /** For method calls: whether the receiver is static */
-  readonly is_static_call?: boolean;
-
-  /** Whether this is a higher-order function call (e.g., map, filter, fold) */
-  readonly is_higher_order?: boolean;
-
-  // Note: Resolution happens in symbol_resolution Phase 3, not here
-}
+import { CallReference } from "@ariadnejs/types/src/call_chains";
 
 /**
  * Validation error for invalid captures
@@ -125,7 +86,7 @@ export function process_call_references(
   root_scope: LexicalScope,
   scopes: Map<ScopeId, LexicalScope>,
   file_path: FilePath,
-  scope_to_symbol?: Map<ScopeId, SymbolId>
+  scope_to_symbol: Map<ScopeId, SymbolId>
 ): CallReference[] {
   const calls: CallReference[] = [];
   const errors: InvalidCaptureError[] = [];
@@ -196,7 +157,7 @@ function create_call_reference(
   scope: LexicalScope,
   scopes: Map<ScopeId, LexicalScope>,
   file_path: FilePath,
-  scope_to_symbol?: Map<ScopeId, SymbolId>
+  scope_to_symbol: Map<ScopeId, SymbolId>
 ): CallReference {
   const context = capture.context;
   const location = capture.node_location;
@@ -284,10 +245,8 @@ function create_call_reference(
 function get_containing_function(
   scope: LexicalScope,
   scopes: Map<ScopeId, LexicalScope>,
-  scope_to_symbol?: Map<ScopeId, SymbolId>
-): SymbolId | undefined {
-  if (!scope_to_symbol) return undefined;
-
+  scope_to_symbol: Map<ScopeId, SymbolId>
+): SymbolId {
   let current: LexicalScope | undefined = scope;
   const visited = new Set<ScopeId>(); // Prevent infinite loops
 
@@ -299,11 +258,19 @@ function get_containing_function(
       current.type === "method" ||
       current.type === "constructor"
     ) {
-      return scope_to_symbol.get(current.id);
+      const symbol = scope_to_symbol.get(current.id);
+      if (!symbol) {
+        throw new Error(
+          `Symbol not found for scope at ${current.location.file_path}:${current.location.line}:${current.location.column}`
+        );
+      }
+      return symbol;
     }
 
     current = current.parent_id ? scopes.get(current.parent_id) : undefined;
   }
 
-  return undefined;
+  throw new Error(
+    `Symbol not found for scope at ${scope.location.file_path}:${scope.location.line}:${scope.location.column}`
+  );
 }

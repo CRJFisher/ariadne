@@ -3,11 +3,17 @@
  */
 
 import { describe, it, expect } from "vitest";
-import type { FilePath, SymbolId, Location, ScopeId, SymbolName } from "@ariadnejs/types";
+import type {
+  FilePath,
+  SymbolId,
+  Location,
+  ScopeId,
+  SymbolName,
+} from "@ariadnejs/types";
 import type { ProcessedReferences } from "./reference_types";
 
 // Import individual reference types for testing
-import type { CallReference } from "./call_references/call_references";
+import type { CallReference } from "@ariadnejs/types/src/call_chains";
 import type { LocalTypeFlowData } from "./type_flow_references/type_flow_references";
 import type { ReturnReference } from "./return_references/return_references";
 import type { MemberAccessReference } from "./member_access_references/member_access_references";

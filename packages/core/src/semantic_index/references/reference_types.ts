@@ -3,7 +3,7 @@
  * Preserves rich type information from each processor
  */
 
-import type { CallReference } from "./call_references/call_references";
+import type { CallReference } from "@ariadnejs/types/src/call_chains";
 import type { LocalTypeFlowData } from "./type_flow_references/type_flow_references";
 import type { ReturnReference } from "./return_references/return_references";
 import type { MemberAccessReference } from "./member_access_references/member_access_references";
@@ -24,7 +24,7 @@ export type ProcessedReference =
  */
 export interface ProcessedReferences {
   readonly calls: readonly CallReference[];
-  readonly type_flows?: LocalTypeFlowData; // Now a single object, not array
+  readonly type_flows: LocalTypeFlowData;
   readonly returns: readonly ReturnReference[];
   readonly member_accesses: readonly MemberAccessReference[];
   readonly type_annotations: readonly TypeAnnotationReference[];
