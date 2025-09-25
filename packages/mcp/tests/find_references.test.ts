@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { Project } from '@ariadnejs/core';
 import { findReferences, FindReferencesRequest } from '../src/tools/find_references';
 import * as fs from 'fs/promises';
 import * as path from 'path';

@@ -1,4 +1,3 @@
-import { Project } from "@ariadnejs/core";
 import { z } from "zod";
 
 // Request schema for the MCP tool

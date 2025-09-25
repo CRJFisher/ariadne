@@ -3,7 +3,6 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
 import { spawn } from 'child_process';
-import { Project } from '@ariadnejs/core';
 
 describe('Ariadne MCP Server', () => {
   let testDir: string;

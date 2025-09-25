@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { Project } from '@ariadnejs/core';
 import { getFileMetadata, GetFileMetadataRequest } from '../src/tools/get_file_metadata';
 import * as fs from 'fs/promises';
 import * as path from 'path';

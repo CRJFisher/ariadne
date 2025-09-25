@@ -1,7 +1,6 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
-import { Project } from "@ariadnejs/core";
 import { z } from "zod";
 import * as path from "path";
 import * as fs from "fs/promises";
@@ -34,7 +33,6 @@ export async function start_server(options: AriadneMCPServerOptions = {}): Promi
   );
 
   // Initialize Ariadne project
-  const project = new Project();
 
   // Register tools handler
   server.setRequestHandler(ListToolsRequestSchema, async () => {

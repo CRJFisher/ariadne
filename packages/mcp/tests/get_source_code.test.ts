@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { Project } from '@ariadnejs/core';
 import { getSourceCode, GetSourceCodeRequest } from '../src/tools/get_source_code';
 import * as fs from 'fs/promises';
 import * as path from 'path';

@@ -1,4 +1,3 @@
-import { Project } from "@ariadnejs/core";
 import { getSymbolContext } from "../src/tools/get_symbol_context";
 import * as path from "path";
 import * as fs from "fs/promises";
