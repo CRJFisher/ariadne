@@ -9,8 +9,8 @@ import type { SyntaxNode } from "tree-sitter";
 import type { Language, FilePath } from "@ariadnejs/types";
 import { SemanticCategory, SemanticEntity } from "../capture_types";
 import { RUST_CAPTURE_CONFIG } from "./rust";
-import { create_simple_mock_node } from "../test_utils";
-import { query_tree_and_parse_captures } from "../semantic_index";
+import { create_simple_mock_node } from "../../semantic_index/test_utils";
+import { query_tree_and_parse_captures } from "../parse_and_query_code";
 
 describe("Rust Language Configuration", () => {
   let parser: Parser;

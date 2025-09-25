@@ -33,9 +33,11 @@ describe("Semantic Index Query Bug Fixes", () => {
     it("should throw descriptive error when parser is not found for language", async () => {
       // Import after mocking
       const { query_tree_and_parse_captures } = await import(
-        "./semantic_index"
+        "../parse_and_query_code"
       );
-      const { load_query } = await import("./query_loader");
+      const { load_query } = await import(
+        "../parse_and_query_code/query_loader"
+      );
 
       // Mock successful query loading
       vi.mocked(load_query).mockReturnValue("(identifier) @test");
@@ -53,9 +55,11 @@ describe("Semantic Index Query Bug Fixes", () => {
 
     it("should work correctly when parser is found", async () => {
       const { query_tree_and_parse_captures } = await import(
-        "./semantic_index"
+        "../parse_and_query_code"
       );
-      const { load_query } = await import("./query_loader");
+      const { load_query } = await import(
+        "../parse_and_query_code/query_loader"
+      );
 
       // Mock successful query loading with a valid query
       vi.mocked(load_query).mockReturnValue("(identifier) @def.variable");
@@ -73,10 +77,10 @@ describe("Semantic Index Query Bug Fixes", () => {
 
     it("should handle undefined parser gracefully", async () => {
       const { query_tree_and_parse_captures } = await import(
-        "./semantic_index"
+        "../parse_and_query_code"
       );
       const { load_query, LANGUAGE_TO_TREESITTER_LANG } = await import(
-        "./query_loader"
+        "../parse_and_query_code/query_loader"
       );
 
       // Mock successful query loading
@@ -104,9 +108,11 @@ describe("Semantic Index Query Bug Fixes", () => {
 
     it("should preserve error from load_query if query loading fails", async () => {
       const { query_tree_and_parse_captures } = await import(
-        "./semantic_index"
+        "../parse_and_query_code"
       );
-      const { load_query } = await import("./query_loader");
+      const { load_query } = await import(
+        "../parse_and_query_code/query_loader"
+      );
 
       // Mock query loading failure
       vi.mocked(load_query).mockImplementation(() => {
@@ -124,9 +130,11 @@ describe("Semantic Index Query Bug Fixes", () => {
 
     it("should handle invalid query syntax errors from Query constructor", async () => {
       const { query_tree_and_parse_captures } = await import(
-        "./semantic_index"
+        "../parse_and_query_code"
       );
-      const { load_query } = await import("./query_loader");
+      const { load_query } = await import(
+        "../parse_and_query_code/query_loader"
+      );
 
       // Mock loading of invalid query syntax
       vi.mocked(load_query).mockReturnValue("(invalid query syntax [[[");
@@ -148,9 +156,11 @@ describe("Semantic Index Query Bug Fixes", () => {
       // where get(lang) could return undefined
 
       const { query_tree_and_parse_captures } = await import(
-        "./semantic_index"
+        "../parse_and_query_code"
       );
-      const { load_query } = await import("./query_loader");
+      const { load_query } = await import(
+        "../parse_and_query_code/query_loader"
+      );
 
       vi.mocked(load_query).mockReturnValue("(identifier) @test");
 
@@ -170,24 +180,32 @@ describe("Semantic Index Query Bug Fixes", () => {
   describe("Edge Cases", () => {
     it("should handle null tree gracefully", async () => {
       const { query_tree_and_parse_captures } = await import(
-        "./semantic_index"
+        "../parse_and_query_code"
       );
-      const { load_query } = await import("./query_loader");
+      const { load_query } = await import(
+        "../parse_and_query_code/query_loader"
+      );
 
       vi.mocked(load_query).mockReturnValue("(identifier) @test");
 
       const file_path = "test.js" as FilePath;
 
       expect(() => {
-        query_tree_and_parse_captures("javascript", null as unknown as Tree, file_path);
+        query_tree_and_parse_captures(
+          "javascript",
+          null as unknown as Tree,
+          file_path
+        );
       }).toThrow(); // Should throw due to null tree
     });
 
     it("should handle empty query string", async () => {
       const { query_tree_and_parse_captures } = await import(
-        "./semantic_index"
+        "../parse_and_query_code"
       );
-      const { load_query } = await import("./query_loader");
+      const { load_query } = await import(
+        "../parse_and_query_code/query_loader"
+      );
 
       vi.mocked(load_query).mockReturnValue("");
 
@@ -203,9 +221,11 @@ describe("Semantic Index Query Bug Fixes", () => {
 
     it("should handle very large query results", async () => {
       const { query_tree_and_parse_captures } = await import(
-        "./semantic_index"
+        "../parse_and_query_code"
       );
-      const { load_query } = await import("./query_loader");
+      const { load_query } = await import(
+        "../parse_and_query_code/query_loader"
+      );
 
       // Query that captures many nodes
       vi.mocked(load_query).mockReturnValue(

@@ -34,7 +34,7 @@ import {
 } from "./scope_tree";
 import { SemanticEntity, SemanticCategory } from "../capture_types";
 import type { NormalizedCapture } from "../capture_types";
-import { query_tree_and_parse_captures } from "../semantic_index";
+import { query_tree_and_parse_captures } from "../../parse_and_query_code/parse_and_query_code";
 
 const FIXTURES_DIR = join(__dirname, "fixtures");
 
@@ -231,7 +231,9 @@ describe("Scope Tree Module", () => {
           "typescript"
         );
 
-        const scope_types = Array.from(result.scopes.values()).map((s) => s.type);
+        const scope_types = Array.from(result.scopes.values()).map(
+          (s) => s.type
+        );
         expect(scope_types).toContain("module");
         expect(scope_types).toContain("function");
         expect(scope_types).toContain("class");
@@ -349,14 +351,24 @@ describe("Scope Tree Module", () => {
             category: SemanticCategory.SCOPE,
             entity: SemanticEntity.FUNCTION,
             text: "func2",
-            node_location: { ...base_location, line: 5, column: 20, end_line: 8 },
+            node_location: {
+              ...base_location,
+              line: 5,
+              column: 20,
+              end_line: 8,
+            },
             modifiers: {},
           },
           {
             category: SemanticCategory.SCOPE,
             entity: SemanticEntity.FUNCTION,
             text: "func1",
-            node_location: { ...base_location, line: 5, column: 10, end_line: 7 },
+            node_location: {
+              ...base_location,
+              line: 5,
+              column: 10,
+              end_line: 7,
+            },
             modifiers: {},
           },
         ];
@@ -703,16 +715,24 @@ describe("Scope Tree Module", () => {
         // Test entities that might be passed but should default to 'block'
         expect(map_entity_to_scope_type(SemanticEntity.VARIABLE)).toBe("block");
         expect(map_entity_to_scope_type(SemanticEntity.CONSTANT)).toBe("block");
-        expect(map_entity_to_scope_type(SemanticEntity.PARAMETER)).toBe("block");
+        expect(map_entity_to_scope_type(SemanticEntity.PARAMETER)).toBe(
+          "block"
+        );
         expect(map_entity_to_scope_type(SemanticEntity.FIELD)).toBe("block");
         expect(map_entity_to_scope_type(SemanticEntity.PROPERTY)).toBe("block");
-        expect(map_entity_to_scope_type(SemanticEntity.INTERFACE)).toBe("block");
+        expect(map_entity_to_scope_type(SemanticEntity.INTERFACE)).toBe(
+          "block"
+        );
         expect(map_entity_to_scope_type(SemanticEntity.ENUM)).toBe("block");
-        expect(map_entity_to_scope_type(SemanticEntity.TYPE_ALIAS)).toBe("block");
+        expect(map_entity_to_scope_type(SemanticEntity.TYPE_ALIAS)).toBe(
+          "block"
+        );
         expect(map_entity_to_scope_type(SemanticEntity.ENUM_MEMBER)).toBe(
           "block"
         );
-        expect(map_entity_to_scope_type(SemanticEntity.NAMESPACE)).toBe("block");
+        expect(map_entity_to_scope_type(SemanticEntity.NAMESPACE)).toBe(
+          "block"
+        );
         expect(map_entity_to_scope_type(SemanticEntity.TYPE_PARAMETER)).toBe(
           "block"
         );
@@ -1239,8 +1259,16 @@ describe("Scope Tree Module", () => {
           end_column: 20,
         };
 
-        const result1 = find_containing_scope(test_location, root_scope, scopes);
-        const result2 = find_containing_scope(test_location, root_scope, scopes);
+        const result1 = find_containing_scope(
+          test_location,
+          root_scope,
+          scopes
+        );
+        const result2 = find_containing_scope(
+          test_location,
+          root_scope,
+          scopes
+        );
 
         // Should return same result both times (deterministic)
         expect(result1.id).toBe(result2.id);
@@ -1517,24 +1545,38 @@ describe("Scope Tree Module", () => {
 
     describe("TypeScript fixtures", () => {
       it("should build comprehensive scope tree for nested TypeScript code", () => {
-        const code = readFileSync(join(FIXTURES_DIR, "typescript", "nested_scopes.ts"), "utf8");
+        const code = readFileSync(
+          join(FIXTURES_DIR, "typescript", "nested_scopes.ts"),
+          "utf8"
+        );
         const tree = typescript_parser.parse(code);
         const file_path = "nested_scopes.ts" as FilePath;
 
         // Get scope captures using the semantic index
         let captures;
         try {
-          captures = query_tree_and_parse_captures("typescript", tree, file_path);
+          captures = query_tree_and_parse_captures(
+            "typescript",
+            tree,
+            file_path
+          );
         } catch (error) {
           // Skip test if there are query syntax issues - this is not a scope_tree problem
-          console.warn("Skipping TypeScript test due to query syntax error - this is a query issue, not scope_tree");
+          console.warn(
+            "Skipping TypeScript test due to query syntax error - this is a query issue, not scope_tree"
+          );
           expect(true).toBe(true); // Mark test as passed but skipped
           return;
         }
         const scope_captures = captures.scopes;
 
         // Build scope tree
-        const result = build_scope_tree(scope_captures, tree, file_path, "typescript");
+        const result = build_scope_tree(
+          scope_captures,
+          tree,
+          file_path,
+          "typescript"
+        );
 
         // Verify we have a substantial scope tree
         expect(result.scopes.size).toBeGreaterThan(20); // Should have many scopes
@@ -1545,7 +1587,9 @@ describe("Scope Tree Module", () => {
         expect(result.root_scope.child_ids.length).toBeGreaterThan(0);
 
         // Verify we have different types of scopes
-        const scope_types = Array.from(result.scopes.values()).map(s => s.type);
+        const scope_types = Array.from(result.scopes.values()).map(
+          (s) => s.type
+        );
         expect(scope_types).toContain("module");
         expect(scope_types).toContain("class");
         expect(scope_types).toContain("function");
@@ -1561,19 +1605,31 @@ describe("Scope Tree Module", () => {
       });
 
       it("should correctly find containing scopes in TypeScript code", () => {
-        const code = readFileSync(join(FIXTURES_DIR, "typescript", "nested_scopes.ts"), "utf8");
+        const code = readFileSync(
+          join(FIXTURES_DIR, "typescript", "nested_scopes.ts"),
+          "utf8"
+        );
         const tree = typescript_parser.parse(code);
         const file_path = "nested_scopes.ts" as FilePath;
 
         let captures;
         try {
-          captures = query_tree_and_parse_captures("typescript", tree, file_path);
+          captures = query_tree_and_parse_captures(
+            "typescript",
+            tree,
+            file_path
+          );
         } catch (error) {
           console.warn("Skipping TypeScript test due to query syntax error");
           expect(true).toBe(true);
           return;
         }
-        const result = build_scope_tree(captures.scopes, tree, file_path, "typescript");
+        const result = build_scope_tree(
+          captures.scopes,
+          tree,
+          file_path,
+          "typescript"
+        );
 
         // Test finding scope for a location inside a method
         const method_location = {
@@ -1584,7 +1640,11 @@ describe("Scope Tree Module", () => {
           end_column: 15,
         };
 
-        const containing_scope = find_containing_scope(method_location, result.root_scope, result.scopes);
+        const containing_scope = find_containing_scope(
+          method_location,
+          result.root_scope,
+          result.scopes
+        );
 
         // Should find a method, function, or block scope, not the root
         expect(containing_scope.type).not.toBe("module");
@@ -1592,29 +1652,45 @@ describe("Scope Tree Module", () => {
       });
 
       it("should handle TypeScript class hierarchies correctly", () => {
-        const code = readFileSync(join(FIXTURES_DIR, "typescript", "nested_scopes.ts"), "utf8");
+        const code = readFileSync(
+          join(FIXTURES_DIR, "typescript", "nested_scopes.ts"),
+          "utf8"
+        );
         const tree = typescript_parser.parse(code);
         const file_path = "nested_scopes.ts" as FilePath;
 
         let captures;
         try {
-          captures = query_tree_and_parse_captures("typescript", tree, file_path);
+          captures = query_tree_and_parse_captures(
+            "typescript",
+            tree,
+            file_path
+          );
         } catch (error) {
           console.warn("Skipping TypeScript test due to query syntax error");
           expect(true).toBe(true);
           return;
         }
-        const result = build_scope_tree(captures.scopes, tree, file_path, "typescript");
+        const result = build_scope_tree(
+          captures.scopes,
+          tree,
+          file_path,
+          "typescript"
+        );
 
         // Find class scopes
-        const class_scopes = Array.from(result.scopes.values()).filter(s => s.type === "class");
+        const class_scopes = Array.from(result.scopes.values()).filter(
+          (s) => s.type === "class"
+        );
         expect(class_scopes.length).toBeGreaterThan(0);
 
         // Verify each class scope has methods as children
         for (const class_scope of class_scopes) {
-          const child_scopes = class_scope.child_ids.map(id => result.scopes.get(id)).filter(Boolean);
-          const has_methods = child_scopes.some(scope =>
-            scope?.type === "method" || scope?.type === "constructor"
+          const child_scopes = class_scope.child_ids
+            .map((id) => result.scopes.get(id))
+            .filter(Boolean);
+          const has_methods = child_scopes.some(
+            (scope) => scope?.type === "method" || scope?.type === "constructor"
           );
 
           if (class_scope.child_ids.length > 0) {
@@ -1626,12 +1702,24 @@ describe("Scope Tree Module", () => {
 
     describe("Python fixtures", () => {
       it("should build comprehensive scope tree for nested Python code", () => {
-        const code = readFileSync(join(FIXTURES_DIR, "python", "nested_scopes.py"), "utf8");
+        const code = readFileSync(
+          join(FIXTURES_DIR, "python", "nested_scopes.py"),
+          "utf8"
+        );
         const tree = python_parser.parse(code);
         const file_path = "nested_scopes.py" as FilePath;
 
-        const captures = query_tree_and_parse_captures("python", tree, file_path);
-        const result = build_scope_tree(captures.scopes, tree, file_path, "python");
+        const captures = query_tree_and_parse_captures(
+          "python",
+          tree,
+          file_path
+        );
+        const result = build_scope_tree(
+          captures.scopes,
+          tree,
+          file_path,
+          "python"
+        );
 
         // Verify we have a substantial scope tree
         expect(result.scopes.size).toBeGreaterThan(15);
@@ -1640,22 +1728,38 @@ describe("Scope Tree Module", () => {
         expect(result.root_scope.type).toBe("module");
 
         // Verify we have different types of scopes
-        const scope_types = Array.from(result.scopes.values()).map(s => s.type);
+        const scope_types = Array.from(result.scopes.values()).map(
+          (s) => s.type
+        );
         expect(scope_types).toContain("module");
         expect(scope_types).toContain("class");
         expect(scope_types).toContain("function");
       });
 
       it("should handle Python function nesting correctly", () => {
-        const code = readFileSync(join(FIXTURES_DIR, "python", "nested_scopes.py"), "utf8");
+        const code = readFileSync(
+          join(FIXTURES_DIR, "python", "nested_scopes.py"),
+          "utf8"
+        );
         const tree = python_parser.parse(code);
         const file_path = "nested_scopes.py" as FilePath;
 
-        const captures = query_tree_and_parse_captures("python", tree, file_path);
-        const result = build_scope_tree(captures.scopes, tree, file_path, "python");
+        const captures = query_tree_and_parse_captures(
+          "python",
+          tree,
+          file_path
+        );
+        const result = build_scope_tree(
+          captures.scopes,
+          tree,
+          file_path,
+          "python"
+        );
 
         // Find function scopes
-        const function_scopes = Array.from(result.scopes.values()).filter(s => s.type === "function");
+        const function_scopes = Array.from(result.scopes.values()).filter(
+          (s) => s.type === "function"
+        );
         expect(function_scopes.length).toBeGreaterThan(5);
 
         // Verify nested functions have correct parent relationships
@@ -1671,15 +1775,29 @@ describe("Scope Tree Module", () => {
       });
 
       it("should correctly handle Python class methods and decorators", () => {
-        const code = readFileSync(join(FIXTURES_DIR, "python", "nested_scopes.py"), "utf8");
+        const code = readFileSync(
+          join(FIXTURES_DIR, "python", "nested_scopes.py"),
+          "utf8"
+        );
         const tree = python_parser.parse(code);
         const file_path = "nested_scopes.py" as FilePath;
 
-        const captures = query_tree_and_parse_captures("python", tree, file_path);
-        const result = build_scope_tree(captures.scopes, tree, file_path, "python");
+        const captures = query_tree_and_parse_captures(
+          "python",
+          tree,
+          file_path
+        );
+        const result = build_scope_tree(
+          captures.scopes,
+          tree,
+          file_path,
+          "python"
+        );
 
         // Find class scopes
-        const class_scopes = Array.from(result.scopes.values()).filter(s => s.type === "class");
+        const class_scopes = Array.from(result.scopes.values()).filter(
+          (s) => s.type === "class"
+        );
         expect(class_scopes.length).toBeGreaterThan(0);
 
         // Verify depth calculation works for nested structures
@@ -1694,12 +1812,20 @@ describe("Scope Tree Module", () => {
 
     describe("Rust fixtures", () => {
       it("should build comprehensive scope tree for nested Rust code", () => {
-        const code = readFileSync(join(FIXTURES_DIR, "rust", "nested_scopes.rs"), "utf8");
+        const code = readFileSync(
+          join(FIXTURES_DIR, "rust", "nested_scopes.rs"),
+          "utf8"
+        );
         const tree = rust_parser.parse(code);
         const file_path = "nested_scopes.rs" as FilePath;
 
         const captures = query_tree_and_parse_captures("rust", tree, file_path);
-        const result = build_scope_tree(captures.scopes, tree, file_path, "rust");
+        const result = build_scope_tree(
+          captures.scopes,
+          tree,
+          file_path,
+          "rust"
+        );
 
         // Verify we have a substantial scope tree
         expect(result.scopes.size).toBeGreaterThan(10);
@@ -1708,7 +1834,9 @@ describe("Scope Tree Module", () => {
         expect(result.root_scope.type).toBe("module");
 
         // Verify we have different types of scopes appropriate for Rust
-        const scope_types = Array.from(result.scopes.values()).map(s => s.type);
+        const scope_types = Array.from(result.scopes.values()).map(
+          (s) => s.type
+        );
         expect(scope_types).toContain("module");
         expect(scope_types).toContain("function");
 
@@ -1717,15 +1845,25 @@ describe("Scope Tree Module", () => {
       });
 
       it("should handle Rust impl blocks and associated functions", () => {
-        const code = readFileSync(join(FIXTURES_DIR, "rust", "nested_scopes.rs"), "utf8");
+        const code = readFileSync(
+          join(FIXTURES_DIR, "rust", "nested_scopes.rs"),
+          "utf8"
+        );
         const tree = rust_parser.parse(code);
         const file_path = "nested_scopes.rs" as FilePath;
 
         const captures = query_tree_and_parse_captures("rust", tree, file_path);
-        const result = build_scope_tree(captures.scopes, tree, file_path, "rust");
+        const result = build_scope_tree(
+          captures.scopes,
+          tree,
+          file_path,
+          "rust"
+        );
 
         // Find function scopes (includes methods and associated functions)
-        const function_scopes = Array.from(result.scopes.values()).filter(s => s.type === "function");
+        const function_scopes = Array.from(result.scopes.values()).filter(
+          (s) => s.type === "function"
+        );
         expect(function_scopes.length).toBeGreaterThan(3);
 
         // Verify basic scope containment works - test that all function scopes can compute their depth
@@ -1743,12 +1881,20 @@ describe("Scope Tree Module", () => {
       });
 
       it("should handle Rust nested modules correctly", () => {
-        const code = readFileSync(join(FIXTURES_DIR, "rust", "nested_scopes.rs"), "utf8");
+        const code = readFileSync(
+          join(FIXTURES_DIR, "rust", "nested_scopes.rs"),
+          "utf8"
+        );
         const tree = rust_parser.parse(code);
         const file_path = "nested_scopes.rs" as FilePath;
 
         const captures = query_tree_and_parse_captures("rust", tree, file_path);
-        const result = build_scope_tree(captures.scopes, tree, file_path, "rust");
+        const result = build_scope_tree(
+          captures.scopes,
+          tree,
+          file_path,
+          "rust"
+        );
 
         // Verify that we can compute depths without errors
         let max_depth = 0;
@@ -1765,8 +1911,16 @@ describe("Scope Tree Module", () => {
 
     describe("Cross-language scope patterns", () => {
       it("should produce consistent scope structures across languages", async () => {
-        const languages: Array<{ name: Language; parser: Parser; file: string }> = [
-          { name: "typescript", parser: typescript_parser, file: "nested_scopes.ts" },
+        const languages: Array<{
+          name: Language;
+          parser: Parser;
+          file: string;
+        }> = [
+          {
+            name: "typescript",
+            parser: typescript_parser,
+            file: "nested_scopes.ts",
+          },
           { name: "python", parser: python_parser, file: "nested_scopes.py" },
           { name: "rust", parser: rust_parser, file: "nested_scopes.rs" },
         ];
@@ -1783,20 +1937,31 @@ describe("Scope Tree Module", () => {
             captures = query_tree_and_parse_captures(name, tree, file_path);
           } catch (error) {
             if (name === "typescript") {
-              console.warn(`Skipping ${name} in cross-language test due to query syntax error`);
+              console.warn(
+                `Skipping ${name} in cross-language test due to query syntax error`
+              );
               continue; // Skip TypeScript if queries are broken
             }
             throw error; // Re-throw for other languages
           }
-          const result = build_scope_tree(captures.scopes, tree, file_path, name);
+          const result = build_scope_tree(
+            captures.scopes,
+            tree,
+            file_path,
+            name
+          );
 
           results.push({
             language: name,
             scope_count: result.scopes.size,
-            max_depth: Math.max(...Array.from(result.scopes.values()).map(s =>
-              compute_scope_depth(s, result.scopes)
-            )),
-            scope_types: [...new Set(Array.from(result.scopes.values()).map(s => s.type))],
+            max_depth: Math.max(
+              ...Array.from(result.scopes.values()).map((s) =>
+                compute_scope_depth(s, result.scopes)
+              )
+            ),
+            scope_types: [
+              ...new Set(Array.from(result.scopes.values()).map((s) => s.type)),
+            ],
           });
         }
 
@@ -1810,11 +1975,30 @@ describe("Scope Tree Module", () => {
 
         // All should have module as root type
         for (const { name: language } of languages) {
-          const code = readFileSync(join(FIXTURES_DIR, language, `nested_scopes.${language === 'typescript' ? 'ts' : language === 'python' ? 'py' : 'rs'}`), "utf8");
-          const tree = languages.find(l => l.name === language)!.parser.parse(code);
+          const code = readFileSync(
+            join(
+              FIXTURES_DIR,
+              language,
+              `nested_scopes.${
+                language === "typescript"
+                  ? "ts"
+                  : language === "python"
+                  ? "py"
+                  : "rs"
+              }`
+            ),
+            "utf8"
+          );
+          const tree = languages
+            .find((l) => l.name === language)!
+            .parser.parse(code);
           let captures;
           try {
-            captures = query_tree_and_parse_captures(language, tree, `test.${language}` as FilePath);
+            captures = query_tree_and_parse_captures(
+              language,
+              tree,
+              `test.${language}` as FilePath
+            );
           } catch (error) {
             if (language === "typescript") {
               // Skip TypeScript test but still verify it's a module
@@ -1823,7 +2007,12 @@ describe("Scope Tree Module", () => {
             }
             throw error;
           }
-          const result = build_scope_tree(captures.scopes, tree, `test.${language}` as FilePath, language);
+          const result = build_scope_tree(
+            captures.scopes,
+            tree,
+            `test.${language}` as FilePath,
+            language
+          );
 
           expect(result.root_scope.type).toBe("module");
         }
@@ -1855,11 +2044,18 @@ describe("Scope Tree Module", () => {
 
         expect(() => {
           try {
-            const captures = query_tree_and_parse_captures("typescript", tree, file_path);
+            const captures = query_tree_and_parse_captures(
+              "typescript",
+              tree,
+              file_path
+            );
             build_scope_tree(captures.scopes, tree, file_path, "typescript");
           } catch (error) {
             // Query syntax errors are not scope_tree errors, so don't propagate them
-            if (error instanceof Error && error.message.includes("query syntax")) {
+            if (
+              error instanceof Error &&
+              error.message.includes("query syntax")
+            ) {
               return; // Skip this specific error
             }
             throw error; // Re-throw non-query errors
@@ -1871,9 +2067,10 @@ describe("Scope Tree Module", () => {
         // Generate a large TypeScript file with many nested scopes
         const large_code = [
           "// Large TypeScript file",
-          ...Array.from({ length: 100 }, (_, i) =>
-            `function func${i}() { if (true) { const x = ${i}; } }`
-          )
+          ...Array.from(
+            { length: 100 },
+            (_, i) => `function func${i}() { if (true) { const x = ${i}; } }`
+          ),
         ].join("\n");
 
         const tree = typescript_parser.parse(large_code);
@@ -1882,13 +2079,24 @@ describe("Scope Tree Module", () => {
         const start_time = Date.now();
         let captures;
         try {
-          captures = query_tree_and_parse_captures("typescript", tree, file_path);
+          captures = query_tree_and_parse_captures(
+            "typescript",
+            tree,
+            file_path
+          );
         } catch (error) {
-          console.warn("Skipping large TypeScript test due to query syntax error");
+          console.warn(
+            "Skipping large TypeScript test due to query syntax error"
+          );
           expect(true).toBe(true);
           return;
         }
-        const result = build_scope_tree(captures.scopes, tree, file_path, "typescript");
+        const result = build_scope_tree(
+          captures.scopes,
+          tree,
+          file_path,
+          "typescript"
+        );
         const end_time = Date.now();
 
         // Should complete in reasonable time

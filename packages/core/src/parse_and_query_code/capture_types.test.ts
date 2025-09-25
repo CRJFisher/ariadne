@@ -13,7 +13,7 @@ import {
   type CaptureContext,
   type CaptureMapping,
   type LanguageCaptureConfig,
-} from "./capture_types";
+} from "../parse_and_query_code/capture_types";
 
 describe("Capture Types", () => {
   describe("SemanticCategory Enum", () => {

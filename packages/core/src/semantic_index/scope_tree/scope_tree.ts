@@ -21,8 +21,8 @@ import {
 } from "@ariadnejs/types";
 import { node_to_location } from "../../utils/node_utils";
 import { location_contains } from "@ariadnejs/types";
-import type { NormalizedCapture } from "../capture_types";
-import { SemanticEntity } from "../capture_types";
+import type { NormalizedCapture } from "../../parse_and_query_code/capture_types";
+import { SemanticEntity } from "../../parse_and_query_code/capture_types";
 
 /**
  * Map semantic entity to scope type

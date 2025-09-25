@@ -25,10 +25,9 @@ import {
   class_symbol,
   method_symbol,
   variable_symbol,
-  property_symbol,
   location_key,
 } from "@ariadnejs/types";
-import type { SemanticIndex, ProjectSemanticIndex } from "../semantic_index/semantic_index";
+import type { SemanticIndex } from "../semantic_index/semantic_index";
 import type { ProcessedReferences } from "../semantic_index/references";
 import type { CallReference } from "../semantic_index/references/call_references";
 import type { MemberAccessReference } from "../semantic_index/references/member_access_references";
@@ -404,71 +403,6 @@ export function mock_semantic_index(
   };
 }
 
-// ============================================================================
-// ProjectSemanticIndex Factory
-// ============================================================================
-
-/**
- * Create a mock ProjectSemanticIndex for testing
- */
-export function mock_project_semantic_index(
-  files: Map<FilePath, SemanticIndex>
-): ProjectSemanticIndex {
-  const global_symbols = new Map<SymbolId, SymbolDefinition>();
-  const import_graph = new Map<FilePath, FilePath[]>();
-  const export_graph = new Map<FilePath, Map<SymbolName, SymbolId>>();
-
-  // Extract global symbols from exported symbols
-  for (const [file_path, index] of files) {
-    const file_exports = new Map<SymbolName, SymbolId>();
-
-    for (const export_entry of index.exports) {
-      file_exports.set(export_entry.symbol_name, export_entry.symbol);
-
-      // Add to global symbols if it's exported
-      const symbol = index.symbols.get(export_entry.symbol);
-      if (symbol && symbol.is_exported) {
-        global_symbols.set(symbol.id, symbol);
-      }
-    }
-
-    export_graph.set(file_path, file_exports);
-
-    // Build import graph
-    const imported_files = index.imports.map((imp: Import) => imp.source);
-    import_graph.set(file_path, imported_files);
-  }
-
-  return {
-    files,
-    global_symbols,
-    import_graph,
-    export_graph,
-  };
-}
-
-// ============================================================================
-// Resolution Result Factories
-// ============================================================================
-
-/**
- * Create a mock ResolutionInput for testing
- */
-export function mock_resolution_input(
-  files: Map<FilePath, SemanticIndex>
-): ResolutionInput {
-  return {
-    indices: files,
-  };
-}
-
-/**
- * Create an empty ImportResolutionMap for testing
- */
-export function mock_import_resolution_map(): ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> {
-  return new Map();
-}
-
 /**
  * Create an empty FunctionResolutionMap for testing
  */
@@ -493,17 +427,6 @@ export function mock_type_resolution_map(): TypeResolutionMap {
     constructors: new Map(),
     inheritance_hierarchy: new Map(),
     interface_implementations: new Map(),
-  };
-}
-
-/**
- * Create an empty MethodResolutionMap for testing
- */
-export function mock_method_resolution_map(): MethodResolutionMap {
-  return {
-    method_calls: new Map(),
-    constructor_calls: new Map(),
-    calls_to_method: new Map(),
   };
 }
 

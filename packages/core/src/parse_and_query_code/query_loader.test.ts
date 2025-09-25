@@ -16,8 +16,6 @@ import {
   load_query,
   has_query,
   clear_query_cache,
-  get_cache_size,
-  SUPPORTED_LANGUAGES,
 } from "./query_loader";
 
 // Mock fs to test error cases

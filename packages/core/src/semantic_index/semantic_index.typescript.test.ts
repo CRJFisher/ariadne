@@ -8,8 +8,12 @@ import { join } from "path";
 import Parser from "tree-sitter";
 import TypeScript from "tree-sitter-typescript";
 import type { Language, FilePath } from "@ariadnejs/types";
-import { build_semantic_index, query_tree_and_parse_captures } from "./semantic_index";
-import { SemanticEntity, SemanticCategory } from "./capture_types";
+import { build_semantic_index } from "./semantic_index";
+import { query_tree_and_parse_captures } from "../parse_and_query_code/parse_and_query_code";
+import {
+  SemanticEntity,
+  SemanticCategory,
+} from "../parse_and_query_code/capture_types";
 
 const FIXTURES_DIR = join(__dirname, "fixtures", "typescript");
 
@@ -50,13 +54,13 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
       );
 
       // Verify we have captures from all categories
-      const categories = new Set(captures.scopes.map(c => c.category));
+      const categories = new Set(captures.scopes.map((c) => c.category));
       expect(categories.has(SemanticCategory.SCOPE)).toBe(true);
 
       const entities = new Set([
-        ...captures.definitions.map(c => c.entity),
-        ...captures.references.map(c => c.entity),
-        ...captures.exports.map(c => c.entity)
+        ...captures.definitions.map((c) => c.entity),
+        ...captures.references.map((c) => c.entity),
+        ...captures.exports.map((c) => c.entity),
       ]);
 
       expect(entities.has(SemanticEntity.INTERFACE)).toBe(true);
@@ -95,7 +99,7 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
       );
 
       // Verify type aliases and enums are captured
-      const typeEntities = captures.definitions.map(c => c.entity);
+      const typeEntities = captures.definitions.map((c) => c.entity);
       expect(typeEntities).toContain(SemanticEntity.TYPE_ALIAS);
       expect(typeEntities).toContain(SemanticEntity.ENUM);
       expect(typeEntities).toContain(SemanticEntity.FUNCTION);
@@ -121,7 +125,7 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
       );
       expect(interfaces.length).toBeGreaterThan(10);
 
-      const interfaceNames = interfaces.map(i => i.name);
+      const interfaceNames = interfaces.map((i) => i.name);
       expect(interfaceNames).toContain("BasicInterface");
       expect(interfaceNames).toContain("GenericContainer");
       expect(interfaceNames).toContain("ExtendedUser");
@@ -130,8 +134,8 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
       expect(interfaceNames).toContain("HybridInterface");
 
       // Check exports
-      const interfaceExports = index.exports.filter(
-        (e) => interfaceNames.includes(e.symbol_name)
+      const interfaceExports = index.exports.filter((e) =>
+        interfaceNames.includes(e.symbol_name)
       );
       expect(interfaceExports.length).toBeGreaterThan(0);
     });
@@ -189,7 +193,7 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
         (sym) => sym.kind === "function"
       );
 
-      const functionNames = functions.map(f => f.name);
+      const functionNames = functions.map((f) => f.name);
       expect(functionNames).toContain("identity");
       expect(functionNames).toContain("combine");
       expect(functionNames).toContain("processLengthwise");
@@ -200,7 +204,7 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
         (sym) => sym.kind === "class"
       );
 
-      const classNames = classes.map(c => c.name);
+      const classNames = classes.map((c) => c.name);
       expect(classNames).toContain("Container");
       expect(classNames).toContain("KeyValuePair");
       expect(classNames).toContain("Repository");
@@ -212,7 +216,7 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
         (sym) => sym.kind === "type_alias"
       );
 
-      const typeNames = typeAliases.map(t => t.name);
+      const typeNames = typeAliases.map((t) => t.name);
       expect(typeNames).toContain("IsArray");
       expect(typeNames).toContain("ArrayElement");
       expect(typeNames).toContain("Optional");
@@ -245,18 +249,18 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
       const functions = Array.from(index.symbols.values()).filter(
         (sym) => sym.kind === "function"
       );
-      expect(functions.some(f => f.name === "constrained")).toBe(true);
+      expect(functions.some((f) => f.name === "constrained")).toBe(true);
 
       const typeAliases = Array.from(index.symbols.values()).filter(
         (sym) => sym.kind === "type_alias"
       );
-      expect(typeAliases.some(t => t.name === "Lengthwise")).toBe(true);
-      expect(typeAliases.some(t => t.name === "Conditional")).toBe(true);
+      expect(typeAliases.some((t) => t.name === "Lengthwise")).toBe(true);
+      expect(typeAliases.some((t) => t.name === "Conditional")).toBe(true);
 
       const classes = Array.from(index.symbols.values()).filter(
         (sym) => sym.kind === "class"
       );
-      expect(classes.some(c => c.name === "GenericClass")).toBe(true);
+      expect(classes.some((c) => c.name === "GenericClass")).toBe(true);
     });
   });
 
@@ -278,7 +282,7 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
         (sym) => sym.kind === "class"
       );
 
-      const classNames = classes.map(c => c.name);
+      const classNames = classes.map((c) => c.name);
       expect(classNames).toContain("Person");
       expect(classNames).toContain("Employee");
       expect(classNames).toContain("Animal");
@@ -341,7 +345,7 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
       );
       expect(classes.length).toBe(3);
 
-      const classNames = classes.map(c => c.name);
+      const classNames = classes.map((c) => c.name);
       expect(classNames).toContain("BaseClass");
       expect(classNames).toContain("ConcreteClass");
       expect(classNames).toContain("FlyingClass");
@@ -405,7 +409,7 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
         (sym) => sym.kind === "type_alias"
       );
 
-      const typeNames = typeAliases.map(t => t.name);
+      const typeNames = typeAliases.map((t) => t.name);
       expect(typeNames).toContain("StringOrNumber");
       expect(typeNames).toContain("ApiResponse");
       expect(typeNames).toContain("Repository");
@@ -419,7 +423,7 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
         (sym) => sym.kind === "function"
       );
 
-      const functionNames = functions.map(f => f.name);
+      const functionNames = functions.map((f) => f.name);
       expect(functionNames).toContain("isString");
       expect(functionNames).toContain("isUserData");
       expect(functionNames).toContain("assertIsString");
@@ -465,7 +469,7 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
         (sym) => sym.kind === "type_alias"
       );
 
-      const typeNames = typeAliases.map(t => t.name);
+      const typeNames = typeAliases.map((t) => t.name);
       expect(typeNames).toContain("Optional");
       expect(typeNames).toContain("Pick");
       expect(typeNames).toContain("Conditional");
@@ -494,7 +498,7 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
         (sym) => sym.kind === "enum"
       );
 
-      const enumNames = enums.map(e => e.name);
+      const enumNames = enums.map((e) => e.name);
       expect(enumNames).toContain("Color");
       expect(enumNames).toContain("Direction");
       expect(enumNames).toContain("HttpStatus");
@@ -511,7 +515,7 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
         (sym) => sym.kind === "function"
       );
 
-      const functionNames = functions.map(f => f.name);
+      const functionNames = functions.map((f) => f.name);
       expect(functionNames).toContain("getColorHex");
       expect(functionNames).toContain("isSuccessStatus");
       expect(functionNames).toContain("canAccess");
@@ -520,8 +524,8 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
       const variables = Array.from(index.symbols.values()).filter(
         (sym) => sym.kind === "variable"
       );
-      expect(variables.some(v => v.name === "colorConfig")).toBe(true);
-      expect(variables.some(v => v.name === "userOperations")).toBe(true);
+      expect(variables.some((v) => v.name === "colorConfig")).toBe(true);
+      expect(variables.some((v) => v.name === "userOperations")).toBe(true);
     });
 
     it("should handle const enums and computed values", () => {
@@ -556,7 +560,7 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
         (sym) => sym.kind === "enum"
       );
 
-      const enumNames = enums.map(e => e.name);
+      const enumNames = enums.map((e) => e.name);
       expect(enumNames).toContain("ConstEnum");
       expect(enumNames).toContain("ComputedEnum");
       expect(enumNames).toContain("StringEnum");
@@ -582,7 +586,7 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
       // Check exports
       expect(index.exports.length).toBeGreaterThan(10);
 
-      const exportNames = index.exports.map(e => e.symbol_name);
+      const exportNames = index.exports.map((e) => e.symbol_name);
       expect(exportNames).toContain("ModuleConfig");
       expect(exportNames).toContain("ModuleManager");
       expect(exportNames).toContain("BaseModule");
@@ -595,7 +599,7 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
         (sym) => sym.kind === "class"
       );
 
-      const classNames = classes.map(c => c.name);
+      const classNames = classes.map((c) => c.name);
       expect(classNames).toContain("ModuleManager");
       expect(classNames).toContain("BaseModule");
       expect(classNames).toContain("GenericModuleManager");
@@ -605,7 +609,7 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
         (sym) => sym.kind === "interface"
       );
 
-      const interfaceNames = interfaces.map(i => i.name);
+      const interfaceNames = interfaces.map((i) => i.name);
       expect(interfaceNames).toContain("ModuleInterface");
       expect(interfaceNames).toContain("AsyncModuleInterface");
       expect(interfaceNames).toContain("PluginSystem");
@@ -638,7 +642,7 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
       expect(index.imports.length).toBeGreaterThan(0);
       expect(index.exports.length).toBeGreaterThan(0);
 
-      const exportNames = index.exports.map(e => e.symbol_name);
+      const exportNames = index.exports.map((e) => e.symbol_name);
       expect(exportNames).toContain("UserConfig");
       expect(exportNames).toContain("ApiResponse");
       expect(exportNames).toContain("UserService");
@@ -673,7 +677,7 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
       const namespaces = Array.from(index.symbols.values()).filter(
         (sym) => sym.kind === "namespace"
       );
-      expect(namespaces.some(n => n.name === "MyNamespace")).toBe(true);
+      expect(namespaces.some((n) => n.name === "MyNamespace")).toBe(true);
     });
   });
 
@@ -695,7 +699,7 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
         (sym) => sym.kind === "function"
       );
 
-      const functionNames = functions.map(f => f.name);
+      const functionNames = functions.map((f) => f.name);
       expect(functionNames).toContain("Entity");
       expect(functionNames).toContain("Sealed");
       expect(functionNames).toContain("Log");
@@ -709,7 +713,7 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
         (sym) => sym.kind === "class"
       );
 
-      const classNames = classes.map(c => c.name);
+      const classNames = classes.map((c) => c.name);
       expect(classNames).toContain("User");
       expect(classNames).toContain("UserController");
       expect(classNames).toContain("UserService");
@@ -762,13 +766,13 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
       const functions = Array.from(index.symbols.values()).filter(
         (sym) => sym.kind === "function"
       );
-      expect(functions.some(f => f.name === "validate")).toBe(true);
-      expect(functions.some(f => f.name === "route")).toBe(true);
+      expect(functions.some((f) => f.name === "validate")).toBe(true);
+      expect(functions.some((f) => f.name === "route")).toBe(true);
 
       const classes = Array.from(index.symbols.values()).filter(
         (sym) => sym.kind === "class"
       );
-      expect(classes.some(c => c.name === "DecoratedUser")).toBe(true);
+      expect(classes.some((c) => c.name === "DecoratedUser")).toBe(true);
     });
   });
 
@@ -824,32 +828,32 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
       const namespaces = Array.from(index.symbols.values()).filter(
         (sym) => sym.kind === "namespace"
       );
-      expect(namespaces.some(n => n.name === "Api")).toBe(true);
+      expect(namespaces.some((n) => n.name === "Api")).toBe(true);
 
       // Check interface inside namespace
       const interfaces = Array.from(index.symbols.values()).filter(
         (sym) => sym.kind === "interface"
       );
-      expect(interfaces.some(i => i.name === "Config")).toBe(true);
-      expect(interfaces.some(i => i.name === "Service")).toBe(true);
+      expect(interfaces.some((i) => i.name === "Config")).toBe(true);
+      expect(interfaces.some((i) => i.name === "Service")).toBe(true);
 
       // Check enum inside namespace
       const enums = Array.from(index.symbols.values()).filter(
         (sym) => sym.kind === "enum"
       );
-      expect(enums.some(e => e.name === "HttpMethod")).toBe(true);
+      expect(enums.some((e) => e.name === "HttpMethod")).toBe(true);
 
       // Check class inside namespace
       const classes = Array.from(index.symbols.values()).filter(
         (sym) => sym.kind === "class"
       );
-      expect(classes.some(c => c.name === "ApiService")).toBe(true);
+      expect(classes.some((c) => c.name === "ApiService")).toBe(true);
 
       // Check type aliases
       const typeAliases = Array.from(index.symbols.values()).filter(
         (sym) => sym.kind === "type_alias"
       );
-      expect(typeAliases.some(t => t.name === "Response")).toBe(true);
+      expect(typeAliases.some((t) => t.name === "Response")).toBe(true);
 
       // Check exports
       expect(index.exports.length).toBeGreaterThan(0);

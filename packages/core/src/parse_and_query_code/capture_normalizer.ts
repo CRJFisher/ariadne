@@ -4,7 +4,10 @@
 
 import type { QueryCapture } from "tree-sitter";
 import type { Language, FilePath } from "@ariadnejs/types";
-import type { NormalizedCapture, LanguageCaptureConfig } from "./capture_types";
+import type {
+  NormalizedCapture,
+  LanguageCaptureConfig,
+} from "../parse_and_query_code/capture_types";
 import { JAVASCRIPT_CAPTURE_CONFIG } from "./language_configs/javascript";
 import { TYPESCRIPT_CAPTURE_CONFIG } from "./language_configs/typescript";
 import { PYTHON_CAPTURE_CONFIG } from "./language_configs/python";
@@ -49,20 +52,22 @@ export function normalize_captures(
     let namespace_chain: string[] | undefined;
 
     // For scoped macro invocations like tokio::join!
-    if (capture.name.includes('macro') && capture.name.includes('scoped')) {
+    if (capture.name.includes("macro") && capture.name.includes("scoped")) {
       // Find the parent macro_invocation node to get the full scoped identifier
       let parent = capture.node.parent;
-      while (parent && parent.type !== 'macro_invocation') {
+      while (parent && parent.type !== "macro_invocation") {
         parent = parent.parent;
       }
 
       if (parent) {
         // Find the scoped_identifier child
-        const scopedIdChild = parent.children.find(child => child.type === 'scoped_identifier');
+        const scopedIdChild = parent.children.find(
+          (child) => child.type === "scoped_identifier"
+        );
         if (scopedIdChild) {
           qualified_name = scopedIdChild.text;
           // Extract namespace chain (e.g., ["tokio", "join"] from "tokio::join")
-          namespace_chain = qualified_name.split('::');
+          namespace_chain = qualified_name.split("::");
         }
       }
     }

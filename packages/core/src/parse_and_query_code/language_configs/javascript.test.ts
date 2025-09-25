@@ -900,9 +900,7 @@ class TestClass {
   describe("Edge Cases and Error Conditions", () => {
     it("should handle empty capture mappings gracefully", () => {
       // Test that all mappings have required properties
-      for (const [key, mapping] of Array.from(
-        JAVASCRIPT_CAPTURE_CONFIG.entries()
-      )) {
+      for (const [key, mapping] of JAVASCRIPT_CAPTURE_CONFIG) {
         expect(mapping.category).toBeDefined();
         expect(mapping.entity).toBeDefined();
         expect(typeof key).toBe("string");

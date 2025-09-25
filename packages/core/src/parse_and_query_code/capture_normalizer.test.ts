@@ -5,13 +5,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { QueryCapture } from "tree-sitter";
 import type { Language, FilePath } from "@ariadnejs/types";
-import type { NormalizedCapture } from "./capture_types";
-import { SemanticCategory, SemanticEntity } from "./capture_types";
+import type { NormalizedCapture } from "../parse_and_query_code/capture_types";
+import {
+  SemanticCategory,
+  SemanticEntity,
+} from "./capture_types";
 import {
   normalize_captures,
   group_captures_by_category,
 } from "./capture_normalizer";
-import { create_mock_node as create_mock_node } from "./test_utils";
+import { create_mock_node as create_mock_node } from "../semantic_index/test_utils";
 
 // Mock dependencies
 vi.mock("../utils/node_utils", () => ({

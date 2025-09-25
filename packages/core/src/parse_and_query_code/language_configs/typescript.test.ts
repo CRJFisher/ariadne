@@ -14,7 +14,7 @@ import {
 } from "../capture_types";
 import { TYPESCRIPT_CAPTURE_CONFIG } from "./typescript";
 import { JAVASCRIPT_CAPTURE_CONFIG } from "./javascript";
-import { create_simple_mock_node } from "../test_utils";
+import { create_simple_mock_node } from "../../semantic_index/test_utils";
 
 describe("TypeScript Language Configuration", () => {
   let parser: Parser;
@@ -1082,9 +1082,12 @@ describe("TypeScript Language Configuration", () => {
     });
 
     it("should handle parameter property field definitions", () => {
-      const fieldParamPropertyConfig =
-        TYPESCRIPT_CAPTURE_CONFIG.get("def.field.param_property");
-      expect(fieldParamPropertyConfig?.category).toBe(SemanticCategory.DEFINITION);
+      const fieldParamPropertyConfig = TYPESCRIPT_CAPTURE_CONFIG.get(
+        "def.field.param_property"
+      );
+      expect(fieldParamPropertyConfig?.category).toBe(
+        SemanticCategory.DEFINITION
+      );
       expect(fieldParamPropertyConfig?.entity).toBe(SemanticEntity.VARIABLE);
       expect(fieldParamPropertyConfig?.context).toBeDefined();
 
@@ -1147,9 +1150,7 @@ describe("TypeScript Language Configuration", () => {
   describe("Edge Cases and Error Conditions", () => {
     it("should handle empty capture mappings gracefully", () => {
       // Test that all mappings have required properties
-      for (const [key, mapping] of Array.from(
-        TYPESCRIPT_CAPTURE_CONFIG.entries()
-      )) {
+      for (const [key, mapping] of TYPESCRIPT_CAPTURE_CONFIG) {
         expect(mapping.category).toBeDefined();
         expect(mapping.entity).toBeDefined();
         expect(typeof key).toBe("string");

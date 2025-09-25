@@ -8,8 +8,12 @@ import { join } from "path";
 import Parser from "tree-sitter";
 import Python from "tree-sitter-python";
 import type { Language, FilePath } from "@ariadnejs/types";
-import { query_tree_and_parse_captures, build_semantic_index } from "./semantic_index";
-import { SemanticEntity, SemanticCategory } from "./capture_types";
+import { build_semantic_index } from "./semantic_index";
+import { query_tree_and_parse_captures } from "../parse_and_query_code/parse_and_query_code";
+import {
+  SemanticEntity,
+  SemanticCategory,
+} from "../parse_and_query_code/capture_types";
 import { build_scope_tree } from "./scope_tree";
 
 const FIXTURES_DIR = join(__dirname, "fixtures", "python");
@@ -28,13 +32,16 @@ describe("Semantic Index - Python Comprehensive", () => {
 
   describe("query_tree_and_parse_captures", () => {
     it("should capture all Python scopes correctly", () => {
-      const code = readFileSync(join(FIXTURES_DIR, "scope_hierarchy.py"), "utf8");
+      const code = readFileSync(
+        join(FIXTURES_DIR, "scope_hierarchy.py"),
+        "utf8"
+      );
       const tree = parser.parse(code);
       const file_path = "scope_hierarchy.py" as FilePath;
       const result = query_tree_and_parse_captures("python", tree, file_path);
 
       // Check different scope types
-      const scope_entities = result.scopes.map(s => s.entity);
+      const scope_entities = result.scopes.map((s) => s.entity);
       expect(scope_entities).toContain(SemanticEntity.MODULE);
       expect(scope_entities).toContain(SemanticEntity.FUNCTION);
       expect(scope_entities).toContain(SemanticEntity.CLASS);
@@ -51,7 +58,7 @@ describe("Semantic Index - Python Comprehensive", () => {
       const result = query_tree_and_parse_captures("python", tree, file_path);
 
       // Check definition types
-      const def_entities = result.definitions.map(d => d.entity);
+      const def_entities = result.definitions.map((d) => d.entity);
       expect(def_entities).toContain(SemanticEntity.FUNCTION);
       expect(def_entities).toContain(SemanticEntity.CLASS);
       expect(def_entities).toContain(SemanticEntity.METHOD);
@@ -72,7 +79,7 @@ describe("Semantic Index - Python Comprehensive", () => {
       expect(result.imports.length).toBeGreaterThan(5);
 
       // Check for specific import patterns
-      const import_texts = result.imports.map(i => i.text);
+      const import_texts = result.imports.map((i) => i.text);
       expect(import_texts).toContain("os");
       expect(import_texts).toContain("sys");
       expect(import_texts).toContain("json");
@@ -85,7 +92,7 @@ describe("Semantic Index - Python Comprehensive", () => {
       const result = query_tree_and_parse_captures("python", tree, file_path);
 
       // Check reference types
-      const ref_entities = result.references.map(r => r.entity);
+      const ref_entities = result.references.map((r) => r.entity);
       expect(ref_entities).toContain(SemanticEntity.CALL);
 
       // Verify reference count is reasonable
@@ -152,7 +159,9 @@ describe("Semantic Index - Python Comprehensive", () => {
 
       // Check dataclass definitions
       const dataclass_symbols = Array.from(result.symbols.values()).filter(
-        (def) => def.kind === "class" && (def.name === "DataClassExample" || def.name === "FrozenDataClass")
+        (def) =>
+          def.kind === "class" &&
+          (def.name === "DataClassExample" || def.name === "FrozenDataClass")
       );
       expect(dataclass_symbols.length).toBeGreaterThanOrEqual(1);
     });
@@ -177,7 +186,10 @@ describe("Semantic Index - Python Comprehensive", () => {
 
   describe("Type Hints", () => {
     it("should capture basic type annotations", () => {
-      const code = readFileSync(join(FIXTURES_DIR, "comprehensive_type_hints.py"), "utf8");
+      const code = readFileSync(
+        join(FIXTURES_DIR, "comprehensive_type_hints.py"),
+        "utf8"
+      );
       const tree = parser.parse(code);
       const file_path = "comprehensive_type_hints.py" as FilePath;
       const parsed = query_tree_and_parse_captures("python", tree, file_path);
@@ -202,7 +214,7 @@ def typed_function(x: int, y: str, z: list[int]) -> dict[str, any]:
       );
       expect(typed_params.length).toBeGreaterThanOrEqual(3);
 
-      const param_names = typed_params.map(p => p.text);
+      const param_names = typed_params.map((p) => p.text);
       expect(param_names).toContain("x");
       expect(param_names).toContain("y");
       expect(param_names).toContain("z");
@@ -226,7 +238,10 @@ z: list[int] = [1, 2, 3]
     });
 
     it("should parse generic type annotations", () => {
-      const code = readFileSync(join(FIXTURES_DIR, "comprehensive_type_hints.py"), "utf8");
+      const code = readFileSync(
+        join(FIXTURES_DIR, "comprehensive_type_hints.py"),
+        "utf8"
+      );
       const tree = parser.parse(code);
       const file_path = "comprehensive_type_hints.py" as FilePath;
       const result = build_semantic_index(file_path, tree, "python");
@@ -239,20 +254,28 @@ z: list[int] = [1, 2, 3]
     });
 
     it("should parse Protocol definitions", () => {
-      const code = readFileSync(join(FIXTURES_DIR, "comprehensive_type_hints.py"), "utf8");
+      const code = readFileSync(
+        join(FIXTURES_DIR, "comprehensive_type_hints.py"),
+        "utf8"
+      );
       const tree = parser.parse(code);
       const file_path = "comprehensive_type_hints.py" as FilePath;
       const result = build_semantic_index(file_path, tree, "python");
 
       // Check for Protocol classes
       const protocol_classes = Array.from(result.symbols.values()).filter(
-        (def) => def.kind === "class" && (def.name === "Drawable" || def.name === "Comparable")
+        (def) =>
+          def.kind === "class" &&
+          (def.name === "Drawable" || def.name === "Comparable")
       );
       expect(protocol_classes.length).toBeGreaterThan(0);
     });
 
     it("should parse TypedDict definitions", () => {
-      const code = readFileSync(join(FIXTURES_DIR, "comprehensive_type_hints.py"), "utf8");
+      const code = readFileSync(
+        join(FIXTURES_DIR, "comprehensive_type_hints.py"),
+        "utf8"
+      );
       const tree = parser.parse(code);
       const file_path = "comprehensive_type_hints.py" as FilePath;
       const result = build_semantic_index(file_path, tree, "python");
@@ -271,7 +294,10 @@ z: list[int] = [1, 2, 3]
 
   describe("Exports", () => {
     it("should handle implicit exports (all top-level definitions)", () => {
-      const code = readFileSync(join(FIXTURES_DIR, "implicit_exports.py"), "utf8");
+      const code = readFileSync(
+        join(FIXTURES_DIR, "implicit_exports.py"),
+        "utf8"
+      );
       const tree = parser.parse(code);
       const file_path = "implicit_exports.py" as FilePath;
       const result = build_semantic_index(file_path, tree, "python");
@@ -291,7 +317,10 @@ z: list[int] = [1, 2, 3]
     });
 
     it("should parse __all__ explicit exports and extract contents", () => {
-      const code = readFileSync(join(FIXTURES_DIR, "comprehensive_exports.py"), "utf8");
+      const code = readFileSync(
+        join(FIXTURES_DIR, "comprehensive_exports.py"),
+        "utf8"
+      );
       const tree = parser.parse(code);
       const file_path = "comprehensive_exports.py" as FilePath;
       const parsed = query_tree_and_parse_captures("python", tree, file_path);
@@ -304,7 +333,8 @@ z: list[int] = [1, 2, 3]
 
       // Check for __all__ list capture with contents
       const all_list_exports = parsed.exports.filter(
-        (exp) => exp.context?.all_contents && Array.isArray(exp.context.all_contents)
+        (exp) =>
+          exp.context?.all_contents && Array.isArray(exp.context.all_contents)
       );
       expect(all_list_exports.length).toBeGreaterThan(0);
 
@@ -325,7 +355,10 @@ z: list[int] = [1, 2, 3]
     });
 
     it("should handle complex __all__ patterns", () => {
-      const code = readFileSync(join(FIXTURES_DIR, "comprehensive_exports.py"), "utf8");
+      const code = readFileSync(
+        join(FIXTURES_DIR, "comprehensive_exports.py"),
+        "utf8"
+      );
       const tree = parser.parse(code);
       const file_path = "comprehensive_exports.py" as FilePath;
       const result = build_semantic_index(file_path, tree, "python");
@@ -339,30 +372,46 @@ z: list[int] = [1, 2, 3]
     });
 
     it("should identify private symbols by naming convention", () => {
-      const code = readFileSync(join(FIXTURES_DIR, "comprehensive_exports.py"), "utf8");
+      const code = readFileSync(
+        join(FIXTURES_DIR, "comprehensive_exports.py"),
+        "utf8"
+      );
       const tree = parser.parse(code);
       const file_path = "comprehensive_exports.py" as FilePath;
       const result = build_semantic_index(file_path, tree, "python");
 
       // Check for private symbols
       const all_symbols = Array.from(result.symbols.values());
-      const private_symbols = all_symbols.filter(s => s.name.startsWith("_") && !s.name.startsWith("__"));
-      const magic_symbols = all_symbols.filter(s => s.name.startsWith("__") && s.name.endsWith("__"));
+      const private_symbols = all_symbols.filter(
+        (s) => s.name.startsWith("_") && !s.name.startsWith("__")
+      );
+      const magic_symbols = all_symbols.filter(
+        (s) => s.name.startsWith("__") && s.name.endsWith("__")
+      );
 
       expect(private_symbols.length).toBeGreaterThan(0);
       expect(magic_symbols.length).toBeGreaterThan(0);
     });
 
     it("should handle re-exports from other modules", () => {
-      const code = readFileSync(join(FIXTURES_DIR, "comprehensive_exports.py"), "utf8");
+      const code = readFileSync(
+        join(FIXTURES_DIR, "comprehensive_exports.py"),
+        "utf8"
+      );
       const tree = parser.parse(code);
       const file_path = "comprehensive_exports.py" as FilePath;
       const result = build_semantic_index(file_path, tree, "python");
 
       // Check for re-exported items
       const imports = result.imports;
-      const import_names = imports.map(i =>
-        i.kind === "named" ? i.imports[0]?.name : i.kind === "namespace" ? i.namespace_name : i.kind === "default" ? i.name : ""
+      const import_names = imports.map((i) =>
+        i.kind === "named"
+          ? i.imports[0]?.name
+          : i.kind === "namespace"
+          ? i.namespace_name
+          : i.kind === "default"
+          ? i.name
+          : ""
       );
       expect(import_names).toContain("defaultdict");
       expect(import_names).toContain("Counter");
@@ -415,7 +464,10 @@ z: list[int] = [1, 2, 3]
       const result = build_semantic_index(file_path, tree, "python");
 
       const magic_methods = Array.from(result.symbols.values()).filter(
-        (def) => (def.kind === "method" || def.kind === "constructor") && def.name.startsWith("__") && def.name.endsWith("__")
+        (def) =>
+          (def.kind === "method" || def.kind === "constructor") &&
+          def.name.startsWith("__") &&
+          def.name.endsWith("__")
       );
 
       const magic_names = magic_methods.map((m) => m.name);
@@ -482,7 +534,8 @@ z: list[int] = [1, 2, 3]
 
       // Check for async function definitions
       const async_functions = parsed.definitions.filter(
-        (def) => def.entity === SemanticEntity.FUNCTION && def.text.includes("async")
+        (def) =>
+          def.entity === SemanticEntity.FUNCTION && def.text.includes("async")
       );
       expect(async_functions.length).toBeGreaterThan(0);
     });
@@ -530,7 +583,13 @@ z: list[int] = [1, 2, 3]
       expect(result.imports.length).toBeGreaterThan(0);
 
       const import_names = result.imports.map((imp) =>
-        imp.kind === "named" ? imp.imports[0]?.name : imp.kind === "namespace" ? imp.namespace_name : imp.kind === "default" ? imp.name : ""
+        imp.kind === "named"
+          ? imp.imports[0]?.name
+          : imp.kind === "namespace"
+          ? imp.namespace_name
+          : imp.kind === "default"
+          ? imp.name
+          : ""
       );
       expect(import_names).toContain("os");
       expect(import_names).toContain("sys");
@@ -548,17 +607,15 @@ z: list[int] = [1, 2, 3]
       );
 
       expect(from_imports.length).toBeGreaterThan(0);
-      const from_import_names = from_imports.flatMap((imp) =>
-        {
-          if (imp.kind === "named") {
-            return imp.imports.map(importItem => importItem.name);
-          } else if (imp.kind === "default") {
-            return [imp.name];
-          } else {
-            return [];
-          }
-        } 
-      );
+      const from_import_names = from_imports.flatMap((imp) => {
+        if (imp.kind === "named") {
+          return imp.imports.map((importItem) => importItem.name);
+        } else if (imp.kind === "default") {
+          return [imp.name];
+        } else {
+          return [];
+        }
+      });
       expect(from_import_names).toContain("defaultdict");
       expect(from_import_names).toContain("Counter");
     });
@@ -570,19 +627,21 @@ z: list[int] = [1, 2, 3]
       const result = build_semantic_index(file_path, tree, "python");
 
       const aliased_imports = result.imports.filter(
-        (imp) => imp.kind === "named" && imp.imports.some(importItem => importItem.alias)
+        (imp) =>
+          imp.kind === "named" &&
+          imp.imports.some((importItem) => importItem.alias)
       );
 
       expect(aliased_imports.length).toBeGreaterThan(0);
-      const aliases = aliased_imports.flatMap((imp) =>
-        {
-          if (imp.kind === "named") {
-            return imp.imports.filter(importItem => importItem.alias).map(importItem => importItem.alias!);
-          } else {
-            return [];
-          }
+      const aliases = aliased_imports.flatMap((imp) => {
+        if (imp.kind === "named") {
+          return imp.imports
+            .filter((importItem) => importItem.alias)
+            .map((importItem) => importItem.alias!);
+        } else {
+          return [];
         }
-      );
+      });
       expect(aliases).toContain("np");
       expect(aliases).toContain("pd");
       expect(aliases).toContain("dt");
@@ -608,7 +667,10 @@ z: list[int] = [1, 2, 3]
 
   describe("Scope Hierarchy", () => {
     it("should build correct scope tree", () => {
-      const code = readFileSync(join(FIXTURES_DIR, "scope_hierarchy.py"), "utf8");
+      const code = readFileSync(
+        join(FIXTURES_DIR, "scope_hierarchy.py"),
+        "utf8"
+      );
       const tree = parser.parse(code);
       const file_path = "scope_hierarchy.py" as FilePath;
       const parsed = query_tree_and_parse_captures("python", tree, file_path);
@@ -724,9 +786,7 @@ with open("file") as f:
       const parsed = query_tree_and_parse_captures("python", tree, file_path);
 
       // Check for self references
-      const self_refs = parsed.references.filter(
-        (ref) => ref.text === "self"
-      );
+      const self_refs = parsed.references.filter((ref) => ref.text === "self");
       expect(self_refs.length).toBeGreaterThan(0);
 
       // Check for cls references
@@ -796,11 +856,12 @@ def generator():
 
       // Check for yield expressions - look for ref.yield captures or yield in text
       const yields = parsed.references.filter(
-        (ref) => ref.text.includes("yield") || ref.entity === SemanticEntity.VARIABLE
+        (ref) =>
+          ref.text.includes("yield") || ref.entity === SemanticEntity.VARIABLE
       );
       // Alternative: check if any references contain yield-related content
-      const hasYieldContent = parsed.references.some(ref =>
-        ref.text === "1" || ref.text === "2" || ref.text === "3"
+      const hasYieldContent = parsed.references.some(
+        (ref) => ref.text === "1" || ref.text === "2" || ref.text === "3"
       );
       expect(yields.length > 0 || hasYieldContent).toBe(true);
     });
@@ -819,9 +880,15 @@ y *= 2
 z //= 3
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures("python", tree, "test.py" as FilePath);
+      const parsed = query_tree_and_parse_captures(
+        "python",
+        tree,
+        "test.py" as FilePath
+      );
 
-      const augmented = parsed.assignments.filter(a => a.entity === SemanticEntity.VARIABLE);
+      const augmented = parsed.assignments.filter(
+        (a) => a.entity === SemanticEntity.VARIABLE
+      );
       expect(augmented.length).toBeGreaterThan(0);
     });
 
@@ -837,12 +904,20 @@ x, y, z = 1, 2, 3
 [c, d] = [6, 7]
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures("python", tree, "test.py" as FilePath);
+      const parsed = query_tree_and_parse_captures(
+        "python",
+        tree,
+        "test.py" as FilePath
+      );
 
-      const multipleAssigns = parsed.definitions.filter(d => d.text === "x" || d.text === "y" || d.text === "z");
+      const multipleAssigns = parsed.definitions.filter(
+        (d) => d.text === "x" || d.text === "y" || d.text === "z"
+      );
       expect(multipleAssigns.length).toBe(3);
 
-      const tupleAssigns = parsed.definitions.filter(d => d.text === "a" || d.text === "b");
+      const tupleAssigns = parsed.definitions.filter(
+        (d) => d.text === "a" || d.text === "b"
+      );
       expect(tupleAssigns.length).toBe(2);
     });
 
@@ -861,10 +936,16 @@ unique = {item for item in items if item}
 gen = (n for n in numbers if n > 0)
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures("python", tree, "test.py" as FilePath);
+      const parsed = query_tree_and_parse_captures(
+        "python",
+        tree,
+        "test.py" as FilePath
+      );
 
-      const compVars = parsed.definitions.filter(d => d.entity === SemanticEntity.VARIABLE);
-      const compVarNames = compVars.map(v => v.text);
+      const compVars = parsed.definitions.filter(
+        (d) => d.entity === SemanticEntity.VARIABLE
+      );
+      const compVarNames = compVars.map((v) => v.text);
       expect(compVarNames).toContain("x");
       expect(compVarNames).toContain("k");
       expect(compVarNames).toContain("v");
@@ -880,10 +961,16 @@ except (TypeError, KeyError) as err:
     handle_error(err)
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures("python", tree, "test.py" as FilePath);
+      const parsed = query_tree_and_parse_captures(
+        "python",
+        tree,
+        "test.py" as FilePath
+      );
 
-      const exceptVars = parsed.definitions.filter(d => d.entity === SemanticEntity.VARIABLE);
-      const exceptVarNames = exceptVars.map(v => v.text);
+      const exceptVars = parsed.definitions.filter(
+        (d) => d.entity === SemanticEntity.VARIABLE
+      );
+      const exceptVarNames = exceptVars.map((v) => v.text);
       expect(exceptVarNames).toContain("e");
       expect(exceptVarNames).toContain("err");
     });
@@ -897,10 +984,16 @@ with contextlib.suppress(Exception) as suppressed:
     risky_operation()
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures("python", tree, "test.py" as FilePath);
+      const parsed = query_tree_and_parse_captures(
+        "python",
+        tree,
+        "test.py" as FilePath
+      );
 
-      const withVars = parsed.definitions.filter(d => d.entity === SemanticEntity.VARIABLE);
-      const withVarNames = withVars.map(v => v.text);
+      const withVars = parsed.definitions.filter(
+        (d) => d.entity === SemanticEntity.VARIABLE
+      );
+      const withVarNames = withVars.map((v) => v.text);
       expect(withVarNames).toContain("f");
       expect(withVarNames).toContain("suppressed");
     });
@@ -918,9 +1011,15 @@ match value:
         print("default")
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures("python", tree, "test.py" as FilePath);
+      const parsed = query_tree_and_parse_captures(
+        "python",
+        tree,
+        "test.py" as FilePath
+      );
 
-      const matchScopes = parsed.scopes.filter(s => s.entity === SemanticEntity.BLOCK);
+      const matchScopes = parsed.scopes.filter(
+        (s) => s.entity === SemanticEntity.BLOCK
+      );
       expect(matchScopes.length).toBeGreaterThan(0);
     });
 
@@ -933,9 +1032,15 @@ def generator():
     yield from other_generator()
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures("python", tree, "test.py" as FilePath);
+      const parsed = query_tree_and_parse_captures(
+        "python",
+        tree,
+        "test.py" as FilePath
+      );
 
-      const yields = parsed.references.filter(r => r.text === "yield" || r.text === "yield from");
+      const yields = parsed.references.filter(
+        (r) => r.text === "yield" || r.text === "yield from"
+      );
       expect(yields.length).toBeGreaterThan(0);
     });
 
@@ -945,9 +1050,13 @@ assert x > 0, "x must be positive"
 assert isinstance(obj, MyClass)
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures("python", tree, "test.py" as FilePath);
+      const parsed = query_tree_and_parse_captures(
+        "python",
+        tree,
+        "test.py" as FilePath
+      );
 
-      const asserts = parsed.references.filter(r => r.text === "assert");
+      const asserts = parsed.references.filter((r) => r.text === "assert");
       expect(asserts.length).toBeGreaterThan(0);
     });
 
@@ -958,9 +1067,15 @@ del obj.attr
 del items[0]
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures("python", tree, "test.py" as FilePath);
+      const parsed = query_tree_and_parse_captures(
+        "python",
+        tree,
+        "test.py" as FilePath
+      );
 
-      const deletes = parsed.references.filter(r => r.text === "x" || r.text === "obj" || r.text === "items");
+      const deletes = parsed.references.filter(
+        (r) => r.text === "x" || r.text === "obj" || r.text === "items"
+      );
       expect(deletes.length).toBeGreaterThan(0);
     });
 
@@ -972,10 +1087,17 @@ data['key'] = 'value'
 slice_val = array[1:10:2]
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures("python", tree, "test.py" as FilePath);
+      const parsed = query_tree_and_parse_captures(
+        "python",
+        tree,
+        "test.py" as FilePath
+      );
 
-      const subscripts = parsed.references.filter(r =>
-        r.entity === SemanticEntity.MEMBER_ACCESS || r.text === "items" || r.text === "matrix"
+      const subscripts = parsed.references.filter(
+        (r) =>
+          r.entity === SemanticEntity.MEMBER_ACCESS ||
+          r.text === "items" ||
+          r.text === "matrix"
       );
       expect(subscripts.length).toBeGreaterThan(0);
     });
@@ -987,7 +1109,10 @@ slice_val = array[1:10:2]
 
   describe("Integration", () => {
     it("should handle complex Python file with all features", () => {
-      const code = readFileSync(join(FIXTURES_DIR, "comprehensive_type_hints.py"), "utf8");
+      const code = readFileSync(
+        join(FIXTURES_DIR, "comprehensive_type_hints.py"),
+        "utf8"
+      );
       const tree = parser.parse(code);
       const file_path = "comprehensive_type_hints.py" as FilePath;
       const result = build_semantic_index(file_path, tree, "python");
@@ -1007,7 +1132,7 @@ slice_val = array[1:10:2]
         "comprehensive_type_hints.py",
         "comprehensive_exports.py",
         "imports.py",
-        "scope_hierarchy.py"
+        "scope_hierarchy.py",
       ];
 
       for (const fixture of fixtures) {
@@ -1017,7 +1142,11 @@ slice_val = array[1:10:2]
 
         // Should not throw errors
         expect(() => {
-          const result = query_tree_and_parse_captures("python", tree, file_path);
+          const result = query_tree_and_parse_captures(
+            "python",
+            tree,
+            file_path
+          );
           expect(result).toBeDefined();
           expect(result.scopes).toBeDefined();
           expect(result.definitions).toBeDefined();

@@ -17,8 +17,6 @@ import {
   mock_import,
   mock_export,
   mock_local_type_info,
-  mock_project_semantic_index,
-  mock_resolution_input,
   create_function_scenario,
   create_class_method_scenario,
   create_import_export_scenario,
@@ -375,37 +373,6 @@ describe("Test Factories", () => {
       expect(scenario.exported_symbol.is_exported).toBe(true);
       expect(scenario.import_ref.kind).toBe("named");
       expect(scenario.export_ref.kind).toBe("named");
-    });
-  });
-
-  describe("Project-level Factories", () => {
-    it("should create ProjectSemanticIndex", () => {
-      const file1 = "file1.ts" as FilePath;
-      const file2 = "file2.ts" as FilePath;
-
-      const index1 = mock_semantic_index(file1);
-      const index2 = mock_semantic_index(file2);
-
-      const files = new Map([
-        [file1, index1],
-        [file2, index2],
-      ]);
-
-      const project_index = mock_project_semantic_index(files);
-
-      expect(project_index.files.size).toBe(2);
-      expect(project_index.global_symbols).toBeInstanceOf(Map);
-      expect(project_index.import_graph).toBeInstanceOf(Map);
-      expect(project_index.export_graph).toBeInstanceOf(Map);
-    });
-
-    it("should create ResolutionInput", () => {
-      const files = new Map([[test_file, mock_semantic_index(test_file)]]);
-
-      const input = mock_resolution_input(files);
-
-      expect(input.indices).toBe(files);
-      expect(input.indices.size).toBe(1);
     });
   });
 

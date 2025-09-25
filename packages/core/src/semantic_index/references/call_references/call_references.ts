@@ -12,8 +12,12 @@ import type {
 } from "@ariadnejs/types";
 import { node_to_location } from "../../../utils/node_utils";
 import { find_containing_scope } from "../../scope_tree";
-import type { NormalizedCapture, CaptureContext } from "../../capture_types";
-import { SemanticEntity, SemanticCategory } from "../../capture_types";
+import {
+  SemanticEntity,
+  SemanticCategory,
+  NormalizedCapture,
+  CaptureContext,
+} from "../../../parse_and_query_code/capture_types";
 
 /**
  * Call reference - Represents a function/method/constructor call
@@ -113,7 +117,6 @@ function detect_static_call(context: CaptureContext): boolean | undefined {
   return undefined; // Cannot determine
 }
 
-
 /**
  * Process call references
  */
@@ -129,11 +132,15 @@ export function process_call_references(
 
   // Filter for call-related entities (only references, not definitions)
   const call_captures = captures.filter(
-    (c) => (c.entity === SemanticEntity.CALL) ||
-           (c.entity === SemanticEntity.SUPER) ||
-           (c.entity === SemanticEntity.FUNCTION && c.category === SemanticCategory.REFERENCE) ||
-           (c.entity === SemanticEntity.METHOD && c.category === SemanticCategory.REFERENCE) ||
-           (c.entity === SemanticEntity.MACRO && c.category === SemanticCategory.REFERENCE)
+    (c) =>
+      c.entity === SemanticEntity.CALL ||
+      c.entity === SemanticEntity.SUPER ||
+      (c.entity === SemanticEntity.FUNCTION &&
+        c.category === SemanticCategory.REFERENCE) ||
+      (c.entity === SemanticEntity.METHOD &&
+        c.category === SemanticCategory.REFERENCE) ||
+      (c.entity === SemanticEntity.MACRO &&
+        c.category === SemanticCategory.REFERENCE)
   );
 
   for (const capture of call_captures) {
@@ -300,4 +307,3 @@ function get_containing_function(
 
   return undefined;
 }
-
