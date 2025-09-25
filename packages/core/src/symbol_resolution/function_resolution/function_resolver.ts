@@ -10,7 +10,7 @@ import type {
   SymbolName,
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
-import type { CallReference } from "../../semantic_index/references/call_references/call_references";
+import type { CallReference } from "@ariadnejs/types/src/call_chains";
 import type { SemanticIndex } from "../../semantic_index/semantic_index";
 import type {
   FunctionCallResolution,
@@ -53,9 +53,10 @@ export function resolve_function_calls(
     // Process all function and macro call references in this file
     for (const call_ref of index.references.calls) {
       if (call_ref.call_type === "function" || call_ref.call_type === "macro") {
-        const resolution = call_ref.call_type === "macro"
-          ? resolve_single_macro_call(call_ref, context)
-          : resolve_single_function_call(call_ref, context);
+        const resolution =
+          call_ref.call_type === "macro"
+            ? resolve_single_macro_call(call_ref, context)
+            : resolve_single_function_call(call_ref, context);
 
         if (resolution) {
           const location_key_val = location_key(call_ref.location);
@@ -69,10 +70,16 @@ export function resolve_function_calls(
               closure_calls.set(location_key_val, resolution.resolved_function);
             }
             if (resolution.rust_function_info.is_higher_order_call) {
-              higher_order_calls.set(location_key_val, resolution.resolved_function);
+              higher_order_calls.set(
+                location_key_val,
+                resolution.resolved_function
+              );
             }
             if (resolution.rust_function_info.function_trait_kind) {
-              function_pointer_calls.set(location_key_val, resolution.resolved_function);
+              function_pointer_calls.set(
+                location_key_val,
+                resolution.resolved_function
+              );
             }
           }
 
@@ -94,11 +101,23 @@ export function resolve_function_calls(
 
   return {
     function_calls: function_calls as ReadonlyMap<LocationKey, SymbolId>,
-    calls_to_function: calls_to_function as ReadonlyMap<SymbolId, readonly Location[]>,
-    resolution_details: resolution_details as ReadonlyMap<LocationKey, FunctionCallResolution>,
+    calls_to_function: calls_to_function as ReadonlyMap<
+      SymbolId,
+      readonly Location[]
+    >,
+    resolution_details: resolution_details as ReadonlyMap<
+      LocationKey,
+      FunctionCallResolution
+    >,
     closure_calls: closure_calls as ReadonlyMap<LocationKey, SymbolId>,
-    higher_order_calls: higher_order_calls as ReadonlyMap<LocationKey, SymbolId>,
-    function_pointer_calls: function_pointer_calls as ReadonlyMap<LocationKey, SymbolId>,
+    higher_order_calls: higher_order_calls as ReadonlyMap<
+      LocationKey,
+      SymbolId
+    >,
+    function_pointer_calls: function_pointer_calls as ReadonlyMap<
+      LocationKey,
+      SymbolId
+    >,
   };
 }
 
@@ -167,25 +186,54 @@ function try_builtin_macro_resolution(
   context: FunctionResolutionContext
 ): FunctionCallResolution | null {
   const builtin_macros = new Set([
-    'println', 'eprintln', 'print', 'eprint', 'vec', 'panic', 'assert',
-    'debug_assert', 'format', 'write', 'writeln', 'todo', 'unimplemented',
-    'unreachable', 'compile_error', 'include', 'include_str', 'include_bytes',
-    'concat', 'stringify', 'env', 'option_env', 'cfg', 'column', 'file',
-    'line', 'module_path', 'assert_eq', 'assert_ne', 'debug_assert_eq',
-    'debug_assert_ne', 'matches', 'dbg', 'try'
+    "println",
+    "eprintln",
+    "print",
+    "eprint",
+    "vec",
+    "panic",
+    "assert",
+    "debug_assert",
+    "format",
+    "write",
+    "writeln",
+    "todo",
+    "unimplemented",
+    "unreachable",
+    "compile_error",
+    "include",
+    "include_str",
+    "include_bytes",
+    "concat",
+    "stringify",
+    "env",
+    "option_env",
+    "cfg",
+    "column",
+    "file",
+    "line",
+    "module_path",
+    "assert_eq",
+    "assert_ne",
+    "debug_assert_eq",
+    "debug_assert_ne",
+    "matches",
+    "dbg",
+    "try",
   ]);
 
   if (builtin_macros.has(macro_name)) {
     // Create a synthetic symbol ID for built-in macros
-    const builtin_symbol_id = `builtin_macro_${macro_name}_${context.file_path}` as SymbolId;
+    const builtin_symbol_id =
+      `builtin_macro_${macro_name}_${context.file_path}` as SymbolId;
 
     return {
       resolved_function: builtin_symbol_id,
-      resolution_strategy: 'builtin_macro',
-      confidence: 'high',
+      resolution_strategy: "builtin_macro",
+      confidence: "high",
       macro_info: {
         is_builtin: true,
-        macro_kind: 'builtin',
+        macro_kind: "builtin",
         macro_name,
       },
     };
@@ -204,7 +252,7 @@ function try_lexical_macro_resolution(
 ): FunctionCallResolution | null {
   // Look for macro definitions in the current file
   for (const [symbol_id, symbol] of context.file_index.symbols) {
-    if (symbol.kind === 'function' && symbol.name === macro_name) {
+    if (symbol.kind === "function" && symbol.name === macro_name) {
       // Check if this symbol was created from a macro definition
       // (We map macros to function symbols in definitions.ts)
 
@@ -212,11 +260,11 @@ function try_lexical_macro_resolution(
       // For now, if we find a macro with the same name, assume it's a match
       return {
         resolved_function: symbol_id,
-        resolution_strategy: 'lexical_macro',
-        confidence: 'high',
+        resolution_strategy: "lexical_macro",
+        confidence: "high",
         macro_info: {
           is_builtin: false,
-          macro_kind: 'declarative',
+          macro_kind: "declarative",
           macro_name,
         },
       };
@@ -240,15 +288,15 @@ function try_imported_macro_resolution(
     // Verify the imported symbol is actually a macro
     for (const [, index] of context.indices) {
       const symbol = index.symbols.get(imported_symbol);
-      if (symbol?.kind === 'function') {
+      if (symbol?.kind === "function") {
         // Assume imported function-like symbols could be macros
         return {
           resolved_function: imported_symbol,
-          resolution_strategy: 'imported_macro',
-          confidence: 'medium',
+          resolution_strategy: "imported_macro",
+          confidence: "medium",
           macro_info: {
             is_builtin: false,
-            macro_kind: 'imported',
+            macro_kind: "imported",
             macro_name,
           },
         };
@@ -281,40 +329,40 @@ function extract_rust_function_info(
   symbol_id: SymbolId,
   context: FunctionResolutionContext,
   call_ref: CallReference
-): FunctionCallResolution['rust_function_info'] {
+): FunctionCallResolution["rust_function_info"] {
   // Find the symbol in any of the indices
   for (const [file_path, index] of context.indices) {
     const symbol = index.symbols.get(symbol_id);
-    if (symbol && (symbol.kind === 'function' || symbol.kind === 'method')) {
-      const is_closure = symbol.modifiers?.is_closure ?? false;
-      const is_higher_order = symbol.modifiers?.is_higher_order ?? false;
-      const is_const = symbol.modifiers?.is_const ?? false;
-      const is_async = symbol.modifiers?.is_async ?? false;
-      const is_unsafe = symbol.modifiers?.is_unsafe ?? false;
-      const accepts_impl_trait = symbol.modifiers?.accepts_impl_trait ?? false;
-      const returns_impl_trait = symbol.modifiers?.returns_impl_trait ?? false;
-      const is_move = symbol.modifiers?.is_move ?? false;
-      const is_function_trait = symbol.modifiers?.is_function_trait ?? false;
+    if (symbol && (symbol.kind === "function" || symbol.kind === "method")) {
+      const is_closure = symbol?.modifiers?.is_closure ?? false;
+      const is_higher_order = symbol?.is_higher_order ?? false;
+      const is_const = symbol?.is_const ?? false;
+      const is_async = symbol?.is_async ?? false;
+      const is_unsafe = symbol?.is_unsafe ?? false;
+      const accepts_impl_trait = symbol?.accepts_impl_trait ?? false;
+      const returns_impl_trait = symbol?.returns_impl_trait ?? false;
+      const is_move = symbol?.is_move ?? false;
+      const is_function_trait = symbol?.is_function_trait ?? false;
 
       // Determine closure capture kind
-      let closure_capture_kind: 'move' | 'borrow' | 'mut_borrow' | undefined;
+      let closure_capture_kind: "move" | "borrow" | "mut_borrow" | undefined;
       if (is_closure) {
         if (is_move) {
-          closure_capture_kind = 'move';
+          closure_capture_kind = "move";
         } else {
           // Default to borrow for non-move closures
-          closure_capture_kind = 'borrow';
+          closure_capture_kind = "borrow";
         }
       }
 
       // Determine function trait kind based on call pattern
-      let function_trait_kind: 'Fn' | 'FnMut' | 'FnOnce' | undefined;
+      let function_trait_kind: "Fn" | "FnMut" | "FnOnce" | undefined;
       if (is_function_trait || is_higher_order) {
         // Analyze the call pattern to determine trait type
         // For now, default to Fn - this could be enhanced with more sophisticated analysis
-        function_trait_kind = 'Fn';
+        function_trait_kind = "Fn";
         if (is_move) {
-          function_trait_kind = 'FnOnce';
+          function_trait_kind = "FnOnce";
         }
       }
 

@@ -7,7 +7,8 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { resolve_symbols } from "../symbol_resolution";
-import type { ResolutionInput, ResolvedSymbols } from "../types";
+import type { ResolutionInput } from "../types";
+import type { ResolvedSymbols } from "@ariadnejs/types/src/call_chains";
 import type {
   FilePath,
   SymbolId,

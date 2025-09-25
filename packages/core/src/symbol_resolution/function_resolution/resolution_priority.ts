@@ -10,7 +10,7 @@ import type {
   LexicalScope,
   ScopeId,
 } from "@ariadnejs/types";
-import type { CallReference } from "../../semantic_index/references/call_references/call_references";
+import type { CallReference } from "@ariadnejs/types/src/call_chains";
 import type { SemanticIndex } from "../../semantic_index/semantic_index";
 import type {
   FunctionCallResolution,
@@ -54,8 +54,11 @@ export function try_lexical_resolution(
   ) {
     // Map resolution methods - "hoisted" is considered "lexical" in function resolution context
     const resolution_strategy: FunctionCallResolution["resolution_strategy"] =
-      lookup_result.resolution_method === "hoisted" ? "lexical" :
-      lookup_result.resolution_method === "global" ? "global" : "lexical";
+      lookup_result.resolution_method === "hoisted"
+        ? "lexical"
+        : lookup_result.resolution_method === "global"
+        ? "global"
+        : "lexical";
 
     return {
       call_location: call_ref.location,

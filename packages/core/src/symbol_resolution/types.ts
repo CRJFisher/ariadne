@@ -85,33 +85,6 @@ export interface MethodResolutionMap {
 }
 
 // ============================================================================
-// Complete Resolution Result
-// ============================================================================
-
-/**
- * Complete symbol resolution result
- * Combines all phase outputs into a unified resolution map
- */
-export interface ResolvedSymbols {
-  // Master map: any reference location key -> its resolved SymbolId
-  readonly resolved_references: ReadonlyMap<LocationKey, SymbolId>;
-
-  // Reverse map: SymbolId -> all locations that reference it
-  readonly references_to_symbol: ReadonlyMap<SymbolId, readonly Location[]>;
-
-  // References that could not be resolved to any symbol
-  readonly unresolved_references: ReadonlyMap<LocationKey, SymbolId>;
-
-  // Individual phase results (for debugging/analysis)
-  readonly phases: {
-    readonly imports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>;
-    readonly functions: FunctionResolutionMap;
-    readonly types: TypeResolutionMap;
-    readonly methods: MethodResolutionMap;
-  };
-}
-
-// ============================================================================
 // Resolution Input
 // ============================================================================
 

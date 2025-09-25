@@ -8,10 +8,13 @@ import type {
   SymbolDefinition,
   LexicalScope,
 } from "@ariadnejs/types";
-import type { CallReference } from "../../semantic_index/references/call_references/call_references";
+import type { CallReference } from "@ariadnejs/types/src/call_chains";
 import type { SemanticIndex } from "../../semantic_index/semantic_index";
 import type { FunctionResolutionContext } from "./function_types";
-import { mock_local_type_tracking, mock_local_type_flow } from "../test_factories";
+import {
+  mock_local_type_tracking,
+  mock_local_type_flow,
+} from "../test_factories";
 import {
   try_lexical_resolution,
   try_imported_resolution,
@@ -113,7 +116,12 @@ describe("Resolution Priority Functions", () => {
         root_scope_id: "scope:module" as ScopeId,
         scopes: new Map([["scope:module" as ScopeId, scope]]),
         symbols: new Map([["sym:localFunc" as SymbolId, funcDef]]),
-        references: { calls: [], returns: [], member_accesses: [], type_annotations: [] },
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
@@ -138,7 +146,11 @@ describe("Resolution Priority Functions", () => {
         "scope:module" as ScopeId
       );
 
-      const result = try_lexical_resolution("localFunc" as SymbolName, call_ref, context);
+      const result = try_lexical_resolution(
+        "localFunc" as SymbolName,
+        call_ref,
+        context
+      );
 
       expect(result).not.toBeNull();
       expect(result?.resolved_function).toBe("sym:localFunc" as SymbolId);
@@ -161,7 +173,11 @@ describe("Resolution Priority Functions", () => {
         new Map([["parentFunc" as SymbolName, funcDef]])
       );
 
-      const childScope = create_scope("scope:child" as ScopeId, "scope:module" as ScopeId, new Map());
+      const childScope = create_scope(
+        "scope:child" as ScopeId,
+        "scope:module" as ScopeId,
+        new Map()
+      );
 
       const index: SemanticIndex = {
         file_path,
@@ -172,7 +188,12 @@ describe("Resolution Priority Functions", () => {
           ["scope:child" as ScopeId, childScope],
         ]),
         symbols: new Map([["sym:parentFunc" as SymbolId, funcDef]]),
-        references: { calls: [], returns: [], member_accesses: [], type_annotations: [] },
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
@@ -197,7 +218,11 @@ describe("Resolution Priority Functions", () => {
         "scope:child" as ScopeId
       );
 
-      const result = try_lexical_resolution("parentFunc" as SymbolName, call_ref, context);
+      const result = try_lexical_resolution(
+        "parentFunc" as SymbolName,
+        call_ref,
+        context
+      );
 
       expect(result).not.toBeNull();
       expect(result?.resolved_function).toBe("sym:parentFunc" as SymbolId);
@@ -234,7 +259,12 @@ describe("Resolution Priority Functions", () => {
         root_scope_id: "scope:module" as ScopeId,
         scopes: new Map([["scope:module" as ScopeId, scope]]),
         symbols: new Map([["sym:myVar" as SymbolId, varDef]]),
-        references: { calls: [], returns: [], member_accesses: [], type_annotations: [] },
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
@@ -252,9 +282,18 @@ describe("Resolution Priority Functions", () => {
         file_imports: new Map(),
       };
 
-      const call_ref = create_call_ref("myVar" as SymbolName, file_path, 5, "scope:module" as ScopeId);
+      const call_ref = create_call_ref(
+        "myVar" as SymbolName,
+        file_path,
+        5,
+        "scope:module" as ScopeId
+      );
 
-      const result = try_lexical_resolution("myVar" as SymbolName, call_ref, context);
+      const result = try_lexical_resolution(
+        "myVar" as SymbolName,
+        call_ref,
+        context
+      );
 
       expect(result).toBeNull();
     });
@@ -267,7 +306,12 @@ describe("Resolution Priority Functions", () => {
         root_scope_id: "scope:module" as ScopeId,
         scopes: new Map(), // Empty scopes
         symbols: new Map(),
-        references: { calls: [], returns: [], member_accesses: [], type_annotations: [] },
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
@@ -292,7 +336,11 @@ describe("Resolution Priority Functions", () => {
         "scope:missing" as ScopeId
       );
 
-      const result = try_lexical_resolution("someFunc" as SymbolName, call_ref, context);
+      const result = try_lexical_resolution(
+        "someFunc" as SymbolName,
+        call_ref,
+        context
+      );
 
       expect(result).toBeNull();
     });
@@ -317,7 +365,12 @@ describe("Resolution Priority Functions", () => {
         root_scope_id: "scope:other" as ScopeId,
         scopes: new Map(),
         symbols: new Map([["sym:importedFunc" as SymbolId, importedFuncDef]]),
-        references: { calls: [], returns: [], member_accesses: [], type_annotations: [] },
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
@@ -333,7 +386,12 @@ describe("Resolution Priority Functions", () => {
         root_scope_id: "scope:module" as ScopeId,
         scopes: new Map(),
         symbols: new Map(),
-        references: { calls: [], returns: [], member_accesses: [], type_annotations: [] },
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
@@ -363,7 +421,11 @@ describe("Resolution Priority Functions", () => {
         "scope:module" as ScopeId
       );
 
-      const result = try_imported_resolution("importedFunc" as SymbolName, call_ref, context);
+      const result = try_imported_resolution(
+        "importedFunc" as SymbolName,
+        call_ref,
+        context
+      );
 
       expect(result).not.toBeNull();
       expect(result?.resolved_function).toBe("sym:importedFunc" as SymbolId);
@@ -380,7 +442,12 @@ describe("Resolution Priority Functions", () => {
         root_scope_id: "scope:module" as ScopeId,
         scopes: new Map(),
         symbols: new Map(),
-        references: { calls: [], returns: [], member_accesses: [], type_annotations: [] },
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
@@ -405,7 +472,11 @@ describe("Resolution Priority Functions", () => {
         "scope:module" as ScopeId
       );
 
-      const result = try_imported_resolution("notImported" as SymbolName, call_ref, context);
+      const result = try_imported_resolution(
+        "notImported" as SymbolName,
+        call_ref,
+        context
+      );
 
       expect(result).toBeNull();
     });
@@ -437,7 +508,12 @@ describe("Resolution Priority Functions", () => {
         root_scope_id: "scope:other" as ScopeId,
         scopes: new Map(),
         symbols: new Map([["sym:importedVar" as SymbolId, importedVarDef]]),
-        references: { calls: [], returns: [], member_accesses: [], type_annotations: [] },
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
@@ -453,7 +529,12 @@ describe("Resolution Priority Functions", () => {
         root_scope_id: "scope:module" as ScopeId,
         scopes: new Map(),
         symbols: new Map(),
-        references: { calls: [], returns: [], member_accesses: [], type_annotations: [] },
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
@@ -471,7 +552,9 @@ describe("Resolution Priority Functions", () => {
         imports: new Map(),
         file_path,
         file_index: currentIndex,
-        file_imports: new Map([["importedVar" as SymbolName, "sym:importedVar" as SymbolId]]),
+        file_imports: new Map([
+          ["importedVar" as SymbolName, "sym:importedVar" as SymbolId],
+        ]),
       };
 
       const call_ref = create_call_ref(
@@ -481,7 +564,11 @@ describe("Resolution Priority Functions", () => {
         "scope:module" as ScopeId
       );
 
-      const result = try_imported_resolution("importedVar" as SymbolName, call_ref, context);
+      const result = try_imported_resolution(
+        "importedVar" as SymbolName,
+        call_ref,
+        context
+      );
 
       expect(result).toBeNull();
     });
@@ -497,7 +584,12 @@ describe("Resolution Priority Functions", () => {
         root_scope_id: "scope:module" as ScopeId,
         scopes: new Map(),
         symbols: new Map(),
-        references: { calls: [], returns: [], member_accesses: [], type_annotations: [] },
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
@@ -522,10 +614,16 @@ describe("Resolution Priority Functions", () => {
         "scope:module" as ScopeId
       );
 
-      const result = try_global_resolution("setTimeout" as SymbolName, call_ref, context);
+      const result = try_global_resolution(
+        "setTimeout" as SymbolName,
+        call_ref,
+        context
+      );
 
       expect(result).not.toBeNull();
-      expect(result?.resolved_function).toBe("builtin:javascript:setTimeout" as SymbolId);
+      expect(result?.resolved_function).toBe(
+        "builtin:javascript:setTimeout" as SymbolId
+      );
       expect(result?.resolution_strategy).toBe("global");
     });
 
@@ -538,7 +636,12 @@ describe("Resolution Priority Functions", () => {
         root_scope_id: "scope:module" as ScopeId,
         scopes: new Map(),
         symbols: new Map(),
-        references: { calls: [], returns: [], member_accesses: [], type_annotations: [] },
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
@@ -556,12 +659,23 @@ describe("Resolution Priority Functions", () => {
         file_imports: new Map(),
       };
 
-      const call_ref = create_call_ref("print" as SymbolName, file_path, 5, "scope:module" as ScopeId);
+      const call_ref = create_call_ref(
+        "print" as SymbolName,
+        file_path,
+        5,
+        "scope:module" as ScopeId
+      );
 
-      const result = try_global_resolution("print" as SymbolName, call_ref, context);
+      const result = try_global_resolution(
+        "print" as SymbolName,
+        call_ref,
+        context
+      );
 
       expect(result).not.toBeNull();
-      expect(result?.resolved_function).toBe("builtin:python:print" as SymbolId);
+      expect(result?.resolved_function).toBe(
+        "builtin:python:print" as SymbolId
+      );
       expect(result?.resolution_strategy).toBe("global");
     });
 
@@ -574,7 +688,12 @@ describe("Resolution Priority Functions", () => {
         root_scope_id: "scope:module" as ScopeId,
         scopes: new Map(),
         symbols: new Map(),
-        references: { calls: [], returns: [], member_accesses: [], type_annotations: [] },
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
@@ -599,7 +718,11 @@ describe("Resolution Priority Functions", () => {
         "scope:module" as ScopeId
       );
 
-      const result = try_global_resolution("unknownGlobal" as SymbolName, call_ref, context);
+      const result = try_global_resolution(
+        "unknownGlobal" as SymbolName,
+        call_ref,
+        context
+      );
 
       expect(result).toBeNull();
     });
@@ -615,7 +738,12 @@ describe("Resolution Priority Functions", () => {
         root_scope_id: "scope:module" as ScopeId,
         scopes: new Map(),
         symbols: new Map(),
-        references: { calls: [], returns: [], member_accesses: [], type_annotations: [] },
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
@@ -641,7 +769,11 @@ describe("Resolution Priority Functions", () => {
       );
 
       // try_builtin_resolution now returns null since globals handle everything
-      const result = try_builtin_resolution("parseInt" as SymbolName, call_ref, context);
+      const result = try_builtin_resolution(
+        "parseInt" as SymbolName,
+        call_ref,
+        context
+      );
 
       expect(result).toBeNull();
     });
@@ -672,7 +804,12 @@ describe("Resolution Priority Functions", () => {
         root_scope_id: "scope:module" as ScopeId,
         scopes: new Map([["scope:module" as ScopeId, scope]]),
         symbols: new Map([["sym:setTimeout" as SymbolId, localSetTimeout]]),
-        references: { calls: [], returns: [], member_accesses: [], type_annotations: [] },
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
@@ -698,14 +835,26 @@ describe("Resolution Priority Functions", () => {
       );
 
       // Lexical should resolve first
-      const lexicalResult = try_lexical_resolution("setTimeout" as SymbolName, call_ref, context);
+      const lexicalResult = try_lexical_resolution(
+        "setTimeout" as SymbolName,
+        call_ref,
+        context
+      );
       expect(lexicalResult).not.toBeNull();
-      expect(lexicalResult?.resolved_function).toBe("sym:setTimeout" as SymbolId);
+      expect(lexicalResult?.resolved_function).toBe(
+        "sym:setTimeout" as SymbolId
+      );
 
       // Global would also resolve, but should not be called if lexical succeeds
-      const globalResult = try_global_resolution("setTimeout" as SymbolName, call_ref, context);
+      const globalResult = try_global_resolution(
+        "setTimeout" as SymbolName,
+        call_ref,
+        context
+      );
       expect(globalResult).not.toBeNull();
-      expect(globalResult?.resolved_function).toBe("builtin:javascript:setTimeout" as SymbolId);
+      expect(globalResult?.resolved_function).toBe(
+        "builtin:javascript:setTimeout" as SymbolId
+      );
     });
 
     it("should prioritize imported over global resolution", () => {
@@ -727,7 +876,12 @@ describe("Resolution Priority Functions", () => {
         root_scope_id: "scope:other" as ScopeId,
         scopes: new Map(),
         symbols: new Map([["sym:console" as SymbolId, importedConsole]]),
-        references: { calls: [], returns: [], member_accesses: [], type_annotations: [] },
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
@@ -743,7 +897,12 @@ describe("Resolution Priority Functions", () => {
         root_scope_id: "scope:module" as ScopeId,
         scopes: new Map(),
         symbols: new Map(),
-        references: { calls: [], returns: [], member_accesses: [], type_annotations: [] },
+        references: {
+          calls: [],
+          returns: [],
+          member_accesses: [],
+          type_annotations: [],
+        },
         imports: [],
         exports: [],
         file_symbols_by_name: new Map(),
@@ -761,7 +920,9 @@ describe("Resolution Priority Functions", () => {
         imports: new Map(),
         file_path,
         file_index: currentIndex,
-        file_imports: new Map([["console" as SymbolName, "sym:console" as SymbolId]]),
+        file_imports: new Map([
+          ["console" as SymbolName, "sym:console" as SymbolId],
+        ]),
       };
 
       const call_ref = create_call_ref(
@@ -772,14 +933,24 @@ describe("Resolution Priority Functions", () => {
       );
 
       // Imported should resolve
-      const importedResult = try_imported_resolution("console" as SymbolName, call_ref, context);
+      const importedResult = try_imported_resolution(
+        "console" as SymbolName,
+        call_ref,
+        context
+      );
       expect(importedResult).not.toBeNull();
       expect(importedResult?.resolved_function).toBe("sym:console" as SymbolId);
 
       // Global would also resolve
-      const globalResult = try_global_resolution("console" as SymbolName, call_ref, context);
+      const globalResult = try_global_resolution(
+        "console" as SymbolName,
+        call_ref,
+        context
+      );
       expect(globalResult).not.toBeNull();
-      expect(globalResult?.resolved_function).toBe("builtin:javascript:console" as SymbolId);
+      expect(globalResult?.resolved_function).toBe(
+        "builtin:javascript:console" as SymbolId
+      );
     });
   });
 });

@@ -24,14 +24,15 @@ import {
   type ScopeId,
   location_key,
   parse_location_key,
+  SymbolDefinition,
 } from "@ariadnejs/types";
 import type {
   ResolutionInput,
-  ResolvedSymbols,
   FunctionResolutionMap,
   TypeResolutionMap,
   MethodResolutionMap,
 } from "./types";
+import type { ResolvedSymbols } from "@ariadnejs/types/src/call_chains";
 import { defined_type_id, TypeCategory } from "@ariadnejs/types";
 import type { SemanticIndex } from "../semantic_index/semantic_index";
 import {
@@ -64,11 +65,19 @@ import type {
 } from "./type_resolution/types";
 import type { LocalTypeTracking } from "../semantic_index/references/type_tracking";
 import type { LocalTypeAnnotation as SemanticAnnotation } from "../semantic_index/references/type_annotation_references";
-import {
-  resolve_imports,
-} from "./import_resolution";
+import { resolve_imports } from "./import_resolution";
 import { resolve_function_calls } from "./function_resolution";
 import { resolve_pattern_aware_method_calls } from "./method_resolution";
+import { CallReference } from "../semantic_index/references/call_references";
+import {
+  LocalAssignmentFlow,
+  LocalCallAssignment,
+  LocalReturnFlow,
+  LocalConstructorCall,
+} from "../semantic_index/references/type_flow_references";
+import { MemberAccessReference } from "../semantic_index/references/member_access_references";
+import { TypeAnnotationReference } from "../semantic_index/references/type_annotation_references/type_annotation_references";
+import { ReturnReference } from "../semantic_index/references/return_references";
 
 /**
  * Create a TypeId from a local type definition
@@ -124,7 +133,7 @@ export function resolve_symbols(input: ResolutionInput): ResolvedSymbols {
   const methods = phase4_resolve_methods(indices, imports, functions, types);
 
   // Combine all resolutions
-  return combine_results(indices, imports, functions, types, methods);
+  return combine_results(indices, functions, methods);
 }
 
 /**
@@ -138,7 +147,7 @@ function phase1_resolve_imports(
   indices: ReadonlyMap<FilePath, SemanticIndex>
 ): ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> {
   // Create import resolution context with the new simplified architecture
-  return resolve_imports({indices});
+  return resolve_imports({ indices });
 }
 
 /**
@@ -303,7 +312,14 @@ export function phase3_resolve_types(
   }
 
   // Step 8: Process Rust ownership semantics and pattern matching for each file
-  let current_type_resolution = { symbol_types, reference_types, type_members, constructors, inheritance_hierarchy, interface_implementations };
+  let current_type_resolution = {
+    symbol_types,
+    reference_types,
+    type_members,
+    constructors,
+    inheritance_hierarchy,
+    interface_implementations,
+  };
 
   for (const [file_path, index] of indices) {
     // Resolve Rust reference types (&T, &mut T)
@@ -410,28 +426,51 @@ export function phase3_resolve_types(
     );
 
     // Process ownership operations (borrow, deref, smart pointer methods)
-    const ownership_operations = resolve_ownership_operations(index, current_type_resolution);
+    const ownership_operations = resolve_ownership_operations(
+      index,
+      current_type_resolution
+    );
 
     // Integrate pattern matching information into type resolution
-    const enhanced_type_resolution = integrate_pattern_matching_into_type_resolution(index, current_type_resolution);
+    const enhanced_type_resolution =
+      integrate_pattern_matching_into_type_resolution(
+        index,
+        current_type_resolution
+      );
 
     // Update current resolution with pattern matching enhancements
-    if (enhanced_type_resolution.symbol_types !== current_type_resolution.symbol_types) {
+    if (
+      enhanced_type_resolution.symbol_types !==
+      current_type_resolution.symbol_types
+    ) {
       // Copy enhanced symbol types back to main maps
       for (const [sym_id, type_id] of enhanced_type_resolution.symbol_types) {
         symbol_types.set(sym_id, type_id);
       }
     }
 
-    if (enhanced_type_resolution.reference_types !== current_type_resolution.reference_types) {
+    if (
+      enhanced_type_resolution.reference_types !==
+      current_type_resolution.reference_types
+    ) {
       // Copy enhanced reference types back to main maps
-      for (const [loc_key, type_id] of enhanced_type_resolution.reference_types) {
+      for (const [
+        loc_key,
+        type_id,
+      ] of enhanced_type_resolution.reference_types) {
         reference_types.set(loc_key, type_id);
       }
     }
 
     // Update current_type_resolution for next iteration
-    current_type_resolution = { symbol_types, reference_types, type_members, constructors, inheritance_hierarchy, interface_implementations };
+    current_type_resolution = {
+      symbol_types,
+      reference_types,
+      type_members,
+      constructors,
+      inheritance_hierarchy,
+      interface_implementations,
+    };
 
     // Store ownership operations for later use in method resolution
     // Note: This would typically be stored in a separate map, but for now
@@ -447,7 +486,10 @@ export function phase3_resolve_types(
           member_map.set(member_name, member_info.symbol_id);
         }
       }
-      type_members.set(type_id, member_map as ReadonlyMap<SymbolName, SymbolId>);
+      type_members.set(
+        type_id,
+        member_map as ReadonlyMap<SymbolName, SymbolId>
+      );
     }
   }
 
@@ -466,10 +508,19 @@ export function phase3_resolve_types(
   return {
     symbol_types: symbol_types as ReadonlyMap<SymbolId, TypeId>,
     reference_types: reference_types as ReadonlyMap<LocationKey, TypeId>,
-    type_members: type_members as ReadonlyMap<TypeId, ReadonlyMap<SymbolName, SymbolId>>,
+    type_members: type_members as ReadonlyMap<
+      TypeId,
+      ReadonlyMap<SymbolName, SymbolId>
+    >,
     constructors: constructors as ReadonlyMap<TypeId, SymbolId>,
-    inheritance_hierarchy: inheritance_hierarchy as ReadonlyMap<TypeId, readonly TypeId[]>,
-    interface_implementations: interface_implementations as ReadonlyMap<TypeId, readonly TypeId[]>,
+    inheritance_hierarchy: inheritance_hierarchy as ReadonlyMap<
+      TypeId,
+      readonly TypeId[]
+    >,
+    interface_implementations: interface_implementations as ReadonlyMap<
+      TypeId,
+      readonly TypeId[]
+    >,
     // Additional properties for test compatibility
     type_definitions: local_extraction.type_definitions,
     type_flow_edges: type_flow?.flow_edges || [],
@@ -504,23 +555,29 @@ function collect_local_types(
       implements_names: local_type.implements_clause,
       // Rust-specific features
       is_generic: local_type.is_generic,
-      type_parameters: local_type.type_parameters ? local_type.type_parameters.map(tp => ({
-        name: tp.name,
-        location: tp.location,
-        bounds: tp.bounds,
-        default_type: tp.default_type,
-      })) : undefined,
-      lifetime_parameters: local_type.lifetime_parameters ? local_type.lifetime_parameters.map(lp => ({
-        name: lp.name,
-        location: lp.location,
-        bounds: lp.bounds,
-      })) : undefined,
-      where_constraints: local_type.where_constraints ? local_type.where_constraints.map(wc => ({
-        type_name: wc.type_name,
-        constraint_kind: wc.constraint_kind,
-        bound_names: wc.bound_names,
-        location: wc.location,
-      })) : undefined,
+      type_parameters: local_type.type_parameters
+        ? local_type.type_parameters.map((tp) => ({
+            name: tp.name,
+            location: tp.location,
+            bounds: tp.bounds,
+            default_type: tp.default_type,
+          }))
+        : undefined,
+      lifetime_parameters: local_type.lifetime_parameters
+        ? local_type.lifetime_parameters.map((lp) => ({
+            name: lp.name,
+            location: lp.location,
+            bounds: lp.bounds,
+          }))
+        : undefined,
+      where_constraints: local_type.where_constraints
+        ? local_type.where_constraints.map((wc) => ({
+            type_name: wc.type_name,
+            constraint_kind: wc.constraint_kind,
+            bound_names: wc.bound_names,
+            location: wc.location,
+          }))
+        : undefined,
     }));
 
     if (defs.length > 0) {
@@ -725,10 +782,7 @@ function phase4_resolve_methods(
         // Fallback: Look in local symbols (for same-file constructor calls)
         for (const [symbol_id, symbol] of index.symbols) {
           if (symbol.kind === "class" && symbol.name === type_name) {
-            constructor_calls.set(
-              location_key(ctor_call.location),
-              symbol_id
-            );
+            constructor_calls.set(location_key(ctor_call.location), symbol_id);
 
             // Update reverse mapping
             const calls = calls_to_method.get(symbol_id) || [];
@@ -746,7 +800,7 @@ function phase4_resolve_methods(
     method_calls,
     constructor_calls,
     calls_to_method,
-    resolution_details: new Map() // Initialize empty resolution details
+    resolution_details: new Map(), // Initialize empty resolution details
   };
 
   // Apply pattern-aware enhancements for Rust code
@@ -766,10 +820,8 @@ function phase4_resolve_methods(
  */
 function combine_results(
   indices: ReadonlyMap<FilePath, SemanticIndex>,
-  imports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>,
   functions: FunctionResolutionMap,
-  types: TypeResolutionMap,
-  methods: MethodResolutionMap
+  methods: MethodResolutionMap  
 ): ResolvedSymbols {
   // Merge all resolution maps
   const resolved_references = new Map<LocationKey, SymbolId>();
@@ -797,16 +849,23 @@ function combine_results(
     references_to_symbol.set(id, locs);
   }
 
+  const combined_references: CallReference[] = [];
+
+  for (const index of indices.values()) {
+    combined_references.push(...index.references.calls);
+  }
+
+  const definitions = new Map<SymbolId, SymbolDefinition>();
+  for (const idx of indices.values()) {
+    for (const [id, definition] of idx.symbols) {
+      definitions.set(id, definition);
+    }
+  }
+
   return {
     resolved_references,
     references_to_symbol,
-    unresolved_references: new Map<LocationKey, SymbolId>(),
-    phases: {
-      imports,
-      functions,
-      types,
-      methods,
-    },
+    references: combined_references,
+    definitions,
   };
 }
-

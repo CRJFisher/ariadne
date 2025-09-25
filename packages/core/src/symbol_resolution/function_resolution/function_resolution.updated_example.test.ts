@@ -15,7 +15,7 @@ import type {
   ScopeId,
 } from "@ariadnejs/types";
 import { location_key, function_symbol } from "@ariadnejs/types";
-import type { CallReference } from "../../semantic_index/references/call_references/call_references";
+import type { CallReference } from "@ariadnejs/types/src/call_chains";
 import type { SemanticIndex } from "../../semantic_index/semantic_index";
 import { resolve_function_calls } from "./function_resolver";
 import type { FunctionResolutionMap } from "./function_types";
@@ -156,7 +156,7 @@ describe("Function Resolution with Mock Factories", () => {
         line: 1,
         column: 0,
         end_line: 1,
-        end_column: 5
+        end_column: 5,
       };
       const func1Symbol = function_symbol("func1" as SymbolName, mockLocation);
       const func2Symbol = function_symbol("func2" as SymbolName, mockLocation);

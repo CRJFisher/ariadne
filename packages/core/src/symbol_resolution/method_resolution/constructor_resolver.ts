@@ -13,12 +13,9 @@ import type {
   FilePath,
 } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../semantic_index/semantic_index";
-import type { CallReference } from "../../semantic_index/references/call_references/call_references";
+import type { CallReference } from "@ariadnejs/types/src/call_chains";
 import type { LocalConstructorCall } from "../../semantic_index/references/type_flow_references/type_flow_references";
-import type {
-  MethodCallResolution,
-  MethodLookupContext,
-} from "./method_types";
+import type { MethodCallResolution, MethodLookupContext } from "./method_types";
 import { get_type_methods } from "./type_lookup";
 import { build_inheritance_chain } from "./inheritance_resolver";
 
@@ -50,7 +47,10 @@ function resolve_new_expressions(
 
   if (index.local_type_flow?.constructor_calls) {
     for (const ctor_call of index.local_type_flow.constructor_calls) {
-      const resolution = resolve_constructor_with_inheritance(ctor_call, context);
+      const resolution = resolve_constructor_with_inheritance(
+        ctor_call,
+        context
+      );
       if (resolution) {
         resolutions.push(resolution);
       }
@@ -68,7 +68,9 @@ export function resolve_constructor_with_inheritance(
   context: MethodLookupContext
 ): MethodCallResolution | null {
   // Find the type being constructed
-  const type_name_map = context.current_index.file_symbols_by_name.get(context.current_file);
+  const type_name_map = context.current_index.file_symbols_by_name.get(
+    context.current_file
+  );
   if (!type_name_map) {
     return null;
   }
@@ -79,27 +81,50 @@ export function resolve_constructor_with_inheritance(
   }
 
   // Get the type ID for this symbol
-  const constructed_type = context.type_resolution.symbol_types.get(type_symbol);
+  const constructed_type =
+    context.type_resolution.symbol_types.get(type_symbol);
   if (!constructed_type) {
     return null;
   }
 
   // 1. Look for explicit constructor
-  const explicit_constructor = find_explicit_constructor(constructed_type, context);
+  const explicit_constructor = find_explicit_constructor(
+    constructed_type,
+    context
+  );
   if (explicit_constructor) {
-    return create_constructor_resolution(explicit_constructor, ctor_call, constructed_type);
+    return create_constructor_resolution(
+      explicit_constructor,
+      ctor_call,
+      constructed_type
+    );
   }
 
   // 2. Look for default constructor
-  const default_constructor = find_default_constructor(constructed_type, context);
+  const default_constructor = find_default_constructor(
+    constructed_type,
+    context
+  );
   if (default_constructor) {
-    return create_constructor_resolution(default_constructor, ctor_call, constructed_type);
+    return create_constructor_resolution(
+      default_constructor,
+      ctor_call,
+      constructed_type
+    );
   }
 
   // 3. Look for inherited constructors
-  const inherited_constructor = find_inherited_constructor(constructed_type, context);
+  const inherited_constructor = find_inherited_constructor(
+    constructed_type,
+    context
+  );
   if (inherited_constructor) {
-    return create_constructor_resolution(inherited_constructor, ctor_call, constructed_type, "inherited");
+    return create_constructor_resolution(
+      inherited_constructor,
+      ctor_call,
+      constructed_type,
+      "inherited"
+    );
   }
 
   return null;
@@ -123,7 +148,12 @@ function find_explicit_constructor(
   if (!type_methods) return null;
 
   // Look for constructor by common names
-  const constructor_names = ["constructor", "__init__", "new", "__new__"] as SymbolName[];
+  const constructor_names = [
+    "constructor",
+    "__init__",
+    "new",
+    "__new__",
+  ] as SymbolName[];
 
   for (const name of constructor_names) {
     const ctor = type_methods.constructors.get(name);
@@ -150,7 +180,12 @@ export function find_default_constructor(
   if (!type_methods) return null;
 
   // Try common constructor names
-  const constructor_names = ["constructor", "new", "__init__", "__new__"] as SymbolName[];
+  const constructor_names = [
+    "constructor",
+    "new",
+    "__init__",
+    "__new__",
+  ] as SymbolName[];
 
   for (const name of constructor_names) {
     const constructor = type_methods.constructors.get(name);
@@ -211,7 +246,9 @@ function resolve_super_constructor_calls(
  */
 function is_super_constructor_call(call_ref: CallReference): boolean {
   // Check if the name is "super" or the call_type is "super"
-  return call_ref.name === "super" as SymbolName || call_ref.call_type === "super";
+  return (
+    call_ref.name === ("super" as SymbolName) || call_ref.call_type === "super"
+  );
 }
 
 /**
@@ -222,16 +259,21 @@ function resolve_super_call(
   context: MethodLookupContext
 ): MethodCallResolution | null {
   // Find the containing class type
-  const containing_class = find_containing_class_type(call_ref.location, context);
+  const containing_class = find_containing_class_type(
+    call_ref.location,
+    context
+  );
   if (!containing_class) return null;
 
   // Get parent classes from inheritance hierarchy
-  const parent_classes = context.type_resolution.inheritance_hierarchy.get(containing_class) || [];
+  const parent_classes =
+    context.type_resolution.inheritance_hierarchy.get(containing_class) || [];
   if (parent_classes.length === 0) return null;
 
   // Find constructor in first parent class
-  const parent_constructor = find_explicit_constructor(parent_classes[0], context) ||
-                            find_default_constructor(parent_classes[0], context);
+  const parent_constructor =
+    find_explicit_constructor(parent_classes[0], context) ||
+    find_default_constructor(parent_classes[0], context);
 
   if (parent_constructor) {
     return {
@@ -239,7 +281,7 @@ function resolve_super_call(
       resolved_method: parent_constructor,
       receiver_type: parent_classes[0],
       method_kind: "constructor",
-      resolution_path: "inherited"
+      resolution_path: "inherited",
     };
   }
 
@@ -255,7 +297,10 @@ function find_containing_class_type(
 ): TypeId | null {
   // Look through all symbols to find the containing class
   for (const [symbol_id, symbol_def] of context.current_index.symbols) {
-    if (symbol_def.kind === "class" && location_is_within(location, symbol_def.location)) {
+    if (
+      symbol_def.kind === "class" &&
+      location_is_within(location, symbol_def.location)
+    ) {
       // Get the type for this class symbol
       return context.type_resolution.symbol_types.get(symbol_id) || null;
     }
@@ -303,7 +348,7 @@ function resolve_delegated_constructors(
  */
 function is_delegated_constructor_call(call_ref: CallReference): boolean {
   // Check if the name is "this" (for languages that support it)
-  return call_ref.name === "this" as SymbolName;
+  return call_ref.name === ("this" as SymbolName);
 }
 
 /**
@@ -314,7 +359,10 @@ function resolve_delegated_call(
   context: MethodLookupContext
 ): MethodCallResolution | null {
   // Find the containing class type
-  const containing_class = find_containing_class_type(call_ref.location, context);
+  const containing_class = find_containing_class_type(
+    call_ref.location,
+    context
+  );
   if (!containing_class) return null;
 
   // Find another constructor in the same class
@@ -325,7 +373,7 @@ function resolve_delegated_call(
       resolved_method: constructor,
       receiver_type: containing_class,
       method_kind: "constructor",
-      resolution_path: "direct"
+      resolution_path: "direct",
     };
   }
 
@@ -346,6 +394,6 @@ function create_constructor_resolution(
     resolved_method: constructor_symbol,
     receiver_type: constructed_type,
     method_kind: "constructor",
-    resolution_path
+    resolution_path,
   };
 }

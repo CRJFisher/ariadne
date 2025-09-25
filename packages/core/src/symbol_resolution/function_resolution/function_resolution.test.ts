@@ -8,7 +8,7 @@ import type {
   ScopeId,
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
-import type { CallReference } from "../../semantic_index/references/call_references/call_references";
+import type { CallReference } from "@ariadnejs/types/src/call_chains";
 import type { SemanticIndex } from "../../semantic_index/semantic_index";
 import { resolve_function_calls } from "./function_resolver";
 
@@ -108,6 +108,12 @@ function create_mock_index(
       returns: [],
       member_accesses: [],
       type_annotations: [],
+      type_flows: {
+        constructor_calls: [],
+        assignments: [],
+        returns: [],
+        call_assignments: [],
+      },
     },
     imports: [],
     exports: [],
@@ -604,6 +610,12 @@ describe("Function Resolution", () => {
           ["sym:innerFunc" as SymbolId, innerFuncDef],
         ]),
         references: {
+          type_flows: {
+            constructor_calls: [],
+            assignments: [],
+            returns: [],
+            call_assignments: [],
+          },
           calls: [
             {
               location: {
@@ -768,6 +780,12 @@ describe("Function Resolution", () => {
           ["sym:process:local" as SymbolId, localProcessDef],
         ]),
         references: {
+          type_flows: {
+            constructor_calls: [],
+            assignments: [],
+            returns: [],
+            call_assignments: [],
+          },
           calls: [
             {
               location: {
@@ -1040,7 +1058,10 @@ describe("Function Resolution", () => {
       index = { ...index, language: "typescript" };
 
       const indices = new Map([[file_path, index]]);
-      const imports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> = new Map();
+      const imports: ReadonlyMap<
+        FilePath,
+        ReadonlyMap<SymbolName, SymbolId>
+      > = new Map();
 
       const result = resolve_function_calls(indices, imports);
 
