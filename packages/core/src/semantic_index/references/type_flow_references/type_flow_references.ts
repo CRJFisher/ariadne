@@ -13,8 +13,8 @@ import type {
   LexicalScope,
 } from "@ariadnejs/types";
 import { find_containing_scope } from "../../scope_tree";
-import type { NormalizedCapture } from "../../capture_types";
-import { SemanticCategory } from "../../capture_types";
+import type { NormalizedCapture } from "../../../parse_and_query_code/capture_types";
+import { SemanticCategory } from "../../../parse_and_query_code/capture_types";
 
 /**
  * Local type flow data tracking without resolution
@@ -112,7 +112,6 @@ export type FlowSource =
 export function extract_type_flow(
   captures: NormalizedCapture[],
   scopes: Map<ScopeId, LexicalScope>,
-  file_path: FilePath
 ): LocalTypeFlowData {
   const constructor_calls: LocalConstructorCall[] = [];
   const assignments: LocalAssignmentFlow[] = [];

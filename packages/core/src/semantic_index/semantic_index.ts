@@ -7,12 +7,19 @@ import type {
   FilePath,
   Language,
   SymbolId,
-  SymbolDefinition,
+  AnyDefinition,
+  ImportDefinition,
   SymbolName,
   ScopeId,
   LexicalScope,
   Import,
   Export,
+  FunctionDefinition,
+  ClassDefinition,
+  VariableDefinition,
+  InterfaceDefinition,
+  EnumDefinition,
+  NamespaceDefinition,
 } from "@ariadnejs/types";
 
 import { build_scope_tree } from "./scope_tree";
@@ -55,8 +62,14 @@ export interface SemanticIndex {
   /** All scopes in the file */
   readonly scopes: ReadonlyMap<ScopeId, LexicalScope>;
 
-  /** All symbols in the file */
-  readonly symbols: ReadonlyMap<SymbolId, SymbolDefinition>;
+  /** Symbol definitions by type */
+  readonly functions: ReadonlyMap<SymbolId, FunctionDefinition>;
+  readonly classes: ReadonlyMap<SymbolId, ClassDefinition>;
+  readonly variables: ReadonlyMap<SymbolId, VariableDefinition>;
+  readonly interfaces: ReadonlyMap<SymbolId, InterfaceDefinition>;
+  readonly enums: ReadonlyMap<SymbolId, EnumDefinition>;
+  readonly namespaces: ReadonlyMap<SymbolId, NamespaceDefinition>;
+  readonly imported_symbols: ReadonlyMap<SymbolId, ImportDefinition>;
 
   /** All processed references with specialized type information */
   readonly references: ProcessedReferences;
@@ -107,7 +120,16 @@ export function build_semantic_index(
   );
 
   // Phase 2: Process definitions
-  const { symbols, file_symbols_by_name } = process_definitions(
+  const {
+    functions,
+    classes,
+    variables,
+    interfaces,
+    enums,
+    types,
+    namespaces,
+    file_symbols_by_name,
+  } = process_definitions(
     grouped.definitions,
     root_scope,
     scopes,
@@ -115,23 +137,33 @@ export function build_semantic_index(
     lang
   );
 
-  // Build scope-to-symbol mapping for function/method/class scopes
-  const scope_to_symbol = build_scope_to_symbol_map(scopes, symbols);
+  // Build scope-to-symbol mapping for function/class scopes
+  const scope_to_symbol = build_scope_to_symbol_map(scopes, functions, classes);
 
   // Phase 3: Process imports
-  const imports = process_imports(
+  const { imports, imported_symbols } = process_imports(
     grouped.imports,
     root_scope,
-    symbols,
     file_path,
     lang
   );
 
   // Phase 4: Process exports
+  // Needs to look up any symbol type, so create a combined read-only view
+  const allSymbols = new Map<SymbolId, AnyDefinition>([
+    ...functions,
+    ...classes,
+    ...variables,
+    ...interfaces,
+    ...enums,
+    ...types,
+    ...namespaces,
+  ]);
+
   const exports = process_exports(
     grouped.exports,
     root_scope,
-    symbols,
+    allSymbols,
     file_path,
     lang
   );
@@ -149,11 +181,14 @@ export function build_semantic_index(
   );
 
   // Process class inheritance and static modifiers
-  process_class_metadata(grouped.types, symbols);
+  process_class_metadata(grouped.types, classes);
 
   // Phase 6: Extract local type members (single-file only)
   const local_types = extract_type_members(
-    symbols,
+    classes,
+    interfaces,
+    types,
+    enums,
     scopes,
     file_path,
     grouped.definitions,
@@ -182,18 +217,20 @@ export function build_semantic_index(
     ...grouped.assignments,
     ...grouped.returns,
   ];
-  const local_type_flow = extract_type_flow(
-    type_flow_captures,
-    scopes,
-    file_path
-  );
+  const local_type_flow = extract_type_flow(type_flow_captures, scopes);
 
   return {
     file_path,
     language: lang,
     root_scope_id: root_scope.id,
     scopes,
-    symbols,
+    functions,
+    classes,
+    variables,
+    interfaces,
+    enums,
+    namespaces,
+    imported_symbols,
     references,
     imports,
     exports,
@@ -211,22 +248,23 @@ export function build_semantic_index(
  */
 function process_class_metadata(
   type_captures: NormalizedCapture[],
-  symbols: Map<SymbolId, SymbolDefinition>
+  classes: Map<SymbolId, ClassDefinition>
 ): void {
   // Find class inheritance relationships
   for (const capture of type_captures) {
     if (capture.context?.extends_class) {
       // Find the class symbol at this location
-      for (const [, symbol] of symbols) {
+      for (const [symbol_id, symbol] of classes) {
         if (
-          symbol.kind === "class" &&
           symbol.location.line === capture.node_location.line &&
           symbol.location.file_path === capture.node_location.file_path
         ) {
-          symbols.set(symbol.id, {
+          // Update the class definition with inheritance info
+          const updatedClass: ClassDefinition = {
             ...symbol,
             extends_class: capture.context.extends_class as SymbolName,
-          });
+          };
+          classes.set(symbol_id, updatedClass);
           break;
         }
       }
@@ -240,29 +278,54 @@ function process_class_metadata(
  */
 function build_scope_to_symbol_map(
   scopes: Map<ScopeId, LexicalScope>,
-  symbols: Map<SymbolId, SymbolDefinition>
+  functions: Map<SymbolId, FunctionDefinition>,
+  classes: Map<SymbolId, ClassDef>
 ): Map<ScopeId, SymbolId> {
   const scope_to_symbol = new Map<ScopeId, SymbolId>();
 
-  // For each symbol that creates a scope, find its scope
-  for (const [symbol_id, symbol] of symbols) {
-    if (
-      symbol.kind === "function" ||
-      symbol.kind === "method" ||
-      symbol.kind === "class"
-    ) {
-      // Find scope with matching location
+  // Check functions
+  for (const [symbol_id, symbol] of functions) {
+    for (const [scope_id, scope] of scopes) {
+      if (
+        scope.location.line === symbol.location.line &&
+        scope.location.column === symbol.location.column &&
+        scope.location.file_path === symbol.location.file_path &&
+        scope.type === "function"
+      ) {
+        scope_to_symbol.set(scope_id, symbol_id);
+        break;
+      }
+    }
+  }
+
+  // Check classes
+  for (const [symbol_id, symbol] of classes) {
+    for (const [scope_id, scope] of scopes) {
+      if (
+        scope.location.line === symbol.location.line &&
+        scope.location.column === symbol.location.column &&
+        scope.location.file_path === symbol.location.file_path &&
+        scope.type === "class"
+      ) {
+        scope_to_symbol.set(scope_id, symbol_id);
+        break;
+      }
+    }
+
+    // Also check methods within the class
+    const allMethods = [
+      ...(symbol.methods || []),
+      ...(symbol.static_methods || []),
+    ];
+    for (const method of allMethods) {
       for (const [scope_id, scope] of scopes) {
         if (
-          scope.location.line === symbol.location.line &&
-          scope.location.column === symbol.location.column &&
-          scope.location.file_path === symbol.location.file_path &&
-          (scope.type === "function" ||
-            scope.type === "method" ||
-            scope.type === "constructor" ||
-            scope.type === "class")
+          scope.location.line === method.location.line &&
+          scope.location.column === method.location.column &&
+          scope.location.file_path === method.location.file_path &&
+          (scope.type === "method" || scope.type === "constructor")
         ) {
-          scope_to_symbol.set(scope_id, symbol_id);
+          scope_to_symbol.set(scope_id, method.id);
           break;
         }
       }

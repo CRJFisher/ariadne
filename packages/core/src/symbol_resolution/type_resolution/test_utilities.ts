@@ -8,7 +8,7 @@
 import type {
   TypeResolutionMap,
   FunctionResolutionMap,
-  MethodResolutionMap,
+  MethodAndConstructorResolutionMap,
 } from "../types";
 import type {
   FilePath,
@@ -44,7 +44,11 @@ export class TypeResolutionMapBuilder {
     return this;
   }
 
-  addTypeMember(typeId: TypeId, memberName: SymbolName, memberSymbolId: SymbolId): this {
+  addTypeMember(
+    typeId: TypeId,
+    memberName: SymbolName,
+    memberSymbolId: SymbolId
+  ): this {
     if (!this.type_members.has(typeId)) {
       this.type_members.set(typeId, new Map());
     }
@@ -69,18 +73,33 @@ export class TypeResolutionMapBuilder {
 
   build(): TypeResolutionMap {
     // Convert mutable Maps to ReadonlyMaps
-    const readonly_type_members = new Map<TypeId, ReadonlyMap<SymbolName, SymbolId>>();
+    const readonly_type_members = new Map<
+      TypeId,
+      ReadonlyMap<SymbolName, SymbolId>
+    >();
     for (const [typeId, members] of this.type_members) {
-      readonly_type_members.set(typeId, members as ReadonlyMap<SymbolName, SymbolId>);
+      readonly_type_members.set(
+        typeId,
+        members as ReadonlyMap<SymbolName, SymbolId>
+      );
     }
 
     return {
       symbol_types: this.symbol_types as ReadonlyMap<SymbolId, TypeId>,
       reference_types: this.reference_types as ReadonlyMap<LocationKey, TypeId>,
-      type_members: readonly_type_members as ReadonlyMap<TypeId, ReadonlyMap<SymbolName, SymbolId>>,
+      type_members: readonly_type_members as ReadonlyMap<
+        TypeId,
+        ReadonlyMap<SymbolName, SymbolId>
+      >,
       constructors: this.constructors as ReadonlyMap<TypeId, SymbolId>,
-      inheritance_hierarchy: this.inheritance_hierarchy as ReadonlyMap<TypeId, readonly TypeId[]>,
-      interface_implementations: this.interface_implementations as ReadonlyMap<TypeId, readonly TypeId[]>,
+      inheritance_hierarchy: this.inheritance_hierarchy as ReadonlyMap<
+        TypeId,
+        readonly TypeId[]
+      >,
+      interface_implementations: this.interface_implementations as ReadonlyMap<
+        TypeId,
+        readonly TypeId[]
+      >,
     };
   }
 }
@@ -91,7 +110,11 @@ export class TypeResolutionMapBuilder {
 export class ImportResolutionMapBuilder {
   private imports = new Map<FilePath, Map<SymbolName, SymbolId>>();
 
-  addImport(filePath: FilePath, importName: SymbolName, symbolId: SymbolId): this {
+  addImport(
+    filePath: FilePath,
+    importName: SymbolName,
+    symbolId: SymbolId
+  ): this {
     if (!this.imports.has(filePath)) {
       this.imports.set(filePath, new Map());
     }
@@ -105,9 +128,15 @@ export class ImportResolutionMapBuilder {
   }
 
   build(): ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> {
-    const readonly_imports = new Map<FilePath, ReadonlyMap<SymbolName, SymbolId>>();
+    const readonly_imports = new Map<
+      FilePath,
+      ReadonlyMap<SymbolName, SymbolId>
+    >();
     for (const [filePath, fileImports] of this.imports) {
-      readonly_imports.set(filePath, fileImports as ReadonlyMap<SymbolName, SymbolId>);
+      readonly_imports.set(
+        filePath,
+        fileImports as ReadonlyMap<SymbolName, SymbolId>
+      );
     }
 
     return readonly_imports;
@@ -137,7 +166,10 @@ export class FunctionResolutionMapBuilder {
   build(): FunctionResolutionMap {
     return {
       function_calls: this.function_calls as ReadonlyMap<LocationKey, SymbolId>,
-      calls_to_function: this.calls_to_function as ReadonlyMap<SymbolId, readonly Location[]>,
+      calls_to_function: this.calls_to_function as ReadonlyMap<
+        SymbolId,
+        readonly Location[]
+      >,
     };
   }
 }
@@ -155,7 +187,10 @@ export class MethodResolutionMapBuilder {
     return this;
   }
 
-  addConstructorCall(locationKey: LocationKey, constructorSymbolId: SymbolId): this {
+  addConstructorCall(
+    locationKey: LocationKey,
+    constructorSymbolId: SymbolId
+  ): this {
     this.constructor_calls.set(locationKey, constructorSymbolId);
     return this;
   }
@@ -168,11 +203,17 @@ export class MethodResolutionMapBuilder {
     return this;
   }
 
-  build(): MethodResolutionMap {
+  build(): MethodAndConstructorResolutionMap {
     return {
       method_calls: this.method_calls as ReadonlyMap<LocationKey, SymbolId>,
-      constructor_calls: this.constructor_calls as ReadonlyMap<LocationKey, SymbolId>,
-      calls_to_method: this.calls_to_method as ReadonlyMap<SymbolId, readonly Location[]>,
+      constructor_calls: this.constructor_calls as ReadonlyMap<
+        LocationKey,
+        SymbolId
+      >,
+      calls_to_method: this.calls_to_method as ReadonlyMap<
+        SymbolId,
+        readonly Location[]
+      >,
     };
   }
 }
@@ -191,7 +232,10 @@ export function createEmptyTypeResolutionMap(): TypeResolutionMap {
 /**
  * Create an empty ImportResolutionMap
  */
-export function createEmptyImportResolutionMap(): ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> {
+export function createEmptyImportResolutionMap(): ReadonlyMap<
+  FilePath,
+  ReadonlyMap<SymbolName, SymbolId>
+> {
   return new ImportResolutionMapBuilder().build();
 }
 
@@ -205,14 +249,16 @@ export function createEmptyFunctionResolutionMap(): FunctionResolutionMap {
 /**
  * Create an empty MethodResolutionMap
  */
-export function createEmptyMethodResolutionMap(): MethodResolutionMap {
+export function createEmptyMethodResolutionMap(): MethodAndConstructorResolutionMap {
   return new MethodResolutionMapBuilder().build();
 }
 
 /**
  * Create a simple ImportResolutionMap with no imports for a file
  */
-export function createEmptyFileImports(filePath: FilePath): ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> {
+export function createEmptyFileImports(
+  filePath: FilePath
+): ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> {
   return new ImportResolutionMapBuilder()
     .addFileImports(filePath, new Map())
     .build();
@@ -228,7 +274,9 @@ export function toReadonlyMap<K, V>(map: Map<K, V>): ReadonlyMap<K, V> {
 /**
  * Create a mutable Map and then convert to ReadonlyMap
  */
-export function createReadonlyMap<K, V>(entries?: readonly (readonly [K, V])[]): ReadonlyMap<K, V> {
+export function createReadonlyMap<K, V>(
+  entries?: readonly (readonly [K, V])[]
+): ReadonlyMap<K, V> {
   return new Map(entries) as ReadonlyMap<K, V>;
 }
 

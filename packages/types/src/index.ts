@@ -46,9 +46,33 @@ export * from "./classes";
 // Export from symbols
 export * from "./semantic_index";
 
+export * from "./symbol_definitions";
+
 // Export from scopes
 export * from "./scopes";
-export * from "./definitions";
+
+// Export definition types
+export {
+  SymbolAvailability,
+  Definition,
+  FunctionDefinition,
+  ClassDefinition,
+  MethodDefinition,
+  PropertyDefinition,
+  ParameterDefinition,
+  InterfaceDefinition,
+  EnumDefinition,
+  VariableDefinition,
+  ImportDefinition,
+  NamespaceDefinition,
+  AnyDefinition,
+  // Type aliases and other types
+  ParameterName,
+  FunctionSignature,
+  MethodSignature,
+  PropertySignature,
+  EnumMember,
+} from "./symbol_definitions";
 export * from "./errors";
 
 // Export TypeInfo from semantic_index (the new one with TypeId)

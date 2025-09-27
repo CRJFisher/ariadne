@@ -16,7 +16,7 @@ import { resolve_rust_module_path } from "./language_handlers/rust";
  * Resolve a module path using language-specific routing
  */
 export function resolve_module_path(
-  import_path: string,
+  import_path: FilePath,
   importing_file: FilePath,
   language: Language,
   context: ImportResolutionContext
@@ -24,8 +24,8 @@ export function resolve_module_path(
   // First try to resolve from indices directly (for testing)
 
   // Check for direct path match in indices (for node_modules style imports like "lodash")
-  if (context.indices.has(import_path as FilePath)) {
-    return import_path as FilePath;
+  if (context.indices.has(import_path)) {
+    return import_path;
   }
 
   // Check for relative paths
@@ -37,11 +37,11 @@ export function resolve_module_path(
     for (const ext of extensions) {
       const candidate = path.join(dir, import_path + ext);
       // Normalize the path (remove ./ and resolve ..)
-      const normalized = path.normalize(candidate);
+      const normalized = path.normalize(candidate) as FilePath;
 
       // Check if this file exists in indices
-      if (context.indices.has(normalized as FilePath)) {
-        return normalized as FilePath;
+      if (context.indices.has(normalized)) {
+        return normalized;
       }
     }
   }

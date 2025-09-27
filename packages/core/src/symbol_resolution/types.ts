@@ -70,18 +70,15 @@ export interface TypeResolutionMap {
  * Phase 4: Method/Constructor Resolution
  * Maps method calls and constructor calls to their definitions
  */
-export interface MethodResolutionMap {
-  // Method call location key -> resolved method SymbolId
+export interface MethodAndConstructorResolutionMap {
+  // Method call location key -> resolved possible method SymbolId
   readonly method_calls: ReadonlyMap<LocationKey, SymbolId>;
 
-  // Constructor call location key -> resolved constructor SymbolId
+  // Constructor call location key -> resolved possible constructor SymbolId
   readonly constructor_calls: ReadonlyMap<LocationKey, SymbolId>;
 
   // Reverse map: method/constructor -> call sites
   readonly calls_to_method: ReadonlyMap<SymbolId, readonly Location[]>;
-
-  // Resolution details for debugging and analysis
-  readonly resolution_details: ReadonlyMap<LocationKey, any>;
 }
 
 // ============================================================================

@@ -41,7 +41,7 @@ import type {
   ResolutionInput,
   FunctionResolutionMap,
   TypeResolutionMap,
-  MethodResolutionMap,
+  MethodAndConstructorResolutionMap,
 } from "./types";
 
 // ============================================================================
@@ -398,7 +398,8 @@ export function mock_semantic_index(
     file_symbols_by_name: options.file_symbols_by_name || new Map(),
     local_types: options.local_types || [],
     local_type_annotations: options.local_type_annotations || [],
-    local_type_tracking: options.local_type_tracking || mock_local_type_tracking(),
+    local_type_tracking:
+      options.local_type_tracking || mock_local_type_tracking(),
     local_type_flow: options.local_type_flow || mock_local_type_flow(),
   };
 }
@@ -451,7 +452,9 @@ export function to_readonly_set<T>(set: Set<T>): ReadonlySet<T> {
 /**
  * Create a ReadonlyMap from entries for testing
  */
-export function readonly_map_from_entries<K, V>(entries: [K, V][]): ReadonlyMap<K, V> {
+export function readonly_map_from_entries<K, V>(
+  entries: [K, V][]
+): ReadonlyMap<K, V> {
   const map = new Map<K, V>();
   for (const [key, value] of entries) {
     map.set(key, value);
@@ -543,7 +546,10 @@ export function create_type_resolution_builder() {
     type_members: new NestedReadonlyMapBuilder<TypeId, SymbolName, SymbolId>(),
     constructors: new ReadonlyMapBuilder<TypeId, SymbolId>(),
     inheritance_hierarchy: new ReadonlyMapBuilder<TypeId, readonly TypeId[]>(),
-    interface_implementations: new ReadonlyMapBuilder<TypeId, readonly TypeId[]>(),
+    interface_implementations: new ReadonlyMapBuilder<
+      TypeId,
+      readonly TypeId[]
+    >(),
   };
 }
 
@@ -594,7 +600,10 @@ export function update_nested_readonly_map<K, V1, V2>(
   for (const [existing_key, existing_nested] of original) {
     if (existing_key === key) {
       // Update this nested map
-      const updated_nested = update_readonly_map(existing_nested, nested_updates);
+      const updated_nested = update_readonly_map(
+        existing_nested,
+        nested_updates
+      );
       new_map.set(existing_key, updated_nested);
     } else {
       // Keep unchanged
@@ -726,11 +735,9 @@ export function create_import_export_scenario(): {
     export_location
   );
 
-  const import_ref = mock_import(
-    "./exporter" as FilePath,
-    import_location,
-    [{ name: "exportedFunction" as SymbolName, is_type_only: false }]
-  );
+  const import_ref = mock_import("./exporter" as FilePath, import_location, [
+    { name: "exportedFunction" as SymbolName, is_type_only: false },
+  ]);
 
   const exporter_symbols = new Map([[exported_symbol.id, exported_symbol]]);
   const exporter_index = mock_semantic_index(exporter_file, {

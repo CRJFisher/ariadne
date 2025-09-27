@@ -50,6 +50,7 @@ function build_function_nodes(
       name: definition.name,
       enclosed_calls: symbol_to_enclosed_calls.get(id) || [],
       location: definition.location,
+      definition: definition,
     });
   }
 

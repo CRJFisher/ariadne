@@ -119,6 +119,7 @@ export function process_references(
   );
 
   if (member_captures.length > 0) {
+    // TODO: verify we are differentiating between method calls and functions called on objects e.g. function called on a python module import.
     member_accesses = process_member_access_references(
       member_captures,
       root_scope,

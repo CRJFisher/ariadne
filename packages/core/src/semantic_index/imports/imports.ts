@@ -8,11 +8,14 @@ import type {
   SymbolName,
   LexicalScope,
   SymbolDefinition,
+  VariableDef,
+  ImportDefinition,
   Import,
   NamedImport,
   Export,
   NamespaceName,
   Language,
+  ScopeId,
 } from "@ariadnejs/types";
 import { variable_symbol, create_namespace_name } from "@ariadnejs/types";
 import type { NormalizedCapture } from "../capture_types";
@@ -23,11 +26,11 @@ import type { NormalizedCapture } from "../capture_types";
 export function process_imports(
   import_captures: NormalizedCapture[],
   root_scope: LexicalScope,
-  symbols: Map<SymbolId, SymbolDefinition>,
   _file_path: FilePath,
   language: Language
-): Import[] {
+): { imports: Import[]; imported_symbols: Map<SymbolId, ImportDefinition> } {
   const imports: Import[] = [];
+  const imported_symbols = new Map<SymbolId, ImportDefinition>();
 
   // Group captures by import statement
   for (const capture of import_captures) {
@@ -72,7 +75,11 @@ export function process_imports(
         language: language,
         node_type: "import_statement",
       };
-    } else if (capture.modifiers.is_namespace || (language === "python" && capture.text === "*") || (language === "rust" && capture.modifiers.is_wildcard)) {
+    } else if (
+      capture.modifiers.is_namespace ||
+      (language === "python" && capture.text === "*") ||
+      (language === "rust" && capture.modifiers.is_wildcard)
+    ) {
       // Namespace import, Python wildcard import, or Rust glob import
       const modifiers: string[] = [];
 
@@ -105,13 +112,18 @@ export function process_imports(
       import_item = {
         kind: "namespace" as const,
         source: source as FilePath,
-        namespace_name: create_namespace_name(capture.text === "*" ? "STAR_IMPORT" : capture.text),
+        namespace_name: create_namespace_name(
+          capture.text === "*" ? "STAR_IMPORT" : capture.text
+        ),
         location,
         modifiers,
         language: language,
         node_type: "import_statement",
       };
-    } else if (capture.context?.import_alias && typeof capture.context.import_alias === "string") {
+    } else if (
+      capture.context?.import_alias &&
+      typeof capture.context.import_alias === "string"
+    ) {
       // Named import with alias (with validation)
       const modifiers: string[] = [];
 
@@ -185,29 +197,31 @@ export function process_imports(
     imports.push(import_item);
 
     // Create symbol for imported name (skip for side-effect and wildcard imports)
-    if (!capture.context?.is_side_effect_import &&
-        !(language === "python" && capture.text === "*") &&
-        !(language === "rust" && capture.modifiers?.is_wildcard)) {
+    if (
+      !capture.context?.is_side_effect_import &&
+      !(language === "python" && capture.text === "*") &&
+      !(language === "rust" && capture.modifiers?.is_wildcard)
+    ) {
       const symbol_id = variable_symbol(capture.text, location);
-      const symbol: SymbolDefinition = {
-        id: symbol_id,
+      const symbol: ImportDefinition = {
+        symbol_id: symbol_id,
         name: capture.text as SymbolName,
         kind: "import",
         location,
-        scope_id: root_scope.id,
-        is_hoisted: false,
-        is_exported: false,
-        is_imported: true,
-        import_source: source as FilePath,
+        scope_id: root_scope.id as ScopeId,
+        availability: {
+          scope: "file-private", // Imports are local to the file
+        },
+        source: source,
+        original_name: capture.context?.original_name as SymbolName,
+        is_default: capture.modifiers?.is_default || false,
+        is_namespace: capture.modifiers?.is_namespace || false,
       };
 
-      root_scope.symbols.set(
-        capture.text as SymbolName,
-        symbol
-      );
-      symbols.set(symbol_id, symbol);
+      root_scope.symbols.set(capture.text as SymbolName, symbol);
+      imported_symbols.set(symbol_id, symbol);
     }
   }
 
-  return imports;
+  return { imports, imported_symbols };
 }

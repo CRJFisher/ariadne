@@ -6,7 +6,7 @@ import { SymbolId } from "./symbol";
 import { SymbolName } from "./symbol";
 import { Location, type LocationKey } from "./common";
 import type { ScopeId } from "./scopes";
-import type { SymbolDefinition } from "./semantic_index";
+import type { AnyDefinition } from "./symbol_definitions";
 
 /**
  * Node in a call graph representing a function/method
@@ -16,6 +16,7 @@ export interface FunctionNode {
   readonly name: SymbolName;
   readonly enclosed_calls: readonly CallReference[];
   readonly location: Location;
+  readonly definition: AnyDefinition;
 }
 
 /**
@@ -78,5 +79,5 @@ export interface ResolvedSymbols {
   readonly references_to_symbol: ReadonlyMap<SymbolId, readonly Location[]>;
 
   readonly references: CallReference[];
-  readonly definitions: ReadonlyMap<SymbolId, SymbolDefinition>;
+  readonly definitions: ReadonlyMap<SymbolId, AnyDefinition>;
 }

@@ -15,6 +15,15 @@ import type {
   NamespaceExport,
   ReExport,
   NamespaceName,
+  FunctionDef,
+  ClassDef,
+  MethodDef,
+  VariableDef,
+  InterfaceDef,
+  EnumDef,
+  TypeDef,
+  NamespaceDef,
+  AnyDefinition,
 } from "@ariadnejs/types";
 import { variable_symbol } from "@ariadnejs/types";
 import type { NormalizedCapture } from "../capture_types";
@@ -45,7 +54,7 @@ import type { NormalizedCapture } from "../capture_types";
 export function process_exports(
   export_captures: NormalizedCapture[],
   root_scope: LexicalScope,
-  symbols: Map<SymbolId, SymbolDefinition>,
+  symbols: ReadonlyMap<SymbolId, AnyDefinition>,
   _file_path: FilePath,
   language: Language
 ): Export[] {

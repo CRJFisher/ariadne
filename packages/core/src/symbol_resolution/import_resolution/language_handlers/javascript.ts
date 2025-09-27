@@ -244,6 +244,7 @@ function match_namespace_import(
   // the namespace object. However, for simplicity in this implementation,
   // we'll just map the namespace name to the first export's symbol as a placeholder.
   // In a full implementation, this would create a proper namespace symbol.
+  // TODO: Implement a proper namespace symbol
 
   // Note: A more complete implementation would:
   // 1. Create a synthetic namespace symbol

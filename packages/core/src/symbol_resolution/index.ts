@@ -8,11 +8,11 @@
  * 4. Method/Constructor Resolution - Object-oriented call resolution
  */
 
-export { resolve_symbols } from './symbol_resolution';
+export { resolve_symbols } from "./symbol_resolution";
 export type {
   ResolvedSymbols,
   ResolutionInput,
   FunctionResolutionMap,
   TypeResolutionMap,
-  MethodResolutionMap,
-} from './types';
+  MethodAndConstructorResolutionMap as MethodResolutionMap,
+} from "./types";

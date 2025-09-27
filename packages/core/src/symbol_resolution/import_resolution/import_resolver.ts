@@ -45,7 +45,7 @@ export function resolve_imports(
       }
 
       const source_file = resolve_module_path(
-        import_stmt.source as string,
+        import_stmt.source,
         file_path,
         index.language,
         context
@@ -57,8 +57,9 @@ export function resolve_imports(
       }
 
       const source_index = context.indices.get(source_file)!;
-
+      
       // Match import to exports using language-specific routing
+      // TODO: this seems wrong - the imports should be matched to exports in many different modules (indexes) not the same index as the import - that's the one place it isn't!!!
       const symbol_mappings = match_import_to_export(
         index.language,
         import_stmt,

@@ -83,7 +83,8 @@ function find_hoisted_function_declarations(
       symbol_def.scope_id === scope.id &&
       symbol_def.name === symbol_name &&
       symbol_def.kind === "function" &&
-      symbol_def.is_hoisted
+      // Check if symbol has immediate temporal availability (hoisted)
+      is_symbol_hoisted_by_availability(symbol_def)
     ) {
       return symbol_id;
     }
@@ -151,6 +152,20 @@ export function get_hoisting_rules(language: Language): HoistingRules {
 }
 
 /**
+ * Check if a symbol is hoisted based on availability
+ * Since we removed temporal from availability, we infer from symbol kind
+ */
+function is_symbol_hoisted_by_availability(
+  symbol_def: SymbolDefinition
+): boolean {
+  // In JavaScript/TypeScript, these are hoisted:
+  // - function declarations
+  // - class declarations
+  // - var declarations (but we can't distinguish from let/const here)
+  return symbol_def.kind === "function" || symbol_def.kind === "class";
+}
+
+/**
  * Check if a symbol is hoisted according to language rules
  *
  * @param symbol_def - The symbol definition
@@ -161,18 +176,13 @@ function is_symbol_hoisted(
   symbol_def: SymbolDefinition,
   rules: HoistingRules
 ): boolean {
-  // First check the symbol's own hoisting flag
-  if (symbol_def.is_hoisted) {
-    return true;
-  }
-
-  // Then check language-specific rules
+  // Check language-specific rules
   switch (symbol_def.kind) {
     case "function":
       return rules.function_declarations;
     case "variable":
       // In JS/TS, check if it's a var declaration (would need more context)
-      // For now, rely on the is_hoisted flag from semantic index
+      // Without temporal availability, we can't distinguish var from let/const
       return false;
     case "class":
       return rules.class_declarations;

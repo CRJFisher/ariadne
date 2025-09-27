@@ -1,5 +1,5 @@
 import { Location, Language } from "./common";
-import { FunctionDefinition, ClassDefinition } from "./definitions";
+import { FunctionDefinition, ClassDefinition } from "./symbol_definitions";
 import { FunctionCall, MethodCall, ConstructorCall } from "./calls";
 import { ScopeTree } from "./scopes";
 import { TypeString, SourceCode } from "./aliases";

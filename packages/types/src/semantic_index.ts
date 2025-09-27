@@ -11,6 +11,7 @@ import type { SymbolId, SymbolName } from "./symbol";
 import type { ScopeId, ScopeType } from "./scopes";
 import type { Import, Export } from "./import_export";
 import type { TypeId } from "./type_id";
+import type { AnyDefinition, SymbolAvailability } from "./symbol_definitions";
 
 /**
  * Symbol kind - essential for resolution rules
@@ -68,11 +69,183 @@ export interface LexicalScope {
   readonly child_ids: readonly ScopeId[];
 
   /** Symbols defined in this scope */
-  readonly symbols: Map<SymbolName, SymbolDefinition>;
+  readonly symbols: Map<SymbolName, AnyDefinition>;
 }
+
+
+// /**
+//  * Base definition interface - common fields for all symbol types
+//  */
+// export interface BaseDefinition {
+//   /** Universal symbol ID */
+//   readonly id: SymbolId;
+//   /** Local name in scope */
+//   readonly name: SymbolName;
+//   /** Kind determines resolution behavior and acts as discriminator */
+//   readonly kind: SymbolKind;
+//   /** Definition location */
+//   readonly location: Location;
+//   /** Containing scope */
+//   readonly scope_id: ScopeId;
+//   /** Symbol availability for import/export */
+//   readonly availability: SymbolAvailability;
+// }
+
+// /**
+//  * Function definition for extraction phase
+//  */
+// export interface FunctionDef extends BaseDefinition {
+//   readonly kind: "function" | "constructor";
+//   readonly return_type_hint?: SymbolName;
+//   readonly is_generic?: boolean;
+//   readonly is_async?: boolean;
+//   readonly is_generator?: boolean;
+//   // Rust-specific
+//   readonly is_const?: boolean;
+//   readonly is_move?: boolean;
+//   readonly returns_impl_trait?: boolean;
+//   readonly accepts_impl_trait?: boolean;
+//   readonly is_higher_order?: boolean;
+//   readonly is_function_pointer?: boolean;
+//   readonly is_function_trait?: boolean;
+// }
+
+// /**
+//  * Class definition for extraction phase
+//  */
+// export interface ClassDef extends BaseDefinition {
+//   readonly kind: "class";
+//   readonly extends_class?: SymbolName;
+//   readonly implements_interfaces?: readonly SymbolName[];
+//   readonly methods?: readonly MethodDef[];
+//   readonly fields?: readonly VariableDef[];
+//   readonly is_generic?: boolean;
+// }
+
+// /**
+//  * Interface definition for extraction phase
+//  */
+// export interface InterfaceDef extends BaseDefinition {
+//   readonly kind: "interface";
+//   readonly extends_interfaces?: readonly SymbolName[];
+//   readonly methods?: readonly MethodDef[];
+//   readonly is_generic?: boolean;
+// }
+
+// /**
+//  * Enum definition for extraction phase
+//  */
+// export interface EnumDef extends BaseDefinition {
+//   readonly kind: "enum";
+//   readonly members?: readonly SymbolName[];
+//   readonly methods?: readonly MethodDef[];
+// }
+
+// /**
+//  * Method definition for extraction phase
+//  */
+// export interface MethodDef extends BaseDefinition {
+//   readonly kind: "method";
+//   readonly is_static?: boolean;
+//   readonly return_type_hint?: SymbolName;
+//   readonly is_generic?: boolean;
+//   readonly is_async?: boolean;
+// }
+
+// /**
+//  * Variable/constant/parameter definition for extraction phase
+//  */
+// export interface VariableDef extends BaseDefinition {
+//   readonly kind: "variable" | "constant" | "parameter";
+//   readonly type_hint?: SymbolName;
+//   readonly is_lifetime?: boolean; // Rust lifetime parameter
+// }
+
+// /**
+//  * Import definition for extraction phase
+//  */
+// export interface ImportDef extends BaseDefinition {
+//   readonly kind: "import";
+//   readonly source: FilePath; // Module path imported from
+//   readonly original_name?: SymbolName; // Original name if aliased
+//   readonly is_default?: boolean;
+//   readonly is_namespace?: boolean;
+// }
+
+
+// /**
+//  * Type/type alias definition for extraction phase
+//  */
+// export interface TypeDef extends BaseDefinition {
+//   readonly kind: "type" | "type_alias";
+//   readonly type_expression?: string;
+//   readonly is_generic?: boolean;
+// }
+
+// /**
+//  * Namespace/module definition for extraction phase
+//  */
+// export interface NamespaceDef extends BaseDefinition {
+//   readonly kind: "namespace" | "module";
+//   readonly exported_symbols?: readonly SymbolId[];
+// }
+
+// /**
+//  * Discriminated union of all definition types
+//  */
+// export type AnyDefinition =
+//   | FunctionDef
+//   | ClassDef
+//   | MethodDef
+//   | VariableDef
+//   | InterfaceDef
+//   | EnumDef
+//   | TypeDef
+//   | NamespaceDef
+//   | ImportDef;
+
+// /**
+//  * Type guards for definition types
+//  */
+// export function isFunctionDef(def: AnyDefinition): def is FunctionDef {
+//   return def.kind === "function" || def.kind === "constructor";
+// }
+
+// export function isClassDef(def: AnyDefinition): def is ClassDef {
+//   return def.kind === "class";
+// }
+
+// export function isMethodDef(def: AnyDefinition): def is MethodDef {
+//   return def.kind === "method";
+// }
+
+// export function isVariableDef(def: AnyDefinition): def is VariableDef {
+//   return def.kind === "variable" || def.kind === "constant" || def.kind === "parameter";
+// }
+
+// export function isImportDef(def: AnyDefinition): def is ImportDef {
+//   return def.kind === "import";
+// }
+
+// export function isInterfaceDef(def: AnyDefinition): def is InterfaceDef {
+//   return def.kind === "interface";
+// }
+
+// export function isEnumDef(def: AnyDefinition): def is EnumDef {
+//   return def.kind === "enum";
+// }
+
+// export function isTypeDef(def: AnyDefinition): def is TypeDef {
+//   return def.kind === "type" || def.kind === "type_alias";
+// }
+
+// export function isNamespaceDef(def: AnyDefinition): def is NamespaceDef {
+//   return def.kind === "namespace" || def.kind === "module";
+// }
 
 /**
  * Symbol definition - minimal fields for call resolution
+ * @deprecated Use AnyDefinition instead
  */
 export interface SymbolDefinition {
   /** Universal symbol ID */
@@ -90,18 +263,8 @@ export interface SymbolDefinition {
   /** Containing scope  */
   readonly scope_id: ScopeId;
 
-  /** Hoisting behavior - CRITICAL for JS/TS */
-  readonly is_hoisted: boolean;
-
-  /** Module boundary markers */
-  readonly is_exported: boolean;
-  readonly is_imported: boolean;
-
-  /** For imports: source module */
-  readonly import_source?: FilePath;
-
-  /** For exports: exported name if different */
-  readonly exported_as?: SymbolName;
+  /** Symbol availability for import/export */
+  readonly availability: SymbolAvailability;
 
   /** For classes: what it extends */
   readonly extends_class?: SymbolName;
