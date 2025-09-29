@@ -4,7 +4,7 @@
  * Maps language-specific tree-sitter captures to common semantic concepts
  */
 
-import type { Location } from "@ariadnejs/types";
+import type { Location, SymbolName } from "@ariadnejs/types";
 import type { SyntaxNode } from "tree-sitter";
 
 /**
@@ -83,11 +83,31 @@ export enum SemanticEntity {
 }
 
 /**
+ * Normalized semantic capture
+ */
+export interface NormalizedCapture {
+  category: SemanticCategory;
+  entity: SemanticEntity;
+  node_location: Location;
+  symbol_name: SymbolName;
+  modifiers: SemanticModifiers;
+
+  // Additional context based on category
+  context: CaptureContext;
+
+  // For scoped references (e.g., tokio::join!, std::fmt::Display)
+  qualified_name?: string; // Captured. Unused. TODO: why is it at this level and not in e.g. CaptureContext?
+
+  // For namespace chains
+  namespace_chain?: string[]; // Captured. Unused. TODO: why is it at this level and not in e.g. CaptureContext?
+}
+
+/**
  * Additional semantic modifiers
  */
 export interface SemanticModifiers {
-  is_static?: boolean;
-  is_async?: boolean;
+  is_static?: boolean; // Captured. Used. I don't think this is needed for call-graph detection.
+  is_async?: boolean; // Captured. Used. I don't think this is needed for call-graph detection.
   is_generator?: boolean;
   is_private?: boolean;
   is_protected?: boolean;
@@ -112,8 +132,8 @@ export interface SemanticModifiers {
   is_constructor?: boolean;
   is_self?: boolean;
   is_closure_param?: boolean;
-  visibility_level?: string;
-  visibility_path?: string;
+  visibility_level?: string; // Captured in rust. Unused. This could be used for visibility tracking -> export resolution. TODO: Add support in other languages
+  visibility_path?: string; // Not captured. Unused. Is this useful in call-graph detection?
   is_associated_call?: boolean;
   is_self_reference?: boolean;
   is_borrow?: boolean;
@@ -158,26 +178,6 @@ export interface SemanticModifiers {
 }
 
 /**
- * Normalized semantic capture
- */
-export interface NormalizedCapture {
-  category: SemanticCategory;
-  entity: SemanticEntity;
-  node_location: Location;
-  text: string;
-  modifiers: SemanticModifiers;
-
-  // Additional context based on category
-  context?: CaptureContext;
-
-  // For scoped references (e.g., tokio::join!, std::fmt::Display)
-  qualified_name?: string;
-
-  // For namespace chains
-  namespace_chain?: string[];
-}
-
-/**
  * Context for different capture types
  */
 export interface CaptureContext {
@@ -203,7 +203,7 @@ export interface CaptureContext {
   reexports?: Array<{ original: string; alias?: string }>;
 
   // For assignments
-  target_node?: SyntaxNode;
+  target_node?: SyntaxNode; // Implemented in 1 language
   source_node?: SyntaxNode;
 
   // For method calls
@@ -278,14 +278,14 @@ export interface CaptureContext {
 
   // For Rust pub use statements
   is_pub_use?: boolean;
-  visibility_level?: string;
-  alias?: string;
+  visibility_level?: string; // Unimplemented. Unused
+  alias?: string; // Implemented. Unused
 
   // For type tracking
   annotated_var_name?: string;
-  parameter_name?: string;
-  declaration_kind?: string;
-  type_annotation?: string;
+  parameter_name?: string; // Not captured. 1 usage
+  declaration_kind?: string; // Not captured. Unused
+  type_annotation?: string; // Not captured. Unused
   initializer_text?: string;
   source_text?: string;
   operator?: string;

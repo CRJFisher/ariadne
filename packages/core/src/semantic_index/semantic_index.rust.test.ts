@@ -40,34 +40,34 @@ describe("Semantic Index - Rust", () => {
         (c) => c.entity === SemanticEntity.CLASS
       );
       expect(structs.length).toBeGreaterThan(0);
-      expect(structs.some((s) => s.text === "Point")).toBe(true);
-      expect(structs.some((s) => s.text === "Pair")).toBe(true);
-      expect(structs.some((s) => s.text === "Color")).toBe(true);
+      expect(structs.some((s) => s.symbol_name === "Point")).toBe(true);
+      expect(structs.some((s) => s.symbol_name === "Pair")).toBe(true);
+      expect(structs.some((s) => s.symbol_name === "Color")).toBe(true);
 
       // Check enum definitions
       const enums = captures.definitions.filter(
         (c) => c.entity === SemanticEntity.ENUM
       );
       expect(enums.length).toBeGreaterThan(0);
-      expect(enums.some((e) => e.text === "Direction")).toBe(true);
-      expect(enums.some((e) => e.text === "Option")).toBe(true);
-      expect(enums.some((e) => e.text === "Message")).toBe(true);
+      expect(enums.some((e) => e.symbol_name === "Direction")).toBe(true);
+      expect(enums.some((e) => e.symbol_name === "Option")).toBe(true);
+      expect(enums.some((e) => e.symbol_name === "Message")).toBe(true);
 
       // Check enum variants
       const variants = captures.definitions.filter(
         (c) => c.entity === SemanticEntity.ENUM_MEMBER
       );
-      expect(variants.some((v) => v.text === "North")).toBe(true);
-      expect(variants.some((v) => v.text === "Some")).toBe(true);
-      expect(variants.some((v) => v.text === "Quit")).toBe(true);
+      expect(variants.some((v) => v.symbol_name === "North")).toBe(true);
+      expect(variants.some((v) => v.symbol_name === "Some")).toBe(true);
+      expect(variants.some((v) => v.symbol_name === "Quit")).toBe(true);
 
       // Check methods
       const methods = captures.definitions.filter(
         (c) => c.entity === SemanticEntity.METHOD
       );
-      expect(methods.some((m) => m.text === "new")).toBe(true);
-      expect(methods.some((m) => m.text === "distance")).toBe(true);
-      expect(methods.some((m) => m.text === "translate")).toBe(true);
+      expect(methods.some((m) => m.symbol_name === "new")).toBe(true);
+      expect(methods.some((m) => m.symbol_name === "distance")).toBe(true);
+      expect(methods.some((m) => m.symbol_name === "translate")).toBe(true);
 
       // Check impl blocks
       const implBlocks = captures.scopes.filter(
@@ -93,14 +93,14 @@ describe("Semantic Index - Rust", () => {
       );
 
       // new() should be marked as a constructor or associated function
-      const newMethod = methods.find((m) => m.text === "new");
+      const newMethod = methods.find((m) => m.symbol_name === "new");
       expect(newMethod).toBeDefined();
       expect(
         newMethod?.modifiers?.is_constructor || newMethod?.modifiers?.is_static
       ).toBe(true);
 
       // distance() should be a regular method
-      const distanceMethod = methods.find((m) => m.text === "distance");
+      const distanceMethod = methods.find((m) => m.symbol_name === "distance");
       expect(distanceMethod).toBeDefined();
       expect(distanceMethod?.modifiers?.is_static).not.toBe(true);
     });
@@ -123,10 +123,10 @@ describe("Semantic Index - Rust", () => {
       const traits = captures.definitions.filter(
         (c) => c.entity === SemanticEntity.INTERFACE
       );
-      expect(traits.some((t) => t.text === "Drawable")).toBe(true);
-      expect(traits.some((t) => t.text === "Iterator")).toBe(true);
-      expect(traits.some((t) => t.text === "Container")).toBe(true);
-      expect(traits.some((t) => t.text === "Greet")).toBe(true);
+      expect(traits.some((t) => t.symbol_name === "Drawable")).toBe(true);
+      expect(traits.some((t) => t.symbol_name === "Iterator")).toBe(true);
+      expect(traits.some((t) => t.symbol_name === "Container")).toBe(true);
+      expect(traits.some((t) => t.symbol_name === "Greet")).toBe(true);
 
       // Check generic parameters
       const typeParams = captures.definitions.filter(
@@ -139,8 +139,8 @@ describe("Semantic Index - Rust", () => {
         (c) =>
           c.entity === SemanticEntity.METHOD && c.modifiers?.is_trait_method
       );
-      expect(traitMethods.some((m) => m.text === "draw")).toBe(true);
-      expect(traitMethods.some((m) => m.text === "next")).toBe(true);
+      expect(traitMethods.some((m) => m.symbol_name === "draw")).toBe(true);
+      expect(traitMethods.some((m) => m.symbol_name === "next")).toBe(true);
     });
 
     it("should parse generic types and constraints", () => {
@@ -159,7 +159,7 @@ describe("Semantic Index - Rust", () => {
       const genericStructs = captures.definitions.filter(
         (c) => c.entity === SemanticEntity.CLASS && c.modifiers?.is_generic
       );
-      expect(genericStructs.some((s) => s.text === "Stack")).toBe(true);
+      expect(genericStructs.some((s) => s.symbol_name === "Stack")).toBe(true);
 
       // Check type constraints
       const typeConstraints = captures.types.filter(
@@ -169,7 +169,7 @@ describe("Semantic Index - Rust", () => {
 
       // Check const generics
       const constGenerics = captures.definitions.filter(
-        (c) => c.text === "Array"
+        (c) => c.symbol_name === "Array"
       );
       expect(constGenerics.length).toBeGreaterThan(0);
     });
@@ -211,17 +211,19 @@ describe("Semantic Index - Rust", () => {
       const functions = captures.definitions.filter(
         (c) => c.entity === SemanticEntity.FUNCTION
       );
-      expect(functions.some((f) => f.text === "add")).toBe(true);
-      expect(functions.some((f) => f.text === "first_word")).toBe(true);
-      expect(functions.some((f) => f.text === "longest")).toBe(true);
+      expect(functions.some((f) => f.symbol_name === "add")).toBe(true);
+      expect(functions.some((f) => f.symbol_name === "first_word")).toBe(true);
+      expect(functions.some((f) => f.symbol_name === "longest")).toBe(true);
 
       // Check async functions
       const asyncFunctions = functions.filter((f) => f.modifiers?.is_async);
-      expect(asyncFunctions.some((f) => f.text === "fetch_data")).toBe(true);
+      expect(asyncFunctions.some((f) => f.symbol_name === "fetch_data")).toBe(
+        true
+      );
 
       // Check generic functions
       const genericFunctions = functions.filter((f) => f.modifiers?.is_generic);
-      expect(genericFunctions.some((f) => f.text === "swap")).toBe(true);
+      expect(genericFunctions.some((f) => f.symbol_name === "swap")).toBe(true);
     });
 
     it("should parse closures", () => {
@@ -289,13 +291,13 @@ describe("Semantic Index - Rust", () => {
       const constFunctions = captures.definitions.filter(
         (c) => c.entity === SemanticEntity.FUNCTION && c.modifiers?.is_const
       );
-      expect(constFunctions.some((f) => f.text === "max")).toBe(true);
-      expect(constFunctions.some((f) => f.text === "factorial_const")).toBe(
-        true
-      );
-      expect(constFunctions.some((f) => f.text === "is_power_of_two")).toBe(
-        true
-      );
+      expect(constFunctions.some((f) => f.symbol_name === "max")).toBe(true);
+      expect(
+        constFunctions.some((f) => f.symbol_name === "factorial_const")
+      ).toBe(true);
+      expect(
+        constFunctions.some((f) => f.symbol_name === "is_power_of_two")
+      ).toBe(true);
 
       // Note: Combined modifiers like unsafe const may not be fully supported yet
       // This is tested separately in the unsafe and generic const functions test
@@ -316,7 +318,7 @@ describe("Semantic Index - Rust", () => {
       // Check function pointer type references
       // Function pointer types are captured as references due to query structure
       const functionPointerTypes = captures.references.filter(
-        (c) => c.entity === SemanticEntity.TYPE && c.text.includes("fn(")
+        (c) => c.entity === SemanticEntity.TYPE && c.symbol_name.includes("fn(")
       );
       expect(functionPointerTypes.length).toBeGreaterThan(0);
 
@@ -324,11 +326,15 @@ describe("Semantic Index - Rust", () => {
       const functions = captures.definitions.filter(
         (c) => c.entity === SemanticEntity.FUNCTION
       );
-      expect(functions.some((f) => f.text === "call_function")).toBe(true);
-      expect(functions.some((f) => f.text === "get_operation")).toBe(true);
-      expect(functions.some((f) => f.text === "sort_with_comparator")).toBe(
+      expect(functions.some((f) => f.symbol_name === "call_function")).toBe(
         true
       );
+      expect(functions.some((f) => f.symbol_name === "get_operation")).toBe(
+        true
+      );
+      expect(
+        functions.some((f) => f.symbol_name === "sort_with_comparator")
+      ).toBe(true);
     });
 
     it("should parse function trait objects (Fn, FnMut, FnOnce)", () => {
@@ -347,10 +353,16 @@ describe("Semantic Index - Rust", () => {
       const functions = captures.definitions.filter(
         (c) => c.entity === SemanticEntity.FUNCTION
       );
-      expect(functions.some((f) => f.text === "use_fn_trait")).toBe(true);
-      expect(functions.some((f) => f.text === "use_fn_mut_trait")).toBe(true);
-      expect(functions.some((f) => f.text === "use_fn_once_trait")).toBe(true);
-      expect(functions.some((f) => f.text === "apply_twice")).toBe(true);
+      expect(functions.some((f) => f.symbol_name === "use_fn_trait")).toBe(
+        true
+      );
+      expect(functions.some((f) => f.symbol_name === "use_fn_mut_trait")).toBe(
+        true
+      );
+      expect(functions.some((f) => f.symbol_name === "use_fn_once_trait")).toBe(
+        true
+      );
+      expect(functions.some((f) => f.symbol_name === "apply_twice")).toBe(true);
 
       // Check that we capture type references (best effort for function traits)
       const typeRefs = captures.references.filter(
@@ -378,7 +390,7 @@ describe("Semantic Index - Rust", () => {
       expect(methodCalls.length).toBeGreaterThan(10); // Should have many method calls
 
       // Check that we capture typical iterator method names
-      const allMethodNames = methodCalls.map((c) => c.text);
+      const allMethodNames = methodCalls.map((c) => c.symbol_name);
       const higherOrderMethodNames = allMethodNames.filter((name) =>
         [
           "map",
@@ -425,25 +437,33 @@ describe("Semantic Index - Rust", () => {
       );
 
       // Functions that return impl Trait
-      expect(functions.some((f) => f.text === "make_adder")).toBe(true);
-      expect(functions.some((f) => f.text === "returns_closure")).toBe(true);
-      expect(functions.some((f) => f.text === "create_processor")).toBe(true);
-      expect(functions.some((f) => f.text === "create_validator")).toBe(true);
+      expect(functions.some((f) => f.symbol_name === "make_adder")).toBe(true);
+      expect(functions.some((f) => f.symbol_name === "returns_closure")).toBe(
+        true
+      );
+      expect(functions.some((f) => f.symbol_name === "create_processor")).toBe(
+        true
+      );
+      expect(functions.some((f) => f.symbol_name === "create_validator")).toBe(
+        true
+      );
 
       // Functions that accept impl Trait parameters
-      expect(functions.some((f) => f.text === "notify")).toBe(true);
+      expect(functions.some((f) => f.symbol_name === "notify")).toBe(true);
       expect(
-        functions.some((f) => f.text === "complex_impl_trait_parameter")
+        functions.some((f) => f.symbol_name === "complex_impl_trait_parameter")
       ).toBe(true);
       expect(
-        functions.some((f) => f.text === "multiple_impl_trait_params")
+        functions.some((f) => f.symbol_name === "multiple_impl_trait_params")
       ).toBe(true);
 
       // Advanced impl Trait functions
-      expect(functions.some((f) => f.text === "async_impl_trait_param")).toBe(
-        true
-      );
-      expect(functions.some((f) => f.text === "async_returns_impl")).toBe(true);
+      expect(
+        functions.some((f) => f.symbol_name === "async_impl_trait_param")
+      ).toBe(true);
+      expect(
+        functions.some((f) => f.symbol_name === "async_returns_impl")
+      ).toBe(true);
     });
 
     it("should parse advanced closure patterns", () => {
@@ -475,10 +495,12 @@ describe("Semantic Index - Rust", () => {
       const functions = captures.definitions.filter(
         (c) => c.entity === SemanticEntity.FUNCTION
       );
-      expect(functions.some((f) => f.text === "advanced_closures")).toBe(true);
-      expect(functions.some((f) => f.text === "higher_order_examples")).toBe(
+      expect(functions.some((f) => f.symbol_name === "advanced_closures")).toBe(
         true
       );
+      expect(
+        functions.some((f) => f.symbol_name === "higher_order_examples")
+      ).toBe(true);
     });
 
     it("should parse unsafe and generic const functions", () => {
@@ -499,16 +521,18 @@ describe("Semantic Index - Rust", () => {
       );
 
       // Should capture the unsafe const function (even if modifiers aren't perfect)
-      expect(functions.some((f) => f.text === "unsafe_const_operation")).toBe(
+      expect(
+        functions.some((f) => f.symbol_name === "unsafe_const_operation")
+      ).toBe(true);
+
+      // Should capture the generic const function (even if ~const syntax isn't supported)
+      expect(functions.some((f) => f.symbol_name === "generic_const_max")).toBe(
         true
       );
 
-      // Should capture the generic const function (even if ~const syntax isn't supported)
-      expect(functions.some((f) => f.text === "generic_const_max")).toBe(true);
-
       // Check that we have unsafe functions in general
       const unsafeFunctions = functions.filter(
-        (f) => f.modifiers?.is_unsafe || f.text.includes("unsafe")
+        (f) => f.modifiers?.is_unsafe || f.symbol_name.includes("unsafe")
       );
       expect(unsafeFunctions.length).toBeGreaterThanOrEqual(1);
     });
@@ -564,9 +588,9 @@ describe("Semantic Index - Rust", () => {
       const modules = captures.definitions.filter(
         (c) => c.entity === SemanticEntity.MODULE
       );
-      expect(modules.some((m) => m.text === "math")).toBe(true);
-      expect(modules.some((m) => m.text === "utils")).toBe(true);
-      expect(modules.some((m) => m.text === "internal")).toBe(true);
+      expect(modules.some((m) => m.symbol_name === "math")).toBe(true);
+      expect(modules.some((m) => m.symbol_name === "utils")).toBe(true);
+      expect(modules.some((m) => m.symbol_name === "internal")).toBe(true);
 
       // Check visibility modifiers
       const visibility = captures.modifiers.filter(
@@ -576,8 +600,8 @@ describe("Semantic Index - Rust", () => {
 
       // Check exports (public items)
       const exports = captures.exports;
-      expect(exports.some((e) => e.text === "add")).toBe(true);
-      expect(exports.some((e) => e.text === "User")).toBe(true);
+      expect(exports.some((e) => e.symbol_name === "add")).toBe(true);
+      expect(exports.some((e) => e.symbol_name === "User")).toBe(true);
     });
 
     it("should parse use statements and imports", () => {
@@ -595,8 +619,8 @@ describe("Semantic Index - Rust", () => {
       // Check imports
       const imports = captures.imports;
       expect(imports.length).toBeGreaterThan(0);
-      expect(imports.some((i) => i.text === "HashMap")).toBe(true);
-      expect(imports.some((i) => i.text === "Display")).toBe(true);
+      expect(imports.some((i) => i.symbol_name === "HashMap")).toBe(true);
+      expect(imports.some((i) => i.symbol_name === "Display")).toBe(true);
 
       // Check aliased imports
       const aliasedImports = imports.filter((i) => i.context?.import_alias);
@@ -636,19 +660,19 @@ describe("Semantic Index - Rust", () => {
 
       // Check pub use captures by looking for pub use statements in exports
       const pubUseCaptures = parsed.exports.filter((e) =>
-        e.text.includes("pub use")
+        e.symbol_name.includes("pub use")
       );
       expect(pubUseCaptures.length).toBeGreaterThan(0);
 
       // Check for visibility modifiers in exports
       const publicExports = parsed.exports.filter((e) =>
-        e.text.startsWith("pub")
+        e.symbol_name.startsWith("pub")
       );
       expect(publicExports.length).toBeGreaterThan(0);
 
       // Check for aliased pub use (contains 'as')
       const aliasedExports = parsed.exports.filter((e) =>
-        e.text.includes(" as ")
+        e.symbol_name.includes(" as ")
       );
       expect(aliasedExports.length).toBeGreaterThan(0);
 
@@ -697,8 +721,8 @@ describe("Semantic Index - Rust", () => {
       expect(externCrates.length).toBeGreaterThanOrEqual(4);
 
       // Check specific extern crates
-      expect(externCrates.some((e) => e.text === "serde")).toBe(true);
-      expect(externCrates.some((e) => e.text === "tokio")).toBe(true);
+      expect(externCrates.some((e) => e.symbol_name === "serde")).toBe(true);
+      expect(externCrates.some((e) => e.symbol_name === "tokio")).toBe(true);
 
       // Check aliased extern crates
       const aliasedExternCrates = captures.imports.filter(
@@ -716,36 +740,40 @@ describe("Semantic Index - Rust", () => {
       expect(imports.length).toBeGreaterThanOrEqual(30);
 
       // Check simple imports
-      expect(imports.some((i) => i.text === "HashMap")).toBe(true);
-      expect(imports.some((i) => i.text === "Display")).toBe(true);
-      expect(imports.some((i) => i.text === "Result")).toBe(true);
+      expect(imports.some((i) => i.symbol_name === "HashMap")).toBe(true);
+      expect(imports.some((i) => i.symbol_name === "Display")).toBe(true);
+      expect(imports.some((i) => i.symbol_name === "Result")).toBe(true);
 
       // Check aliased imports
       const aliasedImports = imports.filter((i) => i.context?.import_alias);
       expect(aliasedImports.length).toBeGreaterThanOrEqual(6);
-      expect(aliasedImports.some((i) => i.text === "Map")).toBe(true);
-      expect(aliasedImports.some((i) => i.text === "IoResult")).toBe(true);
-      expect(aliasedImports.some((i) => i.text === "OrderedMap")).toBe(true);
+      expect(aliasedImports.some((i) => i.symbol_name === "Map")).toBe(true);
+      expect(aliasedImports.some((i) => i.symbol_name === "IoResult")).toBe(
+        true
+      );
+      expect(aliasedImports.some((i) => i.symbol_name === "OrderedMap")).toBe(
+        true
+      );
 
       // Check wildcard imports
       const wildcardImports = imports.filter((i) => i.modifiers?.is_wildcard);
       expect(wildcardImports.length).toBeGreaterThanOrEqual(2);
       expect(
-        wildcardImports.some((i) => i.text.includes("collections::*"))
+        wildcardImports.some((i) => i.symbol_name.includes("collections::*"))
       ).toBe(true);
 
       // Check complex nested imports
-      expect(imports.some((i) => i.text === "HashSet")).toBe(true);
-      expect(imports.some((i) => i.text === "BTreeMap")).toBe(true);
-      expect(imports.some((i) => i.text === "PathBuf")).toBe(true);
+      expect(imports.some((i) => i.symbol_name === "HashSet")).toBe(true);
+      expect(imports.some((i) => i.symbol_name === "BTreeMap")).toBe(true);
+      expect(imports.some((i) => i.symbol_name === "PathBuf")).toBe(true);
 
       // Check self imports
-      expect(imports.some((i) => i.text === "Debug")).toBe(true);
-      expect(imports.some((i) => i.text === "Formatter")).toBe(true);
+      expect(imports.some((i) => i.symbol_name === "Debug")).toBe(true);
+      expect(imports.some((i) => i.symbol_name === "Formatter")).toBe(true);
 
       // Check external crate usage
-      expect(imports.some((i) => i.text === "Serialize")).toBe(true);
-      expect(imports.some((i) => i.text === "Deserialize")).toBe(true);
+      expect(imports.some((i) => i.symbol_name === "Serialize")).toBe(true);
+      expect(imports.some((i) => i.symbol_name === "Deserialize")).toBe(true);
 
       // ========================================================================
       // MODULE DECLARATIONS
@@ -757,31 +785,37 @@ describe("Semantic Index - Rust", () => {
       expect(modules.length).toBeGreaterThanOrEqual(15);
 
       // Check external modules
-      expect(modules.some((m) => m.text === "utils")).toBe(true);
-      expect(modules.some((m) => m.text === "helpers")).toBe(true);
+      expect(modules.some((m) => m.symbol_name === "utils")).toBe(true);
+      expect(modules.some((m) => m.symbol_name === "helpers")).toBe(true);
 
       // Check public modules (many modules are captured, including inline ones with full text)
       const publicModules = modules.filter(
         (m) =>
-          m.text?.includes("public") ||
-          m.text === "api" ||
-          m.text === "prelude" ||
-          m.text === "complex"
+          m.symbol_name?.includes("public") ||
+          m.symbol_name === "api" ||
+          m.symbol_name === "prelude" ||
+          m.symbol_name === "complex"
       );
       expect(publicModules.length).toBeGreaterThanOrEqual(5);
 
       // Check inline modules
-      expect(modules.some((m) => m.text === "private_inline")).toBe(true);
-      expect(modules.some((m) => m.text === "public_inline")).toBe(true);
+      expect(modules.some((m) => m.symbol_name === "private_inline")).toBe(
+        true
+      );
+      expect(modules.some((m) => m.symbol_name === "public_inline")).toBe(true);
 
       // Check restricted visibility modules
-      expect(modules.some((m) => m.text === "crate_module")).toBe(true);
-      expect(modules.some((m) => m.text === "super_module")).toBe(true);
-      expect(modules.some((m) => m.text === "restricted_module")).toBe(true);
+      expect(modules.some((m) => m.symbol_name === "crate_module")).toBe(true);
+      expect(modules.some((m) => m.symbol_name === "super_module")).toBe(true);
+      expect(modules.some((m) => m.symbol_name === "restricted_module")).toBe(
+        true
+      );
 
       // Check conditional modules
-      expect(modules.some((m) => m.text === "advanced_features")).toBe(true);
-      expect(modules.some((m) => m.text === "tests")).toBe(true);
+      expect(modules.some((m) => m.symbol_name === "advanced_features")).toBe(
+        true
+      );
+      expect(modules.some((m) => m.symbol_name === "tests")).toBe(true);
 
       // ========================================================================
       // PUB USE RE-EXPORTS
@@ -794,25 +828,27 @@ describe("Semantic Index - Rust", () => {
 
       // Check simple pub use re-exports
       expect(
-        pubUseExports.some((e) => e.text?.includes("internal_function"))
+        pubUseExports.some((e) => e.symbol_name?.includes("internal_function"))
       ).toBe(true);
       expect(
-        pubUseExports.some((e) => e.text?.includes("public_function"))
+        pubUseExports.some((e) => e.symbol_name?.includes("public_function"))
       ).toBe(true);
 
       // Check aliased pub use re-exports
       const aliasedPubUse = pubUseExports.filter((e) => e.context?.alias);
       expect(aliasedPubUse.length).toBeGreaterThanOrEqual(5);
       expect(
-        aliasedPubUse.some((e) => e.text?.includes("exposed_crate_function"))
+        aliasedPubUse.some((e) =>
+          e.symbol_name?.includes("exposed_crate_function")
+        )
       ).toBe(true);
 
       // Check list re-exports
-      expect(pubUseExports.some((e) => e.text?.includes("internal_fn"))).toBe(
-        true
-      );
       expect(
-        pubUseExports.some((e) => e.text?.includes("parent_function"))
+        pubUseExports.some((e) => e.symbol_name?.includes("internal_fn"))
+      ).toBe(true);
+      expect(
+        pubUseExports.some((e) => e.symbol_name?.includes("parent_function"))
       ).toBe(true);
 
       // Check visibility levels in pub use
@@ -832,19 +868,20 @@ describe("Semantic Index - Rust", () => {
 
       // Check various visibility modifiers are captured
       const publicItems = captures.exports.filter(
-        (e) => e.text?.includes("pub ") && !e.text?.includes("pub(")
+        (e) =>
+          e.symbol_name?.includes("pub ") && !e.symbol_name?.includes("pub(")
       );
       expect(publicItems.length).toBeGreaterThanOrEqual(10);
 
       // Check crate-visible items (captured in larger text blocks)
       const crateItems = captures.definitions.filter((d) =>
-        d.text?.includes("pub(crate)")
+        d.symbol_name?.includes("pub(crate)")
       );
       expect(crateItems.length).toBeGreaterThanOrEqual(5);
 
       // Check super-visible items (captured in larger text blocks)
       const superItems = captures.definitions.filter((d) =>
-        d.text?.includes("pub(super)")
+        d.symbol_name?.includes("pub(super)")
       );
       expect(superItems.length).toBeGreaterThanOrEqual(9);
 
@@ -854,19 +891,23 @@ describe("Semantic Index - Rust", () => {
 
       // Check structs with various visibility fields
       const publicStruct = captures.definitions.find(
-        (d) => d.entity === SemanticEntity.CLASS && d.text === "PublicStruct"
+        (d) =>
+          d.entity === SemanticEntity.CLASS && d.symbol_name === "PublicStruct"
       );
       expect(publicStruct).toBeDefined();
 
       // Check enums
       const publicEnum = captures.definitions.find(
-        (d) => d.entity === SemanticEntity.ENUM && d.text === "PublicEnum"
+        (d) =>
+          d.entity === SemanticEntity.ENUM && d.symbol_name === "PublicEnum"
       );
       expect(publicEnum).toBeDefined();
 
       // Check traits
       const publicTrait = captures.definitions.find(
-        (d) => d.entity === SemanticEntity.INTERFACE && d.text === "PublicTrait"
+        (d) =>
+          d.entity === SemanticEntity.INTERFACE &&
+          d.symbol_name === "PublicTrait"
       );
       expect(publicTrait).toBeDefined();
 
@@ -875,16 +916,16 @@ describe("Semantic Index - Rust", () => {
       // ========================================================================
 
       // Check nested modules
-      expect(modules.some((m) => m.text === "complex")).toBe(true);
-      expect(modules.some((m) => m.text === "nested")).toBe(true);
+      expect(modules.some((m) => m.symbol_name === "complex")).toBe(true);
+      expect(modules.some((m) => m.symbol_name === "nested")).toBe(true);
 
       // Check re-exports from nested structures
-      expect(pubUseExports.some((e) => e.text?.includes("deeply_nested"))).toBe(
-        true
-      );
-      expect(pubUseExports.some((e) => e.text?.includes("root_deep_fn"))).toBe(
-        true
-      );
+      expect(
+        pubUseExports.some((e) => e.symbol_name?.includes("deeply_nested"))
+      ).toBe(true);
+      expect(
+        pubUseExports.some((e) => e.symbol_name?.includes("root_deep_fn"))
+      ).toBe(true);
 
       // ========================================================================
       // CONSTANTS AND STATICS
@@ -910,19 +951,23 @@ describe("Semantic Index - Rust", () => {
       expect(typeAliases.length).toBeGreaterThanOrEqual(5);
 
       // Check specific type aliases
-      expect(typeAliases.some((t) => t.text === "PublicAlias")).toBe(true);
-      expect(typeAliases.some((t) => t.text === "CrateAlias")).toBe(true);
+      expect(typeAliases.some((t) => t.symbol_name === "PublicAlias")).toBe(
+        true
+      );
+      expect(typeAliases.some((t) => t.symbol_name === "CrateAlias")).toBe(
+        true
+      );
 
       // ========================================================================
       // PRELUDE PATTERN
       // ========================================================================
 
       // Check prelude module exists
-      expect(modules.some((m) => m.text === "prelude")).toBe(true);
+      expect(modules.some((m) => m.symbol_name === "prelude")).toBe(true);
 
       // Check prelude re-exports
       const preludeExports = pubUseExports.filter((e) =>
-        e.text?.includes("prelude")
+        e.symbol_name?.includes("prelude")
       );
       // Prelude should have many re-exports but they might not all have "prelude" in the text
       // So let's check that we have a reasonable number of total pub use exports which includes prelude
@@ -968,7 +1013,7 @@ describe("Semantic Index - Rust", () => {
       // ========================================================================
 
       const mixedAliasImports = captures.imports.filter(
-        (i) => i.text === "OrderedMap" || i.text === "Set"
+        (i) => i.symbol_name === "OrderedMap" || i.symbol_name === "Set"
       );
       expect(mixedAliasImports.length).toBeGreaterThanOrEqual(2);
 
@@ -977,7 +1022,7 @@ describe("Semantic Index - Rust", () => {
       // ========================================================================
 
       const selfReferences = captures.imports.filter(
-        (i) => i.text?.includes("self") || i.context?.is_self_import
+        (i) => i.symbol_name?.includes("self") || i.context?.is_self_import
       );
       expect(selfReferences.length).toBeGreaterThanOrEqual(2);
 
@@ -987,8 +1032,8 @@ describe("Semantic Index - Rust", () => {
 
       const pathRestrictedItems = captures.definitions.filter(
         (d) =>
-          d.text?.includes("pub(in crate::api)") ||
-          d.text?.includes("restricted")
+          d.symbol_name?.includes("pub(in crate::api)") ||
+          d.symbol_name?.includes("restricted")
       );
       expect(pathRestrictedItems.length).toBeGreaterThanOrEqual(2);
 
@@ -998,9 +1043,9 @@ describe("Semantic Index - Rust", () => {
 
       const pubSelfItems = captures.definitions.filter(
         (d) =>
-          d.text?.includes("pub(self)") ||
-          d.text === "SelfStruct" ||
-          d.text === "self_function"
+          d.symbol_name?.includes("pub(self)") ||
+          d.symbol_name === "SelfStruct" ||
+          d.symbol_name === "self_function"
       );
       expect(pubSelfItems.length).toBeGreaterThanOrEqual(2);
 
@@ -1009,7 +1054,9 @@ describe("Semantic Index - Rust", () => {
       // ========================================================================
 
       const featureGatedModules = captures.definitions.filter(
-        (d) => d.text === "experimental" || d.text === "async_networking"
+        (d) =>
+          d.symbol_name === "experimental" ||
+          d.symbol_name === "async_networking"
       );
       expect(featureGatedModules.length).toBeGreaterThanOrEqual(1);
 
@@ -1018,7 +1065,9 @@ describe("Semantic Index - Rust", () => {
       // ========================================================================
 
       const macroExports = captures.exports.filter(
-        (e) => e.text?.includes("macro") || e.text?.includes("crate_macro")
+        (e) =>
+          e.symbol_name?.includes("macro") ||
+          e.symbol_name?.includes("crate_macro")
       );
       expect(macroExports.length).toBeGreaterThanOrEqual(1);
 
@@ -1032,7 +1081,7 @@ describe("Semantic Index - Rust", () => {
       expect(methods.length).toBeGreaterThanOrEqual(10);
 
       // Check that we have methods with different visibility levels
-      const methodTexts = methods.map((m) => m.text);
+      const methodTexts = methods.map((m) => m.symbol_name);
       expect(methodTexts.some((t) => t === "public_method")).toBe(true);
       expect(methodTexts.some((t) => t === "crate_method")).toBe(true);
       expect(methodTexts.some((t) => t === "super_method")).toBe(true);
@@ -1044,8 +1093,8 @@ describe("Semantic Index - Rust", () => {
 
       const documentedItems = captures.definitions.filter(
         (d) =>
-          d.text === "documented_function" ||
-          d.text === "attribute_documented_function"
+          d.symbol_name === "documented_function" ||
+          d.symbol_name === "attribute_documented_function"
       );
       expect(documentedItems.length).toBeGreaterThanOrEqual(2);
 
@@ -1055,7 +1104,8 @@ describe("Semantic Index - Rust", () => {
 
       const deprecatedItems = captures.definitions.filter(
         (d) =>
-          d.text === "deprecated_function" || d.text === "must_use_function"
+          d.symbol_name === "deprecated_function" ||
+          d.symbol_name === "must_use_function"
       );
       expect(deprecatedItems.length).toBeGreaterThanOrEqual(2);
 
@@ -1066,11 +1116,11 @@ describe("Semantic Index - Rust", () => {
       const publicStructFields = captures.definitions.filter(
         (d) =>
           d.entity === SemanticEntity.FIELD &&
-          (d.text?.includes("public_field") ||
-            d.text?.includes("crate_field") ||
-            d.text?.includes("super_field") ||
-            d.text?.includes("restricted_field") ||
-            d.text?.includes("self_field"))
+          (d.symbol_name?.includes("public_field") ||
+            d.symbol_name?.includes("crate_field") ||
+            d.symbol_name?.includes("super_field") ||
+            d.symbol_name?.includes("restricted_field") ||
+            d.symbol_name?.includes("self_field"))
       );
       expect(publicStructFields.length).toBeGreaterThanOrEqual(3);
     });
@@ -1098,13 +1148,13 @@ describe("Semantic Index - Rust", () => {
 
       // After declaring extern crate serde, we should see serde:: usage
       const serdeImports = captures.imports.filter(
-        (i) => i.text === "Serialize" || i.text === "Deserialize"
+        (i) => i.symbol_name === "Serialize" || i.symbol_name === "Deserialize"
       );
       expect(serdeImports.length).toBeGreaterThanOrEqual(2);
 
       // After declaring extern crate regex as re, we should see re:: usage
       const reImports = captures.imports.filter(
-        (i) => i.text === "Regex" || i.text === "RegexBuilder"
+        (i) => i.symbol_name === "Regex" || i.symbol_name === "RegexBuilder"
       );
       expect(reImports.length).toBeGreaterThanOrEqual(2);
 
@@ -1116,9 +1166,9 @@ describe("Semantic Index - Rust", () => {
       const nestedReExports = captures.exports.filter(
         (e) =>
           e.context?.is_pub_use &&
-          (e.text?.includes("deeply_nested") ||
-            e.text?.includes("root_deep_fn") ||
-            e.text?.includes("PublicDeepStruct"))
+          (e.symbol_name?.includes("deeply_nested") ||
+            e.symbol_name?.includes("root_deep_fn") ||
+            e.symbol_name?.includes("PublicDeepStruct"))
       );
       expect(nestedReExports.length).toBeGreaterThanOrEqual(2);
 
@@ -1133,12 +1183,12 @@ describe("Semantic Index - Rust", () => {
 
       // Check that we have re-exports from different sources
       const fromSuperReExports = allPubUseExports.filter((e) =>
-        e.text?.includes("super::")
+        e.symbol_name?.includes("super::")
       );
       expect(fromSuperReExports.length).toBeGreaterThanOrEqual(3);
 
       const fromCrateReExports = allPubUseExports.filter((e) =>
-        e.text?.includes("crate::")
+        e.symbol_name?.includes("crate::")
       );
       expect(fromCrateReExports.length).toBeGreaterThanOrEqual(1);
 
@@ -1151,11 +1201,18 @@ describe("Semantic Index - Rust", () => {
       const allDefinitions = captures.definitions;
 
       allDefinitions.forEach((def) => {
-        if (def.text?.includes("pub(crate)")) visibilityLevels.add("crate");
-        if (def.text?.includes("pub(super)")) visibilityLevels.add("super");
-        if (def.text?.includes("pub(in")) visibilityLevels.add("restricted");
-        if (def.text?.includes("pub(self)")) visibilityLevels.add("self");
-        if (def.text?.includes("pub ") && !def.text?.includes("pub("))
+        if (def.symbol_name?.includes("pub(crate)"))
+          visibilityLevels.add("crate");
+        if (def.symbol_name?.includes("pub(super)"))
+          visibilityLevels.add("super");
+        if (def.symbol_name?.includes("pub(in"))
+          visibilityLevels.add("restricted");
+        if (def.symbol_name?.includes("pub(self)"))
+          visibilityLevels.add("self");
+        if (
+          def.symbol_name?.includes("pub ") &&
+          !def.symbol_name?.includes("pub(")
+        )
           visibilityLevels.add("public");
       });
 
@@ -1192,10 +1249,11 @@ describe("Semantic Index - Rust", () => {
 
       // Check that we have both imports and re-exports (functional relationship)
       const hasImportsFromStd = captures.imports.some(
-        (i) => i.text === "HashMap" || i.text === "Vec"
+        (i) => i.symbol_name === "HashMap" || i.symbol_name === "Vec"
       );
       const hasReExportsToStd = allPubUseExports.some(
-        (e) => e.text?.includes("HashMap") || e.text?.includes("Vec")
+        (e) =>
+          e.symbol_name?.includes("HashMap") || e.symbol_name?.includes("Vec")
       );
 
       // Should have comprehensive import/export functionality
@@ -1227,29 +1285,29 @@ describe("Semantic Index - Rust", () => {
       // Deeply nested imports
       const deepImports = captures.imports.filter(
         (i) =>
-          i.text === "DefaultHasher" ||
-          i.text === "Relaxed" ||
-          i.text === "SeqCst" ||
-          i.text === "AcqRel"
+          i.symbol_name === "DefaultHasher" ||
+          i.symbol_name === "Relaxed" ||
+          i.symbol_name === "SeqCst" ||
+          i.symbol_name === "AcqRel"
       );
       expect(deepImports.length).toBeGreaterThanOrEqual(4);
 
       // Multiple self imports with aliases
       const selfImports = captures.imports.filter(
         (i) =>
-          i.text === "Fmt" ||
-          i.text === "DbgFmt" ||
-          i.text === "ReadTrait" ||
-          i.text === "WriteTrait"
+          i.symbol_name === "Fmt" ||
+          i.symbol_name === "DbgFmt" ||
+          i.symbol_name === "ReadTrait" ||
+          i.symbol_name === "WriteTrait"
       );
       expect(selfImports.length).toBeGreaterThanOrEqual(4);
 
       // Complex mixed imports
       const atomicImports = captures.imports.filter(
         (i) =>
-          i.text === "AtomicBool" ||
-          i.text === "AtomicU64" ||
-          i.text === "JoinHandle"
+          i.symbol_name === "AtomicBool" ||
+          i.symbol_name === "AtomicU64" ||
+          i.symbol_name === "JoinHandle"
       );
       expect(atomicImports.length).toBeGreaterThanOrEqual(1);
 
@@ -1260,12 +1318,12 @@ describe("Semantic Index - Rust", () => {
       const externCrates = captures.imports.filter(
         (i) => i.modifiers?.is_extern_crate
       );
-      expect(externCrates.some((e) => e.text === "alloc")).toBe(true);
-      expect(externCrates.some((e) => e.text === "core")).toBe(true);
+      expect(externCrates.some((e) => e.symbol_name === "alloc")).toBe(true);
+      expect(externCrates.some((e) => e.symbol_name === "core")).toBe(true);
 
       // Usage of extern crate aliases
       const externUsage = captures.imports.filter(
-        (i) => i.text === "AllocVec" || i.text === "PhantomData"
+        (i) => i.symbol_name === "AllocVec" || i.symbol_name === "PhantomData"
       );
       expect(externUsage.length).toBeGreaterThanOrEqual(2);
 
@@ -1275,10 +1333,10 @@ describe("Semantic Index - Rust", () => {
 
       const deepPathRestrictions = captures.definitions.filter(
         (d) =>
-          d.text?.includes("pub(in crate::deep::nested::module)") ||
-          d.text?.includes("pub(in super::parent::sibling)") ||
-          d.text === "DeepRestricted" ||
-          d.text === "complex_path_visibility"
+          d.symbol_name?.includes("pub(in crate::deep::nested::module)") ||
+          d.symbol_name?.includes("pub(in super::parent::sibling)") ||
+          d.symbol_name === "DeepRestricted" ||
+          d.symbol_name === "complex_path_visibility"
       );
       expect(deepPathRestrictions.length).toBeGreaterThanOrEqual(2);
 
@@ -1289,10 +1347,10 @@ describe("Semantic Index - Rust", () => {
       const reExportChains = captures.exports.filter(
         (e) =>
           e.context?.is_pub_use &&
-          (e.text?.includes("level1_fn") ||
-            e.text?.includes("public_deep") ||
-            e.text?.includes("crate_deep") ||
-            e.text?.includes("PublicLevel2"))
+          (e.symbol_name?.includes("level1_fn") ||
+            e.symbol_name?.includes("public_deep") ||
+            e.symbol_name?.includes("crate_deep") ||
+            e.symbol_name?.includes("PublicLevel2"))
       );
       expect(reExportChains.length).toBeGreaterThanOrEqual(3);
 
@@ -1302,9 +1360,9 @@ describe("Semantic Index - Rust", () => {
 
       const conditionalExports = captures.exports.filter(
         (e) =>
-          e.text?.includes("ExperimentalStruct") ||
-          e.text?.includes("NoStdPhantom") ||
-          e.text?.includes("PermissionsExt")
+          e.symbol_name?.includes("ExperimentalStruct") ||
+          e.symbol_name?.includes("NoStdPhantom") ||
+          e.symbol_name?.includes("PermissionsExt")
       );
       expect(conditionalExports.length).toBeGreaterThanOrEqual(1);
 
@@ -1315,9 +1373,9 @@ describe("Semantic Index - Rust", () => {
       const typeAliases = captures.definitions.filter(
         (d) =>
           d.entity === SemanticEntity.TYPE_ALIAS &&
-          (d.text === "PrivateAlias" ||
-            d.text === "CrateAlias" ||
-            d.text === "PublicAlias")
+          (d.symbol_name === "PrivateAlias" ||
+            d.symbol_name === "CrateAlias" ||
+            d.symbol_name === "PublicAlias")
       );
       expect(typeAliases.length).toBeGreaterThanOrEqual(3);
 
@@ -1328,10 +1386,10 @@ describe("Semantic Index - Rust", () => {
       const complexConsts = captures.definitions.filter(
         (d) =>
           d.entity === SemanticEntity.CONSTANT &&
-          (d.text === "SELF_CONST" ||
-            d.text === "CRATE_CONST" ||
-            d.text === "SUPER_CONST" ||
-            d.text === "RESTRICTED_CONST")
+          (d.symbol_name === "SELF_CONST" ||
+            d.symbol_name === "CRATE_CONST" ||
+            d.symbol_name === "SUPER_CONST" ||
+            d.symbol_name === "RESTRICTED_CONST")
       );
       expect(complexConsts.length).toBeGreaterThanOrEqual(4);
 
@@ -1339,7 +1397,8 @@ describe("Semantic Index - Rust", () => {
         (d) =>
           d.entity === SemanticEntity.VARIABLE &&
           d.modifiers?.is_static &&
-          (d.text === "CRATE_STATIC" || d.text === "PUBLIC_STATIC")
+          (d.symbol_name === "CRATE_STATIC" ||
+            d.symbol_name === "PUBLIC_STATIC")
       );
       expect(complexStatics.length).toBeGreaterThanOrEqual(2);
 
@@ -1349,7 +1408,8 @@ describe("Semantic Index - Rust", () => {
 
       const visibilityStruct = captures.definitions.find(
         (d) =>
-          d.entity === SemanticEntity.CLASS && d.text === "VisibilityStruct"
+          d.entity === SemanticEntity.CLASS &&
+          d.symbol_name === "VisibilityStruct"
       );
       expect(visibilityStruct).toBeDefined();
 
@@ -1357,16 +1417,16 @@ describe("Semantic Index - Rust", () => {
       const structMethods = captures.definitions.filter(
         (d) =>
           d.entity === SemanticEntity.METHOD &&
-          (d.text === "public_new" ||
-            d.text === "crate_new" ||
-            d.text === "super_new" ||
-            d.text === "restricted_new" ||
-            d.text === "self_new" ||
-            d.text === "get_public" ||
-            d.text === "get_crate" ||
-            d.text === "get_super" ||
-            d.text === "get_restricted" ||
-            d.text === "get_self")
+          (d.symbol_name === "public_new" ||
+            d.symbol_name === "crate_new" ||
+            d.symbol_name === "super_new" ||
+            d.symbol_name === "restricted_new" ||
+            d.symbol_name === "self_new" ||
+            d.symbol_name === "get_public" ||
+            d.symbol_name === "get_crate" ||
+            d.symbol_name === "get_super" ||
+            d.symbol_name === "get_restricted" ||
+            d.symbol_name === "get_self")
       );
       expect(structMethods.length).toBeGreaterThanOrEqual(5);
 
@@ -1378,7 +1438,7 @@ describe("Semantic Index - Rust", () => {
         (d) =>
           (d.entity === SemanticEntity.CLASS ||
             d.entity === SemanticEntity.ENUM) &&
-          (d.text === "GenericStruct" || d.text === "GenericEnum")
+          (d.symbol_name === "GenericStruct" || d.symbol_name === "GenericEnum")
       );
       expect(genericItems.length).toBeGreaterThanOrEqual(2);
 
@@ -1386,8 +1446,8 @@ describe("Semantic Index - Rust", () => {
       const genericReExports = captures.exports.filter(
         (e) =>
           e.context?.is_pub_use &&
-          (e.text?.includes("PublicGeneric") ||
-            e.text?.includes("CrateGeneric"))
+          (e.symbol_name?.includes("PublicGeneric") ||
+            e.symbol_name?.includes("CrateGeneric"))
       );
       expect(genericReExports.length).toBeGreaterThanOrEqual(1);
 
@@ -1397,7 +1457,8 @@ describe("Semantic Index - Rust", () => {
 
       const complexTrait = captures.definitions.find(
         (d) =>
-          d.entity === SemanticEntity.INTERFACE && d.text === "ComplexTrait"
+          d.entity === SemanticEntity.INTERFACE &&
+          d.symbol_name === "ComplexTrait"
       );
       expect(complexTrait).toBeDefined();
 
@@ -1425,8 +1486,8 @@ describe("Semantic Index - Rust", () => {
       // ========================================================================
 
       const allCapturedText = [
-        ...captures.definitions.map((d) => d.text),
-        ...captures.exports.map((e) => e.text),
+        ...captures.definitions.map((d) => d.symbol_name),
+        ...captures.exports.map((e) => e.symbol_name),
       ].join(" ");
 
       expect(allCapturedText.includes("pub(crate)")).toBe(true);
@@ -1445,12 +1506,12 @@ describe("Semantic Index - Rust", () => {
       const hasExternCrate = captures.imports.some(
         (i) =>
           i.modifiers?.is_extern_crate &&
-          (i.text === "alloc" || i.text === "core")
+          (i.symbol_name === "alloc" || i.symbol_name === "core")
       );
       expect(hasExternCrate).toBe(true);
 
       const hasExternUsage = captures.imports.some(
-        (i) => i.text === "AllocVec" || i.text === "PhantomData"
+        (i) => i.symbol_name === "AllocVec" || i.symbol_name === "PhantomData"
       );
       expect(hasExternUsage).toBe(true);
     });
@@ -1478,7 +1539,7 @@ describe("Semantic Index - Rust", () => {
 
       // Check structs with lifetimes
       const bookStruct = captures.definitions.find(
-        (c) => c.entity === SemanticEntity.CLASS && c.text === "Book"
+        (c) => c.entity === SemanticEntity.CLASS && c.symbol_name === "Book"
       );
       expect(bookStruct).toBeDefined();
     });
@@ -1748,9 +1809,9 @@ describe("Semantic Index - Rust", () => {
       const enums = captures.definitions.filter(
         (d) =>
           d.entity === SemanticEntity.ENUM &&
-          (d.text === "Message" ||
-            d.text === "Color" ||
-            d.text === "CompleteEnum")
+          (d.symbol_name === "Message" ||
+            d.symbol_name === "Color" ||
+            d.symbol_name === "CompleteEnum")
       );
       expect(enums.length).toBeGreaterThan(2); // Pattern matching enums
 
@@ -1758,7 +1819,7 @@ describe("Semantic Index - Rust", () => {
       const structs = captures.definitions.filter(
         (d) =>
           d.entity === SemanticEntity.CLASS &&
-          (d.text === "Point" || d.text === "Person")
+          (d.symbol_name === "Point" || d.symbol_name === "Person")
       );
       expect(structs.length).toBeGreaterThan(1); // Pattern matching structs
 
@@ -1766,12 +1827,12 @@ describe("Semantic Index - Rust", () => {
       const functions = captures.definitions.filter(
         (d) =>
           d.entity === SemanticEntity.FUNCTION &&
-          (d.text === "basic_match_example" ||
-            d.text === "handle_message" ||
-            d.text === "if_let_examples" ||
-            d.text === "while_let_examples" ||
-            d.text === "parameter_destructuring" ||
-            d.text === "analyze_point")
+          (d.symbol_name === "basic_match_example" ||
+            d.symbol_name === "handle_message" ||
+            d.symbol_name === "if_let_examples" ||
+            d.symbol_name === "while_let_examples" ||
+            d.symbol_name === "parameter_destructuring" ||
+            d.symbol_name === "analyze_point")
       );
       expect(functions.length).toBeGreaterThan(5); // Pattern functions
 
@@ -1805,7 +1866,8 @@ describe("Semantic Index - Rust", () => {
 
       specificFunctions.forEach((funcName) => {
         const func = captures.definitions.find(
-          (d) => d.entity === SemanticEntity.FUNCTION && d.text === funcName
+          (d) =>
+            d.entity === SemanticEntity.FUNCTION && d.symbol_name === funcName
         );
         expect(func, `Function ${funcName} should be captured`).toBeDefined();
       });
@@ -1824,7 +1886,7 @@ describe("Semantic Index - Rust", () => {
           (d) =>
             (d.entity === SemanticEntity.CLASS ||
               d.entity === SemanticEntity.ENUM) &&
-            d.text === typeName
+            d.symbol_name === typeName
         );
         if (type) typesFound++;
       });
@@ -1876,7 +1938,8 @@ describe("Semantic Index - Rust", () => {
 
       // Check match scopes exist
       const matchScopes = captures.scopes.filter(
-        (s) => s.entity === SemanticEntity.BLOCK && s.text?.includes("match")
+        (s) =>
+          s.entity === SemanticEntity.BLOCK && s.symbol_name?.includes("match")
       );
       expect(matchScopes.length).toBeGreaterThan(5);
 
@@ -2037,12 +2100,12 @@ impl<const N: usize> Container for Array<i32, N> {
       );
 
       const constParams = parsed.definitions.filter(
-        (d) => d.entity === SemanticEntity.CONSTANT && d.text === "N"
+        (d) => d.entity === SemanticEntity.CONSTANT && d.symbol_name === "N"
       );
       expect(constParams.length).toBeGreaterThan(0);
 
       const associatedTypes = parsed.definitions.filter(
-        (d) => d.entity === SemanticEntity.TYPE && d.text === "Item"
+        (d) => d.entity === SemanticEntity.TYPE && d.symbol_name === "Item"
       );
       expect(associatedTypes.length).toBeGreaterThan(0);
     });
@@ -2068,7 +2131,9 @@ let capture = move |val| println!("{}", external_var + val);
       const closureParams = parsed.definitions.filter(
         (d) =>
           d.entity === SemanticEntity.PARAMETER &&
-          (d.text === "x" || d.text === "y" || d.text === "val")
+          (d.symbol_name === "x" ||
+            d.symbol_name === "y" ||
+            d.symbol_name === "val")
       );
       expect(closureParams.length).toBeGreaterThan(0);
     });
@@ -2092,7 +2157,7 @@ let capture = move |val| println!("{}", external_var + val);
       expect(macroDefs.length).toBeGreaterThan(10); // Should have many macro definitions
 
       // Check specific macro definitions
-      const macroNames = macroDefs.map((d) => d.text);
+      const macroNames = macroDefs.map((d) => d.symbol_name);
       expect(macroNames).toContain("say_hello");
       expect(macroNames).toContain("create_struct");
       expect(macroNames).toContain("impl_display");
@@ -2118,7 +2183,7 @@ let capture = move |val| println!("{}", external_var + val);
       expect(builtinMacros.length).toBeGreaterThan(15); // Should have many built-in macros
 
       // Check specific built-in macros are captured
-      const builtinMacroNames = builtinMacros.map((r) => r.text);
+      const builtinMacroNames = builtinMacros.map((r) => r.symbol_name);
       expect(builtinMacroNames).toContain("println");
       expect(builtinMacroNames).toContain("eprintln");
       expect(builtinMacroNames).toContain("vec");
@@ -2145,7 +2210,7 @@ let capture = move |val| println!("{}", external_var + val);
       expect(userMacros.length).toBeGreaterThan(5);
 
       // Check specific user macro invocations
-      const userMacroNames = userMacros.map((r) => r.text);
+      const userMacroNames = userMacros.map((r) => r.symbol_name);
       expect(userMacroNames).toContain("say_hello");
       expect(userMacroNames).toContain("create_struct");
       expect(userMacroNames).toContain("hash_map");
@@ -2154,9 +2219,11 @@ let capture = move |val| println!("{}", external_var + val);
       // Test scoped macro references (should be detected)
       const scopedMacros = macroRefs.filter(
         (r) =>
-          (r.text && r.text.includes("::")) ||
+          (r.symbol_name && r.symbol_name.includes("::")) ||
           parsed.references.some(
-            (ref) => ref.text === r.text && ref.text === "log_debug"
+            (ref) =>
+              ref.symbol_name === r.symbol_name &&
+              ref.symbol_name === "log_debug"
           )
       );
       // Note: Scoped macros like utils::log_debug! might be captured differently
@@ -2255,7 +2322,7 @@ mod custom_module;
       );
 
       const externCrates = parsed.imports.filter(
-        (i) => i.text === "serde" || i.text === "regex"
+        (i) => i.symbol_name === "serde" || i.symbol_name === "regex"
       );
       expect(externCrates.length).toBeGreaterThan(0);
 
@@ -2282,14 +2349,14 @@ async fn fetch_data() -> Result<String, Error> {
 
       const tryExprs = parsed.references.filter((r) =>
         // r.modifiers?.is_try || // TODO: is_try not yet implemented
-        r.text?.includes("?")
+        r.symbol_name?.includes("?")
       );
       expect(tryExprs.length).toBeGreaterThan(0);
 
       const awaitExprs = parsed.references.filter(
         (r) =>
           // r.modifiers?.is_await || // TODO: is_await not yet implemented
-          r.text === "await" || r.text?.includes(".await")
+          r.symbol_name === "await" || r.symbol_name?.includes(".await")
       );
       expect(awaitExprs.length).toBeGreaterThan(0);
     });
@@ -2310,9 +2377,9 @@ struct PrivateStruct;
       );
 
       // Since is_exported modifier isn't being set properly, check if definition name exists in exports
-      const exportNames = new Set(parsed.exports.map((e) => e.text));
+      const exportNames = new Set(parsed.exports.map((e) => e.symbol_name));
       const publicDefs = parsed.definitions.filter(
-        (d) => d.modifiers?.is_exported || exportNames.has(d.text) // Check both ways
+        (d) => d.modifiers?.is_exported || exportNames.has(d.symbol_name) // Check both ways
       );
       expect(publicDefs.length).toBeGreaterThan(0);
     });
@@ -2375,10 +2442,10 @@ loop {
       const loopVars = parsed.definitions.filter(
         (d) =>
           d.entity === SemanticEntity.VARIABLE &&
-          (d.text === "i" ||
-            d.text === "key" ||
-            d.text === "value" ||
-            d.text === "item")
+          (d.symbol_name === "i" ||
+            d.symbol_name === "key" ||
+            d.symbol_name === "value" ||
+            d.symbol_name === "item")
       );
       expect(loopVars.length).toBeGreaterThan(0);
 
@@ -2386,7 +2453,7 @@ loop {
         (s) =>
           s.entity === SemanticEntity.BLOCK &&
           // s.modifiers?.is_loop || // TODO: is_loop not yet implemented
-          (s.text?.includes("for") || s.text?.includes("while"))
+          (s.symbol_name?.includes("for") || s.symbol_name?.includes("while"))
       );
       expect(loopScopes.length).toBeGreaterThan(0);
     });
@@ -2473,45 +2540,53 @@ loop {
         (c) => c.entity === SemanticEntity.CLASS && c.modifiers?.is_generic
       );
       expect(
-        advancedGenericStructs.some((s) => s.text === "AdvancedContainer")
+        advancedGenericStructs.some(
+          (s) => s.symbol_name === "AdvancedContainer"
+        )
       ).toBe(true);
-      expect(advancedGenericStructs.some((s) => s.text === "Matrix")).toBe(
-        true
-      );
-      expect(advancedGenericStructs.some((s) => s.text === "SelfRef")).toBe(
-        true
-      );
+      expect(
+        advancedGenericStructs.some((s) => s.symbol_name === "Matrix")
+      ).toBe(true);
+      expect(
+        advancedGenericStructs.some((s) => s.symbol_name === "SelfRef")
+      ).toBe(true);
 
       // Check generic enums
       const genericEnums = captures.definitions.filter(
         (c) => c.entity === SemanticEntity.ENUM && c.modifiers?.is_generic
       );
-      expect(genericEnums.some((e) => e.text === "ComplexResult")).toBe(true);
+      expect(genericEnums.some((e) => e.symbol_name === "ComplexResult")).toBe(
+        true
+      );
 
       // Check generic functions
       const genericFunctions = captures.definitions.filter(
         (c) => c.entity === SemanticEntity.FUNCTION && c.modifiers?.is_generic
       );
       expect(
-        genericFunctions.some((f) => f.text === "process_with_closure")
+        genericFunctions.some((f) => f.symbol_name === "process_with_closure")
       ).toBe(true);
       expect(
-        genericFunctions.some((f) => f.text === "complex_generic_function")
+        genericFunctions.some(
+          (f) => f.symbol_name === "complex_generic_function"
+        )
       ).toBe(true);
       expect(
-        genericFunctions.some((f) => f.text === "ultimate_generic_function")
+        genericFunctions.some(
+          (f) => f.symbol_name === "ultimate_generic_function"
+        )
       ).toBe(true);
 
       // Check generic traits
       const genericTraits = captures.definitions.filter(
         (c) => c.entity === SemanticEntity.INTERFACE && c.modifiers?.is_generic
       );
-      expect(genericTraits.some((t) => t.text === "AdvancedIterator")).toBe(
-        true
-      );
-      expect(genericTraits.some((t) => t.text === "GenericLifetimeTrait")).toBe(
-        true
-      );
+      expect(
+        genericTraits.some((t) => t.symbol_name === "AdvancedIterator")
+      ).toBe(true);
+      expect(
+        genericTraits.some((t) => t.symbol_name === "GenericLifetimeTrait")
+      ).toBe(true);
     });
 
     it("should parse const generics with complex parameters", () => {
@@ -2530,14 +2605,14 @@ loop {
       const constParams = captures.definitions.filter(
         (c) =>
           c.entity === SemanticEntity.PARAMETER &&
-          c.text &&
-          ["ROWS", "COLS", "OTHER_COLS"].includes(c.text)
+          c.symbol_name &&
+          ["ROWS", "COLS", "OTHER_COLS"].includes(c.symbol_name)
       );
       expect(constParams.length).toBeGreaterThan(0);
 
       // Check Matrix struct with const generics
       const matrixStruct = captures.definitions.find(
-        (c) => c.entity === SemanticEntity.CLASS && c.text === "Matrix"
+        (c) => c.entity === SemanticEntity.CLASS && c.symbol_name === "Matrix"
       );
       expect(matrixStruct).toBeDefined();
       expect(matrixStruct?.modifiers?.is_generic).toBe(true);
@@ -2564,17 +2639,22 @@ loop {
 
       // Check specific lifetime structures
       const multiLifetimeStruct = captures.definitions.find(
-        (c) => c.entity === SemanticEntity.CLASS && c.text === "MultiLifetime"
+        (c) =>
+          c.entity === SemanticEntity.CLASS && c.symbol_name === "MultiLifetime"
       );
       expect(multiLifetimeStruct).toBeDefined();
 
       const boundedLifetimeStruct = captures.definitions.find(
-        (c) => c.entity === SemanticEntity.CLASS && c.text === "BoundedLifetime"
+        (c) =>
+          c.entity === SemanticEntity.CLASS &&
+          c.symbol_name === "BoundedLifetime"
       );
       expect(boundedLifetimeStruct).toBeDefined();
 
       const phantomLifetimeStruct = captures.definitions.find(
-        (c) => c.entity === SemanticEntity.CLASS && c.text === "PhantomLifetime"
+        (c) =>
+          c.entity === SemanticEntity.CLASS &&
+          c.symbol_name === "PhantomLifetime"
       );
       expect(phantomLifetimeStruct).toBeDefined();
     });
@@ -2595,7 +2675,7 @@ loop {
       const combinedStruct = captures.definitions.find(
         (c) =>
           c.entity === SemanticEntity.CLASS &&
-          c.text === "GenericLifetimeStruct"
+          c.symbol_name === "GenericLifetimeStruct"
       );
       expect(combinedStruct).toBeDefined();
       expect(combinedStruct?.modifiers?.is_generic).toBe(true);
@@ -2604,7 +2684,7 @@ loop {
       const ultimateFunction = captures.definitions.find(
         (c) =>
           c.entity === SemanticEntity.FUNCTION &&
-          c.text === "ultimate_generic_function"
+          c.symbol_name === "ultimate_generic_function"
       );
       expect(ultimateFunction).toBeDefined();
       expect(ultimateFunction?.modifiers?.is_generic).toBe(true);
@@ -2612,7 +2692,7 @@ loop {
       const complexLifetimeFunction = captures.definitions.find(
         (c) =>
           c.entity === SemanticEntity.FUNCTION &&
-          c.text === "complex_lifetime_function"
+          c.symbol_name === "complex_lifetime_function"
       );
       expect(complexLifetimeFunction).toBeDefined();
       expect(complexLifetimeFunction?.modifiers?.is_generic).toBe(true);
@@ -2639,9 +2719,9 @@ loop {
       // Check trait bounds in constraints
       const traitConstraints = whereConstraints.filter(
         (c) =>
-          c.text &&
+          c.symbol_name &&
           ["Clone", "Debug", "Display", "PartialEq", "Send", "Sync"].includes(
-            c.text
+            c.symbol_name
           )
       );
       expect(traitConstraints.length).toBeGreaterThan(5);
@@ -2670,7 +2750,7 @@ loop {
       const hrtbFunction = captures.definitions.find(
         (c) =>
           c.entity === SemanticEntity.FUNCTION &&
-          c.text === "process_with_closure"
+          c.symbol_name === "process_with_closure"
       );
       expect(hrtbFunction).toBeDefined();
       expect(hrtbFunction?.modifiers?.is_generic).toBe(true);
@@ -2679,7 +2759,7 @@ loop {
       const lifetimeProcessorTrait = captures.definitions.find(
         (c) =>
           c.entity === SemanticEntity.INTERFACE &&
-          c.text === "LifetimeProcessor"
+          c.symbol_name === "LifetimeProcessor"
       );
       expect(lifetimeProcessorTrait).toBeDefined();
     });
@@ -2701,7 +2781,7 @@ loop {
         (c) =>
           c.entity === SemanticEntity.INTERFACE &&
           ["AdvancedIterator", "Validator", "GenericLifetimeTrait"].includes(
-            c.text || ""
+            c.symbol_name || ""
           )
       );
       expect(traitsWithAssocTypes.length).toBeGreaterThanOrEqual(3);
@@ -2710,7 +2790,7 @@ loop {
       const assocTypes = captures.definitions.filter(
         (c) =>
           c.entity === SemanticEntity.TYPE_ALIAS &&
-          ["Error", "State", "Input", "Output"].includes(c.text || "")
+          ["Error", "State", "Input", "Output"].includes(c.symbol_name || "")
       );
       expect(assocTypes.length).toBeGreaterThan(4);
     });
@@ -2762,11 +2842,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const index = build_semantic_index(
-        "test.rs" as FilePath,
-        tree,
-        "rust"
-      );
+      const index = build_semantic_index("test.rs" as FilePath, tree, "rust");
 
       // Check that trait implementations are captured
       const traitImpls = Array.from(index.symbols.values()).filter(
@@ -2821,7 +2897,7 @@ loop {
       ];
 
       expectedTraits.forEach((traitName) => {
-        expect(traits.some((t) => t.text === traitName)).toBe(true);
+        expect(traits.some((t) => t.symbol_name === traitName)).toBe(true);
       });
 
       // Check that traits are captured as interface entities
@@ -2871,7 +2947,9 @@ loop {
       ];
 
       expectedTraitMethods.forEach((methodName) => {
-        expect(traitMethods.some((m) => m.text === methodName)).toBe(true);
+        expect(traitMethods.some((m) => m.symbol_name === methodName)).toBe(
+          true
+        );
       });
 
       expect(traitMethods.length).toBeGreaterThan(15);
@@ -2914,7 +2992,9 @@ loop {
         "Row",
       ];
       expectedAssocTypes.forEach((typeName) => {
-        expect(associatedTypes.some((t) => t.text === typeName)).toBe(true);
+        expect(associatedTypes.some((t) => t.symbol_name === typeName)).toBe(
+          true
+        );
       });
 
       // Check associated constants
@@ -2930,9 +3010,9 @@ loop {
         "TIMEOUT_SECONDS",
       ];
       expectedConstants.forEach((constName) => {
-        expect(associatedConstants.some((c) => c.text === constName)).toBe(
-          true
-        );
+        expect(
+          associatedConstants.some((c) => c.symbol_name === constName)
+        ).toBe(true);
       });
 
       expect(associatedTypes.length).toBeGreaterThan(5);
@@ -2958,10 +3038,14 @@ loop {
       expect(traitImplMethods.length).toBeGreaterThan(10);
 
       // Check specific implementations exist
-      const drawMethods = traitImplMethods.filter((m) => m.text === "draw");
+      const drawMethods = traitImplMethods.filter(
+        (m) => m.symbol_name === "draw"
+      );
       expect(drawMethods.length).toBeGreaterThanOrEqual(2); // Circle and Rectangle
 
-      const areaMethods = traitImplMethods.filter((m) => m.text === "area");
+      const areaMethods = traitImplMethods.filter(
+        (m) => m.symbol_name === "area"
+      );
       expect(areaMethods.length).toBeGreaterThanOrEqual(2);
 
       // Check associated functions in implementations
@@ -3025,7 +3109,7 @@ loop {
             "print_shapes",
             "process_iterator",
             "parse_and_process",
-          ].includes(c.text || "")
+          ].includes(c.symbol_name || "")
       );
       expect(boundedFunctions.length).toBeGreaterThanOrEqual(4);
 
@@ -3050,14 +3134,16 @@ loop {
 
       // Check that Shape trait exists (has supertraits)
       const shapeTrait = captures.definitions.find(
-        (c) => c.entity === SemanticEntity.INTERFACE && c.text === "Shape"
+        (c) =>
+          c.entity === SemanticEntity.INTERFACE && c.symbol_name === "Shape"
       );
       expect(shapeTrait).toBeDefined();
 
       // Check that PrintableShape trait exists (multiple supertraits)
       const printableShapeTrait = captures.definitions.find(
         (c) =>
-          c.entity === SemanticEntity.INTERFACE && c.text === "PrintableShape"
+          c.entity === SemanticEntity.INTERFACE &&
+          c.symbol_name === "PrintableShape"
       );
       expect(printableShapeTrait).toBeDefined();
 
@@ -3066,7 +3152,7 @@ loop {
         (c) =>
           c.entity === SemanticEntity.METHOD &&
           c.modifiers?.is_trait_impl &&
-          ["perimeter", "description"].includes(c.text || "")
+          ["perimeter", "description"].includes(c.symbol_name || "")
       );
       expect(shapeImpls.length).toBeGreaterThan(1);
     });
@@ -3088,7 +3174,7 @@ loop {
         (c) =>
           c.entity === SemanticEntity.METHOD &&
           c.modifiers?.is_trait_impl &&
-          c.text === "add"
+          c.symbol_name === "add"
       );
       expect(addImpl.length).toBeGreaterThan(0);
 
@@ -3097,7 +3183,7 @@ loop {
         (c) =>
           c.entity === SemanticEntity.METHOD &&
           c.modifiers?.is_trait_impl &&
-          c.text === "index"
+          c.symbol_name === "index"
       );
       expect(indexImpl.length).toBeGreaterThan(0);
     });
@@ -3158,10 +3244,12 @@ loop {
       expect(assocTypeImpls.length).toBeGreaterThan(3);
 
       // Check that associated types like "Item = i32" are captured
-      const itemAssoc = assocTypeImpls.filter((t) => t.text === "Item");
+      const itemAssoc = assocTypeImpls.filter((t) => t.symbol_name === "Item");
       expect(itemAssoc.length).toBeGreaterThan(0);
 
-      const errorAssoc = assocTypeImpls.filter((t) => t.text === "Error");
+      const errorAssoc = assocTypeImpls.filter(
+        (t) => t.symbol_name === "Error"
+      );
       expect(errorAssoc.length).toBeGreaterThan(0);
     });
 
@@ -3217,27 +3305,33 @@ loop {
       expect(asyncFunctions.length).toBeGreaterThan(10);
 
       // Verify specific async function patterns
-      const fetchDataFn = asyncFunctions.find((f) => f.text === "fetch_data");
+      const fetchDataFn = asyncFunctions.find(
+        (f) => f.symbol_name === "fetch_data"
+      );
       expect(fetchDataFn).toBeDefined();
       expect(fetchDataFn?.modifiers?.is_async).toBe(true);
 
       // Check if function is in exports instead of relying on is_exported modifier
-      const isInExports = parsed.exports.some((e) => e.text === "fetch_data");
+      const isInExports = parsed.exports.some(
+        (e) => e.symbol_name === "fetch_data"
+      );
       expect(fetchDataFn?.modifiers?.is_exported || isInExports).toBe(true);
 
       const processAsyncFn = asyncFunctions.find(
-        (f) => f.text === "process_async"
+        (f) => f.symbol_name === "process_async"
       );
       expect(processAsyncFn).toBeDefined();
       expect(processAsyncFn?.modifiers?.is_async).toBe(true);
 
       // Check main async function with tokio::main attribute
-      const mainFn = asyncFunctions.find((f) => f.text === "main");
+      const mainFn = asyncFunctions.find((f) => f.symbol_name === "main");
       expect(mainFn).toBeDefined();
       expect(mainFn?.modifiers?.is_async).toBe(true);
 
       // Main function might not have is_exported set, check exports array too
-      const mainInExports = parsed.exports.some((e) => e.text === "main");
+      const mainInExports = parsed.exports.some(
+        (e) => e.symbol_name === "main"
+      );
       expect(mainFn?.modifiers?.is_exported || mainInExports).toBe(true);
     });
 
@@ -3256,7 +3350,8 @@ loop {
       // Check async trait definition
       const asyncTrait = parsed.definitions.find(
         (d) =>
-          d.entity === SemanticEntity.INTERFACE && d.text === "AsyncProcessor"
+          d.entity === SemanticEntity.INTERFACE &&
+          d.symbol_name === "AsyncProcessor"
       );
       expect(asyncTrait).toBeDefined();
 
@@ -3265,7 +3360,7 @@ loop {
         (d) =>
           d.entity === SemanticEntity.METHOD &&
           d.modifiers?.is_async &&
-          d.text === "process"
+          d.symbol_name === "process"
       );
       expect(asyncImplMethods.length).toBeGreaterThan(0);
     });
@@ -3284,13 +3379,14 @@ loop {
 
       // Check await expressions are captured as references
       const awaitExprs = parsed.references.filter(
-        (r) => r.text?.includes(".await") || r.text === "await"
+        (r) => r.symbol_name?.includes(".await") || r.symbol_name === "await"
       );
       expect(awaitExprs.length).toBeGreaterThan(20);
 
       // Check specific await patterns like tokio::time::sleep().await
       const sleepAwaits = awaitExprs.filter(
-        (r) => r.text?.includes("sleep") && r.text?.includes(".await")
+        (r) =>
+          r.symbol_name?.includes("sleep") && r.symbol_name?.includes(".await")
       );
       expect(sleepAwaits.length).toBeGreaterThan(5);
 
@@ -3349,7 +3445,7 @@ loop {
 
       // Check await expressions within closures
       const awaitInClosures = parsed.references.filter((r) =>
-        r.text?.includes(".await")
+        r.symbol_name?.includes(".await")
       );
       // Note: Context might not include closure info, so check general await patterns
 
@@ -3384,7 +3480,7 @@ loop {
       // Check tokio::spawn calls
       const spawnCalls = parsed.references.filter(
         (r) =>
-          r.text === "spawn" &&
+          r.symbol_name === "spawn" &&
           (r.qualified_name?.includes("tokio") ||
             r.namespace_chain?.includes("tokio"))
       );
@@ -3392,7 +3488,7 @@ loop {
 
       // Check async task creation
       const taskCreation = parsed.references.filter(
-        (r) => r.text === "spawn_blocking" || r.text === "spawn"
+        (r) => r.symbol_name === "spawn_blocking" || r.symbol_name === "spawn"
       );
       expect(taskCreation.length).toBeGreaterThan(3);
     });
@@ -3411,13 +3507,13 @@ loop {
 
       // Check channel operations
       const channelOps = parsed.references.filter((r) =>
-        ["send", "recv", "channel"].includes(r.text || "")
+        ["send", "recv", "channel"].includes(r.symbol_name || "")
       );
       expect(channelOps.length).toBeGreaterThan(3);
 
       // Check semaphore and Arc usage
       const concurrencyPrimitives = parsed.references.filter((r) =>
-        ["Semaphore", "Arc", "Mutex", "RwLock"].includes(r.text || "")
+        ["Semaphore", "Arc", "Mutex", "RwLock"].includes(r.symbol_name || "")
       );
       expect(concurrencyPrimitives.length).toBeGreaterThan(5);
     });
@@ -3437,16 +3533,16 @@ loop {
       // Check tokio::select! macro usage
       const selectMacro = parsed.references.filter(
         (r) =>
-          r.text === "select!" ||
-          (r.text === "select" && r.qualified_name?.includes("tokio"))
+          r.symbol_name === "select!" ||
+          (r.symbol_name === "select" && r.qualified_name?.includes("tokio"))
       );
       expect(selectMacro.length).toBeGreaterThan(0);
 
       // Check tokio::join! macro usage
       const joinMacro = parsed.references.filter(
         (r) =>
-          r.text === "join!" ||
-          (r.text === "join" && r.qualified_name?.includes("tokio"))
+          r.symbol_name === "join!" ||
+          (r.symbol_name === "join" && r.qualified_name?.includes("tokio"))
       );
       expect(joinMacro.length).toBeGreaterThan(0);
     });
@@ -3473,13 +3569,13 @@ loop {
 
       // Check Pin usage
       const pinRefs = parsed.references.filter(
-        (r) => r.text === "Pin" || r.qualified_name?.includes("Pin")
+        (r) => r.symbol_name === "Pin" || r.qualified_name?.includes("Pin")
       );
       expect(pinRefs.length).toBeGreaterThan(2);
 
       // Check poll method in Future impl
       const pollMethod = parsed.definitions.find(
-        (d) => d.entity === SemanticEntity.METHOD && d.text === "poll"
+        (d) => d.entity === SemanticEntity.METHOD && d.symbol_name === "poll"
       );
       expect(pollMethod).toBeDefined();
     });
@@ -3499,12 +3595,15 @@ loop {
       // Check async recursive function
       const recursiveFn = parsed.definitions.find(
         (d) =>
-          d.entity === SemanticEntity.FUNCTION && d.text === "async_recursive"
+          d.entity === SemanticEntity.FUNCTION &&
+          d.symbol_name === "async_recursive"
       );
       expect(recursiveFn).toBeDefined();
 
       // Check Box<Pin<dyn Future>> pattern
-      const boxPinFuture = parsed.references.filter((r) => r.text === "Box");
+      const boxPinFuture = parsed.references.filter(
+        (r) => r.symbol_name === "Box"
+      );
       // Note: This might need adjustment based on how complex types are captured
     });
 
@@ -3523,13 +3622,16 @@ loop {
       // Check stream processing functions
       const streamFn = parsed.definitions.find(
         (d) =>
-          d.entity === SemanticEntity.FUNCTION && d.text === "stream_example"
+          d.entity === SemanticEntity.FUNCTION &&
+          d.symbol_name === "stream_example"
       );
       expect(streamFn).toBeDefined();
 
       // Check stream operations
       const streamOps = parsed.references.filter((r) =>
-        ["buffer_unordered", "collect", "StreamExt"].includes(r.text || "")
+        ["buffer_unordered", "collect", "StreamExt"].includes(
+          r.symbol_name || ""
+        )
       );
       expect(streamOps.length).toBeGreaterThan(2);
     });
@@ -3549,13 +3651,15 @@ loop {
       // Check timeout function
       const timeoutFn = parsed.definitions.find(
         (d) =>
-          d.entity === SemanticEntity.FUNCTION && d.text === "timeout_example"
+          d.entity === SemanticEntity.FUNCTION &&
+          d.symbol_name === "timeout_example"
       );
       expect(timeoutFn).toBeDefined();
 
       // Check timeout operations
       const timeoutOps = parsed.references.filter(
-        (r) => r.text === "timeout" && r.qualified_name?.includes("tokio")
+        (r) =>
+          r.symbol_name === "timeout" && r.qualified_name?.includes("tokio")
       );
       expect(timeoutOps.length).toBeGreaterThan(0);
     });
@@ -3589,46 +3693,56 @@ loop {
 
       // Specific async function patterns
       expect(
-        asyncFunctions.some((f) => f.text === "simple_async_function")
+        asyncFunctions.some((f) => f.symbol_name === "simple_async_function")
       ).toBe(true);
       expect(
-        asyncFunctions.some((f) => f.text === "async_function_with_await")
+        asyncFunctions.some(
+          (f) => f.symbol_name === "async_function_with_await"
+        )
       ).toBe(true);
       expect(
-        asyncFunctions.some((f) => f.text === "async_function_generic")
+        asyncFunctions.some((f) => f.symbol_name === "async_function_generic")
       ).toBe(true);
       expect(
-        asyncFunctions.some((f) => f.text === "async_function_with_lifetime")
+        asyncFunctions.some(
+          (f) => f.symbol_name === "async_function_with_lifetime"
+        )
       ).toBe(true);
       expect(
-        asyncFunctions.some((f) => f.text === "await_expression_patterns")
+        asyncFunctions.some(
+          (f) => f.symbol_name === "await_expression_patterns"
+        )
       ).toBe(true);
       expect(
-        asyncFunctions.some((f) => f.text === "try_expression_patterns")
+        asyncFunctions.some((f) => f.symbol_name === "try_expression_patterns")
       ).toBe(true);
       expect(
-        asyncFunctions.some((f) => f.text === "async_move_variations")
+        asyncFunctions.some((f) => f.symbol_name === "async_move_variations")
       ).toBe(true);
       expect(
-        asyncFunctions.some((f) => f.text === "complex_async_error_patterns")
+        asyncFunctions.some(
+          (f) => f.symbol_name === "complex_async_error_patterns"
+        )
       ).toBe(true);
 
       // Async unsafe and extern functions
       expect(
-        asyncFunctions.some((f) => f.text === "async_unsafe_example")
+        asyncFunctions.some((f) => f.symbol_name === "async_unsafe_example")
       ).toBe(true);
       expect(
-        asyncFunctions.some((f) => f.text === "async_extern_example")
+        asyncFunctions.some((f) => f.symbol_name === "async_extern_example")
       ).toBe(true);
 
       // Async trait methods
-      expect(asyncFunctions.some((f) => f.text === "async_method")).toBe(true);
+      expect(asyncFunctions.some((f) => f.symbol_name === "async_method")).toBe(
+        true
+      );
       expect(
-        asyncFunctions.some((f) => f.text === "async_method_default")
+        asyncFunctions.some((f) => f.symbol_name === "async_method_default")
       ).toBe(true);
 
       // Async main function
-      expect(asyncFunctions.some((f) => f.text === "main")).toBe(true);
+      expect(asyncFunctions.some((f) => f.symbol_name === "main")).toBe(true);
     });
 
     it("should capture async blocks and async move blocks", () => {
@@ -3676,7 +3790,7 @@ loop {
       // ========================================================================
 
       const awaitExprs = parsed.references.filter(
-        (r) => r.text === "await" || r.text?.includes(".await")
+        (r) => r.symbol_name === "await" || r.symbol_name?.includes(".await")
       );
 
       // Should capture many different await patterns
@@ -3685,10 +3799,10 @@ loop {
       // Should capture await expressions with method chaining
       const methodChainAwaits = awaitExprs.filter(
         (r) =>
-          r.text?.includes(".await") &&
-          (r.text?.includes("unwrap") ||
-            r.text?.includes("to_uppercase") ||
-            r.text?.includes("parse"))
+          r.symbol_name?.includes(".await") &&
+          (r.symbol_name?.includes("unwrap") ||
+            r.symbol_name?.includes("to_uppercase") ||
+            r.symbol_name?.includes("parse"))
       );
       expect(methodChainAwaits.length).toBeGreaterThan(0);
     });
@@ -3711,8 +3825,8 @@ loop {
 
       const tryExprs = parsed.references.filter(
         (r) =>
-          r.text?.includes("?") ||
-          (r.entity === SemanticEntity.OPERATOR && r.text === "?")
+          r.symbol_name?.includes("?") ||
+          (r.entity === SemanticEntity.OPERATOR && r.symbol_name === "?")
       );
 
       // Should capture try operators in async contexts
@@ -3721,8 +3835,8 @@ loop {
       // Should capture await-try combinations (await?)
       const awaitTryPatterns = parsed.references.filter(
         (r) =>
-          r.text?.includes(".await?") ||
-          (r.text === "?" && r.text?.includes("await"))
+          r.symbol_name?.includes(".await?") ||
+          (r.symbol_name === "?" && r.symbol_name?.includes("await"))
       );
       expect(awaitTryPatterns.length).toBeGreaterThan(0);
     });
@@ -3784,22 +3898,23 @@ loop {
       );
       const futureReturnFunctions = functions.filter(
         (f) =>
-          f.text === "future_return_types" ||
-          f.text === "impl_future_return" ||
-          f.text === "future_trait_bounds"
+          f.symbol_name === "future_return_types" ||
+          f.symbol_name === "impl_future_return" ||
+          f.symbol_name === "future_trait_bounds"
       );
       // Allow for improved capture - may capture more than expected due to better patterns
       expect(futureReturnFunctions.length).toBeGreaterThanOrEqual(3);
 
       // Check for Future trait references
       const futureTraitRefs = parsed.references.filter(
-        (r) => r.text === "Future" || r.qualified_name?.includes("Future")
+        (r) =>
+          r.symbol_name === "Future" || r.qualified_name?.includes("Future")
       );
       expect(futureTraitRefs.length).toBeGreaterThan(0);
 
       // Check for Pin<Box<dyn Future>> pattern
       const pinBoxFutureRefs = parsed.references.filter(
-        (r) => r.text === "Pin"
+        (r) => r.symbol_name === "Pin"
       );
       expect(pinBoxFutureRefs.length).toBeGreaterThan(0);
     });
@@ -3824,21 +3939,24 @@ loop {
       const traits = parsed.definitions.filter(
         (d) => d.entity === SemanticEntity.INTERFACE
       );
-      const asyncTrait = traits.find((t) => t.text === "AsyncTrait");
+      const asyncTrait = traits.find((t) => t.symbol_name === "AsyncTrait");
       expect(asyncTrait).toBeDefined();
 
       // Check async trait methods
       const traitMethods = parsed.definitions.filter(
         (d) => d.entity === SemanticEntity.METHOD && d.modifiers?.is_async
       );
-      expect(traitMethods.some((m) => m.text === "async_method")).toBe(true);
-      expect(traitMethods.some((m) => m.text === "async_method_default")).toBe(
+      expect(traitMethods.some((m) => m.symbol_name === "async_method")).toBe(
         true
       );
+      expect(
+        traitMethods.some((m) => m.symbol_name === "async_method_default")
+      ).toBe(true);
 
       // Check async trait implementation
       const asyncImpl = parsed.definitions.find(
-        (d) => d.entity === SemanticEntity.CLASS && d.text === "AsyncImpl"
+        (d) =>
+          d.entity === SemanticEntity.CLASS && d.symbol_name === "AsyncImpl"
       );
       expect(asyncImpl).toBeDefined();
     });
@@ -3869,15 +3987,15 @@ loop {
       const errorHandlingFns = parsed.definitions.filter(
         (d) =>
           d.entity === SemanticEntity.FUNCTION &&
-          (d.text === "complex_async_error_patterns" ||
-            d.text === "try_expression_patterns")
+          (d.symbol_name === "complex_async_error_patterns" ||
+            d.symbol_name === "try_expression_patterns")
       );
       // Allow for improved capture - may capture more than expected due to better patterns
       expect(errorHandlingFns.length).toBeGreaterThanOrEqual(2);
 
       // Verify we have comprehensive await coverage
       const awaitExpressions = parsed.references.filter(
-        (r) => r.text === "await" || r.text?.includes(".await")
+        (r) => r.symbol_name === "await" || r.symbol_name?.includes(".await")
       );
       expect(awaitExpressions.length).toBeGreaterThan(25);
     });
@@ -3904,27 +4022,27 @@ loop {
 
       // Check async unsafe function
       const asyncUnsafeFn = asyncFunctions.find(
-        (f) => f.text === "async_unsafe_example"
+        (f) => f.symbol_name === "async_unsafe_example"
       );
       expect(asyncUnsafeFn).toBeDefined();
       // May not capture is_unsafe modifier perfectly yet, but function should be detected
 
       // Check async extern function
       const asyncExternFn = asyncFunctions.find(
-        (f) => f.text === "async_extern_example"
+        (f) => f.symbol_name === "async_extern_example"
       );
       expect(asyncExternFn).toBeDefined();
 
       // Check public async functions
       const publicAsyncFns = asyncFunctions.filter(
-        (f) => f.modifiers?.is_exported || f.text?.startsWith("pub")
+        (f) => f.modifiers?.is_exported || f.symbol_name?.startsWith("pub")
       );
       // Public async functions should exist - allow for variations in export detection
       expect(publicAsyncFns.length).toBeGreaterThan(0); // At least some functions are pub
 
       // Check crate visibility async functions
       const crateAsyncFns = asyncFunctions.filter((f) =>
-        f.text?.includes("pub(crate)")
+        f.symbol_name?.includes("pub(crate)")
       );
       // This may be 0 if visibility modifiers aren't fully captured yet
     });
@@ -3987,7 +4105,7 @@ loop {
 
       // Check await expressions
       const awaitExpressions = parsed.references.filter(
-        (r) => r.text === "await" || r.text?.includes(".await")
+        (r) => r.symbol_name === "await" || r.symbol_name?.includes(".await")
       );
       expect(awaitExpressions.length).toBeGreaterThan(25);
     });
@@ -4016,7 +4134,7 @@ loop {
       const asyncMoveFunctions = parsed.definitions.filter(
         (d) =>
           d.entity === SemanticEntity.FUNCTION &&
-          d.text === "async_move_patterns"
+          d.symbol_name === "async_move_patterns"
       );
       // Allow for improved capture - may capture more than expected due to better patterns
       expect(asyncMoveFunctions.length).toBeGreaterThanOrEqual(1);
@@ -4025,7 +4143,7 @@ loop {
       const complexAwaitFn = parsed.definitions.filter(
         (d) =>
           d.entity === SemanticEntity.FUNCTION &&
-          d.text === "complex_await_expressions"
+          d.symbol_name === "complex_await_expressions"
       );
       expect(complexAwaitFn.length).toBe(1);
 
@@ -4033,7 +4151,7 @@ loop {
       const tryAwaitFn = parsed.definitions.filter(
         (d) =>
           d.entity === SemanticEntity.FUNCTION &&
-          d.text === "try_with_await_patterns"
+          d.symbol_name === "try_with_await_patterns"
       );
       expect(tryAwaitFn.length).toBe(1);
 
@@ -4041,7 +4159,7 @@ loop {
       const asyncClosureFn = parsed.definitions.filter(
         (d) =>
           d.entity === SemanticEntity.FUNCTION &&
-          d.text === "async_closure_patterns"
+          d.symbol_name === "async_closure_patterns"
       );
       expect(asyncClosureFn.length).toBe(1);
 
@@ -4049,7 +4167,7 @@ loop {
       const nestedAsyncFn = parsed.definitions.filter(
         (d) =>
           d.entity === SemanticEntity.FUNCTION &&
-          d.text === "nested_async_blocks"
+          d.symbol_name === "nested_async_blocks"
       );
       expect(nestedAsyncFn.length).toBe(1);
 
@@ -4057,7 +4175,7 @@ loop {
       const asyncBlocksContextFn = parsed.definitions.filter(
         (d) =>
           d.entity === SemanticEntity.FUNCTION &&
-          d.text === "async_blocks_in_contexts"
+          d.symbol_name === "async_blocks_in_contexts"
       );
       expect(asyncBlocksContextFn.length).toBe(1);
 
@@ -4065,7 +4183,7 @@ loop {
       const errorHandlingFn = parsed.definitions.filter(
         (d) =>
           d.entity === SemanticEntity.FUNCTION &&
-          d.text === "complex_error_handling"
+          d.symbol_name === "complex_error_handling"
       );
       expect(errorHandlingFn.length).toBe(1);
 
@@ -4073,21 +4191,21 @@ loop {
       const asyncGenericFn = parsed.definitions.filter(
         (d) =>
           d.entity === SemanticEntity.FUNCTION &&
-          d.text === "async_with_generics"
+          d.symbol_name === "async_with_generics"
       );
       expect(asyncGenericFn.length).toBe(1);
 
       const asyncLifetimeFn = parsed.definitions.filter(
         (d) =>
           d.entity === SemanticEntity.FUNCTION &&
-          d.text === "async_with_lifetimes"
+          d.symbol_name === "async_with_lifetimes"
       );
       expect(asyncLifetimeFn.length).toBe(1);
 
       const asyncWhereFn = parsed.definitions.filter(
         (d) =>
           d.entity === SemanticEntity.FUNCTION &&
-          d.text === "async_with_where_clause"
+          d.symbol_name === "async_with_where_clause"
       );
       expect(asyncWhereFn.length).toBe(1);
 
@@ -4095,14 +4213,14 @@ loop {
       const asyncUnsafeFn = parsed.definitions.filter(
         (d) =>
           d.entity === SemanticEntity.FUNCTION &&
-          d.text === "async_unsafe_function"
+          d.symbol_name === "async_unsafe_function"
       );
       expect(asyncUnsafeFn.length).toBe(1);
 
       const asyncExternFn = parsed.definitions.filter(
         (d) =>
           d.entity === SemanticEntity.FUNCTION &&
-          d.text === "async_extern_function"
+          d.symbol_name === "async_extern_function"
       );
       expect(asyncExternFn.length).toBe(1);
 
@@ -4127,7 +4245,7 @@ loop {
 
       // Verify that we capture most of the expected async functions
       const foundAsyncFunctions = expectedAsyncFunctions.filter((name) =>
-        allAsyncFunctions.some((f) => f.text === name)
+        allAsyncFunctions.some((f) => f.symbol_name === name)
       );
       expect(foundAsyncFunctions.length).toBeGreaterThanOrEqual(8); // At least 8 of the 12 new functions
     });
@@ -4174,15 +4292,15 @@ loop {
 
       // Comprehensive await expression count
       const allAwaitExpressions = parsed.references.filter(
-        (r) => r.text === "await" || r.text?.includes(".await")
+        (r) => r.symbol_name === "await" || r.symbol_name?.includes(".await")
       );
       expect(allAwaitExpressions.length).toBeGreaterThan(50); // Comprehensive await coverage
 
       // Comprehensive try expression count
       const allTryExpressions = parsed.references.filter(
         (r) =>
-          r.text?.includes("?") ||
-          (r.entity === SemanticEntity.OPERATOR && r.text === "?")
+          r.symbol_name?.includes("?") ||
+          (r.entity === SemanticEntity.OPERATOR && r.symbol_name === "?")
       );
       expect(allTryExpressions.length).toBeGreaterThan(15); // Multiple try patterns
 
@@ -4215,13 +4333,13 @@ loop {
       ];
 
       const capturedOriginal = originalAsyncPatterns.filter((name) =>
-        allAsyncFunctions.some((f) => f.text === name)
+        allAsyncFunctions.some((f) => f.symbol_name === name)
       );
       const capturedEnhanced = enhancedAsyncPatterns.filter((name) =>
-        allAsyncFunctions.some((f) => f.text === name)
+        allAsyncFunctions.some((f) => f.symbol_name === name)
       );
       const capturedDedicated = dedicatedAsyncPatterns.filter((name) =>
-        allAsyncFunctions.some((f) => f.text === name)
+        allAsyncFunctions.some((f) => f.symbol_name === name)
       );
 
       expect(capturedOriginal.length).toBeGreaterThanOrEqual(3); // Most original patterns
@@ -4278,7 +4396,7 @@ loop {
         expect(constParams.length).toBeGreaterThan(5); // N, ROWS, COLS, M, etc.
 
         // Verify specific const generic names
-        const constParamNames = constParams.map((p) => p.text);
+        const constParamNames = constParams.map((p) => p.symbol_name);
         expect(constParamNames).toContain("N");
         expect(constParamNames).toContain("ROWS");
         expect(constParamNames).toContain("COLS");
@@ -4288,7 +4406,8 @@ loop {
         const constGenericFunctions = advancedParsedResult.definitions.filter(
           (d) =>
             d.entity === SemanticEntity.FUNCTION &&
-            (d.text === "calculate_buffer_size" || d.text === "process_arrays")
+            (d.symbol_name === "calculate_buffer_size" ||
+              d.symbol_name === "process_arrays")
         );
         expect(constGenericFunctions.length).toBeGreaterThanOrEqual(2); // May capture duplicates
       });
@@ -4296,12 +4415,13 @@ loop {
       it("should capture const generic constraints and bounds", () => {
         // Test complex const generic structs
         const fixedArrayStruct = advancedParsedResult.definitions.filter(
-          (d) => d.entity === SemanticEntity.CLASS && d.text === "FixedArray"
+          (d) =>
+            d.entity === SemanticEntity.CLASS && d.symbol_name === "FixedArray"
         );
         expect(fixedArrayStruct.length).toBeGreaterThanOrEqual(1); // May capture duplicates
 
         const matrixStruct = advancedParsedResult.definitions.filter(
-          (d) => d.entity === SemanticEntity.CLASS && d.text === "Matrix"
+          (d) => d.entity === SemanticEntity.CLASS && d.symbol_name === "Matrix"
         );
         expect(matrixStruct.length).toBeGreaterThanOrEqual(1); // May capture multiple times
       });
@@ -4314,7 +4434,7 @@ loop {
         expect(constFunctions.length).toBeGreaterThan(8); // Various const fn implementations
 
         // Verify specific const functions
-        const constFnNames = constFunctions.map((f) => f.text);
+        const constFnNames = constFunctions.map((f) => f.symbol_name);
         expect(constFnNames).toContain("new");
         expect(constFnNames).toContain("from_slice");
         expect(constFnNames).toContain("capacity");
@@ -4332,7 +4452,7 @@ loop {
         expect(associatedTypes.length).toBeGreaterThan(8); // Item, Iterator, IntoIter, Key, Value, etc.
 
         // Verify specific associated type names
-        const associatedTypeNames = associatedTypes.map((t) => t.text);
+        const associatedTypeNames = associatedTypes.map((t) => t.symbol_name);
         expect(associatedTypeNames).toContain("Item");
         expect(associatedTypeNames).toContain("Iterator");
         expect(associatedTypeNames).toContain("IntoIter");
@@ -4354,12 +4474,15 @@ loop {
 
         // Test traits with associated types
         const containerTrait = advancedParsedResult.definitions.filter(
-          (d) => d.entity === SemanticEntity.INTERFACE && d.text === "Container"
+          (d) =>
+            d.entity === SemanticEntity.INTERFACE &&
+            d.symbol_name === "Container"
         );
         expect(containerTrait.length).toBe(1);
 
         const storageTrait = advancedParsedResult.definitions.filter(
-          (d) => d.entity === SemanticEntity.INTERFACE && d.text === "Storage"
+          (d) =>
+            d.entity === SemanticEntity.INTERFACE && d.symbol_name === "Storage"
         );
         expect(storageTrait.length).toBe(1);
       });
@@ -4373,7 +4496,7 @@ loop {
         expect(associatedConstants.length).toBeGreaterThanOrEqual(2); // DEFAULT_CAPACITY, MAX_CAPACITY
 
         // Verify specific associated constant names
-        const constNames = associatedConstants.map((c) => c.text);
+        const constNames = associatedConstants.map((c) => c.symbol_name);
         expect(constNames).toContain("DEFAULT_CAPACITY");
         expect(constNames).toContain("MAX_CAPACITY");
       });
@@ -4381,13 +4504,14 @@ loop {
       it("should handle generic associated types (GATs)", () => {
         // Test Generic Associated Types
         const collectTrait = advancedParsedResult.definitions.filter(
-          (d) => d.entity === SemanticEntity.INTERFACE && d.text === "Collect"
+          (d) =>
+            d.entity === SemanticEntity.INTERFACE && d.symbol_name === "Collect"
         );
         expect(collectTrait.length).toBeGreaterThanOrEqual(1); // May capture generics separately
 
         // Test GAT implementations
         const gatAssociatedTypes = advancedParsedResult.definitions.filter(
-          (d) => d.entity === SemanticEntity.TYPE && d.text === "Output"
+          (d) => d.entity === SemanticEntity.TYPE && d.symbol_name === "Output"
         );
         expect(gatAssociatedTypes.length).toBeGreaterThan(0);
       });
@@ -4402,7 +4526,7 @@ loop {
         expect(unsafeFunctions.length).toBeGreaterThan(3);
 
         // Verify specific unsafe functions
-        const unsafeFnNames = unsafeFunctions.map((f) => f.text);
+        const unsafeFnNames = unsafeFunctions.map((f) => f.symbol_name);
         expect(unsafeFnNames).toContain("raw_pointer_ops");
         expect(unsafeFnNames).toContain("complex_unsafe_operations");
         expect(unsafeFnNames).toContain("unsafe_method");
@@ -4419,7 +4543,7 @@ loop {
         const safeWrapperExists = advancedParsedResult.definitions.some(
           (d) =>
             d.entity === SemanticEntity.FUNCTION &&
-            d.text === "safe_pointer_wrapper"
+            d.symbol_name === "safe_pointer_wrapper"
         );
         expect(safeWrapperExists).toBe(true);
       });
@@ -4428,7 +4552,8 @@ loop {
         // Test unsafe trait definitions
         const unsafeTraits = advancedParsedResult.definitions.filter(
           (d) =>
-            d.entity === SemanticEntity.INTERFACE && d.text === "UnsafeTrait"
+            d.entity === SemanticEntity.INTERFACE &&
+            d.symbol_name === "UnsafeTrait"
         );
         expect(unsafeTraits.length).toBe(1);
 
@@ -4437,7 +4562,7 @@ loop {
           (d) =>
             (d.entity === SemanticEntity.CLASS ||
               d.entity === SemanticEntity.ENUM) &&
-            d.text === "FloatIntUnion"
+            d.symbol_name === "FloatIntUnion"
         );
         expect(unionTypes.length).toBeGreaterThanOrEqual(0); // Union may not be captured as CLASS
       });
@@ -4447,7 +4572,7 @@ loop {
         const complexUnsafeFn = advancedParsedResult.definitions.filter(
           (d) =>
             d.entity === SemanticEntity.FUNCTION &&
-            d.text === "complex_unsafe_operations"
+            d.symbol_name === "complex_unsafe_operations"
         );
         expect(complexUnsafeFn.length).toBeGreaterThanOrEqual(1); // May capture multiple times
 
@@ -4455,9 +4580,9 @@ loop {
         const unsafeImplMethods = advancedParsedResult.definitions.filter(
           (d) =>
             d.entity === SemanticEntity.METHOD &&
-            (d.text === "unsafe_method" ||
-              d.text === "as_float" ||
-              d.text === "as_int")
+            (d.symbol_name === "unsafe_method" ||
+              d.symbol_name === "as_float" ||
+              d.symbol_name === "as_int")
         );
         expect(unsafeImplMethods.length).toBeGreaterThan(2);
       });
@@ -4506,7 +4631,7 @@ loop {
         expect(loopVars.length).toBeGreaterThan(10); // i, item, key, value, etc.
 
         // Verify common loop variable names
-        const loopVarNames = loopVars.map((v) => v.text);
+        const loopVarNames = loopVars.map((v) => v.symbol_name);
         expect(loopVarNames).toContain("i");
         expect(loopVarNames).toContain("item");
         expect(loopVarNames).toContain("key");
@@ -4518,9 +4643,9 @@ loop {
         const loopFunctions = advancedParsedResult.definitions.filter(
           (d) =>
             d.entity === SemanticEntity.FUNCTION &&
-            (d.text === "comprehensive_loops" ||
-              d.text === "advanced_iterators" ||
-              d.text === "loop_variable_patterns")
+            (d.symbol_name === "comprehensive_loops" ||
+              d.symbol_name === "advanced_iterators" ||
+              d.symbol_name === "loop_variable_patterns")
         );
         expect(loopFunctions.length).toBe(3);
 
@@ -4528,10 +4653,10 @@ loop {
         const iteratorMethods = advancedParsedResult.references.filter(
           (r) =>
             r.entity === SemanticEntity.CALL &&
-            (r.text === "iter" ||
-              r.text === "enumerate" ||
-              r.text === "filter" ||
-              r.text === "map")
+            (r.symbol_name === "iter" ||
+              r.symbol_name === "enumerate" ||
+              r.symbol_name === "filter" ||
+              r.symbol_name === "map")
         );
         expect(iteratorMethods.length).toBeGreaterThan(10);
       });
@@ -4582,7 +4707,9 @@ loop {
       it("should handle builder pattern and method chaining", () => {
         // Test builder pattern structures
         const configBuilder = advancedParsedResult.definitions.filter(
-          (d) => d.entity === SemanticEntity.CLASS && d.text === "ConfigBuilder"
+          (d) =>
+            d.entity === SemanticEntity.CLASS &&
+            d.symbol_name === "ConfigBuilder"
         );
         expect(configBuilder.length).toBe(1);
 
@@ -4590,10 +4717,10 @@ loop {
         const builderMethods = advancedParsedResult.definitions.filter(
           (d) =>
             d.entity === SemanticEntity.METHOD &&
-            (d.text === "host" ||
-              d.text === "port" ||
-              d.text === "enable_ssl" ||
-              d.text === "timeout")
+            (d.symbol_name === "host" ||
+              d.symbol_name === "port" ||
+              d.symbol_name === "enable_ssl" ||
+              d.symbol_name === "timeout")
         );
         expect(builderMethods.length).toBeGreaterThanOrEqual(4); // May capture additional methods
       });
@@ -4601,13 +4728,15 @@ loop {
       it("should capture complex method call patterns", () => {
         // Test database operations
         const database = advancedParsedResult.definitions.filter(
-          (d) => d.entity === SemanticEntity.CLASS && d.text === "Database"
+          (d) =>
+            d.entity === SemanticEntity.CLASS && d.symbol_name === "Database"
         );
         expect(database.length).toBe(1);
 
         // Test connection methods
         const connection = advancedParsedResult.definitions.filter(
-          (d) => d.entity === SemanticEntity.CLASS && d.text === "Connection"
+          (d) =>
+            d.entity === SemanticEntity.CLASS && d.symbol_name === "Connection"
         );
         expect(connection.length).toBe(1);
 
@@ -4615,7 +4744,7 @@ loop {
         const methodExamplesFn = advancedParsedResult.definitions.filter(
           (d) =>
             d.entity === SemanticEntity.FUNCTION &&
-            d.text === "method_call_examples"
+            d.symbol_name === "method_call_examples"
         );
         expect(methodExamplesFn.length).toBe(1);
       });
@@ -4625,15 +4754,17 @@ loop {
         const genericMethods = advancedParsedResult.definitions.filter(
           (d) =>
             d.entity === SemanticEntity.METHOD &&
-            (d.text === "transform" ||
-              d.text === "chain_transform" ||
-              d.text === "complex_operation")
+            (d.symbol_name === "transform" ||
+              d.symbol_name === "chain_transform" ||
+              d.symbol_name === "complex_operation")
         );
         expect(genericMethods.length).toBeGreaterThanOrEqual(3); // May capture additional methods
 
         // Test associated functions with generics
         const withDefaultFn = advancedParsedResult.definitions.filter(
-          (d) => d.entity === SemanticEntity.METHOD && d.text === "with_default"
+          (d) =>
+            d.entity === SemanticEntity.METHOD &&
+            d.symbol_name === "with_default"
         );
         expect(withDefaultFn.length).toBeGreaterThanOrEqual(0); // May not be captured as METHOD
       });
@@ -4645,13 +4776,15 @@ loop {
         const demonstrateAllFn = advancedParsedResult.definitions.filter(
           (d) =>
             d.entity === SemanticEntity.FUNCTION &&
-            d.text === "demonstrate_all_features"
+            d.symbol_name === "demonstrate_all_features"
         );
         expect(demonstrateAllFn.length).toBeGreaterThanOrEqual(1); // May capture multiple times
 
         // Test complex struct with multiple advanced features
         const complexStruct = advancedParsedResult.definitions.filter(
-          (d) => d.entity === SemanticEntity.CLASS && d.text === "ComplexStruct"
+          (d) =>
+            d.entity === SemanticEntity.CLASS &&
+            d.symbol_name === "ComplexStruct"
         );
         expect(complexStruct.length).toBeGreaterThanOrEqual(1); // May capture multiple times
       });
@@ -4659,7 +4792,8 @@ loop {
       it("should handle test data module with comprehensive patterns", () => {
         // Test test_data module
         const testDataModule = advancedParsedResult.definitions.filter(
-          (d) => d.entity === SemanticEntity.MODULE && d.text === "test_data"
+          (d) =>
+            d.entity === SemanticEntity.MODULE && d.symbol_name === "test_data"
         );
         expect(testDataModule.length).toBe(1);
 
@@ -4667,7 +4801,7 @@ loop {
         const createTestScenarios = advancedParsedResult.definitions.filter(
           (d) =>
             d.entity === SemanticEntity.FUNCTION &&
-            d.text === "create_test_scenarios"
+            d.symbol_name === "create_test_scenarios"
         );
         expect(createTestScenarios.length).toBe(1);
       });

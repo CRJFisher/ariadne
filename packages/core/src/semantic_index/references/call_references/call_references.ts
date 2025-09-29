@@ -34,7 +34,7 @@ export class InvalidCaptureError extends Error {
  * Validate symbol name from capture text
  */
 function validate_symbol_name(
-  text: string,
+  text: SymbolName,
   capture: NormalizedCapture
 ): SymbolName {
   if (typeof text !== "string") {
@@ -161,7 +161,7 @@ function create_call_reference(
 ): CallReference {
   const context = capture.context;
   const location = capture.node_location;
-  const name = validate_symbol_name(capture.text, capture);
+  const name = validate_symbol_name(capture.symbol_name, capture);
 
   // Determine call type
   let call_type: CallReference["call_type"] = "function";

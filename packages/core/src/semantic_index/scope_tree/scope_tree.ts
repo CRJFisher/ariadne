@@ -170,7 +170,7 @@ export function compute_scope_depth(
 export function find_containing_scope(
   node_location: Location,
   root_scope: LexicalScope,
-  scopes: Map<ScopeId, LexicalScope>
+  scopes: ReadonlyMap<ScopeId, LexicalScope>
 ): LexicalScope {
   // Find deepest scope that contains this node
   let best_scope = root_scope;

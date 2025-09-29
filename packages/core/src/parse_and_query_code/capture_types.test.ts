@@ -268,7 +268,7 @@ describe("Capture Types", () => {
         category: SemanticCategory.DEFINITION,
         entity: SemanticEntity.FUNCTION,
         node_location: mockLocation,
-        text: "testFunction",
+        symbol_name: "testFunction",
         modifiers: { is_static: true },
         context: { method_name: "testFunction" },
       };
@@ -276,7 +276,7 @@ describe("Capture Types", () => {
       expect(capture.category).toBe(SemanticCategory.DEFINITION);
       expect(capture.entity).toBe(SemanticEntity.FUNCTION);
       expect(capture.node_location).toBe(mockLocation);
-      expect(capture.text).toBe("testFunction");
+      expect(capture.symbol_name).toBe("testFunction");
       expect(capture.modifiers.is_static).toBe(true);
       expect(capture.context?.method_name).toBe("testFunction");
     });
@@ -294,7 +294,7 @@ describe("Capture Types", () => {
         category: SemanticCategory.DEFINITION,
         entity: SemanticEntity.VARIABLE,
         node_location: mockLocation,
-        text: "testVar",
+        symbol_name: "testVar",
         modifiers: {},
       };
 
@@ -522,7 +522,7 @@ describe("Capture Types", () => {
             end_line: 1,
             end_column: 4,
           },
-          text: "test",
+          symbol_name: "test",
           modifiers: {},
         };
 

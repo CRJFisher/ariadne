@@ -79,7 +79,7 @@ describe("Semantic Index - Python Comprehensive", () => {
       expect(result.imports.length).toBeGreaterThan(5);
 
       // Check for specific import patterns
-      const import_texts = result.imports.map((i) => i.text);
+      const import_texts = result.imports.map((i) => i.symbol_name);
       expect(import_texts).toContain("os");
       expect(import_texts).toContain("sys");
       expect(import_texts).toContain("json");
@@ -113,7 +113,8 @@ describe("Semantic Index - Python Comprehensive", () => {
 
       // Check for decorator references
       const decorator_refs = parsed.references.filter(
-        (ref) => ref.text === "simple_decorator" || ref.text === "repeat"
+        (ref) =>
+          ref.symbol_name === "simple_decorator" || ref.symbol_name === "repeat"
       );
       expect(decorator_refs.length).toBeGreaterThan(0);
     });
@@ -174,7 +175,7 @@ describe("Semantic Index - Python Comprehensive", () => {
 
       // Check for functions with multiple decorators
       const multi_decorated = parsed.definitions.filter(
-        (def) => def.text === "multi_decorated_function"
+        (def) => def.symbol_name === "multi_decorated_function"
       );
       expect(multi_decorated.length).toBeGreaterThan(0);
     });
@@ -214,7 +215,7 @@ def typed_function(x: int, y: str, z: list[int]) -> dict[str, any]:
       );
       expect(typed_params.length).toBeGreaterThanOrEqual(3);
 
-      const param_names = typed_params.map((p) => p.text);
+      const param_names = typed_params.map((p) => p.symbol_name);
       expect(param_names).toContain("x");
       expect(param_names).toContain("y");
       expect(param_names).toContain("z");
@@ -327,7 +328,7 @@ z: list[int] = [1, 2, 3]
 
       // Check for __all__ definition
       const all_exports = parsed.exports.filter(
-        (exp) => exp.text === "__all__"
+        (exp) => exp.symbol_name === "__all__"
       );
       expect(all_exports.length).toBeGreaterThan(0);
 
@@ -535,7 +536,8 @@ z: list[int] = [1, 2, 3]
       // Check for async function definitions
       const async_functions = parsed.definitions.filter(
         (def) =>
-          def.entity === SemanticEntity.FUNCTION && def.text.includes("async")
+          def.entity === SemanticEntity.FUNCTION &&
+          def.symbol_name.includes("async")
       );
       expect(async_functions.length).toBeGreaterThan(0);
     });
@@ -655,7 +657,8 @@ z: list[int] = [1, 2, 3]
 
       // Check for wildcard import
       const wildcard_imports = parsed.imports.filter(
-        (imp) => imp.text === "*" || imp.entity === SemanticEntity.NAMESPACE
+        (imp) =>
+          imp.symbol_name === "*" || imp.entity === SemanticEntity.NAMESPACE
       );
       expect(wildcard_imports.length).toBeGreaterThan(0);
     });
@@ -773,7 +776,8 @@ with open("file") as f:
 
       // Check for super calls
       const super_calls = parsed.references.filter(
-        (ref) => ref.entity === SemanticEntity.SUPER || ref.text === "super"
+        (ref) =>
+          ref.entity === SemanticEntity.SUPER || ref.symbol_name === "super"
       );
 
       expect(super_calls.length).toBeGreaterThan(0);
@@ -786,11 +790,15 @@ with open("file") as f:
       const parsed = query_tree_and_parse_captures("python", tree, file_path);
 
       // Check for self references
-      const self_refs = parsed.references.filter((ref) => ref.text === "self");
+      const self_refs = parsed.references.filter(
+        (ref) => ref.symbol_name === "self"
+      );
       expect(self_refs.length).toBeGreaterThan(0);
 
       // Check for cls references
-      const cls_refs = parsed.references.filter((ref) => ref.text === "cls");
+      const cls_refs = parsed.references.filter(
+        (ref) => ref.symbol_name === "cls"
+      );
       expect(cls_refs.length).toBeGreaterThan(0);
     });
 
@@ -857,11 +865,15 @@ def generator():
       // Check for yield expressions - look for ref.yield captures or yield in text
       const yields = parsed.references.filter(
         (ref) =>
-          ref.text.includes("yield") || ref.entity === SemanticEntity.VARIABLE
+          ref.symbol_name.includes("yield") ||
+          ref.entity === SemanticEntity.VARIABLE
       );
       // Alternative: check if any references contain yield-related content
       const hasYieldContent = parsed.references.some(
-        (ref) => ref.text === "1" || ref.text === "2" || ref.text === "3"
+        (ref) =>
+          ref.symbol_name === "1" ||
+          ref.symbol_name === "2" ||
+          ref.symbol_name === "3"
       );
       expect(yields.length > 0 || hasYieldContent).toBe(true);
     });
@@ -911,12 +923,15 @@ x, y, z = 1, 2, 3
       );
 
       const multipleAssigns = parsed.definitions.filter(
-        (d) => d.text === "x" || d.text === "y" || d.text === "z"
+        (d) =>
+          d.symbol_name === "x" ||
+          d.symbol_name === "y" ||
+          d.symbol_name === "z"
       );
       expect(multipleAssigns.length).toBe(3);
 
       const tupleAssigns = parsed.definitions.filter(
-        (d) => d.text === "a" || d.text === "b"
+        (d) => d.symbol_name === "a" || d.symbol_name === "b"
       );
       expect(tupleAssigns.length).toBe(2);
     });
@@ -945,7 +960,7 @@ gen = (n for n in numbers if n > 0)
       const compVars = parsed.definitions.filter(
         (d) => d.entity === SemanticEntity.VARIABLE
       );
-      const compVarNames = compVars.map((v) => v.text);
+      const compVarNames = compVars.map((v) => v.symbol_name);
       expect(compVarNames).toContain("x");
       expect(compVarNames).toContain("k");
       expect(compVarNames).toContain("v");
@@ -970,7 +985,7 @@ except (TypeError, KeyError) as err:
       const exceptVars = parsed.definitions.filter(
         (d) => d.entity === SemanticEntity.VARIABLE
       );
-      const exceptVarNames = exceptVars.map((v) => v.text);
+      const exceptVarNames = exceptVars.map((v) => v.symbol_name);
       expect(exceptVarNames).toContain("e");
       expect(exceptVarNames).toContain("err");
     });
@@ -993,7 +1008,7 @@ with contextlib.suppress(Exception) as suppressed:
       const withVars = parsed.definitions.filter(
         (d) => d.entity === SemanticEntity.VARIABLE
       );
-      const withVarNames = withVars.map((v) => v.text);
+      const withVarNames = withVars.map((v) => v.symbol_name);
       expect(withVarNames).toContain("f");
       expect(withVarNames).toContain("suppressed");
     });
@@ -1039,7 +1054,7 @@ def generator():
       );
 
       const yields = parsed.references.filter(
-        (r) => r.text === "yield" || r.text === "yield from"
+        (r) => r.symbol_name === "yield" || r.symbol_name === "yield from"
       );
       expect(yields.length).toBeGreaterThan(0);
     });
@@ -1056,7 +1071,9 @@ assert isinstance(obj, MyClass)
         "test.py" as FilePath
       );
 
-      const asserts = parsed.references.filter((r) => r.text === "assert");
+      const asserts = parsed.references.filter(
+        (r) => r.symbol_name === "assert"
+      );
       expect(asserts.length).toBeGreaterThan(0);
     });
 
@@ -1074,7 +1091,10 @@ del items[0]
       );
 
       const deletes = parsed.references.filter(
-        (r) => r.text === "x" || r.text === "obj" || r.text === "items"
+        (r) =>
+          r.symbol_name === "x" ||
+          r.symbol_name === "obj" ||
+          r.symbol_name === "items"
       );
       expect(deletes.length).toBeGreaterThan(0);
     });
@@ -1096,8 +1116,8 @@ slice_val = array[1:10:2]
       const subscripts = parsed.references.filter(
         (r) =>
           r.entity === SemanticEntity.MEMBER_ACCESS ||
-          r.text === "items" ||
-          r.text === "matrix"
+          r.symbol_name === "items" ||
+          r.symbol_name === "matrix"
       );
       expect(subscripts.length).toBeGreaterThan(0);
     });

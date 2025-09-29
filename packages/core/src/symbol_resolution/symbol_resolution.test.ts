@@ -548,7 +548,7 @@ describe("Symbol Resolution Pipeline", () => {
           kind: "class",
           location: derived_loc,
           direct_members: new Map(),
-          extends_clause: ["BaseClass" as SymbolName],
+          extends: ["BaseClass" as SymbolName],
         },
       ];
 
@@ -713,10 +713,7 @@ describe("Symbol Resolution Pipeline", () => {
 
       // File A: exports a class with methods
       const class_id = class_symbol("Utils", location(file_a, 1, 0));
-      const method_id = method_symbol(
-        "process",
-        location(file_a, 2, 2)
-      );
+      const method_id = method_symbol("process", location(file_a, 2, 2));
 
       const symbols_a = new Map<SymbolId, SymbolDefinition>([
         [

@@ -6,10 +6,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { QueryCapture } from "tree-sitter";
 import type { Language, FilePath } from "@ariadnejs/types";
 import type { NormalizedCapture } from "../parse_and_query_code/capture_types";
-import {
-  SemanticCategory,
-  SemanticEntity,
-} from "./capture_types";
+import { SemanticCategory, SemanticEntity } from "./capture_types";
 import {
   normalize_captures,
   group_captures_by_category,
@@ -123,7 +120,7 @@ describe("Capture Normalizer", () => {
         const result = normalize_captures(captures, "javascript", mockFilePath);
 
         expect(result).toHaveLength(1);
-        expect(result[0].text).toBe("testFunc");
+        expect(result[0].symbol_name).toBe("testFunc");
       });
 
       it("should include node location", () => {
@@ -140,7 +137,7 @@ describe("Capture Normalizer", () => {
 
         const result = normalize_captures(captures, "javascript", mockFilePath);
 
-        expect(result[0].text).toBe("testFunc");
+        expect(result[0].symbol_name).toBe("testFunc");
       });
 
       it("should apply modifiers when available", () => {
@@ -226,7 +223,11 @@ describe("Capture Normalizer", () => {
         expect(result.every((r) => r.entity === SemanticEntity.FUNCTION)).toBe(
           true
         );
-        expect(result.map((r) => r.text)).toEqual(["func1", "func2", "func3"]);
+        expect(result.map((r) => r.symbol_name)).toEqual([
+          "func1",
+          "func2",
+          "func3",
+        ]);
       });
 
       it("should handle mixed language-specific features", () => {
@@ -261,7 +262,11 @@ describe("Capture Normalizer", () => {
 
         const result = normalize_captures(captures, "javascript", mockFilePath);
 
-        expect(result.map((r) => r.text)).toEqual(["first", "second", "third"]);
+        expect(result.map((r) => r.symbol_name)).toEqual([
+          "first",
+          "second",
+          "third",
+        ]);
       });
     });
 
@@ -295,7 +300,7 @@ describe("Capture Normalizer", () => {
         const result = normalize_captures(captures, "javascript", mockFilePath);
 
         expect(result).toHaveLength(1);
-        expect(result[0].text).toBeUndefined();
+        expect(result[0].symbol_name).toBeUndefined();
       });
     });
   });
@@ -315,7 +320,7 @@ describe("Capture Normalizer", () => {
             end_line: 1,
             end_column: 4,
           },
-          text: "func",
+          symbol_name: "func",
           modifiers: {},
         },
         {
@@ -328,7 +333,7 @@ describe("Capture Normalizer", () => {
             end_line: 2,
             end_column: 3,
           },
-          text: "var",
+          symbol_name: "var",
           modifiers: {},
         },
         {
@@ -341,7 +346,7 @@ describe("Capture Normalizer", () => {
             end_line: 3,
             end_column: 4,
           },
-          text: "call",
+          symbol_name: "call",
           modifiers: {},
         },
         {
@@ -354,7 +359,7 @@ describe("Capture Normalizer", () => {
             end_line: 4,
             end_column: 6,
           },
-          text: "import",
+          symbol_name: "import",
           modifiers: {},
         },
         {
@@ -367,7 +372,7 @@ describe("Capture Normalizer", () => {
             end_line: 5,
             end_column: 6,
           },
-          text: "export",
+          symbol_name: "export",
           modifiers: {},
         },
         {
@@ -380,7 +385,7 @@ describe("Capture Normalizer", () => {
             end_line: 6,
             end_column: 4,
           },
-          text: "type",
+          symbol_name: "type",
           modifiers: {},
         },
         {
@@ -393,7 +398,7 @@ describe("Capture Normalizer", () => {
             end_line: 7,
             end_column: 6,
           },
-          text: "assign",
+          symbol_name: "assign",
           modifiers: {},
         },
         {
@@ -406,7 +411,7 @@ describe("Capture Normalizer", () => {
             end_line: 8,
             end_column: 6,
           },
-          text: "return",
+          symbol_name: "return",
           modifiers: {},
         },
         {
@@ -419,7 +424,7 @@ describe("Capture Normalizer", () => {
             end_line: 9,
             end_column: 9,
           },
-          text: "decorator",
+          symbol_name: "decorator",
           modifiers: {},
         },
         {
@@ -432,7 +437,7 @@ describe("Capture Normalizer", () => {
             end_line: 10,
             end_column: 8,
           },
-          text: "modifier",
+          symbol_name: "modifier",
           modifiers: {},
         },
       ];
@@ -456,16 +461,16 @@ describe("Capture Normalizer", () => {
     it("should maintain capture content in groups", () => {
       const grouped = group_captures_by_category(sampleCaptures);
 
-      expect(grouped.scopes[0].text).toBe("func");
-      expect(grouped.definitions[0].text).toBe("var");
-      expect(grouped.references[0].text).toBe("call");
-      expect(grouped.imports[0].text).toBe("import");
-      expect(grouped.exports[0].text).toBe("export");
-      expect(grouped.types[0].text).toBe("type");
-      expect(grouped.assignments[0].text).toBe("assign");
-      expect(grouped.returns[0].text).toBe("return");
-      expect(grouped.decorators[0].text).toBe("decorator");
-      expect(grouped.modifiers[0].text).toBe("modifier");
+      expect(grouped.scopes[0].symbol_name).toBe("func");
+      expect(grouped.definitions[0].symbol_name).toBe("var");
+      expect(grouped.references[0].symbol_name).toBe("call");
+      expect(grouped.imports[0].symbol_name).toBe("import");
+      expect(grouped.exports[0].symbol_name).toBe("export");
+      expect(grouped.types[0].symbol_name).toBe("type");
+      expect(grouped.assignments[0].symbol_name).toBe("assign");
+      expect(grouped.returns[0].symbol_name).toBe("return");
+      expect(grouped.decorators[0].symbol_name).toBe("decorator");
+      expect(grouped.modifiers[0].symbol_name).toBe("modifier");
     });
 
     it("should handle multiple captures in same category", () => {
@@ -502,7 +507,7 @@ describe("Capture Normalizer", () => {
       const grouped = group_captures_by_category(multipleDefinitions);
 
       expect(grouped.definitions).toHaveLength(3);
-      expect(grouped.definitions.map((d) => d.text)).toEqual([
+      expect(grouped.definitions.map((d) => d.symbol_name)).toEqual([
         "var",
         "func2",
         "class",
@@ -587,7 +592,7 @@ describe("Capture Normalizer", () => {
 
       const grouped = group_captures_by_category(multipleRefs);
 
-      expect(grouped.references.map((r) => r.text)).toEqual([
+      expect(grouped.references.map((r) => r.symbol_name)).toEqual([
         "first",
         "second",
         "third",
@@ -609,7 +614,7 @@ describe("Capture Normalizer", () => {
             end_line: 1,
             end_column: 4,
           },
-          text: "test",
+          symbol_name: "test",
           modifiers: {},
         };
 
@@ -647,13 +652,13 @@ describe("Capture Normalizer", () => {
       expect(grouped.imports).toHaveLength(1);
       expect(grouped.exports).toHaveLength(1);
 
-      expect(grouped.definitions.map((d) => d.text)).toEqual([
+      expect(grouped.definitions.map((d) => d.symbol_name)).toEqual([
         "testFunc",
         "testVar",
       ]);
-      expect(grouped.references[0].text).toBe("testFunc");
-      expect(grouped.imports[0].text).toBe("utils");
-      expect(grouped.exports[0].text).toBe("testFunc");
+      expect(grouped.references[0].symbol_name).toBe("testFunc");
+      expect(grouped.imports[0].symbol_name).toBe("utils");
+      expect(grouped.exports[0].symbol_name).toBe("testFunc");
     });
 
     it("should preserve complex capture information through pipeline", () => {
@@ -686,7 +691,7 @@ describe("Capture Normalizer", () => {
       expect(grouped.definitions).toHaveLength(1);
       const method = grouped.definitions[0];
 
-      expect(method.text).toBe("asyncMethod");
+      expect(method.symbol_name).toBe("asyncMethod");
       // Note: The actual modifiers depend on the real implementation
       // This test validates the structure works, specific modifier logic is tested elsewhere
       expect(method.modifiers).toBeDefined();

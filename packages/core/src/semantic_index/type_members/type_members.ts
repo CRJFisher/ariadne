@@ -21,20 +21,40 @@ import type {
   AnyDefinition,
   Language,
   ParameterDefinition,
+  ClassDefinition,
+  InterfaceDefinition,
+  TypeDefinition,
+  EnumDefinition,
 } from "@ariadnejs/types";
 import type { NormalizedCapture } from "../../parse_and_query_code/capture_types";
 import { SemanticEntity } from "../../parse_and_query_code/capture_types";
 
 /**
  * Local type information extracted from single file
+*/
+/**
+ * this is what's output from extract_rust_features
+ const local_type: {
+    // Rust-specific features - none of these are supported in LocalTypeInfo...
+    is_generic?: boolean;
+    type_parameters?: LocalTypeParameter[];
+    lifetime_parameters?: LocalLifetimeParameter[];
+    where_constraints?: LocalTypeConstraint[];
+
+    type_name: SymbolName;
+    kind: "class" | "interface" | "type" | "enum";
+    location: Location;
+    direct_members: Map<SymbolName, LocalMemberInfo>;
+    extends?: readonly SymbolName[];
+}
+ * 
  */
 export interface LocalTypeInfo {
   readonly type_name: SymbolName;
   readonly kind: "class" | "interface" | "type" | "enum";
   readonly location: Location;
   readonly direct_members: Map<SymbolName, LocalMemberInfo>;
-  readonly extends_clause?: SymbolName[];  // Just names, not resolved
-  readonly implements_clause?: SymbolName[];  // Just names, not resolved
+  readonly extends?: readonly SymbolName[];
 }
 
 /**
@@ -66,19 +86,18 @@ export interface LocalTypeConstraint {
   readonly location: Location;
 }
 
-
 /**
  * Extract type members from symbols (single-file analysis only)
  */
 export function extract_type_members(
-  classes: ReadonlyMap<SymbolId, ClassDef>,
-  interfaces: ReadonlyMap<SymbolId, InterfaceDef>,
-  types: ReadonlyMap<SymbolId, TypeDef>,
-  enums: ReadonlyMap<SymbolId, EnumDef>,
+  classes: ReadonlyMap<SymbolId, ClassDefinition>,
+  interfaces: ReadonlyMap<SymbolId, InterfaceDefinition>,
+  types: ReadonlyMap<SymbolId, TypeDefinition>,
+  enums: ReadonlyMap<SymbolId, EnumDefinition>,
   scopes: ReadonlyMap<ScopeId, LexicalScope>,
   file_path: FilePath,
-  definitions?: readonly NormalizedCapture[],
-  type_captures?: readonly NormalizedCapture[]
+  definitions?: readonly NormalizedCapture[], // TODO: why still captures??
+  type_captures?: readonly NormalizedCapture[] // TODO: why still captures??
 ): LocalTypeInfo[] {
   const result_types: LocalTypeInfo[] = [];
   const type_symbols = new Map<SymbolId, LocalTypeInfo>();
@@ -90,8 +109,7 @@ export function extract_type_members(
       kind: "class",
       location: symbol.location,
       direct_members: new Map(),
-      extends_clause: symbol.extends_class ? [symbol.extends_class] : undefined,
-      implements_clause: symbol.implements_interfaces ? [...symbol.implements_interfaces] : undefined,
+      extends: symbol.extends ? symbol.extends : undefined,
     };
     result_types.push(type_info);
     type_symbols.set(symbol_id, type_info);
@@ -104,12 +122,13 @@ export function extract_type_members(
       kind: "interface",
       location: symbol.location,
       direct_members: new Map(),
-      extends_clause: symbol.extends_interfaces ? [...symbol.extends_interfaces] : undefined,
+      extends: symbol.extends ? symbol.extends : undefined,
     };
     result_types.push(type_info);
     type_symbols.set(symbol_id, type_info);
   }
 
+  // TODO: we already have members, fields/properties and constructors in the definitions
   // Note: The second pass for collecting members based on members/static_members arrays
   // has been removed since ClassDef and InterfaceDef don't have members/static_members fields.
   // Member collection will be handled by scope relationships in collect_direct_members_from_scopes.
@@ -123,10 +142,13 @@ export function extract_type_members(
   ]);
 
   // Determine language from file path
-  const language = file_path.endsWith('.rs') ? 'rust' as Language :
-                   file_path.endsWith('.py') ? 'python' as Language :
-                   file_path.endsWith('.ts') || file_path.endsWith('.tsx') ? 'typescript' as Language :
-                   'javascript' as Language;
+  const language = file_path.endsWith(".rs")
+    ? ("rust" as Language)
+    : file_path.endsWith(".py")
+    ? ("python" as Language)
+    : file_path.endsWith(".ts") || file_path.endsWith(".tsx")
+    ? ("typescript" as Language)
+    : ("javascript" as Language);
 
   // Second pass: collect members from lexical scope relationships
   const enriched_types = collect_direct_members_from_scopes(
@@ -157,12 +179,15 @@ function extract_rust_features(
   type_captures: readonly NormalizedCapture[]
 ): LocalTypeInfo[] {
   // Create a map to track rust features by location
-  const rust_features_by_location = new Map<string, {
-    is_generic?: boolean;
-    type_parameters?: LocalTypeParameter[];
-    lifetime_parameters?: LocalLifetimeParameter[];
-    where_constraints?: LocalTypeConstraint[];
-  }>();
+  const rust_features_by_location = new Map<
+    string,
+    {
+      is_generic?: boolean;
+      type_parameters?: LocalTypeParameter[];
+      lifetime_parameters?: LocalLifetimeParameter[];
+      where_constraints?: LocalTypeConstraint[];
+    }
+  >();
 
   // Process definitions to find generic/lifetime information
   for (const capture of definitions) {
@@ -178,9 +203,9 @@ function extract_rust_features(
       if (capture.modifiers.is_lifetime) {
         // This is a lifetime parameter
         const lifetime_param: LocalLifetimeParameter = {
-          name: capture.text as SymbolName,
+          name: capture.symbol_name as SymbolName,
           location: capture.node_location,
-          bounds: undefined // Would need additional parsing for bounds
+          bounds: undefined, // Would need additional parsing for bounds
         };
 
         if (!features.lifetime_parameters) {
@@ -196,28 +221,33 @@ function extract_rust_features(
   // Process type captures to find type parameters and constraints
   for (const capture of type_captures) {
     // Look for type parameters and constraints near type definitions
-    const nearby_types = types.filter(type =>
-      Math.abs(type.location.line - capture.node_location.line) <= 2 &&
-      type.location.file_path === capture.node_location.file_path
+    const nearby_types = types.filter(
+      (type) =>
+        Math.abs(type.location.line - capture.node_location.line) <= 2 &&
+        type.location.file_path === capture.node_location.file_path
     );
 
     for (const type_info of nearby_types) {
       // Find matching type by location proximity
-      const matching_type = types.find(t =>
-        Math.abs(t.location.line - capture.node_location.line) <= 2 &&
-        t.location.file_path === capture.node_location.file_path
+      const matching_type = types.find(
+        (t) =>
+          Math.abs(t.location.line - capture.node_location.line) <= 2 &&
+          t.location.file_path === capture.node_location.file_path
       );
 
       if (matching_type) {
         const location_key = `${matching_type.location.line}:${matching_type.location.column}`;
         const features = rust_features_by_location.get(location_key) || {};
 
-        if (capture.entity === SemanticEntity.TYPE_PARAMETER && !capture.modifiers?.is_lifetime) {
+        if (
+          capture.entity === SemanticEntity.TYPE_PARAMETER &&
+          !capture.modifiers?.is_lifetime
+        ) {
           // This is a type parameter
           const type_param: LocalTypeParameter = {
-            name: capture.text as SymbolName,
+            name: capture.symbol_name as SymbolName,
             location: capture.node_location,
-            bounds: undefined // Would need additional processing for bounds
+            bounds: undefined, // Would need additional processing for bounds
           };
 
           if (!features.type_parameters) {
@@ -227,10 +257,10 @@ function extract_rust_features(
         } else if (capture.entity === SemanticEntity.TYPE_CONSTRAINT) {
           // This is a type constraint
           const constraint: LocalTypeConstraint = {
-            type_name: capture.text as SymbolName,
+            type_name: capture.symbol_name as SymbolName,
             constraint_kind: "trait_bound", // Default, would need better parsing
             bound_names: [], // Would need additional processing
-            location: capture.node_location
+            location: capture.node_location,
           };
 
           if (!features.where_constraints) {
@@ -244,8 +274,8 @@ function extract_rust_features(
     }
   }
 
-  // Apply rust features to types and return new array
-  return types.map(type_info => {
+  const rust_features = types.map((type_info) => {
+    // TODO: wrong - use common.ts
     const location_key = `${type_info.location.line}:${type_info.location.column}`;
     const features = rust_features_by_location.get(location_key);
 
@@ -253,11 +283,14 @@ function extract_rust_features(
       return type_info;
     }
 
-    return {
+    const local_type = {
       ...type_info,
-      ...features
+      ...features,
     };
+    return local_type;
   });
+  // Apply rust features to types and return new array
+  return rust_features;
 }
 
 /**
@@ -267,7 +300,6 @@ function create_local_member_info(
   symbol: AnyDefinition,
   classes: ReadonlyMap<SymbolId, ClassDef>,
   interfaces: ReadonlyMap<SymbolId, InterfaceDef>
-
 ): LocalMemberInfo {
   let kind: LocalMemberInfo["kind"];
 
@@ -289,7 +321,7 @@ function create_local_member_info(
   }
 
   // Extract parameters for methods/constructors
-  const parameters = extract_local_parameters(symbol, );
+  const parameters = extract_local_parameters(symbol);
 
   return {
     name: symbol.name,
@@ -297,8 +329,8 @@ function create_local_member_info(
     location: symbol.location,
     symbol_id: symbol.id,
     is_static: symbol.is_static,
-    is_optional: false,  // Would need modifiers analysis
-    type_annotation: symbol.return_type_hint,  // Use the return_type_hint field if available
+    is_optional: false, // Would need modifiers analysis
+    type_annotation: symbol.return_type_hint, // Use the return_type_hint field if available
     parameters,
   };
 }
@@ -308,11 +340,13 @@ function create_local_member_info(
  */
 function extract_local_parameters(
   symbol: AnyDefinition,
-  parameters: ReadonlyMap<SymbolId, ParameterDefinition>,
+  parameters: ReadonlyMap<SymbolId, ParameterDefinition>
 ): LocalParameterInfo[] | undefined {
-  if (symbol.kind !== "method" &&
-      symbol.kind !== "function" &&
-      symbol.kind !== "constructor") {
+  if (
+    symbol.kind !== "method" &&
+    symbol.kind !== "function" &&
+    symbol.kind !== "constructor"
+  ) {
     return undefined;
   }
 
@@ -323,17 +357,16 @@ function extract_local_parameters(
     if (param.kind === "parameter" && param.scope_id === symbol.scope_id) {
       parameters.push({
         name: param.name,
-        type_annotation: undefined,  // Type annotations not available in SymbolDefinition
-        is_optional: false,  // Would need to check for optional modifier
-        is_rest: false,  // Would need to check for rest parameter
-        default_value: undefined,  // Would need to parse default values
+        type_annotation: undefined, // Type annotations not available in SymbolDefinition
+        is_optional: false, // Would need to check for optional modifier
+        is_rest: false, // Would need to check for rest parameter
+        default_value: undefined, // Would need to parse default values
       });
     }
   }
 
   return parameters.length > 0 ? parameters : undefined;
 }
-
 
 /**
  * Collect direct members from scope relationships
@@ -349,12 +382,13 @@ function collect_direct_members_from_scopes(
   language: Language
 ): LocalTypeInfo[] {
   // Create a new array with enriched type information
-  let enriched_types = types.map(type_info => {
+  let enriched_types = types.map((type_info) => {
     // Find the corresponding symbol
     const symbol_entry = [...classes, ...interfaces].find(
-      ([_, symbol]) => symbol.name === type_info.type_name &&
-                       symbol.location.line === type_info.location.line &&
-                       symbol.location.column === type_info.location.column
+      ([_, symbol]) =>
+        symbol.name === type_info.type_name &&
+        symbol.location.line === type_info.location.line &&
+        symbol.location.column === type_info.location.column
     );
 
     if (!symbol_entry) {
@@ -381,7 +415,11 @@ function collect_direct_members_from_scopes(
 
     // ENHANCEMENT: Collect parameter properties from constructor scope
     if (symbol.kind === "class") {
-      const param_props = collect_parameter_property_fields(symbol_id, symbols, scopes);
+      const param_props = collect_parameter_property_fields(
+        symbol_id,
+        symbols,
+        scopes
+      );
       for (const [name, member] of param_props) {
         if (!new_members.has(name)) {
           new_members.set(name, member);
@@ -392,7 +430,7 @@ function collect_direct_members_from_scopes(
     // Return new LocalTypeInfo with enriched members
     return {
       ...type_info,
-      direct_members: new_members
+      direct_members: new_members,
     };
   });
 
@@ -401,12 +439,16 @@ function collect_direct_members_from_scopes(
   // Only apply for the specific test case that was originally failing
   if (language === "rust" && types.length > 0) {
     // Only apply Rust-specific processing for the basic_structs_and_enums.rs test case
-    const hasPoint = types.some(t => t.type_name === ("Point" as SymbolName));
-    const hasPair = types.some(t => t.type_name === ("Pair" as SymbolName));
+    const hasPoint = types.some((t) => t.type_name === ("Point" as SymbolName));
+    const hasPair = types.some((t) => t.type_name === ("Pair" as SymbolName));
     const isBasicStructsTest = hasPoint && hasPair;
 
     if (isBasicStructsTest) {
-      enriched_types = collect_rust_impl_block_members(symbols, scopes, enriched_types);
+      enriched_types = collect_rust_impl_block_members(
+        symbols,
+        scopes,
+        enriched_types
+      );
     }
   }
 
@@ -442,7 +484,9 @@ function collect_rust_impl_block_members(
 
   // Create a mapping of impl blocks to their target types
   const impl_blocks = new Map<ScopeId, LocalTypeInfo>();
-  const sortedTypes = [...types].sort((a, b) => a.location.line - b.location.line);
+  const sortedTypes = [...types].sort(
+    (a, b) => a.location.line - b.location.line
+  );
 
   // Find impl block scopes efficiently
   for (const [scope_id, scope] of scopes) {
@@ -505,14 +549,18 @@ function collect_parameter_property_fields(
   if (!class_symbol) return result;
 
   for (const [_, symbol] of symbols) {
-    if (symbol.kind === "constructor" &&
-        symbol.name === "constructor" &&
-        symbol.location.file_path === class_symbol.location.file_path) {
+    if (
+      symbol.kind === "constructor" &&
+      symbol.name === "constructor" &&
+      symbol.location.file_path === class_symbol.location.file_path
+    ) {
       // Check if this constructor is in the same class by examining scope relationships
       const constructor_scope = scopes.get(symbol.scope_id);
       if (constructor_scope) {
         // Look for the class symbol in parent scopes
-        let current_scope = constructor_scope.parent_id ? scopes.get(constructor_scope.parent_id) : undefined;
+        let current_scope = constructor_scope.parent_id
+          ? scopes.get(constructor_scope.parent_id)
+          : undefined;
         while (current_scope) {
           for (const [_, scope_symbol] of current_scope.symbols) {
             if (scope_symbol.id === class_symbol_id) {
@@ -521,7 +569,9 @@ function collect_parameter_property_fields(
             }
           }
           if (constructor_symbol) break;
-          current_scope = current_scope.parent_id ? scopes.get(current_scope.parent_id) : undefined;
+          current_scope = current_scope.parent_id
+            ? scopes.get(current_scope.parent_id)
+            : undefined;
         }
         if (constructor_symbol) break;
       }
@@ -540,7 +590,10 @@ function collect_parameter_property_fields(
       // Check if this variable symbol represents a parameter property
       // We can identify parameter properties by their location being in constructor parameters
       // and their symbol ID containing evidence of being a parameter property
-      const is_parameter_property = is_likely_parameter_property(member_symbol, constructor_symbol);
+      const is_parameter_property = is_likely_parameter_property(
+        member_symbol,
+        constructor_symbol
+      );
 
       if (is_parameter_property) {
         const member_info = create_local_member_info(member_symbol, symbols);
@@ -567,7 +620,8 @@ function is_likely_parameter_property(
   // Check if the variable is located within the constructor's parameter range
   const var_line = variable_symbol.location.line;
   const constructor_line = constructor_symbol.location.line;
-  const constructor_end_line = constructor_symbol.location.end_line || constructor_line;
+  const constructor_end_line =
+    constructor_symbol.location.end_line || constructor_line;
 
   // Parameter properties should be defined within constructor parameter range
   return var_line >= constructor_line && var_line <= constructor_end_line;

@@ -126,7 +126,7 @@ export function build_semantic_index(
     variables,
     interfaces,
     enums,
-    types,
+    // types,
     namespaces,
     file_symbols_by_name,
   } = process_definitions(
@@ -156,7 +156,7 @@ export function build_semantic_index(
     ...variables,
     ...interfaces,
     ...enums,
-    ...types,
+    // ...types,
     ...namespaces,
   ]);
 

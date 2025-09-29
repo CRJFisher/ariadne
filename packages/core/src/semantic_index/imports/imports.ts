@@ -7,8 +7,6 @@ import type {
   SymbolId,
   SymbolName,
   LexicalScope,
-  SymbolDefinition,
-  VariableDef,
   ImportDefinition,
   Import,
   NamedImport,
@@ -18,7 +16,7 @@ import type {
   ScopeId,
 } from "@ariadnejs/types";
 import { variable_symbol, create_namespace_name } from "@ariadnejs/types";
-import type { NormalizedCapture } from "../capture_types";
+import type { NormalizedCapture } from "../../parse_and_query_code/capture_types";
 
 /**
  * Process imports with language-specific handling
@@ -44,7 +42,7 @@ export function process_imports(
     const location = capture.node_location;
 
     // Validate capture has required data
-    if (!capture.text && capture.text !== "") {
+    if (!capture.symbol_name && capture.symbol_name !== "") {
       continue; // Skip if no import name
     }
 
@@ -69,7 +67,7 @@ export function process_imports(
       import_item = {
         kind: "default" as const,
         source: source as FilePath,
-        name: capture.text as SymbolName,
+        name: capture.symbol_name as SymbolName,
         location,
         modifiers: [],
         language: language,
@@ -77,14 +75,14 @@ export function process_imports(
       };
     } else if (
       capture.modifiers.is_namespace ||
-      (language === "python" && capture.text === "*") ||
+      (language === "python" && capture.symbol_name === "*") ||
       (language === "rust" && capture.modifiers.is_wildcard)
     ) {
       // Namespace import, Python wildcard import, or Rust glob import
       const modifiers: string[] = [];
 
       // Mark Python wildcard imports specially
-      if (language === "python" && capture.text === "*") {
+      if (language === "python" && capture.symbol_name === "*") {
         modifiers.push("wildcard");
       }
 
@@ -113,7 +111,7 @@ export function process_imports(
         kind: "namespace" as const,
         source: source as FilePath,
         namespace_name: create_namespace_name(
-          capture.text === "*" ? "STAR_IMPORT" : capture.text
+          capture.symbol_name === "*" ? "STAR_IMPORT" : capture.symbol_name
         ),
         location,
         modifiers,
@@ -148,7 +146,7 @@ export function process_imports(
         source: source as FilePath,
         imports: [
           {
-            name: capture.text as SymbolName,
+            name: capture.symbol_name as SymbolName,
             alias: capture.context.import_alias as SymbolName,
             is_type_only: capture.modifiers.is_type_only || false,
           },
@@ -183,7 +181,7 @@ export function process_imports(
         source: source as FilePath,
         imports: [
           {
-            name: capture.text as SymbolName,
+            name: capture.symbol_name as SymbolName,
             is_type_only: capture.modifiers.is_type_only || false,
           },
         ],
@@ -199,13 +197,13 @@ export function process_imports(
     // Create symbol for imported name (skip for side-effect and wildcard imports)
     if (
       !capture.context?.is_side_effect_import &&
-      !(language === "python" && capture.text === "*") &&
+      !(language === "python" && capture.symbol_name === "*") &&
       !(language === "rust" && capture.modifiers?.is_wildcard)
     ) {
-      const symbol_id = variable_symbol(capture.text, location);
+      const symbol_id = variable_symbol(capture.symbol_name, location);
       const symbol: ImportDefinition = {
         symbol_id: symbol_id,
-        name: capture.text as SymbolName,
+        name: capture.symbol_name as SymbolName,
         kind: "import",
         location,
         scope_id: root_scope.id as ScopeId,
@@ -218,7 +216,7 @@ export function process_imports(
         is_namespace: capture.modifiers?.is_namespace || false,
       };
 
-      root_scope.symbols.set(capture.text as SymbolName, symbol);
+      root_scope.symbols.set(capture.symbol_name as SymbolName, symbol);
       imported_symbols.set(symbol_id, symbol);
     }
   }

@@ -55,7 +55,7 @@ describe("Semantic Index - JavaScript", () => {
           // Verify exact function definitions
           const function_defs = parsed_captures.definitions
             .filter((c) => c.entity === SemanticEntity.FUNCTION)
-            .map((c) => c.text);
+            .map((c) => c.symbol_name);
           expect(function_defs).toEqual([
             "greet",
             "sayGoodbye",
@@ -66,19 +66,19 @@ describe("Semantic Index - JavaScript", () => {
           // Verify exact function calls (including console.log)
           const calls = parsed_captures.references
             .filter((c) => c.entity === SemanticEntity.CALL)
-            .map((c) => c.text);
+            .map((c) => c.symbol_name);
           expect(calls).toEqual(["log", "greet", "sayGoodbye", "inner"]);
 
           // Verify exact parameters
           const params = parsed_captures.definitions
             .filter((c) => c.entity === SemanticEntity.PARAMETER)
-            .map((c) => c.text);
+            .map((c) => c.symbol_name);
           expect(params).toEqual(["name", "name"]); // Two 'name' parameters
 
           // Verify variable definitions (const sayGoodbye)
           const variables = parsed_captures.definitions
             .filter((c) => c.entity === SemanticEntity.VARIABLE)
-            .map((c) => c.text);
+            .map((c) => c.symbol_name);
           expect(variables).toContain("sayGoodbye");
 
           // Verify scopes structure - scopes exist for all functions
@@ -92,14 +92,14 @@ describe("Semantic Index - JavaScript", () => {
           // Verify exact class definitions
           const class_defs = parsed_captures.definitions
             .filter((c) => c.entity === SemanticEntity.CLASS)
-            .map((c) => c.text);
+            .map((c) => c.symbol_name);
           expect(class_defs).toEqual(["Animal", "Dog"]);
 
           // Verify exact method definitions with modifiers
           const method_defs = parsed_captures.definitions
             .filter((c) => c.entity === SemanticEntity.METHOD)
             .map((c) => ({
-              name: c.text,
+              name: c.symbol_name,
               is_static: c.modifiers?.is_static || false,
             }));
           expect(method_defs).toEqual([
@@ -114,7 +114,7 @@ describe("Semantic Index - JavaScript", () => {
           // Verify exact constructor definitions
           const constructor_defs = parsed_captures.definitions
             .filter((c) => c.entity === SemanticEntity.CONSTRUCTOR)
-            .map((c) => c.text);
+            .map((c) => c.symbol_name);
           expect(constructor_defs).toEqual(["constructor", "constructor"]);
 
           // Verify class inheritance
@@ -126,19 +126,21 @@ describe("Semantic Index - JavaScript", () => {
           // Verify exact this references
           const this_refs = parsed_captures.references
             .filter((c) => c.entity === SemanticEntity.THIS)
-            .map((c) => c.text);
+            .map((c) => c.symbol_name);
           expect(this_refs.length).toBe(4); // this.name (x2), this.breed (x1), this in Dog speak (x1)
 
           // Verify super call
           const super_refs = parsed_captures.references
             .filter((c) => c.entity === SemanticEntity.SUPER)
-            .map((c) => c.text);
+            .map((c) => c.symbol_name);
           expect(super_refs).toEqual(["super"]);
 
           // Verify constructor calls with targets (may have duplicates from multiple captures)
           const constructor_calls = parsed_captures.references
-            .filter((c) => c.entity === SemanticEntity.CALL && c.text === "Dog")
-            .map((c) => c.text);
+            .filter(
+              (c) => c.entity === SemanticEntity.CALL && c.symbol_name === "Dog"
+            )
+            .map((c) => c.symbol_name);
           // Remove duplicates for comparison
           expect([...new Set(constructor_calls)]).toEqual(["Dog"]);
 
@@ -148,7 +150,7 @@ describe("Semantic Index - JavaScript", () => {
               (c) =>
                 c.entity === SemanticEntity.CALL && c.context?.receiver_node
             )
-            .map((c) => c.text);
+            .map((c) => c.symbol_name);
           expect(method_calls).toEqual([
             "log",
             "log",
@@ -161,9 +163,11 @@ describe("Semantic Index - JavaScript", () => {
           // Verify static method call
           const static_calls = parsed_captures.references
             .filter(
-              (c) => c.entity === SemanticEntity.CALL && c.text === "getSpecies"
+              (c) =>
+                c.entity === SemanticEntity.CALL &&
+                c.symbol_name === "getSpecies"
             )
-            .map((c) => c.text);
+            .map((c) => c.symbol_name);
           expect(static_calls).toEqual(["getSpecies"]);
         }
 
@@ -178,7 +182,7 @@ describe("Semantic Index - JavaScript", () => {
                 !c.context?.skip
             )
             .map((c) => ({
-              name: c.text,
+              name: c.symbol_name,
               alias: c.context?.import_alias,
               source: c.context?.source_module,
             }));
@@ -192,13 +196,19 @@ describe("Semantic Index - JavaScript", () => {
           // Verify exact default imports
           const default_imports = parsed_captures.imports
             .filter((c) => c.modifiers.is_default)
-            .map((c) => ({ name: c.text, source: c.context?.source_module }));
+            .map((c) => ({
+              name: c.symbol_name,
+              source: c.context?.source_module,
+            }));
           expect(default_imports).toEqual([{ name: "React", source: "react" }]);
 
           // Verify exact namespace imports
           const namespace_imports = parsed_captures.imports
             .filter((c) => c.modifiers.is_namespace)
-            .map((c) => ({ name: c.text, source: c.context?.source_module }));
+            .map((c) => ({
+              name: c.symbol_name,
+              source: c.context?.source_module,
+            }));
           expect(namespace_imports).toEqual([
             { name: "utils", source: "./utils" },
           ]);
@@ -215,7 +225,7 @@ describe("Semantic Index - JavaScript", () => {
               (c) =>
                 !c.modifiers.is_default && c.entity !== SemanticEntity.MODULE
             )
-            .map((c) => c.text);
+            .map((c) => c.symbol_name);
           expect(named_exports).toContain("DataProcessor"); // export class DataProcessor
           expect(named_exports).toContain("VERSION"); // export const VERSION
           expect(named_exports).toContain("processData"); // export function processData
@@ -229,38 +239,38 @@ describe("Semantic Index - JavaScript", () => {
           // Verify default export exists
           const default_exports = parsed_captures.exports
             .filter((c) => c.modifiers.is_default)
-            .map((c) => c.text);
+            .map((c) => c.symbol_name);
           expect(default_exports).toContain("main");
           // Note: Other exports might also have is_default incorrectly set
 
           // Verify function definitions from exports
           const exported_functions = parsed_captures.definitions
             .filter((c) => c.entity === SemanticEntity.FUNCTION)
-            .map((c) => c.text);
+            .map((c) => c.symbol_name);
           expect(exported_functions).toEqual(["processData", "main"]);
 
           // Verify class definitions from exports
           const exported_classes = parsed_captures.definitions
             .filter((c) => c.entity === SemanticEntity.CLASS)
-            .map((c) => c.text);
+            .map((c) => c.symbol_name);
           expect(exported_classes).toEqual(["DataProcessor"]);
 
           // Verify method in exported class
           const methods = parsed_captures.definitions
             .filter((c) => c.entity === SemanticEntity.METHOD)
-            .map((c) => c.text);
+            .map((c) => c.symbol_name);
           expect(methods).toContain("process");
 
           // Verify const definitions from exports
           const exported_variables = parsed_captures.definitions
             .filter((c) => c.entity === SemanticEntity.VARIABLE)
-            .map((c) => c.text);
+            .map((c) => c.symbol_name);
           expect(exported_variables).toEqual(["VERSION"]);
 
           // Verify all function calls (including built-ins like console.log and array methods)
           const all_calls = parsed_captures.references
             .filter((c) => c.entity === SemanticEntity.CALL)
-            .map((c) => c.text);
+            .map((c) => c.symbol_name);
           expect(all_calls).toEqual(["map", "processData", "log"]); // data.map(), processData(), console.log()
         }
       });
@@ -437,17 +447,19 @@ describe("Semantic Index - JavaScript", () => {
       // Verify exact function definitions
       const function_defs = parsed_captures.definitions
         .filter((c) => c.entity === SemanticEntity.FUNCTION)
-        .map((c) => c.text);
+        .map((c) => c.symbol_name);
       expect(function_defs).toEqual(["test"]);
 
       // Verify exact calls
       const calls = parsed_captures.references
         .filter((c) => c.entity === SemanticEntity.CALL)
-        .map((c) => c.text);
+        .map((c) => c.symbol_name);
       expect(calls).toEqual(["test"]);
 
       // Verify return statements
-      const returns = parsed_captures.returns.filter((c) => c.text === "42");
+      const returns = parsed_captures.returns.filter(
+        (c) => c.symbol_name === "42"
+      );
       expect(returns.length).toBe(1);
     });
 
@@ -470,7 +482,7 @@ describe("Semantic Index - JavaScript", () => {
       const methods = parsed_captures.definitions
         .filter((c) => c.entity === SemanticEntity.METHOD)
         .map((c) => ({
-          name: c.text,
+          name: c.symbol_name,
           is_static: c.modifiers?.is_static || false,
         }));
 
@@ -482,7 +494,7 @@ describe("Semantic Index - JavaScript", () => {
       // Verify class definition
       const classes = parsed_captures.definitions
         .filter((c) => c.entity === SemanticEntity.CLASS)
-        .map((c) => c.text);
+        .map((c) => c.symbol_name);
       expect(classes).toEqual(["Test"]);
     });
 
@@ -502,8 +514,10 @@ describe("Semantic Index - JavaScript", () => {
 
       // Verify exact constructor calls (may have duplicates from multiple captures)
       const constructor_calls = parsed_captures.references
-        .filter((c) => c.entity === SemanticEntity.CALL && c.text === "MyClass")
-        .map((c) => c.text);
+        .filter(
+          (c) => c.entity === SemanticEntity.CALL && c.symbol_name === "MyClass"
+        )
+        .map((c) => c.symbol_name);
       // Remove duplicates for comparison
       expect([...new Set(constructor_calls)]).toEqual(["MyClass"]);
 
@@ -512,21 +526,21 @@ describe("Semantic Index - JavaScript", () => {
         .filter(
           (c) => c.entity === SemanticEntity.CALL && c.context?.receiver_node
         )
-        .map((c) => c.text);
+        .map((c) => c.symbol_name);
       // Remove duplicates for comparison
       expect([...new Set(method_calls)]).toEqual(["method", "nested"]);
 
       // Verify variable definitions (may have duplicates from different scopes)
       const variables = parsed_captures.definitions
         .filter((c) => c.entity === SemanticEntity.VARIABLE)
-        .map((c) => c.text);
+        .map((c) => c.symbol_name);
       expect(variables).toContain("obj");
       // Allow duplicates as they might be from different capture patterns
 
       // Verify member access patterns
       const member_accesses = parsed_captures.references
         .filter((c) => c.entity === SemanticEntity.MEMBER_ACCESS)
-        .map((c) => c.text);
+        .map((c) => c.symbol_name);
       // Should capture property accesses used in method calls
       expect(member_accesses.length).toBeGreaterThanOrEqual(2);
     });
@@ -550,11 +564,13 @@ describe("Semantic Index - JavaScript", () => {
         .filter(
           (c) =>
             c.entity === SemanticEntity.CALL &&
-            c.text &&
-            ["MyClass", "ServiceClass", "UnassignedClass"].includes(c.text)
+            c.symbol_name &&
+            ["MyClass", "ServiceClass", "UnassignedClass"].includes(
+              c.symbol_name
+            )
         )
         .map((c) => ({
-          constructor: c.text,
+          constructor: c.symbol_name,
           hasTarget: !!c.context?.construct_target,
           targetType: c.context?.construct_target?.type,
         }));
@@ -629,7 +645,7 @@ describe("Semantic Index - JavaScript", () => {
           (c) => c.entity === SemanticEntity.CALL && c.context?.property_chain
         )
         .map((c) => ({
-          method: c.text,
+          method: c.symbol_name,
           chain: c.context?.property_chain,
         }));
 

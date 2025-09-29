@@ -672,7 +672,7 @@ describe("Cross-Language Symbol Resolution", () => {
             kind: "class",
             location: create_location(ts_file_path, 10, 10),
             direct_members: new Map(),
-            extends_clause: [],
+            extends: [],
             implements_clause: [],
           },
           {
@@ -680,7 +680,7 @@ describe("Cross-Language Symbol Resolution", () => {
             kind: "class",
             location: create_location(ts_file_path, 20, 10),
             direct_members: new Map(),
-            extends_clause: [],
+            extends: [],
             implements_clause: [],
           },
         ],

@@ -47,6 +47,7 @@ export function normalize_captures(
       continue;
     }
 
+    // TODO: move this to some rust-specific function
     // Extract qualified name for scoped references
     let qualified_name: string | undefined;
     let namespace_chain: string[] | undefined;
@@ -76,7 +77,7 @@ export function normalize_captures(
       category: mapping.category,
       entity: mapping.entity,
       node_location: node_to_location(capture.node, file_path),
-      text: capture.node.text,
+      symbol_name: capture.node.text,
       modifiers: mapping.modifiers?.(capture.node) || {},
       context: mapping.context?.(capture.node),
       qualified_name,
@@ -90,9 +91,9 @@ export function normalize_captures(
 }
 
 /**
- * Group normalized captures by category
+ * Grouped captures by category
  */
-export function group_captures_by_category(captures: NormalizedCapture[]): {
+export interface GroupedCaptures {
   scopes: NormalizedCapture[];
   definitions: NormalizedCapture[];
   references: NormalizedCapture[];
@@ -103,7 +104,14 @@ export function group_captures_by_category(captures: NormalizedCapture[]): {
   returns: NormalizedCapture[];
   decorators: NormalizedCapture[];
   modifiers: NormalizedCapture[];
-} {
+}
+
+/**
+ * Group normalized captures by category
+ */
+export function group_captures_by_category(
+  captures: NormalizedCapture[]
+): GroupedCaptures {
   const grouped = {
     scopes: [] as NormalizedCapture[],
     definitions: [] as NormalizedCapture[],

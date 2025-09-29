@@ -18,19 +18,12 @@ import type {
   EnumDefinition,
   NamespaceDefinition,
   MethodDefinition,
+  TypeDefinition,
+  AnyDefinition,
+  ConstructorDefinition,
+  Definition,
+  ParameterDefinition,
 } from "@ariadnejs/types";
-import type {
-  SymbolDefinition,
-  SymbolKind,
-  FunctionDef,
-  ClassDef,
-  MethodDef,
-  VariableDef,
-  InterfaceDef,
-  EnumDef,
-  TypeDef,
-  NamespaceDef,
-} from "@ariadnejs/types/src/semantic_index";
 import {
   function_symbol,
   class_symbol,
@@ -40,8 +33,10 @@ import {
 } from "@ariadnejs/types";
 import { find_containing_scope } from "../scope_tree";
 import {
+  CaptureContext,
   type NormalizedCapture,
   SemanticEntity,
+  SemanticModifiers,
 } from "../../parse_and_query_code/capture_types";
 
 /**
@@ -60,6 +55,7 @@ export function process_definitions(
   interfaces: Map<SymbolId, InterfaceDefinition>;
   enums: Map<SymbolId, EnumDefinition>;
   namespaces: Map<SymbolId, NamespaceDefinition>;
+  types: Map<SymbolId, TypeDefinition>;
   file_symbols_by_name: Map<FilePath, Map<SymbolName, SymbolId>>;
 } {
   // Input validation
@@ -69,23 +65,30 @@ export function process_definitions(
   // Initialize separate maps for each symbol type
   const functions = new Map<SymbolId, FunctionDefinition>();
   const classes = new Map<SymbolId, ClassDefinition>();
-  const methods = new Map<SymbolId, MethodDefinition>(); // Temporary storage before nesting
-  const variables = new Map<SymbolId, VariableDefinition>();
+  const variables = new Map<SymbolId, VariableDefinition>(); // TODO: create scope-variables map for type-tracking
   const interfaces = new Map<SymbolId, InterfaceDefinition>();
   const enums = new Map<SymbolId, EnumDefinition>();
   const namespaces = new Map<SymbolId, NamespaceDefinition>();
   const symbols_by_name = new Map<FilePath, Map<SymbolName, SymbolId>>();
+  const types = new Map<SymbolId, TypeDefinition>();
+
+  // Temporary storage before nesting in classes, interfaces and functions
+  const methods = new Map<SymbolId, MethodDefinition>();
+  const parameters = new Map<SymbolId, ParameterDefinition>();
+  const constructors = new Map<SymbolId, ConstructorDefinition>();
+
+  const class_scope_id_to_definitions = new Map<ScopeId, ClassDefinition>();
 
   // First pass: create all symbols
   for (const capture of def_captures) {
     const location = capture.node_location;
-    if (!location || !capture.text) {
+    if (!location || !capture.symbol_name) {
       continue; // Skip invalid captures
     }
 
     const scope =
       find_containing_scope(location, root_scope, scopes) || root_scope;
-    const name = (capture.text || "").trim() as SymbolName;
+    const name = (capture.symbol_name || "").trim() as SymbolName;
     if (!name) {
       continue; // Skip empty names
     }
@@ -95,10 +98,7 @@ export function process_definitions(
       capture.modifiers,
       language
     );
-    const is_hoisted = is_symbol_hoisted(
-      capture.entity,
-      language
-    );
+    const is_hoisted = is_symbol_hoisted(capture.entity, language);
     const def_scope = is_hoisted
       ? get_hoist_target(scope, kind, scopes)
       : scope;
@@ -107,8 +107,8 @@ export function process_definitions(
     const symbol_id = create_symbol_id(name, kind, location);
 
     // Base fields common to all definitions
-    const base = {
-      id: symbol_id,
+    const base: Definition = {
+      symbol_id,
       name,
       location,
       scope_id: def_scope.id,
@@ -119,64 +119,111 @@ export function process_definitions(
     let symbol: AnyDefinition;
     switch (kind) {
       case "function":
+        const function_def = createFunctionDef(base, capture.modifiers);
+        functions.set(symbol_id, function_def);
+        symbol = function_def;
+        break;
       case "constructor":
-        symbol = createFunctionDef(base, capture.modifiers);
-        functions.set(symbol_id, symbol as FunctionDefinition);
+        const constructor_def = createConstructorDef(base, capture.modifiers);
+        constructors.set(symbol_id, constructor_def);
+        symbol = constructor_def;
         break;
       case "class":
-        symbol = createClassDef(base, capture.modifiers);
-        classes.set(symbol_id, symbol as ClassDef);
+        const class_def = createClassDef(base, capture.modifiers);
+        classes.set(symbol_id, class_def);
+        class_scope_id_to_definitions.set(def_scope.id, class_def);
+        symbol = class_def;
         break;
       case "method":
-        symbol = createMethodDef(base, capture.modifiers);
-        methods.set(symbol_id, symbol as MethodDef);
+        const method_def = createMethodDef(base, capture.modifiers);
+        methods.set(symbol_id, method_def);
+        symbol = method_def;
         break;
       case "variable":
-        symbol = createVariableDef(base, "variable", capture.modifiers);
-        variables.set(symbol_id, symbol as VariableDef);
+        const variable_def = createVariableDef(
+          base,
+          "variable",
+          capture.modifiers
+        );
+        variables.set(symbol_id, variable_def);
+        symbol = variable_def;
         break;
       case "constant":
-        symbol = createVariableDef(base, "constant", capture.modifiers);
-        variables.set(symbol_id, symbol as VariableDef);
+        const constant_def = createVariableDef(
+          base,
+          "constant",
+          capture.modifiers
+        );
+        variables.set(symbol_id, constant_def);
+        symbol = constant_def;
         break;
       case "parameter":
-        symbol = createVariableDef(base, "parameter", capture.modifiers);
-        variables.set(symbol_id, symbol as VariableDef);
+        const parameter_def = createParameterDef(
+          base,
+          "parameter",
+          capture.modifiers
+        );
+        parameters.set(symbol_id, parameter_def);
+        symbol = parameter_def;
         break;
       case "interface":
-        symbol = createInterfaceDef(base, capture.modifiers);
-        interfaces.set(symbol_id, symbol as InterfaceDef);
+        const interface_def = createInterfaceDef(base, capture.modifiers);
+        interfaces.set(symbol_id, interface_def);
+        symbol = interface_def;
         break;
       case "enum":
-        symbol = createEnumDef(base, capture.modifiers);
-        enums.set(symbol_id, symbol as EnumDef);
+        const enum_def = createEnumDef(base, capture.modifiers);
+        enums.set(symbol_id, enum_def);
+        symbol = enum_def;
         break;
       case "type":
-        symbol = createTypeDef(base, "type", capture.modifiers);
-        types.set(symbol_id, symbol as TypeDef);
+        const type_def = createTypeDef(base, "type", capture.modifiers);
+        types.set(symbol_id, type_def);
+        symbol = type_def;
         break;
       case "type_alias":
-        symbol = createTypeDef(base, "type_alias", capture.modifiers);
-        types.set(symbol_id, symbol as TypeDef);
+        const type_alias_def = createTypeDef(
+          base,
+          "type_alias",
+          capture.modifiers
+        );
+        types.set(symbol_id, type_alias_def);
+        symbol = type_alias_def;
         break;
       case "namespace":
-        symbol = createNamespaceDef(base, "namespace", capture.modifiers);
-        namespaces.set(symbol_id, symbol as NamespaceDef);
+        const namespace_def = createNamespaceDef(
+          base,
+          "namespace",
+          capture.modifiers
+        );
+        namespaces.set(symbol_id, namespace_def);
+        symbol = namespace_def;
         break;
       case "module":
-        symbol = createNamespaceDef(base, "module", capture.modifiers);
-        namespaces.set(symbol_id, symbol as NamespaceDef);
+        const module_def = createNamespaceDef(
+          base,
+          "module",
+          capture.modifiers
+        );
+        namespaces.set(symbol_id, module_def);
+        symbol = module_def;
         break;
       case "import":
         // Imports are handled separately, create as variable for now
-        symbol = createVariableDef(base, "variable", capture.modifiers);
-        variables.set(symbol_id, symbol as VariableDef);
+        const import_def = createVariableDef(
+          base,
+          "variable",
+          capture.modifiers
+        );
+        variables.set(symbol_id, import_def);
+        symbol = import_def;
         break;
       default:
         // Default to variable for unknown kinds
         console.warn(`Unknown symbol kind: ${kind}, defaulting to variable`);
-        symbol = createVariableDef(base, "variable", capture.modifiers);
-        variables.set(symbol_id, symbol as VariableDef);
+        const var_def = createVariableDef(base, "variable", capture.modifiers);
+        variables.set(symbol_id, var_def);
+        symbol = var_def;
     }
 
     // Store symbol in scope
@@ -203,23 +250,17 @@ export function process_definitions(
 
     // Check if the method belongs to a class
     for (const [class_id, class_def] of classes) {
-      if (class_def.scope_id === method_scope.parent_id ||
-          (method_scope.parent_id && scopes.get(method_scope.parent_id)?.symbols.has(class_def.name))) {
+      if (
+        class_def.scope_id === method_scope.parent_id ||
+        (method_scope.parent_id &&
+          scopes.get(method_scope.parent_id)?.symbols.has(class_def.name))
+      ) {
         // Add method to class
         const existing_methods = class_def.methods || [];
-        const existing_static = class_def.static_methods || [];
-
-        if (method.is_static) {
-          classes.set(class_id, {
-            ...class_def,
-            static_methods: [...existing_static, method]
-          });
-        } else {
-          classes.set(class_id, {
-            ...class_def,
-            methods: [...existing_methods, method]
-          });
-        }
+        classes.set(class_id, {
+          ...class_def,
+          methods: [...existing_methods, method],
+        });
         parent_found = true;
         break;
       }
@@ -228,13 +269,16 @@ export function process_definitions(
     // Check interfaces if not found in classes
     if (!parent_found) {
       for (const [interface_id, interface_def] of interfaces) {
-        if (interface_def.scope_id === method_scope.parent_id ||
-            (method_scope.parent_id && scopes.get(method_scope.parent_id)?.symbols.has(interface_def.name))) {
+        if (
+          interface_def.scope_id === method_scope.parent_id ||
+          (method_scope.parent_id &&
+            scopes.get(method_scope.parent_id)?.symbols.has(interface_def.name))
+        ) {
           // Add method to interface
           const existing_methods = interface_def.methods || [];
           interfaces.set(interface_id, {
             ...interface_def,
-            methods: [...existing_methods, method]
+            methods: [...existing_methods, method],
           });
           parent_found = true;
           break;
@@ -245,13 +289,16 @@ export function process_definitions(
     // Check enums if not found in classes or interfaces
     if (!parent_found) {
       for (const [enum_id, enum_def] of enums) {
-        if (enum_def.scope_id === method_scope.parent_id ||
-            (method_scope.parent_id && scopes.get(method_scope.parent_id)?.symbols.has(enum_def.name))) {
+        if (
+          enum_def.scope_id === method_scope.parent_id ||
+          (method_scope.parent_id &&
+            scopes.get(method_scope.parent_id)?.symbols.has(enum_def.name))
+        ) {
           // Add method to enum
           const existing_methods = enum_def.methods || [];
           enums.set(enum_id, {
             ...enum_def,
-            methods: [...existing_methods, method]
+            methods: [...existing_methods, method],
           });
           parent_found = true;
           break;
@@ -259,6 +306,17 @@ export function process_definitions(
       }
     }
   }
+
+  // Associate constructors with their parent classes
+  for (const [constructor_id, constructor] of constructors) {
+    const constructor_scope = scopes.get(constructor.scope_id);
+    if (!constructor_scope) continue;
+    classes.set(constructor_id, {
+      ...constructor,
+      constructor: constructor,
+    });
+  }
+  // TODO: parameters, decorators
 
   // Also associate fields/variables with their parent classes
   for (const [var_id, var_def] of variables) {
@@ -268,13 +326,15 @@ export function process_definitions(
 
       // Check if this variable is a field in a class
       for (const [class_id, class_def] of classes) {
-        if (class_def.scope_id === var_def.scope_id ||
-            class_def.scope_id === var_scope.parent_id) {
+        if (
+          class_def.scope_id === var_def.scope_id ||
+          class_def.scope_id === var_scope.parent_id
+        ) {
           // Add field to class
           const existing_fields = class_def.fields || [];
           classes.set(class_id, {
             ...class_def,
-            fields: [...existing_fields, var_def]
+            fields: [...existing_fields, var_def],
           });
           break;
         }
@@ -299,112 +359,117 @@ export function process_definitions(
  */
 
 function createFunctionDef(
-  base: Omit<FunctionDef, "kind">,
-  modifiers?: any
-): FunctionDef {
+  base: Definition,
+  modifiers: SemanticModifiers,
+  context: CaptureContext | undefined
+): FunctionDefinition {
   return {
     ...base,
-    kind: base.name === "constructor" ? "constructor" : "function",
-    return_type_hint: modifiers?.return_type as SymbolName,
-    is_generic: modifiers?.is_generic,
-    is_async: modifiers?.is_async,
-    is_generator: modifiers?.is_generator,
-    // Rust-specific
-    is_const: modifiers?.is_const,
-    is_move: modifiers?.is_move,
-    returns_impl_trait: modifiers?.returns_impl_trait,
-    accepts_impl_trait: modifiers?.accepts_impl_trait,
-    is_higher_order: modifiers?.is_higher_order,
-    is_function_pointer: modifiers?.is_function_pointer,
-    is_function_trait: modifiers?.is_function_trait,
+    kind: "function",
+    signature: {
+      parameters: context?.parameters || [], // TODO: add parameters on second pass.
+      return_type: context?.return_type as SymbolName,
+    },
+  };
+}
+
+function createConstructorDef(
+  base: Definition,
+  modifiers: SemanticModifiers
+): ConstructorDefinition {
+  return {
+    ...base,
+    kind: "constructor",
+    parameters: modifiers.parameters, // TODO: add parameters on second pass.
+    decorators: modifiers.decorators, // TODO: add decorators on second pass.
   };
 }
 
 function createClassDef(
-  base: Omit<ClassDef, "kind">,
-  modifiers?: any
-): ClassDef {
+  base: Definition,
+  modifiers: SemanticModifiers
+): ClassDefinition {
   return {
     ...base,
     kind: "class",
-    extends_class: modifiers?.extends_class as SymbolName,
-    implements_interfaces: modifiers?.implements_interfaces,
-    is_generic: modifiers?.is_generic,
+    extends_class: modifiers.extends_class as SymbolName,
+    implements_interfaces: modifiers.implements_interfaces,
+    is_generic: modifiers.is_generic,
   };
 }
 
 function createMethodDef(
-  base: Omit<MethodDef, "kind">,
-  modifiers?: any
-): MethodDef {
+  base: Definition,
+  modifiers: SemanticModifiers
+): MethodDefinition {
   return {
     ...base,
     kind: "method",
-    is_static: modifiers?.is_static,
-    return_type_hint: modifiers?.return_type as SymbolName,
-    is_generic: modifiers?.is_generic,
-    is_async: modifiers?.is_async,
+    is_static: modifiers.is_static,
+    return_type_hint: modifiers.return_type as SymbolName,
+    is_generic: modifiers.is_generic,
+    is_async: modifiers.is_async,
   };
 }
 
 function createVariableDef(
-  base: Omit<VariableDef, "kind">,
-  kind: "variable" | "constant" | "parameter",
-  modifiers?: any
-): VariableDef {
+  base: Definition,
+  kind: "variable" | "constant",
+  modifiers: SemanticModifiers
+): VariableDefinition {
   return {
     ...base,
     kind,
-    type_hint: modifiers?.type_hint as SymbolName,
-    is_lifetime: modifiers?.is_lifetime,
+    type: modifiers.type as SymbolName,
+    is_lifetime: modifiers.is_lifetime,
   };
 }
 
 function createInterfaceDef(
-  base: Omit<InterfaceDef, "kind">,
-  modifiers?: any
-): InterfaceDef {
+  base: Definition,
+  modifiers: SemanticModifiers
+): InterfaceDefinition {
   return {
     ...base,
     kind: "interface",
-    extends_interfaces: modifiers?.extends_interfaces,
-    is_generic: modifiers?.is_generic,
+    extends_interfaces: modifiers.extends_interfaces,
+    is_generic: modifiers.is_generic,
   };
 }
 
 function createEnumDef(
-  base: Omit<EnumDef, "kind">,
-  modifiers?: any
-): EnumDef {
+  base: Definition,
+  modifiers: SemanticModifiers
+): EnumDefinition {
   return {
     ...base,
     kind: "enum",
-    members: modifiers?.members,
+    members: modifiers.members,
   };
 }
 
 function createTypeDef(
-  base: Omit<TypeDef, "kind">,
+  base: Definition,
   kind: "type" | "type_alias",
-  modifiers?: any
-): TypeDef {
+  modifiers: SemanticModifiers
+): TypeDefinition {
   return {
     ...base,
     kind,
-    type_expression: modifiers?.type_expression,
-    is_generic: modifiers?.is_generic,
+    type_expression: modifiers.type_expression,
+    is_generic: modifiers.is_generic,
   };
 }
 
 function createNamespaceDef(
-  base: Omit<NamespaceDef, "kind">,
+  base: Definition,
   kind: "namespace" | "module",
-  modifiers?: any
-): NamespaceDef {
+  modifiers: SemanticModifiers
+): NamespaceDefinition {
   return {
     ...base,
     kind,
-    exported_symbols: modifiers?.exported_symbols,
+    exported_symbols: modifiers.exported_symbols,
   };
 }
 
@@ -464,13 +529,15 @@ export function map_entity_to_symbol_kind(entity: SemanticEntity): SymbolKind {
  */
 function determine_symbol_availability(
   entity: SemanticEntity,
-  modifiers: any,
+  modifiers: SemanticModifiers,
   _language?: Language
 ): SymbolAvailability {
+  // TODO: improve this with the use of scope information. TODO: also, downstream clients of this ('export' processing) should calculate the visibility based on the scope
   // Check if symbol is exported (from modifiers or entity type)
-  const is_exported = modifiers?.is_exported ||
-                     entity === SemanticEntity.EXPORTED_FUNCTION ||
-                     entity === SemanticEntity.EXPORTED_CLASS;
+  const is_exported =
+    modifiers.is_exported ||
+    entity === SemanticEntity.EXPORTED_FUNCTION ||
+    entity === SemanticEntity.EXPORTED_CLASS;
 
   // Default to file-private, upgrade to file-export if exported
   return {

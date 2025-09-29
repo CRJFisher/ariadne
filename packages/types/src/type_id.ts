@@ -10,6 +10,7 @@ import type { SymbolName } from "./symbol";
 
 /**
  * Branded type for type identifiers
+ * @deprecated Use TypeName instead
  */
 export type TypeId = string & { __brand: "TypeId" };
 

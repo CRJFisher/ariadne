@@ -69,7 +69,6 @@ export {
   // Type aliases and other types
   ParameterName,
   FunctionSignature,
-  MethodSignature,
   PropertySignature,
   EnumMember,
 } from "./symbol_definitions";

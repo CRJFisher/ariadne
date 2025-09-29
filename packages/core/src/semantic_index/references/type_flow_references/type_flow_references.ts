@@ -111,7 +111,7 @@ export type FlowSource =
  */
 export function extract_type_flow(
   captures: NormalizedCapture[],
-  scopes: Map<ScopeId, LexicalScope>,
+  scopes: Map<ScopeId, LexicalScope>
 ): LocalTypeFlowData {
   const constructor_calls: LocalConstructorCall[] = [];
   const assignments: LocalAssignmentFlow[] = [];
@@ -143,9 +143,9 @@ export function extract_type_flow(
         // Check if this is a constructor call or function call
         // This would need proper analysis of the capture
         if (is_constructor_call(capture)) {
-          const constructor_scope = root_scope ?
-            find_containing_scope(capture.node_location, root_scope, scopes) :
-            Array.from(scopes.values())[0];
+          const constructor_scope = root_scope
+            ? find_containing_scope(capture.node_location, root_scope, scopes)
+            : Array.from(scopes.values())[0];
 
           constructor_calls.push({
             class_name: extract_class_name(capture),
@@ -154,7 +154,10 @@ export function extract_type_flow(
             argument_count: count_arguments(capture),
             scope_id: constructor_scope.id,
           });
-        } else if (is_function_call(capture) && has_assignment_target(capture)) {
+        } else if (
+          is_function_call(capture) &&
+          has_assignment_target(capture)
+        ) {
           call_assignments.push(extract_call_assignment(capture));
         }
         break;
@@ -169,13 +172,15 @@ export function extract_type_flow(
  */
 function extract_class_name(capture: NormalizedCapture): SymbolName {
   // The capture text should be the class name for constructor calls
-  return capture.text as SymbolName;
+  return capture.symbol_name as SymbolName;
 }
 
 /**
  * Extract assignment target from capture
  */
-function extract_assignment_target(capture: NormalizedCapture): SymbolName | undefined {
+function extract_assignment_target(
+  capture: NormalizedCapture
+): SymbolName | undefined {
   // Look for parent assignment node
   // This would need to analyze the parent node in the AST
   // For now, return undefined - proper implementation would check parent nodes
@@ -194,10 +199,12 @@ function count_arguments(capture: NormalizedCapture): number {
 /**
  * Extract assignment flow from capture
  */
-function extract_assignment_flow(capture: NormalizedCapture): LocalAssignmentFlow {
+function extract_assignment_flow(
+  capture: NormalizedCapture
+): LocalAssignmentFlow {
   return {
-    source: { kind: "expression", text: capture.text },
-    target: capture.text as SymbolName, // Would need proper target extraction
+    source: { kind: "expression", text: capture.symbol_name },
+    target: capture.symbol_name as SymbolName, // Would need proper target extraction
     location: capture.node_location,
     kind: "direct",
   };
@@ -211,14 +218,14 @@ function extract_return_flow(
   scopes: Map<ScopeId, LexicalScope>,
   root_scope: LexicalScope | undefined
 ): LocalReturnFlow {
-  const containing_scope = root_scope ?
-    find_containing_scope(capture.node_location, root_scope, scopes) :
-    Array.from(scopes.values())[0];
+  const containing_scope = root_scope
+    ? find_containing_scope(capture.node_location, root_scope, scopes)
+    : Array.from(scopes.values())[0];
 
   return {
     function_name: undefined, // Would need to find containing function
     location: capture.node_location,
-    value: { kind: "expression", text: capture.text },
+    value: { kind: "expression", text: capture.symbol_name },
     scope_id: containing_scope.id,
   };
 }
@@ -228,7 +235,10 @@ function extract_return_flow(
  */
 function is_constructor_call(capture: NormalizedCapture): boolean {
   // Simple heuristic - would need proper implementation
-  return capture.text.charAt(0) === capture.text.charAt(0).toUpperCase();
+  return (
+    capture.symbol_name.charAt(0) ===
+    capture.symbol_name.charAt(0).toUpperCase()
+  );
 }
 
 /**
@@ -250,9 +260,11 @@ function has_assignment_target(capture: NormalizedCapture): boolean {
 /**
  * Extract call assignment from capture
  */
-function extract_call_assignment(capture: NormalizedCapture): LocalCallAssignment {
+function extract_call_assignment(
+  capture: NormalizedCapture
+): LocalCallAssignment {
   return {
-    function_name: capture.text as SymbolName,
+    function_name: capture.symbol_name as SymbolName,
     location: capture.node_location,
     assigned_to: "unknown" as SymbolName, // Would need proper extraction
     method_info: undefined,

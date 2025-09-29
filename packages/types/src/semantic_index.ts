@@ -11,33 +11,18 @@ import type { SymbolId, SymbolName } from "./symbol";
 import type { ScopeId, ScopeType } from "./scopes";
 import type { Import, Export } from "./import_export";
 import type { TypeId } from "./type_id";
-import type { AnyDefinition, SymbolAvailability } from "./symbol_definitions";
-
-/**
- * Symbol kind - essential for resolution rules
- */
-export type SymbolKind =
-  | "function"
-  | "class"
-  | "method"
-  | "constructor"
-  | "parameter"
-  | "variable"
-  | "constant"
-  | "import"
-  | "interface"
-  | "enum"
-  | "type"
-  | "type_alias"
-  | "namespace"
-  | "module";
+import type {
+  AnyDefinition,
+  SymbolAvailability,
+  SymbolKind,
+} from "./symbol_definitions";
 
 /**
  * Reference type - essential for call chain tracking
  */
 export type ReferenceType =
-  | "call" // Function/method call - CRITICAL for call chains
-  | "construct" // Constructor call - CRITICAL for call chains
+  | "call" // Function/method call
+  | "construct" // Constructor call
   | "read" // Variable read
   | "write" // Variable write
   | "member_access" // Property/method access - needed for method resolution
@@ -71,7 +56,6 @@ export interface LexicalScope {
   /** Symbols defined in this scope */
   readonly symbols: Map<SymbolName, AnyDefinition>;
 }
-
 
 // /**
 //  * Base definition interface - common fields for all symbol types
@@ -172,7 +156,6 @@ export interface LexicalScope {
 //   readonly is_namespace?: boolean;
 // }
 
-
 // /**
 //  * Type/type alias definition for extraction phase
 //  */
@@ -271,7 +254,7 @@ export interface SymbolDefinition {
 
   /** For classes: what it implements */
   readonly implements_interfaces?: readonly SymbolName[];
-  
+
   /** For methods: whether it's static */
   readonly is_static?: boolean;
 

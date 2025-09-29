@@ -156,7 +156,7 @@ describe("Definitions Module", () => {
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.FUNCTION,
-          text: "testFunction",
+          symbol_name: "testFunction",
           node_location: { ...base_location, line: 3 },
           modifiers: {},
         },
@@ -184,7 +184,7 @@ describe("Definitions Module", () => {
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.CLASS,
-          text: "TestClass",
+          symbol_name: "TestClass",
           node_location: { ...base_location, line: 3 },
           modifiers: {},
         },
@@ -211,7 +211,7 @@ describe("Definitions Module", () => {
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.INTERFACE,
-          text: "TestInterface",
+          symbol_name: "TestInterface",
           node_location: { ...base_location, line: 3 },
           modifiers: {},
         },
@@ -234,7 +234,7 @@ describe("Definitions Module", () => {
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.ENUM,
-          text: "TestEnum",
+          symbol_name: "TestEnum",
           node_location: { ...base_location, line: 3 },
           modifiers: {},
         },
@@ -257,7 +257,7 @@ describe("Definitions Module", () => {
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.VARIABLE,
-          text: "testVariable",
+          symbol_name: "testVariable",
           node_location: { ...base_location, line: 3 },
           modifiers: {},
         },
@@ -280,7 +280,7 @@ describe("Definitions Module", () => {
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.METHOD,
-          text: "staticMethod",
+          symbol_name: "staticMethod",
           node_location: { ...base_location, line: 3 },
           modifiers: { is_static: true },
         },
@@ -308,14 +308,14 @@ describe("Definitions Module", () => {
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.CLASS,
-          text: "TestClass",
+          symbol_name: "TestClass",
           node_location: class_scope.location,
           modifiers: {},
         },
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.METHOD,
-          text: "testMethod",
+          symbol_name: "testMethod",
           node_location: method_scope.location,
           modifiers: {},
         },
@@ -364,21 +364,21 @@ describe("Definitions Module", () => {
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.CLASS,
-          text: "TestClass",
+          symbol_name: "TestClass",
           node_location: class_scope.location,
           modifiers: {},
         },
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.METHOD,
-          text: "instanceMethod",
+          symbol_name: "instanceMethod",
           node_location: method_scope.location,
           modifiers: { is_static: false },
         },
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.METHOD,
-          text: "staticMethod",
+          symbol_name: "staticMethod",
           node_location: { ...method_scope.location, line: 13 },
           modifiers: { is_static: true },
         },
@@ -416,14 +416,14 @@ describe("Definitions Module", () => {
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.VARIABLE,
-          text: "x",
+          symbol_name: "x",
           node_location: base_location,
           modifiers: {},
         },
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.VARIABLE,
-          text: "x",
+          symbol_name: "x",
           node_location: function_scope.location,
           modifiers: {},
         },
@@ -449,14 +449,14 @@ describe("Definitions Module", () => {
           {
             category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.FUNCTION,
-            text: "func",
+            symbol_name: "func",
             node_location: base_location,
             modifiers: {},
           },
           {
             category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.VARIABLE,
-            text: "var",
+            symbol_name: "var",
             node_location: base_location,
             modifiers: {},
           },
@@ -478,21 +478,21 @@ describe("Definitions Module", () => {
           {
             category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.FUNCTION,
-            text: "func",
+            symbol_name: "func",
             node_location: base_location,
             modifiers: {},
           },
           {
             category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.CLASS,
-            text: "MyClass",
+            symbol_name: "MyClass",
             node_location: base_location,
             modifiers: {},
           },
           {
             category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.VARIABLE,
-            text: "var",
+            symbol_name: "var",
             node_location: base_location,
             modifiers: {},
           },
@@ -521,21 +521,21 @@ describe("Definitions Module", () => {
           {
             category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.FUNCTION,
-            text: "func",
+            symbol_name: "func",
             node_location: base_location,
             modifiers: {},
           },
           {
             category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.CONSTANT,
-            text: "CONST",
+            symbol_name: "CONST",
             node_location: base_location,
             modifiers: {},
           },
           {
             category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.VARIABLE,
-            text: "var",
+            symbol_name: "var",
             node_location: base_location,
             modifiers: {},
           },
@@ -574,7 +574,7 @@ describe("Definitions Module", () => {
           {
             category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.FUNCTION,
-            text: "orphanFunction",
+            symbol_name: "orphanFunction",
             node_location: { ...base_location, line: 100 }, // Far from any scope
             modifiers: {},
           },
@@ -591,7 +591,7 @@ describe("Definitions Module", () => {
           {
             category: SemanticCategory.DEFINITION,
             entity: "invalid_entity" as SemanticEntity,
-            text: "test",
+            symbol_name: "test",
             node_location: base_location,
             modifiers: {},
           },
@@ -615,7 +615,7 @@ describe("Definitions Module", () => {
           {
             category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.CONSTRUCTOR,
-            text: "constructor",
+            symbol_name: "constructor",
             node_location: base_location,
             modifiers: {},
           },
@@ -638,7 +638,7 @@ describe("Definitions Module", () => {
           {
             category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.FUNCTION,
-            text: "testFunc",
+            symbol_name: "testFunc",
             node_location: base_location,
             modifiers: {},
           },
@@ -660,7 +660,7 @@ describe("Definitions Module", () => {
           {
             category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.CLASS,
-            text: "TestClass",
+            symbol_name: "TestClass",
             node_location: base_location,
             modifiers: {},
           },
@@ -682,7 +682,7 @@ describe("Definitions Module", () => {
           {
             category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.METHOD,
-            text: "testMethod",
+            symbol_name: "testMethod",
             node_location: base_location,
             modifiers: {},
           },
@@ -704,7 +704,7 @@ describe("Definitions Module", () => {
           {
             category: SemanticCategory.DEFINITION,
             entity: SemanticEntity.VARIABLE,
-            text: "testVar",
+            symbol_name: "testVar",
             node_location: base_location,
             modifiers: {},
           },
@@ -1071,14 +1071,14 @@ describe("Definitions Module", () => {
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.FUNCTION,
-          text: "", // Empty name
+          symbol_name: "", // Empty name
           node_location: base_location,
           modifiers: {},
         },
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.VARIABLE,
-          text: "", // Empty name
+          symbol_name: "", // Empty name
           node_location: base_location,
           modifiers: {},
         },
@@ -1095,7 +1095,7 @@ describe("Definitions Module", () => {
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.FUNCTION,
-          text: "testFunction",
+          symbol_name: "testFunction",
           node_location: {
             file_path: file_path,
             line: -1, // Invalid line
@@ -1119,7 +1119,7 @@ describe("Definitions Module", () => {
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.METHOD,
-          text: "testMethod",
+          symbol_name: "testMethod",
           node_location: base_location,
           modifiers: {
             is_static: true, // Changed to boolean
@@ -1206,7 +1206,7 @@ describe("Definitions Module", () => {
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.VARIABLE,
-          text: "deepVariable",
+          symbol_name: "deepVariable",
           node_location: function_scope.location,
           modifiers: {},
         },
@@ -1249,7 +1249,7 @@ describe("Definitions Module", () => {
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.VARIABLE,
-          text: "cyclicVariable",
+          symbol_name: "cyclicVariable",
           node_location: scope_a.location,
           modifiers: {},
         },
@@ -1268,7 +1268,7 @@ describe("Definitions Module", () => {
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.FUNCTION,
-          text: long_name,
+          symbol_name: long_name,
           node_location: base_location,
           modifiers: {},
         },
@@ -1461,7 +1461,7 @@ describe("Definitions Module", () => {
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.CLASS,
-          text: "TestClass",
+          symbol_name: "TestClass",
           node_location: base_location,
           modifiers: {},
         },
@@ -1498,21 +1498,21 @@ describe("Definitions Module", () => {
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.CLASS,
-          text: "Test",
+          symbol_name: "Test",
           node_location: { ...base_location, line: 1 },
           modifiers: {},
         },
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.INTERFACE,
-          text: "Test",
+          symbol_name: "Test",
           node_location: { ...base_location, line: 2 },
           modifiers: {},
         },
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.ENUM,
-          text: "Test",
+          symbol_name: "Test",
           node_location: { ...base_location, line: 3 },
           modifiers: {},
         },
@@ -1551,7 +1551,7 @@ describe("Definitions Module", () => {
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.FUNCTION,
-          text: "testFunction",
+          symbol_name: "testFunction",
           node_location: base_location,
           modifiers: {},
         },
@@ -1591,7 +1591,7 @@ describe("Definitions Module", () => {
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.VARIABLE,
-          text: "nestedVar",
+          symbol_name: "nestedVar",
           node_location: nested_block.location,
           modifiers: {},
         },
@@ -1622,7 +1622,7 @@ describe("Definitions Module", () => {
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.VARIABLE,
-          text: "orphanedVariable",
+          symbol_name: "orphanedVariable",
           node_location: out_of_scope_location,
           modifiers: {},
         },
@@ -1655,7 +1655,7 @@ describe("Definitions Module", () => {
         {
           category: SemanticCategory.DEFINITION,
           entity: SemanticEntity.VARIABLE,
-          text: "orphanedVariable",
+          symbol_name: "orphanedVariable",
           node_location: orphaned_scope.location,
           modifiers: {},
         },

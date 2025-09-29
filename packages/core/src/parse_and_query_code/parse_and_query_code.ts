@@ -5,6 +5,7 @@ import {
   group_captures_by_category,
 } from "./capture_normalizer";
 import { load_query, LANGUAGE_TO_TREESITTER_LANG } from "./query_loader";
+import type { GroupedCaptures } from "./capture_normalizer";
 
 /**
  * Query tree and parse captures into normalized semantic categories
@@ -14,7 +15,7 @@ export function query_tree_and_parse_captures(
   lang: Language,
   tree: Tree,
   file_path: FilePath
-) {
+): GroupedCaptures {
   const query_string = load_query(lang);
   const parser = LANGUAGE_TO_TREESITTER_LANG.get(lang);
   if (!parser) {

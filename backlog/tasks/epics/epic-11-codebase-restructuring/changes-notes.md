@@ -36,3 +36,7 @@
 ## Misnamings
 
 - `usage_finder.ts` is misnamed. it now just deals with finding the caller of a call.
+
+## Usage of ScopeTree
+
+- When performin all symbol_resolution, we should have a pattern of matching SymbolName's from the most local scope first, then the next most local scope, etc. until we find a match.

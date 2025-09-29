@@ -1,5 +1,5 @@
 /**
- * Type definitions for code element definitions
+ * Type definitions for code element definitions.
  */
 
 import { Location } from "./common";
@@ -10,8 +10,30 @@ export type ParameterName = string & { __brand: "ParameterName" };
 
 import { SymbolId } from "./symbol";
 import { SymbolName } from "./symbol";
-import { TypeName } from "./types";
 import { ModulePath } from "./import_export";
+
+
+/**
+ * Symbol kind - essential for resolution rules
+ */
+
+export type SymbolKind =
+  | "function"
+  | "class"
+  | "method"
+  | "constructor"
+  | "property"
+  | "parameter"
+  | "decorator"
+  | "variable"
+  | "constant"
+  | "import"
+  | "interface"
+  | "enum"
+  | "type"
+  | "type_alias"
+  | "namespace"
+  | "module";
 
 /**
  * Symbol availability determines where a symbol can be referenced
@@ -37,6 +59,7 @@ export interface SymbolAvailability {
  * All entity-specific definition types should extend this
  */
 export interface Definition {
+  readonly kind: SymbolKind;
   readonly symbol_id: SymbolId;
   readonly name: SymbolName;
   readonly scope_id: ScopeId; // ID of containing scope
@@ -45,9 +68,11 @@ export interface Definition {
 }
 
 export interface FunctionDefinition extends Definition {
+  readonly kind: "function";
   readonly signature: FunctionSignature;
   readonly docstring?: DocString;
   readonly decorators?: readonly SymbolName[];
+  readonly return_type?: SymbolName;
 }
 
 export interface FunctionSignature {
@@ -60,6 +85,7 @@ export interface FunctionSignature {
  * Covers: class (JS/TS/Python/Java), struct (Rust/Go/C), trait (Rust), protocol (Python)
  */
 export interface ClassDefinition extends Definition {
+  readonly kind: "class";
   readonly extends: readonly SymbolName[]; // extends or implements
   readonly methods: readonly MethodDefinition[];
   readonly properties: readonly PropertyDefinition[]; // Aka fields
@@ -72,12 +98,14 @@ export interface ClassDefinition extends Definition {
  * Method definition within a class
  */
 export interface MethodDefinition extends Definition {
+  readonly kind: "method";
   readonly parameters: readonly ParameterDefinition[];
-  readonly return_type?: TypeName;
+  readonly return_type?: SymbolName;
   readonly decorators?: readonly SymbolName[];
 }
 
 export interface ConstructorDefinition extends Definition {
+  readonly kind: "constructor";
   readonly parameters: readonly ParameterDefinition[];
   readonly decorators?: readonly SymbolName[];
 }
@@ -86,7 +114,8 @@ export interface ConstructorDefinition extends Definition {
  * Property/field definition within a class
  */
 export interface PropertyDefinition extends Definition {
-  readonly type?: TypeName;
+  readonly kind: "property";
+  readonly type?: SymbolName;
   readonly initial_value?: string;
   readonly decorators: readonly SymbolId[];
 }
@@ -95,7 +124,9 @@ export interface PropertyDefinition extends Definition {
  * Function/method parameter definition
  */
 export interface ParameterDefinition extends Definition {
+  readonly kind: "parameter";
   readonly type?: SymbolName;
+  readonly default_value?: string;
 }
 
 /**
@@ -103,33 +134,31 @@ export interface ParameterDefinition extends Definition {
  * Covers: interface (TS/Java/C#), protocol (Swift/Python), trait (Rust)
  */
 export interface InterfaceDefinition extends Definition {
-  readonly extends: readonly SymbolId[];
-  readonly methods: readonly MethodSignature[] | readonly MethodDefinition[]; // Can be signatures or full definitions
+  readonly kind: "interface";
+  readonly extends: readonly SymbolName[];
+  readonly methods: readonly MethodDefinition[];
   readonly properties: readonly PropertySignature[];
-}
-
-/**
- * Method signature in an interface
- */
-export interface MethodSignature extends Definition {
-  readonly parameters: readonly ParameterDefinition[];
-  readonly return_type?: SymbolName;
-  readonly is_optional?: boolean;
 }
 
 /**
  * Property signature in an interface
  */
 export interface PropertySignature {
+  readonly kind: "property";
   readonly name: SymbolId;
-  readonly type?: TypeName; // Required - use "unknown" when type cannot be inferred
+  readonly type?: SymbolName; // Required - use "unknown" when type cannot be inferred
   readonly location: Location;
+}
+
+export interface DecoratorDefinition extends Definition {
+  readonly kind: "decorator";
 }
 
 /**
  * Enum definition
  */
 export interface EnumDefinition extends Definition {
+  readonly kind: "enum";
   readonly members: readonly EnumMember[];
   readonly methods?: readonly MethodDefinition[]; // Enum methods (Rust/Java style)
   readonly is_const: boolean; // TypeScript const enum, defaults to false
@@ -148,7 +177,8 @@ export interface EnumMember {
  * Variable/constant definition
  */
 export interface VariableDefinition extends Definition {
-  readonly type?: TypeName;
+  readonly kind: "variable" | "constant";
+  readonly type?: SymbolName;
   readonly initial_value?: string;
 }
 
@@ -170,6 +200,10 @@ export interface NamespaceDefinition extends Definition {
   readonly exported_symbols?: readonly SymbolId[];
 }
 
+export interface TypeDefinition extends Definition {
+  readonly kind: "type" | "type_alias";
+  readonly type_expression?: string;
+}
 /**
  * Union of all definition types
  */
@@ -183,4 +217,5 @@ export type AnyDefinition =
   | EnumDefinition
   | VariableDefinition
   | NamespaceDefinition
-  | ImportDefinition;
+  | ImportDefinition
+  | TypeDefinition;
