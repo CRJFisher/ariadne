@@ -1,0 +1,82 @@
+/**
+ * Types for function call resolution
+ */
+
+import type {
+  Location,
+  LocationKey,
+  SymbolId,
+  SymbolName,
+  ScopeId,
+  FilePath,
+} from "@ariadnejs/types";
+import type { SemanticIndex } from "../../index_single_file/semantic_index";
+
+/**
+ * Resolution result for a single function call
+ */
+export interface FunctionCallResolution {
+  readonly call_location?: Location;
+  readonly resolved_function: SymbolId;
+  readonly resolution_strategy:
+    | "lexical"
+    | "imported"
+    | "global"
+    | "builtin"
+    | "builtin_macro"
+    | "lexical_macro"
+    | "imported_macro";
+  readonly confidence: "high" | "medium" | "low";
+  readonly scope_chain?: readonly ScopeId[];
+  readonly import_source?: FilePath;
+
+  // Rust-specific function call information
+  readonly rust_function_info?: {
+    readonly is_closure_call: boolean;
+    readonly is_higher_order_call: boolean;
+    readonly is_const_function: boolean;
+    readonly is_async_function: boolean;
+    readonly is_unsafe_function: boolean;
+    readonly accepts_impl_trait: boolean;
+    readonly returns_impl_trait: boolean;
+    readonly closure_capture_kind?: "move" | "borrow" | "mut_borrow";
+    readonly function_trait_kind?: "Fn" | "FnMut" | "FnOnce";
+  };
+
+  // Rust macro-specific information
+  readonly macro_info?: {
+    readonly is_builtin: boolean;
+    readonly macro_kind:
+      | "builtin"
+      | "declarative"
+      | "procedural"
+      | "derive"
+      | "imported";
+    readonly macro_name: SymbolName;
+  };
+}
+
+/**
+ * Complete function resolution mapping
+ */
+export interface FunctionResolutionMap {
+  readonly function_calls: ReadonlyMap<LocationKey, SymbolId>;
+  readonly calls_to_function: ReadonlyMap<SymbolId, readonly Location[]>;
+  readonly resolution_details: ReadonlyMap<LocationKey, FunctionCallResolution>;
+
+  // Rust-specific resolution maps
+  readonly closure_calls: ReadonlyMap<LocationKey, SymbolId>;
+  readonly higher_order_calls: ReadonlyMap<LocationKey, SymbolId>;
+  readonly function_pointer_calls: ReadonlyMap<LocationKey, SymbolId>;
+}
+
+/**
+ * Context for resolving function calls in a file
+ */
+export interface FunctionResolutionContext {
+  readonly indices: ReadonlyMap<FilePath, SemanticIndex>;
+  readonly imports: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>;
+  readonly file_path: FilePath;
+  readonly file_index: SemanticIndex;
+  readonly file_imports: ReadonlyMap<SymbolName, SymbolId>;
+}

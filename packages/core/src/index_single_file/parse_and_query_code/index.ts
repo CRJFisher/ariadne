@@ -7,3 +7,9 @@ export {
   type ProcessingContext,
   type RawCapture
 } from "./scope_processor";
+export {
+  ReferenceBuilder,
+  ReferenceKind,
+  process_references,
+  is_reference_capture
+} from "./reference_builder";

@@ -52,9 +52,6 @@ export interface LexicalScope {
 
   /** Child scope IDs */
   readonly child_ids: readonly ScopeId[];
-
-  /** Symbols defined in this scope */
-  readonly symbols: Map<SymbolName, AnyDefinition>;
 }
 
 // /**
