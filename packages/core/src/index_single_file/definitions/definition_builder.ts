@@ -24,6 +24,7 @@ import type {
   ParameterDefinition,
   PropertyDefinition,
   PropertySignature,
+  ScopeId,
   SymbolAvailability,
   SymbolId,
   SymbolName,
@@ -280,9 +281,9 @@ export class DefinitionBuilder {
     // Route to appropriate handler based on entity type
     switch (entity) {
       case 'class':
-        return this.add_class(capture);
+        return this.add_class_from_capture(capture);
       case 'function':
-        return this.add_function(capture);
+        return this.add_function_from_capture(capture);
       case 'method':
         return this.add_method(capture);
       case 'constructor':
@@ -302,9 +303,9 @@ export class DefinitionBuilder {
         return this.add_namespace(capture);
       case 'variable':
       case 'constant':
-        return this.add_variable(capture);
+        return this.add_variable_from_capture(capture);
       case 'import':
-        return this.add_import(capture);
+        return this.add_import_from_capture(capture);
       case 'type':
       case 'type_alias':
         return this.add_type(capture);
@@ -336,10 +337,191 @@ export class DefinitionBuilder {
   }
 
   // ============================================================================
-  // Complex Type Handlers
+  // Public API for Language Configs
   // ============================================================================
 
-  private add_class(capture: RawCapture): DefinitionBuilder {
+  /**
+   * Add a class definition
+   */
+  add_class(definition: {
+    symbol_id: SymbolId;
+    name: SymbolName;
+    location: Location;
+    scope_id: ScopeId;
+    availability: SymbolAvailability;
+    extends?: SymbolName[];
+  }): DefinitionBuilder {
+    this.classes.set(definition.symbol_id, {
+      base: {
+        kind: "class",
+        ...definition,
+        extends: definition.extends || [],
+      },
+      methods: new Map(),
+      properties: new Map(),
+      constructor: undefined,
+      decorators: [],
+    });
+    return this;
+  }
+
+  /**
+   * Add a method to a class
+   */
+  add_method_to_class(class_id: SymbolId, definition: {
+    symbol_id: SymbolId;
+    name: SymbolName;
+    location: Location;
+    scope_id: ScopeId;
+    availability: SymbolAvailability;
+    return_type?: SymbolName;
+  }): DefinitionBuilder {
+    const class_state = this.classes.get(class_id);
+    if (!class_state) return this;
+
+    class_state.methods.set(definition.symbol_id, {
+      base: {
+        kind: "method",
+        ...definition,
+      },
+      parameters: new Map(),
+      decorators: [],
+    });
+    return this;
+  }
+
+  /**
+   * Add a function definition
+   */
+  add_function(definition: {
+    symbol_id: SymbolId;
+    name: SymbolName;
+    location: Location;
+    scope_id: ScopeId;
+    availability: SymbolAvailability;
+  }): DefinitionBuilder {
+    this.functions.set(definition.symbol_id, {
+      base: {
+        kind: "function",
+        ...definition,
+      },
+      signature: {
+        parameters: new Map(),
+        return_type: undefined,
+      },
+      decorators: [],
+    });
+    return this;
+  }
+
+  /**
+   * Add a parameter to a callable (function/method)
+   */
+  add_parameter_to_callable(callable_id: SymbolId, definition: {
+    symbol_id: SymbolId;
+    name: SymbolName;
+    location: Location;
+    scope_id: ScopeId;
+    type?: SymbolName;
+    default_value?: string;
+  }): DefinitionBuilder {
+    const param_def: ParameterDefinition = {
+      kind: "parameter",
+      ...definition,
+      availability: { scope: "file-private" },
+    };
+
+    // Check functions
+    const func_state = this.functions.get(callable_id);
+    if (func_state) {
+      func_state.signature.parameters.set(definition.symbol_id, param_def);
+      return this;
+    }
+
+    // Check methods in classes
+    for (const class_state of this.classes.values()) {
+      const method_state = class_state.methods.get(callable_id);
+      if (method_state) {
+        method_state.parameters.set(definition.symbol_id, param_def);
+        return this;
+      }
+    }
+
+    return this;
+  }
+
+  /**
+   * Add a variable definition
+   */
+  add_variable(definition: {
+    kind: 'variable' | 'constant';
+    symbol_id: SymbolId;
+    name: SymbolName;
+    location: Location;
+    scope_id: ScopeId;
+    availability: SymbolAvailability;
+    type?: SymbolName;
+    initial_value?: string;
+  }): DefinitionBuilder {
+    this.variables.set(definition.symbol_id, {
+      ...definition,
+    });
+    return this;
+  }
+
+  /**
+   * Add an import definition
+   */
+  add_import(definition: {
+    symbol_id: SymbolId;
+    name: SymbolName;
+    location: Location;
+    scope_id: ScopeId;
+    availability: SymbolAvailability;
+    import_path: ModulePath;
+    original_name?: SymbolName;
+    is_default?: boolean;
+    is_namespace?: boolean;
+  }): DefinitionBuilder {
+    this.imports.set(definition.symbol_id, {
+      kind: "import",
+      ...definition,
+      is_default: definition.is_default || false,
+      is_namespace: definition.is_namespace || false,
+    });
+    return this;
+  }
+
+  /**
+   * Add a property to a class
+   */
+  add_property_to_class(class_id: SymbolId, definition: {
+    symbol_id: SymbolId;
+    name: SymbolName;
+    location: Location;
+    scope_id: ScopeId;
+    availability: SymbolAvailability;
+    type?: SymbolName;
+    initial_value?: string;
+  }): DefinitionBuilder {
+    const class_state = this.classes.get(class_id);
+    if (!class_state) return this;
+
+    class_state.properties.set(definition.symbol_id, {
+      base: {
+        kind: "property",
+        ...definition,
+      },
+      decorators: [],
+    });
+    return this;
+  }
+
+  // ============================================================================
+  // Complex Type Handlers (private, used by process() method)
+  // ============================================================================
+
+  private add_class_from_capture(capture: RawCapture): DefinitionBuilder {
     const symbol_name = extract_symbol_name(capture);
     const location = extract_location(capture.node);
     const class_id = class_symbol(symbol_name, location);
@@ -364,7 +546,7 @@ export class DefinitionBuilder {
     return this;
   }
 
-  private add_function(capture: RawCapture): DefinitionBuilder {
+  private add_function_from_capture(capture: RawCapture): DefinitionBuilder {
     const symbol_name = extract_symbol_name(capture);
     const location = extract_location(capture.node);
     const func_id = function_symbol(symbol_name, location);
@@ -619,7 +801,7 @@ export class DefinitionBuilder {
   // Simple Definition Handlers
   // ============================================================================
 
-  private add_variable(capture: RawCapture): DefinitionBuilder {
+  private add_variable_from_capture(capture: RawCapture): DefinitionBuilder {
     const var_id = variable_symbol(extract_symbol_name(capture), extract_location(capture.node));
     const scope_id = this.context.get_scope_id(extract_location(capture.node));
 
@@ -641,8 +823,8 @@ export class DefinitionBuilder {
     return this;
   }
 
-  private add_import(capture: RawCapture): DefinitionBuilder {
-    const import_id = import_symbol(extract_symbol_name(capture), extract_location(capture.node));
+  private add_import_from_capture(capture: RawCapture): DefinitionBuilder {
+    const import_id = variable_symbol(extract_symbol_name(capture), extract_location(capture.node));
     const scope_id = this.context.get_scope_id(extract_location(capture.node));
 
     this.imports.set(import_id, {

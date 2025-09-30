@@ -135,10 +135,10 @@ export function extract_type_members(
 
   // Create combined map for helper functions that need to look up any symbol
   const allSymbols = new Map<SymbolId, AnyDefinition>([
-    ...classes,
-    ...interfaces,
-    ...types,
-    ...enums,
+    ...Array.from(classes || new Map()),
+    ...Array.from(interfaces || new Map()),
+    ...Array.from(types || new Map()),
+    ...Array.from(enums || new Map()),
   ]);
 
   // Determine language from file path

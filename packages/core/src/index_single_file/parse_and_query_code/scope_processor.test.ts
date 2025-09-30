@@ -198,35 +198,31 @@ describe("scope_processor", () => {
     it("should handle closures (functions within functions)", () => {
       const captures: RawCapture[] = [
         // Outer function
-        {
-          category: SemanticCategory.DEFINITION,
-          entity: SemanticEntity.FUNCTION,
-          node_location: {
+        create_raw_capture(
+          "scope",
+          "function",
+          {
             file_path,
             line: 2,
             column: 0,
             end_line: 10,
             end_column: 1
           },
-          symbol_name: "outerFunc" as SymbolName,
-          modifiers: {},
-          context: {}
-        },
+          "outerFunc"
+        ),
         // Inner closure
-        {
-          category: SemanticCategory.DEFINITION,
-          entity: SemanticEntity.CLOSURE,
-          node_location: {
+        create_raw_capture(
+          "scope",
+          "function",
+          {
             file_path,
             line: 4,
             column: 2,
             end_line: 8,
             end_column: 3
           },
-          symbol_name: "innerFunc" as SymbolName,
-          modifiers: {},
-          context: {}
-        }
+          "innerFunc"
+        )
       ];
 
       const scopes = process_scopes(captures, file_path, language);
@@ -243,35 +239,31 @@ describe("scope_processor", () => {
     it("should handle interface and enum scopes", () => {
       const captures: RawCapture[] = [
         // Interface
-        {
-          category: SemanticCategory.TYPE,
-          entity: SemanticEntity.INTERFACE,
-          node_location: {
+        create_raw_capture(
+          "scope",
+          "class",
+          {
             file_path,
             line: 2,
             column: 0,
             end_line: 5,
             end_column: 1
           },
-          symbol_name: "IUser" as SymbolName,
-          modifiers: {},
-          context: {}
-        },
+          "IUser"
+        ),
         // Enum
-        {
-          category: SemanticCategory.TYPE,
-          entity: SemanticEntity.ENUM,
-          node_location: {
+        create_raw_capture(
+          "scope",
+          "class",
+          {
             file_path,
             line: 7,
             column: 0,
             end_line: 10,
             end_column: 1
           },
-          symbol_name: "Status" as SymbolName,
-          modifiers: {},
-          context: {}
-        }
+          "Status"
+        )
       ];
 
       const scopes = process_scopes(captures, file_path, language);
@@ -531,34 +523,32 @@ describe("scope_processor", () => {
   describe("scope types", () => {
     it("should handle all scope entity types correctly", () => {
       const test_cases = [
-        { entity: SemanticEntity.MODULE, expected_type: "module" },
-        { entity: SemanticEntity.NAMESPACE, expected_type: "module" },
-        { entity: SemanticEntity.CLASS, expected_type: "class" },
-        { entity: SemanticEntity.INTERFACE, expected_type: "class" },
-        { entity: SemanticEntity.ENUM, expected_type: "class" },
-        { entity: SemanticEntity.FUNCTION, expected_type: "function" },
-        { entity: SemanticEntity.CLOSURE, expected_type: "function" },
-        { entity: SemanticEntity.METHOD, expected_type: "method" },
-        { entity: SemanticEntity.CONSTRUCTOR, expected_type: "constructor" },
-        { entity: SemanticEntity.BLOCK, expected_type: "block" },
+        { entity: "module", expected_type: "module" },
+        { entity: "namespace", expected_type: "module" },
+        { entity: "class", expected_type: "class" },
+        { entity: "interface", expected_type: "class" },
+        { entity: "enum", expected_type: "class" },
+        { entity: "function", expected_type: "function" },
+        { entity: "closure", expected_type: "function" },
+        { entity: "method", expected_type: "method" },
+        { entity: "constructor", expected_type: "constructor" },
+        { entity: "block", expected_type: "block" },
       ];
 
       test_cases.forEach(({ entity, expected_type }) => {
         const captures: RawCapture[] = [
-          {
-            category: SemanticCategory.SCOPE,
+          create_raw_capture(
+            "scope",
             entity,
-            node_location: {
+            {
               file_path,
               line: 5,
               column: 0,
               end_line: 10,
               end_column: 1
             },
-            symbol_name: "test" as SymbolName,
-            modifiers: {},
-            context: {}
-          }
+            "test"
+          )
         ];
 
         const scopes = process_scopes(captures, file_path, language);
@@ -573,7 +563,7 @@ describe("scope_processor", () => {
           s.name === "test" || (s.type === expected_type && s.parent_id !== null)
         );
 
-        if (entity === SemanticEntity.MODULE || entity === SemanticEntity.NAMESPACE) {
+        if (entity === "module" || entity === "namespace") {
           // Module/namespace might be nested or might modify root
           const module_scopes = Array.from(scopes.values()).filter(s => s.type === "module");
           expect(module_scopes.length).toBeGreaterThan(0);

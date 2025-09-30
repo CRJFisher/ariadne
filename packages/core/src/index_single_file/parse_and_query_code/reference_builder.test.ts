@@ -10,8 +10,7 @@ import {
   process_references,
   is_reference_capture,
 } from "./reference_builder";
-import type { ProcessingContext } from "./scope_processor";
-import type { NormalizedCapture } from "./capture_types";
+import type { ProcessingContext, RawCapture } from "./scope_processor";
 import { SemanticCategory, SemanticEntity } from "./capture_types";
 import type { Location, ScopeId, SymbolReference } from "@ariadnejs/types";
 import { module_scope } from "@ariadnejs/types";
@@ -47,18 +46,44 @@ function create_test_context(): ProcessingContext {
 }
 
 function create_test_capture(
-  overrides: Partial<NormalizedCapture> = {}
-): NormalizedCapture {
+  overrides: {
+    category?: any;
+    entity?: any;
+    symbol_name?: string;
+    node_location?: Location;
+    [key: string]: any;
+  } = {}
+): RawCapture {
+  const location = overrides.node_location || create_test_location();
+  const symbol_name = overrides.symbol_name || "testVar";
+
+  // Map old category to new name format
+  let category_str = "reference";
+  if (overrides.category !== undefined) {
+    switch (overrides.category) {
+      case SemanticCategory.REFERENCE: category_str = "reference"; break;
+      case SemanticCategory.DEFINITION: category_str = "definition"; break;
+      case SemanticCategory.ASSIGNMENT: category_str = "assignment"; break;
+      case SemanticCategory.SCOPE: category_str = "scope"; break;
+      case SemanticCategory.IMPORT: category_str = "import"; break;
+      case SemanticCategory.EXPORT: category_str = "export"; break;
+    }
+  }
+
+  // Map old entity to new name format - entity is already a string in the enum
+  const entity_str = overrides.entity || "variable";
+
+  const mock_node = {
+    text: symbol_name,
+    startPosition: { row: location.line - 1, column: location.column },
+    endPosition: { row: location.end_line - 1, column: location.end_column },
+  };
+
   return {
-    category: SemanticCategory.REFERENCE,
-    entity: SemanticEntity.VARIABLE,
-    symbol_name: "testVar" as any,  // Cast for test simplicity
-    node_location: create_test_location(),
-    node_type: "identifier",
-    modifiers: {},
-    context: {},
-    ...overrides,
-  } as NormalizedCapture;
+    name: `${category_str}.${entity_str}`,
+    node: mock_node as any,
+    text: symbol_name,
+  };
 }
 
 // ============================================================================

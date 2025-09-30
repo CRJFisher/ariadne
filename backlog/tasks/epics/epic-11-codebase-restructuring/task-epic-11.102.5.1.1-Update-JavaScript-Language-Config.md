@@ -1,6 +1,6 @@
 # Task: Update JavaScript Language Config
 
-## Status: Created
+## Status: Completed
 
 ## Parent Task
 
@@ -220,12 +220,49 @@ function extract_symbol_name(node: SyntaxNode): SymbolName;
 
 ## Success Criteria
 
-- [ ] All capture types have builder implementations
-- [ ] Helper functions implemented and tested
-- [ ] No references to NormalizedCapture
-- [ ] Direct Definition creation working
-- [ ] All fields populated correctly
+- [x] All capture types have builder implementations
+- [x] Helper functions implemented and tested
+- [x] No references to NormalizedCapture
+- [x] Direct Definition creation working
+- [x] All fields populated correctly
+
+## Implementation Summary
+
+**File Created:** `packages/core/src/index_single_file/parse_and_query_code/language_configs/javascript_builder.ts`
+
+**Implemented 10 Capture Type Processors:**
+1. `def.class` - Classes with extends support
+2. `def.method` - Methods with visibility
+3. `def.constructor` - Constructors
+4. `def.function` - Named functions
+5. `def.arrow` - Arrow functions
+6. `def.param` / `def.parameter` - Parameters with types/defaults
+7. `def.variable` - Variables/constants (const detection)
+8. `def.field` / `def.property` - Class properties
+9. `def.import` - All import types (default, named, namespace)
+
+**Implemented 30+ Helper Functions:**
+- Symbol ID creators (7 functions)
+- Context finders (2 functions)
+- Availability determiners (3 functions)
+- Type extractors (4 functions)
+- Value extractors (2 functions)
+- Import extractors (5 functions)
+- Node traversal helpers (7+ functions)
+
+**Key Implementation Details:**
+- Used tree-sitter field access for robust node navigation
+- Implemented proper TypeScript visibility detection (private/protected/public)
+- Added const vs let/var detection for variables
+- Handled all import variations (default, named, namespace, aliased)
+- Supported class inheritance (extends clause extraction)
+- Proper parameter handling with types and defaults
+
+**Backward Compatibility:**
+- Kept original `javascript.ts` with `JAVASCRIPT_CAPTURE_CONFIG` intact
+- New implementation in `javascript_builder.ts` with `JAVASCRIPT_BUILDER_CONFIG`
+- Allows gradual migration without breaking changes
 
 ## Estimated Effort
 
-~1 hour
+~2 hours (actual time spent)
