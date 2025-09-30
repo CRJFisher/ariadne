@@ -34,6 +34,7 @@ import { process_references } from "./query_code_tree/reference_builder";
 import { node_to_location } from "./node_utils";
 import { DefinitionBuilder, type BuilderResult } from "./definitions/definition_builder";
 import type { LanguageBuilderConfig } from "./query_code_tree/language_configs/javascript_builder";
+import type { MetadataExtractors } from "./query_code_tree/language_configs/metadata_types";
 import { JAVASCRIPT_BUILDER_CONFIG } from "./query_code_tree/language_configs/javascript_builder";
 import { TYPESCRIPT_BUILDER_CONFIG } from "./query_code_tree/language_configs/typescript_builder";
 import { PYTHON_BUILDER_CONFIG } from "./query_code_tree/language_configs/python_builder";
@@ -127,8 +128,9 @@ export function build_semantic_index(
   const language_config = get_language_config(language);
   const builder_result = process_definitions(context, language_config);
 
-  // PASS 4: Process references (language-agnostic)
-  const all_references = process_references(context);
+  // PASS 4: Process references with language-specific metadata extractors
+  const metadata_extractors = get_metadata_extractors(language);
+  const all_references = process_references(context, metadata_extractors, file.file_path);
 
   // PASS 5: Build name index
   const symbols_by_name = build_name_index(builder_result);
@@ -171,6 +173,29 @@ function get_language_config(language: Language): LanguageBuilderConfig {
       return RUST_BUILDER_CONFIG;
     default:
       throw new Error(`Unsupported language: ${language}`);
+  }
+}
+
+/**
+ * Get language-specific metadata extractors
+ *
+ * Returns undefined for now - language-specific extractors will be implemented
+ * in subsequent tasks (104.3 for JS/TS, 104.4 for Python, 104.5 for Rust)
+ */
+function get_metadata_extractors(language: Language): MetadataExtractors | undefined {
+  switch (language) {
+    case "javascript":
+    case "typescript":
+      // TODO: Task 104.3 - Import and return javascript_metadata extractors
+      return undefined;
+    case "python":
+      // TODO: Task 104.4 - Import and return python_metadata extractors
+      return undefined;
+    case "rust":
+      // TODO: Task 104.5 - Import and return rust_metadata extractors
+      return undefined;
+    default:
+      return undefined;
   }
 }
 

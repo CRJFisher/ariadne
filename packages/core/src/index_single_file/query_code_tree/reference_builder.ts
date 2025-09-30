@@ -7,6 +7,7 @@
  */
 
 import type {
+  FilePath,
   Location,
   ScopeId,
   SymbolName,
@@ -17,6 +18,7 @@ import type {
 } from "@ariadnejs/types";
 
 import type { ProcessingContext, CaptureNode } from "./scope_processor";
+import type { MetadataExtractors } from "./language_configs/metadata_types";
 
 // ============================================================================
 // Reference Kind Enum
@@ -153,108 +155,59 @@ function determine_call_type(
 /**
  * Extract type information from capture
  */
-function extract_type_info(capture: CaptureNode): TypeInfo | undefined {
-  // TODO: Type information would need to be extracted from node structure
-  const type_name = undefined;
+function extract_type_info(
+  capture: CaptureNode,
+  extractors: MetadataExtractors | undefined,
+  file_path: FilePath
+): TypeInfo | undefined {
+  // If extractors are available, use them
+  if (extractors) {
+    return extractors.extract_type_from_annotation(capture.node, file_path);
+  }
 
-  if (!type_name) return undefined;
-
-  return {
-    type_id: `type:${type_name}` as any, // TypeId is a branded type
-    type_name: type_name as SymbolName,
-    certainty: "declared",
-  };
+  // Fallback to undefined if no extractors available
+  return undefined;
 }
 
 /**
  * Extract reference context from capture
  */
-function extract_context(capture: CaptureNode): ReferenceContext | undefined {
+function extract_context(
+  capture: CaptureNode,
+  extractors: MetadataExtractors | undefined,
+  file_path: FilePath
+): ReferenceContext | undefined {
+  if (!extractors) {
+    return undefined;
+  }
+
   let receiver_location: Location | undefined;
   let assignment_source: Location | undefined;
   let assignment_target: Location | undefined;
   let construct_target: Location | undefined;
   let property_chain: readonly SymbolName[] | undefined;
 
-  // For method calls: extract receiver/object information from node
-  // Would need to extract receiver from node structure
-  const receiver_node = undefined; // TODO: Would need to extract receiver from node
-  if (
-    receiver_node &&
-    typeof receiver_node === "object" &&
-    "startPosition" in receiver_node
-  ) {
-    const pos = receiver_node.startPosition;
-    const endPos = receiver_node.endPosition;
-    receiver_location = {
-      file_path: capture.location.file_path,
-      start_line: pos.row + 1,
-      start_column: pos.column,
-      end_line: endPos.row + 1,
-      end_column: endPos.column,
-    };
+  // For method calls: extract receiver/object information
+  const kind = determine_reference_kind(capture);
+  if (kind === ReferenceKind.METHOD_CALL || kind === ReferenceKind.SUPER_CALL) {
+    receiver_location = extractors.extract_call_receiver(capture.node, file_path);
   }
 
-  // For assignments: extract source and target from nodes
+  // For assignments: extract source and target
   if (capture.category === "assignment") {
-    const source_node = undefined; // TODO: Would need to extract source from node
-    if (
-      source_node &&
-      typeof source_node === "object" &&
-      "startPosition" in source_node
-    ) {
-      const pos = source_node.startPosition;
-      const endPos = source_node.endPosition;
-      assignment_source = {
-        file_path: capture.location.file_path,
-        start_line: pos.row + 1,
-        start_column: pos.column,
-        end_line: endPos.row + 1,
-        end_column: endPos.column,
-      };
-    }
-
-    const target_node = undefined; // TODO: Would need to extract target from node
-    if (
-      target_node &&
-      typeof target_node === "object" &&
-      "startPosition" in target_node
-    ) {
-      const pos = target_node.startPosition;
-      const endPos = target_node.endPosition;
-      assignment_target = {
-        file_path: capture.location.file_path,
-        start_line: pos.row + 1,
-        start_column: pos.column,
-        end_line: endPos.row + 1,
-        end_column: endPos.column,
-      };
-    }
+    const assignment_parts = extractors.extract_assignment_parts(capture.node, file_path);
+    assignment_source = assignment_parts.source;
+    assignment_target = assignment_parts.target;
   }
 
   // For constructor calls: extract target variable
-  const construct_node = undefined; // TODO: Would need to extract construct target from node
-  if (
-    construct_node &&
-    typeof construct_node === "object" &&
-    "startPosition" in construct_node
-  ) {
-    const pos = construct_node.startPosition;
-    const endPos = construct_node.endPosition;
-    construct_target = {
-      file_path: capture.location.file_path,
-      start_line: pos.row + 1,
-      start_column: pos.column,
-      end_line: endPos.row + 1,
-      end_column: endPos.column,
-    };
+  if (kind === ReferenceKind.CONSTRUCTOR_CALL) {
+    construct_target = extractors.extract_construct_target(capture.node, file_path);
   }
 
   // For member access: extract property chain
-  // Would need to extract property chain from node structure
-  const property_chain_data = undefined; // Would need to extract property chain from node
-  if (property_chain_data) {
-    property_chain = property_chain_data as readonly SymbolName[];
+  if (kind === ReferenceKind.PROPERTY_ACCESS || kind === ReferenceKind.METHOD_CALL) {
+    property_chain = extractors.extract_property_chain(capture.node);
   }
 
   // Build context object with defined properties only
@@ -281,25 +234,21 @@ function extract_context(capture: CaptureNode): ReferenceContext | undefined {
  */
 function process_method_reference(
   capture: CaptureNode,
-  context: ProcessingContext
+  context: ProcessingContext,
+  extractors: MetadataExtractors | undefined,
+  file_path: FilePath
 ): SymbolReference {
   const scope_id = context.get_scope_id(capture.location);
   const reference_type = map_to_reference_type(ReferenceKind.METHOD_CALL);
 
-  // Extract object/receiver information from type_name if available
-  const object_type = undefined; // Would need to extract type name from node;
+  // Extract type information using extractors if available
+  const type_info = extract_type_info(capture, extractors, file_path);
 
-  // Build member access details
+  // Build member access details - object_type might come from type_info
   const member_access = {
-    object_type: object_type
-      ? {
-          type_id: `type:${object_type}` as any,
-          type_name: object_type as SymbolName,
-          certainty: "inferred" as const,
-        }
-      : undefined,
+    object_type: type_info ? type_info : undefined,
     access_type: "method" as const,
-    is_optional_chain: false, // Would need to extract from capture name || false,
+    is_optional_chain: false, // Could be enhanced in language-specific extractors
   };
 
   return {
@@ -307,8 +256,8 @@ function process_method_reference(
     type: reference_type,
     scope_id: scope_id,
     name: capture.text,
-    context: extract_context(capture),
-    type_info: extract_type_info(capture),
+    context: extract_context(capture, extractors, file_path),
+    type_info: type_info,
     call_type: "method",
     member_access: member_access,
   };
@@ -319,20 +268,22 @@ function process_method_reference(
  */
 function process_type_reference(
   capture: CaptureNode,
-  context: ProcessingContext
+  context: ProcessingContext,
+  extractors: MetadataExtractors | undefined,
+  file_path: FilePath
 ): SymbolReference {
   const scope_id = context.get_scope_id(capture.location);
 
-  // Extract generic type arguments if present
-  const type_args = undefined; // Would need to extract type arguments from node;
-  const type_info = extract_type_info(capture);
+  // Extract generic type arguments using extractors if available
+  const type_args = extractors ? extractors.extract_type_arguments(capture.node) : undefined;
+  const type_info = extract_type_info(capture, extractors, file_path);
 
   // Enhance type info with generic parameters
   const enhanced_type_info =
     type_args && type_info
       ? {
           ...type_info,
-          type_name: `${type_info.type_name}<${type_args}>` as SymbolName,
+          type_name: `${type_info.type_name}<${type_args.join(', ')}>` as SymbolName,
         }
       : type_info;
 
@@ -341,7 +292,7 @@ function process_type_reference(
     type: "type",
     scope_id: scope_id,
     name: capture.text,
-    context: extract_context(capture),
+    context: extract_context(capture, extractors, file_path),
     type_info: enhanced_type_info,
   };
 }
@@ -353,7 +304,11 @@ function process_type_reference(
 export class ReferenceBuilder {
   private readonly references: SymbolReference[] = [];
 
-  constructor(private readonly context: ProcessingContext) {}
+  constructor(
+    private readonly context: ProcessingContext,
+    private readonly extractors: MetadataExtractors | undefined,
+    private readonly file_path: FilePath
+  ) {}
 
   /**
    * Process a reference capture and add to builder
@@ -373,12 +328,16 @@ export class ReferenceBuilder {
 
     // Route to special handlers for complex references
     if (kind === ReferenceKind.METHOD_CALL) {
-      this.references.push(process_method_reference(capture, this.context));
+      this.references.push(
+        process_method_reference(capture, this.context, this.extractors, this.file_path)
+      );
       return this;
     }
 
     if (kind === ReferenceKind.TYPE_REFERENCE) {
-      this.references.push(process_type_reference(capture, this.context));
+      this.references.push(
+        process_type_reference(capture, this.context, this.extractors, this.file_path)
+      );
       return this;
     }
 
@@ -391,8 +350,8 @@ export class ReferenceBuilder {
       type: reference_type,
       scope_id: scope_id,
       name: capture.text,
-      context: extract_context(capture),
-      type_info: extract_type_info(capture),
+      context: extract_context(capture, this.extractors, this.file_path),
+      type_info: extract_type_info(capture, this.extractors, this.file_path),
       call_type: determine_call_type(kind),
     };
 
@@ -400,8 +359,8 @@ export class ReferenceBuilder {
     if (kind === ReferenceKind.ASSIGNMENT) {
       // Type flow information can be extracted from annotation_type or source_text
       const type_flow_info = {
-        source_type: undefined,
-        target_type: extract_type_info(capture),
+        source_type: undefined, // Could be enhanced with extractors
+        target_type: extract_type_info(capture, this.extractors, this.file_path),
         is_narrowing: false,
         is_widening: false,
       };
@@ -416,7 +375,7 @@ export class ReferenceBuilder {
 
     // Add return type for return references
     if (kind === ReferenceKind.RETURN) {
-      const return_type = extract_type_info(capture);
+      const return_type = extract_type_info(capture, this.extractors, this.file_path);
       if (return_type) {
         const updated_ref = { ...reference, return_type };
         this.references.push(updated_ref);
@@ -426,18 +385,13 @@ export class ReferenceBuilder {
 
     // Add member access details for property access
     if (kind === ReferenceKind.PROPERTY_ACCESS) {
-      const object_type = undefined; // Would need to extract type name from node;
+      // Extract type using extractors if available
+      const type_info = extract_type_info(capture, this.extractors, this.file_path);
 
       const member_access_info = {
-        object_type: object_type
-          ? {
-              type_id: `type:${object_type}` as any,
-              type_name: object_type as SymbolName,
-              certainty: "inferred" as const,
-            }
-          : undefined,
+        object_type: type_info ? type_info : undefined,
         access_type: "property" as const,
-        is_optional_chain: false, // Would need to extract from capture name || false,
+        is_optional_chain: false, // Could be enhanced in language-specific extractors
       };
 
       const updated_ref = { ...reference, member_access: member_access_info };
@@ -465,10 +419,14 @@ export class ReferenceBuilder {
  * Process reference captures using functional composition
  *
  * @param context - Processing context with scope information
+ * @param extractors - Language-specific metadata extractors (optional)
+ * @param file_path - File path for location creation
  * @returns Array of symbol references
  */
 export function process_references(
-  context: ProcessingContext
+  context: ProcessingContext,
+  extractors: MetadataExtractors | undefined,
+  file_path: FilePath
 ): SymbolReference[] {
   // Filter for reference captures and process using builder
   return context.captures
@@ -480,7 +438,7 @@ export function process_references(
     )
     .reduce(
       (builder, capture) => builder.process(capture),
-      new ReferenceBuilder(context)
+      new ReferenceBuilder(context, extractors, file_path)
     )
     .build();
 }
