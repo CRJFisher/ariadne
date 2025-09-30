@@ -86,6 +86,20 @@ function extract_typescript_type(node: SyntaxNode): string | undefined {
   // For TypeScript, look for type_annotation child
   const typeAnnotation = node.childForFieldName("type");
   if (typeAnnotation) {
+    // TypeScript type_annotation nodes include the ':' character
+    // We need to extract the actual type part after the ':'
+    if (typeAnnotation.type === "type_annotation") {
+      // Skip the ':' and get the actual type node
+      for (let i = 0; i < typeAnnotation.childCount; i++) {
+        const child = typeAnnotation.child(i);
+        if (child && child.type !== ":") {
+          return child.text;
+        }
+      }
+      // Fallback: remove leading ':' and whitespace
+      return typeAnnotation.text.replace(/^:\s*/, '');
+    }
+
     // Handle simple type identifiers
     if (typeAnnotation.type === "type_identifier") {
       return typeAnnotation.text;
@@ -137,10 +151,13 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
     const location = node_to_location(node, file_path);
     const type_id = type_symbol(type_name, location);
 
+    // Check if this is a declared TypeScript type (has type_annotation child)
+    const hasTypeAnnotation = node.childForFieldName("type")?.type === "type_annotation";
+
     return {
       type_id,
       type_name: type_name as SymbolName,
-      certainty: node.type.includes("type_annotation") ? "declared" : "inferred",
+      certainty: hasTypeAnnotation ? "declared" : "inferred",
       is_nullable: type_name.includes("null") || type_name.includes("undefined"),
     };
   },
@@ -199,7 +216,9 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
 
         // Recursively traverse nested member expressions
         if (object_node) {
-          if (object_node.type === "member_expression" || object_node.type === "optional_chain") {
+          if (object_node.type === "member_expression" ||
+              object_node.type === "optional_chain" ||
+              object_node.type === "subscript_expression") {
             traverse(object_node);
           } else if (object_node.type === "identifier" || object_node.type === "this" || object_node.type === "super") {
             chain.push(object_node.text);
@@ -216,23 +235,29 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
         const index_node = current.childForFieldName("index");
 
         if (object_node) {
-          if (object_node.type === "member_expression" || object_node.type === "subscript_expression") {
+          if (object_node.type === "member_expression" ||
+              object_node.type === "subscript_expression" ||
+              object_node.type === "optional_chain") {
             traverse(object_node);
-          } else if (object_node.type === "identifier") {
+          } else if (object_node.type === "identifier" || object_node.type === "this" || object_node.type === "super") {
             chain.push(object_node.text);
           }
         }
 
         // For computed properties, try to extract string literals
-        if (index_node && index_node.type === "string" && index_node.text.startsWith('"')) {
-          // Extract string content without quotes
-          const prop = index_node.text.slice(1, -1);
-          chain.push(prop);
+        if (index_node && index_node.type === "string") {
+          // Extract string content without quotes (handle both single and double quotes)
+          if (index_node.text.startsWith('"') || index_node.text.startsWith("'")) {
+            const prop = index_node.text.slice(1, -1);
+            chain.push(prop);
+          }
         }
       } else if (current.type === "call_expression") {
         // For method calls, extract the chain from the function part
         const function_node = current.childForFieldName("function");
-        if (function_node && (function_node.type === "member_expression" || function_node.type === "optional_chain")) {
+        if (function_node && (function_node.type === "member_expression" ||
+                             function_node.type === "optional_chain" ||
+                             function_node.type === "subscript_expression")) {
           traverse(function_node);
         }
       }
