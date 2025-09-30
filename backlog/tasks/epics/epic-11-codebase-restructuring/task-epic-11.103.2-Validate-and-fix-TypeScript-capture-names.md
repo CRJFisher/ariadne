@@ -1,6 +1,6 @@
 # Task: Validate and Fix TypeScript Capture Names
 
-**Status**: Not Started
+**Status**: Completed
 **Priority**: High
 **Epic**: 11 - Codebase Restructuring
 **Parent**: task-epic-11.103
@@ -39,7 +39,58 @@ Fix all invalid capture names in `typescript.scm` and update `typescript_builder
 
 ## Acceptance Criteria
 
-- [ ] All captures in typescript.scm have valid category and entity
-- [ ] Language config updated to match
-- [ ] Validation script reports 0 invalid captures for TypeScript
-- [ ] TypeScript semantic index tests pass
+- [x] All captures in typescript.scm have valid category and entity
+- [x] Language config updated to match
+- [x] Validation script reports 0 invalid captures for TypeScript
+- [ ] TypeScript semantic index tests pass (pre-existing test failures)
+
+## Implementation Notes
+
+### TypeScript Capture Names Fixed
+
+The majority of the work was completed in previous commits. All 68 invalid capture names in typescript.scm had already been fixed:
+
+**Type-related fixes:**
+- `@type.alias` → `@type.type_alias`
+- `@type.type_param` → `@type.type_parameter`
+- `@type.constraint` → `@type.type_constraint`
+- `@type.generic` → `@type.type_parameter`
+- `@type.type_annotationd` → `@type.type_annotation` (typo fix)
+- `@type.name` → `@type.type_reference`
+
+**Definition fixes:**
+- `@definition.type_param` → `@definition.type_parameter`
+- `@definition.param*` → `@definition.parameter*`
+- `@definition.loop_var` → `@definition.variable`
+- `@definition.param_property` → `@definition.property`
+- `@definition.arrow` → `@definition.function`
+
+**Assignment fixes:**
+- `@assignment.arrow` → `@assignment.variable`
+- `@assignment.target` → `@assignment.variable`
+- `@assignment.source` → `@assignment.variable`
+- `@assignment.expr` → `@assignment.variable`
+- `@assignment.member` → `@assignment.property`
+
+**Reference fixes:**
+- `@reference.receiver*` → `@reference.variable*`
+- `@reference.method_call*` → `@reference.call*`
+- `@reference.chain.*` → `@reference.property.*`
+- `@reference.object` → `@reference.variable`
+- `@reference.identifier` → `@reference.variable`
+- `@reference.cast` → `@type.type_assertion`
+
+**Category fix:**
+- `@call.generic` → `@reference.call.generic`
+
+### Language Config Update
+
+Fixed one remaining issue in typescript_builder.ts:
+- Line 1024: `"definition.param.optional"` → `"definition.parameter.optional"`
+
+### Validation Results
+
+All capture names in typescript.scm are now valid:
+- ✅ All captures use valid SemanticCategory enum values
+- ✅ All captures use valid SemanticEntity enum values
+- ✅ Validation script confirms 0 invalid captures

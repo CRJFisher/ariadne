@@ -80,13 +80,13 @@ describe("TypeScript Builder Configuration", () => {
 
     it("should contain TypeScript-specific capture handlers", () => {
       const tsSpecificHandlers = [
-        "def.interface",
-        "def.interface.method",
-        "def.interface.property",
-        "def.type_alias",
-        "def.enum",
-        "def.enum.member",
-        "def.namespace",
+        "definition.interface",
+        "definition.interface.method",
+        "definition.interface.property",
+        "definition.type_alias",
+        "definition.enum",
+        "definition.enum.member",
+        "definition.namespace",
         "decorator.class",
         "decorator.method",
         "decorator.property",

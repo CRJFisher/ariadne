@@ -1021,7 +1021,7 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   // OPTIONAL PARAMETERS
   // ============================================================================
   [
-    "definition.param.optional",
+    "definition.parameter.optional",
     {
       process: (
         capture: CaptureNode,
