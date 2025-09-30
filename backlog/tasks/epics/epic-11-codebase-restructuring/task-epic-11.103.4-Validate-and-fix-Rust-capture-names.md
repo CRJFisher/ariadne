@@ -144,10 +144,23 @@ Most of rust.scm had already been fixed in the parent task. The builder config n
 - All `scope.*` entries (not definition captures)
 
 ### Validation Results
+
+#### Initial validation (after rust.scm fix):
 ```
 === Validating Rust Captures ===
 Total unique captures: 115
 ✅ All captures are valid!
+```
+
+#### Final validation (all languages):
+```bash
+$ node validate_captures.js
+✅ javascript.scm: All captures valid
+✅ python.scm: All captures valid
+✅ rust.scm: All captures valid
+✅ typescript.scm: All captures valid
+
+Total invalid captures: 0
 ```
 
 ### Notes
@@ -155,3 +168,4 @@ Total unique captures: 115
 - This task only needed to fix the remaining `@while_let_pattern` capture
 - The rust_builder.ts updates ensure the builder config matches the current capture names
 - No new SemanticEntity values were needed - all Rust concepts mapped to existing entities
+- All 4 language query files now pass validation with 0 invalid captures
