@@ -34,9 +34,9 @@ export type ProcessFunction = (
 export type LanguageBuilderConfig = Map<string, { process: ProcessFunction }>;
 
 export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
-  // Struct Definitions
+  // Struct Definitions (now using @definition.class)
   [
-    "definition.struct",
+    "definition.class",
     {
       process: (
         capture: CaptureNode,
@@ -61,7 +61,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   ],
 
   [
-    "definition.struct.generic",
+    "definition.class.generic",
     {
       process: (
         capture: CaptureNode,
@@ -153,7 +153,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   ],
 
   [
-    "definition.enum_variant",
+    "definition.enum_member",
     {
       process: () => {
         // Enum variants are handled as part of the enum definition
@@ -161,27 +161,8 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
     },
   ],
 
-  // Trait Definitions
-  [
-    "definition.trait",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const trait_id = create_trait_id(capture);
-
-        builder.add_interface({
-          symbol_id: trait_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          availability: extract_visibility(capture.node.parent || capture.node),
-        });
-      },
-    },
-  ],
+  // Trait Definitions (traits are now captured as interfaces)
+  // Note: definition.trait no longer exists in rust.scm
 
   [
     "definition.interface",
@@ -398,36 +379,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   ],
 
   [
-    "definition.trait_method",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const method_id = create_method_id(capture);
-        const trait_id = find_containing_trait(capture);
-        const returnType = extract_return_type(
-          capture.node.parent || capture.node
-        );
-
-        if (trait_id) {
-          builder.add_method_to_class(trait_id, {
-            symbol_id: method_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            availability: { scope: "public" },
-            return_type: returnType,
-            abstract: true,
-          });
-        }
-      },
-    },
-  ],
-
-  [
-    "definition.trait_method.default",
+    "definition.method.default",
     {
       process: (
         capture: CaptureNode,
@@ -455,37 +407,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   ],
 
   [
-    "definition.trait_impl_method",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const method_id = create_method_id(capture);
-        const impl_info = find_containing_impl(capture);
-        const returnType = extract_return_type(
-          capture.node.parent || capture.node
-        );
-
-        if (impl_info?.struct) {
-          builder.add_method_to_class(impl_info.struct, {
-            symbol_id: method_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            availability: extract_visibility(
-              capture.node.parent || capture.node
-            ),
-            return_type: returnType,
-          });
-        }
-      },
-    },
-  ],
-
-  [
-    "definition.trait_impl_method.async",
+    "definition.method.async",
     {
       process: (
         capture: CaptureNode,
@@ -579,8 +501,8 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
 
   // Parameters
   ["definition.parameter", { process: () => {} }],
-  ["definition.param", { process: () => {} }],
-  ["definition.param.self", { process: () => {} }],
+  ["definition.parameter.self", { process: () => {} }],
+  ["definition.parameter.closure", { process: () => {} }],
 
   // Variables and Constants
   [
@@ -636,33 +558,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   ],
 
   [
-    "definition.const",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const const_id = create_constant_id(capture);
-        const const_type = extract_parameter_type(
-          capture.node.parent || capture.node
-        );
-
-        builder.add_variable({
-          kind: "constant",
-          symbol_id: const_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          availability: extract_visibility(capture.node.parent || capture.node),
-          type: const_type,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.static",
+    "definition.variable.mut",
     {
       process: (
         capture: CaptureNode,
@@ -687,28 +583,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
     },
   ],
 
-  [
-    "definition.loop_var",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const var_id = create_variable_id(capture);
-
-        builder.add_variable({
-          kind: "variable",
-          symbol_id: var_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          availability: { scope: "file-private" },
-        });
-      },
-    },
-  ],
-
   // Module Definitions
   [
     "definition.module",
@@ -726,6 +600,27 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: extract_visibility(capture.node.parent || capture.node),
+        });
+      },
+    },
+  ],
+
+  [
+    "definition.module.public",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const module_id = create_module_id(capture);
+
+        builder.add_namespace({
+          symbol_id: module_id,
+          name: capture.text,
+          location: capture.location,
+          scope_id: context.get_scope_id(capture.location),
+          availability: { scope: "public" },
         });
       },
     },
@@ -785,34 +680,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   ],
 
   [
-    "definition.associated_type",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const type_id = create_type_alias_id(capture);
-        const trait_id =
-          find_containing_trait(capture) ||
-          find_containing_impl(capture)?.trait;
-
-        if (trait_id) {
-          builder.add_type({
-            kind: "type_alias",
-            symbol_id: type_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            availability: { scope: "public" },
-          });
-        }
-      },
-    },
-  ],
-
-  [
-    "definition.associated_type.impl",
+    "definition.type_alias.impl",
     {
       process: (
         capture: CaptureNode,
@@ -828,32 +696,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: { scope: "public" },
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.associated_const",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const const_id = create_constant_id(capture);
-        const const_type = extract_parameter_type(
-          capture.node.parent || capture.node
-        );
-
-        builder.add_variable({
-          kind: "constant",
-          symbol_id: const_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          availability: extract_visibility(capture.node.parent || capture.node),
-          type: const_type,
         });
       },
     },
@@ -882,21 +724,14 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   ],
 
   // Type Parameters and Constraints
-  ["definition.type_param", { process: () => {} }],
-  ["definition.type_param.constrained", { process: () => {} }],
-  ["definition.const_param", { process: () => {} }],
+  ["definition.type_parameter", { process: () => {} }],
+  ["definition.type_parameter.constrained", { process: () => {} }],
 
-  // Imports and Exports
-  ["import.name", { process: () => {} }],
-  ["export.struct", { process: () => {} }],
-  ["export.function", { process: () => {} }],
-
-  // Scopes
-  ["scope.module", { process: () => {} }],
-  ["scope.function", { process: () => {} }],
-  ["scope.impl", { process: () => {} }],
-  ["scope.struct", { process: () => {} }],
-  ["scope.enum", { process: () => {} }],
-  ["scope.trait", { process: () => {} }],
-  ["scope.block", { process: () => {} }],
+  // Other captures
+  ["definition.function.closure", { process: () => {} }],
+  ["definition.function.async_closure", { process: () => {} }],
+  ["definition.function.async_move_closure", { process: () => {} }],
+  ["definition.function.returns_impl", { process: () => {} }],
+  ["definition.function.accepts_impl", { process: () => {} }],
+  ["definition.visibility", { process: () => {} }],
 ]);

@@ -429,7 +429,7 @@
 ; Loop variables in while-let patterns
 (while_expression
   condition: (let_condition
-    pattern: (_) @while_let_pattern
+    pattern: (_) @definition.variable
   )
 )
 

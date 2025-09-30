@@ -79,7 +79,7 @@ This validation will fail if either part is not a valid enum value.
 - [x] task-epic-11.103.1: Validate and fix JavaScript capture names
 - [x] task-epic-11.103.2: Validate and fix TypeScript capture names
 - [x] task-epic-11.103.3: Validate and fix Python capture names
-- [x] task-epic-11.103.4: Validate and fix Rust capture names
+- [x] task-epic-11.103.4: Validate and fix Rust capture names (completed - fixed 1 remaining capture + updated rust_builder.ts)
 - [x] task-epic-11.103.5: Verify all tests pass after fixes
 
 ## Acceptance Criteria
