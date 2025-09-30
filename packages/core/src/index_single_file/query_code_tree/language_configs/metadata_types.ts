@@ -1,0 +1,158 @@
+import type { SyntaxNode } from "tree-sitter";
+import type { Location, SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
+
+/**
+ * Language-specific metadata extraction functions
+ *
+ * Each language implements these functions to extract rich metadata
+ * from tree-sitter SyntaxNode structures. AST structures differ by
+ * language, requiring language-specific implementations.
+ */
+export interface MetadataExtractors {
+  /**
+   * Extract type information from type annotation nodes
+   *
+   * Examples:
+   * - TypeScript: `const x: string` → extract "string"
+   * - Python: `def foo() -> int:` → extract "int"
+   * - Rust: `let x: i32` → extract "i32"
+   *
+   * @param node - The SyntaxNode to extract type information from
+   * @param file_path - The file containing the node (needed for Location creation)
+   * @returns TypeInfo containing the extracted type or undefined if not a type annotation
+   */
+  extract_type_from_annotation(
+    node: SyntaxNode,
+    file_path: FilePath
+  ): TypeInfo | undefined;
+
+  /**
+   * Extract receiver/object location from method call
+   *
+   * For `obj.method()`, extract the location of `obj`
+   * Enables tracing the receiver to determine method resolution
+   *
+   * Examples:
+   * - JavaScript: `user.getName()` → location of `user`
+   * - Python: `self.process()` → location of `self`
+   * - Rust: `vec.push(5)` → location of `vec`
+   *
+   * @param node - The SyntaxNode representing a method call
+   * @param file_path - The file containing the node
+   * @returns Location of the receiver object or undefined if not a method call
+   */
+  extract_call_receiver(
+    node: SyntaxNode,
+    file_path: FilePath
+  ): Location | undefined;
+
+  /**
+   * Extract property access chain
+   *
+   * For `a.b.c.d`, extract ["a", "b", "c", "d"]
+   * Enables tracking chained method calls and nested property access
+   *
+   * Examples:
+   * - JavaScript: `config.database.host` → ["config", "database", "host"]
+   * - Python: `self.data.items` → ["self", "data", "items"]
+   * - Rust: `struct.field1.field2` → ["struct", "field1", "field2"]
+   *
+   * @param node - The SyntaxNode representing a property access chain
+   * @returns Array of property names in the chain or undefined if not a property access
+   */
+  extract_property_chain(
+    node: SyntaxNode
+  ): SymbolName[] | undefined;
+
+  /**
+   * Extract assignment source and target locations
+   *
+   * For `target = source`, extract locations of both
+   * Enables type flow analysis and tracking variable assignments
+   *
+   * Examples:
+   * - JavaScript: `const x = getValue()` → target: location of `x`, source: location of `getValue()`
+   * - Python: `result = compute(data)` → target: location of `result`, source: location of `compute(data)`
+   * - Rust: `let mut x = 42` → target: location of `x`, source: location of `42`
+   *
+   * @param node - The SyntaxNode representing an assignment
+   * @param file_path - The file containing the node
+   * @returns Object with source and target locations, either may be undefined
+   */
+  extract_assignment_parts(
+    node: SyntaxNode,
+    file_path: FilePath
+  ): {
+    source: Location | undefined;
+    target: Location | undefined;
+  };
+
+  /**
+   * Extract constructor call target variable location
+   *
+   * For `const obj = new Class()`, extract location of `obj`
+   * Enables tracking constructed objects and their types
+   *
+   * Examples:
+   * - JavaScript: `const user = new User()` → location of `user`
+   * - Python: `obj = MyClass()` → location of `obj`
+   * - Rust: `let vec = Vec::new()` → location of `vec`
+   *
+   * @param node - The SyntaxNode representing a constructor call or instantiation
+   * @param file_path - The file containing the node
+   * @returns Location of the target variable or undefined if not a constructor assignment
+   */
+  extract_construct_target(
+    node: SyntaxNode,
+    file_path: FilePath
+  ): Location | undefined;
+
+  /**
+   * Extract generic type arguments
+   *
+   * Examples:
+   * - TypeScript: `Array<string>` → ["string"]
+   * - TypeScript: `Map<string, number>` → ["string", "number"]
+   * - Rust: `Vec<i32>` → ["i32"]
+   * - Rust: `HashMap<String, u64>` → ["String", "u64"]
+   *
+   * @param node - The SyntaxNode representing a generic type
+   * @returns Array of type argument names or undefined if no type arguments
+   */
+  extract_type_arguments(
+    node: SyntaxNode
+  ): string[] | undefined;
+}
+
+/**
+ * Result of attempting to extract metadata
+ *
+ * Represents the outcome of any metadata extraction attempt,
+ * where undefined indicates the node didn't match the expected structure
+ */
+export type ExtractionResult<T> = T | undefined;
+
+/**
+ * AST node traversal result
+ *
+ * Used when traversing the AST to collect context about a node's position
+ * within the tree structure
+ */
+export interface NodeTraversal {
+  /** The current node being traversed */
+  node: SyntaxNode;
+  /** Path from root to current node, as node types */
+  path: string[];
+}
+
+/**
+ * Helper type for metadata extraction context
+ *
+ * Provides common context needed during extraction operations
+ */
+export interface ExtractionContext {
+  /** The file being processed */
+  file_path: FilePath;
+  /** The root node of the file's AST */
+  root_node: SyntaxNode;
+}

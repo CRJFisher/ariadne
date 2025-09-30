@@ -16,9 +16,6 @@ import type {
 } from "@ariadnejs/types";
 import {
   module_scope,
-  function_scope,
-  class_scope,
-  block_scope,
   scope_string,
   ScopeType,
 } from "@ariadnejs/types";

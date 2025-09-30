@@ -90,10 +90,10 @@ export interface LocalTypeConstraint {
  * Extract type members from symbols (single-file analysis only)
  */
 export function extract_type_members(
-  classes: ReadonlyMap<SymbolId, ClassDefinition>,
-  interfaces: ReadonlyMap<SymbolId, InterfaceDefinition>,
-  types: ReadonlyMap<SymbolId, TypeDefinition>,
-  enums: ReadonlyMap<SymbolId, EnumDefinition>,
+  classes: ClassDefinition[],
+  interfaces: InterfaceDefinition[],
+  types: TypeDefinition[],
+  enums: EnumDefinition[],
   scopes: ReadonlyMap<ScopeId, LexicalScope>,
   file_path: FilePath,
   definitions?: readonly NormalizedCapture[], // TODO: why still captures??
@@ -103,29 +103,29 @@ export function extract_type_members(
   const type_symbols = new Map<SymbolId, LocalTypeInfo>();
 
   // First pass: process classes
-  for (const [symbol_id, symbol] of classes) {
+  for (const class_def of classes) {
     const type_info: LocalTypeInfo = {
-      type_name: symbol.name,
+      type_name: class_def.name,
       kind: "class",
-      location: symbol.location,
+      location: class_def.location,
       direct_members: new Map(),
-      extends: symbol.extends ? symbol.extends : undefined,
+      extends: class_def.extends ? class_def.extends : undefined,
     };
     result_types.push(type_info);
-    type_symbols.set(symbol_id, type_info);
+    type_symbols.set(class_def.symbol_id, type_info);
   }
 
   // Process interfaces
-  for (const [symbol_id, symbol] of interfaces) {
+  for (const interface_def of interfaces) {
     const type_info: LocalTypeInfo = {
-      type_name: symbol.name,
+      type_name: interface_def.name,
       kind: "interface",
-      location: symbol.location,
+      location: interface_def.location,
       direct_members: new Map(),
-      extends: symbol.extends ? symbol.extends : undefined,
+      extends: interface_def.extends ? interface_def.extends : undefined,
     };
     result_types.push(type_info);
-    type_symbols.set(symbol_id, type_info);
+    type_symbols.set(interface_def.symbol_id, type_info);
   }
 
   // TODO: we already have members, fields/properties and constructors in the definitions
@@ -135,10 +135,10 @@ export function extract_type_members(
 
   // Create combined map for helper functions that need to look up any symbol
   const allSymbols = new Map<SymbolId, AnyDefinition>([
-    ...Array.from(classes || new Map()),
-    ...Array.from(interfaces || new Map()),
-    ...Array.from(types || new Map()),
-    ...Array.from(enums || new Map()),
+    ...classes.map((class_def) => [class_def.symbol_id, class_def]),
+    ...interfaces.map((interface_def) => [interface_def.symbol_id, interface_def]),
+    ...types.map((type_def) => [type_def.symbol_id, type_def]),
+    ...enums.map((enum_def) => [enum_def.symbol_id, enum_def]),
   ]);
 
   // Determine language from file path
