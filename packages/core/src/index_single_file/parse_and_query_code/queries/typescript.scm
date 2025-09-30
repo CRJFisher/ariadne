@@ -56,6 +56,24 @@
   name: (type_identifier) @def.interface
 ) @interface.definition
 
+; Interface method signatures
+(interface_declaration
+  (interface_body
+    (method_signature
+      name: (property_identifier) @def.interface.method
+    )
+  )
+)
+
+; Interface property signatures
+(interface_declaration
+  (interface_body
+    (property_signature
+      name: (property_identifier) @def.interface.property
+    )
+  )
+)
+
 ; Type alias definitions
 (type_alias_declaration
   name: (type_identifier) @def.type_alias
@@ -242,38 +260,74 @@
   pattern: (identifier) @def.field.param_property
 ) @field.param_property.readonly
 
-; Class decorators
+; Class decorators (decorator first, then target)
 (class_declaration
   (decorator
     (identifier) @decorator.class
   )
-  name: (type_identifier) @decorated.class
-) @class.decorated
+  name: (type_identifier)
+)
+
+(class_declaration
+  (decorator
+    (call_expression
+      function: (identifier) @decorator.class
+    )
+  )
+  name: (type_identifier)
+)
 
 (abstract_class_declaration
   (decorator
     (identifier) @decorator.class
   )
-  name: (type_identifier) @decorated.class
-) @class.decorated
+  name: (type_identifier)
+)
 
-; Method decorators (decorator and method are siblings in class_body)
+(abstract_class_declaration
+  (decorator
+    (call_expression
+      function: (identifier) @decorator.class
+    )
+  )
+  name: (type_identifier)
+)
+
+; Method decorators (decorator is sibling in class_body, not child of method)
 (class_body
   (decorator
     (identifier) @decorator.method
   )
-  (method_definition
-    name: (property_identifier) @decorated.method
-  ) @method.decorated
+  .
+  (method_definition)
 )
 
-; Property decorators (decorator is child of field definition)
+(class_body
+  (decorator
+    (call_expression
+      function: (identifier) @decorator.method
+    )
+  )
+  .
+  (method_definition)
+)
+
+; Property decorators
 (public_field_definition
   (decorator
     (identifier) @decorator.property
   )
-  name: (property_identifier) @decorated.property
-) @property.decorated
+  name: (property_identifier)
+)
+
+(public_field_definition
+  (decorator
+    (call_expression
+      function: (identifier) @decorator.property
+    )
+  )
+  name: (property_identifier)
+)
 
 ;; ==============================================================================
 ;; DEFINITIONS - Symbols that introduce new names (JavaScript base + TypeScript)

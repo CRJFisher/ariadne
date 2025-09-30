@@ -294,13 +294,13 @@ export class DefinitionBuilder {
       case 'parameter':
         return this.add_parameter(capture);
       case 'interface':
-        return this.add_interface(capture);
+        return this.add_interface_from_capture(capture);
       case 'enum':
-        return this.add_enum(capture);
+        return this.add_enum_from_capture(capture);
       case 'enum_member':
-        return this.add_enum_member(capture);
+        return this.add_enum_member_from_capture(capture);
       case 'namespace':
-        return this.add_namespace(capture);
+        return this.add_namespace_from_capture(capture);
       case 'variable':
       case 'constant':
         return this.add_variable_from_capture(capture);
@@ -308,7 +308,7 @@ export class DefinitionBuilder {
         return this.add_import_from_capture(capture);
       case 'type':
       case 'type_alias':
-        return this.add_type(capture);
+        return this.add_type_from_capture(capture);
       default:
         return this;
     }
@@ -350,6 +350,9 @@ export class DefinitionBuilder {
     scope_id: ScopeId;
     availability: SymbolAvailability;
     extends?: SymbolName[];
+    abstract?: boolean;
+    implements?: SymbolName[];
+    type_parameters?: string[];
   }): DefinitionBuilder {
     this.classes.set(definition.symbol_id, {
       base: {
@@ -375,6 +378,11 @@ export class DefinitionBuilder {
     scope_id: ScopeId;
     availability: SymbolAvailability;
     return_type?: SymbolName;
+    access_modifier?: 'public' | 'private' | 'protected';
+    abstract?: boolean;
+    static?: boolean;
+    async?: boolean;
+    type_parameters?: string[];
   }): DefinitionBuilder {
     const class_state = this.classes.get(class_id);
     if (!class_state) return this;
@@ -424,6 +432,7 @@ export class DefinitionBuilder {
     scope_id: ScopeId;
     type?: SymbolName;
     default_value?: string;
+    optional?: boolean;
   }): DefinitionBuilder {
     const param_def: ParameterDefinition = {
       kind: "parameter",
@@ -503,6 +512,11 @@ export class DefinitionBuilder {
     availability: SymbolAvailability;
     type?: SymbolName;
     initial_value?: string;
+    access_modifier?: 'public' | 'private' | 'protected';
+    static?: boolean;
+    readonly?: boolean;
+    abstract?: boolean;
+    is_parameter_property?: boolean;
   }): DefinitionBuilder {
     const class_state = this.classes.get(class_id);
     if (!class_state) return this;
@@ -514,6 +528,215 @@ export class DefinitionBuilder {
       },
       decorators: [],
     });
+    return this;
+  }
+
+  /**
+   * Add an interface definition
+   */
+  add_interface(definition: {
+    symbol_id: SymbolId;
+    name: SymbolName;
+    location: Location;
+    scope_id: ScopeId;
+    availability: SymbolAvailability;
+    extends?: SymbolName[];
+  }): DefinitionBuilder {
+    this.interfaces.set(definition.symbol_id, {
+      base: {
+        kind: "interface",
+        ...definition,
+        extends: definition.extends || [],
+      },
+      methods: new Map(),
+      properties: new Map(),
+    });
+    return this;
+  }
+
+  /**
+   * Add a method signature to an interface
+   */
+  add_method_signature_to_interface(interface_id: SymbolId, definition: {
+    symbol_id: SymbolId;
+    name: SymbolName;
+    location: Location;
+    scope_id: ScopeId;
+    optional?: boolean;
+    type_parameters?: string[];
+    return_type?: SymbolName;
+  }): DefinitionBuilder {
+    const interface_state = this.interfaces.get(interface_id);
+    if (!interface_state) return this;
+
+    interface_state.methods.set(definition.symbol_id, {
+      base: {
+        kind: "method",
+        symbol_id: definition.symbol_id,
+        name: definition.name,
+        location: definition.location,
+        scope_id: definition.scope_id,
+        availability: { scope: "file-private" },
+        return_type: definition.return_type,
+      },
+      parameters: new Map(),
+      decorators: [],
+    });
+    return this;
+  }
+
+  /**
+   * Add a property signature to an interface
+   */
+  add_property_signature_to_interface(interface_id: SymbolId, definition: {
+    symbol_id: SymbolId;
+    name: SymbolName;
+    location: Location;
+    type?: SymbolName;
+    optional?: boolean;
+    readonly?: boolean;
+  }): DefinitionBuilder {
+    const interface_state = this.interfaces.get(interface_id);
+    if (!interface_state) return this;
+
+    interface_state.properties.set(definition.symbol_id, {
+      kind: "property",
+      name: definition.symbol_id,
+      type: definition.type,
+      location: definition.location,
+    });
+    return this;
+  }
+
+  /**
+   * Add a type definition (type alias or type)
+   */
+  add_type(definition: {
+    kind: 'type' | 'type_alias';
+    symbol_id: SymbolId;
+    name: SymbolName;
+    location: Location;
+    scope_id: ScopeId;
+    availability: SymbolAvailability;
+    type_expression?: string;
+    type_parameters?: string[];
+  }): DefinitionBuilder {
+    this.types.set(definition.symbol_id, {
+      ...definition,
+    });
+    return this;
+  }
+
+  /**
+   * Add an enum definition
+   */
+  add_enum(definition: {
+    symbol_id: SymbolId;
+    name: SymbolName;
+    location: Location;
+    scope_id: ScopeId;
+    availability: SymbolAvailability;
+    is_const?: boolean;
+  }): DefinitionBuilder {
+    this.enums.set(definition.symbol_id, {
+      base: {
+        kind: "enum",
+        ...definition,
+        is_const: definition.is_const || false,
+      },
+      members: new Map(),
+      methods: undefined,
+    });
+    return this;
+  }
+
+  /**
+   * Add an enum member
+   */
+  add_enum_member(enum_id: SymbolId, definition: {
+    symbol_id: SymbolId;
+    name: SymbolName;
+    location: Location;
+    value?: string | number;
+  }): DefinitionBuilder {
+    const enum_state = this.enums.get(enum_id);
+    if (!enum_state) return this;
+
+    enum_state.members.set(definition.symbol_id, {
+      name: definition.symbol_id,
+      value: definition.value,
+      location: definition.location,
+    });
+    return this;
+  }
+
+  /**
+   * Add a namespace definition
+   */
+  add_namespace(definition: {
+    symbol_id: SymbolId;
+    name: SymbolName;
+    location: Location;
+    scope_id: ScopeId;
+    availability: SymbolAvailability;
+  }): DefinitionBuilder {
+    this.namespaces.set(definition.symbol_id, {
+      base: {
+        kind: "namespace",
+        ...definition,
+      },
+      exported_symbols: new Set(),
+    });
+    return this;
+  }
+
+  /**
+   * Add a decorator to a target (class, method, or property)
+   */
+  add_decorator_to_target(target_id: SymbolId, decorator: {
+    name: SymbolName;
+    arguments?: string[];
+    location: Location;
+  }): DefinitionBuilder {
+    // Create a decorator symbol ID
+    const decorator_id = decorator_symbol(decorator.name, decorator.location);
+
+    // Check if target is a class
+    const class_state = this.classes.get(target_id);
+    if (class_state) {
+      // Classes use SymbolId for decorators
+      class_state.decorators.push(decorator_id);
+      return this;
+    }
+
+    // Check if target is a method in a class
+    for (const cls of this.classes.values()) {
+      const method_state = cls.methods.get(target_id);
+      if (method_state) {
+        // Methods use SymbolName for decorators
+        method_state.decorators.push(decorator.name);
+        return this;
+      }
+
+      // Check if target is a property in a class
+      const prop_state = cls.properties.get(target_id);
+      if (prop_state) {
+        // Properties use SymbolId for decorators
+        prop_state.decorators.push(decorator_id);
+        return this;
+      }
+    }
+
+    // Check if target is a method in an interface
+    for (const iface of this.interfaces.values()) {
+      const method_state = iface.methods.get(target_id);
+      if (method_state) {
+        // Interface methods use SymbolName for decorators
+        method_state.decorators.push(decorator.name);
+        return this;
+      }
+    }
+
     return this;
   }
 
@@ -571,7 +794,7 @@ export class DefinitionBuilder {
     return this;
   }
 
-  private add_interface(capture: RawCapture): DefinitionBuilder {
+  private add_interface_from_capture(capture: RawCapture): DefinitionBuilder {
     const interface_id = interface_symbol(extract_symbol_name(capture), extract_location(capture.node));
     const scope_id = this.context.get_scope_id(extract_location(capture.node));
 
@@ -592,7 +815,7 @@ export class DefinitionBuilder {
     return this;
   }
 
-  private add_enum(capture: RawCapture): DefinitionBuilder {
+  private add_enum_from_capture(capture: RawCapture): DefinitionBuilder {
     const enum_id = enum_symbol(extract_symbol_name(capture), extract_location(capture.node));
     const scope_id = this.context.get_scope_id(extract_location(capture.node));
 
@@ -613,7 +836,7 @@ export class DefinitionBuilder {
     return this;
   }
 
-  private add_namespace(capture: RawCapture): DefinitionBuilder {
+  private add_namespace_from_capture(capture: RawCapture): DefinitionBuilder {
     const namespace_id = namespace_symbol(extract_symbol_name(capture), extract_location(capture.node));
     const scope_id = this.context.get_scope_id(extract_location(capture.node));
 
@@ -782,7 +1005,7 @@ export class DefinitionBuilder {
     return this;
   }
 
-  private add_enum_member(capture: RawCapture): DefinitionBuilder {
+  private add_enum_member_from_capture(capture: RawCapture): DefinitionBuilder {
     const containing_enum = this.find_containing_enum(extract_location(capture.node));
     if (!containing_enum) return this;
 
@@ -843,7 +1066,7 @@ export class DefinitionBuilder {
     return this;
   }
 
-  private add_type(capture: RawCapture): DefinitionBuilder {
+  private add_type_from_capture(capture: RawCapture): DefinitionBuilder {
     const type_id = type_symbol(extract_symbol_name(capture), extract_location(capture.node));
     const scope_id = this.context.get_scope_id(extract_location(capture.node));
 
