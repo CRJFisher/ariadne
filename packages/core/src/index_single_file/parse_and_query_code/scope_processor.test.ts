@@ -6,13 +6,11 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   process_scopes,
   create_processing_context,
-  type ProcessingContext
-} from "./scope_processor";
-import {
+  type ProcessingContext,
+  type RawCapture,
   SemanticCategory,
-  SemanticEntity,
-  type NormalizedCapture
-} from "./capture_types";
+  SemanticEntity
+} from "./scope_processor";
 import type {
   Location,
   FilePath,
@@ -25,9 +23,29 @@ describe("scope_processor", () => {
   const file_path = "test.ts" as FilePath;
   const language = "typescript" as const;
 
+  // Helper to create raw captures for testing
+  function create_raw_capture(
+    category: string,
+    entity: string,
+    location: Location,
+    symbol_name: string = "test"
+  ): RawCapture {
+    const mock_node = {
+      text: symbol_name,
+      startPosition: { row: location.line - 1, column: location.column },
+      endPosition: { row: location.end_line - 1, column: location.end_column },
+    };
+
+    return {
+      name: `${category}.${entity}`,
+      node: mock_node as any,
+      text: symbol_name,
+    };
+  }
+
   describe("process_scopes", () => {
     it("should create root module scope for empty file", () => {
-      const captures: NormalizedCapture[] = [];
+      const captures: RawCapture[] = [];
 
       const scopes = process_scopes(captures, file_path, language);
 
@@ -39,21 +57,19 @@ describe("scope_processor", () => {
     });
 
     it("should create function scope nested in module", () => {
-      const captures: NormalizedCapture[] = [
-        {
-          category: SemanticCategory.DEFINITION,
-          entity: SemanticEntity.FUNCTION,
-          node_location: {
+      const captures: RawCapture[] = [
+        create_raw_capture(
+          "scope",
+          "function",
+          {
             file_path,
             line: 2,
             column: 0,
             end_line: 5,
             end_column: 1
           },
-          symbol_name: "processData" as SymbolName,
-          modifiers: {},
-          context: {}
-        }
+          "processData"
+        )
       ];
 
       const scopes = process_scopes(captures, file_path, language);
@@ -72,52 +88,46 @@ describe("scope_processor", () => {
     });
 
     it("should create nested scopes correctly", () => {
-      const captures: NormalizedCapture[] = [
+      const captures: RawCapture[] = [
         // Class
-        {
-          category: SemanticCategory.DEFINITION,
-          entity: SemanticEntity.CLASS,
-          node_location: {
+        create_raw_capture(
+          "scope",
+          "class",
+          {
             file_path,
             line: 2,
             column: 0,
             end_line: 20,
             end_column: 1
           },
-          symbol_name: "MyClass" as SymbolName,
-          modifiers: {},
-          context: {}
-        },
+          "MyClass"
+        ),
         // Method inside class
-        {
-          category: SemanticCategory.DEFINITION,
-          entity: SemanticEntity.METHOD,
-          node_location: {
+        create_raw_capture(
+          "scope",
+          "method",
+          {
             file_path,
             line: 4,
             column: 2,
             end_line: 8,
             end_column: 3
           },
-          symbol_name: "getData" as SymbolName,
-          modifiers: {},
-          context: {}
-        },
+          "getData"
+        ),
         // Block inside method
-        {
-          category: SemanticCategory.SCOPE,
-          entity: SemanticEntity.BLOCK,
-          node_location: {
+        create_raw_capture(
+          "scope",
+          "block",
+          {
             file_path,
             line: 5,
             column: 4,
             end_line: 7,
             end_column: 5
           },
-          symbol_name: null as any,
-          modifiers: {},
-          context: {}
-        }
+          ""
+        )
       ];
 
       const scopes = process_scopes(captures, file_path, language);
@@ -143,52 +153,31 @@ describe("scope_processor", () => {
     });
 
     it("should handle multiple sibling scopes", () => {
-      const captures: NormalizedCapture[] = [
+      const captures: RawCapture[] = [
         // First function
-        {
-          category: SemanticCategory.DEFINITION,
-          entity: SemanticEntity.FUNCTION,
-          node_location: {
-            file_path,
-            line: 2,
-            column: 0,
-            end_line: 5,
-            end_column: 1
-          },
-          symbol_name: "func1" as SymbolName,
-          modifiers: {},
-          context: {}
-        },
+        create_raw_capture("scope", "function", {
+          file_path,
+          line: 2,
+          column: 0,
+          end_line: 5,
+          end_column: 1
+        }, "func1"),
         // Second function
-        {
-          category: SemanticCategory.DEFINITION,
-          entity: SemanticEntity.FUNCTION,
-          node_location: {
-            file_path,
-            line: 7,
-            column: 0,
-            end_line: 10,
-            end_column: 1
-          },
-          symbol_name: "func2" as SymbolName,
-          modifiers: {},
-          context: {}
-        },
+        create_raw_capture("scope", "function", {
+          file_path,
+          line: 7,
+          column: 0,
+          end_line: 10,
+          end_column: 1
+        }, "func2"),
         // Third function
-        {
-          category: SemanticCategory.DEFINITION,
-          entity: SemanticEntity.FUNCTION,
-          node_location: {
-            file_path,
-            line: 12,
-            column: 0,
-            end_line: 15,
-            end_column: 1
-          },
-          symbol_name: "func3" as SymbolName,
-          modifiers: {},
-          context: {}
-        }
+        create_raw_capture("scope", "function", {
+          file_path,
+          line: 12,
+          column: 0,
+          end_line: 15,
+          end_column: 1
+        }, "func3")
       ];
 
       const scopes = process_scopes(captures, file_path, language);
@@ -207,7 +196,7 @@ describe("scope_processor", () => {
     });
 
     it("should handle closures (functions within functions)", () => {
-      const captures: NormalizedCapture[] = [
+      const captures: RawCapture[] = [
         // Outer function
         {
           category: SemanticCategory.DEFINITION,
@@ -252,7 +241,7 @@ describe("scope_processor", () => {
     });
 
     it("should handle interface and enum scopes", () => {
-      const captures: NormalizedCapture[] = [
+      const captures: RawCapture[] = [
         // Interface
         {
           category: SemanticCategory.TYPE,
@@ -555,7 +544,7 @@ describe("scope_processor", () => {
       ];
 
       test_cases.forEach(({ entity, expected_type }) => {
-        const captures: NormalizedCapture[] = [
+        const captures: RawCapture[] = [
           {
             category: SemanticCategory.SCOPE,
             entity,

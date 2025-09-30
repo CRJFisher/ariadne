@@ -7,6 +7,7 @@
  */
 
 import type {
+  FilePath,
   Location,
   ScopeId,
   SymbolName,
@@ -16,9 +17,8 @@ import type {
   TypeInfo,
 } from "@ariadnejs/types";
 
-import type { ProcessingContext } from "./scope_processor";
-import type { NormalizedCapture } from "./capture_types";
-import { SemanticCategory, SemanticEntity } from "./capture_types";
+import type { ProcessingContext, RawCapture } from "./scope_processor";
+import { SemanticCategory, SemanticEntity } from "./scope_processor";
 
 // ============================================================================
 // Reference Kind Enum
@@ -44,51 +44,91 @@ export enum ReferenceKind {
 // ============================================================================
 
 /**
+ * Extract location from tree-sitter node
+ */
+function extract_location(node: any, file_path?: string): Location {
+  return {
+    file_path: (file_path || "") as FilePath,
+    line: node.startPosition.row + 1,
+    column: node.startPosition.column,
+    end_line: node.endPosition.row + 1,
+    end_column: node.endPosition.column,
+  };
+}
+
+/**
+ * Extract symbol name from capture
+ */
+function extract_symbol_name(capture: RawCapture): SymbolName {
+  return (capture.text || "") as SymbolName;
+}
+
+/**
+ * Parse capture category from name
+ */
+function get_category(capture: RawCapture): string {
+  const parts = capture.name.split('.');
+  return parts[0];
+}
+
+/**
+ * Parse capture entity from name
+ */
+function get_entity(capture: RawCapture): string {
+  const parts = capture.name.split('.');
+  return parts[1] || "";
+}
+
+/**
  * Determine reference kind from capture
  */
-function determine_reference_kind(capture: NormalizedCapture): ReferenceKind {
+function determine_reference_kind(capture: RawCapture): ReferenceKind {
+  const parts = capture.name.split('.');
+  const category = parts[0];
+  const entity = parts[1];
+
   // Check category first for special cases
-  if (capture.category === SemanticCategory.ASSIGNMENT) {
+  if (category === 'assignment') {
     return ReferenceKind.ASSIGNMENT;
   }
 
-  if (capture.category === SemanticCategory.RETURN) {
+  if (category === 'return') {
     return ReferenceKind.RETURN;
   }
 
   // Check entity type
-  switch (capture.entity) {
-    case SemanticEntity.CALL:
-      // Further distinguish call types
-      if (capture.modifiers.is_constructor) {
+  switch (entity) {
+    case 'call':
+      // Further distinguish call types based on capture name parts
+      if (parts.includes('constructor')) {
         return ReferenceKind.CONSTRUCTOR_CALL;
       }
-      if (capture.context.receiver_node) {
+      if (parts.includes('method')) {
         return ReferenceKind.METHOD_CALL;
       }
       return ReferenceKind.FUNCTION_CALL;
 
-    case SemanticEntity.SUPER:
+    case 'super':
       return ReferenceKind.SUPER_CALL;
 
-    case SemanticEntity.CONSTRUCTOR:
+    case 'constructor':
       return ReferenceKind.CONSTRUCTOR_CALL;
 
-    case SemanticEntity.METHOD:
+    case 'method':
       return ReferenceKind.METHOD_CALL;
 
-    case SemanticEntity.PROPERTY:
-    case SemanticEntity.FIELD:
+    case 'property':
+    case 'field':
       return ReferenceKind.PROPERTY_ACCESS;
 
-    case SemanticEntity.VARIABLE:
+    case 'variable':
       return ReferenceKind.VARIABLE_REFERENCE;
 
-    case SemanticEntity.TYPE:
-    case SemanticEntity.TYPE_ALIAS:
-    case SemanticEntity.CLASS:
-    case SemanticEntity.INTERFACE:
-    case SemanticEntity.ENUM:
+    case 'type':
+    case 'type_alias':
+    case 'class':
+    case 'interface':
+    case 'enum':
       return ReferenceKind.TYPE_REFERENCE;
 
     default:
@@ -149,10 +189,9 @@ function determine_call_type(kind: ReferenceKind): "function" | "method" | "cons
 /**
  * Extract type information from capture
  */
-function extract_type_info(capture: NormalizedCapture): TypeInfo | undefined {
-  const type_name = capture.context.type_name ||
-                   capture.context.annotation_type ||
-                   capture.context.return_type;
+function extract_type_info(capture: RawCapture): TypeInfo | undefined {
+  // Type information would need to be extracted from node structure
+  const type_name = undefined;
 
   if (!type_name) return undefined;
 
@@ -166,7 +205,7 @@ function extract_type_info(capture: NormalizedCapture): TypeInfo | undefined {
 /**
  * Extract reference context from capture
  */
-function extract_context(capture: NormalizedCapture): ReferenceContext | undefined {
+function extract_context(capture: RawCapture): ReferenceContext | undefined {
   let receiver_location: Location | undefined;
   let assignment_source: Location | undefined;
   let assignment_target: Location | undefined;
@@ -174,73 +213,68 @@ function extract_context(capture: NormalizedCapture): ReferenceContext | undefin
   let property_chain: readonly SymbolName[] | undefined;
 
   // For method calls: extract receiver/object information from node
-  if (capture.context.receiver_node) {
-    // receiver_node is a SyntaxNode, we can extract location from it
-    const node = capture.context.receiver_node;
-    if (node && typeof node === 'object' && 'startPosition' in node) {
-      const pos = node.startPosition;
-      const endPos = node.endPosition;
-      receiver_location = {
-        file_path: capture.node_location.file_path,
+  // Would need to extract receiver from node structure
+  const receiver_node = undefined; // Would need to extract receiver from node
+  if (receiver_node && typeof receiver_node === 'object' && 'startPosition' in receiver_node) {
+    const pos = receiver_node.startPosition;
+    const endPos = receiver_node.endPosition;
+    receiver_location = {
+      file_path: extract_location(capture.node).file_path,
+      line: pos.row + 1,
+      column: pos.column,
+      end_line: endPos.row + 1,
+      end_column: endPos.column,
+    };
+  }
+
+  // For assignments: extract source and target from nodes
+  if (get_category(capture) === 'assignment') {
+    const source_node = undefined; // Would need to extract source from node
+    if (source_node && typeof source_node === 'object' && 'startPosition' in source_node) {
+      const pos = source_node.startPosition;
+      const endPos = source_node.endPosition;
+      assignment_source = {
+        file_path: extract_location(capture.node).file_path,
         line: pos.row + 1,
         column: pos.column,
         end_line: endPos.row + 1,
         end_column: endPos.column,
       };
     }
-  }
 
-  // For assignments: extract source and target from nodes
-  if (capture.category === SemanticCategory.ASSIGNMENT) {
-    if (capture.context.source_node) {
-      const node = capture.context.source_node;
-      if (node && typeof node === 'object' && 'startPosition' in node) {
-        const pos = node.startPosition;
-        const endPos = node.endPosition;
-        assignment_source = {
-          file_path: capture.node_location.file_path,
-          line: pos.row + 1,
-          column: pos.column,
-          end_line: endPos.row + 1,
-          end_column: endPos.column,
-        };
-      }
-    }
-    if (capture.context.target_node) {
-      const node = capture.context.target_node;
-      if (node && typeof node === 'object' && 'startPosition' in node) {
-        const pos = node.startPosition;
-        const endPos = node.endPosition;
-        assignment_target = {
-          file_path: capture.node_location.file_path,
-          line: pos.row + 1,
-          column: pos.column,
-          end_line: endPos.row + 1,
-          end_column: endPos.column,
-        };
-      }
+    const target_node = undefined; // Would need to extract target from node
+    if (target_node && typeof target_node === 'object' && 'startPosition' in target_node) {
+      const pos = target_node.startPosition;
+      const endPos = target_node.endPosition;
+      assignment_target = {
+        file_path: extract_location(capture.node).file_path,
+        line: pos.row + 1,
+        column: pos.column,
+        end_line: endPos.row + 1,
+        end_column: endPos.column,
+      };
     }
   }
 
   // For constructor calls: extract target variable
-  if (capture.context.construct_target) {
-    const node = capture.context.construct_target;
-    if (node && typeof node === 'object' && 'startPosition' in node) {
-      const pos = node.startPosition;
-      const endPos = node.endPosition;
-      construct_target = {
-        file_path: capture.node_location.file_path,
-        line: pos.row + 1,
-        column: pos.column,
-        end_line: endPos.row + 1,
-        end_column: endPos.column,
-      };
-    }
+  const construct_node = undefined; // Would need to extract construct target from node
+  if (construct_node && typeof construct_node === 'object' && 'startPosition' in construct_node) {
+    const pos = construct_node.startPosition;
+    const endPos = construct_node.endPosition;
+    construct_target = {
+      file_path: extract_location(capture.node).file_path,
+      line: pos.row + 1,
+      column: pos.column,
+      end_line: endPos.row + 1,
+      end_column: endPos.column,
+    };
   }
 
   // For member access: extract property chain
-  if (capture.context.property_chain) {
-    property_chain = capture.context.property_chain.map(p => p as SymbolName);
+  // Would need to extract property chain from node structure
+  const property_chain_data = undefined; // Would need to extract property chain from node
+  if (property_chain_data) {
+    property_chain = property_chain_data as readonly SymbolName[];
   }
 
   // Build context object with defined properties only
@@ -263,14 +297,14 @@ function extract_context(capture: NormalizedCapture): ReferenceContext | undefin
  * Process method reference with object context
  */
 function process_method_reference(
-  capture: NormalizedCapture,
+  capture: RawCapture,
   context: ProcessingContext
 ): SymbolReference {
-  const scope_id = context.get_scope_id(capture.node_location);
+  const scope_id = context.get_scope_id(extract_location(capture.node));
   const reference_type = map_to_reference_type(ReferenceKind.METHOD_CALL);
 
   // Extract object/receiver information from type_name if available
-  const object_type = capture.context.type_name;
+  const object_type = undefined // Would need to extract type name from node;
 
   // Build member access details
   const member_access = {
@@ -280,14 +314,14 @@ function process_method_reference(
       certainty: "inferred" as const,
     } : undefined,
     access_type: "method" as const,
-    is_optional_chain: capture.modifiers.is_optional || false,
+    is_optional_chain: false // Would need to extract from capture name || false,
   };
 
   return {
-    location: capture.node_location,
+    location: extract_location(capture.node),
     type: reference_type,
     scope_id: scope_id,
-    name: capture.symbol_name,
+    name: extract_symbol_name(capture),
     context: extract_context(capture),
     type_info: extract_type_info(capture),
     call_type: "method",
@@ -299,13 +333,13 @@ function process_method_reference(
  * Process type reference with generics
  */
 function process_type_reference(
-  capture: NormalizedCapture,
+  capture: RawCapture,
   context: ProcessingContext
 ): SymbolReference {
-  const scope_id = context.get_scope_id(capture.node_location);
+  const scope_id = context.get_scope_id(extract_location(capture.node));
 
   // Extract generic type arguments if present
-  const type_args = capture.context.type_arguments;
+  const type_args = undefined // Would need to extract type arguments from node;
   const type_info = extract_type_info(capture);
 
   // Enhance type info with generic parameters
@@ -315,10 +349,10 @@ function process_type_reference(
   } : type_info;
 
   return {
-    location: capture.node_location,
+    location: extract_location(capture.node),
     type: "type",
     scope_id: scope_id,
-    name: capture.symbol_name,
+    name: extract_symbol_name(capture),
     context: extract_context(capture),
     type_info: enhanced_type_info,
   };
@@ -337,11 +371,11 @@ export class ReferenceBuilder {
    * Process a reference capture and add to builder
    * Returns this for functional chaining
    */
-  process(capture: NormalizedCapture): ReferenceBuilder {
+  process(capture: RawCapture): ReferenceBuilder {
     // Only process reference-like captures
-    if (capture.category !== SemanticCategory.REFERENCE &&
-        capture.category !== SemanticCategory.ASSIGNMENT &&
-        capture.category !== SemanticCategory.RETURN) {
+    if (get_category(capture) !== 'reference' &&
+        get_category(capture) !== 'assignment' &&
+        get_category(capture) !== 'return') {
       return this;
     }
 
@@ -359,14 +393,14 @@ export class ReferenceBuilder {
     }
 
     // Build standard reference
-    const scope_id = this.context.get_scope_id(capture.node_location);
+    const scope_id = this.context.get_scope_id(extract_location(capture.node));
     const reference_type = map_to_reference_type(kind);
 
     const reference: SymbolReference = {
-      location: capture.node_location,
+      location: extract_location(capture.node),
       type: reference_type,
       scope_id: scope_id,
-      name: capture.symbol_name,
+      name: extract_symbol_name(capture),
       context: extract_context(capture),
       type_info: extract_type_info(capture),
       call_type: determine_call_type(kind),
@@ -402,7 +436,7 @@ export class ReferenceBuilder {
 
     // Add member access details for property access
     if (kind === ReferenceKind.PROPERTY_ACCESS) {
-      const object_type = capture.context.type_name;
+      const object_type = undefined // Would need to extract type name from node;
 
       const member_access_info = {
         object_type: object_type ? {
@@ -411,7 +445,7 @@ export class ReferenceBuilder {
           certainty: "inferred" as const,
         } : undefined,
         access_type: "property" as const,
-        is_optional_chain: capture.modifiers.is_optional || false,
+        is_optional_chain: false // Would need to extract from capture name || false,
       };
 
       const updated_ref = { ...reference, member_access: member_access_info };
@@ -438,20 +472,20 @@ export class ReferenceBuilder {
 /**
  * Process reference captures using functional composition
  *
- * @param captures - Normalized captures from tree-sitter queries
+ * @param captures - Raw captures from tree-sitter queries
  * @param context - Processing context with scope information
  * @returns Array of symbol references
  */
 export function process_references(
-  captures: NormalizedCapture[],
+  captures: RawCapture[],
   context: ProcessingContext
 ): SymbolReference[] {
   // Filter for reference captures and process using builder
   return captures
     .filter(capture =>
-      capture.category === SemanticCategory.REFERENCE ||
-      capture.category === SemanticCategory.ASSIGNMENT ||
-      capture.category === SemanticCategory.RETURN
+      get_category(capture) === 'reference' ||
+      get_category(capture) === 'assignment' ||
+      get_category(capture) === 'return'
     )
     .reduce(
       (builder, capture) => builder.process(capture),
@@ -463,8 +497,8 @@ export function process_references(
 /**
  * Check if a capture is a reference
  */
-export function is_reference_capture(capture: NormalizedCapture): boolean {
-  return capture.category === SemanticCategory.REFERENCE ||
-         capture.category === SemanticCategory.ASSIGNMENT ||
-         capture.category === SemanticCategory.RETURN;
+export function is_reference_capture(capture: RawCapture): boolean {
+  return get_category(capture) === 'reference' ||
+         get_category(capture) === 'assignment' ||
+         get_category(capture) === 'return';
 }

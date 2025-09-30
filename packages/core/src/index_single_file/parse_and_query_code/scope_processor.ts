@@ -23,11 +23,81 @@ import {
   ScopeType
 } from "@ariadnejs/types";
 import type { QueryCapture } from "tree-sitter";
-import {
-  SemanticCategory,
-  SemanticEntity,
-  NormalizedCapture
-} from "./capture_types";
+
+/**
+ * Core semantic categories
+ */
+export enum SemanticCategory {
+  SCOPE = "scope",
+  DEFINITION = "definition",
+  REFERENCE = "reference",
+  IMPORT = "import",
+  EXPORT = "export",
+  TYPE = "type",
+  ASSIGNMENT = "assignment",
+  RETURN = "return",
+  DECORATOR = "decorator",
+  MODIFIER = "modifier",
+}
+
+/**
+ * Semantic entity types (normalized across languages)
+ */
+export enum SemanticEntity {
+  // Scopes
+  MODULE = "module",
+  CLASS = "class",
+  FUNCTION = "function",
+  METHOD = "method",
+  CONSTRUCTOR = "constructor",
+  BLOCK = "block",
+  CLOSURE = "closure",
+  INTERFACE = "interface",
+  ENUM = "enum",
+  NAMESPACE = "namespace",
+
+  // Definitions
+  VARIABLE = "variable",
+  CONSTANT = "constant",
+  PARAMETER = "parameter",
+  FIELD = "field",
+  PROPERTY = "property",
+  TYPE_PARAMETER = "type_parameter",
+  ENUM_MEMBER = "enum_member",
+
+  // Types
+  TYPE = "type",
+  TYPE_ALIAS = "type_alias",
+  TYPE_ANNOTATION = "type_annotation",
+  TYPE_PARAMETERS = "type_parameters",
+  TYPE_ASSERTION = "type_assertion",
+  TYPE_CONSTRAINT = "type_constraint",
+  TYPE_ARGUMENT = "type_argument",
+
+  // References
+  CALL = "call",
+  MEMBER_ACCESS = "member_access",
+  TYPE_REFERENCE = "type_reference",
+  TYPEOF = "typeof",
+
+  // Special
+  THIS = "this",
+  SUPER = "super",
+  IMPORT = "import",
+
+  // Modifiers
+  ACCESS_MODIFIER = "access_modifier",
+  READONLY_MODIFIER = "readonly_modifier",
+  VISIBILITY = "visibility",
+  MUTABILITY = "mutability",
+  REFERENCE = "reference",
+
+  // Expressions and constructs
+  OPERATOR = "operator",
+  ARGUMENT_LIST = "argument_list",
+  LABEL = "label",
+  MACRO = "macro",
+}
 
 /**
  * Raw capture from tree-sitter query
@@ -57,7 +127,7 @@ export interface ProcessingContext {
  * This MUST run before definition and reference processing
  */
 export function process_scopes(
-  captures: NormalizedCapture[],
+  captures: RawCapture[],
   file_path: FilePath,
   language: Language
 ): Map<ScopeId, LexicalScope> {
@@ -83,16 +153,25 @@ export function process_scopes(
   };
   scopes.set(root_scope_id, root_scope);
 
+  // Helper to extract location from node
+  const extract_loc = (node: any): Location => ({
+    file_path: file_path,
+    line: node.startPosition.row + 1,
+    column: node.startPosition.column,
+    end_line: node.endPosition.row + 1,
+    end_column: node.endPosition.column,
+  });
+
   // Sort captures by location for proper nesting
   const sorted_captures = [...captures].sort((a, b) =>
-    compare_locations(a.node_location, b.node_location)
+    compare_locations(extract_loc(a.node), extract_loc(b.node))
   );
 
   // Process each capture that creates a scope
   for (const capture of sorted_captures) {
     if (!creates_scope(capture)) continue;
 
-    const location = capture.node_location;
+    const location = extract_loc(capture.node);
     const scope_type = map_capture_to_scope_type(capture);
 
     if (!scope_type) continue;
@@ -107,7 +186,7 @@ export function process_scopes(
     const scope: LexicalScope = {
       id: scope_id,
       parent_id: parent.id,
-      name: capture.symbol_name || null,
+      name: capture.text || null,
       type: scope_type,
       location,
       child_ids: []
@@ -166,47 +245,56 @@ export function create_processing_context(
 }
 
 /**
- * Check if a capture creates a scope
+ * Check if a capture creates a scope based on capture name
  */
-function creates_scope(capture: NormalizedCapture): boolean {
-  // Scopes are created by certain semantic entities
-  return capture.category === SemanticCategory.SCOPE ||
-    capture.entity === SemanticEntity.MODULE ||
-    capture.entity === SemanticEntity.CLASS ||
-    capture.entity === SemanticEntity.FUNCTION ||
-    capture.entity === SemanticEntity.METHOD ||
-    capture.entity === SemanticEntity.CONSTRUCTOR ||
-    capture.entity === SemanticEntity.BLOCK ||
-    capture.entity === SemanticEntity.CLOSURE ||
-    capture.entity === SemanticEntity.INTERFACE ||
-    capture.entity === SemanticEntity.ENUM ||
-    capture.entity === SemanticEntity.NAMESPACE;
+function creates_scope(capture: RawCapture): boolean {
+  // Parse capture name (e.g., "scope.function" -> creates scope)
+  const parts = capture.name.split('.');
+  const category = parts[0];
+  const entity = parts[1];
+
+  // Scopes are created by scope category or specific entity types
+  return category === 'scope' ||
+    entity === 'module' ||
+    entity === 'class' ||
+    entity === 'function' ||
+    entity === 'method' ||
+    entity === 'constructor' ||
+    entity === 'block' ||
+    entity === 'closure' ||
+    entity === 'interface' ||
+    entity === 'enum' ||
+    entity === 'namespace';
 }
 
 /**
  * Map capture entity to scope type
  */
-function map_capture_to_scope_type(capture: NormalizedCapture): ScopeType | null {
-  switch (capture.entity) {
-    case SemanticEntity.MODULE:
-    case SemanticEntity.NAMESPACE:
+function map_capture_to_scope_type(capture: RawCapture): ScopeType | null {
+  const parts = capture.name.split('.');
+  const category = parts[0];
+  const entity = parts[1];
+
+  switch (entity) {
+    case 'module':
+    case 'namespace':
       return "module";
-    case SemanticEntity.CLASS:
-    case SemanticEntity.INTERFACE:
-    case SemanticEntity.ENUM:
+    case 'class':
+    case 'interface':
+    case 'enum':
       return "class";
-    case SemanticEntity.FUNCTION:
-    case SemanticEntity.CLOSURE:
+    case 'function':
+    case 'closure':
       return "function";
-    case SemanticEntity.METHOD:
+    case 'method':
       return "method";
-    case SemanticEntity.CONSTRUCTOR:
+    case 'constructor':
       return "constructor";
-    case SemanticEntity.BLOCK:
+    case 'block':
       return "block";
     default:
       // Check if it's a scope category with block type
-      if (capture.category === SemanticCategory.SCOPE) {
+      if (category === 'scope') {
         return "block";
       }
       return null;
@@ -317,16 +405,22 @@ function compute_scope_depth(
 }
 
 /**
- * Process scopes from tree-sitter captures in two phases
+ * Process scopes from tree-sitter captures
  */
 export function process_file(
   captures: QueryCapture[],
-  normalized_captures: NormalizedCapture[],
   file_path: FilePath,
   language: Language
 ): ProcessingContext {
+  // Convert QueryCapture to RawCapture
+  const raw_captures: RawCapture[] = captures.map(c => ({
+    name: c.name,
+    node: c.node,
+    text: c.node.text
+  }));
+
   // PASS 1: Create scopes directly (single pass)
-  const scopes = process_scopes(normalized_captures, file_path, language);
+  const scopes = process_scopes(raw_captures, file_path, language);
 
   // Create context with precomputed depths for efficient lookups
   const context = create_processing_context(scopes);

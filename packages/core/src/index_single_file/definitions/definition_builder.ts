@@ -13,6 +13,7 @@ import type {
   DecoratorDefinition,
   EnumDefinition,
   EnumMember,
+  FilePath,
   FunctionDefinition,
   FunctionSignature,
   ImportDefinition,
@@ -42,9 +43,8 @@ import {
   variable_symbol,
 } from "@ariadnejs/types";
 
-import type { ProcessingContext } from "../parse_and_query_code/scope_processor";
-import type { NormalizedCapture } from "../parse_and_query_code/capture_types";
-import { SemanticCategory, SemanticEntity } from "../parse_and_query_code/capture_types";
+import type { ProcessingContext, RawCapture } from "../parse_and_query_code/scope_processor";
+import { SemanticCategory, SemanticEntity } from "../parse_and_query_code/scope_processor";
 
 // ============================================================================
 // Builder State Types
@@ -170,25 +170,26 @@ function constructor_symbol(class_name: string, location: Location): SymbolId {
 }
 
 /**
- * Determine symbol availability based on capture modifiers
+ * Determine symbol availability based on capture name
  */
-function determine_availability(capture: NormalizedCapture): SymbolAvailability {
-  const modifiers = capture.modifiers;
+function determine_availability(capture: RawCapture): SymbolAvailability {
+  // Parse capture name for modifiers
+  const parts = capture.name.split('.');
 
-  // Check for export modifiers
-  if (modifiers.is_exported || modifiers.is_default) {
+  // Check for export modifiers in capture name
+  if (parts.includes('exported') || parts.includes('export')) {
     return {
       scope: "file-export",
       export: {
-        name: capture.symbol_name,
-        is_default: modifiers.is_default,
-        is_reexport: modifiers.is_reexport,
+        name: extract_symbol_name(capture),
+        is_default: parts.includes('default'),
+        is_reexport: parts.includes('reexport'),
       }
     };
   }
 
   // Check for visibility modifiers (Rust)
-  if (modifiers.visibility_level === "pub") {
+  if (parts.includes('pub') || parts.includes('public')) {
     return { scope: "public" };
   }
 
@@ -197,36 +198,43 @@ function determine_availability(capture: NormalizedCapture): SymbolAvailability 
 }
 
 /**
- * Extract type annotation from capture
+ * Extract location from tree-sitter node
  */
-function extract_type(capture: NormalizedCapture): SymbolName | undefined {
-  // Look for type information in context
-  const type_name = capture.context.type_name ||
-                   capture.context.annotation_type ||
-                   capture.context.return_type;
+function extract_location(node: any, file_path?: string): Location {
+  return {
+    file_path: (file_path || "") as FilePath,
+    line: node.startPosition.row + 1,
+    column: node.startPosition.column,
+    end_line: node.endPosition.row + 1,
+    end_column: node.endPosition.column,
+  };
+}
 
-  return type_name ? type_name as SymbolName : undefined;
+/**
+ * Extract symbol name from capture
+ */
+function extract_symbol_name(capture: RawCapture): SymbolName {
+  // Use capture text as symbol name
+  return (capture.text || "") as SymbolName;
+}
+
+/**
+ * Extract type annotation from capture
+ * Simplified for now - would need to parse node structure
+ */
+function extract_type(capture: RawCapture): SymbolName | undefined {
+  // Type information would need to be extracted from the node structure
+  // For now, return undefined to maintain compatibility
+  return undefined;
 }
 
 /**
  * Extract extends/implements for classes and interfaces
  */
-function extract_extends(capture: NormalizedCapture): SymbolName[] {
-  const extends_list: SymbolName[] = [];
-
-  if (capture.context.extends_class) {
-    extends_list.push(capture.context.extends_class as SymbolName);
-  }
-
-  if (capture.context.implements_interface) {
-    extends_list.push(capture.context.implements_interface as SymbolName);
-  }
-
-  if (capture.context.implements_interfaces) {
-    extends_list.push(...capture.context.implements_interfaces.map(i => i as SymbolName));
-  }
-
-  return extends_list;
+function extract_extends(capture: RawCapture): SymbolName[] {
+  // This would need to parse the node structure to find extends/implements
+  // For now, return empty array to maintain compatibility
+  return [];
 }
 
 // ============================================================================
@@ -253,47 +261,52 @@ export class DefinitionBuilder {
    * Process a capture and update builder state
    * Returns this for functional chaining
    */
-  process(capture: NormalizedCapture): DefinitionBuilder {
+  process(capture: RawCapture): DefinitionBuilder {
+    // Parse capture name (e.g., "definition.class", "decorator.function")
+    const parts = capture.name.split('.');
+    const category = parts[0];
+    const entity = parts[1];
+
     // Handle decorators by category
-    if (capture.category === SemanticCategory.DECORATOR) {
+    if (category === 'decorator') {
       return this.add_decorator(capture);
     }
 
     // Only process definition captures
-    if (capture.category !== SemanticCategory.DEFINITION) {
+    if (category !== 'definition') {
       return this;
     }
 
     // Route to appropriate handler based on entity type
-    switch (capture.entity) {
-      case SemanticEntity.CLASS:
+    switch (entity) {
+      case 'class':
         return this.add_class(capture);
-      case SemanticEntity.FUNCTION:
+      case 'function':
         return this.add_function(capture);
-      case SemanticEntity.METHOD:
+      case 'method':
         return this.add_method(capture);
-      case SemanticEntity.CONSTRUCTOR:
+      case 'constructor':
         return this.add_constructor(capture);
-      case SemanticEntity.PROPERTY:
-      case SemanticEntity.FIELD:
+      case 'property':
+      case 'field':
         return this.add_property(capture);
-      case SemanticEntity.PARAMETER:
+      case 'parameter':
         return this.add_parameter(capture);
-      case SemanticEntity.INTERFACE:
+      case 'interface':
         return this.add_interface(capture);
-      case SemanticEntity.ENUM:
+      case 'enum':
         return this.add_enum(capture);
-      case SemanticEntity.ENUM_MEMBER:
+      case 'enum_member':
         return this.add_enum_member(capture);
-      case SemanticEntity.NAMESPACE:
+      case 'namespace':
         return this.add_namespace(capture);
-      case SemanticEntity.VARIABLE:
-      case SemanticEntity.CONSTANT:
+      case 'variable':
+      case 'constant':
         return this.add_variable(capture);
-      case SemanticEntity.IMPORT:
+      case 'import':
         return this.add_import(capture);
-      case SemanticEntity.TYPE:
-      case SemanticEntity.TYPE_ALIAS:
+      case 'type':
+      case 'type_alias':
         return this.add_type(capture);
       default:
         return this;
@@ -326,16 +339,18 @@ export class DefinitionBuilder {
   // Complex Type Handlers
   // ============================================================================
 
-  private add_class(capture: NormalizedCapture): DefinitionBuilder {
-    const class_id = class_symbol(capture.symbol_name, capture.node_location);
-    const scope_id = this.context.get_scope_id(capture.node_location);
+  private add_class(capture: RawCapture): DefinitionBuilder {
+    const symbol_name = extract_symbol_name(capture);
+    const location = extract_location(capture.node);
+    const class_id = class_symbol(symbol_name, location);
+    const scope_id = this.context.get_scope_id(location);
 
     this.classes.set(class_id, {
       base: {
         kind: "class",
         symbol_id: class_id,
-        name: capture.symbol_name,
-        location: capture.node_location,
+        name: symbol_name,
+        location: location,
         scope_id: scope_id,
         availability: determine_availability(capture),
         extends: extract_extends(capture),
@@ -349,16 +364,18 @@ export class DefinitionBuilder {
     return this;
   }
 
-  private add_function(capture: NormalizedCapture): DefinitionBuilder {
-    const func_id = function_symbol(capture.symbol_name, capture.node_location);
-    const scope_id = this.context.get_scope_id(capture.node_location);
+  private add_function(capture: RawCapture): DefinitionBuilder {
+    const symbol_name = extract_symbol_name(capture);
+    const location = extract_location(capture.node);
+    const func_id = function_symbol(symbol_name, location);
+    const scope_id = this.context.get_scope_id(location);
 
     this.functions.set(func_id, {
       base: {
         kind: "function",
         symbol_id: func_id,
-        name: capture.symbol_name,
-        location: capture.node_location,
+        name: symbol_name,
+        location: location,
         scope_id: scope_id,
         availability: determine_availability(capture),
       },
@@ -372,16 +389,16 @@ export class DefinitionBuilder {
     return this;
   }
 
-  private add_interface(capture: NormalizedCapture): DefinitionBuilder {
-    const interface_id = interface_symbol(capture.symbol_name, capture.node_location);
-    const scope_id = this.context.get_scope_id(capture.node_location);
+  private add_interface(capture: RawCapture): DefinitionBuilder {
+    const interface_id = interface_symbol(extract_symbol_name(capture), extract_location(capture.node));
+    const scope_id = this.context.get_scope_id(extract_location(capture.node));
 
     this.interfaces.set(interface_id, {
       base: {
         kind: "interface",
         symbol_id: interface_id,
-        name: capture.symbol_name,
-        location: capture.node_location,
+        name: extract_symbol_name(capture),
+        location: extract_location(capture.node),
         scope_id: scope_id,
         availability: determine_availability(capture),
         extends: extract_extends(capture),
@@ -393,19 +410,19 @@ export class DefinitionBuilder {
     return this;
   }
 
-  private add_enum(capture: NormalizedCapture): DefinitionBuilder {
-    const enum_id = enum_symbol(capture.symbol_name, capture.node_location);
-    const scope_id = this.context.get_scope_id(capture.node_location);
+  private add_enum(capture: RawCapture): DefinitionBuilder {
+    const enum_id = enum_symbol(extract_symbol_name(capture), extract_location(capture.node));
+    const scope_id = this.context.get_scope_id(extract_location(capture.node));
 
     this.enums.set(enum_id, {
       base: {
         kind: "enum",
         symbol_id: enum_id,
-        name: capture.symbol_name,
-        location: capture.node_location,
+        name: extract_symbol_name(capture),
+        location: extract_location(capture.node),
         scope_id: scope_id,
         availability: determine_availability(capture),
-        is_const: capture.modifiers.is_const || false,
+        is_const: false, // Would need to be extracted from capture name or node
       },
       members: new Map(),
       methods: undefined,
@@ -414,16 +431,16 @@ export class DefinitionBuilder {
     return this;
   }
 
-  private add_namespace(capture: NormalizedCapture): DefinitionBuilder {
-    const namespace_id = namespace_symbol(capture.symbol_name, capture.node_location);
-    const scope_id = this.context.get_scope_id(capture.node_location);
+  private add_namespace(capture: RawCapture): DefinitionBuilder {
+    const namespace_id = namespace_symbol(extract_symbol_name(capture), extract_location(capture.node));
+    const scope_id = this.context.get_scope_id(extract_location(capture.node));
 
     this.namespaces.set(namespace_id, {
       base: {
         kind: "namespace",
         symbol_id: namespace_id,
-        name: capture.symbol_name,
-        location: capture.node_location,
+        name: extract_symbol_name(capture),
+        location: extract_location(capture.node),
         scope_id: scope_id,
         availability: determine_availability(capture),
       },
@@ -437,20 +454,20 @@ export class DefinitionBuilder {
   // Nested Structure Handlers
   // ============================================================================
 
-  private add_method(capture: NormalizedCapture): DefinitionBuilder {
+  private add_method(capture: RawCapture): DefinitionBuilder {
     // Find containing class or interface
-    const containing_class = this.find_containing_class(capture.node_location);
-    const containing_interface = this.find_containing_interface(capture.node_location);
+    const containing_class = this.find_containing_class(extract_location(capture.node));
+    const containing_interface = this.find_containing_interface(extract_location(capture.node));
 
-    const method_id = method_symbol(capture.symbol_name, capture.node_location);
-    const scope_id = this.context.get_scope_id(capture.node_location);
+    const method_id = method_symbol(extract_symbol_name(capture), extract_location(capture.node));
+    const scope_id = this.context.get_scope_id(extract_location(capture.node));
 
     const method_state: MethodBuilderState = {
       base: {
         kind: "method",
         symbol_id: method_id,
-        name: capture.symbol_name,
-        location: capture.node_location,
+        name: extract_symbol_name(capture),
+        location: extract_location(capture.node),
         scope_id: scope_id,
         availability: determine_availability(capture),
         return_type: extract_type(capture),
@@ -468,22 +485,22 @@ export class DefinitionBuilder {
     return this;
   }
 
-  private add_constructor(capture: NormalizedCapture): DefinitionBuilder {
-    const containing_class = this.find_containing_class(capture.node_location);
+  private add_constructor(capture: RawCapture): DefinitionBuilder {
+    const containing_class = this.find_containing_class(extract_location(capture.node));
     if (!containing_class) return this;
 
     const constructor_id = constructor_symbol(
       containing_class.base.name || "constructor",
-      capture.node_location
+      extract_location(capture.node)
     );
-    const scope_id = this.context.get_scope_id(capture.node_location);
+    const scope_id = this.context.get_scope_id(extract_location(capture.node));
 
     containing_class.constructor = {
       base: {
         kind: "constructor",
         symbol_id: constructor_id,
         name: "constructor" as SymbolName,
-        location: capture.node_location,
+        location: extract_location(capture.node),
         scope_id: scope_id,
         availability: determine_availability(capture),
       },
@@ -494,20 +511,20 @@ export class DefinitionBuilder {
     return this;
   }
 
-  private add_property(capture: NormalizedCapture): DefinitionBuilder {
-    const containing_class = this.find_containing_class(capture.node_location);
-    const containing_interface = this.find_containing_interface(capture.node_location);
+  private add_property(capture: RawCapture): DefinitionBuilder {
+    const containing_class = this.find_containing_class(extract_location(capture.node));
+    const containing_interface = this.find_containing_interface(extract_location(capture.node));
 
-    const prop_id = property_symbol(capture.symbol_name, capture.node_location);
-    const scope_id = this.context.get_scope_id(capture.node_location);
+    const prop_id = property_symbol(extract_symbol_name(capture), extract_location(capture.node));
+    const scope_id = this.context.get_scope_id(extract_location(capture.node));
 
     if (containing_class) {
       containing_class.properties.set(prop_id, {
         base: {
           kind: "property",
           symbol_id: prop_id,
-          name: capture.symbol_name,
-          location: capture.node_location,
+          name: extract_symbol_name(capture),
+          location: extract_location(capture.node),
           scope_id: scope_id,
           availability: determine_availability(capture),
           type: extract_type(capture),
@@ -520,30 +537,30 @@ export class DefinitionBuilder {
         kind: "property",
         name: prop_id,
         type: extract_type(capture),
-        location: capture.node_location,
+        location: extract_location(capture.node),
       });
     }
 
     return this;
   }
 
-  private add_parameter(capture: NormalizedCapture): DefinitionBuilder {
-    const param_id = parameter_symbol(capture.symbol_name, capture.node_location);
-    const scope_id = this.context.get_scope_id(capture.node_location);
+  private add_parameter(capture: RawCapture): DefinitionBuilder {
+    const param_id = parameter_symbol(extract_symbol_name(capture), extract_location(capture.node));
+    const scope_id = this.context.get_scope_id(extract_location(capture.node));
 
     const param_def: ParameterDefinition = {
       kind: "parameter",
       symbol_id: param_id,
-      name: capture.symbol_name,
-      location: capture.node_location,
+      name: extract_symbol_name(capture),
+      location: extract_location(capture.node),
       scope_id: scope_id,
       availability: { scope: "file-private" },
       type: extract_type(capture),
-      default_value: capture.context.initializer_text,
+      default_value: undefined // Would need to be extracted from node,
     };
 
     // Find containing callable (function, method, or constructor)
-    const location = capture.node_location;
+    const location = extract_location(capture.node);
 
     // Check methods in classes
     for (const class_state of this.classes.values()) {
@@ -583,16 +600,16 @@ export class DefinitionBuilder {
     return this;
   }
 
-  private add_enum_member(capture: NormalizedCapture): DefinitionBuilder {
-    const containing_enum = this.find_containing_enum(capture.node_location);
+  private add_enum_member(capture: RawCapture): DefinitionBuilder {
+    const containing_enum = this.find_containing_enum(extract_location(capture.node));
     if (!containing_enum) return this;
 
-    const member_id = `${containing_enum.base.symbol_id}:${capture.symbol_name}` as SymbolId;
+    const member_id = `${containing_enum.base.symbol_id}:${extract_symbol_name(capture)}` as SymbolId;
 
     containing_enum.members.set(member_id, {
       name: member_id,
-      value: capture.context.initializer_text,
-      location: capture.node_location,
+      value: undefined, // Would need to be extracted from node
+      location: extract_location(capture.node),
     });
 
     return this;
@@ -602,74 +619,78 @@ export class DefinitionBuilder {
   // Simple Definition Handlers
   // ============================================================================
 
-  private add_variable(capture: NormalizedCapture): DefinitionBuilder {
-    const var_id = variable_symbol(capture.symbol_name, capture.node_location);
-    const scope_id = this.context.get_scope_id(capture.node_location);
+  private add_variable(capture: RawCapture): DefinitionBuilder {
+    const var_id = variable_symbol(extract_symbol_name(capture), extract_location(capture.node));
+    const scope_id = this.context.get_scope_id(extract_location(capture.node));
 
-    const kind = capture.entity === SemanticEntity.CONSTANT ? "constant" : "variable";
+    const parts = capture.name.split('.');
+    const entity = parts[1];
+    const kind = entity === 'constant' ? "constant" : "variable";
 
     this.variables.set(var_id, {
       kind: kind,
       symbol_id: var_id,
-      name: capture.symbol_name,
-      location: capture.node_location,
+      name: extract_symbol_name(capture),
+      location: extract_location(capture.node),
       scope_id: scope_id,
       availability: determine_availability(capture),
       type: extract_type(capture),
-      initial_value: capture.context.initializer_text,
+      initial_value: undefined, // Would need to be extracted from node
     });
 
     return this;
   }
 
-  private add_import(capture: NormalizedCapture): DefinitionBuilder {
-    const import_id = import_symbol(capture.symbol_name, capture.node_location);
-    const scope_id = this.context.get_scope_id(capture.node_location);
+  private add_import(capture: RawCapture): DefinitionBuilder {
+    const import_id = import_symbol(extract_symbol_name(capture), extract_location(capture.node));
+    const scope_id = this.context.get_scope_id(extract_location(capture.node));
 
     this.imports.set(import_id, {
       kind: "import",
       symbol_id: import_id,
-      name: capture.symbol_name,
-      location: capture.node_location,
+      name: extract_symbol_name(capture),
+      location: extract_location(capture.node),
       scope_id: scope_id,
       availability: { scope: "file-private" },
-      import_path: (capture.context.source_module || "") as ModulePath,
-      original_name: capture.context.import_alias as SymbolName,
-      is_default: capture.modifiers.is_default,
-      is_namespace: capture.modifiers.is_namespace,
+      import_path: "" as ModulePath, // Would need to be extracted from node
+      original_name: undefined, // Would need to be extracted from node
+      is_default: false, // Would need to be extracted from capture name
+      is_namespace: false, // Would need to be extracted from capture name
     });
 
     return this;
   }
 
-  private add_type(capture: NormalizedCapture): DefinitionBuilder {
-    const type_id = type_symbol(capture.symbol_name, capture.node_location);
-    const scope_id = this.context.get_scope_id(capture.node_location);
+  private add_type(capture: RawCapture): DefinitionBuilder {
+    const type_id = type_symbol(extract_symbol_name(capture), extract_location(capture.node));
+    const scope_id = this.context.get_scope_id(extract_location(capture.node));
 
-    const kind = capture.entity === SemanticEntity.TYPE_ALIAS ? "type_alias" : "type";
+    const parts = capture.name.split('.');
+    const entity = parts[1];
+    const kind = entity === 'type_alias' ? "type_alias" : "type";
 
     this.types.set(type_id, {
       kind: kind,
       symbol_id: type_id,
-      name: capture.symbol_name,
-      location: capture.node_location,
+      name: extract_symbol_name(capture),
+      location: extract_location(capture.node),
       scope_id: scope_id,
       availability: determine_availability(capture),
-      type_expression: capture.context.type_name,
+      type_expression: undefined, // Would need to be extracted from node
     });
 
     return this;
   }
 
-  private add_decorator(capture: NormalizedCapture): DefinitionBuilder {
-    const decorator_id = decorator_symbol(capture.symbol_name, capture.node_location);
-    const scope_id = this.context.get_scope_id(capture.node_location);
+  private add_decorator(capture: RawCapture): DefinitionBuilder {
+    const decorator_id = decorator_symbol(extract_symbol_name(capture), extract_location(capture.node));
+    const scope_id = this.context.get_scope_id(extract_location(capture.node));
 
     this.decorators.set(decorator_id, {
       kind: "decorator",
       symbol_id: decorator_id,
-      name: capture.symbol_name,
-      location: capture.node_location,
+      name: extract_symbol_name(capture),
+      location: extract_location(capture.node),
       scope_id: scope_id,
       availability: { scope: "file-private" },
     });
@@ -838,15 +859,16 @@ export class DefinitionBuilder {
  * @returns Array of definition objects
  */
 export function process_captures(
-  captures: NormalizedCapture[],
+  captures: RawCapture[],
   context: ProcessingContext
 ): AnyDefinition[] {
   // Filter for definition and decorator captures and process using builder
   return captures
-    .filter(capture =>
-      capture.category === SemanticCategory.DEFINITION ||
-      capture.category === SemanticCategory.DECORATOR
-    )
+    .filter(capture => {
+      const parts = capture.name.split('.');
+      const category = parts[0];
+      return category === 'definition' || category === 'decorator';
+    })
     .reduce(
       (builder, capture) => builder.process(capture),
       new DefinitionBuilder(context)

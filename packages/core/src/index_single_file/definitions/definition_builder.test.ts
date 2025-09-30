@@ -4,9 +4,8 @@
 
 import { describe, it, expect } from "vitest";
 import { DefinitionBuilder } from "./definition_builder";
-import type { ProcessingContext } from "../parse_and_query_code/scope_processor";
-import type { NormalizedCapture } from "../parse_and_query_code/capture_types";
-import { SemanticCategory, SemanticEntity } from "../parse_and_query_code/capture_types";
+import type { ProcessingContext, RawCapture } from "../parse_and_query_code/scope_processor";
+import { SemanticCategory, SemanticEntity } from "../parse_and_query_code/scope_processor";
 import type { Location, ScopeId, SymbolName } from "@ariadnejs/types";
 
 // Test helpers
@@ -32,17 +31,21 @@ function create_test_context(): ProcessingContext {
 }
 
 function create_test_capture(
-  entity: SemanticEntity,
+  entity: string,
   name: string = "testSymbol",
   location: Location = create_test_location()
-): NormalizedCapture {
+): RawCapture {
+  // Create a mock tree-sitter node
+  const mock_node = {
+    text: name,
+    startPosition: { row: location.line - 1, column: location.column },
+    endPosition: { row: location.end_line - 1, column: location.end_column },
+  };
+
   return {
-    category: SemanticCategory.DEFINITION,
-    entity,
-    node_location: location,
-    symbol_name: name as SymbolName,
-    modifiers: {},
-    context: {},
+    name: `definition.${entity}`,
+    node: mock_node as any,
+    text: name,
   };
 }
 
@@ -59,7 +62,7 @@ describe("DefinitionBuilder", () => {
     const context = create_test_context();
     const builder = new DefinitionBuilder(context);
 
-    const class_capture = create_test_capture(SemanticEntity.CLASS, "MyClass");
+    const class_capture = create_test_capture("class", "MyClass");
     builder.process(class_capture);
 
     const definitions = builder.build();
@@ -75,7 +78,7 @@ describe("DefinitionBuilder", () => {
     const context = create_test_context();
     const builder = new DefinitionBuilder(context);
 
-    const func_capture = create_test_capture(SemanticEntity.FUNCTION, "myFunction");
+    const func_capture = create_test_capture("function", "myFunction");
     builder.process(func_capture);
 
     const definitions = builder.build();
@@ -91,7 +94,7 @@ describe("DefinitionBuilder", () => {
     const context = create_test_context();
     const builder = new DefinitionBuilder(context);
 
-    const interface_capture = create_test_capture(SemanticEntity.INTERFACE, "IMyInterface");
+    const interface_capture = create_test_capture("interface", "IMyInterface");
     builder.process(interface_capture);
 
     const definitions = builder.build();
@@ -221,13 +224,17 @@ describe("DefinitionBuilder", () => {
     const context = create_test_context();
     const builder = new DefinitionBuilder(context);
 
-    const reference_capture: NormalizedCapture = {
-      category: SemanticCategory.REFERENCE, // Not a definition
-      entity: SemanticEntity.CALL,
-      node_location: create_test_location(),
-      symbol_name: "someCall" as SymbolName,
-      modifiers: {},
-      context: {},
+    const location = create_test_location();
+    const mock_node = {
+      text: "someCall",
+      startPosition: { row: location.line - 1, column: location.column },
+      endPosition: { row: location.end_line - 1, column: location.end_column },
+    };
+
+    const reference_capture: RawCapture = {
+      name: "reference.call", // Not a definition
+      node: mock_node as any,
+      text: "someCall",
     };
 
     builder.process(reference_capture);
@@ -242,14 +249,14 @@ describe("DefinitionBuilder", () => {
 
     // Process various definition types
     builder
-      .process(create_test_capture(SemanticEntity.CLASS, "MyClass"))
-      .process(create_test_capture(SemanticEntity.INTERFACE, "IMyInterface"))
-      .process(create_test_capture(SemanticEntity.ENUM, "MyEnum"))
-      .process(create_test_capture(SemanticEntity.FUNCTION, "myFunction"))
-      .process(create_test_capture(SemanticEntity.VARIABLE, "myVar"))
-      .process(create_test_capture(SemanticEntity.CONSTANT, "MY_CONST"))
-      .process(create_test_capture(SemanticEntity.TYPE, "MyType"))
-      .process(create_test_capture(SemanticEntity.NAMESPACE, "MyNamespace"));
+      .process(create_test_capture("class", "MyClass"))
+      .process(create_test_capture("interface", "IMyInterface"))
+      .process(create_test_capture("enum", "MyEnum"))
+      .process(create_test_capture("function", "myFunction"))
+      .process(create_test_capture("variable", "myVar"))
+      .process(create_test_capture("constant", "MY_CONST"))
+      .process(create_test_capture("type", "MyType"))
+      .process(create_test_capture("namespace", "MyNamespace"));
 
     const definitions = builder.build();
     expect(definitions).toHaveLength(8);

@@ -1,21 +1,16 @@
 import type { Language, FilePath } from "@ariadnejs/types";
-import { type Tree, Query } from "tree-sitter";
-import {
-  normalize_captures,
-  group_captures_by_category,
-} from "./capture_normalizer";
+import { type Tree, Query, type QueryCapture } from "tree-sitter";
 import { load_query, LANGUAGE_TO_TREESITTER_LANG } from "./query_loader";
-import type { GroupedCaptures } from "./capture_normalizer";
 
 /**
- * Query tree and parse captures into normalized semantic categories
- * Returns grouped normalized captures for testing and use
+ * Query tree and get raw captures
+ * Returns raw tree-sitter captures for processing
  */
 export function query_tree_and_parse_captures(
   lang: Language,
   tree: Tree,
   file_path: FilePath
-): GroupedCaptures {
+): QueryCapture[] {
   const query_string = load_query(lang);
   const parser = LANGUAGE_TO_TREESITTER_LANG.get(lang);
   if (!parser) {
@@ -24,9 +19,6 @@ export function query_tree_and_parse_captures(
   const query = new Query(parser, query_string);
   const captures = query.captures(tree.rootNode);
 
-  // Normalize captures to common semantic format
-  const normalized = normalize_captures(captures, lang, file_path);
-
-  // Group by category and return
-  return group_captures_by_category(normalized);
+  // Return raw captures directly
+  return captures;
 }

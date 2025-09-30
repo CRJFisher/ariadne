@@ -27,7 +27,6 @@ import { process_definitions } from "./definitions";
 import { process_imports } from "./definitions/imports";
 import { process_exports } from "./definitions/exports";
 import { process_references, ProcessedReferences } from "./references";
-import { NormalizedCapture } from "./parse_and_query_code/capture_types";
 import {
   extract_type_members,
   type LocalTypeInfo,
