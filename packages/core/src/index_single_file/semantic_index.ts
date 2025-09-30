@@ -133,42 +133,6 @@ export function build_semantic_index(
   // PASS 5: Build name index
   const symbols_by_name = build_name_index(builder_result);
 
-   // Phase 6: Extract local type members (single-file only)
-   const local_types = extract_type_members(
-    classes,
-    interfaces,
-    types,
-    enums,
-    scopes,
-    file_path,
-    grouped.definitions,
-    grouped.types
-  );
-
-  // Phase 7: Extract type annotations (unresolved)
-  const local_type_annotations = process_type_annotations(
-    grouped.types,
-    root_scope,
-    scopes,
-    file_path
-  );
-
-  // Phase 8: Extract type tracking (unresolved)
-  const local_type_tracking = extract_type_tracking(
-    grouped.assignments,
-    scopes,
-    file_path
-  );
-
-  // Phase 9: Extract type flow patterns (unresolved)
-  // Combine relevant captures for type flow analysis
-  const type_flow_captures = [
-    ...grouped.types,
-    ...grouped.assignments,
-    ...grouped.returns,
-  ];
-  const local_type_flow = extract_type_flow(type_flow_captures, scopes);
-
   // Return complete semantic index (single-file)
   return {
     file_path: file.file_path,
@@ -185,7 +149,6 @@ export function build_semantic_index(
     imported_symbols: builder_result.imports,
     references: all_references,
     symbols_by_name,
-    local_types,
   };
 }
 
