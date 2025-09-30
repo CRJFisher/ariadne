@@ -730,14 +730,14 @@
   argument: (identifier) @reference.variable.update
 )
 
-; JSX components
-(jsx_opening_element
-  (identifier) @reference.call.jsx
-)
-
-(jsx_self_closing_element
-  (identifier) @reference.call.jsx
-)
+; JSX components (only valid in TSX, commented out for plain TypeScript)
+; (jsx_opening_element
+;   (identifier) @reference.call.jsx
+; )
+;
+; (jsx_self_closing_element
+;   (identifier) @reference.call.jsx
+; )
 
 ; this references (important for method context)
 (this) @reference.this
