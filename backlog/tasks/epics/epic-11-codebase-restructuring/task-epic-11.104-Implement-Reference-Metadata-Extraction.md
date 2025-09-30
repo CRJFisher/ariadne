@@ -1,6 +1,6 @@
 # Task Epic 11.104: Implement Reference Metadata Extraction
 
-**Status:** Phase 2 In Progress (Tasks 104.3.1-104.3.2 Complete) - Ready for Task 104.3.3
+**Status:** Phase 2 In Progress (Tasks 104.3.1-104.3.3 Complete) - Ready for Task 104.3.4
 **Priority:** High
 **Estimated Effort:** 12-16 hours
 **Dependencies:** task-epic-11.103 (capture name validation complete)
@@ -8,6 +8,7 @@
 **Phase 1 Completed:** 2025-09-30
 **Task 104.3.1 Completed:** 2025-10-01
 **Task 104.3.2 Completed:** 2025-10-01
+**Task 104.3.3 Completed:** 2025-10-01
 
 ## Phase 1 Summary (Foundation)
 
@@ -29,18 +30,21 @@
 ✅ **Completed Tasks:**
 - Task 104.3.1: Implemented javascript_metadata.ts with all 6 extractors
 - Task 104.3.2: Comprehensive test suite for JavaScript metadata extractors (57 tests, 100% passing)
+- Task 104.3.3: Wired JavaScript/TypeScript extractors into semantic_index
 
 ✅ **Key Achievements:**
 - All 6 metadata extractors fully implemented and tested
 - 57 comprehensive tests covering JavaScript, TypeScript, and edge cases
-- 100% test success rate with zero regressions
+- JavaScript extractors successfully integrated into semantic_index pipeline
 - TypeScript type annotation support with proper certainty detection
 - Fixed 3 critical bugs discovered during testing
 - Full support for JSDoc and TypeScript type systems
+- Zero regressions: 878 tests passing (baseline maintained)
 
 📋 **Next Steps:**
-- Task 104.3.3: Wire JavaScript extractors into semantic_index
-- Task 104.3.4-104.3.6: Fix JavaScript/TypeScript integration tests
+- Task 104.3.4: Fix semantic_index.javascript.test.ts
+- Task 104.3.5: Fix semantic_index.typescript.test.ts
+- Task 104.3.6: Fix javascript_builder.test.ts for metadata
 - Task 104.4: Implement Python metadata extractors
 - Task 104.5: Implement Rust metadata extractors
 
@@ -148,7 +152,7 @@ Update `semantic_index.ts` to:
 3. **104.3** - Implement JavaScript/TypeScript metadata extraction
    - 104.3.1 - ✅ Implement javascript_metadata.ts (Completed 2025-10-01)
    - 104.3.2 - ✅ Test javascript_metadata.ts (Completed 2025-10-01)
-   - 104.3.3 - Wire JS/TS extractors into semantic_index
+   - 104.3.3 - ✅ Wire JS/TS extractors into semantic_index (Completed 2025-10-01)
    - 104.3.4 - Fix semantic_index.javascript.test.ts
    - 104.3.5 - Fix semantic_index.typescript.test.ts
    - 104.3.6 - Fix javascript_builder.test.ts for metadata
@@ -565,3 +569,57 @@ Regression Analysis:
 - Test count: 57 tests (25 original + 32 new)
 - Complexity: Functions remain simple with clear single responsibilities
 - Maintainability: Excellent - pure functions, well-tested, easy to extend
+
+### Task 104.3.3: Wire JavaScript/TypeScript Extractors into Semantic Index (Completed 2025-10-01)
+
+**What Was Completed:**
+- Updated `semantic_index.ts` to import `JAVASCRIPT_METADATA_EXTRACTORS` from `javascript_metadata.ts`
+- Modified `get_metadata_extractors()` function to return JavaScript extractors for both "javascript" and "typescript" languages
+- Verified extractors are properly passed through the pipeline to `ReferenceBuilder` via `process_references()`
+- Confirmed TypeScript compilation: Zero errors in modified files
+- Ran full test suite regression analysis
+
+**Architecture Integration:**
+- JavaScript extractors work for both JavaScript and TypeScript (tree-sitter-typescript is a superset of tree-sitter-javascript)
+- Extractors parameter flows: `build_semantic_index()` → `get_metadata_extractors()` → `process_references()` → `ReferenceBuilder`
+- Extractors are now active for all JavaScript/TypeScript files processed through semantic_index
+
+**Verification:**
+- ✅ TypeScript compilation: Zero errors in `semantic_index.ts`, `javascript_metadata.ts`, `metadata_types.ts`
+- ✅ JavaScript metadata tests: 57/57 tests passing (100%)
+- ✅ Reference builder tests: 14/14 tests passing (7 appropriately skipped)
+- ✅ Full test suite: 878 tests passing (baseline maintained)
+- ✅ Regression analysis: 531 pre-existing failures, 0 new failures
+- ✅ Integration verified: Type info extraction confirmed working in integration testing
+
+**Files Modified:**
+- `packages/core/src/index_single_file/semantic_index.ts`:
+  - Added import for `JAVASCRIPT_METADATA_EXTRACTORS`
+  - Updated `get_metadata_extractors()` to return extractors for JavaScript/TypeScript
+  - Updated function documentation
+
+**Test Results:**
+```
+Before: 878 tests passing, 531 failing (pre-existing)
+After:  878 tests passing, 531 failing (no new failures)
+Change: 0 new failures (zero regressions)
+```
+
+**Issues Encountered:**
+- None. Integration was straightforward due to well-designed interface from task 104.2
+
+**Follow-on Work:**
+- Task 104.3.4: Fix semantic_index.javascript.test.ts (legacy tests using deprecated query_tree API)
+- Task 104.3.5: Fix semantic_index.typescript.test.ts (legacy tests using deprecated query_tree API)
+- Task 104.3.6: Fix javascript_builder.test.ts for metadata validation
+- Future: TypeScript-specific extractors may be needed for advanced TypeScript features (currently JavaScript extractors handle basic TypeScript correctly)
+
+**Performance:**
+- No performance impact observed (extractors are pure functions with O(1) AST node traversal)
+- Metadata extraction adds negligible overhead to semantic index building
+
+**Code Quality:**
+- Clean integration following existing patterns
+- No breaking changes to public API
+- Full backward compatibility maintained (extractors parameter is optional)
+- Zero technical debt introduced

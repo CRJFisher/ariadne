@@ -39,6 +39,7 @@ import { JAVASCRIPT_BUILDER_CONFIG } from "./query_code_tree/language_configs/ja
 import { TYPESCRIPT_BUILDER_CONFIG } from "./query_code_tree/language_configs/typescript_builder";
 import { PYTHON_BUILDER_CONFIG } from "./query_code_tree/language_configs/python_builder";
 import { RUST_BUILDER_CONFIG } from "./query_code_tree/language_configs/rust_builder";
+import { JAVASCRIPT_METADATA_EXTRACTORS } from "./query_code_tree/language_configs/javascript_metadata";
 import { ParsedFile } from "./file_utils";
 import { extract_type_members } from "./definitions/type_members";
 import { process_type_annotations } from "./references/type_annotation_references";
@@ -179,15 +180,14 @@ function get_language_config(language: Language): LanguageBuilderConfig {
 /**
  * Get language-specific metadata extractors
  *
- * Returns undefined for now - language-specific extractors will be implemented
- * in subsequent tasks (104.3 for JS/TS, 104.4 for Python, 104.5 for Rust)
+ * JavaScript extractors work for both JavaScript and TypeScript since
+ * tree-sitter-typescript is a superset of tree-sitter-javascript
  */
 function get_metadata_extractors(language: Language): MetadataExtractors | undefined {
   switch (language) {
     case "javascript":
     case "typescript":
-      // TODO: Task 104.3 - Import and return javascript_metadata extractors
-      return undefined;
+      return JAVASCRIPT_METADATA_EXTRACTORS;
     case "python":
       // TODO: Task 104.4 - Import and return python_metadata extractors
       return undefined;
