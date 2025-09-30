@@ -18,7 +18,7 @@ import {
 } from "./parse_and_query_code/capture_types";
 import { build_scope_tree } from "./scope_tree";
 
-const FIXTURES_DIR = join(__dirname, "fixtures", "python");
+const FIXTURES_DIR = join(__dirname, "parse_and_query_code", "fixtures", "python");
 
 describe("Semantic Index - Python Comprehensive", () => {
   let parser: Parser;

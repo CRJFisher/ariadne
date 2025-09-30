@@ -329,7 +329,6 @@
 (member_expression
   object: (identifier) @ref.object
   property: (property_identifier) @ref.property.optional
-  "?." @optional_chaining_operator
 ) @member_access.optional
 
 ; Assignments (capture both sides)

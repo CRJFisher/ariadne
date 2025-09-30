@@ -256,6 +256,12 @@ export class DefinitionBuilder {
   private readonly types = new Map<SymbolId, TypeDefinition>();
   private readonly decorators = new Map<SymbolId, DecoratorDefinition>();
 
+  // Orphan captures (waiting for their parent to be added)
+  private readonly orphan_methods = new Map<Location, MethodBuilderState>();
+  private readonly orphan_properties = new Map<Location, PropertyBuilderState>();
+  private readonly orphan_parameters = new Map<Location, ParameterDefinition>();
+  private readonly orphan_constructors = new Map<Location, ConstructorBuilderState>();
+
   constructor(private readonly context: ProcessingContext) {}
 
   /**
@@ -750,7 +756,7 @@ export class DefinitionBuilder {
     const class_id = class_symbol(symbol_name, location);
     const scope_id = this.context.get_scope_id(location);
 
-    this.classes.set(class_id, {
+    const class_state: ClassBuilderState = {
       base: {
         kind: "class",
         symbol_id: class_id,
@@ -764,7 +770,53 @@ export class DefinitionBuilder {
       properties: new Map(),
       constructor: undefined,
       decorators: [],
-    });
+    };
+
+    this.classes.set(class_id, class_state);
+
+    // Check for orphan methods that belong to this class
+    for (const [orphan_location, orphan_method] of this.orphan_methods) {
+      if (this.is_location_within(orphan_location, location)) {
+        class_state.methods.set(orphan_method.base.symbol_id!, orphan_method);
+        this.orphan_methods.delete(orphan_location);
+      }
+    }
+
+    // Check for orphan properties that belong to this class
+    for (const [orphan_location, orphan_property] of this.orphan_properties) {
+      if (this.is_location_within(orphan_location, location)) {
+        class_state.properties.set(orphan_property.base.symbol_id!, orphan_property);
+        this.orphan_properties.delete(orphan_location);
+      }
+    }
+
+    // Check for orphan constructor that belongs to this class
+    for (const [orphan_location, orphan_constructor] of this.orphan_constructors) {
+      if (this.is_location_within(orphan_location, location)) {
+        class_state.constructor = orphan_constructor;
+        this.orphan_constructors.delete(orphan_location);
+        break; // Only one constructor per class
+      }
+    }
+
+    // Check for orphan parameters that belong to this class's methods or constructor
+    for (const [orphan_location, orphan_param] of this.orphan_parameters) {
+      // Check if parameter belongs to any method
+      for (const method of class_state.methods.values()) {
+        if (this.is_location_within(orphan_location, method.base.location!)) {
+          method.parameters.set(orphan_param.symbol_id, orphan_param);
+          this.orphan_parameters.delete(orphan_location);
+          break;
+        }
+      }
+
+      // Check if parameter belongs to constructor
+      if (class_state.constructor &&
+          this.is_location_within(orphan_location, class_state.constructor.base.location!)) {
+        class_state.constructor.parameters.set(orphan_param.symbol_id, orphan_param);
+        this.orphan_parameters.delete(orphan_location);
+      }
+    }
 
     return this;
   }
@@ -775,7 +827,7 @@ export class DefinitionBuilder {
     const func_id = function_symbol(symbol_name, location);
     const scope_id = this.context.get_scope_id(location);
 
-    this.functions.set(func_id, {
+    const func_state: FunctionBuilderState = {
       base: {
         kind: "function",
         symbol_id: func_id,
@@ -789,28 +841,75 @@ export class DefinitionBuilder {
         return_type: extract_type(capture),
       },
       decorators: [],
-    });
+    };
+
+    this.functions.set(func_id, func_state);
+
+    // Check for orphan parameters that belong to this function
+    for (const [orphan_location, orphan_param] of this.orphan_parameters) {
+      if (this.is_location_within(orphan_location, location)) {
+        func_state.signature.parameters.set(orphan_param.symbol_id, orphan_param);
+        this.orphan_parameters.delete(orphan_location);
+      }
+    }
 
     return this;
   }
 
   private add_interface_from_capture(capture: RawCapture): DefinitionBuilder {
-    const interface_id = interface_symbol(extract_symbol_name(capture), extract_location(capture.node));
-    const scope_id = this.context.get_scope_id(extract_location(capture.node));
+    const symbol_name = extract_symbol_name(capture);
+    const location = extract_location(capture.node);
+    const interface_id = interface_symbol(symbol_name, location);
+    const scope_id = this.context.get_scope_id(location);
 
-    this.interfaces.set(interface_id, {
+    const interface_state: InterfaceBuilderState = {
       base: {
         kind: "interface",
         symbol_id: interface_id,
-        name: extract_symbol_name(capture),
-        location: extract_location(capture.node),
+        name: symbol_name,
+        location: location,
         scope_id: scope_id,
         availability: determine_availability(capture),
         extends: extract_extends(capture),
       },
       methods: new Map(),
       properties: new Map(),
-    });
+    };
+
+    this.interfaces.set(interface_id, interface_state);
+
+    // Check for orphan methods that belong to this interface
+    for (const [orphan_location, orphan_method] of this.orphan_methods) {
+      if (this.is_location_within(orphan_location, location)) {
+        interface_state.methods.set(orphan_method.base.symbol_id!, orphan_method);
+        this.orphan_methods.delete(orphan_location);
+      }
+    }
+
+    // Check for orphan properties that belong to this interface
+    for (const [orphan_location, orphan_property] of this.orphan_properties) {
+      if (this.is_location_within(orphan_location, location)) {
+        // For interfaces, we need to convert to PropertySignature
+        interface_state.properties.set(orphan_property.base.symbol_id!, {
+          kind: "property",
+          name: orphan_property.base.symbol_id!,
+          type: orphan_property.base.type,
+          location: orphan_property.base.location!,
+        });
+        this.orphan_properties.delete(orphan_location);
+      }
+    }
+
+    // Check for orphan parameters that belong to this interface's methods
+    for (const [orphan_location, orphan_param] of this.orphan_parameters) {
+      for (const method of interface_state.methods.values()) {
+        if (this.is_location_within(orphan_location, method.base.location!)) {
+          method.parameters.set(orphan_param.symbol_id, orphan_param);
+          this.orphan_parameters.delete(orphan_location);
+          break;
+        }
+      }
+    }
 
     return this;
   }
@@ -861,18 +960,19 @@ export class DefinitionBuilder {
 
   private add_method(capture: RawCapture): DefinitionBuilder {
     // Find containing class or interface
-    const containing_class = this.find_containing_class(extract_location(capture.node));
-    const containing_interface = this.find_containing_interface(extract_location(capture.node));
+    const method_location = extract_location(capture.node);
+    const containing_class = this.find_containing_class(method_location);
+    const containing_interface = this.find_containing_interface(method_location);
 
-    const method_id = method_symbol(extract_symbol_name(capture), extract_location(capture.node));
-    const scope_id = this.context.get_scope_id(extract_location(capture.node));
+    const method_id = method_symbol(extract_symbol_name(capture), method_location);
+    const scope_id = this.context.get_scope_id(method_location);
 
     const method_state: MethodBuilderState = {
       base: {
         kind: "method",
         symbol_id: method_id,
         name: extract_symbol_name(capture),
-        location: extract_location(capture.node),
+        location: method_location,
         scope_id: scope_id,
         availability: determine_availability(capture),
         return_type: extract_type(capture),
@@ -885,27 +985,30 @@ export class DefinitionBuilder {
       containing_class.methods.set(method_id, method_state);
     } else if (containing_interface) {
       containing_interface.methods.set(method_id, method_state);
+    } else {
+      // Store as orphan - will be attached when parent is added
+      this.orphan_methods.set(method_location, method_state);
     }
 
     return this;
   }
 
   private add_constructor(capture: RawCapture): DefinitionBuilder {
-    const containing_class = this.find_containing_class(extract_location(capture.node));
-    if (!containing_class) return this;
+    const constructor_location = extract_location(capture.node);
+    const containing_class = this.find_containing_class(constructor_location);
 
+    const scope_id = this.context.get_scope_id(constructor_location);
     const constructor_id = constructor_symbol(
-      containing_class.base.name || "constructor",
-      extract_location(capture.node)
+      containing_class?.base.name || "constructor",
+      constructor_location
     );
-    const scope_id = this.context.get_scope_id(extract_location(capture.node));
 
-    containing_class.constructor = {
+    const constructor_state: ConstructorBuilderState = {
       base: {
         kind: "constructor",
         symbol_id: constructor_id,
         name: "constructor" as SymbolName,
-        location: extract_location(capture.node),
+        location: constructor_location,
         scope_id: scope_id,
         availability: determine_availability(capture),
       },
@@ -913,15 +1016,23 @@ export class DefinitionBuilder {
       decorators: [],
     };
 
+    if (containing_class) {
+      containing_class.constructor = constructor_state;
+    } else {
+      // Store as orphan - will be attached when parent is added
+      this.orphan_constructors.set(constructor_location, constructor_state);
+    }
+
     return this;
   }
 
   private add_property(capture: RawCapture): DefinitionBuilder {
-    const containing_class = this.find_containing_class(extract_location(capture.node));
-    const containing_interface = this.find_containing_interface(extract_location(capture.node));
+    const prop_location = extract_location(capture.node);
+    const containing_class = this.find_containing_class(prop_location);
+    const containing_interface = this.find_containing_interface(prop_location);
 
-    const prop_id = property_symbol(extract_symbol_name(capture), extract_location(capture.node));
-    const scope_id = this.context.get_scope_id(extract_location(capture.node));
+    const prop_id = property_symbol(extract_symbol_name(capture), prop_location);
+    const scope_id = this.context.get_scope_id(prop_location);
 
     if (containing_class) {
       containing_class.properties.set(prop_id, {
@@ -929,7 +1040,7 @@ export class DefinitionBuilder {
           kind: "property",
           symbol_id: prop_id,
           name: extract_symbol_name(capture),
-          location: extract_location(capture.node),
+          location: prop_location,
           scope_id: scope_id,
           availability: determine_availability(capture),
           type: extract_type(capture),
@@ -942,7 +1053,21 @@ export class DefinitionBuilder {
         kind: "property",
         name: prop_id,
         type: extract_type(capture),
-        location: extract_location(capture.node),
+        location: prop_location,
+      });
+    } else {
+      // Store as orphan - will be attached when parent is added
+      this.orphan_properties.set(prop_location, {
+        base: {
+          kind: "property",
+          symbol_id: prop_id,
+          name: extract_symbol_name(capture),
+          location: prop_location,
+          scope_id: scope_id,
+          availability: determine_availability(capture),
+          type: extract_type(capture),
+        },
+        decorators: [],
       });
     }
 
@@ -950,14 +1075,15 @@ export class DefinitionBuilder {
   }
 
   private add_parameter(capture: RawCapture): DefinitionBuilder {
-    const param_id = parameter_symbol(extract_symbol_name(capture), extract_location(capture.node));
-    const scope_id = this.context.get_scope_id(extract_location(capture.node));
+    const param_location = extract_location(capture.node);
+    const param_id = parameter_symbol(extract_symbol_name(capture), param_location);
+    const scope_id = this.context.get_scope_id(param_location);
 
     const param_def: ParameterDefinition = {
       kind: "parameter",
       symbol_id: param_id,
       name: extract_symbol_name(capture),
-      location: extract_location(capture.node),
+      location: param_location,
       scope_id: scope_id,
       availability: { scope: "file-private" },
       type: extract_type(capture),
@@ -965,41 +1091,78 @@ export class DefinitionBuilder {
     };
 
     // Find containing callable (function, method, or constructor)
-    const location = extract_location(capture.node);
+    let found = false;
 
     // Check methods in classes
     for (const class_state of this.classes.values()) {
       for (const method_state of class_state.methods.values()) {
-        if (this.is_location_within(location, method_state.base.location!)) {
+        if (this.is_location_within(param_location, method_state.base.location!)) {
           method_state.parameters.set(param_id, param_def);
-          return this;
+          found = true;
+          break;
         }
       }
+      if (found) break;
 
       // Check constructor
       if (class_state.constructor &&
-          this.is_location_within(location, class_state.constructor.base.location!)) {
+          this.is_location_within(param_location, class_state.constructor.base.location!)) {
         class_state.constructor.parameters.set(param_id, param_def);
-        return this;
+        found = true;
+        break;
       }
     }
 
-    // Check functions
-    for (const func_state of this.functions.values()) {
-      if (this.is_location_within(location, func_state.base.location!)) {
-        func_state.signature.parameters.set(param_id, param_def);
-        return this;
-      }
-    }
-
-    // Check methods in interfaces
-    for (const interface_state of this.interfaces.values()) {
-      for (const method_state of interface_state.methods.values()) {
-        if (this.is_location_within(location, method_state.base.location!)) {
-          method_state.parameters.set(param_id, param_def);
-          return this;
+    if (!found) {
+      // Check functions
+      for (const func_state of this.functions.values()) {
+        if (this.is_location_within(param_location, func_state.base.location!)) {
+          func_state.signature.parameters.set(param_id, param_def);
+          found = true;
+          break;
         }
       }
+    }
+
+    if (!found) {
+      // Check methods in interfaces
+      for (const interface_state of this.interfaces.values()) {
+        for (const method_state of interface_state.methods.values()) {
+          if (this.is_location_within(param_location, method_state.base.location!)) {
+            method_state.parameters.set(param_id, param_def);
+            found = true;
+            break;
+          }
+        }
+        if (found) break;
+      }
+    }
+
+    if (!found) {
+      // Check orphan methods
+      for (const orphan_method of this.orphan_methods.values()) {
+        if (this.is_location_within(param_location, orphan_method.base.location!)) {
+          orphan_method.parameters.set(param_id, param_def);
+          found = true;
+          break;
+        }
+      }
+    }
+
+    if (!found) {
+      // Check orphan constructors
+      for (const orphan_constructor of this.orphan_constructors.values()) {
+        if (this.is_location_within(param_location, orphan_constructor.base.location!)) {
+          orphan_constructor.parameters.set(param_id, param_def);
+          found = true;
+          break;
+        }
+      }
+    }
+
+    if (!found) {
+      // Store as orphan - will be attached when parent is added
+      this.orphan_parameters.set(param_location, param_def);
     }
 
     return this;

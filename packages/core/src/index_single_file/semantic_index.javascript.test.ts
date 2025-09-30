@@ -14,7 +14,7 @@ import { build_semantic_index } from "./semantic_index";
 import { query_tree_and_parse_captures } from "./parse_and_query_code/parse_and_query_code";
 import { SemanticEntity } from "./parse_and_query_code/capture_types";
 
-const FIXTURES_DIR = join(__dirname, "fixtures");
+const FIXTURES_DIR = join(__dirname, "parse_and_query_code", "fixtures");
 
 describe("Semantic Index - JavaScript", () => {
   let parser: Parser;

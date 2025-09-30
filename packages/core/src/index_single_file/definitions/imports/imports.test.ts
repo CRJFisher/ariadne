@@ -28,8 +28,8 @@ import type {
 } from "@ariadnejs/types";
 import { variable_symbol } from "@ariadnejs/types";
 import { process_imports } from "./imports";
-import { SemanticEntity, SemanticCategory } from "../capture_types";
-import type { NormalizedCapture } from "../capture_types";
+import { SemanticEntity, SemanticCategory } from "../../capture_types";
+import type { NormalizedCapture } from "../../capture_types";
 import { query_tree_and_parse_captures } from "../../parse_and_query_code/parse_and_query_code";
 
 const FIXTURES_DIR = join(__dirname, "..", "fixtures");

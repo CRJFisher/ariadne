@@ -17,7 +17,7 @@ import {
   SemanticCategory,
 } from "./parse_and_query_code/capture_types";
 
-const FIXTURES_DIR = join(__dirname, "fixtures", "typescript");
+const FIXTURES_DIR = join(__dirname, "parse_and_query_code", "fixtures", "typescript");
 
 describe("Semantic Index - TypeScript Comprehensive", () => {
   let parser: Parser;
