@@ -16,10 +16,10 @@
 (closure_expression) @scope.closure
 
 ; Type scopes
-(struct_item) @scope.struct
+(struct_item) @scope.class
 (enum_item) @scope.enum
-(trait_item) @scope.trait
-(impl_item) @scope.impl
+(trait_item) @scope.interface
+(impl_item) @scope.block
 
 ; Module scopes
 (mod_item) @scope.module
@@ -30,12 +30,12 @@
 (async_block) @scope.block.async
 
 ; Control flow scopes
-(if_expression) @scope.if
-(match_expression) @scope.match
-(for_expression) @scope.for
-(while_expression) @scope.while
-(loop_expression) @scope.loop
-(match_arm) @scope.match_arm
+(if_expression) @scope.block
+(match_expression) @scope.block
+(for_expression) @scope.block
+(while_expression) @scope.block
+(loop_expression) @scope.block
+(match_arm) @scope.block
 
 ;; ==============================================================================
 ;; PATTERN MATCHING
@@ -43,67 +43,67 @@
 
 ; Match expressions with value and body
 (match_expression
-  value: (_) @reference.value) @reference.expression
+  value: (_) @reference.variable) @reference.variable
 
 ; Match arms with patterns and values
 (match_arm
-  pattern: (_) @reference.definition
-  value: (_) @reference.value) @reference.match_arm
+  pattern: (_) @reference.variable
+  value: (_) @reference.variable) @reference.variable
 
 ; Pattern variables - general capture of identifiers in pattern contexts
 ; This will capture most pattern-bound variables automatically
 
 ; Struct pattern destructuring
 (struct_pattern
-  type: (type_identifier) @reference.struct_type) @reference.struct_destructure
+  type: (type_identifier) @reference.type_reference) @reference.variable
 
 ; Tuple pattern destructuring
-(tuple_pattern) @reference.tuple_destructure
+(tuple_pattern) @reference.variable
 
 ; Or patterns (pattern | pattern)
-(or_pattern) @reference.or
+(or_pattern) @reference.variable
 
 ; Range patterns
-(range_pattern) @reference.range
+(range_pattern) @reference.variable
 
 ; Ref patterns
-(ref_pattern) @reference.ref
+(ref_pattern) @reference.variable
 
 ; Mut patterns
-(mut_pattern) @reference.mut
+(mut_pattern) @modifier.mutability
 
 ; Slice patterns
-(slice_pattern) @reference.slice
+(slice_pattern) @reference.variable
 
 ; If-let expressions
 (if_expression
   condition: (let_condition
-    pattern: (_) @reference.if_let
-    value: (_) @reference.if_let_value)) @reference.if_let
+    pattern: (_) @reference.variable
+    value: (_) @reference.variable)) @reference.variable
 
 ; While-let expressions
 (while_expression
   condition: (let_condition
-    pattern: (_) @reference.while_let
-    value: (_) @reference.while_let_value)) @reference.while_let
+    pattern: (_) @reference.variable
+    value: (_) @reference.variable)) @reference.variable
 
 ; Let-else statements
 (let_declaration
-  pattern: (_) @reference.let_else_pattern
-  value: (_) @reference.let_else_value
-  alternative: (_) @reference.let_else_alternative) @reference.let_else
+  pattern: (_) @reference.variable
+  value: (_) @reference.variable
+  alternative: (_) @reference.variable) @reference.variable
 
 ; Pattern in for loops
 (for_expression
-  pattern: (_) @reference.for_loop
-  value: (_) @reference.for_loop_iterable) @reference.for_loop_pattern
+  pattern: (_) @reference.variable
+  value: (_) @reference.variable) @reference.variable
 
 ; Function parameters with patterns
 (parameter
-  pattern: (tuple_pattern) @reference.param_destructure) @reference.param_tuple
+  pattern: (tuple_pattern) @reference.variable) @reference.variable
 
 (parameter
-  pattern: (struct_pattern) @reference.param_destructure) @reference.param_struct
+  pattern: (struct_pattern) @reference.variable) @reference.variable
 
 ;; ==============================================================================
 ;; DEFINITIONS - Basic symbols
@@ -111,13 +111,13 @@
 
 ; Struct with generics (must come first to match before general pattern)
 (struct_item
-  name: (type_identifier) @definition.struct.generic
+  name: (type_identifier) @definition.class.generic
   type_parameters: (type_parameters)
 )
 
 ; Struct definitions (general)
 (struct_item
-  name: (type_identifier) @definition.struct
+  name: (type_identifier) @definition.class
 )
 
 ; Struct fields
@@ -138,7 +138,7 @@
 
 ; Enum variants
 (enum_variant
-  name: (identifier) @definition.enum_variant
+  name: (identifier) @definition.enum_member
 )
 
 ; Generic functions (must come first)
@@ -198,17 +198,17 @@
 
 ; Trait implementations
 (impl_item
-  trait: (type_identifier) @reference.trait
+  trait: (type_identifier) @reference.type_reference
   type: (type_identifier) @reference.type
-) @reference.trait_impl
+) @reference.type_reference.impl
 
 ; Trait implementations with generic type
 (impl_item
-  trait: (type_identifier) @reference.trait
+  trait: (type_identifier) @reference.type_reference
   type: (generic_type
     type: (type_identifier) @reference.type.generic
   )
-) @reference.trait_impl.generic
+) @reference.type_reference.impl.generic
 
 ; Async methods in trait implementations (with self parameter)
 (impl_item
@@ -218,7 +218,7 @@
       (function_modifiers
         "async"
       )
-      name: (identifier) @definition.trait_impl_method.async
+      name: (identifier) @definition.method.async
       parameters: (parameters
         (self_parameter)
       )
@@ -231,7 +231,7 @@
   trait: (_)
   body: (declaration_list
     (function_item
-      name: (identifier) @definition.trait_impl_method
+      name: (identifier) @definition.method
       parameters: (parameters
         (self_parameter)
       )
@@ -244,7 +244,7 @@
   trait: (_)
   body: (declaration_list
     (function_item
-      name: (identifier) @definition.trait_impl_method.associated
+      name: (identifier) @definition.method.associated
       parameters: (parameters
         (parameter)
       )
@@ -303,7 +303,7 @@
 (trait_item
   body: (declaration_list
     (function_signature_item
-      name: (identifier) @definition.trait_method
+      name: (identifier) @definition.method
     )
   )
 )
@@ -312,7 +312,7 @@
 (trait_item
   body: (declaration_list
     (function_item
-      name: (identifier) @definition.trait_method.default
+      name: (identifier) @definition.method.default
     )
   )
 )
@@ -321,7 +321,7 @@
 (trait_item
   body: (declaration_list
     (associated_type
-      name: (type_identifier) @definition.associated_type
+      name: (type_identifier) @definition.type_alias
     )
   )
 )
@@ -331,7 +331,7 @@
   trait: (_)
   body: (declaration_list
     (type_item
-      name: (type_identifier) @definition.associated_type.impl
+      name: (type_identifier) @definition.type_alias.impl
     )
   )
 )
@@ -340,7 +340,7 @@
 (trait_item
   body: (declaration_list
     (const_item
-      name: (identifier) @definition.associated_const
+      name: (identifier) @definition.constant
     )
   )
 )
@@ -352,12 +352,12 @@
 
 ; Constants
 (const_item
-  name: (identifier) @definition.const
+  name: (identifier) @definition.constant
 )
 
 ; Static items
 (static_item
-  name: (identifier) @definition.static
+  name: (identifier) @definition.variable
 )
 
 ; Variable bindings
@@ -373,12 +373,12 @@
 
 ; Function parameters
 (parameter
-  pattern: (identifier) @definition.param
+  pattern: (identifier) @definition.parameter
 )
 
 ; Self parameters
 (self_parameter
-  (self) @definition.param.self
+  (self) @definition.parameter.self
 )
 
 ; Closure expressions
@@ -394,14 +394,14 @@
 ; Pattern: |args| async move { ... }
 (closure_expression
   body: (async_block
-    "move" @modifier.move_modifier
+    "move" @modifier.reference
   )
 ) @definition.function.async_move_closure
 
 ; Closure parameters - simple identifiers
 (closure_expression
   parameters: (closure_parameters
-    (identifier) @definition.param.closure
+    (identifier) @definition.parameter.closure
   )
 )
 
@@ -409,20 +409,20 @@
 (closure_expression
   parameters: (closure_parameters
     (parameter
-      pattern: (identifier) @definition.param.closure
+      pattern: (identifier) @definition.parameter.closure
     )
   )
 )
 
 ; Loop variables
 (for_expression
-  pattern: (identifier) @definition.loop_var
+  pattern: (identifier) @definition.variable
 )
 
 ; Loop variables in tuple patterns
 (for_expression
   pattern: (tuple_pattern
-    (identifier) @definition.loop_var
+    (identifier) @definition.variable
   )
 )
 
@@ -435,26 +435,26 @@
 
 ; Variables in while-let conditions
 (let_condition
-  pattern: (identifier) @definition.loop_var
+  pattern: (identifier) @definition.variable
 )
 
 ; Module definitions with body
 (mod_item
   name: (identifier) @definition.module
-  body: (declaration_list) @definition.body
-) @definition.inline
+  body: (declaration_list) @definition.function
+) @definition.function
 
 ; Module declarations without body (external file)
 (mod_item
   name: (identifier) @definition.module
   !body
-) @definition.external
+) @definition.function
 
 ; Public module definitions
 (mod_item
   (visibility_modifier) @definition.visibility
   name: (identifier) @definition.module.public
-) @definition.public
+) @definition.function
 
 
 ;; ==============================================================================
@@ -463,38 +463,38 @@
 
 ; Type parameters (simple)
 (type_parameters
-  (type_identifier) @definition.type_param
+  (type_identifier) @definition.type_parameter
 )
 
 ; Constrained type parameters (e.g., T: Clone)
 (constrained_type_parameter
-  left: (type_identifier) @definition.type_param.constrained
-  bounds: (trait_bounds) @type.bounds
+  left: (type_identifier) @definition.type_parameter.constrained
+  bounds: (trait_bounds) @type.type_constraint
 )
 
 ; Const parameters
 (const_parameter
-  name: (identifier) @definition.const_param
+  name: (identifier) @definition.parameter
 )
 
 ; Lifetime parameters in type parameters
 (type_parameters
-  (lifetime) @type.param
+  (lifetime) @type.type_parameter
 )
 
 ; Lifetime parameters in type arguments
 (type_arguments
-  (lifetime) @type.param
+  (lifetime) @type.type_parameter
 )
 
 ; Lifetime references in types
 (reference_type
-  (lifetime) @type.ref
+  (lifetime) @type.type_reference
 )
 
 ; Lifetimes in trait bounds
 (trait_bounds
-  (lifetime) @type.ref
+  (lifetime) @type.type_reference
 )
 
 ;; ==============================================================================
@@ -503,36 +503,36 @@
 
 ; Function pointer types
 (function_type
-  "fn" @type.function_keyword
-  parameters: (parameters) @type.function_params
-  return_type: (_)? @type.function_return
-) @type.function_pointer
+  "fn" @type.type_reference
+  parameters: (parameters) @type.type_parameters
+  return_type: (_)? @type.type_annotation
+) @type.type_reference
 
 ; Trait object function types (Fn, FnMut, FnOnce)
 (generic_type
-  type: (type_identifier) @type.trait_name
-  (#match? @type.trait_name "^(Fn|FnMut|FnOnce)$")
-) @type.function_trait
+  type: (type_identifier) @type.type_reference
+  (#match? @type.type_reference "^(Fn|FnMut|FnOnce)$")
+) @type.type_reference
 
 ; Higher-order function calls (map, filter, fold, etc.)
 (call_expression
   function: (field_expression
-    value: (_) @call.receiver
-    field: (field_identifier) @call.method
-    (#match? @call.method "^(map|filter|fold|for_each|find|any|all|collect|flat_map|filter_map|take|skip|take_while|skip_while)$")
+    value: (_) @reference.call
+    field: (field_identifier) @reference.call
+    (#match? @reference.call "^(map|filter|fold|for_each|find|any|all|collect|flat_map|filter_map|take|skip|take_while|skip_while)$")
   )
-) @call.higher_order
+) @reference.call
 
 ; Functions returning impl Trait
 (function_item
-  return_type: (abstract_type) @return.impl_trait
+  return_type: (abstract_type) @return.variable
 ) @definition.function.returns_impl
 
 ; Functions accepting impl Trait parameters
 (function_item
   parameters: (parameters
     (parameter
-      type: (abstract_type) @definition.impl_trait
+      type: (abstract_type) @definition.interface
     )
   )
 ) @definition.function.accepts_impl
@@ -542,29 +542,29 @@
 ;; ==============================================================================
 
 ; Where clause
-(where_clause) @type.where_clause
+(where_clause) @type.type_constraint
 
 ; Where predicates with type bounds
 (where_predicate
   left: (type_identifier) @type.type
-  bounds: (trait_bounds) @type.bounds
+  bounds: (trait_bounds) @type.type_constraint
 )
 
 ; Lifetime where predicates
 (where_predicate
-  left: (lifetime) @type.lifetime
-  bounds: (trait_bounds) @type.bounds
+  left: (lifetime) @type.type_parameter
+  bounds: (trait_bounds) @type.type_constraint
 )
 
 ; Trait bounds in where clauses
 (trait_bounds
-  (type_identifier) @type.trait
+  (type_identifier) @type.type_reference
 )
 
 ; Generic trait bounds
 (trait_bounds
   (generic_type
-    type: (type_identifier) @type.trait.generic
+    type: (type_identifier) @type.type_reference.generic
   )
 )
 
@@ -575,14 +575,14 @@
 ; Simple use statements with full path - capturing the last identifier as the import name
 (use_declaration
   argument: (scoped_identifier
-    (identifier) @import.name
+    (identifier) @import.import
   )
-) @import.declaration
+) @import.import
 
 ; Simple use statements without path (e.g., use self)
 (use_declaration
-  argument: (identifier) @import.name
-) @import.declaration
+  argument: (identifier) @import.import
+) @import.import
 
 ; Use with alias (scoped path)
 (use_declaration
@@ -591,18 +591,18 @@
       name: (identifier) @import.import
     )
     "as"
-    (identifier) @import.alias
+    (identifier) @import.import
   )
-) @import.declaration.aliased
+) @import.import.aliased
 
 ; Use with alias (simple identifier)
 (use_declaration
   argument: (use_as_clause
     (identifier) @import.import
     "as"
-    (identifier) @import.alias
+    (identifier) @import.import
   )
-) @import.declaration.aliased
+) @import.import.aliased
 
 ; Wildcard imports
 (use_declaration
@@ -612,19 +612,19 @@
 ; Use lists (e.g., use module::{A, B, C})
 (use_declaration
   argument: (use_list
-    (identifier) @import.name
+    (identifier) @import.import
   )
-) @import.list.declaration
+) @import.import
 
 ; Scoped use lists with simple items (e.g., std::fmt::{Display, Formatter})
 (use_declaration
   argument: (scoped_use_list
     path: (_) @import.import
     list: (use_list
-      (identifier) @import.name
+      (identifier) @import.import
     )
   )
-) @import.scoped_list.declaration
+) @import.import
 
 ; Scoped use lists with scoped items
 (use_declaration
@@ -632,11 +632,11 @@
     path: (_) @import.import
     list: (use_list
       (scoped_identifier
-        name: (identifier) @import.name
+        name: (identifier) @import.import
       )
     )
   )
-) @import.scoped_list.declaration
+) @import.import
 
 ; Scoped use lists with aliases
 (use_declaration
@@ -646,11 +646,11 @@
       (use_as_clause
         (identifier) @import.import
         "as"
-        (identifier) @import.alias
+        (identifier) @import.import
       )
     )
   )
-) @import.scoped_list.declaration
+) @import.import
 
 ; Nested use lists (e.g., use std::{collections::{HashMap, HashSet}})
 (use_declaration
@@ -659,12 +659,12 @@
       (scoped_use_list
         path: (_) @import.import
         list: (use_list
-          (identifier) @import.name
+          (identifier) @import.import
         )
       )
     )
   )
-) @import.nested.declaration
+) @import.import
 
 ; Self imports in use lists (e.g., use std::fmt::{self, Display})
 (use_declaration
@@ -694,28 +694,28 @@
 ; Public visibility (plain pub)
 (visibility_modifier
   "pub"
-) @modifier.public
+) @modifier.visibility
 
 ; Crate visibility - pub(crate)
 (visibility_modifier
-  (crate) @modifier.scope.crate
-) @modifier.crate
+  (crate) @modifier.visibility
+) @modifier.visibility
 
 ; Super visibility - pub(super)
 (visibility_modifier
-  (super) @modifier.scope.super
+  (super) @modifier.visibility
 ) @modifier.super
 
 ; Path visibility - pub(in path::to::module)
 (visibility_modifier
   "in"
-  (scoped_identifier) @modifier.scope.path
-) @modifier.restricted
+  (scoped_identifier) @modifier.visibility
+) @modifier.visibility
 
 ; Self visibility - pub(self) (equivalent to private)
 (visibility_modifier
-  (self) @modifier.scope.self
-) @modifier.self
+  (self) @modifier.visibility
+) @modifier.reference
 
 ;; ==============================================================================
 ;; EXPORTS (public items)
@@ -724,7 +724,7 @@
 ; Public structs
 (struct_item
   (visibility_modifier)
-  name: (type_identifier) @export.struct
+  name: (type_identifier) @export.class
 )
 
 ; Public enums
@@ -742,7 +742,7 @@
 ; Public traits
 (trait_item
   (visibility_modifier)
-  name: (type_identifier) @export.trait
+  name: (type_identifier) @export.interface
 )
 
 ; Public modules
@@ -819,51 +819,51 @@
 
 ; Macro definitions (declarative)
 (macro_definition
-  name: (identifier) @definition.macro) @reference.macrodefinition
+  name: (identifier) @definition.macro) @reference.macro
 
 ; Macro invocations
 (macro_invocation
-  macro: (identifier) @reference.macro) @call.macro_invocation
+  macro: (identifier) @reference.macro) @reference.macro
 
 ; Scoped macro invocations
 (macro_invocation
   macro: (scoped_identifier
     name: (identifier) @reference.macro.scoped
-  )) @call.scoped_macro_invocation
+  )) @reference.macro
 
 ; Built-in macro invocations
 (macro_invocation
   macro: (identifier) @reference.macro.builtin
   (#match? @reference.macro.builtin "^(println|eprintln|print|eprint|vec|panic|assert|debug_assert|format|write|writeln|todo|unimplemented|unreachable|compile_error|include|include_str|include_bytes|concat|stringify|env|option_env|cfg|column|file|line|module_path|assert_eq|assert_ne|debug_assert_eq|debug_assert_ne|matches|dbg|try|join|select)$")
-) @call.builtin_macro_invocation
+) @reference.macro
 
 ; Async macro invocations (tokio::select!, tokio::join!, etc.)
 (macro_invocation
   macro: (scoped_identifier
-    path: (identifier) @modifier.crate
+    path: (identifier) @modifier.visibility
     name: (identifier) @reference.macro.async
   )
-  (#eq? @modifier.crate "tokio")
+  (#eq? @modifier.visibility "tokio")
   (#match? @reference.macro.async "^(select|join|spawn|timeout)$")
-) @call.async_macro_invocation
+) @reference.macro
 
 ; Attribute macros
 (attribute_item
-  (attribute) @decorator.classcontent) @decorator.classmacro
+  (attribute) @decorator.macro) @decorator.macro
 
 ; Derive macros - simplified pattern
 (attribute_item
   (attribute
-    (identifier) @decorator.classname
-    (token_tree) @decorator.classarguments)
-  (#eq? @decorator.classname "derive")) @decorator.classattribute
+    (identifier) @decorator.macro
+    (token_tree) @decorator.macro)
+  (#eq? @decorator.macro "derive")) @decorator.macro
 
 ; Procedural macro usage
 (attribute_item
   (attribute
     (scoped_identifier
-      path: (identifier) @decorator.classcrate
-      name: (identifier) @decorator.classname)) @decorator.classattribute)
+      path: (identifier) @decorator.macro
+      name: (identifier) @decorator.macro)) @decorator.macro)
 
 ;; ==============================================================================
 ;; OWNERSHIP AND REFERENCES
@@ -871,53 +871,53 @@
 
 ; Reference expressions (borrow) - matches all references
 (reference_expression
-  value: (_) @reference.borrowed
-) @reference.borrow
+  value: (_) @reference.variable.borrowed
+) @reference.variable
 
 ; Mutable reference expressions (mutable borrow)
 (reference_expression
   (mutable_specifier)
-  value: (_) @reference.borrowed.mut
-) @reference.borrow_mut
+  value: (_) @reference.variable.borrowed
+) @reference.variable.mut
 
 ; Dereference expressions
 (unary_expression
-  (_) @reference.dereferenced
-) @reference.deref
+  (_) @reference.variable
+) @reference.variable
 
 ; Reference types
 (reference_type
-  type: (_) @type.inner
-) @type.reference
+  type: (_) @type.type_reference.inner
+) @type.type_reference
 
 ; Mutable reference types
 (reference_type
   (mutable_specifier)
-  type: (_) @type.inner.mut
-) @type.reference.mut
+  type: (_) @type.type_reference.inner
+) @type.type_reference.mut
 
 ; Smart pointer types (Box, Rc, Arc, RefCell, Weak)
 (generic_type
-  type: (type_identifier) @type.smart_pointer.name
-  type_arguments: (type_arguments) @type.smart_pointer.args
-) @type.smart_pointer
-  (#match? @type.smart_pointer.name "^(Box|Rc|Arc|RefCell|Weak|Mutex|RwLock)$")
+  type: (type_identifier) @type.type_reference
+  type_arguments: (type_arguments) @type.type_argument
+) @type.type_reference
+  (#match? @type.type_reference "^(Box|Rc|Arc|RefCell|Weak|Mutex|RwLock)$")
 
 ; Specific smart pointer patterns for better matching
 (generic_type
-  type: (type_identifier) @type.box
-  (#match? @type.box "^Box$")
-) @type.box
+  type: (type_identifier) @type.type_reference
+  (#match? @type.type_reference "^Box$")
+) @type.type_reference
 
 (generic_type
-  type: (type_identifier) @type.rc
-  (#match? @type.rc "^Rc$")
-) @type.rc
+  type: (type_identifier) @type.type_reference
+  (#match? @type.type_reference "^Rc$")
+) @type.type_reference
 
 (generic_type
-  type: (type_identifier) @type.arc
-  (#match? @type.arc "^Arc$")
-) @type.arc
+  type: (type_identifier) @type.type_reference
+  (#match? @type.type_reference "^Arc$")
+) @type.type_reference
 
 ; Box::new() calls (smart pointer allocation)
 (call_expression
@@ -927,16 +927,16 @@
   )
   (#eq? @type.module "Box")
   (#eq? @type.function "new")
-) @type.allocation
+) @type.type_reference
 
 ; Smart pointer method calls (clone, as_ref, as_mut, etc.)
 (call_expression
   function: (field_expression
-    value: (_) @type.instance
+    value: (_) @type.type_reference
     field: (field_identifier) @type.method
   )
   (#match? @type.method "^(clone|as_ref|as_mut|get|get_mut|borrow|borrow_mut|try_borrow|try_borrow_mut|lock|try_lock|read|write|try_read|try_write)$")
-) @type.method_call
+) @type.type_reference
 
 ;; ==============================================================================
 ;; REFERENCES AND CALLS
@@ -950,8 +950,8 @@
 ; Method calls
 (call_expression
   function: (field_expression
-    value: (_) @reference.receiver
-    field: (field_identifier) @reference.method_call
+    value: (_) @reference.variable
+    field: (field_identifier) @reference.call
   )
 )
 
@@ -959,10 +959,10 @@
 (call_expression
   function: (field_expression
     value: (field_expression
-      value: (_) @reference.receiver.base
-      field: (field_identifier) @reference.chain.field1
+      value: (_) @reference.variable.base
+      field: (field_identifier) @reference.property.field1
     )
-    field: (field_identifier) @reference.method_call.chained
+    field: (field_identifier) @reference.call.chained
   )
 )
 
@@ -970,7 +970,7 @@
 (call_expression
   function: (scoped_identifier
     path: (_) @reference.type
-    name: (identifier) @reference.associated_function
+    name: (identifier) @reference.call
   )
 )
 
@@ -984,9 +984,9 @@
 ; Instance method call - uses .
 (call_expression
   function: (field_expression
-    value: (_) @reference.ref
-    field: (field_identifier) @reference.method_call)
-) @reference.method_call
+    value: (_) @reference.variable
+    field: (field_identifier) @reference.call)
+) @reference.call
 
 ; Generic function calls
 (call_expression
@@ -997,7 +997,7 @@
 
 ; Field access
 (field_expression
-  value: (_) @reference.object
+  value: (_) @reference.variable
   field: (field_identifier) @reference.field
 )
 
@@ -1010,32 +1010,32 @@
 (type_identifier) @reference.type
 
 ; Self and super
-(self) @reference.self
+(self) @reference.this
 (super) @reference.super
 
 ; Assignments
 (assignment_expression
-  left: (identifier) @reference.assign.target
-  right: (_) @reference.assign.source
+  left: (identifier) @reference.variable.target
+  right: (_) @reference.variable.source
 )
 
 ; Compound assignments
 (compound_assignment_expr
-  left: (identifier) @reference.compound.target
-  right: (_) @reference.compound.source
+  left: (identifier) @reference.variable.target
+  right: (_) @reference.variable.source
 )
 
 ; Return expressions
 (return_expression
-  (_)? @reference.return
+  (_)? @return.variable
 )
 
 
 ; Try operator - capture the whole expression to include "?"
-(try_expression) @reference.try
+(try_expression) @reference.variable
 
 ; Await expressions
-(await_expression) @reference.await
+(await_expression) @reference.variable
 
 ; General identifier references
-(identifier) @reference.identifier
+(identifier) @reference.variable

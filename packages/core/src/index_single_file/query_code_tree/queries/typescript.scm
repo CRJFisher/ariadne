@@ -77,7 +77,7 @@
 ; Type alias definitions
 (type_alias_declaration
   name: (type_identifier) @definition.type_alias
-  value: (_) @type.alias.value
+  value: (_) @type.type_alias
 ) @definition.type_alias
 
 ; Enum definitions
@@ -104,9 +104,9 @@
 
 ; Type parameter definitions
 (type_parameter
-  (type_identifier) @definition.type_param
+  (type_identifier) @definition.type_parameter
   constraint: (constraint
-    (_) @type.constraint
+    (_) @type.type_constraint
   )?
 ) @definition.type_parameter
 
@@ -122,14 +122,14 @@
 
 ; Generic type parameters on classes
 (class_declaration
-  name: (type_identifier) @type.name
-  type_parameters: (type_parameters) @type.type_params
-) @type.generic
+  name: (type_identifier) @type.type_reference
+  type_parameters: (type_parameters) @type.type_parameters
+) @type.type_parameter
 
 (abstract_class_declaration
-  name: (type_identifier) @type.name
-  type_parameters: (type_parameters) @type.type_params
-) @type.generic
+  name: (type_identifier) @type.type_reference
+  type_parameters: (type_parameters) @type.type_parameters
+) @type.type_parameter
 
 ; Generic type parameters on interfaces
 (interface_declaration
@@ -149,14 +149,14 @@
   type: (type_annotation
     (_) @type.type_annotation
   )
-) @type.type_annotationd
+) @type.type_annotation
 
 (optional_parameter
   pattern: (identifier) @definition.parameter
   type: (type_annotation
     (_) @type.type_annotation
   )
-) @type.type_annotationd.optional
+) @type.type_annotation.optional
 
 ; Return type annotations
 (function_declaration
@@ -175,9 +175,9 @@
 
 (arrow_function
   return_type: (type_annotation
-    (_) @definition.return_type
+    (_) @type.type_annotation
   )
-) @definition.with_return_type
+) @definition.function
 
 ; Property type annotations (interface)
 (property_signature
@@ -185,7 +185,7 @@
   type: (type_annotation
     (_) @type.type_annotation
   )
-) @type.type_annotationd
+) @type.type_annotation
 
 ; Field type annotations (class)
 (public_field_definition
@@ -201,7 +201,7 @@
   type: (type_annotation
     (_) @type.type_annotation
   )
-) @type.type_annotationd
+) @type.type_annotation
 
 ;; ==============================================================================
 ;; ACCESS MODIFIERS AND DECORATORS
@@ -240,7 +240,7 @@
 (required_parameter
   (accessibility_modifier) @modifier.access_modifier
   pattern: (identifier) @definition.parameter
-) @definition.param_property
+) @definition.property
 
 ; Constructor parameter properties as field definitions (with access modifiers)
 (required_parameter
@@ -252,7 +252,7 @@
 (required_parameter
   "readonly" @modifier.readonly_modifier
   pattern: (identifier) @definition.parameter
-) @definition.param_property.readonly
+) @definition.property.readonly
 
 ; Constructor parameter properties as field definitions (readonly)
 (required_parameter
@@ -344,22 +344,22 @@
 
 ; Arrow functions assigned to variables
 (variable_declarator
-  name: (identifier) @definition.arrow @assignment.target
-  value: (arrow_function) @assignment.source.arrow
-) @assignment.arrow
+  name: (identifier) @definition.function @assignment.variable
+  value: (arrow_function) @assignment.variable.arrow
+) @assignment.variable
 
 ; Variable declarations with assignments
 (variable_declarator
-  name: (identifier) @definition.variable @assignment.target
-  value: (_) @assignment.source
-) @assignment.var
+  name: (identifier) @definition.variable @assignment.variable
+  value: (_) @assignment.variable
+) @assignment.variable
 
 ; Variable declarations with constructor calls
 (variable_declarator
-  name: (identifier) @definition.variable @assignment.target
+  name: (identifier) @definition.variable @assignment.variable
   value: (new_expression
     constructor: (identifier) @assignment.constructor
-  ) @assignment.source.constructor
+  ) @assignment.variable.constructor
 ) @assignment.constructor
 
 ; Destructuring
@@ -427,26 +427,26 @@
 
 ; Parameters
 (required_parameter
-  pattern: (identifier) @definition.param
+  pattern: (identifier) @definition.parameter
 )
 
 (optional_parameter
-  pattern: (identifier) @definition.param.optional
+  pattern: (identifier) @definition.parameter.optional
 )
 
 (rest_pattern
-  (identifier) @definition.param.rest
+  (identifier) @definition.parameter.rest
 )
 
 ; Catch clause parameter
 (catch_clause
-  parameter: (identifier) @definition.catch_param
+  parameter: (identifier) @definition.parameter
 )
 
 ; Loop variables
 (for_in_statement
   left: (_
-    (identifier) @definition.loop_var
+    (identifier) @definition.variable
   )
 )
 
@@ -623,37 +623,37 @@
 (call_expression
   function: (identifier) @reference.call.generic
   type_arguments: (type_arguments) @reference.call.type_args
-) @call.generic
+) @reference.call.generic
 
 ; Method calls with receiver tracking
 (call_expression
   function: (member_expression
-    object: (_) @reference.receiver
-    property: (property_identifier) @reference.method_call
+    object: (_) @reference.variable
+    property: (property_identifier) @reference.call
   )
-) @reference.method_call.full
+) @reference.call.full
 
 ; Chained method calls (2 levels)
 (call_expression
   function: (member_expression
     object: (member_expression
-      object: (_) @reference.receiver.base
-      property: (property_identifier) @reference.chain.prop1
-    ) @reference.receiver.chain
-    property: (property_identifier) @reference.method_call.chained
+      object: (_) @reference.variable.base
+      property: (property_identifier) @reference.property.prop1
+    ) @reference.variable.chain
+    property: (property_identifier) @reference.call.chained
   )
-) @reference.method_call.chained
+) @reference.call.chained
 
 ; Deep property chains (3+ levels)
 (call_expression
   function: (member_expression
     object: (member_expression
-      object: (member_expression) @reference.receiver.deep
-      property: (property_identifier) @reference.chain.prop2
-    ) @reference.receiver.chain2
-    property: (property_identifier) @reference.method_call.deep
+      object: (member_expression) @reference.variable.deep
+      property: (property_identifier) @reference.property.prop2
+    ) @reference.variable.chain2
+    property: (property_identifier) @reference.call.deep
   )
-) @reference.method_call.deep
+) @reference.call.deep
 
 ; Constructor calls
 (new_expression
@@ -668,19 +668,19 @@
 
 ; Property access
 (member_expression
-  object: (identifier) @reference.object
+  object: (identifier) @reference.variable
   property: (property_identifier) @reference.property
 ) @reference.member_access
 
 ; Computed member access (bracket notation)
 (subscript_expression
-  object: (identifier) @reference.object
+  object: (identifier) @reference.variable
   index: (_) @reference.property.computed
 ) @reference.member_access.computed
 
 ; Optional chaining member access
 (member_expression
-  object: (identifier) @reference.object
+  object: (identifier) @reference.variable
   property: (property_identifier) @reference.property.optional
 ) @reference.member_access.optional
 
@@ -694,9 +694,9 @@
 ; Instance method call - object is lowercase/instance
 (call_expression
   function: (member_expression
-    object: (identifier) @reference.ref
-    property: (property_identifier) @reference.method_call)
-  (#not-match? @reference.ref "^[A-Z]")) @reference.method_call
+    object: (identifier) @reference.variable
+    property: (property_identifier) @reference.call)
+  (#not-match? @reference.variable "^[A-Z]")) @reference.call
 
 ; Type references (TypeScript)
 (type_identifier) @reference.type
@@ -708,35 +708,35 @@
 
 ; Assignments (capture both sides)
 (assignment_expression
-  left: (identifier) @reference.assign.target
-  right: (_) @reference.assign.source
-) @assignment.expr
+  left: (identifier) @reference.variable.target
+  right: (_) @reference.variable.source
+) @assignment.variable
 
 (assignment_expression
   left: (member_expression
-    object: (identifier) @reference.assign.object
-    property: (property_identifier) @reference.assign.property
-  ) @reference.assign.member
-  right: (_) @reference.assign.source.member
-) @assignment.member
+    object: (identifier) @reference.variable.object
+    property: (property_identifier) @reference.property.assign
+  ) @reference.member_access.assign
+  right: (_) @reference.variable.source.member
+) @assignment.property
 
 ; Return statements
 (return_statement
-  (_) @reference.return
+  (_) @return.variable
 ) @return.function
 
 ; Update expressions
 (update_expression
-  argument: (identifier) @reference.update
+  argument: (identifier) @reference.variable.update
 )
 
 ; JSX components
 (jsx_opening_element
-  (identifier) @reference.jsx
+  (identifier) @reference.call.jsx
 )
 
 (jsx_self_closing_element
-  (identifier) @reference.jsx
+  (identifier) @reference.call.jsx
 )
 
 ; this references (important for method context)
@@ -747,9 +747,9 @@
 
 ; Type assertions (TypeScript - only 'as' expressions, angle brackets parse as JSX)
 (as_expression
-  (_) @reference.cast.value
-  (_) @reference.cast.type
-) @type.cast
+  (_) @reference.variable
+  (_) @type.type_assertion
+) @type.type_assertion
 
 ; Typeof queries (TypeScript)
 (type_query
@@ -757,4 +757,4 @@
 ) @reference.typeof
 
 ; General identifier references (catch-all)
-(identifier) @reference.identifier
+(identifier) @reference.variable

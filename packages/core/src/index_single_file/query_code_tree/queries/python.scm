@@ -20,7 +20,7 @@
     (function_definition) @scope.function
   )
 )
-(lambda) @scope.lambda
+(lambda) @scope.closure
 
 ; Class scopes
 (class_definition) @scope.class
@@ -43,23 +43,23 @@
 
 ; Block scopes
 (block) @scope.block
-(for_statement) @scope.for
-(while_statement) @scope.while
-(with_statement) @scope.with
-(if_statement) @scope.if
-(elif_clause) @scope.elif
-(else_clause) @scope.else
-(try_statement) @scope.try
-(except_clause) @scope.except
-(finally_clause) @scope.finally
-(match_statement) @scope.match
-(case_clause) @scope.case
+(for_statement) @scope.block
+(while_statement) @scope.block
+(with_statement) @scope.block
+(if_statement) @scope.block
+(elif_clause) @scope.block
+(else_clause) @scope.block
+(try_statement) @scope.block
+(except_clause) @scope.block
+(finally_clause) @scope.block
+(match_statement) @scope.block
+(case_clause) @scope.block
 
 ; Comprehension scopes
-(list_comprehension) @scope.comprehension
-(dictionary_comprehension) @scope.comprehension
-(set_comprehension) @scope.comprehension
-(generator_expression) @scope.comprehension
+(list_comprehension) @scope.block
+(dictionary_comprehension) @scope.block
+(set_comprehension) @scope.block
+(generator_expression) @scope.block
 
 ;; ==============================================================================
 ;; DEFINITIONS - Symbols that introduce new names
@@ -78,9 +78,9 @@
 
 ; Lambda functions assigned to variables
 (assignment
-  left: (identifier) @definition.lambda @assignment.target
-  right: (lambda) @assignment.source.lambda
-) @assignment.lambda
+  left: (identifier) @definition.function @assignment.variable
+  right: (lambda) @assignment.variable.lambda
+) @assignment.variable
 
 ; Class definitions with inheritance
 (class_definition
@@ -114,8 +114,8 @@
   body: (block
     (decorated_definition
       (decorator
-        (identifier) @decorator.static
-        (#eq? @decorator.static "staticmethod")
+        (identifier) @modifier.visibility
+        (#eq? @modifier.visibility "staticmethod")
       )
       definition: (function_definition
         name: (identifier) @definition.method.static
@@ -129,8 +129,8 @@
   body: (block
     (decorated_definition
       (decorator
-        (identifier) @decorator.classmethod
-        (#eq? @decorator.classmethod "classmethod")
+        (identifier) @modifier.visibility
+        (#eq? @modifier.visibility "classmethod")
       )
       definition: (function_definition
         name: (identifier) @definition.method.class
@@ -160,7 +160,7 @@
     (expression_statement
       (assignment
         left: (identifier) @definition.field
-        right: (_) @reference.identifier
+        right: (_) @reference.variable
       )
     )
   )
@@ -168,54 +168,54 @@
 
 ; Variable assignments
 (assignment
-  left: (identifier) @definition.variable @assignment.target
-  right: (_) @assignment.source
-) @assignment.var
+  left: (identifier) @definition.variable @assignment.variable
+  right: (_) @assignment.variable
+) @assignment.variable
 
 ; Annotated assignments (with type hints)
 (assignment
-  left: (identifier) @definition.variable.typed @assignment.target
-  type: (_) @type.annotation
-  right: (_)? @assignment.source.typed
-) @assignment.typed
+  left: (identifier) @definition.variable.typed @assignment.variable
+  type: (_) @type.type_annotation
+  right: (_)? @assignment.variable.typed
+) @assignment.variable
 
 ; Multiple assignments
 (assignment
   left: (pattern_list
     (identifier) @definition.variable.multiple
   )
-  right: (_) @assignment.source.multiple
-) @assignment.multiple
+  right: (_) @assignment.variable.multiple
+) @assignment.variable
 
 ; Tuple unpacking
 (assignment
   left: (tuple_pattern
     (identifier) @definition.variable.tuple
   )
-  right: (_) @assignment.source.tuple
-) @assignment.tuple
+  right: (_) @assignment.variable.tuple
+) @assignment.variable
 
 ; Parameters
 (parameters
-  (identifier) @definition.param
+  (identifier) @definition.parameter
 )
 
 (parameters
   (default_parameter
-    name: (identifier) @definition.param.default
+    name: (identifier) @definition.parameter.default
   )
 )
 
 (parameters
   (typed_parameter
-    (identifier) @definition.param.typed
+    (identifier) @definition.parameter.typed
     type: (_) @type.type_annotation
   )
 )
 
 (parameters
   (typed_default_parameter
-    name: (identifier) @definition.param.typed.default
+    name: (identifier) @definition.parameter.typed.default
     type: (_) @type.type_annotation.default
   )
 )
@@ -223,37 +223,37 @@
 ; *args and **kwargs
 (parameters
   (list_splat_pattern
-    (identifier) @definition.param.args
+    (identifier) @definition.parameter.args
   )
 )
 
 (parameters
   (dictionary_splat_pattern
-    (identifier) @definition.param.kwargs
+    (identifier) @definition.parameter.kwargs
   )
 )
 
 ; Loop variables
 (for_statement
-  left: (identifier) @definition.loop_var
+  left: (identifier) @definition.variable
 )
 
 (for_statement
   left: (pattern_list
-    (identifier) @definition.loop_var.multiple
+    (identifier) @definition.variable.multiple
   )
 )
 
 ; Comprehension variables
 (for_in_clause
-  left: (identifier) @definition.comprehension_var
+  left: (identifier) @definition.variable
 )
 
 ; Exception variables
 (except_clause
   (as_pattern
     alias: (as_pattern_target
-      (identifier) @definition.except_var
+      (identifier) @definition.variable
     )
   )
 )
@@ -264,7 +264,7 @@
     (with_item
       (as_pattern
         alias: (as_pattern_target
-          (identifier) @definition.with_var
+          (identifier) @definition.variable
         )
       )
     )
@@ -376,32 +376,32 @@
 ; Method calls with receiver tracking
 (call
   function: (attribute
-    object: (_) @reference.receiver
-    attribute: (identifier) @reference.method_call
+    object: (_) @reference.variable
+    attribute: (identifier) @reference.call
   )
-) @reference.method_call.full
+) @reference.call.full
 
 ; Chained method calls (2 levels)
 (call
   function: (attribute
     object: (attribute
-      object: (_) @reference.receiver.base
-      attribute: (identifier) @reference.chain.prop1
-    ) @reference.receiver.chain
-    attribute: (identifier) @reference.method_call.chained
+      object: (_) @reference.variable.base
+      attribute: (identifier) @reference.property.prop1
+    ) @reference.variable.chain
+    attribute: (identifier) @reference.call.chained
   )
-) @reference.method_call.chained
+) @reference.call.chained
 
 ; Deep property chains (3+ levels)
 (call
   function: (attribute
     object: (attribute
-      object: (attribute) @reference.receiver.deep
-      attribute: (identifier) @reference.chain.prop2
-    ) @reference.receiver.chain2
-    attribute: (identifier) @reference.method_call.deep
+      object: (attribute) @reference.variable.deep
+      attribute: (identifier) @reference.property.prop2
+    ) @reference.variable.chain2
+    attribute: (identifier) @reference.call.deep
   )
-) @reference.method_call.deep
+) @reference.call.deep
 
 ; Constructor calls (class instantiation)
 (call
@@ -419,80 +419,80 @@
 ; Instance method call - object is lowercase/instance
 (call
   function: (attribute
-    object: (identifier) @reference.ref
-    attribute: (identifier) @reference.method_call)
-  (#not-match? @reference.ref "^[A-Z]")) @reference.method_call
+    object: (identifier) @reference.variable
+    attribute: (identifier) @reference.call)
+  (#not-match? @reference.variable "^[A-Z]")) @reference.call
 
 ; Attribute access
 (attribute
-  object: (identifier) @reference.object
+  object: (identifier) @reference.variable
   attribute: (identifier) @reference.property
 ) @reference.member_access
 
 ; Subscript access
 (subscript
-  value: (identifier) @reference.subscript.object
-  subscript: (_) @reference.subscript.index
+  value: (identifier) @reference.variable.subscript
+  subscript: (_) @reference.variable.index
 ) @reference.member_access
 
 ; Assignments (capture both sides)
 (assignment
-  left: (identifier) @reference.assign.target
-  right: (_) @reference.assign.source
-) @assignment.expr
+  left: (identifier) @reference.variable.target
+  right: (_) @reference.variable.source
+) @assignment.variable
 
 (assignment
   left: (attribute
-    object: (identifier) @reference.assign.object
-    attribute: (identifier) @reference.assign.property
-  ) @reference.assign.member
-  right: (_) @reference.assign.source.member
-) @assignment.member
+    object: (identifier) @reference.variable.object
+    attribute: (identifier) @reference.property.assign
+  ) @reference.member_access.assign
+  right: (_) @reference.variable.source.member
+) @assignment.property
 
 ; Augmented assignments (+=, -=, etc.)
 (augmented_assignment
-  left: (identifier) @reference.augment.target
-  right: (_) @reference.augment.source
-) @assignment.augmented
+  left: (identifier) @reference.variable.target
+  right: (_) @reference.variable.source
+) @assignment.variable
 
 ; Return statements
 (return_statement
-  (_) @reference.return
+  (_) @return.variable
 ) @return.function
 
 ; Yield expressions
 (yield
-  (_) @reference.yield
-) @return.expression
+  (_) @return.variable
+) @return.variable
 
 ; Delete statements
 (delete_statement
-  (identifier) @reference.delete
+  (identifier) @reference.variable
 )
 
 ; Assert statements
 (assert_statement
-  (identifier) @reference.assert
+  (identifier) @reference.variable
 )
 
 ; Decorators
 (decorator
-  (identifier) @reference.decorator
+  (identifier) @reference.call
 )
 
 (decorator
   (call
-    function: (identifier) @reference.decorator.call
+    function: (identifier) @reference.call.decorator
   )
 )
 
 ; self references (important for method context)
-(identifier) @reference.self
-(#eq? @reference.self "self")
+(identifier) @reference.this
+(#eq? @reference.this "self")
 
 ; cls references (for classmethods)
-(identifier) @reference.cls
-(#eq? @reference.cls "cls")
+(identifier) @reference.this
+(#eq? @reference.this "cls")
 
 ; super() calls
 (call
@@ -512,4 +512,4 @@
 )
 
 ; General identifier references (catch-all)
-(identifier) @reference.identifier
+(identifier) @reference.variable
