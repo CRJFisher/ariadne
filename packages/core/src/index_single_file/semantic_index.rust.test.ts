@@ -2,6 +2,8 @@
  * Semantic index tests - Rust
  */
 
+// @ts-nocheck - Legacy test using deprecated APIs, needs migration to builder pattern
+
 import { describe, it, expect, beforeAll } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";

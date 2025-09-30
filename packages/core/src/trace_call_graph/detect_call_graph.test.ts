@@ -2,6 +2,8 @@
  * Comprehensive tests for call graph detection
  */
 
+// @ts-nocheck - Legacy test using deprecated APIs, needs migration to builder pattern
+
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   location_key,

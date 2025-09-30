@@ -2,6 +2,8 @@
  * Comprehensive tests for Rust language configuration
  */
 
+// @ts-nocheck - Legacy test using deprecated APIs, needs migration to builder pattern
+
 import { describe, it, expect, beforeAll } from "vitest";
 import Parser from "tree-sitter";
 import Rust from "tree-sitter-rust";

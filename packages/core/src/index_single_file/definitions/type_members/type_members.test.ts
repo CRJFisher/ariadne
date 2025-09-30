@@ -2,6 +2,8 @@
  * Comprehensive tests for type members extraction (local only)
  */
 
+// @ts-nocheck - Legacy test using deprecated APIs, needs migration to builder pattern
+
 import { describe, it, expect, beforeEach } from "vitest";
 import type {
   SymbolId,

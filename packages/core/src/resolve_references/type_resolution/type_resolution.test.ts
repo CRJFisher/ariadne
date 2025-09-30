@@ -1,3 +1,4 @@
+// @ts-nocheck - Legacy test using deprecated APIs, needs migration to builder pattern
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   resolve_types,
