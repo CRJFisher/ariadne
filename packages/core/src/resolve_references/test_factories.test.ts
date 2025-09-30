@@ -6,7 +6,15 @@
  */
 
 import { describe, it, expect } from "vitest";
-import type { FilePath, SymbolName, Location, LocationKey, SymbolId, TypeId, ScopeId } from "@ariadnejs/types";
+import type {
+  FilePath,
+  SymbolName,
+  Location,
+  LocationKey,
+  SymbolId,
+  TypeId,
+  ScopeId,
+} from "@ariadnejs/types";
 import {
   mock_location,
   mock_semantic_index,
@@ -39,8 +47,8 @@ describe("Test Factories", () => {
       const location = mock_location(test_file, 5, 10, 5, 20);
 
       expect(location.file_path).toBe(test_file);
-      expect(location.line).toBe(5);
-      expect(location.column).toBe(10);
+      expect(location.start_line).toBe(5);
+      expect(location.start_column).toBe(10);
       expect(location.end_line).toBe(5);
       expect(location.end_column).toBe(20);
     });
@@ -245,7 +253,10 @@ describe("Test Factories", () => {
           ["member1" as SymbolName, "member_symbol1" as SymbolId],
           ["member2" as SymbolName, "member_symbol2" as SymbolId],
         ]);
-        builders.constructors.set("type1" as TypeId, "constructor_symbol" as SymbolId);
+        builders.constructors.set(
+          "type1" as TypeId,
+          "constructor_symbol" as SymbolId
+        );
 
         const result = {
           symbol_types: builders.symbol_types.build(),
@@ -256,11 +267,17 @@ describe("Test Factories", () => {
           interface_implementations: builders.interface_implementations.build(),
         };
 
-        expect(result.symbol_types.get("symbol1" as SymbolId)).toBe("type1" as TypeId);
+        expect(result.symbol_types.get("symbol1" as SymbolId)).toBe(
+          "type1" as TypeId
+        );
         expect(
-          result.type_members.get("type1" as TypeId)?.get("member1" as SymbolName)
+          result.type_members
+            .get("type1" as TypeId)
+            ?.get("member1" as SymbolName)
         ).toBe("member_symbol1");
-        expect(result.constructors.get("type1" as TypeId)).toBe("constructor_symbol" as SymbolId);
+        expect(result.constructors.get("type1" as TypeId)).toBe(
+          "constructor_symbol" as SymbolId
+        );
       });
     });
 
@@ -287,7 +304,9 @@ describe("Test Factories", () => {
             .get("file1.ts" as FilePath)
             ?.get("import1" as SymbolName)
         ).toBe("symbol1");
-        expect(result.unresolved_imports.get("location1" as LocationKey)).toBe("unresolved");
+        expect(result.unresolved_imports.get("location1" as LocationKey)).toBe(
+          "unresolved"
+        );
       });
     });
 

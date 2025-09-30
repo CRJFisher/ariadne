@@ -187,8 +187,8 @@ function create_location(
 ): Location {
   return {
     file_path,
-    line,
-    column,
+    start_line: line,
+    start_column: column,
     end_line: line,
     end_column: column + 10,
   };

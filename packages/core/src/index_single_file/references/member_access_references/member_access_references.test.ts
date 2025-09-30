@@ -11,8 +11,11 @@ import type {
   LexicalScope,
 } from "@ariadnejs/types";
 import type { TypeInfo } from "../type_tracking/type_info";
-import type { NormalizedCapture } from "../../parse_and_query_code/capture_types";
-import { SemanticEntity, SemanticCategory } from "../../parse_and_query_code/capture_types";
+import type { NormalizedCapture } from "../../query_code_tree/capture_types";
+import {
+  SemanticEntity,
+  SemanticCategory,
+} from "../../query_code_tree/capture_types";
 import {
   MemberAccessReference,
   ObjectMemberAccesses,
@@ -48,8 +51,8 @@ describe("Member Access References", () => {
   const mockFilePath = "test.ts" as FilePath;
   const mockLocation: Location = {
     file_path: mockFilePath,
-    line: 1,
-    column: 0,
+    start_line: 1,
+    start_column: 0,
     end_line: 1,
     end_column: 10,
   };
@@ -59,8 +62,8 @@ describe("Member Access References", () => {
     type: "function",
     location: {
       file_path: mockFilePath,
-      line: 1,
-      column: 0,
+      start_line: 1,
+      start_column: 0,
       end_line: 1,
       end_column: 10,
     },
@@ -616,16 +619,16 @@ describe("Member Access References", () => {
       it("should group accesses by object location", () => {
         const objectLocation1: Location = {
           file_path: mockFilePath,
-          line: 1,
-          column: 0,
+          start_line: 1,
+          start_column: 0,
           end_line: 1,
           end_column: 5,
         };
 
         const objectLocation2: Location = {
           file_path: mockFilePath,
-          line: 2,
-          column: 0,
+          start_line: 2,
+          start_column: 0,
           end_line: 2,
           end_column: 5,
         };
@@ -775,16 +778,16 @@ describe("Member Access References", () => {
       it("should create unique keys for different locations", () => {
         const location1: Location = {
           file_path: mockFilePath,
-          line: 1,
-          column: 0,
+          start_line: 1,
+          start_column: 0,
           end_line: 1,
           end_column: 5,
         };
 
         const location2: Location = {
           file_path: mockFilePath,
-          line: 1,
-          column: 5,
+          start_line: 1,
+          start_column: 5,
           end_line: 1,
           end_column: 10,
         };
@@ -1555,16 +1558,16 @@ describe("Member Access References", () => {
       it("should include file_path in grouping key to avoid collisions", () => {
         const file1Location: Location = {
           file_path: "file1.ts" as FilePath,
-          line: 1,
-          column: 0,
+          start_line: 1,
+          start_column: 0,
           end_line: 1,
           end_column: 5,
         };
 
         const file2Location: Location = {
           file_path: "file2.ts" as FilePath,
-          line: 1, // Same line and column as file1
-          column: 0,
+          start_line: 1, // Same line and column as file1
+          start_column: 0,
           end_line: 1,
           end_column: 5,
         };
@@ -1611,8 +1614,8 @@ describe("Member Access References", () => {
       it("should still group accesses from same file and location correctly", () => {
         const sameLocation: Location = {
           file_path: mockFilePath,
-          line: 1,
-          column: 0,
+          start_line: 1,
+          start_column: 0,
           end_line: 1,
           end_column: 5,
         };
@@ -1843,7 +1846,7 @@ describe("Member Access References", () => {
 
         expect(result).toHaveLength(1);
         expect(result[0].computed_key).toBeDefined();
-        expect(result[0].computed_key?.line).toBe(1); // mocked by mockNodeToLocation
+        expect(result[0].computed_key?.start_line).toBe(1); // mocked by mockNodeToLocation
         expect(mockNodeToLocation).toHaveBeenCalledWith(
           mockComputedKeyNode,
           mockFilePath

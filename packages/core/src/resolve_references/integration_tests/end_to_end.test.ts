@@ -85,8 +85,8 @@ function create_test_project(
       type: "module",
       location: {
         file_path: path,
-        line: 0,
-        column: 0,
+        start_line: 0,
+        start_column: 0,
         end_line: 0,
         end_column: 0,
       },
@@ -157,8 +157,8 @@ function create_location(
 ): Location {
   return {
     file_path,
-    line,
-    column,
+    start_line: line,
+    start_column: column,
     end_line: line,
     end_column: column + 10,
   };

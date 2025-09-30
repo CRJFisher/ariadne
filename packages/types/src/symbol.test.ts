@@ -3,20 +3,15 @@
  */
 
 import { describe, it, expect } from "vitest";
-import {
-  SymbolId,
-  SymbolName,
-  function_symbol,
-  method_symbol,
-} from "./symbol";
+import { SymbolId, SymbolName, function_symbol, method_symbol } from "./symbol";
 import { Location } from "./common";
 import { FilePath } from "./aliases";
 
 describe("Symbol Utilities", () => {
   const test_location: Location = {
     file_path: "src/test.ts" as FilePath,
-    line: 10,
-    column: 5,
+    start_line: 10,
+    start_column: 5,
     end_line: 15,
     end_column: 10,
   };
@@ -34,10 +29,7 @@ describe("Symbol Utilities", () => {
       });
 
       it("should handle qualified symbols correctly", () => {
-        const method_symbol_result = method_symbol(
-          "getValue",
-          test_location
-        );
+        const method_symbol_result = method_symbol("getValue", test_location);
         // Format: kind:file_path:line:column:end_line:end_column:name
         const expectedFormat = "method:src/test.ts:10:5:15:10:getValue";
 

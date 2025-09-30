@@ -26,8 +26,8 @@ import type {
   TypeDefinition,
   EnumDefinition,
 } from "@ariadnejs/types";
-import type { NormalizedCapture } from "../../parse_and_query_code/capture_types";
-import { SemanticEntity } from "../../parse_and_query_code/capture_types";
+import type { NormalizedCapture } from "../../query_code_tree/capture_types";
+import { SemanticEntity } from "../../query_code_tree/capture_types";
 
 /**
  * Local type information extracted from single file
@@ -223,7 +223,7 @@ function extract_rust_features(
     // Look for type parameters and constraints near type definitions
     const nearby_types = types.filter(
       (type) =>
-        Math.abs(type.location.line - capture.node_location.line) <= 2 &&
+        Math.abs(type.location.start_line - capture.node_location.line) <= 2 &&
         type.location.file_path === capture.node_location.file_path
     );
 
@@ -231,12 +231,12 @@ function extract_rust_features(
       // Find matching type by location proximity
       const matching_type = types.find(
         (t) =>
-          Math.abs(t.location.line - capture.node_location.line) <= 2 &&
+          Math.abs(t.location.start_line - capture.node_location.line) <= 2 &&
           t.location.file_path === capture.node_location.file_path
       );
 
       if (matching_type) {
-        const location_key = `${matching_type.location.line}:${matching_type.location.column}`;
+        const location_key = `${matching_type.location.start_line}:${matching_type.location.start_column}`;
         const features = rust_features_by_location.get(location_key) || {};
 
         if (
@@ -276,7 +276,7 @@ function extract_rust_features(
 
   const rust_features = types.map((type_info) => {
     // TODO: wrong - use common.ts
-    const location_key = `${type_info.location.line}:${type_info.location.column}`;
+    const location_key = `${type_info.location.start_line}:${type_info.location.start_column}`;
     const features = rust_features_by_location.get(location_key);
 
     if (!features) {
@@ -387,8 +387,8 @@ function collect_direct_members_from_scopes(
     const symbol_entry = [...classes, ...interfaces].find(
       ([_, symbol]) =>
         symbol.name === type_info.type_name &&
-        symbol.location.line === type_info.location.line &&
-        symbol.location.column === type_info.location.column
+        symbol.location.line === type_info.location.start_line &&
+        symbol.location.column === type_info.location.start_column
     );
 
     if (!symbol_entry) {
@@ -473,7 +473,7 @@ function collect_rust_impl_block_members(
 
   for (const [_, symbol] of symbols) {
     if (symbol.kind === "class") {
-      const key = `${symbol.location.line}:${symbol.location.column}`;
+      const key = `${symbol.location.start_line}:${symbol.location.start_column}`;
       symbolLocationMap.set(key, symbol);
     }
   }
@@ -485,13 +485,13 @@ function collect_rust_impl_block_members(
   // Create a mapping of impl blocks to their target types
   const impl_blocks = new Map<ScopeId, LocalTypeInfo>();
   const sortedTypes = [...types].sort(
-    (a, b) => a.location.line - b.location.line
+    (a, b) => a.location.start_line - b.location.start_line
   );
 
   // Find impl block scopes efficiently
   for (const [scope_id, scope] of scopes) {
     if (scope.type === "class") {
-      const locationKey = `${scope.location.line}:${scope.location.column}`;
+      const locationKey = `${scope.location.start_line}:${scope.location.start_column}`;
       const hasMatchingSymbol = symbolLocationMap.has(locationKey);
 
       if (!hasMatchingSymbol) {
@@ -501,7 +501,7 @@ function collect_rust_impl_block_members(
         // Find the closest preceding type (most common pattern)
         for (let i = sortedTypes.length - 1; i >= 0; i--) {
           const type_info = sortedTypes[i];
-          if (type_info.location.line < scope.location.line) {
+          if (type_info.location.start_line < scope.location.start_line) {
             targetType = type_info;
             break;
           }
@@ -618,8 +618,8 @@ function is_likely_parameter_property(
   // 3. May have special naming patterns from our semantic index
 
   // Check if the variable is located within the constructor's parameter range
-  const var_line = variable_symbol.location.line;
-  const constructor_line = constructor_symbol.location.line;
+  const var_line = variable_symbol.location.start_line;
+  const constructor_line = constructor_symbol.location.start_line;
   const constructor_end_line =
     constructor_symbol.location.end_line || constructor_line;
 
@@ -643,8 +643,8 @@ function find_scope_for_symbol(
   // Look for a scope at the same location
   for (const [scope_id, scope] of scopes) {
     if (
-      scope.location.line === symbol.location.line &&
-      scope.location.column === symbol.location.column &&
+      scope.location.start_line === symbol.location.start_line &&
+      scope.location.start_column === symbol.location.start_column &&
       scope.location.file_path === symbol.location.file_path &&
       scope.type === "class"
     ) {

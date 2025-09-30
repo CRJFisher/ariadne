@@ -11,8 +11,11 @@ import type {
   LexicalScope,
   SymbolId,
 } from "@ariadnejs/types";
-import type { NormalizedCapture } from "../../parse_and_query_code/capture_types";
-import { SemanticEntity, SemanticCategory } from "../../parse_and_query_code/capture_types";
+import type { NormalizedCapture } from "../../query_code_tree/capture_types";
+import {
+  SemanticEntity,
+  SemanticCategory,
+} from "../../query_code_tree/capture_types";
 import {
   ReturnReference,
   process_return_references,
@@ -31,10 +34,10 @@ describe("Return References", () => {
   const mockFilePath = "test.ts" as FilePath;
   const mockLocation: Location = {
     file_path: mockFilePath,
-    line: 1,
-    column: 0 ,
+    start_line: 1,
+    start_column: 0,
     end_line: 1,
-    end_column: 10 ,
+    end_column: 10,
   };
 
   const mockScope: LexicalScope = {
@@ -50,7 +53,13 @@ describe("Return References", () => {
   const mockFunctionScope: LexicalScope = {
     id: "func_scope" as ScopeId,
     type: "function",
-    location: {line: 1, column: 0 , end_line: 15, end_column: 0, file_path: mockFilePath },
+    location: {
+      start_line: 1,
+      start_column: 0,
+      end_line: 15,
+      end_column: 0,
+      file_path: mockFilePath,
+    },
     parent_id: "func_scope" as ScopeId,
     name: "testFunction" as SymbolName,
     symbols: new Map(),
@@ -61,7 +70,6 @@ describe("Return References", () => {
     [mockScope.id, mockScope],
     [mockFunctionScope.id, mockFunctionScope],
   ]);
-
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -83,7 +91,6 @@ describe("Return References", () => {
       expect(returnRef.scope_id).toBe(mockScope.id);
       expect(returnRef.function_scope_id).toBe(mockFunctionScope.id);
     });
-
 
     it("should support optional fields", () => {
       const minimalReturn: ReturnReference = {
@@ -110,7 +117,6 @@ describe("Return References", () => {
             modifiers: {},
           },
         ];
-
 
         const result = process_return_references(
           returns,
@@ -140,7 +146,6 @@ describe("Return References", () => {
           [mockFunctionScope.id, "my_function" as SymbolId],
         ]);
 
-
         const result = process_return_references(
           returns,
           mockScope,
@@ -154,7 +159,13 @@ describe("Return References", () => {
       });
 
       it("should handle multiple return captures", () => {
-        const location2: Location = { ...mockLocation, line: 5, column: 0 , end_line: 5, end_column: 0  };
+        const location2: Location = {
+          ...mockLocation,
+          start_line: 5,
+          start_column: 0,
+          end_line: 5,
+          end_column: 0,
+        };
 
         const returns: NormalizedCapture[] = [
           {
@@ -175,7 +186,6 @@ describe("Return References", () => {
           },
         ];
 
-
         const result = process_return_references(
           returns,
           mockScope,
@@ -187,7 +197,6 @@ describe("Return References", () => {
         expect(result[0].expression).toBe("return first");
         expect(result[1].expression).toBe("return second");
       });
-
     });
 
     describe("Edge Cases", () => {
@@ -213,7 +222,6 @@ describe("Return References", () => {
             modifiers: {},
           },
         ];
-
 
         const result = process_return_references(
           returns,
@@ -261,7 +269,6 @@ describe("Return References", () => {
           },
         ];
 
-
         const result = process_return_references(
           returns,
           mockScope,
@@ -273,5 +280,4 @@ describe("Return References", () => {
       });
     });
   });
-
 });

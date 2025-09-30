@@ -124,8 +124,8 @@ describe("method_resolution", () => {
       const member_access: MemberAccessReference = {
         location: {
           file_path,
-          line: 10,
-          column: 1,
+          start_line: 10,
+          start_column: 1,
           end_line: 10,
           end_column: 15,
         },
@@ -135,8 +135,8 @@ describe("method_resolution", () => {
         object: {
           location: {
             file_path,
-            line: 10,
-            column: 1,
+            start_line: 10,
+            start_column: 1,
             end_line: 10,
             end_column: 8,
           },
@@ -158,8 +158,8 @@ describe("method_resolution", () => {
               name: "MyClass" as SymbolName,
               location: {
                 file_path,
-                line: 1,
-                column: 1,
+                start_line: 1,
+                start_column: 1,
                 end_line: 5,
                 end_column: 1,
               },
@@ -172,8 +172,8 @@ describe("method_resolution", () => {
               name: "getValue" as SymbolName,
               location: {
                 file_path,
-                line: 2,
-                column: 3,
+                start_line: 2,
+                start_column: 3,
                 end_line: 2,
                 end_column: 20,
               },
@@ -186,8 +186,8 @@ describe("method_resolution", () => {
               name: "instance" as SymbolName,
               location: {
                 file_path,
-                line: 10,
-                column: 1,
+                start_line: 10,
+                start_column: 1,
                 end_line: 10,
                 end_column: 8,
               },
@@ -267,8 +267,8 @@ describe("method_resolution", () => {
       const member_access: MemberAccessReference = {
         location: {
           file_path,
-          line: 10,
-          column: 1,
+          start_line: 10,
+          start_column: 1,
           end_line: 10,
           end_column: 20,
         },
@@ -278,8 +278,8 @@ describe("method_resolution", () => {
         object: {
           location: {
             file_path,
-            line: 10,
-            column: 1,
+            start_line: 10,
+            start_column: 1,
             end_line: 10,
             end_column: 7,
           },
@@ -302,8 +302,8 @@ describe("method_resolution", () => {
               name: "MyClass" as SymbolName,
               location: {
                 file_path,
-                line: 1,
-                column: 1,
+                start_line: 1,
+                start_column: 1,
                 end_line: 5,
                 end_column: 1,
               },
@@ -317,8 +317,8 @@ describe("method_resolution", () => {
               name: "createDefault" as SymbolName,
               location: {
                 file_path,
-                line: 2,
-                column: 3,
+                start_line: 2,
+                start_column: 3,
                 end_line: 2,
                 end_column: 25,
               },
@@ -407,8 +407,8 @@ describe("method_resolution", () => {
         class_name: "MyClass" as SymbolName,
         location: {
           file_path,
-          line: 10,
-          column: 1,
+          start_line: 10,
+          start_column: 1,
           end_line: 10,
           end_column: 15,
         },
@@ -431,8 +431,8 @@ describe("method_resolution", () => {
               name: "MyClass" as SymbolName,
               location: {
                 file_path,
-                line: 1,
-                column: 1,
+                start_line: 1,
+                start_column: 1,
                 end_line: 5,
                 end_column: 1,
               },
@@ -445,8 +445,8 @@ describe("method_resolution", () => {
               name: "constructor" as SymbolName,
               location: {
                 file_path,
-                line: 2,
-                column: 3,
+                start_line: 2,
+                start_column: 3,
                 end_line: 2,
                 end_column: 15,
               },
@@ -526,8 +526,8 @@ describe("method_resolution", () => {
       const member_access: MemberAccessReference = {
         location: {
           file_path,
-          line: 10,
-          column: 1,
+          start_line: 10,
+          start_column: 1,
           end_line: 10,
           end_column: 15,
         },
@@ -537,8 +537,8 @@ describe("method_resolution", () => {
         object: {
           location: {
             file_path,
-            line: 10,
-            column: 1,
+            start_line: 10,
+            start_column: 1,
             end_line: 10,
             end_column: 8,
           },
@@ -604,8 +604,8 @@ describe("method_resolution", () => {
       const member_access: MemberAccessReference = {
         location: {
           file_path,
-          line: 10,
-          column: 1,
+          start_line: 10,
+          start_column: 1,
           end_line: 10,
           end_column: 15,
         },
@@ -615,8 +615,8 @@ describe("method_resolution", () => {
         object: {
           location: {
             file_path,
-            line: 10,
-            column: 1,
+            start_line: 10,
+            start_column: 1,
             end_line: 10,
             end_column: 8,
           },
@@ -664,8 +664,8 @@ describe("method_resolution", () => {
         class_name: "UnknownClass" as SymbolName,
         location: {
           file_path,
-          line: 10,
-          column: 1,
+          start_line: 10,
+          start_column: 1,
           end_line: 10,
           end_column: 15,
         },
@@ -735,8 +735,8 @@ describe("method_resolution", () => {
       const member_access: MemberAccessReference = {
         location: {
           file_path,
-          line: 10,
-          column: 1,
+          start_line: 10,
+          start_column: 1,
           end_line: 10,
           end_column: 15,
         },
@@ -746,8 +746,8 @@ describe("method_resolution", () => {
         object: {
           location: {
             file_path,
-            line: 10,
-            column: 1,
+            start_line: 10,
+            start_column: 1,
             end_line: 10,
             end_column: 8,
           },
@@ -819,8 +819,8 @@ describe("method_resolution", () => {
       const member_access: MemberAccessReference = {
         location: {
           file_path,
-          line: 10,
-          column: 1,
+          start_line: 10,
+          start_column: 1,
           end_line: 10,
           end_column: 15,
         },
@@ -830,8 +830,8 @@ describe("method_resolution", () => {
         object: {
           location: {
             file_path,
-            line: 10,
-            column: 1,
+            start_line: 10,
+            start_column: 1,
             end_line: 10,
             end_column: 8,
           },
@@ -933,8 +933,8 @@ describe("method_resolution", () => {
               name: "MyClass" as SymbolName,
               location: {
                 file_path,
-                line: 1,
-                column: 1,
+                start_line: 1,
+                start_column: 1,
                 end_line: 10,
                 end_column: 1,
               },
@@ -947,8 +947,8 @@ describe("method_resolution", () => {
               name: "getValue" as SymbolName,
               location: {
                 file_path,
-                line: 3,
-                column: 3,
+                start_line: 3,
+                start_column: 3,
                 end_line: 3,
                 end_column: 20,
               },
@@ -962,8 +962,8 @@ describe("method_resolution", () => {
               name: "createDefault" as SymbolName,
               location: {
                 file_path,
-                line: 5,
-                column: 3,
+                start_line: 5,
+                start_column: 3,
                 end_line: 5,
                 end_column: 25,
               },
@@ -1174,8 +1174,8 @@ describe("method_resolution", () => {
       const member_access: MemberAccessReference = {
         location: {
           file_path,
-          line: 10,
-          column: 1,
+          start_line: 10,
+          start_column: 1,
           end_line: 10,
           end_column: 15,
         },
@@ -2092,8 +2092,8 @@ describe("method_resolution", () => {
               name: "Derived" as SymbolName,
               location: {
                 file_path,
-                line: 10,
-                column: 1,
+                start_line: 10,
+                start_column: 1,
                 end_line: 20,
                 end_column: 1,
               },
@@ -2917,8 +2917,8 @@ describe("method_resolution", () => {
         const member_access: MemberAccessReference = {
           location: {
             file_path,
-            line: 10,
-            column: 1,
+            start_line: 10,
+            start_column: 1,
             end_line: 10,
             end_column: 20,
           },
@@ -2928,8 +2928,8 @@ describe("method_resolution", () => {
           object: {
             location: {
               file_path,
-              line: 10,
-              column: 1,
+              start_line: 10,
+              start_column: 1,
               end_line: 10,
               end_column: 8,
             },
@@ -3021,8 +3021,8 @@ describe("method_resolution", () => {
         const member_access: MemberAccessReference = {
           location: {
             file_path,
-            line: 10,
-            column: 1,
+            start_line: 10,
+            start_column: 1,
             end_line: 10,
             end_column: 20,
           },
@@ -3032,8 +3032,8 @@ describe("method_resolution", () => {
           object: {
             location: {
               file_path,
-              line: 10,
-              column: 1,
+              start_line: 10,
+              start_column: 1,
               end_line: 10,
               end_column: 8,
             },
@@ -3107,8 +3107,8 @@ describe("method_resolution", () => {
         const member_access: MemberAccessReference = {
           location: {
             file_path,
-            line: 10,
-            column: 6,
+            start_line: 10,
+            start_column: 6,
             end_line: 10,
             end_column: 9,
           },
@@ -3118,8 +3118,8 @@ describe("method_resolution", () => {
           object: {
             location: {
               file_path,
-              line: 10,
-              column: 1,
+              start_line: 10,
+              start_column: 1,
               end_line: 10,
               end_column: 5,
             },
@@ -3142,8 +3142,8 @@ describe("method_resolution", () => {
                 "enum",
                 {
                   file_path,
-                  line: 10,
-                  column: 1,
+                  start_line: 10,
+                  start_column: 1,
                   end_line: 10,
                   end_column: 5,
                 }
@@ -3240,8 +3240,8 @@ describe("method_resolution", () => {
         const member_access: MemberAccessReference = {
           location: {
             file_path: consumer_file,
-            line: 5,
-            column: 7,
+            start_line: 5,
+            start_column: 7,
             end_line: 5,
             end_column: 13,
           },
@@ -3251,8 +3251,8 @@ describe("method_resolution", () => {
           object: {
             location: {
               file_path: consumer_file,
-              line: 5,
-              column: 1,
+              start_line: 5,
+              start_column: 1,
               end_line: 5,
               end_column: 6,
             },
@@ -3323,8 +3323,8 @@ describe("method_resolution", () => {
                 "enum",
                 {
                   file_path: consumer_file,
-                  line: 5,
-                  column: 1,
+                  start_line: 5,
+                  start_column: 1,
                   end_line: 5,
                   end_column: 6,
                 }
@@ -3403,8 +3403,8 @@ describe("method_resolution", () => {
         const member_access: MemberAccessReference = {
           location: {
             file_path,
-            line: 10,
-            column: 1,
+            start_line: 10,
+            start_column: 1,
             end_line: 10,
             end_column: 15,
           },
@@ -3414,8 +3414,8 @@ describe("method_resolution", () => {
           object: {
             location: {
               file_path,
-              line: 10,
-              column: 1,
+              start_line: 10,
+              start_column: 1,
               end_line: 10,
               end_column: 8,
             },
@@ -3524,8 +3524,8 @@ describe("method_resolution", () => {
         const member_access: MemberAccessReference = {
           location: {
             file_path,
-            line: 10,
-            column: 7,
+            start_line: 10,
+            start_column: 7,
             end_line: 10,
             end_column: 13,
           },
@@ -3535,8 +3535,8 @@ describe("method_resolution", () => {
           object: {
             location: {
               file_path,
-              line: 10,
-              column: 1,
+              start_line: 10,
+              start_column: 1,
               end_line: 10,
               end_column: 6,
             },
@@ -3558,8 +3558,8 @@ describe("method_resolution", () => {
                 "enum",
                 {
                   file_path,
-                  line: 10,
-                  column: 1,
+                  start_line: 10,
+                  start_column: 1,
                   end_line: 10,
                   end_column: 6,
                 }
@@ -3648,8 +3648,8 @@ describe("method_resolution", () => {
         const member_access: MemberAccessReference = {
           location: {
             file_path,
-            line: 5,
-            column: 12,
+            start_line: 5,
+            start_column: 12,
             end_line: 5,
             end_column: 16,
           },
@@ -3659,8 +3659,8 @@ describe("method_resolution", () => {
           object: {
             location: {
               file_path,
-              line: 5,
-              column: 7,
+              start_line: 5,
+              start_column: 7,
               end_line: 5,
               end_column: 11,
             },
@@ -3782,8 +3782,8 @@ describe("method_resolution", () => {
         const member_access: MemberAccessReference = {
           location: {
             file_path: consumer_file,
-            line: 4,
-            column: 16,
+            start_line: 4,
+            start_column: 16,
             end_line: 4,
             end_column: 22,
           },
@@ -3793,8 +3793,8 @@ describe("method_resolution", () => {
           object: {
             location: {
               file_path: consumer_file,
-              line: 4,
-              column: 10,
+              start_line: 4,
+              start_column: 10,
               end_line: 4,
               end_column: 16,
             },
@@ -3871,8 +3871,8 @@ describe("method_resolution", () => {
                 "enum",
                 {
                   file_path: consumer_file,
-                  line: 4,
-                  column: 10,
+                  start_line: 4,
+                  start_column: 10,
                   end_line: 4,
                   end_column: 16,
                 }
@@ -3955,8 +3955,8 @@ describe("method_resolution", () => {
         const property_access: MemberAccessReference = {
           location: {
             file_path,
-            line: 10,
-            column: 1,
+            start_line: 10,
+            start_column: 1,
             end_line: 10,
             end_column: 15,
           },
@@ -3966,8 +3966,8 @@ describe("method_resolution", () => {
           object: {
             location: {
               file_path,
-              line: 10,
-              column: 1,
+              start_line: 10,
+              start_column: 1,
               end_line: 10,
               end_column: 8,
             },
@@ -3978,8 +3978,8 @@ describe("method_resolution", () => {
         const method_call: MemberAccessReference = {
           location: {
             file_path,
-            line: 11,
-            column: 1,
+            start_line: 11,
+            start_column: 1,
             end_line: 11,
             end_column: 18,
           },
@@ -3989,8 +3989,8 @@ describe("method_resolution", () => {
           object: {
             location: {
               file_path,
-              line: 11,
-              column: 1,
+              start_line: 11,
+              start_column: 1,
               end_line: 11,
               end_column: 8,
             },
@@ -4167,8 +4167,8 @@ describe("method_resolution", () => {
         const settings_access: MemberAccessReference = {
           location: {
             file_path,
-            line: 10,
-            column: 17,
+            start_line: 10,
+            start_column: 17,
             end_line: 10,
             end_column: 25,
           },
@@ -4178,8 +4178,8 @@ describe("method_resolution", () => {
           object: {
             location: {
               file_path,
-              line: 10,
-              column: 12,
+              start_line: 10,
+              start_column: 12,
               end_line: 10,
               end_column: 16,
             },

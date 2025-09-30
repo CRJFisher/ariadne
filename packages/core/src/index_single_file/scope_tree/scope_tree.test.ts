@@ -36,7 +36,7 @@ import {
 } from "./scope_tree";
 import { SemanticEntity, SemanticCategory } from "../capture_types";
 import type { NormalizedCapture } from "../capture_types";
-import { query_tree_and_parse_captures } from "../parse_and_query_code/parse_and_query_code";
+import { query_tree } from "../query_code_tree/query_code_tree";
 
 const FIXTURES_DIR = join(__dirname, "fixtures");
 
@@ -48,8 +48,8 @@ describe("Scope Tree Module", () => {
     file_path = "test.ts" as FilePath;
     base_location = {
       file_path,
-      line: 1,
-      column: 0,
+      start_line: 1,
+      start_column: 0,
       end_line: 1,
       end_column: 10,
     };
@@ -291,7 +291,7 @@ describe("Scope Tree Module", () => {
 
         // The block should be a child of func1, not func2
         const func1_scope = Array.from(result.scopes.values()).find(
-          (s) => s.type === "function" && s.location.line === 5
+          (s) => s.type === "function" && s.location.start_line === 5
         );
         const block_scope = Array.from(result.scopes.values()).find(
           (s) => s.type === "block"
@@ -408,35 +408,35 @@ describe("Scope Tree Module", () => {
           symbols: new Map(),
         };
 
-        const class_id = class_scope({ ...base_location, line: 2 });
+        const class_id = class_scope({ ...base_location, start_line: 2 });
         const class_scope_obj: LexicalScope = {
           id: class_id,
           parent_id: root_id,
           name: null,
           type: "class",
-          location: { ...base_location, line: 2 },
+          location: { ...base_location, start_line: 2 },
           child_ids: [],
           symbols: new Map(),
         };
 
-        const method_id = function_scope({ ...base_location, line: 3 });
+        const method_id = function_scope({ ...base_location, start_line: 3 });
         const method_scope_obj: LexicalScope = {
           id: method_id,
           parent_id: class_id,
           name: null,
           type: "method",
-          location: { ...base_location, line: 3 },
+          location: { ...base_location, start_line: 3 },
           child_ids: [],
           symbols: new Map(),
         };
 
-        const block_id = block_scope({ ...base_location, line: 4 });
+        const block_id = block_scope({ ...base_location, start_line: 4 });
         const block_scope_obj: LexicalScope = {
           id: block_id,
           parent_id: method_id,
           name: null,
           type: "block",
-          location: { ...base_location, line: 4 },
+          location: { ...base_location, start_line: 4 },
           child_ids: [],
           symbols: new Map(),
         };
@@ -493,7 +493,7 @@ describe("Scope Tree Module", () => {
           parent_id: scope_b_id,
           name: null,
           type: "function",
-          location: { ...base_location, line: 10 },
+          location: { ...base_location, start_line: 10 },
           child_ids: [],
           symbols: new Map(),
         };
@@ -503,7 +503,7 @@ describe("Scope Tree Module", () => {
           parent_id: scope_a_id,
           name: null,
           type: "function",
-          location: { ...base_location, line: 11 },
+          location: { ...base_location, start_line: 11 },
           child_ids: [],
           symbols: new Map(),
         };
@@ -529,8 +529,8 @@ describe("Scope Tree Module", () => {
         // Create a hierarchy with overlapping scopes
         const root_location: Location = {
           file_path,
-          line: 1,
-          column: 0,
+          start_line: 1,
+          start_column: 0,
           end_line: 20,
           end_column: 100,
         };
@@ -548,8 +548,8 @@ describe("Scope Tree Module", () => {
 
         const class_location: Location = {
           file_path,
-          line: 5,
-          column: 0,
+          start_line: 5,
+          start_column: 0,
           end_line: 15,
           end_column: 50,
         };
@@ -567,8 +567,8 @@ describe("Scope Tree Module", () => {
 
         const method_location: Location = {
           file_path,
-          line: 8,
-          column: 4,
+          start_line: 8,
+          start_column: 4,
           end_line: 12,
           end_column: 20,
         };
@@ -592,8 +592,8 @@ describe("Scope Tree Module", () => {
       it("should find root scope for location outside all scopes", () => {
         const location: Location = {
           file_path,
-          line: 2,
-          column: 0,
+          start_line: 2,
+          start_column: 0,
           end_line: 2,
           end_column: 10,
         };
@@ -609,8 +609,8 @@ describe("Scope Tree Module", () => {
       it("should find class scope for location inside class but outside method", () => {
         const location: Location = {
           file_path,
-          line: 6,
-          column: 2,
+          start_line: 6,
+          start_column: 2,
           end_line: 6,
           end_column: 10,
         };
@@ -626,8 +626,8 @@ describe("Scope Tree Module", () => {
       it("should find deepest containing scope", () => {
         const location: Location = {
           file_path,
-          line: 10,
-          column: 8,
+          start_line: 10,
+          start_column: 8,
           end_line: 10,
           end_column: 15,
         };
@@ -644,8 +644,8 @@ describe("Scope Tree Module", () => {
         // Location at start of class scope
         const start_location: Location = {
           file_path,
-          line: 5,
-          column: 0,
+          start_line: 5,
+          start_column: 0,
           end_line: 5,
           end_column: 5,
         };
@@ -661,8 +661,8 @@ describe("Scope Tree Module", () => {
       it("should return root scope when no containing scope found", () => {
         const location: Location = {
           file_path,
-          line: 100, // Far outside any scope
-          column: 0,
+          start_line: 100, // Far outside any scope
+          start_column: 0,
           end_line: 100,
           end_column: 10,
         };
@@ -679,8 +679,8 @@ describe("Scope Tree Module", () => {
         const empty_scopes = new Map();
         const location: Location = {
           file_path,
-          line: 10,
-          column: 5,
+          start_line: 10,
+          start_column: 5,
           end_line: 10,
           end_column: 10,
         };
@@ -898,10 +898,10 @@ describe("Scope Tree Module", () => {
         expect(result.scopes.size).toBe(3); // root + outer + inner
 
         const outer_scope = Array.from(result.scopes.values()).find(
-          (s) => s.type === "function" && s.location.line === 2
+          (s) => s.type === "function" && s.location.start_line === 2
         );
         const inner_scope = Array.from(result.scopes.values()).find(
-          (s) => s.type === "function" && s.location.line === 5
+          (s) => s.type === "function" && s.location.start_line === 5
         );
 
         expect(outer_scope!.parent_id).toBe(result.root_scope.id);
@@ -963,8 +963,8 @@ describe("Scope Tree Module", () => {
           type: "module",
           location: {
             file_path,
-            line: 1,
-            column: 0,
+            start_line: 1,
+            start_column: 0,
             end_line: 10000,
             end_column: 100,
           },
@@ -977,8 +977,8 @@ describe("Scope Tree Module", () => {
         for (let i = 0; i < 1000; i++) {
           const scope_id = function_scope({
             file_path,
-            line: i + 10,
-            column: 0,
+            start_line: i + 10,
+            start_column: 0,
             end_line: i + 11,
             end_column: 50,
           });
@@ -990,8 +990,8 @@ describe("Scope Tree Module", () => {
             type: "function",
             location: {
               file_path,
-              line: i + 10,
-              column: 0,
+              start_line: i + 10,
+              start_column: 0,
               end_line: i + 11,
               end_column: 50,
             },
@@ -1004,8 +1004,8 @@ describe("Scope Tree Module", () => {
 
         const test_location: Location = {
           file_path,
-          line: 500,
-          column: 25,
+          start_line: 500,
+          start_column: 25,
           end_line: 500,
           end_column: 30,
         };
@@ -1172,7 +1172,7 @@ describe("Scope Tree Module", () => {
           parent_id: real_parent_id,
           name: null,
           type: "function",
-          location: { ...base_location, line: 2 },
+          location: { ...base_location, start_line: 2 },
           child_ids: [],
           symbols: new Map(),
         };
@@ -1192,8 +1192,8 @@ describe("Scope Tree Module", () => {
         // Create root scope
         const root_location: Location = {
           file_path,
-          line: 1,
-          column: 0,
+          start_line: 1,
+          start_column: 0,
           end_line: 20,
           end_column: 100,
         };
@@ -1213,16 +1213,16 @@ describe("Scope Tree Module", () => {
         // Create two functions at same level with overlapping ranges
         const func1_location: Location = {
           file_path,
-          line: 5,
-          column: 0,
+          start_line: 5,
+          start_column: 0,
           end_line: 10,
           end_column: 50,
         };
 
         const func2_location: Location = {
           file_path,
-          line: 5,
-          column: 10,
+          start_line: 5,
+          start_column: 10,
           end_line: 15,
           end_column: 60,
         };
@@ -1255,8 +1255,8 @@ describe("Scope Tree Module", () => {
         // Location that overlaps both functions
         const test_location: Location = {
           file_path,
-          line: 7,
-          column: 15,
+          start_line: 7,
+          start_column: 15,
           end_line: 7,
           end_column: 20,
         };
@@ -1285,24 +1285,24 @@ describe("Scope Tree Module", () => {
         // Create nested structure: root -> class -> method
         const root_location: Location = {
           file_path,
-          line: 1,
-          column: 0,
+          start_line: 1,
+          start_column: 0,
           end_line: 20,
           end_column: 100,
         };
 
         const class_location: Location = {
           file_path,
-          line: 5,
-          column: 0,
+          start_line: 5,
+          start_column: 0,
           end_line: 15,
           end_column: 50,
         };
 
         const method_location: Location = {
           file_path,
-          line: 8,
-          column: 4,
+          start_line: 8,
+          start_column: 4,
           end_line: 12,
           end_column: 20,
         };
@@ -1348,8 +1348,8 @@ describe("Scope Tree Module", () => {
         // Location inside the method
         const test_location: Location = {
           file_path,
-          line: 10,
-          column: 8,
+          start_line: 10,
+          start_column: 8,
           end_line: 10,
           end_column: 15,
         };
@@ -1506,8 +1506,8 @@ describe("Scope Tree Module", () => {
 
         const zero_length_location: Location = {
           file_path,
-          line: 5,
-          column: 10,
+          start_line: 5,
+          start_column: 10,
           end_line: 5,
           end_column: 10, // Same as start
         };
@@ -1557,11 +1557,7 @@ describe("Scope Tree Module", () => {
         // Get scope captures using the semantic index
         let captures;
         try {
-          captures = query_tree_and_parse_captures(
-            "typescript",
-            tree,
-            file_path
-          );
+          captures = query_tree("typescript", tree, file_path);
         } catch (error) {
           // Skip test if there are query syntax issues - this is not a scope_tree problem
           console.warn(
@@ -1616,11 +1612,7 @@ describe("Scope Tree Module", () => {
 
         let captures;
         try {
-          captures = query_tree_and_parse_captures(
-            "typescript",
-            tree,
-            file_path
-          );
+          captures = query_tree("typescript", tree, file_path);
         } catch (error) {
           console.warn("Skipping TypeScript test due to query syntax error");
           expect(true).toBe(true);
@@ -1663,11 +1655,7 @@ describe("Scope Tree Module", () => {
 
         let captures;
         try {
-          captures = query_tree_and_parse_captures(
-            "typescript",
-            tree,
-            file_path
-          );
+          captures = query_tree("typescript", tree, file_path);
         } catch (error) {
           console.warn("Skipping TypeScript test due to query syntax error");
           expect(true).toBe(true);
@@ -1711,11 +1699,7 @@ describe("Scope Tree Module", () => {
         const tree = python_parser.parse(code);
         const file_path = "nested_scopes.py" as FilePath;
 
-        const captures = query_tree_and_parse_captures(
-          "python",
-          tree,
-          file_path
-        );
+        const captures = query_tree("python", tree, file_path);
         const result = build_scope_tree(
           captures.scopes,
           tree,
@@ -1746,11 +1730,7 @@ describe("Scope Tree Module", () => {
         const tree = python_parser.parse(code);
         const file_path = "nested_scopes.py" as FilePath;
 
-        const captures = query_tree_and_parse_captures(
-          "python",
-          tree,
-          file_path
-        );
+        const captures = query_tree("python", tree, file_path);
         const result = build_scope_tree(
           captures.scopes,
           tree,
@@ -1784,11 +1764,7 @@ describe("Scope Tree Module", () => {
         const tree = python_parser.parse(code);
         const file_path = "nested_scopes.py" as FilePath;
 
-        const captures = query_tree_and_parse_captures(
-          "python",
-          tree,
-          file_path
-        );
+        const captures = query_tree("python", tree, file_path);
         const result = build_scope_tree(
           captures.scopes,
           tree,
@@ -1821,7 +1797,7 @@ describe("Scope Tree Module", () => {
         const tree = rust_parser.parse(code);
         const file_path = "nested_scopes.rs" as FilePath;
 
-        const captures = query_tree_and_parse_captures("rust", tree, file_path);
+        const captures = query_tree("rust", tree, file_path);
         const result = build_scope_tree(
           captures.scopes,
           tree,
@@ -1854,7 +1830,7 @@ describe("Scope Tree Module", () => {
         const tree = rust_parser.parse(code);
         const file_path = "nested_scopes.rs" as FilePath;
 
-        const captures = query_tree_and_parse_captures("rust", tree, file_path);
+        const captures = query_tree("rust", tree, file_path);
         const result = build_scope_tree(
           captures.scopes,
           tree,
@@ -1890,7 +1866,7 @@ describe("Scope Tree Module", () => {
         const tree = rust_parser.parse(code);
         const file_path = "nested_scopes.rs" as FilePath;
 
-        const captures = query_tree_and_parse_captures("rust", tree, file_path);
+        const captures = query_tree("rust", tree, file_path);
         const result = build_scope_tree(
           captures.scopes,
           tree,
@@ -1936,7 +1912,7 @@ describe("Scope Tree Module", () => {
 
           let captures;
           try {
-            captures = query_tree_and_parse_captures(name, tree, file_path);
+            captures = query_tree(name, tree, file_path);
           } catch (error) {
             if (name === "typescript") {
               console.warn(
@@ -1996,7 +1972,7 @@ describe("Scope Tree Module", () => {
             .parser.parse(code);
           let captures;
           try {
-            captures = query_tree_and_parse_captures(
+            captures = query_tree(
               language,
               tree,
               `test.${language}` as FilePath
@@ -2046,11 +2022,7 @@ describe("Scope Tree Module", () => {
 
         expect(() => {
           try {
-            const captures = query_tree_and_parse_captures(
-              "typescript",
-              tree,
-              file_path
-            );
+            const captures = query_tree("typescript", tree, file_path);
             build_scope_tree(captures.scopes, tree, file_path, "typescript");
           } catch (error) {
             // Query syntax errors are not scope_tree errors, so don't propagate them
@@ -2081,11 +2053,7 @@ describe("Scope Tree Module", () => {
         const start_time = Date.now();
         let captures;
         try {
-          captures = query_tree_and_parse_captures(
-            "typescript",
-            tree,
-            file_path
-          );
+          captures = query_tree("typescript", tree, file_path);
         } catch (error) {
           console.warn(
             "Skipping large TypeScript test due to query syntax error"

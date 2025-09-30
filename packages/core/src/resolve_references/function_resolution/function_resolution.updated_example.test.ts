@@ -153,8 +153,8 @@ describe("Function Resolution with Mock Factories", () => {
       // Use in mock semantic index - use ReadonlyMapBuilder for proper interface compatibility
       const mockLocation: Location = {
         file_path: test_file,
-        line: 1,
-        column: 0,
+        start_line: 1,
+        start_column: 0,
         end_line: 1,
         end_column: 5,
       };

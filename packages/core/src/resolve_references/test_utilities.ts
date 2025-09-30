@@ -59,8 +59,8 @@ export function create_test_location(
 ): Location {
   return {
     file_path: file_path as FilePath,
-    line,
-    column,
+    start_line: line,
+    start_column: column,
     end_line: end_line ?? line,
     end_column: end_column ?? column + 10,
   };

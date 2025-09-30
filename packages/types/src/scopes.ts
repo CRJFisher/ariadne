@@ -107,8 +107,8 @@ export function scope_string(scope: ScopeLocation): ScopeId {
   return [
     scope.type,
     scope.location.file_path,
-    scope.location.line,
-    scope.location.column,
+    scope.location.start_line,
+    scope.location.start_column,
     scope.location.end_line,
     scope.location.end_column,
   ].join(":") as ScopeId;
@@ -146,8 +146,8 @@ export function scope_from_string(scope_id: ScopeId): ScopeLocation {
     type,
     location: {
       file_path,
-      line,
-      column,
+      start_line: line,
+      start_column: column,
       end_line,
       end_column,
     },

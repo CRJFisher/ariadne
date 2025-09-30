@@ -351,8 +351,8 @@ function infer_type_from_initializer(
   // Could be a variable reference - look it up
   const var_id = variable_symbol(initializer as SymbolName, {
     file_path,
-    line: 0,
-    column: 0,
+    start_line: 0,
+    start_column: 0,
     end_line: 0,
     end_column: 0,
   });

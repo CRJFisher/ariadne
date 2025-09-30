@@ -3,9 +3,31 @@ import { Location } from "./common";
 export type SymbolId = string & { __brand: "SymbolId" }; // This is the encoded version of the Symbol object
 export type SymbolName = string & { __brand: "SymbolName" }; // This is the local identifier of the symbol
 
+/**
+ * Symbol kind - essential for resolution rules
+ */
+export type SymbolKind =
+  | "function"
+  | "class"
+  | "method"
+  | "constructor"
+  | "property"
+  | "parameter"
+  | "decorator"
+  | "variable"
+  | "constant"
+  | "import"
+  | "interface"
+  | "enum"
+  | "enum_member"
+  | "type"
+  | "type_alias"
+  | "namespace"
+  | "module";
+
 // Basic symbol info needed for SymbolId generation
 interface BasicSymbolInfo {
-  readonly kind: string;
+  readonly kind: SymbolKind;
   readonly name: SymbolName;
   readonly location: Location;
 }
@@ -35,8 +57,8 @@ function symbol_string(symbol: BasicSymbolInfo): SymbolId {
   const parts = [
     symbol.kind,
     symbol.location.file_path,
-    symbol.location.line,
-    symbol.location.column,
+    symbol.location.start_line,
+    symbol.location.start_column,
     symbol.location.end_line,
     symbol.location.end_column,
     symbol.name,
@@ -269,3 +291,28 @@ export function type_symbol(name: string, location: Location): SymbolId {
     location,
   });
 }
+
+export function enum_symbol(name: string, location: Location): SymbolId {
+  return symbol_string({
+    kind: "enum",
+    name: name as SymbolName,
+    location,
+  });
+}
+
+export function enum_member_symbol(name: string, location: Location): SymbolId {
+  return symbol_string({
+    kind: "enum_member",
+    name: name as SymbolName,
+    location,
+  });
+}
+
+export function decorator_symbol(name: string, location: Location): SymbolId {
+  return symbol_string({
+    kind: "decorator",
+    name: name as SymbolName,
+    location,
+  });
+}
+

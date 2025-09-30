@@ -8,7 +8,7 @@ export {
   SemanticEntity,
   type CaptureMapping,
   type LanguageCaptureConfig,
-} from "./parse_and_query_code/capture_types";
+} from "./query_code_tree/capture_types";
 
 // NormalizedCapture was removed in Epic 11 refactoring
 // Legacy tests that use it need to be migrated to the builder pattern

@@ -14,9 +14,12 @@ import type {
   LexicalScope,
   Location,
 } from "@ariadnejs/types";
-import type { NormalizedCapture } from "../../parse_and_query_code/capture_types";
+import type { NormalizedCapture } from "../../query_code_tree/capture_types";
 import { create_mock_node } from "../../test_utils";
-import { SemanticEntity, SemanticCategory } from "../../parse_and_query_code/capture_types";
+import {
+  SemanticEntity,
+  SemanticCategory,
+} from "../../query_code_tree/capture_types";
 import {
   InvalidCaptureError,
   process_call_references,
@@ -48,8 +51,8 @@ describe("Call References", () => {
   const mockFilePath = "test.ts" as FilePath;
   const mockLocation: Location = {
     file_path: mockFilePath,
-    line: 1,
-    column: 0,
+    start_line: 1,
+    start_column: 0,
     end_line: 1,
     end_column: 10,
   };

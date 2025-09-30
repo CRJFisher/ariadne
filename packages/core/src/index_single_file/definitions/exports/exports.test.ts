@@ -31,7 +31,7 @@ import { variable_symbol } from "@ariadnejs/types";
 import { process_exports } from "./exports";
 import { SemanticEntity, SemanticCategory } from "../../capture_types";
 import type { NormalizedCapture } from "../../capture_types";
-import { query_tree_and_parse_captures } from "../../parse_and_query_code/parse_and_query_code";
+import { query_tree } from "../../query_code_tree/query_code_tree";
 
 const FIXTURES_DIR = join(__dirname, "..", "fixtures");
 
@@ -45,8 +45,8 @@ describe("Exports Module", () => {
     file_path = "test.ts" as FilePath;
     base_location = {
       file_path,
-      line: 1,
-      column: 0,
+      start_line: 1,
+      start_column: 0,
       end_line: 1,
       end_column: 10,
     };
@@ -1150,7 +1150,7 @@ describe("Exports Module", () => {
           "utf-8"
         );
         const tree = typescript_parser.parse(code);
-        const captures = query_tree_and_parse_captures(
+        const captures = query_tree(
           "javascript" as Language,
           tree,
           "imports_exports.js" as FilePath
@@ -1163,8 +1163,8 @@ describe("Exports Module", () => {
           type: "module",
           location: {
             file_path: "imports_exports.js" as FilePath,
-            line: 1,
-            column: 0,
+            start_line: 1,
+            start_column: 0,
             end_line: 1000,
             end_column: 100,
           },
@@ -1205,7 +1205,7 @@ describe("Exports Module", () => {
         "utf-8"
       );
       const tree = python_parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "python" as Language,
         tree,
         "implicit_exports.py" as FilePath
@@ -1218,8 +1218,8 @@ describe("Exports Module", () => {
         type: "module",
         location: {
           file_path: "implicit_exports.py" as FilePath,
-          line: 1,
-          column: 0,
+          start_line: 1,
+          start_column: 0,
           end_line: 1000,
           end_column: 100,
         },
@@ -1462,7 +1462,7 @@ describe("Exports Module", () => {
     it("should handle empty files gracefully", () => {
       const empty_code = "";
       const tree = typescript_parser.parse(empty_code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "typescript" as Language,
         tree,
         "empty.ts" as FilePath
@@ -1474,8 +1474,8 @@ describe("Exports Module", () => {
         type: "module",
         location: {
           file_path: "empty.ts" as FilePath,
-          line: 1,
-          column: 0,
+          start_line: 1,
+          start_column: 0,
           end_line: 1,
           end_column: 0,
         },
@@ -1504,7 +1504,7 @@ describe("Exports Module", () => {
       `;
 
       const tree = typescript_parser.parse(malformed_code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "typescript" as Language,
         tree,
         "malformed.ts" as FilePath
@@ -1516,8 +1516,8 @@ describe("Exports Module", () => {
         type: "module",
         location: {
           file_path: "malformed.ts" as FilePath,
-          line: 1,
-          column: 0,
+          start_line: 1,
+          start_column: 0,
           end_line: 10,
           end_column: 100,
         },
@@ -1547,7 +1547,7 @@ describe("Exports Module", () => {
       ).join("\n");
 
       const tree = typescript_parser.parse(large_code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "typescript" as Language,
         tree,
         "large.ts" as FilePath
@@ -1559,8 +1559,8 @@ describe("Exports Module", () => {
         type: "module",
         location: {
           file_path: "large.ts" as FilePath,
-          line: 1,
-          column: 0,
+          start_line: 1,
+          start_column: 0,
           end_line: 200,
           end_column: large_code.length,
         },

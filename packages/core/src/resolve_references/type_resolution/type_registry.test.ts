@@ -28,8 +28,8 @@ describe("Type Registry", () => {
     end_column: number = 100
   ): Location => ({
     file_path: file as FilePath,
-    line,
-    column,
+    start_line: line,
+    start_column: column,
     end_line,
     end_column,
   });
@@ -76,7 +76,9 @@ describe("Type Registry", () => {
       expect(registry.types.size).toBe(1);
       expect(registry.type_names.size).toBe(1);
       expect(registry.type_names.get(file_path)?.size).toBe(1);
-      expect(registry.type_names.get(file_path)?.has("TestClass" as SymbolName)).toBe(true);
+      expect(
+        registry.type_names.get(file_path)?.has("TestClass" as SymbolName)
+      ).toBe(true);
     });
 
     it("should process multiple types in single file", () => {
@@ -121,11 +123,20 @@ describe("Type Registry", () => {
       const file_path = "test.ts" as FilePath;
 
       const classDef = create_local_type_def("MyClass", "class", "test.ts");
-      const interfaceDef = create_local_type_def("MyInterface", "interface", "test.ts");
+      const interfaceDef = create_local_type_def(
+        "MyInterface",
+        "interface",
+        "test.ts"
+      );
       const typeDef = create_local_type_def("MyType", "type", "test.ts");
       const enumDef = create_local_type_def("MyEnum", "enum", "test.ts");
 
-      type_definitions.set(file_path, [classDef, interfaceDef, typeDef, enumDef]);
+      type_definitions.set(file_path, [
+        classDef,
+        interfaceDef,
+        typeDef,
+        enumDef,
+      ]);
 
       const registry = build_type_registry(type_definitions);
 
@@ -180,12 +191,9 @@ describe("Type Registry", () => {
 
       type_definitions.set(file_path, [
         create_local_type_def("BaseClass", "class", "test.ts"),
-        create_local_type_def(
-          "DerivedClass",
-          "class",
-          "test.ts",
-          ["BaseClass" as SymbolName]
-        ),
+        create_local_type_def("DerivedClass", "class", "test.ts", [
+          "BaseClass" as SymbolName,
+        ]),
       ]);
 
       const registry = build_global_type_registry(type_definitions, imports);
@@ -193,8 +201,12 @@ describe("Type Registry", () => {
       expect(registry.types.size).toBe(2);
 
       // Get the TypeIds
-      const baseId = registry.type_names.get(file_path)?.get("BaseClass" as SymbolName);
-      const derivedId = registry.type_names.get(file_path)?.get("DerivedClass" as SymbolName);
+      const baseId = registry.type_names
+        .get(file_path)
+        ?.get("BaseClass" as SymbolName);
+      const derivedId = registry.type_names
+        .get(file_path)
+        ?.get("DerivedClass" as SymbolName);
 
       expect(baseId).toBeDefined();
       expect(derivedId).toBeDefined();
@@ -210,19 +222,19 @@ describe("Type Registry", () => {
 
       type_definitions.set(file_path, [
         create_local_type_def("ITestable", "interface", "test.ts"),
-        create_local_type_def(
-          "TestClass",
-          "class",
-          "test.ts",
-          undefined,
-          ["ITestable" as SymbolName]
-        ),
+        create_local_type_def("TestClass", "class", "test.ts", undefined, [
+          "ITestable" as SymbolName,
+        ]),
       ]);
 
       const registry = build_global_type_registry(type_definitions, imports);
 
-      const interfaceId = registry.type_names.get(file_path)?.get("ITestable" as SymbolName);
-      const classId = registry.type_names.get(file_path)?.get("TestClass" as SymbolName);
+      const interfaceId = registry.type_names
+        .get(file_path)
+        ?.get("ITestable" as SymbolName);
+      const classId = registry.type_names
+        .get(file_path)
+        ?.get("TestClass" as SymbolName);
 
       expect(interfaceId).toBeDefined();
       expect(classId).toBeDefined();
@@ -262,12 +274,16 @@ describe("Type Registry", () => {
 
       const registry = build_global_type_registry(type_definitions, imports);
 
-      const classId = registry.type_names.get(file_path)?.get("TestClass" as SymbolName);
+      const classId = registry.type_names
+        .get(file_path)
+        ?.get("TestClass" as SymbolName);
       const classType = registry.types.get(classId!);
 
       expect(classType?.all_members.size).toBe(2);
       expect(classType?.all_members.has("testMethod" as SymbolName)).toBe(true);
-      expect(classType?.all_members.has("testProperty" as SymbolName)).toBe(true);
+      expect(classType?.all_members.has("testProperty" as SymbolName)).toBe(
+        true
+      );
 
       const methodInfo = classType?.all_members.get("testMethod" as SymbolName);
       expect(methodInfo?.kind).toBe("method");
@@ -305,14 +321,21 @@ describe("Type Registry", () => {
         is_static: false,
         is_optional: false,
       };
-      derivedDef.direct_members.set("derivedMethod" as SymbolName, derivedMember);
+      derivedDef.direct_members.set(
+        "derivedMethod" as SymbolName,
+        derivedMember
+      );
 
       type_definitions.set(file_path, [baseDef, derivedDef]);
 
       const registry = build_global_type_registry(type_definitions, imports);
 
-      const baseId = registry.type_names.get(file_path)?.get("BaseClass" as SymbolName);
-      const derivedId = registry.type_names.get(file_path)?.get("DerivedClass" as SymbolName);
+      const baseId = registry.type_names
+        .get(file_path)
+        ?.get("BaseClass" as SymbolName);
+      const derivedId = registry.type_names
+        .get(file_path)
+        ?.get("DerivedClass" as SymbolName);
 
       const baseType = registry.types.get(baseId!);
       const derivedType = registry.types.get(derivedId!);
@@ -323,11 +346,17 @@ describe("Type Registry", () => {
 
       // Derived should have both its own and inherited members
       expect(derivedType?.all_members.size).toBe(2);
-      expect(derivedType?.all_members.has("baseMethod" as SymbolName)).toBe(true);
-      expect(derivedType?.all_members.has("derivedMethod" as SymbolName)).toBe(true);
+      expect(derivedType?.all_members.has("baseMethod" as SymbolName)).toBe(
+        true
+      );
+      expect(derivedType?.all_members.has("derivedMethod" as SymbolName)).toBe(
+        true
+      );
 
       // Check inherited member is marked as such
-      const inheritedMember = derivedType?.all_members.get("baseMethod" as SymbolName);
+      const inheritedMember = derivedType?.all_members.get(
+        "baseMethod" as SymbolName
+      );
       expect(inheritedMember?.inherited_from).toBe(baseId);
     });
 
@@ -338,15 +367,25 @@ describe("Type Registry", () => {
 
       type_definitions.set(file_path, [
         create_local_type_def("GrandParent", "class", "test.ts"),
-        create_local_type_def("Parent", "class", "test.ts", ["GrandParent" as SymbolName]),
-        create_local_type_def("Child", "class", "test.ts", ["Parent" as SymbolName]),
+        create_local_type_def("Parent", "class", "test.ts", [
+          "GrandParent" as SymbolName,
+        ]),
+        create_local_type_def("Child", "class", "test.ts", [
+          "Parent" as SymbolName,
+        ]),
       ]);
 
       const registry = build_global_type_registry(type_definitions, imports);
 
-      const grandParentId = registry.type_names.get(file_path)?.get("GrandParent" as SymbolName);
-      const parentId = registry.type_names.get(file_path)?.get("Parent" as SymbolName);
-      const childId = registry.type_names.get(file_path)?.get("Child" as SymbolName);
+      const grandParentId = registry.type_names
+        .get(file_path)
+        ?.get("GrandParent" as SymbolName);
+      const parentId = registry.type_names
+        .get(file_path)
+        ?.get("Parent" as SymbolName);
+      const childId = registry.type_names
+        .get(file_path)
+        ?.get("Child" as SymbolName);
 
       const childType = registry.types.get(childId!);
 
@@ -367,25 +406,31 @@ describe("Type Registry", () => {
         create_local_type_def("ISerializable", "interface", "test.ts"),
         create_local_type_def("IComparable", "interface", "test.ts"),
         create_local_type_def("IClonable", "interface", "test.ts"),
-        create_local_type_def(
-          "TestClass",
-          "class",
-          "test.ts",
-          undefined,
-          ["ISerializable", "IComparable", "IClonable"] as SymbolName[]
-        ),
+        create_local_type_def("TestClass", "class", "test.ts", undefined, [
+          "ISerializable",
+          "IComparable",
+          "IClonable",
+        ] as SymbolName[]),
       ]);
 
       const registry = build_global_type_registry(type_definitions, imports);
 
-      const classId = registry.type_names.get(file_path)?.get("TestClass" as SymbolName);
+      const classId = registry.type_names
+        .get(file_path)
+        ?.get("TestClass" as SymbolName);
       const classType = registry.types.get(classId!);
 
       expect(classType?.base_types.length).toBe(3);
 
-      const serializable = registry.type_names.get(file_path)?.get("ISerializable" as SymbolName);
-      const comparable = registry.type_names.get(file_path)?.get("IComparable" as SymbolName);
-      const clonable = registry.type_names.get(file_path)?.get("IClonable" as SymbolName);
+      const serializable = registry.type_names
+        .get(file_path)
+        ?.get("ISerializable" as SymbolName);
+      const comparable = registry.type_names
+        .get(file_path)
+        ?.get("IComparable" as SymbolName);
+      const clonable = registry.type_names
+        .get(file_path)
+        ?.get("IClonable" as SymbolName);
 
       expect(classType?.base_types).toContain(serializable);
       expect(classType?.base_types).toContain(comparable);
@@ -399,16 +444,24 @@ describe("Type Registry", () => {
 
       // Note: In real code this would be invalid, but we should handle it gracefully
       type_definitions.set(file_path, [
-        create_local_type_def("ClassA", "class", "test.ts", ["ClassB" as SymbolName]),
-        create_local_type_def("ClassB", "class", "test.ts", ["ClassA" as SymbolName]),
+        create_local_type_def("ClassA", "class", "test.ts", [
+          "ClassB" as SymbolName,
+        ]),
+        create_local_type_def("ClassB", "class", "test.ts", [
+          "ClassA" as SymbolName,
+        ]),
       ]);
 
       const registry = build_global_type_registry(type_definitions, imports);
 
       expect(registry.types.size).toBe(2);
 
-      const classA = registry.type_names.get(file_path)?.get("ClassA" as SymbolName);
-      const classB = registry.type_names.get(file_path)?.get("ClassB" as SymbolName);
+      const classA = registry.type_names
+        .get(file_path)
+        ?.get("ClassA" as SymbolName);
+      const classB = registry.type_names
+        .get(file_path)
+        ?.get("ClassB" as SymbolName);
 
       const typeA = registry.types.get(classA!);
       const typeB = registry.types.get(classB!);
@@ -425,19 +478,18 @@ describe("Type Registry", () => {
 
       // Reference non-existent base class
       type_definitions.set(file_path, [
-        create_local_type_def(
-          "DerivedClass",
-          "class",
-          "test.ts",
-          ["NonExistentBase" as SymbolName]
-        ),
+        create_local_type_def("DerivedClass", "class", "test.ts", [
+          "NonExistentBase" as SymbolName,
+        ]),
       ]);
 
       const registry = build_global_type_registry(type_definitions, imports);
 
       expect(registry.types.size).toBe(1);
 
-      const derivedId = registry.type_names.get(file_path)?.get("DerivedClass" as SymbolName);
+      const derivedId = registry.type_names
+        .get(file_path)
+        ?.get("DerivedClass" as SymbolName);
       const derivedType = registry.types.get(derivedId!);
 
       // Should have empty base_types since base doesn't exist
@@ -462,12 +514,24 @@ describe("Type Registry", () => {
       expect(registry.type_names.size).toBe(2);
 
       // Each file should have its own TestClass
-      expect(registry.type_names.get("file1.ts" as FilePath)?.has("TestClass" as SymbolName)).toBe(true);
-      expect(registry.type_names.get("file2.ts" as FilePath)?.has("TestClass" as SymbolName)).toBe(true);
+      expect(
+        registry.type_names
+          .get("file1.ts" as FilePath)
+          ?.has("TestClass" as SymbolName)
+      ).toBe(true);
+      expect(
+        registry.type_names
+          .get("file2.ts" as FilePath)
+          ?.has("TestClass" as SymbolName)
+      ).toBe(true);
 
       // The TypeIds should be different
-      const class1Id = registry.type_names.get("file1.ts" as FilePath)?.get("TestClass" as SymbolName);
-      const class2Id = registry.type_names.get("file2.ts" as FilePath)?.get("TestClass" as SymbolName);
+      const class1Id = registry.type_names
+        .get("file1.ts" as FilePath)
+        ?.get("TestClass" as SymbolName);
+      const class2Id = registry.type_names
+        .get("file2.ts" as FilePath)
+        ?.get("TestClass" as SymbolName);
 
       expect(class1Id).not.toBe(class2Id);
     });
@@ -501,12 +565,11 @@ describe("Type Registry", () => {
       // Create a chain of 10 levels of inheritance
       types.push(create_local_type_def("Level0", "class", "test.ts"));
       for (let i = 1; i < 10; i++) {
-        types.push(create_local_type_def(
-          `Level${i}`,
-          "class",
-          "test.ts",
-          [`Level${i-1}` as SymbolName]
-        ));
+        types.push(
+          create_local_type_def(`Level${i}`, "class", "test.ts", [
+            `Level${i - 1}` as SymbolName,
+          ])
+        );
       }
 
       type_definitions.set(file_path, types);
@@ -516,8 +579,12 @@ describe("Type Registry", () => {
       expect(registry.types.size).toBe(10);
 
       // Check that Level9 has Level8 as base
-      const level9Id = registry.type_names.get(file_path)?.get("Level9" as SymbolName);
-      const level8Id = registry.type_names.get(file_path)?.get("Level8" as SymbolName);
+      const level9Id = registry.type_names
+        .get(file_path)
+        ?.get("Level9" as SymbolName);
+      const level8Id = registry.type_names
+        .get(file_path)
+        ?.get("Level8" as SymbolName);
       const level9Type = registry.types.get(level9Id!);
 
       expect(level9Type?.base_types).toContain(level8Id);
@@ -536,7 +603,9 @@ describe("Type Registry", () => {
 
       const registry = build_global_type_registry(type_definitions, imports);
 
-      const classId = registry.type_names.get(file_path)?.get("EmptyClass" as SymbolName);
+      const classId = registry.type_names
+        .get(file_path)
+        ?.get("EmptyClass" as SymbolName);
       const classType = registry.types.get(classId!);
 
       expect(classType?.all_members.size).toBe(0);
@@ -562,7 +631,9 @@ describe("Type Registry", () => {
 
       const registry = build_global_type_registry(type_definitions, imports);
 
-      const classId = registry.type_names.get(file_path)?.get("DetailedClass" as SymbolName);
+      const classId = registry.type_names
+        .get(file_path)
+        ?.get("DetailedClass" as SymbolName);
       const classType = registry.types.get(classId!);
 
       expect(classType).toBeDefined();

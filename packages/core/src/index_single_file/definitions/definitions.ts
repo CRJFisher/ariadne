@@ -36,10 +36,8 @@ import {
   parameter_symbol,
 } from "@ariadnejs/types";
 import { find_containing_scope } from "../scope_tree";
-import type { RawCapture } from "../parse_and_query_code/scope_processor";
-import {
-  SemanticEntity,
-} from "../parse_and_query_code/scope_processor";
+import type { CaptureNode } from "../query_code_tree/scope_processor";
+import { SemanticEntity } from "../query_code_tree/scope_processor";
 
 /**
  * Process symbol definitions

@@ -8,32 +8,9 @@ import { DocString } from "./aliases";
 
 export type ParameterName = string & { __brand: "ParameterName" };
 
-import { SymbolId } from "./symbol";
+import { SymbolId, SymbolKind } from "./symbol";
 import { SymbolName } from "./symbol";
 import { ModulePath } from "./import_export";
-
-
-/**
- * Symbol kind - essential for resolution rules
- */
-
-export type SymbolKind =
-  | "function"
-  | "class"
-  | "method"
-  | "constructor"
-  | "property"
-  | "parameter"
-  | "decorator"
-  | "variable"
-  | "constant"
-  | "import"
-  | "interface"
-  | "enum"
-  | "type"
-  | "type_alias"
-  | "namespace"
-  | "module";
 
 /**
  * Symbol availability determines where a symbol can be referenced
@@ -90,10 +67,10 @@ export interface ClassDefinition extends Definition {
   readonly methods: readonly MethodDefinition[];
   readonly properties: readonly PropertyDefinition[]; // Aka fields
   readonly decorators: readonly SymbolId[]; // TODO: maybe these should be processed before creating this definition? E.g. in python these result in a new method definitions, fields etc
-  readonly constructor?: ConstructorDefinition;
-  readonly docstring?: DocString;
+  readonly constructor?: readonly ConstructorDefinition[];
+  readonly docstring?: readonly DocString[];
 }
-
+ 
 /**
  * Method definition within a class
  */
@@ -183,14 +160,15 @@ export interface VariableDefinition extends Definition {
 }
 
 /**
- * Import definition for imported symbols
- * //TODO: use Import type from import_export.ts?
+ * Import definition for imported symbols (symbol-level)
+ * Converted to Import union types during cross-file resolution
  */
 export interface ImportDefinition extends Definition {
+  readonly kind: "import";
   readonly import_path: ModulePath; // Module path imported from
-  readonly original_name?: SymbolName; // Original name in source module if aliased
-  readonly is_default?: boolean; // Whether this is a default import
-  readonly is_namespace?: boolean; // Whether this is a namespace import
+  readonly import_kind: "named" | "default" | "namespace"; // Type of import
+  readonly original_name?: SymbolName; // Original name in source module if aliased (for named imports)
+  readonly is_type_only?: boolean; // TypeScript type-only import (e.g., import type { Foo })
 }
 
 /**

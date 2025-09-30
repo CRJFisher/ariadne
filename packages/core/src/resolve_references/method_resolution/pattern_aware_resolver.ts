@@ -96,8 +96,8 @@ export function resolve_pattern_aware_method_calls(
           !existing_calls.some(
             (loc) =>
               loc.file_path === call_location.file_path &&
-              loc.line === call_location.line &&
-              loc.column === call_location.column
+              loc.start_line === call_location.start_line &&
+              loc.start_column === call_location.start_column
           )
         ) {
           existing_calls.push(call_location);
@@ -131,8 +131,8 @@ export function resolve_pattern_aware_method_calls(
         !existing_calls.some(
           (loc) =>
             loc.file_path === await_location.file_path &&
-            loc.line === await_location.line &&
-            loc.column === await_location.column
+            loc.start_line === await_location.start_line &&
+            loc.start_column === await_location.start_column
         )
       ) {
         existing_calls.push(await_location);
@@ -354,8 +354,8 @@ function find_symbol_at_location(
 function locations_match(loc1: Location, loc2: Location): boolean {
   return (
     loc1.file_path === loc2.file_path &&
-    loc1.line === loc2.line &&
-    loc1.column === loc2.column
+    loc1.start_line === loc2.start_line &&
+    loc1.start_column === loc2.start_column
   );
 }
 

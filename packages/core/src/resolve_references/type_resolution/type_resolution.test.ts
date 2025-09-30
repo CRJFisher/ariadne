@@ -107,8 +107,8 @@ describe("Type Resolution Module", () => {
         kind: "class",
         location: {
           file_path: "test.ts" as FilePath,
-          line: 1,
-          column: 0,
+          start_line: 1,
+          start_column: 0,
           end_line: 1,
           end_column: 10,
         },
@@ -346,8 +346,8 @@ describe("Type Resolution Module", () => {
                   kind: "class",
                   location: {
                     file_path: "test.ts" as FilePath,
-                    line: 1,
-                    column: 0,
+                    start_line: 1,
+                    start_column: 0,
                     end_line: 10,
                     end_column: 1,
                   } as Location,
@@ -902,8 +902,8 @@ describe("Type Resolution Module", () => {
           kind: "class",
           location: {
             file_path: "test.ts" as FilePath,
-            line: 10,
-            column: 0,
+            start_line: 10,
+            start_column: 0,
             end_line: 20,
             end_column: 0,
           },
@@ -1005,15 +1005,15 @@ describe("Type Resolution Module", () => {
         const assignmentFlow: LocalTypeFlowPattern = {
           source_location: {
             file_path: "test.ts" as FilePath,
-            line: 5,
-            column: 0,
+            start_line: 5,
+            start_column: 0,
             end_line: 6,
             end_column: 0,
           },
           target_location: {
             file_path: "test.ts" as FilePath,
-            line: 1,
-            column: 0,
+            start_line: 1,
+            start_column: 0,
             end_line: 2,
             end_column: 0,
           },

@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeAll } from "vitest";
-import { parse_code } from "../../index_single_file/parse_and_query_code/parse_and_query_code";
+import { parse_code } from "../../index_single_file/query_code_tree/query_code_tree";
 import { build_semantic_index } from "../../index_single_file/semantic_index";
 import { resolve_methods_enhanced } from "./enhanced_method_resolution";
 import { resolve_methods } from "./method_resolution";

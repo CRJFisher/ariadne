@@ -11,10 +11,15 @@ import Parser from "tree-sitter";
 import Rust from "tree-sitter-rust";
 import type { Language, FilePath, SymbolName } from "@ariadnejs/types";
 import { build_semantic_index } from "./semantic_index";
-import { query_tree_and_parse_captures } from "./parse_and_query_code/parse_and_query_code";
-import { SemanticEntity } from "./parse_and_query_code/capture_types";
+import { query_tree } from "./query_code_tree/query_code_tree";
+import { SemanticEntity } from "./query_code_tree/capture_types";
 
-const FIXTURES_DIR = join(__dirname, "parse_and_query_code", "fixtures", "rust");
+const FIXTURES_DIR = join(
+  __dirname,
+  "parse_and_query_code",
+  "fixtures",
+  "rust"
+);
 
 describe("Semantic Index - Rust", () => {
   let parser: Parser;
@@ -31,7 +36,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -84,7 +89,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -115,7 +120,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -151,7 +156,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -203,7 +208,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -234,7 +239,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -283,7 +288,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -311,7 +316,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -345,7 +350,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -379,7 +384,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -427,7 +432,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -474,7 +479,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -511,7 +516,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -580,7 +585,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -612,7 +617,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -644,7 +649,7 @@ describe("Semantic Index - Rust", () => {
         tree,
         "rust" as Language
       );
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -702,7 +707,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -1004,7 +1009,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -1133,7 +1138,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -1269,7 +1274,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -1526,7 +1531,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -1552,7 +1557,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -1588,7 +1593,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -1621,7 +1626,7 @@ describe("Semantic Index - Rust", () => {
         tree,
         "rust" as Language
       );
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -1659,7 +1664,7 @@ describe("Semantic Index - Rust", () => {
         tree,
         "rust" as Language
       );
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -1756,7 +1761,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -1783,7 +1788,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -1849,7 +1854,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "comprehensive_pattern_matching.rs" as FilePath
@@ -1920,7 +1925,7 @@ describe("Semantic Index - Rust", () => {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "comprehensive_pattern_matching.rs" as FilePath
@@ -1976,7 +1981,7 @@ describe("Semantic Index - Rust", () => {
       `;
 
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -2036,7 +2041,7 @@ describe("Semantic Index - Rust", () => {
         }
       `;
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -2061,7 +2066,7 @@ async fn async_function() -> Result<(), Error> {
 }
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -2095,7 +2100,7 @@ impl<const N: usize> Container for Array<i32, N> {
 }
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -2119,7 +2124,7 @@ let multiply = |x, y| x * y;
 let capture = move |val| println!("{}", external_var + val);
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -2146,7 +2151,7 @@ let capture = move |val| println!("{}", external_var + val);
         "utf-8"
       );
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -2317,7 +2322,7 @@ pub(crate) mod internal;
 mod custom_module;
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -2343,7 +2348,7 @@ async fn fetch_data() -> Result<String, Error> {
 }
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -2372,7 +2377,7 @@ pub(in crate::module) struct RestrictedStruct;
 struct PrivateStruct;
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -2399,7 +2404,7 @@ fn safe_wrapper() {
 }
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -2435,7 +2440,7 @@ loop {
 }
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -2531,7 +2536,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -2597,7 +2602,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -2626,7 +2631,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -2667,7 +2672,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -2706,7 +2711,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -2742,7 +2747,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -2772,7 +2777,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -2871,7 +2876,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -2916,7 +2921,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -2972,7 +2977,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3027,7 +3032,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3096,7 +3101,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3128,7 +3133,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3165,7 +3170,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3230,7 +3235,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3294,7 +3299,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3343,7 +3348,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3373,7 +3378,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3405,7 +3410,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3433,7 +3438,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3473,7 +3478,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3501,7 +3506,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3526,7 +3531,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3555,7 +3560,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3588,7 +3593,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3615,7 +3620,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3644,7 +3649,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3676,7 +3681,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3753,7 +3758,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3781,7 +3786,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3815,7 +3820,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3849,7 +3854,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3884,7 +3889,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3927,7 +3932,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -3969,7 +3974,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -4008,7 +4013,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -4060,7 +4065,7 @@ loop {
         tree,
         "rust" as Language
       );
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -4122,7 +4127,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "test.rs" as FilePath
@@ -4270,7 +4275,7 @@ loop {
         tree,
         "rust" as Language
       );
-      const parsed = query_tree_and_parse_captures(
+      const parsed = query_tree(
         "rust" as Language,
         tree,
         "combined_async.rs" as FilePath
@@ -4372,7 +4377,7 @@ loop {
 
   describe("Advanced Rust Constructs Integration", () => {
     let advancedFixtureCode: string;
-    let advancedParsedResult: ReturnType<typeof query_tree_and_parse_captures>;
+    let advancedParsedResult: ReturnType<typeof query_tree>;
 
     beforeAll(() => {
       advancedFixtureCode = readFileSync(
@@ -4380,7 +4385,7 @@ loop {
         "utf-8"
       );
       const tree = parser.parse(advancedFixtureCode);
-      advancedParsedResult = query_tree_and_parse_captures(
+      advancedParsedResult = query_tree(
         "rust" as Language,
         tree,
         "advanced_constructs_comprehensive.rs" as FilePath

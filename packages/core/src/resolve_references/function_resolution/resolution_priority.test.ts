@@ -32,8 +32,8 @@ function create_call_ref(
   return {
     location: {
       file_path,
-      line,
-      column: 5,
+      start_line: line,
+      start_column: 5,
       end_line: line,
       end_column: 10,
     },
@@ -57,8 +57,8 @@ function create_function_def(
     kind: "function",
     location: {
       file_path,
-      line,
-      column: 10,
+      start_line: line,
+      start_column: 10,
       end_line: line,
       end_column: 20,
     },
@@ -82,8 +82,8 @@ function create_scope(
     type: parent_id === null ? "module" : "function",
     location: {
       file_path: "test.js" as FilePath,
-      line: 1,
-      column: 1,
+      start_line: 1,
+      start_column: 1,
       end_line: 20,
       end_column: 1,
     },
@@ -236,8 +236,8 @@ describe("Resolution Priority Functions", () => {
         kind: "variable",
         location: {
           file_path,
-          line: 1,
-          column: 10,
+          start_line: 1,
+          start_column: 10,
           end_line: 1,
           end_column: 15,
         },
@@ -491,8 +491,8 @@ describe("Resolution Priority Functions", () => {
         kind: "variable",
         location: {
           file_path: other_file,
-          line: 1,
-          column: 10,
+          start_line: 1,
+          start_column: 10,
           end_line: 1,
           end_column: 21,
         },

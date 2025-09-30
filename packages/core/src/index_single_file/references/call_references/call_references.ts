@@ -17,7 +17,7 @@ import {
   SemanticCategory,
   NormalizedCapture,
   CaptureContext,
-} from "../../parse_and_query_code/capture_types";
+} from "../../query_code_tree/capture_types";
 import { CallReference } from "@ariadnejs/types/src/call_chains";
 
 /**
@@ -261,7 +261,7 @@ function get_containing_function(
       const symbol = scope_to_symbol.get(current.id);
       if (!symbol) {
         throw new Error(
-          `Symbol not found for scope at ${current.location.file_path}:${current.location.line}:${current.location.column}`
+          `Symbol not found for scope at ${current.location.file_path}:${current.location.start_line}:${current.location.start_column}`
         );
       }
       return symbol;
@@ -271,6 +271,6 @@ function get_containing_function(
   }
 
   throw new Error(
-    `Symbol not found for scope at ${scope.location.file_path}:${scope.location.line}:${scope.location.column}`
+    `Symbol not found for scope at ${scope.location.file_path}:${scope.location.start_line}:${scope.location.start_column}`
   );
 }

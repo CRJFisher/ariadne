@@ -26,7 +26,7 @@ import type {
   AnyDefinition,
 } from "@ariadnejs/types";
 import { variable_symbol } from "@ariadnejs/types";
-import type { NormalizedCapture } from "../../parse_and_query_code/capture_types";
+import type { NormalizedCapture } from "../../query_code_tree/capture_types";
 
 /**
  * Process exports (explicit and implicit)

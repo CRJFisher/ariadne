@@ -241,8 +241,8 @@ function resolve_source_type(
     case "variable": {
       const location: Location = {
         file_path,
-        line: 0,
-        column: 0,
+        start_line: 0,
+        start_column: 0,
         end_line: 0,
         end_column: 0,
       } as const;
@@ -257,8 +257,8 @@ function resolve_source_type(
     case "function_call": {
       const location: Location = {
         file_path,
-        line: 0,
-        column: 0,
+        start_line: 0,
+        start_column: 0,
         end_line: 0,
         end_column: 0,
       } as const;
@@ -283,8 +283,8 @@ function resolve_source_type(
 function create_flow_node(source: FlowSource, file_path: FilePath): FlowNode {
   const location: Location = {
     file_path,
-    line: 0,
-    column: 0,
+    start_line: 0,
+    start_column: 0,
     end_line: 0,
     end_column: 0,
   } as const;
@@ -326,8 +326,8 @@ function find_type_by_location(
   // Search through all types for matching location
   for (const [_, type_def] of types.types) {
     if (
-      type_def.definition_location.line === location.line &&
-      type_def.definition_location.column === location.column
+      type_def.definition_location.start_line === location.start_line &&
+      type_def.definition_location.start_column === location.start_column
     ) {
       return type_def.type_id;
     }

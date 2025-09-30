@@ -11,14 +11,19 @@ import Parser from "tree-sitter";
 import Python from "tree-sitter-python";
 import type { Language, FilePath } from "@ariadnejs/types";
 import { build_semantic_index } from "./semantic_index";
-import { query_tree_and_parse_captures } from "./parse_and_query_code/parse_and_query_code";
+import { query_tree } from "./query_code_tree/query_code_tree";
 import {
   SemanticEntity,
   SemanticCategory,
-} from "./parse_and_query_code/capture_types";
+} from "./query_code_tree/capture_types";
 import { build_scope_tree } from "./scope_tree";
 
-const FIXTURES_DIR = join(__dirname, "parse_and_query_code", "fixtures", "python");
+const FIXTURES_DIR = join(
+  __dirname,
+  "parse_and_query_code",
+  "fixtures",
+  "python"
+);
 
 describe("Semantic Index - Python Comprehensive", () => {
   let parser: Parser;
@@ -40,7 +45,7 @@ describe("Semantic Index - Python Comprehensive", () => {
       );
       const tree = parser.parse(code);
       const file_path = "scope_hierarchy.py" as FilePath;
-      const result = query_tree_and_parse_captures("python", tree, file_path);
+      const result = query_tree("python", tree, file_path);
 
       // Check different scope types
       const scope_entities = result.scopes.map((s) => s.entity);
@@ -57,7 +62,7 @@ describe("Semantic Index - Python Comprehensive", () => {
       const code = readFileSync(join(FIXTURES_DIR, "classes.py"), "utf8");
       const tree = parser.parse(code);
       const file_path = "classes.py" as FilePath;
-      const result = query_tree_and_parse_captures("python", tree, file_path);
+      const result = query_tree("python", tree, file_path);
 
       // Check definition types
       const def_entities = result.definitions.map((d) => d.entity);
@@ -75,7 +80,7 @@ describe("Semantic Index - Python Comprehensive", () => {
       const code = readFileSync(join(FIXTURES_DIR, "imports.py"), "utf8");
       const tree = parser.parse(code);
       const file_path = "imports.py" as FilePath;
-      const result = query_tree_and_parse_captures("python", tree, file_path);
+      const result = query_tree("python", tree, file_path);
 
       // Check imports exist
       expect(result.imports.length).toBeGreaterThan(5);
@@ -91,7 +96,7 @@ describe("Semantic Index - Python Comprehensive", () => {
       const code = readFileSync(join(FIXTURES_DIR, "functions.py"), "utf8");
       const tree = parser.parse(code);
       const file_path = "functions.py" as FilePath;
-      const result = query_tree_and_parse_captures("python", tree, file_path);
+      const result = query_tree("python", tree, file_path);
 
       // Check reference types
       const ref_entities = result.references.map((r) => r.entity);
@@ -111,7 +116,7 @@ describe("Semantic Index - Python Comprehensive", () => {
       const code = readFileSync(join(FIXTURES_DIR, "decorators.py"), "utf8");
       const tree = parser.parse(code);
       const file_path = "decorators.py" as FilePath;
-      const parsed = query_tree_and_parse_captures("python", tree, file_path);
+      const parsed = query_tree("python", tree, file_path);
 
       // Check for decorator references
       const decorator_refs = parsed.references.filter(
@@ -173,7 +178,7 @@ describe("Semantic Index - Python Comprehensive", () => {
       const code = readFileSync(join(FIXTURES_DIR, "decorators.py"), "utf8");
       const tree = parser.parse(code);
       const file_path = "decorators.py" as FilePath;
-      const parsed = query_tree_and_parse_captures("python", tree, file_path);
+      const parsed = query_tree("python", tree, file_path);
 
       // Check for functions with multiple decorators
       const multi_decorated = parsed.definitions.filter(
@@ -195,7 +200,7 @@ describe("Semantic Index - Python Comprehensive", () => {
       );
       const tree = parser.parse(code);
       const file_path = "comprehensive_type_hints.py" as FilePath;
-      const parsed = query_tree_and_parse_captures("python", tree, file_path);
+      const parsed = query_tree("python", tree, file_path);
 
       // Check for type annotations
       const type_annotations = parsed.types;
@@ -209,7 +214,7 @@ def typed_function(x: int, y: str, z: list[int]) -> dict[str, any]:
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed = query_tree_and_parse_captures("python", tree, file_path);
+      const parsed = query_tree("python", tree, file_path);
 
       // Check parameter definitions with types
       const typed_params = parsed.definitions.filter(
@@ -231,7 +236,7 @@ z: list[int] = [1, 2, 3]
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed = query_tree_and_parse_captures("python", tree, file_path);
+      const parsed = query_tree("python", tree, file_path);
 
       // Check typed variable definitions
       const typed_vars = parsed.definitions.filter(
@@ -326,7 +331,7 @@ z: list[int] = [1, 2, 3]
       );
       const tree = parser.parse(code);
       const file_path = "comprehensive_exports.py" as FilePath;
-      const parsed = query_tree_and_parse_captures("python", tree, file_path);
+      const parsed = query_tree("python", tree, file_path);
 
       // Check for __all__ definition
       const all_exports = parsed.exports.filter(
@@ -533,7 +538,7 @@ z: list[int] = [1, 2, 3]
       const code = readFileSync(join(FIXTURES_DIR, "functions.py"), "utf8");
       const tree = parser.parse(code);
       const file_path = "functions.py" as FilePath;
-      const parsed = query_tree_and_parse_captures("python", tree, file_path);
+      const parsed = query_tree("python", tree, file_path);
 
       // Check for async function definitions
       const async_functions = parsed.definitions.filter(
@@ -655,7 +660,7 @@ z: list[int] = [1, 2, 3]
       const code = `from math import *`;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed = query_tree_and_parse_captures("python", tree, file_path);
+      const parsed = query_tree("python", tree, file_path);
 
       // Check for wildcard import
       const wildcard_imports = parsed.imports.filter(
@@ -678,7 +683,7 @@ z: list[int] = [1, 2, 3]
       );
       const tree = parser.parse(code);
       const file_path = "scope_hierarchy.py" as FilePath;
-      const parsed = query_tree_and_parse_captures("python", tree, file_path);
+      const parsed = query_tree("python", tree, file_path);
 
       const { root_scope, scopes } = build_scope_tree(
         parsed.scopes,
@@ -698,7 +703,7 @@ z: list[int] = [1, 2, 3]
       const code = `[x for x in range(10)]`;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed = query_tree_and_parse_captures("python", tree, file_path);
+      const parsed = query_tree("python", tree, file_path);
 
       const { scopes } = build_scope_tree(
         parsed.scopes,
@@ -725,7 +730,7 @@ finally:
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed = query_tree_and_parse_captures("python", tree, file_path);
+      const parsed = query_tree("python", tree, file_path);
 
       const { scopes } = build_scope_tree(
         parsed.scopes,
@@ -748,7 +753,7 @@ with open("file") as f:
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed = query_tree_and_parse_captures("python", tree, file_path);
+      const parsed = query_tree("python", tree, file_path);
 
       const { scopes } = build_scope_tree(
         parsed.scopes,
@@ -774,7 +779,7 @@ with open("file") as f:
       const code = readFileSync(join(FIXTURES_DIR, "classes.py"), "utf8");
       const tree = parser.parse(code);
       const file_path = "classes.py" as FilePath;
-      const parsed = query_tree_and_parse_captures("python", tree, file_path);
+      const parsed = query_tree("python", tree, file_path);
 
       // Check for super calls
       const super_calls = parsed.references.filter(
@@ -789,7 +794,7 @@ with open("file") as f:
       const code = readFileSync(join(FIXTURES_DIR, "classes.py"), "utf8");
       const tree = parser.parse(code);
       const file_path = "classes.py" as FilePath;
-      const parsed = query_tree_and_parse_captures("python", tree, file_path);
+      const parsed = query_tree("python", tree, file_path);
 
       // Check for self references
       const self_refs = parsed.references.filter(
@@ -862,7 +867,7 @@ def generator():
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed = query_tree_and_parse_captures("python", tree, file_path);
+      const parsed = query_tree("python", tree, file_path);
 
       // Check for yield expressions - look for ref.yield captures or yield in text
       const yields = parsed.references.filter(
@@ -894,11 +899,7 @@ y *= 2
 z //= 3
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
-        "python",
-        tree,
-        "test.py" as FilePath
-      );
+      const parsed = query_tree("python", tree, "test.py" as FilePath);
 
       const augmented = parsed.assignments.filter(
         (a) => a.entity === SemanticEntity.VARIABLE
@@ -918,11 +919,7 @@ x, y, z = 1, 2, 3
 [c, d] = [6, 7]
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
-        "python",
-        tree,
-        "test.py" as FilePath
-      );
+      const parsed = query_tree("python", tree, "test.py" as FilePath);
 
       const multipleAssigns = parsed.definitions.filter(
         (d) =>
@@ -953,11 +950,7 @@ unique = {item for item in items if item}
 gen = (n for n in numbers if n > 0)
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
-        "python",
-        tree,
-        "test.py" as FilePath
-      );
+      const parsed = query_tree("python", tree, "test.py" as FilePath);
 
       const compVars = parsed.definitions.filter(
         (d) => d.entity === SemanticEntity.VARIABLE
@@ -978,11 +971,7 @@ except (TypeError, KeyError) as err:
     handle_error(err)
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
-        "python",
-        tree,
-        "test.py" as FilePath
-      );
+      const parsed = query_tree("python", tree, "test.py" as FilePath);
 
       const exceptVars = parsed.definitions.filter(
         (d) => d.entity === SemanticEntity.VARIABLE
@@ -1001,11 +990,7 @@ with contextlib.suppress(Exception) as suppressed:
     risky_operation()
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
-        "python",
-        tree,
-        "test.py" as FilePath
-      );
+      const parsed = query_tree("python", tree, "test.py" as FilePath);
 
       const withVars = parsed.definitions.filter(
         (d) => d.entity === SemanticEntity.VARIABLE
@@ -1028,11 +1013,7 @@ match value:
         print("default")
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
-        "python",
-        tree,
-        "test.py" as FilePath
-      );
+      const parsed = query_tree("python", tree, "test.py" as FilePath);
 
       const matchScopes = parsed.scopes.filter(
         (s) => s.entity === SemanticEntity.BLOCK
@@ -1049,11 +1030,7 @@ def generator():
     yield from other_generator()
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
-        "python",
-        tree,
-        "test.py" as FilePath
-      );
+      const parsed = query_tree("python", tree, "test.py" as FilePath);
 
       const yields = parsed.references.filter(
         (r) => r.symbol_name === "yield" || r.symbol_name === "yield from"
@@ -1067,11 +1044,7 @@ assert x > 0, "x must be positive"
 assert isinstance(obj, MyClass)
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
-        "python",
-        tree,
-        "test.py" as FilePath
-      );
+      const parsed = query_tree("python", tree, "test.py" as FilePath);
 
       const asserts = parsed.references.filter(
         (r) => r.symbol_name === "assert"
@@ -1086,11 +1059,7 @@ del obj.attr
 del items[0]
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
-        "python",
-        tree,
-        "test.py" as FilePath
-      );
+      const parsed = query_tree("python", tree, "test.py" as FilePath);
 
       const deletes = parsed.references.filter(
         (r) =>
@@ -1109,11 +1078,7 @@ data['key'] = 'value'
 slice_val = array[1:10:2]
 `;
       const tree = parser.parse(code);
-      const parsed = query_tree_and_parse_captures(
-        "python",
-        tree,
-        "test.py" as FilePath
-      );
+      const parsed = query_tree("python", tree, "test.py" as FilePath);
 
       const subscripts = parsed.references.filter(
         (r) =>
@@ -1164,11 +1129,7 @@ slice_val = array[1:10:2]
 
         // Should not throw errors
         expect(() => {
-          const result = query_tree_and_parse_captures(
-            "python",
-            tree,
-            file_path
-          );
+          const result = query_tree("python", tree, file_path);
           expect(result).toBeDefined();
           expect(result.scopes).toBeDefined();
           expect(result.definitions).toBeDefined();

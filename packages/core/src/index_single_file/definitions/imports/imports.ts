@@ -16,7 +16,7 @@ import type {
   ScopeId,
 } from "@ariadnejs/types";
 import { variable_symbol, create_namespace_name } from "@ariadnejs/types";
-import type { NormalizedCapture } from "../../parse_and_query_code/capture_types";
+import type { NormalizedCapture } from "../../query_code_tree/capture_types";
 
 /**
  * Process imports with language-specific handling

@@ -48,8 +48,8 @@ function create_location(
 ): Location {
   return {
     file_path: file_path as FilePath,
-    line,
-    column,
+    start_line: line,
+    start_column: column,
     end_line,
     end_column,
   };
@@ -160,7 +160,12 @@ describe("Scope Walker", () => {
         create_location("test.js", 10, 0, 20, 0)
       );
 
-      const global_var = create_symbol("var1", "globalVar", "variable", "global");
+      const global_var = create_symbol(
+        "var1",
+        "globalVar",
+        "variable",
+        "global"
+      );
 
       global_scope.symbols.set("globalVar" as SymbolName, global_var);
 
@@ -207,7 +212,12 @@ describe("Scope Walker", () => {
         create_location("test.js", 12, 0, 18, 0)
       );
 
-      const globalVar = create_symbol("var1", "globalVar", "variable", "global");
+      const globalVar = create_symbol(
+        "var1",
+        "globalVar",
+        "variable",
+        "global"
+      );
 
       global_scope.symbols.set("globalVar" as SymbolName, globalVar);
 
@@ -248,7 +258,12 @@ describe("Scope Walker", () => {
         create_location("test.js", 10, 0, 20, 0)
       );
 
-      const globalVar = create_symbol("var1", "globalVar", "variable", "global");
+      const globalVar = create_symbol(
+        "var1",
+        "globalVar",
+        "variable",
+        "global"
+      );
       const localVar = create_symbol("var2", "localVar", "variable", "func");
 
       global_scope.symbols.set("globalVar" as SymbolName, globalVar);
@@ -303,7 +318,11 @@ describe("Scope Walker", () => {
         [block_scope.id, block_scope],
       ]);
 
-      const result = find_enclosing_scope_of_type(block_scope, "function", scopes);
+      const result = find_enclosing_scope_of_type(
+        block_scope,
+        "function",
+        scopes
+      );
 
       expect(result).toBeDefined();
       expect(result?.id).toBe("func");
@@ -329,16 +348,35 @@ describe("Scope Walker", () => {
         [block_scope.id, block_scope],
       ]);
 
-      const result = find_enclosing_scope_of_type(block_scope, "function", scopes);
+      const result = find_enclosing_scope_of_type(
+        block_scope,
+        "function",
+        scopes
+      );
       expect(result).toBeNull();
     });
   });
 
   describe("is_scope_descendant", () => {
     it("should correctly identify scope descendant relationships", () => {
-      const global = create_scope("global", "global", null, create_location("test.js", 1, 0, 100, 0));
-      const func = create_scope("func", "function", "global", create_location("test.js", 10, 0, 20, 0));
-      const block = create_scope("block", "block", "func", create_location("test.js", 12, 0, 18, 0));
+      const global = create_scope(
+        "global",
+        "global",
+        null,
+        create_location("test.js", 1, 0, 100, 0)
+      );
+      const func = create_scope(
+        "func",
+        "function",
+        "global",
+        create_location("test.js", 10, 0, 20, 0)
+      );
+      const block = create_scope(
+        "block",
+        "block",
+        "func",
+        create_location("test.js", 12, 0, 18, 0)
+      );
 
       const scopes = new Map([
         [global.id, global],
@@ -365,11 +403,39 @@ describe("Scope Walker", () => {
 
   describe("collect_descendant_scopes", () => {
     it("should collect all descendant scopes recursively", () => {
-      const global = create_scope("global", "global", null, create_location("test.js", 1, 0, 100, 0), ["func1" as ScopeId, "func2" as ScopeId]);
-      const func1 = create_scope("func1", "function", "global", create_location("test.js", 10, 0, 20, 0), ["block1" as ScopeId]);
-      const func2 = create_scope("func2", "function", "global", create_location("test.js", 30, 0, 40, 0), ["block2" as ScopeId]);
-      const block1 = create_scope("block1", "block", "func1", create_location("test.js", 12, 0, 18, 0));
-      const block2 = create_scope("block2", "block", "func2", create_location("test.js", 32, 0, 38, 0));
+      const global = create_scope(
+        "global",
+        "global",
+        null,
+        create_location("test.js", 1, 0, 100, 0),
+        ["func1" as ScopeId, "func2" as ScopeId]
+      );
+      const func1 = create_scope(
+        "func1",
+        "function",
+        "global",
+        create_location("test.js", 10, 0, 20, 0),
+        ["block1" as ScopeId]
+      );
+      const func2 = create_scope(
+        "func2",
+        "function",
+        "global",
+        create_location("test.js", 30, 0, 40, 0),
+        ["block2" as ScopeId]
+      );
+      const block1 = create_scope(
+        "block1",
+        "block",
+        "func1",
+        create_location("test.js", 12, 0, 18, 0)
+      );
+      const block2 = create_scope(
+        "block2",
+        "block",
+        "func2",
+        create_location("test.js", 32, 0, 38, 0)
+      );
 
       const scopes = new Map([
         [global.id, global],
@@ -382,11 +448,21 @@ describe("Scope Walker", () => {
       const descendants = collect_descendant_scopes(global, scopes);
 
       expect(descendants).toHaveLength(4);
-      expect(descendants.map(s => s.id).sort()).toEqual(["block1", "block2", "func1", "func2"]);
+      expect(descendants.map((s) => s.id).sort()).toEqual([
+        "block1",
+        "block2",
+        "func1",
+        "func2",
+      ]);
     });
 
     it("should handle scopes with no children", () => {
-      const leaf = create_scope("leaf", "block", null, create_location("test.js", 1, 0, 10, 0));
+      const leaf = create_scope(
+        "leaf",
+        "block",
+        null,
+        create_location("test.js", 1, 0, 10, 0)
+      );
       const scopes = new Map([[leaf.id, leaf]]);
 
       const descendants = collect_descendant_scopes(leaf, scopes);
@@ -399,8 +475,18 @@ describe("Edge Cases and Error Handling", () => {
   describe("Circular scope references", () => {
     it("should handle circular parent references gracefully", () => {
       // Create a circular reference (should not happen in practice but test defensive coding)
-      const scope1 = create_scope("scope1", "block", "scope2", create_location("test.js", 1, 0, 10, 0));
-      const scope2 = create_scope("scope2", "block", "scope1", create_location("test.js", 11, 0, 20, 0));
+      const scope1 = create_scope(
+        "scope1",
+        "block",
+        "scope2",
+        create_location("test.js", 1, 0, 10, 0)
+      );
+      const scope2 = create_scope(
+        "scope2",
+        "block",
+        "scope1",
+        create_location("test.js", 11, 0, 20, 0)
+      );
 
       const scopes = new Map([
         [scope1.id, scope1],
@@ -427,7 +513,12 @@ describe("Edge Cases and Error Handling", () => {
 
   describe("Empty and null cases", () => {
     it("should handle empty scope maps", () => {
-      const scope = create_scope("scope", "global", null, create_location("test.js", 1, 0, 10, 0));
+      const scope = create_scope(
+        "scope",
+        "global",
+        null,
+        create_location("test.js", 1, 0, 10, 0)
+      );
       const context: ScopeResolutionContext = {
         scopes: new Map(),
         symbols: new Map(),
@@ -444,7 +535,12 @@ describe("Edge Cases and Error Handling", () => {
     });
 
     it("should handle scopes with no symbols", () => {
-      const scope = create_scope("scope", "global", null, create_location("test.js", 1, 0, 10, 0));
+      const scope = create_scope(
+        "scope",
+        "global",
+        null,
+        create_location("test.js", 1, 0, 10, 0)
+      );
       const context: ScopeResolutionContext = {
         scopes: new Map([[scope.id, scope]]),
         symbols: new Map(),
@@ -456,7 +552,12 @@ describe("Edge Cases and Error Handling", () => {
     });
 
     it("should handle missing parent scopes", () => {
-      const orphan = create_scope("orphan", "block", "missing", create_location("test.js", 1, 0, 10, 0));
+      const orphan = create_scope(
+        "orphan",
+        "block",
+        "missing",
+        create_location("test.js", 1, 0, 10, 0)
+      );
       const scopes = new Map([[orphan.id, orphan]]);
 
       const chain = get_scope_chain(orphan, scopes);
@@ -467,7 +568,12 @@ describe("Edge Cases and Error Handling", () => {
 
   describe("Boundary conditions", () => {
     it("should handle exact boundary matches for location_in_scope", () => {
-      const scope = create_scope("scope", "block", null, create_location("test.js", 10, 5, 20, 15));
+      const scope = create_scope(
+        "scope",
+        "block",
+        null,
+        create_location("test.js", 10, 5, 20, 15)
+      );
 
       // Exact start boundary
       const startBoundary = create_location("test.js", 10, 5, 10, 5);
@@ -488,8 +594,18 @@ describe("Edge Cases and Error Handling", () => {
 
     it("should handle overlapping scopes correctly", () => {
       // Two scopes that overlap (shouldn't happen but test it)
-      const scope1 = create_scope("scope1", "block", null, create_location("test.js", 10, 0, 20, 0));
-      const scope2 = create_scope("scope2", "block", null, create_location("test.js", 15, 0, 25, 0));
+      const scope1 = create_scope(
+        "scope1",
+        "block",
+        null,
+        create_location("test.js", 10, 0, 20, 0)
+      );
+      const scope2 = create_scope(
+        "scope2",
+        "block",
+        null,
+        create_location("test.js", 15, 0, 25, 0)
+      );
 
       const scopes = new Map([
         [scope1.id, scope1],
@@ -509,8 +625,18 @@ describe("Edge Cases and Error Handling", () => {
 
   describe("Symbol shadowing", () => {
     it("should handle symbol shadowing correctly", () => {
-      const global = create_scope("global", "global", null, create_location("test.js", 1, 0, 100, 0));
-      const func = create_scope("func", "function", "global", create_location("test.js", 10, 0, 20, 0));
+      const global = create_scope(
+        "global",
+        "global",
+        null,
+        create_location("test.js", 1, 0, 100, 0)
+      );
+      const func = create_scope(
+        "func",
+        "function",
+        "global",
+        create_location("test.js", 10, 0, 20, 0)
+      );
 
       const globalVar = create_symbol("s1", "x", "variable", "global");
       const localVar = create_symbol("s2", "x", "variable", "func");
@@ -609,10 +735,16 @@ describe("Hoisting Handler", () => {
 
   describe("resolve_global_symbol", () => {
     it("should resolve JavaScript built-in symbols", () => {
-      const console_id = resolve_global_symbol("console" as SymbolName, "javascript");
+      const console_id = resolve_global_symbol(
+        "console" as SymbolName,
+        "javascript"
+      );
       expect(console_id).toBe("builtin:javascript:console");
 
-      const promise_id = resolve_global_symbol("Promise" as SymbolName, "javascript");
+      const promise_id = resolve_global_symbol(
+        "Promise" as SymbolName,
+        "javascript"
+      );
       expect(promise_id).toBe("builtin:javascript:Promise");
     });
 
@@ -625,7 +757,10 @@ describe("Hoisting Handler", () => {
     });
 
     it("should resolve Rust macro symbols", () => {
-      const println_id = resolve_global_symbol("println!" as SymbolName, "rust");
+      const println_id = resolve_global_symbol(
+        "println!" as SymbolName,
+        "rust"
+      );
       expect(println_id).toBe("builtin:rust:println!");
 
       const vec_id = resolve_global_symbol("vec!" as SymbolName, "rust");
@@ -633,12 +768,18 @@ describe("Hoisting Handler", () => {
     });
 
     it("should return null for unknown symbols", () => {
-      const unknown_id = resolve_global_symbol("unknownSymbol" as SymbolName, "javascript");
+      const unknown_id = resolve_global_symbol(
+        "unknownSymbol" as SymbolName,
+        "javascript"
+      );
       expect(unknown_id).toBeNull();
     });
 
     it("should resolve TypeScript-specific globals", () => {
-      const array_id = resolve_global_symbol("Array" as SymbolName, "typescript");
+      const array_id = resolve_global_symbol(
+        "Array" as SymbolName,
+        "typescript"
+      );
       expect(array_id).toBe("builtin:typescript:Array");
 
       const map_id = resolve_global_symbol("Map" as SymbolName, "typescript");
@@ -646,29 +787,55 @@ describe("Hoisting Handler", () => {
     });
 
     it("should resolve Node.js-specific globals", () => {
-      const process_id = resolve_global_symbol("process" as SymbolName, "javascript");
+      const process_id = resolve_global_symbol(
+        "process" as SymbolName,
+        "javascript"
+      );
       expect(process_id).toBe("builtin:javascript:process");
 
-      const require_id = resolve_global_symbol("require" as SymbolName, "javascript");
+      const require_id = resolve_global_symbol(
+        "require" as SymbolName,
+        "javascript"
+      );
       expect(require_id).toBe("builtin:javascript:require");
 
-      const buffer_id = resolve_global_symbol("Buffer" as SymbolName, "javascript");
+      const buffer_id = resolve_global_symbol(
+        "Buffer" as SymbolName,
+        "javascript"
+      );
       expect(buffer_id).toBe("builtin:javascript:Buffer");
     });
 
     it("should resolve browser-specific globals", () => {
-      const window_id = resolve_global_symbol("window" as SymbolName, "javascript");
+      const window_id = resolve_global_symbol(
+        "window" as SymbolName,
+        "javascript"
+      );
       expect(window_id).toBe("builtin:javascript:window");
 
-      const document_id = resolve_global_symbol("document" as SymbolName, "javascript");
+      const document_id = resolve_global_symbol(
+        "document" as SymbolName,
+        "javascript"
+      );
       expect(document_id).toBe("builtin:javascript:document");
     });
   });
 
   describe("find_hoisted_symbol_in_scope", () => {
     it("should find hoisted function declarations in scope", () => {
-      const scope = create_scope("scope", "function", null, create_location("test.js", 1, 0, 20, 0));
-      const hoistedFunc = create_symbol("func1", "myHoistedFunc", "function", "scope", true);
+      const scope = create_scope(
+        "scope",
+        "function",
+        null,
+        create_location("test.js", 1, 0, 20, 0)
+      );
+      const hoistedFunc = create_symbol(
+        "func1",
+        "myHoistedFunc",
+        "function",
+        "scope",
+        true
+      );
 
       const context: ScopeResolutionContext = {
         scopes: new Map([[scope.id, scope]]),
@@ -686,8 +853,19 @@ describe("Hoisting Handler", () => {
     });
 
     it("should find hoisted var declarations", () => {
-      const scope = create_scope("scope", "function", null, create_location("test.js", 1, 0, 20, 0));
-      const hoistedVar = create_symbol("var1", "myVar", "variable", "scope", true);
+      const scope = create_scope(
+        "scope",
+        "function",
+        null,
+        create_location("test.js", 1, 0, 20, 0)
+      );
+      const hoistedVar = create_symbol(
+        "var1",
+        "myVar",
+        "variable",
+        "scope",
+        true
+      );
 
       const context: ScopeResolutionContext = {
         scopes: new Map([[scope.id, scope]]),
@@ -705,8 +883,19 @@ describe("Hoisting Handler", () => {
     });
 
     it("should not find non-hoisted symbols", () => {
-      const scope = create_scope("scope", "function", null, create_location("test.js", 1, 0, 20, 0));
-      const nonHoisted = create_symbol("let1", "myLet", "variable", "scope", false);
+      const scope = create_scope(
+        "scope",
+        "function",
+        null,
+        create_location("test.js", 1, 0, 20, 0)
+      );
+      const nonHoisted = create_symbol(
+        "let1",
+        "myLet",
+        "variable",
+        "scope",
+        false
+      );
 
       const context: ScopeResolutionContext = {
         scopes: new Map([[scope.id, scope]]),
@@ -724,8 +913,19 @@ describe("Hoisting Handler", () => {
     });
 
     it("should respect language-specific hoisting rules", () => {
-      const scope = create_scope("scope", "function", null, create_location("test.py", 1, 0, 20, 0));
-      const funcDef = create_symbol("func1", "myFunc", "function", "scope", false);
+      const scope = create_scope(
+        "scope",
+        "function",
+        null,
+        create_location("test.py", 1, 0, 20, 0)
+      );
+      const funcDef = create_symbol(
+        "func1",
+        "myFunc",
+        "function",
+        "scope",
+        false
+      );
 
       const context: ScopeResolutionContext = {
         scopes: new Map([[scope.id, scope]]),
@@ -745,11 +945,27 @@ describe("Hoisting Handler", () => {
 
   describe("hoisting behavior", () => {
     it("should handle JavaScript function hoisting", () => {
-      const global = create_scope("global", "global", null, create_location("test.js", 1, 0, 100, 0));
-      const block = create_scope("block", "block", "global", create_location("test.js", 10, 0, 20, 0));
+      const global = create_scope(
+        "global",
+        "global",
+        null,
+        create_location("test.js", 1, 0, 100, 0)
+      );
+      const block = create_scope(
+        "block",
+        "block",
+        "global",
+        create_location("test.js", 10, 0, 20, 0)
+      );
 
       // Hoisted function defined in block but accessible in parent
-      const hoistedFunc = create_symbol("func1", "hoistedFunc", "function", "block", true);
+      const hoistedFunc = create_symbol(
+        "func1",
+        "hoistedFunc",
+        "function",
+        "block",
+        true
+      );
 
       const context: ScopeResolutionContext = {
         scopes: new Map([
@@ -817,9 +1033,24 @@ describe("Scope Utilities", () => {
 
   describe("is_global_scope", () => {
     it("should identify global and module scopes", () => {
-      const global = create_scope("g", "global", null, create_location("test.js", 1, 0, 100, 0));
-      const module = create_scope("m", "module", null, create_location("test.js", 1, 0, 100, 0));
-      const func = create_scope("f", "function", "g", create_location("test.js", 10, 0, 20, 0));
+      const global = create_scope(
+        "g",
+        "global",
+        null,
+        create_location("test.js", 1, 0, 100, 0)
+      );
+      const module = create_scope(
+        "m",
+        "module",
+        null,
+        create_location("test.js", 1, 0, 100, 0)
+      );
+      const func = create_scope(
+        "f",
+        "function",
+        "g",
+        create_location("test.js", 10, 0, 20, 0)
+      );
 
       expect(is_global_scope(global)).toBe(true);
       expect(is_global_scope(module)).toBe(true);
@@ -829,9 +1060,24 @@ describe("Scope Utilities", () => {
 
   describe("get_scope_chain", () => {
     it("should return chain from scope to root", () => {
-      const global = create_scope("global", "global", null, create_location("test.js", 1, 0, 100, 0));
-      const func = create_scope("func", "function", "global", create_location("test.js", 10, 0, 20, 0));
-      const block = create_scope("block", "block", "func", create_location("test.js", 12, 0, 18, 0));
+      const global = create_scope(
+        "global",
+        "global",
+        null,
+        create_location("test.js", 1, 0, 100, 0)
+      );
+      const func = create_scope(
+        "func",
+        "function",
+        "global",
+        create_location("test.js", 10, 0, 20, 0)
+      );
+      const block = create_scope(
+        "block",
+        "block",
+        "func",
+        create_location("test.js", 12, 0, 18, 0)
+      );
 
       const scopes = new Map([
         [global.id, global],
@@ -850,9 +1096,24 @@ describe("Scope Utilities", () => {
 
   describe("get_scope_depth", () => {
     it("should calculate correct scope depth", () => {
-      const global = create_scope("global", "global", null, create_location("test.js", 1, 0, 100, 0));
-      const func = create_scope("func", "function", "global", create_location("test.js", 10, 0, 20, 0));
-      const block = create_scope("block", "block", "func", create_location("test.js", 12, 0, 18, 0));
+      const global = create_scope(
+        "global",
+        "global",
+        null,
+        create_location("test.js", 1, 0, 100, 0)
+      );
+      const func = create_scope(
+        "func",
+        "function",
+        "global",
+        create_location("test.js", 10, 0, 20, 0)
+      );
+      const block = create_scope(
+        "block",
+        "block",
+        "func",
+        create_location("test.js", 12, 0, 18, 0)
+      );
 
       const scopes = new Map([
         [global.id, global],
@@ -868,10 +1129,30 @@ describe("Scope Utilities", () => {
 
   describe("find_common_ancestor_scope", () => {
     it("should find common ancestor of two scopes", () => {
-      const global = create_scope("global", "global", null, create_location("test.js", 1, 0, 100, 0));
-      const func = create_scope("func", "function", "global", create_location("test.js", 10, 0, 30, 0));
-      const block1 = create_scope("block1", "block", "func", create_location("test.js", 12, 0, 18, 0));
-      const block2 = create_scope("block2", "block", "func", create_location("test.js", 20, 0, 28, 0));
+      const global = create_scope(
+        "global",
+        "global",
+        null,
+        create_location("test.js", 1, 0, 100, 0)
+      );
+      const func = create_scope(
+        "func",
+        "function",
+        "global",
+        create_location("test.js", 10, 0, 30, 0)
+      );
+      const block1 = create_scope(
+        "block1",
+        "block",
+        "func",
+        create_location("test.js", 12, 0, 18, 0)
+      );
+      const block2 = create_scope(
+        "block2",
+        "block",
+        "func",
+        create_location("test.js", 20, 0, 28, 0)
+      );
 
       const scopes = new Map([
         [global.id, global],
@@ -889,9 +1170,24 @@ describe("Scope Utilities", () => {
 
   describe("is_symbol_accessible_from_scope", () => {
     it("should determine if symbol is accessible", () => {
-      const global = create_scope("global", "global", null, create_location("test.js", 1, 0, 100, 0));
-      const func = create_scope("func", "function", "global", create_location("test.js", 10, 0, 20, 0));
-      const block = create_scope("block", "block", "func", create_location("test.js", 12, 0, 18, 0));
+      const global = create_scope(
+        "global",
+        "global",
+        null,
+        create_location("test.js", 1, 0, 100, 0)
+      );
+      const func = create_scope(
+        "func",
+        "function",
+        "global",
+        create_location("test.js", 10, 0, 20, 0)
+      );
+      const block = create_scope(
+        "block",
+        "block",
+        "func",
+        create_location("test.js", 12, 0, 18, 0)
+      );
 
       const scopes = new Map([
         [global.id, global],
@@ -899,29 +1195,67 @@ describe("Scope Utilities", () => {
         [block.id, block],
       ]);
 
-      const globalSymbol = create_symbol("s1", "globalVar", "variable", "global");
+      const globalSymbol = create_symbol(
+        "s1",
+        "globalVar",
+        "variable",
+        "global"
+      );
       const funcSymbol = create_symbol("s2", "funcVar", "variable", "func");
       const blockSymbol = create_symbol("s3", "blockVar", "variable", "block");
 
       // Symbol in ancestor scope is accessible
-      expect(is_symbol_accessible_from_scope(globalSymbol, block, scopes)).toBe(true);
-      expect(is_symbol_accessible_from_scope(funcSymbol, block, scopes)).toBe(true);
+      expect(is_symbol_accessible_from_scope(globalSymbol, block, scopes)).toBe(
+        true
+      );
+      expect(is_symbol_accessible_from_scope(funcSymbol, block, scopes)).toBe(
+        true
+      );
 
       // Symbol in same scope is accessible
-      expect(is_symbol_accessible_from_scope(blockSymbol, block, scopes)).toBe(true);
+      expect(is_symbol_accessible_from_scope(blockSymbol, block, scopes)).toBe(
+        true
+      );
 
       // Symbol in descendant scope is not accessible
-      expect(is_symbol_accessible_from_scope(blockSymbol, func, scopes)).toBe(false);
+      expect(is_symbol_accessible_from_scope(blockSymbol, func, scopes)).toBe(
+        false
+      );
     });
   });
 
   describe("find_containing_function_scope", () => {
     it("should find the containing function scope", () => {
-      const global = create_scope("global", "global", null, create_location("test.js", 1, 0, 100, 0));
-      const func = create_scope("func", "function", "global", create_location("test.js", 10, 0, 20, 0));
-      const method = create_scope("method", "method", "global", create_location("test.js", 30, 0, 40, 0));
-      const constructor = create_scope("ctor", "constructor", "global", create_location("test.js", 50, 0, 60, 0));
-      const block = create_scope("block", "block", "func", create_location("test.js", 12, 0, 18, 0));
+      const global = create_scope(
+        "global",
+        "global",
+        null,
+        create_location("test.js", 1, 0, 100, 0)
+      );
+      const func = create_scope(
+        "func",
+        "function",
+        "global",
+        create_location("test.js", 10, 0, 20, 0)
+      );
+      const method = create_scope(
+        "method",
+        "method",
+        "global",
+        create_location("test.js", 30, 0, 40, 0)
+      );
+      const constructor = create_scope(
+        "ctor",
+        "constructor",
+        "global",
+        create_location("test.js", 50, 0, 60, 0)
+      );
+      const block = create_scope(
+        "block",
+        "block",
+        "func",
+        create_location("test.js", 12, 0, 18, 0)
+      );
 
       const scopes = new Map([
         [global.id, global],
@@ -955,13 +1289,48 @@ describe("Scope Utilities", () => {
 
   describe("get_function_scopes_in_file", () => {
     it("should return all function scopes in a file", () => {
-      const global = create_scope("global", "global", null, create_location("test.js", 1, 0, 100, 0));
-      const func1 = create_scope("func1", "function", "global", create_location("test.js", 10, 0, 20, 0));
-      const func2 = create_scope("func2", "function", "global", create_location("test.js", 30, 0, 40, 0));
-      const method1 = create_scope("method1", "method", "global", create_location("test.js", 50, 0, 60, 0));
-      const constructor1 = create_scope("ctor1", "constructor", "global", create_location("test.js", 70, 0, 80, 0));
-      const block = create_scope("block", "block", "func1", create_location("test.js", 12, 0, 18, 0));
-      const otherFile = create_scope("other", "function", "global", create_location("other.js", 1, 0, 10, 0));
+      const global = create_scope(
+        "global",
+        "global",
+        null,
+        create_location("test.js", 1, 0, 100, 0)
+      );
+      const func1 = create_scope(
+        "func1",
+        "function",
+        "global",
+        create_location("test.js", 10, 0, 20, 0)
+      );
+      const func2 = create_scope(
+        "func2",
+        "function",
+        "global",
+        create_location("test.js", 30, 0, 40, 0)
+      );
+      const method1 = create_scope(
+        "method1",
+        "method",
+        "global",
+        create_location("test.js", 50, 0, 60, 0)
+      );
+      const constructor1 = create_scope(
+        "ctor1",
+        "constructor",
+        "global",
+        create_location("test.js", 70, 0, 80, 0)
+      );
+      const block = create_scope(
+        "block",
+        "block",
+        "func1",
+        create_location("test.js", 12, 0, 18, 0)
+      );
+      const otherFile = create_scope(
+        "other",
+        "function",
+        "global",
+        create_location("other.js", 1, 0, 10, 0)
+      );
 
       const scopes = new Map([
         [global.id, global],
@@ -973,19 +1342,47 @@ describe("Scope Utilities", () => {
         [otherFile.id, otherFile],
       ]);
 
-      const functionScopes = get_function_scopes_in_file(scopes, "test.js" as FilePath);
+      const functionScopes = get_function_scopes_in_file(
+        scopes,
+        "test.js" as FilePath
+      );
 
       expect(functionScopes).toHaveLength(4);
-      expect(functionScopes.map(s => s.id).sort()).toEqual(["ctor1", "func1", "func2", "method1"]);
+      expect(functionScopes.map((s) => s.id).sort()).toEqual([
+        "ctor1",
+        "func1",
+        "func2",
+        "method1",
+      ]);
     });
   });
 
   describe("find_scope_at_location", () => {
     it("should find the most specific scope at a location", () => {
-      const global = create_scope("global", "global", null, create_location("test.js", 1, 0, 100, 0));
-      const func = create_scope("func", "function", "global", create_location("test.js", 10, 0, 20, 0));
-      const block = create_scope("block", "block", "func", create_location("test.js", 12, 0, 18, 0));
-      const innerBlock = create_scope("inner", "block", "block", create_location("test.js", 14, 0, 16, 0));
+      const global = create_scope(
+        "global",
+        "global",
+        null,
+        create_location("test.js", 1, 0, 100, 0)
+      );
+      const func = create_scope(
+        "func",
+        "function",
+        "global",
+        create_location("test.js", 10, 0, 20, 0)
+      );
+      const block = create_scope(
+        "block",
+        "block",
+        "func",
+        create_location("test.js", 12, 0, 18, 0)
+      );
+      const innerBlock = create_scope(
+        "inner",
+        "block",
+        "block",
+        create_location("test.js", 14, 0, 16, 0)
+      );
 
       const scopes = new Map([
         [global.id, global],
@@ -1023,9 +1420,24 @@ describe("Scope Utilities", () => {
 
   describe("analyze_scopes_at_location", () => {
     it("should analyze all scopes at a location", () => {
-      const global = create_scope("global", "global", null, create_location("test.js", 1, 0, 100, 0));
-      const func = create_scope("func", "function", "global", create_location("test.js", 10, 0, 20, 0));
-      const block = create_scope("block", "block", "func", create_location("test.js", 12, 0, 18, 0));
+      const global = create_scope(
+        "global",
+        "global",
+        null,
+        create_location("test.js", 1, 0, 100, 0)
+      );
+      const func = create_scope(
+        "func",
+        "function",
+        "global",
+        create_location("test.js", 10, 0, 20, 0)
+      );
+      const block = create_scope(
+        "block",
+        "block",
+        "func",
+        create_location("test.js", 12, 0, 18, 0)
+      );
 
       const scopes = new Map([
         [global.id, global],
@@ -1034,7 +1446,11 @@ describe("Scope Utilities", () => {
       ]);
 
       const location = create_location("test.js", 15, 5, 15, 10);
-      const analysis = analyze_scopes_at_location(location, scopes, "global" as ScopeId);
+      const analysis = analyze_scopes_at_location(
+        location,
+        scopes,
+        "global" as ScopeId
+      );
 
       expect(analysis.immediate_scope).toBe("block");
       expect(analysis.function_scope).toBe("func");
@@ -1043,12 +1459,21 @@ describe("Scope Utilities", () => {
     });
 
     it("should handle location outside all scopes", () => {
-      const global = create_scope("global", "global", null, create_location("test.js", 1, 0, 100, 0));
+      const global = create_scope(
+        "global",
+        "global",
+        null,
+        create_location("test.js", 1, 0, 100, 0)
+      );
 
       const scopes = new Map([[global.id, global]]);
 
       const location = create_location("test.js", 200, 0, 200, 10);
-      const analysis = analyze_scopes_at_location(location, scopes, "global" as ScopeId);
+      const analysis = analyze_scopes_at_location(
+        location,
+        scopes,
+        "global" as ScopeId
+      );
 
       expect(analysis.immediate_scope).toBeNull();
       expect(analysis.function_scope).toBeNull();
@@ -1059,9 +1484,25 @@ describe("Scope Utilities", () => {
 
   describe("get_symbols_in_scope", () => {
     it("should get all symbols in a scope", () => {
-      const global = create_scope("global", "global", null, create_location("test.js", 1, 0, 100, 0));
-      const func = create_scope("func", "function", "global", create_location("test.js", 10, 0, 20, 0), ["block" as ScopeId]);
-      const block = create_scope("block", "block", "func", create_location("test.js", 12, 0, 18, 0));
+      const global = create_scope(
+        "global",
+        "global",
+        null,
+        create_location("test.js", 1, 0, 100, 0)
+      );
+      const func = create_scope(
+        "func",
+        "function",
+        "global",
+        create_location("test.js", 10, 0, 20, 0),
+        ["block" as ScopeId]
+      );
+      const block = create_scope(
+        "block",
+        "block",
+        "func",
+        create_location("test.js", 12, 0, 18, 0)
+      );
 
       const sym1 = create_symbol("s1", "globalVar", "variable", "global");
       const sym2 = create_symbol("s2", "funcVar", "variable", "func");
@@ -1081,7 +1522,10 @@ describe("Scope Utilities", () => {
       // Get symbols including children
       const funcWithChildren = get_symbols_in_scope(func, symbols, true);
       expect(funcWithChildren).toHaveLength(2);
-      expect(funcWithChildren.map(s => s.name).sort()).toEqual(["blockVar", "funcVar"]);
+      expect(funcWithChildren.map((s) => s.name).sort()).toEqual([
+        "blockVar",
+        "funcVar",
+      ]);
     });
   });
 });

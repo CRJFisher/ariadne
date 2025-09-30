@@ -11,8 +11,8 @@ import Parser from "tree-sitter";
 import JavaScript from "tree-sitter-javascript";
 import type { Language, FilePath } from "@ariadnejs/types";
 import { build_semantic_index } from "./semantic_index";
-import { query_tree_and_parse_captures } from "./parse_and_query_code/parse_and_query_code";
-import { SemanticEntity } from "./parse_and_query_code/capture_types";
+import { query_tree } from "./query_code_tree/query_code_tree";
+import { SemanticEntity } from "./query_code_tree/capture_types";
 
 const FIXTURES_DIR = join(__dirname, "parse_and_query_code", "fixtures");
 
@@ -41,11 +41,7 @@ describe("Semantic Index - JavaScript", () => {
         const language: Language = "javascript";
 
         // Parse captures using the SCM query
-        const parsed_captures = query_tree_and_parse_captures(
-          language,
-          tree,
-          fixture as FilePath
-        );
+        const parsed_captures = query_tree(language, tree, fixture as FilePath);
 
         // Basic structure checks
         expect(parsed_captures.scopes.length).toBeGreaterThan(0);
@@ -433,7 +429,7 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsed_captures = query_tree_and_parse_captures(
+      const parsed_captures = query_tree(
         "javascript",
         tree,
         "test.js" as FilePath
@@ -474,7 +470,7 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsed_captures = query_tree_and_parse_captures(
+      const parsed_captures = query_tree(
         "javascript",
         tree,
         "test.js" as FilePath
@@ -508,7 +504,7 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsed_captures = query_tree_and_parse_captures(
+      const parsed_captures = query_tree(
         "javascript",
         tree,
         "test.js" as FilePath
@@ -555,7 +551,7 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsed_captures = query_tree_and_parse_captures(
+      const parsed_captures = query_tree(
         "javascript",
         tree,
         "test.js" as FilePath
@@ -635,7 +631,7 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsed_captures = query_tree_and_parse_captures(
+      const parsed_captures = query_tree(
         "javascript",
         tree,
         "test.js" as FilePath

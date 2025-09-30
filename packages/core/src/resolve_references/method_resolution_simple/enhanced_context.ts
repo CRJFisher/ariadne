@@ -426,13 +426,15 @@ function find_most_recent_in_scope<
 
   // Sort by location (most recent first)
   filtered = filtered.filter(
-    (item) => item.location.line <= current_location.line
+    (item) => item.location.start_line <= current_location.start_line
   );
 
   if (filtered.length === 0) return null;
 
   // Return most recent (highest row number)
   return filtered.reduce((most_recent, item) =>
-    item.location.line > most_recent.location.line ? item : most_recent
+    item.location.start_line > most_recent.location.start_line
+      ? item
+      : most_recent
   );
 }

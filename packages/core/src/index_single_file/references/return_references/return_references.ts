@@ -10,7 +10,7 @@ import type {
   SymbolId,
 } from "@ariadnejs/types";
 import { find_containing_scope } from "../../scope_tree";
-import type { NormalizedCapture } from "../../parse_and_query_code/capture_types";
+import type { NormalizedCapture } from "../../query_code_tree/capture_types";
 
 /**
  * Return reference - Represents a return statement
@@ -69,7 +69,6 @@ export function process_return_references(
   return return_refs;
 }
 
-
 /**
  * Get the containing function scope
  */
@@ -82,7 +81,11 @@ function get_function_scope(
 
   while (current && !visited.has(current.id)) {
     visited.add(current.id);
-    if (current.type === "function" || current.type === "method" || current.type === "constructor") {
+    if (
+      current.type === "function" ||
+      current.type === "method" ||
+      current.type === "constructor"
+    ) {
       return current.id;
     }
     current = current.parent_id ? scopes.get(current.parent_id) : undefined;

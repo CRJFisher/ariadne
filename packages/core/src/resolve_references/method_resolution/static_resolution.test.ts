@@ -114,8 +114,8 @@ describe("static_resolution", () => {
     it("should check object location for class/type/interface", () => {
       const classLocation: Location = {
         file_path: "test.ts" as FilePath,
-        line: 10,
-        column: 5,
+        start_line: 10,
+        start_column: 5,
         end_line: 10,
         end_column: 12,
       };
@@ -149,8 +149,8 @@ describe("static_resolution", () => {
     it("should return true for type_alias symbol", () => {
       const typeLocation: Location = {
         file_path: "test.ts" as FilePath,
-        line: 20,
-        column: 5,
+        start_line: 20,
+        start_column: 5,
         end_line: 20,
         end_column: 11,
       };
@@ -184,8 +184,8 @@ describe("static_resolution", () => {
     it("should return true for interface symbol", () => {
       const interfaceLocation: Location = {
         file_path: "test.ts" as FilePath,
-        line: 30,
-        column: 5,
+        start_line: 30,
+        start_column: 5,
         end_line: 30,
         end_column: 16,
       };
@@ -305,8 +305,8 @@ describe("static_resolution", () => {
     it("should find symbol at matching location", () => {
       const location: Location = {
         file_path: "/test.ts" as FilePath,
-        line: 10,
-        column: 5,
+        start_line: 10,
+        start_column: 5,
         end_line: 10,
         end_column: 15,
       };
@@ -326,8 +326,8 @@ describe("static_resolution", () => {
 
       const searchLocation: Location = {
         file_path: "/test.ts" as FilePath,
-        line: 10,
-        column: 8,
+        start_line: 10,
+        start_column: 8,
         end_line: 10,
         end_column: 12,
       };
@@ -339,8 +339,8 @@ describe("static_resolution", () => {
     it("should return null for non-matching location", () => {
       const location: Location = {
         file_path: "/test.ts" as FilePath,
-        line: 10,
-        column: 5,
+        start_line: 10,
+        start_column: 5,
         end_line: 10,
         end_column: 15,
       };
@@ -360,8 +360,8 @@ describe("static_resolution", () => {
 
       const searchLocation: Location = {
         file_path: "/test.ts" as FilePath,
-        line: 20,
-        column: 5,
+        start_line: 20,
+        start_column: 5,
         end_line: 20,
         end_column: 10,
       };
@@ -506,8 +506,8 @@ describe("static_resolution", () => {
     it("should distinguish between static and instance methods with same name", () => {
       const classLocation: Location = {
         file_path: "test.ts" as FilePath,
-        line: 50,
-        column: 5,
+        start_line: 50,
+        start_column: 5,
         end_line: 50,
         end_column: 12,
       };

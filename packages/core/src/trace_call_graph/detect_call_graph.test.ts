@@ -25,8 +25,8 @@ describe("detect_call_graph", () => {
     column: number = 0
   ): Location => ({
     file_path: file as FilePath,
-    line,
-    column,
+    start_line: line,
+    start_column: column,
     end_line: line,
     end_column: column + 10,
   });
@@ -61,7 +61,9 @@ describe("detect_call_graph", () => {
       const funcId = create_symbol_id("testFunc");
       const funcLocation = create_location("test.ts", 1);
       const resolved: ResolvedSymbols = {
-        definitions: new Map([[funcId, create_definition(funcId, "testFunc", funcLocation)]]),
+        definitions: new Map([
+          [funcId, create_definition(funcId, "testFunc", funcLocation)],
+        ]),
         references: [],
         resolved_references: new Map(),
         references_to_symbol: new Map(),
@@ -181,7 +183,10 @@ describe("detect_call_graph", () => {
       expect(graph.nodes.get(mainId)?.enclosed_calls).toEqual([call1, call2]);
 
       // Verify process function node
-      expect(graph.nodes.get(processId)?.enclosed_calls).toEqual([call3, call4]);
+      expect(graph.nodes.get(processId)?.enclosed_calls).toEqual([
+        call3,
+        call4,
+      ]);
 
       // Verify utility function node
       expect(graph.nodes.get(utilityId)?.enclosed_calls).toEqual([call5]);
@@ -240,7 +245,9 @@ describe("detect_call_graph", () => {
       const call = create_call_reference("unknownFunc", callLocation, funcId);
 
       const resolved: ResolvedSymbols = {
-        definitions: new Map([[funcId, create_definition(funcId, "testFunc", funcLocation)]]),
+        definitions: new Map([
+          [funcId, create_definition(funcId, "testFunc", funcLocation)],
+        ]),
         references: [call],
         resolved_references: new Map(), // Missing the resolution for call
         references_to_symbol: new Map(),
@@ -295,14 +302,23 @@ describe("detect_call_graph", () => {
 
       // recursiveFunc calls itself
       const callLocation = create_location("test.ts", 2);
-      const call = create_call_reference("recursiveFunc", callLocation, recursiveId);
+      const call = create_call_reference(
+        "recursiveFunc",
+        callLocation,
+        recursiveId
+      );
 
       const resolved: ResolvedSymbols = {
         definitions: new Map([
-          [recursiveId, create_definition(recursiveId, "recursiveFunc", recursiveLocation)],
+          [
+            recursiveId,
+            create_definition(recursiveId, "recursiveFunc", recursiveLocation),
+          ],
         ]),
         references: [call],
-        resolved_references: new Map([[location_key(callLocation), recursiveId]]),
+        resolved_references: new Map([
+          [location_key(callLocation), recursiveId],
+        ]),
         references_to_symbol: new Map([[recursiveId, [call]]]),
       };
 
@@ -326,15 +342,24 @@ describe("detect_call_graph", () => {
       // main exists but doesn't call recursiveFunc
       // recursiveFunc only calls itself
       const callLocation = create_location("recursive.ts", 2);
-      const recursiveCall = create_call_reference("recursiveFunc", callLocation, recursiveId);
+      const recursiveCall = create_call_reference(
+        "recursiveFunc",
+        callLocation,
+        recursiveId
+      );
 
       const resolved: ResolvedSymbols = {
         definitions: new Map([
           [mainId, create_definition(mainId, "main", mainLocation)],
-          [recursiveId, create_definition(recursiveId, "recursiveFunc", recursiveLocation)],
+          [
+            recursiveId,
+            create_definition(recursiveId, "recursiveFunc", recursiveLocation),
+          ],
         ]),
         references: [recursiveCall],
-        resolved_references: new Map([[location_key(callLocation), recursiveId]]),
+        resolved_references: new Map([
+          [location_key(callLocation), recursiveId],
+        ]),
         references_to_symbol: new Map([[recursiveId, [recursiveCall]]]),
       };
 
@@ -346,7 +371,9 @@ describe("detect_call_graph", () => {
       expect(graph.nodes.get(mainId)?.enclosed_calls).toEqual([]);
 
       // recursiveFunc calls itself
-      expect(graph.nodes.get(recursiveId)?.enclosed_calls).toEqual([recursiveCall]);
+      expect(graph.nodes.get(recursiveId)?.enclosed_calls).toEqual([
+        recursiveCall,
+      ]);
 
       // main is an entry point (never called)
       // recursiveFunc is NOT an entry point (it's called, even if only by itself)
@@ -361,11 +388,19 @@ describe("detect_call_graph", () => {
 
       // func1 calls func2
       const call1Location = create_location("test.ts", 2);
-      const call1 = create_call_reference("mutualFunc2", call1Location, func1Id);
+      const call1 = create_call_reference(
+        "mutualFunc2",
+        call1Location,
+        func1Id
+      );
 
       // func2 calls func1
       const call2Location = create_location("test.ts", 6);
-      const call2 = create_call_reference("mutualFunc1", call2Location, func2Id);
+      const call2 = create_call_reference(
+        "mutualFunc1",
+        call2Location,
+        func2Id
+      );
 
       const resolved: ResolvedSymbols = {
         definitions: new Map([
@@ -407,17 +442,35 @@ describe("detect_call_graph", () => {
       // importerFunc calls exportedFunc and utilFunc
       const call1Location = create_location("app.ts", 6);
       const call2Location = create_location("app.ts", 7);
-      const call1 = create_call_reference("exportedFunc", call1Location, importerId);
-      const call2 = create_call_reference("utilFunc", call2Location, importerId);
+      const call1 = create_call_reference(
+        "exportedFunc",
+        call1Location,
+        importerId
+      );
+      const call2 = create_call_reference(
+        "utilFunc",
+        call2Location,
+        importerId
+      );
 
       // exportedFunc calls utilFunc
       const call3Location = create_location("lib.ts", 2);
-      const call3 = create_call_reference("utilFunc", call3Location, exportedId);
+      const call3 = create_call_reference(
+        "utilFunc",
+        call3Location,
+        exportedId
+      );
 
       const resolved: ResolvedSymbols = {
         definitions: new Map([
-          [exportedId, create_definition(exportedId, "exportedFunc", exportedLocation)],
-          [importerId, create_definition(importerId, "importerFunc", importerLocation)],
+          [
+            exportedId,
+            create_definition(exportedId, "exportedFunc", exportedLocation),
+          ],
+          [
+            importerId,
+            create_definition(importerId, "importerFunc", importerLocation),
+          ],
           [utilId, create_definition(utilId, "utilFunc", utilLocation)],
         ]),
         references: [call1, call2, call3],
@@ -437,7 +490,10 @@ describe("detect_call_graph", () => {
       expect(graph.nodes.size).toBe(3);
 
       // Verify enclosed calls for each function
-      expect(graph.nodes.get(importerId)?.enclosed_calls).toEqual([call1, call2]);
+      expect(graph.nodes.get(importerId)?.enclosed_calls).toEqual([
+        call1,
+        call2,
+      ]);
       expect(graph.nodes.get(exportedId)?.enclosed_calls).toEqual([call3]);
       expect(graph.nodes.get(utilId)?.enclosed_calls).toEqual([]);
 
@@ -499,9 +555,18 @@ describe("detect_call_graph", () => {
 
       const resolved: ResolvedSymbols = {
         definitions: new Map([
-          [classMethodId, create_definition(classMethodId, "method", methodLocation)],
-          [namespaceFunc, create_definition(namespaceFunc, "func", namespaceLocation)],
-          [regularFunc, create_definition(regularFunc, "regularFunc", regularLocation)],
+          [
+            classMethodId,
+            create_definition(classMethodId, "method", methodLocation),
+          ],
+          [
+            namespaceFunc,
+            create_definition(namespaceFunc, "func", namespaceLocation),
+          ],
+          [
+            regularFunc,
+            create_definition(regularFunc, "regularFunc", regularLocation),
+          ],
         ]),
         references: [call1, call2],
         resolved_references: new Map([
@@ -517,7 +582,10 @@ describe("detect_call_graph", () => {
       const graph = detect_call_graph(resolved);
 
       expect(graph.nodes.size).toBe(3);
-      expect(graph.nodes.get(regularFunc)?.enclosed_calls).toEqual([call1, call2]);
+      expect(graph.nodes.get(regularFunc)?.enclosed_calls).toEqual([
+        call1,
+        call2,
+      ]);
       expect(graph.entry_points).toEqual([regularFunc]);
     });
   });

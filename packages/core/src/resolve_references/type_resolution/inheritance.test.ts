@@ -16,8 +16,8 @@ import type { LocalTypeDefinition } from "./types";
 // Test utilities
 function create_location(line: number, column: number): Location {
   return {
-    line,
-    column,
+    start_line: line,
+    start_column: column,
     end_line: line,
     end_column: column + 1,
     file_path: "file.ts" as FilePath,
@@ -464,7 +464,9 @@ describe("resolve_inheritance", () => {
 
       // Diamond should have IBase as ancestor through both paths
       let diamond_ancestors: Set<TypeId> | undefined;
-      for (const [type_id, ancestors] of Array.from(result.all_ancestors.entries())) {
+      for (const [type_id, ancestors] of Array.from(
+        result.all_ancestors.entries()
+      )) {
         if (type_id.includes("Diamond")) {
           diamond_ancestors = ancestors;
           break;
@@ -649,7 +651,9 @@ describe("resolve_inheritance", () => {
 
       // Last class should have all ancestors
       let last_ancestors: Set<TypeId> | undefined;
-      for (const [type_id, ancestors] of Array.from(result.all_ancestors.entries())) {
+      for (const [type_id, ancestors] of Array.from(
+        result.all_ancestors.entries()
+      )) {
         if (type_id.includes("Base49")) {
           last_ancestors = ancestors;
           break;
@@ -703,7 +707,9 @@ describe("resolve_inheritance", () => {
 
       // Base should have all derived classes as descendants
       let base_descendants: Set<TypeId> | undefined;
-      for (const [type_id, descendants] of Array.from(result.all_descendants.entries())) {
+      for (const [type_id, descendants] of Array.from(
+        result.all_descendants.entries()
+      )) {
         if (type_id.includes("Base") && !type_id.includes("Derived")) {
           base_descendants = descendants;
           break;

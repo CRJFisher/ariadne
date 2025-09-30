@@ -13,8 +13,8 @@ import type {
   LexicalScope,
 } from "@ariadnejs/types";
 import { find_containing_scope } from "../../scope_tree";
-import type { NormalizedCapture } from "../../parse_and_query_code/capture_types";
-import { SemanticCategory } from "../../parse_and_query_code/capture_types";
+import type { NormalizedCapture } from "../../query_code_tree/capture_types";
+import { SemanticCategory } from "../../query_code_tree/capture_types";
 
 /**
  * Local type flow data tracking without resolution

@@ -40,3 +40,8 @@
 ## Usage of ScopeTree
 
 - When performin all symbol_resolution, we should have a pattern of matching SymbolName's from the most local scope first, then the next most local scope, etc. until we find a match.
+
+## Query Capture naming convention
+
+- The first two parts of the capture name are category and entity. That's followed by any further parts which are used for additional context.
+  - TODO: this isn't enforced yet but it is essential

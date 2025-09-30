@@ -3,9 +3,17 @@
  */
 
 import { describe, it, expect } from "vitest";
-import type { ScopeId, LexicalScope, FilePath, SymbolName } from "@ariadnejs/types";
-import type { NormalizedCapture } from "../../parse_and_query_code/capture_types";
-import { SemanticCategory, SemanticEntity } from "../../parse_and_query_code/capture_types";
+import type {
+  ScopeId,
+  LexicalScope,
+  FilePath,
+  SymbolName,
+} from "@ariadnejs/types";
+import type { NormalizedCapture } from "../../query_code_tree/capture_types";
+import {
+  SemanticCategory,
+  SemanticEntity,
+} from "../../query_code_tree/capture_types";
 import { extract_type_flow } from "./type_flow_references";
 
 describe("extract_type_flow", () => {
@@ -21,8 +29,8 @@ describe("extract_type_flow", () => {
       name: null,
       type,
       location: {
-        line: 0,
-        column: 0,
+        start_line: 0,
+        start_column: 0,
         file_path: id.includes("test.ts")
           ? ("test.ts" as FilePath)
           : ("unknown.ts" as FilePath),
@@ -276,8 +284,8 @@ describe("extract_type_flow", () => {
         name: null,
         type: "module",
         location: {
-          line: 0,
-          column: 0,
+          start_line: 0,
+          start_column: 0,
           file_path: "test.ts" as FilePath,
           end_line: 100,
           end_column: 0,
@@ -293,8 +301,8 @@ describe("extract_type_flow", () => {
         name: "innerFunction" as SymbolName,
         type: "function",
         location: {
-          line: 10,
-          column: 0,
+          start_line: 10,
+          start_column: 0,
           file_path: "test.ts" as FilePath,
           end_line: 20,
           end_column: 0,
@@ -479,8 +487,8 @@ describe("extract_type_flow", () => {
         name: null,
         type: "function",
         location: {
-          line: 0,
-          column: 0,
+          start_line: 0,
+          start_column: 0,
           file_path: "test.ts" as FilePath,
           end_line: 100,
           end_column: 0,

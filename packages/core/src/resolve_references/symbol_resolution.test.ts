@@ -45,8 +45,8 @@ import { TypeAnnotationReference } from "../index_single_file/references/type_an
 function location(file_path: FilePath, line: number, column: number): Location {
   return {
     file_path,
-    line,
-    column,
+    start_line: line,
+    start_column: column,
     end_line: line,
     end_column: column + 1,
   };

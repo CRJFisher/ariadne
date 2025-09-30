@@ -12,8 +12,8 @@ import type {
   LexicalScope,
 } from "@ariadnejs/types";
 import { find_containing_scope } from "../../scope_tree";
-import type { NormalizedCapture } from "../../parse_and_query_code/capture_types";
-import { SemanticEntity } from "../../parse_and_query_code/capture_types";
+import type { NormalizedCapture } from "../../query_code_tree/capture_types";
+import { SemanticEntity } from "../../query_code_tree/capture_types";
 
 /**
  * Local type annotation - just syntax extraction
@@ -27,12 +27,12 @@ export interface LocalTypeAnnotation {
 
   /** What this annotation is for */
   readonly annotation_kind:
-    | "variable"    // let x: string
-    | "parameter"   // (x: string) =>
-    | "return"      // (): string =>
-    | "property"    // { prop: string }
-    | "generic"     // <T extends Foo>
-    | "cast";       // x as string
+    | "variable" // let x: string
+    | "parameter" // (x: string) =>
+    | "return" // (): string =>
+    | "property" // { prop: string }
+    | "generic" // <T extends Foo>
+    | "cast"; // x as string
 
   /** Containing scope */
   readonly scope_id: ScopeId;
@@ -98,12 +98,18 @@ export function process_type_annotations(
         scope_id: scope.id,
         is_optional: capture.modifiers?.is_optional,
         constraint_text: extract_constraint_text(capture),
-        annotates_location:
-          determine_annotates_location(capture, capture.node_location),
+        annotates_location: determine_annotates_location(
+          capture,
+          capture.node_location
+        ),
       });
     } catch (error) {
       // Log error but continue processing other captures
-      console.warn(`Failed to process type capture for ${capture?.text || 'unknown'}: ${error}`);
+      console.warn(
+        `Failed to process type capture for ${
+          capture?.text || "unknown"
+        }: ${error}`
+      );
       continue;
     }
   }
@@ -148,7 +154,7 @@ function extract_constraint_text(
     return undefined;
   }
 
-  const context = capture.context ;
+  const context = capture.context;
   const constraints: string[] = [];
 
   // Extract extends constraint
@@ -159,9 +165,11 @@ function extract_constraint_text(
   // Extract generic constraint
   if (context.constraint_type) {
     // Just extract the text, don't determine the kind
-    const prefix = context.constraint_type.includes("Record") ||
-                  context.constraint_type.includes("unknown")
-                  ? "satisfies" : "extends";
+    const prefix =
+      context.constraint_type.includes("Record") ||
+      context.constraint_type.includes("unknown")
+        ? "satisfies"
+        : "extends";
     constraints.push(`${prefix} ${context.constraint_type}`);
   }
 
@@ -171,7 +179,10 @@ function extract_constraint_text(
   }
 
   // Extract multiple implements constraints
-  if (context.implements_interfaces && Array.isArray(context.implements_interfaces)) {
+  if (
+    context.implements_interfaces &&
+    Array.isArray(context.implements_interfaces)
+  ) {
     for (const impl of context.implements_interfaces) {
       constraints.push(`implements ${impl}`);
     }

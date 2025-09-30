@@ -25,8 +25,8 @@ describe("resolve_type_tracking", () => {
   const mock_file_path = "test.ts" as FilePath;
   const mock_location: Location = {
     file_path: mock_file_path,
-    line: 1,
-    column: 0,
+    start_line: 1,
+    start_column: 0,
     end_line: 1,
     end_column: 10,
   };
@@ -56,7 +56,7 @@ describe("resolve_type_tracking", () => {
       name: "UserInfo" as SymbolName,
       definition_location: {
         ...mock_location,
-        line: 5,
+        start_line: 5,
       },
       file_path: mock_file_path,
       kind: "interface",
@@ -105,7 +105,7 @@ describe("resolve_type_tracking", () => {
               },
               {
                 name: "y" as SymbolName,
-                location: { ...mock_location, line: 2, end_line: 2 },
+                location: { ...mock_location, start_line: 2, end_line: 2 },
                 annotation_text: "number",
                 kind: "variable",
                 scope_id: "scope_1" as ScopeId,
@@ -123,7 +123,7 @@ describe("resolve_type_tracking", () => {
       const x_symbol = variable_symbol("x" as SymbolName, mock_location);
       const y_symbol = variable_symbol("y" as SymbolName, {
         ...mock_location,
-        line: 2,
+        start_line: 2,
         end_line: 2,
       });
 
@@ -234,7 +234,7 @@ describe("resolve_type_tracking", () => {
               },
               {
                 name: "promise" as SymbolName,
-                location: { ...mock_location, line: 2, end_line: 2 },
+                location: { ...mock_location, start_line: 2, end_line: 2 },
                 annotation_text: "Promise<UserInfo>",
                 kind: "variable",
                 scope_id: "scope_1" as ScopeId,
@@ -251,7 +251,7 @@ describe("resolve_type_tracking", () => {
       const map_symbol = variable_symbol("map" as SymbolName, mock_location);
       const promise_symbol = variable_symbol("promise" as SymbolName, {
         ...mock_location,
-        line: 2,
+        start_line: 2,
         end_line: 2,
       });
 
@@ -308,14 +308,14 @@ describe("resolve_type_tracking", () => {
               },
               {
                 name: "num" as SymbolName,
-                location: { ...mock_location, line: 2, end_line: 2 },
+                location: { ...mock_location, start_line: 2, end_line: 2 },
                 kind: "let",
                 initializer: "42",
                 scope_id: "scope_1" as ScopeId,
               },
               {
                 name: "bool" as SymbolName,
-                location: { ...mock_location, line: 3, end_line: 3 },
+                location: { ...mock_location, start_line: 3, end_line: 3 },
                 kind: "const",
                 initializer: "true",
                 scope_id: "scope_1" as ScopeId,
@@ -331,12 +331,12 @@ describe("resolve_type_tracking", () => {
       const str_symbol = variable_symbol("str" as SymbolName, mock_location);
       const num_symbol = variable_symbol("num" as SymbolName, {
         ...mock_location,
-        line: 2,
+        start_line: 2,
         end_line: 2,
       });
       const bool_symbol = variable_symbol("bool" as SymbolName, {
         ...mock_location,
-        line: 3,
+        start_line: 3,
         end_line: 3,
       });
 
@@ -422,7 +422,7 @@ describe("resolve_type_tracking", () => {
               },
               {
                 name: "undefVar" as SymbolName,
-                location: { ...mock_location, line: 2, end_line: 2 },
+                location: { ...mock_location, start_line: 2, end_line: 2 },
                 kind: "let",
                 initializer: "undefined",
                 scope_id: "scope_1" as ScopeId,
@@ -441,7 +441,7 @@ describe("resolve_type_tracking", () => {
       );
       const undef_symbol = variable_symbol("undefVar" as SymbolName, {
         ...mock_location,
-        line: 2,
+        start_line: 2,
         end_line: 2,
       });
 
@@ -467,7 +467,7 @@ describe("resolve_type_tracking", () => {
               },
               {
                 name: "obj" as SymbolName,
-                location: { ...mock_location, line: 2, end_line: 2 },
+                location: { ...mock_location, start_line: 2, end_line: 2 },
                 kind: "const",
                 initializer: "{ foo: 'bar' }",
                 scope_id: "scope_1" as ScopeId,
@@ -483,7 +483,7 @@ describe("resolve_type_tracking", () => {
       const arr_symbol = variable_symbol("arr" as SymbolName, mock_location);
       const obj_symbol = variable_symbol("obj" as SymbolName, {
         ...mock_location,
-        line: 2,
+        start_line: 2,
         end_line: 2,
       });
 
@@ -507,7 +507,7 @@ describe("resolve_type_tracking", () => {
               },
               {
                 name: "y" as SymbolName,
-                location: { ...mock_location, line: 2, end_line: 2 },
+                location: { ...mock_location, start_line: 2, end_line: 2 },
                 kind: "const",
                 initializer: "x",
                 scope_id: "scope_1" as ScopeId,
@@ -523,7 +523,7 @@ describe("resolve_type_tracking", () => {
       const x_symbol = variable_symbol("x" as SymbolName, mock_location);
       const y_symbol = variable_symbol("y" as SymbolName, {
         ...mock_location,
-        line: 2,
+        start_line: 2,
         end_line: 2,
       });
 
@@ -552,7 +552,7 @@ describe("resolve_type_tracking", () => {
             assignments: [
               {
                 target: "x" as SymbolName,
-                location: { ...mock_location, line: 2, end_line: 2 },
+                location: { ...mock_location, start_line: 2, end_line: 2 },
                 source: "42",
                 operator: "=",
                 scope_id: "scope_1" as ScopeId,
@@ -599,21 +599,21 @@ describe("resolve_type_tracking", () => {
             assignments: [
               {
                 target: "x" as SymbolName,
-                location: { ...mock_location, line: 2, end_line: 2 },
+                location: { ...mock_location, start_line: 2, end_line: 2 },
                 source: '"string"',
                 operator: "=",
                 scope_id: "scope_1" as ScopeId,
               },
               {
                 target: "x" as SymbolName,
-                location: { ...mock_location, line: 3, end_line: 3 },
+                location: { ...mock_location, start_line: 3, end_line: 3 },
                 source: "123",
                 operator: "=",
                 scope_id: "scope_1" as ScopeId,
               },
               {
                 target: "x" as SymbolName,
-                location: { ...mock_location, line: 4, end_line: 4 },
+                location: { ...mock_location, start_line: 4, end_line: 4 },
                 source: "true",
                 operator: "=",
                 scope_id: "scope_1" as ScopeId,
@@ -681,7 +681,7 @@ describe("resolve_type_tracking", () => {
             assignments: [
               {
                 target: "x" as SymbolName,
-                location: { ...mock_location, line: 2, end_line: 2 },
+                location: { ...mock_location, start_line: 2, end_line: 2 },
                 source: '"specific"',
                 operator: "=",
                 scope_id: "scope_1" as ScopeId,
@@ -721,7 +721,7 @@ describe("resolve_type_tracking", () => {
             assignments: [
               {
                 target: "count" as SymbolName,
-                location: { ...mock_location, line: 2, end_line: 2 },
+                location: { ...mock_location, start_line: 2, end_line: 2 },
                 source: "5",
                 operator: "+=",
                 scope_id: "scope_1" as ScopeId,

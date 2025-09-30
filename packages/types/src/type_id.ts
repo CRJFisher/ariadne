@@ -50,11 +50,15 @@ export enum TypeCategory {
  * Format: "type:<category>:<name>:<file>:<line>:<column>"
  */
 export function defined_type_id(
-  category: TypeCategory.CLASS | TypeCategory.INTERFACE | TypeCategory.TYPE_ALIAS | TypeCategory.ENUM,
+  category:
+    | TypeCategory.CLASS
+    | TypeCategory.INTERFACE
+    | TypeCategory.TYPE_ALIAS
+    | TypeCategory.ENUM,
   name: SymbolName,
   location: Location
 ): TypeId {
-  return `type:${category}:${name}:${location.file_path}:${location.line}:${location.column}` as TypeId;
+  return `type:${category}:${name}:${location.file_path}:${location.start_line}:${location.start_column}` as TypeId;
 }
 
 /**
@@ -62,7 +66,14 @@ export function defined_type_id(
  * Format: "type:primitive:<name>"
  */
 export function primitive_type_id(
-  name: "string" | "number" | "boolean" | "symbol" | "bigint" | "undefined" | "null"
+  name:
+    | "string"
+    | "number"
+    | "boolean"
+    | "symbol"
+    | "bigint"
+    | "undefined"
+    | "null"
 ): TypeId {
   return `type:primitive:${name}` as TypeId;
 }
@@ -72,7 +83,16 @@ export function primitive_type_id(
  * Format: "type:builtin:<name>"
  */
 export function builtin_type_id(
-  name: "Date" | "RegExp" | "Error" | "Promise" | "Map" | "Set" | "Array" | "Object" | "Function"
+  name:
+    | "Date"
+    | "RegExp"
+    | "Error"
+    | "Promise"
+    | "Map"
+    | "Set"
+    | "Array"
+    | "Object"
+    | "Function"
 ): TypeId {
   return `type:builtin:${name}` as TypeId;
 }
@@ -159,11 +179,11 @@ export function function_type_id(
  * Format: "type:object:{<prop1>:<type1>,<prop2>:<type2>,...}"
  * Properties are sorted for deterministic IDs
  */
-export function object_type_id(
-  properties: Map<string, TypeId>
-): TypeId {
+export function object_type_id(properties: Map<string, TypeId>): TypeId {
   // Sort properties for deterministic ID
-  const sorted = Array.from(properties.entries()).sort(([a], [b]) => a.localeCompare(b));
+  const sorted = Array.from(properties.entries()).sort(([a], [b]) =>
+    a.localeCompare(b)
+  );
   const props = sorted.map(([key, type]) => `${key}:${type}`).join(",");
   return `type:object:{${props}}` as TypeId;
 }
@@ -210,8 +230,8 @@ export function parse_type_id(type_id: TypeId): ParsedTypeId {
         details: parts[2],
         location: {
           file_path: parts[3] as FilePath,
-          line: parseInt(parts[4]),
-          column: parseInt(parts[5]),
+          start_line: parseInt(parts[4]),
+          start_column: parseInt(parts[5]),
           end_line: parseInt(parts[4]), // Would need more info
           end_column: parseInt(parts[5]), // Would need more info
         },
@@ -230,8 +250,11 @@ export function parse_type_id(type_id: TypeId): ParsedTypeId {
       const base_and_args = type_id.substring("type:generic:".length);
       const args_start = base_and_args.indexOf(":[");
       const base = base_and_args.substring(0, args_start);
-      const args_str = base_and_args.substring(args_start + 2, base_and_args.length - 1);
-      const args = args_str.split(",").map(a => a as TypeId);
+      const args_str = base_and_args.substring(
+        args_start + 2,
+        base_and_args.length - 1
+      );
+      const args = args_str.split(",").map((a) => a as TypeId);
       return {
         category,
         details: base,
@@ -240,8 +263,13 @@ export function parse_type_id(type_id: TypeId): ParsedTypeId {
 
     case TypeCategory.UNION:
       // Format: type:union:[<members>]
-      const union_members_str = type_id.substring("type:union:[".length, type_id.length - 1);
-      const union_members = union_members_str.split("|").map(m => m as TypeId);
+      const union_members_str = type_id.substring(
+        "type:union:[".length,
+        type_id.length - 1
+      );
+      const union_members = union_members_str
+        .split("|")
+        .map((m) => m as TypeId);
       return {
         category,
         details: "union",
@@ -250,8 +278,13 @@ export function parse_type_id(type_id: TypeId): ParsedTypeId {
 
     case TypeCategory.INTERSECTION:
       // Format: type:intersection:[<members>]
-      const inter_members_str = type_id.substring("type:intersection:[".length, type_id.length - 1);
-      const inter_members = inter_members_str.split("&").map(m => m as TypeId);
+      const inter_members_str = type_id.substring(
+        "type:intersection:[".length,
+        type_id.length - 1
+      );
+      const inter_members = inter_members_str
+        .split("&")
+        .map((m) => m as TypeId);
       return {
         category,
         details: "intersection",
@@ -310,7 +343,8 @@ export function type_id_to_string(type_id: TypeId): string {
 
     case TypeCategory.GENERIC:
       const base_str = parsed.details;
-      const args_str = parsed.type_args?.map(type_id_to_string).join(", ") || "";
+      const args_str =
+        parsed.type_args?.map(type_id_to_string).join(", ") || "";
       return `${base_str}<${args_str}>`;
 
     case TypeCategory.UNION:

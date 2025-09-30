@@ -60,8 +60,8 @@ export function mock_location(
 ): Location {
   return {
     file_path,
-    line,
-    column,
+    start_line: line,
+    start_column: column,
     end_line: end_line ?? line,
     end_column: end_column ?? column + 1,
   };

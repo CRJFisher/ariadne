@@ -10,8 +10,11 @@ import type {
   ScopeId,
   LexicalScope,
 } from "@ariadnejs/types";
-import type { NormalizedCapture } from "../../parse_and_query_code/capture_types";
-import { SemanticCategory, SemanticEntity } from "../../parse_and_query_code/capture_types";
+import type { NormalizedCapture } from "../../query_code_tree/capture_types";
+import {
+  SemanticCategory,
+  SemanticEntity,
+} from "../../query_code_tree/capture_types";
 import {
   extract_type_tracking,
   type LocalTypeTracking,
@@ -25,8 +28,8 @@ describe("extract_type_tracking", () => {
 
   const mock_location: Location = {
     file_path: mock_file_path,
-    line: 1,
-    column: 0,
+    start_line: 1,
+    start_column: 0,
     end_line: 1,
     end_column: 10,
   };
@@ -38,8 +41,8 @@ describe("extract_type_tracking", () => {
     type: "function",
     location: {
       file_path: mock_file_path,
-      line: 1,
-      column: 0,
+      start_line: 1,
+      start_column: 0,
       end_line: 10, // Extended to line 10 to include test captures
       end_column: 10,
     },
@@ -61,7 +64,7 @@ describe("extract_type_tracking", () => {
           node_location: mock_location,
           context: {
             annotated_var_name: "x",
-            declaration_kind: "let"
+            declaration_kind: "let",
           },
           modifiers: {},
         },
@@ -76,13 +79,17 @@ describe("extract_type_tracking", () => {
           },
           context: {
             annotated_var_name: "y",
-            declaration_kind: "const"
+            declaration_kind: "const",
           },
           modifiers: {},
         },
       ];
 
-      const tracking = extract_type_tracking(captures, mock_scopes, mock_file_path);
+      const tracking = extract_type_tracking(
+        captures,
+        mock_scopes,
+        mock_file_path
+      );
 
       // Should capture annotation text only, no TypeInfo or resolution
       expect(tracking.annotations).toHaveLength(2);
@@ -106,13 +113,17 @@ describe("extract_type_tracking", () => {
           node_location: mock_location,
           context: {
             parameter_name: "count",
-            declaration_kind: "parameter"
+            declaration_kind: "parameter",
           },
           modifiers: {},
         },
       ];
 
-      const tracking = extract_type_tracking(captures, mock_scopes, mock_file_path);
+      const tracking = extract_type_tracking(
+        captures,
+        mock_scopes,
+        mock_file_path
+      );
 
       expect(tracking.annotations).toHaveLength(1);
       expect(tracking.annotations[0].annotation_text).toBe("number");
@@ -129,7 +140,7 @@ describe("extract_type_tracking", () => {
           node_location: mock_location,
           context: {
             annotated_var_name: "items",
-            declaration_kind: "const"
+            declaration_kind: "const",
           },
           modifiers: {},
         },
@@ -144,16 +155,22 @@ describe("extract_type_tracking", () => {
           },
           context: {
             annotated_var_name: "lookup",
-            declaration_kind: "const"
+            declaration_kind: "const",
           },
           modifiers: {},
         },
       ];
 
-      const tracking = extract_type_tracking(captures, mock_scopes, mock_file_path);
+      const tracking = extract_type_tracking(
+        captures,
+        mock_scopes,
+        mock_file_path
+      );
 
       expect(tracking.annotations[0].annotation_text).toBe("Array<string>");
-      expect(tracking.annotations[1].annotation_text).toBe("Map<string, number>");
+      expect(tracking.annotations[1].annotation_text).toBe(
+        "Map<string, number>"
+      );
     });
   });
 
@@ -168,7 +185,7 @@ describe("extract_type_tracking", () => {
           context: {
             declaration_kind: "let",
             type_annotation: "MyClass",
-            initializer_text: "new MyClass()"
+            initializer_text: "new MyClass()",
           },
           modifiers: {},
         },
@@ -183,13 +200,17 @@ describe("extract_type_tracking", () => {
           },
           context: {
             declaration_kind: "const",
-            initializer_text: '"hello"'
+            initializer_text: '"hello"',
           },
           modifiers: {},
         },
       ];
 
-      const tracking = extract_type_tracking(captures, mock_scopes, mock_file_path);
+      const tracking = extract_type_tracking(
+        captures,
+        mock_scopes,
+        mock_file_path
+      );
 
       expect(tracking.declarations).toHaveLength(2);
 
@@ -213,13 +234,17 @@ describe("extract_type_tracking", () => {
           node_location: mock_location,
           context: {
             declaration_kind: "var",
-            initializer_text: "100"
+            initializer_text: "100",
           },
           modifiers: {},
         },
       ];
 
-      const tracking = extract_type_tracking(captures, mock_scopes, mock_file_path);
+      const tracking = extract_type_tracking(
+        captures,
+        mock_scopes,
+        mock_file_path
+      );
 
       expect(tracking.declarations).toHaveLength(1);
       expect(tracking.declarations[0].name).toBe("oldVar");
@@ -235,13 +260,17 @@ describe("extract_type_tracking", () => {
           node_location: mock_location,
           context: {
             declaration_kind: "parameter",
-            type_annotation: "string"
+            type_annotation: "string",
           },
           modifiers: {},
         },
       ];
 
-      const tracking = extract_type_tracking(captures, mock_scopes, mock_file_path);
+      const tracking = extract_type_tracking(
+        captures,
+        mock_scopes,
+        mock_file_path
+      );
 
       expect(tracking.declarations).toHaveLength(1);
       expect(tracking.declarations[0].name).toBe("param");
@@ -260,7 +289,7 @@ describe("extract_type_tracking", () => {
           node_location: mock_location,
           context: {
             source_text: "42",
-            operator: "="
+            operator: "=",
           },
           modifiers: {},
         },
@@ -275,13 +304,17 @@ describe("extract_type_tracking", () => {
           },
           context: {
             source_text: "count + 1",
-            operator: "+="
+            operator: "+=",
           },
           modifiers: {},
         },
       ];
 
-      const tracking = extract_type_tracking(captures, mock_scopes, mock_file_path);
+      const tracking = extract_type_tracking(
+        captures,
+        mock_scopes,
+        mock_file_path
+      );
 
       expect(tracking.assignments).toHaveLength(2);
 
@@ -304,7 +337,7 @@ describe("extract_type_tracking", () => {
           node_location: mock_location,
           context: {
             source_text: "10",
-            operator: "-="
+            operator: "-=",
           },
           modifiers: {},
         },
@@ -315,7 +348,7 @@ describe("extract_type_tracking", () => {
           node_location: { ...mock_location, line: 2, end_line: 2 },
           context: {
             source_text: "2",
-            operator: "*="
+            operator: "*=",
           },
           modifiers: {},
         },
@@ -326,13 +359,17 @@ describe("extract_type_tracking", () => {
           node_location: { ...mock_location, line: 3, end_line: 3 },
           context: {
             source_text: "5",
-            operator: "/="
+            operator: "/=",
           },
           modifiers: {},
         },
       ];
 
-      const tracking = extract_type_tracking(captures, mock_scopes, mock_file_path);
+      const tracking = extract_type_tracking(
+        captures,
+        mock_scopes,
+        mock_file_path
+      );
 
       expect(tracking.assignments).toHaveLength(3);
       expect(tracking.assignments[0].operator).toBe("-=");
@@ -352,7 +389,7 @@ describe("extract_type_tracking", () => {
           node_location: mock_location,
           context: {
             annotated_var_name: "name",
-            declaration_kind: "let"
+            declaration_kind: "let",
           },
           modifiers: {},
         },
@@ -365,7 +402,7 @@ describe("extract_type_tracking", () => {
           context: {
             declaration_kind: "let",
             type_annotation: "string",
-            initializer_text: '"John"'
+            initializer_text: '"John"',
           },
           modifiers: {},
         },
@@ -381,13 +418,17 @@ describe("extract_type_tracking", () => {
           },
           context: {
             source_text: '"Jane"',
-            operator: "="
+            operator: "=",
           },
           modifiers: {},
         },
       ];
 
-      const tracking = extract_type_tracking(captures, mock_scopes, mock_file_path);
+      const tracking = extract_type_tracking(
+        captures,
+        mock_scopes,
+        mock_file_path
+      );
 
       expect(tracking.annotations).toHaveLength(1);
       expect(tracking.declarations).toHaveLength(1);
@@ -431,7 +472,11 @@ describe("extract_type_tracking", () => {
         },
       ];
 
-      const tracking = extract_type_tracking(captures, mock_scopes, mock_file_path);
+      const tracking = extract_type_tracking(
+        captures,
+        mock_scopes,
+        mock_file_path
+      );
 
       expect(tracking.annotations).toHaveLength(0);
     });
@@ -444,8 +489,8 @@ describe("extract_type_tracking", () => {
         type: "block",
         location: {
           file_path: mock_file_path,
-          line: 3,
-          column: 2,
+          start_line: 3,
+          start_column: 2,
           end_line: 5,
           end_column: 2,
         },
@@ -469,13 +514,17 @@ describe("extract_type_tracking", () => {
           },
           context: {
             annotated_var_name: "innerVar",
-            declaration_kind: "const"
+            declaration_kind: "const",
           },
           modifiers: {},
         },
       ];
 
-      const tracking = extract_type_tracking(captures, scopesWithNested, mock_file_path);
+      const tracking = extract_type_tracking(
+        captures,
+        scopesWithNested,
+        mock_file_path
+      );
 
       expect(tracking.annotations).toHaveLength(1);
       expect(tracking.annotations[0].scope_id).toBe(innerScope.id); // Should find innermost scope
@@ -489,8 +538,8 @@ describe("extract_type_tracking", () => {
         type: "block",
         location: {
           file_path: mock_file_path,
-          line: 3,
-          column: 2,
+          start_line: 3,
+          start_column: 2,
           end_line: 5,
           end_column: 2,
         },
@@ -512,7 +561,7 @@ describe("extract_type_tracking", () => {
           node_location: { ...mock_location, line: 1 },
           context: {
             declaration_kind: "let",
-            initializer_text: "'outer'"
+            initializer_text: "'outer'",
           },
           modifiers: {},
         },
@@ -524,13 +573,17 @@ describe("extract_type_tracking", () => {
           node_location: { ...mock_location, line: 4 },
           context: {
             declaration_kind: "const",
-            initializer_text: "'inner'"
+            initializer_text: "'inner'",
           },
           modifiers: {},
         },
       ];
 
-      const tracking = extract_type_tracking(captures, scopesWithNested, mock_file_path);
+      const tracking = extract_type_tracking(
+        captures,
+        scopesWithNested,
+        mock_file_path
+      );
 
       expect(tracking.declarations).toHaveLength(2);
       expect(tracking.declarations[0].scope_id).toBe(mock_scope.id);
@@ -547,13 +600,17 @@ describe("extract_type_tracking", () => {
           entity: SemanticEntity.VARIABLE,
           node_location: mock_location,
           context: {
-            declaration_kind: "let"
+            declaration_kind: "let",
           },
           modifiers: {},
         },
       ];
 
-      const tracking = extract_type_tracking(captures, emptyScopes, mock_file_path);
+      const tracking = extract_type_tracking(
+        captures,
+        emptyScopes,
+        mock_file_path
+      );
 
       // Should handle gracefully without scope
       expect(tracking.declarations).toHaveLength(0);
@@ -568,7 +625,7 @@ describe("extract_type_tracking", () => {
           node_location: mock_location,
           context: {
             annotated_var_name: "unionVar",
-            declaration_kind: "let"
+            declaration_kind: "let",
           },
           modifiers: {},
         },
@@ -579,17 +636,23 @@ describe("extract_type_tracking", () => {
           node_location: { ...mock_location, line: 2, end_line: 2 },
           context: {
             annotated_var_name: "intersectionVar",
-            declaration_kind: "const"
+            declaration_kind: "const",
           },
           modifiers: {},
         },
       ];
 
-      const tracking = extract_type_tracking(captures, mock_scopes, mock_file_path);
+      const tracking = extract_type_tracking(
+        captures,
+        mock_scopes,
+        mock_file_path
+      );
 
       expect(tracking.annotations).toHaveLength(2);
       expect(tracking.annotations[0].annotation_text).toBe("string | number");
-      expect(tracking.annotations[1].annotation_text).toBe("Readable & Writable");
+      expect(tracking.annotations[1].annotation_text).toBe(
+        "Readable & Writable"
+      );
     });
   });
 });

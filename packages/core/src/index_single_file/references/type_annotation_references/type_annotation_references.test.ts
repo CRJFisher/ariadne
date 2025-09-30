@@ -17,8 +17,11 @@ import type {
   LexicalScope,
   SymbolName,
 } from "@ariadnejs/types";
-import type { NormalizedCapture } from "../../parse_and_query_code/capture_types";
-import { SemanticEntity, SemanticCategory } from "../../parse_and_query_code/capture_types";
+import type { NormalizedCapture } from "../../query_code_tree/capture_types";
+import {
+  SemanticEntity,
+  SemanticCategory,
+} from "../../query_code_tree/capture_types";
 import {
   LocalTypeAnnotation,
   process_type_annotations,
@@ -38,8 +41,8 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
   const mock_file_path = "test.ts" as FilePath;
   const create_location = (line: number, column: number = 0): Location => ({
     file_path: mock_file_path,
-    line,
-    column,
+    start_line: line,
+    start_column: column,
     end_line: line,
     end_column: column + 10,
   });
@@ -751,7 +754,12 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
 
       it("should throw for invalid root_scope", () => {
         expect(() =>
-          process_type_annotations([], null as unknown as LexicalScope, mock_scopes, mock_file_path)
+          process_type_annotations(
+            [],
+            null as unknown as LexicalScope,
+            mock_scopes,
+            mock_file_path
+          )
         ).toThrow("Invalid input: root_scope must have an id");
 
         expect(() =>
@@ -766,17 +774,32 @@ describe("Type Annotation References - Comprehensive Test Suite", () => {
 
       it("should throw for invalid scopes", () => {
         expect(() =>
-          process_type_annotations([], mock_scope, null as unknown as Map<ScopeId, LexicalScope>, mock_file_path)
+          process_type_annotations(
+            [],
+            mock_scope,
+            null as unknown as Map<ScopeId, LexicalScope>,
+            mock_file_path
+          )
         ).toThrow("Invalid input: scopes must be a Map");
 
         expect(() =>
-          process_type_annotations([], mock_scope, {} as unknown as Map<ScopeId, LexicalScope>, mock_file_path)
+          process_type_annotations(
+            [],
+            mock_scope,
+            {} as unknown as Map<ScopeId, LexicalScope>,
+            mock_file_path
+          )
         ).toThrow("Invalid input: scopes must be a Map");
       });
 
       it("should throw for missing file_path", () => {
         expect(() =>
-          process_type_annotations([], mock_scope, mock_scopes, null as unknown as FilePath)
+          process_type_annotations(
+            [],
+            mock_scope,
+            mock_scopes,
+            null as unknown as FilePath
+          )
         ).toThrow("Invalid input: file_path is required");
 
         expect(() =>

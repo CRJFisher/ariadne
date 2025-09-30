@@ -13,8 +13,11 @@ import type {
   SymbolName,
   Location,
 } from "@ariadnejs/types";
-import type { NormalizedCapture } from "../parse_and_query_code/capture_types";
-import { SemanticCategory, SemanticEntity } from "../parse_and_query_code/capture_types";
+import type { NormalizedCapture } from "../query_code_tree/capture_types";
+import {
+  SemanticCategory,
+  SemanticEntity,
+} from "../query_code_tree/capture_types";
 import { process_references } from "./references";
 import type { ProcessedReferences } from "./reference_types";
 
@@ -60,8 +63,8 @@ describe("References Module", () => {
   const mockFilePath = "test.ts" as FilePath;
   const mockLocation: Location = {
     file_path: mockFilePath,
-    line: 1,
-    column: 0,
+    start_line: 1,
+    start_column: 0,
     end_line: 1,
     end_column: 10,
   };

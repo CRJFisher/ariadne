@@ -5,44 +5,10 @@ import type { SymbolId, SymbolName } from "./symbol";
 
 export interface Location {
   readonly file_path: FilePath;
-  readonly line: number;
-  readonly column: number;
+  readonly start_line: number;
+  readonly start_column: number;
   readonly end_line: number;
   readonly end_column: number;
-}
-/**
- * Check if a scope's location contains the given location
- */
-export function location_contains(
-  reference_location: Location,
-  target: Location
-): boolean {
-  // Check if target is within the bounds of scope_location
-  // Check line boundaries first
-  if (
-    target.line < reference_location.line ||
-    target.line > reference_location.end_line
-  ) {
-    return false;
-  }
-
-  // If on the start line, check column is after start
-  if (
-    target.line === reference_location.line &&
-    target.column < reference_location.column
-  ) {
-    return false;
-  }
-
-  // If on the end line, check column is before end
-  if (
-    target.line === reference_location.end_line &&
-    target.column > reference_location.end_column
-  ) {
-    return false;
-  }
-
-  return true;
 }
 // File and module identifiers
 export type FilePath = string & { __brand: "FilePath" }; // Absolute or relative file path
@@ -58,15 +24,15 @@ export type LocationKey = string & { __brand: "LocationKey" };
  * Includes all location fields to ensure uniqueness
  */
 export function location_key(location: Location): LocationKey {
-  return `${location.file_path}:${location.line}:${location.column}:${location.end_line}:${location.end_column}` as LocationKey;
+  return `${location.file_path}:${location.start_line}:${location.start_column}:${location.end_line}:${location.end_column}` as LocationKey;
 }
 
 export function parse_location_key(key: LocationKey): Location {
   const parts = key.split(":");
   return {
     file_path: parts[0] as FilePath,
-    line: parseInt(parts[1], 10),
-    column: parseInt(parts[2], 10),
+    start_line: parseInt(parts[1], 10),
+    start_column: parseInt(parts[2], 10),
     end_line: parseInt(parts[3], 10),
     end_column: parseInt(parts[4], 10),
   };
@@ -82,7 +48,13 @@ export function parse_location_key(key: LocationKey): Location {
  */
 export interface LocalMemberInfo {
   readonly name: SymbolName;
-  readonly kind: "method" | "constructor" | "property" | "field" | "getter" | "setter";
+  readonly kind:
+    | "method"
+    | "constructor"
+    | "property"
+    | "field"
+    | "getter"
+    | "setter";
   readonly location: Location;
   readonly symbol_id?: SymbolId;
   readonly is_static?: boolean;

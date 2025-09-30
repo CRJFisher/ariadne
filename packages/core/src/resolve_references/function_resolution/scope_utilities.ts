@@ -27,8 +27,12 @@ export function find_containing_function_scope(
   // Find the nearest function scope that contains this location
   const scope_array = Array.from(scopes.values());
   for (const scope of scope_array) {
-    if ((scope.type === "function" || scope.type === "method" || scope.type === "constructor") &&
-        location_in_scope(location, scope)) {
+    if (
+      (scope.type === "function" ||
+        scope.type === "method" ||
+        scope.type === "constructor") &&
+      location_in_scope(location, scope)
+    ) {
       return scope;
     }
   }
@@ -66,7 +70,10 @@ export function get_scope_chain(
  * @param scope - The scope to check against
  * @returns True if the location is within the scope
  */
-export function location_in_scope(location: Location, scope: LexicalScope): boolean {
+export function location_in_scope(
+  location: Location,
+  scope: LexicalScope
+): boolean {
   // Check if location falls within scope boundaries
   const scope_loc = scope.location;
 
@@ -76,14 +83,20 @@ export function location_in_scope(location: Location, scope: LexicalScope): bool
   }
 
   // Check if location is after scope start
-  if (location.line < scope_loc.line ||
-      (location.line === scope_loc.line && location.column < scope_loc.column)) {
+  if (
+    location.start_line < scope_loc.start_line ||
+    (location.start_line === scope_loc.start_line &&
+      location.start_column < scope_loc.start_column)
+  ) {
     return false;
   }
 
   // Check if location is before scope end
-  if (location.end_line > scope_loc.end_line ||
-      (location.end_line === scope_loc.end_line && location.end_column > scope_loc.end_column)) {
+  if (
+    location.end_line > scope_loc.end_line ||
+    (location.end_line === scope_loc.end_line &&
+      location.end_column > scope_loc.end_column)
+  ) {
     return false;
   }
 
@@ -97,7 +110,11 @@ export function location_in_scope(location: Location, scope: LexicalScope): bool
  * @returns True if this is a global or module scope
  */
 export function is_global_scope(scope: LexicalScope): boolean {
-  return scope.type === "module" || scope.type === "global" || scope.parent_id === null;
+  return (
+    scope.type === "module" ||
+    scope.type === "global" ||
+    scope.parent_id === null
+  );
 }
 
 /**
@@ -112,8 +129,11 @@ export function get_function_scopes_in_file(
   file_path: FilePath
 ): LexicalScope[] {
   return Array.from(scopes.values()).filter(
-    scope => (scope.type === "function" || scope.type === "method" || scope.type === "constructor") &&
-             scope.location.file_path === file_path
+    (scope) =>
+      (scope.type === "function" ||
+        scope.type === "method" ||
+        scope.type === "constructor") &&
+      scope.location.file_path === file_path
   );
 }
 
@@ -151,8 +171,8 @@ export function find_scope_at_location(
  */
 function calculate_scope_size(scope: LexicalScope): number {
   const loc = scope.location;
-  const line_span = loc.end_line - loc.line;
-  const col_span = loc.end_column - loc.column;
+  const line_span = loc.end_line - loc.start_line;
+  const col_span = loc.end_column - loc.start_column;
   return line_span * 1000 + col_span; // Prioritize line span over column span
 }
 
@@ -177,14 +197,14 @@ export function analyze_scopes_at_location(
   const containing_scopes: ScopeId[] = [];
   if (immediate_scope) {
     const chain = get_scope_chain(immediate_scope, scopes);
-    containing_scopes.push(...chain.map(s => s.id));
+    containing_scopes.push(...chain.map((s) => s.id));
   }
 
   return {
     containing_scopes,
     immediate_scope: immediate_scope?.id || null,
     function_scope: function_scope?.id || null,
-    module_scope: root_scope_id
+    module_scope: root_scope_id,
   };
 }
 
@@ -201,7 +221,11 @@ function find_nearest_function_scope(
   while (current && !visited.has(current.id)) {
     visited.add(current.id);
 
-    if (current.type === "function" || current.type === "method" || current.type === "constructor") {
+    if (
+      current.type === "function" ||
+      current.type === "method" ||
+      current.type === "constructor"
+    ) {
       return current;
     }
 
@@ -288,7 +312,7 @@ export function find_common_ancestor_scope(
 ): LexicalScope | null {
   // Get chain from scope1 to root
   const chain1 = get_scope_chain(scope1, scopes);
-  const chain1_ids = new Set(chain1.map(s => s.id));
+  const chain1_ids = new Set(chain1.map((s) => s.id));
 
   // Walk up from scope2 until we find a common scope
   let current: LexicalScope | undefined = scope2;

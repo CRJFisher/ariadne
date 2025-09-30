@@ -59,8 +59,8 @@ describe("analyze_type_flow", () => {
         {
           class_name: "MyClass" as SymbolName,
           location: {
-            line: 10,
-            column: 5,
+            start_line: 10,
+            start_column: 5,
             file_path: testFilePath,
             end_line: 10,
             end_column: 12,
@@ -85,7 +85,7 @@ describe("analyze_type_flow", () => {
     // Find by checking all entries since object comparison won't work
     let constructor_type;
     for (const [loc, type] of resolved.constructor_types) {
-      if (loc.line === 10 && loc.column === 5) {
+      if (loc.start_line === 10 && loc.start_column === 5) {
         constructor_type = type;
         break;
       }
@@ -107,8 +107,8 @@ describe("analyze_type_flow", () => {
           source: { kind: "variable", name: "a" as SymbolName },
           target: "b" as SymbolName,
           location: {
-            line: 20,
-            column: 0,
+            start_line: 20,
+            start_column: 0,
             file_path: testFilePath,
             end_line: 20,
             end_column: 5,
@@ -141,8 +141,8 @@ describe("analyze_type_flow", () => {
         {
           function_name: "myFunction" as SymbolName,
           location: {
-            line: 30,
-            column: 4,
+            start_line: 30,
+            start_column: 4,
             file_path: testFilePath,
             end_line: 30,
             end_column: 10,
@@ -190,8 +190,8 @@ describe("analyze_type_flow", () => {
           {
             class_name: "ImportedClass" as SymbolName,
             location: {
-              line: 5,
-              column: 10,
+              start_line: 5,
+              start_column: 10,
               file_path: testFilePath,
               end_line: 5,
               end_column: 23,
@@ -217,8 +217,8 @@ describe("analyze_type_flow", () => {
       >();
       fileImports.set("ImportedClass" as SymbolName, {
         resolved_location: {
-          line: 1,
-          column: 0,
+          start_line: 1,
+          start_column: 0,
           file_path: importedFilePath,
           end_line: 1,
           end_column: 13,
@@ -277,8 +277,8 @@ describe("analyze_type_flow", () => {
           {
             function_name: "getUser" as SymbolName,
             location: {
-              line: 10,
-              column: 0,
+              start_line: 10,
+              start_column: 0,
               file_path: testFilePath,
               end_line: 10,
               end_column: 7,
@@ -318,8 +318,8 @@ describe("analyze_type_flow", () => {
           {
             function_name: "getValue" as SymbolName,
             location: {
-              line: 10,
-              column: 2,
+              start_line: 10,
+              start_column: 2,
               file_path: testFilePath,
               end_line: 10,
               end_column: 8,
@@ -330,8 +330,8 @@ describe("analyze_type_flow", () => {
           {
             function_name: "getValue" as SymbolName,
             location: {
-              line: 15,
-              column: 2,
+              start_line: 15,
+              start_column: 2,
               file_path: testFilePath,
               end_line: 15,
               end_column: 8,
@@ -369,8 +369,8 @@ describe("analyze_type_flow", () => {
           {
             class_name: "MyClass" as SymbolName,
             location: {
-              line: 1,
-              column: 0,
+              start_line: 1,
+              start_column: 0,
               file_path: testFilePath,
               end_line: 1,
               end_column: 7,
@@ -385,8 +385,8 @@ describe("analyze_type_flow", () => {
             source: { kind: "variable", name: "a" as SymbolName },
             target: "b" as SymbolName,
             location: {
-              line: 2,
-              column: 0,
+              start_line: 2,
+              start_column: 0,
               file_path: testFilePath,
               end_line: 2,
               end_column: 1,
@@ -397,8 +397,8 @@ describe("analyze_type_flow", () => {
             source: { kind: "variable", name: "b" as SymbolName },
             target: "c" as SymbolName,
             location: {
-              line: 3,
-              column: 0,
+              start_line: 3,
+              start_column: 0,
               file_path: testFilePath,
               end_line: 3,
               end_column: 1,
@@ -436,8 +436,8 @@ describe("analyze_type_flow", () => {
             source: { kind: "expression", text: "{x, y}" },
             target: "data" as SymbolName,
             location: {
-              line: 1,
-              column: 0,
+              start_line: 1,
+              start_column: 0,
               file_path: testFilePath,
               end_line: 1,
               end_column: 4,

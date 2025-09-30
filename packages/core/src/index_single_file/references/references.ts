@@ -9,8 +9,8 @@ import type {
   LexicalScope,
   SymbolId,
 } from "@ariadnejs/types";
-import type { NormalizedCapture } from "../parse_and_query_code/capture_types";
-import { SemanticEntity } from "../parse_and_query_code/capture_types";
+import type { NormalizedCapture } from "../query_code_tree/capture_types";
+import { SemanticEntity } from "../query_code_tree/capture_types";
 
 import { process_call_references } from "./call_references/call_references";
 import { CallReference } from "@ariadnejs/types/src/call_chains";

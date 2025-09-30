@@ -12,8 +12,11 @@ import type {
 } from "@ariadnejs/types";
 import { node_to_location } from "../../node_utils";
 import { find_containing_scope } from "../../scope_tree";
-import type { CaptureContext, NormalizedCapture } from "../../parse_and_query_code/capture_types";
-import { SemanticEntity } from "../../parse_and_query_code/capture_types";
+import type {
+  CaptureContext,
+  NormalizedCapture,
+} from "../../query_code_tree/capture_types";
+import { SemanticEntity } from "../../query_code_tree/capture_types";
 
 /**
  * Member access reference - Property or method access on an object
@@ -333,7 +336,7 @@ export function group_by_object(
 
     // Include file_path in key to avoid collisions across files
     const loc = access.object.location;
-    const key = `${loc.file_path}:${loc.line}:${loc.column}`;
+    const key = `${loc.file_path}:${loc.start_line}:${loc.start_column}`;
 
     if (!groups.has(key)) {
       groups.set(key, {

@@ -154,10 +154,10 @@ function convert_flows_for_analysis(
           const assignment: LocalAssignmentFlow = {
             source: {
               kind: "variable",
-              name: `source_${pattern.source_location.line}_${pattern.source_location.column}` as SymbolName,
+              name: `source_${pattern.source_location.start_line}_${pattern.source_location.start_column}` as SymbolName,
             } as FlowSource,
             target:
-              `target_${pattern.target_location.line}_${pattern.target_location.column}` as SymbolName,
+              `target_${pattern.target_location.start_line}_${pattern.target_location.start_column}` as SymbolName,
             location: pattern.target_location,
             kind: "direct",
           };
@@ -168,11 +168,11 @@ function convert_flows_for_analysis(
           // Convert return pattern to LocalReturnFlow
           const returnFlow: LocalReturnFlow = {
             function_name:
-              `func_${pattern.source_location.line}_${pattern.source_location.column}` as SymbolName,
+              `func_${pattern.source_location.start_line}_${pattern.source_location.start_column}` as SymbolName,
             location: pattern.source_location,
             value: {
               kind: "variable",
-              name: `return_value_${pattern.source_location.line}_${pattern.source_location.column}` as SymbolName,
+              name: `return_value_${pattern.source_location.start_line}_${pattern.source_location.start_column}` as SymbolName,
             } as FlowSource,
             scope_id: pattern.scope_id,
           };
@@ -186,10 +186,10 @@ function convert_flows_for_analysis(
           const paramAssignment: LocalAssignmentFlow = {
             source: {
               kind: "variable",
-              name: `param_${pattern.source_location.line}_${pattern.source_location.column}` as SymbolName,
+              name: `param_${pattern.source_location.start_line}_${pattern.source_location.start_column}` as SymbolName,
             } as FlowSource,
             target:
-              `param_target_${pattern.target_location.line}_${pattern.target_location.column}` as SymbolName,
+              `param_target_${pattern.target_location.start_line}_${pattern.target_location.start_column}` as SymbolName,
             location: pattern.target_location,
             kind: "direct",
           };

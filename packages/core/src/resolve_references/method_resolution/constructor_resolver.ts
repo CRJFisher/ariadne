@@ -314,7 +314,7 @@ function find_containing_class_type(
 function location_is_within(inner: Location, outer: Location): boolean {
   return (
     inner.file_path === outer.file_path &&
-    inner.line >= outer.line &&
+    inner.start_line >= outer.start_line &&
     inner.end_line <= outer.end_line
   );
 }

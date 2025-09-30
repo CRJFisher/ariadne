@@ -11,8 +11,8 @@ import type { LocalTypeDefinition, LocalMemberInfo } from "./types";
 function create_location(line: number, column: number): Location {
   return {
     file_path: "test.ts" as FilePath,
-    line,
-    column,
+    start_line: line,
+    start_column: column,
     end_line: line,
     end_column: column + 10,
   };
@@ -517,20 +517,26 @@ describe("resolve_type_members", () => {
     it("should handle static vs instance members", () => {
       const type_id = "TypeId:MyClass" as TypeId;
       const members = new Map<SymbolName, LocalMemberInfo>([
-        ["staticMethod" as SymbolName, {
-          name: "staticMethod" as SymbolName,
-          kind: "method",
-          location: create_location(1, 1),
-          is_static: true,
-          is_optional: false,
-        }],
-        ["instanceMethod" as SymbolName, {
-          name: "instanceMethod" as SymbolName,
-          kind: "method",
-          location: create_location(2, 1),
-          is_static: false,
-          is_optional: false,
-        }],
+        [
+          "staticMethod" as SymbolName,
+          {
+            name: "staticMethod" as SymbolName,
+            kind: "method",
+            location: create_location(1, 1),
+            is_static: true,
+            is_optional: false,
+          },
+        ],
+        [
+          "instanceMethod" as SymbolName,
+          {
+            name: "instanceMethod" as SymbolName,
+            kind: "method",
+            location: create_location(2, 1),
+            is_static: false,
+            is_optional: false,
+          },
+        ],
       ]);
 
       const local_definition = create_local_type_definition(
@@ -542,13 +548,21 @@ describe("resolve_type_members", () => {
 
       const type_hierarchy = new Map<TypeId, TypeId[]>();
 
-      const result = resolve_type_members(type_id, local_definition, type_hierarchy);
+      const result = resolve_type_members(
+        type_id,
+        local_definition,
+        type_hierarchy
+      );
 
       // Both members should be present
       expect(result.all_members.size).toBe(2);
 
-      const static_method = result.all_members.get("staticMethod" as SymbolName);
-      const instance_method = result.all_members.get("instanceMethod" as SymbolName);
+      const static_method = result.all_members.get(
+        "staticMethod" as SymbolName
+      );
+      const instance_method = result.all_members.get(
+        "instanceMethod" as SymbolName
+      );
 
       expect(static_method!.is_static).toBe(true);
       expect(instance_method!.is_static).toBe(false);
@@ -557,20 +571,26 @@ describe("resolve_type_members", () => {
     it("should handle optional members", () => {
       const type_id = "TypeId:MyInterface" as TypeId;
       const members = new Map<SymbolName, LocalMemberInfo>([
-        ["requiredProperty" as SymbolName, {
-          name: "requiredProperty" as SymbolName,
-          kind: "property",
-          location: create_location(1, 1),
-          is_static: false,
-          is_optional: false,
-        }],
-        ["optionalProperty" as SymbolName, {
-          name: "optionalProperty" as SymbolName,
-          kind: "property",
-          location: create_location(2, 1),
-          is_static: false,
-          is_optional: true,
-        }],
+        [
+          "requiredProperty" as SymbolName,
+          {
+            name: "requiredProperty" as SymbolName,
+            kind: "property",
+            location: create_location(1, 1),
+            is_static: false,
+            is_optional: false,
+          },
+        ],
+        [
+          "optionalProperty" as SymbolName,
+          {
+            name: "optionalProperty" as SymbolName,
+            kind: "property",
+            location: create_location(2, 1),
+            is_static: false,
+            is_optional: true,
+          },
+        ],
       ]);
 
       const local_definition = create_local_type_definition(
@@ -582,10 +602,18 @@ describe("resolve_type_members", () => {
 
       const type_hierarchy = new Map<TypeId, TypeId[]>();
 
-      const result = resolve_type_members(type_id, local_definition, type_hierarchy);
+      const result = resolve_type_members(
+        type_id,
+        local_definition,
+        type_hierarchy
+      );
 
-      const required_prop = result.all_members.get("requiredProperty" as SymbolName);
-      const optional_prop = result.all_members.get("optionalProperty" as SymbolName);
+      const required_prop = result.all_members.get(
+        "requiredProperty" as SymbolName
+      );
+      const optional_prop = result.all_members.get(
+        "optionalProperty" as SymbolName
+      );
 
       expect(required_prop!.is_optional).toBe(false);
       expect(optional_prop!.is_optional).toBe(true);
@@ -594,11 +622,26 @@ describe("resolve_type_members", () => {
     it("should handle different member kinds", () => {
       const type_id = "TypeId:ComplexClass" as TypeId;
       const members = new Map<SymbolName, LocalMemberInfo>([
-        ["method" as SymbolName, create_local_member_info("method" as SymbolName, "method")],
-        ["property" as SymbolName, create_local_member_info("property" as SymbolName, "property")],
-        ["field" as SymbolName, create_local_member_info("field" as SymbolName, "field")],
-        ["getter" as SymbolName, create_local_member_info("getter" as SymbolName, "getter")],
-        ["setter" as SymbolName, create_local_member_info("setter" as SymbolName, "setter")],
+        [
+          "method" as SymbolName,
+          create_local_member_info("method" as SymbolName, "method"),
+        ],
+        [
+          "property" as SymbolName,
+          create_local_member_info("property" as SymbolName, "property"),
+        ],
+        [
+          "field" as SymbolName,
+          create_local_member_info("field" as SymbolName, "field"),
+        ],
+        [
+          "getter" as SymbolName,
+          create_local_member_info("getter" as SymbolName, "getter"),
+        ],
+        [
+          "setter" as SymbolName,
+          create_local_member_info("setter" as SymbolName, "setter"),
+        ],
       ]);
 
       const local_definition = create_local_type_definition(
@@ -610,16 +653,28 @@ describe("resolve_type_members", () => {
 
       const type_hierarchy = new Map<TypeId, TypeId[]>();
 
-      const result = resolve_type_members(type_id, local_definition, type_hierarchy);
+      const result = resolve_type_members(
+        type_id,
+        local_definition,
+        type_hierarchy
+      );
 
       expect(result.all_members.size).toBe(5);
 
       // Verify each member has correct kind
-      expect(result.all_members.get("method" as SymbolName)!.kind).toBe("method");
-      expect(result.all_members.get("property" as SymbolName)!.kind).toBe("property");
+      expect(result.all_members.get("method" as SymbolName)!.kind).toBe(
+        "method"
+      );
+      expect(result.all_members.get("property" as SymbolName)!.kind).toBe(
+        "property"
+      );
       expect(result.all_members.get("field" as SymbolName)!.kind).toBe("field");
-      expect(result.all_members.get("getter" as SymbolName)!.kind).toBe("getter");
-      expect(result.all_members.get("setter" as SymbolName)!.kind).toBe("setter");
+      expect(result.all_members.get("getter" as SymbolName)!.kind).toBe(
+        "getter"
+      );
+      expect(result.all_members.get("setter" as SymbolName)!.kind).toBe(
+        "setter"
+      );
     });
   });
 
@@ -632,28 +687,60 @@ describe("resolve_type_members", () => {
 
       // Base interface with common method
       const base_members = new Map<SymbolName, LocalMemberInfo>([
-        ["baseMethod" as SymbolName, create_local_member_info("baseMethod" as SymbolName, "method")],
+        [
+          "baseMethod" as SymbolName,
+          create_local_member_info("baseMethod" as SymbolName, "method"),
+        ],
       ]);
 
       // Left interface with its own method
       const left_members = new Map<SymbolName, LocalMemberInfo>([
-        ["leftMethod" as SymbolName, create_local_member_info("leftMethod" as SymbolName, "method")],
+        [
+          "leftMethod" as SymbolName,
+          create_local_member_info("leftMethod" as SymbolName, "method"),
+        ],
       ]);
 
       // Right interface with its own method
       const right_members = new Map<SymbolName, LocalMemberInfo>([
-        ["rightMethod" as SymbolName, create_local_member_info("rightMethod" as SymbolName, "method")],
+        [
+          "rightMethod" as SymbolName,
+          create_local_member_info("rightMethod" as SymbolName, "method"),
+        ],
       ]);
 
       // Diamond class with its own method
       const diamond_members = new Map<SymbolName, LocalMemberInfo>([
-        ["diamondMethod" as SymbolName, create_local_member_info("diamondMethod" as SymbolName, "method")],
+        [
+          "diamondMethod" as SymbolName,
+          create_local_member_info("diamondMethod" as SymbolName, "method"),
+        ],
       ]);
 
-      const base_def = create_local_type_definition("IBase" as SymbolName, "interface", "test.ts" as FilePath, base_members);
-      const left_def = create_local_type_definition("ILeft" as SymbolName, "interface", "test.ts" as FilePath, left_members);
-      const right_def = create_local_type_definition("IRight" as SymbolName, "interface", "test.ts" as FilePath, right_members);
-      const diamond_def = create_local_type_definition("Diamond" as SymbolName, "class", "test.ts" as FilePath, diamond_members);
+      const base_def = create_local_type_definition(
+        "IBase" as SymbolName,
+        "interface",
+        "test.ts" as FilePath,
+        base_members
+      );
+      const left_def = create_local_type_definition(
+        "ILeft" as SymbolName,
+        "interface",
+        "test.ts" as FilePath,
+        left_members
+      );
+      const right_def = create_local_type_definition(
+        "IRight" as SymbolName,
+        "interface",
+        "test.ts" as FilePath,
+        right_members
+      );
+      const diamond_def = create_local_type_definition(
+        "Diamond" as SymbolName,
+        "class",
+        "test.ts" as FilePath,
+        diamond_members
+      );
 
       // Hierarchy: Diamond implements ILeft, IRight; ILeft extends IBase; IRight extends IBase
       const type_hierarchy = new Map<TypeId, TypeId[]>([
@@ -669,7 +756,12 @@ describe("resolve_type_members", () => {
         [diamond_id, diamond_def],
       ]);
 
-      const result = resolve_type_members(diamond_id, diamond_def, type_hierarchy, all_definitions);
+      const result = resolve_type_members(
+        diamond_id,
+        diamond_def,
+        type_hierarchy,
+        all_definitions
+      );
 
       // Should have all methods: diamond + left + right + base (only once)
       expect(result.all_members.size).toBe(4);
@@ -689,19 +781,44 @@ describe("resolve_type_members", () => {
 
       // Interface with abstract methods
       const interface_members = new Map<SymbolName, LocalMemberInfo>([
-        ["draw" as SymbolName, create_local_member_info("draw" as SymbolName, "method")],
-        ["area" as SymbolName, create_local_member_info("area" as SymbolName, "method")],
+        [
+          "draw" as SymbolName,
+          create_local_member_info("draw" as SymbolName, "method"),
+        ],
+        [
+          "area" as SymbolName,
+          create_local_member_info("area" as SymbolName, "method"),
+        ],
       ]);
 
       // Class implementing the interface
       const class_members = new Map<SymbolName, LocalMemberInfo>([
-        ["draw" as SymbolName, create_local_member_info("draw" as SymbolName, "method")], // Implementation
-        ["area" as SymbolName, create_local_member_info("area" as SymbolName, "method")], // Implementation
-        ["name" as SymbolName, create_local_member_info("name" as SymbolName, "property")], // Additional member
+        [
+          "draw" as SymbolName,
+          create_local_member_info("draw" as SymbolName, "method"),
+        ], // Implementation
+        [
+          "area" as SymbolName,
+          create_local_member_info("area" as SymbolName, "method"),
+        ], // Implementation
+        [
+          "name" as SymbolName,
+          create_local_member_info("name" as SymbolName, "property"),
+        ], // Additional member
       ]);
 
-      const interface_def = create_local_type_definition("IDrawable" as SymbolName, "interface", "test.ts" as FilePath, interface_members);
-      const class_def = create_local_type_definition("Shape" as SymbolName, "class", "test.ts" as FilePath, class_members);
+      const interface_def = create_local_type_definition(
+        "IDrawable" as SymbolName,
+        "interface",
+        "test.ts" as FilePath,
+        interface_members
+      );
+      const class_def = create_local_type_definition(
+        "Shape" as SymbolName,
+        "class",
+        "test.ts" as FilePath,
+        class_members
+      );
 
       const type_hierarchy = new Map<TypeId, TypeId[]>([
         [class_id, [interface_id]], // Class implements interface
@@ -712,7 +829,12 @@ describe("resolve_type_members", () => {
         [class_id, class_def],
       ]);
 
-      const result = resolve_type_members(class_id, class_def, type_hierarchy, all_definitions);
+      const result = resolve_type_members(
+        class_id,
+        class_def,
+        type_hierarchy,
+        all_definitions
+      );
 
       // Should have class methods (which override interface methods) + additional property
       expect(result.all_members.size).toBe(3);
@@ -733,35 +855,54 @@ describe("resolve_type_members", () => {
 
       // Base class with static and instance members
       const base_members = new Map<SymbolName, LocalMemberInfo>([
-        ["staticMethod" as SymbolName, {
-          name: "staticMethod" as SymbolName,
-          kind: "method",
-          location: create_location(1, 1),
-          is_static: true,
-          is_optional: false,
-        }],
-        ["instanceMethod" as SymbolName, {
-          name: "instanceMethod" as SymbolName,
-          kind: "method",
-          location: create_location(2, 1),
-          is_static: false,
-          is_optional: false,
-        }],
+        [
+          "staticMethod" as SymbolName,
+          {
+            name: "staticMethod" as SymbolName,
+            kind: "method",
+            location: create_location(1, 1),
+            is_static: true,
+            is_optional: false,
+          },
+        ],
+        [
+          "instanceMethod" as SymbolName,
+          {
+            name: "instanceMethod" as SymbolName,
+            kind: "method",
+            location: create_location(2, 1),
+            is_static: false,
+            is_optional: false,
+          },
+        ],
       ]);
 
       // Derived class with its own static method
       const derived_members = new Map<SymbolName, LocalMemberInfo>([
-        ["derivedStatic" as SymbolName, {
-          name: "derivedStatic" as SymbolName,
-          kind: "method",
-          location: create_location(1, 1),
-          is_static: true,
-          is_optional: false,
-        }],
+        [
+          "derivedStatic" as SymbolName,
+          {
+            name: "derivedStatic" as SymbolName,
+            kind: "method",
+            location: create_location(1, 1),
+            is_static: true,
+            is_optional: false,
+          },
+        ],
       ]);
 
-      const base_def = create_local_type_definition("BaseClass" as SymbolName, "class", "test.ts" as FilePath, base_members);
-      const derived_def = create_local_type_definition("DerivedClass" as SymbolName, "class", "test.ts" as FilePath, derived_members);
+      const base_def = create_local_type_definition(
+        "BaseClass" as SymbolName,
+        "class",
+        "test.ts" as FilePath,
+        base_members
+      );
+      const derived_def = create_local_type_definition(
+        "DerivedClass" as SymbolName,
+        "class",
+        "test.ts" as FilePath,
+        derived_members
+      );
 
       const type_hierarchy = new Map<TypeId, TypeId[]>([
         [derived_id, [base_id]],
@@ -772,14 +913,25 @@ describe("resolve_type_members", () => {
         [derived_id, derived_def],
       ]);
 
-      const result = resolve_type_members(derived_id, derived_def, type_hierarchy, all_definitions);
+      const result = resolve_type_members(
+        derived_id,
+        derived_def,
+        type_hierarchy,
+        all_definitions
+      );
 
       // Should inherit both static and instance members
       expect(result.all_members.size).toBe(3);
 
-      const derived_static = result.all_members.get("derivedStatic" as SymbolName);
-      const inherited_static = result.all_members.get("staticMethod" as SymbolName);
-      const inherited_instance = result.all_members.get("instanceMethod" as SymbolName);
+      const derived_static = result.all_members.get(
+        "derivedStatic" as SymbolName
+      );
+      const inherited_static = result.all_members.get(
+        "staticMethod" as SymbolName
+      );
+      const inherited_instance = result.all_members.get(
+        "instanceMethod" as SymbolName
+      );
 
       expect(derived_static!.is_static).toBe(true);
       expect(derived_static!.inherited_from).toBeUndefined();
@@ -798,7 +950,10 @@ describe("resolve_type_members", () => {
 
       // Create a member with minimal information
       const members = new Map<SymbolName, LocalMemberInfo>([
-        ["validMember" as SymbolName, create_local_member_info("validMember" as SymbolName, "method")],
+        [
+          "validMember" as SymbolName,
+          create_local_member_info("validMember" as SymbolName, "method"),
+        ],
       ]);
 
       const local_definition = create_local_type_definition(
@@ -810,7 +965,11 @@ describe("resolve_type_members", () => {
 
       const type_hierarchy = new Map<TypeId, TypeId[]>();
 
-      const result = resolve_type_members(type_id, local_definition, type_hierarchy);
+      const result = resolve_type_members(
+        type_id,
+        local_definition,
+        type_hierarchy
+      );
 
       // Should handle gracefully
       expect(result.all_members.size).toBe(1);
@@ -836,7 +995,12 @@ describe("resolve_type_members", () => {
         [type_id, local_definition],
       ]);
 
-      const result = resolve_type_members(type_id, local_definition, type_hierarchy, all_definitions);
+      const result = resolve_type_members(
+        type_id,
+        local_definition,
+        type_hierarchy,
+        all_definitions
+      );
 
       // Should complete without error
       expect(result.all_members.size).toBe(0);
@@ -850,24 +1014,54 @@ describe("resolve_type_members", () => {
 
       // Base class with method
       const base_members = new Map<SymbolName, LocalMemberInfo>([
-        ["conflictMethod" as SymbolName, create_local_member_info("conflictMethod" as SymbolName, "method")],
-        ["baseOnly" as SymbolName, create_local_member_info("baseOnly" as SymbolName, "method")],
+        [
+          "conflictMethod" as SymbolName,
+          create_local_member_info("conflictMethod" as SymbolName, "method"),
+        ],
+        [
+          "baseOnly" as SymbolName,
+          create_local_member_info("baseOnly" as SymbolName, "method"),
+        ],
       ]);
 
       // Mixin class with same method name
       const mixin_members = new Map<SymbolName, LocalMemberInfo>([
-        ["conflictMethod" as SymbolName, create_local_member_info("conflictMethod" as SymbolName, "method")],
-        ["mixinOnly" as SymbolName, create_local_member_info("mixinOnly" as SymbolName, "method")],
+        [
+          "conflictMethod" as SymbolName,
+          create_local_member_info("conflictMethod" as SymbolName, "method"),
+        ],
+        [
+          "mixinOnly" as SymbolName,
+          create_local_member_info("mixinOnly" as SymbolName, "method"),
+        ],
       ]);
 
       // Derived class that extends both (multiple inheritance simulation)
       const derived_members = new Map<SymbolName, LocalMemberInfo>([
-        ["derivedOnly" as SymbolName, create_local_member_info("derivedOnly" as SymbolName, "method")],
+        [
+          "derivedOnly" as SymbolName,
+          create_local_member_info("derivedOnly" as SymbolName, "method"),
+        ],
       ]);
 
-      const base_def = create_local_type_definition("BaseClass" as SymbolName, "class", "test.ts" as FilePath, base_members);
-      const mixin_def = create_local_type_definition("MixinClass" as SymbolName, "class", "test.ts" as FilePath, mixin_members);
-      const derived_def = create_local_type_definition("DerivedClass" as SymbolName, "class", "test.ts" as FilePath, derived_members);
+      const base_def = create_local_type_definition(
+        "BaseClass" as SymbolName,
+        "class",
+        "test.ts" as FilePath,
+        base_members
+      );
+      const mixin_def = create_local_type_definition(
+        "MixinClass" as SymbolName,
+        "class",
+        "test.ts" as FilePath,
+        mixin_members
+      );
+      const derived_def = create_local_type_definition(
+        "DerivedClass" as SymbolName,
+        "class",
+        "test.ts" as FilePath,
+        derived_members
+      );
 
       // Derived inherits from both base and mixin
       const type_hierarchy = new Map<TypeId, TypeId[]>([
@@ -880,12 +1074,19 @@ describe("resolve_type_members", () => {
         [derived_id, derived_def],
       ]);
 
-      const result = resolve_type_members(derived_id, derived_def, type_hierarchy, all_definitions);
+      const result = resolve_type_members(
+        derived_id,
+        derived_def,
+        type_hierarchy,
+        all_definitions
+      );
 
       // Should have all unique methods, with first-encountered taking precedence for conflicts
       expect(result.all_members.size).toBe(4); // derivedOnly + conflictMethod + baseOnly + mixinOnly
 
-      const conflict_method = result.all_members.get("conflictMethod" as SymbolName);
+      const conflict_method = result.all_members.get(
+        "conflictMethod" as SymbolName
+      );
 
       // The implementation should define which parent takes precedence
       expect(conflict_method).toBeDefined();
@@ -915,7 +1116,11 @@ describe("resolve_type_members", () => {
       const type_hierarchy = new Map<TypeId, TypeId[]>();
 
       const start_time = performance.now();
-      const result = resolve_type_members(type_id, local_definition, type_hierarchy);
+      const result = resolve_type_members(
+        type_id,
+        local_definition,
+        type_hierarchy
+      );
       const end_time = performance.now();
 
       // Should complete quickly even with many members
@@ -961,7 +1166,12 @@ describe("resolve_type_members", () => {
       const last_def = type_defs.get(last_type_id)!;
 
       const start_time = performance.now();
-      const result = resolve_type_members(last_type_id, last_def, hierarchy, type_defs);
+      const result = resolve_type_members(
+        last_type_id,
+        last_def,
+        hierarchy,
+        type_defs
+      );
       const end_time = performance.now();
 
       // Should complete in reasonable time

@@ -140,8 +140,8 @@ describe("Function Resolution", () => {
       const file_path = "test.js" as FilePath;
       const call_location: Location = {
         file_path,
-        line: 8,
-        column: 5,
+        start_line: 8,
+        start_column: 5,
         end_line: 8,
         end_column: 14,
       };
@@ -179,8 +179,8 @@ describe("Function Resolution", () => {
       const file_path = "test.js" as FilePath;
       const call_location: Location = {
         file_path,
-        line: 10,
-        column: 5,
+        start_line: 10,
+        start_column: 5,
         end_line: 10,
         end_column: 18,
       };
@@ -249,8 +249,8 @@ describe("Function Resolution", () => {
       const file_path = "test.js" as FilePath;
       const call_location: Location = {
         file_path,
-        line: 12,
-        column: 5,
+        start_line: 12,
+        start_column: 5,
         end_line: 12,
         end_column: 13,
       };
@@ -286,8 +286,8 @@ describe("Function Resolution", () => {
         {
           location: {
             file_path,
-            line: 8,
-            column: 5,
+            start_line: 8,
+            start_column: 5,
             end_line: 8,
             end_column: 13,
           },
@@ -298,8 +298,8 @@ describe("Function Resolution", () => {
         {
           location: {
             file_path,
-            line: 9,
-            column: 5,
+            start_line: 9,
+            start_column: 5,
             end_line: 9,
             end_column: 13,
           },
@@ -310,8 +310,8 @@ describe("Function Resolution", () => {
         {
           location: {
             file_path,
-            line: 10,
-            column: 5,
+            start_line: 10,
+            start_column: 5,
             end_line: 10,
             end_column: 14,
           },
@@ -347,8 +347,8 @@ describe("Function Resolution", () => {
         {
           location: {
             file_path,
-            line: 8,
-            column: 5,
+            start_line: 8,
+            start_column: 5,
             end_line: 8,
             end_column: 13,
           },
@@ -359,8 +359,8 @@ describe("Function Resolution", () => {
         {
           location: {
             file_path,
-            line: 9,
-            column: 5,
+            start_line: 9,
+            start_column: 5,
             end_line: 9,
             end_column: 14,
           },
@@ -371,8 +371,8 @@ describe("Function Resolution", () => {
         {
           location: {
             file_path,
-            line: 10,
-            column: 5,
+            start_line: 10,
+            start_column: 5,
             end_line: 10,
             end_column: 14,
           },
@@ -401,8 +401,8 @@ describe("Function Resolution", () => {
       const file_path = "test.js" as FilePath;
       const call_location: Location = {
         file_path,
-        line: 8,
-        column: 5,
+        start_line: 8,
+        start_column: 5,
         end_line: 8,
         end_column: 20,
       };
@@ -436,8 +436,8 @@ describe("Function Resolution", () => {
       const file_path = "test.py" as FilePath;
       const call_location: Location = {
         file_path,
-        line: 5,
-        column: 1,
+        start_line: 5,
+        start_column: 1,
         end_line: 5,
         end_column: 6,
       };
@@ -473,8 +473,8 @@ describe("Function Resolution", () => {
       const file_path = "test.js" as FilePath;
       const call_location: Location = {
         file_path,
-        line: 8,
-        column: 5,
+        start_line: 8,
+        start_column: 5,
         end_line: 8,
         end_column: 14,
       };
@@ -620,8 +620,8 @@ describe("Function Resolution", () => {
             {
               location: {
                 file_path,
-                line: 5,
-                column: 5,
+                start_line: 5,
+                start_column: 5,
                 end_line: 5,
                 end_column: 14,
               },
@@ -632,8 +632,8 @@ describe("Function Resolution", () => {
             {
               location: {
                 file_path,
-                line: 6,
-                column: 5,
+                start_line: 6,
+                start_column: 5,
                 end_line: 6,
                 end_column: 14,
               },
@@ -675,8 +675,8 @@ describe("Function Resolution", () => {
       // innerFunc calling itself should resolve
       const innerCall = location_key({
         file_path,
-        line: 5,
-        column: 5,
+        start_line: 5,
+        start_column: 5,
         end_line: 5,
         end_column: 14,
       });
@@ -687,8 +687,8 @@ describe("Function Resolution", () => {
       // innerFunc calling outerFunc should resolve through parent scope
       const outerCall = location_key({
         file_path,
-        line: 6,
-        column: 5,
+        start_line: 6,
+        start_column: 5,
         end_line: 6,
         end_column: 14,
       });
@@ -790,8 +790,8 @@ describe("Function Resolution", () => {
             {
               location: {
                 file_path,
-                line: 7,
-                column: 5,
+                start_line: 7,
+                start_column: 5,
                 end_line: 7,
                 end_column: 12,
               },
@@ -802,8 +802,8 @@ describe("Function Resolution", () => {
             {
               location: {
                 file_path,
-                line: 15,
-                column: 5,
+                start_line: 15,
+                start_column: 5,
                 end_line: 15,
                 end_column: 12,
               },
@@ -845,8 +845,8 @@ describe("Function Resolution", () => {
       // Call in function scope should resolve to local function (shadowing)
       const localCall = location_key({
         file_path,
-        line: 7,
-        column: 5,
+        start_line: 7,
+        start_column: 5,
         end_line: 7,
         end_column: 12,
       });
@@ -857,8 +857,8 @@ describe("Function Resolution", () => {
       // Call in module scope should resolve to global function
       const globalCall = location_key({
         file_path,
-        line: 15,
-        column: 5,
+        start_line: 15,
+        start_column: 5,
         end_line: 15,
         end_column: 12,
       });
@@ -873,8 +873,8 @@ describe("Function Resolution", () => {
         {
           location: {
             file_path,
-            line: 5,
-            column: 5,
+            start_line: 5,
+            start_column: 5,
             end_line: 5,
             end_column: 13,
           },
@@ -895,8 +895,8 @@ describe("Function Resolution", () => {
 
       const call = location_key({
         file_path,
-        line: 5,
-        column: 5,
+        start_line: 5,
+        start_column: 5,
         end_line: 5,
         end_column: 13,
       });
@@ -941,8 +941,8 @@ describe("Function Resolution", () => {
         {
           location: {
             file_path,
-            line: 5,
-            column: 5,
+            start_line: 5,
+            start_column: 5,
             end_line: 5,
             end_column: 10,
           },
@@ -953,8 +953,8 @@ describe("Function Resolution", () => {
         {
           location: {
             file_path,
-            line: 10,
-            column: 5,
+            start_line: 10,
+            start_column: 5,
             end_line: 10,
             end_column: 13,
           },
@@ -977,8 +977,8 @@ describe("Function Resolution", () => {
       expect(result.function_calls.size).toBe(1);
       const funcCall = location_key({
         file_path,
-        line: 10,
-        column: 5,
+        start_line: 10,
+        start_column: 5,
         end_line: 10,
         end_column: 13,
       });
@@ -989,8 +989,8 @@ describe("Function Resolution", () => {
       const file_path = "test.js" as FilePath;
       const call_location: Location = {
         file_path,
-        line: 10,
-        column: 5,
+        start_line: 10,
+        start_column: 5,
         end_line: 10,
         end_column: 18,
       };
@@ -1031,8 +1031,8 @@ describe("Function Resolution", () => {
         {
           location: {
             file_path,
-            line: 5,
-            column: 5,
+            start_line: 5,
+            start_column: 5,
             end_line: 5,
             end_column: 11,
           },
@@ -1043,8 +1043,8 @@ describe("Function Resolution", () => {
         {
           location: {
             file_path,
-            line: 6,
-            column: 5,
+            start_line: 6,
+            start_column: 5,
             end_line: 6,
             end_column: 11,
           },
@@ -1068,15 +1068,15 @@ describe("Function Resolution", () => {
       expect(result.function_calls.size).toBe(2);
       const numberCall = location_key({
         file_path,
-        line: 5,
-        column: 5,
+        start_line: 5,
+        start_column: 5,
         end_line: 5,
         end_column: 11,
       });
       const stringCall = location_key({
         file_path,
-        line: 6,
-        column: 5,
+        start_line: 6,
+        start_column: 5,
         end_line: 6,
         end_column: 11,
       });

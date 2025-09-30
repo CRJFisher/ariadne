@@ -5,17 +5,11 @@
  * Language-agnostic with minimal fields needed for call graph construction.
  */
 
-import type { Location, Language } from "./common";
-import type { FilePath } from "./common";
+import type { Location } from "./common";
 import type { SymbolId, SymbolName } from "./symbol";
 import type { ScopeId, ScopeType } from "./scopes";
-import type { Import, Export } from "./import_export";
-import type { TypeId } from "./type_id";
-import type {
-  AnyDefinition,
-  SymbolAvailability,
-  SymbolKind,
-} from "./symbol_definitions";
+import type { SymbolAvailability } from "./symbol_definitions";
+import type { SymbolKind } from "./symbol";
 
 /**
  * Reference type - essential for call chain tracking
@@ -285,7 +279,7 @@ export interface SymbolDefinition {
  */
 export interface TypeInfo {
   /** Type identifier */
-  readonly type_id: TypeId;
+  readonly type_id: SymbolId;
 
   /** Human-readable type name */
   readonly type_name: SymbolName;
@@ -363,3 +357,4 @@ export interface ReferenceContext {
   /** For member access: the property chain */
   readonly property_chain?: readonly SymbolName[];
 }
+

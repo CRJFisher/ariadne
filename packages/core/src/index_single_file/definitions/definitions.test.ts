@@ -23,9 +23,9 @@ import type {
   Language,
 } from "@ariadnejs/types";
 import { process_definitions, map_entity_to_symbol_kind } from "./definitions";
-import { SemanticEntity } from "../parse_and_query_code/capture_types";
-import { SemanticCategory } from "../parse_and_query_code/capture_types";
-import { query_tree_and_parse_captures } from "../parse_and_query_code/parse_and_query_code";
+import { SemanticEntity } from "../query_code_tree/capture_types";
+import { SemanticCategory } from "../query_code_tree/capture_types";
+import { query_tree } from "../query_code_tree/query_code_tree";
 
 const FIXTURES_DIR = join(__dirname, "fixtures");
 
@@ -39,8 +39,8 @@ describe.skip("Definitions Module", () => {
     file_path = "test.ts" as FilePath;
     base_location = {
       file_path,
-      line: 1,
-      column: 0,
+      start_line: 1,
+      start_column: 0,
       end_line: 1,
       end_column: 10,
     };
@@ -60,7 +60,7 @@ describe.skip("Definitions Module", () => {
       id: "scope_1" as ScopeId,
       name: null,
       type: "function",
-      location: { ...base_location, line: 5, end_line: 5 },
+      location: { ...base_location, start_line: 5, end_line: 5 },
       parent_id: root_scope.id,
       child_ids: [],
       symbols: new Map(),
@@ -70,7 +70,7 @@ describe.skip("Definitions Module", () => {
       id: "scope_2" as ScopeId,
       name: null,
       type: "class",
-      location: { ...base_location, line: 10, end_line: 10 },
+      location: { ...base_location, start_line: 10, end_line: 10 },
       parent_id: root_scope.id,
       child_ids: ["scope_3" as ScopeId],
       symbols: new Map(),
@@ -80,7 +80,7 @@ describe.skip("Definitions Module", () => {
       id: "scope_3" as ScopeId,
       name: null,
       type: "method",
-      location: { ...base_location, line: 12, end_line: 12 },
+      location: { ...base_location, start_line: 12, end_line: 12 },
       parent_id: class_scope.id,
       child_ids: [],
       symbols: new Map(),
@@ -749,7 +749,7 @@ describe.skip("Definitions Module", () => {
         "utf-8"
       );
       const tree = typescript_parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "typescript" as Language,
         tree,
         "comprehensive_definitions.ts" as FilePath
@@ -762,8 +762,8 @@ describe.skip("Definitions Module", () => {
         type: "module",
         location: {
           file_path: "comprehensive_definitions.ts" as FilePath,
-          line: 1,
-          column: 0,
+          start_line: 1,
+          start_column: 0,
           end_line: 1000,
           end_column: 100,
         },
@@ -816,7 +816,7 @@ describe.skip("Definitions Module", () => {
         "utf-8"
       );
       const tree = python_parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "python" as Language,
         tree,
         "comprehensive_definitions.py" as FilePath
@@ -828,8 +828,8 @@ describe.skip("Definitions Module", () => {
         type: "module",
         location: {
           file_path: "comprehensive_definitions.py" as FilePath,
-          line: 1,
-          column: 0,
+          start_line: 1,
+          start_column: 0,
           end_line: 1000,
           end_column: 100,
         },
@@ -870,7 +870,7 @@ describe.skip("Definitions Module", () => {
         "utf-8"
       );
       const tree = rust_parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "rust" as Language,
         tree,
         "comprehensive_definitions.rs" as FilePath
@@ -882,8 +882,8 @@ describe.skip("Definitions Module", () => {
         type: "module",
         location: {
           file_path: "comprehensive_definitions.rs" as FilePath,
-          line: 1,
-          column: 0,
+          start_line: 1,
+          start_column: 0,
           end_line: 1000,
           end_column: 100,
         },
@@ -940,7 +940,7 @@ describe.skip("Definitions Module", () => {
       `;
 
       const tree = typescript_parser.parse(malformed_code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "typescript" as Language,
         tree,
         "malformed.ts" as FilePath
@@ -952,8 +952,8 @@ describe.skip("Definitions Module", () => {
         type: "module",
         location: {
           file_path: "malformed.ts" as FilePath,
-          line: 1,
-          column: 0,
+          start_line: 1,
+          start_column: 0,
           end_line: 10,
           end_column: 100,
         },
@@ -979,7 +979,7 @@ describe.skip("Definitions Module", () => {
     it("should handle empty files", () => {
       const empty_code = "";
       const tree = typescript_parser.parse(empty_code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "typescript" as Language,
         tree,
         "empty.ts" as FilePath
@@ -991,8 +991,8 @@ describe.skip("Definitions Module", () => {
         type: "module",
         location: {
           file_path: "empty.ts" as FilePath,
-          line: 1,
-          column: 0,
+          start_line: 1,
+          start_column: 0,
           end_line: 1,
           end_column: 0,
         },
@@ -1024,7 +1024,7 @@ describe.skip("Definitions Module", () => {
       ).join("\n");
 
       const tree = typescript_parser.parse(large_code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "typescript" as Language,
         tree,
         "large.ts" as FilePath
@@ -1036,8 +1036,8 @@ describe.skip("Definitions Module", () => {
         type: "module",
         location: {
           file_path: "large.ts" as FilePath,
-          line: 1,
-          column: 0,
+          start_line: 1,
+          start_column: 0,
           end_line: 200,
           end_column: large_code.length,
         },
@@ -1154,7 +1154,7 @@ describe.skip("Definitions Module", () => {
         id: "deep_0" as ScopeId,
         type: "module",
         name: null,
-        location: { ...base_location, line: 1 },
+        location: { ...base_location, start_line: 1 },
         parent_id: null,
         child_ids: [],
         symbols: new Map(),
@@ -1164,7 +1164,7 @@ describe.skip("Definitions Module", () => {
         id: "deep_1" as ScopeId,
         type: "class",
         name: null,
-        location: { ...base_location, line: 2 },
+        location: { ...base_location, start_line: 2 },
         parent_id: module_scope.id,
         child_ids: [],
         symbols: new Map(),
@@ -1174,7 +1174,7 @@ describe.skip("Definitions Module", () => {
         id: "deep_2" as ScopeId,
         type: "method",
         name: null,
-        location: { ...base_location, line: 3 },
+        location: { ...base_location, start_line: 3 },
         parent_id: class_scope.id,
         child_ids: [],
         symbols: new Map(),
@@ -1184,7 +1184,7 @@ describe.skip("Definitions Module", () => {
         id: "deep_3" as ScopeId,
         type: "block",
         name: null,
-        location: { ...base_location, line: 4 },
+        location: { ...base_location, start_line: 4 },
         parent_id: method_scope.id,
         child_ids: [],
         symbols: new Map(),
@@ -1194,7 +1194,7 @@ describe.skip("Definitions Module", () => {
         id: "deep_4" as ScopeId,
         type: "function",
         name: null,
-        location: { ...base_location, line: 5 },
+        location: { ...base_location, start_line: 5 },
         parent_id: block_scope.id,
         child_ids: [],
         symbols: new Map(),
@@ -1230,7 +1230,7 @@ describe.skip("Definitions Module", () => {
         id: "cyclic_a" as ScopeId,
         type: "function",
         name: null,
-        location: { ...base_location, line: 1 },
+        location: { ...base_location, start_line: 1 },
         parent_id: "cyclic_b" as ScopeId, // Points to B
         child_ids: [],
         symbols: new Map(),
@@ -1240,7 +1240,7 @@ describe.skip("Definitions Module", () => {
         id: "cyclic_b" as ScopeId,
         type: "function",
         name: null,
-        location: { ...base_location, line: 2 },
+        location: { ...base_location, start_line: 2 },
         parent_id: "cyclic_a" as ScopeId, // Points back to A
         child_ids: [],
         symbols: new Map(),
@@ -1580,7 +1580,7 @@ describe.skip("Definitions Module", () => {
         id: "nested_block" as ScopeId,
         type: "block",
         name: null,
-        location: { ...base_location, line: 10, end_line: 10 },
+        location: { ...base_location, start_line: 10, end_line: 10 },
         parent_id: "scope_1" as ScopeId, // Child of function scope
         child_ids: [],
         symbols: new Map(),
@@ -1644,7 +1644,7 @@ describe.skip("Definitions Module", () => {
         id: "orphaned" as ScopeId,
         type: "function",
         name: null,
-        location: { ...base_location, line: 50, end_line: 50 },
+        location: { ...base_location, start_line: 50, end_line: 50 },
         parent_id: "nonexistent" as ScopeId, // References non-existent parent
         child_ids: [],
         symbols: new Map(),

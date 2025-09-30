@@ -23,15 +23,15 @@ import {
 const mockFilePath = "test.ts" as FilePath;
 const mockLocation: Location = {
   file_path: mockFilePath,
-  line: 1,
-  column: 1,
+  start_line: 1,
+  start_column: 1,
   end_line: 1,
   end_column: 1,
 };
 const mockLocation2: Location = {
   file_path: mockFilePath,
-  line: 2,
-  column: 5,
+  start_line: 2,
+  start_column: 5,
   end_line: 2,
   end_column: 5,
 };
@@ -300,7 +300,10 @@ describe("Type Info Module", () => {
 
     it("should create TypeInfo for unknown literal values", () => {
       const unknownValue = Symbol("test"); // Simulate unknown value
-      const typeInfo = type_info_from_literal(unknownValue as any, mockLocation);
+      const typeInfo = type_info_from_literal(
+        unknownValue as any,
+        mockLocation
+      );
 
       expect(typeInfo.type_name).toBe("unknown");
       expect(typeInfo.certainty).toBe("inferred");

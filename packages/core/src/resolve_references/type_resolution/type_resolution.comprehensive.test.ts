@@ -84,8 +84,8 @@ function create_location(
 ): Location {
   return {
     file_path: file as FilePath,
-    line,
-    column,
+    start_line: line,
+    start_column: column,
     end_line,
     end_column,
   };
@@ -829,7 +829,10 @@ describe("Type Resolution - Comprehensive Suite", () => {
         type_flows: new Map([["test.ts" as FilePath, type_flow_patterns]]),
       };
 
-      const import_resolution_map: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> = new Map();
+      const import_resolution_map: ReadonlyMap<
+        FilePath,
+        ReadonlyMap<SymbolName, SymbolId>
+      > = new Map();
       const function_resolution_map: FunctionResolutionMap = {
         function_calls: new Map(),
         calls_to_function: new Map(),
@@ -862,7 +865,13 @@ describe("Type Resolution - Comprehensive Suite", () => {
 
       const file2_types = [
         {
-          ...create_type_definition("Implementation", "file2.ts", "class", [], []),
+          ...create_type_definition(
+            "Implementation",
+            "file2.ts",
+            "class",
+            [],
+            []
+          ),
           implements_names: ["SharedInterface" as SymbolName],
         },
       ];
@@ -876,7 +885,10 @@ describe("Type Resolution - Comprehensive Suite", () => {
         type_flows: new Map(),
       };
 
-      const import_resolution_map: ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>> = new Map();
+      const import_resolution_map: ReadonlyMap<
+        FilePath,
+        ReadonlyMap<SymbolName, SymbolId>
+      > = new Map();
       const function_resolution_map: FunctionResolutionMap = {
         function_calls: new Map(),
         calls_to_function: new Map(),
@@ -918,7 +930,13 @@ describe("Type Resolution - Comprehensive Suite", () => {
       const result = resolve_types(
         extraction,
         new Map() as ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>,
-        { function_calls: new Map(), calls_to_function: new Map(), closure_calls: new Map(), higher_order_calls: new Map(), function_pointer_calls: new Map() }
+        {
+          function_calls: new Map(),
+          calls_to_function: new Map(),
+          closure_calls: new Map(),
+          higher_order_calls: new Map(),
+          function_pointer_calls: new Map(),
+        }
       );
 
       expect(result.type_registry.types.size).toBe(0);
@@ -942,7 +960,13 @@ describe("Type Resolution - Comprehensive Suite", () => {
       const result = resolve_types(
         extraction,
         new Map() as ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>,
-        { function_calls: new Map(), calls_to_function: new Map(), closure_calls: new Map(), higher_order_calls: new Map(), function_pointer_calls: new Map() }
+        {
+          function_calls: new Map(),
+          calls_to_function: new Map(),
+          closure_calls: new Map(),
+          higher_order_calls: new Map(),
+          function_pointer_calls: new Map(),
+        }
       );
 
       expect(result.type_registry.types.size).toBe(1);
@@ -974,7 +998,13 @@ describe("Type Resolution - Comprehensive Suite", () => {
       const result = resolve_types(
         extraction,
         new Map() as ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>,
-        { function_calls: new Map(), calls_to_function: new Map(), closure_calls: new Map(), higher_order_calls: new Map(), function_pointer_calls: new Map() }
+        {
+          function_calls: new Map(),
+          calls_to_function: new Map(),
+          closure_calls: new Map(),
+          higher_order_calls: new Map(),
+          function_pointer_calls: new Map(),
+        }
       );
 
       const end_time = performance.now();
@@ -1006,7 +1036,13 @@ describe("Type Resolution - Comprehensive Suite", () => {
       const result = resolve_types(
         extraction,
         new Map() as ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>,
-        { function_calls: new Map(), calls_to_function: new Map(), closure_calls: new Map(), higher_order_calls: new Map(), function_pointer_calls: new Map() }
+        {
+          function_calls: new Map(),
+          calls_to_function: new Map(),
+          closure_calls: new Map(),
+          higher_order_calls: new Map(),
+          function_pointer_calls: new Map(),
+        }
       );
 
       expect(result.type_registry.types.size).toBe(chain_length);
@@ -1040,7 +1076,13 @@ describe("Type Resolution - Comprehensive Suite", () => {
       const result = resolve_types(
         extraction,
         new Map() as ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>,
-        { function_calls: new Map(), calls_to_function: new Map(), closure_calls: new Map(), higher_order_calls: new Map(), function_pointer_calls: new Map() }
+        {
+          function_calls: new Map(),
+          calls_to_function: new Map(),
+          closure_calls: new Map(),
+          higher_order_calls: new Map(),
+          function_pointer_calls: new Map(),
+        }
       );
 
       // Basic sanity checks
@@ -1077,7 +1119,13 @@ describe("Type Resolution - Comprehensive Suite", () => {
         resolve_types(
           extraction,
           new Map() as ReadonlyMap<FilePath, ReadonlyMap<SymbolName, SymbolId>>,
-          { function_calls: new Map(), calls_to_function: new Map(), closure_calls: new Map(), higher_order_calls: new Map(), function_pointer_calls: new Map() }
+          {
+            function_calls: new Map(),
+            calls_to_function: new Map(),
+            closure_calls: new Map(),
+            higher_order_calls: new Map(),
+            function_pointer_calls: new Map(),
+          }
         );
 
         const end_time = performance.now();

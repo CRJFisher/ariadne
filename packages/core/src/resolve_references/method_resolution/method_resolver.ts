@@ -546,7 +546,7 @@ function find_symbol_at_location(
 function locations_overlap(loc1: Location, loc2: Location): boolean {
   return (
     loc1.file_path === loc2.file_path &&
-    loc1.line <= loc2.end_line &&
-    loc1.end_line >= loc2.line
+    loc1.start_line <= loc2.end_line &&
+    loc1.end_line >= loc2.start_line
   );
 }

@@ -11,13 +11,18 @@ import Parser from "tree-sitter";
 import TypeScript from "tree-sitter-typescript";
 import type { Language, FilePath } from "@ariadnejs/types";
 import { build_semantic_index } from "./semantic_index";
-import { query_tree_and_parse_captures } from "./parse_and_query_code/parse_and_query_code";
+import { query_tree } from "./query_code_tree/query_code_tree";
 import {
   SemanticEntity,
   SemanticCategory,
-} from "./parse_and_query_code/capture_types";
+} from "./query_code_tree/capture_types";
 
-const FIXTURES_DIR = join(__dirname, "parse_and_query_code", "fixtures", "typescript");
+const FIXTURES_DIR = join(
+  __dirname,
+  "parse_and_query_code",
+  "fixtures",
+  "typescript"
+);
 
 describe("Semantic Index - TypeScript Comprehensive", () => {
   let parser: Parser;
@@ -49,7 +54,7 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
       `;
 
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "typescript" as Language,
         tree,
         "test.ts" as FilePath
@@ -94,7 +99,7 @@ describe("Semantic Index - TypeScript Comprehensive", () => {
       `;
 
       const tree = parser.parse(code);
-      const captures = query_tree_and_parse_captures(
+      const captures = query_tree(
         "typescript" as Language,
         tree,
         "test.ts" as FilePath

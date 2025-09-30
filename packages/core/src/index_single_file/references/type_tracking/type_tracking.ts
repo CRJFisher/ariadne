@@ -5,10 +5,17 @@
  * without attempting any resolution.
  */
 
-import type { Location, FilePath, LocationKey, SymbolName, ScopeId, LexicalScope } from "@ariadnejs/types";
+import type {
+  Location,
+  FilePath,
+  LocationKey,
+  SymbolName,
+  ScopeId,
+  LexicalScope,
+} from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
-import type { NormalizedCapture } from "../../parse_and_query_code/capture_types";
-import { SemanticCategory } from "../../parse_and_query_code/capture_types";
+import type { NormalizedCapture } from "../../query_code_tree/capture_types";
+import { SemanticCategory } from "../../query_code_tree/capture_types";
 
 /**
  * Local type tracking information extracted from a single file
@@ -140,7 +147,8 @@ function extract_annotation_info(
   }
 
   // Extract variable name from context
-  const var_name = capture.context?.annotated_var_name || capture.context?.parameter_name;
+  const var_name =
+    capture.context?.annotated_var_name || capture.context?.parameter_name;
   if (!var_name) {
     return undefined;
   }
@@ -244,7 +252,12 @@ function determine_declaration_kind(
 ): LocalVariableDeclaration["kind"] {
   // Check context for declaration type
   const kind = capture.context?.declaration_kind;
-  if (kind === "const" || kind === "let" || kind === "var" || kind === "parameter") {
+  if (
+    kind === "const" ||
+    kind === "let" ||
+    kind === "var" ||
+    kind === "parameter"
+  ) {
     return kind;
   }
   return "var"; // Default
@@ -285,40 +298,42 @@ function find_containing_scope_id(
   return best_scope_id;
 }
 
-
 /**
  * Calculate the size of a location range (for finding innermost scope)
  */
 function location_range_size(location: Location): number {
-  const lines = location.end_line - location.line;
-  const cols = location.end_column - location.column;
+  const lines = location.end_line - location.start_line;
+  const cols = location.end_column - location.start_column;
   return lines * 10000 + cols; // Weight lines more than columns
 }
 
 /**
  * Check if a scope location contains a point
  */
-function contains_location(
-  scope_loc: Location,
-  point: Location
-): boolean {
+function contains_location(scope_loc: Location, point: Location): boolean {
   // Point must be on or after scope start line
-  if (point.line < scope_loc.line) {
+  if (point.start_line < scope_loc.start_line) {
     return false;
   }
 
   // Point must be on or before scope end line
-  if (point.line > scope_loc.end_line) {
+  if (point.start_line > scope_loc.end_line) {
     return false;
   }
 
   // If on the same start line, check column boundaries
-  if (point.line === scope_loc.line && point.column < scope_loc.column) {
+  if (
+    point.start_line === scope_loc.start_line &&
+    point.start_column < scope_loc.start_column
+  ) {
     return false;
   }
 
   // If on the same end line, check column boundaries
-  if (point.line === scope_loc.end_line && point.column > scope_loc.end_column) {
+  if (
+    point.start_line === scope_loc.end_line &&
+    point.start_column > scope_loc.end_column
+  ) {
     return false;
   }
 
