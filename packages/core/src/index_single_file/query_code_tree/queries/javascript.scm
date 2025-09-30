@@ -52,13 +52,13 @@
 ; Arrow functions assigned to variables (captures assignment)
 (variable_declarator
   name: (identifier) @definition.function @assignment.variable
-  value: (arrow_function) @reference.identifier
+  value: (arrow_function) @reference.variable
 ) @assignment.variable
 
 ; Variable declarations with assignments
 (variable_declarator
   name: (identifier) @definition.variable @assignment.variable
-  value: (_) @reference.identifier
+  value: (_) @reference.variable
 ) @assignment.variable
 
 ; Variable declarations with constructor calls
@@ -66,7 +66,7 @@
   name: (identifier) @definition.variable @assignment.variable
   value: (new_expression
     constructor: (identifier) @reference.call
-  ) @reference.identifier
+  ) @reference.variable
 ) @assignment.variable
 
 ; Destructuring
@@ -274,32 +274,32 @@
 ; Method calls with receiver tracking
 (call_expression
   function: (member_expression
-    object: (_) @reference.receiver
-    property: (property_identifier) @reference.method_call
+    object: (_) @reference.variable
+    property: (property_identifier) @reference.call
   )
-) @reference.method_call.full
+) @reference.call.full
 
 ; Chained method calls (2 levels)
 (call_expression
   function: (member_expression
     object: (member_expression
-      object: (_) @reference.receiver.base
-      property: (property_identifier) @reference.chain.prop1
-    ) @reference.receiver.chain
-    property: (property_identifier) @reference.method_call.chained
+      object: (_) @reference.variable.base
+      property: (property_identifier) @reference.property.prop1
+    ) @reference.variable.chain
+    property: (property_identifier) @reference.call.chained
   )
-) @reference.method_call.chained
+) @reference.call.chained
 
 ; Deep property chains (3+ levels)
 (call_expression
   function: (member_expression
     object: (member_expression
-      object: (member_expression) @reference.receiver.deep
-      property: (property_identifier) @reference.chain.prop2
-    ) @reference.receiver.chain2
-    property: (property_identifier) @reference.method_call.deep
+      object: (member_expression) @reference.variable.deep
+      property: (property_identifier) @reference.property.prop2
+    ) @reference.variable.chain2
+    property: (property_identifier) @reference.call.deep
   )
-) @reference.method_call.deep
+) @reference.call.deep
 
 ; Constructor calls
 (new_expression
@@ -315,53 +315,53 @@
 
 ; Property access
 (member_expression
-  object: (identifier) @reference.object
+  object: (identifier) @reference.variable
   property: (property_identifier) @reference.property
 ) @reference.member_access
 
 ; Computed member access (bracket notation)
 (subscript_expression
-  object: (identifier) @reference.object
+  object: (identifier) @reference.variable
   index: (_) @reference.property.computed
 ) @reference.member_access.computed
 
 ; Optional chaining member access
 (member_expression
-  object: (identifier) @reference.object
+  object: (identifier) @reference.variable
   property: (property_identifier) @reference.property.optional
 ) @reference.member_access.optional
 
 ; Assignments (capture both sides)
 (assignment_expression
-  left: (identifier) @reference.assign.target
-  right: (_) @reference.assign.source
-) @assignment.expr
+  left: (identifier) @reference.variable.target
+  right: (_) @reference.variable.source
+) @assignment.variable
 
 (assignment_expression
   left: (member_expression
-    object: (identifier) @reference.assign.object
-    property: (property_identifier) @reference.assign.property
-  ) @reference.assign.member
-  right: (_) @reference.assign.source.member
-) @assignment.member
+    object: (identifier) @reference.variable.object
+    property: (property_identifier) @reference.property.assign
+  ) @reference.member_access.assign
+  right: (_) @reference.variable.source.member
+) @assignment.property
 
 ; Return statements
 (return_statement
-  (_) @reference.return
+  (_) @return.variable
 ) @return.function
 
 ; Update expressions
 (update_expression
-  argument: (identifier) @reference.update
+  argument: (identifier) @reference.variable.update
 )
 
 ; JSX components
 (jsx_opening_element
-  (identifier) @reference.jsx
+  (identifier) @reference.call.jsx
 )
 
 (jsx_self_closing_element
-  (identifier) @reference.jsx
+  (identifier) @reference.call.jsx
 )
 
 ; this references (important for method context)
@@ -380,9 +380,9 @@
 ; Instance method call - object is lowercase/instance
 (call_expression
   function: (member_expression
-    object: (identifier) @reference.ref
-    property: (property_identifier) @reference.method_call)
-  (#not-match? @reference.ref "^[A-Z]")) @reference.method_call
+    object: (identifier) @reference.variable
+    property: (property_identifier) @reference.call)
+  (#not-match? @reference.variable "^[A-Z]")) @reference.call
 
 ; General identifier references (catch-all)
-(identifier) @reference.identifier
+(identifier) @reference.variable
