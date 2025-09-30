@@ -44,6 +44,7 @@ function create_test_context(): ProcessingContext {
   const test_scope_id = "module:test.ts:1:0:100:0:<module>" as ScopeId;
 
   return {
+    captures: [],
     scopes: new Map(),
     scope_depths: new Map(),
     root_scope_id: test_scope_id,
