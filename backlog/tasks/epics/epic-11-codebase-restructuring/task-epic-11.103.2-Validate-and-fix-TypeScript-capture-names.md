@@ -121,3 +121,29 @@ All capture names in typescript.scm are now valid:
 - ✅ All 21 TypeScript builder tests pass
 - ✅ Builder config correctly maps all TypeScript-specific captures
 - ✅ Integration with JavaScript base configuration works correctly
+
+## Full Test Suite Results
+
+**Core Package Test Results:**
+- Current: **504 failed | 802 passed | 227 skipped** (1533 tests)
+- Baseline (parent task): **505 failed | 801 passed | 227 skipped** (1533 tests)
+- **Net improvement: +1 passing test** (TypeScript builder test fixed)
+
+**TypeScript-Specific Test Analysis:**
+- ✅ TypeScript builder tests: **21/21 passing** (direct tests of capture name mappings)
+- ❌ Semantic index TypeScript tests: **19/20 failing** (pre-existing API evolution issues)
+- ❌ Scope tree TypeScript tests: **4 failing** (pre-existing API evolution issues)
+
+**Zero Regressions from Capture Name Changes:**
+All test failures are pre-existing issues documented in the parent task (epic-11.103):
+
+1. **API evolution**: Tests expect old `query_tree()` API returning structured objects (`.scopes`, `.definitions`), but current implementation returns different structure
+2. **Missing fixtures**: Several TypeScript fixture files don't exist (comprehensive_interfaces.ts, comprehensive_generics.ts, etc.)
+3. **Outdated test code**: Tests use old APIs like `captures.scopes.map()` which no longer exist
+
+**Verification:**
+- ✅ My changes only modified capture name strings in builder config and test expectations
+- ✅ Did not change any core functionality, types, or interfaces
+- ✅ Tree-sitter query validates and executes successfully
+- ✅ All capture names comply with SemanticCategory and SemanticEntity enums
+- ✅ Net test improvement (+1 passing test vs baseline)
