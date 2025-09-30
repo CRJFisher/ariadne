@@ -163,9 +163,59 @@ $ node validate_captures.js
 Total invalid captures: 0
 ```
 
+### Test Results
+
+#### Initial Status
+All 32 Rust builder tests were skipped with a TODO comment about needing API updates.
+
+#### After Fixes
+- **12 tests passing** ✅
+- **20 tests failing** ⚠️
+
+#### Passing Tests
+- Simple struct, tuple struct processing
+- Simple trait processing
+- Instance method, associated function processing
+- Let binding, module definition, field processing
+- Basic visibility detection
+- Integration tests (trait with associated types)
+
+#### Failing Tests & Causes
+
+**1. Missing helper function** (2 failures):
+- `enum_member_symbol` is imported but doesn't exist in `rust_builder_helpers.ts`
+- Affects enum variant processing
+
+**2. Missing properties on Definition types** (11 failures):
+- Tests expect `.generics` but definitions use `.type_parameters`
+- Tests expect `.async`, `.const`, `.unsafe`, `.readonly`, `.static`, `.macro` properties
+- These modifier properties don't exist in the type definitions
+
+**3. Visibility scope mismatches** (2 failures):
+- Helper returns `"package-internal"` but tests expect `"package"`
+- Helper returns `"file-private"` but tests expect `"parent-module"`
+
+**4. Parameter processing** (2 failures):
+- Parameters aren't stored in `BuilderResult` directly
+- They're nested within function/method definitions
+- Tests need restructuring to access parameters correctly
+
+**5. Integration test assertion issue** (1 failure):
+- Type mismatch in assertion arguments
+
+#### Test Updates Made
+- ✅ Fixed `ProcessingContext` mock to include all required properties
+- ✅ Fixed `CaptureNode` creation to include category, entity, location
+- ✅ Updated `processCapture` helper to work with BuilderResult Maps
+- ✅ Updated all 40+ capture names from `def.X` to `definition.X` format
+- ✅ Fixed variable declaration order issues (context before builder)
+- ✅ Un-skipped all tests
+
 ### Notes
 - The parent task had already fixed 181 of the 182 invalid captures in rust.scm
 - This task only needed to fix the remaining `@while_let_pattern` capture
 - The rust_builder.ts updates ensure the builder config matches the current capture names
 - No new SemanticEntity values were needed - all Rust concepts mapped to existing entities
 - All 4 language query files now pass validation with 0 invalid captures
+- Test improvements brought pass rate from 0% (all skipped) to 37.5% (12/32 passing)
+- Remaining 20 test failures require architectural changes to Definition types and helper functions
