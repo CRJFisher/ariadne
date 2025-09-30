@@ -20,7 +20,7 @@ import { module_scope } from "@ariadnejs/types";
 // ============================================================================
 
 function create_test_location(
-  line: number = 1,
+        start_line: number = 1,
   column: number = 0,
   file_path: string = "test.ts"
 ): Location {

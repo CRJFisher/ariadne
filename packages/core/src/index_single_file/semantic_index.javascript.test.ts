@@ -617,7 +617,7 @@ describe("Semantic Index - JavaScript", () => {
       // The construct_target should be a Location object with file_path, line, column
       expect(constructor_ref?.construct_target).toMatchObject({
         file_path: "test.js",
-        line: expect.any(Number),
+        start_line: expect.any(Number),
         column: expect.any(Number),
       });
     });

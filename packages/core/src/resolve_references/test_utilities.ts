@@ -52,16 +52,16 @@ import type { LocalTypeInfo } from "../index_single_file/definitions/type_member
  */
 export function create_test_location(
   file_path: FilePath | string,
-  line: number = 1,
+  start_line: number = 1,
   column: number = 0,
   end_line?: number,
   end_column?: number
 ): Location {
   return {
     file_path: file_path as FilePath,
-    start_line: line,
+    start_line: start_line,
     start_column: column,
-    end_line: end_line ?? line,
+    end_line: end_line ?? start_line,
     end_column: end_column ?? column + 10,
   };
 }
@@ -87,10 +87,10 @@ export function create_test_symbol_id(
   kind: "function" | "class" | "method" | "variable",
   name: string,
   file: string = "test.ts",
-  line: number = 1,
+        start_line: number = 1,
   column: number = 0
 ): SymbolId {
-  const location = create_test_location(file, line, column);
+  const location = create_test_location(file, start_line, column);
   const symbol_name = create_test_symbol_name(name);
 
   switch (kind) {

@@ -21,7 +21,7 @@ import { detect_call_graph } from "./detect_call_graph";
 describe("detect_call_graph", () => {
   const create_location = (
     file: string,
-    line: number,
+        start_line: number,
     column: number = 0
   ): Location => ({
     file_path: file as FilePath,

@@ -77,14 +77,14 @@ import type { FunctionResolutionMap } from "../types";
  */
 function create_location(
   file: string,
-  line: number = 0,
+        start_line: number = 0,
   column: number = 0,
   end_line: number = 0,
   end_column: number = 100
 ): Location {
   return {
     file_path: file as FilePath,
-    start_line: line,
+    start_line: start_line,
     start_column: column,
     end_line,
     end_column,

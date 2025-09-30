@@ -41,14 +41,14 @@ import type { ScopeResolutionContext } from "./scope_types";
 // Helper function to create test location
 function create_location(
   file_path: string,
-  line: number,
+        start_line: number,
   column: number,
   end_line: number,
   end_column: number
 ): Location {
   return {
     file_path: file_path as FilePath,
-    start_line: line,
+    start_line: start_line,
     start_column: column,
     end_line,
     end_column,

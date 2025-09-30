@@ -355,8 +355,8 @@ describe("Scope Tree Module", () => {
             text: "func2",
             node_location: {
               ...base_location,
-              line: 5,
-              column: 20,
+        start_line: 5,
+        start_column: 20,
               end_line: 8,
             },
             modifiers: {},
@@ -367,8 +367,8 @@ describe("Scope Tree Module", () => {
             text: "func1",
             node_location: {
               ...base_location,
-              line: 5,
-              column: 10,
+        start_line: 5,
+        start_column: 10,
               end_line: 7,
             },
             modifiers: {},
@@ -784,7 +784,7 @@ describe("Scope Tree Module", () => {
             text: "func",
             node_location: {
               file_path,
-              line: -1,
+        start_line: -1,
               column: -1,
               end_line: -1,
               end_column: -1,
@@ -817,7 +817,7 @@ describe("Scope Tree Module", () => {
             text: `block_${i}`,
             node_location: {
               file_path,
-              line: i + 2,
+        start_line: i + 2,
               column: i,
               end_line: 100 - i,
               end_column: 50,
@@ -866,8 +866,8 @@ describe("Scope Tree Module", () => {
             text: "outer",
             node_location: {
               file_path,
-              line: 2,
-              column: 0,
+        start_line: 2,
+        start_column: 0,
               end_line: 15,
               end_column: 50,
             },
@@ -879,8 +879,8 @@ describe("Scope Tree Module", () => {
             text: "inner",
             node_location: {
               file_path,
-              line: 5,
-              column: 4,
+        start_line: 5,
+        start_column: 4,
               end_line: 10,
               end_column: 30,
             },
@@ -929,8 +929,8 @@ describe("Scope Tree Module", () => {
             text: `func_${i}`,
             node_location: {
               file_path,
-              line: i + 2,
-              column: 0,
+        start_line: i + 2,
+        start_column: 0,
               end_line: i + 3,
               end_column: 50,
             },
@@ -1062,8 +1062,8 @@ describe("Scope Tree Module", () => {
             text: "TestClass",
             node_location: {
               file_path: "test.ts" as FilePath,
-              line: 2,
-              column: 8,
+        start_line: 2,
+        start_column: 8,
               end_line: 10,
               end_column: 9,
             },
@@ -1075,8 +1075,8 @@ describe("Scope Tree Module", () => {
             text: "method",
             node_location: {
               file_path: "test.ts" as FilePath,
-              line: 3,
-              column: 10,
+        start_line: 3,
+        start_column: 10,
               end_line: 9,
               end_column: 11,
             },
@@ -1628,8 +1628,8 @@ describe("Scope Tree Module", () => {
         // Test finding scope for a location inside a method
         const method_location = {
           file_path,
-          line: 25, // Inside processData method
-          column: 8,
+        start_line: 25, // Inside processData method
+        start_column: 8,
           end_line: 25,
           end_column: 15,
         };

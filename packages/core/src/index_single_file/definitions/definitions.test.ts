@@ -1102,7 +1102,7 @@ describe.skip("Definitions Module", () => {
           symbol_name: "testFunction",
           node_location: {
             file_path: file_path,
-            line: -1, // Invalid line
+        start_line: -1, // Invalid line
             column: -1, // Invalid column
             // @ts-ignore - Testing invalid location data
             start_byte: -1, // Invalid byte
@@ -1619,7 +1619,7 @@ describe.skip("Definitions Module", () => {
       // Test that the function correctly finds scopes using find_containing_scope
       const out_of_scope_location = {
         ...base_location,
-        line: 1000, // Far from any defined scope
+        start_line: 1000, // Far from any defined scope
       };
 
       const captures: NormalizedCapture[] = [

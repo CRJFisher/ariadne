@@ -51,8 +51,8 @@ describe("extract_type_flow", () => {
         category: SemanticCategory.REFERENCE,
         entity: SemanticEntity.CALL,
         node_location: {
-          line: 1,
-          column: 10,
+        start_line: 1,
+        start_column: 10,
           file_path: "test.ts" as FilePath,
           end_line: 1,
           end_column: 17,
@@ -69,8 +69,8 @@ describe("extract_type_flow", () => {
     expect(flow.constructor_calls).toHaveLength(1);
     expect(flow.constructor_calls[0].class_name).toBe("MyClass");
     expect(flow.constructor_calls[0].location).toEqual({
-      line: 1,
-      column: 10,
+        start_line: 1,
+        start_column: 10,
       file_path: "test.ts" as FilePath,
       end_line: 1,
       end_column: 17,
@@ -88,8 +88,8 @@ describe("extract_type_flow", () => {
         category: SemanticCategory.ASSIGNMENT,
         entity: SemanticEntity.VARIABLE,
         node_location: {
-          line: 2,
-          column: 5,
+        start_line: 2,
+        start_column: 5,
           file_path: "test.ts" as FilePath,
           end_line: 2,
           end_column: 17,
@@ -106,8 +106,8 @@ describe("extract_type_flow", () => {
     expect(flow.assignments).toHaveLength(1);
     expect(flow.assignments[0].target).toBe("variableName");
     expect(flow.assignments[0].location).toEqual({
-      line: 2,
-      column: 5,
+        start_line: 2,
+        start_column: 5,
       file_path: "test.ts" as FilePath,
       end_line: 2,
       end_column: 17,
@@ -125,8 +125,8 @@ describe("extract_type_flow", () => {
         category: SemanticCategory.RETURN,
         entity: SemanticEntity.VARIABLE,
         node_location: {
-          line: 3,
-          column: 8,
+        start_line: 3,
+        start_column: 8,
           file_path: "test.ts" as FilePath,
           end_line: 3,
           end_column: 19,
@@ -142,8 +142,8 @@ describe("extract_type_flow", () => {
     // Should track the return statement
     expect(flow.returns).toHaveLength(1);
     expect(flow.returns[0].location).toEqual({
-      line: 3,
-      column: 8,
+        start_line: 3,
+        start_column: 8,
       file_path: "test.ts" as FilePath,
       end_line: 3,
       end_column: 19,
@@ -161,8 +161,8 @@ describe("extract_type_flow", () => {
         category: SemanticCategory.REFERENCE,
         entity: SemanticEntity.CALL,
         node_location: {
-          line: 4,
-          column: 0,
+        start_line: 4,
+        start_column: 0,
           file_path: "test.ts" as FilePath,
           end_line: 4,
           end_column: 12,
@@ -186,8 +186,8 @@ describe("extract_type_flow", () => {
         category: SemanticCategory.REFERENCE,
         entity: SemanticEntity.CALL,
         node_location: {
-          line: 1,
-          column: 10,
+        start_line: 1,
+        start_column: 10,
           file_path: "test.ts" as FilePath,
           end_line: 1,
           end_column: 17,
@@ -200,8 +200,8 @@ describe("extract_type_flow", () => {
         category: SemanticCategory.ASSIGNMENT,
         entity: SemanticEntity.VARIABLE,
         node_location: {
-          line: 2,
-          column: 5,
+        start_line: 2,
+        start_column: 5,
           file_path: "test.ts" as FilePath,
           end_line: 2,
           end_column: 17,
@@ -214,8 +214,8 @@ describe("extract_type_flow", () => {
         category: SemanticCategory.RETURN,
         entity: SemanticEntity.VARIABLE,
         node_location: {
-          line: 3,
-          column: 8,
+        start_line: 3,
+        start_column: 8,
           file_path: "test.ts" as FilePath,
           end_line: 3,
           end_column: 19,
@@ -241,8 +241,8 @@ describe("extract_type_flow", () => {
         category: SemanticCategory.DEFINITION,
         entity: SemanticEntity.CLASS,
         node_location: {
-          line: 1,
-          column: 0,
+        start_line: 1,
+        start_column: 0,
           file_path: "test.ts" as FilePath,
           end_line: 1,
           end_column: 9,
@@ -320,8 +320,8 @@ describe("extract_type_flow", () => {
           category: SemanticCategory.RETURN,
           entity: SemanticEntity.VARIABLE,
           node_location: {
-            line: 15,
-            column: 4,
+        start_line: 15,
+        start_column: 4,
             file_path: "test.ts" as FilePath,
             end_line: 15,
             end_column: 15,
@@ -344,8 +344,8 @@ describe("extract_type_flow", () => {
           category: SemanticCategory.REFERENCE,
           entity: SemanticEntity.CALL,
           node_location: {
-            line: 1,
-            column: 0,
+        start_line: 1,
+        start_column: 0,
             file_path: "test.ts" as FilePath,
             end_line: 1,
             end_column: 13,
@@ -370,8 +370,8 @@ describe("extract_type_flow", () => {
           category: SemanticCategory.REFERENCE,
           entity: SemanticEntity.CALL,
           node_location: {
-            line: 1,
-            column: 0,
+        start_line: 1,
+        start_column: 0,
             file_path: "test.ts" as FilePath,
             end_line: 1,
             end_column: 7,
@@ -384,8 +384,8 @@ describe("extract_type_flow", () => {
           category: SemanticCategory.REFERENCE,
           entity: SemanticEntity.CALL,
           node_location: {
-            line: 2,
-            column: 0,
+        start_line: 2,
+        start_column: 0,
             file_path: "test.ts" as FilePath,
             end_line: 2,
             end_column: 10,
@@ -412,8 +412,8 @@ describe("extract_type_flow", () => {
           category: SemanticCategory.REFERENCE,
           entity: SemanticEntity.CALL,
           node_location: {
-            line: 1,
-            column: 10,
+        start_line: 1,
+        start_column: 10,
             file_path: "test.ts" as FilePath,
             end_line: 1,
             end_column: 16,
@@ -427,8 +427,8 @@ describe("extract_type_flow", () => {
           category: SemanticCategory.ASSIGNMENT,
           entity: SemanticEntity.VARIABLE,
           node_location: {
-            line: 2,
-            column: 0,
+        start_line: 2,
+        start_column: 0,
             file_path: "test.ts" as FilePath,
             end_line: 2,
             end_column: 4,
@@ -442,8 +442,8 @@ describe("extract_type_flow", () => {
           category: SemanticCategory.ASSIGNMENT,
           entity: SemanticEntity.VARIABLE,
           node_location: {
-            line: 3,
-            column: 0,
+        start_line: 3,
+        start_column: 0,
             file_path: "test.ts" as FilePath,
             end_line: 3,
             end_column: 6,
@@ -457,8 +457,8 @@ describe("extract_type_flow", () => {
           category: SemanticCategory.RETURN,
           entity: SemanticEntity.VARIABLE,
           node_location: {
-            line: 4,
-            column: 2,
+        start_line: 4,
+        start_column: 2,
             file_path: "test.ts" as FilePath,
             end_line: 4,
             end_column: 6,
@@ -505,8 +505,8 @@ describe("extract_type_flow", () => {
           category: SemanticCategory.REFERENCE,
           entity: SemanticEntity.CALL,
           node_location: {
-            line: 5,
-            column: 0,
+        start_line: 5,
+        start_column: 0,
             file_path: "test.ts" as FilePath,
             end_line: 5,
             end_column: 9,

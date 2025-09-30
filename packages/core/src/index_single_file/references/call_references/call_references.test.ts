@@ -30,7 +30,7 @@ import { CallReference } from "@ariadnejs/types/src/call_chains";
 vi.mock("../../../utils/node_utils", () => ({
   node_to_location: vi.fn((node, file_path) => ({
     file_path,
-    line: node.start_line || 1,
+        start_line: node.start_line || 1,
     column: node.start_column || 0,
     end_line: node.end_line || 1,
     end_column: node.end_column || 10,

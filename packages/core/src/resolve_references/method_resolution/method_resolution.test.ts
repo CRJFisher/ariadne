@@ -95,8 +95,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -243,8 +243,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -378,8 +378,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -505,8 +505,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -595,8 +595,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -713,8 +713,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -794,8 +794,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -895,8 +895,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -1030,8 +1030,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -1107,8 +1107,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -1230,8 +1230,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -1315,8 +1315,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -1376,8 +1376,8 @@ describe("method_resolution", () => {
       const file_path2 = "test2.ts" as FilePath;
       const test_location = {
         file_path: file_path2,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -1465,8 +1465,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -1516,8 +1516,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -1617,8 +1617,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -1686,8 +1686,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -1793,8 +1793,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -1882,8 +1882,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -1945,8 +1945,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -2025,8 +2025,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -2105,8 +2105,8 @@ describe("method_resolution", () => {
             {
               location: {
                 file_path,
-                line: 12,
-                column: 5,
+        start_line: 12,
+        start_column: 5,
                 end_line: 12,
                 end_column: 10,
               },
@@ -2145,8 +2145,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -2204,8 +2204,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -2277,8 +2277,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -2341,22 +2341,22 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const base_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 5,
         end_column: 1,
       };
       const derived1_location = {
         file_path,
-        line: 10,
-        column: 1,
+        start_line: 10,
+        start_column: 1,
         end_line: 15,
         end_column: 1,
       };
       const derived2_location = {
         file_path,
-        line: 20,
-        column: 1,
+        start_line: 20,
+        start_column: 1,
         end_line: 25,
         end_column: 1,
       };
@@ -2455,8 +2455,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -2517,8 +2517,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -2582,8 +2582,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -2643,8 +2643,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -2679,8 +2679,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -2723,8 +2723,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -2777,8 +2777,8 @@ describe("method_resolution", () => {
       const file_path = "test.ts" as FilePath;
       const test_location = {
         file_path,
-        line: 1,
-        column: 1,
+        start_line: 1,
+        start_column: 1,
         end_line: 1,
         end_column: 10,
       };
@@ -2890,8 +2890,8 @@ describe("method_resolution", () => {
         const file_path = "test.ts" as FilePath;
         const test_location = {
           file_path,
-          line: 1,
-          column: 1,
+        start_line: 1,
+        start_column: 1,
           end_line: 1,
           end_column: 10,
         };
@@ -3083,8 +3083,8 @@ describe("method_resolution", () => {
         const file_path = "test.ts" as FilePath;
         const test_location = {
           file_path,
-          line: 1,
-          column: 1,
+        start_line: 1,
+        start_column: 1,
           end_line: 1,
           end_column: 10,
         };
@@ -3208,8 +3208,8 @@ describe("method_resolution", () => {
         const consumer_file = "consumer.ts" as FilePath;
         const test_location = {
           file_path: enum_file,
-          line: 1,
-          column: 1,
+        start_line: 1,
+        start_column: 1,
           end_line: 1,
           end_column: 10,
         };
@@ -3376,8 +3376,8 @@ describe("method_resolution", () => {
         const file_path = "test.ts" as FilePath;
         const test_location = {
           file_path,
-          line: 1,
-          column: 1,
+        start_line: 1,
+        start_column: 1,
           end_line: 1,
           end_column: 10,
         };
@@ -3500,8 +3500,8 @@ describe("method_resolution", () => {
         const file_path = "test.ts" as FilePath;
         const test_location = {
           file_path,
-          line: 1,
-          column: 1,
+        start_line: 1,
+        start_column: 1,
           end_line: 1,
           end_column: 10,
         };
@@ -3621,8 +3621,8 @@ describe("method_resolution", () => {
         const file_path = "test.ts" as FilePath;
         const test_location = {
           file_path,
-          line: 1,
-          column: 1,
+        start_line: 1,
+        start_column: 1,
           end_line: 1,
           end_column: 10,
         };
@@ -3745,8 +3745,8 @@ describe("method_resolution", () => {
         const consumer_file = "consumer.ts" as FilePath;
         const test_location = {
           file_path: enum_file,
-          line: 1,
-          column: 1,
+        start_line: 1,
+        start_column: 1,
           end_line: 1,
           end_column: 10,
         };
@@ -3924,8 +3924,8 @@ describe("method_resolution", () => {
         const file_path = "test.ts" as FilePath;
         const test_location = {
           file_path,
-          line: 1,
-          column: 1,
+        start_line: 1,
+        start_column: 1,
           end_line: 1,
           end_column: 10,
         };
@@ -4103,8 +4103,8 @@ describe("method_resolution", () => {
         const file_path = "test.ts" as FilePath;
         const test_location = {
           file_path,
-          line: 1,
-          column: 1,
+        start_line: 1,
+        start_column: 1,
           end_line: 1,
           end_column: 10,
         };

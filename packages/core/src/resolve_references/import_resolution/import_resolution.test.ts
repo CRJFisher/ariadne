@@ -215,8 +215,8 @@ describe("Import Resolution", () => {
             imports: [{ name: "missing" as SymbolName, is_type_only: false }],
             location: {
               file_path: "/src/main.ts" as FilePath,
-              line: 3,
-              column: 0,
+        start_line: 3,
+        start_column: 0,
               end_line: 3,
               end_column: 0,
             },

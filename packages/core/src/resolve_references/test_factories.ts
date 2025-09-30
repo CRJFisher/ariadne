@@ -53,16 +53,16 @@ import type {
  */
 export function mock_location(
   file_path: FilePath,
-  line: number = 1,
+  start_line: number = 1,
   column: number = 0,
   end_line?: number,
   end_column?: number
 ): Location {
   return {
     file_path,
-    start_line: line,
+    start_line: start_line,
     start_column: column,
-    end_line: end_line ?? line,
+    end_line: end_line ?? start_line,
     end_column: end_column ?? column + 1,
   };
 }
@@ -72,10 +72,10 @@ export function mock_location(
  */
 export function mock_location_key(
   file_path: FilePath,
-  line: number = 1,
+  start_line: number = 1,
   column: number = 0
 ): LocationKey {
-  return location_key(mock_location(file_path, line, column));
+  return location_key(mock_location(file_path, start_line, column));
 }
 
 // ============================================================================

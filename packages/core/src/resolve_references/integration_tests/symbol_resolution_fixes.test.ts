@@ -84,8 +84,8 @@ describe("Symbol Resolution Fixes - Integration Tests", () => {
         source: "" as FilePath, // Simulate malformed import with empty source
         location: {
           file_path: "src/main.ts" as FilePath,
-          line: 1,
-          column: 0,
+        start_line: 1,
+        start_column: 0,
           end_line: 1,
           end_column: 30,
         },

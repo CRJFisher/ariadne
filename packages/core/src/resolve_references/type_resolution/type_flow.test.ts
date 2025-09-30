@@ -35,8 +35,8 @@ describe("analyze_type_flow", () => {
       name: "MyClass" as SymbolName,
       kind: "class",
       definition_location: {
-        line: 1,
-        column: 0,
+        start_line: 1,
+        start_column: 0,
         file_path: testFilePath,
         end_line: 1,
         end_column: 7,
@@ -236,8 +236,8 @@ describe("analyze_type_flow", () => {
               name: "ImportedClass" as SymbolName,
               kind: "class",
               definition_location: {
-                line: 1,
-                column: 0,
+        start_line: 1,
+        start_column: 0,
                 file_path: importedFilePath,
                 end_line: 1,
                 end_column: 13,
@@ -472,8 +472,8 @@ describe("TypeFlowGraph", () => {
     const source = {
       kind: "constructor" as const,
       location: {
-        line: 1,
-        column: 0,
+        start_line: 1,
+        start_column: 0,
         file_path: "test.ts" as FilePath,
         end_line: 1,
         end_column: 7,
@@ -525,8 +525,8 @@ describe("TypeFlowGraph", () => {
     const source1 = {
       kind: "constructor" as const,
       location: {
-        line: 1,
-        column: 0,
+        start_line: 1,
+        start_column: 0,
         file_path: "test.ts" as FilePath,
         end_line: 1,
         end_column: 7,
@@ -535,8 +535,8 @@ describe("TypeFlowGraph", () => {
     const source2 = {
       kind: "constructor" as const,
       location: {
-        line: 2,
-        column: 0,
+        start_line: 2,
+        start_column: 0,
         file_path: "test.ts" as FilePath,
         end_line: 2,
         end_column: 7,

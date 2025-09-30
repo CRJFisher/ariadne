@@ -769,7 +769,7 @@ describe.skip("Consolidated Type Resolution Pipeline (INTEGRATION TESTS - interf
 // Helper function to create a test location
 function create_location(
   file: FilePath,
-  line: number,
+        start_line: number,
   column: number
 ): Location {
   return {

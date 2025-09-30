@@ -26,15 +26,15 @@ import {
 function create_call_ref(
   name: SymbolName,
   file_path: FilePath,
-  line: number,
+  start_line: number,
   scope_id: ScopeId
 ): CallReference {
   return {
     location: {
       file_path,
-      start_line: line,
+      start_line: start_line,
       start_column: 5,
-      end_line: line,
+      end_line: start_line,
       end_column: 10,
     },
     name,
@@ -49,7 +49,7 @@ function create_function_def(
   name: SymbolName,
   scope_id: ScopeId,
   file_path: FilePath,
-  line: number
+        start_line: number
 ): SymbolDefinition {
   return {
     id,
@@ -57,9 +57,9 @@ function create_function_def(
     kind: "function",
     location: {
       file_path,
-      start_line: line,
+      start_line: start_line,
       start_column: 10,
-      end_line: line,
+      end_line: start_line,
       end_column: 20,
     },
     scope_id,

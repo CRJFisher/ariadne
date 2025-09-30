@@ -594,7 +594,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
 
   // Parameters
   [
-    "definition.param",
+    "definition.parameter",
     {
       process: (
         capture: CaptureNode,
@@ -617,54 +617,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   ],
 
   [
-    "definition.param.default",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const param_id = create_parameter_id(capture);
-        const parent_id = find_containing_callable(capture);
-
-        builder.add_parameter_to_callable(parent_id, {
-          symbol_id: param_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          type: extract_parameter_type(capture.node),
-          default_value: extract_default_value(capture.node),
-          optional: true,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.param.typed",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const param_id = create_parameter_id(capture);
-        const parent_id = find_containing_callable(capture);
-
-        builder.add_parameter_to_callable(parent_id, {
-          symbol_id: param_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          type: extract_parameter_type(capture.node),
-          default_value: extract_default_value(capture.node),
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.param.typed.default",
+    "definition.parameter.default",
     {
       process: (
         capture: CaptureNode,
@@ -688,7 +641,54 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   ],
 
   [
-    "definition.param.args",
+    "definition.parameter.typed",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const param_id = create_parameter_id(capture);
+        const parent_id = find_containing_callable(capture);
+
+        builder.add_parameter_to_callable(parent_id, {
+          symbol_id: param_id,
+          name: capture.text,
+          location: capture.location,
+          scope_id: context.get_scope_id(capture.location),
+          type: extract_parameter_type(capture.node),
+          default_value: extract_default_value(capture.node),
+        });
+      },
+    },
+  ],
+
+  [
+    "definition.parameter.typed.default",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const param_id = create_parameter_id(capture);
+        const parent_id = find_containing_callable(capture);
+
+        builder.add_parameter_to_callable(parent_id, {
+          symbol_id: param_id,
+          name: capture.text,
+          location: capture.location,
+          scope_id: context.get_scope_id(capture.location),
+          type: extract_parameter_type(capture.node),
+          default_value: extract_default_value(capture.node),
+          optional: true,
+        });
+      },
+    },
+  ],
+
+  [
+    "definition.parameter.args",
     {
       process: (
         capture: CaptureNode,
@@ -710,7 +710,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   ],
 
   [
-    "definition.param.kwargs",
+    "definition.parameter.kwargs",
     {
       process: (
         capture: CaptureNode,

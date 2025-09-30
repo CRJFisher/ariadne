@@ -22,13 +22,13 @@ describe("Type Registry", () => {
   // Test data setup
   const create_location = (
     file: string,
-    line: number = 0,
+        start_line: number = 0,
     column: number = 0,
     end_line: number = 0,
     end_column: number = 100
   ): Location => ({
     file_path: file as FilePath,
-    start_line: line,
+    start_line: start_line,
     start_column: column,
     end_line,
     end_column,
@@ -40,12 +40,12 @@ describe("Type Registry", () => {
     file: string,
     extends_names?: SymbolName[],
     implements_names?: SymbolName[],
-    line: number = 1,
+        start_line: number = 1,
     column: number = 0
   ): LocalTypeDefinition => ({
     name: name as SymbolName,
     kind,
-    location: create_location(file, line, column, line, column + 100),
+    location: create_location(file, start_line, column, start_line, column + 100),
     file_path: file as FilePath,
     direct_members: new Map(),
     extends_names,

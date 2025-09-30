@@ -74,7 +74,7 @@ describe("extract_type_tracking", () => {
           entity: SemanticEntity.TYPE_ANNOTATION,
           node_location: {
             ...mock_location,
-            line: 2,
+        start_line: 2,
             end_line: 2,
           },
           context: {
@@ -150,7 +150,7 @@ describe("extract_type_tracking", () => {
           entity: SemanticEntity.TYPE_ANNOTATION,
           node_location: {
             ...mock_location,
-            line: 2,
+        start_line: 2,
             end_line: 2,
           },
           context: {
@@ -195,7 +195,7 @@ describe("extract_type_tracking", () => {
           entity: SemanticEntity.VARIABLE,
           node_location: {
             ...mock_location,
-            line: 2,
+        start_line: 2,
             end_line: 2,
           },
           context: {
@@ -299,7 +299,7 @@ describe("extract_type_tracking", () => {
           entity: SemanticEntity.VARIABLE,
           node_location: {
             ...mock_location,
-            line: 2,
+        start_line: 2,
             end_line: 2,
           },
           context: {
@@ -413,7 +413,7 @@ describe("extract_type_tracking", () => {
           entity: SemanticEntity.VARIABLE,
           node_location: {
             ...mock_location,
-            line: 2,
+        start_line: 2,
             end_line: 2,
           },
           context: {
@@ -510,7 +510,7 @@ describe("extract_type_tracking", () => {
           entity: SemanticEntity.TYPE_ANNOTATION,
           node_location: {
             ...mock_location,
-            line: 4, // Inside inner scope
+        start_line: 4, // Inside inner scope
           },
           context: {
             annotated_var_name: "innerVar",

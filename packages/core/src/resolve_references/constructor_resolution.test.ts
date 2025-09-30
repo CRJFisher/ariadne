@@ -26,7 +26,7 @@ import type { LocalTypeFlowData } from "../index_single_file/references/type_flo
 
 function create_location(
   file_path: FilePath,
-  line: number,
+        start_line: number,
   column: number
 ): Location {
   return {

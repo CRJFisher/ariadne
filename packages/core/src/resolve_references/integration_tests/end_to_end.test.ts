@@ -152,14 +152,14 @@ function create_symbol_id(
 
 function create_location(
   file_path: FilePath,
-  line: number,
+        start_line: number,
   column: number
 ): Location {
   return {
     file_path,
-    start_line: line,
+    start_line: start_line,
     start_column: column,
-    end_line: line,
+    end_line: start_line,
     end_column: column + 10,
   };
 }

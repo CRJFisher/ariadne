@@ -30,7 +30,7 @@ import { create_mock_node } from "../../test_utils";
 vi.mock("../../../utils/node_utils", () => ({
   node_to_location: vi.fn((node, file_path) => ({
     file_path,
-    line: node.start_line || 1,
+        start_line: node.start_line || 1,
     column: node.start_column || 0,
     end_line: node.end_line || 1,
     end_column: node.end_column || 10,
@@ -1392,8 +1392,8 @@ describe("Member Access References", () => {
           text: "myMethod",
           node_location: {
             ...mockLocation,
-            line: 2,
-            column: 0,
+        start_line: 2,
+        start_column: 0,
           },
           modifiers: {},
           context: {
@@ -1969,7 +1969,7 @@ describe("Member Access References", () => {
           text: "0",
           node_location: {
             ...mockLocation,
-            line: 2,
+        start_line: 2,
           },
           modifiers: {},
           context: {
