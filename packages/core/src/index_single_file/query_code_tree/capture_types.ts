@@ -9,6 +9,7 @@ export {
 } from "./scope_processor";
 
 import type { SyntaxNode } from "tree-sitter";
+import type { SemanticCategory, SemanticEntity } from "./scope_processor";
 
 /**
  * Mapping configuration for a capture
