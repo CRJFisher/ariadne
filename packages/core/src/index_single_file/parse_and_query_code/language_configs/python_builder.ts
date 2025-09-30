@@ -1,15 +1,4 @@
-/**
- * Python language configuration using builder pattern
- *
- * Handles Python-specific patterns:
- * - Classes with __init__, methods, class methods, static methods
- * - Functions including async functions and lambda
- * - Decorators (@decorator syntax)
- * - Properties (@property, @setter, @getter)
- * - Imports (from X import Y, import X as Y)
- * - Type hints (function annotations, variable annotations)
- */
-
+// Python language configuration using builder pattern
 import type { SyntaxNode } from "tree-sitter";
 import type {
   SymbolId,
@@ -30,10 +19,6 @@ import {
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
 import type { ProcessingContext, RawCapture } from "../scope_processor";
 
-// ============================================================================
-// Types
-// ============================================================================
-
 export type ProcessFunction = (
   capture: RawCapture,
   builder: DefinitionBuilder,
@@ -42,13 +27,7 @@ export type ProcessFunction = (
 
 export type LanguageBuilderConfig = Map<string, { process: ProcessFunction }>;
 
-// ============================================================================
-// Helper Functions for Python
-// ============================================================================
-
-/**
- * Extract location from a tree-sitter node
- */
+// Helper Functions
 function extract_location(node: SyntaxNode): Location {
   return {
     file_path: "" as any, // Will be filled by context
@@ -59,70 +38,46 @@ function extract_location(node: SyntaxNode): Location {
   };
 }
 
-/**
- * Extract symbol name from a capture
- */
 function extract_symbol_name(capture: RawCapture): SymbolName {
   return (capture.text || capture.node.text || "unknown") as SymbolName;
 }
 
-/**
- * Create a class symbol ID
- */
 function create_class_id(capture: RawCapture): SymbolId {
   const name = extract_symbol_name(capture);
   const location = extract_location(capture.node);
   return class_symbol(name, location);
 }
 
-/**
- * Create a method symbol ID
- */
 function create_method_id(capture: RawCapture, class_name?: SymbolName): SymbolId {
   const name = extract_symbol_name(capture);
   const location = extract_location(capture.node);
   return method_symbol(name, location);
 }
 
-/**
- * Create a function symbol ID
- */
 function create_function_id(capture: RawCapture): SymbolId {
   const name = extract_symbol_name(capture);
   const location = extract_location(capture.node);
   return function_symbol(name, location);
 }
 
-/**
- * Create a variable symbol ID
- */
 function create_variable_id(capture: RawCapture): SymbolId {
   const name = extract_symbol_name(capture);
   const location = extract_location(capture.node);
   return variable_symbol(name, location);
 }
 
-/**
- * Create a parameter symbol ID
- */
 function create_parameter_id(capture: RawCapture): SymbolId {
   const name = extract_symbol_name(capture);
   const location = extract_location(capture.node);
   return parameter_symbol(name, location);
 }
 
-/**
- * Create a property symbol ID
- */
 function create_property_id(capture: RawCapture): SymbolId {
   const name = extract_symbol_name(capture);
   const location = extract_location(capture.node);
   return property_symbol(name, location);
 }
 
-/**
- * Find containing class by traversing up the AST
- */
 function find_containing_class(capture: RawCapture): SymbolId | undefined {
   let node = capture.node;
 
@@ -140,9 +95,6 @@ function find_containing_class(capture: RawCapture): SymbolId | undefined {
   return undefined;
 }
 
-/**
- * Find containing callable (function/method)
- */
 function find_containing_callable(capture: RawCapture): SymbolId {
   let node = capture.node;
 
@@ -170,9 +122,6 @@ function find_containing_callable(capture: RawCapture): SymbolId {
   return function_symbol("anonymous" as SymbolName, extract_location(capture.node));
 }
 
-/**
- * Check if a method has a specific decorator
- */
 function has_decorator(node: SyntaxNode, decorator_name: string): boolean {
   const parent = node.parent;
   if (!parent || parent.type !== "function_definition") return false;
@@ -193,23 +142,14 @@ function has_decorator(node: SyntaxNode, decorator_name: string): boolean {
   });
 }
 
-/**
- * Check if a name is a magic method/attribute
- */
 function is_magic_name(name: string): boolean {
   return name.startsWith("__") && name.endsWith("__");
 }
 
-/**
- * Check if a name is private by Python convention
- */
 function is_private_name(name: string): boolean {
   return name.startsWith("_") && !is_magic_name(name);
 }
 
-/**
- * Extract decorator names from a function/method
- */
 function extract_decorators(node: SyntaxNode): SymbolName[] {
   const decorators: SymbolName[] = [];
 
@@ -228,9 +168,6 @@ function extract_decorators(node: SyntaxNode): SymbolName[] {
   return decorators;
 }
 
-/**
- * Determine availability based on Python conventions
- */
 function determine_availability(name: string): SymbolAvailability {
   // Private members (start with _)
   if (is_private_name(name)) {
@@ -241,9 +178,6 @@ function determine_availability(name: string): SymbolAvailability {
   return { scope: "public" };
 }
 
-/**
- * Extract return type from function/method node (type annotation)
- */
 function extract_return_type(node: SyntaxNode): SymbolName | undefined {
   const returnType = node.childForFieldName?.('return_type');
   if (returnType) {
@@ -254,9 +188,6 @@ function extract_return_type(node: SyntaxNode): SymbolName | undefined {
   return undefined;
 }
 
-/**
- * Extract parameter type annotation
- */
 function extract_parameter_type(node: SyntaxNode): SymbolName | undefined {
   // Look for type annotation in parameter node
   const typeNode = node.childForFieldName?.('annotation');
@@ -266,9 +197,6 @@ function extract_parameter_type(node: SyntaxNode): SymbolName | undefined {
   return undefined;
 }
 
-/**
- * Extract default value from parameter
- */
 function extract_default_value(node: SyntaxNode): string | undefined {
   const defaultNode = node.childForFieldName?.('default');
   if (defaultNode) {
@@ -277,9 +205,6 @@ function extract_default_value(node: SyntaxNode): string | undefined {
   return undefined;
 }
 
-/**
- * Extract type annotation from variable
- */
 function extract_type_annotation(node: SyntaxNode): SymbolName | undefined {
   // Look for type annotation in assignment
   const parent = node.parent;
@@ -292,9 +217,6 @@ function extract_type_annotation(node: SyntaxNode): SymbolName | undefined {
   return undefined;
 }
 
-/**
- * Extract initial value from variable
- */
 function extract_initial_value(node: SyntaxNode): string | undefined {
   const parent = node.parent;
   if (parent && parent.type === 'assignment') {
@@ -306,9 +228,6 @@ function extract_initial_value(node: SyntaxNode): string | undefined {
   return undefined;
 }
 
-/**
- * Extract base classes from class definition
- */
 function extract_extends(node: SyntaxNode): SymbolName[] {
   const bases: SymbolName[] = [];
   const superclasses = node.childForFieldName?.('superclasses');
@@ -327,9 +246,6 @@ function extract_extends(node: SyntaxNode): SymbolName[] {
   return bases;
 }
 
-/**
- * Extract import path from import statement
- */
 function extract_import_path(node: SyntaxNode): ModulePath {
   // Look for dotted_name or module name
   const moduleNode = node.childForFieldName?.('module') ||
@@ -340,17 +256,11 @@ function extract_import_path(node: SyntaxNode): ModulePath {
   return "" as ModulePath;
 }
 
-/**
- * Check if function is async
- */
 function is_async_function(node: SyntaxNode): boolean {
   // Check for async keyword
   return node.children?.some(child => child.type === 'async' || child.text === 'async') || false;
 }
 
-/**
- * Determine if method is static, class method, or instance method
- */
 function determine_method_type(node: SyntaxNode): { static?: boolean, abstract?: boolean } {
   const decorators = extract_decorators(node);
 
@@ -366,15 +276,8 @@ function determine_method_type(node: SyntaxNode): { static?: boolean, abstract?:
   return {};
 }
 
-// ============================================================================
-// Python Builder Configuration
-// ============================================================================
-
 export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
-  // ============================================================================
-  // CLASSES
-  // ============================================================================
-
+  // Classes
   ["def.class", {
     process: (capture: RawCapture, builder: DefinitionBuilder, context: ProcessingContext) => {
       const class_id = create_class_id(capture);
@@ -391,10 +294,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
     }
   }],
 
-  // ============================================================================
-  // METHODS
-  // ============================================================================
-
+  // Methods
   ["def.method", {
     process: (capture: RawCapture, builder: DefinitionBuilder, context: ProcessingContext) => {
       const method_id = create_method_id(capture);
@@ -493,10 +393,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
     }
   }],
 
-  // ============================================================================
-  // PROPERTIES
-  // ============================================================================
-
+  // Properties
   ["def.property", {
     process: (capture: RawCapture, builder: DefinitionBuilder, context: ProcessingContext) => {
       const prop_id = create_property_id(capture);
@@ -536,10 +433,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
     }
   }],
 
-  // ============================================================================
-  // FUNCTIONS
-  // ============================================================================
-
+  // Functions
   ["def.function", {
     process: (capture: RawCapture, builder: DefinitionBuilder, context: ProcessingContext) => {
       const func_id = create_function_id(capture);
@@ -585,10 +479,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
     }
   }],
 
-  // ============================================================================
-  // PARAMETERS
-  // ============================================================================
-
+  // Parameters
   ["def.param", {
     process: (capture: RawCapture, builder: DefinitionBuilder, context: ProcessingContext) => {
       const param_id = create_parameter_id(capture);
@@ -685,10 +576,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
     }
   }],
 
-  // ============================================================================
-  // VARIABLES
-  // ============================================================================
-
+  // Variables
   ["def.variable", {
     process: (capture: RawCapture, builder: DefinitionBuilder, context: ProcessingContext) => {
       const var_id = create_variable_id(capture);
@@ -871,10 +759,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
     }
   }],
 
-  // ============================================================================
-  // IMPORTS
-  // ============================================================================
-
+  // Imports
   ["import.named", {
     process: (capture: RawCapture, builder: DefinitionBuilder, context: ProcessingContext) => {
       const import_id = create_variable_id(capture);
@@ -1007,15 +892,4 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
     }
   }],
 
-  // ============================================================================
-  // Note: The following capture types are not definitions, so they're not included:
-  // - Exports (Python doesn't have explicit exports)
-  // - References (ref.*)
-  // - Assignments (assign.*)
-  // - Returns (ref.return, ref.yield)
-  // - Type annotations (type.*, param.type)
-  // - Modifiers (method.static, etc.)
-  // - Composite captures
-  // These would be handled by a separate ReferenceBuilder if needed
-  // ============================================================================
 ]);

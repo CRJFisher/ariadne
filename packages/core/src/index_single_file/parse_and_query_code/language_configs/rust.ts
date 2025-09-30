@@ -1,16 +1,13 @@
 /**
- * Rust capture mapping configuration
+ * Rust language configuration using builder pattern
  *
  * Handles Rust's unique module system, ownership semantics, and type system
  */
 
-import { type LanguageCaptureConfig } from "../capture_types";
-import { RUST_CORE_MAPPINGS } from "./rust_core";
-import { RUST_PATTERN_MAPPINGS } from "./rust_patterns";
-import { RUST_FUNCTION_MAPPINGS } from "./rust_functions";
+import { RUST_BUILDER_CONFIG } from "./rust_builder";
 
 /**
- * Map Rust tree-sitter captures to normalized semantic concepts
+ * Export the builder configuration for Rust
  *
  * Key Rust concepts handled:
  * - Complex visibility system (pub, pub(crate), pub(super), pub(in path))
@@ -22,8 +19,8 @@ import { RUST_FUNCTION_MAPPINGS } from "./rust_functions";
  * - Pattern matching constructs
  * - Async/await and function/closure patterns
  */
-export const RUST_CAPTURE_CONFIG: LanguageCaptureConfig = new Map([
-  ...RUST_CORE_MAPPINGS,
-  ...RUST_PATTERN_MAPPINGS,
-  ...RUST_FUNCTION_MAPPINGS,
-]);
+export { RUST_BUILDER_CONFIG } from "./rust_builder";
+export type { LanguageBuilderConfig } from "./rust_builder";
+
+// For backwards compatibility during migration
+export const RUST_CAPTURE_CONFIG = RUST_BUILDER_CONFIG;
