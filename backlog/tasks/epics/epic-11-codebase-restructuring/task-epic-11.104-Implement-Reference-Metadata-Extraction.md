@@ -1,11 +1,12 @@
 # Task Epic 11.104: Implement Reference Metadata Extraction
 
-**Status:** Phase 1 Complete (Tasks 104.1-104.2) - Ready for Phase 2
+**Status:** Phase 2 In Progress (Task 104.3.1 Complete) - Ready for Task 104.3.3
 **Priority:** High
 **Estimated Effort:** 12-16 hours
 **Dependencies:** task-epic-11.103 (capture name validation complete)
 **Started:** 2025-09-30
 **Phase 1 Completed:** 2025-09-30
+**Task 104.3.1 Completed:** 2025-10-01
 
 ## Phase 1 Summary (Foundation)
 
@@ -23,10 +24,10 @@
 - No regressions introduced - all previously passing tests still pass
 
 📋 **Next Steps:**
-- Task 104.3: Implement JavaScript/TypeScript metadata extractors
+- Task 104.3.3: Wire JavaScript extractors into semantic_index
+- Task 104.3.4-104.3.6: Fix JavaScript/TypeScript integration tests
 - Task 104.4: Implement Python metadata extractors
 - Task 104.5: Implement Rust metadata extractors
-- Enable 7 skipped tests once extractors are implemented
 
 ## Overview
 
@@ -130,8 +131,8 @@ Update `semantic_index.ts` to:
 1. **104.1** - ✅ Create metadata extractor interface and types (Completed 2025-09-30)
 2. **104.2** - ✅ Refactor reference_builder to accept extractors (Completed 2025-09-30)
 3. **104.3** - Implement JavaScript/TypeScript metadata extraction
-   - 104.3.1 - Implement javascript_metadata.ts
-   - 104.3.2 - Test javascript_metadata.ts
+   - 104.3.1 - ✅ Implement javascript_metadata.ts (Completed 2025-10-01)
+   - 104.3.2 - ✅ Test javascript_metadata.ts (Completed 2025-10-01)
    - 104.3.3 - Wire JS/TS extractors into semantic_index
    - 104.3.4 - Fix semantic_index.javascript.test.ts
    - 104.3.5 - Fix semantic_index.typescript.test.ts
@@ -309,3 +310,115 @@ Update existing `semantic_index.*.test.ts` files:
 **Follow-on Work:**
 - 7 skipped tests will be enabled once language-specific extractors are implemented (tasks 104.3-104.5)
 - Legacy semantic_index integration tests need API migration (separate task, outside scope of 104.x)
+
+### Task 104.3.1: Implement JavaScript Metadata Extractors (Completed 2025-10-01)
+
+**What Was Completed:**
+- Created `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_metadata.ts`
+- Implemented all 6 required metadata extractor functions:
+  1. `extract_type_from_annotation()` - Extracts type information from JSDoc and TypeScript annotations
+     - Handles JSDoc `@type` and `@returns` annotations
+     - Handles TypeScript type annotations (type identifiers, predefined types, generic types)
+     - Detects nullable types (`null`, `undefined`)
+     - Navigates AST to find comments preceding variable declarations and function declarations
+  2. `extract_call_receiver()` - Extracts method call receiver location
+     - Handles simple method calls: `obj.method()`
+     - Handles chained method calls: `user.profile.getName()`
+     - Handles `this` references: `this.doSomething()`
+     - Handles `super` references: `super.method()`
+  3. `extract_property_chain()` - Extracts property access chains
+     - Handles nested member expressions: `a.b.c.d`
+     - Handles optional chaining: `obj?.prop?.method`
+     - Handles computed properties: `obj["prop"]["key"]`
+     - Handles `this` and `super` in chains
+     - Recursively traverses nested member expressions
+  4. `extract_assignment_parts()` - Extracts assignment source and target locations
+     - Handles simple assignments: `x = y`
+     - Handles variable declarations: `const x = getValue()`
+     - Handles property assignments: `obj.prop = value`
+     - Handles destructuring: `const {a, b} = obj`
+     - Handles augmented assignments: `x += 5`
+  5. `extract_construct_target()` - Extracts constructor target variable location
+     - Handles variable declarations: `const obj = new MyClass()`
+     - Handles property assignments: `this.prop = new Thing()`
+     - Traverses parent nodes to find assignment context
+  6. `extract_type_arguments()` - Extracts generic type arguments
+     - Handles TypeScript generic types: `Array<string>`, `Map<K, V>`
+     - Handles JSDoc generic syntax: `Array.<string>`, `Object.<K, V>`
+- Created helper function `node_to_location()` for converting tree-sitter nodes to Location objects
+- Exported `JAVASCRIPT_METADATA_EXTRACTORS` constant implementing the `MetadataExtractors` interface
+
+**Edge Cases Handled:**
+- ✅ Optional chaining (`?.`) - Properly extracts chains despite optional operators
+- ✅ Computed property access - Handles bracket notation with string literals
+- ✅ `this` references - Correctly identifies and extracts `this` in various contexts
+- ✅ `super` references - Handles super method calls
+- ✅ Arrow functions - Extracts assignments with arrow functions
+- ✅ Destructuring - Handles object and array destructuring patterns
+- ✅ Augmented assignments - Supports `+=`, `-=`, etc.
+- ✅ Deep nesting - Handles 5+ level property chains
+- ✅ JSDoc comment navigation - Correctly finds JSDoc comments for variable declarations
+
+**Testing:**
+- Created comprehensive test suite: `javascript_metadata.test.ts`
+- **25 tests implemented and passing:**
+  - 3 tests for `extract_type_from_annotation`
+  - 3 tests for `extract_call_receiver`
+  - 5 tests for `extract_property_chain`
+  - 5 tests for `extract_assignment_parts`
+  - 3 tests for `extract_construct_target`
+  - 3 tests for `extract_type_arguments`
+  - 3 tests for edge cases (deep nesting, super calls, arrow functions)
+- All edge cases verified with dedicated tests
+- Tests use tree-sitter-javascript parser for real AST parsing
+- Each test verifies correct location extraction with column/line precision
+
+**Verification:**
+- ✅ TypeScript compilation: Zero errors in `javascript_metadata.ts`
+- ✅ Test suite: 25/25 tests passing
+- ✅ No regressions: Full test suite shows 846 passing (baseline: 821, +25 new tests)
+- ✅ Integration tests: `reference_builder.test.ts` still passing (14 passed, 7 skipped)
+- ✅ Code quality: Follows project conventions (snake_case functions, TSDoc comments)
+- ✅ Type safety: Full use of branded types (`SymbolName`, `FilePath`, `Location`, `TypeInfo`)
+
+**Issues Encountered:**
+1. **JSDoc Comment Location:** Initial implementation looked for `previousSibling` directly on the variable_declarator node, but JSDoc comments are siblings of the parent lexical_declaration node. Fixed by traversing to parent and iterating through children to find preceding comment.
+2. **Test File Build Configuration:** Test files were initially included in TypeScript build. Fixed by adding `**/*.test.ts` and `**/*.test.tsx` to `tsconfig.json` exclude list.
+
+**Files Created:**
+- `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_metadata.ts` (358 lines)
+- `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_metadata.test.ts` (302 lines)
+
+**Files Modified:**
+- `packages/core/tsconfig.json` - Added test file exclusions
+
+**Test Results Summary:**
+```
+Before: 821 tests passing, 531 failing (pre-existing)
+After:  846 tests passing, 531 failing (no new failures)
+Change: +25 tests (all new javascript_metadata tests)
+Regressions: 0
+```
+
+**Performance:**
+- Test execution time: ~18ms for all 25 tests
+- Extractor functions are pure and fast (no file I/O, just AST traversal)
+- No memory leaks or performance concerns
+
+**Follow-on Work:**
+- Next: Task 104.3.3 - Wire JavaScript extractors into semantic_index
+- The 7 skipped tests in reference_builder.test.ts can be enabled once extractors are wired in
+- TypeScript extractor can reuse the same `JAVASCRIPT_METADATA_EXTRACTORS` (tree-sitter-typescript is superset of tree-sitter-javascript)
+- Consider adding more edge case tests for complex JSDoc patterns if needed during integration
+
+**Documentation Updates:**
+- All extractor functions have comprehensive TSDoc comments
+- Each function documents what AST patterns it handles
+- Examples provided for each extractor function
+- Helper functions documented inline
+
+**Code Quality Metrics:**
+- Lines of code: 358 (implementation) + 302 (tests) = 660 total
+- Test coverage: All 6 extractors tested with multiple scenarios
+- Complexity: Functions kept simple with clear single responsibilities
+- Maintainability: Pure functions, no side effects, easy to test and modify

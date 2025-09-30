@@ -13,7 +13,9 @@
   "exclude": [
     "node_modules",
     "dist",
-    "tests"
+    "tests",
+    "**/*.test.ts",
+    "**/*.test.tsx"
   ],
   "references": [
     { "path": "../types" }
