@@ -94,3 +94,30 @@ All capture names in typescript.scm are now valid:
 - ✅ All captures use valid SemanticCategory enum values
 - ✅ All captures use valid SemanticEntity enum values
 - ✅ Validation script confirms 0 invalid captures
+
+### Query Validation and Testing
+
+**Tree-sitter Query Validation:**
+- Fixed JSX pattern error at line 734 (jsx_opening_element not available in TypeScript grammar)
+- Commented out JSX patterns (only valid in TSX grammar for React files)
+- Query now parses and executes successfully
+
+**End-to-End Testing:**
+- ✅ Query validated with real TypeScript code
+- ✅ Successfully captured 81 nodes from test code including:
+  - Interfaces with properties and methods
+  - Classes with constructors and methods
+  - Type aliases
+  - Enums with members
+  - Namespaces with exported functions
+- ✅ Captures distributed across categories:
+  - definition: 31 nodes
+  - reference: 23 nodes
+  - type: 13 nodes
+  - scope: 12 nodes
+  - modifier: 2 nodes
+
+**Language Configuration Tests:**
+- ✅ All 21 TypeScript builder tests pass
+- ✅ Builder config correctly maps all TypeScript-specific captures
+- ✅ Integration with JavaScript base configuration works correctly
