@@ -316,10 +316,8 @@ export interface SymbolReference {
   /** For calls: what kind of call */
   readonly call_type?: "function" | "method" | "constructor" | "super";
 
-  /** For assignments: type flow information */
-  readonly type_flow?: {
-    target_type?: TypeInfo;
-  };
+  /** For assignments: explicit type annotation on the assignment target */
+  readonly assignment_type?: TypeInfo;
 
   /** For returns: return type */
   readonly return_type?: TypeInfo;

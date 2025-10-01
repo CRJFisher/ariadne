@@ -310,8 +310,8 @@ describe("ReferenceBuilder", () => {
       expect(references).toHaveLength(1);
       expect(references[0].name).toBe("result");
       expect(references[0].type).toBe("assignment");
-      expect(references[0].type_flow).toBeDefined();
-      expect(references[0].type_flow?.target_type?.type_name).toBe("number");
+      expect(references[0].assignment_type).toBeDefined();
+      expect(references[0].assignment_type?.type_name).toBe("number");
     });
 
     it("should process return references", () => {
@@ -715,7 +715,7 @@ describe("ReferenceBuilder", () => {
       expect(references[0].member_access?.object_type).toEqual(typeInfo);
     });
 
-    it("should populate type_flow for assignments with extractors", () => {
+    it("should populate assignment_type for assignments with extractors", () => {
       const typeInfo: TypeInfo = {
         type_name: "number" as SymbolName,
         certainty: "explicit" as const,
@@ -735,8 +735,8 @@ describe("ReferenceBuilder", () => {
       builder.process(capture);
       const references = builder.build();
 
-      expect(references[0].type_flow).toBeDefined();
-      expect(references[0].type_flow?.target_type).toEqual(typeInfo);
+      expect(references[0].assignment_type).toBeDefined();
+      expect(references[0].assignment_type).toEqual(typeInfo);
     });
 
     it("should populate return_type for return references with extractors", () => {
@@ -854,7 +854,7 @@ describe("ReferenceBuilder", () => {
 
       expect(references).toHaveLength(1);
       expect(references[0].type).toBe("assignment");
-      expect(references[0].type_flow?.target_type?.type_name).toBe("string");
+      expect(references[0].assignment_type?.type_name).toBe("string");
     });
   });
 });

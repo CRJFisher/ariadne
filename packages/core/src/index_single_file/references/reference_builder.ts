@@ -434,23 +434,17 @@ export class ReferenceBuilder {
       call_type: determine_call_type(kind),
     };
 
-    // Add type flow information for assignments
+    // Add assignment type information for assignments with explicit type annotations
     if (kind === ReferenceKind.ASSIGNMENT) {
-      // Type flow information can be extracted from annotation_type or source_text
-      const type_flow_info = {
-        source_type: undefined, // Could be enhanced with extractors
-        target_type: extract_type_info(
-          capture,
-          this.extractors,
-          this.file_path
-        ),
-        is_narrowing: false,
-        is_widening: false,
-      };
+      const assignment_type = extract_type_info(
+        capture,
+        this.extractors,
+        this.file_path
+      );
 
-      // Only add type_flow if we have meaningful information
-      if (type_flow_info.target_type) {
-        const updated_ref = { ...reference, type_flow: type_flow_info };
+      // Only add assignment_type if we have explicit type annotation
+      if (assignment_type) {
+        const updated_ref = { ...reference, assignment_type };
         this.references.push(updated_ref);
         return this;
       }
