@@ -633,6 +633,68 @@ describe("Semantic Index - TypeScript", () => {
         expect(ref.context?.construct_target).toBeDefined();
       });
     });
+
+    it("should extract method resolution metadata for all receiver patterns", () => {
+      const code = `
+        class Service {
+          getData(): string[] {
+            return [];
+          }
+        }
+
+        function createService(): Service {
+          return new Service();
+        }
+
+        // Scenario 1: Receiver type from annotation
+        const service1: Service = createService();
+        service1.getData();
+
+        // Scenario 2: Receiver type from constructor
+        const service2 = new Service();
+        service2.getData();
+      `;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language
+      );
+      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+
+      // Scenario 1: Receiver type from annotation (const service1: Service = ...)
+      // Verify the assignment is captured
+      const service1Assignment = index.references.find(
+        (r) => r.type === "assignment" && r.name === "service1"
+      );
+      expect(service1Assignment).toBeDefined();
+
+      // Note: assignment_type extraction from type annotations is a future enhancement
+      // Method resolution can work by looking up the variable definition's type annotation
+
+      // Verify method calls have receiver_location
+      const methodCalls = index.references.filter(
+        (r) => r.type === "call" && r.call_type === "method" && r.name === "getData"
+      );
+
+      // Should have at least 2 getData method calls (may include more from return type methods)
+      expect(methodCalls.length).toBeGreaterThanOrEqual(2);
+
+      // At least some method calls should have receiver_location
+      const callsWithReceiver = methodCalls.filter(c => c.context?.receiver_location);
+      expect(callsWithReceiver.length).toBeGreaterThan(0);
+
+      // Scenario 2: Verify constructor call has construct_target
+      const constructorCalls = index.references.filter(
+        (r) => r.type === "construct" && r.name === "Service"
+      );
+
+      // Should have at least one constructor call with construct_target
+      const constructWithTarget = constructorCalls.find(c => c.context?.construct_target);
+      expect(constructWithTarget).toBeDefined();
+    });
   });
 
   describe("TypeScript-specific features", () => {
@@ -718,8 +780,8 @@ describe("Semantic Index - TypeScript", () => {
 
       expect(activeRefs.length).toBeGreaterThan(0);
       activeRefs.forEach((ref) => {
-        if (ref.member_access?.property_chain) {
-          expect(ref.member_access.property_chain).toEqual(["Status", "Active"]);
+        if (ref.context?.property_chain) {
+          expect(ref.context.property_chain).toEqual(["Status", "Active"]);
         }
       });
     });

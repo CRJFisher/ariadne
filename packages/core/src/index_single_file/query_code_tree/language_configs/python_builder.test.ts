@@ -6,13 +6,15 @@ import { describe, it, expect, beforeAll } from "vitest";
 import Parser from "tree-sitter";
 import Python from "tree-sitter-python";
 import type { SyntaxNode } from "tree-sitter";
-import { PYTHON_BUILDER_CONFIG } from "./python_builder";
+import { PYTHON_BUILDER_CONFIG } from "./python_builder_config";
 import { DefinitionBuilder } from "../../definitions/definition_builder";
 import type {
   ProcessingContext,
   CaptureNode,
-} from "../../scopes/scope_processor";
-import type { Location, ScopeId } from "@ariadnejs/types";
+  SemanticCategory,
+  SemanticEntity,
+} from "../../semantic_index";
+import type { Location, ScopeId, SymbolName } from "@ariadnejs/types";
 
 describe("Python Builder Configuration", () => {
   let parser: Parser;
@@ -27,6 +29,7 @@ describe("Python Builder Configuration", () => {
     const test_scope_id = "module:test.py:1:0:100:0:<module>" as ScopeId;
 
     return {
+      captures: [],
       scopes: new Map(),
       scope_depths: new Map(),
       root_scope_id: test_scope_id,
@@ -56,13 +59,13 @@ describe("Python Builder Configuration", () => {
       category,
       entity,
       node: node as any,
-      text: node.text,
+      text: node.text as SymbolName,
       location: {
         file_path: "test.py" as any,
         start_line: node.startPosition.row + 1,
-        start_column: node.startPosition.column,
+        start_column: node.startPosition.column + 1,
         end_line: node.endPosition.row + 1,
-        end_column: node.endPosition.column,
+        end_column: node.endPosition.column + 1,
       },
     };
   }
@@ -423,7 +426,16 @@ describe("Python Builder Configuration", () => {
           const classCapture: CaptureNode = {
             name: "def.class",
             node: className as any,
-            text: className.text,
+            text: className.text as SymbolName,
+            category: "definition" as SemanticCategory,
+            entity: "class" as SemanticEntity,
+            location: {
+              file_path: "test.py" as any,
+              start_line: className.startPosition.row + 1,
+              start_column: className.startPosition.column + 1,
+              end_line: className.endPosition.row + 1,
+              end_column: className.endPosition.column + 1,
+            },
           };
           PYTHON_BUILDER_CONFIG.get("def.class")?.process(
             classCapture,
@@ -439,7 +451,16 @@ describe("Python Builder Configuration", () => {
           const methodCapture: CaptureNode = {
             name: "def.method",
             node: methodName as any,
-            text: methodName.text,
+            text: methodName.text as SymbolName,
+            category: "definition" as SemanticCategory,
+            entity: "method" as SemanticEntity,
+            location: {
+              file_path: "test.py" as any,
+              start_line: methodName.startPosition.row + 1,
+              start_column: methodName.startPosition.column + 1,
+              end_line: methodName.endPosition.row + 1,
+              end_column: methodName.endPosition.column + 1,
+            },
           };
           PYTHON_BUILDER_CONFIG.get("def.method")?.process(
             methodCapture,
@@ -449,9 +470,9 @@ describe("Python Builder Configuration", () => {
         }
 
         const definitions = builder.build();
-        expect(definitions.length).toBeGreaterThan(0);
+        expect(definitions.classes.size).toBeGreaterThan(0);
 
-        const classDef = definitions.find((d) => d.kind === "class");
+        const classDef = definitions.classes.values().next().value;
         expect(classDef).toBeDefined();
         expect(classDef?.name).toBe("Calculator");
       });
@@ -471,7 +492,16 @@ describe("Python Builder Configuration", () => {
           const funcCapture: CaptureNode = {
             name: "def.function",
             node: funcName as any,
-            text: funcName.text,
+            text: funcName.text as SymbolName,
+            category: "definition" as SemanticCategory,
+            entity: "function" as SemanticEntity,
+            location: {
+              file_path: "test.py" as any,
+              start_line: funcName.startPosition.row + 1,
+              start_column: funcName.startPosition.column + 1,
+              end_line: funcName.endPosition.row + 1,
+              end_column: funcName.endPosition.column + 1,
+            },
           };
           PYTHON_BUILDER_CONFIG.get("def.function")?.process(
             funcCapture,
@@ -481,9 +511,9 @@ describe("Python Builder Configuration", () => {
         }
 
         const definitions = builder.build();
-        expect(definitions.length).toBeGreaterThan(0);
+        expect(definitions.functions.size).toBeGreaterThan(0);
 
-        const funcDef = definitions.find((d) => d.kind === "function");
+        const funcDef = definitions.functions.values().next().value;
         expect(funcDef).toBeDefined();
         expect(funcDef?.name).toBe("greet");
       });
@@ -502,7 +532,16 @@ describe("Python Builder Configuration", () => {
           const constCapture: CaptureNode = {
             name: "def.variable",
             node: constNode as any,
-            text: constNode.text,
+            text: constNode.text as SymbolName,
+            category: "definition" as SemanticCategory,
+            entity: "variable" as SemanticEntity,
+            location: {
+              file_path: "test.py" as any,
+              start_line: constNode.startPosition.row + 1,
+              start_column: constNode.startPosition.column + 1,
+              end_line: constNode.endPosition.row + 1,
+              end_column: constNode.endPosition.column + 1,
+            },
           };
           PYTHON_BUILDER_CONFIG.get("def.variable")?.process(
             constCapture,
@@ -511,7 +550,7 @@ describe("Python Builder Configuration", () => {
           );
         }
         const defs1 = builder1.build();
-        const constDef = defs1.find((d) => d.name === "MAX_SIZE");
+        const constDef = defs1.variables.values().next().value;
         expect(constDef?.kind).toBe("constant");
 
         // Test variable (lowercase)
@@ -522,7 +561,16 @@ describe("Python Builder Configuration", () => {
           const varCapture: CaptureNode = {
             name: "def.variable",
             node: varNode as any,
-            text: varNode.text,
+            text: varNode.text as SymbolName,
+            category: "definition" as any,
+            entity: "variable" as any,
+            location: {
+              file_path: "test.py" as any,
+              start_line: varNode.startPosition.row + 1,
+              start_column: varNode.startPosition.column + 1,
+              end_line: varNode.endPosition.row + 1,
+              end_column: varNode.endPosition.column + 1,
+            },
           };
           PYTHON_BUILDER_CONFIG.get("def.variable")?.process(
             varCapture,
@@ -531,7 +579,7 @@ describe("Python Builder Configuration", () => {
           );
         }
         const defs2 = builder2.build();
-        const varDef = defs2.find((d) => d.name === "current_size");
+        const varDef = defs2.variables.values().next().value;
         expect(varDef?.kind).toBe("variable");
       });
 
@@ -564,16 +612,16 @@ describe("Python Builder Configuration", () => {
           ) {
             const importCapture: CaptureNode = {
               name: "definition.import",
-              category: "definition" as any,
-              entity: "import" as any,
               node: id as any,
-              text: id.text,
+              text: id.text as SymbolName,
+              category: "definition" as SemanticCategory,
+              entity: "import" as SemanticEntity,
               location: {
                 file_path: "test.py" as any,
                 start_line: id.startPosition.row + 1,
-                start_column: id.startPosition.column,
+                start_column: id.startPosition.column + 1,
                 end_line: id.endPosition.row + 1,
-                end_column: id.endPosition.column,
+                end_column: id.endPosition.column + 1,
               },
             };
             PYTHON_BUILDER_CONFIG.get("definition.import")?.process(
@@ -613,7 +661,16 @@ describe("Python Builder Configuration", () => {
           const classCapture: CaptureNode = {
             name: "def.class",
             node: className as any,
-            text: className.text,
+            text: className.text as SymbolName,
+            category: "definition" as SemanticCategory,
+            entity: "class" as SemanticEntity,
+            location: {
+              file_path: "test.py" as any,
+              start_line: className.startPosition.row + 1,
+              start_column: className.startPosition.column + 1,
+              end_line: className.endPosition.row + 1,
+              end_column: className.endPosition.column + 1,
+            },
           };
           PYTHON_BUILDER_CONFIG.get("def.class")?.process(
             classCapture,
@@ -641,7 +698,16 @@ describe("Python Builder Configuration", () => {
             const methodCapture: CaptureNode = {
               name: "def.method",
               node: funcName as any,
-              text: funcName.text,
+              text: funcName.text as SymbolName,
+              category: "definition" as SemanticCategory,
+              entity: "method" as SemanticEntity,
+              location: {
+                file_path: "test.py" as any,
+                start_line: funcName.startPosition.row + 1,
+                start_column: funcName.startPosition.column + 1,
+                end_line: funcName.endPosition.row + 1,
+                end_column: funcName.endPosition.column + 1,
+              },
             };
             PYTHON_BUILDER_CONFIG.get("def.method")?.process(
               methodCapture,
@@ -652,7 +718,7 @@ describe("Python Builder Configuration", () => {
         }
 
         const definitions = builder.build();
-        const classDef = definitions.find((d) => d.kind === "class") as any;
+        const classDef = definitions.classes.values().next().value;
 
         // Verify that both methods exist
         expect(classDef).toBeDefined();

@@ -7,7 +7,7 @@ import { DefinitionBuilder } from "../../definitions/definition_builder";
 import type {
   ProcessingContext,
   CaptureNode,
-} from "../../scopes/scope_processor";
+} from "../../semantic_index";
 import type { Location } from "@ariadnejs/types";
 
 describe("rust_builder", () => {

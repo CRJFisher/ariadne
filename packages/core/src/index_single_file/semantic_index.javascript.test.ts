@@ -530,11 +530,61 @@ describe("Semantic Index - JavaScript", () => {
       expect(maxCall?.call_type).toBe("method");
     });
 
-    // Assignment metadata tracking requires additional query support
-    // This test is removed as assignments are not currently tracked as references
-    it.skip("should handle assignment metadata correctly (not currently implemented)", () => {
-      // Assignment tracking would require capturing reassignments as references
-      // with assignment_source and assignment_target metadata
+    it("should extract method resolution metadata for all receiver patterns", () => {
+      const code = `
+        class Service {
+          getData() {
+            return [];
+          }
+        }
+
+        function createService() {
+          return new Service();
+        }
+
+        // Scenario 1: Receiver type from JSDoc annotation
+        /** @type {Service} */
+        const service1 = createService();
+        service1.getData();
+
+        // Scenario 2: Receiver type from constructor
+        const service2 = new Service();
+        service2.getData();
+      `;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
+      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+
+      // Scenario 1: Receiver from JSDoc annotation
+      // Verify the assignment is captured
+      const service1Assignment = result.references.find(
+        ref => ref.type === "assignment" && ref.name === "service1"
+      );
+      expect(service1Assignment).toBeDefined();
+
+      // Note: assignment_type from JSDoc is a future enhancement
+
+      // Verify method calls have receiver_location
+      const methodCalls = result.references.filter(
+        ref => ref.type === "call" && ref.call_type === "method" && ref.name === "getData"
+      );
+
+      // Should have at least 2 getData method calls
+      expect(methodCalls.length).toBeGreaterThanOrEqual(2);
+
+      // At least some method calls should have receiver_location
+      const callsWithReceiver = methodCalls.filter(c => c.context?.receiver_location);
+      expect(callsWithReceiver.length).toBeGreaterThan(0);
+
+      // Scenario 2: Verify constructor call has construct_target
+      const constructorCalls = result.references.filter(
+        ref => ref.type === "construct" && ref.name === "Service"
+      );
+
+      // Should have at least one constructor call with construct_target
+      const constructWithTarget = constructorCalls.find(c => c.context?.construct_target);
+      expect(constructWithTarget).toBeDefined();
     });
   });
 

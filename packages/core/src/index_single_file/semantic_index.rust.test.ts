@@ -906,6 +906,69 @@ fn main() {
       expect(config_construct).toBeDefined();
       expect(config_construct?.context?.construct_target).toBeDefined();
     });
+
+    it.skip("should extract method resolution metadata for all receiver patterns", () => {
+      // Note: Skipped pending enhancement to Rust extractor for receiver_location
+      const code = `
+struct Service {
+    data: Vec<String>,
+}
+
+impl Service {
+    fn get_data(&self) -> &Vec<String> {
+        &self.data
+    }
+}
+
+fn create_service() -> Service {
+    Service { data: vec![] }
+}
+
+fn main() {
+    // Scenario 1: Receiver type from annotation
+    let service1: Service = create_service();
+    service1.get_data();
+
+    // Scenario 2: Receiver type from constructor
+    let service2 = Service { data: vec![] };
+    service2.get_data();
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const result = build_semantic_index(parsed_file, tree, "rust");
+
+      // Scenario 1: Receiver from type annotation
+      // Verify the assignment is captured
+      const service1_assignment = result.references.find(
+        ref => ref.type === "assignment" && ref.name === "service1"
+      );
+      expect(service1_assignment).toBeDefined();
+
+      // Note: assignment_type from type annotations is a future enhancement
+
+      // Verify method calls have receiver_location
+      const method_calls = result.references.filter(
+        ref => ref.type === "call" && ref.name === "get_data"
+      );
+
+      // Should have at least 2 get_data method calls
+      expect(method_calls.length).toBeGreaterThanOrEqual(2);
+
+      // At least some method calls should have receiver_location
+      const calls_with_receiver = method_calls.filter(c => c.context?.receiver_location);
+      expect(calls_with_receiver.length).toBeGreaterThan(0);
+
+      // Scenario 2: Verify struct instantiation has construct_target
+      const constructor_calls = result.references.filter(
+        ref => ref.type === "construct" && ref.name === "Service"
+      );
+
+      // Should have at least one constructor call with construct_target
+      const construct_with_target = constructor_calls.find(c => c.context?.construct_target);
+      expect(construct_with_target).toBeDefined();
+    });
   });
 
   // ============================================================================

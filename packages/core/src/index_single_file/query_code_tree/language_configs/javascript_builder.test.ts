@@ -11,7 +11,9 @@ import { DefinitionBuilder } from "../../definitions/definition_builder";
 import type {
   ProcessingContext,
   CaptureNode,
-} from "../../scopes/scope_processor";
+  SemanticCategory,
+  SemanticEntity,
+} from "../../semantic_index";
 import type { Location, ScopeId, FilePath, SymbolName } from "@ariadnejs/types";
 import { ReferenceBuilder } from "../../references/reference_builder";
 import { JAVASCRIPT_METADATA_EXTRACTORS } from "./javascript_metadata";
@@ -140,8 +142,8 @@ describe("JavaScript Builder Configuration", () => {
 
         const capture: CaptureNode = {
           name: "definition.class",
-          category: "definition",
-          entity: "class",
+          category: "definition" as SemanticCategory,
+          entity: "class" as SemanticEntity,
           node: nameNode as any,
           text: nameNode.text as SymbolName,
           location: {
@@ -179,8 +181,8 @@ describe("JavaScript Builder Configuration", () => {
 
         const capture: CaptureNode = {
           name: "definition.function",
-          category: "definition",
-          entity: "function",
+          category: "definition" as SemanticCategory,
+          entity: "function" as SemanticEntity,
           node: nameNode as any,
           text: nameNode.text as SymbolName,
           location: {
@@ -218,8 +220,8 @@ describe("JavaScript Builder Configuration", () => {
 
         const capture: CaptureNode = {
           name: "definition.variable",
-          category: "definition",
-          entity: "variable",
+          category: "definition" as SemanticCategory,
+          entity: "variable" as SemanticEntity,
           node: nameNode as any,
           text: nameNode.text as SymbolName,
           location: {
@@ -263,8 +265,8 @@ describe("JavaScript Builder Configuration", () => {
 
         const classCapture: CaptureNode = {
           name: "definition.class",
-          category: "definition",
-          entity: "class",
+          category: "definition" as SemanticCategory,
+          entity: "class" as SemanticEntity,
           node: classNameNode as any,
           text: classNameNode.text as SymbolName,
           location: {
@@ -290,8 +292,8 @@ describe("JavaScript Builder Configuration", () => {
 
         const methodCapture: CaptureNode = {
           name: "definition.method",
-          category: "definition",
-          entity: "method",
+          category: "definition" as SemanticCategory,
+          entity: "method" as SemanticEntity,
           node: methodNameNode as any,
           text: methodNameNode.text as SymbolName,
           location: {
@@ -332,8 +334,8 @@ describe("JavaScript Builder Configuration", () => {
 
         const capture: CaptureNode = {
           name: "import.default",
-          category: "definition",
-          entity: "import",
+          category: "definition" as SemanticCategory,
+          entity: "import" as SemanticEntity,
           node: nameNode as any,
           text: nameNode.text as SymbolName,
           location: {
@@ -375,8 +377,8 @@ describe("JavaScript Builder Configuration", () => {
 
         const capture: CaptureNode = {
           name: "definition.arrow",
-          category: "definition",
-          entity: "function",
+          category: "definition" as SemanticCategory,
+          entity: "function" as SemanticEntity,
           node: nameNode as any,
           text: nameNode.text as SymbolName,
           location: {
@@ -420,8 +422,8 @@ describe("JavaScript Builder Configuration", () => {
 
         const classCapture: CaptureNode = {
           name: "definition.class",
-          category: "definition",
-          entity: "class",
+          category: "definition" as SemanticCategory,
+          entity: "class" as SemanticEntity,
           node: classNameNode as any,
           text: classNameNode.text as SymbolName,
           location: {
@@ -447,8 +449,8 @@ describe("JavaScript Builder Configuration", () => {
 
         const propCapture: CaptureNode = {
           name: "definition.field",
-          category: "definition",
-          entity: "property",
+          category: "definition" as SemanticCategory,
+          entity: "property" as SemanticEntity,
           node: propNode as any,
           text: propNode.text as SymbolName,
           location: {
@@ -490,8 +492,8 @@ describe("JavaScript Builder Configuration", () => {
 
         const funcCapture: CaptureNode = {
           name: "definition.function",
-          category: "definition",
-          entity: "function",
+          category: "definition" as SemanticCategory,
+          entity: "function" as SemanticEntity,
           node: funcNameNode as any,
           text: funcNameNode.text as SymbolName,
           location: {
@@ -518,8 +520,8 @@ describe("JavaScript Builder Configuration", () => {
           if (child.type === "identifier") {
             const paramCapture: CaptureNode = {
               name: "definition.param",
-              category: "definition",
-              entity: "parameter",
+              category: "definition" as SemanticCategory,
+              entity: "parameter" as SemanticEntity,
               node: child as any,
               text: child.text as SymbolName,
               location: {
@@ -570,6 +572,8 @@ describe("JavaScript Builder Configuration", () => {
         if (classNameNode) {
           const classCapture: CaptureNode = {
             name: "definition.class",
+            category: "definition" as SemanticCategory,
+            entity: "class" as SemanticEntity,
             node: classNameNode as any,
             text: classNameNode.text as SymbolName,
             location: {
@@ -630,8 +634,8 @@ describe("JavaScript Builder Configuration", () => {
             if (propNode) {
               captures.push({
                 name: "ref.call",
-                category: "reference",
-                entity: "call",
+                category: "reference" as SemanticCategory,
+                entity: "call" as SemanticEntity,
                 node: propNode as any,
                 text: propNode.text as SymbolName,
                 location: {
@@ -657,12 +661,12 @@ describe("JavaScript Builder Configuration", () => {
           TEST_FILE_PATH
         );
 
-        const references = builder.process();
-        const methodCalls = references.filter((r) => r.type === "call");
+        const references = builder.process(captures[0]);
+        const methodCalls = references.build().filter((r) => r.type === "call");
 
         expect(methodCalls).toHaveLength(1);
         expect(methodCalls[0].name).toBe("method");
-        expect(methodCalls[0].context.receiver_location).toBeDefined();
+        expect(methodCalls[0].context?.receiver_location).toBeDefined();
       });
 
       it("should process property chains with metadata", () => {
@@ -684,8 +688,8 @@ describe("JavaScript Builder Configuration", () => {
             if (propNode) {
               captures.push({
                 name: "ref.call",
-                category: "reference",
-                entity: "call",
+                category: "reference" as SemanticCategory,
+                entity: "call" as SemanticEntity,
                 node: propNode as any,
                 text: propNode.text as SymbolName,
                 location: {
@@ -711,12 +715,12 @@ describe("JavaScript Builder Configuration", () => {
           TEST_FILE_PATH
         );
 
-        const references = builder.process();
-        const methodCalls = references.filter((r) => r.type === "call");
+        const references = builder.process(captures[0]);
+        const methodCalls = references.build().filter((r) => r.type === "call");
 
         expect(methodCalls).toHaveLength(1);
-        expect(methodCalls[0].context.property_chain).toBeDefined();
-        expect(methodCalls[0].context.property_chain).toEqual([
+        expect(methodCalls[0].context?.property_chain).toBeDefined();
+        expect(methodCalls[0].context?.property_chain).toEqual([
           "api",
           "users",
           "list",
@@ -743,8 +747,8 @@ describe("JavaScript Builder Configuration", () => {
           if (nameNode) {
             captures.push({
               name: "ref.identifier",
-              category: "reference",
-              entity: "identifier",
+              category: "reference" as SemanticCategory,
+              entity: "identifier" as SemanticEntity,
               node: nameNode as any,
               text: nameNode.text as SymbolName,
               location: {
@@ -769,7 +773,7 @@ describe("JavaScript Builder Configuration", () => {
           TEST_FILE_PATH
         );
 
-        const references = builder.process();
+        const references = builder.process(captures[0]);
 
         // The type info extraction would be populated if the variable had a type annotation
         expect(references).toBeDefined();
@@ -795,8 +799,8 @@ describe("JavaScript Builder Configuration", () => {
           if (leftNode) {
             captures.push({
               name: "ref.assignment",
-              category: "assignment",
-              entity: "assignment",
+              category: "assignment" as SemanticCategory,
+              entity: "assignment" as SemanticEntity,
               node: assignmentNode as any,
               text: leftNode.text as SymbolName,
               location: {
@@ -821,8 +825,8 @@ describe("JavaScript Builder Configuration", () => {
           TEST_FILE_PATH
         );
 
-        const references = builder.process();
-        const assignments = references.filter((r) => r.type === "assignment");
+        const references = builder.process(captures[0]);
+        const assignments = references.build().filter((r) => r.type === "assignment");
 
         expect(assignments).toBeDefined();
         // Assignment parts would be extracted through metadata extractors
@@ -844,8 +848,8 @@ describe("JavaScript Builder Configuration", () => {
           if (constructorNode) {
             captures.push({
               name: "ref.constructor",
-              category: "reference",
-              entity: "constructor",
+              category: "reference" as SemanticCategory,
+              entity: "constructor" as SemanticEntity,
               node: constructorNode as any,
               text: constructorNode.text as SymbolName,
               location: {
@@ -870,13 +874,13 @@ describe("JavaScript Builder Configuration", () => {
           TEST_FILE_PATH
         );
 
-        const references = builder.process();
-        const constructorCalls = references.filter(
+        const references = builder.process(captures[0]);
+        const constructorCalls = references.build().filter(
           (r) => r.type === "construct"
         );
 
         expect(constructorCalls).toHaveLength(1);
-        expect(constructorCalls[0].context.construct_target).toBeDefined();
+        expect(constructorCalls[0]?.context?.construct_target).toBeDefined();
       });
     });
   });
