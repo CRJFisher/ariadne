@@ -117,9 +117,9 @@ describe("Python Builder Configuration", () => {
 
     it("should contain function definition capture mappings", () => {
       const functionMappings = [
-        "def.function",
-        "def.function.async",
-        "def.lambda",
+        "definition.function",
+        "definition.function.async",
+        "definition.lambda",
       ];
 
       for (const mapping of functionMappings) {
@@ -132,12 +132,12 @@ describe("Python Builder Configuration", () => {
 
     it("should contain parameter definition capture mappings", () => {
       const paramMappings = [
-        "def.param",
-        "def.param.default",
-        "def.param.typed",
-        "def.param.typed.default",
-        "def.param.args",
-        "def.param.kwargs",
+        "definition.parameter",
+        "definition.parameter.default",
+        "definition.parameter.typed",
+        "definition.parameter.typed.default",
+        "definition.parameter.args",
+        "definition.parameter.kwargs",
       ];
 
       for (const mapping of paramMappings) {
@@ -150,16 +150,16 @@ describe("Python Builder Configuration", () => {
 
     it("should contain variable definition capture mappings", () => {
       const variableMappings = [
-        "def.variable",
-        "def.variable.typed",
-        "def.variable.multiple",
-        "def.variable.tuple",
-        "def.variable.destructured",
-        "def.loop_var",
-        "def.loop_var.multiple",
-        "def.comprehension_var",
-        "def.except_var",
-        "def.with_var",
+        "definition.variable",
+        "definition.variable.typed",
+        "definition.variable.multiple",
+        "definition.variable.tuple",
+        "definition.variable.destructured",
+        "definition.loop_var",
+        "definition.loop_var.multiple",
+        "definition.comprehension_var",
+        "definition.except_var",
+        "definition.with_var",
       ];
 
       for (const mapping of variableMappings) {
@@ -171,7 +171,7 @@ describe("Python Builder Configuration", () => {
     });
 
     it("should contain property definition capture mappings", () => {
-      const propertyMappings = ["def.property", "def.field"];
+      const propertyMappings = ["definition.property", "definition.field"];
 
       for (const mapping of propertyMappings) {
         expect(PYTHON_BUILDER_CONFIG.has(mapping)).toBe(true);
@@ -203,9 +203,9 @@ describe("Python Builder Configuration", () => {
     it("should handle a simple class definition", () => {
       const code = `class MyClass:
     pass`;
-      const capture = createCapture(code, "def.class", "identifier");
+      const capture = createCapture(code, "definition.class", "identifier");
       const builder = new DefinitionBuilder(createTestContext());
-      const config = PYTHON_BUILDER_CONFIG.get("def.class");
+      const config = PYTHON_BUILDER_CONFIG.get("definition.class");
 
       expect(() => {
         config?.process(capture, builder, createTestContext());
@@ -216,9 +216,9 @@ describe("Python Builder Configuration", () => {
       const code = `class MyClass:
     def my_method(self):
         pass`;
-      const capture = createCapture(code, "def.method", "identifier");
+      const capture = createCapture(code, "definition.method", "identifier");
       const builder = new DefinitionBuilder(createTestContext());
-      const config = PYTHON_BUILDER_CONFIG.get("def.method");
+      const config = PYTHON_BUILDER_CONFIG.get("definition.method");
 
       expect(() => {
         config?.process(capture, builder, createTestContext());
@@ -228,9 +228,9 @@ describe("Python Builder Configuration", () => {
     it("should handle a function definition", () => {
       const code = `def my_function():
     pass`;
-      const capture = createCapture(code, "def.function", "identifier");
+      const capture = createCapture(code, "definition.function", "identifier");
       const builder = new DefinitionBuilder(createTestContext());
-      const config = PYTHON_BUILDER_CONFIG.get("def.function");
+      const config = PYTHON_BUILDER_CONFIG.get("definition.function");
 
       expect(() => {
         config?.process(capture, builder, createTestContext());
@@ -239,9 +239,9 @@ describe("Python Builder Configuration", () => {
 
     it("should handle variable definitions", () => {
       const code = `x = 10`;
-      const capture = createCapture(code, "def.variable", "identifier");
+      const capture = createCapture(code, "definition.variable", "identifier");
       const builder = new DefinitionBuilder(createTestContext());
-      const config = PYTHON_BUILDER_CONFIG.get("def.variable");
+      const config = PYTHON_BUILDER_CONFIG.get("definition.variable");
 
       expect(() => {
         config?.process(capture, builder, createTestContext());
@@ -262,9 +262,9 @@ describe("Python Builder Configuration", () => {
     it("should handle async functions", () => {
       const code = `async def async_function():
     pass`;
-      const capture = createCapture(code, "def.function.async", "identifier");
+      const capture = createCapture(code, "definition.function.async", "identifier");
       const builder = new DefinitionBuilder(createTestContext());
-      const config = PYTHON_BUILDER_CONFIG.get("def.function.async");
+      const config = PYTHON_BUILDER_CONFIG.get("definition.function.async");
 
       expect(() => {
         config?.process(capture, builder, createTestContext());
@@ -273,9 +273,9 @@ describe("Python Builder Configuration", () => {
 
     it("should handle lambda functions", () => {
       const code = `f = lambda x: x * 2`;
-      const capture = createCapture(code, "def.lambda", "lambda");
+      const capture = createCapture(code, "definition.lambda", "lambda");
       const builder = new DefinitionBuilder(createTestContext());
-      const config = PYTHON_BUILDER_CONFIG.get("def.lambda");
+      const config = PYTHON_BUILDER_CONFIG.get("definition.lambda");
 
       expect(() => {
         config?.process(capture, builder, createTestContext());
@@ -287,9 +287,9 @@ describe("Python Builder Configuration", () => {
     @staticmethod
     def static_method():
         pass`;
-      const capture = createCapture(code, "def.method.static", "identifier");
+      const capture = createCapture(code, "definition.method.static", "identifier");
       const builder = new DefinitionBuilder(createTestContext());
-      const config = PYTHON_BUILDER_CONFIG.get("def.method.static");
+      const config = PYTHON_BUILDER_CONFIG.get("definition.method.static");
 
       expect(() => {
         config?.process(capture, builder, createTestContext());
@@ -301,9 +301,9 @@ describe("Python Builder Configuration", () => {
     @classmethod
     def class_method(cls):
         pass`;
-      const capture = createCapture(code, "def.method.class", "identifier");
+      const capture = createCapture(code, "definition.method.class", "identifier");
       const builder = new DefinitionBuilder(createTestContext());
-      const config = PYTHON_BUILDER_CONFIG.get("def.method.class");
+      const config = PYTHON_BUILDER_CONFIG.get("definition.method.class");
 
       expect(() => {
         config?.process(capture, builder, createTestContext());
@@ -315,9 +315,9 @@ describe("Python Builder Configuration", () => {
     @property
     def my_property(self):
         return self._value`;
-      const capture = createCapture(code, "def.property", "identifier");
+      const capture = createCapture(code, "definition.property", "identifier");
       const builder = new DefinitionBuilder(createTestContext());
-      const config = PYTHON_BUILDER_CONFIG.get("def.property");
+      const config = PYTHON_BUILDER_CONFIG.get("definition.property");
 
       expect(() => {
         config?.process(capture, builder, createTestContext());
@@ -327,9 +327,9 @@ describe("Python Builder Configuration", () => {
     it("should handle class inheritance", () => {
       const code = `class Child(Parent):
     pass`;
-      const capture = createCapture(code, "def.class", "identifier");
+      const capture = createCapture(code, "definition.class", "identifier");
       const builder = new DefinitionBuilder(createTestContext());
-      const config = PYTHON_BUILDER_CONFIG.get("def.class");
+      const config = PYTHON_BUILDER_CONFIG.get("definition.class");
 
       expect(() => {
         config?.process(capture, builder, createTestContext());
@@ -341,11 +341,11 @@ describe("Python Builder Configuration", () => {
     pass`;
       const capture = createCapture(
         code,
-        "def.param.typed.default",
+        "definition.param.typed.default",
         "identifier"
       );
       const builder = new DefinitionBuilder(createTestContext());
-      const config = PYTHON_BUILDER_CONFIG.get("def.param.typed.default");
+      const config = PYTHON_BUILDER_CONFIG.get("definition.param.typed.default");
 
       expect(() => {
         config?.process(capture, builder, createTestContext());
@@ -359,11 +359,11 @@ describe("Python Builder Configuration", () => {
       // Test *args
       const argsCapture = createCapture(
         code,
-        "def.param.args",
+        "definition.param.args",
         "list_splat_pattern"
       );
       const builder1 = new DefinitionBuilder(createTestContext());
-      const argsConfig = PYTHON_BUILDER_CONFIG.get("def.param.args");
+      const argsConfig = PYTHON_BUILDER_CONFIG.get("definition.param.args");
 
       expect(() => {
         argsConfig?.process(argsCapture, builder1, createTestContext());
@@ -372,11 +372,11 @@ describe("Python Builder Configuration", () => {
       // Test **kwargs
       const kwargsCapture = createCapture(
         code,
-        "def.param.kwargs",
+        "definition.param.kwargs",
         "dictionary_splat_pattern"
       );
       const builder2 = new DefinitionBuilder(createTestContext());
-      const kwargsConfig = PYTHON_BUILDER_CONFIG.get("def.param.kwargs");
+      const kwargsConfig = PYTHON_BUILDER_CONFIG.get("definition.param.kwargs");
 
       expect(() => {
         kwargsConfig?.process(kwargsCapture, builder2, createTestContext());
@@ -424,7 +424,7 @@ describe("Python Builder Configuration", () => {
         const className = classNode?.childForFieldName("name");
         if (className) {
           const classCapture: CaptureNode = {
-            name: "def.class",
+            name: "definition.class",
             node: className as any,
             text: className.text as SymbolName,
             category: "definition" as SemanticCategory,
@@ -437,7 +437,7 @@ describe("Python Builder Configuration", () => {
               end_column: className.endPosition.column + 1,
             },
           };
-          PYTHON_BUILDER_CONFIG.get("def.class")?.process(
+          PYTHON_BUILDER_CONFIG.get("definition.class")?.process(
             classCapture,
             builder,
             context
@@ -449,7 +449,7 @@ describe("Python Builder Configuration", () => {
         const methodName = funcDefNode?.childForFieldName("name");
         if (methodName) {
           const methodCapture: CaptureNode = {
-            name: "def.method",
+            name: "definition.method",
             node: methodName as any,
             text: methodName.text as SymbolName,
             category: "definition" as SemanticCategory,
@@ -462,7 +462,7 @@ describe("Python Builder Configuration", () => {
               end_column: methodName.endPosition.column + 1,
             },
           };
-          PYTHON_BUILDER_CONFIG.get("def.method")?.process(
+          PYTHON_BUILDER_CONFIG.get("definition.method")?.process(
             methodCapture,
             builder,
             context
@@ -490,7 +490,7 @@ describe("Python Builder Configuration", () => {
 
         if (funcName) {
           const funcCapture: CaptureNode = {
-            name: "def.function",
+            name: "definition.function",
             node: funcName as any,
             text: funcName.text as SymbolName,
             category: "definition" as SemanticCategory,
@@ -503,7 +503,7 @@ describe("Python Builder Configuration", () => {
               end_column: funcName.endPosition.column + 1,
             },
           };
-          PYTHON_BUILDER_CONFIG.get("def.function")?.process(
+          PYTHON_BUILDER_CONFIG.get("definition.function")?.process(
             funcCapture,
             builder,
             context
@@ -530,7 +530,7 @@ describe("Python Builder Configuration", () => {
         const constNode = findNodeByType(ast1.rootNode, "identifier");
         if (constNode) {
           const constCapture: CaptureNode = {
-            name: "def.variable",
+            name: "definition.variable",
             node: constNode as any,
             text: constNode.text as SymbolName,
             category: "definition" as SemanticCategory,
@@ -543,7 +543,7 @@ describe("Python Builder Configuration", () => {
               end_column: constNode.endPosition.column + 1,
             },
           };
-          PYTHON_BUILDER_CONFIG.get("def.variable")?.process(
+          PYTHON_BUILDER_CONFIG.get("definition.variable")?.process(
             constCapture,
             builder1,
             context
@@ -559,7 +559,7 @@ describe("Python Builder Configuration", () => {
         const varNode = findNodeByType(ast2.rootNode, "identifier");
         if (varNode) {
           const varCapture: CaptureNode = {
-            name: "def.variable",
+            name: "definition.variable",
             node: varNode as any,
             text: varNode.text as SymbolName,
             category: "definition" as any,
@@ -572,7 +572,7 @@ describe("Python Builder Configuration", () => {
               end_column: varNode.endPosition.column + 1,
             },
           };
-          PYTHON_BUILDER_CONFIG.get("def.variable")?.process(
+          PYTHON_BUILDER_CONFIG.get("definition.variable")?.process(
             varCapture,
             builder2,
             context
@@ -659,7 +659,7 @@ describe("Python Builder Configuration", () => {
         const className = classNode?.childForFieldName("name");
         if (className) {
           const classCapture: CaptureNode = {
-            name: "def.class",
+            name: "definition.class",
             node: className as any,
             text: className.text as SymbolName,
             category: "definition" as SemanticCategory,
@@ -672,7 +672,7 @@ describe("Python Builder Configuration", () => {
               end_column: className.endPosition.column + 1,
             },
           };
-          PYTHON_BUILDER_CONFIG.get("def.class")?.process(
+          PYTHON_BUILDER_CONFIG.get("definition.class")?.process(
             classCapture,
             builder,
             context
@@ -696,7 +696,7 @@ describe("Python Builder Configuration", () => {
           const funcName = func.childForFieldName("name");
           if (funcName) {
             const methodCapture: CaptureNode = {
-              name: "def.method",
+              name: "definition.method",
               node: funcName as any,
               text: funcName.text as SymbolName,
               category: "definition" as SemanticCategory,
@@ -709,7 +709,7 @@ describe("Python Builder Configuration", () => {
                 end_column: funcName.endPosition.column + 1,
               },
             };
-            PYTHON_BUILDER_CONFIG.get("def.method")?.process(
+            PYTHON_BUILDER_CONFIG.get("definition.method")?.process(
               methodCapture,
               builder,
               context

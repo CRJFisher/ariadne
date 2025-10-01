@@ -66,15 +66,16 @@ export function process_scopes(
     // Find parent scope using position containment
     const parent = find_containing_scope(location, root_scope_id, scopes);
 
-    const symbol_name = capture.text;
-    if (!symbol_name) {
+    // Block scopes don't have a meaningful name
+    const symbol_name = capture.text || (scope_type === "block" ? "" : undefined);
+    if (!symbol_name && scope_type !== "block") {
       throw new Error(`Symbol name not found for capture: ${capture.name}`);
     }
     // Create the scope with parent reference
     const scope: LexicalScope = {
       id: scope_id,
       parent_id: parent.id,
-      name: symbol_name as SymbolName,
+      name: (symbol_name || "") as SymbolName,
       type: scope_type,
       location,
       child_ids: [],
@@ -280,7 +281,8 @@ function location_contains(container: Location, contained: Location): boolean {
  */
 function calculate_area(location: Location): number {
   const lines = location.end_line - location.start_line + 1;
-  const columns = location.end_column - location.start_column + 1;
+  // Handle cases where end_column might be less than start_column (whole-file scopes)
+  const columns = Math.max(1, location.end_column - location.start_column + 1);
   return lines * columns;
 }
 

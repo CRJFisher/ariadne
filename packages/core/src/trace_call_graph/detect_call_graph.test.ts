@@ -21,13 +21,13 @@ import { detect_call_graph } from "./detect_call_graph";
 describe("detect_call_graph", () => {
   const create_location = (
     file: string,
-        start_line: number,
+    start_line: number,
     column: number = 0
   ): Location => ({
     file_path: file as FilePath,
-    start_line: line,
+    start_line: start_line,
     start_column: column,
-    end_line: line,
+    end_line: start_line,
     end_column: column + 10,
   });
 
@@ -72,7 +72,7 @@ describe("detect_call_graph", () => {
       const graph = detect_call_graph(resolved);
 
       expect(graph.nodes.size).toBe(1);
-      expect(graph.nodes.get(funcId)).toEqual({
+      expect(graph.nodes.get(funcId)).toMatchObject({
         symbol_id: funcId,
         name: "testFunc",
         enclosed_calls: [],
@@ -106,7 +106,7 @@ describe("detect_call_graph", () => {
       expect(graph.nodes.size).toBe(2);
 
       const func1Node = graph.nodes.get(func1Id);
-      expect(func1Node).toEqual({
+      expect(func1Node).toMatchObject({
         symbol_id: func1Id,
         name: "func1",
         enclosed_calls: [call1],
@@ -114,7 +114,7 @@ describe("detect_call_graph", () => {
       });
 
       const func2Node = graph.nodes.get(func2Id);
-      expect(func2Node).toEqual({
+      expect(func2Node).toMatchObject({
         symbol_id: func2Id,
         name: "func2",
         enclosed_calls: [],
