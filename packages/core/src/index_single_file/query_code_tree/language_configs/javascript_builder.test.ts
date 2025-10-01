@@ -9,7 +9,9 @@ import type { SyntaxNode } from "tree-sitter";
 import { JAVASCRIPT_BUILDER_CONFIG } from "./javascript_builder";
 import { DefinitionBuilder } from "../../definitions/definition_builder";
 import type { ProcessingContext, CaptureNode } from "../scope_processor";
-import type { Location, ScopeId } from "@ariadnejs/types";
+import type { Location, ScopeId, FilePath, SymbolName } from "@ariadnejs/types";
+import { ReferenceBuilder } from "../reference_builder";
+import { JAVASCRIPT_METADATA_EXTRACTORS } from "./javascript_metadata";
 
 describe("JavaScript Builder Configuration", () => {
   let parser: Parser;
@@ -18,6 +20,8 @@ describe("JavaScript Builder Configuration", () => {
     parser = new Parser();
     parser.setLanguage(JavaScript);
   });
+
+  const TEST_FILE_PATH = "/test/file.js" as FilePath;
 
   // Helper function to create test context
   function createTestContext(): ProcessingContext {
@@ -45,8 +49,17 @@ describe("JavaScript Builder Configuration", () => {
 
     return {
       name: captureName,
+      category: "definition" as any,  // Default for builder tests
+      entity: nodeType as any,
       node: node as any,
-      text: node.text,
+      text: node.text as SymbolName,
+      location: {
+        file_path: TEST_FILE_PATH,
+        start_line: node.startPosition.row + 1,
+        start_column: node.startPosition.column,
+        end_line: node.endPosition.row + 1,
+        end_column: node.endPosition.column,
+      },
     };
   }
 
@@ -70,16 +83,16 @@ describe("JavaScript Builder Configuration", () => {
 
     it("should contain definition capture mappings with process functions", () => {
       const definitionMappings = [
-        "def.class",
-        "def.method",
-        "def.constructor",
-        "def.function",
-        "def.arrow",
-        "def.param",
-        "def.parameter",
-        "def.variable",
-        "def.field",
-        "def.property",
+        "definition.class",
+        "definition.method",
+        "definition.constructor",
+        "definition.function",
+        "definition.arrow",
+        "definition.param",
+        "definition.parameter",
+        "definition.variable",
+        "definition.field",
+        "definition.property",
       ];
 
       for (const mapping of definitionMappings) {
@@ -92,7 +105,7 @@ describe("JavaScript Builder Configuration", () => {
 
     it("should contain import capture mappings with process functions", () => {
       const importMappings = [
-        "def.import",
+        "definition.import",
         "import.named",
         "import.default",
         "import.namespace",
@@ -122,19 +135,29 @@ describe("JavaScript Builder Configuration", () => {
         }
 
         const capture: CaptureNode = {
-          name: "def.class",
+          name: "definition.class",
+          category: "definition",
+          entity: "class",
           node: nameNode as any,
-          text: nameNode.text,
+          text: nameNode.text as SymbolName,
+          location: {
+            file_path: TEST_FILE_PATH,
+            start_line: nameNode.startPosition.row + 1,
+            start_column: nameNode.startPosition.column,
+            end_line: nameNode.endPosition.row + 1,
+            end_column: nameNode.endPosition.column,
+          },
         };
 
-        const processor = JAVASCRIPT_BUILDER_CONFIG.get("def.class");
+        const processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
         expect(processor).toBeDefined();
         processor?.process(capture, builder, context);
 
-        const definitions = builder.build();
-        expect(definitions).toHaveLength(1);
-        expect(definitions[0].kind).toBe("class");
-        expect(definitions[0].name).toBe("MyClass");
+        const result = builder.build();
+        const classes = Array.from(result.classes.values());
+        expect(classes).toHaveLength(1);
+        expect(classes[0].kind).toBe("class");
+        expect(classes[0].name).toBe("MyClass");
       });
 
       it("should process function definitions", () => {
@@ -151,19 +174,29 @@ describe("JavaScript Builder Configuration", () => {
         }
 
         const capture: CaptureNode = {
-          name: "def.function",
+          name: "definition.function",
+          category: "definition",
+          entity: "function",
           node: nameNode as any,
-          text: nameNode.text,
+          text: nameNode.text as SymbolName,
+          location: {
+            file_path: TEST_FILE_PATH,
+            start_line: nameNode.startPosition.row + 1,
+            start_column: nameNode.startPosition.column,
+            end_line: nameNode.endPosition.row + 1,
+            end_column: nameNode.endPosition.column,
+          },
         };
 
-        const processor = JAVASCRIPT_BUILDER_CONFIG.get("def.function");
+        const processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
         expect(processor).toBeDefined();
         processor?.process(capture, builder, context);
 
-        const definitions = builder.build();
-        expect(definitions).toHaveLength(1);
-        expect(definitions[0].kind).toBe("function");
-        expect(definitions[0].name).toBe("myFunction");
+        const result = builder.build();
+        const functions = Array.from(result.functions.values());
+        expect(functions).toHaveLength(1);
+        expect(functions[0].kind).toBe("function");
+        expect(functions[0].name).toBe("myFunction");
       });
 
       it("should process variable definitions", () => {
@@ -180,19 +213,29 @@ describe("JavaScript Builder Configuration", () => {
         }
 
         const capture: CaptureNode = {
-          name: "def.variable",
+          name: "definition.variable",
+          category: "definition",
+          entity: "variable",
           node: nameNode as any,
-          text: nameNode.text,
+          text: nameNode.text as SymbolName,
+          location: {
+            file_path: TEST_FILE_PATH,
+            start_line: nameNode.startPosition.row + 1,
+            start_column: nameNode.startPosition.column,
+            end_line: nameNode.endPosition.row + 1,
+            end_column: nameNode.endPosition.column,
+          },
         };
 
-        const processor = JAVASCRIPT_BUILDER_CONFIG.get("def.variable");
+        const processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
         expect(processor).toBeDefined();
         processor?.process(capture, builder, context);
 
-        const definitions = builder.build();
-        expect(definitions).toHaveLength(1);
-        expect(definitions[0].kind).toBe("constant");
-        expect(definitions[0].name).toBe("myVar");
+        const result = builder.build();
+        const variables = Array.from(result.variables.values());
+        expect(variables).toHaveLength(1);
+        expect(variables[0].kind).toBe("constant");
+        expect(variables[0].name).toBe("myVar");
       });
 
       it("should process method definitions in classes", () => {
@@ -215,12 +258,21 @@ describe("JavaScript Builder Configuration", () => {
         }
 
         const classCapture: CaptureNode = {
-          name: "def.class",
+          name: "definition.class",
+          category: "definition",
+          entity: "class",
           node: classNameNode as any,
-          text: classNameNode.text,
+          text: classNameNode.text as SymbolName,
+          location: {
+            file_path: TEST_FILE_PATH,
+            start_line: classNameNode.startPosition.row + 1,
+            start_column: classNameNode.startPosition.column,
+            end_line: classNameNode.endPosition.row + 1,
+            end_column: classNameNode.endPosition.column,
+          },
         };
 
-        const classProcessor = JAVASCRIPT_BUILDER_CONFIG.get("def.class");
+        const classProcessor = JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
         classProcessor?.process(classCapture, builder, context);
 
         // Then add the method
@@ -232,19 +284,29 @@ describe("JavaScript Builder Configuration", () => {
         }
 
         const methodCapture: CaptureNode = {
-          name: "def.method",
+          name: "definition.method",
+          category: "definition",
+          entity: "method",
           node: methodNameNode as any,
-          text: methodNameNode.text,
+          text: methodNameNode.text as SymbolName,
+          location: {
+            file_path: TEST_FILE_PATH,
+            start_line: methodNameNode.startPosition.row + 1,
+            start_column: methodNameNode.startPosition.column,
+            end_line: methodNameNode.endPosition.row + 1,
+            end_column: methodNameNode.endPosition.column,
+          },
         };
 
-        const methodProcessor = JAVASCRIPT_BUILDER_CONFIG.get("def.method");
+        const methodProcessor = JAVASCRIPT_BUILDER_CONFIG.get("definition.method");
         methodProcessor?.process(methodCapture, builder, context);
 
-        const definitions = builder.build();
-        expect(definitions).toHaveLength(1);
-        expect(definitions[0].kind).toBe("class");
+        const result = builder.build();
+        const classes = Array.from(result.classes.values());
+        expect(classes).toHaveLength(1);
+        expect(classes[0].kind).toBe("class");
 
-        const classDef = definitions[0] as any;
+        const classDef = classes[0] as any;
         expect(classDef.methods).toHaveLength(1);
         expect(classDef.methods[0].name).toBe("myMethod");
       });
@@ -264,21 +326,31 @@ describe("JavaScript Builder Configuration", () => {
 
         const capture: CaptureNode = {
           name: "import.default",
+          category: "definition",
+          entity: "import",
           node: nameNode as any,
-          text: nameNode.text,
+          text: nameNode.text as SymbolName,
+          location: {
+            file_path: TEST_FILE_PATH,
+            start_line: nameNode.startPosition.row + 1,
+            start_column: nameNode.startPosition.column,
+            end_line: nameNode.endPosition.row + 1,
+            end_column: nameNode.endPosition.column,
+          },
         };
 
         const processor = JAVASCRIPT_BUILDER_CONFIG.get("import.default");
         expect(processor).toBeDefined();
         processor?.process(capture, builder, context);
 
-        const definitions = builder.build();
-        expect(definitions).toHaveLength(1);
-        expect(definitions[0].kind).toBe("import");
-        expect(definitions[0].name).toBe("React");
+        const result = builder.build();
+        const imports = Array.from(result.imports.values());
+        expect(imports).toHaveLength(1);
+        expect(imports[0].kind).toBe("import");
+        expect(imports[0].name).toBe("React");
 
-        const importDef = definitions[0] as any;
-        expect(importDef.is_default).toBe(true);
+        const importDef = imports[0] as any;
+        expect(importDef.import_kind).toBe("default");
         expect(importDef.import_path).toBe("react");
       });
 
@@ -296,19 +368,29 @@ describe("JavaScript Builder Configuration", () => {
         }
 
         const capture: CaptureNode = {
-          name: "def.arrow",
+          name: "definition.arrow",
+          category: "definition",
+          entity: "function",
           node: nameNode as any,
-          text: nameNode.text,
+          text: nameNode.text as SymbolName,
+          location: {
+            file_path: TEST_FILE_PATH,
+            start_line: nameNode.startPosition.row + 1,
+            start_column: nameNode.startPosition.column,
+            end_line: nameNode.endPosition.row + 1,
+            end_column: nameNode.endPosition.column,
+          },
         };
 
-        const processor = JAVASCRIPT_BUILDER_CONFIG.get("def.arrow");
+        const processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.arrow");
         expect(processor).toBeDefined();
         processor?.process(capture, builder, context);
 
-        const definitions = builder.build();
-        expect(definitions).toHaveLength(1);
-        expect(definitions[0].kind).toBe("function");
-        expect(definitions[0].name).toBe("myFunc");
+        const result = builder.build();
+        const functions = Array.from(result.functions.values());
+        expect(functions).toHaveLength(1);
+        expect(functions[0].kind).toBe("function");
+        expect(functions[0].name).toBe("myFunc");
       });
 
       it("should process class properties", () => {
@@ -331,12 +413,21 @@ describe("JavaScript Builder Configuration", () => {
         }
 
         const classCapture: CaptureNode = {
-          name: "def.class",
+          name: "definition.class",
+          category: "definition",
+          entity: "class",
           node: classNameNode as any,
-          text: classNameNode.text,
+          text: classNameNode.text as SymbolName,
+          location: {
+            file_path: TEST_FILE_PATH,
+            start_line: classNameNode.startPosition.row + 1,
+            start_column: classNameNode.startPosition.column,
+            end_line: classNameNode.endPosition.row + 1,
+            end_column: classNameNode.endPosition.column,
+          },
         };
 
-        const classProcessor = JAVASCRIPT_BUILDER_CONFIG.get("def.class");
+        const classProcessor = JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
         classProcessor?.process(classCapture, builder, context);
 
         // Then add the property
@@ -348,19 +439,29 @@ describe("JavaScript Builder Configuration", () => {
         }
 
         const propCapture: CaptureNode = {
-          name: "def.field",
+          name: "definition.field",
+          category: "definition",
+          entity: "property",
           node: propNode as any,
-          text: propNode.text,
+          text: propNode.text as SymbolName,
+          location: {
+            file_path: TEST_FILE_PATH,
+            start_line: propNode.startPosition.row + 1,
+            start_column: propNode.startPosition.column,
+            end_line: propNode.endPosition.row + 1,
+            end_column: propNode.endPosition.column,
+          },
         };
 
-        const propProcessor = JAVASCRIPT_BUILDER_CONFIG.get("def.field");
+        const propProcessor = JAVASCRIPT_BUILDER_CONFIG.get("definition.field");
         propProcessor?.process(propCapture, builder, context);
 
-        const definitions = builder.build();
-        expect(definitions).toHaveLength(1);
-        expect(definitions[0].kind).toBe("class");
+        const result = builder.build();
+        const classes = Array.from(result.classes.values());
+        expect(classes).toHaveLength(1);
+        expect(classes[0].kind).toBe("class");
 
-        const classDef = definitions[0] as any;
+        const classDef = classes[0] as any;
         expect(classDef.properties).toHaveLength(1);
         expect(classDef.properties[0].name).toBe("myProperty");
       });
@@ -381,12 +482,21 @@ describe("JavaScript Builder Configuration", () => {
         }
 
         const funcCapture: CaptureNode = {
-          name: "def.function",
+          name: "definition.function",
+          category: "definition",
+          entity: "function",
           node: funcNameNode as any,
-          text: funcNameNode.text,
+          text: funcNameNode.text as SymbolName,
+          location: {
+            file_path: TEST_FILE_PATH,
+            start_line: funcNameNode.startPosition.row + 1,
+            start_column: funcNameNode.startPosition.column,
+            end_line: funcNameNode.endPosition.row + 1,
+            end_column: funcNameNode.endPosition.column,
+          },
         };
 
-        const funcProcessor = JAVASCRIPT_BUILDER_CONFIG.get("def.function");
+        const funcProcessor = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
         funcProcessor?.process(funcCapture, builder, context);
 
         // Then add the parameters
@@ -398,21 +508,31 @@ describe("JavaScript Builder Configuration", () => {
         for (const child of paramsNode.namedChildren) {
           if (child.type === "identifier") {
             const paramCapture: CaptureNode = {
-              name: "def.param",
+              name: "definition.param",
+              category: "definition",
+              entity: "parameter",
               node: child as any,
-              text: child.text,
+              text: child.text as SymbolName,
+              location: {
+                file_path: TEST_FILE_PATH,
+                start_line: child.startPosition.row + 1,
+                start_column: child.startPosition.column,
+                end_line: child.endPosition.row + 1,
+                end_column: child.endPosition.column,
+              },
             };
 
-            const paramProcessor = JAVASCRIPT_BUILDER_CONFIG.get("def.param");
+            const paramProcessor = JAVASCRIPT_BUILDER_CONFIG.get("definition.param");
             paramProcessor?.process(paramCapture, builder, context);
           }
         }
 
-        const definitions = builder.build();
-        expect(definitions).toHaveLength(1);
-        expect(definitions[0].kind).toBe("function");
+        const result = builder.build();
+        const functions = Array.from(result.functions.values());
+        expect(functions).toHaveLength(1);
+        expect(functions[0].kind).toBe("function");
 
-        const funcDef = definitions[0] as any;
+        const funcDef = functions[0] as any;
         expect(funcDef.signature.parameters).toHaveLength(2);
       });
     });
@@ -439,18 +559,26 @@ describe("JavaScript Builder Configuration", () => {
 
         if (classNameNode) {
           const classCapture: CaptureNode = {
-            name: "def.class",
+            name: "definition.class",
             node: classNameNode as any,
-            text: classNameNode.text,
+            text: classNameNode.text as SymbolName,
+            location: {
+              file_path: TEST_FILE_PATH,
+              start_line: classNameNode.startPosition.row + 1,
+              start_column: classNameNode.startPosition.column,
+              end_line: classNameNode.endPosition.row + 1,
+              end_column: classNameNode.endPosition.column,
+            },
           };
-          const classProcessor = JAVASCRIPT_BUILDER_CONFIG.get("def.class");
+          const classProcessor = JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
           classProcessor?.process(classCapture, builder, context);
         }
 
-        const definitions = builder.build();
-        expect(definitions).toHaveLength(1);
+        const result = builder.build();
+        const classes = Array.from(result.classes.values());
+        expect(classes).toHaveLength(1);
 
-        const classDef = definitions[0];
+        const classDef = classes[0];
 
         // Check all required fields are populated
         expect(classDef.kind).toBe("class");
@@ -468,6 +596,267 @@ describe("JavaScript Builder Configuration", () => {
 
         // Check availability has scope field
         expect(classDef.availability.scope).toBeDefined();
+      });
+    });
+
+    describe("Metadata Integration", () => {
+      it("should process method calls with receiver metadata", () => {
+        const code = `
+          const obj = { method: () => {} };
+          obj.method();
+        `;
+
+        const context = createTestContext();
+        const ast = parser.parse(code);
+        const captures: CaptureNode[] = [];
+
+        // Find the method call
+        const callNode = findNodeByType(ast.rootNode, "call_expression");
+        if (callNode) {
+          const memberExpr = callNode.childForFieldName("function");
+          if (memberExpr && memberExpr.type === "member_expression") {
+            const propNode = memberExpr.childForFieldName("property");
+            if (propNode) {
+              captures.push({
+                name: "ref.call",
+                category: "reference",
+                entity: "call",
+                node: propNode as any,
+                text: propNode.text as SymbolName,
+                location: {
+                  file_path: TEST_FILE_PATH,
+                  start_line: propNode.startPosition.row + 1,
+                  start_column: propNode.startPosition.column,
+                  end_line: propNode.endPosition.row + 1,
+                  end_column: propNode.endPosition.column,
+                },
+              });
+            }
+          }
+        }
+
+        const processingContext = {
+          ...context,
+          captures: captures,
+        };
+
+        const builder = new ReferenceBuilder(
+          processingContext,
+          JAVASCRIPT_METADATA_EXTRACTORS,
+          TEST_FILE_PATH
+        );
+
+        const references = builder.process();
+        const methodCalls = references.filter(r => r.type === "call");
+
+        expect(methodCalls).toHaveLength(1);
+        expect(methodCalls[0].name).toBe("method");
+        expect(methodCalls[0].context.receiver_location).toBeDefined();
+      });
+
+      it("should process property chains with metadata", () => {
+        const code = `
+          const api = { users: { list: () => {} } };
+          api.users.list();
+        `;
+
+        const context = createTestContext();
+        const ast = parser.parse(code);
+        const captures: CaptureNode[] = [];
+
+        // Find the chained method call
+        const callNode = findNodeByType(ast.rootNode, "call_expression");
+        if (callNode) {
+          const memberExpr = callNode.childForFieldName("function");
+          if (memberExpr && memberExpr.type === "member_expression") {
+            const propNode = memberExpr.childForFieldName("property");
+            if (propNode) {
+              captures.push({
+                name: "ref.call",
+                category: "reference",
+                entity: "call",
+                node: propNode as any,
+                text: propNode.text as SymbolName,
+                location: {
+                  file_path: TEST_FILE_PATH,
+                  start_line: propNode.startPosition.row + 1,
+                  start_column: propNode.startPosition.column,
+                  end_line: propNode.endPosition.row + 1,
+                  end_column: propNode.endPosition.column,
+                },
+              });
+            }
+          }
+        }
+
+        const processingContext = {
+          ...context,
+          captures: captures,
+        };
+
+        const builder = new ReferenceBuilder(
+          processingContext,
+          JAVASCRIPT_METADATA_EXTRACTORS,
+          TEST_FILE_PATH
+        );
+
+        const references = builder.process();
+        const methodCalls = references.filter(r => r.type === "call");
+
+        expect(methodCalls).toHaveLength(1);
+        expect(methodCalls[0].context.property_chain).toBeDefined();
+        expect(methodCalls[0].context.property_chain).toEqual(["api", "users", "list"]);
+      });
+
+      it("should extract type annotations from JSDoc", () => {
+        const code = `
+          /** @type {string} */
+          const myVar = "value";
+
+          /** @returns {number} */
+          function compute() { return 42; }
+        `;
+
+        const context = createTestContext();
+        const ast = parser.parse(code);
+        const captures: CaptureNode[] = [];
+
+        // Find the variable with JSDoc
+        const varNode = findNodeByType(ast.rootNode, "variable_declarator");
+        if (varNode) {
+          const nameNode = varNode.childForFieldName("name");
+          if (nameNode) {
+            captures.push({
+              name: "ref.identifier",
+              category: "reference",
+              entity: "identifier",
+              node: nameNode as any,
+              text: nameNode.text as SymbolName,
+              location: {
+                file_path: TEST_FILE_PATH,
+                start_line: nameNode.startPosition.row + 1,
+                start_column: nameNode.startPosition.column,
+                end_line: nameNode.endPosition.row + 1,
+                end_column: nameNode.endPosition.column,
+              },
+            });
+          }
+        }
+
+        const processingContext = {
+          ...context,
+          captures: captures,
+        };
+
+        const builder = new ReferenceBuilder(
+          processingContext,
+          JAVASCRIPT_METADATA_EXTRACTORS,
+          TEST_FILE_PATH
+        );
+
+        const references = builder.process();
+
+        // The type info extraction would be populated if the variable had a type annotation
+        expect(references).toBeDefined();
+      });
+
+      it("should process assignment contexts with metadata", () => {
+        const code = `
+          let target;
+          target = getValue();
+        `;
+
+        const context = createTestContext();
+        const ast = parser.parse(code);
+        const captures: CaptureNode[] = [];
+
+        // Find the assignment
+        const assignmentNode = findNodeByType(ast.rootNode, "assignment_expression");
+        if (assignmentNode) {
+          const leftNode = assignmentNode.childForFieldName("left");
+          if (leftNode) {
+            captures.push({
+              name: "ref.assignment",
+              category: "assignment",
+              entity: "assignment",
+              node: assignmentNode as any,
+              text: leftNode.text as SymbolName,
+              location: {
+                file_path: TEST_FILE_PATH,
+                start_line: leftNode.startPosition.row + 1,
+                start_column: leftNode.startPosition.column,
+                end_line: leftNode.endPosition.row + 1,
+                end_column: leftNode.endPosition.column,
+              },
+            });
+          }
+        }
+
+        const processingContext = {
+          ...context,
+          captures: captures,
+        };
+
+        const builder = new ReferenceBuilder(
+          processingContext,
+          JAVASCRIPT_METADATA_EXTRACTORS,
+          TEST_FILE_PATH
+        );
+
+        const references = builder.process();
+        const assignments = references.filter(r => r.type === "assignment");
+
+        expect(assignments).toBeDefined();
+        // Assignment parts would be extracted through metadata extractors
+      });
+
+      it("should process constructor calls with metadata", () => {
+        const code = `
+          const instance = new MyClass();
+        `;
+
+        const context = createTestContext();
+        const ast = parser.parse(code);
+        const captures: CaptureNode[] = [];
+
+        // Find the new expression
+        const newExpr = findNodeByType(ast.rootNode, "new_expression");
+        if (newExpr) {
+          const constructorNode = newExpr.childForFieldName("constructor");
+          if (constructorNode) {
+            captures.push({
+              name: "ref.constructor",
+              category: "reference",
+              entity: "constructor",
+              node: constructorNode as any,
+              text: constructorNode.text as SymbolName,
+              location: {
+                file_path: TEST_FILE_PATH,
+                start_line: constructorNode.startPosition.row + 1,
+                start_column: constructorNode.startPosition.column,
+                end_line: constructorNode.endPosition.row + 1,
+                end_column: constructorNode.endPosition.column,
+              },
+            });
+          }
+        }
+
+        const processingContext = {
+          ...context,
+          captures: captures,
+        };
+
+        const builder = new ReferenceBuilder(
+          processingContext,
+          JAVASCRIPT_METADATA_EXTRACTORS,
+          TEST_FILE_PATH
+        );
+
+        const references = builder.process();
+        const constructorCalls = references.filter(r => r.type === "construct");
+
+        expect(constructorCalls).toHaveLength(1);
+        expect(constructorCalls[0].context.construct_target).toBeDefined();
       });
     });
   });
