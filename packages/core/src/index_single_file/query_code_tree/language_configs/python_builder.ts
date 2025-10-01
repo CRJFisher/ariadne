@@ -16,6 +16,7 @@ import {
   property_symbol,
   variable_symbol,
   interface_symbol,
+  type_symbol,
 } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
 import type { CaptureNode } from "../../semantic_index";
@@ -334,6 +335,44 @@ export function determine_availability(name: string): SymbolAvailability {
 
   // Public by default in Python
   return { scope: "public" };
+}
+
+/**
+ * Create a type alias symbol ID
+ */
+export function create_type_alias_id(capture: CaptureNode): SymbolId {
+  const name = capture.text;
+  const location = capture.location;
+  return type_symbol(name, location);
+}
+
+/**
+ * Extract type expression from type alias value node
+ * For Python 3.12+ type statements: type Url = str
+ */
+export function extract_type_expression(node: SyntaxNode): string | undefined {
+  // Traverse up to find the type_alias_statement
+  let current: SyntaxNode | null = node;
+  while (current) {
+    if (current.type === "type_alias_statement") {
+      // The value is the last child after the '=' sign
+      const children = current.children || [];
+      for (let i = 0; i < children.length; i++) {
+        if (children[i].type === "=" && i + 1 < children.length) {
+          // Return the text of the value type node (excluding 'type' wrapper text if any)
+          const valueNode = children[i + 1];
+          if (valueNode.childCount > 0) {
+            // Return first child's text (the actual type expression)
+            return valueNode.child(0)?.text;
+          }
+          return valueNode.text;
+        }
+      }
+      break;
+    }
+    current = current.parent;
+  }
+  return undefined;
 }
 
 export function extract_return_type(node: SyntaxNode): SymbolName | undefined {

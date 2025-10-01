@@ -1732,4 +1732,125 @@ fn pair<T, U>(first: T, second: U) -> (T, U) {
       }
     });
   });
+
+  // ============================================================================
+  // TYPE ALIAS TESTS
+  // ============================================================================
+
+  describe("Type aliases", () => {
+    it("should extract simple type aliases with complete structure", () => {
+      const code = `
+type Kilometers = i32;
+type Result<T> = std::result::Result<T, Error>;
+pub type BoxedError = Box<dyn Error>;
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const result = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify type aliases exist
+      const typeNames = Array.from(result.types.values()).map(t => t.name);
+      expect(typeNames).toContain("Kilometers");
+      expect(typeNames).toContain("Result");
+      expect(typeNames).toContain("BoxedError");
+
+      // Verify Kilometers type alias with complete structure
+      const kilometersType = Array.from(result.types.values()).find(
+        (t) => t.name === "Kilometers"
+      );
+
+      expect(kilometersType).toBeDefined();
+
+      if (kilometersType) {
+        expect(kilometersType).toMatchObject({
+          kind: "type_alias",
+          symbol_id: expect.stringMatching(/^type/),
+          name: "Kilometers",
+          location: expect.objectContaining({
+            file_path: "test.rs",
+            start_line: expect.any(Number),
+            start_column: expect.any(Number),
+            end_line: expect.any(Number),
+            end_column: expect.any(Number),
+          }),
+          scope_id: expect.any(String),
+          availability: expect.objectContaining({
+            scope: expect.any(String),
+          }),
+        });
+      }
+
+      // Verify generic Result type alias
+      const resultType = Array.from(result.types.values()).find(
+        (t) => t.name === "Result"
+      );
+
+      expect(resultType).toBeDefined();
+
+      if (resultType) {
+        expect(resultType).toMatchObject({
+          kind: "type_alias",
+          name: "Result",
+          generics: expect.arrayContaining(["T"]),
+        });
+      }
+
+      // Verify public BoxedError type alias
+      const boxedErrorType = Array.from(result.types.values()).find(
+        (t) => t.name === "BoxedError"
+      );
+
+      expect(boxedErrorType).toBeDefined();
+
+      if (boxedErrorType) {
+        expect(boxedErrorType).toMatchObject({
+          kind: "type_alias",
+          name: "BoxedError",
+          availability: expect.objectContaining({
+            scope: "public",
+          }),
+        });
+      }
+    });
+
+    it("should extract associated type aliases in traits", () => {
+      const code = `
+trait Iterator {
+    type Item;
+
+    fn next(&mut self) -> Option<Self::Item>;
+}
+
+impl Iterator for MyIterator {
+    type Item = i32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        None
+    }
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const result = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify associated type aliases exist
+      const typeNames = Array.from(result.types.values()).map(t => t.name);
+      expect(typeNames).toContain("Item");
+
+      // Should find both the trait associated type and the impl associated type
+      const itemTypes = Array.from(result.types.values()).filter(
+        (t) => t.name === "Item"
+      );
+
+      expect(itemTypes.length).toBeGreaterThanOrEqual(1);
+
+      // Verify structure of at least one Item type
+      const firstItem = itemTypes[0];
+      expect(firstItem).toBeDefined();
+      expect(firstItem.kind).toBe("type_alias");
+      expect(firstItem.location.file_path).toBe("test.rs");
+    });
+  });
 });

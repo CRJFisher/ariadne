@@ -381,6 +381,26 @@
 )
 
 ;; ==============================================================================
+;; TYPE ALIASES (Python 3.12+)
+;; ==============================================================================
+
+; Type alias statements - simple (PEP 695)
+; Example: type Url = str
+(type_alias_statement
+  "type"
+  .
+  (type (identifier) @definition.type_alias)
+)
+
+; Type alias statements - generic (PEP 695)
+; Example: type Point[T] = tuple[T, T]
+(type_alias_statement
+  "type"
+  .
+  (type (generic_type (identifier) @definition.type_alias))
+)
+
+;; ==============================================================================
 ;; IMPORTS
 ;; ==============================================================================
 

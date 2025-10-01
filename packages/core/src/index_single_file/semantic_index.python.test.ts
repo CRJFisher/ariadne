@@ -1679,4 +1679,146 @@ class Calculator:
       }
     });
   });
+
+  // ============================================================================
+  // TYPE ALIAS TESTS (Python 3.12+)
+  // ============================================================================
+
+  describe("Type aliases (Python 3.12+)", () => {
+    it("should extract simple type aliases with complete structure", () => {
+      const code = `
+type Url = str
+type StringOrInt = str | int
+type Count = int
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.py" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const result = build_semantic_index(parsed_file, tree, "python");
+
+      // Verify type aliases exist
+      const typeNames = Array.from(result.types.values()).map(t => t.name);
+      expect(typeNames).toContain("Url");
+      expect(typeNames).toContain("StringOrInt");
+      expect(typeNames).toContain("Count");
+
+      // Verify Url type alias with complete structure
+      const urlType = Array.from(result.types.values()).find(
+        (t) => t.name === "Url"
+      );
+
+      expect(urlType).toBeDefined();
+
+      if (urlType) {
+        expect(urlType).toMatchObject({
+          kind: "type_alias",
+          symbol_id: expect.stringMatching(/^type:/),
+          name: "Url",
+          type_expression: "str",
+          location: expect.objectContaining({
+            file_path: "test.py",
+            start_line: expect.any(Number),
+            start_column: expect.any(Number),
+            end_line: expect.any(Number),
+            end_column: expect.any(Number),
+          }),
+          scope_id: expect.any(String),
+          availability: expect.objectContaining({
+            scope: expect.any(String),
+          }),
+        });
+      }
+
+      // Verify StringOrInt type alias
+      const stringOrIntType = Array.from(result.types.values()).find(
+        (t) => t.name === "StringOrInt"
+      );
+
+      expect(stringOrIntType).toBeDefined();
+
+      if (stringOrIntType) {
+        expect(stringOrIntType).toMatchObject({
+          kind: "type_alias",
+          name: "StringOrInt",
+          type_expression: "str | int",
+        });
+      }
+    });
+
+    it("should extract generic type aliases", () => {
+      const code = `
+type Point[T] = tuple[T, T]
+type GenericList[T] = list[T]
+type Result[T, E] = tuple[T, E] | E
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.py" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const result = build_semantic_index(parsed_file, tree, "python");
+
+      // Verify generic type aliases exist
+      const typeNames = Array.from(result.types.values()).map(t => t.name);
+      expect(typeNames).toContain("Point");
+      expect(typeNames).toContain("GenericList");
+      expect(typeNames).toContain("Result");
+
+      // Verify Point generic type alias
+      const pointType = Array.from(result.types.values()).find(
+        (t) => t.name === "Point"
+      );
+
+      expect(pointType).toBeDefined();
+
+      if (pointType) {
+        expect(pointType).toMatchObject({
+          kind: "type_alias",
+          name: "Point",
+          type_expression: "tuple[T, T]",
+          location: expect.objectContaining({
+            file_path: "test.py",
+          }),
+        });
+      }
+
+      // Verify GenericList
+      const genericListType = Array.from(result.types.values()).find(
+        (t) => t.name === "GenericList"
+      );
+
+      expect(genericListType).toBeDefined();
+
+      if (genericListType) {
+        expect(genericListType).toMatchObject({
+          kind: "type_alias",
+          name: "GenericList",
+          type_expression: "list[T]",
+        });
+      }
+    });
+
+    it("should extract complex type aliases", () => {
+      const code = `
+type Callback = Callable[[int, str], bool]
+type JSONValue = dict[str, str | int | list[str] | dict[str, str]]
+type Handler = Callable[[str], None]
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.py" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const result = build_semantic_index(parsed_file, tree, "python");
+
+      // Verify complex type aliases exist
+      const typeNames = Array.from(result.types.values()).map(t => t.name);
+      expect(typeNames).toContain("Callback");
+      expect(typeNames).toContain("JSONValue");
+      expect(typeNames).toContain("Handler");
+
+      // Verify each has a type_expression
+      for (const [id, typeAlias] of result.types) {
+        expect(typeAlias.type_expression).toBeDefined();
+        expect(typeAlias.kind).toBe("type_alias");
+        expect(typeAlias.location.file_path).toBe("test.py");
+      }
+    });
+  });
 });

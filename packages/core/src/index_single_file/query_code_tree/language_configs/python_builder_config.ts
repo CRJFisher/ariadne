@@ -29,6 +29,8 @@ import {
   create_protocol_id,
   find_containing_protocol,
   extract_property_type,
+  create_type_alias_id,
+  extract_type_expression,
 } from "./python_builder";
 
 export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
@@ -1110,6 +1112,34 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         builder.add_decorator_to_target(target_id, {
           name: decorator_name,
           location: capture.location,
+        });
+      },
+    },
+  ],
+
+  // ============================================================================
+  // TYPE ALIASES (Python 3.12+)
+  // ============================================================================
+
+  [
+    "definition.type_alias",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const type_id = create_type_alias_id(capture);
+        const type_expression = extract_type_expression(capture.node);
+
+        builder.add_type_alias({
+          kind: "type_alias",
+          symbol_id: type_id,
+          name: capture.text,
+          location: capture.location,
+          scope_id: context.get_scope_id(capture.location),
+          availability: determine_availability(capture.text),
+          type_expression,
         });
       },
     },
