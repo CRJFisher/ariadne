@@ -318,10 +318,7 @@ export interface SymbolReference {
 
   /** For assignments: type flow information */
   readonly type_flow?: {
-    source_type?: TypeInfo;
     target_type?: TypeInfo;
-    is_narrowing: boolean;
-    is_widening: boolean;
   };
 
   /** For returns: return type */
