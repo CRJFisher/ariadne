@@ -21,6 +21,14 @@ import {
   extract_default_value,
   create_variable_id,
   extract_import_path,
+  find_decorator_target,
+  create_enum_id,
+  create_enum_member_id,
+  find_containing_enum,
+  extract_enum_value,
+  create_protocol_id,
+  find_containing_protocol,
+  extract_property_type,
 } from "./python_builder";
 
 export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
@@ -64,6 +72,11 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const name = capture.text;
 
         if (class_id) {
+          // Skip __init__ - handled by definition.constructor
+          if (name === "__init__") {
+            return;
+          }
+
           const methodType = determine_method_type(
             capture.node.parent || capture.node
           );
@@ -71,33 +84,18 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
             capture.node.parent || capture.node
           );
 
-          // Special handling for __init__
-          if (name === "__init__") {
-            // __init__ is actually a constructor
-            builder.add_method_to_class(class_id, {
-              symbol_id: method_id,
-              name: "constructor" as SymbolName,
-              location: capture.location,
-              scope_id: context.get_scope_id(capture.location),
-              availability: { scope: "public" },
-              return_type: undefined,
-              ...methodType,
-              async: isAsync,
-            });
-          } else {
-            builder.add_method_to_class(class_id, {
-              symbol_id: method_id,
-              name: name,
-              location: capture.location,
-              scope_id: context.get_scope_id(capture.location),
-              availability: determine_availability(name),
-              return_type: extract_return_type(
-                capture.node.parent || capture.node
-              ),
-              ...methodType,
-              async: isAsync,
-            });
-          }
+          builder.add_method_to_class(class_id, {
+            symbol_id: method_id,
+            name: name,
+            location: capture.location,
+            scope_id: context.get_scope_id(capture.location),
+            availability: determine_availability(name),
+            return_type: extract_return_type(
+              capture.node.parent || capture.node
+            ),
+            ...methodType,
+            async: isAsync,
+          });
         }
       },
     },
@@ -174,13 +172,12 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const class_id = find_containing_class(capture);
 
         if (class_id) {
-          builder.add_method_to_class(class_id, {
+          builder.add_constructor_to_class(class_id, {
             symbol_id: method_id,
-            name: "constructor" as SymbolName,
+            name: "__init__" as SymbolName,
             location: capture.location,
             scope_id: context.get_scope_id(capture.location),
             availability: { scope: "public" },
-            return_type: undefined,
           });
         }
       },
@@ -956,6 +953,163 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           import_path: import_path,
           import_kind: "namespace",
           original_name: undefined,
+        });
+      },
+    },
+  ],
+
+  // Protocols (Python's structural typing, similar to TypeScript interfaces)
+  [
+    "definition.protocol",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const protocol_id = create_protocol_id(capture);
+
+        builder.add_interface({
+          symbol_id: protocol_id,
+          name: capture.text,
+          location: capture.location,
+          scope_id: context.get_scope_id(capture.location),
+          availability: determine_availability(capture.text),
+        });
+      },
+    },
+  ],
+
+  [
+    "definition.property.protocol",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const protocol_id = find_containing_protocol(capture);
+        if (!protocol_id) return;
+
+        const prop_id = create_property_id(capture);
+        const prop_type = extract_property_type(capture.node);
+
+        builder.add_property_signature_to_interface(protocol_id, {
+          symbol_id: prop_id,
+          name: capture.text,
+          location: capture.location,
+          type: prop_type,
+          readonly: false,
+        });
+      },
+    },
+  ],
+
+  // Enums
+  [
+    "definition.enum",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const enum_id = create_enum_id(capture);
+
+        builder.add_enum({
+          symbol_id: enum_id,
+          name: capture.text,
+          location: capture.location,
+          scope_id: context.get_scope_id(capture.location),
+          availability: determine_availability(capture.text),
+        });
+      },
+    },
+  ],
+
+  [
+    "definition.enum_member",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const enum_id = find_containing_enum(capture);
+        if (!enum_id) return;
+
+        const member_id = create_enum_member_id(capture.text, enum_id);
+        const value = extract_enum_value(capture.node);
+
+        builder.add_enum_member(enum_id, {
+          symbol_id: member_id,
+          name: capture.text,
+          location: capture.location,
+          value,
+        });
+      },
+    },
+  ],
+
+  // Decorators
+  [
+    "decorator.variable",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const target_id = find_decorator_target(capture);
+        if (!target_id) return;
+
+        const decorator_name = capture.text;
+
+        builder.add_decorator_to_target(target_id, {
+          name: decorator_name,
+          location: capture.location,
+        });
+      },
+    },
+  ],
+
+  [
+    "decorator.function",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const target_id = find_decorator_target(capture);
+        if (!target_id) return;
+
+        const decorator_name = capture.text;
+
+        builder.add_decorator_to_target(target_id, {
+          name: decorator_name,
+          location: capture.location,
+        });
+      },
+    },
+  ],
+
+  [
+    "decorator.property",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const target_id = find_decorator_target(capture);
+        if (!target_id) return;
+
+        const decorator_name = capture.text;
+
+        builder.add_decorator_to_target(target_id, {
+          name: decorator_name,
+          location: capture.location,
         });
       },
     },

@@ -90,11 +90,88 @@
   )?
 )
 
-; Method definitions (including special methods)
+; Enum class detection (classes inheriting from Enum)
+(class_definition
+  name: (identifier) @definition.enum
+  superclasses: (argument_list
+    (identifier) @type.type_reference
+    (#match? @type.type_reference "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$")
+  )
+)
+
+; Enum class detection (from module.Enum)
+(class_definition
+  name: (identifier) @definition.enum
+  superclasses: (argument_list
+    (attribute
+      attribute: (identifier) @type.type_reference
+      (#match? @type.type_reference "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$")
+    )
+  )
+)
+
+; Protocol class detection (classes inheriting from Protocol)
+(class_definition
+  name: (identifier) @definition.protocol
+  superclasses: (argument_list
+    (identifier) @type.type_reference
+    (#eq? @type.type_reference "Protocol")
+  )
+)
+
+; Protocol class detection (from typing.Protocol)
+(class_definition
+  name: (identifier) @definition.protocol
+  superclasses: (argument_list
+    (attribute
+      attribute: (identifier) @type.type_reference
+      (#eq? @type.type_reference "Protocol")
+    )
+  )
+)
+
+; Protocol property signatures (annotated assignments without values)
+(class_definition
+  superclasses: (argument_list
+    (identifier) @type.type_reference
+    (#eq? @type.type_reference "Protocol")
+  )
+  body: (block
+    (expression_statement
+      (assignment
+        left: (identifier) @definition.property.protocol
+        type: (_) @type.type_reference
+        !right
+      )
+    )
+  )
+)
+
+; Protocol property signatures (from typing.Protocol)
+(class_definition
+  superclasses: (argument_list
+    (attribute
+      attribute: (identifier) @type.type_reference
+      (#eq? @type.type_reference "Protocol")
+    )
+  )
+  body: (block
+    (expression_statement
+      (assignment
+        left: (identifier) @definition.property.protocol
+        type: (_) @type.type_reference
+        !right
+      )
+    )
+  )
+)
+
+; Method definitions (excluding __init__)
 (class_definition
   body: (block
     (function_definition
       name: (identifier) @definition.method
+      (#not-eq? @definition.method "__init__")
     )
   )
 )
@@ -151,6 +228,38 @@
         name: (identifier) @definition.property
       )
     ) @definition.property
+  )
+)
+
+; Enum members (class attributes in Enum classes)
+(class_definition
+  superclasses: (argument_list
+    (identifier) @type.type_reference
+    (#match? @type.type_reference "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$")
+  )
+  body: (block
+    (expression_statement
+      (assignment
+        left: (identifier) @definition.enum_member
+      )
+    )
+  )
+)
+
+; Enum members (from module.Enum)
+(class_definition
+  superclasses: (argument_list
+    (attribute
+      attribute: (identifier) @type.type_reference
+      (#match? @type.type_reference "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$")
+    )
+  )
+  body: (block
+    (expression_statement
+      (assignment
+        left: (identifier) @definition.enum_member
+      )
+    )
   )
 )
 
@@ -477,7 +586,30 @@
   (identifier) @reference.variable
 )
 
-; Decorators
+; Decorators - capture for decorator tracking
+(decorated_definition
+  (decorator
+    (identifier) @decorator.variable
+  )
+)
+
+(decorated_definition
+  (decorator
+    (call
+      function: (identifier) @decorator.function
+    )
+  )
+)
+
+(decorated_definition
+  (decorator
+    (attribute
+      attribute: (identifier) @decorator.property
+    )
+  )
+)
+
+; Decorators (old reference captures for compatibility)
 (decorator
   (identifier) @reference.call
 )

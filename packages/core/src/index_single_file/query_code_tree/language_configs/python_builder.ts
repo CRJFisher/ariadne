@@ -15,6 +15,7 @@ import {
   parameter_symbol,
   property_symbol,
   variable_symbol,
+  interface_symbol,
 } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
 import type { CaptureNode } from "../../semantic_index";
@@ -78,6 +79,20 @@ export function create_property_id(capture: CaptureNode): SymbolId {
   return property_symbol(name, location);
 }
 
+export function create_enum_id(capture: CaptureNode): SymbolId {
+  const name = capture.text;
+  const location = capture.location;
+  const file_path = location.file_path;
+  return `enum:${file_path}:${location.start_line}:${location.start_column}:${location.end_line}:${location.end_column}:${name}` as SymbolId;
+}
+
+export function create_enum_member_id(
+  name: string,
+  enum_id: SymbolId
+): SymbolId {
+  return `${enum_id}:${name}` as SymbolId;
+}
+
 export function find_containing_class(
   capture: CaptureNode
 ): SymbolId | undefined {
@@ -96,6 +111,125 @@ export function find_containing_class(
       node = node.parent;
     } else {
       break;
+    }
+  }
+  return undefined;
+}
+
+export function find_containing_enum(
+  capture: CaptureNode
+): SymbolId | undefined {
+  let node = capture.node;
+
+  // Traverse up until we find a class_definition
+  while (node) {
+    if (node.type === "class_definition") {
+      // Check if it inherits from Enum
+      const superclasses = node.childForFieldName?.("superclasses");
+      if (superclasses) {
+        const hasEnumBase = superclasses.children?.some((child) => {
+          if (child.type === "identifier") {
+            return /^(Enum|IntEnum|Flag|IntFlag|StrEnum)$/.test(child.text);
+          } else if (child.type === "attribute") {
+            const attr = child.childForFieldName?.("attribute");
+            return attr && /^(Enum|IntEnum|Flag|IntFlag|StrEnum)$/.test(attr.text);
+          }
+          return false;
+        });
+
+        if (hasEnumBase) {
+          const nameNode = node.childForFieldName?.("name");
+          if (nameNode) {
+            const file_path = capture.location.file_path;
+            const enumName = nameNode.text as SymbolName;
+            return `enum:${file_path}:${nameNode.startPosition.row + 1}:${nameNode.startPosition.column + 1}:${nameNode.endPosition.row + 1}:${nameNode.endPosition.column + 1}:${enumName}` as SymbolId;
+          }
+        }
+      }
+    }
+    if (node.parent) {
+      node = node.parent;
+    } else {
+      break;
+    }
+  }
+  return undefined;
+}
+
+export function extract_enum_value(node: SyntaxNode): string | undefined {
+  // The node is the identifier (left side of assignment), so we need to get the right side
+  const assignment = node.parent;
+  if (assignment && assignment.type === "assignment") {
+    const valueNode = assignment.childForFieldName?.("right");
+    if (valueNode) {
+      return valueNode.text;
+    }
+  }
+  return undefined;
+}
+
+export function create_protocol_id(capture: CaptureNode): SymbolId {
+  const name = capture.text;
+  const location = capture.location;
+  return interface_symbol(name, location);
+}
+
+export function find_containing_protocol(
+  capture: CaptureNode
+): SymbolId | undefined {
+  let node = capture.node;
+
+  // Traverse up until we find a class_definition
+  while (node) {
+    if (node.type === "class_definition") {
+      // Check if it inherits from Protocol
+      const superclasses = node.childForFieldName?.("superclasses");
+      if (superclasses) {
+        const hasProtocolBase = superclasses.children?.some((child) => {
+          if (child.type === "identifier") {
+            return child.text === "Protocol";
+          } else if (child.type === "attribute") {
+            const attr = child.childForFieldName?.("attribute");
+            return attr && attr.text === "Protocol";
+          }
+          return false;
+        });
+
+        if (hasProtocolBase) {
+          const nameNode = node.childForFieldName?.("name");
+          if (nameNode) {
+            const file_path = capture.location.file_path;
+            const protocolName = nameNode.text as SymbolName;
+            return interface_symbol(
+              protocolName,
+              {
+                file_path,
+                start_line: nameNode.startPosition.row + 1,
+                start_column: nameNode.startPosition.column + 1,
+                end_line: nameNode.endPosition.row + 1,
+                end_column: nameNode.endPosition.column + 1,
+              }
+            );
+          }
+        }
+      }
+    }
+    if (node.parent) {
+      node = node.parent;
+    } else {
+      break;
+    }
+  }
+  return undefined;
+}
+
+export function extract_property_type(node: SyntaxNode): SymbolName | undefined {
+  // For annotated assignments, extract the type annotation
+  const assignment = node.parent;
+  if (assignment && assignment.type === "assignment") {
+    const typeNode = assignment.childForFieldName?.("type");
+    if (typeNode) {
+      return typeNode.text as SymbolName;
     }
   }
   return undefined;
@@ -312,4 +446,80 @@ export function determine_method_type(node: SyntaxNode): {
   }
 
   return {};
+}
+
+export function find_decorator_target(capture: CaptureNode): SymbolId | undefined {
+  // Traverse up from decorator to find the decorated_definition, then get the actual definition
+  let node = capture.node.parent;
+
+  while (node) {
+    if (node.type === "decorated_definition") {
+      // Get the definition child (function_definition or class_definition)
+      const definition = node.childForFieldName?.("definition");
+
+      if (definition) {
+        if (definition.type === "function_definition") {
+          const nameNode = definition.childForFieldName?.("name");
+          if (nameNode) {
+            const file_path = capture.location.file_path;
+
+            // Check if this is a method (inside a class)
+            const class_node = find_containing_class({
+              node: definition,
+              text: "",
+              name: "",
+              location: capture.location,
+            } as CaptureNode);
+
+            if (class_node) {
+              // It's a method or constructor
+              const method_name = nameNode.text as SymbolName;
+              return method_symbol(
+                method_name,
+                {
+                  file_path,
+                  start_line: nameNode.startPosition.row + 1,
+                  start_column: nameNode.startPosition.column + 1,
+                  end_line: nameNode.endPosition.row + 1,
+                  end_column: nameNode.endPosition.column + 1,
+                }
+              );
+            } else {
+              // It's a function
+              return function_symbol(
+                nameNode.text as SymbolName,
+                {
+                  file_path,
+                  start_line: nameNode.startPosition.row + 1,
+                  start_column: nameNode.startPosition.column + 1,
+                  end_line: nameNode.endPosition.row + 1,
+                  end_column: nameNode.endPosition.column + 1,
+                }
+              );
+            }
+          }
+        } else if (definition.type === "class_definition") {
+          const nameNode = definition.childForFieldName?.("name");
+          if (nameNode) {
+            const file_path = capture.location.file_path;
+            return class_symbol(
+              nameNode.text as SymbolName,
+              {
+                file_path,
+                start_line: nameNode.startPosition.row + 1,
+                start_column: nameNode.startPosition.column + 1,
+                end_line: nameNode.endPosition.row + 1,
+                end_column: nameNode.endPosition.column + 1,
+              }
+            );
+          }
+        }
+      }
+      break;
+    }
+
+    node = node.parent;
+  }
+
+  return undefined;
 }
