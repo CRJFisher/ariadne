@@ -303,8 +303,8 @@
 (trait_item
   body: (declaration_list
     (function_signature_item
-      name: (identifier) @definition.method
-    )
+      name: (identifier) @definition.interface.method
+    ) @scope.method
   )
 )
 

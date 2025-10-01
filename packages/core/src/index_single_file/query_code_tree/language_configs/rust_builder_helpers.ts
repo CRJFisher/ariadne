@@ -604,3 +604,174 @@ export function extract_import_alias(node: SyntaxNode): SymbolName | undefined {
   }
   return undefined;
 }
+
+export function extract_use_path(capture: CaptureNode): ModulePath {
+  // For use declarations, extract the full path
+  let node: SyntaxNode | null = capture.node;
+
+  // Traverse up to find use_declaration
+  while (node && node.type !== "use_declaration") {
+    node = node.parent;
+  }
+
+  if (!node) {
+    return capture.text as any as ModulePath;
+  }
+
+  // Get the argument field which contains the path
+  const argument = node.childForFieldName?.("argument");
+  if (argument) {
+    // Handle different argument types
+    if (argument.type === "scoped_identifier") {
+      return argument.text as any as ModulePath;
+    } else if (argument.type === "identifier") {
+      return argument.text as any as ModulePath;
+    } else if (argument.type === "use_as_clause") {
+      // For aliased imports, get the source path
+      const source = argument.children?.find(
+        c => c.type === "scoped_identifier" || c.type === "identifier"
+      );
+      return (source?.text || argument.text) as any as ModulePath;
+    } else if (argument.type === "scoped_use_list") {
+      // For use lists, get the path before the list
+      const path = argument.childForFieldName?.("path");
+      return (path?.text || "") as any as ModulePath;
+    }
+  }
+
+  return capture.text as any as ModulePath;
+}
+
+export function extract_use_alias(capture: CaptureNode): SymbolName | undefined {
+  let node: SyntaxNode | null = capture.node;
+
+  // Traverse up to find use_as_clause
+  while (node && node.type !== "use_as_clause") {
+    node = node.parent;
+  }
+
+  if (node?.type === "use_as_clause") {
+    // Find the identifier after "as"
+    const children = node.children || [];
+    let foundAs = false;
+    for (const child of children) {
+      if (child.text === "as") {
+        foundAs = true;
+      } else if (foundAs && child.type === "identifier") {
+        return child.text as SymbolName;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+export function is_wildcard_import(capture: CaptureNode): boolean {
+  let node: SyntaxNode | null = capture.node;
+
+  // Check if parent is use_wildcard
+  while (node) {
+    if (node.type === "use_wildcard") {
+      return true;
+    }
+    node = node.parent;
+  }
+
+  return false;
+}
+
+export function find_containing_callable(
+  capture: CaptureNode
+): SymbolId | undefined {
+  let node = capture.node.parent;
+  const file_path = capture.location.file_path;
+
+  while (node) {
+    // Function items (top-level functions)
+    if (node.type === "function_item") {
+      const nameNode = node.childForFieldName?.("name");
+      if (!nameNode) return undefined;
+
+      return function_symbol(
+        nameNode.text as SymbolName,
+        {
+          file_path,
+          start_line: node.startPosition.row + 1,
+          start_column: node.startPosition.column + 1,
+          end_line: node.endPosition.row + 1,
+          end_column: node.endPosition.column + 1,
+        }
+      );
+    }
+
+    // Check if this is a method in impl block or trait
+    if (node.type === "impl_item" || node.type === "trait_item") {
+      // The parameter is directly in a method, look for the function_item sibling
+      let functionNode: SyntaxNode | null = node;
+      while (functionNode && functionNode.type !== "function_item") {
+        // Look in children for function_item
+        const funcChild = functionNode.children?.find(
+          (c) => c.type === "function_item"
+        );
+        if (funcChild) {
+          functionNode = funcChild;
+          break;
+        }
+        // Move to parent
+        functionNode = functionNode.parent || null;
+      }
+
+      if (functionNode?.type === "function_item") {
+        const nameNode = functionNode.childForFieldName?.("name");
+        if (!nameNode) return undefined;
+
+        return method_symbol(
+          nameNode.text as SymbolName,
+          {
+            file_path,
+            start_line: functionNode.startPosition.row + 1,
+            start_column: functionNode.startPosition.column + 1,
+            end_line: functionNode.endPosition.row + 1,
+            end_column: functionNode.endPosition.column + 1,
+          }
+        );
+      }
+    }
+
+    // Trait method signatures (function_signature_item in traits)
+    if (node.type === "function_signature_item") {
+      const nameNode = node.childForFieldName?.("name");
+      if (!nameNode) return undefined;
+
+      return method_symbol(
+        nameNode.text as SymbolName,
+        {
+          file_path,
+          start_line: node.startPosition.row + 1,
+          start_column: node.startPosition.column + 1,
+          end_line: node.endPosition.row + 1,
+          end_column: node.endPosition.column + 1,
+        }
+      );
+    }
+
+    // Closure expressions
+    if (node.type === "closure_expression") {
+      // Closures don't have names, use location as identifier
+      return function_symbol(
+        `<closure>` as SymbolName,
+        {
+          file_path,
+          start_line: node.startPosition.row + 1,
+          start_column: node.startPosition.column + 1,
+          end_line: node.endPosition.row + 1,
+          end_column: node.endPosition.column + 1,
+        }
+      );
+    }
+
+    node = node.parent;
+  }
+
+  return undefined;
+}

@@ -554,9 +554,8 @@ mod private_module {
       expect(public_mod?.availability?.scope).toBe("public");
     });
 
-    it.skip("should extract simple use statements", () => {
-      // SKIPPED: Import extraction not yet implemented for Rust
-      // This test documents the expected behavior when imports are added
+    it("should extract simple use statements", () => {
+      // Import extraction now implemented for Rust
       const code = `
 use std::collections::HashMap;
 use std::io::Result;
@@ -574,13 +573,13 @@ fn main() {
       // Verify imports are tracked
       expect(index.imported_symbols.size).toBeGreaterThan(0);
 
-      const imported_names = Array.from(index.imported_symbols.values()).map(imp => imp.imported_name);
+      const imported_names = Array.from(index.imported_symbols.values()).map(imp => imp.name);
       expect(imported_names).toContain("HashMap");
       expect(imported_names).toContain("Result");
     });
 
-    it.skip("should extract multiple imports from same module", () => {
-      // SKIPPED: Import extraction not yet implemented for Rust
+    it("should extract multiple imports from same module", () => {
+      // Import extraction now implemented for Rust
       const code = `
 use std::fmt::{Display, Formatter, Result};
 `;
@@ -591,14 +590,14 @@ use std::fmt::{Display, Formatter, Result};
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify all imports are captured
-      const imported_names = Array.from(index.imported_symbols.values()).map(imp => imp.imported_name);
+      const imported_names = Array.from(index.imported_symbols.values()).map(imp => imp.name);
       expect(imported_names).toContain("Display");
       expect(imported_names).toContain("Formatter");
       expect(imported_names).toContain("Result");
     });
 
-    it.skip("should extract aliased imports", () => {
-      // SKIPPED: Import extraction not yet implemented for Rust
+    it("should extract aliased imports", () => {
+      // Import extraction now implemented for Rust
       const code = `
 use std::collections::HashMap as Map;
 use std::io::Result as IoResult;
@@ -614,13 +613,13 @@ use std::io::Result as IoResult;
 
       // Check for HashMap/Map
       const map_import = imports.find(imp =>
-        imp.imported_name === "Map" || imp.source_name === "HashMap"
+        imp.name === "Map" || imp.original_name === "HashMap"
       );
       expect(map_import).toBeDefined();
 
       // Check for Result/IoResult
       const result_import = imports.find(imp =>
-        imp.imported_name === "IoResult" || imp.source_name === "Result"
+        imp.name === "IoResult" || imp.original_name === "Result"
       );
       expect(result_import).toBeDefined();
     });

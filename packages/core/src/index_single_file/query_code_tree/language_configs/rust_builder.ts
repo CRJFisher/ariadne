@@ -14,15 +14,21 @@ import {
   create_constant_id,
   create_module_id,
   create_type_alias_id,
+  create_parameter_id,
   extract_visibility,
   extract_generic_parameters,
   extract_return_type,
   extract_parameter_type,
   extract_enum_variants,
+  extract_use_path,
+  extract_use_alias,
+  is_wildcard_import,
   is_associated_function,
+  is_mutable_parameter,
   find_containing_impl,
   find_containing_struct,
   find_containing_trait,
+  find_containing_callable,
   enum_member_symbol,
 } from "./rust_builder_helpers";
 
@@ -211,6 +217,34 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           availability: extract_visibility(capture.node.parent || capture.node),
           generics,
         });
+      },
+    },
+  ],
+
+  // Trait Method Signatures (signatures without implementation)
+  [
+    "definition.interface.method",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const method_id = create_method_id(capture);
+        const trait_id = find_containing_trait(capture);
+        const returnType = extract_return_type(
+          capture.node.parent || capture.node
+        );
+
+        if (trait_id) {
+          builder.add_method_signature_to_interface(trait_id, {
+            symbol_id: method_id,
+            name: capture.text,
+            location: capture.location,
+            scope_id: context.get_scope_id(capture.location),
+            return_type: returnType,
+          });
+        }
       },
     },
   ],
@@ -513,9 +547,97 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   ],
 
   // Parameters
-  ["definition.parameter", { process: () => {} }],
-  ["definition.parameter.self", { process: () => {} }],
-  ["definition.parameter.closure", { process: () => {} }],
+  [
+    "definition.parameter",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const param_id = create_parameter_id(capture);
+        const parent_id = find_containing_callable(capture);
+
+        if (!parent_id) return;
+
+        const param_type = extract_parameter_type(
+          capture.node.parent || capture.node
+        );
+        const is_mut = is_mutable_parameter(
+          capture.node.parent || capture.node
+        );
+
+        builder.add_parameter_to_callable(parent_id, {
+          symbol_id: param_id,
+          name: capture.text,
+          location: capture.location,
+          scope_id: context.get_scope_id(capture.location),
+          type: param_type,
+          optional: false,
+        });
+      },
+    },
+  ],
+
+  [
+    "definition.parameter.self",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const param_id = create_parameter_id(capture);
+        const parent_id = find_containing_callable(capture);
+
+        if (!parent_id) return;
+
+        // Self parameter type is the containing struct/trait
+        const impl_info = find_containing_impl(capture);
+        const self_type = impl_info?.struct
+          ? impl_info.struct.split(":").pop()
+          : "Self";
+
+        builder.add_parameter_to_callable(parent_id, {
+          symbol_id: param_id,
+          name: "self" as SymbolName,
+          location: capture.location,
+          scope_id: context.get_scope_id(capture.location),
+          type: self_type as SymbolName,
+          optional: false,
+        });
+      },
+    },
+  ],
+
+  [
+    "definition.parameter.closure",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const param_id = create_parameter_id(capture);
+        const parent_id = find_containing_callable(capture);
+
+        if (!parent_id) return;
+
+        const param_type = extract_parameter_type(
+          capture.node.parent || capture.node
+        );
+
+        builder.add_parameter_to_callable(parent_id, {
+          symbol_id: param_id,
+          name: capture.text,
+          location: capture.location,
+          scope_id: context.get_scope_id(capture.location),
+          type: param_type,
+          optional: false,
+        });
+      },
+    },
+  ],
 
   // Variables and Constants
   [
@@ -739,6 +861,86 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   // Type Parameters and Constraints
   ["definition.type_parameter", { process: () => {} }],
   ["definition.type_parameter.constrained", { process: () => {} }],
+
+  // Imports and Use Statements
+  [
+    "import.import",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const import_path = extract_use_path(capture);
+        const alias = extract_use_alias(capture);
+        const is_wildcard = is_wildcard_import(capture);
+
+        // Get the imported name - use alias if present, otherwise last segment
+        const imported_name = alias || capture.text;
+
+        builder.add_import({
+          symbol_id: `import:${capture.location.file_path}:${capture.location.start_line}:${imported_name}` as SymbolId,
+          name: imported_name as SymbolName,
+          location: capture.location,
+          scope_id: context.get_scope_id(capture.location),
+          availability: { scope: "file-private" },
+          import_path,
+          import_kind: is_wildcard ? "namespace" : "named",
+        });
+      },
+    },
+  ],
+
+  [
+    "import.import.aliased",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const import_path = extract_use_path(capture);
+        const alias = extract_use_alias(capture);
+
+        if (!alias) return;
+
+        builder.add_import({
+          symbol_id: `import:${capture.location.file_path}:${capture.location.start_line}:${alias}` as SymbolId,
+          name: alias,
+          location: capture.location,
+          scope_id: context.get_scope_id(capture.location),
+          availability: { scope: "file-private" },
+          import_path,
+          original_name: capture.text,
+          import_kind: "named",
+        });
+      },
+    },
+  ],
+
+  [
+    "import.import.declaration",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const import_path = extract_use_path(capture);
+        const is_wildcard = is_wildcard_import(capture);
+
+        builder.add_import({
+          symbol_id: `import:${capture.location.file_path}:${capture.location.start_line}:${capture.text}` as SymbolId,
+          name: capture.text,
+          location: capture.location,
+          scope_id: context.get_scope_id(capture.location),
+          availability: { scope: "file-private" },
+          import_path,
+          import_kind: is_wildcard ? "namespace" : "named",
+        });
+      },
+    },
+  ],
 
   // Other captures
   ["definition.function.closure", { process: () => {} }],
