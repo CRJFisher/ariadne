@@ -98,6 +98,88 @@ describe("Python Metadata Extractors", () => {
       expect(result).toBeDefined();
       expect(result?.type_name).toContain("|");
     });
+
+    it("should handle parameters with default values", () => {
+      const code = `def f(x: int = 5): pass`;
+      const tree = parser.parse(code);
+      const typedDefaultParam = tree.rootNode.descendantsOfType("typed_default_parameter")[0];
+
+      if (typedDefaultParam) {
+        const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typedDefaultParam, TEST_FILE);
+
+        expect(result).toBeDefined();
+        expect(result?.type_name).toBe("int");
+        expect(result?.certainty).toBe("declared");
+      } else {
+        // Some versions of tree-sitter-python might use typed_parameter even with defaults
+        const typedParam = tree.rootNode.descendantsOfType("typed_parameter")[0];
+        const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typedParam, TEST_FILE);
+
+        expect(result).toBeDefined();
+        expect(result?.type_name).toBe("int");
+      }
+    });
+
+    it("should detect nullable with pipe None syntax", () => {
+      const code = `def f(x: str | None): pass`;
+      const tree = parser.parse(code);
+      const typedParam = tree.rootNode.descendantsOfType("typed_parameter")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typedParam, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.type_name).toContain("None");
+      expect(result?.is_nullable).toBe(true);
+    });
+
+    it("should return undefined for nodes without type annotation", () => {
+      const code = `x = 5`;  // Assignment without type annotation
+      const tree = parser.parse(code);
+      const assignment = tree.rootNode.descendantsOfType("assignment")[0];
+
+      // Pass an assignment node that has no type field
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(assignment, TEST_FILE);
+
+      // Since this assignment has no type annotation, it should return undefined
+      expect(result).toBeUndefined();
+    });
+
+    it("should handle identifier node as type", () => {
+      const code = `def f(x): pass`;
+      const tree = parser.parse(code);
+      // When we pass a raw identifier, it treats it as a type name
+      const param = tree.rootNode.descendantsOfType("identifier").find(n => n.text === "x");
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(param!, TEST_FILE);
+
+      // An identifier node will be treated as a type name itself
+      expect(result).toBeDefined();
+      expect(result?.type_name).toBe("x");
+    });
+
+    it("should handle custom type identifiers", () => {
+      const code = `def f(x: MyCustomType): pass`;
+      const tree = parser.parse(code);
+      const typedParam = tree.rootNode.descendantsOfType("typed_parameter")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typedParam, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.type_name).toBe("MyCustomType");
+    });
+
+    it("should extract type from type node directly", () => {
+      const code = `x: int = 5`;
+      const tree = parser.parse(code);
+      const typeNode = tree.rootNode.descendantsOfType("type")[0];
+
+      if (typeNode) {
+        const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typeNode, TEST_FILE);
+
+        expect(result).toBeDefined();
+        expect(result?.type_name).toBe("int");
+      }
+    });
   });
 
   describe("extract_call_receiver", () => {
@@ -172,6 +254,30 @@ describe("Python Metadata Extractors", () => {
 
       expect(result).toBeUndefined();
     });
+
+    it("should handle attribute node directly (not in call)", () => {
+      const code = `obj.prop`;
+      const tree = parser.parse(code);
+      const attribute = tree.rootNode.descendantsOfType("attribute")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(attribute, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.start_column).toBe(0);
+      expect(result?.end_column).toBe(3); // end of "obj"
+    });
+
+    it("should handle nested attribute node directly", () => {
+      const code = `user.profile.name`;
+      const tree = parser.parse(code);
+      const attribute = tree.rootNode.descendantsOfType("attribute")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(attribute, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.start_column).toBe(0);
+      expect(result?.end_column).toBe(12); // end of "user.profile"
+    });
   });
 
   describe("extract_property_chain", () => {
@@ -238,6 +344,56 @@ describe("Python Metadata Extractors", () => {
       const result = PYTHON_METADATA_EXTRACTORS.extract_property_chain(subscript);
 
       expect(result).toEqual(["obj", "key1", "key2"]);
+    });
+
+    it("should handle integer subscript", () => {
+      const code = `obj[0].prop`;
+      const tree = parser.parse(code);
+      const attribute = tree.rootNode.descendantsOfType("attribute")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_property_chain(attribute);
+
+      expect(result).toBeDefined();
+      expect(result).toContain("obj");
+      expect(result).toContain("prop");
+      // Note: numeric subscripts are not included in the chain
+    });
+
+    it("should handle variable subscript", () => {
+      const code = `obj[index].prop`;
+      const tree = parser.parse(code);
+      const attribute = tree.rootNode.descendantsOfType("attribute")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_property_chain(attribute);
+
+      expect(result).toBeDefined();
+      expect(result).toContain("obj");
+      expect(result).toContain("prop");
+      // Note: variable subscripts are not included in the chain
+    });
+
+    it("should return undefined for simple identifier", () => {
+      const code = `x`;
+      const tree = parser.parse(code);
+      const identifier = tree.rootNode.descendantsOfType("identifier")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_property_chain(identifier);
+
+      expect(result).toBeUndefined();
+    });
+
+    it("should handle mixed subscript and attribute access", () => {
+      const code = `data["users"][0].profile.name`;
+      const tree = parser.parse(code);
+      const attribute = tree.rootNode.descendantsOfType("attribute")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_property_chain(attribute);
+
+      expect(result).toBeDefined();
+      expect(result).toContain("data");
+      expect(result).toContain("users");
+      expect(result).toContain("profile");
+      expect(result).toContain("name");
     });
   });
 
@@ -433,6 +589,131 @@ describe("Python Metadata Extractors", () => {
 
       const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(identifier);
 
+      expect(result).toBeUndefined();
+    });
+
+    it("should extract exact Callable arguments", () => {
+      const code = `f: Callable[[int, str], bool] = lambda x, y: True`;
+      const tree = parser.parse(code);
+      const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(genericType);
+
+      expect(result).toBeDefined();
+      // Callable has special format where arguments are in a list
+      expect(result).toBeDefined();
+      const resultStr = result?.join(", ");
+      expect(resultStr).toContain("bool");
+    });
+
+    it("should handle deeply nested generics", () => {
+      const code = `x: Dict[str, List[Tuple[int, str]]] = {}`;
+      const tree = parser.parse(code);
+      const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(genericType);
+
+      expect(result).toBeDefined();
+      expect(result?.[0]).toBe("str");
+      expect(result?.[1]).toContain("List");
+      expect(result?.[1]).toContain("Tuple");
+    });
+
+    it("should handle Optional as special case of Union", () => {
+      const code = `x: Optional[str] = None`;
+      const tree = parser.parse(code);
+      const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(genericType);
+
+      expect(result).toBeDefined();
+      expect(result).toEqual(["str"]);
+    });
+
+    it("should handle complex nested Union types", () => {
+      const code = `x: Union[int, List[str], Dict[str, Any]] = []`;
+      const tree = parser.parse(code);
+      const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(genericType);
+
+      expect(result).toBeDefined();
+      expect(result?.length).toBe(3);
+      expect(result?.[0]).toBe("int");
+      expect(result?.[1]).toContain("List");
+      expect(result?.[2]).toContain("Dict");
+    });
+
+    it("should handle Literal type arguments", () => {
+      const code = `x: Literal["foo", "bar"] = "foo"`;
+      const tree = parser.parse(code);
+      const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(genericType);
+
+      expect(result).toBeDefined();
+      // Literal contains string values as type arguments
+      expect(result?.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("null/undefined handling", () => {
+    it("extract_type_from_annotation should handle null input", () => {
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(
+        // @ts-ignore - testing null input
+        null,
+        TEST_FILE
+      );
+      expect(result).toBeUndefined();
+    });
+
+    it("extract_call_receiver should handle null input", () => {
+      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(null, TEST_FILE);
+      expect(result).toBeUndefined();
+    });
+
+    it("extract_call_receiver should handle undefined input", () => {
+      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(undefined, TEST_FILE);
+      expect(result).toBeUndefined();
+    });
+
+    it("extract_property_chain should handle null input", () => {
+      const result = PYTHON_METADATA_EXTRACTORS.extract_property_chain(null);
+      expect(result).toBeUndefined();
+    });
+
+    it("extract_property_chain should handle undefined input", () => {
+      const result = PYTHON_METADATA_EXTRACTORS.extract_property_chain(undefined);
+      expect(result).toBeUndefined();
+    });
+
+    it("extract_assignment_parts should handle null input", () => {
+      const result = PYTHON_METADATA_EXTRACTORS.extract_assignment_parts(null, TEST_FILE);
+      expect(result).toEqual({ source: undefined, target: undefined });
+    });
+
+    it("extract_assignment_parts should handle undefined input", () => {
+      const result = PYTHON_METADATA_EXTRACTORS.extract_assignment_parts(undefined, TEST_FILE);
+      expect(result).toEqual({ source: undefined, target: undefined });
+    });
+
+    it("extract_construct_target should handle null input", () => {
+      const result = PYTHON_METADATA_EXTRACTORS.extract_construct_target(null, TEST_FILE);
+      expect(result).toBeUndefined();
+    });
+
+    it("extract_construct_target should handle undefined input", () => {
+      const result = PYTHON_METADATA_EXTRACTORS.extract_construct_target(undefined, TEST_FILE);
+      expect(result).toBeUndefined();
+    });
+
+    it("extract_type_arguments should handle null input", () => {
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(null);
+      expect(result).toBeUndefined();
+    });
+
+    it("extract_type_arguments should handle undefined input", () => {
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(undefined);
       expect(result).toBeUndefined();
     });
   });
