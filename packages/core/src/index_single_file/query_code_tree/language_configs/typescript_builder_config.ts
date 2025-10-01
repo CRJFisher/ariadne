@@ -406,8 +406,32 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   ],
 
   // ============================================================================
-  // OPTIONAL PARAMETERS
+  // PARAMETERS - Override JavaScript to use TypeScript's find_containing_callable
   // ============================================================================
+  [
+    "definition.parameter",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const param_id = create_parameter_id(capture);
+        const parent_id = find_containing_callable(capture);
+
+        builder.add_parameter_to_callable(parent_id, {
+          symbol_id: param_id,
+          name: capture.text,
+          location: capture.location,
+          scope_id: context.get_scope_id(capture.location),
+          type: extract_parameter_type(capture.node),
+          default_value: undefined,
+          optional: false,
+        });
+      },
+    },
+  ],
+
   [
     "definition.parameter.optional",
     {
@@ -427,6 +451,30 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           type: extract_parameter_type(capture.node),
           default_value: undefined,
           optional: true,
+        });
+      },
+    },
+  ],
+
+  [
+    "definition.parameter.rest",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const param_id = create_parameter_id(capture);
+        const parent_id = find_containing_callable(capture);
+
+        builder.add_parameter_to_callable(parent_id, {
+          symbol_id: param_id,
+          name: capture.text,
+          location: capture.location,
+          scope_id: context.get_scope_id(capture.location),
+          type: extract_parameter_type(capture.node),
+          default_value: undefined,
+          optional: false,
         });
       },
     },

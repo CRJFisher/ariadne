@@ -485,6 +485,7 @@ export function find_containing_class(
   capture: CaptureNode
 ): SymbolId | undefined {
   let node = capture.node.parent;
+  const file_path = capture.location.file_path;
 
   while (node) {
     if (
@@ -495,7 +496,14 @@ export function find_containing_class(
       const nameNode = node.childForFieldName?.("name");
       if (nameNode) {
         const className = nameNode.text as SymbolName;
-        return class_symbol(className, extract_location(nameNode));
+        const location: Location = {
+          file_path,
+          start_line: nameNode.startPosition.row + 1,
+          start_column: nameNode.startPosition.column + 1,
+          end_line: nameNode.endPosition.row + 1,
+          end_column: nameNode.endPosition.column + 1,
+        };
+        return class_symbol(className, location);
       }
     }
     node = node.parent;
@@ -510,13 +518,21 @@ export function find_containing_interface(
   capture: CaptureNode
 ): SymbolId | undefined {
   let node = capture.node.parent;
+  const file_path = capture.location.file_path;
 
   while (node) {
     if (node.type === "interface_declaration") {
       const nameNode = node.childForFieldName?.("name");
       if (nameNode) {
         const interfaceName = nameNode.text as SymbolName;
-        return interface_symbol(interfaceName, extract_location(nameNode));
+        const location: Location = {
+          file_path,
+          start_line: nameNode.startPosition.row + 1,
+          start_column: nameNode.startPosition.column + 1,
+          end_line: nameNode.endPosition.row + 1,
+          end_column: nameNode.endPosition.column + 1,
+        };
+        return interface_symbol(interfaceName, location);
       }
     }
     node = node.parent;
@@ -531,13 +547,20 @@ export function find_containing_enum(
   capture: CaptureNode
 ): SymbolId | undefined {
   let node = capture.node.parent;
+  const file_path = capture.location.file_path;
 
   while (node) {
     if (node.type === "enum_declaration") {
       const nameNode = node.childForFieldName?.("name");
       if (nameNode) {
         const enumName = nameNode.text as SymbolName;
-        const location = extract_location(nameNode);
+        const location: Location = {
+          file_path,
+          start_line: nameNode.startPosition.row + 1,
+          start_column: nameNode.startPosition.column + 1,
+          end_line: nameNode.endPosition.row + 1,
+          end_column: nameNode.endPosition.column + 1,
+        };
         return `enum:${location.file_path}:${location.start_line}:${location.start_column}:${location.end_line}:${location.end_column}:${enumName}` as SymbolId;
       }
     }
@@ -547,38 +570,53 @@ export function find_containing_enum(
 }
 
 /**
- * Find containing callable (function/method)
+ * Find containing callable (function/method/method_signature)
  */
 export function find_containing_callable(capture: CaptureNode): SymbolId {
   let node = capture.node.parent;
+  const file_path = capture.location.file_path;
 
   while (node) {
     if (
       node.type === "function_declaration" ||
       node.type === "function_expression" ||
       node.type === "arrow_function" ||
-      node.type === "method_definition"
+      node.type === "method_definition" ||
+      node.type === "method_signature"
     ) {
       const nameNode = node.childForFieldName?.("name");
 
-      if (node.type === "method_definition") {
+      if (node.type === "method_definition" || node.type === "method_signature") {
         const methodName = nameNode ? nameNode.text : "anonymous";
-        return method_symbol(
-          methodName as SymbolName,
-          extract_location(nameNode || node)
-        );
+        // Reconstruct location with proper file_path
+        const location: Location = {
+          file_path,
+          start_line: (nameNode || node).startPosition.row + 1,
+          start_column: (nameNode || node).startPosition.column + 1,
+          end_line: (nameNode || node).endPosition.row + 1,
+          end_column: (nameNode || node).endPosition.column + 1,
+        };
+        return method_symbol(methodName as SymbolName, location);
       } else if (nameNode) {
         // Named function
-        return function_symbol(
-          nameNode.text as SymbolName,
-          extract_location(nameNode)
-        );
+        const location: Location = {
+          file_path,
+          start_line: nameNode.startPosition.row + 1,
+          start_column: nameNode.startPosition.column + 1,
+          end_line: nameNode.endPosition.row + 1,
+          end_column: nameNode.endPosition.column + 1,
+        };
+        return function_symbol(nameNode.text as SymbolName, location);
       } else {
         // Anonymous function/arrow function - use the location as ID
-        return function_symbol(
-          "anonymous" as SymbolName,
-          extract_location(node)
-        );
+        const location: Location = {
+          file_path,
+          start_line: node.startPosition.row + 1,
+          start_column: node.startPosition.column + 1,
+          end_line: node.endPosition.row + 1,
+          end_column: node.endPosition.column + 1,
+        };
+        return function_symbol("anonymous" as SymbolName, location);
       }
     }
     node = node.parent;
@@ -620,9 +658,30 @@ export function extract_parameter_type(
 export function find_decorator_target(
   capture: CaptureNode
 ): SymbolId | undefined {
-  // Decorator node's next sibling is typically the target
+  const file_path = capture.location.file_path;
+
+  // Check if the decorator is a child of the target (class decorators)
   const parent = capture.node.parent;
   if (parent) {
+    // Case 1: Decorator is child of class_declaration or abstract_class_declaration
+    if (
+      parent.type === "class_declaration" ||
+      parent.type === "abstract_class_declaration"
+    ) {
+      const nameNode = parent.childForFieldName?.("name");
+      if (nameNode) {
+        const location: Location = {
+          file_path,
+          start_line: nameNode.startPosition.row + 1,
+          start_column: nameNode.startPosition.column + 1,
+          end_line: nameNode.endPosition.row + 1,
+          end_column: nameNode.endPosition.column + 1,
+        };
+        return class_symbol(nameNode.text as SymbolName, location);
+      }
+    }
+
+    // Case 2: Decorator is sibling in class_body (method/property decorators)
     const decoratorIndex = parent.children?.indexOf(capture.node);
     if (decoratorIndex !== undefined && decoratorIndex >= 0) {
       // Look for the next non-decorator sibling
@@ -634,32 +693,29 @@ export function find_decorator_target(
         const sibling = parent.children![i];
         if (sibling.type !== "decorator") {
           // Found the target - extract its ID based on type
-          if (
-            sibling.type === "class_declaration" ||
-            sibling.type === "abstract_class_declaration"
-          ) {
+          if (sibling.type === "method_definition") {
             const nameNode = sibling.childForFieldName?.("name");
             if (nameNode) {
-              return class_symbol(
-                nameNode.text as SymbolName,
-                extract_location(nameNode)
-              );
-            }
-          } else if (sibling.type === "method_definition") {
-            const nameNode = sibling.childForFieldName?.("name");
-            if (nameNode) {
-              return method_symbol(
-                nameNode.text as SymbolName,
-                extract_location(nameNode)
-              );
+              const location: Location = {
+                file_path,
+                start_line: nameNode.startPosition.row + 1,
+                start_column: nameNode.startPosition.column + 1,
+                end_line: nameNode.endPosition.row + 1,
+                end_column: nameNode.endPosition.column + 1,
+              };
+              return method_symbol(nameNode.text as SymbolName, location);
             }
           } else if (sibling.type === "public_field_definition") {
             const nameNode = sibling.childForFieldName?.("name");
             if (nameNode) {
-              return property_symbol(
-                nameNode.text as SymbolName,
-                extract_location(nameNode)
-              );
+              const location: Location = {
+                file_path,
+                start_line: nameNode.startPosition.row + 1,
+                start_column: nameNode.startPosition.column + 1,
+                end_line: nameNode.endPosition.row + 1,
+                end_column: nameNode.endPosition.column + 1,
+              };
+              return property_symbol(nameNode.text as SymbolName, location);
             }
           }
           break;
@@ -669,3 +725,6 @@ export function find_decorator_target(
   }
   return undefined;
 }
+
+// Re-export the configuration
+export { TYPESCRIPT_BUILDER_CONFIG } from "./typescript_builder_config";

@@ -61,7 +61,7 @@
   (interface_body
     (method_signature
       name: (property_identifier) @definition.interface.method
-    )
+    ) @scope.method
   )
 )
 
