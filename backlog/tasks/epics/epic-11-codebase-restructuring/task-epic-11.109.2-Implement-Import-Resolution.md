@@ -4,11 +4,11 @@
 **Priority:** Critical
 **Estimated Effort:** 4-5 days
 **Parent:** task-epic-11.109
-**Dependencies:** task-epic-11.109.1 (ScopeResolver)
+**Dependencies:** None (creates ImportMap consumed by 11.109.1)
 
 ## Objective
 
-Implement cross-file import/export resolution that creates a per-file map of imported names to their source SymbolIds. This map will be consumed by ScopeResolver at module scope.
+Implement cross-file import/export resolution that creates a per-file map of imported names to their source SymbolIds. This map will be consumed by ScopeResolverIndex when building resolver functions for module scopes.
 
 ## Implementation
 
@@ -275,12 +275,13 @@ Document these for future work:
 
 **Consumed by:**
 
-- Task 11.109.1 `ScopeResolver` (uses ImportMap)
+- Task 11.109.1 `ScopeResolverIndex` (uses ImportMap to create import resolver functions)
 
 ## Next Steps
 
 After completion:
 
-- ScopeResolver will consume ImportMap
-- Function/method/constructor resolvers will benefit
+- ScopeResolverIndex will use ImportMap to create import resolver functions
+- Import resolvers will be added to module scopes
+- All call resolvers will benefit from resolved imports
 - Future task: Enhance module path resolution

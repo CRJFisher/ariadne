@@ -5,7 +5,7 @@
 **Estimated Effort:** 3-4 days
 **Parent:** task-epic-11.109
 **Dependencies:**
-- task-epic-11.109.1 (ScopeResolver)
+- task-epic-11.109.1 (ScopeResolverIndex + Cache)
 - task-epic-11.109.3 (TypeContext)
 
 ## Objective
@@ -44,14 +44,16 @@ import type {
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../index_single_file/semantic_index";
-import type { ScopeResolver } from "../core/scope_resolver";
+import type { ScopeResolverIndex } from "../core/scope_resolver_index";
+import type { ResolutionCache } from "../core/resolution_cache";
 import type { TypeContext } from "../type_resolution/type_context";
 
 export type ConstructorCallMap = Map<LocationKey, SymbolId>;
 
 export function resolve_constructor_calls(
   indices: ReadonlyMap<FilePath, SemanticIndex>,
-  scope_resolver: ScopeResolver,
+  resolver_index: ScopeResolverIndex,
+  cache: ResolutionCache,
   type_context: TypeContext
 ): ConstructorCallMap {
   const resolutions = new Map<LocationKey, SymbolId>();
@@ -66,7 +68,8 @@ export function resolve_constructor_calls(
       const resolved = resolve_single_constructor_call(
         call_ref,
         index,
-        scope_resolver,
+        resolver_index,
+        cache,
         type_context
       );
 
@@ -83,13 +86,15 @@ export function resolve_constructor_calls(
 function resolve_single_constructor_call(
   call_ref: SymbolReference,
   index: SemanticIndex,
-  scope_resolver: ScopeResolver,
+  resolver_index: ScopeResolverIndex,
+  cache: ResolutionCache,
   type_context: TypeContext
 ): SymbolId | null {
-  // Step 1: Resolve class name to class symbol (scope-aware)
-  const class_symbol = scope_resolver.resolve_in_scope(
+  // Step 1: Resolve class name to class symbol (scope-aware with caching)
+  const class_symbol = resolver_index.resolve(
+    call_ref.scope_id,
     call_ref.name,
-    call_ref.scope_id
+    cache
   );
   if (!class_symbol) return null;
 
@@ -127,15 +132,16 @@ function find_class_definition(
 Given: `new User()`
 - Class name: `User`
 
-Resolve using ScopeResolver:
+Resolve using on-demand ScopeResolverIndex:
 ```typescript
-const class_symbol = scope_resolver.resolve_in_scope(
+const class_symbol = resolver_index.resolve(
+  call_ref.scope_id,
   "User",
-  call_ref.scope_id
+  cache
 );
 ```
 
-This respects scoping:
+This respects scoping through on-demand resolver functions with caching:
 - Finds local class definitions
 - Finds imported classes
 - Handles shadowing correctly
@@ -392,8 +398,9 @@ new Box<string>("hello");
 ### Performance
 
 - O(n) where n = number of constructor calls
-- Each call: O(scope_depth) + O(1) class lookup
-- Typical: ~1ms per 100 calls
+- Each call: O(1) class name resolution (cached) + O(1) class lookup
+- First class resolution may call resolver function, subsequent lookups are O(1) cache hits
+- Typical: ~0.5ms per 100 calls with 80% cache hit rate
 
 ## Known Limitations
 
@@ -408,7 +415,8 @@ Document for future work:
 ## Dependencies
 
 **Uses:**
-- `ScopeResolver` for class name resolution
+- `ScopeResolverIndex` for on-demand class name resolution
+- `ResolutionCache` for caching class name resolutions
 - `TypeContext` for validation
 - `SemanticIndex.references` for constructor calls
 - `SemanticIndex.classes` for class definitions
@@ -416,6 +424,17 @@ Document for future work:
 **Consumed by:**
 - Task 11.109.7 (Main orchestration)
 - TypeContext uses results for type tracking
+
+## Cache Benefits
+
+Constructor calls benefit from caching because:
+1. **Repeated constructors**: Same class instantiated multiple times
+2. **Common patterns**: Factory functions creating many instances
+3. **Nested scopes**: Same class name in different scopes
+
+Example: 50 constructor calls for 5 different classes
+- Without cache: 50 class name resolutions
+- With cache: 5 resolver calls + 45 cache hits (9x speedup!)
 
 ## Integration with TypeContext
 

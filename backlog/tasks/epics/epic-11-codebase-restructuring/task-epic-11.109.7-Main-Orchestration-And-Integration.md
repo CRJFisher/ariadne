@@ -5,7 +5,7 @@
 **Estimated Effort:** 3-4 days
 **Parent:** task-epic-11.109
 **Dependencies:**
-- task-epic-11.109.1 (ScopeResolver)
+- task-epic-11.109.1 (ScopeResolverIndex + Cache)
 - task-epic-11.109.2 (ImportResolver)
 - task-epic-11.109.3 (TypeContext)
 - task-epic-11.109.4 (FunctionResolver)
@@ -30,21 +30,23 @@ packages/core/src/resolve_references/
 
 ```typescript
 /**
- * Symbol Resolution - Scope-aware unified pipeline
+ * Symbol Resolution - On-demand scope-aware unified pipeline
  *
  * Architecture:
  * 1. Build import map (cross-file connections)
- * 2. Create scope resolver (core algorithm)
- * 3. Build type context (for method resolution)
- * 4. Resolve all call types using scope resolver
- * 5. Combine results
+ * 2. Build scope resolver index (resolver functions per scope)
+ * 3. Create resolution cache (for on-demand lookups)
+ * 4. Build type context (for method resolution)
+ * 5. Resolve all call types using resolver index + cache
+ * 6. Combine results
  */
 
 import type { FilePath, ResolvedSymbols } from "@ariadnejs/types";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
 
 import { resolve_imports } from "./import_resolution/import_resolver";
-import { create_scope_resolver } from "./core/scope_resolver";
+import { build_scope_resolver_index } from "./core/scope_resolver_index";
+import { create_resolution_cache } from "./core/resolution_cache";
 import { build_type_context } from "./type_resolution/type_context";
 import { resolve_function_calls } from "./call_resolution/function_resolver";
 import { resolve_method_calls } from "./call_resolution/method_resolver";
@@ -61,28 +63,34 @@ export function resolve_symbols(
   // Creates per-file map: local_name -> source_symbol_id
   const imports = resolve_imports(indices);
 
-  // Phase 2: Create scope resolver (core algorithm)
-  // Used by all subsequent phases
-  const scope_resolver = create_scope_resolver(indices, imports);
+  // Phase 2: Build scope resolver index (lightweight)
+  // Creates resolver functions: scope_id -> name -> resolver()
+  const resolver_index = build_scope_resolver_index(indices, imports);
 
-  // Phase 3: Build type context
-  // Tracks variable types and type members
-  const type_context = build_type_context(indices, scope_resolver);
+  // Phase 3: Create resolution cache
+  // Stores on-demand resolutions: (scope_id, name) -> symbol_id
+  const cache = create_resolution_cache();
 
-  // Phase 4: Resolve all call types
-  const function_calls = resolve_function_calls(indices, scope_resolver);
+  // Phase 4: Build type context
+  // Tracks variable types and type members (uses resolver_index + cache)
+  const type_context = build_type_context(indices, resolver_index, cache);
+
+  // Phase 5: Resolve all call types (on-demand with caching)
+  const function_calls = resolve_function_calls(indices, resolver_index, cache);
   const method_calls = resolve_method_calls(
     indices,
-    scope_resolver,
+    resolver_index,
+    cache,
     type_context
   );
   const constructor_calls = resolve_constructor_calls(
     indices,
-    scope_resolver,
+    resolver_index,
+    cache,
     type_context
   );
 
-  // Phase 5: Combine results
+  // Phase 6: Combine results
   return combine_results(
     indices,
     function_calls,
@@ -168,7 +176,8 @@ function combine_results(
 export { resolve_symbols } from "./symbol_resolution";
 
 // Export types for external use
-export type { ScopeResolver } from "./core/scope_resolver";
+export type { ScopeResolverIndex } from "./core/scope_resolver_index";
+export type { ResolutionCache } from "./core/resolution_cache";
 export type { ImportMap } from "./import_resolution/import_resolver";
 export type { TypeContext } from "./type_resolution/type_context";
 export type {
@@ -196,32 +205,43 @@ SemanticIndex (per file)
          ImportMap (per file)
                 ↓
    ┌─────────────────────────────────────────┐
-   │ Phase 2: Scope Resolver                 │
-   │ - create_scope_resolver()               │
-   │ - Universal scope-walking algorithm     │
+   │ Phase 2: Build Resolver Index           │
+   │ - build_scope_resolver_index()          │
+   │ - Creates resolver functions per scope  │
+   │ - Lightweight: just closures (~100B)    │
    └────────────┬────────────────────────────┘
                 ↓
-          ScopeResolver
+          ScopeResolverIndex
                 ↓
    ┌─────────────────────────────────────────┐
-   │ Phase 3: Type Context                   │
+   │ Phase 3: Create Cache                   │
+   │ - create_resolution_cache()             │
+   │ - Stores (scope_id, name) → symbol_id   │
+   └────────────┬────────────────────────────┘
+                ↓
+           ResolutionCache
+                ↓
+   ┌─────────────────────────────────────────┐
+   │ Phase 4: Type Context                   │
    │ - build_type_context()                  │
    │ - Type tracking and member lookup       │
+   │ - Uses resolver_index + cache           │
    └────────────┬────────────────────────────┘
                 ↓
            TypeContext
                 ↓
    ┌─────────────────────────────────────────┐
-   │ Phase 4: Call Resolution                │
+   │ Phase 5: Call Resolution (On-Demand)    │
    │ - resolve_function_calls()              │
    │ - resolve_method_calls()                │
    │ - resolve_constructor_calls()           │
+   │ - Each uses resolver_index + cache      │
    └────────────┬────────────────────────────┘
                 ↓
     Function/Method/Constructor Maps
                 ↓
    ┌─────────────────────────────────────────┐
-   │ Phase 5: Combine Results                │
+   │ Phase 6: Combine Results                │
    │ - combine_results()                     │
    │ - Build ResolvedSymbols output          │
    └────────────┬────────────────────────────┘
@@ -306,6 +326,27 @@ Target performance:
 - Medium: < 100ms
 - Large: < 1s
 
+### On-Demand Benefits
+
+**Example scenario:** Large codebase with 1000 scopes, 50 symbols per scope
+
+Pre-compute approach:
+- Build: 1000 × 50 = 50,000 full resolutions upfront
+- Time: ~50ms (O(scope_depth) for each)
+- Memory: 50,000 symbol_id entries
+
+On-demand approach with caching:
+- Build: 1000 × 50 = 50,000 resolver functions (~100B each = 5MB)
+- First use: Only ~5,000 symbols referenced (10%)
+- Resolutions: 5,000 resolver calls + ~4,000 cache hits (80% hit rate)
+- Time: ~5ms for resolutions (10x faster!)
+- Memory: 5,000 cache entries (10x less!)
+
+**Cache hit rates improve over time:**
+- Early phase: 50% hits
+- Mid phase: 80% hits
+- Late phase: 95% hits
+
 ## Success Criteria
 
 ### Functional
@@ -373,22 +414,27 @@ const methods = resolve_methods(indices, imports, local_types);
 
 ### After (New Implementation)
 ```typescript
-// Unified scope-aware pipeline
+// On-demand scope-aware pipeline with resolver functions
 const imports = resolve_imports(indices);
-const scope_resolver = create_scope_resolver(indices, imports);
-const type_context = build_type_context(indices, scope_resolver);
-const functions = resolve_function_calls(indices, scope_resolver);
-const methods = resolve_method_calls(indices, scope_resolver, type_context);
-const constructors = resolve_constructor_calls(indices, scope_resolver, type_context);
+const resolver_index = build_scope_resolver_index(indices, imports);
+const cache = create_resolution_cache();
+const type_context = build_type_context(indices, resolver_index, cache);
+const functions = resolve_function_calls(indices, resolver_index, cache);
+const methods = resolve_method_calls(indices, resolver_index, cache, type_context);
+const constructors = resolve_constructor_calls(indices, resolver_index, cache, type_context);
 ```
 
 ### Key Differences
 - **Before:** Imports passed everywhere
-- **After:** ScopeResolver encapsulates imports
+- **After:** ScopeResolverIndex encapsulates imports with resolver functions
 - **Before:** Type tracking ad-hoc
 - **After:** TypeContext unified
 - **Before:** No constructor resolution
 - **After:** Explicit constructor resolution
+- **Before:** Pre-compute all resolutions (90% wasted)
+- **After:** On-demand resolution with caching (only resolve what's referenced)
+- **Before:** O(scope_depth) per lookup
+- **After:** O(1) per lookup (after first resolution)
 
 ## Dependencies
 

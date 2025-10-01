@@ -31,8 +31,8 @@ Validate the complete scope-aware resolution system with comprehensive test cove
 
 ## Test Coverage by Component
 
-### 1. ScopeResolver Tests
-**File:** `core/scope_resolver.test.ts`
+### 1. ScopeResolverIndex Tests
+**File:** `core/scope_resolver_index.test.ts`
 
 **Coverage requirements:**
 - ✅ 100% line coverage
@@ -40,8 +40,10 @@ Validate the complete scope-aware resolution system with comprehensive test cove
 - ✅ All edge cases covered
 
 **Test categories:**
-- Basic resolution (same scope, parent scope)
-- Shadowing (local shadows import, nested shadowing)
+- Resolver function building (per scope)
+- Resolver inheritance (child inherits parent resolvers)
+- On-demand resolution with caching
+- Shadowing (local resolvers override parent/import)
 - Import visibility (module scope only)
 - Cross-file resolution
 - Error cases (not found, invalid scope)
@@ -52,7 +54,28 @@ Validate the complete scope-aware resolution system with comprehensive test cove
 - Python: 20 test cases
 - Rust: 25 test cases (includes lifetime/trait specifics)
 
-### 2. ImportResolver Tests
+### 2. ResolutionCache Tests
+**File:** `core/resolution_cache.test.ts`
+
+**Coverage requirements:**
+- ✅ 100% line coverage
+- ✅ 100% branch coverage
+
+**Test categories:**
+- Basic caching (get, set, has)
+- Cache invalidation (per file, full clear)
+- Cache hit/miss tracking
+- Memory efficiency
+- Concurrent access patterns
+
+**Test cases:**
+- Store and retrieve resolutions
+- Cache hits for repeated lookups
+- Invalidate specific file
+- Clear entire cache
+- Track hit rate statistics
+
+### 3. ImportResolver Tests
 **File:** `import_resolution/import_resolver.test.ts`
 
 **Coverage requirements:**
@@ -72,7 +95,7 @@ Validate the complete scope-aware resolution system with comprehensive test cove
 - Python: 15 test cases (relative imports)
 - Rust: 20 test cases (use statements, glob imports)
 
-### 3. TypeContext Tests
+### 4. TypeContext Tests
 **File:** `type_resolution/type_context.test.ts`
 
 **Coverage requirements:**
@@ -92,22 +115,25 @@ Validate the complete scope-aware resolution system with comprehensive test cove
 - Python: 20 test cases (type hints)
 - Rust: 25 test cases (trait system)
 
-### 4. Call Resolution Tests
+### 5. Call Resolution Tests
 
 #### Function Resolver
 **File:** `call_resolution/function_resolver.test.ts`
 - 15 test cases per language
 - Focus on shadowing and cross-file calls
+- Test cache effectiveness for repeated calls
 
 #### Method Resolver
 **File:** `call_resolution/method_resolver.test.ts`
 - 25 test cases per language
 - Focus on type tracking and member lookup
+- Test receiver resolution caching
 
 #### Constructor Resolver
 **File:** `call_resolution/constructor_resolver.test.ts`
 - 20 test cases per language
 - Focus on class resolution and implicit constructors
+- Test class name resolution caching
 
 ## Integration Tests
 
@@ -239,13 +265,21 @@ Verify:
 - Total resolution time
 - Time per phase:
   - Import resolution
-  - Scope resolver creation
+  - Scope resolver index building
+  - Cache creation
   - Type context building
   - Function call resolution
   - Method call resolution
   - Constructor call resolution
-- Memory usage
+- Memory usage:
+  - Resolver functions memory
+  - Cache memory
+  - Total memory
 - Resolution rate (% of calls resolved)
+- Cache performance:
+  - Cache hit rate
+  - Cache miss rate
+  - Average hits per resolution
 
 #### Performance Targets
 | Project Size | Resolution Time | Memory Usage |
@@ -326,7 +360,8 @@ npm run test:coverage
 
 | Component | Line Coverage | Branch Coverage |
 |-----------|---------------|-----------------|
-| ScopeResolver | 100% | 100% |
+| ScopeResolverIndex | 100% | 100% |
+| ResolutionCache | 100% | 100% |
 | ImportResolver | 95% | 90% |
 | TypeContext | 90% | 85% |
 | FunctionResolver | 100% | 100% |

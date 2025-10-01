@@ -9,10 +9,3 @@
  */
 
 export { resolve_symbols } from "./symbol_resolution";
-export type {
-  ResolvedSymbols,
-  ResolutionInput,
-  FunctionResolutionMap,
-  TypeResolutionMap,
-  MethodAndConstructorResolutionMap as MethodResolutionMap,
-} from "./types";

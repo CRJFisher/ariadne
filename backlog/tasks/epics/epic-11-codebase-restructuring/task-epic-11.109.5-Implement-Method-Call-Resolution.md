@@ -5,7 +5,7 @@
 **Estimated Effort:** 4-5 days
 **Parent:** task-epic-11.109
 **Dependencies:**
-- task-epic-11.109.1 (ScopeResolver)
+- task-epic-11.109.1 (ScopeResolverIndex + Cache)
 - task-epic-11.109.3 (TypeContext)
 
 ## Objective
@@ -45,14 +45,16 @@ import type {
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../index_single_file/semantic_index";
-import type { ScopeResolver } from "../core/scope_resolver";
+import type { ScopeResolverIndex } from "../core/scope_resolver_index";
+import type { ResolutionCache } from "../core/resolution_cache";
 import type { TypeContext } from "../type_resolution/type_context";
 
 export type MethodCallMap = Map<LocationKey, SymbolId>;
 
 export function resolve_method_calls(
   indices: ReadonlyMap<FilePath, SemanticIndex>,
-  scope_resolver: ScopeResolver,
+  resolver_index: ScopeResolverIndex,
+  cache: ResolutionCache,
   type_context: TypeContext
 ): MethodCallMap {
   const resolutions = new Map<LocationKey, SymbolId>();
@@ -67,7 +69,8 @@ export function resolve_method_calls(
       const resolved = resolve_single_method_call(
         call_ref,
         index,
-        scope_resolver,
+        resolver_index,
+        cache,
         type_context
       );
 
@@ -84,18 +87,20 @@ export function resolve_method_calls(
 function resolve_single_method_call(
   call_ref: SymbolReference,
   index: SemanticIndex,
-  scope_resolver: ScopeResolver,
+  resolver_index: ScopeResolverIndex,
+  cache: ResolutionCache,
   type_context: TypeContext
 ): SymbolId | null {
   // Extract receiver location from context
   const receiver_loc = call_ref.context?.receiver_location;
   if (!receiver_loc) return null;
 
-  // Step 1: Resolve receiver to its symbol (scope-aware)
+  // Step 1: Resolve receiver to its symbol (scope-aware with caching)
   const receiver_name = extract_receiver_name(call_ref);
-  const receiver_symbol = scope_resolver.resolve_in_scope(
+  const receiver_symbol = resolver_index.resolve(
+    call_ref.scope_id,
     receiver_name,
-    call_ref.scope_id
+    cache
   );
   if (!receiver_symbol) return null;
 
@@ -127,15 +132,16 @@ Given: `user.getName()`
 - Receiver: `user`
 - Method: `getName`
 
-Resolve `user` using ScopeResolver:
+Resolve `user` using on-demand ScopeResolverIndex:
 ```typescript
-const receiver_symbol = scope_resolver.resolve_in_scope(
+const receiver_symbol = resolver_index.resolve(
+  call_ref.scope_id,
   "user",
-  call_ref.scope_id
+  cache
 );
 ```
 
-This respects scoping rules - finds the closest `user` definition.
+This respects scoping rules - finds the closest `user` definition through on-demand resolver function lookup with caching.
 
 ### Step 2: Determine Receiver Type
 
@@ -322,8 +328,9 @@ Both follow same pattern:
 ### Performance
 
 - O(n) where n = number of method calls
-- Each call: O(scope_depth) + O(1) type lookup + O(1) member lookup
-- Typical: ~2ms per 100 calls
+- Each call: O(1) receiver resolution (cached) + O(1) type lookup + O(1) member lookup
+- First receiver resolution may call resolver function, subsequent lookups are O(1) cache hits
+- Typical: ~1ms per 100 calls with 80% cache hit rate
 
 ## Known Limitations
 
@@ -338,12 +345,24 @@ Document for future work:
 ## Dependencies
 
 **Uses:**
-- `ScopeResolver` for receiver resolution
+- `ScopeResolverIndex` for on-demand receiver resolution
+- `ResolutionCache` for caching receiver resolutions
 - `TypeContext` for type tracking and member lookup
 - `SemanticIndex.references` for method calls
 
 **Consumed by:**
 - Task 11.109.7 (Main orchestration)
+
+## Cache Benefits
+
+Method calls benefit significantly from caching because:
+1. **Common receivers**: `obj.method1()` and `obj.method2()` share receiver resolution
+2. **Repeated calls**: Same method called multiple times in same scope
+3. **Nested scopes**: Same receiver name in child scopes
+
+Example: 100 method calls on 10 different receivers in same scope
+- Without cache: 100 receiver resolutions
+- With cache: 10 resolver calls + 90 cache hits (9x speedup!)
 
 ## Next Steps
 
