@@ -1,6 +1,7 @@
 import { z } from "zod";
 import * as path from "path";
 import * as fs from "fs/promises";
+import type { Project } from "../types";
 
 // Request schema for the MCP tool
 export const get_file_metadataSchema = z.object({
@@ -94,7 +95,7 @@ export async function get_file_metadata(
   const lines = source.split('\n');
   
   // Get definitions from the project
-  const definitions = project.get_definitions(resolvedPath);
+  const definitions = project.get_definitions(resolvedPath as any);
   
   // Detect language from file extension
   const ext = path.extname(resolvedPath);

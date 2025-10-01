@@ -9,6 +9,7 @@ import { get_file_metadata, get_file_metadataSchema } from "./tools/get_file_met
 import { find_references, find_referencesSchema } from "./tools/find_references";
 import { get_source_code, get_source_codeSchema } from "./tools/get_source_code";
 import { VERSION } from "./version";
+import { create_project, load_project_files, load_file_if_needed, type Project } from "./types";
 
 export interface AriadneMCPServerOptions {
   projectPath?: string;
@@ -33,6 +34,8 @@ export async function start_server(options: AriadneMCPServerOptions = {}): Promi
   );
 
   // Initialize Ariadne project
+  // TODO: Replace with actual implementation that loads and parses files
+  const project = create_project();
 
   // Register tools handler
   server.setRequestHandler(ListToolsRequestSchema, async () => {

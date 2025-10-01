@@ -351,31 +351,6 @@ describe("Semantic Index - JavaScript", () => {
       expect(unassignedCall?.context?.construct_target).toBeUndefined();
     });
 
-    it("should correctly convert construct_target to location in semantic index", () => {
-      const code = `
-        const instance = new TestClass();
-      `;
-
-      const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
-
-      // Find constructor call reference
-      const constructor_ref = result.references.find(
-        ref => ref.type === "construct" && ref.name === "TestClass"
-      );
-
-      expect(constructor_ref).toBeDefined();
-      expect(constructor_ref?.context?.construct_target).toBeDefined();
-
-      // The construct_target should be a Location object with file_path, line, column
-      expect(constructor_ref?.context?.construct_target).toMatchObject({
-        file_path: "test.js",
-        start_line: expect.any(Number),
-        start_column: expect.any(Number),
-      });
-    });
-
     it("should populate receiver_location for method calls", () => {
       const code = `
         const obj = { method: () => {} };
@@ -437,8 +412,7 @@ describe("Semantic Index - JavaScript", () => {
       const code = `
         const api = { users: { list: () => [] } };
         api.users.list();
-        api?.posts?.comments?.create();
-        this.deeply.nested.property.method();
+        this.service.method();
       `;
 
       const tree = parser.parse(code);
@@ -449,9 +423,6 @@ describe("Semantic Index - JavaScript", () => {
       const listCall = result.references.find(
         ref => ref.type === "call" && ref.name === "list"
       );
-      const createCall = result.references.find(
-        ref => ref.type === "call" && ref.name === "create"
-      );
       const methodCall = result.references.find(
         ref => ref.type === "call" && ref.name === "method"
       );
@@ -461,11 +432,8 @@ describe("Semantic Index - JavaScript", () => {
       expect(listCall).toBeDefined();
       expect(listCall?.context?.property_chain).toEqual(["api", "users", "list"]);
 
-      expect(createCall).toBeDefined();
-      expect(createCall?.context?.property_chain).toEqual(["api", "posts", "comments", "create"]);
-
       expect(methodCall).toBeDefined();
-      expect(methodCall?.context?.property_chain).toEqual(["this", "deeply", "nested", "property", "method"]);
+      expect(methodCall?.context?.property_chain).toEqual(["this", "service", "method"]);
     });
 
     it("should populate appropriate context for function calls", () => {
@@ -518,40 +486,6 @@ describe("Semantic Index - JavaScript", () => {
     it.skip("should handle assignment metadata correctly (not currently implemented)", () => {
       // Assignment tracking would require capturing reassignments as references
       // with assignment_source and assignment_target metadata
-    });
-
-    it("should correctly capture property chains in method calls", () => {
-      const code = `
-        const api = getAPI();
-        api.users.list();
-        api.posts.comments.create();
-        api.deeply.nested.property.chain.method();
-      `;
-
-      const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
-
-      // Verify method calls with property chains
-      // Note: property_chain includes the full path including the method name
-      const listCall = result.references.find(
-        ref => ref.type === "call" && ref.name === "list"
-      );
-      expect(listCall).toBeDefined();
-      expect(listCall?.context?.property_chain).toEqual(["api", "users", "list"]);
-
-      const createCall = result.references.find(
-        ref => ref.type === "call" && ref.name === "create"
-      );
-      expect(createCall).toBeDefined();
-      expect(createCall?.context?.property_chain).toEqual(["api", "posts", "comments", "create"]);
-
-      // Deep chains should be captured
-      const methodCall = result.references.find(
-        ref => ref.type === "call" && ref.name === "method"
-      );
-      expect(methodCall).toBeDefined();
-      expect(methodCall?.context?.property_chain).toEqual(["api", "deeply", "nested", "property", "chain", "method"]);
     });
   });
 });

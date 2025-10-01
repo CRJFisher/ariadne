@@ -1,6 +1,7 @@
 import { z } from "zod";
 import * as path from "path";
 import * as fs from "fs/promises";
+import type { Project } from "../types";
 
 // Request schema for the MCP tool
 export const get_source_codeSchema = z.object({

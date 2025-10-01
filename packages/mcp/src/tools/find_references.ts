@@ -1,6 +1,11 @@
 import { z } from "zod";
 import * as path from "path";
 import * as fs from "fs/promises";
+import type { Project } from "../types";
+
+// Stub type for references
+// TODO: Use actual Ref type from Ariadne core
+type Ref = any;
 
 // Request schema for the MCP tool
 export const find_referencesSchema = z.object({
@@ -141,7 +146,7 @@ export async function find_references(
     }
     
     // Get all references in this file
-    const fileRefs = graph.getNodes<Ref>('reference');
+    const fileRefs = graph.getNodes('reference');
     for (const fileRef of fileRefs) {
       if (fileRef.name === symbol && fileRef.range?.start) {
         const context = await get_line_context(filePath, fileRef.range.start.row + 1);

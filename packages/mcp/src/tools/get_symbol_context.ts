@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { Project } from "../types";
 
 // Request schema for the MCP tool
 export const get_symbol_contextSchema = z.object({
@@ -411,7 +412,7 @@ function find_symbol_usages(
           
           // Also find direct references by name in this file
           const allRefs = graph.getNodes('reference');
-          const nameMatchingRefs = allRefs.filter(ref => ref.name === imp.name);
+          const nameMatchingRefs = allRefs.filter((ref: any) => ref.name === imp.name);
           
           for (const ref of nameMatchingRefs) {
             const context = extract_reference_context(filePath, ref, project);
@@ -476,9 +477,9 @@ function extract_reference_context(filePath: string, ref: any, project: Project)
         end: { row: ref.range.start.row, column: 999 }
       }
     };
-    
-    const line = project.get_source_code(dummyDef, filePath);
-    
+
+    const line = project.get_source_code(dummyDef, filePath as any);
+
     // Trim whitespace and limit length
     return line.trim().substring(0, 100);
   } catch (error) {
@@ -502,8 +503,8 @@ function extract_test_name(filePath: string, ref: any, project: Project): string
           end: { row: i, column: 999 }
         }
       };
-      
-      const line = project.get_source_code(dummyDef, filePath);
+
+      const line = project.get_source_code(dummyDef, filePath as any);
       const testMatch = line.match(/(?:test|it|describe)\s*\(\s*['"`]([^'"`]+)['"`]/);
       if (testMatch) {
         return testMatch[1];
@@ -553,7 +554,7 @@ function analyze_relationships(project: Project, def: any): RelationshipInfo {
       const functionNode = callGraph.nodes.get(def.symbol_id);
       if (functionNode) {
         // Extract calls and called_by relationships
-        relationships.calls = functionNode.calls.map(call => call.symbol);
+        relationships.calls = functionNode.calls.map((call: any) => call.symbol);
         relationships.calledBy = functionNode.called_by; // already strings
       }
     } catch (error) {
@@ -605,7 +606,7 @@ function analyze_relationships(project: Project, def: any): RelationshipInfo {
       if (def.symbol_kind === 'class' || def.symbol_kind === 'struct') {
         const subclasses = project.find_subclasses(def);
         if (subclasses.length > 0) {
-          relationships.dependents = subclasses.map(sub => sub.name);
+          relationships.dependents = subclasses.map((sub: any) => sub.name);
         } else {
           // Fallback: search for classes that extend this one
           relationships.dependents = find_dependent_classes_from_source(project, def);
@@ -613,7 +614,7 @@ function analyze_relationships(project: Project, def: any): RelationshipInfo {
       } else if (def.symbol_kind === 'interface') {
         const implementations = project.find_implementations(def);
         if (implementations.length > 0) {
-          relationships.dependents = implementations.map(impl => impl.name);
+          relationships.dependents = implementations.map((impl: any) => impl.name);
         } else {
           // Fallback: search for classes that implement this interface
           relationships.dependents = find_dependent_classes_from_source(project, def);
@@ -656,8 +657,8 @@ function extract_inheritance_from_source(project: Project, def: any): { extends?
     if (implementsMatch) {
       result.implements = implementsMatch[1]
         .split(',')
-        .map(name => name.trim())
-        .filter(name => name.length > 0);
+        .map((name: string) => name.trim())
+        .filter((name: string) => name.length > 0);
     }
     
     // Handle interface extension
@@ -666,8 +667,8 @@ function extract_inheritance_from_source(project: Project, def: any): { extends?
       if (interfaceExtendsMatch) {
         const extendedInterfaces = interfaceExtendsMatch[1]
           .split(',')
-          .map(name => name.trim())
-          .filter(name => name.length > 0);
+          .map((name: string) => name.trim())
+          .filter((name: string) => name.length > 0);
         
         if (extendedInterfaces.length === 1) {
           result.extends = extendedInterfaces[0];
@@ -688,7 +689,7 @@ function extract_inheritance_from_source(project: Project, def: any): { extends?
         
         if (graph) {
           const refs = graph.getNodes('reference');
-          const structRefs = refs.filter(ref => ref.name === def.name);
+          const structRefs = refs.filter((ref: any) => ref.name === def.name);
           
           const implementedTraits: string[] = [];
           
@@ -740,7 +741,7 @@ function find_dependent_classes_from_source(project: Project, def: any): string[
     
     for (const [filePath, graph] of fileGraphs) {
       const definitions = graph.getNodes('definition');
-      const classDefinitions = definitions.filter(d => 
+      const classDefinitions = definitions.filter((d: any) =>
         d.symbol_kind === 'class' || d.symbol_kind === 'struct' || d.symbol_kind === 'interface'
       );
       
