@@ -1,6 +1,6 @@
 # Task Epic 11.104: Implement Reference Metadata Extraction
 
-**Status:** ✅ COMPLETE - All 4 Phases Done - Rust Metadata Extraction Fully Operational (Zero Regressions)
+**Status:** 🔄 IN PROGRESS - Phase 5 (Integration & Validation) - Task 104.6.1 Complete
 **Priority:** High
 **Estimated Effort:** 12-16 hours
 **Dependencies:** task-epic-11.103 (capture name validation complete)
@@ -9,6 +9,7 @@
 **Phase 2 Completed:** 2025-10-01
 **Phase 3 Completed:** 2025-10-01
 **Phase 4 Completed:** 2025-10-01
+**Phase 5 Started:** 2025-10-01
 **Task 104.3.1 Completed:** 2025-10-01
 **Task 104.3.2 Completed:** 2025-10-01
 **Task 104.3.3 Completed:** 2025-10-01
@@ -23,6 +24,7 @@
 **Task 104.5.2 Completed:** 2025-10-01
 **Task 104.5.3 Completed:** 2025-10-01
 **Task 104.5.4 Completed:** 2025-10-01
+**Task 104.6.1 Completed:** 2025-10-01
 
 ## Phase 1 Summary (Foundation)
 
@@ -165,12 +167,81 @@
 - All existing metadata tests continue to pass (JavaScript: 57, Python: 69, TypeScript integration: 11)
 - **Zero regressions**: Full test suite run shows no new failures from enhanced test suite
 
-📋 **Next Steps:**
-- Task 104.6: Integration and validation across all languages
-- Future enhancement: Complete property chain extraction debugging
-- Future enhancement: Fix DefinitionBuilder to properly add methods/properties to classes
-- Future enhancement: Fix DefinitionBuilder to properly populate function parameters
-- Future enhancement: Address 6 known implementation gaps in Python semantic index tests
+## Phase 5 Summary (Integration & Validation)
+
+✅ **Completed Tasks:**
+- Task 104.6.1: Updated reference_builder.test.ts with comprehensive metadata extractor tests (Completed 2025-10-01)
+
+✅ **Key Achievements:**
+- **14 new comprehensive tests** added to reference_builder.test.ts (100% passing)
+- **Total reference_builder tests: 35** (28 passing + 7 intentionally skipped)
+- **Mock metadata extractors** created for isolated unit testing
+- **Zero regressions**: Full test suite verification (1123 passing, +14 from Phase 4 baseline)
+- Net improvement: **+14 passing tests** from Phase 5
+- Test execution: ~17ms for reference_builder suite (excellent performance)
+
+🔍 **Implementation Details (Task 104.6.1):**
+
+**File Modified:**
+- `packages/core/src/index_single_file/query_code_tree/reference_builder.test.ts`
+  - Added mock extractor factory function using Vitest's `vi.fn()` for proper test isolation
+  - Created new test suite: "metadata extractors integration" (14 tests)
+
+**Test Coverage Added:**
+1. ✅ `extract_type_from_annotation` - Verifies type extraction and certainty detection
+2. ✅ `extract_call_receiver` - Verifies receiver location extraction for method calls
+3. ✅ `extract_property_chain` - Verifies property chain tracking for member access
+4. ✅ `extract_assignment_parts` - Verifies source/target location extraction for assignments
+5. ✅ `extract_construct_target` - Verifies target location extraction for constructor calls
+6. ✅ `extract_type_arguments` - Verifies generic type argument extraction
+7. ✅ Multiple extractor calls - Verifies complex references with multiple metadata sources
+8. ✅ Undefined extractors handling - Verifies graceful degradation when extractors not provided
+9. ✅ Extractors returning undefined - Verifies handling of missing metadata
+10. ✅ Member access metadata population - Verifies object_type field population
+11. ✅ Type flow metadata population - Verifies target_type field population for assignments
+12. ✅ Return type metadata population - Verifies return_type field population
+13. ✅ Empty context handling - Verifies no context object created when extractors return nothing
+14. ✅ Partial context creation - Verifies context created only with available data
+
+**Test Validation Results:**
+- All 14 new tests pass with proper mock extractor verification
+- Extractor functions called with correct arguments (node, file_path)
+- Metadata properly populated in SymbolReference objects
+- Edge cases handled gracefully (undefined extractors, missing data)
+- No regressions in existing 21 tests (14 existing + 7 skipped)
+
+**TypeScript Compilation:**
+- Zero new TypeScript errors introduced
+- File uses `@ts-nocheck` directive (intentional for test utilities)
+- Pre-existing codebase errors unrelated to changes (471 failures baseline)
+
+**Semantic Index Integration Tests:**
+- TypeScript metadata tests: ✅ 11/11 passing (2 skipped)
+- Python metadata tests: ✅ 9/9 passing (100%)
+- Rust metadata tests: ✅ 5/5 passing (100%)
+- JavaScript semantic index tests: 11/16 passing (5 failures pre-existing, documented in Phase 2)
+
+**Full Test Suite Comparison:**
+```
+Baseline (before changes):
+  Tests: 471 failed | 1109 passed | 183 skipped (1763 total)
+
+After Task 104.6.1:
+  Tests: 471 failed | 1123 passed | 183 skipped (1777 total)
+
+Impact: +14 passing tests, 0 new failures
+```
+
+📋 **Outstanding Work:**
+- Task 104.6.2: End-to-end validation across all languages (not started)
+- Task 104.6.3: Cleanup and documentation (not started)
+
+📋 **Future Enhancements:**
+- Complete property chain extraction debugging
+- Fix DefinitionBuilder to properly add methods/properties to classes
+- Fix DefinitionBuilder to properly populate function parameters
+- Address 6 known implementation gaps in Python semantic index tests
+- Address 5 known failures in JavaScript semantic index tests
 
 ## Overview
 

@@ -3,7 +3,7 @@
  */
 
 // @ts-nocheck - Test utilities use simplified type casting for readability
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   ReferenceBuilder,
   ReferenceKind,
@@ -12,8 +12,31 @@ import {
 } from "./reference_builder";
 import type { ProcessingContext, CaptureNode } from "./scope_processor";
 import { SemanticCategory, SemanticEntity } from "./capture_types";
-import type { Location, ScopeId, SymbolReference } from "@ariadnejs/types";
+import type { Location, ScopeId, SymbolReference, TypeInfo, FilePath, SymbolName } from "@ariadnejs/types";
 import { module_scope } from "@ariadnejs/types";
+import type { MetadataExtractors } from "./language_configs/metadata_types";
+
+// ============================================================================
+// Mock Metadata Extractors
+// ============================================================================
+
+/**
+ * Create mock metadata extractors for testing
+ */
+function create_mock_extractors(overrides: Partial<MetadataExtractors> = {}): MetadataExtractors {
+  return {
+    extract_type_from_annotation: vi.fn((node, file_path) => undefined),
+    extract_call_receiver: vi.fn((node, file_path) => undefined),
+    extract_property_chain: vi.fn((node) => undefined),
+    extract_assignment_parts: vi.fn((node, file_path) => ({
+      source: undefined,
+      target: undefined,
+    })),
+    extract_construct_target: vi.fn((node, file_path) => undefined),
+    extract_type_arguments: vi.fn((node) => undefined),
+    ...overrides,
+  };
+}
 
 // ============================================================================
 // Test Utilities
@@ -442,6 +465,338 @@ describe("ReferenceBuilder", () => {
       });
 
       expect(is_reference_capture(capture)).toBe(false);
+    });
+  });
+
+  describe("metadata extractors integration", () => {
+    it("should call extract_type_from_annotation for type references", () => {
+      const mockExtractors = create_mock_extractors({
+        extract_type_from_annotation: vi.fn((node, file_path) => ({
+          type_name: "string" as SymbolName,
+          certainty: "explicit" as const,
+        })),
+      });
+
+      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const capture = create_test_capture({
+        category: SemanticCategory.REFERENCE,
+        entity: SemanticEntity.TYPE,
+        symbol_name: "string",
+      });
+
+      builder.process(capture);
+      const references = builder.build();
+
+      expect(mockExtractors.extract_type_from_annotation).toHaveBeenCalledWith(
+        capture.node,
+        TEST_FILE_PATH
+      );
+      expect(references[0].type_info).toEqual({
+        type_name: "string",
+        certainty: "explicit",
+      });
+    });
+
+    it("should call extract_call_receiver for method calls", () => {
+      const receiverLocation = create_test_location(5, 10);
+      const mockExtractors = create_mock_extractors({
+        extract_call_receiver: vi.fn((node, file_path) => receiverLocation),
+      });
+
+      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const capture = create_test_capture({
+        category: SemanticCategory.REFERENCE,
+        entity: SemanticEntity.METHOD,
+        symbol_name: "getValue",
+      });
+
+      builder.process(capture);
+      const references = builder.build();
+
+      expect(mockExtractors.extract_call_receiver).toHaveBeenCalledWith(
+        capture.node,
+        TEST_FILE_PATH
+      );
+      expect(references[0].context?.receiver_location).toEqual(receiverLocation);
+    });
+
+    it("should call extract_property_chain for member access", () => {
+      const propertyChain: SymbolName[] = ["obj", "nested", "value"] as SymbolName[];
+      const mockExtractors = create_mock_extractors({
+        extract_property_chain: vi.fn((node) => propertyChain),
+      });
+
+      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const capture = create_test_capture({
+        category: SemanticCategory.REFERENCE,
+        entity: SemanticEntity.PROPERTY,
+        symbol_name: "value",
+      });
+
+      builder.process(capture);
+      const references = builder.build();
+
+      expect(mockExtractors.extract_property_chain).toHaveBeenCalledWith(capture.node);
+      expect(references[0].context?.property_chain).toEqual(propertyChain);
+    });
+
+    it("should call extract_assignment_parts for assignments", () => {
+      const sourceLocation = create_test_location(2, 5);
+      const targetLocation = create_test_location(2, 0);
+      const mockExtractors = create_mock_extractors({
+        extract_assignment_parts: vi.fn((node, file_path) => ({
+          source: sourceLocation,
+          target: targetLocation,
+        })),
+      });
+
+      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const capture = create_test_capture({
+        category: SemanticCategory.ASSIGNMENT,
+        entity: SemanticEntity.VARIABLE,
+        symbol_name: "result",
+      });
+
+      builder.process(capture);
+      const references = builder.build();
+
+      expect(mockExtractors.extract_assignment_parts).toHaveBeenCalledWith(
+        capture.node,
+        TEST_FILE_PATH
+      );
+      expect(references[0].context?.assignment_source).toEqual(sourceLocation);
+      expect(references[0].context?.assignment_target).toEqual(targetLocation);
+    });
+
+    it("should call extract_construct_target for constructor calls", () => {
+      const targetLocation = create_test_location(3, 6);
+      const mockExtractors = create_mock_extractors({
+        extract_construct_target: vi.fn((node, file_path) => targetLocation),
+      });
+
+      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const capture = create_test_capture({
+        category: SemanticCategory.REFERENCE,
+        entity: "constructor",
+        symbol_name: "MyClass",
+      });
+
+      builder.process(capture);
+      const references = builder.build();
+
+      expect(mockExtractors.extract_construct_target).toHaveBeenCalledWith(
+        capture.node,
+        TEST_FILE_PATH
+      );
+      expect(references[0].context?.construct_target).toEqual(targetLocation);
+    });
+
+    it("should call extract_type_arguments for generic types", () => {
+      const typeArgs = ["string", "number"];
+      const mockExtractors = create_mock_extractors({
+        extract_type_arguments: vi.fn((node) => typeArgs),
+        extract_type_from_annotation: vi.fn((node, file_path) => ({
+          type_name: "Map" as SymbolName,
+          certainty: "explicit" as const,
+        })),
+      });
+
+      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const capture = create_test_capture({
+        category: SemanticCategory.REFERENCE,
+        entity: SemanticEntity.TYPE,
+        symbol_name: "Map",
+      });
+
+      builder.process(capture);
+      const references = builder.build();
+
+      expect(mockExtractors.extract_type_arguments).toHaveBeenCalledWith(capture.node);
+      expect(references[0].type_info?.type_name).toBe("Map<string, number>");
+    });
+
+    it("should handle multiple extractor calls for complex references", () => {
+      const receiverLocation = create_test_location(1, 0);
+      const propertyChain: SymbolName[] = ["obj", "method"] as SymbolName[];
+      const typeInfo: TypeInfo = {
+        type_name: "MyClass" as SymbolName,
+        certainty: "inferred" as const,
+      };
+
+      const mockExtractors = create_mock_extractors({
+        extract_call_receiver: vi.fn((node, file_path) => receiverLocation),
+        extract_property_chain: vi.fn((node) => propertyChain),
+        extract_type_from_annotation: vi.fn((node, file_path) => typeInfo),
+      });
+
+      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const capture = create_test_capture({
+        category: SemanticCategory.REFERENCE,
+        entity: SemanticEntity.METHOD,
+        symbol_name: "method",
+      });
+
+      builder.process(capture);
+      const references = builder.build();
+
+      // Verify all relevant extractors were called
+      expect(mockExtractors.extract_call_receiver).toHaveBeenCalled();
+      expect(mockExtractors.extract_property_chain).toHaveBeenCalled();
+      expect(mockExtractors.extract_type_from_annotation).toHaveBeenCalled();
+
+      // Verify the reference has all the extracted metadata
+      expect(references[0].context?.receiver_location).toEqual(receiverLocation);
+      expect(references[0].context?.property_chain).toEqual(propertyChain);
+      expect(references[0].member_access?.object_type).toEqual(typeInfo);
+    });
+
+    it("should handle undefined extractors gracefully", () => {
+      // Test with no extractors (undefined)
+      const builder = new ReferenceBuilder(context, undefined, TEST_FILE_PATH);
+      const capture = create_test_capture({
+        category: SemanticCategory.REFERENCE,
+        entity: SemanticEntity.METHOD,
+        symbol_name: "getValue",
+      });
+
+      builder.process(capture);
+      const references = builder.build();
+
+      expect(references).toHaveLength(1);
+      expect(references[0].name).toBe("getValue");
+      expect(references[0].type).toBe("call");
+      expect(references[0].call_type).toBe("method");
+      expect(references[0].context).toBeUndefined(); // No context without extractors
+      expect(references[0].type_info).toBeUndefined(); // No type info without extractors
+    });
+
+    it("should handle extractors returning undefined", () => {
+      // All extractors return undefined
+      const mockExtractors = create_mock_extractors();
+
+      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const capture = create_test_capture({
+        category: SemanticCategory.REFERENCE,
+        entity: SemanticEntity.METHOD,
+        symbol_name: "getValue",
+      });
+
+      builder.process(capture);
+      const references = builder.build();
+
+      expect(references).toHaveLength(1);
+      expect(references[0].name).toBe("getValue");
+      expect(references[0].context).toBeUndefined(); // No context when extractors return undefined
+      expect(references[0].type_info).toBeUndefined(); // No type info when extractors return undefined
+    });
+
+    it("should populate member_access for property references with extractors", () => {
+      const typeInfo: TypeInfo = {
+        type_name: "Array" as SymbolName,
+        certainty: "explicit" as const,
+      };
+
+      const mockExtractors = create_mock_extractors({
+        extract_type_from_annotation: vi.fn((node, file_path) => typeInfo),
+      });
+
+      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const capture = create_test_capture({
+        category: SemanticCategory.REFERENCE,
+        entity: SemanticEntity.PROPERTY,
+        symbol_name: "length",
+      });
+
+      builder.process(capture);
+      const references = builder.build();
+
+      expect(references[0].member_access).toBeDefined();
+      expect(references[0].member_access?.access_type).toBe("property");
+      expect(references[0].member_access?.object_type).toEqual(typeInfo);
+    });
+
+    it("should populate type_flow for assignments with extractors", () => {
+      const typeInfo: TypeInfo = {
+        type_name: "number" as SymbolName,
+        certainty: "explicit" as const,
+      };
+
+      const mockExtractors = create_mock_extractors({
+        extract_type_from_annotation: vi.fn((node, file_path) => typeInfo),
+      });
+
+      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const capture = create_test_capture({
+        category: SemanticCategory.ASSIGNMENT,
+        entity: SemanticEntity.VARIABLE,
+        symbol_name: "result",
+      });
+
+      builder.process(capture);
+      const references = builder.build();
+
+      expect(references[0].type_flow).toBeDefined();
+      expect(references[0].type_flow?.target_type).toEqual(typeInfo);
+    });
+
+    it("should populate return_type for return references with extractors", () => {
+      const typeInfo: TypeInfo = {
+        type_name: "Promise" as SymbolName,
+        certainty: "inferred" as const,
+      };
+
+      const mockExtractors = create_mock_extractors({
+        extract_type_from_annotation: vi.fn((node, file_path) => typeInfo),
+      });
+
+      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const capture = create_test_capture({
+        category: "return",
+        entity: "value",
+        symbol_name: "result",
+      });
+
+      builder.process(capture);
+      const references = builder.build();
+
+      expect(references[0].return_type).toEqual(typeInfo);
+    });
+
+    it("should not add empty context object when all extractors return undefined", () => {
+      const mockExtractors = create_mock_extractors();
+
+      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const capture = create_test_capture({
+        category: SemanticCategory.REFERENCE,
+        entity: SemanticEntity.VARIABLE,
+        symbol_name: "myVar",
+      });
+
+      builder.process(capture);
+      const references = builder.build();
+
+      expect(references[0].context).toBeUndefined();
+    });
+
+    it("should add context only when extractors return data", () => {
+      const propertyChain: SymbolName[] = ["obj", "prop"] as SymbolName[];
+      const mockExtractors = create_mock_extractors({
+        extract_property_chain: vi.fn((node) => propertyChain),
+      });
+
+      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const capture = create_test_capture({
+        category: SemanticCategory.REFERENCE,
+        entity: SemanticEntity.PROPERTY,
+        symbol_name: "prop",
+      });
+
+      builder.process(capture);
+      const references = builder.build();
+
+      expect(references[0].context).toBeDefined();
+      expect(references[0].context?.property_chain).toEqual(propertyChain);
+      expect(references[0].context?.receiver_location).toBeUndefined();
     });
   });
 
