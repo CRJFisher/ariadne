@@ -11,8 +11,6 @@ import { DefinitionBuilder } from "../../definitions/definition_builder";
 import type {
   ProcessingContext,
   CaptureNode,
-  SemanticCategory,
-  SemanticEntity,
 } from "../../scopes/scope_processor";
 import type { Location, ScopeId, FilePath, SymbolName } from "@ariadnejs/types";
 import { ReferenceBuilder } from "../../references/reference_builder";
@@ -142,8 +140,8 @@ describe("JavaScript Builder Configuration", () => {
 
         const capture: CaptureNode = {
           name: "definition.class",
-          category: "definition" as SemanticCategory,
-          entity: "class" as SemanticEntity,
+          category: "definition",
+          entity: "class",
           node: nameNode as any,
           text: nameNode.text as SymbolName,
           location: {

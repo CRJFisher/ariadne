@@ -1,10 +1,11 @@
 # Task Epic 11.106: Refine SymbolReference Attributes for Method Call Resolution
 
-**Status:** Not Started
+**Status:** In Progress (Task 11.106.1 Complete - 1/8 tasks done)
 **Priority:** High
-**Estimated Effort:** 4 hours
+**Estimated Effort:** 4 hours (45 min spent, ~3h15m remaining)
 **Dependencies:** task-epic-11.104 (Metadata Extraction - Complete)
 **Created:** 2025-10-01
+**Started:** 2025-10-01
 
 ## Objective
 
@@ -129,21 +130,28 @@ export interface SymbolReference {
 
 ## Sub-Tasks
 
-### 11.106.1 - Evaluate Context Attributes for Method Resolution (45 minutes)
+### 11.106.1 - Evaluate Context Attributes for Method Resolution (45 minutes) ✅ COMPLETED
 
 Determine which `ReferenceContext` attributes are essential for method call resolution:
-- **receiver_location:** Essential (identifies the object)
-- **property_chain:** Essential (for chained access)
-- **assignment_source/target:** Evaluate necessity
-- **construct_target:** Evaluate necessity
-- **containing_function:** Not needed for method resolution → Remove
+- **receiver_location:** ✅ KEEP - Essential (identifies the object)
+- **property_chain:** ✅ KEEP - Essential (for chained access)
+- **assignment_source/target:** ❌ REMOVE - Not needed for method resolution
+- **construct_target:** ✅ KEEP - Essential (type from constructor)
+- **containing_function:** ❌ REMOVE - Not needed for method resolution
 
 **Deliverable:** Decision matrix mapping each context attribute to tree-sitter captures and method resolution use cases.
+
+**Completion:** See `task-epic-11.106.1-context-attributes-decision-matrix.md` for full analysis.
 
 **Success Criteria:**
 - ✅ Clear justification for keeping/removing each context attribute
 - ✅ Tree-sitter query pattern identified for each kept attribute
 - ✅ Method resolution scenario documented for each kept attribute
+
+**Decision Summary:**
+- **KEEP (3 attributes):** receiver_location, property_chain, construct_target
+- **REMOVE (3 attributes):** assignment_source, assignment_target, containing_function
+- **Reduction:** 6 attributes → 3 attributes (50% reduction)
 
 ### 11.106.2 - Remove Non-Extractable Type Attributes (30 minutes)
 
@@ -427,5 +435,299 @@ Focus on **method resolution scenarios**, not exhaustive interface coverage:
 
 ---
 
+## Implementation Results
+
+### Task 11.106.1 - Completed (2025-10-01)
+
+**Status:** ✅ COMPLETED
+**Time Spent:** 45 minutes
+**Deliverable:** [task-epic-11.106.1-context-attributes-decision-matrix.md](./task-epic-11.106.1-context-attributes-decision-matrix.md)
+
+#### What Was Completed
+
+Comprehensive evaluation of all 6 `ReferenceContext` attributes for:
+1. Tree-sitter extractability (can it be reliably captured?)
+2. Method resolution utility (does it help resolve `obj.method()` calls?)
+
+Created detailed decision matrix with:
+- Tree-sitter query patterns for each attribute (across all 4 languages)
+- Method resolution scenarios demonstrating use cases
+- Clear keep/remove justifications based on evaluation criteria
+
+#### Decisions Made
+
+**✅ KEEP (3 attributes - Essential for method resolution):**
+
+1. **receiver_location** - The anchor point for all method resolution
+   - Identifies which object the method is called on
+   - Required to look up the receiver's type
+   - Extractable: Direct node capture in call expression
+   - Use case: `user.getName()` → receiver_location points to `user`
+
+2. **property_chain** - Critical for chained method calls
+   - Tracks multi-step access: `container.getUser().getName()`
+   - Enables type narrowing through the chain
+   - Extractable: Recursive member_expression/attribute/field_expression traversal
+   - Use case: Modern APIs heavily use method chaining
+
+3. **construct_target** - Essential for type determination from constructors
+   - Links constructor calls to target variables: `const obj = new MyClass()`
+   - Most reliable way to determine type when no explicit annotation
+   - Extractable: Variable declarator with new_expression pattern
+   - Use case: Resolve methods on constructed objects without type annotations
+
+**❌ REMOVE (3 attributes - Not needed for method resolution):**
+
+1. **assignment_source** - Type info comes from annotations/constructors, not assignment structure
+   - Tree-sitter can extract it, but it doesn't serve method resolution
+   - Type information already captured via type_info and construct_target
+   - Might be useful for data flow analysis, but that's out of scope
+
+2. **assignment_target** - Same rationale as assignment_source
+   - Provides structural information but not semantic type information
+   - Definition lookup handled via scope resolution, not assignment tracking
+
+3. **containing_function** - Method resolution needs return TYPES, not function links
+   - Return types stored in SymbolDefinition.return_type_hint
+   - Linking return statements to functions doesn't help resolve methods
+   - Might be useful for control flow analysis, but that's out of scope
+
+**Result:** 50% reduction (6 attributes → 3 attributes)
+
+#### Tree-sitter Query Patterns Discovered
+
+**Pattern 1: receiver_location (Method Call Receiver Extraction)**
+
+JavaScript/TypeScript:
+```scheme
+(call_expression
+  function: (member_expression
+    object: (_) @receiver      ; Capture the receiver node
+    property: (property_identifier) @method_name
+  )
+)
+```
+
+Python:
+```scheme
+(call
+  function: (attribute
+    object: (_) @receiver
+    attribute: (identifier) @method_name
+  )
+)
+```
+
+Rust:
+```scheme
+(call_expression
+  function: (field_expression
+    value: (_) @receiver
+    field: (field_identifier) @method_name
+  )
+)
+```
+
+**Pattern 2: property_chain (Chained Member Access)**
+
+Requires recursive traversal of nested member_expression/attribute/field_expression nodes. Algorithm:
+1. Start at innermost property
+2. Traverse upward through object references
+3. Collect names in reverse order
+4. Return array of SymbolNames
+
+**Pattern 3: construct_target (Constructor Assignment)**
+
+JavaScript/TypeScript:
+```scheme
+(variable_declarator
+  name: (identifier) @construct.target
+  value: (new_expression
+    constructor: (identifier) @construct.class
+  )
+)
+```
+
+Python (uses call, not 'new'):
+```scheme
+(assignment
+  left: (identifier) @construct.target
+  right: (call
+    function: (identifier) @construct.class
+  )
+)
+```
+
+Rust:
+```scheme
+(let_declaration
+  pattern: (identifier) @construct.target
+  value: (struct_expression
+    name: (type_identifier) @construct.type
+  )
+)
+```
+
+#### Key Method Resolution Scenarios
+
+**Scenario 1: Explicit type annotation**
+```typescript
+const user: User = getUser();
+user.getName();
+```
+Resolution: receiver_location → 'user' → type_info → User → resolve getName() on User
+
+**Scenario 2: Constructor without annotation**
+```typescript
+const user = new User();
+user.getName();
+```
+Resolution: receiver_location → 'user' → construct_target → 'new User()' → extract User → resolve getName() on User
+
+**Scenario 3: Chained method calls**
+```typescript
+container.getUser().getName();
+```
+Resolution: property_chain → ['container', 'getUser', 'getName'] → resolve getUser() on Container → returns User → resolve getName() on User
+
+#### Issues Encountered
+
+**Issue 1: TypeScript Compilation Error**
+- **Problem:** `capture_types.ts` was importing from wrong module path
+- **Error:** `Module '"../scopes/scope_processor"' has no exported member 'SemanticEntity'`
+- **Root cause:** Re-export was pointing to incorrect location
+- **Fix:** Updated import path from `../scopes/scope_processor` to `../semantic_index`
+- **Resolution:** All TypeScript compilation now passes (packages/types, core, mcp)
+
+**Issue 2: Subtle distinction between assignment tracking and type tracking**
+- **Challenge:** assignment_source/target are extractable but don't serve method resolution
+- **Insight:** Method resolution needs semantic type information, not structural assignment information
+- **Decision:** Removed despite extractability because they don't satisfy the "useful for method resolution" criterion
+
+#### Insights Gained
+
+1. **Extractability ≠ Usefulness**
+   - Tree-sitter can extract many things, but we should only keep what serves our use case
+   - assignment_source/target demonstrate this: extractable but not useful for method resolution
+
+2. **Constructor patterns are essential**
+   - In dynamically typed languages, constructors are the most reliable type hint
+   - construct_target is critical when explicit type annotations are absent
+
+3. **Property chains enable modern API patterns**
+   - Method chaining (fluent APIs) is ubiquitous in modern code
+   - Without property_chain, we can't resolve chains like `array.filter().map().reduce()`
+
+4. **Return types vs. containing functions**
+   - Method resolution needs the WHAT (return type), not the WHERE (containing function)
+   - This distinction clarified why containing_function isn't needed
+
+#### Architecture Implications
+
+**Refined ReferenceContext Interface:**
+```typescript
+export interface ReferenceContext {
+  /** For method calls: the receiver object location (essential for method resolution) */
+  readonly receiver_location?: Location;
+
+  /** For member access: the property chain (essential for chained method resolution) */
+  readonly property_chain?: readonly SymbolName[];
+
+  /** For constructor calls: the variable being assigned to (essential for type determination) */
+  readonly construct_target?: Location;
+}
+```
+
+**Downstream Impact:**
+- Sub-task 11.106.2: Can proceed with removing type_flow fields
+- Sub-task 11.106.4: Will implement ReferenceContext refinement (remove 3 attributes)
+- Metadata extractors: Keep extract_call_receiver, extract_property_chain, extract_construct_target
+- Metadata extractors: Remove extract_assignment_parts (no longer needed)
+
+#### Follow-on Work Needed
+
+**Immediate (Part of Epic 11.106):**
+
+1. **Task 11.106.2** - Remove non-extractable type_flow attributes
+   - Remove: source_type, is_narrowing, is_widening
+   - Status: Ready to proceed
+
+2. **Task 11.106.3** - Simplify type_flow to assignment_type
+   - Replace type_flow object with simple assignment_type?: TypeInfo
+   - Status: Ready to proceed
+
+3. **Task 11.106.4** - Implement ReferenceContext refinement
+   - Remove: assignment_source, assignment_target, containing_function
+   - Keep: receiver_location, property_chain, construct_target
+   - Update all references to removed fields
+   - Status: Ready to proceed (decision matrix complete)
+
+4. **Task 11.106.5** - Implement optional chain detection
+   - Add tree-sitter queries for optional_chain nodes (JS/TS only)
+   - Populate member_access.is_optional_chain field
+   - Status: Ready to proceed
+
+5. **Task 11.106.6** - Verify extractable receiver type hints
+   - Audit all type extraction patterns across languages
+   - Ensure comprehensive coverage of extractable patterns
+   - Status: Ready to proceed
+
+6. **Task 11.106.7** - Update tests for refined interface
+   - Remove assertions on deleted fields
+   - Add tests for method resolution scenarios
+   - Status: Blocked on 11.106.2-11.106.6
+
+7. **Task 11.106.8** - Update documentation
+   - Document refined interface with tree-sitter mappings
+   - Explain extractability vs. inference distinction
+   - Status: Blocked on 11.106.2-11.106.6
+
+**Future (Beyond Epic 11.106):**
+
+1. **Method resolution implementation**
+   - Use refined ReferenceContext to implement actual method resolution
+   - Leverage receiver_location, property_chain, construct_target
+   - Verify decisions by building the resolution system
+
+2. **Cross-language type extraction parity**
+   - Ensure consistent patterns across JS/TS/Python/Rust
+   - Document language-specific limitations (e.g., optional chaining only in JS/TS)
+
+3. **Performance optimization**
+   - property_chain extraction requires recursive traversal
+   - May need caching for deeply nested chains
+
+#### Documentation Created
+
+- **task-epic-11.106.1-context-attributes-decision-matrix.md** (18KB)
+  - Comprehensive analysis of all 6 attributes
+  - Tree-sitter query patterns for 4 languages
+  - Method resolution scenarios with examples
+  - Keep/remove justifications
+  - Cross-language verification table
+
+#### Validation
+
+**Success Criteria Met:**
+- ✅ Clear justification for keeping/removing each context attribute
+- ✅ Tree-sitter query pattern identified for each kept attribute
+- ✅ Method resolution scenario documented for each kept attribute
+- ✅ TypeScript compilation passes with no errors
+- ✅ Decision matrix delivered as specified
+
+**Code Quality:**
+- ✅ TypeScript compiles: packages/types, packages/core, packages/mcp
+- ✅ No runtime changes (analysis-only task)
+- ✅ Documentation is comprehensive and implementation-ready
+
+**Design Quality:**
+- ✅ Every kept attribute is tree-sitter extractable
+- ✅ Every kept attribute serves method resolution
+- ✅ Every removed attribute justified with clear reasoning
+- ✅ 50% reduction in ReferenceContext complexity
+
+---
+
 **Last Updated:** 2025-10-01
-**Next Step:** Start with 11.106.1 (Audit type_flow usage)
+**Current Status:** Task 11.106.1 complete, ready for 11.106.2
+**Next Step:** Start 11.106.2 (Remove non-extractable type_flow attributes)
