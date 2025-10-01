@@ -275,42 +275,44 @@
 ;; IMPORTS
 ;; ==============================================================================
 
-; Import statements
+; Import statements (import X)
 (import_statement
-  name: (dotted_name) @import.import
+  name: (dotted_name) @definition.import
 )
 
+; Aliased import statements (import X as Y)
 (import_statement
   name: (aliased_import
-    name: (dotted_name) @import.import.source
-    alias: (identifier) @import.import.alias
+    name: (dotted_name) @definition.import
+    alias: (identifier) @definition.import
   )
 )
 
-; From imports
+; From imports (from X import Y)
 (import_from_statement
-  module_name: (dotted_name) @import.import
-  name: (dotted_name) @import.import
+  module_name: (dotted_name)
+  name: (dotted_name) @definition.import
 )
 
+; Aliased from imports (from X import Y as Z)
 (import_from_statement
-  module_name: (dotted_name) @import.import
+  module_name: (dotted_name)
   name: (aliased_import
-    name: (dotted_name) @import.import.source
-    alias: (identifier) @import.import.alias
+    name: (dotted_name) @definition.import
+    alias: (identifier) @definition.import
   )
 )
 
 ; Import all (from module import *)
 (import_from_statement
-  module_name: (dotted_name) @import.import.star
-  (wildcard_import) @import.import
+  module_name: (dotted_name)
+  (wildcard_import) @definition.import
 )
 
-; Relative imports
+; Relative imports (from . import X, from .. import Y)
 (import_from_statement
-  module_name: (relative_import) @import.import.relative
-  name: (dotted_name) @import.import.relative
+  module_name: (relative_import)
+  name: (dotted_name) @definition.import
 )
 
 ;; ==============================================================================

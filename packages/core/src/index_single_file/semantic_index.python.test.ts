@@ -546,6 +546,149 @@ def greet(name: str) -> None:
   });
 
   // ============================================================================
+  // IMPORT STATEMENT TESTS
+  // ============================================================================
+
+  describe("Import statement handling", () => {
+    it("should extract import statements", () => {
+      const code = `
+import os
+import sys
+from typing import List, Dict, Optional
+from collections import defaultdict
+import numpy as np
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.py" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const index = build_semantic_index(parsed_file, tree, "python");
+
+      // Check imports were captured
+      const import_names = Array.from(index.imported_symbols.values()).map(i => i.name);
+      expect(import_names.length).toBeGreaterThan(0);
+
+      // Check specific imports
+      expect(import_names).toContain("os");
+      expect(import_names).toContain("sys");
+      expect(import_names).toContain("List");
+      expect(import_names).toContain("Dict");
+    });
+
+    it("should handle aliased imports", () => {
+      const code = `
+import pandas as pd
+import numpy as np
+from typing import List as L
+from collections import defaultdict as dd
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.py" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const index = build_semantic_index(parsed_file, tree, "python");
+
+      // Check aliased imports were captured
+      const imports = Array.from(index.imported_symbols.values());
+      expect(imports.length).toBeGreaterThan(0);
+
+      // Look for aliased imports (either by original name or alias)
+      const has_pandas = imports.some(i => i.name === "pandas" || i.name === "pd");
+      const has_numpy = imports.some(i => i.name === "numpy" || i.name === "np");
+      expect(has_pandas || has_numpy).toBe(true);
+    });
+
+    it("should handle relative imports", () => {
+      const code = `
+from . import utils
+from .. import config
+from .helpers import helper_func
+from ..models import User
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.py" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const index = build_semantic_index(parsed_file, tree, "python");
+
+      // Check relative imports were captured
+      const import_names = Array.from(index.imported_symbols.values()).map(i => i.name);
+      expect(import_names.length).toBeGreaterThan(0);
+    });
+  });
+
+  // ============================================================================
+  // DECORATOR TESTS
+  // ============================================================================
+
+  describe("Decorator handling", () => {
+    it("should handle class and method decorators", () => {
+      const code = `
+def my_decorator(func):
+    return func
+
+@my_decorator
+class DecoratedClass:
+    @property
+    def value(self):
+        return self._value
+
+    @staticmethod
+    def static_method():
+        pass
+
+    @classmethod
+    def class_method(cls):
+        pass
+
+    @my_decorator
+    def custom_decorated(self):
+        pass
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.py" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const index = build_semantic_index(parsed_file, tree, "python");
+
+      // Check class definition exists
+      expect(index.classes.size).toBeGreaterThan(0);
+
+      // Check decorator function calls in references
+      const function_calls = index.references.filter(
+        r => r.type === "call"
+      );
+      const decorator_call = function_calls.find(r => r.name === "my_decorator");
+      expect(decorator_call).toBeDefined();
+    });
+
+    it("should handle decorators with arguments", () => {
+      const code = `
+def decorator_with_args(arg1, arg2):
+    def wrapper(func):
+        return func
+    return wrapper
+
+@decorator_with_args("param1", "param2")
+def decorated_function():
+    pass
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.py" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const index = build_semantic_index(parsed_file, tree, "python");
+
+      // Check function was captured
+      const functions = Array.from(index.functions.values());
+      const decorated_func = functions.find(f => f.name === "decorated_function");
+      expect(decorated_func).toBeDefined();
+
+      // Check decorator call
+      const function_calls = index.references.filter(
+        r => r.type === "call"
+      );
+      const decorator_call = function_calls.find(r => r.name === "decorator_with_args");
+      expect(decorator_call).toBeDefined();
+    });
+  });
+
+  // ============================================================================
   // PYTHON-SPECIFIC METADATA PATTERNS
   // ============================================================================
 

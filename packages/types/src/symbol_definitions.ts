@@ -70,7 +70,7 @@ export interface ClassDefinition extends Definition {
   readonly constructor?: readonly ConstructorDefinition[];
   readonly docstring?: readonly DocString[];
 }
- 
+
 /**
  * Method definition within a class
  */
@@ -178,7 +178,7 @@ export interface NamespaceDefinition extends Definition {
   readonly exported_symbols?: readonly SymbolId[];
 }
 
-export interface TypeDefinition extends Definition {
+export interface TypeAliasDefinition extends Definition {
   readonly kind: "type" | "type_alias";
   readonly type_expression?: string;
 }
@@ -196,4 +196,4 @@ export type AnyDefinition =
   | VariableDefinition
   | NamespaceDefinition
   | ImportDefinition
-  | TypeDefinition;
+  | TypeAliasDefinition;

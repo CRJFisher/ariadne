@@ -65,6 +65,7 @@ export {
   VariableDefinition,
   ImportDefinition,
   NamespaceDefinition,
+  TypeAliasDefinition,
   AnyDefinition,
   // Type aliases and other types
   ParameterName,

@@ -26,7 +26,7 @@ import {
   type SymbolAvailability,
   type SymbolId,
   type SymbolName,
-  type TypeDefinition,
+  type TypeAliasDefinition,
   type VariableDefinition,
   type ModulePath,
   type_symbol,
@@ -51,7 +51,7 @@ export interface BuilderResult {
   interfaces: ReadonlyMap<SymbolId, InterfaceDefinition>;
   enums: ReadonlyMap<SymbolId, EnumDefinition>;
   namespaces: ReadonlyMap<SymbolId, NamespaceDefinition>;
-  types: ReadonlyMap<SymbolId, TypeDefinition>;
+  types: ReadonlyMap<SymbolId, TypeAliasDefinition>;
   decorators: ReadonlyMap<SymbolId, DecoratorDefinition>;
   imports: ReadonlyMap<SymbolId, ImportDefinition>;
 }
@@ -160,7 +160,7 @@ export class DefinitionBuilder {
   // Simple definitions
   private readonly variables = new Map<SymbolId, VariableDefinition>();
   private readonly imports = new Map<SymbolId, ImportDefinition>();
-  private readonly types = new Map<SymbolId, TypeDefinition>();
+  private readonly types = new Map<SymbolId, TypeAliasDefinition>();
   private readonly decorators = new Map<SymbolId, DecoratorDefinition>();
 
   // Orphan captures (waiting for their parent to be added)
@@ -367,7 +367,6 @@ export class DefinitionBuilder {
 
   /**
    * Add an import definition
-   * TODO: add support in rust and typescript
    */
   add_import(definition: {
     symbol_id: SymbolId;
@@ -508,7 +507,7 @@ export class DefinitionBuilder {
   }
 
   /**
-   * Add a type definition (type alias or type)
+   * Add a type alias definition
    */
   add_type(definition: {
     kind: "type" | "type_alias";

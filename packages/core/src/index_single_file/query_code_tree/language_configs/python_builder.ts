@@ -989,6 +989,87 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
 
   // Imports
   [
+    "definition.import",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const import_id = create_variable_id(capture);
+
+        // Navigate up to find import_statement or import_from_statement
+        let import_stmt = capture.node.parent;
+        while (import_stmt &&
+               import_stmt.type !== "import_statement" &&
+               import_stmt.type !== "import_from_statement") {
+          import_stmt = import_stmt.parent;
+        }
+
+        if (!import_stmt) {
+          // Skip if we can't find the import statement
+          return;
+        }
+
+        // Determine import kind
+        let import_kind: "named" | "namespace" = "named";
+        let import_path: ModulePath;
+        let original_name: SymbolName | undefined;
+        let imported_name: SymbolName = capture.text;
+
+        if (import_stmt.type === "import_statement") {
+          // import X or import X as Y
+          import_kind = "namespace";
+          import_path = capture.text as unknown as ModulePath;
+
+          // Check for alias
+          const aliased_import = capture.node.parent;
+          if (aliased_import?.type === "aliased_import") {
+            const alias_node = aliased_import.childForFieldName?.("alias");
+            if (alias_node && alias_node.text !== capture.text) {
+              original_name = capture.text;
+              imported_name = alias_node.text as SymbolName;
+            }
+          }
+        } else {
+          // import_from_statement (from X import Y)
+          import_path = extract_import_path(import_stmt);
+
+          // Check if it's a wildcard import
+          if (capture.node.type === "wildcard_import") {
+            import_kind = "namespace";
+            imported_name = "*" as SymbolName;
+          } else {
+            import_kind = "named";
+
+            // Check for alias in from imports
+            const aliased_import = capture.node.parent;
+            if (aliased_import?.type === "aliased_import") {
+              const name_node = aliased_import.childForFieldName?.("name");
+              const alias_node = aliased_import.childForFieldName?.("alias");
+              if (name_node && alias_node) {
+                original_name = name_node.text as SymbolName;
+                imported_name = alias_node.text as SymbolName;
+              }
+            }
+          }
+        }
+
+        builder.add_import({
+          symbol_id: import_id,
+          name: imported_name,
+          location: capture.location,
+          scope_id: context.get_scope_id(capture.location),
+          availability: { scope: "file-private" },
+          import_path,
+          import_kind,
+          original_name,
+        });
+      },
+    },
+  ],
+
+  [
     "import.named",
     {
       process: (

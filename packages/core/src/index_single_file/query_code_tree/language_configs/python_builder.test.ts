@@ -46,10 +46,24 @@ describe("Python Builder Configuration", () => {
       throw new Error(`Could not find node of type ${nodeType} in code`);
     }
 
+    // Parse capture name to get category and entity
+    const parts = captureName.split(".");
+    const category = parts[0] as any;
+    const entity = parts[1] as any;
+
     return {
       name: captureName,
+      category,
+      entity,
       node: node as any,
       text: node.text,
+      location: {
+        file_path: "test.py" as any,
+        start_line: node.startPosition.row + 1,
+        start_column: node.startPosition.column,
+        end_line: node.endPosition.row + 1,
+        end_column: node.endPosition.column,
+      },
     };
   }
 
@@ -72,7 +86,7 @@ describe("Python Builder Configuration", () => {
     });
 
     it("should contain class definition capture mappings", () => {
-      const classMappings = ["def.class"];
+      const classMappings = ["definition.class"];
 
       for (const mapping of classMappings) {
         expect(PYTHON_BUILDER_CONFIG.has(mapping)).toBe(true);
@@ -84,10 +98,10 @@ describe("Python Builder Configuration", () => {
 
     it("should contain method definition capture mappings", () => {
       const methodMappings = [
-        "def.method",
-        "def.method.static",
-        "def.method.class",
-        "def.constructor",
+        "definition.method",
+        "definition.method.static",
+        "definition.method.class",
+        "definition.constructor",
       ];
 
       for (const mapping of methodMappings) {
@@ -549,11 +563,20 @@ describe("Python Builder Configuration", () => {
             id.text === "Optional"
           ) {
             const importCapture: CaptureNode = {
-              name: "import.named",
+              name: "definition.import",
+              category: "definition" as any,
+              entity: "import" as any,
               node: id as any,
               text: id.text,
+              location: {
+                file_path: "test.py" as any,
+                start_line: id.startPosition.row + 1,
+                start_column: id.startPosition.column,
+                end_line: id.endPosition.row + 1,
+                end_column: id.endPosition.column,
+              },
             };
-            PYTHON_BUILDER_CONFIG.get("import.named")?.process(
+            PYTHON_BUILDER_CONFIG.get("definition.import")?.process(
               importCapture,
               builder,
               context
@@ -561,9 +584,14 @@ describe("Python Builder Configuration", () => {
           }
         }
 
-        const definitions = builder.build();
-        const imports = definitions.filter((d) => d.kind === "import");
-        expect(imports.length).toBeGreaterThan(0);
+        const result = builder.build();
+        expect(result.imports.size).toBeGreaterThan(0);
+
+        // Verify we have the expected imports
+        const import_names = Array.from(result.imports.values()).map(i => i.name);
+        expect(import_names).toContain("List");
+        expect(import_names).toContain("Dict");
+        expect(import_names).toContain("Optional");
       });
 
       it("should handle private methods by naming convention", () => {

@@ -17,7 +17,7 @@ import type {
   InterfaceDefinition,
   EnumDefinition,
   NamespaceDefinition,
-  TypeDefinition,
+  TypeAliasDefinition,
   SymbolReference,
 } from "@ariadnejs/types";
 
@@ -72,7 +72,7 @@ export interface SemanticIndex {
   readonly interfaces: ReadonlyMap<SymbolId, InterfaceDefinition>;
   readonly enums: ReadonlyMap<SymbolId, EnumDefinition>;
   readonly namespaces: ReadonlyMap<SymbolId, NamespaceDefinition>;
-  readonly types: ReadonlyMap<SymbolId, TypeDefinition>;
+  readonly types: ReadonlyMap<SymbolId, TypeAliasDefinition>;
 
   /** ImportDefinitions (converted to Import unions during cross-file resolution) */
   readonly imported_symbols: ReadonlyMap<SymbolId, ImportDefinition>;
