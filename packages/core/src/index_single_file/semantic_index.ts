@@ -42,6 +42,7 @@ import { RUST_BUILDER_CONFIG } from "./query_code_tree/language_configs/rust_bui
 import { JAVASCRIPT_METADATA_EXTRACTORS } from "./query_code_tree/language_configs/javascript_metadata";
 import { TYPESCRIPT_METADATA_EXTRACTORS } from "./query_code_tree/language_configs/typescript_metadata";
 import { PYTHON_METADATA_EXTRACTORS } from "./query_code_tree/language_configs/python_metadata";
+import { RUST_METADATA_EXTRACTORS } from "./query_code_tree/language_configs/rust_metadata";
 import { ParsedFile } from "./file_utils";
 import { extract_type_members } from "./definitions/type_members";
 import { process_type_annotations } from "./references/type_annotation_references";
@@ -194,8 +195,7 @@ function get_metadata_extractors(language: Language): MetadataExtractors | undef
     case "python":
       return PYTHON_METADATA_EXTRACTORS;
     case "rust":
-      // TODO: Task 104.5 - Import and return rust_metadata extractors
-      return undefined;
+      return RUST_METADATA_EXTRACTORS;
     default:
       return undefined;
   }
