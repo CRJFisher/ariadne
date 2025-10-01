@@ -6,3 +6,4 @@
  */
 
 export { extract_type_bindings } from "./type_bindings";
+export { extract_constructor_bindings } from "./constructor_tracking";
