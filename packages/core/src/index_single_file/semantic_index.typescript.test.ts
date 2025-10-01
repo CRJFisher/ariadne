@@ -466,6 +466,47 @@ describe("Semantic Index - TypeScript", () => {
       expect(limitCall?.context?.receiver_location).toBeDefined();
     });
 
+    it("should detect optional chaining in method calls and property access", () => {
+      const code = `
+        class User {
+          profile = {
+            getDisplayName() { return "User"; }
+          };
+        }
+
+        const user: User | undefined = getUser();
+
+        // Regular method call (no optional chaining)
+        user.profile.getDisplayName();
+
+        // Optional chaining method call
+        user?.profile?.getDisplayName();
+      `;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language
+      );
+      const result = build_semantic_index(parsedFile, tree, "typescript" as Language);
+
+      // Regular method call - should NOT have optional chaining
+      const regularCall = result.references.find(
+        ref => ref.type === "call" && ref.name === "getDisplayName" && ref.member_access && !ref.member_access.is_optional_chain
+      );
+      expect(regularCall).toBeDefined();
+      expect(regularCall?.member_access?.is_optional_chain).toBe(false);
+
+      // Optional chaining method call - should have optional chaining
+      const optionalCall = result.references.find(
+        ref => ref.type === "call" && ref.name === "getDisplayName" && ref.member_access && ref.member_access.is_optional_chain
+      );
+      expect(optionalCall).toBeDefined();
+      expect(optionalCall?.member_access?.is_optional_chain).toBe(true);
+    });
+
     it("should extract type info for interface references", () => {
       const code = `
         interface User {

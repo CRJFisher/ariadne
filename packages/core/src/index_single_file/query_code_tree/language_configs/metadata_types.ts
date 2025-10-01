@@ -122,6 +122,32 @@ export interface MetadataExtractors {
   extract_type_arguments(
     node: SyntaxNode
   ): string[] | undefined;
+
+  /**
+   * Check if a node represents optional chaining
+   *
+   * Optional chaining (`?.`) affects method resolution - the result can be undefined.
+   * This is only supported in JavaScript/TypeScript.
+   *
+   * Tree-sitter pattern (JavaScript/TypeScript):
+   * ```
+   * (optional_chain
+   *   object: (_) @object
+   *   property: (_) @property)
+   * ```
+   *
+   * Examples:
+   * - JavaScript/TypeScript: `obj?.method()` → true
+   * - JavaScript/TypeScript: `obj.method()` → false
+   * - JavaScript/TypeScript: `obj?.prop?.method()` → true
+   * - Python/Rust: Always false (no optional chaining syntax)
+   *
+   * @param node - The SyntaxNode representing a member access or call expression
+   * @returns true if the node uses optional chaining syntax, false otherwise
+   */
+  extract_is_optional_chain(
+    node: SyntaxNode
+  ): boolean;
 }
 
 /**

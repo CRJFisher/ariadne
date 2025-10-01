@@ -96,4 +96,5 @@ export const TYPESCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
   extract_assignment_parts: JAVASCRIPT_METADATA_EXTRACTORS.extract_assignment_parts,
   extract_construct_target: JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target,
   extract_type_arguments: JAVASCRIPT_METADATA_EXTRACTORS.extract_type_arguments,
+  extract_is_optional_chain: JAVASCRIPT_METADATA_EXTRACTORS.extract_is_optional_chain,
 };

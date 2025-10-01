@@ -401,6 +401,55 @@ describe("Semantic Index - JavaScript", () => {
       });
     });
 
+    it("should detect optional chaining in method calls and property access", () => {
+      const code = `
+        const obj = { prop: { method: () => {} } };
+        // Regular method call (no optional chaining)
+        obj.method();
+
+        // Optional chaining method call
+        obj?.optionalMethod();
+
+        // Chained optional chaining
+        obj?.prop?.chainedMethod();
+
+        // Mixed regular and optional chaining
+        obj.prop?.mixedMethod();
+      `;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
+      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+
+      // Regular method call - should NOT have optional chaining
+      const regularCall = result.references.find(
+        ref => ref.type === "call" && ref.name === "method"
+      );
+      expect(regularCall).toBeDefined();
+      expect(regularCall?.member_access?.is_optional_chain).toBe(false);
+
+      // Optional chaining method call - should have optional chaining
+      const optionalCall = result.references.find(
+        ref => ref.type === "call" && ref.name === "optionalMethod"
+      );
+      expect(optionalCall).toBeDefined();
+      expect(optionalCall?.member_access?.is_optional_chain).toBe(true);
+
+      // Chained optional chaining - should have optional chaining
+      const chainedCall = result.references.find(
+        ref => ref.type === "call" && ref.name === "chainedMethod"
+      );
+      expect(chainedCall).toBeDefined();
+      expect(chainedCall?.member_access?.is_optional_chain).toBe(true);
+
+      // Mixed optional chaining - should have optional chaining
+      const mixedCall = result.references.find(
+        ref => ref.type === "call" && ref.name === "mixedMethod"
+      );
+      expect(mixedCall).toBeDefined();
+      expect(mixedCall?.member_access?.is_optional_chain).toBe(true);
+    });
+
     // JavaScript doesn't have built-in type annotations, and JSDoc parsing is not currently implemented
     // This test is removed as it tests for unsupported features
     it.skip("should populate type_info for type references (JSDoc not supported)", () => {

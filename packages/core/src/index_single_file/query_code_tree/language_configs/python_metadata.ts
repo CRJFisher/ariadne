@@ -462,4 +462,16 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
 
     return args.length > 0 ? args : undefined;
   },
+
+  /**
+   * Check if a node represents optional chaining
+   *
+   * Python does not have optional chaining syntax, so this always returns false.
+   *
+   * @param _node - The SyntaxNode (unused)
+   * @returns Always false for Python
+   */
+  extract_is_optional_chain(_node: SyntaxNode): boolean {
+    return false;
+  },
 };

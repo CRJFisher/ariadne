@@ -10,8 +10,8 @@ import {
   process_references,
   is_reference_capture,
 } from "./reference_builder";
-import type { ProcessingContext, CaptureNode } from "../scopes/scope_processor";
-import { SemanticCategory, SemanticEntity } from "../scopes/scope_processor";
+import type { ProcessingContext, CaptureNode } from "../semantic_index";
+import { SemanticCategory, SemanticEntity } from "../semantic_index";
 import type { Location, ScopeId, SymbolReference, TypeInfo, FilePath, SymbolName } from "@ariadnejs/types";
 import { module_scope } from "@ariadnejs/types";
 import type { MetadataExtractors } from "../query_code_tree/language_configs/metadata_types";
@@ -34,6 +34,7 @@ function create_mock_extractors(overrides: Partial<MetadataExtractors> = {}): Me
     })),
     extract_construct_target: vi.fn((node, file_path) => undefined),
     extract_type_arguments: vi.fn((node) => undefined),
+    extract_is_optional_chain: vi.fn((node) => false),
     ...overrides,
   };
 }

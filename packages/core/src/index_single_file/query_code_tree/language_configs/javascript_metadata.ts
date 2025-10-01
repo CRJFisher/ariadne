@@ -392,4 +392,74 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
 
     return args.length > 0 ? args : undefined;
   },
+
+  /**
+   * Check if a node represents optional chaining
+   *
+   * Detects optional chaining syntax (`?.`) in JavaScript/TypeScript:
+   * - `obj?.method()` → true
+   * - `obj.method()` → false
+   * - `obj?.prop?.method()` → true
+   * - `a.b?.c.d` → true (any part uses ?.)
+   *
+   * Checks if the node itself is an optional_chain or if any parent up to
+   * the call_expression is an optional_chain.
+   */
+  extract_is_optional_chain(node: SyntaxNode): boolean {
+    // Debug logging
+    const debug = false; // Set to true to enable debug logging
+    if (debug) {
+      console.log(`[extract_is_optional_chain] node.type=${node.type}, text=${node.text.substring(0, 50)}`);
+    }
+
+    // Check if the node itself is an optional_chain
+    if (node.type === "optional_chain") {
+      if (debug) console.log(`  -> Found optional_chain node directly`);
+      return true;
+    }
+
+    // For call_expression, check if the function part is optional_chain
+    if (node.type === "call_expression") {
+      const function_node = node.childForFieldName("function");
+      if (debug && function_node) {
+        console.log(`  -> call_expression function node type: ${function_node.type}`);
+        // Debug: Check if there's an optional_chaining_operator or similar
+        for (let i = 0; i < function_node.childCount; i++) {
+          const child = function_node.child(i);
+          if (child) {
+            console.log(`    -> child ${i}: type=${child.type}, text="${child.text}"`);
+          }
+        }
+      }
+      if (function_node && function_node.type === "optional_chain") {
+        if (debug) console.log(`  -> Found optional_chain in function field`);
+        return true;
+      }
+      // Also recursively check if function_node has optional chaining
+      if (function_node) {
+        return JAVASCRIPT_METADATA_EXTRACTORS.extract_is_optional_chain(function_node);
+      }
+    }
+
+    // For member_expression, check if it has an optional_chain child
+    if (node.type === "member_expression") {
+      // Check children for optional_chain token
+      for (let i = 0; i < node.childCount; i++) {
+        const child = node.child(i);
+        if (child && child.type === "optional_chain") {
+          if (debug) console.log(`  -> Found optional_chain child in member_expression`);
+          return true;
+        }
+      }
+
+      // Also check if nested member_expression has optional chaining
+      const object_node = node.childForFieldName("object");
+      if (object_node && object_node.type === "member_expression") {
+        return JAVASCRIPT_METADATA_EXTRACTORS.extract_is_optional_chain(object_node);
+      }
+    }
+
+    if (debug) console.log(`  -> No optional chaining found`);
+    return false;
+  },
 };

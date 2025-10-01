@@ -259,11 +259,16 @@ function process_method_reference(
   // Extract type information using extractors if available
   const type_info = extract_type_info(capture, extractors, file_path);
 
+  // Detect optional chaining syntax using extractors
+  const is_optional_chain = extractors
+    ? extractors.extract_is_optional_chain(capture.node)
+    : false;
+
   // Build member access details - object_type might come from type_info
   const member_access = {
     object_type: type_info ? type_info : undefined,
     access_type: "method" as const,
-    is_optional_chain: false, // Could be enhanced in language-specific extractors
+    is_optional_chain: is_optional_chain,
   };
 
   // Extract just the method name from method calls
@@ -454,10 +459,15 @@ export class ReferenceBuilder {
         this.file_path
       );
 
+      // Detect optional chaining syntax using extractors
+      const is_optional_chain = this.extractors
+        ? this.extractors.extract_is_optional_chain(capture.node)
+        : false;
+
       const member_access_info = {
         object_type: type_info ? type_info : undefined,
         access_type: "property" as const,
-        is_optional_chain: false, // Could be enhanced in language-specific extractors
+        is_optional_chain: is_optional_chain,
       };
 
       const updated_ref = { ...reference, member_access: member_access_info };
