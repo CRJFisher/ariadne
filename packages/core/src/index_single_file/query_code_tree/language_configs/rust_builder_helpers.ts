@@ -15,8 +15,12 @@ import {
   property_symbol,
   variable_symbol,
   interface_symbol,
+  enum_member_symbol,
 } from "@ariadnejs/types";
 import type { CaptureNode } from "../../scopes/scope_processor";
+
+// Re-export enum_member_symbol for use in rust_builder.ts
+export { enum_member_symbol };
 
 // ============================================================================
 // Additional Symbol Creation Functions (not in @ariadnejs/types yet)
@@ -383,7 +387,11 @@ export function find_containing_impl(
         return result;
       }
     }
-    node = node.parent;
+    if (node.parent) {
+      node = node.parent;
+    } else {
+      break;
+    }
   }
 
   return undefined;
@@ -404,7 +412,11 @@ export function find_containing_struct(
         );
       }
     }
-    node = node.parent;
+    if (node.parent) {
+      node = node.parent;
+    } else {
+      break;
+    }
   }
 
   return undefined;
@@ -425,7 +437,11 @@ export function find_containing_enum(
         );
       }
     }
-    node = node.parent;
+    if (node.parent) {
+      node = node.parent;
+    } else {
+      break;
+    }
   }
 
   return undefined;
@@ -446,7 +462,11 @@ export function find_containing_trait(
         );
       }
     }
-    node = node.parent;
+    if (node.parent) {
+      node = node.parent;
+    } else {
+      break;
+    }
   }
 
   return undefined;
@@ -467,7 +487,11 @@ export function find_containing_module(
         );
       }
     }
-    node = node.parent;
+    if (node.parent) {
+      node = node.parent;
+    } else {
+      break;
+    }
   }
 
   return undefined;

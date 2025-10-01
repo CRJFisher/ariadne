@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "build": "tsc && npm run copy-scm-files",
-    "copy-scm-files": "mkdir -p dist/semantic_index/queries && cp src/semantic_index/queries/*.scm dist/semantic_index/queries/",
+    "copy-scm-files": "mkdir -p dist/index_single_file/query_code_tree/queries && cp src/index_single_file/query_code_tree/queries/*.scm dist/index_single_file/query_code_tree/queries/",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:with-types": "npm run typecheck && npm test",

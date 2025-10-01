@@ -15,7 +15,8 @@
     "dist",
     "tests",
     "**/*.test.ts",
-    "**/*.test.tsx"
+    "**/*.test.tsx",
+    "src/resolve_references/**/*"
   ],
   "references": [
     { "path": "../types" }

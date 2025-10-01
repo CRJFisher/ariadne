@@ -43,14 +43,15 @@ export type LanguageBuilderConfig = Map<string, { process: ProcessFunction }>;
 
 /**
  * Extract location from a tree-sitter node
+ * NOTE: This should match node_to_location() in node_utils.ts
  */
 function extract_location(node: SyntaxNode): Location {
   return {
     file_path: "" as any, // Will be filled by context
     start_line: node.startPosition.row + 1,
-    start_column: node.startPosition.column,
+    start_column: node.startPosition.column + 1,
     end_line: node.endPosition.row + 1,
-    end_column: node.endPosition.column,
+    end_column: node.endPosition.column + 1,
   };
 }
 
@@ -119,6 +120,12 @@ function create_import_id(capture: CaptureNode): SymbolId {
 
 /**
  * Find containing class by traversing up the AST
+ *
+ * Note: This function attempts to recreate the class_symbol ID by finding the class node
+ * and extracting its name. However, the Location might not perfectly match the one used
+ * when the class was originally captured, leading to ID mismatches.
+ *
+ * To avoid this, we need to ensure we're using the exact same node coordinates.
  */
 function find_containing_class(capture: CaptureNode): SymbolId | undefined {
   let node = capture.node;
@@ -126,10 +133,24 @@ function find_containing_class(capture: CaptureNode): SymbolId | undefined {
   // Traverse up until we find a class
   while (node) {
     if (node.type === "class_declaration" || node.type === "class") {
-      const nameNode = node.childForFieldName?.("name");
+      // Get the name field node - this should match what the query captured
+      const nameNode = node.childForFieldName("name");
       if (nameNode) {
         const className = nameNode.text as SymbolName;
-        return class_symbol(className, extract_location(nameNode));
+
+        // Create location from the name node
+        // The query captures the identifier directly: (class_declaration name: (identifier) @definition.class)
+        // So we need to use the exact coordinates of the identifier node
+        // NOTE: Must add 1 to columns to match node_to_location() behavior
+        const location: Location = {
+          file_path: capture.location.file_path,
+          start_line: nameNode.startPosition.row + 1,
+          start_column: nameNode.startPosition.column + 1,
+          end_line: nameNode.endPosition.row + 1,
+          end_column: nameNode.endPosition.column + 1,
+        };
+
+        return class_symbol(className, location);
       }
     }
     if (node.parent) {
@@ -311,9 +332,12 @@ function extract_import_path(node: SyntaxNode | null | undefined): ModulePath {
  * Extract original name for aliased imports
  */
 function extract_original_name(
-  node: SyntaxNode,
+  node: SyntaxNode | null,
   local_name: SymbolName
 ): SymbolName | undefined {
+  if (!node) {
+    return undefined;
+  }
   // Check if this is an aliased import
   const importClause = node.childForFieldName?.("import_clause");
   if (importClause) {

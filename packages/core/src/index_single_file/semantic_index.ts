@@ -30,7 +30,7 @@ import {
   process_scopes,
   create_processing_context,
 } from "./scopes/scope_processor";
-import { process_references } from "./query_code_tree/reference_builder";
+import { process_references } from "./references/reference_builder";
 import { node_to_location } from "./node_utils";
 import {
   DefinitionBuilder,
@@ -47,10 +47,6 @@ import { TYPESCRIPT_METADATA_EXTRACTORS } from "./query_code_tree/language_confi
 import { PYTHON_METADATA_EXTRACTORS } from "./query_code_tree/language_configs/python_metadata";
 import { RUST_METADATA_EXTRACTORS } from "./query_code_tree/language_configs/rust_metadata";
 import { ParsedFile } from "./file_utils";
-import { extract_type_members } from "./definitions/type_members";
-import { process_type_annotations } from "./references/type_annotation_references";
-import { extract_type_tracking } from "./references/type_tracking";
-import { extract_type_flow } from "./references/type_flow_references";
 
 /**
  * Semantic Index - Single-file analysis results

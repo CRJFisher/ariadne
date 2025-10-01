@@ -234,7 +234,10 @@ function determine_method_availability(node: SyntaxNode): SymbolAvailability {
 /**
  * Extract type parameters from a node
  */
-function extract_type_parameters(node: SyntaxNode): string[] {
+function extract_type_parameters(node: SyntaxNode | null): string[] {
+  if (!node) {
+    return [];
+  }
   const typeParams = node.childForFieldName?.("type_parameters");
   if (typeParams) {
     // Extract individual type parameter names
