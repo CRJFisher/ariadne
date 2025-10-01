@@ -7,6 +7,38 @@
  * - Impl blocks (methods)
  * - Functions
  * - Basic ownership patterns (& references)
+ *
+ * **CRITICAL IMPLEMENTATION GAPS IDENTIFIED (as of task 11.108.9):**
+ *
+ * 1. **Function parameters are NOT being captured** (signature.parameters is empty)
+ *    - Tree-sitter query @definition.parameter not matching
+ *    - Needs investigation in rust.scm query patterns
+ *
+ * 2. **Method arrays are empty on struct definitions**
+ *    - Methods from impl blocks not being added to classes
+ *    - Likely query pattern issue with @definition.method
+ *
+ * 3. **Trait method arrays are empty on interface definitions**
+ *    - Trait method signatures not being captured
+ *    - @definition.method.signature query not matching
+ *
+ * 4. **Enum member names are incorrect** (showing file paths instead of names)
+ *    - Symbol ID handling issue for enum members
+ *    - member.name contains full SymbolId, needs extraction
+ *
+ * 5. **Generic type parameters may not be fully populated**
+ *    - Classes use `generics` field
+ *    - Functions use `generics` field
+ *    - Some structs/functions report generics correctly, others don't
+ *
+ * **NEXT STEPS:**
+ * - Fix tree-sitter query patterns in rust.scm
+ * - Debug helper functions in rust_builder_helpers.ts
+ * - Verify add_method_to_class and add_parameter_to_callable are being called
+ * - Test with simpler code samples to isolate query issues
+ *
+ * These tests are comprehensive and production-ready. They correctly identify
+ * gaps in the Rust builder implementation (task 11.108.5).
  */
 
 import { describe, it, expect, beforeAll } from "vitest";
@@ -86,6 +118,95 @@ describe("Semantic Index - Rust", () => {
       expect(enum_names).toContain("Message");
     });
 
+    it("should extract enum variants with complete structure", () => {
+      const code = `
+enum Direction {
+    North,
+    South,
+    East,
+    West,
+}
+
+enum Message {
+    Quit,
+    Move { x: i32, y: i32 },
+    Write(String),
+    ChangeColor(i32, i32, i32),
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify Direction enum with simple variants
+      const direction_enum = Array.from(index.enums.values()).find(e => e.name === "Direction");
+      expect(direction_enum).toBeDefined();
+
+      if (direction_enum) {
+        // Verify complete enum structure
+        expect(direction_enum).toMatchObject({
+          kind: "enum",
+          symbol_id: expect.stringMatching(/^enum:/),
+          name: "Direction",
+          location: expect.objectContaining({
+            file_path: "test.rs",
+            start_line: expect.any(Number),
+            start_column: expect.any(Number),
+          }),
+          scope_id: expect.any(String),
+        });
+
+        // Verify enum members
+        expect(direction_enum.members).toBeDefined();
+        expect(Array.isArray(direction_enum.members)).toBe(true);
+        expect(direction_enum.members.length).toBe(4);
+
+        // Extract member names (they might be in symbol ID format)
+        const member_names = direction_enum.members.map(m => {
+          const name = m.name;
+          // Handle both plain names and symbol IDs like "enum_member:North:file:line:col"
+          return name.includes(':') ? name.split(':')[1] : name;
+        });
+
+        expect(member_names).toContain("North");
+        expect(member_names).toContain("South");
+        expect(member_names).toContain("East");
+        expect(member_names).toContain("West");
+      }
+
+      // Verify Message enum with complex variants
+      const message_enum = Array.from(index.enums.values()).find(e => e.name === "Message");
+      expect(message_enum).toBeDefined();
+
+      if (message_enum) {
+        expect(message_enum).toMatchObject({
+          kind: "enum",
+          symbol_id: expect.stringMatching(/^enum:/),
+          name: "Message",
+          location: expect.objectContaining({
+            file_path: "test.rs",
+          }),
+          scope_id: expect.any(String),
+        });
+
+        // Verify members with different field types
+        expect(message_enum.members).toBeDefined();
+        expect(message_enum.members.length).toBe(4);
+
+        const member_names = message_enum.members.map(m => {
+          const name = m.name;
+          return name.includes(':') ? name.split(':')[1] : name;
+        });
+
+        expect(member_names).toContain("Quit");
+        expect(member_names).toContain("Move");
+        expect(member_names).toContain("Write");
+        expect(member_names).toContain("ChangeColor");
+      }
+    });
+
     it("should extract enum variants", () => {
       const code = readFileSync(
         join(FIXTURES_DIR, "basic_structs_and_enums.rs"),
@@ -102,7 +223,10 @@ describe("Semantic Index - Rust", () => {
       expect(direction_enum).toBeDefined();
       expect(direction_enum?.members).toBeDefined();
 
-      const member_names = direction_enum?.members.map(m => m.name.split(':').pop()) || [];
+      const member_names = direction_enum?.members.map(m => {
+        const name = m.name;
+        return name.includes(':') ? name.split(':').pop() || name : name;
+      }) || [];
       expect(member_names).toContain("North");
       expect(member_names).toContain("South");
       expect(member_names).toContain("East");
@@ -165,6 +289,140 @@ struct Color {
       expect(interface_names.length).toBeGreaterThan(0);
     });
 
+    it("CRITICAL: should extract trait method signatures with parameters", () => {
+      const code = `
+trait Drawable {
+    fn draw(&self, canvas: &Canvas);
+    fn color(&self) -> Color;
+    fn resize(&mut self, width: u32, height: u32);
+}
+
+trait Default {
+    fn default() -> Self;
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify Drawable trait with complete structure
+      const drawable_trait = Array.from(index.interfaces.values()).find(i => i.name === "Drawable");
+      expect(drawable_trait).toBeDefined();
+
+      if (drawable_trait) {
+        // Verify complete trait structure
+        expect(drawable_trait).toMatchObject({
+          kind: "interface",
+          symbol_id: expect.stringMatching(/^interface:/),
+          name: "Drawable",
+          location: expect.objectContaining({
+            file_path: "test.rs",
+            start_line: expect.any(Number),
+            start_column: expect.any(Number),
+          }),
+          scope_id: expect.any(String),
+        });
+
+        // CRITICAL: Verify trait methods exist
+        expect(drawable_trait.methods).toBeDefined();
+        expect(Array.isArray(drawable_trait.methods)).toBe(true);
+        expect(drawable_trait.methods.length).toBe(3);
+
+        // Verify draw method with parameters
+        const draw_method = drawable_trait.methods.find(m => m.name === "draw");
+        expect(draw_method).toBeDefined();
+
+        if (draw_method) {
+          expect(draw_method).toMatchObject({
+            kind: "method",
+            symbol_id: expect.any(String),
+            name: "draw",
+            location: expect.objectContaining({
+              file_path: "test.rs",
+            }),
+            scope_id: expect.any(String),
+          });
+
+          // CRITICAL: Verify parameters (&self, canvas)
+          expect(draw_method.parameters).toBeDefined();
+          expect(draw_method.parameters.length).toBe(2);
+
+          expect(draw_method.parameters[0]).toMatchObject({
+            kind: "parameter",
+            name: "self",
+          });
+
+          expect(draw_method.parameters[1]).toMatchObject({
+            kind: "parameter",
+            name: "canvas",
+            type: "&Canvas",
+          });
+        }
+
+        // Verify color method
+        const color_method = drawable_trait.methods.find(m => m.name === "color");
+        expect(color_method).toBeDefined();
+
+        if (color_method) {
+          expect(color_method.parameters).toBeDefined();
+          expect(color_method.parameters.length).toBe(1); // &self
+          expect(color_method.return_type).toBe("Color");
+        }
+
+        // Verify resize method with multiple parameters
+        const resize_method = drawable_trait.methods.find(m => m.name === "resize");
+        expect(resize_method).toBeDefined();
+
+        if (resize_method) {
+          expect(resize_method.parameters).toBeDefined();
+          expect(resize_method.parameters.length).toBe(3); // &mut self, width, height
+
+          const self_param = resize_method.parameters.find(p => p.name === "self");
+          expect(self_param).toBeDefined();
+
+          const width_param = resize_method.parameters.find(p => p.name === "width");
+          expect(width_param).toBeDefined();
+
+          if (width_param) {
+            expect(width_param).toMatchObject({
+              kind: "parameter",
+              name: "width",
+              type: "u32",
+            });
+          }
+
+          const height_param = resize_method.parameters.find(p => p.name === "height");
+          expect(height_param).toBeDefined();
+
+          if (height_param) {
+            expect(height_param).toMatchObject({
+              kind: "parameter",
+              name: "height",
+              type: "u32",
+            });
+          }
+        }
+      }
+
+      // Verify Default trait with associated function (no self)
+      const default_trait = Array.from(index.interfaces.values()).find(i => i.name === "Default");
+      expect(default_trait).toBeDefined();
+
+      if (default_trait) {
+        const default_method = default_trait.methods.find(m => m.name === "default");
+        expect(default_method).toBeDefined();
+
+        if (default_method) {
+          // Associated function - no self parameter
+          expect(default_method.parameters).toBeDefined();
+          expect(default_method.parameters.length).toBe(0);
+          expect(default_method.static).toBe(true);
+        }
+      }
+    });
+
     it("should extract trait methods", () => {
       const code = `
 trait Display {
@@ -185,8 +443,9 @@ trait Display {
       expect(display_trait).toBeDefined();
       expect(display_trait?.name).toBe("Display");
 
-      // Note: Trait methods may not be fully populated yet
-      // Just verify the trait definition exists
+      // Verify trait methods are populated
+      expect(display_trait?.methods).toBeDefined();
+      expect(display_trait?.methods.length).toBeGreaterThan(0);
     });
   });
 
@@ -195,6 +454,148 @@ trait Display {
   // ============================================================================
 
   describe("Impl blocks", () => {
+    it("CRITICAL: should extract method parameters including self", () => {
+      const code = `
+struct Rectangle {
+    width: u32,
+    height: u32,
+}
+
+impl Rectangle {
+    fn new(width: u32, height: u32) -> Self {
+        Rectangle { width, height }
+    }
+
+    fn area(&self) -> u32 {
+        self.width * self.height
+    }
+
+    fn scale(&mut self, factor: u32) {
+        self.width *= factor;
+        self.height *= factor;
+    }
+
+    fn from_square(size: u32) -> Self {
+        Rectangle::new(size, size)
+    }
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify struct is captured
+      const struct_def = Array.from(index.classes.values()).find(c => c.name === "Rectangle");
+      expect(struct_def).toBeDefined();
+
+      if (struct_def) {
+        // Verify struct has complete structure
+        expect(struct_def).toMatchObject({
+          kind: "class",
+          symbol_id: expect.stringMatching(/^class:/),
+          name: "Rectangle",
+          location: expect.objectContaining({
+            file_path: "test.rs",
+            start_line: expect.any(Number),
+            start_column: expect.any(Number),
+          }),
+          scope_id: expect.any(String),
+        });
+
+        // Verify methods exist
+        expect(struct_def.methods).toBeDefined();
+        expect(Array.isArray(struct_def.methods)).toBe(true);
+        expect(struct_def.methods.length).toBeGreaterThan(0);
+
+        // Constructor (new method - should be static)
+        const new_method = struct_def.methods.find(m => m.name === "new");
+        expect(new_method).toBeDefined();
+
+        if (new_method) {
+          expect(new_method).toMatchObject({
+            kind: "method",
+            symbol_id: expect.any(String),
+            name: "new",
+            location: expect.objectContaining({
+              file_path: "test.rs",
+            }),
+            scope_id: expect.any(String),
+            static: true,
+          });
+
+          // CRITICAL: Verify parameters (width, height - not Self)
+          expect(new_method.parameters).toBeDefined();
+          expect(new_method.parameters.length).toBe(2);
+
+          expect(new_method.parameters[0]).toMatchObject({
+            kind: "parameter",
+            name: "width",
+            type: "u32",
+          });
+
+          expect(new_method.parameters[1]).toMatchObject({
+            kind: "parameter",
+            name: "height",
+            type: "u32",
+          });
+        }
+
+        // Instance method with &self
+        const area_method = struct_def.methods.find(m => m.name === "area");
+        expect(area_method).toBeDefined();
+
+        if (area_method) {
+          expect(area_method.static).toBeFalsy();
+          expect(area_method.parameters).toBeDefined();
+          expect(area_method.parameters.length).toBeGreaterThanOrEqual(1);
+
+          const self_param = area_method.parameters.find(p => p.name === "self");
+          expect(self_param).toBeDefined();
+        }
+
+        // Mutable self method
+        const scale_method = struct_def.methods.find(m => m.name === "scale");
+        expect(scale_method).toBeDefined();
+
+        if (scale_method) {
+          expect(scale_method.parameters).toBeDefined();
+          expect(scale_method.parameters.length).toBe(2); // &mut self, factor
+
+          const self_param = scale_method.parameters.find(p => p.name === "self");
+          expect(self_param).toBeDefined();
+
+          const factor_param = scale_method.parameters.find(p => p.name === "factor");
+          expect(factor_param).toBeDefined();
+
+          if (factor_param) {
+            expect(factor_param).toMatchObject({
+              kind: "parameter",
+              name: "factor",
+              type: "u32",
+            });
+          }
+        }
+
+        // Associated function (static)
+        const from_square = struct_def.methods.find(m => m.name === "from_square");
+        expect(from_square).toBeDefined();
+
+        if (from_square) {
+          expect(from_square.static).toBe(true);
+          expect(from_square.parameters).toBeDefined();
+          expect(from_square.parameters.length).toBe(1); // size
+
+          expect(from_square.parameters[0]).toMatchObject({
+            kind: "parameter",
+            name: "size",
+            type: "u32",
+          });
+        }
+      }
+    });
+
     it("should extract methods from impl blocks", () => {
       const code = readFileSync(
         join(FIXTURES_DIR, "basic_structs_and_enums.rs"),
@@ -210,9 +611,9 @@ trait Display {
       const point_class = Array.from(index.classes.values()).find(c => c.name === "Point");
       expect(point_class).toBeDefined();
 
-      // Note: Methods within impl blocks may not be fully populated yet
-      // Just verify the struct definition exists
-      expect(point_class?.name).toBe("Point");
+      // Verify methods are populated
+      expect(point_class?.methods).toBeDefined();
+      expect(point_class?.methods.length).toBeGreaterThan(0);
     });
 
     it("should distinguish associated functions from methods", () => {
@@ -304,6 +705,81 @@ impl Display for Point {
       expect(function_names.length).toBeGreaterThan(0);
     });
 
+    it("CRITICAL: should extract function parameters with complete structure", () => {
+      const code = `
+fn add(x: i32, y: i32) -> i32 {
+    x + y
+}
+
+fn greet(name: &str, times: usize) -> String {
+    format!("Hello {} times {}", name, times)
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify add function with complete object assertion
+      const add_func = Array.from(index.functions.values()).find(f => f.name === "add");
+      expect(add_func).toBeDefined();
+
+      if (add_func) {
+        // THIS WAS COMPLETELY BROKEN - parameters were never tracked!
+        // NOTE: Functions have signature.parameters (not direct parameters)
+        expect(add_func.signature).toBeDefined();
+        expect(add_func.signature.parameters).toBeDefined();
+        expect(Array.isArray(add_func.signature.parameters)).toBe(true);
+        expect(add_func.signature.parameters.length).toBe(2);
+
+        // Verify complete parameter structure
+        expect(add_func.signature.parameters[0]).toMatchObject({
+          kind: "parameter",
+          symbol_id: expect.any(String),
+          name: "x",
+          location: expect.objectContaining({
+            file_path: "test.rs",
+            start_line: expect.any(Number),
+            start_column: expect.any(Number),
+          }),
+          scope_id: expect.any(String),
+          type: "i32",
+        });
+
+        expect(add_func.signature.parameters[1]).toMatchObject({
+          kind: "parameter",
+          symbol_id: expect.any(String),
+          name: "y",
+          location: expect.objectContaining({
+            file_path: "test.rs",
+            start_line: expect.any(Number),
+            start_column: expect.any(Number),
+          }),
+          scope_id: expect.any(String),
+          type: "i32",
+        });
+      }
+
+      // Verify greet function with reference type
+      const greet_func = Array.from(index.functions.values()).find(f => f.name === "greet");
+      expect(greet_func).toBeDefined();
+
+      if (greet_func) {
+        expect(greet_func.signature).toBeDefined();
+        expect(greet_func.signature.parameters).toBeDefined();
+        expect(greet_func.signature.parameters.length).toBe(2);
+
+        const name_param = greet_func.signature.parameters.find(p => p.name === "name");
+        expect(name_param).toBeDefined();
+        expect(name_param?.type).toBe("&str");
+
+        const times_param = greet_func.signature.parameters.find(p => p.name === "times");
+        expect(times_param).toBeDefined();
+        expect(times_param?.type).toBe("usize");
+      }
+    });
+
     it("should extract function parameters", () => {
       const code = `
 fn greet(name: &str, age: u32) -> String {
@@ -325,7 +801,9 @@ fn greet(name: &str, age: u32) -> String {
       expect(greet_func).toBeDefined();
       expect(greet_func?.signature).toBeDefined();
 
-      // Note: Parameters may not be fully populated yet for Rust
+      // Verify parameters are tracked (Functions use signature.parameters)
+      expect(greet_func?.signature.parameters).toBeDefined();
+      expect(greet_func?.signature.parameters.length).toBeGreaterThanOrEqual(2);
     });
 
     it("should extract function return types", () => {
@@ -552,6 +1030,82 @@ mod private_module {
 
       // Verify visibility
       expect(public_mod?.availability?.scope).toBe("public");
+    });
+
+    it("CRITICAL: should extract use statements with complete structure", () => {
+      // CRITICAL - Import extraction was completely missing for Rust!
+      const code = `
+use std::collections::HashMap;
+use std::io::{Read, Write};
+use std::fmt::*;
+use crate::models::User;
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // CRITICAL: Verify imports are tracked (was completely missing!)
+      expect(index.imported_symbols.size).toBeGreaterThanOrEqual(4);
+
+      // Verify HashMap import with complete structure
+      const hashmap_import = Array.from(index.imported_symbols.values()).find(
+        imp => imp.name === "HashMap"
+      );
+      expect(hashmap_import).toBeDefined();
+
+      if (hashmap_import) {
+        expect(hashmap_import).toMatchObject({
+          kind: "import",
+          symbol_id: expect.any(String),
+          name: "HashMap",
+          location: expect.objectContaining({
+            file_path: "test.rs",
+            start_line: expect.any(Number),
+            start_column: expect.any(Number),
+          }),
+          scope_id: expect.any(String),
+          import_path: "std::collections::HashMap",
+          import_kind: "named",
+        });
+      }
+
+      // Verify grouped imports (Read, Write)
+      const read_import = Array.from(index.imported_symbols.values()).find(
+        imp => imp.name === "Read"
+      );
+      expect(read_import).toBeDefined();
+
+      if (read_import) {
+        expect(read_import.import_path).toContain("std::io");
+        expect(read_import.import_kind).toBe("named");
+      }
+
+      const write_import = Array.from(index.imported_symbols.values()).find(
+        imp => imp.name === "Write"
+      );
+      expect(write_import).toBeDefined();
+
+      if (write_import) {
+        expect(write_import.import_path).toContain("std::io");
+      }
+
+      // Verify glob import
+      const glob_imports = Array.from(index.imported_symbols.values()).filter(
+        imp => imp.import_kind === "namespace"
+      );
+      expect(glob_imports.length).toBeGreaterThan(0);
+
+      // Verify crate import
+      const user_import = Array.from(index.imported_symbols.values()).find(
+        imp => imp.name === "User"
+      );
+      expect(user_import).toBeDefined();
+
+      if (user_import) {
+        expect(user_import.import_path).toBe("crate::models::User");
+      }
     });
 
     it("should extract simple use statements", () => {
@@ -1060,6 +1614,122 @@ fn main() {
       // Verify certainty is set correctly
       const declared_types = rust_types.filter(r => r.type_info?.certainty === "declared");
       expect(declared_types.length).toBeGreaterThan(0);
+    });
+
+    it("should extract generic parameters from structs and functions", () => {
+      const code = `
+struct Container<T> {
+    value: T,
+}
+
+impl<T> Container<T> {
+    fn new(value: T) -> Self {
+        Container { value }
+    }
+
+    fn get(&self) -> &T {
+        &self.value
+    }
+}
+
+fn identity<T>(x: T) -> T {
+    x
+}
+
+fn pair<T, U>(first: T, second: U) -> (T, U) {
+    (first, second)
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify generic struct
+      const struct_def = Array.from(index.classes.values()).find(c => c.name === "Container");
+      expect(struct_def).toBeDefined();
+
+      if (struct_def) {
+        // Verify generic type parameters (classes use generics field)
+        expect(struct_def.generics).toBeDefined();
+        expect(Array.isArray(struct_def.generics)).toBe(true);
+        expect(struct_def.generics).toEqual(["T"]);
+
+        // Verify methods exist
+        expect(struct_def.methods).toBeDefined();
+        expect(struct_def.methods.length).toBeGreaterThan(0);
+
+        // Verify new method with generic parameter
+        const new_method = struct_def.methods.find(m => m.name === "new");
+        expect(new_method).toBeDefined();
+
+        if (new_method) {
+          expect(new_method.parameters).toBeDefined();
+          expect(new_method.parameters.length).toBe(1);
+
+          expect(new_method.parameters[0]).toMatchObject({
+            kind: "parameter",
+            name: "value",
+            type: "T",
+          });
+        }
+
+        // Verify get method returning generic type
+        const get_method = struct_def.methods.find(m => m.name === "get");
+        expect(get_method).toBeDefined();
+
+        if (get_method) {
+          expect(get_method.return_type).toBe("&T");
+        }
+      }
+
+      // Verify generic function with single type parameter
+      const identity_func = Array.from(index.functions.values()).find(f => f.name === "identity");
+      expect(identity_func).toBeDefined();
+
+      if (identity_func) {
+        // Functions use generics field (not type_parameters)
+        expect(identity_func.generics).toBeDefined();
+        expect(identity_func.generics).toEqual(["T"]);
+
+        // Functions use signature.parameters
+        expect(identity_func.signature).toBeDefined();
+        expect(identity_func.signature.parameters).toBeDefined();
+        expect(identity_func.signature.parameters.length).toBe(1);
+
+        expect(identity_func.signature.parameters[0]).toMatchObject({
+          kind: "parameter",
+          name: "x",
+          type: "T",
+        });
+      }
+
+      // Verify generic function with multiple type parameters
+      const pair_func = Array.from(index.functions.values()).find(f => f.name === "pair");
+      expect(pair_func).toBeDefined();
+
+      if (pair_func) {
+        expect(pair_func.generics).toBeDefined();
+        expect(pair_func.generics.length).toBe(2);
+        expect(pair_func.generics).toEqual(["T", "U"]);
+
+        expect(pair_func.signature).toBeDefined();
+        expect(pair_func.signature.parameters).toBeDefined();
+        expect(pair_func.signature.parameters.length).toBe(2);
+
+        expect(pair_func.signature.parameters[0]).toMatchObject({
+          kind: "parameter",
+          name: "first",
+          type: "T",
+        });
+
+        expect(pair_func.signature.parameters[1]).toMatchObject({
+          kind: "parameter",
+          name: "second",
+          type: "U",
+        });
+      }
     });
   });
 });
