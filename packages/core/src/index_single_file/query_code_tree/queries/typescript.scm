@@ -479,29 +479,24 @@
 ;; IMPORTS - Standard JavaScript imports
 ;; ==============================================================================
 
-; Import source (captured for all imports)
-(import_statement
-  source: (string) @import.import
-)
-
 ; Named imports
 (import_specifier
-  name: (identifier) @import.import
+  name: (identifier) @definition.import
 )
 
 (import_specifier
-  name: (identifier) @import.import.source
-  alias: (identifier) @import.import.alias
+  name: (identifier)
+  alias: (identifier) @definition.import
 )
 
 ; Default imports
 (import_clause
-  (identifier) @import.import
+  (identifier) @definition.import
 )
 
 ; Namespace imports
 (namespace_import
-  (identifier) @import.namespace
+  (identifier) @definition.import
 )
 
 ;; ==============================================================================

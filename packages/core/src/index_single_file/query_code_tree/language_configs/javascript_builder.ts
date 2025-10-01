@@ -290,8 +290,12 @@ function extract_default_value(node: SyntaxNode): string | undefined {
 /**
  * Extract import path from import statement
  */
-function extract_import_path(node: SyntaxNode): ModulePath {
-  const source = node.childForFieldName?.("source");
+function extract_import_path(node: SyntaxNode | null | undefined): ModulePath {
+  if (!node) {
+    return "" as ModulePath;
+  }
+  // Use childForFieldName without optional chaining - it exists on SyntaxNode
+  const source = node.childForFieldName("source");
   if (source) {
     // Remove quotes from the string literal
     const text = source.text;
@@ -643,18 +647,24 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         context: ProcessingContext
       ) => {
         const import_id = create_import_id(capture);
-        const import_node = capture.node.parent; // Get full import statement
-        if (!import_node) {
+        // Navigate up to find the import_statement node
+        let import_stmt = capture.node.parent;
+        while (import_stmt && import_stmt.type !== "import_statement") {
+          import_stmt = import_stmt.parent;
+        }
+
+        if (!import_stmt) {
           throw new Error(
-            "Import node not found for capture: " +
+            "Import statement not found for capture: " +
               JSON.stringify(capture) +
               ". Context: " +
               JSON.stringify(context)
           );
         }
+
         // Determine import kind
-        const is_default = is_default_import(import_node, capture.text);
-        const is_namespace = is_namespace_import(import_node);
+        const is_default = is_default_import(import_stmt, capture.text);
+        const is_namespace = is_namespace_import(import_stmt);
         const import_kind = is_namespace
           ? "namespace"
           : is_default
@@ -667,9 +677,9 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: { scope: "file-private" },
-          import_path: extract_import_path(import_node),
+          import_path: extract_import_path(import_stmt),
           import_kind,
-          original_name: extract_original_name(import_node, capture.text),
+          original_name: extract_original_name(import_stmt, capture.text),
         });
       },
     },

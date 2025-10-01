@@ -71,10 +71,24 @@ function determine_reference_kind(capture: CaptureNode): ReferenceKind {
         return ReferenceKind.METHOD_CALL;
       }
       // Check if this is a method call by looking at the node structure
-      // Method calls have a member_expression as the function
+      // JavaScript/TypeScript: call_expression with member_expression function
       if (capture.node.type === "call_expression") {
         const functionNode = capture.node.childForFieldName("function");
         if (functionNode && functionNode.type === "member_expression") {
+          return ReferenceKind.METHOD_CALL;
+        }
+      }
+      // Python: call with attribute function
+      if (capture.node.type === "call") {
+        const functionNode = capture.node.childForFieldName("function");
+        if (functionNode && functionNode.type === "attribute") {
+          return ReferenceKind.METHOD_CALL;
+        }
+      }
+      // Rust: call_expression with field_expression function
+      if (capture.node.type === "call_expression") {
+        const functionNode = capture.node.childForFieldName("function");
+        if (functionNode && functionNode.type === "field_expression") {
           return ReferenceKind.METHOD_CALL;
         }
       }
