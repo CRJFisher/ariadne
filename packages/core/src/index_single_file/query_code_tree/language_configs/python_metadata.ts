@@ -1,9 +1,18 @@
 /**
  * Python metadata extraction functions
  *
- * Implements language-specific metadata extraction from tree-sitter AST nodes
- * for Python, handling type hints, method calls, attribute chains, and
- * various Python-specific patterns.
+ * Language-specific implementation of metadata extractors for method call resolution.
+ * Extracts ReferenceContext fields and TypeInfo from Python AST nodes.
+ *
+ * Supports:
+ * - Type hints: PEP 484 type annotations and Python 3.10+ union syntax
+ * - Method calls: Extracts receiver location from attribute patterns
+ * - Property chains: Recursive traversal of attribute and subscript nodes
+ * - Constructor tracking: Finds target variables in assignment patterns
+ * - No optional chaining: Python lacks ?. syntax, always returns false
+ *
+ * All extraction is purely tree-sitter AST-based - no type inference or
+ * cross-file resolution happens here.
  */
 
 import type { SyntaxNode } from "tree-sitter";
@@ -138,12 +147,26 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
   /**
    * Extract receiver location from method call
    *
+   * Essential for method resolution - identifies the object a method is called on.
+   * Navigates the AST to find the receiver (object) portion of a method call.
+   *
+   * Tree-sitter pattern:
+   * ```
+   * (call
+   *   function: (attribute
+   *     object: (_) @receiver    ← Extract this location
+   *     attribute: (identifier)))
+   * ```
+   *
    * Handles:
    * - `obj.method()` → location of `obj`
    * - `self.method()` → location of `self`
    * - `cls.method()` → location of `cls`
    * - `super().method()` → location of `super()`
-   * - `a.b.c.method()` → location of `a.b.c`
+   * - `a.b.c.method()` → location of `a.b.c` (entire chain except method name)
+   *
+   * The receiver location enables looking up the receiver's type to determine
+   * which class defines the method.
    */
   extract_call_receiver(
     node: SyntaxNode | null | undefined,
@@ -180,11 +203,30 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
   /**
    * Extract property access chain
    *
+   * Critical for chained method calls - builds complete sequence of accessed properties.
+   * Recursively traverses attribute and subscript nodes.
+   *
+   * Algorithm:
+   * 1. Start with leftmost identifier (root object)
+   * 2. Traverse each attribute access from left to right
+   * 3. Build array of all property/method names in order
+   *
+   * Tree-sitter pattern (recursive):
+   * ```
+   * (attribute
+   *   object: (attribute         ← Recurse here
+   *     object: (identifier) @chain.0
+   *     attribute: (identifier) @chain.1)
+   *   attribute: (identifier) @chain.2)
+   * ```
+   *
    * Handles:
    * - `a.b.c.d` → ["a", "b", "c", "d"]
    * - `self.data.items` → ["self", "data", "items"]
    * - `obj['key'].prop` → ["obj", "key", "prop"]
    * - `super().method` → ["super", "method"]
+   *
+   * Used for both method calls and property access to track the complete chain.
    */
   extract_property_chain(node: SyntaxNode | null | undefined): SymbolName[] | undefined {
     if (!node) {
@@ -321,11 +363,33 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
   /**
    * Extract constructor call target variable
    *
+   * Essential for type tracking - most reliable way to determine object types.
+   * In Python, constructors are regular function calls, so we navigate from the
+   * call node to find the assignment target.
+   *
+   * Tree-sitter pattern:
+   * ```
+   * (assignment
+   *   left: (identifier) @construct.target    ← Extract this location
+   *   right: (call
+   *     function: (identifier) @construct.class))
+   * ```
+   *
+   * Also handles annotated assignments:
+   * ```
+   * (annotated_assignment
+   *   target: (identifier) @construct.target    ← Extract this location
+   *   value: (call))
+   * ```
+   *
    * Handles:
    * - `obj = MyClass()` → location of `obj`
    * - `self.prop = Thing()` → location of `self.prop`
    * - `items = [Item() for _ in range(10)]` → location of `items`
-   * - Class instantiation with factory methods: `obj = MyClass.create()`
+   * - `x := MyClass()` → location of `x` (walrus operator)
+   *
+   * This enables immediate type determination: when we see `x = Y()`,
+   * we know `x` has type `Y` without complex inference.
    */
   extract_construct_target(
     node: SyntaxNode | null | undefined,

@@ -1,9 +1,19 @@
 /**
  * Rust metadata extraction functions
  *
- * Implements language-specific metadata extraction from tree-sitter AST nodes
- * for Rust, handling type annotations, method calls, field access, generic types,
- * and Rust-specific patterns like turbofish syntax and trait methods.
+ * Language-specific implementation of metadata extractors for method call resolution.
+ * Extracts ReferenceContext fields and TypeInfo from Rust AST nodes.
+ *
+ * Supports:
+ * - Type annotations: Rust's explicit type system with generics and lifetimes
+ * - Method calls: Extracts receiver location from field_expression patterns
+ * - Property chains: Recursive traversal of field_expression and index_expression
+ * - Constructor tracking: Finds target variables in let_declaration patterns
+ * - Turbofish syntax: Handles ::<Type> generic function calls
+ * - No optional chaining: Rust lacks ?. syntax, always returns false
+ *
+ * All extraction is purely tree-sitter AST-based - no type inference or
+ * cross-file resolution happens here.
  */
 
 import type { SyntaxNode } from "tree-sitter";
@@ -143,6 +153,25 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
   /**
    * Extract receiver location from method call
    *
+   * Essential for method resolution - identifies the object a method is called on.
+   * Navigates the AST to find the receiver (value) portion of a method call.
+   *
+   * Tree-sitter pattern:
+   * ```
+   * (call_expression
+   *   function: (field_expression
+   *     value: (_) @receiver    ← Extract this location
+   *     field: (identifier)))
+   * ```
+   *
+   * Also handles turbofish syntax:
+   * ```
+   * (call_expression
+   *   function: (generic_function
+   *     function: (field_expression
+   *       value: (_) @receiver)))
+   * ```
+   *
    * Handles:
    * - Instance methods: `obj.method()` → location of `obj`
    * - Associated functions: `Type::function()` → location of `Type`
@@ -150,6 +179,9 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
    * - Field method calls: `self.field.method()` → location of `self.field`
    * - Turbofish syntax: `vec.iter::<i32>()` → location of `vec`
    * - Trait methods: `value.clone()` → location of `value`
+   *
+   * The receiver location enables looking up the receiver's type to determine
+   * which impl block or trait defines the method.
    */
   extract_call_receiver(
     node: SyntaxNode | null | undefined,
@@ -205,12 +237,31 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
   /**
    * Extract property/field access chain
    *
+   * Critical for chained method calls - builds complete sequence of accessed fields.
+   * Recursively traverses field_expression, index_expression, and scoped_identifier nodes.
+   *
+   * Algorithm:
+   * 1. Start with leftmost identifier (root value)
+   * 2. Traverse each field access from left to right
+   * 3. Build array of all field/method names in order
+   *
+   * Tree-sitter pattern (recursive):
+   * ```
+   * (field_expression
+   *   value: (field_expression    ← Recurse here
+   *     value: (identifier) @chain.0
+   *     field: (identifier) @chain.1)
+   *   field: (identifier) @chain.2)
+   * ```
+   *
    * Handles:
    * - Field access: `struct.field1.field2` → ["struct", "field1", "field2"]
    * - Self fields: `self.data.items` → ["self", "data", "items"]
    * - Method chains: `vec.iter().map()` → ["vec", "iter", "map"]
    * - Index access: `array[0].field` → ["array", "0", "field"]
    * - Associated items: `Module::Type::CONSTANT` → ["Module", "Type", "CONSTANT"]
+   *
+   * Used for both method calls and field access to track the complete chain.
    */
   extract_property_chain(node: SyntaxNode | null | undefined): SymbolName[] | undefined {
     if (!node) {
@@ -348,6 +399,25 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
   /**
    * Extract constructor call target variable
    *
+   * Essential for type tracking - most reliable way to determine object types.
+   * In Rust, constructors can be struct expressions, calls to ::new(), or enum variants.
+   * Navigates from the constructor expression to find the let binding.
+   *
+   * Tree-sitter pattern:
+   * ```
+   * (let_declaration
+   *   pattern: (identifier) @construct.target    ← Extract this location
+   *   value: (call_expression
+   *     function: (scoped_identifier) @construct.class))
+   * ```
+   *
+   * Also handles struct expressions:
+   * ```
+   * (let_declaration
+   *   pattern: (identifier) @construct.target
+   *   value: (struct_expression))
+   * ```
+   *
    * Handles:
    * - Struct instantiation: `let point = Point { x: 1, y: 2 }` → location of `point`
    * - Tuple struct: `let color = Color(255, 0, 0)` → location of `color`
@@ -355,6 +425,9 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
    * - Builder pattern: `let obj = Builder::new().build()` → location of `obj`
    * - Enum variants: `let opt = Some(42)` → location of `opt`
    * - Box/Arc/Rc constructors: `let boxed = Box::new(value)` → location of `boxed`
+   *
+   * This enables immediate type determination: when we see `let x = Y::new()`,
+   * we know `x` has type `Y` without complex inference.
    */
   extract_construct_target(
     node: SyntaxNode | null | undefined,

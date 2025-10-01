@@ -1,9 +1,18 @@
 /**
  * Reference Builder System
  *
- * Directly creates Reference objects from tree-sitter captures,
- * using scope context from the ScopeBuilder. Implements functional
- * composition pattern for chaining operations.
+ * Constructs SymbolReference objects from tree-sitter query captures.
+ * Designed to extract method call resolution metadata from AST nodes.
+ *
+ * Key capabilities:
+ * - Extracts receiver locations for method calls (`obj.method()` → location of `obj`)
+ * - Builds property chains for chained access (`a.b.c` → ['a', 'b', 'c'])
+ * - Tracks constructor targets (`const x = new Y()` → location of `x`)
+ * - Detects optional chaining syntax (`obj?.method?.()`)
+ * - Infers type information from annotations and JSDoc
+ *
+ * Uses functional composition pattern - each capture is processed through
+ * a builder that chains operations and builds the final reference array.
  */
 
 import type {
@@ -176,23 +185,60 @@ function determine_call_type(
 
 /**
  * Extract type information from capture
+ *
+ * Attempts to infer type information from annotations or JSDoc comments.
+ * This is inference-based - relies on explicit type declarations in the source.
+ *
+ * Extraction sources (language-specific):
+ * - TypeScript: type_annotation nodes (`: TypeName`)
+ * - JavaScript: JSDoc comments (`@type {TypeName}`)
+ * - Python: type hints (`: TypeName`)
+ * - Rust: type annotations (`: TypeName`)
+ *
+ * Returns TypeInfo with certainty level:
+ * - "declared": Explicit type annotation exists
+ * - "inferred": Type determined from context
+ * - "ambiguous": Multiple possible types
+ *
+ * @returns TypeInfo if type can be determined, undefined otherwise
  */
 function extract_type_info(
   capture: CaptureNode,
   extractors: MetadataExtractors | undefined,
   file_path: FilePath
 ): TypeInfo | undefined {
-  // If extractors are available, use them
+  // Delegate to language-specific extractor
   if (extractors) {
     return extractors.extract_type_from_annotation(capture.node, file_path);
   }
 
-  // Fallback to undefined if no extractors available
+  // No type information available without extractors
   return undefined;
 }
 
 /**
  * Extract reference context from capture for method call resolution
+ *
+ * Builds ReferenceContext by extracting relevant metadata based on reference kind.
+ * Each field is populated using language-specific extractors that traverse the AST.
+ *
+ * Extraction strategy by reference kind:
+ * - METHOD_CALL: Extract receiver_location and property_chain
+ *   - receiver_location: Points to the object the method is called on
+ *   - property_chain: Complete chain of property/method accesses
+ *
+ * - CONSTRUCTOR_CALL: Extract construct_target
+ *   - construct_target: Points to the variable being assigned to
+ *
+ * - PROPERTY_ACCESS: Extract property_chain
+ *   - property_chain: All properties accessed in the chain
+ *
+ * Returns undefined if no extractors available or no context data found.
+ *
+ * @param capture - Tree-sitter capture node
+ * @param extractors - Language-specific metadata extractors
+ * @param file_path - File being processed
+ * @returns ReferenceContext with extracted fields, or undefined
  */
 function extract_context(
   capture: CaptureNode,
@@ -207,8 +253,10 @@ function extract_context(
   let construct_target: Location | undefined;
   let property_chain: readonly SymbolName[] | undefined;
 
-  // For method calls: extract receiver/object information
   const kind = determine_reference_kind(capture);
+
+  // Extract receiver location for method calls
+  // Example: obj.method() → receiver_location points to 'obj'
   if (kind === ReferenceKind.METHOD_CALL || kind === ReferenceKind.SUPER_CALL) {
     receiver_location = extractors.extract_call_receiver(
       capture.node,
@@ -216,7 +264,8 @@ function extract_context(
     );
   }
 
-  // For constructor calls: extract target variable
+  // Extract constructor target variable
+  // Example: const x = new Class() → construct_target points to 'x'
   if (kind === ReferenceKind.CONSTRUCTOR_CALL) {
     construct_target = extractors.extract_construct_target(
       capture.node,
@@ -224,7 +273,8 @@ function extract_context(
     );
   }
 
-  // For member access: extract property chain
+  // Extract property chain for member access patterns
+  // Example: a.b.c.method() → property_chain is ['a', 'b', 'c', 'method']
   if (
     kind === ReferenceKind.PROPERTY_ACCESS ||
     kind === ReferenceKind.METHOD_CALL
@@ -232,11 +282,12 @@ function extract_context(
     property_chain = extractors.extract_property_chain(capture.node);
   }
 
-  // Build context object with defined properties only
+  // Only return context if we extracted at least one field
   const has_data = receiver_location || construct_target || property_chain;
 
   if (!has_data) return undefined;
 
+  // Build context object with only defined properties
   return {
     ...(receiver_location && { receiver_location }),
     ...(construct_target && { construct_target }),
@@ -246,6 +297,18 @@ function extract_context(
 
 /**
  * Process method reference with object context
+ *
+ * Specialized handler for method calls that extracts comprehensive metadata
+ * for method resolution. Builds a SymbolReference with:
+ * - call_type: "method"
+ * - context: receiver_location and property_chain
+ * - member_access: object_type, access_type, is_optional_chain
+ * - type_info: inferred from type annotations if available
+ *
+ * Handles patterns like:
+ * - `obj.method()` → receiver: obj, chain: ['obj', 'method']
+ * - `a.b.c()` → receiver: a.b, chain: ['a', 'b', 'c']
+ * - `obj?.method()` → receiver: obj, is_optional_chain: true
  */
 function process_method_reference(
   capture: CaptureNode,

@@ -803,27 +803,254 @@ obj?.method(); // Can we extract the optional flag?
 - ✅ No assertions on non-extractable attributes
 - ✅ Cross-language test parity
 
-### 11.106.8 - Update Documentation (20 minutes)
+### 11.106.8 - Update Documentation
 
-**Goal:** Document the refined interface with focus on tree-sitter extractability and method resolution.
+**Completed:** 2025-10-01
+**Duration:** ~45 minutes (comprehensive documentation across all files)
+**Status:** ✅ Complete
+**Deliverable:** Comprehensive timeless documentation for SymbolReference interface
 
-Update documentation to explain:
-- What attributes exist and why (method resolution goal)
-- What each attribute maps to in tree-sitter queries
-- What patterns can be extracted vs. what requires inference
+### What Was Completed
 
-**Files to Update:**
-- Interface JSDoc comments in `semantic_index.ts`
-- Inline comments in metadata extractors
-- Any existing guides/documentation
+Documented the refined SymbolReference interface with focus on tree-sitter extractability and method resolution purpose across all relevant files.
 
-**Approach:** Timeless documentation (don't reference "old way" or changes), focused on current capability and purpose.
+**Phase 1: Core Type Documentation**
+1. **packages/types/src/semantic_index.ts**
+   - SymbolReference interface: Comprehensive JSDoc with 200+ lines of documentation
+   - ReferenceContext interface: Detailed field documentation with multi-language patterns
+   - Each attribute documented with:
+     - Purpose and method resolution goal
+     - Extractable vs. inference-based classification
+     - Tree-sitter query patterns (S-expressions)
+     - Concrete examples for each language
 
-**Success Criteria:**
+**Phase 2: Reference Builder Documentation**
+2. **packages/core/src/index_single_file/references/reference_builder.ts**
+   - Module header: Explained key capabilities (receiver extraction, property chains, constructor tracking, optional chaining)
+   - `extract_context()`: 25-line JSDoc documenting extraction strategy per reference kind
+   - `process_method_reference()`: Specialized method call handling documentation
+   - `extract_type_info()`: Inference-based extraction sources and certainty levels
+
+**Phase 3: Language-Specific Metadata Extractor Documentation**
+3. **packages/core/src/.../javascript_metadata.ts** (4 major functions updated)
+   - Module header with JavaScript/TypeScript-specific capabilities
+   - `extract_call_receiver()`: Tree-sitter patterns for member_expression
+   - `extract_property_chain()`: Recursive algorithm with subscript/optional chain support
+   - `extract_construct_target()`: Constructor tracking via variable_declarator and assignment_expression
+   - `extract_is_optional_chain()`: Optional chaining detection algorithm
+
+4. **packages/core/src/.../python_metadata.ts** (3 major functions updated)
+   - Module header with Python-specific features (PEP 484 type hints, walrus operator)
+   - `extract_call_receiver()`: Attribute node patterns for method calls
+   - `extract_property_chain()`: Recursive attribute and subscript traversal
+   - `extract_construct_target()`: Assignment, annotated_assignment, and named_expression support
+
+5. **packages/core/src/.../rust_metadata.ts** (3 major functions updated)
+   - Module header with Rust-specific features (turbofish syntax, lifetimes)
+   - `extract_call_receiver()`: field_expression and generic_function patterns
+   - `extract_property_chain()`: Field, index, and scoped_identifier traversal
+   - `extract_construct_target()`: let_declaration and struct_expression patterns
+
+**Phase 4: Verification**
+- TypeScript compilation: ✅ Zero errors across all packages
+- All documentation follows timeless principles
+- No references to "old way" or deleted fields
+
+### Decisions Made Regarding Documentation Style
+
+**Decision 1: Timeless Documentation Principle**
+
+All documentation written as if the current design has always existed:
+- ❌ Avoid: "We changed X to Y", "The new way is...", "Previously we had..."
+- ✅ Use: "This field enables...", "The extractor navigates...", "Essential for..."
+
+**Rationale:** Documentation should explain HOW and WHY, not chronicle the change history. This keeps docs clean and focused on current implementation.
+
+**Decision 2: Extractable vs. Inference-Based Classification**
+
+Every SymbolReference field explicitly classified:
+- **Extractable**: Directly from tree-sitter AST structure (location, receiver_location, property_chain, construct_target, call_type, is_optional_chain)
+- **Inference-based**: From type annotations or context (type_info, assignment_type, return_type)
+- **Mixed**: member_access (access_type/is_optional_chain extractable, object_type inference-based)
+
+**Rationale:** Clear distinction helps developers understand what can be reliably extracted vs. what depends on explicit type information.
+
+**Decision 3: Tree-Sitter Pattern Documentation Format**
+
+Standardized pattern documentation across all extractors:
+```
+Tree-sitter pattern:
+```
+(node_type
+  field: (child_type) @capture)  ← Extract this location
+```
+
+Example: `code` → result
+```
+
+**Rationale:** Concrete S-expressions make patterns verifiable and provide copy-paste-ready query fragments.
+
+**Decision 4: Multi-Language Pattern Documentation**
+
+ReferenceContext documented with patterns for all languages:
+- JavaScript/TypeScript: `(call_expression (member_expression ...))`
+- Python: `(call (attribute ...))`
+- Rust: `(call_expression (field_expression ...))`
+
+**Rationale:** Cross-language documentation prevents assumptions and clarifies language-specific differences.
+
+### Tree-Sitter Query Patterns Documented
+
+**Pattern 1: Receiver Location Extraction (Method Calls)**
+
+JavaScript/TypeScript:
+```scheme
+(call_expression
+  function: (member_expression
+    object: (_) @receiver))
+```
+
+Python:
+```scheme
+(call
+  function: (attribute
+    object: (_) @receiver))
+```
+
+Rust:
+```scheme
+(call_expression
+  function: (field_expression
+    value: (_) @receiver))
+```
+
+**Pattern 2: Property Chain Extraction (Recursive)**
+
+All languages use recursive traversal of member access nodes:
+- JavaScript/TypeScript: `member_expression`, `optional_chain`
+- Python: `attribute`, `subscript`
+- Rust: `field_expression`, `scoped_identifier`
+
+Algorithm:
+1. Start with leftmost identifier (root object)
+2. Traverse member access nodes from left to right
+3. Build array of all accessed names
+
+**Pattern 3: Constructor Target Extraction**
+
+JavaScript/TypeScript:
+```scheme
+(variable_declarator
+  name: (identifier) @construct.target
+  value: (new_expression
+    constructor: (identifier) @construct.class))
+```
+
+Python:
+```scheme
+(assignment
+  left: (identifier) @construct.target
+  right: (call
+    function: (identifier) @construct.class))
+```
+
+Rust:
+```scheme
+(let_declaration
+  pattern: (identifier) @construct.target
+  value: (call_expression
+    function: (scoped_identifier) @construct.class))
+```
+
+**Pattern 4: Optional Chaining Detection (JavaScript/TypeScript Only)**
+
+```scheme
+(optional_chain
+  object: (_)
+  property: (_))
+```
+
+Algorithm: Check node type for `optional_chain`, recursively traverse member_expression children.
+
+**Pattern 5: Type Annotation Extraction (Inference-Based)**
+
+TypeScript:
+```scheme
+(variable_declarator
+  name: (identifier) @var.name
+  type: (type_annotation) @var.type)
+```
+
+Python:
+```scheme
+(assignment
+  left: (identifier)
+  type: (type) @var.type)
+```
+
+Rust:
+```scheme
+(let_declaration
+  pattern: (identifier)
+  type: (type_annotation) @var.type)
+```
+
+### Issues Encountered
+
+**Issue 1: None - Clean Implementation**
+
+All documentation updates completed without compilation errors or test failures. TypeScript type checker passed with zero errors.
+
+### Follow-On Work Needed
+
+**Task 1: Consider Adding Usage Examples to CLAUDE.md**
+
+Current state: CLAUDE.md has SymbolId guidelines but no SymbolReference documentation.
+
+Potential addition:
+```markdown
+## Working with SymbolReference
+
+When extracting references, use the ReferenceContext fields:
+- `receiver_location`: Points to the object a method is called on
+- `property_chain`: Complete sequence of accessed properties
+- `construct_target`: Variable being assigned a constructor result
+
+See packages/types/src/semantic_index.ts for full documentation.
+```
+
+**Status:** Optional enhancement - not blocking.
+
+**Task 2: Add Tree-Sitter Pattern Reference Document**
+
+Create `docs/tree-sitter-patterns.md` consolidating all patterns:
+- Receiver extraction patterns (all languages)
+- Property chain patterns (all languages)
+- Constructor tracking patterns (all languages)
+- Optional chaining detection (JS/TS only)
+
+**Status:** Future documentation enhancement.
+
+**Task 3: Generate API Documentation**
+
+Run TypeDoc or similar to generate HTML documentation from JSDoc:
+```bash
+npx typedoc packages/types/src/semantic_index.ts
+```
+
+**Status:** Future documentation enhancement.
+
+### Verification
+
+✅ All success criteria met:
 - ✅ Every attribute documented with tree-sitter query pattern
-- ✅ Method resolution use cases explained
+- ✅ Method resolution use cases explained throughout
 - ✅ Clear distinction: extractable vs. inference-based
 - ✅ No references to deleted fields
+- ✅ TypeScript compilation passes (0 errors)
+- ✅ Timeless documentation style maintained
+- ✅ Multi-language patterns documented
+- ✅ Concrete examples provided
 
 ---
 

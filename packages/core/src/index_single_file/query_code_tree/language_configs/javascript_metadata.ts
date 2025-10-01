@@ -1,9 +1,18 @@
 /**
  * JavaScript/TypeScript metadata extraction functions
  *
- * Implements language-specific metadata extraction from tree-sitter AST nodes
- * for JavaScript, handling JSDoc annotations, property chains, method calls,
- * and various JavaScript-specific patterns.
+ * Language-specific implementation of metadata extractors for method call resolution.
+ * Extracts ReferenceContext fields and TypeInfo from JavaScript/TypeScript AST nodes.
+ *
+ * Supports:
+ * - Type annotations: TypeScript type_annotation and JSDoc comments
+ * - Method calls: Extracts receiver location from member_expression patterns
+ * - Property chains: Recursive traversal of member_expression and optional_chain
+ * - Constructor tracking: Finds target variables in new_expression patterns
+ * - Optional chaining: Detects ?. syntax in method and property access
+ *
+ * All extraction is purely tree-sitter AST-based - no type inference or
+ * cross-file resolution happens here.
  */
 
 import type { SyntaxNode } from "tree-sitter";
@@ -165,11 +174,25 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
   /**
    * Extract receiver location from method call
    *
+   * Essential for method resolution - identifies the object a method is called on.
+   * Navigates the AST to find the receiver (object) portion of a method call.
+   *
+   * Tree-sitter pattern:
+   * ```
+   * (call_expression
+   *   function: (member_expression
+   *     object: (_) @receiver    ← Extract this location
+   *     property: (property_identifier)))
+   * ```
+   *
    * Handles:
    * - `obj.method()` → location of `obj`
    * - `this.method()` → location of `this`
    * - `super.method()` → location of `super`
-   * - `a.b.c.method()` → location of `a.b.c`
+   * - `a.b.c.method()` → location of `a.b.c` (entire chain except method name)
+   *
+   * The receiver location enables looking up the receiver's type to determine
+   * which class defines the method.
    */
   extract_call_receiver(
     node: SyntaxNode,
@@ -201,10 +224,30 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
   /**
    * Extract property access chain
    *
+   * Critical for chained method calls - builds complete sequence of accessed properties.
+   * Recursively traverses member_expression, optional_chain, and subscript_expression nodes.
+   *
+   * Algorithm:
+   * 1. Start with leftmost identifier (root object)
+   * 2. Traverse each member access from left to right
+   * 3. Build array of all property/method names in order
+   *
+   * Tree-sitter pattern (recursive):
+   * ```
+   * (member_expression
+   *   object: (member_expression      ← Recurse here
+   *     object: (identifier) @chain.0
+   *     property: (property_identifier) @chain.1)
+   *   property: (property_identifier) @chain.2)
+   * ```
+   *
    * Handles:
    * - `a.b.c.d` → ["a", "b", "c", "d"]
    * - `this.data.items` → ["this", "data", "items"]
    * - `obj?.prop?.method` → ["obj", "prop", "method"]
+   * - `obj["computed"].method` → ["obj", "computed", "method"]
+   *
+   * Used for both method calls and property access to track the complete chain.
    */
   extract_property_chain(node: SyntaxNode): SymbolName[] | undefined {
     const chain: string[] = [];
@@ -320,10 +363,31 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
   /**
    * Extract constructor call target variable
    *
+   * Essential for type tracking - most reliable way to determine object types.
+   * Navigates from new_expression to the variable being assigned to.
+   *
+   * Tree-sitter pattern:
+   * ```
+   * (variable_declarator
+   *   name: (identifier) @construct.target    ← Extract this location
+   *   value: (new_expression
+   *     constructor: (identifier) @construct.class))
+   * ```
+   *
+   * Also handles assignment expressions:
+   * ```
+   * (assignment_expression
+   *   left: (_) @construct.target    ← Extract this location
+   *   right: (new_expression))
+   * ```
+   *
    * Handles:
    * - `const obj = new Class()` → location of `obj`
    * - `let x = new Map()` → location of `x`
    * - `this.prop = new Thing()` → location of `this.prop`
+   *
+   * This enables immediate type determination: when we see `const x = new Y()`,
+   * we know `x` has type `Y` without complex inference.
    */
   extract_construct_target(
     node: SyntaxNode,
@@ -396,14 +460,28 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
   /**
    * Check if a node represents optional chaining
    *
+   * Detects optional chaining syntax (`?.`) in JavaScript/TypeScript.
+   * Important for understanding null-safety semantics in method calls.
+   *
+   * Tree-sitter pattern:
+   * ```
+   * (optional_chain              ← Look for this node type
+   *   object: (_)
+   *   property: (_))
+   * ```
+   *
+   * Algorithm:
+   * 1. Check if node itself is `optional_chain` type
+   * 2. For call_expression, check if function field is `optional_chain`
+   * 3. For member_expression, recursively check children
+   *
    * Detects optional chaining syntax (`?.`) in JavaScript/TypeScript:
    * - `obj?.method()` → true
    * - `obj.method()` → false
    * - `obj?.prop?.method()` → true
    * - `a.b?.c.d` → true (any part uses ?.)
    *
-   * Checks if the node itself is an optional_chain or if any parent up to
-   * the call_expression is an optional_chain.
+   * Returns true if any part of the access chain uses optional chaining.
    */
   extract_is_optional_chain(node: SyntaxNode): boolean {
     // Debug logging

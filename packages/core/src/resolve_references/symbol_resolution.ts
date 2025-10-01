@@ -19,7 +19,6 @@ import {
   type SymbolId,
   type FilePath,
   type SymbolName,
-  type TypeId,
   type LocationKey,
   type ScopeId,
   location_key,
@@ -32,84 +31,15 @@ import {
   VariableDefinition,
   EnumDefinition,
   ClassDefinition,
+  ResolvedSymbols,
 } from "@ariadnejs/types";
-import type {
-  ResolutionInput,
-  FunctionResolutionMap,
-  TypeResolutionMap,
-  MethodAndConstructorResolutionMap,
-} from "./types";
-import type { ResolvedSymbols } from "@ariadnejs/types/src/call_chains";
-import { defined_type_id, TypeCategory } from "@ariadnejs/types";
-import type { SemanticIndex } from "../index_single_file/semantic_index";
-import {
-  build_global_type_registry,
-  resolve_type_annotations,
-  resolve_inheritance,
-  resolve_type_tracking,
-  resolve_type_members,
-  resolve_rust_reference_types,
-  resolve_rust_function_types,
-  resolve_closure_types,
-  resolve_higher_order_function_calls,
-  resolve_ownership_operations,
-  integrate_pattern_matching_into_type_resolution,
-  resolve_rust_async_types,
-  resolve_const_generics,
-  resolve_associated_types,
-  resolve_unsafe_contexts,
-  resolve_loop_constructs,
-} from "./type_resolution";
-import { analyze_integrated_type_flow } from "./type_flow_integration";
-import type {
-  LocalTypeDefinition,
-  LocalTypeExtraction,
-  LocalTypeAnnotation as TypeResolutionAnnotation,
-  LocalTypeFlowPattern as TypeResolutionFlow,
-  ResolvedMemberInfo,
-} from "./type_resolution/types";
-import type { LocalTypeTracking } from "../index_single_file/references/type_tracking";
-import type { LocalTypeAnnotation as SemanticAnnotation } from "../index_single_file/references/type_annotation_references";
-import { resolve_imports } from "./import_resolution";
-import { resolve_function_calls } from "./function_resolution";
-import { build_local_type_context } from "./local_type_context";
-import { CallReference } from "../index_single_file/references/call_references";
-import { resolve_methods } from "./method_resolution_simple/method_resolution";
-/**
- * Create a TypeId from a local type definition
- */
-function create_type_id(type_def: LocalTypeDefinition): TypeId {
-  const category = kind_to_category(type_def.kind);
-  return defined_type_id(category, type_def.name, type_def.location);
-}
+import { SemanticIndex } from "../index_single_file/semantic_index";
 
-/**
- * Convert type kind to TypeCategory
- */
-function kind_to_category(
-  kind: "class" | "interface" | "type" | "enum"
-):
-  | TypeCategory.CLASS
-  | TypeCategory.INTERFACE
-  | TypeCategory.TYPE_ALIAS
-  | TypeCategory.ENUM {
-  switch (kind) {
-    case "class":
-      return TypeCategory.CLASS;
-    case "interface":
-      return TypeCategory.INTERFACE;
-    case "type":
-      return TypeCategory.TYPE_ALIAS;
-    case "enum":
-      return TypeCategory.ENUM;
-  }
-}
 
 /**
  * Main entry point for symbol resolution
  */
-export function resolve_symbols(input: ResolutionInput): ResolvedSymbols {
-  const { indices } = input;
+export function resolve_symbols(indices: ReadonlyMap<FilePath, SemanticIndex>): ResolvedSymbols {
 
   // Phase 1: Resolve imports/exports
   // Creates: file_path -> imported_name -> symbol_id
