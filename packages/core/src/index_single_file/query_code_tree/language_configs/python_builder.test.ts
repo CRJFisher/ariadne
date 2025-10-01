@@ -8,7 +8,10 @@ import Python from "tree-sitter-python";
 import type { SyntaxNode } from "tree-sitter";
 import { PYTHON_BUILDER_CONFIG } from "./python_builder";
 import { DefinitionBuilder } from "../../definitions/definition_builder";
-import type { ProcessingContext, CaptureNode } from "../scope_processor";
+import type {
+  ProcessingContext,
+  CaptureNode,
+} from "../../scopes/scope_processor";
 import type { Location, ScopeId } from "@ariadnejs/types";
 
 describe("Python Builder Configuration", () => {

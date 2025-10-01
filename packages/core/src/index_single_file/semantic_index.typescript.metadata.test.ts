@@ -6,8 +6,9 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { join } from "path";
 import Parser from "tree-sitter";
 import TypeScript from "tree-sitter-typescript";
-import type { Language, FilePath, ParsedFile } from "@ariadnejs/types";
+import type { Language, FilePath } from "@ariadnejs/types";
 import { build_semantic_index } from "./semantic_index";
+import type { ParsedFile } from "./file_utils";
 
 // Helper to create ParsedFile from fixture
 function createParsedFile(

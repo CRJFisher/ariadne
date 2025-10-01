@@ -33,7 +33,7 @@ import {
   decorator_symbol,
 } from "@ariadnejs/types";
 
-import type { ProcessingContext } from "../query_code_tree/scope_processor";
+import type { ProcessingContext } from "../scopes/scope_processor";
 
 // ============================================================================
 // Builder Result Type

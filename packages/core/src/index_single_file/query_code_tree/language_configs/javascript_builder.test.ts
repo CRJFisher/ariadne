@@ -8,7 +8,10 @@ import JavaScript from "tree-sitter-javascript";
 import type { SyntaxNode } from "tree-sitter";
 import { JAVASCRIPT_BUILDER_CONFIG } from "./javascript_builder";
 import { DefinitionBuilder } from "../../definitions/definition_builder";
-import type { ProcessingContext, CaptureNode } from "../scope_processor";
+import type {
+  ProcessingContext,
+  CaptureNode,
+} from "../../scopes/scope_processor";
 import type { Location, ScopeId, FilePath, SymbolName } from "@ariadnejs/types";
 import { ReferenceBuilder } from "../reference_builder";
 import { JAVASCRIPT_METADATA_EXTRACTORS } from "./javascript_metadata";
@@ -49,7 +52,7 @@ describe("JavaScript Builder Configuration", () => {
 
     return {
       name: captureName,
-      category: "definition" as any,  // Default for builder tests
+      category: "definition" as any, // Default for builder tests
       entity: nodeType as any,
       node: node as any,
       text: node.text as SymbolName,
@@ -272,7 +275,8 @@ describe("JavaScript Builder Configuration", () => {
           },
         };
 
-        const classProcessor = JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
+        const classProcessor =
+          JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
         classProcessor?.process(classCapture, builder, context);
 
         // Then add the method
@@ -298,7 +302,8 @@ describe("JavaScript Builder Configuration", () => {
           },
         };
 
-        const methodProcessor = JAVASCRIPT_BUILDER_CONFIG.get("definition.method");
+        const methodProcessor =
+          JAVASCRIPT_BUILDER_CONFIG.get("definition.method");
         methodProcessor?.process(methodCapture, builder, context);
 
         const result = builder.build();
@@ -427,7 +432,8 @@ describe("JavaScript Builder Configuration", () => {
           },
         };
 
-        const classProcessor = JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
+        const classProcessor =
+          JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
         classProcessor?.process(classCapture, builder, context);
 
         // Then add the property
@@ -496,7 +502,9 @@ describe("JavaScript Builder Configuration", () => {
           },
         };
 
-        const funcProcessor = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
+        const funcProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+          "definition.function"
+        );
         funcProcessor?.process(funcCapture, builder, context);
 
         // Then add the parameters
@@ -522,7 +530,8 @@ describe("JavaScript Builder Configuration", () => {
               },
             };
 
-            const paramProcessor = JAVASCRIPT_BUILDER_CONFIG.get("definition.param");
+            const paramProcessor =
+              JAVASCRIPT_BUILDER_CONFIG.get("definition.param");
             paramProcessor?.process(paramCapture, builder, context);
           }
         }
@@ -570,7 +579,8 @@ describe("JavaScript Builder Configuration", () => {
               end_column: classNameNode.endPosition.column,
             },
           };
-          const classProcessor = JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
+          const classProcessor =
+            JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
           classProcessor?.process(classCapture, builder, context);
         }
 
@@ -647,7 +657,7 @@ describe("JavaScript Builder Configuration", () => {
         );
 
         const references = builder.process();
-        const methodCalls = references.filter(r => r.type === "call");
+        const methodCalls = references.filter((r) => r.type === "call");
 
         expect(methodCalls).toHaveLength(1);
         expect(methodCalls[0].name).toBe("method");
@@ -701,11 +711,15 @@ describe("JavaScript Builder Configuration", () => {
         );
 
         const references = builder.process();
-        const methodCalls = references.filter(r => r.type === "call");
+        const methodCalls = references.filter((r) => r.type === "call");
 
         expect(methodCalls).toHaveLength(1);
         expect(methodCalls[0].context.property_chain).toBeDefined();
-        expect(methodCalls[0].context.property_chain).toEqual(["api", "users", "list"]);
+        expect(methodCalls[0].context.property_chain).toEqual([
+          "api",
+          "users",
+          "list",
+        ]);
       });
 
       it("should extract type annotations from JSDoc", () => {
@@ -771,7 +785,10 @@ describe("JavaScript Builder Configuration", () => {
         const captures: CaptureNode[] = [];
 
         // Find the assignment
-        const assignmentNode = findNodeByType(ast.rootNode, "assignment_expression");
+        const assignmentNode = findNodeByType(
+          ast.rootNode,
+          "assignment_expression"
+        );
         if (assignmentNode) {
           const leftNode = assignmentNode.childForFieldName("left");
           if (leftNode) {
@@ -804,7 +821,7 @@ describe("JavaScript Builder Configuration", () => {
         );
 
         const references = builder.process();
-        const assignments = references.filter(r => r.type === "assignment");
+        const assignments = references.filter((r) => r.type === "assignment");
 
         expect(assignments).toBeDefined();
         // Assignment parts would be extracted through metadata extractors
@@ -853,7 +870,9 @@ describe("JavaScript Builder Configuration", () => {
         );
 
         const references = builder.process();
-        const constructorCalls = references.filter(r => r.type === "construct");
+        const constructorCalls = references.filter(
+          (r) => r.type === "construct"
+        );
 
         expect(constructorCalls).toHaveLength(1);
         expect(constructorCalls[0].context.construct_target).toBeDefined();

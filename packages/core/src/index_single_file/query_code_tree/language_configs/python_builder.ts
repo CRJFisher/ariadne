@@ -17,7 +17,10 @@ import {
   variable_symbol,
 } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
-import type { ProcessingContext, CaptureNode } from "../scope_processor";
+import type {
+  ProcessingContext,
+  CaptureNode,
+} from "../../scopes/scope_processor";
 
 export type ProcessFunction = (
   capture: CaptureNode,

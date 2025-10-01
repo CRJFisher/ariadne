@@ -9,7 +9,10 @@ import type { SyntaxNode } from "tree-sitter";
 import { TYPESCRIPT_BUILDER_CONFIG } from "./typescript_builder";
 import { JAVASCRIPT_BUILDER_CONFIG } from "./javascript_builder";
 import { DefinitionBuilder } from "../../definitions/definition_builder";
-import type { ProcessingContext, CaptureNode } from "../scope_processor";
+import type {
+  ProcessingContext,
+  CaptureNode,
+} from "../../scopes/scope_processor";
 import type { Location, ScopeId } from "@ariadnejs/types";
 
 describe("TypeScript Builder Configuration", () => {

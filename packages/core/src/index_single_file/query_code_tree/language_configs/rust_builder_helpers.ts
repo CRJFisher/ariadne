@@ -16,7 +16,7 @@ import {
   variable_symbol,
   interface_symbol,
 } from "@ariadnejs/types";
-import type { CaptureNode } from "../scope_processor";
+import type { CaptureNode } from "../../scopes/scope_processor";
 
 // ============================================================================
 // Additional Symbol Creation Functions (not in @ariadnejs/types yet)

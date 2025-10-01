@@ -29,10 +29,13 @@ import {
   SemanticCategory,
   process_scopes,
   create_processing_context,
-} from "./query_code_tree/scope_processor";
+} from "./scopes/scope_processor";
 import { process_references } from "./query_code_tree/reference_builder";
 import { node_to_location } from "./node_utils";
-import { DefinitionBuilder, type BuilderResult } from "./definitions/definition_builder";
+import {
+  DefinitionBuilder,
+  type BuilderResult,
+} from "./definitions/definition_builder";
 import type { LanguageBuilderConfig } from "./query_code_tree/language_configs/javascript_builder";
 import type { MetadataExtractors } from "./query_code_tree/language_configs/metadata_types";
 import { JAVASCRIPT_BUILDER_CONFIG } from "./query_code_tree/language_configs/javascript_builder";
@@ -85,7 +88,6 @@ export interface SemanticIndex {
   readonly symbols_by_name: ReadonlyMap<SymbolName, readonly SymbolId[]>;
 }
 
-
 // ============================================================================
 // Main Entry Point
 // ============================================================================
@@ -134,7 +136,11 @@ export function build_semantic_index(
 
   // PASS 4: Process references with language-specific metadata extractors
   const metadata_extractors = get_metadata_extractors(language);
-  const all_references = process_references(context, metadata_extractors, file.file_path);
+  const all_references = process_references(
+    context,
+    metadata_extractors,
+    file.file_path
+  );
 
   // PASS 5: Build name index
   const symbols_by_name = build_name_index(builder_result);
@@ -186,7 +192,9 @@ function get_language_config(language: Language): LanguageBuilderConfig {
  * JavaScript extractors work for both JavaScript and TypeScript since
  * tree-sitter-typescript is a superset of tree-sitter-javascript
  */
-function get_metadata_extractors(language: Language): MetadataExtractors | undefined {
+function get_metadata_extractors(
+  language: Language
+): MetadataExtractors | undefined {
   switch (language) {
     case "javascript":
       return JAVASCRIPT_METADATA_EXTRACTORS;

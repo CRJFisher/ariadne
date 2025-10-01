@@ -4,7 +4,10 @@ import Parser from "tree-sitter";
 import Rust from "tree-sitter-rust";
 import { RUST_BUILDER_CONFIG } from "./rust_builder";
 import { DefinitionBuilder } from "../../definitions/definition_builder";
-import type { ProcessingContext, CaptureNode } from "../scope_processor";
+import type {
+  ProcessingContext,
+  CaptureNode,
+} from "../../scopes/scope_processor";
 import type { Location } from "@ariadnejs/types";
 
 describe("rust_builder", () => {
@@ -22,7 +25,8 @@ describe("rust_builder", () => {
       scopes: new Map(),
       scope_depths: new Map(),
       root_scope_id: "module:test.rs:1:0:100:0:<module>" as any,
-      get_scope_id: (_location: Location) => "module:test.rs:1:0:100:0:<module>" as any,
+      get_scope_id: (_location: Location) =>
+        "module:test.rs:1:0:100:0:<module>" as any,
     };
   }
 

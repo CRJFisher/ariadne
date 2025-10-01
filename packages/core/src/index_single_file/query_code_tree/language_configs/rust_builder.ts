@@ -1,7 +1,10 @@
 // Rust language configuration using builder pattern
 import type { SymbolId, SymbolName } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
-import type { ProcessingContext, CaptureNode } from "../scope_processor";
+import type {
+  ProcessingContext,
+  CaptureNode,
+} from "../../scopes/scope_processor";
 import {
   create_struct_id,
   create_enum_id,

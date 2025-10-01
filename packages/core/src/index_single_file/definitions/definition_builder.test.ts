@@ -10,7 +10,7 @@ import type {
   CaptureNode,
   SemanticEntity,
   SemanticCategory,
-} from "../query_code_tree/scope_processor";
+} from "../scopes/scope_processor";
 import type {
   Location,
   ScopeId,
