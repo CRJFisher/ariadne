@@ -62,9 +62,9 @@ describe("JavaScript Builder Configuration", () => {
       location: {
         file_path: TEST_FILE_PATH,
         start_line: node.startPosition.row + 1,
-        start_column: node.startPosition.column,
+        start_column: node.startPosition.column + 1,
         end_line: node.endPosition.row + 1,
-        end_column: node.endPosition.column,
+        end_column: node.endPosition.column + 1,
       },
     };
   }
@@ -149,9 +149,9 @@ describe("JavaScript Builder Configuration", () => {
           location: {
             file_path: TEST_FILE_PATH,
             start_line: nameNode.startPosition.row + 1,
-            start_column: nameNode.startPosition.column,
+            start_column: nameNode.startPosition.column + 1,
             end_line: nameNode.endPosition.row + 1,
-            end_column: nameNode.endPosition.column,
+            end_column: nameNode.endPosition.column + 1,
           },
         };
 
@@ -188,9 +188,9 @@ describe("JavaScript Builder Configuration", () => {
           location: {
             file_path: TEST_FILE_PATH,
             start_line: nameNode.startPosition.row + 1,
-            start_column: nameNode.startPosition.column,
+            start_column: nameNode.startPosition.column + 1,
             end_line: nameNode.endPosition.row + 1,
-            end_column: nameNode.endPosition.column,
+            end_column: nameNode.endPosition.column + 1,
           },
         };
 
@@ -227,9 +227,9 @@ describe("JavaScript Builder Configuration", () => {
           location: {
             file_path: TEST_FILE_PATH,
             start_line: nameNode.startPosition.row + 1,
-            start_column: nameNode.startPosition.column,
+            start_column: nameNode.startPosition.column + 1,
             end_line: nameNode.endPosition.row + 1,
-            end_column: nameNode.endPosition.column,
+            end_column: nameNode.endPosition.column + 1,
           },
         };
 
@@ -272,9 +272,9 @@ describe("JavaScript Builder Configuration", () => {
           location: {
             file_path: TEST_FILE_PATH,
             start_line: classNameNode.startPosition.row + 1,
-            start_column: classNameNode.startPosition.column,
+            start_column: classNameNode.startPosition.column + 1,
             end_line: classNameNode.endPosition.row + 1,
-            end_column: classNameNode.endPosition.column,
+            end_column: classNameNode.endPosition.column + 1,
           },
         };
 
@@ -299,9 +299,9 @@ describe("JavaScript Builder Configuration", () => {
           location: {
             file_path: TEST_FILE_PATH,
             start_line: methodNameNode.startPosition.row + 1,
-            start_column: methodNameNode.startPosition.column,
+            start_column: methodNameNode.startPosition.column + 1,
             end_line: methodNameNode.endPosition.row + 1,
-            end_column: methodNameNode.endPosition.column,
+            end_column: methodNameNode.endPosition.column + 1,
           },
         };
 
@@ -341,9 +341,9 @@ describe("JavaScript Builder Configuration", () => {
           location: {
             file_path: TEST_FILE_PATH,
             start_line: nameNode.startPosition.row + 1,
-            start_column: nameNode.startPosition.column,
+            start_column: nameNode.startPosition.column + 1,
             end_line: nameNode.endPosition.row + 1,
-            end_column: nameNode.endPosition.column,
+            end_column: nameNode.endPosition.column + 1,
           },
         };
 
@@ -384,9 +384,9 @@ describe("JavaScript Builder Configuration", () => {
           location: {
             file_path: TEST_FILE_PATH,
             start_line: nameNode.startPosition.row + 1,
-            start_column: nameNode.startPosition.column,
+            start_column: nameNode.startPosition.column + 1,
             end_line: nameNode.endPosition.row + 1,
-            end_column: nameNode.endPosition.column,
+            end_column: nameNode.endPosition.column + 1,
           },
         };
 
@@ -429,9 +429,9 @@ describe("JavaScript Builder Configuration", () => {
           location: {
             file_path: TEST_FILE_PATH,
             start_line: classNameNode.startPosition.row + 1,
-            start_column: classNameNode.startPosition.column,
+            start_column: classNameNode.startPosition.column + 1,
             end_line: classNameNode.endPosition.row + 1,
-            end_column: classNameNode.endPosition.column,
+            end_column: classNameNode.endPosition.column + 1,
           },
         };
 
@@ -456,9 +456,9 @@ describe("JavaScript Builder Configuration", () => {
           location: {
             file_path: TEST_FILE_PATH,
             start_line: propNode.startPosition.row + 1,
-            start_column: propNode.startPosition.column,
+            start_column: propNode.startPosition.column + 1,
             end_line: propNode.endPosition.row + 1,
-            end_column: propNode.endPosition.column,
+            end_column: propNode.endPosition.column + 1,
           },
         };
 
@@ -499,9 +499,9 @@ describe("JavaScript Builder Configuration", () => {
           location: {
             file_path: TEST_FILE_PATH,
             start_line: funcNameNode.startPosition.row + 1,
-            start_column: funcNameNode.startPosition.column,
+            start_column: funcNameNode.startPosition.column + 1,
             end_line: funcNameNode.endPosition.row + 1,
-            end_column: funcNameNode.endPosition.column,
+            end_column: funcNameNode.endPosition.column + 1,
           },
         };
 
@@ -527,9 +527,9 @@ describe("JavaScript Builder Configuration", () => {
               location: {
                 file_path: TEST_FILE_PATH,
                 start_line: child.startPosition.row + 1,
-                start_column: child.startPosition.column,
+                start_column: child.startPosition.column + 1,
                 end_line: child.endPosition.row + 1,
-                end_column: child.endPosition.column,
+                end_column: child.endPosition.column + 1,
               },
             };
 
@@ -579,9 +579,9 @@ describe("JavaScript Builder Configuration", () => {
             location: {
               file_path: TEST_FILE_PATH,
               start_line: classNameNode.startPosition.row + 1,
-              start_column: classNameNode.startPosition.column,
+              start_column: classNameNode.startPosition.column + 1,
               end_line: classNameNode.endPosition.row + 1,
-              end_column: classNameNode.endPosition.column,
+              end_column: classNameNode.endPosition.column + 1,
             },
           };
           const classProcessor =
@@ -641,9 +641,9 @@ describe("JavaScript Builder Configuration", () => {
                 location: {
                   file_path: TEST_FILE_PATH,
                   start_line: propNode.startPosition.row + 1,
-                  start_column: propNode.startPosition.column,
+                  start_column: propNode.startPosition.column + 1,
                   end_line: propNode.endPosition.row + 1,
-                  end_column: propNode.endPosition.column,
+                  end_column: propNode.endPosition.column + 1,
                 },
               });
             }
@@ -695,9 +695,9 @@ describe("JavaScript Builder Configuration", () => {
                 location: {
                   file_path: TEST_FILE_PATH,
                   start_line: propNode.startPosition.row + 1,
-                  start_column: propNode.startPosition.column,
+                  start_column: propNode.startPosition.column + 1,
                   end_line: propNode.endPosition.row + 1,
-                  end_column: propNode.endPosition.column,
+                  end_column: propNode.endPosition.column + 1,
                 },
               });
             }
@@ -754,9 +754,9 @@ describe("JavaScript Builder Configuration", () => {
               location: {
                 file_path: TEST_FILE_PATH,
                 start_line: nameNode.startPosition.row + 1,
-                start_column: nameNode.startPosition.column,
+                start_column: nameNode.startPosition.column + 1,
                 end_line: nameNode.endPosition.row + 1,
-                end_column: nameNode.endPosition.column,
+                end_column: nameNode.endPosition.column + 1,
               },
             });
           }
@@ -806,9 +806,9 @@ describe("JavaScript Builder Configuration", () => {
               location: {
                 file_path: TEST_FILE_PATH,
                 start_line: leftNode.startPosition.row + 1,
-                start_column: leftNode.startPosition.column,
+                start_column: leftNode.startPosition.column + 1,
                 end_line: leftNode.endPosition.row + 1,
-                end_column: leftNode.endPosition.column,
+                end_column: leftNode.endPosition.column + 1,
               },
             });
           }
@@ -855,9 +855,9 @@ describe("JavaScript Builder Configuration", () => {
               location: {
                 file_path: TEST_FILE_PATH,
                 start_line: constructorNode.startPosition.row + 1,
-                start_column: constructorNode.startPosition.column,
+                start_column: constructorNode.startPosition.column + 1,
                 end_line: constructorNode.endPosition.row + 1,
-                end_column: constructorNode.endPosition.column,
+                end_column: constructorNode.endPosition.column + 1,
               },
             });
           }

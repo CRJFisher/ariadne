@@ -915,5 +915,84 @@ describe("Semantic Index - JavaScript", () => {
       const functionNames = Array.from(result.functions.values()).map(f => f.name);
       expect(functionNames).toContain("n");
     });
+
+    it("should correctly parse class constructors with parameters and properties", () => {
+      const code = `
+        class Person {
+          constructor(name, age = 0) {
+            this.name = name;
+            this.age = age;
+          }
+
+          greet() {
+            return \`Hello, \${this.name}\`;
+          }
+        }
+
+        class Animal {
+          species = "unknown";
+
+          constructor(species) {
+            this.species = species;
+          }
+        }
+      `;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
+      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+
+      // Verify classes are captured
+      const classNames = Array.from(result.classes.values()).map(c => c.name);
+      expect(classNames).toContain("Person");
+      expect(classNames).toContain("Animal");
+
+      // Verify Person class has constructor
+      const personClass = Array.from(result.classes.values()).find(c => c.name === "Person");
+      expect(personClass).toBeDefined();
+      expect(personClass?.constructor).toBeDefined();
+      expect(personClass?.constructor?.length).toBe(1);
+
+      if (personClass?.constructor && personClass.constructor.length > 0) {
+        const ctor = personClass.constructor[0];
+        expect(ctor.name).toBe("constructor");
+        expect(ctor.parameters).toBeDefined();
+        expect(ctor.parameters.length).toBe(2);
+
+        // Verify constructor parameters
+        const paramNames = ctor.parameters.map(p => p.name);
+        expect(paramNames).toContain("name");
+        expect(paramNames).toContain("age");
+
+        // Verify parameter with default value
+        const ageParam = ctor.parameters.find(p => p.name === "age");
+        expect(ageParam?.default_value).toBeDefined();
+      }
+
+      // Verify Person class has methods
+      expect(personClass?.methods).toBeDefined();
+      expect(personClass?.methods.length).toBeGreaterThan(0);
+      const methodNames = personClass?.methods.map(m => m.name);
+      expect(methodNames).toContain("greet");
+
+      // Verify Animal class has constructor and properties
+      const animalClass = Array.from(result.classes.values()).find(c => c.name === "Animal");
+      expect(animalClass).toBeDefined();
+      expect(animalClass?.constructor).toBeDefined();
+      expect(animalClass?.constructor?.length).toBe(1);
+
+      if (animalClass?.constructor && animalClass.constructor.length > 0) {
+        const ctor = animalClass.constructor[0];
+        expect(ctor.parameters).toBeDefined();
+        expect(ctor.parameters.length).toBe(1);
+        expect(ctor.parameters[0].name).toBe("species");
+      }
+
+      // Verify Animal class has properties
+      expect(animalClass?.properties).toBeDefined();
+      expect(animalClass?.properties.length).toBeGreaterThan(0);
+      const propNames = animalClass?.properties.map(p => p.name);
+      expect(propNames).toContain("species");
+    });
   });
 });

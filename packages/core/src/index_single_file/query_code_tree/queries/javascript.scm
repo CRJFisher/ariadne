@@ -90,6 +90,7 @@
 (method_definition
   "static"? @modifier.visibility
   name: (property_identifier) @definition.method
+  (#not-eq? @definition.method "constructor")
 ) @scope.method
 
 (method_definition

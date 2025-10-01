@@ -161,7 +161,8 @@ function find_containing_class(capture: CaptureNode): SymbolId | undefined {
 }
 
 /**
- * Find containing callable (function/method)
+ * Find containing callable (function/method/constructor)
+ * Uses the same location reconstruction strategy as find_containing_class to ensure SymbolId consistency
  */
 function find_containing_callable(capture: CaptureNode): SymbolId {
   let node = capture.node;
@@ -178,22 +179,43 @@ function find_containing_callable(capture: CaptureNode): SymbolId {
 
       if (node.type === "method_definition") {
         const methodName = nameNode ? nameNode.text : "anonymous";
-        return method_symbol(
-          methodName as SymbolName,
-          extract_location(nameNode || node)
-        );
+        // Reconstruct location using same coordinates as capture
+        const location: Location = nameNode
+          ? {
+              file_path: capture.location.file_path,
+              start_line: nameNode.startPosition.row + 1,
+              start_column: nameNode.startPosition.column + 1,
+              end_line: nameNode.endPosition.row + 1,
+              end_column: nameNode.endPosition.column + 1,
+            }
+          : {
+              file_path: capture.location.file_path,
+              start_line: node.startPosition.row + 1,
+              start_column: node.startPosition.column + 1,
+              end_line: node.endPosition.row + 1,
+              end_column: node.endPosition.column + 1,
+            };
+        return method_symbol(methodName as SymbolName, location);
       } else if (nameNode) {
         // Named function
-        return function_symbol(
-          nameNode.text as SymbolName,
-          extract_location(nameNode)
-        );
+        const location: Location = {
+          file_path: capture.location.file_path,
+          start_line: nameNode.startPosition.row + 1,
+          start_column: nameNode.startPosition.column + 1,
+          end_line: nameNode.endPosition.row + 1,
+          end_column: nameNode.endPosition.column + 1,
+        };
+        return function_symbol(nameNode.text as SymbolName, location);
       } else {
         // Anonymous function/arrow function - use the location as ID
-        return function_symbol(
-          "anonymous" as SymbolName,
-          extract_location(node)
-        );
+        const location: Location = {
+          file_path: capture.location.file_path,
+          start_line: node.startPosition.row + 1,
+          start_column: node.startPosition.column + 1,
+          end_line: node.endPosition.row + 1,
+          end_column: node.endPosition.column + 1,
+        };
+        return function_symbol("anonymous" as SymbolName, location);
       }
     }
     if (node.parent) {
@@ -303,9 +325,18 @@ function extract_initial_value(node: SyntaxNode): string | undefined {
 }
 
 /**
- * Extract default value
+ * Extract default value for parameter
+ * If node is inside assignment_pattern (default parameter), extract the right side
  */
 function extract_default_value(node: SyntaxNode): string | undefined {
+  // Check if parent is assignment_pattern (e.g., param = defaultValue)
+  if (node.parent?.type === "assignment_pattern") {
+    const rightSide = node.parent.childForFieldName?.("right");
+    if (rightSide) {
+      return rightSide.text;
+    }
+  }
+  // Fallback to checking node itself
   return extract_initial_value(node);
 }
 
@@ -461,20 +492,39 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         builder: DefinitionBuilder,
         context: ProcessingContext
       ) => {
-        // Constructor will be added as a special method to the containing class
         const class_id = find_containing_class(capture);
         if (class_id) {
           const constructor_id = method_symbol(
             "constructor" as SymbolName,
             capture.location
           );
-          builder.add_method_to_class(class_id, {
+
+          // Extract access modifier from method_definition node
+          let access_modifier: "public" | "private" | "protected" | undefined =
+            undefined;
+          const parent = capture.node.parent;
+          if (parent?.type === "method_definition") {
+            const modifiers = parent.children?.filter(
+              (c: any) =>
+                c.type === "private" ||
+                c.type === "protected" ||
+                c.type === "public"
+            );
+            if (modifiers?.length > 0) {
+              access_modifier = modifiers[0].type as
+                | "public"
+                | "private"
+                | "protected";
+            }
+          }
+
+          builder.add_constructor_to_class(class_id, {
             symbol_id: constructor_id,
             name: "constructor" as SymbolName,
             location: capture.location,
             scope_id: context.get_scope_id(capture.location),
             availability: determine_method_availability(capture.node),
-            return_type: undefined,
+            access_modifier,
           });
         }
       },
