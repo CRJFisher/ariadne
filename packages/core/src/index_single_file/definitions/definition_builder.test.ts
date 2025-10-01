@@ -145,10 +145,10 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       static: true,
     });
 
-    const definitions = builder.build();
-    expect(definitions).toHaveLength(1);
+    const result = builder.build();
+    expect(result.classes.size).toBe(1);
 
-    const class_def = definitions[0] as ClassDefinition;
+    const class_def = result.classes.get(class_id)!;
     expect(class_def.methods).toHaveLength(2);
     expect(class_def.properties).toHaveLength(2);
     expect(class_def.extends).toEqual(["BaseClass"]);
@@ -164,8 +164,9 @@ describe("DefinitionBuilder - Complex Assembly", () => {
     const context = create_test_context();
     const builder = new DefinitionBuilder(context);
 
+    const class_id = "class:test.ts:1:0:10:0:ChildClass" as SymbolId;
     builder.add_class({
-      symbol_id: "class:test.ts:1:0:10:0:ChildClass" as SymbolId,
+      symbol_id: class_id,
       name: "ChildClass" as SymbolName,
       location: create_test_location(1),
       scope_id: context.root_scope_id,
@@ -173,8 +174,8 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       extends: ["ParentClass" as SymbolName],
     });
 
-    const definitions = builder.build();
-    const class_def = definitions[0] as ClassDefinition;
+    const result = builder.build();
+    const class_def = result.classes.get(class_id)!;
 
     expect(class_def.extends).toEqual(["ParentClass"]);
   });
@@ -222,8 +223,8 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       default_value: "false",
     });
 
-    const definitions = builder.build();
-    const func_def = definitions[0] as FunctionDefinition;
+    const result = builder.build();
+    const func_def = result.functions.get(func_id)!;
 
     expect(func_def.signature.parameters).toHaveLength(3);
 
@@ -272,8 +273,8 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       arguments: ["Use newMethod instead"],
     });
 
-    const definitions = builder.build();
-    const class_def = definitions[0] as ClassDefinition;
+    const result = builder.build();
+    const class_def = result.classes.get(class_id)!;
     const method = class_def.methods[0];
 
     expect(method.decorators).toHaveLength(2);
@@ -316,8 +317,8 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       readonly: true,
     });
 
-    const definitions = builder.build();
-    const interface_def = definitions[0] as InterfaceDefinition;
+    const result = builder.build();
+    const interface_def = result.interfaces.get(interface_id)!;
 
     expect(interface_def.extends).toEqual(["IBase"]);
     expect(interface_def.methods).toHaveLength(1);
@@ -361,8 +362,8 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       value: 3,
     });
 
-    const definitions = builder.build();
-    const enum_def = definitions[0] as EnumDefinition;
+    const result = builder.build();
+    const enum_def = result.enums.get(enum_id)!;
 
     expect(enum_def.is_const).toBe(true);
     expect(enum_def.members).toHaveLength(3);
@@ -385,11 +386,109 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       availability: { scope: "file-export" },
     });
 
-    const definitions = builder.build();
-    const namespace_def = definitions[0] as NamespaceDefinition;
+    const result = builder.build();
+    const namespace_def = result.namespaces.get(namespace_id)!;
 
     expect(namespace_def.kind).toBe("namespace");
     expect(namespace_def.name).toBe("MyNamespace");
+  });
+
+  it("should assemble class with constructor and parameters", () => {
+    const context = create_test_context();
+    const builder = new DefinitionBuilder(context);
+
+    const class_id = "class:test.ts:1:0:10:0:MyClass" as SymbolId;
+    const constructor_id = "constructor:test.ts:2:2:4:3:constructor" as SymbolId;
+
+    builder.add_class({
+      symbol_id: class_id,
+      name: "MyClass" as SymbolName,
+      location: create_test_location(1),
+      scope_id: context.root_scope_id,
+      availability: { scope: "file-export" },
+    });
+
+    builder.add_constructor_to_class(class_id, {
+      symbol_id: constructor_id,
+      name: "constructor" as SymbolName,
+      location: create_test_location(2, 2),
+      scope_id: context.root_scope_id,
+      availability: { scope: "public" },
+      access_modifier: "public",
+    });
+
+    builder.add_parameter_to_callable(constructor_id, {
+      symbol_id: "param:test.ts:2:15:2:20:name" as SymbolId,
+      name: "name" as SymbolName,
+      location: create_test_location(2, 15),
+      scope_id: context.root_scope_id,
+      type: "string" as SymbolName,
+    });
+
+    builder.add_parameter_to_callable(constructor_id, {
+      symbol_id: "param:test.ts:2:22:2:27:age" as SymbolId,
+      name: "age" as SymbolName,
+      location: create_test_location(2, 22),
+      scope_id: context.root_scope_id,
+      type: "number" as SymbolName,
+      optional: true,
+    });
+
+    const result = builder.build();
+    const class_def = result.classes.get(class_id)!;
+
+    expect(class_def.constructor).toBeDefined();
+    expect(class_def.constructor).toHaveLength(1);
+
+    const constructor_def = class_def.constructor![0];
+    expect(constructor_def.kind).toBe("constructor");
+    expect(constructor_def.parameters).toHaveLength(2);
+    expect(constructor_def.parameters[0].name).toBe("name");
+    expect(constructor_def.parameters[0].type).toBe("string");
+    expect(constructor_def.parameters[1].name).toBe("age");
+    expect(constructor_def.parameters[1].optional).toBe(true);
+  });
+
+  it("should support parameters for interface methods", () => {
+    const context = create_test_context();
+    const builder = new DefinitionBuilder(context);
+
+    const interface_id = "interface:test.ts:1:0:5:0:IService" as SymbolId;
+    const method_id = "method:test.ts:2:2:2:30:process" as SymbolId;
+
+    builder.add_interface({
+      symbol_id: interface_id,
+      name: "IService" as SymbolName,
+      location: create_test_location(1),
+      scope_id: context.root_scope_id,
+      availability: { scope: "file-export" },
+    });
+
+    builder.add_method_signature_to_interface(interface_id, {
+      symbol_id: method_id,
+      name: "process" as SymbolName,
+      location: create_test_location(2, 2),
+      scope_id: context.root_scope_id,
+      return_type: "Promise<void>" as SymbolName,
+    });
+
+    builder.add_parameter_to_callable(method_id, {
+      symbol_id: "param:test.ts:2:10:2:15:data" as SymbolId,
+      name: "data" as SymbolName,
+      location: create_test_location(2, 10),
+      scope_id: context.root_scope_id,
+      type: "string" as SymbolName,
+    });
+
+    const result = builder.build();
+    const interface_def = result.interfaces.get(interface_id)!;
+
+    expect(interface_def.methods).toHaveLength(1);
+    const method_def = interface_def.methods[0];
+    expect(method_def.name).toBe("process");
+    expect(method_def.parameters).toHaveLength(1);
+    expect(method_def.parameters[0].name).toBe("data");
+    expect(method_def.parameters[0].type).toBe("string");
   });
 });
 
@@ -460,7 +559,7 @@ describe("DefinitionBuilder - Public API", () => {
         scope_id: context.root_scope_id,
         availability: { scope: "file-private" },
         import_path: "react" as any,
-        is_default: true,
+        import_kind: "default",
       })
       .add_type_alias({
         kind: "type_alias",
@@ -471,20 +570,24 @@ describe("DefinitionBuilder - Public API", () => {
         availability: { scope: "file-export" },
       });
 
-    const definitions = builder.build();
-    expect(definitions).toHaveLength(8);
+    const result = builder.build();
 
-    const kinds = definitions.map((d) => d.kind).sort();
-    expect(kinds).toEqual([
-      "class",
-      "enum",
-      "function",
-      "import",
-      "interface",
-      "namespace",
-      "type_alias",
-      "variable",
-    ]);
+    // Check all types were created
+    expect(result.classes.size).toBe(1);
+    expect(result.functions.size).toBe(1);
+    expect(result.interfaces.size).toBe(1);
+    expect(result.enums.size).toBe(1);
+    expect(result.namespaces.size).toBe(1);
+    expect(result.variables.size).toBe(1);
+    expect(result.imports.size).toBe(1);
+    expect(result.types.size).toBe(2); // Interface creates a type alias + explicit type alias
+
+    // Verify specific definitions exist
+    expect(result.classes.get(class_id)).toBeDefined();
+    expect(result.functions.get(func_id)).toBeDefined();
+    expect(result.interfaces.get(interface_id)).toBeDefined();
+    expect(result.enums.get(enum_id)).toBeDefined();
+    expect(result.namespaces.get(namespace_id)).toBeDefined();
   });
 
   it("should properly chain all builder methods", () => {
@@ -531,10 +634,10 @@ describe("DefinitionBuilder - Public API", () => {
     // All methods should return the builder for chaining
     expect(result).toBe(builder);
 
-    const definitions = builder.build();
-    expect(definitions).toHaveLength(1);
+    const build_result = builder.build();
+    expect(build_result.classes.size).toBe(1);
 
-    const class_def = definitions[0] as ClassDefinition;
+    const class_def = build_result.classes.get(class_id)!;
     expect(class_def.methods).toHaveLength(1);
     expect(class_def.properties).toHaveLength(1);
     expect(class_def.decorators).toHaveLength(1);

@@ -72,7 +72,7 @@ interface ClassBuilderState {
   >;
   methods: Map<SymbolId, MethodBuilderState>;
   properties: Map<SymbolId, PropertyBuilderState>;
-  constructor?: ConstructorBuilderState;
+  constructors: Map<SymbolId, ConstructorBuilderState>;
   decorators: SymbolId[];
 }
 
@@ -243,7 +243,7 @@ export class DefinitionBuilder {
       },
       methods: new Map(),
       properties: new Map(),
-      constructor: undefined,
+      constructors: new Map(),
       decorators: [],
     });
     return this;
@@ -283,6 +283,34 @@ export class DefinitionBuilder {
   }
 
   /**
+   * Add a constructor to a class
+   */
+  add_constructor_to_class(
+    class_id: SymbolId,
+    definition: {
+      symbol_id: SymbolId;
+      name: SymbolName;
+      location: Location;
+      scope_id: ScopeId;
+      availability: SymbolAvailability;
+      access_modifier?: "public" | "private" | "protected";
+    }
+  ): DefinitionBuilder {
+    const class_state = this.classes.get(class_id);
+    if (!class_state) return this;
+
+    class_state.constructors.set(definition.symbol_id, {
+      base: {
+        kind: "constructor",
+        ...definition,
+      },
+      parameters: new Map(),
+      decorators: [],
+    });
+    return this;
+  }
+
+  /**
    * Add a function definition
    */
   add_function(definition: {
@@ -308,7 +336,7 @@ export class DefinitionBuilder {
   }
 
   /**
-   * Add a parameter to a callable (function/method)
+   * Add a parameter to a callable (function/method/constructor)
    */
   add_parameter_to_callable(
     callable_id: SymbolId,
@@ -338,6 +366,22 @@ export class DefinitionBuilder {
     // Check methods in classes
     for (const class_state of this.classes.values()) {
       const method_state = class_state.methods.get(callable_id);
+      if (method_state) {
+        method_state.parameters.set(definition.symbol_id, param_def);
+        return this;
+      }
+
+      // Check constructors in class
+      const constructor_state = class_state.constructors.get(callable_id);
+      if (constructor_state) {
+        constructor_state.parameters.set(definition.symbol_id, param_def);
+        return this;
+      }
+    }
+
+    // Check methods in interfaces
+    for (const interface_state of this.interfaces.values()) {
+      const method_state = interface_state.methods.get(callable_id);
       if (method_state) {
         method_state.parameters.set(definition.symbol_id, param_def);
         return this;
@@ -658,16 +702,19 @@ export class DefinitionBuilder {
     const properties = Array.from(state.properties.values()).map((p) =>
       this.build_property(p)
     );
-    const constructor = state.constructor
-      ? this.build_constructor(state.constructor)
-      : undefined;
+    const constructors =
+      state.constructors.size > 0
+        ? Array.from(state.constructors.values()).map((c) =>
+            this.build_constructor(c)
+          )
+        : undefined;
 
     return {
       kind: "class" as const,
       ...state.base,
       methods: methods,
       properties: properties,
-      constructor: constructor,
+      constructor: constructors,
       decorators: state.decorators,
       extends: state.base.extends || [],
     } as ClassDefinition;
