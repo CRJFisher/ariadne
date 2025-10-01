@@ -70,6 +70,14 @@ function determine_reference_kind(capture: CaptureNode): ReferenceKind {
       if (parts.includes("method")) {
         return ReferenceKind.METHOD_CALL;
       }
+      // Check if this is a method call by looking at the node structure
+      // Method calls have a member_expression as the function
+      if (capture.node.type === "call_expression") {
+        const functionNode = capture.node.childForFieldName("function");
+        if (functionNode && functionNode.type === "member_expression") {
+          return ReferenceKind.METHOD_CALL;
+        }
+      }
       return ReferenceKind.FUNCTION_CALL;
 
     case "super":
@@ -251,11 +259,26 @@ function process_method_reference(
     is_optional_chain: false, // Could be enhanced in language-specific extractors
   };
 
+  // Extract just the method name from method calls
+  // If the capture is for a full call expression like "obj.method()",
+  // we need to extract just the property/method name
+  let methodName = capture.text;
+  if (capture.node.type === "call_expression") {
+    // For method calls, find the property identifier in the member_expression
+    const functionNode = capture.node.childForFieldName("function");
+    if (functionNode && functionNode.type === "member_expression") {
+      const propertyNode = functionNode.childForFieldName("property");
+      if (propertyNode) {
+        methodName = propertyNode.text as SymbolName;
+      }
+    }
+  }
+
   return {
     location: capture.location,
     type: reference_type,
     scope_id: scope_id,
-    name: capture.text,
+    name: methodName,
     context: extract_context(capture, extractors, file_path),
     type_info: type_info,
     call_type: "method",
@@ -345,11 +368,27 @@ export class ReferenceBuilder {
     const scope_id = this.context.get_scope_id(capture.location);
     const reference_type = map_to_reference_type(kind);
 
+    // Extract the actual name from call expressions
+    let referenceName = capture.text;
+    if (capture.node.type === "call_expression") {
+      // For regular function calls, get the function identifier
+      const functionNode = capture.node.childForFieldName("function");
+      if (functionNode && functionNode.type === "identifier") {
+        referenceName = functionNode.text as SymbolName;
+      }
+    } else if (capture.node.type === "new_expression") {
+      // For constructor calls, get the constructor identifier
+      const constructorNode = capture.node.childForFieldName("constructor");
+      if (constructorNode && constructorNode.type === "identifier") {
+        referenceName = constructorNode.text as SymbolName;
+      }
+    }
+
     const reference: SymbolReference = {
       location: capture.location,
       type: reference_type,
       scope_id: scope_id,
-      name: capture.text,
+      name: referenceName,
       context: extract_context(capture, this.extractors, this.file_path),
       type_info: extract_type_info(capture, this.extractors, this.file_path),
       call_type: determine_call_type(kind),
