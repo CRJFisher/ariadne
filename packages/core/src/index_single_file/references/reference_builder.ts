@@ -192,7 +192,7 @@ function extract_type_info(
 }
 
 /**
- * Extract reference context from capture
+ * Extract reference context from capture for method call resolution
  */
 function extract_context(
   capture: CaptureNode,
@@ -204,8 +204,6 @@ function extract_context(
   }
 
   let receiver_location: Location | undefined;
-  let assignment_source: Location | undefined;
-  let assignment_target: Location | undefined;
   let construct_target: Location | undefined;
   let property_chain: readonly SymbolName[] | undefined;
 
@@ -216,16 +214,6 @@ function extract_context(
       capture.node,
       file_path
     );
-  }
-
-  // For assignments: extract source and target
-  if (capture.category === "assignment") {
-    const assignment_parts = extractors.extract_assignment_parts(
-      capture.node,
-      file_path
-    );
-    assignment_source = assignment_parts.source;
-    assignment_target = assignment_parts.target;
   }
 
   // For constructor calls: extract target variable
@@ -245,19 +233,12 @@ function extract_context(
   }
 
   // Build context object with defined properties only
-  const has_data =
-    receiver_location ||
-    assignment_source ||
-    assignment_target ||
-    construct_target ||
-    property_chain;
+  const has_data = receiver_location || construct_target || property_chain;
 
   if (!has_data) return undefined;
 
   return {
     ...(receiver_location && { receiver_location }),
-    ...(assignment_source && { assignment_source }),
-    ...(assignment_target && { assignment_target }),
     ...(construct_target && { construct_target }),
     ...(property_chain && { property_chain }),
   };

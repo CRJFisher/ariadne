@@ -331,25 +331,55 @@ export interface SymbolReference {
 }
 
 /**
- * Additional context for complex references
+ * Additional context for method call resolution
+ *
+ * Each attribute maps to extractable tree-sitter query patterns and supports
+ * resolving method calls of the form `obj.method()`.
  */
 export interface ReferenceContext {
-  /** For method calls: the receiver object location */
+  /**
+   * For method calls: the receiver object location
+   *
+   * Essential for method resolution - identifies which object the method is called on.
+   *
+   * Tree-sitter pattern (JavaScript/TypeScript):
+   * ```
+   * (call_expression
+   *   function: (member_expression
+   *     object: (_) @receiver))
+   * ```
+   *
+   * Example: `user.getName()` → receiver_location points to `user`
+   */
   readonly receiver_location?: Location;
 
-  /** For assignments: the source value location */
-  readonly assignment_source?: Location;
-
-  /** For assignments: the target variable location */
-  readonly assignment_target?: Location;
-
-  /** For constructor calls: the variable being assigned to */
-  readonly construct_target?: Location;
-
-  /** For returns: the containing function */
-  readonly containing_function?: SymbolId;
-
-  /** For member access: the property chain */
+  /**
+   * For member access: the property chain
+   *
+   * Critical for chained method calls - tracks multi-step access patterns.
+   *
+   * Tree-sitter pattern: Recursive traversal of member_expression/attribute/field_expression nodes
+   *
+   * Example: `container.getUser().getName()` → ['container', 'getUser', 'getName']
+   */
   readonly property_chain?: readonly SymbolName[];
+
+  /**
+   * For constructor calls: the variable being assigned to
+   *
+   * Essential for type determination from constructors - most reliable way to determine
+   * type when no explicit annotation exists.
+   *
+   * Tree-sitter pattern (JavaScript/TypeScript):
+   * ```
+   * (variable_declarator
+   *   name: (identifier) @construct.target
+   *   value: (new_expression
+   *     constructor: (identifier) @construct.class))
+   * ```
+   *
+   * Example: `const obj = new MyClass()` → construct_target points to `obj`
+   */
+  readonly construct_target?: Location;
 }
 

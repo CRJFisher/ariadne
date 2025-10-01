@@ -540,34 +540,6 @@ describe("ReferenceBuilder", () => {
       expect(references[0].context?.property_chain).toEqual(propertyChain);
     });
 
-    it("should call extract_assignment_parts for assignments", () => {
-      const sourceLocation = create_test_location(2, 5);
-      const targetLocation = create_test_location(2, 0);
-      const mockExtractors = create_mock_extractors({
-        extract_assignment_parts: vi.fn((node, file_path) => ({
-          source: sourceLocation,
-          target: targetLocation,
-        })),
-      });
-
-      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
-      const capture = create_test_capture({
-        category: SemanticCategory.ASSIGNMENT,
-        entity: SemanticEntity.VARIABLE,
-        symbol_name: "result",
-      });
-
-      builder.process(capture);
-      const references = builder.build();
-
-      expect(mockExtractors.extract_assignment_parts).toHaveBeenCalledWith(
-        capture.node,
-        TEST_FILE_PATH
-      );
-      expect(references[0].context?.assignment_source).toEqual(sourceLocation);
-      expect(references[0].context?.assignment_target).toEqual(targetLocation);
-    });
-
     it("should call extract_construct_target for constructor calls", () => {
       const targetLocation = create_test_location(3, 6);
       const mockExtractors = create_mock_extractors({
