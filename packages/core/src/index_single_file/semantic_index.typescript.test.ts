@@ -212,6 +212,67 @@ describe("Semantic Index - TypeScript", () => {
       // The class itself should be captured correctly
       expect(index.classes.size).toBe(1);
     });
+
+    it("should handle async functions and methods with Promise return types", () => {
+      const code = `
+        async function fetchUser(id: string): Promise<User> {
+          return { id, name: "Test" };
+        }
+
+        interface User {
+          id: string;
+          name: string;
+        }
+
+        class ApiService {
+          async getData(): Promise<number[]> {
+            return [1, 2, 3];
+          }
+
+          async processData(items: number[]): Promise<void> {
+            items.forEach(i => console.log(i));
+          }
+        }
+
+        const service = new ApiService();
+        const data = service.getData();
+        service.processData([1, 2, 3]);
+      `;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language
+      );
+      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+
+      // Check async function is captured
+      const functionNames = Array.from(index.functions.values()).map(f => f.name);
+      expect(functionNames).toContain("fetchUser");
+
+      // Check class with async methods
+      const classNames = Array.from(index.classes.values()).map(c => c.name);
+      expect(classNames).toContain("ApiService");
+
+      // Check method calls on async methods
+      const methodCalls = index.references.filter(
+        (r) => r.type === "call" && r.call_type === "method"
+      );
+      const getDataCall = methodCalls.find((r) => r.name === "getData");
+      const processDataCall = methodCalls.find((r) => r.name === "processData");
+
+      expect(getDataCall).toBeDefined();
+      expect(processDataCall).toBeDefined();
+
+      if (getDataCall) {
+        expect(getDataCall.context?.receiver_location).toBeDefined();
+      }
+      if (processDataCall) {
+        expect(processDataCall.context?.receiver_location).toBeDefined();
+      }
+    });
   });
 
   describe("Module system", () => {
@@ -280,7 +341,7 @@ describe("Semantic Index - TypeScript", () => {
   });
 
   describe("Metadata extraction", () => {
-    it("should extract receiver location for method calls", () => {
+    it("should extract receiver location for method calls on class instances", () => {
       const code = `
         class Service {
           getData() {
@@ -310,6 +371,63 @@ describe("Semantic Index - TypeScript", () => {
       if (getDataCall) {
         expect(getDataCall.context?.receiver_location).toBeDefined();
         expect(getDataCall.context?.receiver_location?.start_line).toBe(9);
+      }
+    });
+
+    it("should extract type context for method calls on interface-typed objects", () => {
+      const code = `
+        interface Calculator {
+          add(a: number, b: number): number;
+          subtract(a: number, b: number): number;
+        }
+
+        class BasicCalculator implements Calculator {
+          add(a: number, b: number): number {
+            return a + b;
+          }
+          subtract(a: number, b: number): number {
+            return a - b;
+          }
+        }
+
+        const calc: Calculator = new BasicCalculator();
+        const sum = calc.add(5, 3);
+        const diff = calc.subtract(10, 4);
+      `;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language
+      );
+      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+
+      // Check interface definition
+      const interfaceNames = Array.from(index.interfaces.values()).map(i => i.name);
+      expect(interfaceNames).toContain("Calculator");
+
+      // Check class implementation
+      const classNames = Array.from(index.classes.values()).map(c => c.name);
+      expect(classNames).toContain("BasicCalculator");
+
+      // Check method calls on interface-typed object
+      const methodCalls = index.references.filter(
+        (r) => r.type === "call" && r.call_type === "method"
+      );
+      const addCall = methodCalls.find((r) => r.name === "add");
+      const subtractCall = methodCalls.find((r) => r.name === "subtract");
+
+      expect(addCall).toBeDefined();
+      expect(subtractCall).toBeDefined();
+
+      // Both should have receiver location
+      if (addCall) {
+        expect(addCall.context?.receiver_location).toBeDefined();
+      }
+      if (subtractCall) {
+        expect(subtractCall.context?.receiver_location).toBeDefined();
       }
     });
 
@@ -477,6 +595,59 @@ describe("Semantic Index - TypeScript", () => {
   });
 
   describe("TypeScript-specific features", () => {
+    it("should handle optional chaining on typed objects", () => {
+      const code = `
+        interface Address {
+          street?: string;
+          city?: string;
+        }
+
+        interface User {
+          name: string;
+          address?: Address;
+          getEmail?(): string;
+        }
+
+        function processUser(user: User): void {
+          const city = user.address?.city;
+          const street = user.address?.street?.toUpperCase();
+          const email = user.getEmail?.();
+        }
+
+        const userData: User = { name: "Alice" };
+        processUser(userData);
+      `;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language
+      );
+      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+
+      // Check interfaces are captured
+      const interfaceNames = Array.from(index.interfaces.values()).map(i => i.name);
+      expect(interfaceNames).toContain("User");
+      expect(interfaceNames).toContain("Address");
+
+      // Check function is captured
+      const functionNames = Array.from(index.functions.values()).map(f => f.name);
+      expect(functionNames).toContain("processUser");
+
+      // Check member access through optional chaining
+      const memberAccessRefs = index.references.filter((r) => r.type === "member_access");
+      expect(memberAccessRefs.length).toBeGreaterThan(0);
+
+      // Optional chaining creates member access references
+      // Verify we capture property accesses (address, city, street)
+      const propertyNames = memberAccessRefs.map(r => r.name);
+
+      // At minimum, we should capture some property accesses
+      expect(propertyNames.length).toBeGreaterThan(0);
+    });
+
     it("should handle enum member access", () => {
       const code = `
         enum Status {

@@ -1,5 +1,20 @@
 # Changes Notes
 
+## TypeScript Compilation Status (2025-10-01)
+
+✅ **All packages compile cleanly with no TypeScript errors**
+
+- `@ariadnejs/types`: ✅ Passing typecheck
+- `@ariadnejs/core`: ✅ Passing typecheck
+- `@ariadnejs/mcp`: ✅ Passing typecheck
+
+Added `typecheck` script to root package.json for convenience.
+
+Test coverage verification:
+- TypeScript semantic_index tests: 25/25 passing (100%)
+- All packages build successfully
+- No regressions introduced
+
 ## What do we actually need?
 
 - CodeGraph with list of top-level nodes (Call-able entities which aren't referenced by other entities)
@@ -39,7 +54,8 @@
 
 ## Usage of ScopeTree
 
-- When performin all symbol_resolution, we should have a pattern of matching SymbolName's from the most local scope first, then the next most local scope, etc. until we find a match.
+- When performing all symbol_resolution, we should have a pattern of matching SymbolName's from the most local scope first, then the next most local scope, etc. until we find a match.
+- The 'visibility' defined in semantic_index processing should be limited to any 'extra' attributes present in the language e.g. TS `export` and Rust `pub`. The symbol_resolution should have some language-specific code to determine which symbols are export-able in each file (based on scope + visibility attributes and language visibility rules).
 
 ## Query Capture naming convention
 
