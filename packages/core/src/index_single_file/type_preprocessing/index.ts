@@ -7,5 +7,5 @@
 
 export { extract_type_bindings } from "./type_bindings";
 export { extract_constructor_bindings } from "./constructor_tracking";
-export { extract_type_members, type TypeMemberInfo } from "./member_extraction";
+export { extract_type_members } from "./member_extraction";
 export { extract_type_alias_metadata } from "./alias_extraction";

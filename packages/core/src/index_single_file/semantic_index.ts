@@ -20,6 +20,8 @@ import type {
   TypeAliasDefinition,
   SymbolReference,
   Location,
+  LocationKey,
+  TypeMemberInfo,
 } from "@ariadnejs/types";
 
 import { query_tree } from "./query_code_tree";
@@ -44,6 +46,12 @@ import { TYPESCRIPT_METADATA_EXTRACTORS } from "./query_code_tree/language_confi
 import { PYTHON_METADATA_EXTRACTORS } from "./query_code_tree/language_configs/python_metadata";
 import { RUST_METADATA_EXTRACTORS } from "./query_code_tree/language_configs/rust_metadata";
 import { ParsedFile } from "./file_utils";
+import {
+  extract_type_bindings,
+  extract_constructor_bindings,
+  extract_type_members,
+  extract_type_alias_metadata,
+} from "./type_preprocessing";
 
 /**
  * Semantic Index - Single-file analysis results
@@ -71,7 +79,7 @@ export interface SemanticIndex {
   readonly namespaces: ReadonlyMap<SymbolId, NamespaceDefinition>;
   readonly types: ReadonlyMap<SymbolId, TypeAliasDefinition>;
 
-  /** ImportDefinitions (converted to Import unions during cross-file resolution) */
+  /** ImportDefinitions */
   readonly imported_symbols: ReadonlyMap<SymbolId, ImportDefinition>;
 
   /** All symbol references */
@@ -79,6 +87,24 @@ export interface SemanticIndex {
 
   /** Quick lookup: name -> symbols with that name in this file */
   readonly symbols_by_name: ReadonlyMap<SymbolName, readonly SymbolId[]>;
+
+  /**
+   * Type bindings: location → type name
+   * Extracted from annotations, constructors, return types
+   */
+  readonly type_bindings: ReadonlyMap<LocationKey, SymbolName>;
+
+  /**
+   * Type members: type → methods/properties
+   * Extracted from classes, interfaces, enums
+   */
+  readonly type_members: ReadonlyMap<SymbolId, TypeMemberInfo>;
+
+  /**
+   * Type alias metadata: alias → type_expression string
+   * Extracted from TypeAliasDefinition (NOT resolved - that's 11.109.3's job)
+   */
+  readonly type_alias_metadata: ReadonlyMap<SymbolId, string>;
 }
 
 // ============================================================================
@@ -138,6 +164,30 @@ export function build_semantic_index(
   // PASS 5: Build name index
   const symbols_by_name = build_name_index(builder_result);
 
+  // PASS 6: Extract type preprocessing data
+  const type_bindings_from_defs = extract_type_bindings({
+    variables: builder_result.variables,
+    functions: builder_result.functions,
+    classes: builder_result.classes,
+    interfaces: builder_result.interfaces,
+  });
+
+  const type_bindings_from_ctors = extract_constructor_bindings(all_references);
+
+  // Merge type bindings from definitions and constructors
+  const type_bindings = new Map([
+    ...type_bindings_from_defs,
+    ...type_bindings_from_ctors,
+  ]);
+
+  const type_members = extract_type_members({
+    classes: builder_result.classes,
+    interfaces: builder_result.interfaces,
+    enums: builder_result.enums,
+  });
+
+  const type_alias_metadata = extract_type_alias_metadata(builder_result.types);
+
   // Return complete semantic index (single-file)
   return {
     file_path: file.file_path,
@@ -154,6 +204,9 @@ export function build_semantic_index(
     imported_symbols: builder_result.imports,
     references: all_references,
     symbols_by_name,
+    type_bindings,
+    type_members,
+    type_alias_metadata,
   };
 }
 

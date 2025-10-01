@@ -13,6 +13,7 @@ import type {
   ClassDefinition,
   InterfaceDefinition,
   EnumDefinition,
+  TypeMemberInfo,
 } from "@ariadnejs/types";
 
 /**
@@ -27,26 +28,6 @@ import type {
 function extract_name_from_symbol_id(symbol_id: SymbolId): SymbolName {
   const parts = symbol_id.split(":");
   return parts[parts.length - 1] as SymbolName;
-}
-
-/**
- * Type member information
- *
- * Contains indexed members of a type (class, interface, or enum).
- * Used for efficient member lookup during method resolution.
- */
-export interface TypeMemberInfo {
-  /** Methods by name */
-  readonly methods: ReadonlyMap<SymbolName, SymbolId>;
-
-  /** Properties by name */
-  readonly properties: ReadonlyMap<SymbolName, SymbolId>;
-
-  /** Constructor (if any) - classes only */
-  readonly constructor?: SymbolId;
-
-  /** Types this extends (for inheritance lookup in 11.109.3) */
-  readonly extends: readonly SymbolName[];
 }
 
 /**

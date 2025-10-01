@@ -5,7 +5,7 @@
  * Language-agnostic with minimal fields needed for call graph construction.
  */
 
-import type { Location } from "./common";
+import type { Location, LocationKey } from "./common";
 import type { SymbolId, SymbolName } from "./symbol";
 import type { ScopeId, ScopeType } from "./scopes";
 import type { SymbolAvailability } from "./symbol_definitions";
@@ -216,6 +216,26 @@ export interface LexicalScope {
 // export function isNamespaceDef(def: AnyDefinition): def is NamespaceDef {
 //   return def.kind === "namespace" || def.kind === "module";
 // }
+
+/**
+ * Type member information
+ *
+ * Contains indexed members of a type (class, interface, or enum).
+ * Used for efficient member lookup during method resolution.
+ */
+export interface TypeMemberInfo {
+  /** Methods by name */
+  readonly methods: ReadonlyMap<SymbolName, SymbolId>;
+
+  /** Properties by name */
+  readonly properties: ReadonlyMap<SymbolName, SymbolId>;
+
+  /** Constructor (if any) - classes only */
+  readonly constructor?: SymbolId;
+
+  /** Types this extends (for inheritance lookup in 11.109.3) */
+  readonly extends: readonly SymbolName[];
+}
 
 /**
  * Symbol definition - minimal fields for call resolution
