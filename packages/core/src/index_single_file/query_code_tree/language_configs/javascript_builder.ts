@@ -20,10 +20,8 @@ import {
   variable_symbol,
 } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
-import type {
-  ProcessingContext,
-  CaptureNode,
-} from "../../scopes/scope_processor";
+import type { CaptureNode } from "../../semantic_index";
+import type { ProcessingContext } from "../../semantic_index";
 
 // ============================================================================
 // Types

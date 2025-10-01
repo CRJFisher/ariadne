@@ -33,7 +33,7 @@ import {
   ConstructorDefinition,
 } from "@ariadnejs/types";
 
-import type { ProcessingContext } from "../scopes/scope_processor";
+import type { ProcessingContext } from "../semantic_index";
 
 // ============================================================================
 // Builder Result Type
@@ -233,7 +233,7 @@ export class DefinitionBuilder {
     extends?: SymbolName[];
     abstract?: boolean;
     implements?: SymbolName[];
-    type_parameters?: string[];
+    generics?: string[];
   }): DefinitionBuilder {
     this.classes.set(definition.symbol_id, {
       base: {
@@ -265,7 +265,7 @@ export class DefinitionBuilder {
       abstract?: boolean;
       static?: boolean;
       async?: boolean;
-      type_parameters?: string[];
+      generics?: string[];
     }
   ): DefinitionBuilder {
     const class_state = this.classes.get(class_id);
@@ -291,7 +291,7 @@ export class DefinitionBuilder {
     location: Location;
     scope_id: ScopeId;
     availability: SymbolAvailability;
-    type_parameters?: string[];
+    generics?: string[];
   }): DefinitionBuilder {
     this.functions.set(definition.symbol_id, {
       base: {
@@ -430,7 +430,7 @@ export class DefinitionBuilder {
     scope_id: ScopeId;
     availability: SymbolAvailability;
     extends?: SymbolName[];
-    type_parameters?: string[];
+    generics?: SymbolName[];
   }): DefinitionBuilder {
     this.interfaces.set(definition.symbol_id, {
       base: {
@@ -459,7 +459,7 @@ export class DefinitionBuilder {
       location: Location;
       scope_id: ScopeId;
       optional?: boolean;
-      type_parameters?: string[];
+      generics?: SymbolName[];
       return_type?: SymbolName;
     }
   ): DefinitionBuilder {
@@ -684,7 +684,9 @@ export class DefinitionBuilder {
     } as MethodDefinition;
   }
 
-  private build_constructor(state: ConstructorBuilderState): ConstructorDefinition {
+  private build_constructor(
+    state: ConstructorBuilderState
+  ): ConstructorDefinition {
     const parameters = Array.from(state.parameters.values());
 
     return {

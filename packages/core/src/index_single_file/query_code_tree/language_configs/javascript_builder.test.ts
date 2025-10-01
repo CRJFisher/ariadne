@@ -11,9 +11,11 @@ import { DefinitionBuilder } from "../../definitions/definition_builder";
 import type {
   ProcessingContext,
   CaptureNode,
+  SemanticCategory,
+  SemanticEntity,
 } from "../../scopes/scope_processor";
 import type { Location, ScopeId, FilePath, SymbolName } from "@ariadnejs/types";
-import { ReferenceBuilder } from "../reference_builder";
+import { ReferenceBuilder } from "../../references/reference_builder";
 import { JAVASCRIPT_METADATA_EXTRACTORS } from "./javascript_metadata";
 
 describe("JavaScript Builder Configuration", () => {
@@ -32,6 +34,7 @@ describe("JavaScript Builder Configuration", () => {
 
     return {
       scopes: new Map(),
+      captures: [],
       scope_depths: new Map(),
       root_scope_id: test_scope_id,
       get_scope_id: (location: Location) => test_scope_id,
@@ -139,8 +142,8 @@ describe("JavaScript Builder Configuration", () => {
 
         const capture: CaptureNode = {
           name: "definition.class",
-          category: "definition",
-          entity: "class",
+          category: "definition" as SemanticCategory,
+          entity: "class" as SemanticEntity,
           node: nameNode as any,
           text: nameNode.text as SymbolName,
           location: {

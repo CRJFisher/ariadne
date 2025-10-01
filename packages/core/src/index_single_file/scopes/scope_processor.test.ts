@@ -3,14 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import {
-  process_scopes,
-  create_processing_context,
-  type ProcessingContext,
-  type CaptureNode,
-  SemanticCategory,
-  SemanticEntity,
-} from "./scope_processor";
+import { process_scopes, create_processing_context } from "./scope_processor";
 import type {
   Location,
   FilePath,
@@ -18,10 +11,22 @@ import type {
   ScopeId,
   LexicalScope,
 } from "@ariadnejs/types";
+import {
+  CaptureNode,
+  SemanticEntity,
+  SemanticCategory,
+} from "../semantic_index";
+import { ParsedFile } from "../file_utils";
 
 describe("scope_processor", () => {
   const file_path = "test.ts" as FilePath;
-  const language = "typescript" as const;
+  const file = {
+    file_path: file_path,
+    file_lines: 100,
+    file_end_column: 0,
+    tree: null as any,
+    lang: "typescript" as const,
+  } as ParsedFile;
 
   // Helper to create raw captures for testing
   function create_raw_capture(
@@ -42,7 +47,10 @@ describe("scope_processor", () => {
     return {
       name: `${category}.${entity}`,
       node: mock_node as any,
-      text: symbol_name,
+      text: symbol_name as SymbolName,
+      category: category as SemanticCategory,
+      entity: entity as SemanticEntity,
+      location: location,
     };
   }
 
@@ -50,7 +58,7 @@ describe("scope_processor", () => {
     it("should create root module scope for empty file", () => {
       const captures: CaptureNode[] = [];
 
-      const scopes = process_scopes(captures, file_path, language);
+      const scopes = process_scopes(captures, file);
 
       expect(scopes.size).toBe(1);
       const root = Array.from(scopes.values())[0];
@@ -75,7 +83,7 @@ describe("scope_processor", () => {
         ),
       ];
 
-      const scopes = process_scopes(captures, file_path, language);
+      const scopes = process_scopes(captures, file);
 
       expect(scopes.size).toBe(2);
 
@@ -137,7 +145,7 @@ describe("scope_processor", () => {
         ),
       ];
 
-      const scopes = process_scopes(captures, file_path, language);
+      const scopes = process_scopes(captures, file);
 
       expect(scopes.size).toBe(4); // root + class + method + block
 
@@ -208,7 +216,7 @@ describe("scope_processor", () => {
         ),
       ];
 
-      const scopes = process_scopes(captures, file_path, language);
+      const scopes = process_scopes(captures, file);
 
       expect(scopes.size).toBe(4); // root + 3 functions
 
@@ -257,7 +265,7 @@ describe("scope_processor", () => {
         ),
       ];
 
-      const scopes = process_scopes(captures, file_path, language);
+      const scopes = process_scopes(captures, file);
 
       expect(scopes.size).toBe(3); // root + outer + inner
 
@@ -302,7 +310,7 @@ describe("scope_processor", () => {
         ),
       ];
 
-      const scopes = process_scopes(captures, file_path, language);
+      const scopes = process_scopes(captures, file);
 
       expect(scopes.size).toBe(3); // root + interface + enum
 
@@ -372,11 +380,13 @@ describe("scope_processor", () => {
         child_ids: [],
       });
 
-      const context = create_processing_context(scopes);
+      const captures: CaptureNode[] = [];
+      const context = create_processing_context(scopes, captures);
 
       expect(context.scope_depths.get(root_id)).toBe(0);
       expect(context.scope_depths.get(func_id)).toBe(1);
       expect(context.scope_depths.get(block_id)).toBe(2);
+      expect(context.captures).toEqual(captures);
     });
 
     it("should find correct scope for location", () => {
@@ -431,7 +441,8 @@ describe("scope_processor", () => {
         child_ids: [],
       });
 
-      const context = create_processing_context(scopes);
+      const captures: CaptureNode[] = [];
+      const context = create_processing_context(scopes, captures);
 
       // Location in module but outside function
       expect(
@@ -465,6 +476,7 @@ describe("scope_processor", () => {
           end_column: 10,
         })
       ).toBe(block_id);
+      expect(context.captures).toEqual(captures);
     });
 
     it("should handle overlapping scopes by choosing deepest", () => {
@@ -535,7 +547,8 @@ describe("scope_processor", () => {
         child_ids: [],
       });
 
-      const context = create_processing_context(scopes);
+      const captures: CaptureNode[] = [];
+      const context = create_processing_context(scopes, captures);
 
       // Location in method1
       expect(
@@ -569,6 +582,7 @@ describe("scope_processor", () => {
           end_column: 10,
         })
       ).toBe(class_id);
+      expect(context.captures).toEqual(captures);
     });
   });
 
@@ -603,7 +617,7 @@ describe("scope_processor", () => {
           ),
         ];
 
-        const scopes = process_scopes(captures, file_path, language);
+        const scopes = process_scopes(captures, file);
 
         // MODULE and NAMESPACE create module-level scopes, so they might replace or add to root
         // All others add a new scope to the existing root

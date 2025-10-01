@@ -1,10 +1,8 @@
 // Rust language configuration using builder pattern
 import type { SymbolId, SymbolName } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
-import type {
-  ProcessingContext,
-  CaptureNode,
-} from "../../scopes/scope_processor";
+import type { CaptureNode } from "../../semantic_index";
+import type { ProcessingContext } from "../../semantic_index";
 import {
   create_struct_id,
   create_enum_id,
@@ -57,7 +55,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: extract_visibility(capture.node.parent || capture.node),
-          type_parameters: generics.length > 0 ? generics : undefined,
+          generics: generics.length > 0 ? generics : undefined,
         });
       },
     },
@@ -82,7 +80,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: extract_visibility(capture.node.parent || capture.node),
-          type_parameters: generics,
+          generics: generics,
         });
       },
     },
@@ -211,7 +209,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: extract_visibility(capture.node.parent || capture.node),
-          type_parameters: generics,
+          generics,
         });
       },
     },
@@ -258,7 +256,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: extract_visibility(capture.node.parent || capture.node),
-          type_parameters: generics,
+          generics,
         });
       },
     },

@@ -17,7 +17,7 @@ import {
   interface_symbol,
   enum_member_symbol,
 } from "@ariadnejs/types";
-import type { CaptureNode } from "../../scopes/scope_processor";
+import type { CaptureNode } from "../../semantic_index";
 
 // Re-export enum_member_symbol for use in rust_builder.ts
 export { enum_member_symbol };

@@ -9,7 +9,6 @@
 import type {
   FilePath,
   Location,
-  ScopeId,
   SymbolName,
   SymbolReference,
   ReferenceType,
@@ -17,7 +16,8 @@ import type {
   TypeInfo,
 } from "@ariadnejs/types";
 
-import type { ProcessingContext, CaptureNode } from "../scopes/scope_processor";
+import type { CaptureNode } from "../semantic_index";
+import type { ProcessingContext } from "../semantic_index";
 import type { MetadataExtractors } from "../query_code_tree/language_configs/metadata_types";
 
 // ============================================================================
@@ -212,23 +212,35 @@ function extract_context(
   // For method calls: extract receiver/object information
   const kind = determine_reference_kind(capture);
   if (kind === ReferenceKind.METHOD_CALL || kind === ReferenceKind.SUPER_CALL) {
-    receiver_location = extractors.extract_call_receiver(capture.node, file_path);
+    receiver_location = extractors.extract_call_receiver(
+      capture.node,
+      file_path
+    );
   }
 
   // For assignments: extract source and target
   if (capture.category === "assignment") {
-    const assignment_parts = extractors.extract_assignment_parts(capture.node, file_path);
+    const assignment_parts = extractors.extract_assignment_parts(
+      capture.node,
+      file_path
+    );
     assignment_source = assignment_parts.source;
     assignment_target = assignment_parts.target;
   }
 
   // For constructor calls: extract target variable
   if (kind === ReferenceKind.CONSTRUCTOR_CALL) {
-    construct_target = extractors.extract_construct_target(capture.node, file_path);
+    construct_target = extractors.extract_construct_target(
+      capture.node,
+      file_path
+    );
   }
 
   // For member access: extract property chain
-  if (kind === ReferenceKind.PROPERTY_ACCESS || kind === ReferenceKind.METHOD_CALL) {
+  if (
+    kind === ReferenceKind.PROPERTY_ACCESS ||
+    kind === ReferenceKind.METHOD_CALL
+  ) {
     property_chain = extractors.extract_property_chain(capture.node);
   }
 
@@ -312,7 +324,9 @@ function process_type_reference(
   const scope_id = context.get_scope_id(capture.location);
 
   // Extract generic type arguments using extractors if available
-  const type_args = extractors ? extractors.extract_type_arguments(capture.node) : undefined;
+  const type_args = extractors
+    ? extractors.extract_type_arguments(capture.node)
+    : undefined;
   const type_info = extract_type_info(capture, extractors, file_path);
 
   // Enhance type info with generic parameters
@@ -320,7 +334,9 @@ function process_type_reference(
     type_args && type_info
       ? {
           ...type_info,
-          type_name: `${type_info.type_name}<${type_args.join(', ')}>` as SymbolName,
+          type_name: `${type_info.type_name}<${type_args.join(
+            ", "
+          )}>` as SymbolName,
         }
       : type_info;
 
@@ -366,14 +382,24 @@ export class ReferenceBuilder {
     // Route to special handlers for complex references
     if (kind === ReferenceKind.METHOD_CALL) {
       this.references.push(
-        process_method_reference(capture, this.context, this.extractors, this.file_path)
+        process_method_reference(
+          capture,
+          this.context,
+          this.extractors,
+          this.file_path
+        )
       );
       return this;
     }
 
     if (kind === ReferenceKind.TYPE_REFERENCE) {
       this.references.push(
-        process_type_reference(capture, this.context, this.extractors, this.file_path)
+        process_type_reference(
+          capture,
+          this.context,
+          this.extractors,
+          this.file_path
+        )
       );
       return this;
     }
@@ -413,7 +439,11 @@ export class ReferenceBuilder {
       // Type flow information can be extracted from annotation_type or source_text
       const type_flow_info = {
         source_type: undefined, // Could be enhanced with extractors
-        target_type: extract_type_info(capture, this.extractors, this.file_path),
+        target_type: extract_type_info(
+          capture,
+          this.extractors,
+          this.file_path
+        ),
         is_narrowing: false,
         is_widening: false,
       };
@@ -428,7 +458,11 @@ export class ReferenceBuilder {
 
     // Add return type for return references
     if (kind === ReferenceKind.RETURN) {
-      const return_type = extract_type_info(capture, this.extractors, this.file_path);
+      const return_type = extract_type_info(
+        capture,
+        this.extractors,
+        this.file_path
+      );
       if (return_type) {
         const updated_ref = { ...reference, return_type };
         this.references.push(updated_ref);
@@ -439,7 +473,11 @@ export class ReferenceBuilder {
     // Add member access details for property access
     if (kind === ReferenceKind.PROPERTY_ACCESS) {
       // Extract type using extractors if available
-      const type_info = extract_type_info(capture, this.extractors, this.file_path);
+      const type_info = extract_type_info(
+        capture,
+        this.extractors,
+        this.file_path
+      );
 
       const member_access_info = {
         object_type: type_info ? type_info : undefined,

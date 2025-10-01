@@ -32,18 +32,10 @@ import {
   type_symbol,
   variable_symbol,
 } from "@ariadnejs/types";
-import type { DefinitionBuilder } from "../../definitions/definition_builder";
-import type {
-  ProcessingContext,
-  CaptureNode,
-} from "../../scopes/scope_processor";
+import type { CaptureNode } from "../../semantic_index";
 
 // Import JavaScript base configuration
-import {
-  JAVASCRIPT_BUILDER_CONFIG,
-  type ProcessFunction,
-  type LanguageBuilderConfig,
-} from "./javascript_builder";
+import { type ProcessFunction } from "./javascript_builder";
 
 // ============================================================================
 // Helper Functions for TypeScript-specific Features
@@ -72,7 +64,7 @@ function extract_symbol_name(capture: CaptureNode): SymbolName {
 /**
  * Create an interface symbol ID
  */
-function create_interface_id(capture: CaptureNode): SymbolId {
+export function create_interface_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
   return interface_symbol(name, location);
@@ -81,7 +73,7 @@ function create_interface_id(capture: CaptureNode): SymbolId {
 /**
  * Create a type alias symbol ID
  */
-function create_type_alias_id(capture: CaptureNode): SymbolId {
+export function create_type_alias_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
   return type_symbol(name, location);
@@ -90,7 +82,7 @@ function create_type_alias_id(capture: CaptureNode): SymbolId {
 /**
  * Create an enum symbol ID
  */
-function create_enum_id(capture: CaptureNode): SymbolId {
+export function create_enum_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
   // Use a branded string pattern for enums
@@ -100,7 +92,7 @@ function create_enum_id(capture: CaptureNode): SymbolId {
 /**
  * Create a namespace symbol ID
  */
-function create_namespace_id(capture: CaptureNode): SymbolId {
+export function create_namespace_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
   // Use a branded string pattern for namespaces
@@ -110,7 +102,7 @@ function create_namespace_id(capture: CaptureNode): SymbolId {
 /**
  * Create an enum member symbol ID
  */
-function create_enum_member_id(
+export function create_enum_member_id(
   capture: CaptureNode,
   enum_id: SymbolId
 ): SymbolId {
@@ -121,7 +113,7 @@ function create_enum_member_id(
 /**
  * Create a method signature symbol ID for interface methods
  */
-function create_method_signature_id(
+export function create_method_signature_id(
   capture: CaptureNode,
   interface_name: SymbolName
 ): SymbolId {
@@ -133,7 +125,7 @@ function create_method_signature_id(
 /**
  * Create a property signature symbol ID for interface properties
  */
-function create_property_signature_id(capture: CaptureNode): SymbolId {
+export function create_property_signature_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
   return property_symbol(name, location);
@@ -142,7 +134,7 @@ function create_property_signature_id(capture: CaptureNode): SymbolId {
 /**
  * Create a class symbol ID
  */
-function create_class_id(capture: CaptureNode): SymbolId {
+export function create_class_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
   return class_symbol(name, location);
@@ -151,7 +143,7 @@ function create_class_id(capture: CaptureNode): SymbolId {
 /**
  * Create a method symbol ID
  */
-function create_method_id(capture: CaptureNode): SymbolId {
+export function create_method_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
   return method_symbol(name, location);
@@ -178,7 +170,7 @@ function create_variable_id(capture: CaptureNode): SymbolId {
 /**
  * Create a parameter symbol ID
  */
-function create_parameter_id(capture: CaptureNode): SymbolId {
+export function create_parameter_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
   return parameter_symbol(name, location);
@@ -187,7 +179,7 @@ function create_parameter_id(capture: CaptureNode): SymbolId {
 /**
  * Create a property symbol ID
  */
-function create_property_id(capture: CaptureNode): SymbolId {
+export function create_property_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
   return property_symbol(name, location);
@@ -196,7 +188,7 @@ function create_property_id(capture: CaptureNode): SymbolId {
 /**
  * Determine availability based on node context
  */
-function determine_availability(node: SyntaxNode): SymbolAvailability {
+export function determine_availability(node: SyntaxNode): SymbolAvailability {
   // Check for export modifier
   // TODO: improve this with the use of scope information. TODO: also, downstream clients of this ('export' processing) should calculate the visibility based on the scope
   let current: SyntaxNode | null = node;
@@ -212,7 +204,9 @@ function determine_availability(node: SyntaxNode): SymbolAvailability {
 /**
  * Determine method availability (with access modifiers)
  */
-function determine_method_availability(node: SyntaxNode): SymbolAvailability {
+export function determine_method_availability(
+  node: SyntaxNode
+): SymbolAvailability {
   // Check for private/protected/public modifiers
   const parent = node.parent;
   if (parent) {
@@ -234,19 +228,19 @@ function determine_method_availability(node: SyntaxNode): SymbolAvailability {
 /**
  * Extract type parameters from a node
  */
-function extract_type_parameters(node: SyntaxNode | null): string[] {
+export function extract_type_parameters(node: SyntaxNode | null): SymbolName[] {
   if (!node) {
     return [];
   }
   const typeParams = node.childForFieldName?.("type_parameters");
   if (typeParams) {
     // Extract individual type parameter names
-    const params: string[] = [];
+    const params: SymbolName[] = [];
     for (const child of typeParams.children || []) {
       if (child.type === "type_parameter") {
         const nameNode = child.childForFieldName?.("name");
         if (nameNode) {
-          params.push(nameNode.text);
+          params.push(nameNode.text as SymbolName);
         }
       }
     }
@@ -258,7 +252,7 @@ function extract_type_parameters(node: SyntaxNode | null): string[] {
 /**
  * Extract interface extends clauses
  */
-function extract_interface_extends(node: SyntaxNode): SymbolName[] {
+export function extract_interface_extends(node: SyntaxNode): SymbolName[] {
   const extendsNode = node.childForFieldName?.("extends");
   if (extendsNode) {
     const interfaces: SymbolName[] = [];
@@ -275,7 +269,7 @@ function extract_interface_extends(node: SyntaxNode): SymbolName[] {
 /**
  * Extract implements interfaces for classes
  */
-function extract_implements(node: SyntaxNode): SymbolName[] {
+export function extract_implements(node: SyntaxNode): SymbolName[] {
   const heritage = node.childForFieldName?.("heritage");
   if (heritage) {
     const implementsClause = heritage.childForFieldName?.("implements_clause");
@@ -295,7 +289,7 @@ function extract_implements(node: SyntaxNode): SymbolName[] {
 /**
  * Extract access modifier from node
  */
-function extract_access_modifier(
+export function extract_access_modifier(
   node: SyntaxNode
 ): "public" | "private" | "protected" | undefined {
   const parent = node.parent;
@@ -312,7 +306,7 @@ function extract_access_modifier(
 /**
  * Check if property is readonly
  */
-function is_readonly_property(node: SyntaxNode): boolean {
+export function is_readonly_property(node: SyntaxNode): boolean {
   const parent = node.parent;
   if (parent) {
     for (const child of parent.children || []) {
@@ -325,7 +319,7 @@ function is_readonly_property(node: SyntaxNode): boolean {
 /**
  * Check if property/method is optional
  */
-function is_optional_member(node: SyntaxNode): boolean {
+export function is_optional_member(node: SyntaxNode): boolean {
   const parent = node.parent;
   if (parent) {
     // Check for optional token (?)
@@ -339,7 +333,7 @@ function is_optional_member(node: SyntaxNode): boolean {
 /**
  * Check if class is abstract
  */
-function is_abstract_class(node: SyntaxNode): boolean {
+export function is_abstract_class(node: SyntaxNode): boolean {
   const parent = node.parent;
   return parent?.type === "abstract_class_declaration";
 }
@@ -347,7 +341,7 @@ function is_abstract_class(node: SyntaxNode): boolean {
 /**
  * Check if method is abstract
  */
-function is_abstract_method(node: SyntaxNode): boolean {
+export function is_abstract_method(node: SyntaxNode): boolean {
   const parent = node.parent;
   if (parent) {
     for (const child of parent.children || []) {
@@ -360,7 +354,7 @@ function is_abstract_method(node: SyntaxNode): boolean {
 /**
  * Check if method is static
  */
-function is_static_method(node: SyntaxNode): boolean {
+export function is_static_method(node: SyntaxNode): boolean {
   const parent = node.parent;
   if (parent) {
     for (const child of parent.children || []) {
@@ -373,7 +367,7 @@ function is_static_method(node: SyntaxNode): boolean {
 /**
  * Check if method is async
  */
-function is_async_method(node: SyntaxNode): boolean {
+export function is_async_method(node: SyntaxNode): boolean {
   const parent = node.parent;
   if (parent) {
     for (const child of parent.children || []) {
@@ -386,7 +380,7 @@ function is_async_method(node: SyntaxNode): boolean {
 /**
  * Extract return type from function/method
  */
-function extract_return_type(node: SyntaxNode): SymbolName | undefined {
+export function extract_return_type(node: SyntaxNode): SymbolName | undefined {
   const returnType = node.parent?.childForFieldName?.("return_type");
   if (returnType) {
     // Skip the colon and get the actual type
@@ -402,7 +396,7 @@ function extract_return_type(node: SyntaxNode): SymbolName | undefined {
 /**
  * Extract type expression from type alias
  */
-function extract_type_expression(node: SyntaxNode): string | undefined {
+export function extract_type_expression(node: SyntaxNode): string | undefined {
   const parent = node.parent;
   if (parent?.type === "type_alias_declaration") {
     const value = parent.childForFieldName?.("value");
@@ -414,7 +408,9 @@ function extract_type_expression(node: SyntaxNode): string | undefined {
 /**
  * Extract enum value if present
  */
-function extract_enum_value(node: SyntaxNode): string | number | undefined {
+export function extract_enum_value(
+  node: SyntaxNode
+): string | number | undefined {
   const parent = node.parent;
   if (parent?.type === "enum_assignment") {
     const value = parent.childForFieldName?.("value");
@@ -433,7 +429,7 @@ function extract_enum_value(node: SyntaxNode): string | number | undefined {
 /**
  * Check if enum is const
  */
-function is_const_enum(node: SyntaxNode): boolean {
+export function is_const_enum(node: SyntaxNode): boolean {
   const parent = node.parent;
   if (parent) {
     // Check for const modifier
@@ -449,7 +445,7 @@ function is_const_enum(node: SyntaxNode): boolean {
 /**
  * Extract decorator name
  */
-function extract_decorator_name(node: SyntaxNode): SymbolName {
+export function extract_decorator_name(node: SyntaxNode): SymbolName {
   if (node.type === "identifier") {
     return node.text as SymbolName;
   }
@@ -466,7 +462,7 @@ function extract_decorator_name(node: SyntaxNode): SymbolName {
 /**
  * Extract decorator arguments if present
  */
-function extract_decorator_arguments(node: SyntaxNode): string[] {
+export function extract_decorator_arguments(node: SyntaxNode): string[] {
   if (node.type === "call_expression") {
     const args = node.childForFieldName?.("arguments");
     if (args) {
@@ -485,7 +481,9 @@ function extract_decorator_arguments(node: SyntaxNode): string[] {
 /**
  * Find containing class by traversing up the AST
  */
-function find_containing_class(capture: CaptureNode): SymbolId | undefined {
+export function find_containing_class(
+  capture: CaptureNode
+): SymbolId | undefined {
   let node = capture.node.parent;
 
   while (node) {
@@ -508,7 +506,9 @@ function find_containing_class(capture: CaptureNode): SymbolId | undefined {
 /**
  * Find containing interface by traversing up the AST
  */
-function find_containing_interface(capture: CaptureNode): SymbolId | undefined {
+export function find_containing_interface(
+  capture: CaptureNode
+): SymbolId | undefined {
   let node = capture.node.parent;
 
   while (node) {
@@ -527,7 +527,9 @@ function find_containing_interface(capture: CaptureNode): SymbolId | undefined {
 /**
  * Find containing enum by traversing up the AST
  */
-function find_containing_enum(capture: CaptureNode): SymbolId | undefined {
+export function find_containing_enum(
+  capture: CaptureNode
+): SymbolId | undefined {
   let node = capture.node.parent;
 
   while (node) {
@@ -547,7 +549,7 @@ function find_containing_enum(capture: CaptureNode): SymbolId | undefined {
 /**
  * Find containing callable (function/method)
  */
-function find_containing_callable(capture: CaptureNode): SymbolId {
+export function find_containing_callable(capture: CaptureNode): SymbolId {
   let node = capture.node.parent;
 
   while (node) {
@@ -588,7 +590,9 @@ function find_containing_callable(capture: CaptureNode): SymbolId {
 /**
  * Extract property type
  */
-function extract_property_type(node: SyntaxNode): SymbolName | undefined {
+export function extract_property_type(
+  node: SyntaxNode
+): SymbolName | undefined {
   const typeAnnotation = node.parent?.childForFieldName?.("type");
   if (typeAnnotation) {
     // Skip the colon and get the actual type
@@ -604,14 +608,18 @@ function extract_property_type(node: SyntaxNode): SymbolName | undefined {
 /**
  * Extract parameter type
  */
-function extract_parameter_type(node: SyntaxNode): SymbolName | undefined {
+export function extract_parameter_type(
+  node: SyntaxNode
+): SymbolName | undefined {
   return extract_property_type(node);
 }
 
 /**
  * Find decorator target (class, method, or property being decorated)
  */
-function find_decorator_target(capture: CaptureNode): SymbolId | undefined {
+export function find_decorator_target(
+  capture: CaptureNode
+): SymbolId | undefined {
   // Decorator node's next sibling is typically the target
   const parent = capture.node.parent;
   if (parent) {
@@ -661,457 +669,3 @@ function find_decorator_target(capture: CaptureNode): SymbolId | undefined {
   }
   return undefined;
 }
-
-// ============================================================================
-// TypeScript Builder Configuration
-// ============================================================================
-
-export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
-  // ============================================================================
-  // JAVASCRIPT FOUNDATION - Start with all JavaScript mappings
-  // ============================================================================
-  ...Array.from(JAVASCRIPT_BUILDER_CONFIG),
-
-  // ============================================================================
-  // INTERFACES
-  // ============================================================================
-  [
-    "definition.interface",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const interface_id = create_interface_id(capture);
-        const parent = capture.node.parent; // interface_declaration
-        const extends_clause = parent ? extract_interface_extends(parent) : [];
-
-        builder.add_interface({
-          symbol_id: interface_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          availability: determine_availability(capture.node),
-          extends: extends_clause,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.interface.method",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const interface_id = find_containing_interface(capture);
-        if (!interface_id) return;
-
-        const method_id = create_method_signature_id(capture, capture.text);
-
-        builder.add_method_signature_to_interface(interface_id, {
-          symbol_id: method_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          optional: is_optional_member(capture.node),
-          type_parameters: extract_type_parameters(capture.node.parent),
-          return_type: extract_return_type(capture.node),
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.interface.property",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const interface_id = find_containing_interface(capture);
-        if (!interface_id) return;
-
-        const prop_id = create_property_signature_id(capture);
-
-        builder.add_property_signature_to_interface(interface_id, {
-          symbol_id: prop_id,
-          name: capture.text,
-          location: capture.location,
-          type: extract_property_type(capture.node),
-          optional: is_optional_member(capture.node),
-          readonly: is_readonly_property(capture.node),
-        });
-      },
-    },
-  ],
-
-  // ============================================================================
-  // TYPE ALIASES
-  // ============================================================================
-  [
-    "definition.type_alias",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const type_id = create_type_alias_id(capture);
-
-        builder.add_type_alias({
-          kind: "type_alias",
-          symbol_id: type_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          availability: determine_availability(capture.node),
-          type_expression: extract_type_expression(capture.node),
-          generics: capture.node.parent
-            ? extract_type_parameters(capture.node.parent)
-            : [],
-        });
-      },
-    },
-  ],
-
-  // ============================================================================
-  // ENUMS
-  // ============================================================================
-  [
-    "definition.enum",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const enum_id = create_enum_id(capture);
-
-        builder.add_enum({
-          symbol_id: enum_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          availability: determine_availability(capture.node),
-          is_const: is_const_enum(capture.node),
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.enum.member",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const enum_id = find_containing_enum(capture);
-        if (!enum_id) return;
-
-        const member_id = create_enum_member_id(capture, enum_id);
-
-        builder.add_enum_member(enum_id, {
-          symbol_id: member_id,
-          name: capture.text,
-          location: capture.location,
-          value: extract_enum_value(capture.node),
-        });
-      },
-    },
-  ],
-
-  // ============================================================================
-  // NAMESPACES
-  // ============================================================================
-  [
-    "definition.namespace",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const namespace_id = create_namespace_id(capture);
-
-        builder.add_namespace({
-          symbol_id: namespace_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          availability: determine_availability(capture.node),
-        });
-      },
-    },
-  ],
-
-  // ============================================================================
-  // DECORATORS
-  // ============================================================================
-  [
-    "decorator.class",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const target_id = find_decorator_target(capture);
-        if (!target_id) return;
-
-        const decorator_name = extract_decorator_name(capture.node);
-
-        builder.add_decorator_to_target(target_id, {
-          name: decorator_name,
-          arguments: extract_decorator_arguments(capture.node),
-          location: capture.location,
-        });
-      },
-    },
-  ],
-
-  [
-    "decorator.method",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const target_id = find_decorator_target(capture);
-        if (!target_id) return;
-
-        const decorator_name = extract_decorator_name(capture.node);
-
-        builder.add_decorator_to_target(target_id, {
-          name: decorator_name,
-          arguments: extract_decorator_arguments(capture.node),
-          location: capture.location,
-        });
-      },
-    },
-  ],
-
-  [
-    "decorator.property",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const target_id = find_decorator_target(capture);
-        if (!target_id) return;
-
-        const decorator_name = extract_decorator_name(capture.node);
-
-        builder.add_decorator_to_target(target_id, {
-          name: decorator_name,
-          arguments: extract_decorator_arguments(capture.node),
-          location: capture.location,
-        });
-      },
-    },
-  ],
-
-  // ============================================================================
-  // ENHANCED CLASS DEFINITIONS - Override JavaScript version with TypeScript features
-  // ============================================================================
-  [
-    "definition.class",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const class_id = create_class_id(capture);
-        const parent = capture.node.parent; // class_declaration or abstract_class_declaration
-
-        // Extract extends
-        const heritage = parent?.childForFieldName?.("heritage");
-        let extends_classes: SymbolName[] = [];
-        if (heritage) {
-          const extendsClause = heritage.childForFieldName?.("extends_clause");
-          if (extendsClause) {
-            const superclass = extendsClause.childForFieldName?.("value");
-            if (superclass) {
-              extends_classes = [superclass.text as SymbolName];
-            }
-          }
-        }
-
-        builder.add_class({
-          symbol_id: class_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          availability: determine_availability(capture.node),
-          abstract: is_abstract_class(capture.node),
-          extends: extends_classes,
-          implements: parent ? extract_implements(parent) : [],
-          type_parameters: parent ? extract_type_parameters(parent) : [],
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.method",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const class_id = find_containing_class(capture);
-        if (!class_id) return;
-
-        const method_id = create_method_id(capture);
-        const parent = capture.node.parent; // method_definition
-
-        builder.add_method_to_class(class_id, {
-          symbol_id: method_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          availability: determine_method_availability(capture.node),
-          access_modifier: extract_access_modifier(capture.node),
-          abstract: is_abstract_method(capture.node),
-          static: is_static_method(capture.node),
-          async: is_async_method(capture.node),
-          return_type: extract_return_type(capture.node),
-          type_parameters: parent ? extract_type_parameters(parent) : [],
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.field",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const class_id = find_containing_class(capture);
-        if (!class_id) return;
-
-        const prop_id = create_property_id(capture);
-
-        builder.add_property_to_class(class_id, {
-          symbol_id: prop_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          availability: determine_method_availability(capture.node),
-          access_modifier: extract_access_modifier(capture.node),
-          static: is_static_method(capture.node),
-          readonly: is_readonly_property(capture.node),
-          abstract: is_abstract_method(capture.node),
-          type: extract_property_type(capture.node),
-          initial_value: undefined, // Would need to extract from node
-        });
-      },
-    },
-  ],
-
-  // ============================================================================
-  // OPTIONAL PARAMETERS
-  // ============================================================================
-  [
-    "definition.parameter.optional",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const param_id = create_parameter_id(capture);
-        const parent_id = find_containing_callable(capture);
-
-        builder.add_parameter_to_callable(parent_id, {
-          symbol_id: param_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          type: extract_parameter_type(capture.node),
-          default_value: undefined,
-          optional: true,
-        });
-      },
-    },
-  ],
-
-  // ============================================================================
-  // PARAMETER PROPERTIES (Constructor parameters that become properties)
-  // ============================================================================
-  [
-    "param.property",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        // This is a constructor parameter that becomes a property
-        const class_id = find_containing_class(capture);
-        if (!class_id) return;
-
-        const prop_id = create_property_id(capture);
-        const parent = capture.node.parent; // required_parameter
-
-        builder.add_property_to_class(class_id, {
-          symbol_id: prop_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          availability: determine_method_availability(capture.node),
-          access_modifier: extract_access_modifier(capture.node),
-          readonly: is_readonly_property(capture.node),
-          type: extract_parameter_type(capture.node),
-          initial_value: undefined,
-          is_parameter_property: true,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.field.param_property",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        // This is the field definition aspect of a parameter property
-        const class_id = find_containing_class(capture);
-        if (!class_id) return;
-
-        const prop_id = create_property_id(capture);
-        const parent = capture.node.parent; // required_parameter
-
-        builder.add_property_to_class(class_id, {
-          symbol_id: prop_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          availability: determine_method_availability(capture.node),
-          access_modifier: extract_access_modifier(capture.node),
-          readonly: is_readonly_property(capture.node),
-          type: extract_parameter_type(capture.node),
-          initial_value: undefined,
-          is_parameter_property: true,
-        });
-      },
-    },
-  ],
-]);
