@@ -40,6 +40,7 @@ import { TYPESCRIPT_BUILDER_CONFIG } from "./query_code_tree/language_configs/ty
 import { PYTHON_BUILDER_CONFIG } from "./query_code_tree/language_configs/python_builder";
 import { RUST_BUILDER_CONFIG } from "./query_code_tree/language_configs/rust_builder";
 import { JAVASCRIPT_METADATA_EXTRACTORS } from "./query_code_tree/language_configs/javascript_metadata";
+import { TYPESCRIPT_METADATA_EXTRACTORS } from "./query_code_tree/language_configs/typescript_metadata";
 import { ParsedFile } from "./file_utils";
 import { extract_type_members } from "./definitions/type_members";
 import { process_type_annotations } from "./references/type_annotation_references";
@@ -186,8 +187,9 @@ function get_language_config(language: Language): LanguageBuilderConfig {
 function get_metadata_extractors(language: Language): MetadataExtractors | undefined {
   switch (language) {
     case "javascript":
-    case "typescript":
       return JAVASCRIPT_METADATA_EXTRACTORS;
+    case "typescript":
+      return TYPESCRIPT_METADATA_EXTRACTORS;
     case "python":
       // TODO: Task 104.4 - Import and return python_metadata extractors
       return undefined;
