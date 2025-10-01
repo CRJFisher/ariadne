@@ -1,0 +1,1331 @@
+
+ RUN  v3.2.4 /Users/chuck/workspace/ariadne
+
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts (120 tests | 91 failed | 24 skipped) 993ms
+   × Semantic Index - Rust > Basic Structs and Enums > should parse struct definitions and implementations 13ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/basic_structs_and_enums.rs'
+   × Semantic Index - Rust > Basic Structs and Enums > should distinguish between associated functions and methods 1ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/basic_structs_and_enums.rs'
+   × Semantic Index - Rust > Traits and Generics > should parse trait definitions and implementations 1ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/traits_and_generics.rs'
+   × Semantic Index - Rust > Traits and Generics > should parse generic types and constraints 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/traits_and_generics.rs'
+   × Semantic Index - Rust > Traits and Generics > should parse trait implementations 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/traits_and_generics.rs'
+   × Semantic Index - Rust > Functions and Closures > should parse function definitions 1ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+   × Semantic Index - Rust > Functions and Closures > should parse closures 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+   × Semantic Index - Rust > Functions and Closures > should parse function parameters and return types 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+   × Semantic Index - Rust > Functions and Closures > should parse const functions with modifiers 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+   × Semantic Index - Rust > Functions and Closures > should parse function pointer types 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+   × Semantic Index - Rust > Functions and Closures > should parse function trait objects (Fn, FnMut, FnOnce) 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+   × Semantic Index - Rust > Functions and Closures > should parse higher-order function calls 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+   × Semantic Index - Rust > Functions and Closures > should parse impl Trait functions with modifiers 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+   × Semantic Index - Rust > Functions and Closures > should parse advanced closure patterns 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+   × Semantic Index - Rust > Functions and Closures > should parse unsafe and generic const functions 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+   × Semantic Index - Rust > Functions and Closures > should comprehensively test function type ecosystem 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+   × Semantic Index - Rust > Modules and Visibility > should parse module declarations and visibility modifiers 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/modules_and_visibility.rs'
+   × Semantic Index - Rust > Modules and Visibility > should parse use statements and imports 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/modules_and_visibility.rs'
+   × Semantic Index - Rust > Modules and Visibility > should parse re-exports and pub use statements 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/modules_and_visibility.rs'
+   × Semantic Index - Rust > Modules and Visibility > should comprehensively parse all module and visibility features 1ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_modules_and_visibility.rs'
+   × Semantic Index - Rust > Modules and Visibility > should handle edge cases in module and visibility patterns 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_modules_and_visibility.rs'
+   × Semantic Index - Rust > Modules and Visibility > should validate specific module system semantics 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_modules_and_visibility.rs'
+   × Semantic Index - Rust > Modules and Visibility > should handle complex edge cases and corner cases 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/module_edge_cases.rs'
+   × Semantic Index - Rust > Ownership and References > should parse lifetime annotations 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/ownership_and_patterns.rs'
+   × Semantic Index - Rust > Ownership and References > should parse comprehensive ownership patterns 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/ownership_and_references.rs'
+   × Semantic Index - Rust > Ownership and References > should parse reference types in function signatures 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/ownership_and_references.rs'
+   × Semantic Index - Rust > Ownership and References > should parse Box smart pointers comprehensively 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/ownership_and_references.rs'
+   × Semantic Index - Rust > Ownership and References > should parse Rc smart pointers with cloning 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/ownership_and_references.rs'
+   × Semantic Index - Rust > Ownership and References > should parse RefCell interior mutability patterns 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/ownership_and_references.rs'
+   × Semantic Index - Rust > Ownership and References > should parse Arc and Mutex thread-safety patterns 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/ownership_and_references.rs'
+   × Semantic Index - Rust > Ownership and References > should parse pattern matching constructs 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/ownership_and_patterns.rs'
+   × Semantic Index - Rust > Ownership and References > should comprehensively parse all pattern matching constructs 3ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_pattern_matching.rs'
+   × Semantic Index - Rust > Ownership and References > should detect specific pattern matching constructs in detail 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_pattern_matching.rs'
+   × Semantic Index - Rust > Pattern Matching Integration > should integrate pattern matching with control flow analysis 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_pattern_matching.rs'
+   × Semantic Index - Rust > Pattern Matching Integration > should handle pattern variables in different scopes correctly 151ms
+     → Cannot read properties of undefined (reading 'filter')
+   ✓ Semantic Index - Rust > Method Calls and Type Resolution with Metadata > should track method calls with receivers 66ms
+   ✓ Semantic Index - Rust > Method Calls and Type Resolution with Metadata > should handle chained method calls 62ms
+   ✓ Semantic Index - Rust > Method Calls and Type Resolution with Metadata > should capture type references with type_info metadata 63ms
+   ✓ Semantic Index - Rust > Method Calls and Type Resolution with Metadata > should capture field access chains with metadata 61ms
+   ✓ Semantic Index - Rust > Method Calls and Type Resolution with Metadata > should capture struct instantiation with metadata 61ms
+   × Semantic Index - Rust > Comprehensive Capture Coverage > should capture async functions and blocks 59ms
+     → Cannot read properties of undefined (reading 'filter')
+   × Semantic Index - Rust > Comprehensive Capture Coverage > should capture const generics and associated types 59ms
+     → Cannot read properties of undefined (reading 'filter')
+   × Semantic Index - Rust > Comprehensive Capture Coverage > should capture closures with parameters 60ms
+     → Cannot read properties of undefined (reading 'filter')
+   × Semantic Index - Rust > Comprehensive Capture Coverage > should capture macro definitions and invocations 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/macros_and_metaprogramming.rs'
+   × Semantic Index - Rust > Comprehensive Capture Coverage > should comprehensively test macro system with full semantic index 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/macros_and_metaprogramming.rs'
+   × Semantic Index - Rust > Comprehensive Capture Coverage > should capture extern crate and module declarations 59ms
+     → Cannot read properties of undefined (reading 'filter')
+   × Semantic Index - Rust > Comprehensive Capture Coverage > should capture try expressions and await 60ms
+     → Cannot read properties of undefined (reading 'filter')
+   × Semantic Index - Rust > Comprehensive Capture Coverage > should capture visibility modifiers 59ms
+     → Cannot read properties of undefined (reading 'map')
+   × Semantic Index - Rust > Comprehensive Capture Coverage > should capture unsafe blocks and functions 59ms
+     → Cannot read properties of undefined (reading 'filter')
+   × Semantic Index - Rust > Comprehensive Capture Coverage > should capture loop variables and iterators 60ms
+     → Cannot read properties of undefined (reading 'filter')
+   × Semantic Index - Rust > Type System Integration > should build type registry with Rust types 3ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/basic_structs_and_enums.rs'
+   × Semantic Index - Rust > Type System Integration > should handle trait implementations in type system 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/traits_and_generics.rs'
+   × Semantic Index - Rust > Advanced Generics and Lifetimes > should parse advanced generic structures with complex constraints 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/advanced_generics_lifetimes.rs'
+   × Semantic Index - Rust > Advanced Generics and Lifetimes > should parse const generics with complex parameters 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/advanced_generics_lifetimes.rs'
+   × Semantic Index - Rust > Advanced Generics and Lifetimes > should parse advanced lifetime structures with multiple parameters 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/advanced_generics_lifetimes.rs'
+   × Semantic Index - Rust > Advanced Generics and Lifetimes > should parse combined generic and lifetime structures 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/advanced_generics_lifetimes.rs'
+   × Semantic Index - Rust > Advanced Generics and Lifetimes > should parse where clauses and complex type constraints 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/advanced_generics_lifetimes.rs'
+   × Semantic Index - Rust > Advanced Generics and Lifetimes > should parse higher-ranked trait bounds (HRTB) 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/advanced_generics_lifetimes.rs'
+   × Semantic Index - Rust > Advanced Generics and Lifetimes > should parse associated types with complex bounds 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/advanced_generics_lifetimes.rs'
+   × Semantic Index - Rust > Advanced Generics and Lifetimes > should build comprehensive type registry with advanced generics 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/advanced_generics_lifetimes.rs'
+   × Semantic Index - Rust > Advanced Generics and Lifetimes > should handle generic trait implementations with complex bounds 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/advanced_generics_lifetimes.rs'
+   × Semantic Index - Rust > Comprehensive Trait System > should parse all trait definition types 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_trait_system.rs'
+   × Semantic Index - Rust > Comprehensive Trait System > should parse trait methods with proper modifiers 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_trait_system.rs'
+   × Semantic Index - Rust > Comprehensive Trait System > should parse associated types and constants 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_trait_system.rs'
+   × Semantic Index - Rust > Comprehensive Trait System > should parse trait implementations 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_trait_system.rs'
+   × Semantic Index - Rust > Comprehensive Trait System > should parse generic trait implementations 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_trait_system.rs'
+   × Semantic Index - Rust > Comprehensive Trait System > should handle complex trait bounds and where clauses 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_trait_system.rs'
+   × Semantic Index - Rust > Comprehensive Trait System > should parse supertrait relationships 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_trait_system.rs'
+   × Semantic Index - Rust > Comprehensive Trait System > should parse operator overloading through traits 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_trait_system.rs'
+   × Semantic Index - Rust > Comprehensive Trait System > should build comprehensive type registry with trait information 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_trait_system.rs'
+   × Semantic Index - Rust > Comprehensive Trait System > should handle associated type implementations 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_trait_system.rs'
+   × Semantic Index - Rust > Comprehensive Trait System > should handle trait objects and dynamic dispatch patterns 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_trait_system.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should capture complex async functions from async_and_concurrency fixture 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should capture async trait methods and implementations 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should capture await expressions and async blocks 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should capture async closures and complex closure patterns 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should capture async closures from functions_and_closures fixture 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should capture tokio spawn and task creation patterns 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should capture channel and concurrency primitives 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should capture async macro patterns (select!, join!) 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should capture Pin and Future trait implementations 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should capture async recursion and boxed futures 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should capture stream processing and async iterators 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should capture timeout and cancellation patterns 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should comprehensively test async/await patterns from dedicated fixture 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_patterns_comprehensive.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should capture async blocks and async move blocks 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_patterns_comprehensive.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should capture await expressions with various patterns 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_patterns_comprehensive.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should capture try expressions (?) with await 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_patterns_comprehensive.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should capture async closures and complex closure patterns 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_patterns_comprehensive.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should capture Future trait bounds and return types 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_patterns_comprehensive.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should capture async trait implementations 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_patterns_comprehensive.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should capture complex nested async patterns 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_patterns_comprehensive.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should capture async function modifiers and visibility 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_patterns_comprehensive.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should capture comprehensive async/await integration patterns 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_patterns_comprehensive.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should handle async/await patterns from enhanced async_and_concurrency fixture 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+   × Semantic Index - Rust > Comprehensive Async/Await Support > should validate end-to-end async/await semantic index integration 0ms
+     → ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > Const Generics Integration > should capture const generic parameters in comprehensive scenarios
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > Const Generics Integration > should capture const generic constraints and bounds
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > Const Generics Integration > should capture const functions with const generics
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > Associated Types Integration > should capture associated types in trait definitions
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > Associated Types Integration > should capture associated type implementations
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > Associated Types Integration > should capture associated constants in traits
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > Associated Types Integration > should handle generic associated types (GATs)
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > Unsafe Blocks and Functions Integration > should capture unsafe functions with comprehensive patterns
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > Unsafe Blocks and Functions Integration > should capture unsafe blocks within safe functions
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > Unsafe Blocks and Functions Integration > should capture unsafe traits and implementations
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > Unsafe Blocks and Functions Integration > should handle nested unsafe blocks and complex patterns
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > Loop Constructs Integration > should capture different loop types with comprehensive patterns
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > Loop Constructs Integration > should capture loop variables and destructuring patterns
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > Loop Constructs Integration > should handle complex iterator patterns and method chains
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > Loop Constructs Integration > should capture nested loops and labeled breaks
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > Method Calls with Receivers Integration > should capture method calls with different receiver types
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > Method Calls with Receivers Integration > should capture associated function calls vs instance methods
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > Method Calls with Receivers Integration > should handle builder pattern and method chaining
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > Method Calls with Receivers Integration > should capture complex method call patterns
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > Method Calls with Receivers Integration > should handle generic method calls and transformations
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > Complex Integration Scenarios > should handle combinations of advanced features
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > Complex Integration Scenarios > should handle test data module with comprehensive patterns
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > Complex Integration Scenarios > should maintain semantic consistency across all advanced features
+   ↓ Semantic Index - Rust > Advanced Rust Constructs Integration > should provide comprehensive end-to-end validation of all advanced features
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Advanced Rust Constructs Integration
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/advanced_constructs_comprehensive.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:4636:29
+    4634| 
+    4635|     beforeAll(() => {
+    4636|       advancedFixtureCode = readFileSync(
+       |                             ^
+    4637|         join(FIXTURES_DIR, "advanced_constructs_comprehensive.rs"),
+    4638|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/92]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 91 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Basic Structs and Enums > should parse struct definitions and implementations
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/basic_structs_and_enums.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:34:20
+     32|   describe("Basic Structs and Enums", () => {
+     33|     it("should parse struct definitions and implementations", () => {
+     34|       const code = readFileSync(
+       |                    ^
+     35|         join(FIXTURES_DIR, "basic_structs_and_enums.rs"),
+     36|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Basic Structs and Enums > should distinguish between associated functions and methods
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/basic_structs_and_enums.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:87:20
+     85| 
+     86|     it("should distinguish between associated functions and methods", …
+     87|       const code = readFileSync(
+       |                    ^
+     88|         join(FIXTURES_DIR, "basic_structs_and_enums.rs"),
+     89|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Traits and Generics > should parse trait definitions and implementations
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/traits_and_generics.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:118:20
+    116|   describe("Traits and Generics", () => {
+    117|     it("should parse trait definitions and implementations", () => {
+    118|       const code = readFileSync(
+       |                    ^
+    119|         join(FIXTURES_DIR, "traits_and_generics.rs"),
+    120|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Traits and Generics > should parse generic types and constraints
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/traits_and_generics.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:154:20
+    152| 
+    153|     it("should parse generic types and constraints", () => {
+    154|       const code = readFileSync(
+       |                    ^
+    155|         join(FIXTURES_DIR, "traits_and_generics.rs"),
+    156|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Traits and Generics > should parse trait implementations
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/traits_and_generics.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:185:20
+    183| 
+    184|     it("should parse trait implementations", () => {
+    185|       const code = readFileSync(
+       |                    ^
+    186|         join(FIXTURES_DIR, "traits_and_generics.rs"),
+    187|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Functions and Closures > should parse function definitions
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:206:20
+    204|   describe("Functions and Closures", () => {
+    205|     it("should parse function definitions", () => {
+    206|       const code = readFileSync(
+       |                    ^
+    207|         join(FIXTURES_DIR, "functions_and_closures.rs"),
+    208|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Functions and Closures > should parse closures
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:237:20
+    235| 
+    236|     it("should parse closures", () => {
+    237|       const code = readFileSync(
+       |                    ^
+    238|         join(FIXTURES_DIR, "functions_and_closures.rs"),
+    239|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Functions and Closures > should parse function parameters and return types
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:263:20
+    261| 
+    262|     it("should parse function parameters and return types", () => {
+    263|       const code = readFileSync(
+       |                    ^
+    264|         join(FIXTURES_DIR, "functions_and_closures.rs"),
+    265|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Functions and Closures > should parse const functions with modifiers
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:286:20
+    284| 
+    285|     it("should parse const functions with modifiers", () => {
+    286|       const code = readFileSync(
+       |                    ^
+    287|         join(FIXTURES_DIR, "functions_and_closures.rs"),
+    288|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Functions and Closures > should parse function pointer types
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:314:20
+    312| 
+    313|     it("should parse function pointer types", () => {
+    314|       const code = readFileSync(
+       |                    ^
+    315|         join(FIXTURES_DIR, "functions_and_closures.rs"),
+    316|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Functions and Closures > should parse function trait objects (Fn, FnMut, FnOnce)
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:348:20
+    346| 
+    347|     it("should parse function trait objects (Fn, FnMut, FnOnce)", () =…
+    348|       const code = readFileSync(
+       |                    ^
+    349|         join(FIXTURES_DIR, "functions_and_closures.rs"),
+    350|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Functions and Closures > should parse higher-order function calls
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:382:20
+    380| 
+    381|     it("should parse higher-order function calls", () => {
+    382|       const code = readFileSync(
+       |                    ^
+    383|         join(FIXTURES_DIR, "functions_and_closures.rs"),
+    384|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Functions and Closures > should parse impl Trait functions with modifiers
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:430:20
+    428| 
+    429|     it("should parse impl Trait functions with modifiers", () => {
+    430|       const code = readFileSync(
+       |                    ^
+    431|         join(FIXTURES_DIR, "functions_and_closures.rs"),
+    432|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Functions and Closures > should parse advanced closure patterns
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:477:20
+    475| 
+    476|     it("should parse advanced closure patterns", () => {
+    477|       const code = readFileSync(
+       |                    ^
+    478|         join(FIXTURES_DIR, "functions_and_closures.rs"),
+    479|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Functions and Closures > should parse unsafe and generic const functions
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:514:20
+    512| 
+    513|     it("should parse unsafe and generic const functions", () => {
+    514|       const code = readFileSync(
+       |                    ^
+    515|         join(FIXTURES_DIR, "functions_and_closures.rs"),
+    516|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Functions and Closures > should comprehensively test function type ecosystem
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:548:20
+    546| 
+    547|     it("should comprehensively test function type ecosystem", () => {
+    548|       const code = readFileSync(
+       |                    ^
+    549|         join(FIXTURES_DIR, "functions_and_closures.rs"),
+    550|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Modules and Visibility > should parse module declarations and visibility modifiers
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/modules_and_visibility.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:583:20
+    581|   describe("Modules and Visibility", () => {
+    582|     it("should parse module declarations and visibility modifiers", ()…
+    583|       const code = readFileSync(
+       |                    ^
+    584|         join(FIXTURES_DIR, "modules_and_visibility.rs"),
+    585|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Modules and Visibility > should parse use statements and imports
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/modules_and_visibility.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:615:20
+    613| 
+    614|     it("should parse use statements and imports", () => {
+    615|       const code = readFileSync(
+       |                    ^
+    616|         join(FIXTURES_DIR, "modules_and_visibility.rs"),
+    617|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Modules and Visibility > should parse re-exports and pub use statements
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/modules_and_visibility.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:642:20
+    640| 
+    641|     it("should parse re-exports and pub use statements", () => {
+    642|       const code = readFileSync(
+       |                    ^
+    643|         join(FIXTURES_DIR, "modules_and_visibility.rs"),
+    644|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Modules and Visibility > should comprehensively parse all module and visibility features
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_modules_and_visibility.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:705:20
+    703| 
+    704|     it("should comprehensively parse all module and visibility feature…
+    705|       const code = readFileSync(
+       |                    ^
+    706|         join(FIXTURES_DIR, "comprehensive_modules_and_visibility.rs"),
+    707|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Modules and Visibility > should handle edge cases in module and visibility patterns
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_modules_and_visibility.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:1007:20
+    1005| 
+    1006|     it("should handle edge cases in module and visibility patterns", (…
+    1007|       const code = readFileSync(
+       |                    ^
+    1008|         join(FIXTURES_DIR, "comprehensive_modules_and_visibility.rs"),
+    1009|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Modules and Visibility > should validate specific module system semantics
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_modules_and_visibility.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:1136:20
+    1134| 
+    1135|     it("should validate specific module system semantics", () => {
+    1136|       const code = readFileSync(
+       |                    ^
+    1137|         join(FIXTURES_DIR, "comprehensive_modules_and_visibility.rs"),
+    1138|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Modules and Visibility > should handle complex edge cases and corner cases
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/module_edge_cases.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:1272:20
+    1270| 
+    1271|     it("should handle complex edge cases and corner cases", () => {
+    1272|       const code = readFileSync(
+       |                    ^
+    1273|         join(FIXTURES_DIR, "module_edge_cases.rs"),
+    1274|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Ownership and References > should parse lifetime annotations
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/ownership_and_patterns.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:1529:20
+    1527|   describe("Ownership and References", () => {
+    1528|     it("should parse lifetime annotations", () => {
+    1529|       const code = readFileSync(
+       |                    ^
+    1530|         join(FIXTURES_DIR, "ownership_and_patterns.rs"),
+    1531|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Ownership and References > should parse comprehensive ownership patterns
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/ownership_and_references.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:1555:20
+    1553| 
+    1554|     it("should parse comprehensive ownership patterns", () => {
+    1555|       const code = readFileSync(
+       |                    ^
+    1556|         join(FIXTURES_DIR, "ownership_and_references.rs"),
+    1557|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Ownership and References > should parse reference types in function signatures
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/ownership_and_references.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:1591:20
+    1589| 
+    1590|     it("should parse reference types in function signatures", () => {
+    1591|       const code = readFileSync(
+       |                    ^
+    1592|         join(FIXTURES_DIR, "ownership_and_references.rs"),
+    1593|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Ownership and References > should parse Box smart pointers comprehensively
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/ownership_and_references.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:1619:20
+    1617| 
+    1618|     it("should parse Box smart pointers comprehensively", () => {
+    1619|       const code = readFileSync(
+       |                    ^
+    1620|         join(FIXTURES_DIR, "ownership_and_references.rs"),
+    1621|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Ownership and References > should parse Rc smart pointers with cloning
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/ownership_and_references.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:1657:20
+    1655| 
+    1656|     it("should parse Rc smart pointers with cloning", () => {
+    1657|       const code = readFileSync(
+       |                    ^
+    1658|         join(FIXTURES_DIR, "ownership_and_references.rs"),
+    1659|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Ownership and References > should parse RefCell interior mutability patterns
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/ownership_and_references.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:1689:20
+    1687| 
+    1688|     it("should parse RefCell interior mutability patterns", () => {
+    1689|       const code = readFileSync(
+       |                    ^
+    1690|         join(FIXTURES_DIR, "ownership_and_references.rs"),
+    1691|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Ownership and References > should parse Arc and Mutex thread-safety patterns
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/ownership_and_references.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:1718:20
+    1716| 
+    1717|     it("should parse Arc and Mutex thread-safety patterns", () => {
+    1718|       const code = readFileSync(
+       |                    ^
+    1719|         join(FIXTURES_DIR, "ownership_and_references.rs"),
+    1720|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Ownership and References > should parse pattern matching constructs
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/ownership_and_patterns.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:1759:20
+    1757| 
+    1758|     it("should parse pattern matching constructs", () => {
+    1759|       const code = readFileSync(
+       |                    ^
+    1760|         join(FIXTURES_DIR, "ownership_and_patterns.rs"),
+    1761|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Ownership and References > should comprehensively parse all pattern matching constructs
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_pattern_matching.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:1786:20
+    1784| 
+    1785|     it("should comprehensively parse all pattern matching constructs",…
+    1786|       const code = readFileSync(
+       |                    ^
+    1787|         join(FIXTURES_DIR, "comprehensive_pattern_matching.rs"),
+    1788|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Ownership and References > should detect specific pattern matching constructs in detail
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_pattern_matching.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:1852:20
+    1850| 
+    1851|     it("should detect specific pattern matching constructs in detail",…
+    1852|       const code = readFileSync(
+       |                    ^
+    1853|         join(FIXTURES_DIR, "comprehensive_pattern_matching.rs"),
+    1854|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Pattern Matching Integration > should integrate pattern matching with control flow analysis
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_pattern_matching.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:1923:20
+    1921|   describe("Pattern Matching Integration", () => {
+    1922|     it("should integrate pattern matching with control flow analysis",…
+    1923|       const code = readFileSync(
+       |                    ^
+    1924|         join(FIXTURES_DIR, "comprehensive_pattern_matching.rs"),
+    1925|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Pattern Matching Integration > should handle pattern variables in different scopes correctly
+TypeError: Cannot read properties of undefined (reading 'filter')
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:1991:44
+    1989| 
+    1990|       // Check any variables are captured (pattern expressions show as…
+    1991|       const allVars = captures.definitions.filter(
+       |                                            ^
+    1992|         (d) => d.entity === SemanticEntity.VARIABLE
+    1993|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Capture Coverage > should capture async functions and blocks
+TypeError: Cannot read properties of undefined (reading 'filter')
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:2328:45
+    2326|       );
+    2327| 
+    2328|       const asyncFuncs = parsed.definitions.filter(
+       |                                             ^
+    2329|         (d) => d.entity === SemanticEntity.FUNCTION && d.modifiers?.is…
+    2330|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Capture Coverage > should capture const generics and associated types
+TypeError: Cannot read properties of undefined (reading 'filter')
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:2362:46
+    2360|       );
+    2361| 
+    2362|       const constParams = parsed.definitions.filter(
+       |                                              ^
+    2363|         (d) => d.entity === SemanticEntity.CONSTANT && d.symbol_name =…
+    2364|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Capture Coverage > should capture closures with parameters
+TypeError: Cannot read properties of undefined (reading 'filter')
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:2386:43
+    2384|       );
+    2385| 
+    2386|       const closures = parsed.definitions.filter(
+       |                                           ^
+    2387|         (d) => d.entity === SemanticEntity.FUNCTION && d.modifiers?.is…
+    2388|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Capture Coverage > should capture macro definitions and invocations
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/macros_and_metaprogramming.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:2402:20
+    2400| 
+    2401|     it("should capture macro definitions and invocations", () => {
+    2402|       const code = readFileSync(
+       |                    ^
+    2403|         join(FIXTURES_DIR, "macros_and_metaprogramming.rs"),
+    2404|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Capture Coverage > should comprehensively test macro system with full semantic index
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/macros_and_metaprogramming.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:2494:20
+    2492| 
+    2493|     it("should comprehensively test macro system with full semantic in…
+    2494|       const code = readFileSync(
+       |                    ^
+    2495|         join(FIXTURES_DIR, "macros_and_metaprogramming.rs"),
+    2496|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Capture Coverage > should capture extern crate and module declarations
+TypeError: Cannot read properties of undefined (reading 'filter')
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:2584:43
+    2582|       );
+    2583| 
+    2584|       const externCrates = parsed.imports.filter(
+       |                                           ^
+    2585|         (i) => i.symbol_name === "serde" || i.symbol_name === "regex"
+    2586|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Capture Coverage > should capture try expressions and await
+TypeError: Cannot read properties of undefined (reading 'filter')
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:2610:42
+    2608|       );
+    2609| 
+    2610|       const tryExprs = parsed.references.filter((r) =>
+       |                                          ^
+    2611|         // r.modifiers?.is_try || // TODO: is_try not yet implemented
+    2612|         r.symbol_name?.includes("?")
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Capture Coverage > should capture visibility modifiers
+TypeError: Cannot read properties of undefined (reading 'map')
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:2640:50
+    2638| 
+    2639|       // Since is_exported modifier isn't being set properly, check if…
+    2640|       const exportNames = new Set(parsed.exports.map((e) => e.symbol_n…
+       |                                                  ^
+    2641|       const publicDefs = parsed.definitions.filter(
+    2642|         (d) => d.modifiers?.is_exported || exportNames.has(d.symbol_na…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Capture Coverage > should capture unsafe blocks and functions
+TypeError: Cannot read properties of undefined (reading 'filter')
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:2666:46
+    2664|       );
+    2665| 
+    2666|       const unsafeFuncs = parsed.definitions.filter(
+       |                                              ^
+    2667|         (d) => d.entity === SemanticEntity.FUNCTION && d.modifiers?.is…
+    2668|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Capture Coverage > should capture loop variables and iterators
+TypeError: Cannot read properties of undefined (reading 'filter')
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:2702:43
+    2700|       );
+    2701| 
+    2702|       const loopVars = parsed.definitions.filter(
+       |                                           ^
+    2703|         (d) =>
+    2704|           d.entity === SemanticEntity.VARIABLE &&
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Type System Integration > should build type registry with Rust types
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/basic_structs_and_enums.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:2724:20
+    2722|   describe("Type System Integration", () => {
+    2723|     it("should build type registry with Rust types", () => {
+    2724|       const code = readFileSync(
+       |                    ^
+    2725|         join(FIXTURES_DIR, "basic_structs_and_enums.rs"),
+    2726|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Type System Integration > should handle trait implementations in type system
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/traits_and_generics.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:2761:20
+    2759| 
+    2760|     it("should handle trait implementations in type system", () => {
+    2761|       const code = readFileSync(
+       |                    ^
+    2762|         join(FIXTURES_DIR, "traits_and_generics.rs"),
+    2763|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Advanced Generics and Lifetimes > should parse advanced generic structures with complex constraints
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/advanced_generics_lifetimes.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:2787:20
+    2785|   describe("Advanced Generics and Lifetimes", () => {
+    2786|     it("should parse advanced generic structures with complex constrai…
+    2787|       const code = readFileSync(
+       |                    ^
+    2788|         join(FIXTURES_DIR, "advanced_generics_lifetimes.rs"),
+    2789|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Advanced Generics and Lifetimes > should parse const generics with complex parameters
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/advanced_generics_lifetimes.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:2853:20
+    2851| 
+    2852|     it("should parse const generics with complex parameters", () => {
+    2853|       const code = readFileSync(
+       |                    ^
+    2854|         join(FIXTURES_DIR, "advanced_generics_lifetimes.rs"),
+    2855|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Advanced Generics and Lifetimes > should parse advanced lifetime structures with multiple parameters
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/advanced_generics_lifetimes.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:2882:20
+    2880| 
+    2881|     it("should parse advanced lifetime structures with multiple parame…
+    2882|       const code = readFileSync(
+       |                    ^
+    2883|         join(FIXTURES_DIR, "advanced_generics_lifetimes.rs"),
+    2884|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[51/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Advanced Generics and Lifetimes > should parse combined generic and lifetime structures
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/advanced_generics_lifetimes.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:2923:20
+    2921| 
+    2922|     it("should parse combined generic and lifetime structures", () => {
+    2923|       const code = readFileSync(
+       |                    ^
+    2924|         join(FIXTURES_DIR, "advanced_generics_lifetimes.rs"),
+    2925|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[52/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Advanced Generics and Lifetimes > should parse where clauses and complex type constraints
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/advanced_generics_lifetimes.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:2962:20
+    2960| 
+    2961|     it("should parse where clauses and complex type constraints", () =…
+    2962|       const code = readFileSync(
+       |                    ^
+    2963|         join(FIXTURES_DIR, "advanced_generics_lifetimes.rs"),
+    2964|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[53/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Advanced Generics and Lifetimes > should parse higher-ranked trait bounds (HRTB)
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/advanced_generics_lifetimes.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:2998:20
+    2996| 
+    2997|     it("should parse higher-ranked trait bounds (HRTB)", () => {
+    2998|       const code = readFileSync(
+       |                    ^
+    2999|         join(FIXTURES_DIR, "advanced_generics_lifetimes.rs"),
+    3000|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[54/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Advanced Generics and Lifetimes > should parse associated types with complex bounds
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/advanced_generics_lifetimes.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3028:20
+    3026| 
+    3027|     it("should parse associated types with complex bounds", () => {
+    3028|       const code = readFileSync(
+       |                    ^
+    3029|         join(FIXTURES_DIR, "advanced_generics_lifetimes.rs"),
+    3030|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[55/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Advanced Generics and Lifetimes > should build comprehensive type registry with advanced generics
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/advanced_generics_lifetimes.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3059:20
+    3057| 
+    3058|     it("should build comprehensive type registry with advanced generic…
+    3059|       const code = readFileSync(
+       |                    ^
+    3060|         join(FIXTURES_DIR, "advanced_generics_lifetimes.rs"),
+    3061|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[56/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Advanced Generics and Lifetimes > should handle generic trait implementations with complex bounds
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/advanced_generics_lifetimes.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3100:20
+    3098| 
+    3099|     it("should handle generic trait implementations with complex bound…
+    3100|       const code = readFileSync(
+       |                    ^
+    3101|         join(FIXTURES_DIR, "advanced_generics_lifetimes.rs"),
+    3102|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[57/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Trait System > should parse all trait definition types
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_trait_system.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3127:20
+    3125|   describe("Comprehensive Trait System", () => {
+    3126|     it("should parse all trait definition types", () => {
+    3127|       const code = readFileSync(
+       |                    ^
+    3128|         join(FIXTURES_DIR, "comprehensive_trait_system.rs"),
+    3129|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[58/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Trait System > should parse trait methods with proper modifiers
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_trait_system.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3172:20
+    3170| 
+    3171|     it("should parse trait methods with proper modifiers", () => {
+    3172|       const code = readFileSync(
+       |                    ^
+    3173|         join(FIXTURES_DIR, "comprehensive_trait_system.rs"),
+    3174|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[59/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Trait System > should parse associated types and constants
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_trait_system.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3228:20
+    3226| 
+    3227|     it("should parse associated types and constants", () => {
+    3228|       const code = readFileSync(
+       |                    ^
+    3229|         join(FIXTURES_DIR, "comprehensive_trait_system.rs"),
+    3230|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[60/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Trait System > should parse trait implementations
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_trait_system.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3283:20
+    3281| 
+    3282|     it("should parse trait implementations", () => {
+    3283|       const code = readFileSync(
+       |                    ^
+    3284|         join(FIXTURES_DIR, "comprehensive_trait_system.rs"),
+    3285|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[61/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Trait System > should parse generic trait implementations
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_trait_system.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3322:20
+    3320| 
+    3321|     it("should parse generic trait implementations", () => {
+    3322|       const code = readFileSync(
+       |                    ^
+    3323|         join(FIXTURES_DIR, "comprehensive_trait_system.rs"),
+    3324|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[62/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Trait System > should handle complex trait bounds and where clauses
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_trait_system.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3352:20
+    3350| 
+    3351|     it("should handle complex trait bounds and where clauses", () => {
+    3352|       const code = readFileSync(
+       |                    ^
+    3353|         join(FIXTURES_DIR, "comprehensive_trait_system.rs"),
+    3354|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[63/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Trait System > should parse supertrait relationships
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_trait_system.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3384:20
+    3382| 
+    3383|     it("should parse supertrait relationships", () => {
+    3384|       const code = readFileSync(
+       |                    ^
+    3385|         join(FIXTURES_DIR, "comprehensive_trait_system.rs"),
+    3386|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[64/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Trait System > should parse operator overloading through traits
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_trait_system.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3421:20
+    3419| 
+    3420|     it("should parse operator overloading through traits", () => {
+    3421|       const code = readFileSync(
+       |                    ^
+    3422|         join(FIXTURES_DIR, "comprehensive_trait_system.rs"),
+    3423|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[65/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Trait System > should build comprehensive type registry with trait information
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_trait_system.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3452:20
+    3450| 
+    3451|     it("should build comprehensive type registry with trait informatio…
+    3452|       const code = readFileSync(
+       |                    ^
+    3453|         join(FIXTURES_DIR, "comprehensive_trait_system.rs"),
+    3454|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[66/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Trait System > should handle associated type implementations
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_trait_system.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3486:20
+    3484| 
+    3485|     it("should handle associated type implementations", () => {
+    3486|       const code = readFileSync(
+       |                    ^
+    3487|         join(FIXTURES_DIR, "comprehensive_trait_system.rs"),
+    3488|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[67/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Trait System > should handle trait objects and dynamic dispatch patterns
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/comprehensive_trait_system.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3517:20
+    3515| 
+    3516|     it("should handle trait objects and dynamic dispatch patterns", ()…
+    3517|       const code = readFileSync(
+       |                    ^
+    3518|         join(FIXTURES_DIR, "comprehensive_trait_system.rs"),
+    3519|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[68/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should capture complex async functions from async_and_concurrency fixture
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3550:20
+    3548|   describe("Comprehensive Async/Await Support", () => {
+    3549|     it("should capture complex async functions from async_and_concurre…
+    3550|       const code = readFileSync(
+       |                    ^
+    3551|         join(FIXTURES_DIR, "async_and_concurrency.rs"),
+    3552|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[69/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should capture async trait methods and implementations
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3599:20
+    3597| 
+    3598|     it("should capture async trait methods and implementations", () =>…
+    3599|       const code = readFileSync(
+       |                    ^
+    3600|         join(FIXTURES_DIR, "async_and_concurrency.rs"),
+    3601|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[70/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should capture await expressions and async blocks
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3629:20
+    3627| 
+    3628|     it("should capture await expressions and async blocks", () => {
+    3629|       const code = readFileSync(
+       |                    ^
+    3630|         join(FIXTURES_DIR, "async_and_concurrency.rs"),
+    3631|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[71/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should capture async closures and complex closure patterns
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3661:20
+    3659| 
+    3660|     it("should capture async closures and complex closure patterns", (…
+    3661|       const code = readFileSync(
+       |                    ^
+    3662|         join(FIXTURES_DIR, "async_and_concurrency.rs"),
+    3663|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[72/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should capture async closures from functions_and_closures fixture
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/functions_and_closures.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3689:20
+    3687| 
+    3688|     it("should capture async closures from functions_and_closures fixt…
+    3689|       const code = readFileSync(
+       |                    ^
+    3690|         join(FIXTURES_DIR, "functions_and_closures.rs"),
+    3691|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[73/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should capture tokio spawn and task creation patterns
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3729:20
+    3727| 
+    3728|     it("should capture tokio spawn and task creation patterns", () => {
+    3729|       const code = readFileSync(
+       |                    ^
+    3730|         join(FIXTURES_DIR, "async_and_concurrency.rs"),
+    3731|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[74/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should capture channel and concurrency primitives
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3757:20
+    3755| 
+    3756|     it("should capture channel and concurrency primitives", () => {
+    3757|       const code = readFileSync(
+       |                    ^
+    3758|         join(FIXTURES_DIR, "async_and_concurrency.rs"),
+    3759|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[75/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should capture async macro patterns (select!, join!)
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3782:20
+    3780| 
+    3781|     it("should capture async macro patterns (select!, join!)", () => {
+    3782|       const code = readFileSync(
+       |                    ^
+    3783|         join(FIXTURES_DIR, "async_and_concurrency.rs"),
+    3784|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[76/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should capture Pin and Future trait implementations
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3811:20
+    3809| 
+    3810|     it("should capture Pin and Future trait implementations", () => {
+    3811|       const code = readFileSync(
+       |                    ^
+    3812|         join(FIXTURES_DIR, "async_and_concurrency.rs"),
+    3813|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[77/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should capture async recursion and boxed futures
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3844:20
+    3842| 
+    3843|     it("should capture async recursion and boxed futures", () => {
+    3844|       const code = readFileSync(
+       |                    ^
+    3845|         join(FIXTURES_DIR, "async_and_concurrency.rs"),
+    3846|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[78/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should capture stream processing and async iterators
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3871:20
+    3869| 
+    3870|     it("should capture stream processing and async iterators", () => {
+    3871|       const code = readFileSync(
+       |                    ^
+    3872|         join(FIXTURES_DIR, "async_and_concurrency.rs"),
+    3873|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[79/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should capture timeout and cancellation patterns
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3900:20
+    3898| 
+    3899|     it("should capture timeout and cancellation patterns", () => {
+    3900|       const code = readFileSync(
+       |                    ^
+    3901|         join(FIXTURES_DIR, "async_and_concurrency.rs"),
+    3902|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[80/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should comprehensively test async/await patterns from dedicated fixture
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_patterns_comprehensive.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:3932:20
+    3930| 
+    3931|     it("should comprehensively test async/await patterns from dedicate…
+    3932|       const code = readFileSync(
+       |                    ^
+    3933|         join(FIXTURES_DIR, "async_patterns_comprehensive.rs"),
+    3934|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[81/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should capture async blocks and async move blocks
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_patterns_comprehensive.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:4009:20
+    4007| 
+    4008|     it("should capture async blocks and async move blocks", () => {
+    4009|       const code = readFileSync(
+       |                    ^
+    4010|         join(FIXTURES_DIR, "async_patterns_comprehensive.rs"),
+    4011|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[82/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should capture await expressions with various patterns
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_patterns_comprehensive.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:4037:20
+    4035| 
+    4036|     it("should capture await expressions with various patterns", () =>…
+    4037|       const code = readFileSync(
+       |                    ^
+    4038|         join(FIXTURES_DIR, "async_patterns_comprehensive.rs"),
+    4039|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[83/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should capture try expressions (?) with await
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_patterns_comprehensive.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:4071:20
+    4069| 
+    4070|     it("should capture try expressions (?) with await", () => {
+    4071|       const code = readFileSync(
+       |                    ^
+    4072|         join(FIXTURES_DIR, "async_patterns_comprehensive.rs"),
+    4073|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[84/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should capture async closures and complex closure patterns
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_patterns_comprehensive.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:4105:20
+    4103| 
+    4104|     it("should capture async closures and complex closure patterns", (…
+    4105|       const code = readFileSync(
+       |                    ^
+    4106|         join(FIXTURES_DIR, "async_patterns_comprehensive.rs"),
+    4107|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[85/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should capture Future trait bounds and return types
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_patterns_comprehensive.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:4140:20
+    4138| 
+    4139|     it("should capture Future trait bounds and return types", () => {
+    4140|       const code = readFileSync(
+       |                    ^
+    4141|         join(FIXTURES_DIR, "async_patterns_comprehensive.rs"),
+    4142|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[86/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should capture async trait implementations
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_patterns_comprehensive.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:4183:20
+    4181| 
+    4182|     it("should capture async trait implementations", () => {
+    4183|       const code = readFileSync(
+       |                    ^
+    4184|         join(FIXTURES_DIR, "async_patterns_comprehensive.rs"),
+    4185|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[87/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should capture complex nested async patterns
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_patterns_comprehensive.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:4225:20
+    4223| 
+    4224|     it("should capture complex nested async patterns", () => {
+    4225|       const code = readFileSync(
+       |                    ^
+    4226|         join(FIXTURES_DIR, "async_patterns_comprehensive.rs"),
+    4227|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[88/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should capture async function modifiers and visibility
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_patterns_comprehensive.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:4264:20
+    4262| 
+    4263|     it("should capture async function modifiers and visibility", () =>…
+    4264|       const code = readFileSync(
+       |                    ^
+    4265|         join(FIXTURES_DIR, "async_patterns_comprehensive.rs"),
+    4266|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[89/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should capture comprehensive async/await integration patterns
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_patterns_comprehensive.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:4311:20
+    4309| 
+    4310|     it("should capture comprehensive async/await integration patterns"…
+    4311|       const code = readFileSync(
+       |                    ^
+    4312|         join(FIXTURES_DIR, "async_patterns_comprehensive.rs"),
+    4313|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[90/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should handle async/await patterns from enhanced async_and_concurrency fixture
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:4378:20
+    4376| 
+    4377|     it("should handle async/await patterns from enhanced async_and_con…
+    4378|       const code = readFileSync(
+       |                    ^
+    4379|         join(FIXTURES_DIR, "async_and_concurrency.rs"),
+    4380|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[91/92]⎯
+
+ FAIL  packages/core/src/index_single_file/semantic_index.rust.test.ts > Semantic Index - Rust > Comprehensive Async/Await Support > should validate end-to-end async/await semantic index integration
+Error: ENOENT: no such file or directory, open '/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/parse_and_query_code/fixtures/rust/async_and_concurrency.rs'
+ ❯ packages/core/src/index_single_file/semantic_index.rust.test.ts:4515:21
+    4513|     it("should validate end-to-end async/await semantic index integrat…
+    4514|       // Test both fixtures together to ensure comprehensive coverage
+    4515|       const code1 = readFileSync(
+       |                     ^
+    4516|         join(FIXTURES_DIR, "async_and_concurrency.rs"),
+    4517|         "utf-8"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[92/92]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  91 failed | 5 passed | 24 skipped (120)
+   Start at  14:18:01
+   Duration  1.89s (transform 389ms, setup 0ms, collect 505ms, tests 993ms, environment 0ms, prepare 73ms)
+

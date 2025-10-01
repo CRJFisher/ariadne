@@ -20,7 +20,7 @@ import { location_key } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../index_single_file/semantic_index";
 import type { MemberAccessReference } from "../../index_single_file/references/member_access_references/member_access_references";
 import type { MethodLookupContext } from "./method_types";
-import type { NormalizedCapture } from "../../index_single_file/capture_types";
+import type { NormalizedCapture } from "../../index_single_file/query_code_tree/capture_types";
 
 /**
  * Resolve receiver type through Rust ownership operations

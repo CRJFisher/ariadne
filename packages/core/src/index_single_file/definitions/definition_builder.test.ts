@@ -462,7 +462,7 @@ describe("DefinitionBuilder - Public API", () => {
         import_path: "react" as any,
         is_default: true,
       })
-      .add_type({
+      .add_type_alias({
         kind: "type_alias",
         symbol_id: "type:test:80:0:80:15:TestType" as SymbolId,
         name: "TestType" as SymbolName,

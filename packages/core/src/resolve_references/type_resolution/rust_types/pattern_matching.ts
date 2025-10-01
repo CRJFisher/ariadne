@@ -8,11 +8,11 @@ import type { Location, LocationKey, TypeId, SymbolId } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../../index_single_file/semantic_index";
 import type { TypeResolutionMap } from "../../types";
-import type { NormalizedCapture } from "../../../index_single_file/capture_types";
+import type { NormalizedCapture } from "../../../index_single_file/query_code_tree/capture_types";
 import {
   SemanticEntity,
   SemanticCategory,
-} from "../../../index_single_file/capture_types";
+} from "../../../index_single_file/query_code_tree/capture_types";
 import { appears_to_be_rust_code, locations_are_near } from "./rust_type_utils";
 
 /**

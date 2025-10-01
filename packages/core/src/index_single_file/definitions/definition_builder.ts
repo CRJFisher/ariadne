@@ -9,7 +9,6 @@
 import {
   type AnyDefinition,
   type ClassDefinition,
-  type ConstructorDefinition,
   type DecoratorDefinition,
   type EnumDefinition,
   type EnumMember,
@@ -31,6 +30,7 @@ import {
   type ModulePath,
   type_symbol,
   decorator_symbol,
+  ConstructorDefinition,
 } from "@ariadnejs/types";
 
 import type { ProcessingContext } from "../scopes/scope_processor";
@@ -291,6 +291,7 @@ export class DefinitionBuilder {
     location: Location;
     scope_id: ScopeId;
     availability: SymbolAvailability;
+    type_parameters?: string[];
   }): DefinitionBuilder {
     this.functions.set(definition.symbol_id, {
       base: {
@@ -429,6 +430,7 @@ export class DefinitionBuilder {
     scope_id: ScopeId;
     availability: SymbolAvailability;
     extends?: SymbolName[];
+    type_parameters?: string[];
   }): DefinitionBuilder {
     this.interfaces.set(definition.symbol_id, {
       base: {
@@ -509,7 +511,7 @@ export class DefinitionBuilder {
   /**
    * Add a type alias definition
    */
-  add_type(definition: {
+  add_type_alias(definition: {
     kind: "type" | "type_alias";
     symbol_id: SymbolId;
     name: SymbolName;
@@ -517,7 +519,7 @@ export class DefinitionBuilder {
     scope_id: ScopeId;
     availability: SymbolAvailability;
     type_expression?: string;
-    type_parameters?: string[];
+    generics?: SymbolName[];
   }): DefinitionBuilder {
     this.types.set(definition.symbol_id, {
       ...definition,
@@ -535,6 +537,7 @@ export class DefinitionBuilder {
     scope_id: ScopeId;
     availability: SymbolAvailability;
     is_const?: boolean;
+    generics?: SymbolName[];
   }): DefinitionBuilder {
     this.enums.set(definition.symbol_id, {
       base: {
@@ -681,9 +684,7 @@ export class DefinitionBuilder {
     } as MethodDefinition;
   }
 
-  private build_constructor(
-    state: ConstructorBuilderState
-  ): ConstructorDefinition {
+  private build_constructor(state: ConstructorBuilderState): ConstructorDefinition {
     const parameters = Array.from(state.parameters.values());
 
     return {

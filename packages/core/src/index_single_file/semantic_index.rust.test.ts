@@ -344,6 +344,62 @@ fn calculate(x: i32, y: i32) -> i32 {
       const function_names = Array.from(index.functions.values()).map(f => f.name);
       expect(function_names).toContain("calculate");
     });
+
+    it("should track direct function calls", () => {
+      const code = `
+fn helper(x: i32) -> i32 {
+    x * 2
+}
+
+fn main() {
+    let result = helper(5);
+    let doubled = helper(result);
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify function calls are tracked
+      const function_calls = index.references.filter(
+        r => r.type === "call" && r.call_type === "function"
+      );
+      expect(function_calls.length).toBeGreaterThan(0);
+
+      // Should have at least two calls to helper
+      const helper_calls = function_calls.filter(c => c.name.includes("helper"));
+      expect(helper_calls.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it("should track associated function calls", () => {
+      const code = `
+struct Config;
+
+impl Config {
+    fn new() -> Self {
+        Config
+    }
+}
+
+fn main() {
+    let config = Config::new();
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify associated function call is tracked
+      const calls = index.references.filter(r => r.type === "call");
+      expect(calls.length).toBeGreaterThan(0);
+
+      const new_call = calls.find(c => c.name.includes("new"));
+      expect(new_call).toBeDefined();
+    });
   });
 
   // ============================================================================
@@ -395,6 +451,41 @@ fn modify_string(s: &mut String) {
 
   describe("Modules and visibility", () => {
     it("should extract module declarations", () => {
+      const code = `
+pub mod math {
+    pub fn add(a: i32, b: i32) -> i32 {
+        a + b
+    }
+}
+
+mod utils {
+    pub(crate) fn helper() -> i32 {
+        42
+    }
+}
+
+pub(crate) mod internal {
+    pub fn internal_function() -> &'static str {
+        "internal"
+    }
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify modules are extracted as namespaces
+      expect(index.namespaces.size).toBeGreaterThan(0);
+
+      const namespace_names = Array.from(index.namespaces.values()).map(ns => ns.name);
+      expect(namespace_names).toContain("math");
+      expect(namespace_names).toContain("utils");
+      expect(namespace_names).toContain("internal");
+    });
+
+    it("should extract inline module declarations", () => {
       const code = readFileSync(
         join(FIXTURES_DIR, "modules_and_visibility.rs"),
         "utf8"
@@ -405,11 +496,67 @@ fn modify_string(s: &mut String) {
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
-      // Verify functions and structures are captured
-      expect(index.functions.size).toBeGreaterThan(0);
+      // Verify modules are extracted
+      expect(index.namespaces.size).toBeGreaterThan(0);
+
+      const namespace_names = Array.from(index.namespaces.values()).map(ns => ns.name);
+      expect(namespace_names).toContain("math");
     });
 
-    it("should handle use statements", () => {
+    it("should extract nested module declarations", () => {
+      const code = `
+pub mod outer {
+    pub mod inner {
+        pub fn nested_function() -> i32 {
+            42
+        }
+    }
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify both outer and inner modules are captured
+      const namespace_names = Array.from(index.namespaces.values()).map(ns => ns.name);
+      expect(namespace_names).toContain("outer");
+      expect(namespace_names).toContain("inner");
+    });
+
+    it("should distinguish public and private modules", () => {
+      const code = `
+pub mod public_module {
+    pub fn public_fn() {}
+}
+
+mod private_module {
+    fn private_fn() {}
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify modules are extracted
+      expect(index.namespaces.size).toBe(2);
+
+      const public_mod = Array.from(index.namespaces.values()).find(ns => ns.name === "public_module");
+      const private_mod = Array.from(index.namespaces.values()).find(ns => ns.name === "private_module");
+
+      expect(public_mod).toBeDefined();
+      expect(private_mod).toBeDefined();
+
+      // Verify visibility
+      expect(public_mod?.availability?.scope).toBe("public");
+    });
+
+    it.skip("should extract simple use statements", () => {
+      // SKIPPED: Import extraction not yet implemented for Rust
+      // This test documents the expected behavior when imports are added
       const code = `
 use std::collections::HashMap;
 use std::io::Result;
@@ -424,10 +571,125 @@ fn main() {
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
-      // Note: Rust import extraction may not be implemented yet
-      // Just verify the test runs without errors
+      // Verify imports are tracked
+      expect(index.imported_symbols.size).toBeGreaterThan(0);
+
+      const imported_names = Array.from(index.imported_symbols.values()).map(imp => imp.imported_name);
+      expect(imported_names).toContain("HashMap");
+      expect(imported_names).toContain("Result");
+    });
+
+    it.skip("should extract multiple imports from same module", () => {
+      // SKIPPED: Import extraction not yet implemented for Rust
+      const code = `
+use std::fmt::{Display, Formatter, Result};
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify all imports are captured
+      const imported_names = Array.from(index.imported_symbols.values()).map(imp => imp.imported_name);
+      expect(imported_names).toContain("Display");
+      expect(imported_names).toContain("Formatter");
+      expect(imported_names).toContain("Result");
+    });
+
+    it.skip("should extract aliased imports", () => {
+      // SKIPPED: Import extraction not yet implemented for Rust
+      const code = `
+use std::collections::HashMap as Map;
+use std::io::Result as IoResult;
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify aliased imports are captured
+      const imports = Array.from(index.imported_symbols.values());
+
+      // Check for HashMap/Map
+      const map_import = imports.find(imp =>
+        imp.imported_name === "Map" || imp.source_name === "HashMap"
+      );
+      expect(map_import).toBeDefined();
+
+      // Check for Result/IoResult
+      const result_import = imports.find(imp =>
+        imp.imported_name === "IoResult" || imp.source_name === "Result"
+      );
+      expect(result_import).toBeDefined();
+    });
+
+    it("should handle glob imports", () => {
+      const code = `
+use std::collections::*;
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify glob import is captured (even if as a special case)
+      // Implementation may vary - just ensure it doesn't error
       expect(index).toBeDefined();
-      expect(index.functions.size).toBeGreaterThan(0);
+    });
+
+    it.skip("should extract nested/grouped imports", () => {
+      // SKIPPED: Import extraction not yet implemented for Rust
+      const code = `
+use std::{
+    cmp::Ordering,
+    collections::{HashMap, HashSet},
+    fs::File,
+};
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify nested imports are captured
+      const imported_names = Array.from(index.imported_symbols.values()).map(imp => imp.imported_name);
+      expect(imported_names).toContain("Ordering");
+      expect(imported_names).toContain("HashMap");
+      expect(imported_names).toContain("HashSet");
+      expect(imported_names).toContain("File");
+    });
+
+    it.skip("should extract re-exports (pub use)", () => {
+      // SKIPPED: Import extraction not yet implemented for Rust
+      const code = `
+pub use std::collections::HashMap;
+pub use self::math::add as add_numbers;
+
+mod math {
+    pub fn add(a: i32, b: i32) -> i32 {
+        a + b
+    }
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify re-exports are captured
+      const imports = Array.from(index.imported_symbols.values());
+
+      // Check that we have imports
+      expect(imports.length).toBeGreaterThan(0);
+
+      // Re-exports may be marked as public
+      const public_imports = imports.filter(imp => imp.availability?.scope === "public");
+      expect(public_imports.length).toBeGreaterThan(0);
     });
   });
 

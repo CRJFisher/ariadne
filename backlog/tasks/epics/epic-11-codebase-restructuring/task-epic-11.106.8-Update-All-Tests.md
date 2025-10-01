@@ -37,16 +37,23 @@ Changes needed:
 
 ### 3. Semantic Index Integration Tests
 
-**Files:**
-- `semantic_index.javascript.test.ts`
-- `semantic_index.typescript.test.ts`
-- `semantic_index.python.test.ts`
-- `semantic_index.rust.test.ts`
+**NOTE:** This section has been split into 4 language-specific sub-tasks for comprehensive test coverage:
+- **task-epic-11.106.8.1** - JavaScript semantic_index tests
+- **task-epic-11.106.8.2** - TypeScript semantic_index tests
+- **task-epic-11.106.8.3** - Python semantic_index tests
+- **task-epic-11.106.8.4** - Rust semantic_index tests
 
-Changes needed:
+**Files:**
+- `semantic_index.javascript.test.ts` → See task-epic-11.106.8.1
+- `semantic_index.typescript.test.ts` → See task-epic-11.106.8.2
+- `semantic_index.python.test.ts` → See task-epic-11.106.8.3
+- `semantic_index.rust.test.ts` → See task-epic-11.106.8.4
+
+Changes needed (detailed in sub-tasks):
 - Update references assertions
-- Test optional chain in integration
-- Verify `assignment_type` field
+- Test optional chain in integration (JS/TS) or verify false (Python/Rust)
+- Add comprehensive `assignment_type` tests
+- Remove deleted field assertions
 
 ## Search and Replace Patterns
 
@@ -252,10 +259,10 @@ const is_optional = result?.is_optional;
 - [ ] `typescript_metadata.test.ts` - Add optional chain tests
 - [ ] `python_metadata.test.ts` - Verify returns false
 - [ ] `rust_metadata.test.ts` - Verify returns false
-- [ ] `semantic_index.javascript.test.ts` - Integration tests
-- [ ] `semantic_index.typescript.test.ts` - Integration tests
-- [ ] `semantic_index.python.test.ts` - Integration tests
-- [ ] `semantic_index.rust.test.ts` - Integration tests
+- [ ] `semantic_index.javascript.test.ts` - **See task-epic-11.106.8.1**
+- [ ] `semantic_index.typescript.test.ts` - **See task-epic-11.106.8.2**
+- [ ] `semantic_index.python.test.ts` - **See task-epic-11.106.8.3**
+- [ ] `semantic_index.rust.test.ts` - **See task-epic-11.106.8.4**
 
 ## Notes
 

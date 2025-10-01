@@ -763,7 +763,7 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
       ) => {
         const type_id = create_type_alias_id(capture);
 
-        builder.add_type({
+        builder.add_type_alias({
           kind: "type_alias",
           symbol_id: type_id,
           name: capture.text,
@@ -771,7 +771,7 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           scope_id: context.get_scope_id(capture.location),
           availability: determine_availability(capture.node),
           type_expression: extract_type_expression(capture.node),
-          type_parameters: capture.node.parent
+          generics: capture.node.parent
             ? extract_type_parameters(capture.node.parent)
             : [],
         });

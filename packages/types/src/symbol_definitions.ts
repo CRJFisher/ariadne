@@ -50,6 +50,7 @@ export interface FunctionDefinition extends Definition {
   readonly docstring?: DocString;
   readonly decorators?: readonly SymbolName[];
   readonly return_type?: SymbolName;
+  readonly generics?: string[];
 }
 
 export interface FunctionSignature {
@@ -66,9 +67,10 @@ export interface ClassDefinition extends Definition {
   readonly extends: readonly SymbolName[]; // extends or implements
   readonly methods: readonly MethodDefinition[];
   readonly properties: readonly PropertyDefinition[]; // Aka fields
-  readonly decorators: readonly SymbolId[]; // TODO: maybe these should be processed before creating this definition? E.g. in python these result in a new method definitions, fields etc
+  readonly decorators: readonly SymbolId[];
   readonly constructor?: readonly ConstructorDefinition[];
   readonly docstring?: readonly DocString[];
+  readonly generics?: string[];
 }
 
 /**
@@ -79,6 +81,7 @@ export interface MethodDefinition extends Definition {
   readonly parameters: readonly ParameterDefinition[];
   readonly return_type?: SymbolName;
   readonly decorators?: readonly SymbolName[];
+  readonly generics?: string[];
 }
 
 export interface ConstructorDefinition extends Definition {
@@ -115,6 +118,7 @@ export interface InterfaceDefinition extends Definition {
   readonly extends: readonly SymbolName[];
   readonly methods: readonly MethodDefinition[];
   readonly properties: readonly PropertySignature[];
+  readonly generics?: string[];
 }
 
 /**
@@ -139,6 +143,7 @@ export interface EnumDefinition extends Definition {
   readonly members: readonly EnumMember[];
   readonly methods?: readonly MethodDefinition[]; // Enum methods (Rust/Java style)
   readonly is_const: boolean; // TypeScript const enum, defaults to false
+  readonly generics?: string[];
 }
 
 /**
@@ -181,6 +186,7 @@ export interface NamespaceDefinition extends Definition {
 export interface TypeAliasDefinition extends Definition {
   readonly kind: "type" | "type_alias";
   readonly type_expression?: string;
+  readonly generics?: string[];
 }
 /**
  * Union of all definition types

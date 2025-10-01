@@ -134,6 +134,9 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const variants = extract_enum_variants(
           capture.node.parent || capture.node
         );
+        const generics = extract_generic_parameters(
+          capture.node.parent || capture.node
+        );
 
         builder.add_enum({
           symbol_id: enum_id,
@@ -141,6 +144,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: extract_visibility(capture.node.parent || capture.node),
+          generics: generics,
         });
 
         // Add members separately
@@ -197,6 +201,9 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         context: ProcessingContext
       ) => {
         const trait_id = create_trait_id(capture);
+        const generics = extract_generic_parameters(
+          capture.node.parent || capture.node
+        );
 
         builder.add_interface({
           symbol_id: trait_id,
@@ -204,6 +211,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: extract_visibility(capture.node.parent || capture.node),
+          type_parameters: generics,
         });
       },
     },
@@ -240,6 +248,9 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         context: ProcessingContext
       ) => {
         const func_id = create_function_id(capture);
+        const generics = extract_generic_parameters(
+          capture.node.parent || capture.node
+        );
 
         builder.add_function({
           symbol_id: func_id,
@@ -247,6 +258,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: extract_visibility(capture.node.parent || capture.node),
+          type_parameters: generics,
         });
       },
     },
@@ -643,14 +655,14 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           capture.node.parent || capture.node
         );
 
-        builder.add_type({
+        builder.add_type_alias({
           kind: "type_alias",
           symbol_id: type_id,
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: extract_visibility(capture.node.parent || capture.node),
-          type_parameters: generics.length > 0 ? generics : undefined,
+          generics: generics.length > 0 ? generics : undefined,
         });
       },
     },
@@ -669,14 +681,14 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           capture.node.parent || capture.node
         );
 
-        builder.add_type({
+        builder.add_type_alias({
           kind: "type_alias",
           symbol_id: type_id,
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: extract_visibility(capture.node.parent || capture.node),
-          type_parameters: generics.length > 0 ? generics : undefined,
+          generics: generics.length > 0 ? generics : undefined,
         });
       },
     },
@@ -692,7 +704,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
       ) => {
         const type_id = create_type_alias_id(capture);
 
-        builder.add_type({
+        builder.add_type_alias({
           kind: "type_alias",
           symbol_id: type_id,
           name: capture.text,

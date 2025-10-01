@@ -104,6 +104,8 @@ After fixing the critical query issues above, update Python semantic_index tests
 
 ### Python-Specific Features
 - [ ] **Decorators** (@dataclass, @property, @staticmethod, @classmethod)
+- [ ] **Enums** (Enum, IntEnum, StrEnum, Flag, IntFlag)
+- [ ] Enum members with values
 - [ ] Constructor (__init__) parameters
 - [ ] *args parameters
 - [ ] **kwargs parameters
@@ -193,6 +195,70 @@ class Point:
 
   const from_tuple = methods.find((m) => m.name === "from_tuple");
   expect(from_tuple?.decorators?.some(d => d.name === "classmethod")).toBe(true);
+});
+```
+
+### Enums and Enum Members
+```typescript
+it("extracts enums and enum members with values", () => {
+  const code = `
+from enum import Enum, IntEnum, StrEnum
+
+class Color(Enum):
+    RED = 1
+    GREEN = 2
+    BLUE = 3
+
+class Status(StrEnum):
+    PENDING = "pending"
+    COMPLETE = "complete"
+    FAILED = "failed"
+
+class Priority(IntEnum):
+    LOW = 1
+    MEDIUM = 5
+    HIGH = 10
+  `;
+
+  const result = index_single_file(code, "test.py" as FilePath, "python");
+
+  // Check Color enum
+  const color_enum = Array.from(result.definitions.values()).find(
+    (d) => d.kind === "enum" && d.name === "Color"
+  );
+  expect(color_enum).toBeDefined();
+  expect(color_enum?.members).toBeDefined();
+  expect(color_enum?.members?.length).toBe(3);
+
+  const red = color_enum?.members?.find(m => m.name === "RED");
+  expect(red).toBeDefined();
+  expect(red?.value).toBe(1);
+
+  const green = color_enum?.members?.find(m => m.name === "GREEN");
+  expect(green?.value).toBe(2);
+
+  const blue = color_enum?.members?.find(m => m.name === "BLUE");
+  expect(blue?.value).toBe(3);
+
+  // Check Status string enum
+  const status_enum = Array.from(result.definitions.values()).find(
+    (d) => d.kind === "enum" && d.name === "Status"
+  );
+  expect(status_enum).toBeDefined();
+  expect(status_enum?.members?.length).toBe(3);
+
+  const pending = status_enum?.members?.find(m => m.name === "PENDING");
+  expect(pending?.value).toBe('"pending"');
+
+  // Check Priority int enum
+  const priority_enum = Array.from(result.definitions.values()).find(
+    (d) => d.kind === "enum" && d.name === "Priority"
+  );
+  expect(priority_enum).toBeDefined();
+  expect(priority_enum?.members?.length).toBe(3);
+
+  const high = priority_enum?.members?.find(m => m.name === "HIGH");
+  expect(high?.value).toBe(10);
 });
 ```
 
@@ -408,6 +474,7 @@ from collections import defaultdict, Counter
 ### Phase 2: Comprehensive Tests
 - ✅ All Python-specific features tested
 - ✅ Decorators fully verified
+- ✅ Enums and enum members verified (Enum, IntEnum, StrEnum)
 - ✅ Constructor parameters verified
 - ✅ *args and **kwargs tested
 - ✅ All tests use complete object assertions

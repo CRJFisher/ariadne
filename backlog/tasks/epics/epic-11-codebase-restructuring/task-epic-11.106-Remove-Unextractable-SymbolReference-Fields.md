@@ -1,55 +1,75 @@
-# Task Epic 11.106: Remove Unextractable SymbolReference Fields
+# Task Epic 11.106: Refine SymbolReference Attributes for Method Call Resolution
 
 **Status:** Not Started
 **Priority:** High
-**Estimated Effort:** 3 hours
+**Estimated Effort:** 4 hours
 **Dependencies:** task-epic-11.104 (Metadata Extraction - Complete)
 **Created:** 2025-10-01
 
 ## Objective
 
-Clean up the `SymbolReference` interface by **deleting** fields that cannot be extracted from tree-sitter AST captures. Analysis of the completed metadata extraction work (task 11.104) revealed several fields that are always undefined/false because they require semantic analysis beyond what tree-sitter provides.
+Refine `SymbolReference` to contain only attributes that (1) can be reliably captured via tree-sitter queries and (2) provide maximum functionality for method call resolution (receiver type detection). Remove fields that cannot be extracted and add missing extractable fields that support the method resolution use case.
 
 ## Background
 
-Task 11.104 implemented comprehensive metadata extraction across all languages (JavaScript/TypeScript, Python, Rust). Through 247 tests and full implementation, we discovered that certain `SymbolReference` fields cannot be populated from AST-local information:
+**Method call resolution goal:** To resolve `obj.method()`, we need to determine the type of `obj` (the receiver). This type can come from:
+- Explicit type annotations: `const obj: MyClass = ...`
+- Constructor patterns: `const obj = new MyClass()`
+- Property chains: `container.getObj().method()`
+- Optional chaining: `obj?.method()`
 
-1. **`type_flow.source_type`** - Always `undefined` (line 415 in reference_builder.ts)
-2. **`type_flow.is_narrowing`** - Always `false` (requires type system analysis)
-3. **`type_flow.is_widening`** - Always `false` (requires type system analysis)
-4. **`context.containing_function`** - Never populated (needs scope tree traversal)
-5. **`member_access.is_optional_chain`** - Always `false` (but CAN be implemented)
+**Tree-sitter capabilities:** Tree-sitter can extract syntactic patterns from AST nodes:
+- Type annotations (explicit in source)
+- Constructor call patterns
+- Member access chains (structure, not resolved types)
+- Optional chaining syntax
+- Receiver node locations
 
-### Note on Rust Implementation
+**Tree-sitter limitations:** Cannot infer or analyze:
+- Types without annotations
+- Control flow narrowing/widening
+- Inter-procedural type flow
+- Return types (unless annotated)
 
-Per `RUST_METADATA_PATTERNS.md`, Rust metadata extraction has some known partial implementations:
-- Method vs function distinction is incomplete (all reported as "function")
-- Receiver locations not always populated for method calls
-- Property chains partially implemented
+## Attribute Design Principles
 
-**Important:** These are Rust-specific implementation gaps, not fundamental extractability issues. The fields we're removing (source_type, is_narrowing, is_widening) are NEVER populated in ANY language.
+1. **Extractable:** Every attribute must map to a concrete tree-sitter query capture
+2. **Functional:** Every attribute must serve method call resolution
+3. **Minimal:** Remove anything that doesn't satisfy (1) AND (2)
+4. **Language-aware:** Account for language-specific patterns (optional chaining in JS/TS only)
 
-## Analysis Summary
+## Attributes Analysis
 
-### Fields to DELETE (Cannot Extract)
+### Core Attributes (Essential, Keep)
 
-| Field | Current State | Reason for Removal |
-|-------|--------------|-------------------|
-| `type_flow.source_type` | Always `undefined` | Requires inter-procedural analysis |
-| `type_flow.is_narrowing` | Always `false` | Requires type system understanding |
-| `type_flow.is_widening` | Always `false` | Requires type system understanding |
+| Attribute | Purpose | Tree-sitter Capture |
+|-----------|---------|-------------------|
+| `location` | Identify where symbol appears | Node position |
+| `name` | Symbol identifier | Identifier node text |
+| `scope_id` | Scope resolution context | Scope tracking |
+| `call_type` | function/method/constructor | Node type pattern |
 
-### Fields to IMPLEMENT (Can Extract)
+### Type Attributes (For Method Resolution)
 
-| Field | Current State | Implementation Path |
-|-------|--------------|-------------------|
-| `member_access.is_optional_chain` | Always `false` | Add to language-specific extractors |
+| Attribute | Extractable? | Useful for Resolution? | Decision |
+|-----------|-------------|----------------------|----------|
+| `type_info` | ✅ Yes (annotations) | ✅ Yes (receiver type) | **Keep** |
+| `member_access.object_type` | ✅ Yes (annotations) | ✅ Yes (receiver type) | **Keep** |
+| `member_access.is_optional_chain` | ✅ Yes (syntax) | ✅ Yes (affects resolution) | **Implement** |
+| `type_flow.source_type` | ❌ No (requires inference) | ❌ No | **Remove** |
+| `type_flow.is_narrowing` | ❌ No (requires control flow) | ❌ No | **Remove** |
+| `type_flow.is_widening` | ❌ No (requires type system) | ❌ No | **Remove** |
+| `type_flow.target_type` | ⚠️ Partial (annotations only) | ⚠️ Maybe (assignments) | **Simplify** |
 
-### Fields to DEFER (Needs Scope Integration)
+### Context Attributes (For Receiver Identification)
 
-| Field | Current State | Decision Needed |
-|-------|--------------|-----------------|
-| `context.containing_function` | Never populated | Either remove OR implement via ScopeBuilder |
+| Attribute | Extractable? | Useful for Resolution? | Decision |
+|-----------|-------------|----------------------|----------|
+| `context.receiver_location` | ✅ Yes (parent nodes) | ✅ Yes (essential) | **Keep** |
+| `context.property_chain` | ✅ Yes (member access) | ✅ Yes (chained calls) | **Keep** |
+| `context.containing_function` | ⚠️ Needs scope traversal | ❌ No (not for resolution) | **Remove** |
+| `context.assignment_source/target` | ✅ Yes (assignment nodes) | ⚠️ Unclear benefit | **Evaluate** |
+| `context.construct_target` | ✅ Yes (new expression) | ⚠️ Unclear benefit | **Evaluate** |
 
 ## Proposed Changes
 
@@ -109,299 +129,301 @@ export interface SymbolReference {
 
 ## Sub-Tasks
 
-### 11.106.1 - Audit type_flow Usage (30 minutes)
+### 11.106.1 - Evaluate Context Attributes for Method Resolution (45 minutes)
 
-Search codebase for all usages of `type_flow` fields:
-- `source_type` references
-- `is_narrowing` references
-- `is_widening` references
+Determine which `ReferenceContext` attributes are essential for method call resolution:
+- **receiver_location:** Essential (identifies the object)
+- **property_chain:** Essential (for chained access)
+- **assignment_source/target:** Evaluate necessity
+- **construct_target:** Evaluate necessity
+- **containing_function:** Not needed for method resolution → Remove
 
-Document what (if anything) depends on these fields.
-
-**Success Criteria:**
-- ✅ Complete list of all `type_flow` usages
-- ✅ Confirmation that nothing depends on deleted fields
-
-### 11.106.2 - Remove type_flow.source_type (30 minutes)
-
-Delete the `source_type` field and all code that sets it to `undefined`.
-
-**Files to Modify:**
-- `packages/types/src/semantic_index.ts` - Remove from interface
-- `packages/core/src/index_single_file/query_code_tree/reference_builder.ts` - Remove assignment
+**Deliverable:** Decision matrix mapping each context attribute to tree-sitter captures and method resolution use cases.
 
 **Success Criteria:**
-- ✅ Field removed from TypeScript interface
-- ✅ No code references `source_type`
-- ✅ TypeScript compiles
+- ✅ Clear justification for keeping/removing each context attribute
+- ✅ Tree-sitter query pattern identified for each kept attribute
+- ✅ Method resolution scenario documented for each kept attribute
 
-### 11.106.3 - Remove type_flow Boolean Flags (30 minutes)
+### 11.106.2 - Remove Non-Extractable Type Attributes (30 minutes)
 
-Delete `is_narrowing` and `is_widening` fields.
+Remove attributes that cannot be extracted from tree-sitter:
+- `type_flow.source_type` - Requires type inference
+- `type_flow.is_narrowing` - Requires control flow analysis
+- `type_flow.is_widening` - Requires type system knowledge
 
-**Files to Modify:**
-- `packages/types/src/semantic_index.ts` - Remove from interface
-- `packages/core/src/index_single_file/query_code_tree/reference_builder.ts` - Remove assignments
+**Approach:** Delete from interface, remove all references. No codebase audit needed (blinkered approach).
 
 **Success Criteria:**
-- ✅ Fields removed from interface
-- ✅ No code references these flags
-- ✅ TypeScript compiles
+- ✅ Fields removed from `SymbolReference` interface
+- ✅ No compilation errors
+- ✅ Tests updated to remove assertions on deleted fields
 
-### 11.106.4 - Simplify type_flow to assignment_type (45 minutes)
+### 11.106.3 - Refine Type Flow to Assignment Type (30 minutes)
 
-Replace the complex `type_flow` object with a simple `assignment_type?: TypeInfo` field.
+**Decision:** Keep only extractable type information for assignments.
 
-**Changes:**
-1. Rename `type_flow` to `assignment_type` in interface
-2. Update reference_builder.ts to assign directly (not wrapped in object)
-3. Update any tests that check for `type_flow.target_type`
+Simplify `type_flow` object to `assignment_type?: TypeInfo` since only `target_type` was extractable (from explicit annotations).
 
-**Files to Modify:**
-- `packages/types/src/semantic_index.ts`
-- `packages/core/src/index_single_file/query_code_tree/reference_builder.ts`
-- Any test files that assert on `type_flow`
+**Rationale:** For method resolution, we care about annotated types on assignments: `const obj: MyClass = ...` provides type information we can use.
 
 **Success Criteria:**
 - ✅ `type_flow` replaced with `assignment_type`
-- ✅ All tests updated and passing
+- ✅ Extraction limited to explicit type annotations
 - ✅ TypeScript compiles
 
-### 11.106.5 - Audit containing_function Usage (15 minutes)
+### 11.106.4 - Refine ReferenceContext (30 minutes)
 
-Search for any code that reads or writes `context.containing_function`.
+Apply evaluation from 11.106.1 to refine `ReferenceContext`:
 
-**Decision Point:**
-- If USED: Keep and add to follow-up task to implement via ScopeBuilder
-- If UNUSED: Delete in sub-task 11.106.6
+**Remove:**
+- `containing_function` - Not needed for method resolution
 
-**Success Criteria:**
-- ✅ Usage documented
-- ✅ Decision made: keep or delete
+**Evaluate and decide:**
+- `assignment_source/target` - Do these support method resolution?
+- `construct_target` - Does this support method resolution?
 
-### 11.106.6 - Remove containing_function (If Unused) (15 minutes)
+**Keep:**
+- `receiver_location` - Essential for identifying receiver
+- `property_chain` - Essential for chained access
 
-**Conditional:** Only if task 11.106.5 determines it's unused.
-
-Delete `containing_function` from `ReferenceContext`.
-
-**Files to Modify:**
-- `packages/types/src/semantic_index.ts`
+**Approach:** Make decisions based on "does this help resolve `obj.method()` calls?" not on existing code usage.
 
 **Success Criteria:**
-- ✅ Field removed
-- ✅ TypeScript compiles
+- ✅ Context contains only method-resolution-relevant attributes
+- ✅ Each attribute maps to a tree-sitter capture pattern
+- ✅ Interface is minimal
 
-### 11.106.7 - Implement is_optional_chain Detection (45 minutes)
+### 11.106.5 - Implement Optional Chain Detection (1 hour)
 
-Add optional chain detection to language-specific metadata extractors.
+**Goal:** Capture `is_optional_chain` for method/property access to support resolution.
 
-**Languages:**
-- JavaScript/TypeScript: `obj?.method()`, `obj?.prop`
-- Python: N/A (no optional chaining)
-- Rust: N/A (no optional chaining)
+Optional chaining (`obj?.method()`) affects type resolution - the result can be `undefined`. This is extractable from tree-sitter syntax.
 
-**Implementation:**
-- Update `javascript_metadata.ts` to detect `optional_chain` AST nodes
-- Update `extract_call_receiver` to return chain flag
-- Update reference_builder.ts to use the flag
+**Implementation approach:**
+1. Define tree-sitter query patterns for `optional_chain` nodes (JS/TS only)
+2. Update metadata extractors to return `{ location, is_optional }` for receivers
+3. Populate `member_access.is_optional_chain` in SymbolReference
 
-**Files to Modify:**
-- `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_metadata.ts`
-- `packages/core/src/index_single_file/query_code_tree/reference_builder.ts`
+**Language patterns:**
+- JavaScript/TypeScript: `optional_chain` AST node type
+- Python/Rust: No such syntax, always false
 
 **Success Criteria:**
-- ✅ Optional chain detected in JavaScript/TypeScript
-- ✅ Tests added for `obj?.method()` patterns
-- ✅ Other languages return `false` (correct for those languages)
+- ✅ Tree-sitter query captures optional chaining syntax
+- ✅ Extractor returns accurate boolean for JS/TS
+- ✅ Tests verify `obj?.method()` vs `obj.method()` distinction
+- ✅ Supports method resolution (type can be undefined)
 
-### 11.106.8 - Update All Tests (30 minutes)
+### 11.106.6 - Verify Extractable Receiver Type Hints (45 minutes)
 
-Update test assertions to match new simplified structure.
+**Goal:** Ensure we're capturing all tree-sitter-extractable type information for receivers.
 
-**Test Categories:**
-- Reference builder tests
-- Metadata extractor tests
-- Semantic index integration tests
+Review and strengthen extraction of:
+- Type annotations: `const obj: MyClass = ...`
+- Constructor patterns: `const obj = new MyClass()`
+- Return type annotations: `function factory(): MyClass`
+- Generic type arguments: `Array<MyClass>`
+
+**Approach:** Query-first, not code-first. Define what patterns tree-sitter can capture, write queries for each pattern, test across languages.
+
+**Key questions:**
+- What explicit type syntax exists in each language?
+- Can tree-sitter capture these patterns reliably?
+- Are we currently capturing all available patterns?
+
+**Success Criteria:**
+- ✅ All explicit type annotations captured
+- ✅ Constructor patterns captured for all languages
+- ✅ Annotated return types captured
+- ✅ Cross-language parity verified
+- ✅ No inference or semantic analysis required
+
+### 11.106.7 - Update Tests for Refined Interface (45 minutes)
+
+**Goal:** Update tests to match refined interface and verify method resolution use cases.
+
+Focus tests on method resolution scenarios, not comprehensive interface coverage:
+
+```typescript
+// Receiver type from annotation
+const obj: MyClass = factory();
+obj.method(); // Can we extract MyClass from annotation?
+
+// Receiver type from constructor
+const obj = new MyClass();
+obj.method(); // Can we extract MyClass from constructor?
+
+// Receiver from property chain
+container.getObj().method(); // Can we extract the chain?
+
+// Optional chaining
+obj?.method(); // Can we extract the optional flag?
+```
 
 **Changes:**
-- Remove assertions on deleted fields
+- Remove assertions on deleted fields (source_type, is_narrowing, etc.)
+- Add tests for extractable receiver type patterns
 - Update `type_flow.target_type` → `assignment_type`
-- Add tests for `is_optional_chain` detection
+- Add optional chaining tests
 
 **Success Criteria:**
-- ✅ All existing tests updated
-- ✅ New tests for optional chain detection
-- ✅ Zero test regressions
+- ✅ Tests verify all extractable patterns work
+- ✅ Tests verify method resolution use cases
+- ✅ No assertions on non-extractable attributes
+- ✅ Cross-language test parity
 
-### 11.106.9 - Update Documentation (15 minutes)
+### 11.106.8 - Update Documentation (20 minutes)
 
-Update documentation to reflect simplified interface.
+**Goal:** Document the refined interface with focus on tree-sitter extractability and method resolution.
+
+Update documentation to explain:
+- What attributes exist and why (method resolution goal)
+- What each attribute maps to in tree-sitter queries
+- What patterns can be extracted vs. what requires inference
 
 **Files to Update:**
-- `METADATA_EXTRACTORS_GUIDE.md` - Update examples
-- `REFERENCE_METADATA_PLAN.md` - Note field removals
-- Any inline comments in code
+- Interface JSDoc comments in `semantic_index.ts`
+- Inline comments in metadata extractors
+- Any existing guides/documentation
+
+**Approach:** Timeless documentation (don't reference "old way" or changes), focused on current capability and purpose.
 
 **Success Criteria:**
-- ✅ Documentation matches implementation
+- ✅ Every attribute documented with tree-sitter query pattern
+- ✅ Method resolution use cases explained
+- ✅ Clear distinction: extractable vs. inference-based
 - ✅ No references to deleted fields
-- ✅ Examples use new `assignment_type` field
 
 ## Implementation Sequence
 
 ```
-11.106.1 (Audit type_flow)
+11.106.1 (Evaluate context attributes)
     ↓
-11.106.2 (Remove source_type) ─┐
-    ↓                          │
-11.106.3 (Remove boolean flags) ┤─→ Can run in parallel
-    ↓                          │
-11.106.4 (Simplify to assignment_type)
+11.106.2 (Remove non-extractable type attributes)
     ↓
-11.106.5 (Audit containing_function)
+11.106.3 (Simplify type_flow to assignment_type)
     ↓
-11.106.6 (Remove containing_function - conditional)
+11.106.4 (Refine ReferenceContext)
     ↓
-11.106.7 (Implement is_optional_chain)
+11.106.5 (Implement optional chain detection)
     ↓
-11.106.8 (Update tests)
+11.106.6 (Verify extractable receiver type hints)
     ↓
-11.106.9 (Update docs)
+11.106.7 (Update tests for method resolution)
+    ↓
+11.106.8 (Update documentation)
 ```
 
 ## Files Affected
 
 | File | Tasks | Change Type |
 |------|-------|------------|
-| `packages/types/src/semantic_index.ts` | 11.106.2-4, 11.106.6 | Interface definition |
-| `packages/core/src/.../reference_builder.ts` | 11.106.2-4, 11.106.7 | Field assignments |
-| `packages/core/src/.../javascript_metadata.ts` | 11.106.7 | Add optional chain detection |
-| `packages/core/src/.../metadata_types.ts` | 11.106.7 | Update extractor interface |
-| Test files | 11.106.8 | Update assertions |
-| Documentation | 11.106.9 | Update examples |
+| `packages/types/src/semantic_index.ts` | 2,3,4 | Interface refinement |
+| `packages/core/src/.../reference_builder.ts` | 2,3,4,5,6 | Implementation updates |
+| `packages/core/src/.../javascript_metadata.ts` | 5,6 | Enhance extractors |
+| `packages/core/src/.../python_metadata.ts` | 6 | Verify extractors |
+| `packages/core/src/.../rust_metadata.ts` | 6 | Verify extractors |
+| Test files | 7 | Method resolution tests |
+| Documentation | 8 | Extractability docs |
 
 ## Success Metrics
 
+### Design Quality
+- ✅ Every attribute has tree-sitter query mapping
+- ✅ Every attribute serves method resolution
+- ✅ Interface is minimal (no redundant fields)
+- ✅ Clear separation: extractable vs. inference-based
+
+### Functional Verification
+- ✅ Receiver type hints extracted from all explicit sources
+- ✅ Optional chaining captured correctly
+- ✅ Property chains captured for resolution
+- ✅ Cross-language parity maintained
+
 ### Code Quality
 - ✅ TypeScript compiles with 0 errors
-- ✅ All tests pass (maintain 99.6% pass rate)
-- ✅ No references to deleted fields remain
-
-### Functional Improvement
-- ✅ Optional chain detection working for JS/TS
-- ✅ Simplified interface easier to understand
-- ✅ Less confusing "always undefined/false" fields
-
-### Documentation Quality
-- ✅ All docs updated
-- ✅ No stale references
-- ✅ Clear examples of new structure
+- ✅ All method resolution test scenarios pass
+- ✅ No assertions on non-extractable attributes
 
 ## Testing Strategy
 
-### Unit Tests
-- Verify optional chain detection in JS/TS
-- Test that simplified `assignment_type` works
+Focus on **method resolution scenarios**, not exhaustive interface coverage:
 
-### Integration Tests
-- Semantic index tests still pass
-- Reference builder tests updated
-- No regressions in full test suite
+### Receiver Type Extraction
+- Type annotations: `const obj: MyClass = ...`
+- Constructor calls: `const obj = new MyClass()`
+- Annotated returns: `function(): MyClass`
 
-### Validation
-- Search codebase for deleted field names (should be 0 results)
-- Run full test suite (should match current baseline)
+### Method Call Patterns
+- Simple calls: `obj.method()`
+- Chained calls: `obj.getProp().method()`
+- Optional chaining: `obj?.method()`
+
+### Cross-Language
+- Verify patterns work in JS/TS/Python/Rust (where applicable)
+- Language-specific syntax handled correctly
 
 ## Risk Assessment
 
-**Risk Level:** Low
+**Risk Level:** Medium (Interface redesign)
 
-- Changes are primarily deletions (low risk)
-- Deleted fields were never populated (no behavior change)
-- Optional chain implementation is additive
-- Comprehensive test coverage exists
+**Mitigation:**
+- Blinkered approach prevents being influenced by legacy patterns
+- Tree-sitter query-first ensures extractability
+- Method resolution focus provides clear design criteria
+- Test-driven validation ensures functionality
 
 ## Related Tasks
 
-- **task-epic-11.104** - Metadata extraction (revealed these issues)
-- **task-epic-11.105** - Type hint simplification (related cleanup)
+- **task-epic-11.104** - Metadata extraction foundation
+- **Future** - Method call resolution implementation (will use these attributes)
 
-## Notes
+## Design Principles (Reference)
 
-### Why Delete vs Deprecate?
+**Blinkered Approach:**
+- Don't audit existing code usage
+- Don't preserve fields "just in case"
+- Design from method resolution requirements
+- Design from tree-sitter capabilities
 
-Per user request: "we should *delete*, not mark deprecated, any fields and usages of fields that are no longer needed"
+**Tree-Sitter First:**
+- Every attribute must map to query captures
+- No semantic analysis or inference
+- Explicit syntax only (annotations, keywords)
+- Cross-language patterns where syntax supports it
 
-Rationale:
-1. Fields were never working (always undefined/false)
-2. No downstream dependencies identified
-3. Early in project lifecycle (not public API yet)
-4. Cleaner to remove than carry dead code
-
-### What Counts as "Usage"?
-
-**Production code usage:** Code that READS these fields for business logic counts as usage.
-
-**Test-only usage:** Test assertions on these fields do NOT count as usage and should be DELETED along with the fields.
-
-**Examples:**
-```typescript
-// ❌ This is production usage - would prevent deletion
-function analyzeTypeFlow(ref: SymbolReference) {
-  if (ref.type_flow?.is_narrowing) {
-    // Do something with narrowing information
-  }
-}
-
-// ✅ This is test-only usage - DELETE the test assertion
-expect(reference.type_flow?.is_narrowing).toBe(false);
-```
-
-When auditing usage (task 11.106.1), ignore test files. When deleting fields, also delete any test assertions on those fields.
-
-### What About containing_function?
-
-Task 11.106.5 will determine if this field is used anywhere. If it's needed for future work, we'll keep it and add a follow-up task to implement via ScopeBuilder integration. If unused, delete it.
-
-### Optional Chain as Special Case
-
-`is_optional_chain` is the only field that CAN be extracted but isn't yet. We'll implement it as part of this cleanup since it's JavaScript/TypeScript-only and straightforward to detect from AST.
-
-## Follow-Up Work
-
-After this task:
-
-1. **If containing_function kept:** Create task to implement via ScopeBuilder
-2. **Performance:** Profile impact of optional chain detection
-3. **Enhancement:** Consider other extractable patterns we're missing
+**Method Resolution Focus:**
+- Would this help resolve `obj.method()`?
+- Does this identify the receiver type?
+- Does this support chained/optional access?
+- If not → Remove it
 
 ## Estimated Time Breakdown
 
 | Sub-task | Estimated | Notes |
 |----------|-----------|-------|
-| 11.106.1 | 30 min | Audit type_flow usage |
-| 11.106.2 | 30 min | Remove source_type |
-| 11.106.3 | 30 min | Remove boolean flags |
-| 11.106.4 | 45 min | Simplify to assignment_type |
-| 11.106.5 | 15 min | Audit containing_function |
-| 11.106.6 | 15 min | Remove containing_function (conditional) |
-| 11.106.7 | 45 min | Implement optional chain |
-| 11.106.8 | 30 min | Update tests |
-| 11.106.9 | 15 min | Update docs |
-| **Total** | **3.75 hours** | ~4 hours with buffer |
+| 11.106.1 | 45 min | Evaluate context attributes |
+| 11.106.2 | 30 min | Remove non-extractable fields |
+| 11.106.3 | 30 min | Simplify type_flow |
+| 11.106.4 | 30 min | Refine ReferenceContext |
+| 11.106.5 | 60 min | Implement optional chain |
+| 11.106.6 | 45 min | Verify receiver type extraction |
+| 11.106.7 | 45 min | Update tests |
+| 11.106.8 | 20 min | Update docs |
+| **Total** | **~5.5 hours** | Includes implementation & testing |
 
 ## Definition of Done
 
-- ✅ All unused fields deleted from interfaces
-- ✅ All code setting deleted fields removed
-- ✅ `type_flow` simplified to `assignment_type`
-- ✅ Optional chain detection implemented for JS/TS
-- ✅ All tests updated and passing
-- ✅ Documentation reflects new structure
-- ✅ TypeScript compiles with 0 errors
-- ✅ Zero test regressions
-- ✅ No references to deleted fields in codebase
+- ✅ Every attribute justified by method resolution need
+- ✅ Every attribute mapped to tree-sitter query
+- ✅ No attributes requiring inference/semantic analysis
+- ✅ Optional chaining captured (JS/TS)
+- ✅ Receiver type hints captured (all languages)
+- ✅ Tests verify method resolution scenarios
+- ✅ Documentation explains extractability
+- ✅ TypeScript compiles, tests pass
+- ✅ Cross-language parity verified
 
 ---
 

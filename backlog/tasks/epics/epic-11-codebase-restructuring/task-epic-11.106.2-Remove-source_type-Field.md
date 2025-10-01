@@ -1,115 +1,98 @@
-# Task 11.106.2: Remove source_type Field
+# Task 11.106.2: Remove Non-Extractable Type Attributes
 
 **Status:** Not Started
 **Priority:** High
 **Estimated Effort:** 30 minutes
 **Parent:** task-epic-11.106
-**Dependencies:** task-epic-11.106.1 (audit complete)
+**Dependencies:** task-epic-11.106.1 (context evaluation complete)
 
 ## Objective
 
-Delete `type_flow.source_type` field from the codebase. This field is always `undefined` because source type requires inter-procedural analysis that tree-sitter cannot provide.
+Remove `SymbolReference` attributes that cannot be extracted from tree-sitter AST:
+- `type_flow.source_type` - Requires type inference
+- `type_flow.is_narrowing` - Requires control flow analysis
+- `type_flow.is_widening` - Requires type system knowledge
+
+These require semantic analysis beyond tree-sitter's syntactic capabilities.
+
+## Rationale
+
+### Why These Can't Be Extracted
+
+**source_type** - Where a value came from:
+```typescript
+const x = getValue(); // What's the return type of getValue?
+```
+- Requires inter-procedural analysis
+- Needs to track through function calls
+- Beyond AST-local information
+
+**is_narrowing/is_widening** - Type constraint changes:
+```typescript
+if (typeof x === "string") {
+  // x narrowed from string|number to string
+}
+```
+- Requires control flow analysis
+- Needs type system understanding
+- Requires tracking state across branches
+
+### Method Resolution Impact
+
+None of these attributes help resolve `obj.method()`:
+- We don't need to know where a type came from
+- We don't need to track narrowing/widening
+- We only need the **current explicit type** (which we keep in `type_info`)
 
 ## Changes Required
 
-### 1. Update TypeScript Interface
+### 1. Update SymbolReference Interface
 
 **File:** `packages/types/src/semantic_index.ts`
 
-**Before:**
+Remove three fields from `type_flow`:
+
 ```typescript
 readonly type_flow?: {
-  source_type?: TypeInfo;      // ❌ DELETE THIS LINE
-  target_type?: TypeInfo;
-  is_narrowing: boolean;
-  is_widening: boolean;
+  source_type?: TypeInfo;      // ❌ REMOVE
+  target_type?: TypeInfo;      // ✅ Keep (for now)
+  is_narrowing: boolean;       // ❌ REMOVE
+  is_widening: boolean;        // ❌ REMOVE
 }
 ```
 
-**After:**
+After:
 ```typescript
 readonly type_flow?: {
-  target_type?: TypeInfo;
-  is_narrowing: boolean;
-  is_widening: boolean;
+  target_type?: TypeInfo;      // Only this remains
 }
 ```
 
-### 2. Remove Assignment Code
+### 2. Remove Implementation Code
 
 **File:** `packages/core/src/index_single_file/query_code_tree/reference_builder.ts`
 
-Find and remove the line (around line 415):
-```typescript
-source_type: undefined, // Could be enhanced with extractors  // ❌ DELETE
-```
-
-The code should change from:
-```typescript
-const type_flow_info = {
-  source_type: undefined,      // ❌ DELETE THIS LINE
-  target_type: extract_type_info(capture, this.extractors, this.file_path),
-  is_narrowing: false,
-  is_widening: false,
-};
-```
-
-To:
-```typescript
-const type_flow_info = {
-  target_type: extract_type_info(capture, this.extractors, this.file_path),
-  is_narrowing: false,
-  is_widening: false,
-};
-```
+Remove assignments to deleted fields (no code audit needed, just delete).
 
 ## Verification Steps
 
-1. **Search for remaining references in production code:**
+1. **TypeScript compilation:**
    ```bash
-   rg "source_type" --type ts -g "!*test.ts"
-   ```
-   Expected: 0 results (or only unrelated usages)
-
-2. **TypeScript compilation:**
-   ```bash
-   cd packages/core && npx tsc --noEmit
+   npx tsc --noEmit
    ```
    Expected: 0 errors
 
-3. **Run tests (will fail if tests assert on this field):**
-   ```bash
-   npm test -w @ariadnejs/core
-   ```
-   Expected: Some tests MAY fail - this is OK, task 11.106.8 will fix them
-
-   Note: If tests fail with errors about `source_type`, those test assertions will be removed in task 11.106.8.
+2. **Update tests:** Remove assertions on deleted fields
 
 ## Success Criteria
 
-- ✅ `source_type` removed from interface
-- ✅ Assignment to `source_type` removed
-- ✅ No remaining references to `source_type` in codebase
-- ✅ TypeScript compiles with 0 errors
-- ✅ All tests pass
-
-## Rollback Plan
-
-If issues arise:
-```bash
-git checkout packages/types/src/semantic_index.ts
-git checkout packages/core/src/index_single_file/query_code_tree/reference_builder.ts
-```
+- ✅ Three fields removed from interface
+- ✅ Implementation code updated
+- ✅ No compilation errors
+- ✅ Tests updated (assertions removed)
 
 ## Notes
 
-This field was identified in the metadata extraction work as always being `undefined` because:
-- Source type requires tracing the value back through assignments
-- This is inter-procedural analysis (beyond AST scope)
-- Would require a full type inference engine
+**Blinkered approach:** Don't search for existing usages. Simply remove the fields and fix compilation errors. If code was depending on these (which it shouldn't be, since they're always undefined/false), compilation will fail and we'll address it then.
 
-The field was never populated with actual data, so removal is safe.
-
-### Test Failures Expected
-
-After this change, any tests that assert on `source_type` will fail. This is EXPECTED and CORRECT. Task 11.106.8 will update/remove those test assertions. Do not fix failing tests in this task - just remove the field from the interface and implementation.
+**Next step:** Task 11.106.3 will simplify the remaining `type_flow.target_type` to `assignment_type`.
