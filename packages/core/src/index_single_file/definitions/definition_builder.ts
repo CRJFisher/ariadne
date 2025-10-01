@@ -367,6 +367,7 @@ export class DefinitionBuilder {
 
   /**
    * Add an import definition
+   * TODO: add support in rust and typescript
    */
   add_import(definition: {
     symbol_id: SymbolId;

@@ -1082,7 +1082,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: { scope: "file-private" },
-          import_path: capture.text as ModulePath,
+          import_path: capture.text as unknown as ModulePath,
           import_kind: "namespace",
           original_name: undefined,
         });
@@ -1117,7 +1117,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: { scope: "file-private" },
-          import_path: capture.text as ModulePath,
+          import_path: capture.text as unknown as ModulePath,
           import_kind: "namespace",
           original_name: alias_name ? capture.text : undefined,
         });
