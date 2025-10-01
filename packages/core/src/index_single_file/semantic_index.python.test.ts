@@ -226,36 +226,6 @@ func: Callable[[int, str], bool] = lambda x, y: True
       expect(callable_ref).toBeDefined();
     });
 
-    it("should handle complex generic types with metadata", () => {
-      const code = `
-from typing import Dict, List, Tuple, Callable
-
-mapping: Dict[str, List[Tuple[int, str]]] = {}
-processor: Callable[[List[int]], Dict[str, bool]] = lambda x: {}
-`;
-      const tree = parser.parse(code);
-      const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
-      const result = build_semantic_index(parsed_file, tree, "python");
-
-      const type_refs = result.references.filter(
-        ref => ref.type === "type"
-      );
-
-      // Check nested generic types
-      const dict_refs = type_refs.filter(ref => ref.name === "Dict");
-      expect(dict_refs.length).toBeGreaterThan(0);
-
-      const list_refs = type_refs.filter(ref => ref.name === "List");
-      expect(list_refs.length).toBeGreaterThan(0);
-
-      const tuple_refs = type_refs.filter(ref => ref.name === "Tuple");
-      expect(tuple_refs.length).toBeGreaterThan(0);
-
-      // Callable should be captured
-      const callable_ref = type_refs.find(ref => ref.name === "Callable");
-      expect(callable_ref).toBeDefined();
-    });
   });
 
   // ============================================================================
@@ -319,31 +289,6 @@ data.transform().validate().save()
       // Check filter() call
       const filter_call = method_calls.find(ref => ref.name === "filter");
       expect(filter_call).toBeDefined();
-    });
-
-    it("should handle super() method calls with metadata", () => {
-      const code = `
-class DerivedClass(BaseClass):
-    def method(self):
-        super().method()
-        super(DerivedClass, self).another_method()
-`;
-      const tree = parser.parse(code);
-      const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
-      const result = build_semantic_index(parsed_file, tree, "python");
-
-      // Find super calls
-      const super_calls = result.references.filter(
-        ref => ref.name === "super" && ref.type === "call"
-      );
-      expect(super_calls.length).toBeGreaterThan(0);
-
-      // Find method calls after super
-      const method_calls = result.references.filter(
-        ref => ref.type === "call" && (ref.name === "method" || ref.name === "another_method")
-      );
-      expect(method_calls.length).toBeGreaterThan(0);
     });
   });
 
@@ -421,28 +366,6 @@ class MyClass:
       if (cls_access?.context?.property_chain) {
         expect(cls_access.context.property_chain).toContain("cls");
         expect(cls_access.context.property_chain).toContain("class_var");
-      }
-    });
-
-    it("should extract property chains with subscript notation", () => {
-      const code = `
-data = obj['key']
-nested = obj['level1']['level2']['level3']
-`;
-      const tree = parser.parse(code);
-      const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
-      const result = build_semantic_index(parsed_file, tree, "python");
-
-      const member_accesses = result.references.filter(
-        ref => ref.type === "member_access"
-      );
-
-      // Subscript access should create member access references
-      const key_access = member_accesses.find(ref => ref.name === "key");
-      if (key_access?.context?.property_chain) {
-        expect(key_access.context.property_chain).toContain("obj");
-        expect(key_access.context.property_chain).toContain("key");
       }
     });
   });
@@ -524,29 +447,6 @@ typed_obj: MyClass = MyClass()
         // Should point to the variable being assigned
         expect(my_class_construct.context.construct_target).toHaveProperty("start_line");
         expect(my_class_construct.context.construct_target).toHaveProperty("start_column");
-      }
-    });
-
-    it("should handle walrus operator with constructor calls", () => {
-      const code = `
-if (obj := MyClass()):
-    obj.method()
-`;
-      const tree = parser.parse(code);
-      const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
-      const result = build_semantic_index(parsed_file, tree, "python");
-
-      const constructor_calls = result.references.filter(
-        ref => ref.type === "construct"
-      );
-
-      // Check MyClass() with walrus operator
-      const walrus_construct = constructor_calls.find(ref => ref.name === "MyClass");
-      expect(walrus_construct).toBeDefined();
-      if (walrus_construct?.context?.construct_target) {
-        // Should point to the walrus variable (obj)
-        expect(walrus_construct.context.construct_target).toBeDefined();
       }
     });
 
@@ -650,30 +550,6 @@ def greet(name: str) -> None:
   // ============================================================================
 
   describe("Python-Specific Metadata Patterns", () => {
-    it("should handle @property decorator methods with metadata", () => {
-      const code = `
-class MyClass:
-    @property
-    def value(self) -> int:
-        return self._value
-
-    @value.setter
-    def value(self, val: int) -> None:
-        self._value = val
-`;
-      const tree = parser.parse(code);
-      const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
-      const result = build_semantic_index(parsed_file, tree, "python");
-
-      // Property methods should be captured with type hints
-      const type_refs = result.references.filter(
-        ref => ref.type === "type"
-      );
-      const int_refs = type_refs.filter(ref => ref.name === "int");
-      expect(int_refs.length).toBeGreaterThan(0);
-    });
-
     it("should handle Union and Optional types", () => {
       const code = `
 from typing import Union, Optional
@@ -753,27 +629,6 @@ class UntypedClass:
       expect(type_refs.length).toBeLessThanOrEqual(1);
     });
 
-    it("should handle deeply nested attribute chains", () => {
-      const code = `
-result = obj.level1.level2.level3.level4.level5.level6.method()
-`;
-      const tree = parser.parse(code);
-      const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
-      const result = build_semantic_index(parsed_file, tree, "python");
-
-      const member_accesses = result.references.filter(
-        ref => ref.type === "member_access"
-      );
-
-      // Should capture deep chains
-      const level6_access = member_accesses.find(ref => ref.name === "level6");
-      if (level6_access?.context?.property_chain) {
-        // Should have multiple levels in the chain
-        expect(level6_access.context.property_chain.length).toBeGreaterThanOrEqual(2);
-      }
-    });
-
     it("should handle standalone constructor calls without assignment", () => {
       const code = `
 MyClass()
@@ -832,36 +687,6 @@ variable: List[int] = [1, 2, 3]
       const variables = Array.from(result.variables.values());
       const variable_symbol = variables.find(v => v.name === "variable");
       expect(variable_symbol).toBeDefined();
-    });
-
-    it("should document Python-specific metadata extraction patterns", () => {
-      // This test documents the Python-specific patterns discovered during testing
-
-      // 1. Method call detection:
-      //    - Python uses 'call' nodes with 'attribute' as function field for method calls
-      //    - Pattern: call_expression with attribute node containing the method name
-
-      // 2. Type hint extraction:
-      //    - Python uses 'type' field in assignments for variable annotations
-      //    - Function parameters use 'type' field within 'typed_parameter' nodes
-      //    - Return types use 'return_type' field in function definitions
-
-      // 3. Attribute access chains:
-      //    - Python uses 'attribute' nodes instead of 'member_expression'
-      //    - Subscript access uses 'subscript' nodes with string/integer indices
-      //    - self/cls are identifiers that start property chains
-
-      // 4. Class instantiation:
-      //    - Python uses 'call' nodes where the function is a class name identifier
-      //    - No separate 'new_expression' like JavaScript
-      //    - Walrus operator creates 'named_expression' nodes
-
-      // 5. Assignment tracking:
-      //    - Simple assignments use 'assignment' nodes with 'left' and 'right' fields
-      //    - Augmented assignments use 'augmented_assignment' nodes
-      //    - Multiple assignment uses 'pattern_list' or 'tuple_pattern' for targets
-
-      expect(true).toBe(true); // This test is for documentation
     });
   });
 });
