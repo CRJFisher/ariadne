@@ -231,19 +231,27 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         context: ProcessingContext
       ) => {
         const method_id = create_method_id(capture);
-        const trait_id = find_containing_trait(capture);
+        const trait_name = find_containing_trait(capture);
         const returnType = extract_return_type(
           capture.node.parent || capture.node
         );
+        const isStatic = is_associated_function(
+          capture.node.parent || capture.node
+        );
 
-        if (trait_id) {
-          builder.add_method_signature_to_interface(trait_id, {
-            symbol_id: method_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            return_type: returnType,
-          });
+        if (trait_name) {
+          // Look up trait by name
+          const trait_id = builder.find_interface_by_name(trait_name);
+          if (trait_id) {
+            builder.add_method_signature_to_interface(trait_id, {
+              symbol_id: method_id,
+              name: capture.text,
+              location: capture.location,
+              scope_id: context.get_scope_id(capture.location),
+              return_type: returnType,
+              static: isStatic || undefined,
+            });
+          }
         }
       },
     },
@@ -258,6 +266,19 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         builder: DefinitionBuilder,
         context: ProcessingContext
       ) => {
+        // Skip functions inside impl blocks or traits - they're handled by method/constructor handlers
+        const impl_info = find_containing_impl(capture);
+        const trait_name = find_containing_trait(capture);
+        if (impl_info?.struct_name || impl_info?.trait_name || trait_name) {
+          return;
+        }
+
+        // Skip generic functions - they're handled by definition.function.generic
+        const generics = extract_generic_parameters(capture.node.parent || capture.node);
+        if (generics && generics.length > 0) {
+          return;
+        }
+
         const func_id = create_function_id(capture);
 
         builder.add_function({
@@ -279,6 +300,13 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         builder: DefinitionBuilder,
         context: ProcessingContext
       ) => {
+        // Skip functions inside impl blocks or traits - they're handled by method/constructor handlers
+        const impl_info = find_containing_impl(capture);
+        const trait_name = find_containing_trait(capture);
+        if (impl_info?.struct_name || impl_info?.trait_name || trait_name) {
+          return;
+        }
+
         const func_id = create_function_id(capture);
         const generics = extract_generic_parameters(
           capture.node.parent || capture.node
@@ -304,6 +332,13 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         builder: DefinitionBuilder,
         context: ProcessingContext
       ) => {
+        // Skip functions inside impl blocks or traits - they're handled by method/constructor handlers
+        const impl_info = find_containing_impl(capture);
+        const trait_name = find_containing_trait(capture);
+        if (impl_info?.struct_name || impl_info?.trait_name || trait_name) {
+          return;
+        }
+
         const func_id = create_function_id(capture);
 
         builder.add_function({
@@ -325,6 +360,13 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         builder: DefinitionBuilder,
         context: ProcessingContext
       ) => {
+        // Skip functions inside impl blocks or traits - they're handled by method/constructor handlers
+        const impl_info = find_containing_impl(capture);
+        const trait_name = find_containing_trait(capture);
+        if (impl_info?.struct_name || impl_info?.trait_name || trait_name) {
+          return;
+        }
+
         const func_id = create_function_id(capture);
 
         builder.add_function({
@@ -346,6 +388,13 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         builder: DefinitionBuilder,
         context: ProcessingContext
       ) => {
+        // Skip functions inside impl blocks or traits - they're handled by method/constructor handlers
+        const impl_info = find_containing_impl(capture);
+        const trait_name = find_containing_trait(capture);
+        if (impl_info?.struct_name || impl_info?.trait_name || trait_name) {
+          return;
+        }
+
         const func_id = create_function_id(capture);
 
         builder.add_function({
@@ -377,18 +426,24 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           capture.node.parent || capture.node
         );
 
-        if (impl_info?.struct) {
-          builder.add_method_to_class(impl_info.struct, {
-            symbol_id: method_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            availability: extract_visibility(
-              capture.node.parent || capture.node
-            ),
-            return_type: returnType,
-            static: isStatic || undefined,
-          });
+        if (impl_info?.struct_name) {
+          // Look up struct by name
+          const struct_id = builder.find_class_by_name(impl_info.struct_name);
+          if (struct_id) {
+            builder.add_method_to_class(struct_id, {
+              symbol_id: method_id,
+              name: capture.text,
+              location: capture.location,
+              scope_id: context.get_scope_id(capture.location),
+              availability: extract_visibility(
+                capture.node.parent || capture.node
+              ),
+              return_type: returnType,
+              static: isStatic || undefined,
+            });
+          } else {
+          }
+        } else {
         }
       },
     },
@@ -408,18 +463,21 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           capture.node.parent || capture.node
         );
 
-        if (impl_info?.struct) {
-          builder.add_method_to_class(impl_info.struct, {
-            symbol_id: method_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            availability: extract_visibility(
-              capture.node.parent || capture.node
-            ),
-            return_type: returnType,
-            static: true,
-          });
+        if (impl_info?.struct_name) {
+          const struct_id = builder.find_class_by_name(impl_info.struct_name);
+          if (struct_id) {
+            builder.add_method_to_class(struct_id, {
+              symbol_id: method_id,
+              name: capture.text,
+              location: capture.location,
+              scope_id: context.get_scope_id(capture.location),
+              availability: extract_visibility(
+                capture.node.parent || capture.node
+              ),
+              return_type: returnType,
+              static: true,
+            });
+          }
         }
       },
     },
@@ -434,20 +492,24 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         context: ProcessingContext
       ) => {
         const method_id = create_method_id(capture);
-        const trait_id = find_containing_trait(capture);
+        const trait_name = find_containing_trait(capture);
         const returnType = extract_return_type(
           capture.node.parent || capture.node
         );
 
-        if (trait_id) {
-          builder.add_method_to_class(trait_id, {
-            symbol_id: method_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            availability: { scope: "public" },
-            return_type: returnType,
-          });
+        if (trait_name) {
+          // Look up trait by name
+          const trait_id = builder.find_interface_by_name(trait_name);
+          if (trait_id) {
+            builder.add_method_to_class(trait_id, {
+              symbol_id: method_id,
+              name: capture.text,
+              location: capture.location,
+              scope_id: context.get_scope_id(capture.location),
+              availability: { scope: "public" },
+              return_type: returnType,
+            });
+          }
         }
       },
     },
@@ -467,18 +529,21 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           capture.node.parent || capture.node
         );
 
-        if (impl_info?.struct) {
-          builder.add_method_to_class(impl_info.struct, {
-            symbol_id: method_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            availability: extract_visibility(
-              capture.node.parent || capture.node
-            ),
-            return_type: returnType,
-            async: true,
-          });
+        if (impl_info?.struct_name) {
+          const struct_id = builder.find_class_by_name(impl_info.struct_name);
+          if (struct_id) {
+            builder.add_method_to_class(struct_id, {
+              symbol_id: method_id,
+              name: capture.text,
+              location: capture.location,
+              scope_id: context.get_scope_id(capture.location),
+              availability: extract_visibility(
+                capture.node.parent || capture.node
+              ),
+              return_type: returnType,
+              async: true,
+            });
+          }
         }
       },
     },
@@ -498,18 +563,21 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           capture.node.parent || capture.node
         );
 
-        if (impl_info?.struct && capture.text === "new") {
-          builder.add_method_to_class(impl_info.struct, {
-            symbol_id: method_id,
-            name: "constructor" as SymbolName,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            availability: extract_visibility(
-              capture.node.parent || capture.node
-            ),
-            return_type: returnType,
-            static: true,
-          });
+        if (impl_info?.struct_name && capture.text === "new") {
+          const struct_id = builder.find_class_by_name(impl_info.struct_name);
+          if (struct_id) {
+            builder.add_method_to_class(struct_id, {
+              symbol_id: method_id,
+              name: capture.text as SymbolName,
+              location: capture.location,
+              scope_id: context.get_scope_id(capture.location),
+              availability: extract_visibility(
+                capture.node.parent || capture.node
+              ),
+              return_type: returnType,
+              static: true,
+            });
+          }
         }
       },
     },
@@ -558,7 +626,9 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const param_id = create_parameter_id(capture);
         const parent_id = find_containing_callable(capture);
 
-        if (!parent_id) return;
+        if (!parent_id) {
+          return;
+        }
 
         const param_type = extract_parameter_type(
           capture.node.parent || capture.node
@@ -592,11 +662,9 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
 
         if (!parent_id) return;
 
-        // Self parameter type is the containing struct/trait
+        // Self parameter type is the containing struct/trait name
         const impl_info = find_containing_impl(capture);
-        const self_type = impl_info?.struct
-          ? impl_info.struct.split(":").pop()
-          : "Self";
+        const self_type = impl_info?.struct_name || "Self";
 
         builder.add_parameter_to_callable(parent_id, {
           symbol_id: param_id,

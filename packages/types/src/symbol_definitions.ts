@@ -82,6 +82,7 @@ export interface MethodDefinition extends Definition {
   readonly return_type?: SymbolName;
   readonly decorators?: readonly SymbolName[];
   readonly generics?: string[];
+  readonly static?: boolean;
 }
 
 export interface ConstructorDefinition extends Definition {

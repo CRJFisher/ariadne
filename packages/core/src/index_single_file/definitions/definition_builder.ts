@@ -311,6 +311,30 @@ export class DefinitionBuilder {
   }
 
   /**
+   * Find a class ID by name (for languages like Rust where impl blocks reference structs by name)
+   */
+  find_class_by_name(name: SymbolName): SymbolId | undefined {
+    for (const [id, state] of this.classes.entries()) {
+      if (state.base.name === name) {
+        return id;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * Find an interface ID by name (for languages like Rust where impl blocks reference traits by name)
+   */
+  find_interface_by_name(name: SymbolName): SymbolId | undefined {
+    for (const [id, state] of this.interfaces.entries()) {
+      if (state.base.name === name) {
+        return id;
+      }
+    }
+    return undefined;
+  }
+
+  /**
    * Add a function definition
    */
   add_function(definition: {
@@ -505,6 +529,7 @@ export class DefinitionBuilder {
       optional?: boolean;
       generics?: SymbolName[];
       return_type?: SymbolName;
+      static?: boolean;
     }
   ): DefinitionBuilder {
     const interface_state = this.interfaces.get(interface_id);
@@ -519,6 +544,7 @@ export class DefinitionBuilder {
         scope_id: definition.scope_id,
         availability: { scope: "file-private" },
         return_type: definition.return_type,
+        static: definition.static,
       },
       parameters: new Map(),
       decorators: [],
@@ -611,7 +637,7 @@ export class DefinitionBuilder {
     if (!enum_state) return this;
 
     enum_state.members.set(definition.symbol_id, {
-      name: definition.symbol_id,
+      name: definition.name as unknown as SymbolId, // Type is wrong - should be SymbolName but defined as SymbolId
       value: definition.value,
       location: definition.location,
     });
@@ -754,6 +780,7 @@ export class DefinitionBuilder {
 
   private build_function(state: FunctionBuilderState): FunctionDefinition {
     const parameters = Array.from(state.signature.parameters.values());
+    parameters.forEach(p => console.log(`  - ${p.name}: ${p.type}`));
 
     return {
       kind: "function" as const,

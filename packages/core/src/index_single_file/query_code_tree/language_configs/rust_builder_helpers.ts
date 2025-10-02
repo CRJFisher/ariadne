@@ -79,7 +79,20 @@ export function extract_location(node: SyntaxNode): Location {
 
 export function create_struct_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
-  const location = capture.location;
+  // Use the parent struct_item node's location, not just the name's location
+  // This ensures the ID matches what find_containing_impl generates
+  const struct_node = capture.node.parent;
+  if (!struct_node) {
+    return class_symbol(name, capture.location);
+  }
+
+  const location = {
+    file_path: capture.location.file_path,
+    start_line: struct_node.startPosition.row + 1,
+    start_column: struct_node.startPosition.column + 1,
+    end_line: struct_node.endPosition.row + 1,
+    end_column: struct_node.endPosition.column + 1,
+  };
   return class_symbol(name, location);
 }
 
@@ -91,19 +104,58 @@ export function create_enum_id(capture: CaptureNode): SymbolId {
 
 export function create_trait_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
-  const location = capture.location;
+  // Use the parent trait_item node's location, not just the name's location
+  // This ensures the ID matches what find_containing_trait generates
+  const trait_node = capture.node.parent;
+  if (!trait_node) {
+    return interface_symbol(name, capture.location);
+  }
+
+  const location = {
+    file_path: capture.location.file_path,
+    start_line: trait_node.startPosition.row + 1,
+    start_column: trait_node.startPosition.column + 1,
+    end_line: trait_node.endPosition.row + 1,
+    end_column: trait_node.endPosition.column + 1,
+  };
   return interface_symbol(name, location);
 }
 
 export function create_function_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
-  const location = capture.location;
+  // Use the parent function_item node's location, not just the name's location
+  // This ensures the ID matches what find_containing_callable generates
+  const function_node = capture.node.parent;
+  if (!function_node) {
+    return function_symbol(name, capture.location);
+  }
+
+  const location = {
+    file_path: capture.location.file_path,
+    start_line: function_node.startPosition.row + 1,
+    start_column: function_node.startPosition.column + 1,
+    end_line: function_node.endPosition.row + 1,
+    end_column: function_node.endPosition.column + 1,
+  };
   return function_symbol(name, location);
 }
 
 export function create_method_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
-  const location = capture.location;
+  // Use the parent function_item node's location, not just the name's location
+  // This ensures the ID matches what find_containing_callable generates for methods
+  const function_node = capture.node.parent;
+  if (!function_node) {
+    return method_symbol(name, capture.location);
+  }
+
+  const location = {
+    file_path: capture.location.file_path,
+    start_line: function_node.startPosition.row + 1,
+    start_column: function_node.startPosition.column + 1,
+    end_line: function_node.endPosition.row + 1,
+    end_column: function_node.endPosition.column + 1,
+  };
   return method_symbol(name, location);
 }
 
@@ -282,6 +334,19 @@ export function extract_impl_type(node: SyntaxNode): SymbolName | undefined {
   if (node.type === "impl_item") {
     const type = node.childForFieldName?.("type");
     if (type) {
+      // For generic types like "Container<T>", extract just the base name "Container"
+      // The type field might be a generic_type with a type_identifier child
+      if (type.type === "generic_type") {
+        const typeIdentifier = type.childForFieldName?.("type");
+        if (typeIdentifier) {
+          return typeIdentifier.text as SymbolName;
+        }
+      }
+      // For non-generic types, check if it's a type_identifier
+      if (type.type === "type_identifier") {
+        return type.text as SymbolName;
+      }
+      // Fallback: return the full text
       return type.text as SymbolName;
     }
   }
@@ -318,12 +383,8 @@ export function is_unsafe_function(node: SyntaxNode): boolean {
 export function extract_return_type(node: SyntaxNode): SymbolName | undefined {
   const returnType = node.childForFieldName?.("return_type");
   if (returnType) {
-    // Skip the -> arrow if present
-    const typeNode = returnType.children?.find(
-      (child) => child.type !== "->" && child.type !== "type"
-    );
-    return (typeNode?.text ||
-      returnType.text?.replace("->", "").trim()) as SymbolName;
+    // Return the full return type text, cleaned up
+    return returnType.text?.replace(/^->\s*/, "").trim() as SymbolName;
   }
   return undefined;
 }
@@ -365,7 +426,7 @@ export function is_self_parameter(node: SyntaxNode): boolean {
 
 export function find_containing_impl(
   capture: CaptureNode
-): { struct?: SymbolId; trait?: SymbolId } | undefined {
+): { struct_name?: SymbolName; trait_name?: SymbolName } | undefined {
   let node = capture.node;
 
   while (node) {
@@ -374,14 +435,14 @@ export function find_containing_impl(
       const implTrait = extract_impl_trait(node);
 
       if (implType) {
-        const result: { struct?: SymbolId; trait?: SymbolId } = {};
+        const result: { struct_name?: SymbolName; trait_name?: SymbolName } = {};
 
-        // Create struct ID for the type being implemented
-        result.struct = class_symbol(implType, extract_location(node));
+        // Return struct name for lookup (not ID with location)
+        result.struct_name = implType as SymbolName;
 
-        // If implementing a trait, add trait ID
+        // If implementing a trait, return trait name
         if (implTrait) {
-          result.trait = interface_symbol(implTrait, extract_location(node));
+          result.trait_name = implTrait as SymbolName;
         }
 
         return result;
@@ -449,17 +510,15 @@ export function find_containing_enum(
 
 export function find_containing_trait(
   capture: CaptureNode
-): SymbolId | undefined {
+): SymbolName | undefined {
   let node = capture.node;
 
   while (node) {
     if (node.type === "trait_item") {
       const nameNode = node.childForFieldName?.("name");
       if (nameNode) {
-        return interface_symbol(
-          nameNode.text as SymbolName,
-          extract_location(nameNode)
-        );
+        // Return trait name for lookup (not ID with location)
+        return nameNode.text as SymbolName;
       }
     }
     if (node.parent) {
@@ -687,11 +746,31 @@ export function find_containing_callable(
   const file_path = capture.location.file_path;
 
   while (node) {
-    // Function items (top-level functions)
+    // Function items
     if (node.type === "function_item") {
       const nameNode = node.childForFieldName?.("name");
       if (!nameNode) return undefined;
 
+      // Check if this function is inside an impl block or trait
+      let ancestor = node.parent;
+      while (ancestor) {
+        if (ancestor.type === "impl_item" || ancestor.type === "trait_item") {
+          // This is a method, not a standalone function
+          return method_symbol(
+            nameNode.text as SymbolName,
+            {
+              file_path,
+              start_line: node.startPosition.row + 1,
+              start_column: node.startPosition.column + 1,
+              end_line: node.endPosition.row + 1,
+              end_column: node.endPosition.column + 1,
+            }
+          );
+        }
+        ancestor = ancestor.parent;
+      }
+
+      // It's a standalone function
       return function_symbol(
         nameNode.text as SymbolName,
         {
@@ -743,6 +822,7 @@ export function find_containing_callable(
       const nameNode = node.childForFieldName?.("name");
       if (!nameNode) return undefined;
 
+      // Use full function_signature_item node location to match create_method_id
       return method_symbol(
         nameNode.text as SymbolName,
         {

@@ -1,7 +1,21 @@
 ;; ==============================================================================
-;; SEMANTIC INDEX - Rust Language Support (Corrected)
+;; SEMANTIC INDEX - Rust Language Support
 ;; ==============================================================================
 ;; Captures semantic information for Rust using verified node types
+;;
+;; IMPORTANT PATTERN NOTES:
+;; 1. Most identifiers are DIRECT CHILDREN, not named fields
+;;    ✓ Correct: (parameter (identifier) @capture)
+;;    ✗ Wrong:   (parameter pattern: (identifier) @capture)
+;;
+;; 2. Trait method signatures use function_signature_item (no body)
+;;    Trait default methods use function_item (with body)
+;;
+;; 3. Parameters in closures with type annotations use same structure as functions
+;;    Simple: (identifier) direct child of closure_parameters
+;;    Typed:  (parameter (identifier)) nested structure
+;;
+;; See RUST_QUERY_PATTERNS.md for complete AST-to-query mapping
 ;; ==============================================================================
 
 ;; ==============================================================================
@@ -136,9 +150,9 @@
   name: (type_identifier) @definition.enum
 )
 
-; Enum variants
+; Enum variants - identifier is direct child, not named field
 (enum_variant
-  name: (identifier) @definition.enum_member
+  (identifier) @definition.enum_member
 )
 
 ; Generic functions (must come first)
@@ -210,7 +224,7 @@
   )
 ) @reference.type_reference.impl.generic
 
-; Async methods in trait implementations (with self parameter)
+; Async methods in trait implementations - capture all async methods
 (impl_item
   trait: (_)
   body: (declaration_list
@@ -218,62 +232,27 @@
       (function_modifiers
         "async"
       )
-      name: (identifier) @definition.method.async
-      parameters: (parameters
-        (self_parameter)
-      )
+      (identifier) @definition.method.async
     )
   )
 )
 
-; Methods in trait implementations (with self parameter)
+; Methods in trait implementations - capture all methods
 (impl_item
   trait: (_)
   body: (declaration_list
     (function_item
-      name: (identifier) @definition.method
-      parameters: (parameters
-        (self_parameter)
-      )
+      (identifier) @definition.method
     )
   )
 )
 
-; Associated functions in trait implementations
-(impl_item
-  trait: (_)
-  body: (declaration_list
-    (function_item
-      name: (identifier) @definition.method.associated
-      parameters: (parameters
-        (parameter)
-      )
-    )
-  )
-)
-
-; Methods in regular impl blocks (with self parameter)
+; Methods in regular impl blocks - capture all methods
 (impl_item
   type: (_)
   body: (declaration_list
     (function_item
-      name: (identifier) @definition.method
-      parameters: (parameters
-        (self_parameter)
-      )
-    )
-  )
-)
-
-; Associated functions in regular impl blocks (no self parameter)
-(impl_item
-  type: (_)
-  body: (declaration_list
-    (function_item
-      name: (identifier) @definition.method.associated
-      parameters: (parameters
-        (parameter)
-      )
+      (identifier) @definition.method
     )
   )
 )
@@ -299,20 +278,20 @@
   name: (type_identifier) @definition.interface
 ) @scope.interface
 
-; Trait methods (signatures without body)
+; Trait methods (signatures without body) - identifier is direct child
 (trait_item
   body: (declaration_list
     (function_signature_item
-      name: (identifier) @definition.interface.method
-    ) @scope.method
+      (identifier) @definition.interface.method
+    )
   )
 )
 
-; Trait methods with default implementation
+; Trait methods with default implementation - identifier is direct child
 (trait_item
   body: (declaration_list
     (function_item
-      name: (identifier) @definition.method.default
+      (identifier) @definition.method.default
     )
   )
 )
@@ -371,15 +350,13 @@
   pattern: (identifier) @definition.variable.mut
 )
 
-; Function parameters
+; Function parameters - direct identifier child (not pattern field)
 (parameter
-  pattern: (identifier) @definition.parameter
+  (identifier) @definition.parameter
 )
 
-; Self parameters
-(self_parameter
-  (self) @definition.parameter.self
-)
+; Self parameters - capture the whole node
+(self_parameter) @definition.parameter.self
 
 ; Closure expressions
 (closure_expression) @definition.function.closure
@@ -405,11 +382,11 @@
   )
 )
 
-; Closure parameters with type annotations
+; Closure parameters with type annotations - same structure as function parameters
 (closure_expression
   parameters: (closure_parameters
     (parameter
-      pattern: (identifier) @definition.parameter.closure
+      (identifier) @definition.parameter.closure
     )
   )
 )
