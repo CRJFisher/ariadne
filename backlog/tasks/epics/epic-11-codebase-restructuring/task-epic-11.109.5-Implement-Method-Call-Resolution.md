@@ -5,6 +5,7 @@
 **Estimated Effort:** 4-5 days
 **Parent:** task-epic-11.109
 **Dependencies:**
+
 - task-epic-11.109.1 (ScopeResolverIndex + Cache)
 - task-epic-11.109.3 (TypeContext)
 
@@ -20,8 +21,7 @@ Implement method call resolution by combining scope-aware receiver resolution wi
 packages/core/src/resolve_references/
 └── call_resolution/
     ├── method_resolver.ts
-    └── tests/
-        └── method_resolver.test.ts
+    └── method_resolver.test.ts
 ```
 
 ### Core Implementation
@@ -129,10 +129,12 @@ function extract_receiver_name(call_ref: SymbolReference): SymbolName {
 ### Step 1: Resolve Receiver Symbol
 
 Given: `user.getName()`
+
 - Receiver: `user`
 - Method: `getName`
 
 Resolve `user` using on-demand ScopeResolverIndex:
+
 ```typescript
 const receiver_symbol = resolver_index.resolve(
   call_ref.scope_id,
@@ -146,11 +148,13 @@ This respects scoping rules - finds the closest `user` definition through on-dem
 ### Step 2: Determine Receiver Type
 
 Once we have the receiver symbol, get its type:
+
 ```typescript
 const receiver_type = type_context.get_symbol_type(receiver_symbol);
 ```
 
 This uses TypeContext's type tracking:
+
 - Check variable type annotation: `const user: User`
 - Check constructor assignment: `const user = new User()`
 - Check return type: `const user = getUser()` where `getUser(): User`
@@ -158,11 +162,9 @@ This uses TypeContext's type tracking:
 ### Step 3: Lookup Method on Type
 
 Finally, find the method on the type:
+
 ```typescript
-const method_symbol = type_context.get_type_member(
-  receiver_type,
-  "getName"
-);
+const method_symbol = type_context.get_type_member(receiver_type, "getName");
 ```
 
 This searches the class/interface for the method member.
@@ -174,16 +176,19 @@ This searches the class/interface for the method member.
 Test cases for each language:
 
 #### Basic Method Calls
+
 1. **Instance method** - Call method on instance variable
+
    ```typescript
    const obj = new MyClass();
-   obj.method();  // Resolves to MyClass.method
+   obj.method(); // Resolves to MyClass.method
    ```
 
 2. **Annotated variable**
+
    ```typescript
    const obj: MyClass = factory();
-   obj.method();  // Resolves to MyClass.method
+   obj.method(); // Resolves to MyClass.method
    ```
 
 3. **Constructor assignment**
@@ -193,31 +198,36 @@ Test cases for each language:
    ```
 
 #### Receiver Resolution
+
 4. **Local receiver** - Receiver defined locally
 5. **Parameter receiver** - Receiver is function parameter
 6. **Imported receiver** - Receiver imported from another file
 7. **This/self receiver** - `this.method()` or `self.method()`
 
 #### Type Tracking
+
 8. **Explicit annotation** - `const x: Type = ...`
 9. **Constructor tracking** - `const x = new Type()`
 10. **Return type tracking** - `const x = factory()` where `factory(): Type`
 
 #### Shadowing
+
 11. **Receiver shadowing** - Inner scope receiver shadows outer
 12. **Same method different types**
     ```typescript
     const a = new TypeA();
     const b = new TypeB();
-    a.method();  // TypeA.method
-    b.method();  // TypeB.method
+    a.method(); // TypeA.method
+    b.method(); // TypeB.method
     ```
 
 #### Method Chains
+
 13. **Simple chain** - `obj.getHelper().process()`
 14. **Long chain** - Multiple method calls chained
 
 #### Edge Cases
+
 15. **Receiver not found** - Return null gracefully
 16. **Type not found** - Receiver has no tracked type
 17. **Method not found** - Type doesn't have the method
@@ -226,23 +236,27 @@ Test cases for each language:
 ### Test Fixtures
 
 #### TypeScript
+
 ```typescript
 class User {
-  getName(): string { return ""; }
+  getName(): string {
+    return "";
+  }
 }
 
 function test() {
   const user: User = new User();
-  user.getName();  // Should resolve to User.getName
+  user.getName(); // Should resolve to User.getName
 
   function nested() {
-    const user = "string";  // Shadows outer user
+    const user = "string"; // Shadows outer user
     // user.getName(); would be invalid
   }
 }
 ```
 
 #### Python
+
 ```python
 class User:
     def get_name(self):
@@ -254,6 +268,7 @@ def test():
 ```
 
 #### Rust
+
 ```rust
 struct User {}
 impl User {
@@ -269,6 +284,7 @@ fn test() {
 ## Success Criteria
 
 ### Functional
+
 - ✅ Receiver resolved using scope walking
 - ✅ Receiver type determined from TypeContext
 - ✅ Method looked up on receiver type
@@ -276,6 +292,7 @@ fn test() {
 - ✅ All 4 languages supported
 
 ### Testing
+
 - ✅ Unit tests for all resolution steps
 - ✅ Unit tests for type tracking sources
 - ✅ Unit tests for shadowing
@@ -283,6 +300,7 @@ fn test() {
 - ✅ Edge cases covered
 
 ### Code Quality
+
 - ✅ Full JSDoc documentation
 - ✅ Type-safe implementation
 - ✅ Clear error handling
@@ -293,16 +311,18 @@ fn test() {
 ### Reference Context
 
 Method calls have additional context:
+
 ```typescript
 interface ReferenceContext {
-  receiver_location?: Location;  // Location of receiver object
-  property_chain?: readonly SymbolName[];  // For chained calls
+  receiver_location?: Location; // Location of receiver object
+  property_chain?: readonly SymbolName[]; // For chained calls
 }
 ```
 
 ### Method Chains
 
 For `a.b.c()`:
+
 - Property chain: `["a", "b", "c"]`
 - Receiver: location of `a.b`
 - Method: `c`
@@ -314,13 +334,14 @@ For `a.b.c()`:
 
 ```typescript
 // Instance method
-obj.method();  // Receiver is variable
+obj.method(); // Receiver is variable
 
 // Static method
-MyClass.method();  // Receiver is class name
+MyClass.method(); // Receiver is class name
 ```
 
 Both follow same pattern:
+
 1. Resolve receiver (variable or class)
 2. Get type (or use class directly)
 3. Lookup method
@@ -345,28 +366,33 @@ Document for future work:
 ## Dependencies
 
 **Uses:**
+
 - `ScopeResolverIndex` for on-demand receiver resolution
 - `ResolutionCache` for caching receiver resolutions
 - `TypeContext` for type tracking and member lookup
 - `SemanticIndex.references` for method calls
 
 **Consumed by:**
+
 - Task 11.109.7 (Main orchestration)
 
 ## Cache Benefits
 
 Method calls benefit significantly from caching because:
+
 1. **Common receivers**: `obj.method1()` and `obj.method2()` share receiver resolution
 2. **Repeated calls**: Same method called multiple times in same scope
 3. **Nested scopes**: Same receiver name in child scopes
 
 Example: 100 method calls on 10 different receivers in same scope
+
 - Without cache: 100 receiver resolutions
 - With cache: 10 resolver calls + 90 cache hits (9x speedup!)
 
 ## Next Steps
 
 After completion:
+
 - Constructor resolver (11.109.6) follows similar pattern
 - Can enhance with inheritance (after TypeContext update)
 - Can enhance with method chains (future)

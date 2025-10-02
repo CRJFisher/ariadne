@@ -20,8 +20,7 @@ Implement constructor call resolution using scope-aware class name lookup and ty
 packages/core/src/resolve_references/
 └── call_resolution/
     ├── constructor_resolver.ts
-    └── tests/
-        └── constructor_resolver.test.ts
+    └── constructor_resolver.test.ts
 ```
 
 ### Core Implementation

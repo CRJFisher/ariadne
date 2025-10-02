@@ -1,7 +1,28 @@
 # Guidelines
 
-- *never* create "extra" functions/functionality that *might* be used one day. Only create functions that will be wired-in to the top-level functionality.
-- outside of an index.ts file, never re-export types from other modules
+## Project Layout / Intention Tree
+
+- the top of the intention tree (the actual purpose of this codebase) is to detect call graphs and thereby find the entry point to the codebase.
+- every change to the code needs to be justified in terms of its contribution to the top-level intention tree.
+- the module layout is the instantiation of the intention tree.
+- we _never_ add 'extra' functionality outside of this intention tree, even if it is 'well-meaning' and 'might' be used one day. 'extra', surplus code reduces our longterm velocity. it is much better to spend effort reviewing narrow, focussed code and its integration, rather than trying to cover a wide surface area.
+- all namings and documentation should _only_ reflect the trunk and branches of the intention tree, not the 'differential' changes we make to the codebase. E.g. if we're changing 'method_resolution.ts', we don't just create a file like 'enhanced_method_resolution.ts', we just improve 'method_resolution.ts', leaving the core intention tree intact.
+
+### Core
+
+- `packages/core/src/index_single_file`
+  - builds the semantic index for a single file
+  - build definitions including symbol-ids which are globally unique
+  - builds references including symbol-names which are unique within a scope
+  - builds scopes including lexical scope relationships
+  - build type information including type bindings and type members TODO: verify these details
+- `packages/core/src/resolve_references`
+  - resolves references to symbols, matching symbol-names to symbol-ids
+  - resolves symbols by name and scope - start at the bottom of the scope tree and work up i.e. lexical scope resolution
+  - .... on-demand resolution
+- `packages/core/src/trace_call_graph`
+  - detects the call graph of a codebase
+  - uses the semantic index and resolve_references to find the entry points to the codebase caller scopes that are never called (internally)
 
 ## Universal Symbol System
 
@@ -9,81 +30,28 @@
 
 When working with any identifier (variable, function, class, method, property, etc.), use the universal `SymbolId` type instead of individual name types or raw strings:
 
-```typescript
-// ❌ BAD - Don't use individual name types or raw strings
-function find_function(name: FunctionName): Function;
-function resolve_method(class_name: string, method_name: string): Method;
-const symbols = new Map<string, Symbol>();
-
-// ✅ GOOD - Use SymbolId
-function find_function(symbol: SymbolId): Function;
-function resolve_method(class_symbol: SymbolId, method_symbol: SymbolId): Method;
-const symbols = new Map<SymbolId, Symbol>();
-```
-
 ### Creating SymbolIds
 
-Use the factory functions from `symbol_utils.ts`:
+Use the factory functions from `symbol.ts`:
 
 ```typescript
 import { function_symbol, class_symbol, method_symbol } from '@ariadnejs/types';
 
 // Create symbols with proper context
 const funcId = function_symbol('processData', 'src/utils.ts', location);
-const classId = class_symbol('MyClass', 'src/classes.ts', location);  
+const classId = class_symbol('MyClass', 'src/classes.ts', location);
 const methodId = method_symbol('getValue', 'MyClass', 'src/classes.ts', location);
-```
-
-### Why SymbolId?
-
-- **Eliminates ambiguity**: "getValue" could be a function, method, or property - SymbolId encodes the kind
-- **Provides context**: Includes file scope and qualification
-- **Type safety**: Branded types prevent mixing different identifier types
-- **Consistency**: One type for all identifiers instead of 15+ different types
-
-**Always prefer SymbolId over raw strings or individual name types when dealing with identifiers.**
-
-## Tree-sitter Query Development
-
-### Query File Structure
-
-All modules use tree-sitter queries for extracting information from code:
-
-```text
-module_name/
-├── index.ts              # Public API
-├── module_name.ts        # Query execution logic
-└── queries/              # Tree-sitter patterns
-    ├── javascript.scm    # JavaScript queries
-    ├── typescript.scm    # TypeScript queries
-    ├── python.scm        # Python queries
-    └── rust.scm          # Rust queries
-```
-
-### Writing Query Patterns
-
-Use S-expression syntax to match AST patterns:
-
-```scheme
-; Capture function declarations
-(function_declaration
-  name: (identifier) @function.name
-  parameters: (formal_parameters) @function.params)
-
-; Capture method calls
-(call_expression
-  function: (member_expression
-    property: (property_identifier) @method.name))
+...
 ```
 
 ## Code Style Guidelines
 
-### Naming Conventions
+### Naming Convention - pythonic
 
-- **Functions**: `snake_case` (pythonic style)
+- **Functions**: `snake_case`
 - **Variables**: `snake_case`
 - **Constants**: `UPPER_SNAKE_CASE`
-- **Types/Interfaces**: `PascalCase`
+- **Classes/Interfaces**: `PascalCase`
 - **Files**: `snake_case.ts`
 
 ### Code Structure
@@ -92,24 +60,9 @@ Use S-expression syntax to match AST patterns:
 - **Exports**: Only export what is actually used by external modules
 - **Dependencies**: Check existing libraries before adding new ones
 
-### TypeScript Patterns
-
-```typescript
-// Good: Pure function with clear types
-export function process_ast(node: SyntaxNode, language: Language): Result {
-  // Implementation
-}
-
-// Avoid: Stateful, mutable classes
-class Processor {
-  private state: any;
-  process() {
-    /* ... */
-  }
-}
-```
-
 ## Backlog Workflow
+
+USE BACKLOG WHENEVER 'TASK's ARE MENTIONED.
 
 ### Task Management
 
@@ -127,22 +80,12 @@ class Processor {
 
 ## Testing Requirements
 
-### Coverage
-
-- Write tests for all supported languages (JavaScript, TypeScript, Python, Rust)
-- Test query patterns against real code samples
-- Verify cross-language consistency
-
 ### Test Structure
 
 ```text
 module_name/
-├── module_name.test.ts      # Core functionality
-├── fixtures/
-│   ├── javascript/          # JS test cases
-│   ├── typescript/          # TS test cases
-│   ├── python/              # Python test cases
-│   └── rust/                # Rust test cases
+├── module_name.ts      # Core functionality
+├── module_name.test.ts # Core functionality tests
 ```
 
 ### Testing Approach
@@ -150,15 +93,3 @@ module_name/
 - **Fix issues, don't hide them** - Never modify tests to pass
 - **Test real scenarios** - Use realistic code samples
 - **Document gaps** - Note any untested edge cases
-
-## Documentation
-
-- Write comments etc in a 'timeless' way i.e. don't make reference to the change process / new architecture / old way of doing thing in any way. The documentation is for how to build things going forward, not as a record of what changes have been made. The namings are focussed on the concepts they describe and shouldn't include any sense of the change being made.
-
-## Critical Reminders
-
-- **Query-first approach**: Use tree-sitter queries for all AST analysis
-- **Language parity**: Ensure features work across all supported languages
-- **Test everything**: No feature is complete without tests
-- **Document patterns**: Comment complex query patterns. All documentation, including comments, is timeless
-- **Keep it simple**: Prefer declarative queries over imperative code

@@ -499,6 +499,74 @@
 ;; REFERENCES with Enhanced Context
 ;; ==============================================================================
 
+; ============================================================================
+; WRITE REFERENCES - Track variable mutations and assignments
+; ============================================================================
+
+; Simple assignments: x = 42
+(assignment
+  left: (identifier) @reference.write
+)
+
+; Augmented assignments: count += 1, value *= 2
+(augmented_assignment
+  left: (identifier) @reference.write
+)
+
+; Multiple assignments: a, b = 1, 2
+(assignment
+  left: (pattern_list
+    (identifier) @reference.write
+  )
+)
+
+; Tuple assignments: (a, b) = (1, 2)
+(assignment
+  left: (tuple_pattern
+    (identifier) @reference.write
+  )
+)
+
+; Attribute assignments: self.value = 42
+(assignment
+  left: (attribute
+    attribute: (identifier) @reference.write
+  )
+)
+
+; Subscript assignments: arr[0] = value
+(assignment
+  left: (subscript
+    (identifier) @reference.write
+  )
+)
+
+; ============================================================================
+; TYPE REFERENCES - None and nullable types
+; ============================================================================
+
+; None in type contexts (catches all: return types, parameters, variables, etc.)
+; This general pattern matches any None within a type annotation
+(type
+  (none) @reference.type
+)
+
+; None in binary type operators (Python 3.10+ pipe syntax: int | None)
+; These patterns are needed because binary_operator is NOT always wrapped in a type node
+; Right side: int | None
+(binary_operator
+  right: (none) @reference.type
+)
+
+; Left side: None | int
+(binary_operator
+  left: (none) @reference.type
+)
+
+; ============================================================================
+; FUNCTION AND METHOD CALLS
+; ============================================================================
+
 ; Function calls
 (call
   function: (identifier) @reference.call

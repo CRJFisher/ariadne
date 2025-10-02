@@ -369,6 +369,7 @@ export enum SemanticEntity {
   MEMBER_ACCESS = "member_access",
   TYPE_REFERENCE = "type_reference",
   TYPEOF = "typeof",
+  WRITE = "write",  // Variable write/assignment
 
   // Special
   THIS = "this",

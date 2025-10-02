@@ -514,6 +514,76 @@ name: str = "test"
       expect(assignments.length).toBeGreaterThan(0);
       expect(type_refs.length).toBeGreaterThan(0);
     });
+
+    it("should extract write references for simple assignments", () => {
+      const code = `
+x = 42
+y = "hello"
+count = 0
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.py" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const index = build_semantic_index(parsed_file, tree, "python");
+
+      // Check write references were created
+      const write_refs = index.references.filter(r => r.type === "write");
+      expect(write_refs.length).toBeGreaterThanOrEqual(3);
+
+      // Check specific variable writes
+      const x_write = write_refs.find(r => r.name === "x");
+      expect(x_write).toBeDefined();
+      const y_write = write_refs.find(r => r.name === "y");
+      expect(y_write).toBeDefined();
+      const count_write = write_refs.find(r => r.name === "count");
+      expect(count_write).toBeDefined();
+    });
+
+    it("should extract write references for augmented assignments", () => {
+      const code = `
+count = 0
+count += 1
+count *= 2
+value = 10
+value -= 5
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.py" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const index = build_semantic_index(parsed_file, tree, "python");
+
+      const write_refs = index.references.filter(r => r.type === "write");
+
+      // Should have writes for initial assignments and augmented assignments
+      expect(write_refs.length).toBeGreaterThanOrEqual(5);
+
+      // Check count writes (one initial, two augmented)
+      const count_writes = write_refs.filter(r => r.name === "count");
+      expect(count_writes.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it("should extract write references for multiple assignments", () => {
+      const code = `
+a, b, c = 1, 2, 3
+x, y = calculate()
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.py" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const index = build_semantic_index(parsed_file, tree, "python");
+
+      const write_refs = index.references.filter(r => r.type === "write");
+
+      // Should have write references for a, b, c, x, y
+      expect(write_refs.length).toBeGreaterThanOrEqual(5);
+
+      const a_write = write_refs.find(r => r.name === "a");
+      expect(a_write).toBeDefined();
+      const b_write = write_refs.find(r => r.name === "b");
+      expect(b_write).toBeDefined();
+      const c_write = write_refs.find(r => r.name === "c");
+      expect(c_write).toBeDefined();
+    });
   });
 
   // ============================================================================
@@ -719,6 +789,68 @@ y: int | str = 42
       // Union[int, str] should be captured
       const union_refs = type_refs.filter(ref => ref.name === "Union");
       expect(union_refs.length).toBeGreaterThan(0);
+    });
+
+    it("should extract None type references from return type hints", () => {
+      const code = `
+def get_value() -> int | None:
+    return None
+
+def process() -> None:
+    pass
+
+def maybe_str() -> str | None:
+    return "test"
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.py" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const result = build_semantic_index(parsed_file, tree, "python");
+
+      const type_refs = result.references.filter(ref => ref.type === "type");
+
+      // Should have None type references
+      const none_refs = type_refs.filter(ref => ref.name === "None");
+      expect(none_refs.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it("should extract None type references from parameter type hints", () => {
+      const code = `
+def process(value: str | None, other: int | None) -> None:
+    pass
+
+def handle(data: None) -> str:
+    return "handled"
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.py" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const result = build_semantic_index(parsed_file, tree, "python");
+
+      const type_refs = result.references.filter(ref => ref.type === "type");
+      const none_refs = type_refs.filter(ref => ref.name === "None");
+
+      // Should have None from parameter types and return type
+      expect(none_refs.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it("should extract None type references from variable annotations", () => {
+      const code = `
+x: int | None = None
+y: str | None = "test"
+z: None = None
+result: list[str] | None = []
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.py" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const result = build_semantic_index(parsed_file, tree, "python");
+
+      const type_refs = result.references.filter(ref => ref.type === "type");
+      const none_refs = type_refs.filter(ref => ref.name === "None");
+
+      // Should have None from all variable type annotations
+      expect(none_refs.length).toBeGreaterThanOrEqual(4);
     });
   });
 

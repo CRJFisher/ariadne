@@ -41,6 +41,7 @@ export enum ReferenceKind {
   METHOD_CALL,
   PROPERTY_ACCESS,
   VARIABLE_REFERENCE,
+  VARIABLE_WRITE,
   TYPE_REFERENCE,
   CONSTRUCTOR_CALL,
   SUPER_CALL,
@@ -119,6 +120,9 @@ function determine_reference_kind(capture: CaptureNode): ReferenceKind {
     case "variable":
       return ReferenceKind.VARIABLE_REFERENCE;
 
+    case "write":
+      return ReferenceKind.VARIABLE_WRITE;
+
     case "type":
     case "type_alias":
     case "class":
@@ -150,6 +154,9 @@ function map_to_reference_type(kind: ReferenceKind): ReferenceType {
 
     case ReferenceKind.TYPE_REFERENCE:
       return "type";
+
+    case ReferenceKind.VARIABLE_WRITE:
+      return "write";
 
     case ReferenceKind.ASSIGNMENT:
       return "assignment";
