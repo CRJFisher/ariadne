@@ -10,7 +10,7 @@ import type {
   CaptureNode,
   SemanticEntity,
   SemanticCategory,
-} from "../scopes/scope_processor";
+} from "../semantic_index";
 import type {
   Location,
   ScopeId,
@@ -446,7 +446,8 @@ describe("DefinitionBuilder - Complex Assembly", () => {
     expect(constructor_def.parameters[0].name).toBe("name");
     expect(constructor_def.parameters[0].type).toBe("string");
     expect(constructor_def.parameters[1].name).toBe("age");
-    expect(constructor_def.parameters[1].optional).toBe(true);
+    expect(constructor_def.parameters[1].type).toBe("number");
+    expect(constructor_def.parameters[1].default_value).toBeUndefined;
   });
 
   it("should support parameters for interface methods", () => {

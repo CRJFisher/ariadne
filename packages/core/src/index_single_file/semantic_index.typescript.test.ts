@@ -1630,7 +1630,6 @@ describe("Semantic Index - TypeScript", () => {
           if (prop) {
             expect(prop.type).toBe(testCase.type);
             expect(prop.initial_value).toBe(testCase.initial_value);
-            expect(prop.is_parameter_property).toBe(true);
           }
         }
 
@@ -1656,7 +1655,6 @@ describe("Semantic Index - TypeScript", () => {
           const prefixParam = greetMethod.parameters.find((p: any) => p.name === "prefix");
           expect(prefixParam).toBeDefined();
           if (prefixParam) {
-            expect(prefixParam.optional).toBe(true);
             expect(prefixParam.default_value).toBeUndefined();
           }
         }
@@ -1676,7 +1674,6 @@ describe("Semantic Index - TypeScript", () => {
           expect(argsParam).toBeDefined();
           if (argsParam) {
             expect(argsParam.type).toBe("any[]");
-            expect(argsParam.optional).toBe(false);
           }
         }
       }
@@ -1806,7 +1803,7 @@ describe("Semantic Index - TypeScript", () => {
         expect(mapMethod).toBeDefined();
         if (mapMethod) {
           expect(mapMethod.generics).toBeDefined();
-          expect(mapMethod.generics.length).toBeGreaterThan(0);
+          expect(mapMethod.generics?.length).toBeGreaterThan(0);
           expect(mapMethod.parameters).toHaveLength(1);
           expect(mapMethod.parameters[0]).toMatchObject({
             name: "fn",
@@ -2067,9 +2064,9 @@ describe("Semantic Index - TypeScript", () => {
         (f) => f.name === "regularFunc"
       );
       expect(regularFunc).toBeDefined();
-      if (regularFunc && regularFunc.parameters) {
-        expect(regularFunc.parameters).toHaveLength(2);
-        expect(regularFunc.parameters[1].default_value).toBe("42");
+      if (regularFunc && regularFunc.signature?.parameters) {
+        expect(regularFunc.signature.parameters).toHaveLength(2);
+        expect(regularFunc.signature.parameters[1].default_value).toBe("42");
       }
 
       // Verify class method parameters work

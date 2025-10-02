@@ -1,10 +1,21 @@
-# Task 11.109.4: Implement Function Call Resolution
+# Task 11.109.5: Implement Function Call Resolution
 
 **Status:** Not Started
 **Priority:** High
 **Estimated Effort:** 2-3 days
 **Parent:** task-epic-11.109
-**Dependencies:** task-epic-11.109.1 (ScopeResolverIndex + Cache)
+**Dependencies:**
+
+- task-epic-11.109.0 (File Structure)
+- task-epic-11.109.1 (ScopeResolverIndex)
+- task-epic-11.109.2 (ResolutionCache)
+
+## Files to Create
+
+This task creates exactly ONE code file:
+
+- `packages/core/src/resolve_references/call_resolution/function_resolver.ts`
+- `packages/core/src/resolve_references/call_resolution/function_resolver.test.ts`
 
 ## Objective
 
@@ -31,11 +42,7 @@ packages/core/src/resolve_references/
  * Delegates to ScopeResolverIndex with caching.
  */
 
-import type {
-  SymbolId,
-  LocationKey,
-  FilePath,
-} from "@ariadnejs/types";
+import type { SymbolId, LocationKey, FilePath } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../index_single_file/semantic_index";
 import type { ScopeResolverIndex } from "../core/scope_resolver_index";
@@ -53,7 +60,7 @@ export function resolve_function_calls(
   for (const [file_path, index] of indices) {
     // Filter for function call references
     const function_calls = index.references.filter(
-      ref => ref.type === "call" && ref.call_type === "function"
+      (ref) => ref.type === "call" && ref.call_type === "function"
     );
 
     for (const call_ref of function_calls) {
@@ -76,6 +83,7 @@ export function resolve_function_calls(
 ```
 
 **That's the entire implementation!** Function resolution is trivial because `ScopeResolverIndex` handles all the complexity:
+
 - Resolver functions already built for each scope
 - Resolution is on-demand (only when we encounter a reference)
 - Cache ensures repeated lookups are O(1)
@@ -87,32 +95,37 @@ export function resolve_function_calls(
 Test cases for each language:
 
 #### Basic Function Calls
+
 1. **Local function** - Call function in same file
+
    ```javascript
    function foo() {}
-   foo();  // Resolves to local foo
+   foo(); // Resolves to local foo
    ```
 
 2. **Imported function** - Call imported function
+
    ```javascript
-   import { bar } from './utils';
-   bar();  // Resolves to utils.bar
+   import { bar } from "./utils";
+   bar(); // Resolves to utils.bar
    ```
 
 3. **Nested scope** - Call function from outer scope
    ```javascript
    function outer() {
      function inner() {}
-     inner();  // Resolves to local inner
+     inner(); // Resolves to local inner
    }
    ```
 
 #### Shadowing
+
 4. **Local shadows import**
+
    ```javascript
-   import { foo } from './utils';
-   function foo() {}  // Local definition
-   foo();  // Resolves to local foo, not import
+   import { foo } from "./utils";
+   function foo() {} // Local definition
+   foo(); // Resolves to local foo, not import
    ```
 
 5. **Inner shadows outer**
@@ -120,39 +133,42 @@ Test cases for each language:
    function foo() {
      function bar() {}
      function nested() {
-       function bar() {}  // Shadows outer bar
-       bar();  // Resolves to inner bar
+       function bar() {} // Shadows outer bar
+       bar(); // Resolves to inner bar
      }
    }
    ```
 
 #### Edge Cases
+
 6. **Not found** - Call non-existent function returns null
 7. **Closure** - Call function from closure
 8. **Recursive** - Function calls itself
 
 ### Test Fixtures
 
-Create minimal fixtures for each language:
+Create minimal fixtures in the centralized location (`packages/core/tests/fixtures/resolve_references/`):
 
 #### JavaScript/TypeScript
+
 ```typescript
-// test_fixtures/function_calls.ts
+// packages/core/tests/fixtures/resolve_references/javascript/function_calls.ts
 export function helper() {}
 
 function main() {
-  helper();  // Should resolve
-  local();   // Should not resolve
+  helper(); // Should resolve
+  local(); // Should not resolve
 
   function local() {
-    helper();  // Should resolve to imported helper
+    helper(); // Should resolve to imported helper
   }
 }
 ```
 
 #### Python
+
 ```python
-# test_fixtures/function_calls.py
+# packages/core/tests/fixtures/resolve_references/python/function_calls.py
 def helper():
     pass
 
@@ -164,8 +180,9 @@ def main():
 ```
 
 #### Rust
+
 ```rust
-// test_fixtures/function_calls.rs
+// packages/core/tests/fixtures/resolve_references/rust/function_calls.rs
 fn helper() {}
 
 fn main() {
@@ -180,6 +197,7 @@ fn main() {
 ### Integration Tests
 
 Test complete scenarios:
+
 1. **Cross-file** - Import and call
 2. **Multiple files** - Chain of imports
 3. **Shadowing chain** - Multiple levels
@@ -187,6 +205,7 @@ Test complete scenarios:
 ## Success Criteria
 
 ### Functional
+
 - ✅ Local function calls resolve correctly
 - ✅ Imported function calls resolve correctly
 - ✅ Shadowing handled correctly
@@ -194,27 +213,32 @@ Test complete scenarios:
 - ✅ All 4 languages supported
 
 ### Testing
+
 - ✅ Unit tests for basic cases
 - ✅ Unit tests for shadowing
 - ✅ Integration tests for cross-file
 - ✅ All edge cases covered
 
 ### Code Quality
+
 - ✅ Full JSDoc documentation
 - ✅ Type-safe implementation
 - ✅ Clear error handling
 - ✅ Minimal code (leverages ScopeResolverIndex)
+- ✅ Pythonic naming convention
 
 ## Technical Notes
 
 ### Reference Filtering
 
 Filter for function calls:
+
 ```typescript
-ref.type === "call" && ref.call_type === "function"
+ref.type === "call" && ref.call_type === "function";
 ```
 
 This excludes:
+
 - Method calls (`call_type === "method"`)
 - Constructor calls (`call_type === "constructor"`)
 - Super calls (`call_type === "super"`)
@@ -224,7 +248,7 @@ This excludes:
 ```typescript
 interface SymbolReference {
   location: Location;
-  type: ReferenceType;  // "call"
+  type: ReferenceType; // "call"
   call_type?: "function" | "method" | "constructor" | "super";
   name: SymbolName;
   scope_id: ScopeId;
@@ -256,23 +280,27 @@ None - function resolution is complete and correct with on-demand resolver index
 ## Dependencies
 
 **Uses:**
+
 - `ScopeResolverIndex` for on-demand name resolution
 - `ResolutionCache` for caching resolutions
 - `SemanticIndex.references` for call references
 - `location_key` for map keys
 
 **Consumed by:**
-- Task 11.109.7 (Main orchestration)
+
+- Task 11.109.8 (Main orchestration)
 
 ## Next Steps
 
 After completion:
-- Method resolver (11.109.5) follows similar pattern (+ TypeContext)
-- Constructor resolver (11.109.6) follows similar pattern (+ TypeContext)
-- All resolvers integrated in 11.109.7
+
+- Method resolver (11.109.6) follows similar pattern (+ TypeContext)
+- Constructor resolver (11.109.7) follows similar pattern (+ TypeContext)
+- All resolvers integrated in 11.109.8
 
 ## Cache Benefits
 
 Example: 1000 calls to same function in same scope
+
 - Without cache: 1000 resolver function calls
 - With cache: 1 resolver call + 999 cache hits (999x faster!)

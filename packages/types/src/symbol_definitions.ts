@@ -46,7 +46,7 @@ export interface Definition {
 
 export interface FunctionDefinition extends Definition {
   readonly kind: "function";
-  readonly signature: FunctionSignature;
+  readonly signature: FunctionSignature; // TODO: remove this, put its contents directly on the FunctionDefinition
   readonly docstring?: DocString;
   readonly decorators?: readonly SymbolName[];
   readonly return_type?: SymbolName;

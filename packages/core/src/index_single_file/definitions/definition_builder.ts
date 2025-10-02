@@ -472,7 +472,6 @@ export class DefinitionBuilder {
       static?: boolean;
       readonly?: boolean;
       abstract?: boolean;
-      is_parameter_property?: boolean;
     }
   ): DefinitionBuilder {
     const class_state = this.classes.get(class_id);
@@ -781,7 +780,6 @@ export class DefinitionBuilder {
 
   private build_function(state: FunctionBuilderState): FunctionDefinition {
     const parameters = Array.from(state.signature.parameters.values());
-    parameters.forEach(p => console.log(`  - ${p.name}: ${p.type}`));
 
     return {
       kind: "function" as const,

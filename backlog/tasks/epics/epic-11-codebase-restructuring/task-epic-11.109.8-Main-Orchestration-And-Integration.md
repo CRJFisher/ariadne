@@ -1,16 +1,30 @@
-# Task 11.109.7: Main Orchestration and Integration
+# Task 11.109.8: Main Orchestration and Integration
 
 **Status:** Not Started
 **Priority:** High
 **Estimated Effort:** 3-4 days
 **Parent:** task-epic-11.109
 **Dependencies:**
-- task-epic-11.109.1 (ScopeResolverIndex + Cache)
-- task-epic-11.109.2 (Lazy Import Resolution)
-- task-epic-11.109.3 (TypeContext)
-- task-epic-11.109.4 (FunctionResolver)
-- task-epic-11.109.5 (MethodResolver)
-- task-epic-11.109.6 (ConstructorResolver)
+
+- task-epic-11.109.0 (File Structure)
+- task-epic-11.109.1 (ScopeResolverIndex)
+- task-epic-11.109.2 (ResolutionCache)
+- task-epic-11.109.3 (Lazy Import Resolution)
+- task-epic-11.109.4 (TypeContext)
+- task-epic-11.109.5 (FunctionResolver)
+- task-epic-11.109.6 (MethodResolver)
+- task-epic-11.109.7 (ConstructorResolver)
+
+## Files to Create
+
+This task creates exactly TWO code files:
+
+- `packages/core/src/resolve_references/symbol_resolution.ts` (main orchestration)
+- `packages/core/src/resolve_references/index.ts` (public API exports)
+
+Plus integration test file:
+
+- `packages/core/src/resolve_references/symbol_resolution.integration.test.ts`
 
 ## Objective
 
@@ -56,7 +70,6 @@ import { resolve_constructor_calls } from "./call_resolution/constructor_resolve
 export function resolve_symbols(
   indices: ReadonlyMap<FilePath, SemanticIndex>
 ): ResolvedSymbols {
-
   // Phase 1: Build scope resolver index (lightweight)
   // Creates resolver functions: scope_id -> name -> resolver()
   // Includes lazy import resolvers that follow export chains on-demand
@@ -176,15 +189,9 @@ export { resolve_symbols } from "./symbol_resolution";
 export type { ScopeResolverIndex } from "./core/scope_resolver_index";
 export type { ResolutionCache } from "./core/resolution_cache";
 export type { TypeContext } from "./type_resolution/type_context";
-export type {
-  FunctionCallMap,
-} from "./call_resolution/function_resolver";
-export type {
-  MethodCallMap,
-} from "./call_resolution/method_resolver";
-export type {
-  ConstructorCallMap,
-} from "./call_resolution/constructor_resolver";
+export type { FunctionCallMap } from "./call_resolution/function_resolver";
+export type { MethodCallMap } from "./call_resolution/method_resolver";
+export type { ConstructorCallMap } from "./call_resolution/constructor_resolver";
 ```
 
 ## Pipeline Flow Diagram
@@ -246,6 +253,7 @@ SemanticIndex (per file)
 Resolution is often multi-step, with each step potentially triggering another resolution. All resolutions flow through `resolver_index.resolve(scope_id, name, cache)`.
 
 ### Chain 1: Simple Function Call
+
 ```typescript
 helper()
 
@@ -258,6 +266,7 @@ helper()
 ```
 
 ### Chain 2: Imported Function Call
+
 ```typescript
 import { helper } from './utils';
 helper()
@@ -274,6 +283,7 @@ helper()
 ```
 
 ### Chain 3: Method Call on Typed Variable
+
 ```typescript
 const user: User = ...;
 user.getName()
@@ -299,6 +309,7 @@ Step 3: Look up member
 ```
 
 ### Chain 4: Method Call on Imported Type
+
 ```typescript
 import { User } from './types';
 const user: User = ...;
@@ -328,6 +339,7 @@ All resolutions use the same cache: `(scope_id, name) → symbol_id`
 - Imported symbols: `(scope_id, imported_name) → symbol_id` (same cache!)
 
 Resolution chains are just nested calls to `resolve()`. Each nested call:
+
 1. Checks the shared cache
 2. Invokes resolver function if cache miss
 3. Stores result in shared cache
@@ -340,17 +352,20 @@ Resolution chains are just nested calls to `resolve()`. Each nested call:
 Test complete resolution pipeline:
 
 #### Cross-Module Resolution
+
 1. **Import + function call**
+
    ```typescript
    // utils.ts
    export function helper() {}
 
    // main.ts
-   import { helper } from './utils';
-   helper();  // Should resolve across files
+   import { helper } from "./utils";
+   helper(); // Should resolve across files
    ```
 
 2. **Import + method call**
+
    ```typescript
    // types.ts
    export class User {
@@ -358,39 +373,46 @@ Test complete resolution pipeline:
    }
 
    // main.ts
-   import { User } from './types';
+   import { User } from "./types";
    const user = new User();
-   user.getName();  // Should resolve across files
+   user.getName(); // Should resolve across files
    ```
 
 #### Shadowing Scenarios
+
 3. **Local shadows import**
 4. **Nested scope shadowing**
 5. **Type shadowing in method resolution**
 
 #### Complete Workflows
+
 6. **Constructor → type → method**
+
    ```typescript
    class User {
      getName() {}
    }
-   const user = new User();  // Constructor resolution
-   user.getName();           // Method resolution using type
+   const user = new User(); // Constructor resolution
+   user.getName(); // Method resolution using type
    ```
 
 7. **Factory → type → method**
    ```typescript
-   function createUser(): User { return new User(); }
-   const user = createUser();  // Return type tracking
-   user.getName();             // Method resolution using type
+   function createUser(): User {
+     return new User();
+   }
+   const user = createUser(); // Return type tracking
+   user.getName(); // Method resolution using type
    ```
 
 #### Resolution Chains
+
 8. **Nested type resolution** - Type name requires import resolution
 9. **Re-export chains** - Import follows multiple re-export hops
 10. **Circular imports** - Handled gracefully
 
 #### Language Parity
+
 11. **JavaScript** - All features work
 12. **TypeScript** - All features work
 13. **Python** - All features work
@@ -401,17 +423,20 @@ Test complete resolution pipeline:
 ### Benchmarks
 
 Create benchmarks for:
+
 1. **Small project** - 10 files, 100 functions
 2. **Medium project** - 100 files, 1000 functions
 3. **Large project** - 1000 files, 10000 functions
 
 Measure:
+
 - Total resolution time
 - Time per phase
 - Memory usage
 - Cache hit rates
 
 Target performance:
+
 - Small: < 10ms
 - Medium: < 100ms
 - Large: < 1s
@@ -421,11 +446,13 @@ Target performance:
 **Example scenario:** Large codebase with 1000 scopes, 50 symbols per scope
 
 Traditional (pre-compute all resolutions):
+
 - Build: 1000 × 50 = 50,000 full resolutions upfront
 - Time: ~50ms (O(scope_depth) for each)
 - Memory: 50,000 symbol_id entries
 
 On-demand with lazy imports:
+
 - Build: 1000 × 50 = 50,000 resolver functions (~100B each = 5MB)
 - First use: Only ~5,000 symbols referenced (10%)
 - Resolutions: 5,000 resolver calls + ~4,000 cache hits (80% hit rate)
@@ -433,6 +460,7 @@ On-demand with lazy imports:
 - Memory: 5,000 cache entries (10x less!)
 
 **Cache hit rates improve over time:**
+
 - Early phase: 50% hits
 - Mid phase: 80% hits
 - Late phase: 95% hits
@@ -440,6 +468,7 @@ On-demand with lazy imports:
 ## Success Criteria
 
 ### Functional
+
 - ✅ All phases execute in correct order
 - ✅ All resolvers receive correct inputs
 - ✅ Output matches ResolvedSymbols type
@@ -448,6 +477,7 @@ On-demand with lazy imports:
 - ✅ Resolution chains work correctly
 
 ### Architecture
+
 - ✅ Clean separation of phases
 - ✅ Clear data flow
 - ✅ No circular dependencies
@@ -455,6 +485,7 @@ On-demand with lazy imports:
 - ✅ Single shared cache
 
 ### Performance
+
 - ✅ No performance regression
 - ✅ Meets target benchmarks
 - ✅ Scalable to large codebases
@@ -462,10 +493,12 @@ On-demand with lazy imports:
 - ✅ Cache hit rates 80%+
 
 ### Code Quality
+
 - ✅ Full JSDoc documentation
 - ✅ Type-safe implementation
 - ✅ Clear error handling
 - ✅ Good test coverage
+- ✅ Pythonic naming convention
 
 ## Error Handling
 
@@ -491,6 +524,7 @@ const type_context = build_type_context(indices, resolver_index, cache) || {
 ### Error Reporting
 
 Log warnings for:
+
 - Unresolved imports
 - Unknown types
 - Missing definitions
@@ -501,15 +535,18 @@ But don't throw - collect as many resolutions as possible.
 ## Dependencies
 
 **Uses:**
-- All previous tasks (11.109.1-6)
+
+- All previous tasks (11.109.0-7)
 
 **Consumed by:**
+
 - External packages using `resolve_symbols()`
-- Task 11.109.8 (Testing)
+- Task 11.109.9 (Comprehensive Testing)
 
 ## Next Steps
 
 After completion:
-- Task 11.109.8 validates entire system
-- Task 11.109.9 removes old code
+
+- Task 11.109.9 validates entire system with comprehensive tests
+- Task 11.109.10 removes old code and finalizes documentation
 - System is production-ready

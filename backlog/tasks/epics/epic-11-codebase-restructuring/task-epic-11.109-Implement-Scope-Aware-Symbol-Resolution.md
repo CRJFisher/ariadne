@@ -196,14 +196,18 @@ function build_scope_resolver_index(
   const scope_resolvers = new Map<ScopeId, Map<SymbolName, SymbolResolver>>();
 
   for (const [file_path, index] of indices) {
-    build_resolvers_recursive(
+    const file_resolvers = build_resolvers_recursive(
       index.root_scope_id,
       new Map(), // Empty parent resolvers
       index,
       file_path,
-      imports,
-      scope_resolvers
+      indices
     );
+
+    // Merge file's resolvers into main map
+    for (const [scope_id, resolvers] of file_resolvers) {
+      scope_resolvers.set(scope_id, resolvers);
+    }
   }
 
   return create_resolver_index(scope_resolvers);
@@ -211,12 +215,13 @@ function build_scope_resolver_index(
 
 function build_resolvers_recursive(
   scope_id: ScopeId,
-  parent_resolvers: Map<SymbolName, SymbolResolver>,
+  parent_resolvers: ReadonlyMap<SymbolName, SymbolResolver>,
   index: SemanticIndex,
   file_path: FilePath,
-  imports: ImportMap,
-  scope_resolvers: Map<ScopeId, Map<SymbolName, SymbolResolver>>
-) {
+  indices: ReadonlyMap<FilePath, SemanticIndex>
+): Map<ScopeId, Map<SymbolName, SymbolResolver>> {
+
+  const result = new Map<ScopeId, Map<SymbolName, SymbolResolver>>();
   const resolvers = new Map<SymbolName, SymbolResolver>();
 
   // Step 1: Inherit parent resolvers (just copy references - O(1))
@@ -244,24 +249,30 @@ function build_resolvers_recursive(
     resolvers.set(name, () => symbol_id);
   }
 
-  // Store this scope's resolvers
-  scope_resolvers.set(scope_id, resolvers);
+  // Store this scope's resolvers in result
+  result.set(scope_id, resolvers);
 
   // Step 4: Recurse to children with OUR resolvers as parent
   const scope = index.scopes.get(scope_id)!;
   for (const child_id of scope.child_ids) {
     const child = index.scopes.get(child_id);
     if (child) {
-      build_resolvers_recursive(
+      const child_resolvers = build_resolvers_recursive(
         child_id,
         resolvers, // Pass our resolvers down
         index,
         file_path,
-        imports,
-        scope_resolvers
+        indices
       );
+
+      // Merge child results into our result
+      for (const [child_scope_id, child_scope_resolvers] of child_resolvers) {
+        result.set(child_scope_id, child_scope_resolvers);
+      }
     }
   }
+
+  return result;
 }
 ```
 

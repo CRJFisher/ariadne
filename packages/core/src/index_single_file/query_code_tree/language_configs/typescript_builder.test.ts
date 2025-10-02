@@ -136,10 +136,11 @@ describe("TypeScript Builder Configuration", () => {
         const capture = createRawCapture("def.interface", nameNode, "IUser");
         handler.process(capture, builder, mockContext);
 
-        const definitions = builder.build();
-        expect(definitions).toHaveLength(1);
-        expect(definitions[0]?.kind).toBe("interface");
-        expect(definitions[0]?.name).toBe("IUser");
+        const result = builder.build();
+        expect(result.interfaces.size).toBe(1);
+        const iface = Array.from(result.interfaces.values())[0];
+        expect(iface?.kind).toBe("interface");
+        expect(iface?.name).toBe("IUser");
       }
     });
 
@@ -191,10 +192,11 @@ describe("TypeScript Builder Configuration", () => {
         const capture = createRawCapture("def.type_alias", nameNode, "UserID");
         handler.process(capture, builder, mockContext);
 
-        const definitions = builder.build();
-        expect(definitions).toHaveLength(1);
-        expect(definitions[0].kind).toBe("type_alias");
-        expect(definitions[0].name).toBe("UserID");
+        const result = builder.build();
+        expect(result.types.size).toBe(1);
+        const typeAlias = Array.from(result.types.values())[0];
+        expect(typeAlias.kind).toBe("type_alias");
+        expect(typeAlias.name).toBe("UserID");
       }
     });
 
@@ -214,10 +216,11 @@ describe("TypeScript Builder Configuration", () => {
         const capture = createRawCapture("def.type_alias", nameNode, "Result");
         handler.process(capture, builder, mockContext);
 
-        const definitions = builder.build();
-        expect(definitions).toHaveLength(1);
-        expect(definitions[0].kind).toBe("type_alias");
-        expect(definitions[0].name).toBe("Result");
+        const result = builder.build();
+        expect(result.types.size).toBe(1);
+        const typeAlias = Array.from(result.types.values())[0];
+        expect(typeAlias.kind).toBe("type_alias");
+        expect(typeAlias.name).toBe("Result");
         // Type parameters would be extracted from the parent node
       }
     });
@@ -244,10 +247,11 @@ describe("TypeScript Builder Configuration", () => {
         const capture = createRawCapture("def.enum", nameNode, "Color");
         handler.process(capture, builder, mockContext);
 
-        const definitions = builder.build();
-        expect(definitions).toHaveLength(1);
-        expect(definitions[0].kind).toBe("enum");
-        expect(definitions[0].name).toBe("Color");
+        const result = builder.build();
+        expect(result.enums.size).toBe(1);
+        const enumDef = Array.from(result.enums.values())[0];
+        expect(enumDef.kind).toBe("enum");
+        expect(enumDef.name).toBe("Color");
       }
     });
 
@@ -270,9 +274,10 @@ describe("TypeScript Builder Configuration", () => {
         const capture = createRawCapture("def.enum", nameNode, "Status");
         handler.process(capture, builder, mockContext);
 
-        const definitions = builder.build();
-        expect(definitions).toHaveLength(1);
-        expect(definitions[0].kind).toBe("enum");
+        const result = builder.build();
+        expect(result.enums.size).toBe(1);
+        const enumDef = Array.from(result.enums.values())[0];
+        expect(enumDef.kind).toBe("enum");
         // is_const would be determined from parent node
       }
     });
@@ -297,10 +302,11 @@ describe("TypeScript Builder Configuration", () => {
         const capture = createRawCapture("def.namespace", nameNode, "Utils");
         handler.process(capture, builder, mockContext);
 
-        const definitions = builder.build();
-        expect(definitions).toHaveLength(1);
-        expect(definitions[0].kind).toBe("namespace");
-        expect(definitions[0].name).toBe("Utils");
+        const result = builder.build();
+        expect(result.namespaces.size).toBe(1);
+        const namespaceDef = Array.from(result.namespaces.values())[0];
+        expect(namespaceDef.kind).toBe("namespace");
+        expect(namespaceDef.name).toBe("Utils");
       }
     });
   });
@@ -324,10 +330,11 @@ describe("TypeScript Builder Configuration", () => {
         const capture = createRawCapture("def.class", nameNode, "Shape");
         handler.process(capture, builder, mockContext);
 
-        const definitions = builder.build();
-        expect(definitions).toHaveLength(1);
-        expect(definitions[0].kind).toBe("class");
-        expect(definitions[0].name).toBe("Shape");
+        const result = builder.build();
+        expect(result.classes.size).toBe(1);
+        const classDef = Array.from(result.classes.values())[0];
+        expect(classDef.kind).toBe("class");
+        expect(classDef.name).toBe("Shape");
         // abstract flag would be set based on parent node type
       }
     });
@@ -350,10 +357,11 @@ describe("TypeScript Builder Configuration", () => {
         const capture = createRawCapture("def.class", nameNode, "User");
         handler.process(capture, builder, mockContext);
 
-        const definitions = builder.build();
-        expect(definitions).toHaveLength(1);
-        expect(definitions[0].kind).toBe("class");
-        expect(definitions[0].name).toBe("User");
+        const result = builder.build();
+        expect(result.classes.size).toBe(1);
+        const classDef = Array.from(result.classes.values())[0];
+        expect(classDef.kind).toBe("class");
+        expect(classDef.name).toBe("User");
         // implements would be extracted from class heritage
       }
     });
@@ -376,10 +384,11 @@ describe("TypeScript Builder Configuration", () => {
         const capture = createRawCapture("def.class", nameNode, "Container");
         handler.process(capture, builder, mockContext);
 
-        const definitions = builder.build();
-        expect(definitions).toHaveLength(1);
-        expect(definitions[0].kind).toBe("class");
-        expect(definitions[0].name).toBe("Container");
+        const result = builder.build();
+        expect(result.classes.size).toBe(1);
+        const classDef = Array.from(result.classes.values())[0];
+        expect(classDef.kind).toBe("class");
+        expect(classDef.name).toBe("Container");
         // type_parameters would be extracted from parent node
       }
     });

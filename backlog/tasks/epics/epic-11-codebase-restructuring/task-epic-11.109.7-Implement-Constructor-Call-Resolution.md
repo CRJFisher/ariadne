@@ -1,12 +1,22 @@
-# Task 11.109.6: Implement Constructor Call Resolution
+# Task 11.109.7: Implement Constructor Call Resolution
 
 **Status:** Not Started
 **Priority:** High
 **Estimated Effort:** 3-4 days
 **Parent:** task-epic-11.109
 **Dependencies:**
-- task-epic-11.109.1 (ScopeResolverIndex + Cache)
-- task-epic-11.109.3 (TypeContext)
+
+- task-epic-11.109.0 (File Structure)
+- task-epic-11.109.1 (ScopeResolverIndex)
+- task-epic-11.109.2 (ResolutionCache)
+- task-epic-11.109.4 (TypeContext)
+
+## Files to Create
+
+This task creates exactly ONE code file:
+
+- `packages/core/src/resolve_references/call_resolution/constructor_resolver.ts`
+- `packages/core/src/resolve_references/call_resolution/constructor_resolver.test.ts`
 
 ## Objective
 
@@ -129,18 +139,17 @@ function find_class_definition(
 ### Step 1: Resolve Class Name
 
 Given: `new User()`
+
 - Class name: `User`
 
 Resolve using on-demand ScopeResolverIndex:
+
 ```typescript
-const class_symbol = resolver_index.resolve(
-  call_ref.scope_id,
-  "User",
-  cache
-);
+const class_symbol = resolver_index.resolve(call_ref.scope_id, "User", cache);
 ```
 
 This respects scoping through on-demand resolver functions with caching:
+
 - Finds local class definitions
 - Finds imported classes
 - Handles shadowing correctly
@@ -148,6 +157,7 @@ This respects scoping through on-demand resolver functions with caching:
 ### Step 2: Verify It's a Class
 
 Check that the resolved symbol is actually a class:
+
 ```typescript
 const class_def = index.classes.get(class_symbol);
 ```
@@ -157,25 +167,28 @@ This prevents resolving functions/variables as constructors.
 ### Step 3: Get Constructor Symbol
 
 Return the appropriate symbol:
+
 - If explicit constructor exists: return constructor symbol
 - Otherwise: return class symbol (implicit constructor)
 
 ## Language-Specific Handling
 
 ### JavaScript/TypeScript
+
 ```typescript
 // Explicit constructor
 class User {
-  constructor(name: string) { }
+  constructor(name: string) {}
 }
-new User("Alice");  // Resolves to User.constructor
+new User("Alice"); // Resolves to User.constructor
 
 // Implicit constructor
-class Helper { }
-new Helper();  // Resolves to Helper (class symbol)
+class Helper {}
+new Helper(); // Resolves to Helper (class symbol)
 ```
 
 ### Python
+
 ```python
 # __init__ method
 class User:
@@ -192,6 +205,7 @@ helper = Helper()  # Resolves to Helper (class symbol)
 ```
 
 ### Rust
+
 ```rust
 // Struct construction (no explicit constructor)
 struct User {
@@ -219,21 +233,24 @@ let user = User::new("Alice".to_string());
 Test cases for each language:
 
 #### Basic Construction
+
 1. **Explicit constructor** - Class with constructor method
+
    ```typescript
    class User {
-     constructor(name: string) { }
+     constructor(name: string) {}
    }
-   new User("Alice");  // Resolves to constructor
+   new User("Alice"); // Resolves to constructor
    ```
 
 2. **Implicit constructor** - Class without explicit constructor
+
    ```typescript
-   class Helper { }
-   new Helper();  // Resolves to class
+   class Helper {}
+   new Helper(); // Resolves to class
    ```
 
-3. **Python __init__**
+3. **Python **init****
    ```python
    class User:
        def __init__(self, name):
@@ -242,16 +259,19 @@ Test cases for each language:
    ```
 
 #### Class Resolution
+
 4. **Local class** - Constructor of locally defined class
 5. **Imported class** - Constructor of imported class
 6. **Nested class** - Constructor of nested/inner class
 
 #### Shadowing
+
 7. **Class shadows import**
+
    ```typescript
-   import { User } from './types';
-   class User { }  // Local class
-   new User();  // Resolves to local class
+   import { User } from "./types";
+   class User {} // Local class
+   new User(); // Resolves to local class
    ```
 
 8. **Inner class shadows outer**
@@ -268,12 +288,14 @@ Test cases for each language:
    ```
 
 #### Edge Cases
+
 9. **Not a class** - Try to construct a function/variable
 10. **Class not found** - Constructor call with unknown class
 11. **Generic class** - Constructor with type parameters
 12. **Abstract class** - Constructor of abstract class (allowed in definition)
 
 #### Assignment Tracking
+
 13. **Constructor assignment** - `const x = new User()`
 14. **Property assignment** - `this.user = new User()`
 15. **Chained construction** - `new Outer(new Inner())`
@@ -281,25 +303,27 @@ Test cases for each language:
 ### Test Fixtures
 
 #### TypeScript
+
 ```typescript
 class User {
-  constructor(public name: string) { }
+  constructor(public name: string) {}
 }
 
-class Helper { }  // No explicit constructor
+class Helper {} // No explicit constructor
 
 function test() {
-  const user = new User("Alice");  // Should resolve
-  const helper = new Helper();  // Should resolve
+  const user = new User("Alice"); // Should resolve
+  const helper = new Helper(); // Should resolve
 
   class LocalUser {
-    constructor() { }
+    constructor() {}
   }
-  const local = new LocalUser();  // Should resolve to local
+  const local = new LocalUser(); // Should resolve to local
 }
 ```
 
 #### Python
+
 ```python
 class User:
     def __init__(self, name):
@@ -314,6 +338,7 @@ def test():
 ```
 
 #### Rust
+
 ```rust
 struct User {
     name: String,
@@ -330,6 +355,7 @@ fn test() {
 ## Success Criteria
 
 ### Functional
+
 - ✅ Class name resolved using scope walking
 - ✅ Explicit constructors resolved
 - ✅ Implicit constructors handled (return class symbol)
@@ -338,6 +364,7 @@ fn test() {
 - ✅ All 4 languages supported
 
 ### Testing
+
 - ✅ Unit tests for explicit/implicit constructors
 - ✅ Unit tests for class resolution
 - ✅ Unit tests for shadowing
@@ -345,23 +372,27 @@ fn test() {
 - ✅ Edge cases covered
 
 ### Code Quality
+
 - ✅ Full JSDoc documentation
 - ✅ Type-safe implementation
 - ✅ Clear error handling
 - ✅ Consistent with function/method resolvers
+- ✅ Pythonic naming convention
 
 ## Technical Notes
 
 ### Reference Context
 
 Constructor calls have construct_target:
+
 ```typescript
 interface ReferenceContext {
-  construct_target?: Location;  // Variable being assigned to
+  construct_target?: Location; // Variable being assigned to
 }
 ```
 
 This is used by TypeContext to track variable types:
+
 ```typescript
 const user = new User();
 // construct_target points to 'user'
@@ -373,11 +404,13 @@ const user = new User();
 **Design decision:** Return constructor symbol when available, class symbol otherwise.
 
 **Rationale:**
+
 - Constructors may have different signatures
 - Explicit constructors are distinct symbols
 - Enables constructor-specific analysis (parameters, decorators)
 
 **Alternative:** Always return class symbol
+
 - Simpler
 - Loses constructor-specific information
 
@@ -385,7 +418,7 @@ const user = new User();
 
 ```typescript
 class Box<T> {
-  constructor(value: T) { }
+  constructor(value: T) {}
 }
 
 new Box<string>("hello");
@@ -414,6 +447,7 @@ Document for future work:
 ## Dependencies
 
 **Uses:**
+
 - `ScopeResolverIndex` for on-demand class name resolution
 - `ResolutionCache` for caching class name resolutions
 - `TypeContext` for validation
@@ -421,17 +455,20 @@ Document for future work:
 - `SemanticIndex.classes` for class definitions
 
 **Consumed by:**
-- Task 11.109.7 (Main orchestration)
+
+- Task 11.109.8 (Main orchestration)
 - TypeContext uses results for type tracking
 
 ## Cache Benefits
 
 Constructor calls benefit from caching because:
+
 1. **Repeated constructors**: Same class instantiated multiple times
 2. **Common patterns**: Factory functions creating many instances
 3. **Nested scopes**: Same class name in different scopes
 
 Example: 50 constructor calls for 5 different classes
+
 - Without cache: 50 class name resolutions
 - With cache: 5 resolver calls + 45 cache hits (9x speedup!)
 
@@ -448,12 +485,14 @@ Constructor resolution **feeds** TypeContext:
 ```
 
 This is a **bidirectional relationship**:
+
 - Constructor resolver uses TypeContext for validation
 - TypeContext uses constructor resolutions for type tracking
 
 ## Next Steps
 
 After completion:
+
 - All three call resolvers complete
-- Main orchestration (11.109.7) integrates them
+- Main orchestration (11.109.8) integrates them
 - TypeContext can leverage constructor tracking

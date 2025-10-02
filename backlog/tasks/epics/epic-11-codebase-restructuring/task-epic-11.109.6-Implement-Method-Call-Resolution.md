@@ -1,4 +1,4 @@
-# Task 11.109.5: Implement Method Call Resolution
+# Task 11.109.6: Implement Method Call Resolution
 
 **Status:** Not Started
 **Priority:** High
@@ -6,8 +6,17 @@
 **Parent:** task-epic-11.109
 **Dependencies:**
 
-- task-epic-11.109.1 (ScopeResolverIndex + Cache)
-- task-epic-11.109.3 (TypeContext)
+- task-epic-11.109.0 (File Structure)
+- task-epic-11.109.1 (ScopeResolverIndex)
+- task-epic-11.109.2 (ResolutionCache)
+- task-epic-11.109.4 (TypeContext)
+
+## Files to Create
+
+This task creates exactly ONE code file:
+
+- `packages/core/src/resolve_references/call_resolution/method_resolver.ts`
+- `packages/core/src/resolve_references/call_resolution/method_resolver.test.ts`
 
 ## Objective
 
@@ -305,6 +314,7 @@ fn test() {
 - ✅ Type-safe implementation
 - ✅ Clear error handling
 - ✅ Good separation of concerns
+- ✅ Pythonic naming convention
 
 ## Technical Notes
 
@@ -374,7 +384,7 @@ Document for future work:
 
 **Consumed by:**
 
-- Task 11.109.7 (Main orchestration)
+- Task 11.109.8 (Main orchestration)
 
 ## Cache Benefits
 
@@ -393,6 +403,6 @@ Example: 100 method calls on 10 different receivers in same scope
 
 After completion:
 
-- Constructor resolver (11.109.6) follows similar pattern
+- Constructor resolver (11.109.7) follows similar pattern
 - Can enhance with inheritance (after TypeContext update)
 - Can enhance with method chains (future)

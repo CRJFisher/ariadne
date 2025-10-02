@@ -1,10 +1,10 @@
-# Task 11.109.9: Cleanup and Documentation
+# Task 11.109.10: Cleanup and Documentation
 
 **Status:** Not Started
 **Priority:** Medium
 **Estimated Effort:** 2-3 days
 **Parent:** task-epic-11.109
-**Dependencies:** task-epic-11.109.8 (Testing validation)
+**Dependencies:** task-epic-11.109.9 (Testing validation)
 
 ## Objective
 
@@ -23,6 +23,7 @@ packages/core/src/resolve_references/
 ├── OLD_method_resolution/          # DELETE
 ├── OLD_type_resolution/            # DELETE
 └── OLD_local_type_context.ts       # DELETE
+└── recurse_down/OLD_local_type_context.ts       # DELETE
 ```
 
 **Process:**

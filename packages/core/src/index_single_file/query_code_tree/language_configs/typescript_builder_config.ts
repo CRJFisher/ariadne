@@ -591,7 +591,6 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           readonly: is_readonly_property(capture.node),
           type: extract_parameter_type(capture.node),
           initial_value: extract_parameter_default_value(capture.node),
-          is_parameter_property: true,
         });
       },
     },
@@ -622,7 +621,6 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           readonly: is_readonly_property(capture.node),
           type: extract_parameter_type(capture.node),
           initial_value: extract_parameter_default_value(capture.node),
-          is_parameter_property: true,
         });
       },
     },

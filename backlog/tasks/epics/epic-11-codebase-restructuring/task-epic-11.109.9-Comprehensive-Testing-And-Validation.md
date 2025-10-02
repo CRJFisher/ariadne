@@ -1,14 +1,40 @@
-# Task 11.109.8: Comprehensive Testing and Validation
+# Task 11.109.9: Comprehensive Testing and Validation
 
 **Status:** Not Started
 **Priority:** Critical
 **Estimated Effort:** 4-5 days
 **Parent:** task-epic-11.109
-**Dependencies:** task-epic-11.109.7 (Main orchestration)
+**Dependencies:** task-epic-11.109.8 (Main orchestration)
 
 ## Objective
 
 Validate the complete scope-aware resolution system with comprehensive test coverage across all languages, edge cases, and integration scenarios. Ensure system is production-ready.
+
+## Sub-Tasks
+
+This task is divided into language-specific integration test sub-tasks:
+
+1. **11.109.9.1** - JavaScript Integration Tests (`symbol_resolution.javascript.test.ts`)
+   - Tests JS-specific features: ES modules, import/export, class methods
+   - Validates cross-file resolution, import chains, shadowing
+   - Focus on realistic JS codebases
+
+2. **11.109.9.2** - TypeScript Integration Tests (`symbol_resolution.typescript.test.ts`)
+   - Tests TS-specific features: type annotations, interfaces, generics
+   - Validates type-based method resolution
+   - Tests TS module resolution (.ts, index.ts, JS interop)
+
+3. **11.109.9.3** - Python Integration Tests (`symbol_resolution.python.test.ts`)
+   - Tests Python-specific features: relative imports, `__init__.py`, `self`
+   - Validates package structure resolution
+   - Tests class methods, decorators, inheritance
+
+4. **11.109.9.4** - Rust Integration Tests (`symbol_resolution.rust.test.ts`)
+   - Tests Rust-specific features: `use` statements, `mod.rs`, traits
+   - Validates crate/super/self module resolution
+   - Tests impl blocks, associated functions
+
+Each sub-task creates realistic SemanticIndex data and validates the entire resolution pipeline end-to-end.
 
 ## Test Strategy
 
@@ -32,14 +58,17 @@ Validate the complete scope-aware resolution system with comprehensive test cove
 ## Test Coverage by Component
 
 ### 1. ScopeResolverIndex Tests
+
 **File:** `core/scope_resolver_index.test.ts`
 
 **Coverage requirements:**
+
 - ✅ 100% line coverage
 - ✅ 100% branch coverage
 - ✅ All edge cases covered
 
 **Test categories:**
+
 - Resolver function building (per scope)
 - Resolver inheritance (child inherits parent resolvers)
 - On-demand resolution with caching
@@ -49,19 +78,23 @@ Validate the complete scope-aware resolution system with comprehensive test cove
 - Error cases (not found, invalid scope)
 
 **Per-language tests:**
+
 - JavaScript: 20 test cases
 - TypeScript: 25 test cases (includes type-specific)
 - Python: 20 test cases
 - Rust: 25 test cases (includes lifetime/trait specifics)
 
 ### 2. ResolutionCache Tests
+
 **File:** `core/resolution_cache.test.ts`
 
 **Coverage requirements:**
+
 - ✅ 100% line coverage
 - ✅ 100% branch coverage
 
 **Test categories:**
+
 - Basic caching (get, set, has)
 - Cache invalidation (per file, full clear)
 - Cache hit/miss tracking
@@ -69,6 +102,7 @@ Validate the complete scope-aware resolution system with comprehensive test cove
 - Concurrent access patterns
 
 **Test cases:**
+
 - Store and retrieve resolutions
 - Cache hits for repeated lookups
 - Invalidate specific file
@@ -76,13 +110,16 @@ Validate the complete scope-aware resolution system with comprehensive test cove
 - Track hit rate statistics
 
 ### 3. ImportResolver Tests
+
 **File:** `import_resolution/import_resolver.test.ts`
 
 **Coverage requirements:**
+
 - ✅ 95% line coverage (some edge cases may be unreachable)
 - ✅ All import types tested
 
 **Test categories:**
+
 - Named imports (with/without aliases)
 - Default imports
 - Namespace imports
@@ -90,19 +127,23 @@ Validate the complete scope-aware resolution system with comprehensive test cove
 - Missing/invalid imports
 
 **Per-language tests:**
+
 - JavaScript: 15 test cases
 - TypeScript: 20 test cases (type-only imports)
 - Python: 15 test cases (relative imports)
 - Rust: 20 test cases (use statements, glob imports)
 
 ### 4. TypeContext Tests
+
 **File:** `type_resolution/type_context.test.ts`
 
 **Coverage requirements:**
+
 - ✅ 90% line coverage
 - ✅ All type tracking sources tested
 
 **Test categories:**
+
 - Type annotation tracking
 - Constructor assignment tracking
 - Return type tracking
@@ -110,6 +151,7 @@ Validate the complete scope-aware resolution system with comprehensive test cove
 - Inheritance (future enhancement)
 
 **Per-language tests:**
+
 - JavaScript: 10 test cases (limited type info)
 - TypeScript: 30 test cases (rich type system)
 - Python: 20 test cases (type hints)
@@ -118,19 +160,25 @@ Validate the complete scope-aware resolution system with comprehensive test cove
 ### 5. Call Resolution Tests
 
 #### Function Resolver
+
 **File:** `call_resolution/function_resolver.test.ts`
+
 - 15 test cases per language
 - Focus on shadowing and cross-file calls
 - Test cache effectiveness for repeated calls
 
 #### Method Resolver
+
 **File:** `call_resolution/method_resolver.test.ts`
+
 - 25 test cases per language
 - Focus on type tracking and member lookup
 - Test receiver resolution caching
 
 #### Constructor Resolver
+
 **File:** `call_resolution/constructor_resolver.test.ts`
+
 - 20 test cases per language
 - Focus on class resolution and implicit constructors
 - Test class name resolution caching
@@ -142,6 +190,7 @@ Validate the complete scope-aware resolution system with comprehensive test cove
 **Test scenarios:**
 
 #### 1. Cross-File Resolution
+
 ```typescript
 // Test: Import → function call resolution
 // Files: utils.ts, main.ts
@@ -149,6 +198,7 @@ Validate the complete scope-aware resolution system with comprehensive test cove
 ```
 
 #### 2. Type Flow Through System
+
 ```typescript
 // Test: Constructor → type tracking → method resolution
 // Files: types.ts, main.ts
@@ -156,6 +206,7 @@ Validate the complete scope-aware resolution system with comprehensive test cove
 ```
 
 #### 3. Complex Shadowing
+
 ```typescript
 // Test: Multiple levels of shadowing across files
 // Files: outer.ts, middle.ts, inner.ts
@@ -163,6 +214,7 @@ Validate the complete scope-aware resolution system with comprehensive test cove
 ```
 
 #### 4. Import Chain Resolution
+
 ```typescript
 // Test: A imports B imports C imports D
 // Files: a.ts, b.ts, c.ts, d.ts
@@ -170,6 +222,7 @@ Validate the complete scope-aware resolution system with comprehensive test cove
 ```
 
 #### 5. Circular Imports
+
 ```typescript
 // Test: A imports B, B imports A
 // Files: a.ts, b.ts
@@ -177,6 +230,7 @@ Validate the complete scope-aware resolution system with comprehensive test cove
 ```
 
 #### 6. Method Chains
+
 ```typescript
 // Test: obj.getHelper().process()
 // Files: main.ts with chained calls
@@ -185,15 +239,15 @@ Validate the complete scope-aware resolution system with comprehensive test cove
 
 ### Integration Test Matrix
 
-| Scenario | JS | TS | Python | Rust | Status |
-|----------|----|----|--------|------|--------|
-| Cross-file function | ✓ | ✓ | ✓ | ✓ | |
-| Cross-file method | ✓ | ✓ | ✓ | ✓ | |
-| Constructor → method | ✓ | ✓ | ✓ | ✓ | |
-| Import chain | ✓ | ✓ | ✓ | ✓ | |
-| Circular imports | ✓ | ✓ | ✓ | ✓ | |
-| Shadowing chain | ✓ | ✓ | ✓ | ✓ | |
-| Mixed call types | ✓ | ✓ | ✓ | ✓ | |
+| Scenario             | JS  | TS  | Python | Rust | Status |
+| -------------------- | --- | --- | ------ | ---- | ------ |
+| Cross-file function  | ✓   | ✓   | ✓      | ✓    |        |
+| Cross-file method    | ✓   | ✓   | ✓      | ✓    |        |
+| Constructor → method | ✓   | ✓   | ✓      | ✓    |        |
+| Import chain         | ✓   | ✓   | ✓      | ✓    |        |
+| Circular imports     | ✓   | ✓   | ✓      | ✓    |        |
+| Shadowing chain      | ✓   | ✓   | ✓      | ✓    |        |
+| Mixed call types     | ✓   | ✓   | ✓      | ✓    |        |
 
 ## End-to-End Tests
 
@@ -202,28 +256,36 @@ Validate the complete scope-aware resolution system with comprehensive test cove
 Test on actual projects (small versions):
 
 #### 1. JavaScript Project
+
 **Example:** Mini Express app
+
 - Multiple files with imports
 - Class-based controllers
 - Function utilities
 - Expected: 90%+ resolution rate
 
 #### 2. TypeScript Project
+
 **Example:** Mini React component library
+
 - Complex type system
 - Generics and interfaces
 - Cross-file types
 - Expected: 85%+ resolution rate (generics may fail)
 
 #### 3. Python Project
+
 **Example:** Mini Flask app
+
 - Module imports
 - Class-based views
 - Decorators
 - Expected: 85%+ resolution rate
 
 #### 4. Rust Project
+
 **Example:** Mini CLI tool
+
 - Use statements
 - Trait implementations
 - Generic functions
@@ -234,11 +296,13 @@ Test on actual projects (small versions):
 ### Ensure No Breaking Changes
 
 Run all existing tests:
+
 ```bash
 npm test
 ```
 
 Track:
+
 - ✅ Number of passing tests (should not decrease)
 - ✅ Test execution time (should not increase significantly)
 - ✅ Memory usage (should not increase significantly)
@@ -246,6 +310,7 @@ Track:
 ### Backwards Compatibility
 
 Verify:
+
 - ✅ Output format matches `ResolvedSymbols` type
 - ✅ All existing consumers work
 - ✅ API surface unchanged (or explicitly versioned)
@@ -257,11 +322,13 @@ Verify:
 **File:** `symbol_resolution.benchmark.ts`
 
 #### Test Projects
+
 1. **Small** - 10 files, 100 symbols
 2. **Medium** - 100 files, 1000 symbols
 3. **Large** - 1000 files, 10000 symbols
 
 #### Metrics
+
 - Total resolution time
 - Time per phase:
   - Import resolution
@@ -282,15 +349,17 @@ Verify:
   - Average hits per resolution
 
 #### Performance Targets
+
 | Project Size | Resolution Time | Memory Usage |
-|--------------|-----------------|--------------|
-| Small | < 10ms | < 10MB |
-| Medium | < 100ms | < 50MB |
-| Large | < 1s | < 200MB |
+| ------------ | --------------- | ------------ |
+| Small        | < 10ms          | < 10MB       |
+| Medium       | < 100ms         | < 50MB       |
+| Large        | < 1s            | < 200MB      |
 
 #### Performance Comparison
 
 Compare old vs new implementation:
+
 ```typescript
 // Benchmark both implementations
 const old_time = benchmark_old_implementation(indices);
@@ -319,9 +388,11 @@ expect(new_time).toBeLessThan(old_time * 1.2);
 
 ### Fixture Organization
 
+Fixtures use the centralized location:
+
 ```
-packages/core/src/resolve_references/
-└── test_fixtures/
+packages/core/tests/fixtures/
+└── resolve_references/
     ├── javascript/
     │   ├── simple_project/
     │   ├── shadowing_test/
@@ -343,6 +414,7 @@ packages/core/src/resolve_references/
 ### Fixture Requirements
 
 Each fixture includes:
+
 - ✅ Source files (realistic code)
 - ✅ Expected resolutions (JSON format)
 - ✅ Documentation (what's being tested)
@@ -358,21 +430,22 @@ npm run test:coverage
 
 ### Coverage Targets
 
-| Component | Line Coverage | Branch Coverage |
-|-----------|---------------|-----------------|
-| ScopeResolverIndex | 100% | 100% |
-| ResolutionCache | 100% | 100% |
-| ImportResolver | 95% | 90% |
-| TypeContext | 90% | 85% |
-| FunctionResolver | 100% | 100% |
-| MethodResolver | 95% | 90% |
-| ConstructorResolver | 95% | 90% |
-| Integration | 90% | 85% |
-| **Overall** | **95%** | **90%** |
+| Component           | Line Coverage | Branch Coverage |
+| ------------------- | ------------- | --------------- |
+| ScopeResolverIndex  | 100%          | 100%            |
+| ResolutionCache     | 100%          | 100%            |
+| ImportResolver      | 95%           | 90%             |
+| TypeContext         | 90%           | 85%             |
+| FunctionResolver    | 100%          | 100%            |
+| MethodResolver      | 95%           | 90%             |
+| ConstructorResolver | 95%           | 90%             |
+| Integration         | 90%           | 85%             |
+| **Overall**         | **95%**       | **90%**         |
 
 ## Success Criteria
 
 ### Functional
+
 - ✅ All unit tests pass (500+ tests)
 - ✅ All integration tests pass (50+ tests)
 - ✅ All end-to-end tests pass (20+ tests)
@@ -380,16 +453,19 @@ npm run test:coverage
 - ✅ All edge cases handled gracefully
 
 ### Coverage
+
 - ✅ 95%+ overall line coverage
 - ✅ 90%+ overall branch coverage
 - ✅ 100% coverage for critical paths
 
 ### Performance
+
 - ✅ Meets performance targets
 - ✅ No memory leaks
 - ✅ Scalable to large codebases
 
 ### Quality
+
 - ✅ No flaky tests
 - ✅ Clear test documentation
 - ✅ Easy to run and debug
@@ -440,16 +516,19 @@ npm run test:watch
 Document expected failures:
 
 ### 1. Advanced Type Inference
+
 - Generics may not resolve completely
 - Union types pick first type only
 - Intersection types not supported
 
 ### 2. Dynamic Features
+
 - eval/exec not supported
 - Dynamic imports partially supported
 - Reflection not tracked
 
 ### 3. Language-Specific
+
 - **TypeScript:** Conditional types not supported
 - **Python:** Metaclasses not tracked
 - **Rust:** Procedural macros not expanded
@@ -458,11 +537,13 @@ Document expected failures:
 ## Dependencies
 
 **Uses:**
-- All previous tasks (11.109.1-7)
+
+- All previous tasks (11.109.0-8)
 - Test fixtures (to be created)
 - Benchmark utilities (to be created)
 
 **Validates:**
+
 - Entire scope-aware resolution system
 - Integration points
 - Performance characteristics
@@ -470,6 +551,7 @@ Document expected failures:
 ## Next Steps
 
 After completion:
-- Task 11.109.9 (Cleanup) can proceed
+
+- Task 11.109.10 (Cleanup and Documentation) can proceed
 - System ready for production
 - Documentation can be finalized
