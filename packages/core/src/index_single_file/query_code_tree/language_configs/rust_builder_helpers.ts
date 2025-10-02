@@ -399,6 +399,41 @@ export function extract_parameter_type(
   return undefined;
 }
 
+/**
+ * Extract type expression from type alias declaration
+ *
+ * @param node - The type alias name node
+ * @returns The type expression text or undefined
+ *
+ * @example
+ * type Kilometers = i32;  // Returns "i32"
+ * type Result<T> = std::result::Result<T, Error>;  // Returns "std::result::Result<T, Error>"
+ */
+export function extract_type_expression(node: SyntaxNode): string | undefined {
+  const parent = node.parent;
+  if (!parent || parent.type !== "type_item") {
+    return undefined;
+  }
+
+  const typeNode = parent.childForFieldName?.("type");
+  return typeNode?.text;
+}
+
+/**
+ * Check if a node has generic type parameters
+ *
+ * @param node - The node to check (struct_item, enum_item, type_item, function_item, etc.)
+ * @returns True if the node has generic parameters
+ *
+ * @example
+ * struct Foo<T> { }  // Returns true
+ * struct Bar { }     // Returns false
+ */
+export function has_generic_parameters(node: SyntaxNode): boolean {
+  const typeParams = node.childForFieldName?.("type_parameters");
+  return typeParams !== null && typeParams !== undefined;
+}
+
 export function is_mutable_parameter(node: SyntaxNode): boolean {
   const pattern = node.childForFieldName?.("pattern");
   if (pattern) {
@@ -665,11 +700,11 @@ export function extract_import_alias(node: SyntaxNode): SymbolName | undefined {
 }
 
 export function extract_use_path(capture: CaptureNode): ModulePath {
-  // For use declarations, extract the full path
+  // For use declarations and extern crate declarations, extract the full path
   let node: SyntaxNode | null = capture.node;
 
-  // Traverse up to find use_declaration
-  while (node && node.type !== "use_declaration") {
+  // Traverse up to find use_declaration or extern_crate_declaration
+  while (node && node.type !== "use_declaration" && node.type !== "extern_crate_declaration") {
     node = node.parent;
   }
 
@@ -677,6 +712,19 @@ export function extract_use_path(capture: CaptureNode): ModulePath {
     return capture.text as any as ModulePath;
   }
 
+  // Handle extern crate declarations
+  if (node.type === "extern_crate_declaration") {
+    // Find the first identifier (the crate name)
+    const children = node.children || [];
+    for (const child of children) {
+      if (child.type === "identifier") {
+        return child.text as any as ModulePath;
+      }
+    }
+    return capture.text as any as ModulePath;
+  }
+
+  // Handle use declarations
   // Get the argument field which contains the path
   const argument = node.childForFieldName?.("argument");
   if (argument) {
@@ -704,11 +752,28 @@ export function extract_use_path(capture: CaptureNode): ModulePath {
 export function extract_use_alias(capture: CaptureNode): SymbolName | undefined {
   let node: SyntaxNode | null = capture.node;
 
-  // Traverse up to find use_as_clause
-  while (node && node.type !== "use_as_clause") {
+  // Traverse up to find use_as_clause or extern_crate_declaration
+  while (node && node.type !== "use_as_clause" && node.type !== "extern_crate_declaration") {
     node = node.parent;
   }
 
+  if (!node) return undefined;
+
+  // For extern crate declarations: extern crate foo as bar;
+  if (node.type === "extern_crate_declaration") {
+    const children = node.children || [];
+    let foundAs = false;
+    for (const child of children) {
+      if (child.text === "as") {
+        foundAs = true;
+      } else if (foundAs && child.type === "identifier") {
+        return child.text as SymbolName;
+      }
+    }
+    return undefined;
+  }
+
+  // For use declarations with aliases
   if (node?.type === "use_as_clause") {
     // Find the identifier after "as"
     const children = node.children || [];

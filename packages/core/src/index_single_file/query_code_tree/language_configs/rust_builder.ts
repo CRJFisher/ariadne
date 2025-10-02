@@ -30,6 +30,7 @@ import {
   find_containing_trait,
   find_containing_callable,
   enum_member_symbol,
+  extract_type_expression,
 } from "./rust_builder_helpers";
 
 export type ProcessFunction = (
@@ -850,6 +851,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: extract_visibility(capture.node.parent || capture.node),
+          type_expression: extract_type_expression(capture.node),
           generics: generics.length > 0 ? generics : undefined,
         });
       },
@@ -876,6 +878,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: extract_visibility(capture.node.parent || capture.node),
+          type_expression: extract_type_expression(capture.node),
           generics: generics.length > 0 ? generics : undefined,
         });
       },
@@ -899,6 +902,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: { scope: "public" },
+          type_expression: extract_type_expression(capture.node),
         });
       },
     },
@@ -946,6 +950,13 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         // Get the imported name - use alias if present, otherwise last segment
         const imported_name = alias || capture.text;
 
+        // For aliased imports, preserve the original name
+        // If capture.text is the same as alias, this capture is the alias identifier,
+        // so use import_path as the original name instead
+        const original_name = alias && capture.text !== alias
+          ? capture.text
+          : (alias ? import_path as any as SymbolName : undefined);
+
         builder.add_import({
           symbol_id: `import:${capture.location.file_path}:${capture.location.start_line}:${imported_name}` as SymbolId,
           name: imported_name as SymbolName,
@@ -953,6 +964,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           scope_id: context.get_scope_id(capture.location),
           availability: { scope: "file-private" },
           import_path,
+          original_name,
           import_kind: is_wildcard ? "namespace" : "named",
         });
       },
@@ -972,6 +984,10 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
 
         if (!alias) return;
 
+        // For extern crate, use extract_use_path to get the original crate name
+        // For use statements, capture.text is the original name
+        const original_name = import_path ? (import_path as any as SymbolName) : capture.text;
+
         builder.add_import({
           symbol_id: `import:${capture.location.file_path}:${capture.location.start_line}:${alias}` as SymbolId,
           name: alias,
@@ -979,7 +995,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           scope_id: context.get_scope_id(capture.location),
           availability: { scope: "file-private" },
           import_path,
-          original_name: capture.text,
+          original_name,
           import_kind: "named",
         });
       },

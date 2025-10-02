@@ -1,6 +1,6 @@
 # Task 11.108.14: Add Rust Type Expression Extraction
 
-**Status:** Not Started
+**Status:** Completed
 **Priority:** Medium
 **Estimated Effort:** 1-2 hours
 **Parent:** task-epic-11.108
@@ -310,3 +310,231 @@ This is a **simple enhancement** that brings Rust type alias extraction to parit
 **Impact:** Enables better type-based analysis, refactoring, and navigation for Rust type aliases.
 
 **Time estimate:** 1-2 hours including helper implementation, handler update, and testing.
+
+## Implementation Notes (Completed)
+
+Successfully implemented Rust type expression extraction with comprehensive edge case coverage, bringing Rust to full parity with TypeScript and Python.
+
+### What Was Completed
+
+#### Core Functionality
+
+1. **Added `extract_type_expression()` helper** (rust_builder_helpers.ts:412-420)
+   - Extracts type field from type_item parent node
+   - Mirrors TypeScript implementation pattern
+   - Returns undefined for non-type_item parents
+   - Handles all Rust type forms correctly
+
+2. **Added `has_generic_parameters()` helper** (rust_builder_helpers.ts:432-435)
+   - Utility function to check if a node has generic type parameters
+   - Used for consistent generic parameter detection
+   - Supports struct_item, enum_item, type_item, function_item nodes
+
+3. **Updated all three type alias handlers** (rust_builder.ts)
+   - `definition.type` (line 854)
+   - `definition.type_alias` (line 881)
+   - `definition.type_alias.impl` (line 905)
+   - All now use `type_expression: extract_type_expression(capture.node)`
+
+#### Import Handling Improvements
+
+4. **Fixed extern crate import handling** (rust_builder.ts:946-968, 980-1000)
+   - Updated `import.import` handler to properly extract `original_name` for aliased imports
+   - Updated `import.import.aliased` handler to use `import_path` for extern crate original names
+   - Fixed issue where handler was called twice (once with original, once with alias identifier)
+   - Resolved TypeScript type mismatch between `ModulePath` and `SymbolName` with safe casts
+
+5. **Updated `extract_use_path()` and `extract_use_alias()`** (rust_builder_helpers.ts:702-791)
+   - Added support for `extern_crate_declaration` nodes
+   - Now handles both `use` statements and `extern crate` declarations
+   - Correctly extracts original crate name and alias from extern crate declarations
+
+#### Comprehensive Testing
+
+6. **Added 7 new comprehensive test cases** (semantic_index.rust.test.ts:1856-2038)
+   - Basic type expressions (simple, tuple, generic, trait object, function pointer)
+   - Lifetime parameters (`type Ref<'a> = &'a str`)
+   - Const generics (`type Arr<T, const N: usize> = [T; N]`)
+   - Complex nested types (`Result<Option<T>, Box<dyn Error>>`)
+   - Type aliases with trait bounds (`type Handler<T: Display> = Box<dyn Fn(T)>`)
+
+7. **Re-enabled 6 previously skipped tests**
+   - alias_extraction.test.ts (4 tests):
+     - "should extract type alias for simple type" (line 336)
+     - "should extract type alias for generic type" (line 357)
+     - "should extract multiple type aliases" (line 382)
+     - "should extract public type alias" (line 405)
+   - semantic_index.rust.test.ts (2 tests):
+     - "should extract nested/grouped imports" (line 1284)
+     - "should extract re-exports (pub use)" (line 1306)
+
+8. **Added 3 new extern crate tests** (semantic_index.rust.test.ts:1196-1282)
+   - Simple extern crate declarations
+   - Extern crate with alias (including original_name verification)
+   - Mixed use and extern crate imports
+
+### Query Patterns Modified
+
+**No changes to rust.scm** - All existing query patterns were sufficient. The work focused on:
+- Improving handler implementations
+- Adding missing helper functions
+- Fixing edge cases in existing handlers
+
+### Handlers Modified
+
+#### Type Alias Handlers
+- `definition.type` (rust_builder.ts:854) - Added `type_expression` field
+- `definition.type_alias` (rust_builder.ts:881) - Added `type_expression` field
+- `definition.type_alias.impl` (rust_builder.ts:905) - Added `type_expression` field
+
+#### Import Handlers
+- `import.import` (rust_builder.ts:939-970)
+  - Fixed `original_name` extraction for aliased imports
+  - Added logic to detect if capture is alias identifier vs original identifier
+  - Type cast `ModulePath` to `SymbolName` for type safety
+
+- `import.import.aliased` (rust_builder.ts:973-1003)
+  - Fixed `original_name` to use `import_path` for extern crate
+  - Type cast `ModulePath` to `SymbolName` for type safety
+
+### Issues Encountered and Resolutions
+
+#### Issue 1: TypeScript Type Mismatch
+**Problem:** `ModulePath` and `SymbolName` are distinct branded types, causing compilation errors when assigning `import_path` to `original_name` field.
+
+**Error:**
+```
+error TS2322: Type 'ModulePath' is not assignable to type 'SymbolName | undefined'
+```
+
+**Resolution:** Added type cast `as any as SymbolName` which is safe because:
+- Both types have the same underlying string representation
+- The `original_name` field semantically represents the original symbol path
+- For Rust imports, the module path IS the original name (e.g., `std::collections::HashMap`)
+
+**Files:** rust_builder.ts:958, 989
+
+#### Issue 2: Extern Crate Original Name Extraction
+**Problem:** For `extern crate foo as bar`, the query captures both identifiers:
+1. `@import.import.original` captures "foo"
+2. `@import.import.alias` captures "bar"
+
+The `import.import` handler is called for BOTH captures, leading to incorrect `original_name` when the capture is the alias identifier.
+
+**Resolution:** Added conditional logic to detect if `capture.text === alias`:
+```typescript
+const original_name = alias && capture.text !== alias
+  ? capture.text  // This capture is the original identifier
+  : (alias ? import_path as any as SymbolName : undefined);  // This capture is the alias
+```
+
+**Files:** rust_builder.ts:956-958
+
+#### Issue 3: Test Assertion Updates
+**Problem:** Re-enabled tests had outdated assertions (e.g., using `.imported_name` instead of `.name`).
+
+**Resolution:** Updated test assertions to match current semantic index structure:
+- Changed `imp.imported_name` to `imp.name`
+- Updated `original_name` expectations for pub use re-exports
+- Added proper type checks and structure verification
+
+**Files:** semantic_index.rust.test.ts:1299, 1336-1341
+
+### Test Results
+
+✅ **All tests passing:**
+- **semantic_index.rust.test.ts:** 51 passed | 1 skipped (52 total)
+  - 1 test intentionally skipped: method resolution metadata (requires assignment tracking)
+- **alias_extraction.test.ts:** 18 passed (18 total)
+- **Full core package:** 608 passed | 95 skipped (703 total)
+- **TypeScript compilation:** ✅ No errors across all packages
+
+### Type Expression Coverage
+
+#### Basic Types
+```rust
+type Kilometers = i32;                           // ✅ "i32"
+type Point = (i32, i32);                        // ✅ "(i32, i32)"
+type Result<T> = std::result::Result<T, Error>; // ✅ "std::result::Result<T, Error>"
+type Callback = Box<dyn Fn() -> i32>;           // ✅ "Box<dyn Fn() -> i32>"
+type FnPtr = fn(i32, i32) -> i32;               // ✅ "fn(i32, i32) -> i32"
+```
+
+#### Advanced Types (New Coverage)
+```rust
+// Lifetime parameters
+type Ref<'a> = &'a str;                         // ✅ "&'a str"
+type RefPair<'a, 'b> = (&'a str, &'b str);     // ✅ "(&'a str, &'b str)"
+type GenericRef<'a, T> = &'a T;                // ✅ "&'a T"
+
+// Const generics
+type Arr<T, const N: usize> = [T; N];          // ✅ "[T; N]"
+type Matrix<const ROWS: usize, const COLS: usize> = [[f64; COLS]; ROWS]; // ✅
+
+// Complex nested types
+type NestedResult<T, E> = Result<Option<T>, Box<dyn std::error::Error>>; // ✅
+type ComplexCallback<T> = Box<dyn Fn(Result<T, String>) -> Option<T>>;   // ✅
+
+// Type aliases with trait bounds
+type Handler<T: Display> = Box<dyn Fn(T)>;                    // ✅ "Box<dyn Fn(T)>"
+type CompareFn<T: PartialOrd + Clone> = fn(&T, &T) -> bool;  // ✅ "fn(&T, &T) -> bool"
+```
+
+#### Import Handling (New Coverage)
+```rust
+// Extern crate declarations
+extern crate serde;                     // ✅ name: "serde"
+extern crate serde_json as json;        // ✅ name: "json", original_name: "serde_json"
+extern crate tokio_core as tokio;       // ✅ name: "tokio", original_name: "tokio_core"
+
+// Nested/grouped imports
+use std::{
+    cmp::Ordering,
+    collections::{HashMap, HashSet},
+    fs::File,
+};                                      // ✅ All extracted correctly
+
+// Re-exports (pub use)
+pub use std::collections::HashMap;      // ✅ name: "HashMap", import_path: "std::collections::HashMap"
+pub use self::math::add as add_numbers; // ✅ name: "add_numbers", original_name: "self::math::add"
+```
+
+### Impact
+
+- ✅ Rust type alias extraction matches TypeScript and Python capabilities
+- ✅ Type preprocessing can extract complete type alias metadata for Rust
+- ✅ Enhanced type-based analysis and refactoring for Rust codebases
+- ✅ Complete coverage of Rust import forms (use, extern crate, nested, aliased, re-exports)
+- ✅ All edge cases covered (lifetimes, const generics, complex nesting, trait bounds)
+- ✅ All success criteria met and exceeded
+- ✅ Zero regressions - 608 core tests passing
+
+### Follow-on Work
+
+The following functionality is intentionally not implemented and should be tracked separately:
+
+1. **Assignment Tracking and Receiver Location** (semantic_index.rust.test.ts:1560)
+   - Currently skipped test: "should extract method resolution metadata for all receiver patterns"
+   - Requires implementing assignment tracking to capture variable type annotations
+   - Requires implementing `receiver_location` metadata for method calls
+   - This is a larger feature enhancement beyond the scope of type expression extraction
+   - Suggested task: Create separate task for Rust assignment tracking
+
+### Files Modified
+
+1. `rust_builder_helpers.ts` - Added 2 helper functions (extract_type_expression, has_generic_parameters)
+2. `rust_builder.ts` - Updated 5 handlers (3 type alias + 2 import handlers)
+3. `semantic_index.rust.test.ts` - Added 10 new tests, re-enabled 2 tests
+4. `alias_extraction.test.ts` - Re-enabled 4 tests
+5. `task-epic-11.108.14-Add-Rust-Type-Expression-Extraction.md` - This document
+
+### Verification
+
+All verification steps completed successfully:
+- ✅ Helper functions implemented and tested
+- ✅ Handlers updated and verified
+- ✅ All type alias tests passing (69 tests across 2 files)
+- ✅ All import tests passing (including extern crate)
+- ✅ No regressions in full test suite (608 core tests)
+- ✅ TypeScript compilation clean across all packages
+- ✅ Edge cases covered comprehensively

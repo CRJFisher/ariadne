@@ -333,7 +333,7 @@ describe("Type Alias Extraction - Rust", () => {
     parser.setLanguage(Rust);
   });
 
-  it.skip("should extract type alias for simple type (SKIPPED: semantic_index doesn't extract type_expression for Rust)", () => {
+  it("should extract type alias for simple type", () => {
     const code = `
 type Kilometers = i32;
     `;
@@ -354,7 +354,7 @@ type Kilometers = i32;
     expect(expressions.some((expr) => expr.includes("i32"))).toBe(true);
   });
 
-  it.skip("should extract type alias for generic type (SKIPPED: semantic_index doesn't extract type_expression for Rust)", () => {
+  it("should extract type alias for generic type", () => {
     const code = `
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
     `;
@@ -379,7 +379,7 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
     ).toBe(true);
   });
 
-  it.skip("should extract multiple type aliases (SKIPPED: semantic_index doesn't extract type_expression for Rust)", () => {
+  it("should extract multiple type aliases", () => {
     const code = `
 type Kilometers = i32;
 type Miles = f64;
@@ -402,7 +402,7 @@ type Miles = f64;
     expect(expressions.some((expr) => expr.includes("f64"))).toBe(true);
   });
 
-  it.skip("should extract public type alias (SKIPPED: semantic_index doesn't extract type_expression for Rust)", () => {
+  it("should extract public type alias", () => {
     const code = `
 pub type BoxedError = Box<dyn std::error::Error>;
     `;

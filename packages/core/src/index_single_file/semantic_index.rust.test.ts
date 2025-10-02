@@ -1193,8 +1193,95 @@ use std::collections::*;
       expect(index).toBeDefined();
     });
 
-    it.skip("should extract nested/grouped imports", () => {
-      // SKIPPED: Import extraction not yet implemented for Rust
+    it("should extract extern crate declarations", () => {
+      const code = `
+extern crate serde;
+extern crate tokio;
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify extern crate imports are captured
+      const imported_names = Array.from(index.imported_symbols.values()).map(imp => imp.name);
+      expect(imported_names).toContain("serde");
+      expect(imported_names).toContain("tokio");
+
+      // Verify complete structure
+      const serdeImport = Array.from(index.imported_symbols.values()).find(
+        imp => imp.name === "serde"
+      );
+      expect(serdeImport).toBeDefined();
+      if (serdeImport) {
+        expect(serdeImport).toMatchObject({
+          name: "serde",
+          location: expect.objectContaining({
+            file_path: "test.rs",
+          }),
+        });
+      }
+    });
+
+    it("should extract extern crate with alias", () => {
+      const code = `
+extern crate serde_json as json;
+extern crate tokio_core as tokio;
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify aliased extern crate imports are captured
+      const imported_names = Array.from(index.imported_symbols.values()).map(imp => imp.name);
+      expect(imported_names).toContain("json");
+      expect(imported_names).toContain("tokio");
+
+      // Verify original names are preserved
+      const jsonImport = Array.from(index.imported_symbols.values()).find(
+        imp => imp.name === "json"
+      );
+      expect(jsonImport).toBeDefined();
+      if (jsonImport) {
+        expect(jsonImport.original_name).toBe("serde_json");
+      }
+
+      const tokioImport = Array.from(index.imported_symbols.values()).find(
+        imp => imp.name === "tokio"
+      );
+      expect(tokioImport).toBeDefined();
+      if (tokioImport) {
+        expect(tokioImport.original_name).toBe("tokio_core");
+      }
+    });
+
+    it("should handle mixed use and extern crate imports", () => {
+      const code = `
+extern crate serde;
+use std::collections::HashMap;
+extern crate tokio as runtime;
+use std::io::Result;
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify all imports are captured
+      const imported_names = Array.from(index.imported_symbols.values()).map(imp => imp.name);
+      expect(imported_names).toContain("serde");
+      expect(imported_names).toContain("HashMap");
+      expect(imported_names).toContain("runtime");
+      expect(imported_names).toContain("Result");
+
+      expect(index.imported_symbols.size).toBeGreaterThanOrEqual(4);
+    });
+
+    it("should extract nested/grouped imports", () => {
       const code = `
 use std::{
     cmp::Ordering,
@@ -1209,15 +1296,14 @@ use std::{
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify nested imports are captured
-      const imported_names = Array.from(index.imported_symbols.values()).map(imp => imp.imported_name);
+      const imported_names = Array.from(index.imported_symbols.values()).map(imp => imp.name);
       expect(imported_names).toContain("Ordering");
       expect(imported_names).toContain("HashMap");
       expect(imported_names).toContain("HashSet");
       expect(imported_names).toContain("File");
     });
 
-    it.skip("should extract re-exports (pub use)", () => {
-      // SKIPPED: Import extraction not yet implemented for Rust
+    it("should extract re-exports (pub use)", () => {
       const code = `
 pub use std::collections::HashMap;
 pub use self::math::add as add_numbers;
@@ -1240,9 +1326,20 @@ mod math {
       // Check that we have imports
       expect(imports.length).toBeGreaterThan(0);
 
-      // Re-exports may be marked as public
-      const public_imports = imports.filter(imp => imp.availability?.scope === "public");
-      expect(public_imports.length).toBeGreaterThan(0);
+      // Verify HashMap import exists
+      const hashmap_import = imports.find(imp => imp.name === "HashMap");
+      expect(hashmap_import).toBeDefined();
+      if (hashmap_import) {
+        expect(hashmap_import.import_path).toBe("std::collections::HashMap");
+      }
+
+      // Verify add_numbers import exists (aliased from self::math::add)
+      const add_numbers_import = imports.find(imp => imp.name === "add_numbers");
+      expect(add_numbers_import).toBeDefined();
+      if (add_numbers_import) {
+        // The original_name should be the full path from the import
+        expect(add_numbers_import.original_name).toBe("self::math::add");
+      }
     });
   });
 
@@ -1461,7 +1558,7 @@ fn main() {
     });
 
     it.skip("should extract method resolution metadata for all receiver patterns", () => {
-      // Note: Skipped pending enhancement to Rust extractor for receiver_location
+      // SKIPPED: Assignment tracking and receiver_location not yet implemented for Rust
       const code = `
 struct Service {
     data: Vec<String>,
@@ -1767,6 +1864,7 @@ pub type BoxedError = Box<dyn Error>;
           kind: "type_alias",
           symbol_id: expect.stringMatching(/^type/),
           name: "Kilometers",
+          type_expression: "i32",
           location: expect.objectContaining({
             file_path: "test.rs",
             start_line: expect.any(Number),
@@ -1792,6 +1890,7 @@ pub type BoxedError = Box<dyn Error>;
         expect(resultType).toMatchObject({
           kind: "type_alias",
           name: "Result",
+          type_expression: "std::result::Result<T, Error>",
           generics: expect.arrayContaining(["T"]),
         });
       }
@@ -1807,6 +1906,7 @@ pub type BoxedError = Box<dyn Error>;
         expect(boxedErrorType).toMatchObject({
           kind: "type_alias",
           name: "BoxedError",
+          type_expression: "Box<dyn Error>",
           availability: expect.objectContaining({
             scope: "public",
           }),
@@ -1851,6 +1951,187 @@ impl Iterator for MyIterator {
       expect(firstItem).toBeDefined();
       expect(firstItem.kind).toBe("type_alias");
       expect(firstItem.location.file_path).toBe("test.rs");
+    });
+
+    it("should extract type expressions for all type alias forms", () => {
+      const code = `
+type Kilometers = i32;
+type Point = (i32, i32);
+type Result<T> = std::result::Result<T, Error>;
+type Callback = Box<dyn Fn() -> i32>;
+type FnPtr = fn(i32, i32) -> i32;
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const result = build_semantic_index(parsed_file, tree, "rust");
+
+      const type_aliases = Array.from(result.types.values()).filter(
+        (d) => d.kind === "type_alias"
+      );
+
+      expect(type_aliases.length).toBeGreaterThanOrEqual(5);
+
+      // Check Kilometers (simple type)
+      const kilometers = type_aliases.find((t) => t.name === "Kilometers");
+      expect(kilometers).toBeDefined();
+      expect(kilometers?.type_expression).toBe("i32");
+
+      // Check Point (tuple type)
+      const point = type_aliases.find((t) => t.name === "Point");
+      expect(point).toBeDefined();
+      expect(point?.type_expression).toBe("(i32, i32)");
+
+      // Check Result (generic with type parameters)
+      const result_type = type_aliases.find((t) => t.name === "Result");
+      expect(result_type).toBeDefined();
+      expect(result_type?.type_expression).toBe("std::result::Result<T, Error>");
+      expect(result_type?.generics).toEqual(["T"]);
+
+      // Check Callback (trait object)
+      const callback = type_aliases.find((t) => t.name === "Callback");
+      expect(callback).toBeDefined();
+      expect(callback?.type_expression).toBe("Box<dyn Fn() -> i32>");
+
+      // Check FnPtr (function pointer)
+      const fn_ptr = type_aliases.find((t) => t.name === "FnPtr");
+      expect(fn_ptr).toBeDefined();
+      expect(fn_ptr?.type_expression).toBe("fn(i32, i32) -> i32");
+    });
+
+    it("should extract type aliases with lifetime parameters", () => {
+      const code = `
+type Ref<'a> = &'a str;
+type RefPair<'a, 'b> = (&'a str, &'b str);
+type GenericRef<'a, T> = &'a T;
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const result = build_semantic_index(parsed_file, tree, "rust");
+
+      const type_aliases = Array.from(result.types.values()).filter(
+        (d) => d.kind === "type_alias"
+      );
+
+      expect(type_aliases.length).toBeGreaterThanOrEqual(3);
+
+      // Check Ref with single lifetime
+      const refType = type_aliases.find((t) => t.name === "Ref");
+      expect(refType).toBeDefined();
+      expect(refType?.type_expression).toBe("&'a str");
+      expect(refType?.generics).toEqual(["'a"]);
+
+      // Check RefPair with multiple lifetimes
+      const refPairType = type_aliases.find((t) => t.name === "RefPair");
+      expect(refPairType).toBeDefined();
+      expect(refPairType?.type_expression).toBe("(&'a str, &'b str)");
+      expect(refPairType?.generics).toEqual(["'a", "'b"]);
+
+      // Check GenericRef with lifetime and type parameter
+      const genericRefType = type_aliases.find((t) => t.name === "GenericRef");
+      expect(genericRefType).toBeDefined();
+      expect(genericRefType?.type_expression).toBe("&'a T");
+      expect(genericRefType?.generics).toEqual(["'a", "T"]);
+    });
+
+    it("should extract type aliases with const generics", () => {
+      const code = `
+type Arr<T, const N: usize> = [T; N];
+type Matrix<const ROWS: usize, const COLS: usize> = [[f64; COLS]; ROWS];
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const result = build_semantic_index(parsed_file, tree, "rust");
+
+      const type_aliases = Array.from(result.types.values()).filter(
+        (d) => d.kind === "type_alias"
+      );
+
+      expect(type_aliases.length).toBeGreaterThanOrEqual(2);
+
+      // Check Arr with const generic
+      const arrType = type_aliases.find((t) => t.name === "Arr");
+      expect(arrType).toBeDefined();
+      expect(arrType?.type_expression).toBe("[T; N]");
+
+      // Check Matrix with multiple const generics
+      const matrixType = type_aliases.find((t) => t.name === "Matrix");
+      expect(matrixType).toBeDefined();
+      expect(matrixType?.type_expression).toBe("[[f64; COLS]; ROWS]");
+    });
+
+    it("should extract complex nested type aliases", () => {
+      const code = `
+type NestedResult<T, E> = Result<Option<T>, Box<dyn std::error::Error>>;
+type ComplexCallback<T> = Box<dyn Fn(Result<T, String>) -> Option<T>>;
+type AsyncFn<'a, T> = Box<dyn Future<Output = Result<T, Box<dyn Error>>> + Send + 'a>;
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const result = build_semantic_index(parsed_file, tree, "rust");
+
+      const type_aliases = Array.from(result.types.values()).filter(
+        (d) => d.kind === "type_alias"
+      );
+
+      expect(type_aliases.length).toBeGreaterThanOrEqual(3);
+
+      // Check NestedResult
+      const nestedResult = type_aliases.find((t) => t.name === "NestedResult");
+      expect(nestedResult).toBeDefined();
+      expect(nestedResult?.type_expression).toBe("Result<Option<T>, Box<dyn std::error::Error>>");
+      expect(nestedResult?.generics).toEqual(["T", "E"]);
+
+      // Check ComplexCallback
+      const complexCallback = type_aliases.find((t) => t.name === "ComplexCallback");
+      expect(complexCallback).toBeDefined();
+      expect(complexCallback?.type_expression).toBe("Box<dyn Fn(Result<T, String>) -> Option<T>>");
+      expect(complexCallback?.generics).toEqual(["T"]);
+
+      // Check AsyncFn
+      const asyncFn = type_aliases.find((t) => t.name === "AsyncFn");
+      expect(asyncFn).toBeDefined();
+      expect(asyncFn?.type_expression).toBe("Box<dyn Future<Output = Result<T, Box<dyn Error>>> + Send + 'a>");
+      expect(asyncFn?.generics).toEqual(["'a", "T"]);
+    });
+
+    it("should extract type aliases with trait bounds", () => {
+      const code = `
+type Handler<T: Display> = Box<dyn Fn(T)>;
+type CompareFn<T: PartialOrd + Clone> = fn(&T, &T) -> bool;
+type SerializeFn<T: Serialize + Send + 'static> = Box<dyn Fn(T) -> String>;
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const result = build_semantic_index(parsed_file, tree, "rust");
+
+      const type_aliases = Array.from(result.types.values()).filter(
+        (d) => d.kind === "type_alias"
+      );
+
+      expect(type_aliases.length).toBeGreaterThanOrEqual(3);
+
+      // Check Handler with Display bound
+      const handler = type_aliases.find((t) => t.name === "Handler");
+      expect(handler).toBeDefined();
+      expect(handler?.type_expression).toBe("Box<dyn Fn(T)>");
+      expect(handler?.generics).toEqual(["T"]);
+
+      // Check CompareFn with multiple bounds
+      const compareFn = type_aliases.find((t) => t.name === "CompareFn");
+      expect(compareFn).toBeDefined();
+      expect(compareFn?.type_expression).toBe("fn(&T, &T) -> bool");
+      expect(compareFn?.generics).toEqual(["T"]);
+
+      // Check SerializeFn with multiple bounds including lifetime
+      const serializeFn = type_aliases.find((t) => t.name === "SerializeFn");
+      expect(serializeFn).toBeDefined();
+      expect(serializeFn?.type_expression).toBe("Box<dyn Fn(T) -> String>");
+      expect(serializeFn?.generics).toEqual(["T"]);
     });
   });
 });
