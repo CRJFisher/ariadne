@@ -2,7 +2,6 @@
  * Tests for Reference Builder System
  */
 
-// @ts-nocheck - Test utilities use simplified type casting for readability
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   ReferenceBuilder,
