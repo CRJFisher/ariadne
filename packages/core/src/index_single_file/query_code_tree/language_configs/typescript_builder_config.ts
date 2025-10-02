@@ -42,6 +42,9 @@ import {
   create_parameter_id,
   find_containing_callable,
   extract_parameter_type,
+  extract_parameter_default_value,
+  extract_property_initial_value,
+  is_parameter_in_function_type,
 } from "./typescript_builder";
 
 // ============================================================================
@@ -376,6 +379,39 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   ],
 
   [
+    "definition.method.private",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        // Private methods use the same logic as regular methods
+        // They're identified by private_property_identifier node (#method syntax)
+        const class_id = find_containing_class(capture);
+        if (!class_id) return;
+
+        const method_id = create_method_id(capture);
+        const parent = capture.node.parent; // method_definition
+
+        builder.add_method_to_class(class_id, {
+          symbol_id: method_id,
+          name: capture.text,
+          location: capture.location,
+          scope_id: context.get_scope_id(capture.location),
+          availability: { scope: "file-private" }, // Private methods are always private
+          access_modifier: "private",
+          abstract: is_abstract_method(capture.node),
+          static: is_static_method(capture.node),
+          async: is_async_method(capture.node),
+          return_type: extract_return_type(capture.node),
+          generics: parent ? extract_type_parameters(parent) : [],
+        });
+      },
+    },
+  ],
+
+  [
     "definition.field",
     {
       process: (
@@ -399,7 +435,39 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           readonly: is_readonly_property(capture.node),
           abstract: is_abstract_method(capture.node),
           type: extract_property_type(capture.node),
-          initial_value: undefined, // Would need to extract from node
+          initial_value: extract_property_initial_value(capture.node),
+        });
+      },
+    },
+  ],
+
+  [
+    "definition.field.private",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        // Private fields use the same logic as regular fields
+        // They're identified by private_property_identifier node (#field syntax)
+        const class_id = find_containing_class(capture);
+        if (!class_id) return;
+
+        const prop_id = create_property_id(capture);
+
+        builder.add_property_to_class(class_id, {
+          symbol_id: prop_id,
+          name: capture.text,
+          location: capture.location,
+          scope_id: context.get_scope_id(capture.location),
+          availability: { scope: "file-private" }, // Private fields are always private
+          access_modifier: "private",
+          static: is_static_method(capture.node),
+          readonly: is_readonly_property(capture.node),
+          abstract: is_abstract_method(capture.node),
+          type: extract_property_type(capture.node),
+          initial_value: extract_property_initial_value(capture.node),
         });
       },
     },
@@ -416,6 +484,11 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         builder: DefinitionBuilder,
         context: ProcessingContext
       ) => {
+        // Skip parameters inside function_type (they're type annotations, not actual parameters)
+        if (is_parameter_in_function_type(capture.node)) {
+          return;
+        }
+
         const param_id = create_parameter_id(capture);
         const parent_id = find_containing_callable(capture);
 
@@ -425,7 +498,7 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           type: extract_parameter_type(capture.node),
-          default_value: undefined,
+          default_value: extract_parameter_default_value(capture.node),
           optional: false,
         });
       },
@@ -440,6 +513,11 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         builder: DefinitionBuilder,
         context: ProcessingContext
       ) => {
+        // Skip parameters inside function_type (they're type annotations, not actual parameters)
+        if (is_parameter_in_function_type(capture.node)) {
+          return;
+        }
+
         const param_id = create_parameter_id(capture);
         const parent_id = find_containing_callable(capture);
 
@@ -449,7 +527,7 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           type: extract_parameter_type(capture.node),
-          default_value: undefined,
+          default_value: extract_parameter_default_value(capture.node),
           optional: true,
         });
       },
@@ -464,6 +542,11 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         builder: DefinitionBuilder,
         context: ProcessingContext
       ) => {
+        // Skip parameters inside function_type (they're type annotations, not actual parameters)
+        if (is_parameter_in_function_type(capture.node)) {
+          return;
+        }
+
         const param_id = create_parameter_id(capture);
         const parent_id = find_containing_callable(capture);
 
@@ -473,7 +556,7 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           type: extract_parameter_type(capture.node),
-          default_value: undefined,
+          default_value: extract_parameter_default_value(capture.node),
           optional: false,
         });
       },
@@ -507,7 +590,7 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           access_modifier: extract_access_modifier(capture.node),
           readonly: is_readonly_property(capture.node),
           type: extract_parameter_type(capture.node),
-          initial_value: undefined,
+          initial_value: extract_parameter_default_value(capture.node),
           is_parameter_property: true,
         });
       },
@@ -538,7 +621,7 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           access_modifier: extract_access_modifier(capture.node),
           readonly: is_readonly_property(capture.node),
           type: extract_parameter_type(capture.node),
-          initial_value: undefined,
+          initial_value: extract_parameter_default_value(capture.node),
           is_parameter_property: true,
         });
       },

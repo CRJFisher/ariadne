@@ -6,7 +6,7 @@
 **Parent:** task-epic-11.109
 **Dependencies:**
 - task-epic-11.109.1 (ScopeResolverIndex + Cache)
-- task-epic-11.109.2 (ImportResolver)
+- task-epic-11.109.2 (Lazy Import Resolution)
 - task-epic-11.109.3 (TypeContext)
 - task-epic-11.109.4 (FunctionResolver)
 - task-epic-11.109.5 (MethodResolver)
@@ -14,7 +14,7 @@
 
 ## Objective
 
-Integrate all resolution components into a unified pipeline in `symbol_resolution.ts`. This is the main entry point that orchestrates the entire scope-aware resolution process.
+Integrate all resolution components into a unified pipeline in `symbol_resolution.ts`. This is the main entry point that orchestrates the on-demand scope-aware resolution system.
 
 ## Implementation
 
@@ -22,7 +22,7 @@ Integrate all resolution components into a unified pipeline in `symbol_resolutio
 
 ```
 packages/core/src/resolve_references/
-├── symbol_resolution.ts     # Main orchestration (update)
+├── symbol_resolution.ts     # Main orchestration
 └── index.ts                 # Public API exports
 ```
 
@@ -33,18 +33,16 @@ packages/core/src/resolve_references/
  * Symbol Resolution - On-demand scope-aware unified pipeline
  *
  * Architecture:
- * 1. Build import map (cross-file connections)
- * 2. Build scope resolver index (resolver functions per scope)
- * 3. Create resolution cache (for on-demand lookups)
- * 4. Build type context (for method resolution)
- * 5. Resolve all call types using resolver index + cache
- * 6. Combine results
+ * 1. Build scope resolver index (creates lazy resolver functions)
+ * 2. Create resolution cache (stores resolved symbol_ids)
+ * 3. Build type context (uses resolver index for type names)
+ * 4. Resolve all call types (on-demand with caching)
+ * 5. Combine results
  */
 
 import type { FilePath, ResolvedSymbols } from "@ariadnejs/types";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
 
-import { resolve_imports } from "./import_resolution/import_resolver";
 import { build_scope_resolver_index } from "./core/scope_resolver_index";
 import { create_resolution_cache } from "./core/resolution_cache";
 import { build_type_context } from "./type_resolution/type_context";
@@ -59,23 +57,22 @@ export function resolve_symbols(
   indices: ReadonlyMap<FilePath, SemanticIndex>
 ): ResolvedSymbols {
 
-  // Phase 1: Resolve import->export connections
-  // Creates per-file map: local_name -> source_symbol_id
-  const imports = resolve_imports(indices);
-
-  // Phase 2: Build scope resolver index (lightweight)
+  // Phase 1: Build scope resolver index (lightweight)
   // Creates resolver functions: scope_id -> name -> resolver()
-  const resolver_index = build_scope_resolver_index(indices, imports);
+  // Includes lazy import resolvers that follow export chains on-demand
+  const resolver_index = build_scope_resolver_index(indices);
 
-  // Phase 3: Create resolution cache
+  // Phase 2: Create resolution cache
   // Stores on-demand resolutions: (scope_id, name) -> symbol_id
+  // Shared by all resolvers for consistency and performance
   const cache = create_resolution_cache();
 
-  // Phase 4: Build type context
-  // Tracks variable types and type members (uses resolver_index + cache)
+  // Phase 3: Build type context
+  // Tracks variable types and type members
+  // Uses resolver_index + cache to resolve type names
   const type_context = build_type_context(indices, resolver_index, cache);
 
-  // Phase 5: Resolve all call types (on-demand with caching)
+  // Phase 4: Resolve all call types (on-demand with caching)
   const function_calls = resolve_function_calls(indices, resolver_index, cache);
   const method_calls = resolve_method_calls(
     indices,
@@ -90,7 +87,7 @@ export function resolve_symbols(
     type_context
   );
 
-  // Phase 6: Combine results
+  // Phase 5: Combine results
   return combine_results(
     indices,
     function_calls,
@@ -178,7 +175,6 @@ export { resolve_symbols } from "./symbol_resolution";
 // Export types for external use
 export type { ScopeResolverIndex } from "./core/scope_resolver_index";
 export type { ResolutionCache } from "./core/resolution_cache";
-export type { ImportMap } from "./import_resolution/import_resolver";
 export type { TypeContext } from "./type_resolution/type_context";
 export type {
   FunctionCallMap,
@@ -197,57 +193,145 @@ export type {
 SemanticIndex (per file)
          ↓
    ┌─────────────────────────────────────────┐
-   │ Phase 1: Import Resolution              │
-   │ - resolve_imports()                     │
-   │ - Cross-file symbol connections         │
-   └────────────┬────────────────────────────┘
-                ↓
-         ImportMap (per file)
-                ↓
-   ┌─────────────────────────────────────────┐
-   │ Phase 2: Build Resolver Index           │
+   │ Phase 1: Build Resolver Index           │
    │ - build_scope_resolver_index()          │
    │ - Creates resolver functions per scope  │
+   │ - Includes lazy import resolvers        │
    │ - Lightweight: just closures (~100B)    │
    └────────────┬────────────────────────────┘
                 ↓
           ScopeResolverIndex
                 ↓
    ┌─────────────────────────────────────────┐
-   │ Phase 3: Create Cache                   │
+   │ Phase 2: Create Cache                   │
    │ - create_resolution_cache()             │
    │ - Stores (scope_id, name) → symbol_id   │
+   │ - Shared across all resolutions         │
    └────────────┬────────────────────────────┘
                 ↓
            ResolutionCache
                 ↓
    ┌─────────────────────────────────────────┐
-   │ Phase 4: Type Context                   │
+   │ Phase 3: Type Context                   │
    │ - build_type_context()                  │
    │ - Type tracking and member lookup       │
    │ - Uses resolver_index + cache           │
+   │ - Triggers type name resolutions        │
    └────────────┬────────────────────────────┘
                 ↓
            TypeContext
                 ↓
    ┌─────────────────────────────────────────┐
-   │ Phase 5: Call Resolution (On-Demand)    │
+   │ Phase 4: Call Resolution (On-Demand)    │
    │ - resolve_function_calls()              │
    │ - resolve_method_calls()                │
    │ - resolve_constructor_calls()           │
    │ - Each uses resolver_index + cache      │
+   │ - May trigger nested resolutions        │
    └────────────┬────────────────────────────┘
                 ↓
     Function/Method/Constructor Maps
                 ↓
    ┌─────────────────────────────────────────┐
-   │ Phase 6: Combine Results                │
+   │ Phase 5: Combine Results                │
    │ - combine_results()                     │
    │ - Build ResolvedSymbols output          │
    └────────────┬────────────────────────────┘
                 ↓
          ResolvedSymbols
 ```
+
+## Resolution Chains
+
+Resolution is often multi-step, with each step potentially triggering another resolution. All resolutions flow through `resolver_index.resolve(scope_id, name, cache)`.
+
+### Chain 1: Simple Function Call
+```typescript
+helper()
+
+→ resolve(scope_id, "helper", cache)
+  1. Check cache: miss
+  2. Get resolver function for "helper"
+  3. Call resolver: () => helper_symbol_id
+  4. Cache (scope_id, "helper") → helper_symbol_id
+  5. Return helper_symbol_id
+```
+
+### Chain 2: Imported Function Call
+```typescript
+import { helper } from './utils';
+helper()
+
+→ resolve(scope_id, "helper", cache)
+  1. Check cache: miss
+  2. Get resolver: () => resolve_export_chain('./utils', 'helper')
+  3. Call resolver (LAZY - happens now):
+     - Find export in ./utils
+     - May follow re-export chain (multiple hops)
+     - Returns helper_symbol_id from source
+  4. Cache (scope_id, "helper") → helper_symbol_id
+  5. Return helper_symbol_id
+```
+
+### Chain 3: Method Call on Typed Variable
+```typescript
+const user: User = ...;
+user.getName()
+
+Step 1: Resolve receiver
+→ resolve(scope_id, "user", cache)
+  Returns user_variable_symbol_id
+
+Step 2: Get type of receiver
+→ Look up user_variable in index
+→ Extract type annotation: "User"
+→ resolve(user_def_scope_id, "User", cache)  ← NESTED RESOLUTION
+  1. Check cache: miss
+  2. Get resolver for "User"
+  3. May trigger import resolution if User is imported
+  4. Cache (user_def_scope_id, "User") → User_class_symbol_id
+  5. Returns User_class_symbol_id
+
+Step 3: Look up member
+→ Find User class in index
+→ Find "getName" method in class
+→ Returns getName_method_symbol_id
+```
+
+### Chain 4: Method Call on Imported Type
+```typescript
+import { User } from './types';
+const user: User = ...;
+user.getName()
+
+Step 1: Resolve receiver "user"
+→ resolve(scope_id, "user", cache) → user_variable_symbol_id
+
+Step 2: Resolve type name "User" (NESTED RESOLUTION WITH LAZY IMPORT)
+→ resolve(user_def_scope_id, "User", cache)
+  1. Check cache: miss
+  2. Get resolver: () => resolve_export_chain('./types', 'User')
+  3. Call resolver (follows export chain)
+  4. Cache (user_def_scope_id, "User") → User_class_symbol_id
+  5. Returns User_class_symbol_id
+
+Step 3: Look up member "getName"
+→ Returns getName_method_symbol_id
+```
+
+### Key Insight: Single Cache, Nested Resolutions
+
+All resolutions use the same cache: `(scope_id, name) → symbol_id`
+
+- Variable names: `(scope_id, var_name) → var_symbol_id`
+- Type names: `(scope_id, type_name) → type_symbol_id` (same cache!)
+- Imported symbols: `(scope_id, imported_name) → symbol_id` (same cache!)
+
+Resolution chains are just nested calls to `resolve()`. Each nested call:
+1. Checks the shared cache
+2. Invokes resolver function if cache miss
+3. Stores result in shared cache
+4. Returns symbol_id
 
 ## Integration Tests
 
@@ -301,11 +385,16 @@ Test complete resolution pipeline:
    user.getName();             // Method resolution using type
    ```
 
+#### Resolution Chains
+8. **Nested type resolution** - Type name requires import resolution
+9. **Re-export chains** - Import follows multiple re-export hops
+10. **Circular imports** - Handled gracefully
+
 #### Language Parity
-8. **JavaScript** - All features work
-9. **TypeScript** - All features work
-10. **Python** - All features work
-11. **Rust** - All features work
+11. **JavaScript** - All features work
+12. **TypeScript** - All features work
+13. **Python** - All features work
+14. **Rust** - All features work
 
 ## Performance Testing
 
@@ -320,6 +409,7 @@ Measure:
 - Total resolution time
 - Time per phase
 - Memory usage
+- Cache hit rates
 
 Target performance:
 - Small: < 10ms
@@ -330,12 +420,12 @@ Target performance:
 
 **Example scenario:** Large codebase with 1000 scopes, 50 symbols per scope
 
-Pre-compute approach:
+Traditional (pre-compute all resolutions):
 - Build: 1000 × 50 = 50,000 full resolutions upfront
 - Time: ~50ms (O(scope_depth) for each)
 - Memory: 50,000 symbol_id entries
 
-On-demand approach with caching:
+On-demand with lazy imports:
 - Build: 1000 × 50 = 50,000 resolver functions (~100B each = 5MB)
 - First use: Only ~5,000 symbols referenced (10%)
 - Resolutions: 5,000 resolver calls + ~4,000 cache hits (80% hit rate)
@@ -355,17 +445,21 @@ On-demand approach with caching:
 - ✅ Output matches ResolvedSymbols type
 - ✅ All existing tests pass
 - ✅ Integration tests pass
+- ✅ Resolution chains work correctly
 
 ### Architecture
 - ✅ Clean separation of phases
 - ✅ Clear data flow
 - ✅ No circular dependencies
 - ✅ Extensible for future phases
+- ✅ Single shared cache
 
 ### Performance
 - ✅ No performance regression
 - ✅ Meets target benchmarks
 - ✅ Scalable to large codebases
+- ✅ Lazy imports save 90% of import work
+- ✅ Cache hit rates 80%+
 
 ### Code Quality
 - ✅ Full JSDoc documentation
@@ -378,11 +472,14 @@ On-demand approach with caching:
 ### Graceful Degradation
 
 ```typescript
-// If import resolution fails, continue with empty imports
-const imports = resolve_imports(indices) || new Map();
+// If resolver index build fails, bail out
+const resolver_index = build_scope_resolver_index(indices);
+if (!resolver_index) {
+  throw new Error("Failed to build resolver index");
+}
 
 // If type context fails, continue with limited resolution
-const type_context = build_type_context(indices, scope_resolver) || {
+const type_context = build_type_context(indices, resolver_index, cache) || {
   get_symbol_type: () => null,
   get_type_member: () => null,
   get_type_members: () => new Map(),
@@ -400,41 +497,6 @@ Log warnings for:
 - Resolution failures
 
 But don't throw - collect as many resolutions as possible.
-
-## Migration from Old Code
-
-### Before (Old Implementation)
-```typescript
-// Ad-hoc phases, no scope awareness
-const imports = resolve_imports({ indices });
-const functions = resolve_function_calls(indices, imports);
-const local_types = build_local_type_context(indices, imports);
-const methods = resolve_methods(indices, imports, local_types);
-```
-
-### After (New Implementation)
-```typescript
-// On-demand scope-aware pipeline with resolver functions
-const imports = resolve_imports(indices);
-const resolver_index = build_scope_resolver_index(indices, imports);
-const cache = create_resolution_cache();
-const type_context = build_type_context(indices, resolver_index, cache);
-const functions = resolve_function_calls(indices, resolver_index, cache);
-const methods = resolve_method_calls(indices, resolver_index, cache, type_context);
-const constructors = resolve_constructor_calls(indices, resolver_index, cache, type_context);
-```
-
-### Key Differences
-- **Before:** Imports passed everywhere
-- **After:** ScopeResolverIndex encapsulates imports with resolver functions
-- **Before:** Type tracking ad-hoc
-- **After:** TypeContext unified
-- **Before:** No constructor resolution
-- **After:** Explicit constructor resolution
-- **Before:** Pre-compute all resolutions (90% wasted)
-- **After:** On-demand resolution with caching (only resolve what's referenced)
-- **Before:** O(scope_depth) per lookup
-- **After:** O(1) per lookup (after first resolution)
 
 ## Dependencies
 

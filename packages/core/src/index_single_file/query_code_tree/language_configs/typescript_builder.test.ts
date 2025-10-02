@@ -12,14 +12,17 @@ import { DefinitionBuilder } from "../../definitions/definition_builder";
 import type {
   ProcessingContext,
   CaptureNode,
-} from "../../scopes/scope_processor";
-import type { Location, ScopeId } from "@ariadnejs/types";
+  SemanticEntity,
+  SemanticCategory,
+} from "../../semantic_index";
+import type { FilePath, Location, ScopeId, SymbolName } from "@ariadnejs/types";
 
 describe("TypeScript Builder Configuration", () => {
   let parser: Parser;
 
   // Mock processing context
   const mockContext: ProcessingContext = {
+    captures: [],
     scopes: new Map(),
     scope_depths: new Map(),
     root_scope_id: "scope:root" as ScopeId,
@@ -57,7 +60,16 @@ describe("TypeScript Builder Configuration", () => {
     return {
       name,
       node,
-      text: text || node.text,
+      text: (text || node.text) as SymbolName,
+      category: "definition" as SemanticCategory,
+      entity: "interface" as SemanticEntity,
+      location: {
+        file_path: "test.ts" as FilePath,
+        start_line: node.startPosition.row + 1,
+        start_column: node.startPosition.column + 1,
+        end_line: node.endPosition.row + 1,
+        end_column: node.endPosition.column + 1,
+      },
     };
   }
 
@@ -126,8 +138,8 @@ describe("TypeScript Builder Configuration", () => {
 
         const definitions = builder.build();
         expect(definitions).toHaveLength(1);
-        expect(definitions[0].kind).toBe("interface");
-        expect(definitions[0].name).toBe("IUser");
+        expect(definitions[0]?.kind).toBe("interface");
+        expect(definitions[0]?.name).toBe("IUser");
       }
     });
 

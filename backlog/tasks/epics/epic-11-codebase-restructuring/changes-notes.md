@@ -1,122 +1,35 @@
 # Changes Notes
 
-## Python Reference Query Patterns Complete (2025-10-02)
+## Recent Changes (2025-10-02)
 
-✅ **Task 11.108.12: Python reference tracking now complete and production-ready**
+### Task 11.108.13: Complete TypeScript Interface Method Parameters - COMPLETED ✅
 
-### What Was Completed
+**Summary:** Fixed three bugs blocking TypeScript interface method parameter extraction:
 
-**1. Write Reference Tracking ✅**
-- Added `WRITE` entity to SemanticEntity enum
-- Added `VARIABLE_WRITE` to ReferenceKind enum
-- Implemented 6 query patterns covering all assignment forms:
-  - Simple: `x = 42`
-  - Augmented: `count += 1`
-  - Multiple: `a, b = 1, 2`
-  - Tuple: `(x, y) = (1, 2)`
-  - Attribute: `self.value = 42`
-  - Subscript: `arr[0] = value`
+1. **Interface Method Generics Not Stored**
+   - Fixed `add_method_signature_to_interface()` in `definition_builder.ts` to store generics
+   - Added `generics: definition.generics` to method base object (line 548)
 
-**2. None Type Reference Tracking ✅**
-- Added 3 optimized query patterns for None in type hints
-- Covers: return types, parameters, variable annotations, union types
-- Fixed critical binary_operator bug (operator is node ref, not string)
+2. **Nested Function Type Parameters Incorrectly Captured**
+   - Added `is_parameter_in_function_type()` helper in `typescript_builder.ts` (lines 572-596)
+   - Updated all parameter handlers to skip parameters inside function_type nodes
+   - Prevents capturing type signature parameters as actual method parameters
+   - Example: `map<U>(fn: (item: T) => U)` now correctly captures only `fn`, not `item`
 
-**3. Import Symbol Tracking ✅**
-- Verified already working correctly via builder_result.imports
-- No changes needed
+3. **Test Expectation for Type Inference**
+   - Removed incorrect type expectation for `static #staticPrivate = "test"`
+   - We don't implement type inference from initial values (only explicit annotations)
 
-### Critical Issues Fixed
+**Impact:**
+- All 38 TypeScript semantic index tests pass
+- Interface methods with generic type parameters now work correctly
+- Function type parameters in type annotations no longer create spurious parameter definitions
 
-**Binary Operator Pattern Bug (CRITICAL):**
-- Problem: Used `operator: "|"` which would never match
-- Root cause: operator field is a node reference, not a string value
-- Fix: Removed operator filter, match by field name only
-- Impact: Without fix, ALL None type detection would fail silently
-
-**Duplicate Captures:**
-- Problem: Multiple patterns capturing same nodes
-- Fix: Removed 3 redundant patterns
-- Result: 37% pattern reduction, zero duplicates
-
-### Verification Performed
-
-**Phase 1: AST Inspection** - Created sample files, parsed with tree-sitter, verified exact node structures (100% accuracy)
-
-**Phase 2: Direct Query Testing** - Loaded queries into tree-sitter, tested against samples (9/9 patterns match)
-
-**Phase 3: Handler Chain Verification** - Audited all 78 captures, verified complete handler chain
-
-**Phase 4: Integration Testing** - Added 6 comprehensive tests, all passing
-
-**Phase 5: Full Test Suite** - 589/589 core tests passing, zero regressions, TypeScript clean
-
-### Test Results
-
-- 41/41 Python tests passing ✅
-- 6 new tests added for write references and None types
-- Zero regressions across all 589 core tests
-- 3 tests skipped (enum members, protocols, method resolution - outside scope)
-
-### Documentation Created
-
-- PYTHON_AST_VERIFICATION.md - Complete AST structure reference
-- PYTHON_QUERY_VERIFICATION_REPORT.md - Pattern verification results
-- HANDLER_VERIFICATION.md - Handler chain documentation (78/78 captures)
-- QUERY_PATTERNS_REFERENCE.md - Quick reference guide
-- TASK_11.108.12_FINAL_REPORT.md - Complete task summary
-- PYTHON_TEST_VERIFICATION.md - Test results
-- TYPESCRIPT_COMPILATION_VERIFICATION.md - Compilation verification
-- FULL_TEST_SUITE_VERIFICATION.md - Regression analysis
-
-### Impact
-
-**Python semantic indexing now supports:**
-- 🔍 Data flow tracking - Variable mutations tracked via write references
-- 🔒 Type safety analysis - Nullable types and Optional patterns detected
-- 📦 Import resolution - Cross-file dependencies tracked
-
-**Unblocks:**
-- task-epic-11.108.8 (Python test updates)
-- Python data flow analysis
-- Python type safety checks
-- Python call graph detection
-
-### Follow-On Work
-
-**Optional (Low Priority):**
-1. Enum member extraction fix (1-2 hours, medium priority)
-2. Protocol class support (1 hour, low priority)
-3. Method resolution metadata (2-3 hours, low priority)
-
-**Unrelated (High Priority):**
-- MCP package import issues (12 failing tests, pre-existing, 30 min fix)
-
-### Production Status
-
-✅ **PRODUCTION READY**
-- All tests passing
-- Zero regressions
-- TypeScript compilation clean
-- Comprehensive documentation
-- Code review ready
-- Safe to merge and deploy
-
-## TypeScript Compilation Status (2025-10-01)
-
-✅ **All packages compile cleanly with no TypeScript errors**
-
-- `@ariadnejs/types`: ✅ Passing typecheck
-- `@ariadnejs/core`: ✅ Passing typecheck
-- `@ariadnejs/mcp`: ✅ Passing typecheck
-
-Added `typecheck` script to root package.json for convenience.
-
-Test coverage verification:
-
-- TypeScript semantic_index tests: 25/25 passing (100%)
-- All packages build successfully
-- No regressions introduced
+**Files Modified:**
+- `packages/core/src/index_single_file/definitions/definition_builder.ts`
+- `packages/core/src/index_single_file/query_code_tree/language_configs/typescript_builder.ts`
+- `packages/core/src/index_single_file/query_code_tree/language_configs/typescript_builder_config.ts`
+- `packages/core/src/index_single_file/semantic_index.typescript.test.ts`
 
 ## What do we actually need?
 
@@ -170,6 +83,7 @@ Test coverage verification:
 - Language config objects that are a map to a function can't be resolved into a call graph since the function ref->def resolution depends on runtime variables.
 - Is there a better way to do this?
 - Can we create a linter to detect this and fail the build?
+- On the other hand, maybe this isn't actually a problem. As long as we can resolve the function references to their definitions via an assignment trail, we can still resolve them. Unfortunately (for simplicity) in these cases, there is just an explosion in downstream 'called' functions from a node which uses this pattern, but that is the truth of the code, and it shouldn't be verboten to have code like this.
 
 ## Improvements to Agent interactions
 
@@ -186,4 +100,4 @@ Test coverage verification:
 - update the relevant .scm file for the language. make sure the capture naming convention is followed: `@category.entity.additional.qualifiers` - `category` is of type `SemanticCategory` and `entity` is of type `SemanticEntity`.
 - update the relevant `language_configs/<language>_builder.ts` file to match the new capture names.
 - add tests to `language_configs/<language>_builder.test.ts` to verify that the new capture names are parsed correctly.
-- *if* the capture is adding a new property to a target object, 
+- _if_ the capture is adding a new property to a target object, we need to make sure there is a plan for _using_ it in the downstream processing, typically in the `packages/core/src/resolve_references` module.

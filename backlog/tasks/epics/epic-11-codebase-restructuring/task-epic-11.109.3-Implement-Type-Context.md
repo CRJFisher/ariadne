@@ -303,6 +303,69 @@ if (index.type_inheritance) {
 }
 ```
 
+## Role in Resolution Chains
+
+TypeContext is a critical component in multi-step resolutions, particularly for method calls. It does NOT cache anything - it's a helper that triggers nested resolutions.
+
+### How TypeContext Participates
+
+```typescript
+// Method call resolution triggers this chain:
+user.getName()
+
+Step 1: Resolve receiver "user"
+→ resolve(scope_id, "user", cache) → user_variable_symbol_id
+
+Step 2: TypeContext.get_symbol_type(user_variable_symbol_id)
+→ Look up user variable in index
+→ Extract type annotation: "User"
+→ resolve(user_def_scope_id, "User", cache)  ← NESTED RESOLUTION!
+  → May trigger import resolution if "User" is imported
+  → Returns User_class_symbol_id
+
+Step 3: TypeContext.get_type_member(User_class_symbol_id, "getName")
+→ Look up User class in index
+→ Find "getName" method
+→ Returns getName_method_symbol_id
+```
+
+### Key Points
+
+1. **TypeContext is NOT a cache** - It's a helper that coordinates lookups
+2. **Type name resolution uses the SAME cache** - `resolve(scope_id, type_name, cache)`
+3. **Nested resolutions are natural** - Type names follow same scoping rules as variables
+4. **Import resolution is transparent** - If type is imported, resolver handles it
+
+### Example: Imported Type
+
+```typescript
+import { User } from './types';
+const user: User = getUser();
+user.getName();
+```
+
+When resolving `user.getName()`:
+
+```typescript
+// Step 1: Get type of user variable
+get_symbol_type(user_variable_symbol_id)
+  → Lookup user variable definition
+  → Extract type annotation: "User"
+
+  // Step 2: Resolve type name "User" (TRIGGERS LAZY IMPORT)
+  → resolve(user_def_scope_id, "User", cache)
+    → Check cache: miss
+    → Get resolver for "User": () => resolve_export_chain('./types', 'User')
+    → Call resolver (LAZY - happens now!)
+      → Follow export chain to ./types
+      → Find exported User class
+      → Returns User_class_symbol_id
+    → Cache (user_def_scope_id, "User") → User_class_symbol_id
+    → Return User_class_symbol_id
+```
+
+All of this happens automatically through nested calls to `resolver_index.resolve()`, using the shared cache.
+
 ## Test Coverage
 
 ### Unit Tests (`type_context.test.ts`)

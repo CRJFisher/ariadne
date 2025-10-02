@@ -6,6 +6,7 @@
 **Parent:** task-epic-11.108
 **Dependencies:** None
 **Blocks:**
+
 - task-epic-11.108.8 (Python test updates)
 - Python data flow analysis
 - Python type safety checks
@@ -25,6 +26,7 @@ Python reference tracking has three CRITICAL gaps:
 3. **❌ Import Symbol Tracking** - Imports parsed but `imported_symbols` map remains empty
 
 **Impact:**
+
 - Cannot track variable mutations or data flow
 - Cannot detect nullable types or Optional patterns
 - Cannot resolve cross-file imports or dependencies
@@ -102,7 +104,7 @@ Verify handler exists for `ref.write`:
       });
     },
   },
-]
+];
 ```
 
 If missing, add it.
@@ -186,7 +188,7 @@ Verify handler exists for `ref.type`:
       });
     },
   },
-]
+];
 ```
 
 ### Special Handling for Optional
@@ -222,16 +224,19 @@ This is NOT a query issue - imports ARE being captured. The issue is in how they
 **Debug steps:**
 
 1. Check if imports are captured:
+
    ```bash
    grep -n "import\." packages/core/src/index_single_file/references/queries/python.scm
    ```
 
 2. Check import handler:
+
    ```bash
    grep -A 20 '"import' packages/core/src/index_single_file/query_code_tree/language_configs/python_builder_config.ts
    ```
 
 3. Check how imports are stored in builder:
+
    ```bash
    grep -n "add_import" packages/core/src/index_single_file/definitions/definition_builder.ts
    ```
@@ -401,7 +406,7 @@ tree-sitter query python.scm test_sample.py
       // ... handler code
     },
   },
-]
+];
 ```
 
 ## Success Criteria
@@ -442,19 +447,25 @@ All three must be fixed before Python semantic indexing is production-ready.
 ### Changes Made
 
 #### 1. Added WRITE entity to SemanticEntity enum
+
 **File:** `packages/core/src/index_single_file/semantic_index.ts`
+
 - Added `WRITE = "write"` to SemanticEntity enum for variable write/assignment references
 
 #### 2. Updated Reference Builder
+
 **File:** `packages/core/src/index_single_file/references/reference_builder.ts`
+
 - Added `VARIABLE_WRITE` to ReferenceKind enum
 - Updated `determine_reference_kind()` to handle `case "write"`
 - Updated `map_to_reference_type()` to map `VARIABLE_WRITE → "write"`
 
 #### 3. Added Write Reference Query Patterns
+
 **File:** `packages/core/src/index_single_file/query_code_tree/queries/python.scm`
 
 Added captures for all assignment forms:
+
 - Simple assignments: `x = 42` → `@reference.write`
 - Augmented assignments: `count += 1` → `@reference.write`
 - Multiple assignments: `a, b = 1, 2` → `@reference.write`
@@ -464,22 +475,27 @@ Added captures for all assignment forms:
 - Annotated assignments: `x: int = 42` → `@reference.write`
 
 #### 4. Added None Type Reference Query Patterns
+
 **File:** `packages/core/src/index_single_file/query_code_tree/queries/python.scm`
 
 Added captures for None in type contexts:
+
 - None in type hints: `(type (none) @reference.type)`
 - None in return types: Function return type annotations
 - None in parameters: Parameter type annotations
 - None in binary operators: `int | None` → `@reference.type`
 
 #### 5. Verified Import Symbol Tracking
+
 Import tracking was already working correctly via `builder_result.imports` → `imported_symbols`.
 No changes needed.
 
 #### 6. Added 6 New Tests
+
 **File:** `packages/core/src/index_single_file/semantic_index.python.test.ts`
 
 New tests added:
+
 1. ✅ `should extract write references for simple assignments`
 2. ✅ `should extract write references for augmented assignments`
 3. ✅ `should extract write references for multiple assignments`
@@ -497,6 +513,7 @@ All new tests passing. Zero regressions.
 ### Impact
 
 Python semantic indexing now supports:
+
 - ✅ **Data flow tracking** - Can track variable mutations via write references
 - ✅ **Nullable type detection** - Can detect Optional patterns and None types
 - ✅ **Cross-file imports** - Import tracking verified working
@@ -520,6 +537,7 @@ All query patterns were verified against actual tree-sitter AST output to ensure
 ### Critical Fix Applied
 
 **BEFORE (incorrect):**
+
 ```scheme
 (binary_operator
   left: (_)
@@ -529,6 +547,7 @@ All query patterns were verified against actual tree-sitter AST output to ensure
 ```
 
 **AFTER (correct):**
+
 ```scheme
 (binary_operator
   right: (none) @reference.type  ; ✅ Correct - matches by field name only
@@ -556,6 +575,7 @@ All patterns tested with actual tree-sitter queries:
 **File:** `packages/core/PYTHON_AST_VERIFICATION.md`
 
 Comprehensive AST documentation including:
+
 - Exact node structures for all patterns
 - Field name mappings
 - Common pitfalls (operator field, attribute field naming)
@@ -576,11 +596,13 @@ This ensures future query pattern development is based on actual AST structure, 
 Investigated skipped/removed tests to re-enable for write references and None type functionality:
 
 **Currently Skipped Tests (3 found):**
+
 - Line 928: Method resolution metadata test (unrelated to write/type refs)
 - Line 1280: Enum member extraction test (different issue)
 - Line 1420: Protocol classes test (missing Protocol entity)
 
 **Tests Removed in Task 11.107.3:**
+
 - Checked git history (commit f9cf973)
 - 7 tests removed for "advanced Python features"
 - Tests removed: complex generics, super() calls, subscript notation, walrus operator, @property decorators, deeply nested chains, documentation test
@@ -591,6 +613,7 @@ Investigated skipped/removed tests to re-enable for write references and None ty
 **No tests to re-enable for this task.** The "6 tests removed due to missing features" mentioned in the task description don't actually exist. Those tests were removed because they tested advanced features beyond current scope, NOT because of missing write/None functionality.
 
 **New tests created instead:**
+
 - Created 6 new tests specifically for write references and None types
 - All 6 tests passing ✅
 - Coverage complete for all required functionality
@@ -598,6 +621,7 @@ Investigated skipped/removed tests to re-enable for write references and None ty
 ### Final Test Status
 
 **Python Test Suite:** `semantic_index.python.test.ts`
+
 - ✅ 41 tests passing (up from 35)
 - ⏭️ 3 tests skipped (enum members, protocols, method resolution - outside scope)
 - 🆕 6 new tests added for write references and None types
@@ -620,12 +644,14 @@ Investigated skipped/removed tests to re-enable for write references and None ty
 ### Critical Bugs Fixed
 
 **Bug 1: Binary Operator Pattern**
+
 - Issue: Used `operator: "|"` which would never match
 - Root cause: operator field is a node reference, not a string value
 - Fix: Removed operator filter, match by field name only
 - Impact: Without fix, None type detection would fail silently
 
 **Bug 2: Duplicate Captures**
+
 - Issue: Multiple patterns capturing same nodes
 - Evidence: Test showing duplicate captures for annotated assignments
 - Fix: Removed 3 redundant patterns (37% reduction)
@@ -634,12 +660,14 @@ Investigated skipped/removed tests to re-enable for write references and None ty
 ### Deliverables
 
 **Code Changes:**
+
 - `semantic_index.ts`: Added WRITE entity
 - `reference_builder.ts`: Added VARIABLE_WRITE kind and handlers
 - `python.scm`: Added 9 optimized query patterns (6 write, 3 None type)
 - `semantic_index.python.test.ts`: Added 6 comprehensive tests
 
 **Documentation:**
+
 - `PYTHON_AST_VERIFICATION.md`: Complete AST structure reference
 - `PYTHON_QUERY_VERIFICATION_REPORT.md`: Pattern verification results
 - `HANDLER_VERIFICATION.md`: Handler chain documentation
@@ -648,6 +676,7 @@ Investigated skipped/removed tests to re-enable for write references and None ty
 ### Impact
 
 Python semantic indexing now fully supports:
+
 - 🔍 **Data flow tracking** - Variable mutations tracked via write references
 - 🔒 **Type safety** - Nullable types and Optional patterns detected
 - 📦 **Import resolution** - Cross-file dependencies tracked
@@ -670,12 +699,14 @@ Python semantic indexing now fully supports:
 **Objective:** Track all variable mutations and assignments in Python code
 
 **Implementation:**
+
 - Added `WRITE = "write"` entity to `SemanticEntity` enum (`semantic_index.ts:372`)
 - Added `VARIABLE_WRITE` to `ReferenceKind` enum (`reference_builder.ts:44`)
 - Implemented handler chain: "write" → VARIABLE_WRITE → "write" type
 - Added 6 query patterns to `python.scm` covering all assignment forms
 
 **Coverage:**
+
 - ✅ Simple assignments: `x = 42`
 - ✅ Augmented assignments: `count += 1`, `value *= 2`, `total -= 5`
 - ✅ Multiple assignments: `a, b, c = 1, 2, 3`
@@ -684,6 +715,7 @@ Python semantic indexing now fully supports:
 - ✅ Subscript assignments: `arr[0] = value`
 
 **Testing:**
+
 - 3 new integration tests added
 - All tests passing (semantic_index.python.test.ts:518, 542, 565)
 
@@ -692,11 +724,13 @@ Python semantic indexing now fully supports:
 **Objective:** Detect None in type hints for nullable type analysis
 
 **Implementation:**
+
 - Leveraged existing `TYPE_REFERENCE` entity (no new entity needed)
 - Added 3 optimized query patterns to `python.scm` (reduced from 6 initial)
 - Fixed critical binary_operator bug discovered during AST verification
 
 **Coverage:**
+
 - ✅ Return type hints: `def foo() -> int | None`
 - ✅ Parameter type hints: `def foo(x: str | None)`
 - ✅ Variable annotations: `x: int | None = 5`
@@ -705,6 +739,7 @@ Python semantic indexing now fully supports:
 - ✅ General type contexts: `(type (none))`
 
 **Testing:**
+
 - 3 new integration tests added
 - All tests passing (semantic_index.python.test.ts:794, 817, 837)
 
@@ -715,6 +750,7 @@ Python semantic indexing now fully supports:
 **Finding:** Already working correctly via `builder_result.imports` → `imported_symbols`
 
 **Verification:**
+
 - Traced complete handler chain from query to SemanticIndex
 - Confirmed imports stored in definitions map
 - Verified imported_symbols map population
@@ -792,6 +828,7 @@ Python semantic indexing now fully supports:
 **Binary Operator Pattern Bug Fix (CRITICAL):**
 
 **Before (incorrect):**
+
 ```scheme
 (binary_operator
   operator: "|"  ; ❌ WRONG - would never match
@@ -800,6 +837,7 @@ Python semantic indexing now fully supports:
 ```
 
 **After (correct):**
+
 ```scheme
 (binary_operator
   right: (none) @reference.type  ; ✅ CORRECT
@@ -813,6 +851,7 @@ Python semantic indexing now fully supports:
 #### Optimized Patterns
 
 **Removed 3 redundant patterns (37% reduction):**
+
 1. Specific annotated assignment pattern (general assignment already captures)
 2. Specific function return type None pattern (general type pattern already captures)
 3. Specific parameter type None pattern (general type pattern already captures)
@@ -826,10 +865,11 @@ Python semantic indexing now fully supports:
 **Location:** Line 372
 
 **Change:**
+
 ```typescript
 export enum SemanticEntity {
   // ... existing entities
-  WRITE = "write",  // Variable write/assignment
+  WRITE = "write", // Variable write/assignment
   // ...
 }
 ```
@@ -841,13 +881,14 @@ export enum SemanticEntity {
 **Location:** Line 44
 
 **Change:**
+
 ```typescript
 export enum ReferenceKind {
   FUNCTION_CALL,
   METHOD_CALL,
   PROPERTY_ACCESS,
   VARIABLE_REFERENCE,
-  VARIABLE_WRITE,  // ← Added
+  VARIABLE_WRITE, // ← Added
   TYPE_REFERENCE,
   // ...
 }
@@ -860,6 +901,7 @@ export enum ReferenceKind {
 **Location:** Line 123-124
 
 **Change:**
+
 ```typescript
 function determine_reference_kind(capture: CaptureNode): ReferenceKind {
   const entity = capture.entity;
@@ -880,6 +922,7 @@ function determine_reference_kind(capture: CaptureNode): ReferenceKind {
 **Location:** Line 158-159
 
 **Change:**
+
 ```typescript
 function map_to_reference_type(kind: ReferenceKind): ReferenceType {
   switch (kind) {
@@ -894,6 +937,7 @@ function map_to_reference_type(kind: ReferenceKind): ReferenceType {
 **Purpose:** Map VARIABLE_WRITE kind to "write" type in final SymbolReference
 
 **Handler Chain Verification:**
+
 ```
 Query: @reference.write
   ↓
@@ -913,6 +957,7 @@ SemanticIndex.references[]
 **Problem:** Initial pattern used `operator: "|"` which would never match
 
 **Discovery Method:** Direct tree-sitter AST inspection revealed:
+
 ```javascript
 binary_operator | fields: {
   "left": "identifier \"int\"",
@@ -934,6 +979,7 @@ binary_operator | fields: {
 **Evidence:** Test output showed `Expected: [z], Got: [z, z]` for annotated assignments
 
 **Root Cause:**
+
 - General assignment pattern: `(assignment left: (identifier))`
 - Specific annotated assignment pattern: `(assignment left: (identifier) type: (_))`
 - Both matched annotated assignments
@@ -949,6 +995,7 @@ binary_operator | fields: {
 **Problem:** Task document mentioned "re-enable 6 tests removed in task 11.107.3"
 
 **Investigation:**
+
 - Found 3 currently skipped tests (unrelated to write/type references)
 - Checked git history for removed tests in commit f9cf973
 - Found 7 tests removed for "advanced features" (super(), walrus operator, @property)
@@ -963,6 +1010,7 @@ binary_operator | fields: {
 #### Phase 1: AST Inspection ✅
 
 **Method:**
+
 1. Created sample Python files with all test cases
 2. Parsed with tree-sitter to inspect actual AST structure
 3. Verified field names and node types
@@ -970,6 +1018,7 @@ binary_operator | fields: {
 5. Documented exact node structures
 
 **Results:**
+
 - 100% pattern match rate (12/12 patterns tested)
 - Zero false positives
 - Zero false negatives
@@ -978,12 +1027,14 @@ binary_operator | fields: {
 #### Phase 2: Direct Query Testing ✅
 
 **Method:**
+
 1. Loaded queries into tree-sitter
 2. Tested against sample files
 3. Verified capture names align with handlers
 4. Checked for duplicate captures
 
 **Results:**
+
 - All 9 patterns match correctly
 - Zero duplicates after optimization
 - All capture names valid
@@ -991,12 +1042,14 @@ binary_operator | fields: {
 #### Phase 3: Handler Chain Verification ✅
 
 **Method:**
+
 1. Audited all 78 query captures
 2. Traced handler chain for each capture type
 3. Verified builder method integration
 4. Confirmed SemanticIndex population
 
 **Results:**
+
 - All 78 captures have handlers
 - `reference.write` → VARIABLE_WRITE → "write" → SymbolReference ✅
 - `reference.type` → TYPE_REFERENCE → "type" → SymbolReference ✅
@@ -1006,12 +1059,14 @@ binary_operator | fields: {
 #### Phase 4: Integration Testing ✅
 
 **Method:**
+
 1. Added 6 comprehensive tests
 2. Ran full Python test suite (41 tests)
 3. Verified zero regressions
 4. Confirmed production readiness
 
 **Results:**
+
 - All 6 new tests passing
 - All 35 existing tests still passing
 - Total: 41/41 Python tests passing ✅
@@ -1019,12 +1074,14 @@ binary_operator | fields: {
 #### Phase 5: Full Test Suite Verification ✅
 
 **Method:**
+
 1. Ran full test suite across all packages
 2. Analyzed results for regressions
 3. Verified TypeScript compilation
 4. Confirmed production readiness
 
 **Results:**
+
 - @ariadnejs/core: 589 tests passing ✅
 - @ariadnejs/types: 10 tests passing ✅
 - @ariadnejs/mcp: 12 failed (pre-existing, unrelated) ⚠️
@@ -1038,12 +1095,14 @@ binary_operator | fields: {
 **Tests Currently Skipped (3):**
 
 1. **Method resolution metadata** (semantic_index.python.test.ts:928)
+
    - Requires: Method receiver pattern tracking
    - Complexity: Medium
    - Priority: Low
    - Estimated effort: 2-3 hours
 
 2. **Enum member extraction** (semantic_index.python.test.ts:1280)
+
    - Issue: Member names not extracted correctly
    - Requires: Fix enum member query patterns
    - Complexity: Low
@@ -1068,9 +1127,10 @@ binary_operator | fields: {
 **Status:** Pre-existing (existed before task 11.108.12)
 
 **Action Required:**
+
 ```typescript
 // Add to test files:
-import { Project } from '@ariadnejs/core';
+import { Project } from "@ariadnejs/core";
 ```
 
 **Priority:** High (blocks MCP testing)
@@ -1086,6 +1146,7 @@ import { Project } from '@ariadnejs/core';
 **Enhancement Opportunity:** Add explicit Optional detection and semantic understanding
 
 **Example:**
+
 ```scheme
 ; Detect Optional usage and mark as nullable
 (subscript
@@ -1104,6 +1165,7 @@ import { Project } from '@ariadnejs/core';
 #### 4. Documentation Maintenance (Recommended)
 
 **Files Created:**
+
 - `PYTHON_AST_VERIFICATION.md` - AST structure reference
 - `PYTHON_QUERY_VERIFICATION_REPORT.md` - Pattern verification
 - `HANDLER_VERIFICATION.md` - Handler chain docs
@@ -1120,6 +1182,7 @@ import { Project } from '@ariadnejs/core';
 ### Success Metrics Achieved
 
 #### Functional Requirements ✅
+
 - ✅ Write reference tracking for all assignment forms
 - ✅ None type detection in all type hint contexts
 - ✅ Import symbol tracking verified working
@@ -1127,6 +1190,7 @@ import { Project } from '@ariadnejs/core';
 - ✅ Zero regressions in existing functionality
 
 #### Quality Requirements ✅
+
 - ✅ AST verification with 100% accuracy
 - ✅ Pattern optimization (37% reduction)
 - ✅ Zero duplicate captures
@@ -1135,6 +1199,7 @@ import { Project } from '@ariadnejs/core';
 - ✅ Full documentation created
 
 #### Performance Requirements ✅
+
 - ✅ No performance degradation
 - ✅ Test execution time: ~2.8s (Python suite)
 - ✅ Pattern efficiency optimized
@@ -1142,6 +1207,7 @@ import { Project } from '@ariadnejs/core';
 ### Production Readiness ✅
 
 **Checklist:**
+
 - ✅ All tests passing (41/41 Python tests)
 - ✅ Zero regressions (589/589 core tests)
 - ✅ TypeScript compilation clean
@@ -1159,11 +1225,13 @@ import { Project } from '@ariadnejs/core';
 #### Immediate Impact
 
 **Python Semantic Indexing:**
+
 - ✅ Data flow tracking now possible via write references
 - ✅ Nullable type detection enables type safety analysis
 - ✅ Cross-file import resolution verified working
 
 **Downstream Features Unblocked:**
+
 - ✅ task-epic-11.108.8 (Python test updates)
 - ✅ Python data flow analysis
 - ✅ Python type safety checks
@@ -1172,16 +1240,19 @@ import { Project } from '@ariadnejs/core';
 #### Long-Term Impact
 
 **Code Quality:**
+
 - Establishes AST verification as best practice
 - Creates reusable documentation for future Python work
 - Demonstrates pattern optimization methodology
 
 **Developer Experience:**
+
 - Complete handler chain documentation aids future development
 - AST structure reference prevents future bugs
 - Pattern quick reference accelerates query development
 
 **Maintainability:**
+
 - Zero technical debt introduced
 - Comprehensive test coverage ensures stability
 - Clean code with proper abstractions
@@ -1191,6 +1262,7 @@ import { Project } from '@ariadnejs/core';
 **Final Status:** ✅ COMPLETE - All objectives met, zero regressions, production ready
 
 **Documentation Package:**
+
 - Task document: This file
 - AST reference: `PYTHON_AST_VERIFICATION.md`
 - Test verification: `PYTHON_TEST_VERIFICATION.md`

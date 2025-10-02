@@ -143,21 +143,6 @@
   type_parameters: (type_parameters) @type.type_parameters
 ) @scope.method
 
-; Parameter type annotations
-(required_parameter
-  pattern: (identifier) @definition.parameter
-  type: (type_annotation
-    (_) @type.type_annotation
-  )
-) @type.type_annotation
-
-(optional_parameter
-  pattern: (identifier) @definition.parameter
-  type: (type_annotation
-    (_) @type.type_annotation
-  )
-) @type.type_annotation.optional
-
 ; Return type annotations
 (function_declaration
   name: (identifier) @definition.function
@@ -425,15 +410,38 @@
   name: (private_property_identifier) @definition.field.private
 )
 
-; Parameters
+; Parameters - Apply to ALL callables (functions, methods, interface method signatures)
+; These patterns are not scoped to specific parent nodes, so they match parameters
+; in all callable contexts including interface method signatures.
+;
+; AST Structure (verified with tree-sitter):
+;   required_parameter
+;     ├── [pattern] identifier (captured here)
+;     └── [type] type_annotation ": T"
+;
+;   optional_parameter
+;     ├── [pattern] identifier (captured here)
+;     ├── ? "?"
+;     └── [type] type_annotation ": T"
+;
+;   required_parameter (rest parameter)
+;     ├── [pattern] rest_pattern
+;     │   ├── ... "..."
+;     │   └── identifier (captured here - NO FIELD NAME!)
+;     └── [type] type_annotation ": T[]"
+;
+; Required parameters
 (required_parameter
   pattern: (identifier) @definition.parameter
 )
 
+; Optional parameters (contain ? token)
 (optional_parameter
   pattern: (identifier) @definition.parameter.optional
 )
 
+; Rest parameters (...args)
+; Note: rest_pattern does NOT have a field name for the identifier child
 (rest_pattern
   (identifier) @definition.parameter.rest
 )

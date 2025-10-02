@@ -545,6 +545,7 @@ export class DefinitionBuilder {
         availability: { scope: "file-private" },
         return_type: definition.return_type,
         static: definition.static,
+        generics: definition.generics,
       },
       parameters: new Map(),
       decorators: [],

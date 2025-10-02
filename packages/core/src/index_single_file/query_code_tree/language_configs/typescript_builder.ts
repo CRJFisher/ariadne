@@ -570,6 +570,32 @@ export function find_containing_enum(
 }
 
 /**
+ * Check if a parameter is inside a function_type (type signature)
+ * Parameters inside function types are part of type annotations, not actual parameters
+ */
+export function is_parameter_in_function_type(node: SyntaxNode): boolean {
+  let current = node.parent;
+  while (current) {
+    // Stop at the first callable definition
+    if (
+      current.type === "function_declaration" ||
+      current.type === "function_expression" ||
+      current.type === "arrow_function" ||
+      current.type === "method_definition" ||
+      current.type === "method_signature"
+    ) {
+      return false; // Reached actual callable, not in function type
+    }
+    // Check if we're in a function_type (type annotation)
+    if (current.type === "function_type") {
+      return true;
+    }
+    current = current.parent;
+  }
+  return false;
+}
+
+/**
  * Find containing callable (function/method/method_signature)
  */
 export function find_containing_callable(capture: CaptureNode): SymbolId {
@@ -649,7 +675,80 @@ export function extract_property_type(
 export function extract_parameter_type(
   node: SyntaxNode
 ): SymbolName | undefined {
+  // For rest parameters, the type annotation is on the grandparent
+  // Structure: required_parameter > rest_pattern > identifier
+  if (node.parent?.type === "rest_pattern") {
+    const requiredParam = node.parent.parent;
+    if (requiredParam) {
+      const typeAnnotation = requiredParam.childForFieldName?.("type");
+      if (typeAnnotation) {
+        // Skip the colon and get the actual type
+        for (const child of typeAnnotation.children || []) {
+          if (child.type !== ":") {
+            return child.text as SymbolName;
+          }
+        }
+      }
+    }
+    return undefined;
+  }
+
+  // For regular parameters, use the standard extraction
   return extract_property_type(node);
+}
+
+/**
+ * Extract default value from parameter
+ * Returns the text of the default value expression if present
+ */
+export function extract_parameter_default_value(
+  node: SyntaxNode
+): string | undefined {
+  // Navigate up to the parameter node
+  let paramNode = node.parent;
+
+  // Handle rest_pattern case
+  if (paramNode?.type === "rest_pattern") {
+    paramNode = paramNode.parent;
+  }
+
+  // Check for optional_parameter or required_parameter with default
+  if (
+    paramNode?.type === "optional_parameter" ||
+    paramNode?.type === "required_parameter"
+  ) {
+    // Look for value field (default value)
+    const valueNode = paramNode.childForFieldName?.("value");
+    if (valueNode) {
+      return valueNode.text;
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * Extract initial value from property/field declaration
+ * Returns the text of the initializer expression if present
+ */
+export function extract_property_initial_value(
+  node: SyntaxNode
+): string | undefined {
+  const parent = node.parent;
+
+  // Check for public_field_definition or property_signature
+  if (
+    parent?.type === "public_field_definition" ||
+    parent?.type === "property_signature"
+  ) {
+    // Look for value field (initializer)
+    const valueNode = parent.childForFieldName?.("value");
+    if (valueNode) {
+      return valueNode.text;
+    }
+  }
+
+  return undefined;
 }
 
 /**

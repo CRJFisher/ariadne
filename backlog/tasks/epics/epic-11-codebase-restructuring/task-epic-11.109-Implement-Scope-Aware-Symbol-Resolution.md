@@ -19,8 +19,8 @@ Instead of pre-computing all resolutions upfront:
 3. **Cache results**: Store resolved `(scope_id, name) → symbol_id`
 
 ```typescript
-// Build resolver index (cheap - just closures)
-const resolver_index = build_scope_resolver_index(indices, imports);
+// Build resolver index (cheap - just closures, including lazy import resolvers)
+const resolver_index = build_scope_resolver_index(indices);
 
 // Resolve when needed (on-demand)
 const reference = find_call("helper.process()");
@@ -225,14 +225,14 @@ function build_resolvers_recursive(
     resolvers.set(name, resolver);
   }
 
-  // Step 2: At module scope, add import resolvers
-  if (scope_id === index.root_scope_id) {
-    const file_imports = imports.get(file_path) || new Map();
+  // Step 2: Add import resolvers for this scope (any scope level!)
+  const import_specs = extract_import_specs(scope_id, index, file_path);
 
-    for (const [name, target_id] of file_imports) {
-      // Closure captures the imported symbol_id
-      resolvers.set(name, () => target_id);
-    }
+  for (const spec of import_specs) {
+    // Closure captures import spec and resolves lazily
+    resolvers.set(spec.local_name, () =>
+      resolve_export_chain(spec.source_file, spec.import_name, indices)
+    );
   }
 
   // Step 3: Add local definition resolvers (OVERRIDE parent/imports)

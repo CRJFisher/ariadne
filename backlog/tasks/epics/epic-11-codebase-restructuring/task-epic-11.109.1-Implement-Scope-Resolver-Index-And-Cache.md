@@ -16,7 +16,7 @@ Build an index of resolver functions (closures) rather than pre-computing all re
 
 ```typescript
 // Build index: scope_id → name → resolver_function()
-const resolver_index = build_scope_resolver_index(indices, imports)
+const resolver_index = build_scope_resolver_index(indices)
 
 // Resolve on-demand when needed
 const symbol_id = resolver_index.resolve(scope_id, name, cache)
@@ -86,8 +86,7 @@ interface ResolutionCache {
 
 ```typescript
 export function build_scope_resolver_index(
-  indices: ReadonlyMap<FilePath, SemanticIndex>,
-  imports: ImportMap
+  indices: ReadonlyMap<FilePath, SemanticIndex>
 ): ScopeResolverIndex {
 
   const scope_resolvers = new Map<ScopeId, Map<SymbolName, SymbolResolver>>()
@@ -99,7 +98,7 @@ export function build_scope_resolver_index(
       new Map(), // Empty parent resolvers at root
       index,
       file_path,
-      imports,
+      indices,
       scope_resolvers
     )
   }
@@ -112,7 +111,7 @@ function build_resolvers_recursive(
   parent_resolvers: Map<SymbolName, SymbolResolver>,
   index: SemanticIndex,
   file_path: FilePath,
-  imports: ImportMap,
+  indices: ReadonlyMap<FilePath, SemanticIndex>,
   scope_resolvers: Map<ScopeId, Map<SymbolName, SymbolResolver>>
 ): void {
 
@@ -123,14 +122,14 @@ function build_resolvers_recursive(
     resolvers.set(name, resolver)
   }
 
-  // Step 2: At module scope, add import resolvers
-  if (scope_id === index.root_scope_id) {
-    const file_imports = imports.get(file_path) || new Map()
+  // Step 2: Add import resolvers for this scope (any scope level!)
+  const import_specs = extract_import_specs(scope_id, index, file_path)
 
-    for (const [name, target_id] of file_imports) {
-      // Closure captures the imported symbol_id
-      resolvers.set(name, () => target_id)
-    }
+  for (const spec of import_specs) {
+    // Closure captures import spec and resolves lazily
+    resolvers.set(spec.local_name, () =>
+      resolve_export_chain(spec.source_file, spec.import_name, indices)
+    )
   }
 
   // Step 3: Add local definition resolvers (OVERRIDES parent/imports!)
@@ -155,7 +154,7 @@ function build_resolvers_recursive(
         resolvers, // Pass our resolvers down to children
         index,
         file_path,
-        imports,
+        indices,
         scope_resolvers
       )
     }

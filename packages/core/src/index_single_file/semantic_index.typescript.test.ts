@@ -1444,4 +1444,662 @@ describe("Semantic Index - TypeScript", () => {
       }
     });
   });
+
+  describe("New Features - Private Members, Value Extraction, Parameter Enhancements", () => {
+    it("should extract private fields and methods with # syntax", () => {
+      const code = `
+        class SecureClass {
+          // Public members
+          publicField: string = "public";
+          publicMethod() { return "public"; }
+
+          // Private members using # syntax
+          #privateField: number = 42;
+          #privateStaticField: string = "static";
+          static #staticPrivate = "test";
+
+          #privateMethod(): number {
+            return this.#privateField;
+          }
+
+          // TypeScript private (access modifier)
+          private tsPrivate: boolean = true;
+          private tsPrivateMethod() { return this.tsPrivate; }
+        }
+      `;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language
+      );
+      const result = build_semantic_index(parsedFile, tree, "typescript" as Language);
+
+      const secureClass = Array.from(result.classes.values()).find(
+        (c) => c.name === "SecureClass"
+      );
+
+      expect(secureClass).toBeDefined();
+
+      if (secureClass) {
+        // Verify all properties captured
+        expect(secureClass.properties).toBeDefined();
+        expect(secureClass.properties.length).toBeGreaterThanOrEqual(5);
+
+        // Test #privateField
+        const privateField = secureClass.properties.find(
+          (p: any) => p.name === "#privateField"
+        );
+        expect(privateField).toBeDefined();
+        if (privateField) {
+          expect(privateField).toMatchObject({
+            kind: "property",
+            symbol_id: expect.stringMatching(/^property:/),
+            name: "#privateField",
+            type: "number",
+            initial_value: "42",
+            access_modifier: "private",
+            availability: expect.objectContaining({
+              scope: "file-private",
+            }),
+          });
+        }
+
+        // Test static #staticPrivate (no type annotation, only initial value)
+        const staticPrivate = secureClass.properties.find(
+          (p: any) => p.name === "#staticPrivate"
+        );
+        expect(staticPrivate).toBeDefined();
+        if (staticPrivate) {
+          expect(staticPrivate).toMatchObject({
+            name: "#staticPrivate",
+            // Note: type is undefined because no explicit type annotation
+            // (we don't do type inference from initial values)
+            initial_value: '"test"',
+            access_modifier: "private",
+            static: true,
+          });
+        }
+
+        // Test #privateMethod
+        const privateMethod = secureClass.methods.find(
+          (m: any) => m.name === "#privateMethod"
+        );
+        expect(privateMethod).toBeDefined();
+        if (privateMethod) {
+          expect(privateMethod).toMatchObject({
+            kind: "method",
+            symbol_id: expect.stringMatching(/^method:/),
+            name: "#privateMethod",
+            return_type: "number",
+            access_modifier: "private",
+            availability: expect.objectContaining({
+              scope: "file-private",
+            }),
+          });
+        }
+
+        // Verify TypeScript private still works
+        const tsPrivate = secureClass.properties.find(
+          (p: any) => p.name === "tsPrivate"
+        );
+        expect(tsPrivate).toBeDefined();
+      }
+    });
+
+    it("should extract initial values and default values correctly", () => {
+      const code = `
+        class ValueTest {
+          // Field initial values
+          count: number = 42;
+          name: string = "test";
+          flag: boolean = true;
+          obj = { x: 1, y: 2 };
+          arr = [1, 2, 3];
+
+          // Constructor parameter properties with defaults
+          constructor(
+            public id: number = 0,
+            private readonly enabled: boolean = true,
+            protected status: string = "active"
+          ) {}
+
+          // Method with default parameters
+          greet(
+            name: string = "World",
+            count: number = 1,
+            prefix?: string
+          ): void {}
+
+          // Complex defaults
+          process(
+            options = { verbose: true },
+            ...args: any[]
+          ): void {}
+        }
+      `;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language
+      );
+      const result = build_semantic_index(parsedFile, tree, "typescript" as Language);
+
+      const valueTest = Array.from(result.classes.values()).find(
+        (c) => c.name === "ValueTest"
+      );
+
+      expect(valueTest).toBeDefined();
+
+      if (valueTest) {
+        // Test field initial values
+        const testCases = [
+          { name: "count", type: "number", initial_value: "42" },
+          { name: "name", type: "string", initial_value: '"test"' },
+          { name: "flag", type: "boolean", initial_value: "true" },
+          { name: "obj", initial_value: "{ x: 1, y: 2 }" },
+          { name: "arr", initial_value: "[1, 2, 3]" },
+        ];
+
+        for (const testCase of testCases) {
+          const field = valueTest.properties.find((p: any) => p.name === testCase.name);
+          expect(field).toBeDefined();
+          if (field) {
+            if (testCase.type) {
+              expect(field.type).toBe(testCase.type);
+            }
+            expect(field.initial_value).toBe(testCase.initial_value);
+          }
+        }
+
+        // Test parameter properties with defaults
+        const paramProps = [
+          { name: "id", type: "number", initial_value: "0" },
+          { name: "enabled", type: "boolean", initial_value: "true" },
+          { name: "status", type: "string", initial_value: '"active"' },
+        ];
+
+        for (const testCase of paramProps) {
+          const prop = valueTest.properties.find((p: any) => p.name === testCase.name);
+          expect(prop).toBeDefined();
+          if (prop) {
+            expect(prop.type).toBe(testCase.type);
+            expect(prop.initial_value).toBe(testCase.initial_value);
+            expect(prop.is_parameter_property).toBe(true);
+          }
+        }
+
+        // Test method parameter defaults
+        const greetMethod = valueTest.methods.find((m: any) => m.name === "greet");
+        expect(greetMethod).toBeDefined();
+
+        if (greetMethod && greetMethod.parameters) {
+          const nameParam = greetMethod.parameters.find((p: any) => p.name === "name");
+          expect(nameParam).toBeDefined();
+          if (nameParam) {
+            expect(nameParam.default_value).toBe('"World"');
+            expect(nameParam.type).toBe("string");
+          }
+
+          const countParam = greetMethod.parameters.find((p: any) => p.name === "count");
+          expect(countParam).toBeDefined();
+          if (countParam) {
+            expect(countParam.default_value).toBe("1");
+            expect(countParam.type).toBe("number");
+          }
+
+          const prefixParam = greetMethod.parameters.find((p: any) => p.name === "prefix");
+          expect(prefixParam).toBeDefined();
+          if (prefixParam) {
+            expect(prefixParam.optional).toBe(true);
+            expect(prefixParam.default_value).toBeUndefined();
+          }
+        }
+
+        // Test complex defaults
+        const processMethod = valueTest.methods.find((m: any) => m.name === "process");
+        expect(processMethod).toBeDefined();
+
+        if (processMethod && processMethod.parameters) {
+          const optionsParam = processMethod.parameters.find((p: any) => p.name === "options");
+          expect(optionsParam).toBeDefined();
+          if (optionsParam) {
+            expect(optionsParam.default_value).toBe("{ verbose: true }");
+          }
+
+          const argsParam = processMethod.parameters.find((p: any) => p.name === "args");
+          expect(argsParam).toBeDefined();
+          if (argsParam) {
+            expect(argsParam.type).toBe("any[]");
+            expect(argsParam.optional).toBe(false);
+          }
+        }
+      }
+    });
+
+    it("should handle all interface method parameter variations", () => {
+      const code = `
+        interface CompleteAPI<T> {
+          // Required parameters
+          add(x: number, y: number): number;
+
+          // Optional parameters
+          divide(a: number, b?: number): number;
+
+          // Rest parameters
+          log(...args: any[]): void;
+
+          // Mixed parameters
+          process(required: string, optional?: number, ...rest: any[]): void;
+
+          // Generic type parameters
+          map<U>(fn: (item: T) => U): U[];
+
+          // Complex types
+          query(filter: { name: string; age: number }): T[];
+
+          // Union and intersection types
+          merge(a: T & { id: string }): T | null;
+
+          // Function types
+          subscribe(callback: (data: T) => void): void;
+
+          // Array and tuple types
+          batch(items: T[], pair: [string, number]): void;
+
+          // Optional with type
+          update(id: string, data?: Partial<T>): Promise<T>;
+        }
+      `;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language
+      );
+      const result = build_semantic_index(parsedFile, tree, "typescript" as Language);
+
+      const api = Array.from(result.interfaces.values()).find(
+        (i) => i.name === "CompleteAPI"
+      );
+
+      expect(api).toBeDefined();
+
+      if (api && api.methods) {
+        // Test required parameters
+        const addMethod = api.methods.find((m: any) => m.name === "add");
+        expect(addMethod).toBeDefined();
+        if (addMethod) {
+          expect(addMethod.parameters).toHaveLength(2);
+          expect(addMethod.parameters[0]).toMatchObject({
+            name: "x",
+            type: "number",
+            optional: false,
+          });
+          expect(addMethod.parameters[1]).toMatchObject({
+            name: "y",
+            type: "number",
+            optional: false,
+          });
+        }
+
+        // Test optional parameters
+        const divideMethod = api.methods.find((m: any) => m.name === "divide");
+        expect(divideMethod).toBeDefined();
+        if (divideMethod) {
+          expect(divideMethod.parameters).toHaveLength(2);
+          expect(divideMethod.parameters[0]).toMatchObject({
+            name: "a",
+            type: "number",
+            optional: false,
+          });
+          expect(divideMethod.parameters[1]).toMatchObject({
+            name: "b",
+            type: "number",
+            optional: true,
+          });
+        }
+
+        // Test rest parameters
+        const logMethod = api.methods.find((m: any) => m.name === "log");
+        expect(logMethod).toBeDefined();
+        if (logMethod) {
+          expect(logMethod.parameters).toHaveLength(1);
+          expect(logMethod.parameters[0]).toMatchObject({
+            name: "args",
+            type: "any[]",
+            optional: false,
+          });
+        }
+
+        // Test mixed parameters
+        const processMethod = api.methods.find((m: any) => m.name === "process");
+        expect(processMethod).toBeDefined();
+        if (processMethod) {
+          expect(processMethod.parameters).toHaveLength(3);
+          expect(processMethod.parameters[0]).toMatchObject({
+            name: "required",
+            type: "string",
+            optional: false,
+          });
+          expect(processMethod.parameters[1]).toMatchObject({
+            name: "optional",
+            type: "number",
+            optional: true,
+          });
+          expect(processMethod.parameters[2]).toMatchObject({
+            name: "rest",
+            type: "any[]",
+            optional: false,
+          });
+        }
+
+        // Test generic type parameters
+        const mapMethod = api.methods.find((m: any) => m.name === "map");
+        expect(mapMethod).toBeDefined();
+        if (mapMethod) {
+          expect(mapMethod.generics).toBeDefined();
+          expect(mapMethod.generics.length).toBeGreaterThan(0);
+          expect(mapMethod.parameters).toHaveLength(1);
+          expect(mapMethod.parameters[0]).toMatchObject({
+            name: "fn",
+            type: expect.stringContaining("=>"),
+          });
+        }
+
+        // Test complex object type
+        const queryMethod = api.methods.find((m: any) => m.name === "query");
+        expect(queryMethod).toBeDefined();
+        if (queryMethod) {
+          expect(queryMethod.parameters).toHaveLength(1);
+          expect(queryMethod.parameters[0]).toMatchObject({
+            name: "filter",
+            type: expect.stringContaining("{"),
+          });
+        }
+
+        // Test union and intersection types
+        const mergeMethod = api.methods.find((m: any) => m.name === "merge");
+        expect(mergeMethod).toBeDefined();
+        if (mergeMethod) {
+          expect(mergeMethod.parameters).toHaveLength(1);
+          expect(mergeMethod.parameters[0].type).toContain("&");
+        }
+
+        // Test function type parameter
+        const subscribeMethod = api.methods.find((m: any) => m.name === "subscribe");
+        expect(subscribeMethod).toBeDefined();
+        if (subscribeMethod) {
+          expect(subscribeMethod.parameters).toHaveLength(1);
+          expect(subscribeMethod.parameters[0].type).toContain("=>");
+        }
+
+        // Test array and tuple types
+        const batchMethod = api.methods.find((m: any) => m.name === "batch");
+        expect(batchMethod).toBeDefined();
+        if (batchMethod) {
+          expect(batchMethod.parameters).toHaveLength(2);
+          expect(batchMethod.parameters[0]).toMatchObject({
+            name: "items",
+            type: "T[]",
+          });
+          expect(batchMethod.parameters[1]).toMatchObject({
+            name: "pair",
+            type: "[string, number]",
+          });
+        }
+
+        // Test optional with complex type
+        const updateMethod = api.methods.find((m: any) => m.name === "update");
+        expect(updateMethod).toBeDefined();
+        if (updateMethod) {
+          expect(updateMethod.parameters).toHaveLength(2);
+          expect(updateMethod.parameters[1]).toMatchObject({
+            name: "data",
+            optional: true,
+          });
+          expect(updateMethod.parameters[1].type).toContain("Partial");
+        }
+      }
+    });
+
+    it("should handle edge cases in parameter and value extraction", () => {
+      const code = `
+        class EdgeCases {
+          // Empty initial values
+          undefined_field;
+          null_field = null;
+
+          // Numeric edge cases
+          zero = 0;
+          negative = -42;
+          float = 3.14;
+          scientific = 1e10;
+
+          // String edge cases
+          empty_string = "";
+          single_quote = 'test';
+          template = \`template\${1}\`;
+          multiline = "multi\\nline";
+
+          // Special values
+          nan_value = NaN;
+          infinity = Infinity;
+
+          // Complex expressions
+          computed = 1 + 2;
+          call_result = Math.random();
+
+          constructor(
+            // Edge cases in parameters
+            empty = "",
+            zero_default = 0,
+            false_default = false,
+            null_default = null,
+            array_default = [],
+            object_default = {}
+          ) {}
+
+          // Method with edge case parameters
+          test(
+            // Optional without type annotation
+            optional?,
+            // Rest with no type
+            ...args
+          ): void {}
+        }
+
+        interface EdgeInterface {
+          // Optional method signature
+          optional?(): void;
+
+          // No parameters
+          noParams(): void;
+
+          // Only rest parameter
+          onlyRest(...items: string[]): void;
+        }
+      `;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language
+      );
+      const result = build_semantic_index(parsedFile, tree, "typescript" as Language);
+
+      const edgeClass = Array.from(result.classes.values()).find(
+        (c) => c.name === "EdgeCases"
+      );
+
+      expect(edgeClass).toBeDefined();
+
+      if (edgeClass) {
+        // Test special values
+        const specialCases = [
+          { name: "null_field", initial_value: "null" },
+          { name: "zero", initial_value: "0" },
+          { name: "negative", initial_value: "-42" },
+          { name: "float", initial_value: "3.14" },
+          { name: "empty_string", initial_value: '""' },
+          { name: "nan_value", initial_value: "NaN" },
+          { name: "infinity", initial_value: "Infinity" },
+        ];
+
+        for (const testCase of specialCases) {
+          const field = edgeClass.properties.find((p: any) => p.name === testCase.name);
+          expect(field).toBeDefined();
+          if (field) {
+            expect(field.initial_value).toBe(testCase.initial_value);
+          }
+        }
+
+        // Test constructor parameters with edge case defaults
+        const constructor = edgeClass.methods?.find((m: any) => m.name === "constructor");
+        expect(constructor).toBeDefined();
+
+        if (constructor && constructor.parameters) {
+          const defaultCases = [
+            { name: "empty", default_value: '""' },
+            { name: "zero_default", default_value: "0" },
+            { name: "false_default", default_value: "false" },
+            { name: "null_default", default_value: "null" },
+            { name: "array_default", default_value: "[]" },
+            { name: "object_default", default_value: "{}" },
+          ];
+
+          for (const testCase of defaultCases) {
+            const param = constructor.parameters.find((p: any) => p.name === testCase.name);
+            expect(param).toBeDefined();
+            if (param) {
+              expect(param.default_value).toBe(testCase.default_value);
+            }
+          }
+        }
+
+        // Test method with untyped parameters
+        const testMethod = edgeClass.methods.find((m: any) => m.name === "test");
+        expect(testMethod).toBeDefined();
+
+        if (testMethod && testMethod.parameters) {
+          const optionalParam = testMethod.parameters.find((p: any) => p.name === "optional");
+          expect(optionalParam).toBeDefined();
+          if (optionalParam) {
+            expect(optionalParam.optional).toBe(true);
+          }
+
+          const argsParam = testMethod.parameters.find((p: any) => p.name === "args");
+          expect(argsParam).toBeDefined();
+        }
+      }
+
+      // Test edge cases in interface
+      const edgeInterface = Array.from(result.interfaces.values()).find(
+        (i) => i.name === "EdgeInterface"
+      );
+
+      expect(edgeInterface).toBeDefined();
+
+      if (edgeInterface && edgeInterface.methods) {
+        // Test optional method
+        const optionalMethod = edgeInterface.methods.find((m: any) => m.name === "optional");
+        expect(optionalMethod).toBeDefined();
+
+        // Test method with no parameters
+        const noParamsMethod = edgeInterface.methods.find((m: any) => m.name === "noParams");
+        expect(noParamsMethod).toBeDefined();
+        if (noParamsMethod) {
+          expect(noParamsMethod.parameters).toHaveLength(0);
+        }
+
+        // Test only rest parameter
+        const onlyRestMethod = edgeInterface.methods.find((m: any) => m.name === "onlyRest");
+        expect(onlyRestMethod).toBeDefined();
+        if (onlyRestMethod) {
+          expect(onlyRestMethod.parameters).toHaveLength(1);
+          expect(onlyRestMethod.parameters[0]).toMatchObject({
+            name: "items",
+            type: "string[]",
+          });
+        }
+      }
+    });
+
+    it("should maintain consistency with JavaScript parameter handling", () => {
+      const code = `
+        // Regular function (should work like JavaScript)
+        function regularFunc(a: string, b: number = 42): void {}
+
+        // Arrow function
+        const arrowFunc = (x: number, y?: number): number => x + (y || 0);
+
+        // Class method
+        class TestClass {
+          method(p1: string, p2: number = 10): void {}
+        }
+
+        // Interface (TypeScript-specific)
+        interface TestInterface {
+          method(p1: string, p2: number): void;
+        }
+      `;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language
+      );
+      const result = build_semantic_index(parsedFile, tree, "typescript" as Language);
+
+      // Verify function parameters work
+      const regularFunc = Array.from(result.functions.values()).find(
+        (f) => f.name === "regularFunc"
+      );
+      expect(regularFunc).toBeDefined();
+      if (regularFunc && regularFunc.parameters) {
+        expect(regularFunc.parameters).toHaveLength(2);
+        expect(regularFunc.parameters[1].default_value).toBe("42");
+      }
+
+      // Verify class method parameters work
+      const testClass = Array.from(result.classes.values()).find(
+        (c) => c.name === "TestClass"
+      );
+      expect(testClass).toBeDefined();
+      if (testClass && testClass.methods) {
+        const method = testClass.methods.find((m: any) => m.name === "method");
+        expect(method).toBeDefined();
+        if (method && method.parameters) {
+          expect(method.parameters).toHaveLength(2);
+          expect(method.parameters[1].default_value).toBe("10");
+        }
+      }
+
+      // Verify interface method parameters work
+      const testInterface = Array.from(result.interfaces.values()).find(
+        (i) => i.name === "TestInterface"
+      );
+      expect(testInterface).toBeDefined();
+      if (testInterface && testInterface.methods) {
+        const method = testInterface.methods.find((m: any) => m.name === "method");
+        expect(method).toBeDefined();
+        if (method && method.parameters) {
+          expect(method.parameters).toHaveLength(2);
+          // Interface method signatures don't have default values
+          expect(method.parameters[0].default_value).toBeUndefined();
+        }
+      }
+    });
+  });
 });
