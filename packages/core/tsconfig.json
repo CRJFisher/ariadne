@@ -18,8 +18,7 @@
     "dist",
     "tests",
     "**/*.test.ts",
-    "**/*.test.tsx",
-    "src/resolve_references/**/*"
+    "**/*.test.tsx"
   ],
   "references": [
     {

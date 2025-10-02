@@ -32,8 +32,54 @@ import {
   EnumDefinition,
   ClassDefinition,
   ResolvedSymbols,
+  SymbolReference,
+  ConstructorDefinition,
+  CallReference,
 } from "@ariadnejs/types";
 import { SemanticIndex } from "../index_single_file/semantic_index";
+
+// Temporary types - to be replaced by actual implementations in future tasks
+type ImportResolutionMap = Map<FilePath, Map<SymbolName, SymbolId>>;
+type FunctionResolutionMap = { function_calls: Map<LocationKey, SymbolId> };
+type MethodAndConstructorResolutionMap = {
+  method_calls: Map<LocationKey, SymbolId>;
+  constructor_calls: Map<LocationKey, SymbolId>;
+};
+type LocalTypeContext = Map<FilePath, Map<SymbolName, SymbolId>>;
+
+// Temporary stub implementations - to be replaced in future tasks
+function resolve_imports(params: { indices: ReadonlyMap<FilePath, SemanticIndex> }): ImportResolutionMap {
+  // Stub: Will be implemented in task-epic-11.109.3
+  return new Map();
+}
+
+function resolve_function_calls(
+  indices: ReadonlyMap<FilePath, SemanticIndex>,
+  imports: ImportResolutionMap
+): FunctionResolutionMap {
+  // Stub: Will be implemented in task-epic-11.109.5
+  return { function_calls: new Map() };
+}
+
+function build_local_type_context(
+  indices: ReadonlyMap<FilePath, SemanticIndex>,
+  imports: ImportResolutionMap
+): LocalTypeContext {
+  // Stub: Will be implemented in task-epic-11.109.4
+  return new Map();
+}
+
+function resolve_methods(
+  indices: ReadonlyMap<FilePath, SemanticIndex>,
+  imports: ImportResolutionMap,
+  local_types: LocalTypeContext
+): MethodAndConstructorResolutionMap {
+  // Stub: Will be implemented in task-epic-11.109.6 and task-epic-11.109.7
+  return {
+    method_calls: new Map(),
+    constructor_calls: new Map(),
+  };
+}
 
 
 /**
@@ -102,7 +148,23 @@ function combine_results(
   const all_call_references: CallReference[] = [];
 
   for (const index of indices.values()) {
-    all_call_references.push(...index.references.calls);
+    // Filter for call-type references and convert to CallReference
+    const call_refs = index.references
+      .filter((ref): ref is SymbolReference & { call_type: NonNullable<SymbolReference['call_type']> } =>
+        ref.call_type !== undefined
+      )
+      .map((ref): CallReference => ({
+        location: ref.location,
+        name: ref.name,
+        scope_id: ref.scope_id,
+        call_type: ref.call_type as "function" | "method" | "constructor" | "super" | "macro",
+        receiver: ref.context?.receiver_location ? {
+          location: ref.context.receiver_location,
+          name: undefined,
+        } : undefined,
+        construct_target: ref.context?.construct_target,
+      }));
+    all_call_references.push(...call_refs);
   }
 
   const callable_definitions = new Map<SymbolId, AnyDefinition>();
@@ -113,8 +175,11 @@ function combine_results(
     }
     for (const [id, cls] of idx.classes) {
       callable_definitions.set(id, cls);
+      // Constructor is an array
       if (cls.constructor) {
-        callable_definitions.set(cls.constructor.symbol_id, cls.constructor);
+        for (const ctor of cls.constructor) {
+          callable_definitions.set(ctor.symbol_id, ctor);
+        }
       }
       for (const method of cls.methods) {
         callable_definitions.set(method.symbol_id, method);
