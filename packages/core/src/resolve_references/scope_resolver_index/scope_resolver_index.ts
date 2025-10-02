@@ -7,7 +7,11 @@
 
 import type { FilePath, SymbolId, SymbolName, ScopeId } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../index_single_file/semantic_index";
-import type { SymbolResolver, ImportSpec } from "../types";
+import type { SymbolResolver } from "../types";
+import {
+  extract_import_specs,
+  resolve_export_chain,
+} from "../import_resolution/import_resolver";
 
 /**
  * Resolution Cache Interface
@@ -234,59 +238,3 @@ function create_resolver_index(
   };
 }
 
-/**
- * Extract import specifications from a scope's import statements.
- * Used when building resolver functions.
- *
- * TODO: This will be moved to import_resolver.ts in task 11.109.3
- */
-function extract_import_specs(
-  scope_id: ScopeId,
-  index: SemanticIndex,
-  file_path: FilePath
-): ImportSpec[] {
-  const specs: ImportSpec[] = [];
-
-  // Find all imports in this scope
-  for (const [import_id, import_def] of index.imported_symbols) {
-    if (import_def.scope_id === scope_id) {
-      // Create import spec
-      // Note: source file resolution will be implemented in task 11.109.3
-      specs.push({
-        local_name: import_def.name,
-        source_file: import_def.import_path as unknown as FilePath, // Simplified for now - proper conversion in 11.109.3
-        import_name: import_def.original_name || import_def.name,
-        import_kind: import_def.import_kind,
-      });
-    }
-  }
-
-  return specs;
-}
-
-/**
- * Resolve export chain to find the actual symbol being imported.
- * Follows re-exports until finding the actual definition.
- *
- * TODO: This will be moved to import_resolver.ts in task 11.109.3
- */
-function resolve_export_chain(
-  source_file: FilePath,
-  import_name: SymbolName,
-  indices: ReadonlyMap<FilePath, SemanticIndex>
-): SymbolId | null {
-  const index = indices.get(source_file);
-  if (!index) {
-    return null;
-  }
-
-  // Look for the symbol in the source file
-  const symbols = index.symbols_by_name.get(import_name);
-  if (!symbols || symbols.length === 0) {
-    return null;
-  }
-
-  // Return the first matching symbol
-  // TODO: Implement proper export chain resolution in task 11.109.3
-  return symbols[0];
-}

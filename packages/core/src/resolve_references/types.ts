@@ -25,11 +25,13 @@ export interface ImportSpec {
 
 /**
  * Export information found in a file
- * Used during import resolution chain following
+ * Used during import resolution
+ *
+ * NOTE: Re-export chain following is not yet supported because the semantic index
+ * doesn't currently track source_file and source_name for re-exports.
+ * This is future work tracked in the task documentation.
  */
 export interface ExportInfo {
   symbol_id: SymbolId;
   is_reexport: boolean;
-  source_file?: FilePath;      // Set if this is a re-export
-  source_name?: SymbolName;    // Set if this is a re-export
 }

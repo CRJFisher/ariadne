@@ -1,0 +1,290 @@
+/**
+ * Import Resolution - Lazy resolver creation for imported symbols
+ *
+ * This module creates resolver functions for imports that are invoked on-demand.
+ * Resolvers follow export chains only when an imported symbol is first referenced.
+ */
+
+import type {
+  FilePath,
+  Language,
+  SymbolId,
+  SymbolName,
+  ScopeId,
+  FunctionDefinition,
+  ClassDefinition,
+  VariableDefinition,
+  InterfaceDefinition,
+  EnumDefinition,
+  TypeAliasDefinition,
+} from "@ariadnejs/types";
+import type { SemanticIndex } from "../../index_single_file/semantic_index";
+import type { ImportSpec, ExportInfo, SymbolResolver } from "../types";
+import { resolve_module_path_javascript } from "./import_resolver.javascript";
+import { resolve_module_path_typescript } from "./import_resolver.typescript";
+import { resolve_module_path_python } from "./import_resolver.python";
+import { resolve_module_path_rust } from "./import_resolver.rust";
+
+/**
+ * Extract import specifications from a scope's import statements.
+ * Used by ScopeResolverIndex when building resolver functions.
+ *
+ * @param scope_id - The scope to extract imports from
+ * @param index - The semantic index for the current file
+ * @param file_path - Path to the file being processed
+ * @returns Array of import specifications
+ */
+export function extract_import_specs(
+  scope_id: ScopeId,
+  index: SemanticIndex,
+  file_path: FilePath
+): ImportSpec[] {
+  const specs: ImportSpec[] = [];
+
+  // Find all imports in this scope
+  for (const [import_id, import_def] of index.imported_symbols) {
+    if (import_def.scope_id === scope_id) {
+      // Resolve the module path to a file path using language-specific rules
+      const source_file = resolve_module_path(
+        import_def.import_path,
+        file_path,
+        index.language
+      );
+
+      specs.push({
+        local_name: import_def.name,
+        source_file,
+        import_name: import_def.original_name || import_def.name,
+        import_kind: import_def.import_kind,
+      });
+    }
+  }
+
+  return specs;
+}
+
+/**
+ * Create a resolver function for an imported symbol.
+ * The resolver follows the export chain lazily when called.
+ *
+ * @param import_spec - Import specification
+ * @param indices - Map of all semantic indices
+ * @returns Resolver function that executes on-demand
+ */
+export function create_import_resolver(
+  import_spec: ImportSpec,
+  indices: ReadonlyMap<FilePath, SemanticIndex>
+): SymbolResolver {
+  return () => {
+    // This code runs ON-DEMAND when first referenced
+    return resolve_export_chain(
+      import_spec.source_file,
+      import_spec.import_name,
+      indices
+    );
+  };
+}
+
+/**
+ * Follow export chain to find the ultimate source symbol.
+ * This runs lazily when an import resolver is first invoked.
+ *
+ * NOTE: Re-export chain following is not yet implemented because the semantic index
+ * doesn't currently track source information for re-exports. For now, we return the
+ * symbol directly even if it's marked as a re-export.
+ *
+ * TODO: Implement full re-export chain following once the semantic index is enhanced
+ * to track source_file and source_name for re-exported symbols (task-epic-11.110).
+ *
+ * @param source_file - File containing the export
+ * @param export_name - Name of the exported symbol
+ * @param indices - Map of all semantic indices
+ * @param visited - Set of visited exports for cycle detection (reserved for future use)
+ * @returns Symbol ID of the exported symbol, or null if not found
+ */
+export function resolve_export_chain(
+  source_file: FilePath,
+  export_name: SymbolName,
+  indices: ReadonlyMap<FilePath, SemanticIndex>,
+  visited: Set<string> = new Set()
+): SymbolId | null {
+  const source_index = indices.get(source_file);
+  if (!source_index) {
+    return null;
+  }
+
+  // Look for export in source file
+  const export_info = find_export(export_name, source_index);
+  if (!export_info) {
+    return null;
+  }
+
+  // Return the symbol ID directly
+  // Re-export chain following will be added in the future
+  return export_info.symbol_id;
+}
+
+/**
+ * Find an exported symbol in a file's index
+ *
+ * @param name - Symbol name to find
+ * @param index - Semantic index to search in
+ * @returns Export information or null if not found
+ */
+function find_export(
+  name: SymbolName,
+  index: SemanticIndex
+): ExportInfo | null {
+  // Check all definition types
+  const def =
+    find_exported_function(name, index) ||
+    find_exported_class(name, index) ||
+    find_exported_variable(name, index) ||
+    find_exported_interface(name, index) ||
+    find_exported_enum(name, index) ||
+    find_exported_type_alias(name, index);
+
+  if (!def) {
+    return null;
+  }
+
+  return {
+    symbol_id: def.symbol_id,
+    is_reexport: def.availability?.export?.is_reexport || false,
+  };
+}
+
+/**
+ * Find an exported function by name
+ */
+function find_exported_function(
+  name: SymbolName,
+  index: SemanticIndex
+): FunctionDefinition | null {
+  for (const [symbol_id, func_def] of index.functions) {
+    if (func_def.name === name && is_exported(func_def)) {
+      return func_def;
+    }
+  }
+  return null;
+}
+
+/**
+ * Find an exported class by name
+ */
+function find_exported_class(
+  name: SymbolName,
+  index: SemanticIndex
+): ClassDefinition | null {
+  for (const [symbol_id, class_def] of index.classes) {
+    if (class_def.name === name && is_exported(class_def)) {
+      return class_def;
+    }
+  }
+  return null;
+}
+
+/**
+ * Find an exported variable by name
+ */
+function find_exported_variable(
+  name: SymbolName,
+  index: SemanticIndex
+): VariableDefinition | null {
+  for (const [symbol_id, var_def] of index.variables) {
+    if (var_def.name === name && is_exported(var_def)) {
+      return var_def;
+    }
+  }
+  return null;
+}
+
+/**
+ * Find an exported interface by name
+ */
+function find_exported_interface(
+  name: SymbolName,
+  index: SemanticIndex
+): InterfaceDefinition | null {
+  for (const [symbol_id, iface_def] of index.interfaces) {
+    if (iface_def.name === name && is_exported(iface_def)) {
+      return iface_def;
+    }
+  }
+  return null;
+}
+
+/**
+ * Find an exported enum by name
+ */
+function find_exported_enum(
+  name: SymbolName,
+  index: SemanticIndex
+): EnumDefinition | null {
+  for (const [symbol_id, enum_def] of index.enums) {
+    if (enum_def.name === name && is_exported(enum_def)) {
+      return enum_def;
+    }
+  }
+  return null;
+}
+
+/**
+ * Find an exported type alias by name
+ */
+function find_exported_type_alias(
+  name: SymbolName,
+  index: SemanticIndex
+): TypeAliasDefinition | null {
+  for (const [symbol_id, type_def] of index.types) {
+    if (type_def.name === name && is_exported(type_def)) {
+      return type_def;
+    }
+  }
+  return null;
+}
+
+/**
+ * Check if a definition is exported
+ *
+ * IMPORTANT: This uses availability.scope to determine if a symbol is exported.
+ * Based on the codebase, "file-export" and "public" indicate exported symbols.
+ *
+ * @param def - Symbol definition to check
+ * @returns true if the symbol is exported
+ */
+function is_exported(
+  def: FunctionDefinition | ClassDefinition | VariableDefinition | InterfaceDefinition | EnumDefinition | TypeAliasDefinition
+): boolean {
+  return (
+    def.availability?.scope === "file-export" ||
+    def.availability?.scope === "public"
+  );
+}
+
+/**
+ * Resolve import path to absolute file path (language-aware)
+ *
+ * @param import_path - Import path string from the import statement
+ * @param importing_file - Absolute path to the file containing the import
+ * @param language - Programming language
+ * @returns Absolute file path to the imported module
+ */
+function resolve_module_path(
+  import_path: string,
+  importing_file: FilePath,
+  language: Language
+): FilePath {
+  switch (language) {
+    case "javascript":
+      return resolve_module_path_javascript(import_path, importing_file);
+    case "typescript":
+      return resolve_module_path_typescript(import_path, importing_file);
+    case "python":
+      return resolve_module_path_python(import_path, importing_file);
+    case "rust":
+      return resolve_module_path_rust(import_path, importing_file);
+    default:
+      throw new Error(`Unsupported language: ${language}`);
+  }
+}
