@@ -13,9 +13,9 @@ import TypeScript from "tree-sitter-typescript";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
 import type { Language, FilePath } from "@ariadnejs/types";
-import { build_semantic_index } from "../../semantic_index";
-import type { ParsedFile } from "../../file_utils";
-import { extract_type_alias_metadata } from "../alias_extraction";
+import { build_semantic_index } from "../semantic_index";
+import type { ParsedFile } from "../file_utils";
+import { extract_type_alias_metadata } from "./alias_extraction";
 
 // ============================================================================
 // Test Helpers
@@ -167,7 +167,8 @@ describe("Type Alias Extraction - TypeScript", () => {
     const expressions = Array.from(metadata.values());
     expect(
       expressions.some(
-        (expr) => expr.includes("{") || expr.includes("id") || expr.includes("name")
+        (expr) =>
+          expr.includes("{") || expr.includes("id") || expr.includes("name")
       )
     ).toBe(true);
   });
@@ -239,7 +240,9 @@ describe("Type Alias Extraction - TypeScript", () => {
     expect(metadata.size).toBeGreaterThanOrEqual(2);
     const expressions = Array.from(metadata.values());
     // Should have "User" as a type expression (not resolved to SymbolId)
-    expect(expressions.some((expr) => expr.includes("User") || expr.includes("{"))).toBe(true);
+    expect(
+      expressions.some((expr) => expr.includes("User") || expr.includes("{"))
+    ).toBe(true);
   });
 });
 
@@ -374,7 +377,8 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
     const expressions = Array.from(metadata.values());
     expect(
       expressions.some(
-        (expr) => expr.includes("Result") || expr.includes("T") || expr.includes("Box")
+        (expr) =>
+          expr.includes("Result") || expr.includes("T") || expr.includes("Box")
       )
     ).toBe(true);
   });

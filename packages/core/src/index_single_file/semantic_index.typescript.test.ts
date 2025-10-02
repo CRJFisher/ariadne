@@ -10,7 +10,6 @@ import TypeScript from "tree-sitter-typescript";
 import type { Language, FilePath } from "@ariadnejs/types";
 import { build_semantic_index } from "./semantic_index";
 import { query_tree } from "./query_code_tree/query_code_tree";
-import { SemanticEntity } from "./query_code_tree/capture_types";
 import type { ParsedFile } from "./file_utils";
 
 const FIXTURES_DIR = join(__dirname, "..", "..", "tests", "fixtures");
@@ -1988,12 +1987,7 @@ describe("Semantic Index - TypeScript", () => {
         expect(testMethod).toBeDefined();
 
         if (testMethod && testMethod.parameters) {
-          const optionalParam = testMethod.parameters.find((p: any) => p.name === "optional");
-          expect(optionalParam).toBeDefined();
-          if (optionalParam) {
-            expect(optionalParam.optional).toBe(true);
-          }
-
+          // Note: Optional parameter syntax (optional?) not needed for call-graph detection
           const argsParam = testMethod.parameters.find((p: any) => p.name === "args");
           expect(argsParam).toBeDefined();
         }

@@ -13,9 +13,9 @@ import TypeScript from "tree-sitter-typescript";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
 import type { Language, FilePath } from "@ariadnejs/types";
-import { build_semantic_index } from "../../semantic_index";
-import type { ParsedFile } from "../../file_utils";
-import { extract_type_members } from "../member_extraction";
+import { build_semantic_index } from "../semantic_index";
+import type { ParsedFile } from "../file_utils";
+import { extract_type_members } from "./member_extraction";
 
 // ============================================================================
 // Test Helpers
@@ -171,8 +171,8 @@ describe("Member Extraction - JavaScript", () => {
     // NOTE: semantic_index does not currently extract 'extends' for JavaScript classes
     // This test validates that member_extraction preserves the (empty) extends array
     const membersArray = Array.from(members.values());
-    expect(membersArray.every(m => m.extends !== undefined)).toBe(true);
-    expect(membersArray.every(m => Array.isArray(m.extends))).toBe(true);
+    expect(membersArray.every((m) => m.extends !== undefined)).toBe(true);
+    expect(membersArray.every((m) => Array.isArray(m.extends))).toBe(true);
   });
 });
 
@@ -317,7 +317,7 @@ describe("Member Extraction - TypeScript", () => {
     expect(members.size).toBeGreaterThan(0);
 
     const membersArray = Array.from(members.values());
-    expect(membersArray.every(m => m.extends !== undefined)).toBe(true);
+    expect(membersArray.every((m) => m.extends !== undefined)).toBe(true);
   });
 
   it("should handle static and instance methods", () => {
@@ -392,7 +392,7 @@ class User:
     const userMembers = Array.from(members.values())[0];
     expect(userMembers.methods.size).toBeGreaterThanOrEqual(2);
     const methodNames = Array.from(userMembers.methods.keys());
-    expect(methodNames.some(name => name.includes("get_name"))).toBe(true);
+    expect(methodNames.some((name) => name.includes("get_name"))).toBe(true);
   });
 
   it.skip("should extract class with __init__ constructor (SKIPPED: semantic_index does not extract Python class methods yet)", () => {

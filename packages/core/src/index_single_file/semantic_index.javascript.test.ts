@@ -10,7 +10,6 @@ import JavaScript from "tree-sitter-javascript";
 import type { Language, FilePath } from "@ariadnejs/types";
 import { build_semantic_index } from "./semantic_index";
 import { query_tree } from "./query_code_tree/query_code_tree";
-import { SemanticEntity } from "./query_code_tree/capture_types";
 import type { ParsedFile } from "./file_utils";
 
 const FIXTURES_DIR = join(__dirname, "..", "..", "tests", "fixtures");

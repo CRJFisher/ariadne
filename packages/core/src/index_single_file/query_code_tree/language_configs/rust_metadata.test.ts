@@ -362,12 +362,12 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should return undefined for null input", () => {
-      const result = RUST_METADATA_EXTRACTORS.extract_call_receiver(null, TEST_FILE);
+      const result = RUST_METADATA_EXTRACTORS.extract_call_receiver(null as any, TEST_FILE);
       expect(result).toBeUndefined();
     });
 
     it("should return undefined for undefined input", () => {
-      const result = RUST_METADATA_EXTRACTORS.extract_call_receiver(undefined, TEST_FILE);
+      const result = RUST_METADATA_EXTRACTORS.extract_call_receiver(undefined as any, TEST_FILE);
       expect(result).toBeUndefined();
     });
 
@@ -465,12 +465,12 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should handle null input", () => {
-      const result = RUST_METADATA_EXTRACTORS.extract_property_chain(null);
+      const result = RUST_METADATA_EXTRACTORS.extract_property_chain(null as any);
       expect(result).toBeUndefined();
     });
 
     it("should handle undefined input", () => {
-      const result = RUST_METADATA_EXTRACTORS.extract_property_chain(undefined);
+      const result = RUST_METADATA_EXTRACTORS.extract_property_chain(undefined as any);
       expect(result).toBeUndefined();
     });
 
@@ -616,13 +616,13 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should handle null input", () => {
-      const result = RUST_METADATA_EXTRACTORS.extract_assignment_parts(null, TEST_FILE);
+      const result = RUST_METADATA_EXTRACTORS.extract_assignment_parts(null as any, TEST_FILE);
       expect(result.target).toBeUndefined();
       expect(result.source).toBeUndefined();
     });
 
     it("should handle undefined input", () => {
-      const result = RUST_METADATA_EXTRACTORS.extract_assignment_parts(undefined, TEST_FILE);
+      const result = RUST_METADATA_EXTRACTORS.extract_assignment_parts(undefined as any, TEST_FILE);
       expect(result.target).toBeUndefined();
       expect(result.source).toBeUndefined();
     });
@@ -743,12 +743,12 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should handle null input", () => {
-      const result = RUST_METADATA_EXTRACTORS.extract_construct_target(null, TEST_FILE);
+      const result = RUST_METADATA_EXTRACTORS.extract_construct_target(null as any, TEST_FILE);
       expect(result).toBeUndefined();
     });
 
     it("should handle undefined input", () => {
-      const result = RUST_METADATA_EXTRACTORS.extract_construct_target(undefined, TEST_FILE);
+      const result = RUST_METADATA_EXTRACTORS.extract_construct_target(undefined as any, TEST_FILE);
       expect(result).toBeUndefined();
     });
 
@@ -883,12 +883,12 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should handle null input", () => {
-      const result = RUST_METADATA_EXTRACTORS.extract_type_arguments(null);
+      const result = RUST_METADATA_EXTRACTORS.extract_type_arguments(null as any);
       expect(result).toBeUndefined();
     });
 
     it("should handle undefined input", () => {
-      const result = RUST_METADATA_EXTRACTORS.extract_type_arguments(undefined);
+      const result = RUST_METADATA_EXTRACTORS.extract_type_arguments(undefined as any);
       expect(result).toBeUndefined();
     });
 

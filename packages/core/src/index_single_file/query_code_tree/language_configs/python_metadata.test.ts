@@ -668,52 +668,52 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("extract_call_receiver should handle null input", () => {
-      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(null, TEST_FILE);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(null as any, TEST_FILE);
       expect(result).toBeUndefined();
     });
 
     it("extract_call_receiver should handle undefined input", () => {
-      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(undefined, TEST_FILE);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(undefined as any, TEST_FILE);
       expect(result).toBeUndefined();
     });
 
     it("extract_property_chain should handle null input", () => {
-      const result = PYTHON_METADATA_EXTRACTORS.extract_property_chain(null);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_property_chain(null as any);
       expect(result).toBeUndefined();
     });
 
     it("extract_property_chain should handle undefined input", () => {
-      const result = PYTHON_METADATA_EXTRACTORS.extract_property_chain(undefined);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_property_chain(undefined as any);
       expect(result).toBeUndefined();
     });
 
     it("extract_assignment_parts should handle null input", () => {
-      const result = PYTHON_METADATA_EXTRACTORS.extract_assignment_parts(null, TEST_FILE);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_assignment_parts(null as any, TEST_FILE);
       expect(result).toEqual({ source: undefined, target: undefined });
     });
 
     it("extract_assignment_parts should handle undefined input", () => {
-      const result = PYTHON_METADATA_EXTRACTORS.extract_assignment_parts(undefined, TEST_FILE);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_assignment_parts(undefined as any, TEST_FILE);
       expect(result).toEqual({ source: undefined, target: undefined });
     });
 
     it("extract_construct_target should handle null input", () => {
-      const result = PYTHON_METADATA_EXTRACTORS.extract_construct_target(null, TEST_FILE);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_construct_target(null as any, TEST_FILE);
       expect(result).toBeUndefined();
     });
 
     it("extract_construct_target should handle undefined input", () => {
-      const result = PYTHON_METADATA_EXTRACTORS.extract_construct_target(undefined, TEST_FILE);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_construct_target(undefined as any, TEST_FILE);
       expect(result).toBeUndefined();
     });
 
     it("extract_type_arguments should handle null input", () => {
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(null);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(null as any);
       expect(result).toBeUndefined();
     });
 
     it("extract_type_arguments should handle undefined input", () => {
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(undefined);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(undefined as any);
       expect(result).toBeUndefined();
     });
   });

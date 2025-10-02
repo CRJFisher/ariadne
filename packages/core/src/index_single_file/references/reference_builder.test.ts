@@ -5,13 +5,12 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   ReferenceBuilder,
-  ReferenceKind,
   process_references,
   is_reference_capture,
 } from "./reference_builder";
 import type { ProcessingContext, CaptureNode } from "../semantic_index";
 import { SemanticCategory, SemanticEntity } from "../semantic_index";
-import type { Location, ScopeId, SymbolReference, TypeInfo, FilePath, SymbolName } from "@ariadnejs/types";
+import type { Location, ScopeId, TypeInfo, SymbolName, SymbolId } from "@ariadnejs/types";
 import { module_scope } from "@ariadnejs/types";
 import type { MetadataExtractors } from "../query_code_tree/language_configs/metadata_types";
 
@@ -473,7 +472,8 @@ describe("ReferenceBuilder", () => {
       const mockExtractors = create_mock_extractors({
         extract_type_from_annotation: vi.fn((node, file_path) => ({
           type_name: "string" as SymbolName,
-          certainty: "explicit" as const,
+          type_id: "type:string:test.ts:1:0" as SymbolId,
+          certainty: "declared" as const,
         })),
       });
 
@@ -569,7 +569,8 @@ describe("ReferenceBuilder", () => {
         extract_type_arguments: vi.fn((node) => typeArgs),
         extract_type_from_annotation: vi.fn((node, file_path) => ({
           type_name: "Map" as SymbolName,
-          certainty: "explicit" as const,
+          type_id: "type:Map:test.ts:1:0" as SymbolId,
+          certainty: "declared" as const,
         })),
       });
 
@@ -592,6 +593,7 @@ describe("ReferenceBuilder", () => {
       const propertyChain: SymbolName[] = ["obj", "method"] as SymbolName[];
       const typeInfo: TypeInfo = {
         type_name: "MyClass" as SymbolName,
+        type_id: "type:MyClass:test.ts:1:0" as SymbolId,
         certainty: "inferred" as const,
       };
 
@@ -665,7 +667,8 @@ describe("ReferenceBuilder", () => {
     it("should populate member_access for property references with extractors", () => {
       const typeInfo: TypeInfo = {
         type_name: "Array" as SymbolName,
-        certainty: "explicit" as const,
+        type_id: "type:Array:test.ts:1:0" as SymbolId,
+        certainty: "declared" as const,
       };
 
       const mockExtractors = create_mock_extractors({
@@ -690,7 +693,8 @@ describe("ReferenceBuilder", () => {
     it("should populate assignment_type for assignments with extractors", () => {
       const typeInfo: TypeInfo = {
         type_name: "number" as SymbolName,
-        certainty: "explicit" as const,
+        type_id: "type:number:test.ts:1:0" as SymbolId,
+        certainty: "declared" as const,
       };
 
       const mockExtractors = create_mock_extractors({
@@ -714,6 +718,7 @@ describe("ReferenceBuilder", () => {
     it("should populate return_type for return references with extractors", () => {
       const typeInfo: TypeInfo = {
         type_name: "Promise" as SymbolName,
+        type_id: "type:Promise:test.ts:1:0" as SymbolId,
         certainty: "inferred" as const,
       };
 

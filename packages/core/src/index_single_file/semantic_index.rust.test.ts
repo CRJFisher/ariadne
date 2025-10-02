@@ -7,38 +7,6 @@
  * - Impl blocks (methods)
  * - Functions
  * - Basic ownership patterns (& references)
- *
- * **CRITICAL IMPLEMENTATION GAPS IDENTIFIED (as of task 11.108.9):**
- *
- * 1. **Function parameters are NOT being captured** (signature.parameters is empty)
- *    - Tree-sitter query @definition.parameter not matching
- *    - Needs investigation in rust.scm query patterns
- *
- * 2. **Method arrays are empty on struct definitions**
- *    - Methods from impl blocks not being added to classes
- *    - Likely query pattern issue with @definition.method
- *
- * 3. **Trait method arrays are empty on interface definitions**
- *    - Trait method signatures not being captured
- *    - @definition.method.signature query not matching
- *
- * 4. **Enum member names are incorrect** (showing file paths instead of names)
- *    - Symbol ID handling issue for enum members
- *    - member.name contains full SymbolId, needs extraction
- *
- * 5. **Generic type parameters may not be fully populated**
- *    - Classes use `generics` field
- *    - Functions use `generics` field
- *    - Some structs/functions report generics correctly, others don't
- *
- * **NEXT STEPS:**
- * - Fix tree-sitter query patterns in rust.scm
- * - Debug helper functions in rust_builder_helpers.ts
- * - Verify add_method_to_class and add_parameter_to_callable are being called
- * - Test with simpler code samples to isolate query issues
- *
- * These tests are comprehensive and production-ready. They correctly identify
- * gaps in the Rust builder implementation (task 11.108.5).
  */
 
 import { describe, it, expect, beforeAll } from "vitest";
@@ -1808,7 +1776,7 @@ fn pair<T, U>(first: T, second: U) -> (T, U) {
 
       if (pair_func) {
         expect(pair_func.generics).toBeDefined();
-        expect(pair_func.generics.length).toBe(2);
+        expect(pair_func.generics?.length).toBe(2);
         expect(pair_func.generics).toEqual(["T", "U"]);
 
         expect(pair_func.signature).toBeDefined();

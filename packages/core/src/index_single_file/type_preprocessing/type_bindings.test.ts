@@ -16,9 +16,9 @@ import TypeScript from "tree-sitter-typescript";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
 import type { Language, FilePath } from "@ariadnejs/types";
-import { build_semantic_index } from "../../semantic_index";
-import type { ParsedFile } from "../../file_utils";
-import { extract_type_bindings } from "../type_bindings";
+import { build_semantic_index } from "../semantic_index";
+import type { ParsedFile } from "../file_utils";
+import { extract_type_bindings } from "./type_bindings";
 
 // ============================================================================
 // Test Helpers
