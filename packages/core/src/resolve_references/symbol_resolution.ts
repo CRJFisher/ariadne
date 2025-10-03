@@ -1,152 +1,147 @@
 /**
- * Symbol Resolution - Four-phase consolidated pipeline
+ * Symbol Resolution - On-demand scope-aware unified pipeline
  *
- * Resolves all symbol references through incremental phases:
- * 1. Import/Export Resolution - Cross-file symbol mapping
- * 2. Function Call Resolution - Direct function calls via lexical scope
- * 3. Type Resolution - **CONSOLIDATED (2024)**: Unified pipeline handling all 8 type features:
- *    - Data Collection, Type Registry, Inheritance Resolution
- *    - Type Members, Annotations, Tracking, Flow Analysis, Constructor Discovery
- * 4. Method/Constructor Resolution - Object-oriented call resolution
+ * Architecture:
+ * 1. Build scope resolver index (creates lazy resolver functions)
+ * 2. Create resolution cache (stores resolved symbol_ids)
+ * 3. Build type context (uses resolver index for type names)
+ * 4. Resolve all call types (on-demand with caching)
+ * 5. Combine results
  *
- * **Architectural Note**: Phase 3 consolidates previously scattered type resolution
- * functionality into a single, tested, coordinated pipeline for improved consistency
- * and maintainability.
+ * Resolution Flow:
+ * - Resolver index is lightweight (just closures)
+ * - Only referenced symbols are resolved
+ * - Cache is populated as resolutions occur
+ * - Type context uses resolver index for type name resolution
+ * - All resolvers share the same cache for consistency
  */
 
 import {
   type Location,
   type SymbolId,
   type FilePath,
-  type SymbolName,
   type LocationKey,
-  type ScopeId,
-  location_key,
   parse_location_key,
   AnyDefinition,
-  FunctionDefinition,
-  InterfaceDefinition,
-  ImportDefinition,
-  NamespaceDefinition,
-  VariableDefinition,
-  EnumDefinition,
-  ClassDefinition,
   ResolvedSymbols,
-  SymbolReference,
-  ConstructorDefinition,
   CallReference,
+  SymbolReference,
 } from "@ariadnejs/types";
 import { SemanticIndex } from "../index_single_file/semantic_index";
 
-// Temporary types - to be replaced by actual implementations in future tasks
-type ImportResolutionMap = Map<FilePath, Map<SymbolName, SymbolId>>;
-type FunctionResolutionMap = { function_calls: Map<LocationKey, SymbolId> };
-type MethodAndConstructorResolutionMap = {
-  method_calls: Map<LocationKey, SymbolId>;
-  constructor_calls: Map<LocationKey, SymbolId>;
-};
-type LocalTypeContext = Map<FilePath, Map<SymbolName, SymbolId>>;
-
-// Temporary stub implementations - to be replaced in future tasks
-function resolve_imports(params: { indices: ReadonlyMap<FilePath, SemanticIndex> }): ImportResolutionMap {
-  // Stub: Will be implemented in task-epic-11.109.3
-  return new Map();
-}
-
-function resolve_function_calls(
-  indices: ReadonlyMap<FilePath, SemanticIndex>,
-  imports: ImportResolutionMap
-): FunctionResolutionMap {
-  // Stub: Will be implemented in task-epic-11.109.5
-  return { function_calls: new Map() };
-}
-
-function build_local_type_context(
-  indices: ReadonlyMap<FilePath, SemanticIndex>,
-  imports: ImportResolutionMap
-): LocalTypeContext {
-  // Stub: Will be implemented in task-epic-11.109.4
-  return new Map();
-}
-
-function resolve_methods(
-  indices: ReadonlyMap<FilePath, SemanticIndex>,
-  imports: ImportResolutionMap,
-  local_types: LocalTypeContext
-): MethodAndConstructorResolutionMap {
-  // Stub: Will be implemented in task-epic-11.109.6 and task-epic-11.109.7
-  return {
-    method_calls: new Map(),
-    constructor_calls: new Map(),
-  };
-}
-
+import { build_scope_resolver_index } from "./scope_resolver_index/scope_resolver_index";
+import { create_resolution_cache } from "./resolution_cache/resolution_cache";
+import { build_type_context } from "./type_resolution/type_context";
+import {
+  resolve_function_calls,
+  resolve_method_calls,
+  resolve_constructor_calls,
+} from "./call_resolution";
 
 /**
  * Main entry point for symbol resolution
+ *
+ * Implements a five-phase pipeline:
+ * 1. Build scope resolver index (lightweight - just closures)
+ * 2. Create resolution cache (shared by all resolvers)
+ * 3. Build type context (uses resolver index + cache)
+ * 4. Resolve all call types (on-demand with caching)
+ * 5. Combine results into final output
+ *
+ * @param indices - Map of file_path → SemanticIndex for all files
+ * @returns ResolvedSymbols containing all resolved references and definitions
  */
-export function resolve_symbols(indices: ReadonlyMap<FilePath, SemanticIndex>): ResolvedSymbols {
+export function resolve_symbols(
+  indices: ReadonlyMap<FilePath, SemanticIndex>
+): ResolvedSymbols {
+  // Phase 1: Build scope resolver index (lightweight)
+  // Creates resolver functions: scope_id -> name -> resolver()
+  // Includes lazy import resolvers that follow export chains on-demand
+  const resolver_index = build_scope_resolver_index(indices);
 
-  // Phase 1: Resolve imports/exports
-  // Creates: file_path -> imported_name -> symbol_id
-  // TODO: check that symbol-names are only resolved to imports based on there being scope info i.e. local scope can shadow and override import
-  const imports = resolve_imports({ indices });
+  // Phase 2: Create resolution cache
+  // Stores on-demand resolutions: (scope_id, name) -> symbol_id
+  // Shared across all resolvers for consistency and performance
+  const cache = create_resolution_cache();
 
-  // Phase 2: Resolve function calls
-  // Creates: call_location -> function_symbol_id
-  // Using the implementation from function_resolution module
-  const functions = resolve_function_calls(indices, imports);
+  // Phase 3: Build type context
+  // Tracks variable types and type members
+  // Uses resolver_index + cache to resolve type names
+  const type_context = build_type_context(indices, resolver_index, cache);
 
-  // Phase 3: Build local type context
-  // Creates: local type context for method resolution
-  // This just tries to match local type information to global symbols (definitions).
-  // A more complete type tracking, required to resolve method calls would require significant work.
-  const local_types = build_local_type_context(indices, imports);
+  // Phase 4: Resolve all call types (on-demand with caching)
+  const function_calls = resolve_function_calls(indices, resolver_index, cache);
+  const method_calls = resolve_method_calls(
+    indices,
+    resolver_index,
+    cache,
+    type_context
+  );
+  const constructor_calls = resolve_constructor_calls(
+    indices,
+    resolver_index,
+    cache,
+    type_context
+  );
 
-  // Phase 4: Resolve methods and constructors
-  // Creates: method_call_location -> method_symbol_id
-  const methods = resolve_methods(indices, imports, local_types);
-
-  // Combine all resolutions
-  return combine_results(indices, functions, methods);
+  // Phase 5: Combine results
+  return combine_results(
+    indices,
+    function_calls,
+    method_calls,
+    constructor_calls
+  );
 }
 
 /**
- * Combine results from all phases
+ * Combine all resolution maps into final output
+ *
+ * Merges function, method, and constructor call resolutions into:
+ * - resolved_references: Map of location -> resolved symbol_id
+ * - references_to_symbol: Reverse map of symbol_id -> all reference locations
+ * - references: All call references from semantic indices
+ * - definitions: All callable definitions (functions, classes, methods, constructors)
+ *
+ * @param indices - All semantic indices
+ * @param function_calls - Resolved function call locations
+ * @param method_calls - Resolved method call locations
+ * @param constructor_calls - Resolved constructor call locations
+ * @returns Combined ResolvedSymbols output
  */
 function combine_results(
   indices: ReadonlyMap<FilePath, SemanticIndex>,
-  functions: FunctionResolutionMap,
-  methods: MethodAndConstructorResolutionMap
+  function_calls: Map<LocationKey, SymbolId>,
+  method_calls: Map<LocationKey, SymbolId>,
+  constructor_calls: Map<LocationKey, SymbolId>
 ): ResolvedSymbols {
-  // Merge all resolution maps
+  // Master map: any reference location -> resolved SymbolId
   const resolved_references = new Map<LocationKey, SymbolId>();
 
   // Add function calls
-  for (const [loc, id] of functions.function_calls) {
+  for (const [loc, id] of function_calls) {
     resolved_references.set(loc, id);
   }
 
   // Add method calls
-  for (const [loc, id] of methods.method_calls) {
+  for (const [loc, id] of method_calls) {
     resolved_references.set(loc, id);
   }
 
   // Add constructor calls
-  for (const [loc, id] of methods.constructor_calls) {
+  for (const [loc, id] of constructor_calls) {
     resolved_references.set(loc, id);
   }
 
-  // Build reverse map
+  // Build reverse map: SymbolId -> all locations that reference it
   const references_to_symbol = new Map<SymbolId, Location[]>();
-  for (const [loc, id] of resolved_references) {
-    const locs = references_to_symbol.get(id) || [];
-    locs.push(parse_location_key(loc));
-    references_to_symbol.set(id, locs);
+  for (const [loc_key, symbol_id] of resolved_references) {
+    const locs = references_to_symbol.get(symbol_id) || [];
+    locs.push(parse_location_key(loc_key));
+    references_to_symbol.set(symbol_id, locs);
   }
 
+  // Collect all call references
   const all_call_references: CallReference[] = [];
-
   for (const index of indices.values()) {
     // Filter for call-type references and convert to CallReference
     const call_refs = index.references
@@ -167,16 +162,16 @@ function combine_results(
     all_call_references.push(...call_refs);
   }
 
+  // Collect all callable definitions
   const callable_definitions = new Map<SymbolId, AnyDefinition>();
   for (const idx of indices.values()) {
-    // Collect all definition types from AnyDefinition union
     for (const [id, func] of idx.functions) {
       callable_definitions.set(id, func);
     }
     for (const [id, cls] of idx.classes) {
       callable_definitions.set(id, cls);
-      // Constructor is an array
-      if (cls.constructor) {
+      // Use Array.isArray to avoid JavaScript's object.constructor property
+      if (Array.isArray(cls.constructor)) {
         for (const ctor of cls.constructor) {
           callable_definitions.set(ctor.symbol_id, ctor);
         }
