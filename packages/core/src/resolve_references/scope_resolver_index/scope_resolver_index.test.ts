@@ -109,7 +109,7 @@ describe("Scope Resolver Index", () => {
       expect(var_def).toBeDefined();
 
       // Resolve in the scope where the variable is defined
-      const resolved = resolver_index.resolve(var_def!.scope_id, "myVar", cache);
+      const resolved = resolver_index.resolve(var_def!.scope_id, "myVar" as SymbolName, cache);
       expect(resolved).toBe(var_def!.symbol_id);
     });
 
@@ -140,7 +140,7 @@ function outer() {
 
       // Resolve 'x' in the scope where y is defined (inner function body scope)
       // This tests that inner scope can resolve symbols from outer scope
-      const resolved = resolver_index.resolve(y_var!.scope_id, "x", cache);
+      const resolved = resolver_index.resolve(y_var!.scope_id, "x" as SymbolName, cache);
       expect(resolved).toBe(x_var!.symbol_id);
     });
 
@@ -155,7 +155,7 @@ function outer() {
       const resolver_index = build_scope_resolver_index(indices);
       const cache = new TestResolutionCache();
 
-      const resolved = resolver_index.resolve(index.root_scope_id, "unknownSymbol", cache);
+      const resolved = resolver_index.resolve(index.root_scope_id, "unknownSymbol" as SymbolName, cache);
       expect(resolved).toBeNull();
     });
   });
@@ -189,11 +189,11 @@ function test() {
       const inner_x = sorted_vars[1];
 
       // Resolve in outer scope - should get outer x
-      const outer_resolved = resolver_index.resolve(outer_x.scope_id, "x", cache);
+      const outer_resolved = resolver_index.resolve(outer_x.scope_id, "x" as SymbolName, cache);
       expect(outer_resolved).toBe(outer_x.symbol_id);
 
       // Resolve in inner scope - should get inner x (shadowing)
-      const inner_resolved = resolver_index.resolve(inner_x.scope_id, "x", cache);
+      const inner_resolved = resolver_index.resolve(inner_x.scope_id, "x" as SymbolName, cache);
       expect(inner_resolved).toBe(inner_x.symbol_id);
     });
 
@@ -229,13 +229,13 @@ function level1() {
       const x3 = sorted_vars[2];
 
       // Test resolution at each level
-      const level1_resolved = resolver_index.resolve(x1.scope_id, "x", cache);
+      const level1_resolved = resolver_index.resolve(x1.scope_id, "x" as SymbolName, cache);
       expect(level1_resolved).toBe(x1.symbol_id);
 
-      const level2_resolved = resolver_index.resolve(x2.scope_id, "x", cache);
+      const level2_resolved = resolver_index.resolve(x2.scope_id, "x" as SymbolName, cache);
       expect(level2_resolved).toBe(x2.symbol_id);
 
-      const level3_resolved = resolver_index.resolve(x3.scope_id, "x", cache);
+      const level3_resolved = resolver_index.resolve(x3.scope_id, "x" as SymbolName, cache);
       expect(level3_resolved).toBe(x3.symbol_id);
     });
   });
@@ -267,10 +267,10 @@ function parent() {
       expect(child_var).toBeDefined();
 
       // Child scope can resolve both parent and child variables
-      const parent_resolved = resolver_index.resolve(child_var!.scope_id, "parentVar", cache);
+      const parent_resolved = resolver_index.resolve(child_var!.scope_id, "parentVar" as SymbolName, cache);
       expect(parent_resolved).toBe(parent_var!.symbol_id);
 
-      const child_resolved = resolver_index.resolve(child_var!.scope_id, "childVar", cache);
+      const child_resolved = resolver_index.resolve(child_var!.scope_id, "childVar" as SymbolName, cache);
       expect(child_resolved).toBe(child_var!.symbol_id);
     });
 
@@ -301,7 +301,7 @@ function grandparent() {
       expect(x_var).toBeDefined();
 
       // Child can resolve grandparent variable
-      const resolved = resolver_index.resolve(x_var!.scope_id, "gpVar", cache);
+      const resolved = resolver_index.resolve(x_var!.scope_id, "gpVar" as SymbolName, cache);
       expect(resolved).toBe(gp_var!.symbol_id);
     });
 
@@ -330,11 +330,11 @@ function grandparent() {
       expect(sibling2_scope).toBeDefined();
 
       // sibling1 cannot resolve y
-      const y_in_sibling1 = resolver_index.resolve(sibling1_scope!.scope_id, "y", cache);
+      const y_in_sibling1 = resolver_index.resolve(sibling1_scope!.id, "y" as SymbolName, cache);
       expect(y_in_sibling1).toBeNull();
 
       // sibling2 cannot resolve x
-      const x_in_sibling2 = resolver_index.resolve(sibling2_scope!.scope_id, "x", cache);
+      const x_in_sibling2 = resolver_index.resolve(sibling2_scope!.id, "x" as SymbolName, cache);
       expect(x_in_sibling2).toBeNull();
     });
   });
@@ -355,15 +355,15 @@ function grandparent() {
       expect(var_def).toBeDefined();
 
       // First resolution
-      const resolved1 = resolver_index.resolve(var_def!.scope_id, "x", cache);
+      const resolved1 = resolver_index.resolve(var_def!.scope_id, "x" as SymbolName, cache);
       expect(resolved1).toBe(var_def!.symbol_id);
 
       // Check cache
-      expect(cache.has(var_def!.scope_id, "x")).toBe(true);
-      expect(cache.get(var_def!.scope_id, "x")).toBe(var_def!.symbol_id);
+      expect(cache.has(var_def!.scope_id, "x" as SymbolName)).toBe(true);
+      expect(cache.get(var_def!.scope_id, "x" as SymbolName)).toBe(var_def!.symbol_id);
 
       // Second resolution should use cache
-      const resolved2 = resolver_index.resolve(var_def!.scope_id, "x", cache);
+      const resolved2 = resolver_index.resolve(var_def!.scope_id, "x" as SymbolName, cache);
       expect(resolved2).toBe(var_def!.symbol_id);
     });
 
@@ -395,12 +395,12 @@ function outer() {
       const inner_x = sorted_vars[1];
 
       // Resolve in both scopes
-      const outer_resolved = resolver_index.resolve(outer_x.scope_id, "x", cache);
-      const inner_resolved = resolver_index.resolve(inner_x.scope_id, "x", cache);
+      const outer_resolved = resolver_index.resolve(outer_x.scope_id, "x" as SymbolName, cache);
+      const inner_resolved = resolver_index.resolve(inner_x.scope_id, "x" as SymbolName, cache);
 
       // Both should be cached separately
-      expect(cache.has(outer_x.scope_id, "x")).toBe(true);
-      expect(cache.has(inner_x.scope_id, "x")).toBe(true);
+      expect(cache.has(outer_x.scope_id, "x" as SymbolName)).toBe(true);
+      expect(cache.has(inner_x.scope_id, "x" as SymbolName)).toBe(true);
 
       // And they should be different
       expect(outer_resolved).not.toBe(inner_resolved);
@@ -431,7 +431,7 @@ result = greet("World")
       const func_def = Array.from(index.functions.values()).find(f => f.name === "greet");
       expect(func_def).toBeDefined();
 
-      const resolved = resolver_index.resolve(func_def!.scope_id, "greet", cache);
+      const resolved = resolver_index.resolve(func_def!.scope_id, "greet" as SymbolName, cache);
       expect(resolved).toBe(func_def!.symbol_id);
     });
 
@@ -453,7 +453,7 @@ class Person:
       const class_def = Array.from(index.classes.values()).find(c => c.name === "Person");
       expect(class_def).toBeDefined();
 
-      const resolved = resolver_index.resolve(class_def!.scope_id, "Person", cache);
+      const resolved = resolver_index.resolve(class_def!.scope_id, "Person" as SymbolName, cache);
       expect(resolved).toBe(class_def!.symbol_id);
     });
   });
@@ -481,7 +481,7 @@ fn main() {
       const func_def = Array.from(index.functions.values()).find(f => f.name === "greet");
       expect(func_def).toBeDefined();
 
-      const resolved = resolver_index.resolve(func_def!.scope_id, "greet", cache);
+      const resolved = resolver_index.resolve(func_def!.scope_id, "greet" as SymbolName, cache);
       expect(resolved).toBe(func_def!.symbol_id);
     });
 
@@ -508,7 +508,7 @@ fn main() {
       const class_def = Array.from(index.classes.values()).find(c => c.name === "Point");
       expect(class_def).toBeDefined();
 
-      const resolved = resolver_index.resolve(class_def!.scope_id, "Point", cache);
+      const resolved = resolver_index.resolve(class_def!.scope_id, "Point" as SymbolName, cache);
       expect(resolved).toBe(class_def!.symbol_id);
     });
   });
@@ -529,7 +529,7 @@ fn main() {
       // The resolver should be created but not yet executed
       // We can verify this by checking resolution works
       const cache = new TestResolutionCache();
-      const resolved = resolver_index.resolve(index.root_scope_id, "x", cache);
+      const resolved = resolver_index.resolve(index.root_scope_id, "x" as SymbolName, cache);
 
       expect(resolved).toBeDefined();
     });
