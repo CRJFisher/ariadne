@@ -7,10 +7,12 @@
 **Summary:** Fixed three bugs blocking TypeScript interface method parameter extraction:
 
 1. **Interface Method Generics Not Stored**
+
    - Fixed `add_method_signature_to_interface()` in `definition_builder.ts` to store generics
    - Added `generics: definition.generics` to method base object (line 548)
 
 2. **Nested Function Type Parameters Incorrectly Captured**
+
    - Added `is_parameter_in_function_type()` helper in `typescript_builder.ts` (lines 572-596)
    - Updated all parameter handlers to skip parameters inside function_type nodes
    - Prevents capturing type signature parameters as actual method parameters
@@ -21,11 +23,13 @@
    - We don't implement type inference from initial values (only explicit annotations)
 
 **Impact:**
+
 - All 38 TypeScript semantic index tests pass
 - Interface methods with generic type parameters now work correctly
 - Function type parameters in type annotations no longer create spurious parameter definitions
 
 **Files Modified:**
+
 - `packages/core/src/index_single_file/definitions/definition_builder.ts`
 - `packages/core/src/index_single_file/query_code_tree/language_configs/typescript_builder.ts`
 - `packages/core/src/index_single_file/query_code_tree/language_configs/typescript_builder_config.ts`
@@ -101,3 +105,8 @@
 - update the relevant `language_configs/<language>_builder.ts` file to match the new capture names.
 - add tests to `language_configs/<language>_builder.test.ts` to verify that the new capture names are parsed correctly.
 - _if_ the capture is adding a new property to a target object, we need to make sure there is a plan for _using_ it in the downstream processing, typically in the `packages/core/src/resolve_references` module.
+
+## 3rd party function calls
+
+- How does our call-graph detection handle function references being passed to 3rd party functions which call them? E.g. pd.DataFrame.pipe(our_function_def) - `our_function_def` wouldn't be marked as being called but it certainly is.
+  - Maybe we could treat function references being passed to 3rd party functions which call them as a special case. We could assume they are called and treat them as such.
