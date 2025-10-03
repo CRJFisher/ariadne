@@ -52,27 +52,8 @@ export * from "./symbol_definitions";
 export * from "./scopes";
 
 // Export definition types
-export {
-  SymbolAvailability,
-  Definition,
-  FunctionDefinition,
-  ClassDefinition,
-  MethodDefinition,
-  PropertyDefinition,
-  ParameterDefinition,
-  InterfaceDefinition,
-  EnumDefinition,
-  VariableDefinition,
-  ImportDefinition,
-  NamespaceDefinition,
-  TypeAliasDefinition,
-  AnyDefinition,
-  // Type aliases and other types
-  ParameterName,
-  FunctionSignature,
-  PropertySignature,
-  EnumMember,
-} from "./symbol_definitions";
+export * from "./symbol_definitions";
+export * from "./symbol_references";
 export * from "./errors";
 
 // Export TypeInfo from semantic_index (the new one with TypeId)
