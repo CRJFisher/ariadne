@@ -1,6 +1,6 @@
 # Task epic-11.117: Fix Python Module Path Resolution for Cross-File Imports
 
-**Status**: Done
+**Status**: Completed
 **Priority**: Medium
 **Depends On**: None
 **Blocks**: Enabling 13 Python integration tests
@@ -33,10 +33,12 @@ Work on these in order: 117.1 → 117.2 → 117.3
 - Tests verify both package-based and standalone script scenarios
 
 **117.3 - Integration Test Validation** (Completed 2025-10-03)
-- Enabled 2 integration tests (removed `.todo()`)
-- Fixed test data issue: corrected import_path from resolved path to raw Python import string
-- Both tests passing: bare module import and relative import
-- Documented test data format requirements for future test enablement
+- Enabled 5 integration tests (removed `.todo()`)
+- Fixed test data issues: corrected import_path from resolved paths to raw Python import strings
+- Fixed file path issues: changed to absolute paths
+- Fixed availability: changed to `file-export` for importable symbols
+- All 6 tests now passing (1 pre-existing + 5 newly enabled)
+- Documented test data format requirements and blockers for remaining 8 tests
 
 ## Problem Statement
 
@@ -289,29 +291,46 @@ const result = found_any_package
 
 ### Test Coverage Summary
 
-**Unit Tests**: 18/18 passing ✅
-- 13 existing package-based tests
-- 5 new standalone script tests (debug script)
+**Unit Tests**: 63/63 passing ✅
+- All existing package-based tests
+- Additional standalone script tests
+- Comprehensive coverage of all import scenarios
 
-**Integration Tests**: 3/14 passing ✅ (2 newly enabled)
+**Integration Tests**: 6/14 passing ✅ (5 newly enabled)
 - ✅ resolves local function call (pre-existing)
 - ✅ resolves imported function call (bare module import)
 - ✅ resolves function from relative import (relative import with `.`)
+- ✅ resolves single-dot relative import (same directory)
+- ✅ resolves double-dot relative import (parent directory)
+- ✅ resolves nested package import
 
-**Remaining**: 11 tests still disabled (require type tracking and inheritance resolution)
+**Remaining**: 8 tests still disabled (require type tracking, type references, and re-export chaining)
 
 ### Integration Tests Now Passing
 
-**Test 1: "resolves imported function call"**
+**Test 1: "resolves imported function call"** (line 187)
 - Tests bare module imports: `from helper import process`
 - Status: PASSED on first run after fix
-- File: `symbol_resolution.python.test.ts:187`
 
-**Test 2: "resolves function from relative import"**
+**Test 2: "resolves function from relative import"** (line 313)
 - Tests relative imports: `from .helper import process`
-- Status: PASSED after fixing test data (import_path)
-- File: `symbol_resolution.python.test.ts:313`
-- Fix: Changed `import_path: "utils/helper.py"` → `import_path: ".helper"` (line 411)
+- Status: PASSED after fixing test data
+- Fix: Changed `import_path: "utils/helper.py"` → `import_path: ".helper"`
+
+**Test 3: "resolves single-dot relative import"** (line 1212)
+- Tests single-dot relative: `from .helper import process`
+- Status: PASSED after fixing file paths and import_path
+- Fix: Changed to absolute paths and corrected import_path to `.helper`
+
+**Test 4: "resolves double-dot relative import"** (line 1339)
+- Tests double-dot relative: `from ..models.user import User`
+- Status: PASSED after fixing file paths and import_path
+- Fix: Changed to absolute paths and corrected import_path to `..models.user`
+
+**Test 5: "resolves nested package import"** (line 1785)
+- Tests dotted absolute: `from app.services.auth.handler import handle_login`
+- Status: PASSED after fixing file paths and import_path
+- Fix: Changed to absolute paths and corrected import_path to `app.services.auth.handler`
 
 ### What Works Now
 
@@ -342,16 +361,13 @@ const result = found_any_package
 
 ### Follow-on Work Needed
 
-**Immediate**:
-- Fix import_path test data in remaining .todo() tests (lines 1310, 1697)
-- Document test data format requirements
+**For Remaining 8 Tests**:
+- **Method calls (4 tests)**: Requires type tracking integration to resolve receiver types
+- **Type references (1 test)**: Requires support for `type: "type"` references in symbol_resolution.ts
+- **Re-export chaining (1 test)**: Requires multi-hop import resolution through `__init__.py`
+- **Complex scenarios (2 tests)**: Requires combination of above features
 
-**Medium-term**:
-- Enable method call tests (requires type tracking integration)
-- Enable inheritance tests (requires type hierarchy walking)
-- Enable package import tests (verify `__init__.py` handling)
-
-**Long-term**:
+**Long-term Enhancements**:
 - Consider caching project root per directory (performance)
 - Add support for `PYTHONPATH` environment variable
 - Add support for namespace packages (PEP 420)
@@ -468,14 +484,18 @@ const result = found_any_package
 
 **Test Results**
 
-Unit Tests: **18/18 passing** ✅
-- 13 existing package-based tests (backward compatibility verified)
-- 5 new standalone script tests
+Unit Tests: **63/63 passing** ✅
+- All existing package-based tests (backward compatibility verified)
+- Additional standalone script tests
+- Comprehensive coverage of all import scenarios
 
-Integration Tests: **3/14 passing** ✅ (2 newly enabled)
+Integration Tests: **6/14 passing** ✅ (5 newly enabled)
 - ✅ `resolves imported function call` (bare module import: `from helper import process`)
 - ✅ `resolves function from relative import` (relative import: `from .helper import process`)
-- ⚠️ 11 tests remain disabled (require type tracking and inheritance resolution)
+- ✅ `resolves single-dot relative import` (same directory: `from .helper import process`)
+- ✅ `resolves double-dot relative import` (parent directory: `from ..models.user import User`)
+- ✅ `resolves nested package import` (dotted absolute: `from app.services.auth.handler import handle_login`)
+- ⚠️ 8 tests remain disabled (require type tracking, type references, and re-export chaining)
 
 **Impact**
 
@@ -499,12 +519,13 @@ Integration Tests: **3/14 passing** ✅ (2 newly enabled)
 **Follow-on Work**
 
 Immediate:
-- Fix test data format in remaining `.todo()` integration tests
+- None - all achievable goals completed
 
 Medium-term:
-- Enable method call tests (requires type tracking integration)
-- Enable inheritance tests (requires type hierarchy walking)
-- Enable package import tests (verify advanced `__init__.py` scenarios)
+- Enable method call tests (4 tests) - requires type tracking integration
+- Enable type reference test (1 test) - requires type reference resolution support
+- Enable re-export test (1 test) - requires __init__.py re-export chaining
+- Enable complex scenario tests (2 tests) - requires combination of above features
 
 Long-term:
 - Cache project root per directory (performance optimization)
@@ -521,7 +542,7 @@ npm test -- import_resolver.python.test.ts --run
 # Run integration tests
 npm test -- symbol_resolution.python.test.ts --run
 
-# Expected: 18 unit tests pass, 3 integration tests pass
+# Expected: 63 unit tests pass, 6 integration tests pass (8 todo)
 ```
 
 **References**
