@@ -273,7 +273,7 @@ function build_resolvers_recursive(
 function find_local_definitions(
   scope_id: ScopeId,
   index: SemanticIndex
-): Map<SymbolName, SymbolId> {
+): ReadonlyMap<SymbolName, SymbolId> {
   const defs = new Map<SymbolName, SymbolId>();
 
   // Functions

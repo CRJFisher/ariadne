@@ -51,14 +51,13 @@ import type {
   MethodDefinition,
   VariableDefinition,
   ImportDefinition,
-  ExportDefinition,
-  SemanticIndex,
-  TypeBinding,
   TypeMemberInfo,
   ModulePath,
   LocationKey,
+  Export,
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
+import type { SemanticIndex } from "../index_single_file/semantic_index";
 
 // ============================================================================
 // Test Helper: Create Minimal Semantic Index
@@ -74,8 +73,7 @@ function create_test_index(
     references?: SymbolReference[];
     root_scope_id?: ScopeId;
     imports?: Map<SymbolId, ImportDefinition>;
-    exports?: ExportDefinition[];
-    type_bindings?: Map<LocationKey, TypeBinding>;
+    type_bindings?: Map<LocationKey, SymbolName>;
     type_members?: Map<SymbolId, TypeMemberInfo>;
   } = {}
 ): SemanticIndex {
@@ -93,12 +91,10 @@ function create_test_index(
     namespaces: new Map(),
     types: new Map(),
     imported_symbols: options.imports || new Map(),
-    exported_symbols: options.exports || [],
     references: options.references || [],
     symbols_by_name: new Map(),
     type_bindings: options.type_bindings || new Map(),
     type_members: options.type_members || new Map(),
-    constructors: new Map(),
     type_alias_metadata: new Map(),
   };
 }
@@ -226,17 +222,13 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 30,
               },
-              parameters: [],
+              availability: { scope: "file-export" },
+              signature: {
+                parameters: [],
+              },
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "helper" as SymbolName,
-            local_symbol_id: helper_id,
-          },
-        ],
       });
 
       // main.rs: use crate::utils::helper; fn main() { helper(); }
@@ -290,6 +282,7 @@ describe("Rust Symbol Resolution Integration", () => {
               import_path: "utils.rs" as ModulePath,
               import_kind: "named",
               original_name: undefined,
+              availability: { scope: "file-private" },
             },
           ],
         ]),
@@ -358,17 +351,13 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 30,
               },
-              parameters: [],
+              availability: { scope: "file-export" },
+              signature: {
+                parameters: [],
+              },
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "helper" as SymbolName,
-            local_symbol_id: helper_id,
-          },
-        ],
       });
 
       // main.rs: fn main() { crate::utils::helper(); }
@@ -470,17 +459,13 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 32,
               },
-              parameters: [],
+              availability: { scope: "file-export" },
+              signature: {
+                parameters: [],
+              },
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "process" as SymbolName,
-            local_symbol_id: process_id,
-          },
-        ],
       });
 
       // main.rs: use crate::utils::process; fn main() { process(); }
@@ -534,6 +519,7 @@ describe("Rust Symbol Resolution Integration", () => {
               import_path: "utils.rs" as ModulePath,
               import_kind: "named",
               original_name: undefined,
+              availability: { scope: "file-private" },
             },
           ],
         ]),
@@ -602,18 +588,15 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 40,
               },
+              availability: { scope: "file-export" },
+              extends: [],
+              decorators: [],
+              constructor: undefined,
               methods: [],
               properties: [],
-            },
+            } as ClassDefinition,
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "User" as SymbolName,
-            local_symbol_id: user_struct_id,
-          },
-        ],
       });
 
       // services/user_service.rs: use super::models::user::User; pub fn create_user() -> User { User { name: String::from("test") } }
@@ -667,6 +650,7 @@ describe("Rust Symbol Resolution Integration", () => {
               import_path: "models/user.rs" as ModulePath,
               import_kind: "named",
               original_name: undefined,
+              availability: { scope: "file-private" },
             },
           ],
         ]),
@@ -678,7 +662,7 @@ describe("Rust Symbol Resolution Integration", () => {
             location: user_call_location,
             scope_id: service_scope,
             context: {
-              construct_target: "User" as SymbolName,
+              construct_target: user_call_location,
             },
           },
         ],
@@ -745,7 +729,10 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 38,
               },
-              parameters: [],
+              availability: { scope: "file-export" },
+              signature: {
+                parameters: [],
+              },
             },
           ],
         ]),
@@ -823,6 +810,10 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 30,
               },
+              availability: { scope: "file-export" },
+              extends: [],
+              decorators: [],
+              constructor: undefined,
               methods: [
                 {
                   kind: "method",
@@ -836,12 +827,12 @@ describe("Rust Symbol Resolution Integration", () => {
                     end_line: 1,
                     end_column: 80,
                   },
+                  availability: { scope: "file-export" },
                   parameters: [],
-                  parent_class: user_struct_id,
                 },
               ],
               properties: [],
-            },
+            } as ClassDefinition,
           ],
         ]),
         type_members: new Map([
@@ -863,9 +854,7 @@ describe("Rust Symbol Resolution Integration", () => {
             name: "new" as SymbolName,
             location: call_location,
             scope_id: module_scope,
-            context: {
-              receiver_name: "User" as SymbolName,
-            },
+            context: {},
           },
         ],
       });
@@ -923,6 +912,10 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 30,
               },
+              availability: { scope: "file-export" },
+              extends: [],
+              decorators: [],
+              constructor: undefined,
               methods: [
                 {
                   kind: "method",
@@ -936,8 +929,8 @@ describe("Rust Symbol Resolution Integration", () => {
                     end_line: 1,
                     end_column: 85,
                   },
+                  availability: { scope: "file-export" },
                   parameters: [],
-                  parent_class: user_struct_id,
                 },
                 {
                   kind: "method",
@@ -951,12 +944,12 @@ describe("Rust Symbol Resolution Integration", () => {
                     end_line: 1,
                     end_column: 135,
                   },
+                  availability: { scope: "file-export" },
                   parameters: [],
-                  parent_class: user_struct_id,
                 },
               ],
               properties: [],
-            },
+            } as ClassDefinition,
           ],
         ]),
         type_members: new Map([
@@ -974,13 +967,6 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "User" as SymbolName,
-            local_symbol_id: user_struct_id,
-          },
-        ],
       });
 
       // main.rs: use crate::user::User; fn main() { let user = User::new(String::from("Alice")); let name = user.get_name(); }
@@ -1042,6 +1028,7 @@ describe("Rust Symbol Resolution Integration", () => {
               import_path: "user.rs" as ModulePath,
               import_kind: "named",
               original_name: undefined,
+              availability: { scope: "file-private" },
             },
           ],
         ]),
@@ -1060,6 +1047,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 2,
                 end_column: 12,
               },
+              availability: { scope: "file-private" },
             },
           ],
         ]),
@@ -1072,12 +1060,7 @@ describe("Rust Symbol Resolution Integration", () => {
               end_line: 2,
               end_column: 12,
             }),
-            {
-              symbol_id: user_var_id,
-              type_name: "User" as SymbolName,
-              type_scope_id: main_scope,
-              binding_type: "constructor",
-            },
+            "User" as SymbolName,
           ],
         ]),
         references: [
@@ -1087,9 +1070,7 @@ describe("Rust Symbol Resolution Integration", () => {
             name: "new" as SymbolName,
             location: new_call_location,
             scope_id: main_scope,
-            context: {
-              receiver_name: "User" as SymbolName,
-            },
+            context: {},
           },
           {
             type: "call",
@@ -1105,7 +1086,6 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 3,
                 end_column: 21,
               },
-              receiver_name: "user" as SymbolName,
             },
           },
         ],
@@ -1157,13 +1137,6 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "Display" as SymbolName,
-            local_symbol_id: display_trait_id,
-          },
-        ],
       });
 
       // user.rs: use crate::traits::Display; pub struct User { name: String } impl Display for User { fn display(&self) -> String { self.name.clone() } }
@@ -1209,6 +1182,10 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 70,
               },
+              availability: { scope: "file-export" },
+              extends: [],
+              decorators: [],
+              constructor: undefined,
               methods: [
                 {
                   kind: "method",
@@ -1222,12 +1199,12 @@ describe("Rust Symbol Resolution Integration", () => {
                     end_line: 1,
                     end_column: 135,
                   },
+                  availability: { scope: "file-export" },
                   parameters: [],
-                  parent_class: user_struct_id,
                 },
               ],
               properties: [],
-            },
+            } as ClassDefinition,
           ],
         ]),
         type_members: new Map([
@@ -1242,13 +1219,6 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "User" as SymbolName,
-            local_symbol_id: user_struct_id,
-          },
-        ],
       });
 
       // main.rs: use crate::user::User; use crate::traits::Display; fn main() { let user = User { name: String::from("Alice") }; let text = user.display(); }
@@ -1302,6 +1272,7 @@ describe("Rust Symbol Resolution Integration", () => {
               import_path: "user.rs" as ModulePath,
               import_kind: "named",
               original_name: undefined,
+              availability: { scope: "file-private" },
             },
           ],
         ]),
@@ -1312,9 +1283,7 @@ describe("Rust Symbol Resolution Integration", () => {
             name: "display" as SymbolName,
             location: display_call_location,
             scope_id: main_scope,
-            context: {
-              receiver_name: "user" as SymbolName,
-            },
+            context: {},
           },
         ],
       });
@@ -1378,17 +1347,13 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 30,
               },
-              parameters: [],
+              availability: { scope: "file-export" },
+              signature: {
+                parameters: [],
+              },
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "helper" as SymbolName,
-            local_symbol_id: helper_id,
-          },
-        ],
       });
 
       // main.rs: mod utils; use utils::helper; fn main() { helper(); }
@@ -1442,6 +1407,7 @@ describe("Rust Symbol Resolution Integration", () => {
               import_path: "utils.rs" as ModulePath,
               import_kind: "named",
               original_name: undefined,
+              availability: { scope: "file-private" },
             },
           ],
         ]),
@@ -1510,17 +1476,13 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 30,
               },
-              parameters: [],
+              availability: { scope: "file-export" },
+              signature: {
+                parameters: [],
+              },
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "helper" as SymbolName,
-            local_symbol_id: helper_id,
-          },
-        ],
       });
 
       // main.rs: use crate::utils::helper; fn main() { helper(); }
@@ -1574,6 +1536,7 @@ describe("Rust Symbol Resolution Integration", () => {
               import_path: "utils/mod.rs" as ModulePath,
               import_kind: "named",
               original_name: undefined,
+              availability: { scope: "file-private" },
             },
           ],
         ]),
@@ -1642,17 +1605,13 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 45,
               },
-              parameters: [],
+              availability: { scope: "file-export" },
+              signature: {
+                parameters: [],
+              },
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "trim" as SymbolName,
-            local_symbol_id: trim_id,
-          },
-        ],
       });
 
       // utils/mod.rs: pub mod string;
@@ -1733,6 +1692,7 @@ describe("Rust Symbol Resolution Integration", () => {
               import_path: "utils/string/mod.rs" as ModulePath,
               import_kind: "named",
               original_name: undefined,
+              availability: { scope: "file-private" },
             },
           ],
         ]),
@@ -1790,13 +1750,6 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "Processor" as SymbolName,
-            local_symbol_id: processor_trait_id,
-          },
-        ],
       });
 
       // processor.rs: use crate::traits::Processor; pub struct DataProcessor; impl Processor for DataProcessor { fn process(&self) -> i32 { 42 } }
@@ -1843,6 +1796,10 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 65,
               },
+              availability: { scope: "file-export" },
+              extends: [],
+              decorators: [],
+              constructor: undefined,
               methods: [
                 {
                   kind: "method",
@@ -1856,12 +1813,12 @@ describe("Rust Symbol Resolution Integration", () => {
                     end_line: 1,
                     end_column: 120,
                   },
+                  availability: { scope: "file-export" },
                   parameters: [],
-                  parent_class: data_processor_id,
                 },
               ],
               properties: [],
-            },
+            } as ClassDefinition,
           ],
         ]),
         type_members: new Map([
@@ -1876,13 +1833,6 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "DataProcessor" as SymbolName,
-            local_symbol_id: data_processor_id,
-          },
-        ],
       });
 
       // main.rs: use crate::processor::DataProcessor; fn main() { let dp = DataProcessor; dp.process(); }
@@ -1936,6 +1886,7 @@ describe("Rust Symbol Resolution Integration", () => {
               import_path: "processor.rs" as ModulePath,
               import_kind: "named",
               original_name: undefined,
+              availability: { scope: "file-private" },
             },
           ],
         ]),
@@ -1946,9 +1897,7 @@ describe("Rust Symbol Resolution Integration", () => {
             name: "process" as SymbolName,
             location: process_call_location,
             scope_id: main_scope,
-            context: {
-              receiver_name: "dp" as SymbolName,
-            },
+            context: {},
           },
         ],
       });
@@ -1997,13 +1946,6 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "Logger" as SymbolName,
-            local_symbol_id: logger_trait_id,
-          },
-        ],
       });
 
       // service.rs: use crate::traits::Logger; pub struct Service; impl Logger for Service {}
@@ -2047,18 +1989,15 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 55,
               },
+              availability: { scope: "file-export" },
+              extends: [],
+              decorators: [],
+              constructor: undefined,
               methods: [],
               properties: [],
-            },
+            } as ClassDefinition,
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "Service" as SymbolName,
-            local_symbol_id: service_struct_id,
-          },
-        ],
       });
 
       // main.rs: use crate::service::Service; use crate::traits::Logger; fn main() { let s = Service; s.log("test"); }
@@ -2112,6 +2051,7 @@ describe("Rust Symbol Resolution Integration", () => {
               import_path: "service.rs" as ModulePath,
               import_kind: "named",
               original_name: undefined,
+              availability: { scope: "file-private" },
             },
           ],
         ]),
@@ -2122,9 +2062,7 @@ describe("Rust Symbol Resolution Integration", () => {
             name: "log" as SymbolName,
             location: log_call_location,
             scope_id: main_scope,
-            context: {
-              receiver_name: "s" as SymbolName,
-            },
+            context: {},
           },
         ],
       });
@@ -2192,6 +2130,10 @@ describe("Rust Symbol Resolution Integration", () => {
                   end_line: 1,
                   end_column: 35,
                 },
+                availability: { scope: "file-export" },
+                extends: [],
+                decorators: [],
+                constructor: undefined,
                 methods: [
                   {
                     kind: "method",
@@ -2205,8 +2147,8 @@ describe("Rust Symbol Resolution Integration", () => {
                       end_line: 1,
                       end_column: 85,
                     },
+                    availability: { scope: "file-export" },
                     parameters: [],
-                    parent_class: user_struct_id,
                   },
                   {
                     kind: "method",
@@ -2220,12 +2162,12 @@ describe("Rust Symbol Resolution Integration", () => {
                       end_line: 1,
                       end_column: 135,
                     },
+                    availability: { scope: "file-export" },
                     parameters: [],
-                    parent_class: user_struct_id,
                   },
                 ],
                 properties: [],
-              },
+              } as ClassDefinition,
             ],
           ]),
           type_members: new Map([
@@ -2243,13 +2185,6 @@ describe("Rust Symbol Resolution Integration", () => {
               },
             ],
           ]),
-          exports: [
-            {
-              export_type: "named",
-              exported_name: "User" as SymbolName,
-              local_symbol_id: user_struct_id,
-            },
-          ],
         });
 
         // repositories/user_repository.rs: use crate::models::user::User; pub struct UserRepository; impl UserRepository { pub fn create_user(&self, name: String) -> User { User::new(name) } }
@@ -2297,6 +2232,10 @@ describe("Rust Symbol Resolution Integration", () => {
                   end_line: 1,
                   end_column: 60,
                 },
+                availability: { scope: "file-export" },
+                extends: [],
+                decorators: [],
+                constructor: undefined,
                 methods: [
                   {
                     kind: "method",
@@ -2310,12 +2249,12 @@ describe("Rust Symbol Resolution Integration", () => {
                       end_line: 1,
                       end_column: 130,
                     },
+                    availability: { scope: "file-export" },
                     parameters: [],
-                    parent_class: repo_struct_id,
                   },
                 ],
                 properties: [],
-              },
+              } as ClassDefinition,
             ],
           ]),
           type_members: new Map([
@@ -2345,16 +2284,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_column: 125,
               },
               scope_id: repository_scope,
-              context: {
-                receiver_name: "User" as SymbolName,
-              },
-            },
-          ],
-          exports: [
-            {
-              export_type: "named",
-              exported_name: "UserRepository" as SymbolName,
-              local_symbol_id: repo_struct_id,
+              context: {},
             },
           ],
         });
@@ -2404,6 +2334,10 @@ describe("Rust Symbol Resolution Integration", () => {
                   end_line: 1,
                   end_column: 95,
                 },
+                availability: { scope: "file-export" },
+                extends: [],
+                decorators: [],
+                constructor: undefined,
                 methods: [
                   {
                     kind: "method",
@@ -2417,12 +2351,12 @@ describe("Rust Symbol Resolution Integration", () => {
                       end_line: 1,
                       end_column: 210,
                     },
+                    availability: { scope: "file-export" },
                     parameters: [],
-                    parent_class: service_struct_id,
                   },
                 ],
                 properties: [],
-              },
+              } as ClassDefinition,
             ],
           ]),
           type_members: new Map([
@@ -2452,9 +2386,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_column: 180,
               },
               scope_id: service_scope,
-              context: {
-                receiver_name: "repo" as SymbolName,
-              },
+              context: {},
             },
             {
               type: "call",
@@ -2468,16 +2400,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_column: 205,
               },
               scope_id: service_scope,
-              context: {
-                receiver_name: "user" as SymbolName,
-              },
-            },
-          ],
-          exports: [
-            {
-              export_type: "named",
-              exported_name: "UserService" as SymbolName,
-              local_symbol_id: service_struct_id,
+              context: {},
             },
           ],
         });
@@ -2534,6 +2457,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 import_path: "services/user_service.rs" as ModulePath,
                 import_kind: "named",
                 original_name: undefined,
+                availability: { scope: "file-private" },
               },
             ],
           ]),
@@ -2544,9 +2468,7 @@ describe("Rust Symbol Resolution Integration", () => {
               name: "register_user" as SymbolName,
               location: register_user_call_location,
               scope_id: main_scope,
-              context: {
-                receiver_name: "service" as SymbolName,
-              },
+              context: {},
             },
           ],
         });
@@ -2633,13 +2555,6 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "Processable" as SymbolName,
-            local_symbol_id: processable_trait_id,
-          },
-        ],
       });
 
       // item.rs: use crate::traits::Processable; pub struct Item; impl Processable for Item { fn process(&self) -> String { String::from("processed") } }
@@ -2688,6 +2603,7 @@ describe("Rust Symbol Resolution Integration", () => {
               availability: { scope: "file-export" },
               extends: [],
               decorators: [],
+              constructor: undefined,
               methods: [
                 {
                   kind: "method",
@@ -2703,7 +2619,6 @@ describe("Rust Symbol Resolution Integration", () => {
                   },
                   availability: { scope: "file-export" },
                   parameters: [],
-                  parent_class: item_struct_id,
                 },
               ],
               properties: [],
@@ -2722,13 +2637,6 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "Item" as SymbolName,
-            local_symbol_id: item_struct_id,
-          },
-        ],
       });
 
       // processor.rs: use crate::traits::Processable; pub fn run_process<T: Processable>(item: &T) -> String { item.process() }

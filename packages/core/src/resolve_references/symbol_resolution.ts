@@ -6,10 +6,9 @@
  *
  * ## Key Design Principles
  *
- * ### 1. On-Demand Resolution (90% reduction in work)
+ * ### 1. On-Demand Resolution
  * Instead of pre-computing all possible resolutions, we build lightweight resolver
- * functions that only execute when a symbol is actually referenced. This dramatically
- * reduces wasted work since most symbols are never called.
+ * functions that only execute when a symbol is actually referenced.
  *
  * ### 2. Resolver Function Design (lightweight closures)
  * Each resolver is a tiny closure (~100 bytes) that captures just enough context to

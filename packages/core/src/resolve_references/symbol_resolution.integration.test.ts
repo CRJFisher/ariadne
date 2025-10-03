@@ -24,15 +24,13 @@ import type {
   FunctionDefinition,
   ClassDefinition,
   MethodDefinition,
-  ConstructorDefinition,
   VariableDefinition,
   ImportDefinition,
-  ExportDefinition,
-  SemanticIndex,
-  TypeBinding,
   TypeMemberInfo,
   ModulePath,
+  LocationKey,
 } from "@ariadnejs/types";
+import type { SemanticIndex } from "../index_single_file/semantic_index";
 import { location_key } from "@ariadnejs/types";
 
 // Helper to create a minimal semantic index
@@ -46,8 +44,7 @@ function create_test_index(
     references?: SymbolReference[];
     root_scope_id?: ScopeId;
     imports?: Map<SymbolId, ImportDefinition>;
-    exports?: ExportDefinition[];
-    type_bindings?: Map<SymbolId, TypeBinding>;
+    type_bindings?: Map<LocationKey, SymbolName>;
     type_members?: Map<SymbolId, TypeMemberInfo>;
   } = {}
 ): SemanticIndex {
@@ -65,12 +62,11 @@ function create_test_index(
     namespaces: new Map(),
     types: new Map(),
     imported_symbols: options.imports || new Map(),
-    exported_symbols: options.exports || [],
     references: options.references || [],
     symbols_by_name: new Map(),
     type_bindings: options.type_bindings || new Map(),
     type_members: options.type_members || new Map(),
-    constructors: new Map(),
+    type_alias_metadata: new Map(),
   };
 }
 
@@ -125,7 +121,7 @@ describe("Symbol Resolution - Integration Tests", () => {
                 end_column: 23,
               },
               parameters: [],
-            },
+            } as unknown as FunctionDefinition,
           ],
         ]),
         references: [
@@ -165,7 +161,7 @@ describe("Symbol Resolution - Integration Tests", () => {
               parent_id: null,
               name: null,
               location: {
-                file: utils_file,
+                file_path: utils_file,
                 start_line: 1,
                 start_column: 0,
                 end_line: 3,
@@ -184,23 +180,16 @@ describe("Symbol Resolution - Integration Tests", () => {
               name: "helper" as SymbolName,
               scope_id: utils_scope,
               location: {
-                file: utils_file,
+                file_path: utils_file,
                 start_line: 1,
                 start_column: 0,
                 end_line: 1,
                 end_column: 29,
               },
               parameters: [],
-            },
+            } as unknown as FunctionDefinition,
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "helper" as SymbolName,
-            local_symbol_id: helper_id,
-          },
-        ],
       });
 
       // main.ts: import { helper } from './utils'; helper();
@@ -208,7 +197,7 @@ describe("Symbol Resolution - Integration Tests", () => {
       const main_scope = "scope:main.ts:module" as ScopeId;
       const import_id = "import:main.ts:helper:1:9" as SymbolId;
       const call_location = {
-        file: main_file,
+        file_path: main_file,
         start_line: 2,
         start_column: 0,
         end_line: 2,
@@ -226,7 +215,7 @@ describe("Symbol Resolution - Integration Tests", () => {
               parent_id: null,
               name: null,
               location: {
-                file: main_file,
+                file_path: main_file,
                 start_line: 1,
                 start_column: 0,
                 end_line: 2,
@@ -245,7 +234,7 @@ describe("Symbol Resolution - Integration Tests", () => {
               name: "helper" as SymbolName,
               scope_id: main_scope,
               location: {
-                file: main_file,
+                file_path: main_file,
                 start_line: 1,
                 start_column: 9,
                 end_line: 1,
@@ -254,7 +243,7 @@ describe("Symbol Resolution - Integration Tests", () => {
               import_path: "./utils.ts" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-            },
+            } as unknown as ImportDefinition,
           ],
         ]),
         references: [
@@ -298,7 +287,7 @@ describe("Symbol Resolution - Integration Tests", () => {
               parent_id: null,
               name: null,
               location: {
-                file: types_file,
+                file_path: types_file,
                 start_line: 1,
                 start_column: 0,
                 end_line: 3,
@@ -317,7 +306,7 @@ describe("Symbol Resolution - Integration Tests", () => {
               name: "User" as SymbolName,
               scope_id: types_scope,
               location: {
-                file: types_file,
+                file_path: types_file,
                 start_line: 1,
                 start_column: 0,
                 end_line: 3,
@@ -330,7 +319,7 @@ describe("Symbol Resolution - Integration Tests", () => {
                   name: "getName" as SymbolName,
                   scope_id: types_scope,
                   location: {
-                    file: types_file,
+                    file_path: types_file,
                     start_line: 2,
                     start_column: 2,
                     end_line: 2,
@@ -338,17 +327,16 @@ describe("Symbol Resolution - Integration Tests", () => {
                   },
                   parameters: [],
                   parent_class: user_class_id,
-                },
+                } as unknown as MethodDefinition,
               ],
               properties: [],
-            },
+            } as unknown as ClassDefinition,
           ],
         ]),
         type_members: new Map([
           [
             user_class_id,
             {
-              type_id: user_class_id,
               methods: new Map([["getName" as SymbolName, getName_method_id]]),
               properties: new Map(),
               constructor: undefined,
@@ -356,13 +344,6 @@ describe("Symbol Resolution - Integration Tests", () => {
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "User" as SymbolName,
-            local_symbol_id: user_class_id,
-          },
-        ],
       });
 
       // main.ts: import { User } from './types'; const user = new User(); user.getName();
@@ -371,14 +352,14 @@ describe("Symbol Resolution - Integration Tests", () => {
       const import_id = "import:main.ts:User:1:9" as SymbolId;
       const user_var_id = "variable:main.ts:user:2:6" as SymbolId;
       const constructor_call_location = {
-        file: main_file,
+        file_path: main_file,
         start_line: 2,
         start_column: 19,
         end_line: 2,
         end_column: 28,
       };
       const method_call_location = {
-        file: main_file,
+        file_path: main_file,
         start_line: 3,
         start_column: 0,
         end_line: 3,
@@ -396,7 +377,7 @@ describe("Symbol Resolution - Integration Tests", () => {
               parent_id: null,
               name: null,
               location: {
-                file: main_file,
+                file_path: main_file,
                 start_line: 1,
                 start_column: 0,
                 end_line: 3,
@@ -415,7 +396,7 @@ describe("Symbol Resolution - Integration Tests", () => {
               name: "User" as SymbolName,
               scope_id: main_scope,
               location: {
-                file: main_file,
+                file_path: main_file,
                 start_line: 1,
                 start_column: 9,
                 end_line: 1,
@@ -424,7 +405,7 @@ describe("Symbol Resolution - Integration Tests", () => {
               import_path: "./types.ts" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-            },
+            } as unknown as ImportDefinition,
           ],
         ]),
         variables: new Map([
@@ -436,24 +417,25 @@ describe("Symbol Resolution - Integration Tests", () => {
               name: "user" as SymbolName,
               scope_id: main_scope,
               location: {
-                file: main_file,
+                file_path: main_file,
                 start_line: 2,
                 start_column: 6,
                 end_line: 2,
                 end_column: 10,
               },
-            },
+            } as unknown as VariableDefinition,
           ],
         ]),
         type_bindings: new Map([
           [
-            user_var_id,
-            {
-              symbol_id: user_var_id,
-              type_name: "User" as SymbolName,
-              type_scope_id: main_scope,
-              binding_type: "constructor",
-            },
+            location_key({
+              file_path: main_file,
+              start_line: 2,
+              start_column: 6,
+              end_line: 2,
+              end_column: 10,
+            }) as LocationKey,
+            "User" as SymbolName,
           ],
         ]),
         references: [
@@ -464,7 +446,13 @@ describe("Symbol Resolution - Integration Tests", () => {
             location: constructor_call_location,
             scope_id: main_scope,
             context: {
-              construct_target: "User" as SymbolName,
+              construct_target: {
+                file_path: main_file,
+                start_line: 2,
+                start_column: 6,
+                end_line: 2,
+                end_column: 10,
+              },
             },
           },
           {
@@ -475,13 +463,12 @@ describe("Symbol Resolution - Integration Tests", () => {
             scope_id: main_scope,
             context: {
               receiver_location: {
-                file: main_file,
+                file_path: main_file,
                 start_line: 3,
                 start_column: 0,
                 end_line: 3,
                 end_column: 4,
               },
-              receiver_name: "user" as SymbolName,
             },
           },
         ],
@@ -526,7 +513,7 @@ describe("Symbol Resolution - Integration Tests", () => {
               parent_id: null,
               name: null,
               location: {
-                file: utils_file,
+                file_path: utils_file,
                 start_line: 1,
                 start_column: 0,
                 end_line: 1,
@@ -545,23 +532,16 @@ describe("Symbol Resolution - Integration Tests", () => {
               name: "helper" as SymbolName,
               scope_id: utils_scope,
               location: {
-                file: utils_file,
+                file_path: utils_file,
                 start_line: 1,
                 start_column: 0,
                 end_line: 1,
                 end_column: 29,
               },
               parameters: [],
-            },
+            } as unknown as FunctionDefinition,
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "helper" as SymbolName,
-            local_symbol_id: imported_helper_id,
-          },
-        ],
       });
 
       // main.ts: import { helper } from './utils'; function helper() {} helper();
@@ -570,7 +550,7 @@ describe("Symbol Resolution - Integration Tests", () => {
       const import_id = "import:main.ts:helper:1:9" as SymbolId;
       const local_helper_id = "function:main.ts:helper:2:9" as SymbolId;
       const call_location = {
-        file: main_file,
+        file_path: main_file,
         start_line: 3,
         start_column: 0,
         end_line: 3,
@@ -588,7 +568,7 @@ describe("Symbol Resolution - Integration Tests", () => {
               parent_id: null,
               name: null,
               location: {
-                file: main_file,
+                file_path: main_file,
                 start_line: 1,
                 start_column: 0,
                 end_line: 3,
@@ -607,7 +587,7 @@ describe("Symbol Resolution - Integration Tests", () => {
               name: "helper" as SymbolName,
               scope_id: main_scope,
               location: {
-                file: main_file,
+                file_path: main_file,
                 start_line: 1,
                 start_column: 9,
                 end_line: 1,
@@ -616,7 +596,7 @@ describe("Symbol Resolution - Integration Tests", () => {
               import_path: "./utils.ts" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-            },
+            } as unknown as ImportDefinition,
           ],
         ]),
         functions: new Map([
@@ -628,14 +608,14 @@ describe("Symbol Resolution - Integration Tests", () => {
               name: "helper" as SymbolName,
               scope_id: main_scope,
               location: {
-                file: main_file,
+                file_path: main_file,
                 start_line: 2,
                 start_column: 9,
                 end_line: 2,
                 end_column: 24,
               },
               parameters: [],
-            },
+            } as unknown as FunctionDefinition,
           ],
         ]),
         references: [
@@ -671,14 +651,14 @@ describe("Symbol Resolution - Integration Tests", () => {
       const user_var_id = "variable:test.ts:user:4:6" as SymbolId;
 
       const constructor_call_location = {
-        file: file_path,
+        file_path: file_path,
         start_line: 4,
         start_column: 19,
         end_line: 4,
         end_column: 28,
       };
       const method_call_location = {
-        file: file_path,
+        file_path: file_path,
         start_line: 5,
         start_column: 0,
         end_line: 5,
@@ -696,7 +676,7 @@ describe("Symbol Resolution - Integration Tests", () => {
               parent_id: null,
               name: null,
               location: {
-                file: file_path,
+                file_path: file_path,
                 start_line: 1,
                 start_column: 0,
                 end_line: 5,
@@ -715,7 +695,7 @@ describe("Symbol Resolution - Integration Tests", () => {
               name: "User" as SymbolName,
               scope_id: module_scope,
               location: {
-                file: file_path,
+                file_path: file_path,
                 start_line: 1,
                 start_column: 0,
                 end_line: 3,
@@ -728,7 +708,7 @@ describe("Symbol Resolution - Integration Tests", () => {
                   name: "getName" as SymbolName,
                   scope_id: module_scope,
                   location: {
-                    file: file_path,
+                    file_path: file_path,
                     start_line: 2,
                     start_column: 2,
                     end_line: 2,
@@ -736,10 +716,10 @@ describe("Symbol Resolution - Integration Tests", () => {
                   },
                   parameters: [],
                   parent_class: user_class_id,
-                },
+                } as unknown as MethodDefinition,
               ],
               properties: [],
-            },
+            } as unknown as ClassDefinition,
           ],
         ]),
         variables: new Map([
@@ -751,31 +731,31 @@ describe("Symbol Resolution - Integration Tests", () => {
               name: "user" as SymbolName,
               scope_id: module_scope,
               location: {
-                file: file_path,
+                file_path: file_path,
                 start_line: 4,
                 start_column: 6,
                 end_line: 4,
                 end_column: 10,
               },
-            },
+            } as unknown as VariableDefinition,
           ],
         ]),
         type_bindings: new Map([
           [
-            user_var_id,
-            {
-              symbol_id: user_var_id,
-              type_name: "User" as SymbolName,
-              type_scope_id: module_scope,
-              binding_type: "constructor",
-            },
+            location_key({
+              file_path: file_path,
+              start_line: 4,
+              start_column: 6,
+              end_line: 4,
+              end_column: 10,
+            }) as LocationKey,
+            "User" as SymbolName,
           ],
         ]),
         type_members: new Map([
           [
             user_class_id,
             {
-              type_id: user_class_id,
               methods: new Map([["getName" as SymbolName, getName_method_id]]),
               properties: new Map(),
               constructor: undefined,
@@ -791,7 +771,13 @@ describe("Symbol Resolution - Integration Tests", () => {
             location: constructor_call_location,
             scope_id: module_scope,
             context: {
-              construct_target: "User" as SymbolName,
+              construct_target: {
+                file_path: file_path,
+                start_line: 4,
+                start_column: 6,
+                end_line: 4,
+                end_column: 10,
+              },
             },
           },
           {
@@ -802,13 +788,12 @@ describe("Symbol Resolution - Integration Tests", () => {
             scope_id: module_scope,
             context: {
               receiver_location: {
-                file: file_path,
+                file_path: file_path,
                 start_line: 5,
                 start_column: 0,
                 end_line: 5,
                 end_column: 4,
               },
-              receiver_name: "user" as SymbolName,
             },
           },
         ],
@@ -863,7 +848,7 @@ describe("Symbol Resolution - Integration Tests", () => {
               parent_id: null,
               name: null,
               location: {
-                file: file_path,
+                file_path: file_path,
                 start_line: 1,
                 start_column: 0,
                 end_line: 2,
@@ -882,14 +867,14 @@ describe("Symbol Resolution - Integration Tests", () => {
               name: "helper" as SymbolName,
               scope_id: module_scope,
               location: {
-                file: file_path,
+                file_path: file_path,
                 start_line: 1,
                 start_column: 0,
                 end_line: 1,
                 end_column: 23,
               },
               parameters: [],
-            },
+            } as unknown as FunctionDefinition,
           ],
         ]),
         references: [

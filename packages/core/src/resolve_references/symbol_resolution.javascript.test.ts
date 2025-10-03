@@ -27,13 +27,11 @@ import type {
   MethodDefinition,
   VariableDefinition,
   ImportDefinition,
-  ExportDefinition,
-  SemanticIndex,
-  TypeBinding,
   TypeMemberInfo,
   ModulePath,
   LocationKey,
 } from "@ariadnejs/types";
+import type { SemanticIndex } from "../index_single_file/semantic_index";
 import { location_key } from "@ariadnejs/types";
 
 // ============================================================================
@@ -50,8 +48,7 @@ function create_test_index(
     references?: SymbolReference[];
     root_scope_id?: ScopeId;
     imports?: Map<SymbolId, ImportDefinition>;
-    exports?: ExportDefinition[];
-    type_bindings?: Map<LocationKey, TypeBinding>;
+    type_bindings?: Map<LocationKey, SymbolName>;
     type_members?: Map<SymbolId, TypeMemberInfo>;
   } = {}
 ): SemanticIndex {
@@ -69,12 +66,10 @@ function create_test_index(
     namespaces: new Map(),
     types: new Map(),
     imported_symbols: options.imports || new Map(),
-    exported_symbols: options.exports || [],
     references: options.references || [],
     symbols_by_name: new Map(),
     type_bindings: options.type_bindings || new Map(),
     type_members: options.type_members || new Map(),
-    constructors: new Map(),
     type_alias_metadata: new Map(),
   };
 }
@@ -135,7 +130,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_column: 30,
               },
               parameters: [],
-            },
+            } as unknown as FunctionDefinition,
           ],
         ]),
         references: [
@@ -224,7 +219,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_column: 20,
               },
               parameters: [],
-            },
+            } as unknown as FunctionDefinition,
           ],
         ]),
         references: [
@@ -315,7 +310,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_column: 35,
               },
               parameters: [],
-            },
+            } as unknown as FunctionDefinition,
           ],
           [
             local_helper_id,
@@ -332,7 +327,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_column: 55,
               },
               parameters: [],
-            },
+            } as unknown as FunctionDefinition,
           ],
         ]),
         references: [
@@ -399,16 +394,9 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_column: 45,
               },
               parameters: [],
-            },
+            } as unknown as FunctionDefinition,
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "helper" as SymbolName,
-            local_symbol_id: helper_id,
-          },
-        ],
       });
 
       // main.js: import { helper } from './utils'; helper();
@@ -462,7 +450,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
               import_path: "./utils.js" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-            },
+            } as unknown as ImportDefinition,
           ],
         ]),
         references: [
@@ -530,16 +518,9 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_column: 40,
               },
               parameters: [],
-            },
+            } as unknown as FunctionDefinition,
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "core" as SymbolName,
-            local_symbol_id: core_id,
-          },
-        ],
       });
 
       // middle.js: export { core } from './base';
@@ -586,16 +567,9 @@ describe("JavaScript Symbol Resolution Integration", () => {
               import_path: "./base.js" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-            },
+            } as unknown as ImportDefinition,
           ],
         ]),
-        exports: [
-          {
-            export_type: "re-export",
-            exported_name: "core" as SymbolName,
-            local_symbol_id: middle_import_id,
-          },
-        ],
       });
 
       // main.js: import { core } from './middle'; core();
@@ -649,7 +623,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
               import_path: "./middle.js" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-            },
+            } as unknown as ImportDefinition,
           ],
         ]),
         references: [
@@ -719,16 +693,9 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_column: 30,
               },
               parameters: [],
-            },
+            } as unknown as FunctionDefinition,
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "helper" as SymbolName,
-            local_symbol_id: helper_id,
-          },
-        ],
       });
 
       // main.js: import { helper as myHelper } from './utils'; myHelper();
@@ -782,7 +749,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
               import_path: "./utils.js" as ModulePath,
               import_kind: "named",
               original_name: "helper" as SymbolName,
-            },
+            } as unknown as ImportDefinition,
           ],
         ]),
         references: [
@@ -867,17 +834,16 @@ describe("JavaScript Symbol Resolution Integration", () => {
                   },
                   parameters: [],
                   parent_class: user_class_id,
-                },
+                } as unknown as MethodDefinition,
               ],
               properties: [],
-            },
+            } as unknown as ClassDefinition,
           ],
         ]),
         type_members: new Map([
           [
             user_class_id,
             {
-              type_id: user_class_id,
               methods: new Map([["getName" as SymbolName, getName_method_id]]),
               properties: new Map(),
               constructor: undefined,
@@ -885,13 +851,6 @@ describe("JavaScript Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "User" as SymbolName,
-            local_symbol_id: user_class_id,
-          },
-        ],
       });
 
       // main.js: import { User } from './user'; const user = new User(); user.getName();
@@ -953,7 +912,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
               import_path: "./user.js" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-            },
+            } as unknown as ImportDefinition,
           ],
         ]),
         variables: new Map([
@@ -971,7 +930,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_line: 2,
                 end_column: 10,
               },
-            },
+            } as unknown as VariableDefinition,
           ],
         ]),
         type_bindings: new Map([
@@ -982,13 +941,8 @@ describe("JavaScript Symbol Resolution Integration", () => {
               start_column: 6,
               end_line: 2,
               end_column: 10,
-            }),
-            {
-              symbol_id: user_var_id,
-              type_name: "User" as SymbolName,
-              type_scope_id: main_scope,
-              binding_type: "constructor",
-            },
+            }) as LocationKey,
+            "User" as SymbolName,
           ],
         ]),
         references: [
@@ -998,9 +952,6 @@ describe("JavaScript Symbol Resolution Integration", () => {
             name: "User" as SymbolName,
             location: constructor_call_location,
             scope_id: main_scope,
-            context: {
-              construct_target: "User" as SymbolName,
-            },
           },
           {
             type: "call",
@@ -1016,7 +967,6 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_line: 3,
                 end_column: 4,
               },
-              receiver_name: "user" as SymbolName,
             },
           },
         ],
@@ -1095,7 +1045,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
               },
               methods: [],
               properties: [],
-            },
+            } as unknown as ClassDefinition,
           ],
         ]),
         references: [
@@ -1105,9 +1055,6 @@ describe("JavaScript Symbol Resolution Integration", () => {
             name: "User" as SymbolName,
             location: call_location,
             scope_id: module_scope,
-            context: {
-              construct_target: "User" as SymbolName,
-            },
           },
         ],
       });
@@ -1163,16 +1110,9 @@ describe("JavaScript Symbol Resolution Integration", () => {
               },
               methods: [],
               properties: [],
-            },
+            } as unknown as ClassDefinition,
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "User" as SymbolName,
-            local_symbol_id: user_class_id,
-          },
-        ],
       });
 
       // main.js: import { User } from './types'; const user = new User();
@@ -1226,7 +1166,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
               import_path: "./types.js" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-            },
+            } as unknown as ImportDefinition,
           ],
         ]),
         references: [
@@ -1236,9 +1176,6 @@ describe("JavaScript Symbol Resolution Integration", () => {
             name: "User" as SymbolName,
             location: call_location,
             scope_id: main_scope,
-            context: {
-              construct_target: "User" as SymbolName,
-            },
           },
         ],
       });
@@ -1314,17 +1251,16 @@ describe("JavaScript Symbol Resolution Integration", () => {
                   },
                   parameters: [],
                   parent_class: repository_class_id,
-                },
+                } as unknown as MethodDefinition,
               ],
               properties: [],
-            },
+            } as unknown as ClassDefinition,
           ],
         ]),
         type_members: new Map([
           [
             repository_class_id,
             {
-              type_id: repository_class_id,
               methods: new Map([["save" as SymbolName, save_method_id]]),
               properties: new Map(),
               constructor: undefined,
@@ -1332,13 +1268,6 @@ describe("JavaScript Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "Repository" as SymbolName,
-            local_symbol_id: repository_class_id,
-          },
-        ],
       });
 
       // service.js: import { Repository } from './repository'; export class UserService { ... }
@@ -1403,7 +1332,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
               import_path: "./repository.js" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-            },
+            } as unknown as ImportDefinition,
           ],
         ]),
         classes: new Map([
@@ -1436,10 +1365,10 @@ describe("JavaScript Symbol Resolution Integration", () => {
                   },
                   parameters: [],
                   parent_class: service_class_id,
-                },
+                } as unknown as MethodDefinition,
               ],
               properties: [],
-            },
+            } as unknown as ClassDefinition,
           ],
         ]),
         variables: new Map([
@@ -1457,7 +1386,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_line: 2,
                 end_column: 19,
               },
-            },
+            } as unknown as VariableDefinition,
           ],
         ]),
         type_bindings: new Map([
@@ -1468,20 +1397,14 @@ describe("JavaScript Symbol Resolution Integration", () => {
               start_column: 15,
               end_line: 2,
               end_column: 19,
-            }),
-            {
-              symbol_id: repo_var_id,
-              type_name: "Repository" as SymbolName,
-              type_scope_id: service_scope,
-              binding_type: "constructor",
-            },
+            }) as LocationKey,
+            "Repository" as SymbolName,
           ],
         ]),
         type_members: new Map([
           [
             service_class_id,
             {
-              type_id: service_class_id,
               methods: new Map([
                 ["saveUser" as SymbolName, saveUser_method_id],
               ]),
@@ -1498,9 +1421,6 @@ describe("JavaScript Symbol Resolution Integration", () => {
             name: "Repository" as SymbolName,
             location: service_repo_constructor_location,
             scope_id: service_scope,
-            context: {
-              construct_target: "Repository" as SymbolName,
-            },
           },
           {
             type: "call",
@@ -1516,15 +1436,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_line: 3,
                 end_column: 14,
               },
-              receiver_name: "repo" as SymbolName,
             },
-          },
-        ],
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "UserService" as SymbolName,
-            local_symbol_id: service_class_id,
           },
         ],
       });
@@ -1588,7 +1500,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
               import_path: "./service.js" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-            },
+            } as unknown as ImportDefinition,
           ],
         ]),
         variables: new Map([
@@ -1606,7 +1518,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_line: 2,
                 end_column: 13,
               },
-            },
+            } as unknown as VariableDefinition,
           ],
         ]),
         type_bindings: new Map([
@@ -1617,13 +1529,8 @@ describe("JavaScript Symbol Resolution Integration", () => {
               start_column: 6,
               end_line: 2,
               end_column: 13,
-            }),
-            {
-              symbol_id: service_var_id,
-              type_name: "UserService" as SymbolName,
-              type_scope_id: main_scope,
-              binding_type: "constructor",
-            },
+            }) as LocationKey,
+            "UserService" as SymbolName,
           ],
         ]),
         references: [
@@ -1633,9 +1540,6 @@ describe("JavaScript Symbol Resolution Integration", () => {
             name: "UserService" as SymbolName,
             location: main_constructor_location,
             scope_id: main_scope,
-            context: {
-              construct_target: "UserService" as SymbolName,
-            },
           },
           {
             type: "call",
@@ -1651,7 +1555,6 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_line: 3,
                 end_column: 7,
               },
-              receiver_name: "service" as SymbolName,
             },
           },
         ],
@@ -1735,16 +1638,9 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_column: 30,
               },
               parameters: [],
-            },
+            } as unknown as FunctionDefinition,
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "helper" as SymbolName,
-            local_symbol_id: imported_helper_id,
-          },
-        ],
       });
 
       // main.js: import { helper } from './utils'; function helper() {} helper();
@@ -1799,7 +1695,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
               import_path: "./utils.js" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-            },
+            } as unknown as ImportDefinition,
           ],
         ]),
         functions: new Map([
@@ -1818,7 +1714,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_column: 24,
               },
               parameters: [],
-            },
+            } as unknown as FunctionDefinition,
           ],
         ]),
         references: [

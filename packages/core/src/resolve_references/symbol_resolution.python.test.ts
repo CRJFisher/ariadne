@@ -55,14 +55,14 @@ import type {
   MethodDefinition,
   VariableDefinition,
   ImportDefinition,
-  ExportDefinition,
-  SemanticIndex,
-  TypeBinding,
+  Export,
   TypeMemberInfo,
   ModulePath,
   LocationKey,
+  Location,
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
+import type { SemanticIndex } from "../index_single_file/semantic_index";
 
 // ============================================================================
 // Test Helper: Create Minimal Semantic Index
@@ -78,8 +78,7 @@ function create_test_index(
     references?: SymbolReference[];
     root_scope_id?: ScopeId;
     imports?: Map<SymbolId, ImportDefinition>;
-    exports?: ExportDefinition[];
-    type_bindings?: Map<LocationKey, TypeBinding>;
+    type_bindings?: Map<LocationKey, SymbolName>;
     type_members?: Map<SymbolId, TypeMemberInfo>;
   } = {}
 ): SemanticIndex {
@@ -97,12 +96,12 @@ function create_test_index(
     namespaces: new Map(),
     types: new Map(),
     imported_symbols: options.imports || new Map(),
-    exported_symbols: options.exports || [],
+    
     references: options.references || [],
     symbols_by_name: new Map(),
     type_bindings: options.type_bindings || new Map(),
     type_members: options.type_members || new Map(),
-    constructors: new Map(),
+    
     type_alias_metadata: new Map(),
   };
 }
@@ -152,6 +151,7 @@ describe("Python Symbol Resolution Integration", () => {
             helper_id,
             {
               kind: "function",
+              availability: { scope: "file-private" },
               symbol_id: helper_id,
               name: "helper" as SymbolName,
               scope_id: module_scope,
@@ -162,7 +162,7 @@ describe("Python Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 25,
               },
-              parameters: [],
+              signature: { parameters: [] },
             },
           ],
         ]),
@@ -217,6 +217,7 @@ describe("Python Symbol Resolution Integration", () => {
             process_id,
             {
               kind: "function",
+              availability: { scope: "file-private" },
               symbol_id: process_id,
               name: "process" as SymbolName,
               scope_id: helper_scope,
@@ -227,18 +228,11 @@ describe("Python Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 25,
               },
-              parameters: [],
+              signature: { parameters: [] },
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "process" as SymbolName,
-            local_symbol_id: process_id,
-          },
-        ],
-      });
+        });
 
       // main.py: from helper import process\nprocess()
       const main_file = "main.py" as FilePath;
@@ -278,6 +272,7 @@ describe("Python Symbol Resolution Integration", () => {
             import_id,
             {
               kind: "import",
+              availability: { scope: "file-private" },
               symbol_id: import_id,
               name: "process" as SymbolName,
               scope_id: main_scope,
@@ -349,6 +344,7 @@ describe("Python Symbol Resolution Integration", () => {
             process_id,
             {
               kind: "function",
+              availability: { scope: "file-private" },
               symbol_id: process_id,
               name: "process" as SymbolName,
               scope_id: helper_scope,
@@ -359,18 +355,11 @@ describe("Python Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 25,
               },
-              parameters: [],
+              signature: { parameters: [] },
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "process" as SymbolName,
-            local_symbol_id: process_id,
-          },
-        ],
-      });
+        });
 
       // utils/worker.py: from .helper import process\ndef work(): return process()
       const worker_file = "utils/worker.py" as FilePath;
@@ -410,6 +399,7 @@ describe("Python Symbol Resolution Integration", () => {
             import_id,
             {
               kind: "import",
+              availability: { scope: "file-private" },
               symbol_id: import_id,
               name: "process" as SymbolName,
               scope_id: worker_scope,
@@ -485,6 +475,7 @@ describe("Python Symbol Resolution Integration", () => {
             user_class_id,
             {
               kind: "class",
+              availability: { scope: "file-private" },
               symbol_id: user_class_id,
               name: "User" as SymbolName,
               scope_id: user_scope,
@@ -498,6 +489,7 @@ describe("Python Symbol Resolution Integration", () => {
               methods: [
                 {
                   kind: "method",
+                  availability: { scope: "file-private" },
                   symbol_id: get_name_method_id,
                   name: "get_name" as SymbolName,
                   scope_id: user_scope,
@@ -509,10 +501,12 @@ describe("Python Symbol Resolution Integration", () => {
                     end_column: 30,
                   },
                   parameters: [],
-                  parent_class: user_class_id,
                 },
               ],
+              extends: [] as readonly SymbolName[],
+              decorators: [] as readonly SymbolId[],
               properties: [],
+              constructor: undefined,
             },
           ],
         ]),
@@ -520,22 +514,14 @@ describe("Python Symbol Resolution Integration", () => {
           [
             user_class_id,
             {
-              type_id: user_class_id,
               methods: new Map([["get_name" as SymbolName, get_name_method_id]]),
               properties: new Map(),
               constructor: undefined,
-              extends: [],
+              extends: [] as readonly SymbolName[],
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "User" as SymbolName,
-            local_symbol_id: user_class_id,
-          },
-        ],
-      });
+        });
 
       // main.py: from user import User\ndef main():\n  user = User("Alice")\n  name = user.get_name()
       const main_file = "main.py" as FilePath;
@@ -583,6 +569,7 @@ describe("Python Symbol Resolution Integration", () => {
             import_id,
             {
               kind: "import",
+              availability: { scope: "file-private" },
               symbol_id: import_id,
               name: "User" as SymbolName,
               scope_id: main_scope,
@@ -604,6 +591,7 @@ describe("Python Symbol Resolution Integration", () => {
             user_var_id,
             {
               kind: "variable",
+              availability: { scope: "file-private" },
               symbol_id: user_var_id,
               name: "user" as SymbolName,
               scope_id: main_scope,
@@ -626,12 +614,7 @@ describe("Python Symbol Resolution Integration", () => {
               end_line: 3,
               end_column: 6,
             }),
-            {
-              symbol_id: user_var_id,
-              type_name: "User" as SymbolName,
-              type_scope_id: main_scope,
-              binding_type: "constructor",
-            },
+            "User" as SymbolName,
           ],
         ]),
         references: [
@@ -642,8 +625,7 @@ describe("Python Symbol Resolution Integration", () => {
             location: constructor_call_location,
             scope_id: main_scope,
             context: {
-              construct_target: "User" as SymbolName,
-            },
+              },
           },
           {
             type: "call",
@@ -659,8 +641,7 @@ describe("Python Symbol Resolution Integration", () => {
                 end_line: 4,
                 end_column: 13,
               },
-              receiver_name: "user" as SymbolName,
-            },
+              },
           },
         ],
       });
@@ -720,6 +701,7 @@ describe("Python Symbol Resolution Integration", () => {
             service_class_id,
             {
               kind: "class",
+              availability: { scope: "file-private" },
               symbol_id: service_class_id,
               name: "Service" as SymbolName,
               scope_id: service_scope,
@@ -733,6 +715,7 @@ describe("Python Symbol Resolution Integration", () => {
               methods: [
                 {
                   kind: "method",
+                  availability: { scope: "file-private" },
                   symbol_id: process_method_id,
                   name: "process" as SymbolName,
                   scope_id: service_scope,
@@ -744,10 +727,12 @@ describe("Python Symbol Resolution Integration", () => {
                     end_column: 30,
                   },
                   parameters: [],
-                  parent_class: service_class_id,
                 },
               ],
+              extends: [] as readonly SymbolName[],
+              decorators: [] as readonly SymbolId[],
               properties: [],
+              constructor: undefined,
             },
           ],
         ]),
@@ -755,22 +740,14 @@ describe("Python Symbol Resolution Integration", () => {
           [
             service_class_id,
             {
-              type_id: service_class_id,
               methods: new Map([["process" as SymbolName, process_method_id]]),
               properties: new Map(),
               constructor: undefined,
-              extends: [],
+              extends: [] as readonly SymbolName[],
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "Service" as SymbolName,
-            local_symbol_id: service_class_id,
-          },
-        ],
-      });
+        });
 
       // main.py: from service import Service\nsvc = Service()\nresult = svc.process()
       const main_file = "main.py" as FilePath;
@@ -811,6 +788,7 @@ describe("Python Symbol Resolution Integration", () => {
             import_id,
             {
               kind: "import",
+              availability: { scope: "file-private" },
               symbol_id: import_id,
               name: "Service" as SymbolName,
               scope_id: main_scope,
@@ -832,6 +810,7 @@ describe("Python Symbol Resolution Integration", () => {
             svc_var_id,
             {
               kind: "variable",
+              availability: { scope: "file-private" },
               symbol_id: svc_var_id,
               name: "svc" as SymbolName,
               scope_id: main_scope,
@@ -854,12 +833,7 @@ describe("Python Symbol Resolution Integration", () => {
               end_line: 2,
               end_column: 3,
             }),
-            {
-              symbol_id: svc_var_id,
-              type_name: "Service" as SymbolName,
-              type_scope_id: main_scope,
-              binding_type: "constructor",
-            },
+            "Service" as SymbolName,
           ],
         ]),
         references: [
@@ -877,8 +851,7 @@ describe("Python Symbol Resolution Integration", () => {
                 end_line: 3,
                 end_column: 12,
               },
-              receiver_name: "svc" as SymbolName,
-            },
+              },
           },
         ],
       });
@@ -930,6 +903,7 @@ describe("Python Symbol Resolution Integration", () => {
             config_class_id,
             {
               kind: "class",
+              availability: { scope: "file-private" },
               symbol_id: config_class_id,
               name: "Config" as SymbolName,
               scope_id: config_scope,
@@ -943,6 +917,7 @@ describe("Python Symbol Resolution Integration", () => {
               methods: [
                 {
                   kind: "method",
+                  availability: { scope: "file-private" },
                   symbol_id: load_method_id,
                   name: "load" as SymbolName,
                   scope_id: config_scope,
@@ -954,10 +929,12 @@ describe("Python Symbol Resolution Integration", () => {
                     end_column: 30,
                   },
                   parameters: [],
-                  parent_class: config_class_id,
                 },
               ],
+              extends: [] as readonly SymbolName[],
+              decorators: [] as readonly SymbolId[],
               properties: [],
+              constructor: undefined,
             },
           ],
         ]),
@@ -965,22 +942,14 @@ describe("Python Symbol Resolution Integration", () => {
           [
             config_class_id,
             {
-              type_id: config_class_id,
               methods: new Map([["load" as SymbolName, load_method_id]]),
               properties: new Map(),
               constructor: undefined,
-              extends: [],
+              extends: [] as readonly SymbolName[],
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "Config" as SymbolName,
-            local_symbol_id: config_class_id,
-          },
-        ],
-      });
+        });
 
       // main.py: from config import Config\nconfig = Config.load()
       const main_file = "main.py" as FilePath;
@@ -1020,6 +989,7 @@ describe("Python Symbol Resolution Integration", () => {
             import_id,
             {
               kind: "import",
+              availability: { scope: "file-private" },
               symbol_id: import_id,
               name: "Config" as SymbolName,
               scope_id: main_scope,
@@ -1051,8 +1021,7 @@ describe("Python Symbol Resolution Integration", () => {
                 end_line: 2,
                 end_column: 15,
               },
-              receiver_name: "Config" as SymbolName,
-            },
+              },
           },
         ],
       });
@@ -1103,6 +1072,7 @@ describe("Python Symbol Resolution Integration", () => {
             config_class_id,
             {
               kind: "class",
+              availability: { scope: "file-private" },
               symbol_id: config_class_id,
               name: "Config" as SymbolName,
               scope_id: config_scope,
@@ -1116,6 +1086,7 @@ describe("Python Symbol Resolution Integration", () => {
               methods: [
                 {
                   kind: "method",
+                  availability: { scope: "file-private" },
                   symbol_id: validate_method_id,
                   name: "validate" as SymbolName,
                   scope_id: config_scope,
@@ -1127,10 +1098,12 @@ describe("Python Symbol Resolution Integration", () => {
                     end_column: 30,
                   },
                   parameters: [],
-                  parent_class: config_class_id,
                 },
               ],
+              extends: [] as readonly SymbolName[],
+              decorators: [] as readonly SymbolId[],
               properties: [],
+              constructor: undefined,
             },
           ],
         ]),
@@ -1138,22 +1111,14 @@ describe("Python Symbol Resolution Integration", () => {
           [
             config_class_id,
             {
-              type_id: config_class_id,
               methods: new Map([["validate" as SymbolName, validate_method_id]]),
               properties: new Map(),
               constructor: undefined,
-              extends: [],
+              extends: [] as readonly SymbolName[],
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "Config" as SymbolName,
-            local_symbol_id: config_class_id,
-          },
-        ],
-      });
+        });
 
       // main.py: from config import Config\nvalid = Config.validate()
       const main_file = "main.py" as FilePath;
@@ -1193,6 +1158,7 @@ describe("Python Symbol Resolution Integration", () => {
             import_id,
             {
               kind: "import",
+              availability: { scope: "file-private" },
               symbol_id: import_id,
               name: "Config" as SymbolName,
               scope_id: main_scope,
@@ -1224,8 +1190,7 @@ describe("Python Symbol Resolution Integration", () => {
                 end_line: 2,
                 end_column: 14,
               },
-              receiver_name: "Config" as SymbolName,
-            },
+              },
           },
         ],
       });
@@ -1278,6 +1243,7 @@ describe("Python Symbol Resolution Integration", () => {
             process_id,
             {
               kind: "function",
+              availability: { scope: "file-private" },
               symbol_id: process_id,
               name: "process" as SymbolName,
               scope_id: helper_scope,
@@ -1288,18 +1254,11 @@ describe("Python Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 25,
               },
-              parameters: [],
+              signature: { parameters: [] },
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "process" as SymbolName,
-            local_symbol_id: process_id,
-          },
-        ],
-      });
+        });
 
       // utils/worker.py: from .helper import process\ndef work(): return process()
       const worker_file = "utils/worker.py" as FilePath;
@@ -1339,6 +1298,7 @@ describe("Python Symbol Resolution Integration", () => {
             import_id,
             {
               kind: "import",
+              availability: { scope: "file-private" },
               symbol_id: import_id,
               name: "process" as SymbolName,
               scope_id: worker_scope,
@@ -1410,6 +1370,7 @@ describe("Python Symbol Resolution Integration", () => {
             user_class_id,
             {
               kind: "class",
+              availability: { scope: "file-private" },
               symbol_id: user_class_id,
               name: "User" as SymbolName,
               scope_id: user_scope,
@@ -1421,18 +1382,14 @@ describe("Python Symbol Resolution Integration", () => {
                 end_column: 16,
               },
               methods: [],
+              extends: [] as readonly SymbolName[],
+              decorators: [] as readonly SymbolId[],
               properties: [],
+              constructor: undefined,
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "User" as SymbolName,
-            local_symbol_id: user_class_id,
-          },
-        ],
-      });
+        });
 
       // services/user_service.py: from ..models.user import User\nclass UserService:\n  def create_user(self): return User()
       const service_file = "services/user_service.py" as FilePath;
@@ -1472,6 +1429,7 @@ describe("Python Symbol Resolution Integration", () => {
             import_id,
             {
               kind: "import",
+              availability: { scope: "file-private" },
               symbol_id: import_id,
               name: "User" as SymbolName,
               scope_id: service_scope,
@@ -1496,8 +1454,7 @@ describe("Python Symbol Resolution Integration", () => {
             location: user_call_location,
             scope_id: service_scope,
             context: {
-              construct_target: "User" as SymbolName,
-            },
+              },
           },
         ],
       });
@@ -1546,6 +1503,7 @@ describe("Python Symbol Resolution Integration", () => {
             base_model_id,
             {
               kind: "class",
+              availability: { scope: "file-private" },
               symbol_id: base_model_id,
               name: "BaseModel" as SymbolName,
               scope_id: model_scope,
@@ -1557,18 +1515,14 @@ describe("Python Symbol Resolution Integration", () => {
                 end_column: 21,
               },
               methods: [],
+              extends: [] as readonly SymbolName[],
+              decorators: [] as readonly SymbolId[],
               properties: [],
+              constructor: undefined,
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "BaseModel" as SymbolName,
-            local_symbol_id: base_model_id,
-          },
-        ],
-      });
+        });
 
       // app/models/user.py: from ...shared.base.model import BaseModel\nclass User(BaseModel): pass
       const user_file = "app/models/user.py" as FilePath;
@@ -1608,6 +1562,7 @@ describe("Python Symbol Resolution Integration", () => {
             import_id,
             {
               kind: "import",
+              availability: { scope: "file-private" },
               symbol_id: import_id,
               name: "BaseModel" as SymbolName,
               scope_id: user_scope,
@@ -1626,7 +1581,7 @@ describe("Python Symbol Resolution Integration", () => {
         ]),
         references: [
           {
-            type: "reference",
+            type: "type",
             name: "BaseModel" as SymbolName,
             location: base_call_location,
             scope_id: user_scope,
@@ -1681,6 +1636,7 @@ describe("Python Symbol Resolution Integration", () => {
             helper_func_id,
             {
               kind: "function",
+              availability: { scope: "file-private" },
               symbol_id: helper_func_id,
               name: "helper_function" as SymbolName,
               scope_id: helper_scope,
@@ -1691,18 +1647,11 @@ describe("Python Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 38,
               },
-              parameters: [],
+              signature: { parameters: [] },
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "helper_function" as SymbolName,
-            local_symbol_id: helper_func_id,
-          },
-        ],
-      });
+        });
 
       // utils/__init__.py: from .helper import helper_function
       const init_file = "utils/__init__.py" as FilePath;
@@ -1736,6 +1685,7 @@ describe("Python Symbol Resolution Integration", () => {
             init_import_id,
             {
               kind: "import",
+              availability: { scope: "file-private" },
               symbol_id: init_import_id,
               name: "helper_function" as SymbolName,
               scope_id: init_scope,
@@ -1752,14 +1702,7 @@ describe("Python Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "re-export",
-            exported_name: "helper_function" as SymbolName,
-            local_symbol_id: init_import_id,
-          },
-        ],
-      });
+        });
 
       // main.py: from utils import helper_function\ndef main(): helper_function()
       const main_file = "main.py" as FilePath;
@@ -1800,6 +1743,7 @@ describe("Python Symbol Resolution Integration", () => {
             main_import_id,
             {
               kind: "import",
+              availability: { scope: "file-private" },
               symbol_id: main_import_id,
               name: "helper_function" as SymbolName,
               scope_id: main_scope,
@@ -1874,6 +1818,7 @@ describe("Python Symbol Resolution Integration", () => {
             auth_handler_id,
             {
               kind: "class",
+              availability: { scope: "file-private" },
               symbol_id: auth_handler_id,
               name: "AuthHandler" as SymbolName,
               scope_id: handler_scope,
@@ -1885,18 +1830,14 @@ describe("Python Symbol Resolution Integration", () => {
                 end_column: 23,
               },
               methods: [],
+              extends: [] as readonly SymbolName[],
+              decorators: [] as readonly SymbolId[],
               properties: [],
+              constructor: undefined,
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "AuthHandler" as SymbolName,
-            local_symbol_id: auth_handler_id,
-          },
-        ],
-      });
+        });
 
       // main.py: from app.services.auth.handler import AuthHandler\nhandler = AuthHandler()
       const main_file = "main.py" as FilePath;
@@ -1936,6 +1877,7 @@ describe("Python Symbol Resolution Integration", () => {
             import_id,
             {
               kind: "import",
+              availability: { scope: "file-private" },
               symbol_id: import_id,
               name: "AuthHandler" as SymbolName,
               scope_id: main_scope,
@@ -1960,8 +1902,7 @@ describe("Python Symbol Resolution Integration", () => {
             location: call_location,
             scope_id: main_scope,
             context: {
-              construct_target: "AuthHandler" as SymbolName,
-            },
+              },
           },
         ],
       });
@@ -2014,6 +1955,7 @@ describe("Python Symbol Resolution Integration", () => {
             user_class_id,
             {
               kind: "class",
+              availability: { scope: "file-private" },
               symbol_id: user_class_id,
               name: "User" as SymbolName,
               scope_id: user_scope,
@@ -2027,6 +1969,7 @@ describe("Python Symbol Resolution Integration", () => {
               methods: [
                 {
                   kind: "method",
+                  availability: { scope: "file-private" },
                   symbol_id: get_name_method_id,
                   name: "get_name" as SymbolName,
                   scope_id: user_scope,
@@ -2038,10 +1981,12 @@ describe("Python Symbol Resolution Integration", () => {
                     end_column: 30,
                   },
                   parameters: [],
-                  parent_class: user_class_id,
                 },
               ],
+              extends: [] as readonly SymbolName[],
+              decorators: [] as readonly SymbolId[],
               properties: [],
+              constructor: undefined,
             },
           ],
         ]),
@@ -2049,22 +1994,14 @@ describe("Python Symbol Resolution Integration", () => {
           [
             user_class_id,
             {
-              type_id: user_class_id,
               methods: new Map([["get_name" as SymbolName, get_name_method_id]]),
               properties: new Map(),
               constructor: undefined,
-              extends: [],
+              extends: [] as readonly SymbolName[],
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "User" as SymbolName,
-            local_symbol_id: user_class_id,
-          },
-        ],
-      });
+        });
 
       // repositories/user_repository.py
       const repository_file = "repositories/user_repository.py" as FilePath;
@@ -2101,6 +2038,7 @@ describe("Python Symbol Resolution Integration", () => {
             "import:repositories/user_repository.py:User:1:26" as SymbolId,
             {
               kind: "import",
+              availability: { scope: "file-private" },
               symbol_id:
                 "import:repositories/user_repository.py:User:1:26" as SymbolId,
               name: "User" as SymbolName,
@@ -2123,6 +2061,7 @@ describe("Python Symbol Resolution Integration", () => {
             repo_class_id,
             {
               kind: "class",
+              availability: { scope: "file-private" },
               symbol_id: repo_class_id,
               name: "UserRepository" as SymbolName,
               scope_id: repository_scope,
@@ -2136,6 +2075,7 @@ describe("Python Symbol Resolution Integration", () => {
               methods: [
                 {
                   kind: "method",
+                  availability: { scope: "file-private" },
                   symbol_id: create_user_method_id,
                   name: "create_user" as SymbolName,
                   scope_id: repository_scope,
@@ -2147,10 +2087,12 @@ describe("Python Symbol Resolution Integration", () => {
                     end_column: 30,
                   },
                   parameters: [],
-                  parent_class: repo_class_id,
                 },
               ],
+              extends: [] as readonly SymbolName[],
+              decorators: [] as readonly SymbolId[],
               properties: [],
+              constructor: undefined,
             },
           ],
         ]),
@@ -2158,13 +2100,12 @@ describe("Python Symbol Resolution Integration", () => {
           [
             repo_class_id,
             {
-              type_id: repo_class_id,
               methods: new Map([
                 ["create_user" as SymbolName, create_user_method_id],
               ]),
               properties: new Map(),
               constructor: undefined,
-              extends: [],
+              extends: [] as readonly SymbolName[],
             },
           ],
         ]),
@@ -2182,18 +2123,10 @@ describe("Python Symbol Resolution Integration", () => {
             },
             scope_id: repository_scope,
             context: {
-              construct_target: "User" as SymbolName,
-            },
+              },
           },
         ],
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "UserRepository" as SymbolName,
-            local_symbol_id: repo_class_id,
-          },
-        ],
-      });
+        });
 
       // services/user_service.py
       const service_file = "services/user_service.py" as FilePath;
@@ -2231,6 +2164,7 @@ describe("Python Symbol Resolution Integration", () => {
             "import:services/user_service.py:UserRepository:1:44" as SymbolId,
             {
               kind: "import",
+              availability: { scope: "file-private" },
               symbol_id:
                 "import:services/user_service.py:UserRepository:1:44" as SymbolId,
               name: "UserRepository" as SymbolName,
@@ -2253,6 +2187,7 @@ describe("Python Symbol Resolution Integration", () => {
             service_class_id,
             {
               kind: "class",
+              availability: { scope: "file-private" },
               symbol_id: service_class_id,
               name: "UserService" as SymbolName,
               scope_id: service_scope,
@@ -2266,6 +2201,7 @@ describe("Python Symbol Resolution Integration", () => {
               methods: [
                 {
                   kind: "method",
+                  availability: { scope: "file-private" },
                   symbol_id: register_user_method_id,
                   name: "register_user" as SymbolName,
                   scope_id: service_scope,
@@ -2277,10 +2213,12 @@ describe("Python Symbol Resolution Integration", () => {
                     end_column: 30,
                   },
                   parameters: [],
-                  parent_class: service_class_id,
                 },
               ],
+              extends: [] as readonly SymbolName[],
+              decorators: [] as readonly SymbolId[],
               properties: [],
+              constructor: undefined,
             },
           ],
         ]),
@@ -2289,6 +2227,7 @@ describe("Python Symbol Resolution Integration", () => {
             repo_var_id,
             {
               kind: "variable",
+              availability: { scope: "file-private" },
               symbol_id: repo_var_id,
               name: "repo" as SymbolName,
               scope_id: service_scope,
@@ -2311,25 +2250,19 @@ describe("Python Symbol Resolution Integration", () => {
               end_line: 4,
               end_column: 8,
             }),
-            {
-              symbol_id: repo_var_id,
-              type_name: "UserRepository" as SymbolName,
-              type_scope_id: service_scope,
-              binding_type: "constructor",
-            },
+            "UserRepository" as SymbolName,
           ],
         ]),
         type_members: new Map([
           [
             service_class_id,
             {
-              type_id: service_class_id,
               methods: new Map([
                 ["register_user" as SymbolName, register_user_method_id],
               ]),
               properties: new Map(),
               constructor: undefined,
-              extends: [],
+              extends: [] as readonly SymbolName[],
             },
           ],
         ]),
@@ -2347,8 +2280,7 @@ describe("Python Symbol Resolution Integration", () => {
             },
             scope_id: service_scope,
             context: {
-              construct_target: "UserRepository" as SymbolName,
-            },
+              },
           },
           {
             type: "call",
@@ -2370,8 +2302,7 @@ describe("Python Symbol Resolution Integration", () => {
                 end_line: 6,
                 end_column: 15,
               },
-              receiver_name: "repo" as SymbolName,
-            },
+              },
           },
           {
             type: "call",
@@ -2393,18 +2324,10 @@ describe("Python Symbol Resolution Integration", () => {
                 end_line: 8,
                 end_column: 19,
               },
-              receiver_name: "user" as SymbolName,
-            },
+              },
           },
         ],
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "UserService" as SymbolName,
-            local_symbol_id: service_class_id,
-          },
-        ],
-      });
+        });
 
       // main.py
       const main_file = "main.py" as FilePath;
@@ -2452,6 +2375,7 @@ describe("Python Symbol Resolution Integration", () => {
             main_import_id,
             {
               kind: "import",
+              availability: { scope: "file-private" },
               symbol_id: main_import_id,
               name: "UserService" as SymbolName,
               scope_id: main_scope,
@@ -2473,6 +2397,7 @@ describe("Python Symbol Resolution Integration", () => {
             service_var_id,
             {
               kind: "variable",
+              availability: { scope: "file-private" },
               symbol_id: service_var_id,
               name: "service" as SymbolName,
               scope_id: main_scope,
@@ -2495,12 +2420,7 @@ describe("Python Symbol Resolution Integration", () => {
               end_line: 3,
               end_column: 7,
             }),
-            {
-              symbol_id: service_var_id,
-              type_name: "UserService" as SymbolName,
-              type_scope_id: main_scope,
-              binding_type: "constructor",
-            },
+            "UserService" as SymbolName,
           ],
         ]),
         references: [
@@ -2511,8 +2431,7 @@ describe("Python Symbol Resolution Integration", () => {
             location: service_constructor_location,
             scope_id: main_scope,
             context: {
-              construct_target: "UserService" as SymbolName,
-            },
+              },
           },
           {
             type: "call",
@@ -2528,8 +2447,7 @@ describe("Python Symbol Resolution Integration", () => {
                 end_line: 4,
                 end_column: 14,
               },
-              receiver_name: "service" as SymbolName,
-            },
+              },
           },
         ],
       });
@@ -2628,6 +2546,7 @@ describe("Python Symbol Resolution Integration", () => {
             base_class_id,
             {
               kind: "class",
+              availability: { scope: "file-private" },
               symbol_id: base_class_id,
               name: "Base" as SymbolName,
               scope_id: base_scope,
@@ -2641,6 +2560,7 @@ describe("Python Symbol Resolution Integration", () => {
               methods: [
                 {
                   kind: "method",
+                  availability: { scope: "file-private" },
                   symbol_id: base_method_id,
                   name: "base_method" as SymbolName,
                   scope_id: base_scope,
@@ -2652,10 +2572,12 @@ describe("Python Symbol Resolution Integration", () => {
                     end_column: 40,
                   },
                   parameters: [],
-                  parent_class: base_class_id,
                 },
               ],
+              extends: [] as readonly SymbolName[],
+              decorators: [] as readonly SymbolId[],
               properties: [],
+              constructor: undefined,
             },
           ],
         ]),
@@ -2663,22 +2585,14 @@ describe("Python Symbol Resolution Integration", () => {
           [
             base_class_id,
             {
-              type_id: base_class_id,
               methods: new Map([["base_method" as SymbolName, base_method_id]]),
               properties: new Map(),
               constructor: undefined,
-              extends: [],
+              extends: [] as readonly SymbolName[],
             },
           ],
         ]),
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "Base" as SymbolName,
-            local_symbol_id: base_class_id,
-          },
-        ],
-      });
+        });
 
       // derived.py: from base import Base\nclass Derived(Base):\n  def derived_method(self): return self.base_method()
       const derived_file = "derived.py" as FilePath;
@@ -2713,6 +2627,7 @@ describe("Python Symbol Resolution Integration", () => {
             "import:derived.py:Base:1:17" as SymbolId,
             {
               kind: "import",
+              availability: { scope: "file-private" },
               symbol_id: "import:derived.py:Base:1:17" as SymbolId,
               name: "Base" as SymbolName,
               scope_id: derived_scope,
@@ -2734,6 +2649,7 @@ describe("Python Symbol Resolution Integration", () => {
             derived_class_id,
             {
               kind: "class",
+              availability: { scope: "file-private" },
               symbol_id: derived_class_id,
               name: "Derived" as SymbolName,
               scope_id: derived_scope,
@@ -2747,6 +2663,7 @@ describe("Python Symbol Resolution Integration", () => {
               methods: [
                 {
                   kind: "method",
+                  availability: { scope: "file-private" },
                   symbol_id: derived_method_id,
                   name: "derived_method" as SymbolName,
                   scope_id: derived_scope,
@@ -2758,10 +2675,12 @@ describe("Python Symbol Resolution Integration", () => {
                     end_column: 50,
                   },
                   parameters: [],
-                  parent_class: derived_class_id,
                 },
               ],
+              extends: [] as readonly SymbolName[],
+              decorators: [] as readonly SymbolId[],
               properties: [],
+              constructor: undefined,
             },
           ],
         ]),
@@ -2769,13 +2688,12 @@ describe("Python Symbol Resolution Integration", () => {
           [
             derived_class_id,
             {
-              type_id: derived_class_id,
               methods: new Map([
                 ["derived_method" as SymbolName, derived_method_id],
               ]),
               properties: new Map(),
               constructor: undefined,
-              extends: [base_class_id],
+              extends: ["Base" as SymbolName],
             },
           ],
         ]),
@@ -2800,18 +2718,10 @@ describe("Python Symbol Resolution Integration", () => {
                 end_line: 3,
                 end_column: 37,
               },
-              receiver_name: "self" as SymbolName,
-            },
+              },
           },
         ],
-        exports: [
-          {
-            export_type: "named",
-            exported_name: "Derived" as SymbolName,
-            local_symbol_id: derived_class_id,
-          },
-        ],
-      });
+        });
 
       // main.py: from derived import Derived\ndef main():\n  obj = Derived()\n  obj.base_method()\n  obj.derived_method()
       const main_file = "main.py" as FilePath;
@@ -2859,6 +2769,7 @@ describe("Python Symbol Resolution Integration", () => {
             import_id,
             {
               kind: "import",
+              availability: { scope: "file-private" },
               symbol_id: import_id,
               name: "Derived" as SymbolName,
               scope_id: main_scope,
@@ -2880,6 +2791,7 @@ describe("Python Symbol Resolution Integration", () => {
             obj_var_id,
             {
               kind: "variable",
+              availability: { scope: "file-private" },
               symbol_id: obj_var_id,
               name: "obj" as SymbolName,
               scope_id: main_scope,
@@ -2902,12 +2814,7 @@ describe("Python Symbol Resolution Integration", () => {
               end_line: 3,
               end_column: 5,
             }),
-            {
-              symbol_id: obj_var_id,
-              type_name: "Derived" as SymbolName,
-              type_scope_id: main_scope,
-              binding_type: "constructor",
-            },
+            "Derived" as SymbolName,
           ],
         ]),
         references: [
@@ -2925,8 +2832,7 @@ describe("Python Symbol Resolution Integration", () => {
                 end_line: 4,
                 end_column: 5,
               },
-              receiver_name: "obj" as SymbolName,
-            },
+              },
           },
           {
             type: "call",
@@ -2942,8 +2848,7 @@ describe("Python Symbol Resolution Integration", () => {
                 end_line: 5,
                 end_column: 5,
               },
-              receiver_name: "obj" as SymbolName,
-            },
+              },
           },
         ],
       });
