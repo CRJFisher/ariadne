@@ -184,12 +184,11 @@ describe("Python Symbol Resolution Integration", () => {
       expect(result.resolved_references.get(call_key)).toBe(helper_id);
     });
 
-    // TODO: Requires cross-file import resolution
-    it.todo("resolves imported function call", () => {
+    it("resolves imported function call", () => {
       // helper.py: def process(): return 42
-      const helper_file = "helper.py" as FilePath;
-      const helper_scope = "scope:helper.py:module" as ScopeId;
-      const process_id = "function:helper.py:process:1:0" as SymbolId;
+      const helper_file = "/tmp/ariadne-test/python/helper.py" as FilePath;
+      const helper_scope = "scope:/tmp/ariadne-test/python/helper.py:module" as ScopeId;
+      const process_id = "function:/tmp/ariadne-test/python/helper.py:process:1:0" as SymbolId;
 
       const helper_index = create_test_index(helper_file, {
         root_scope_id: helper_scope,
@@ -217,7 +216,7 @@ describe("Python Symbol Resolution Integration", () => {
             process_id,
             {
               kind: "function",
-              availability: { scope: "file-private" },
+              availability: { scope: "file-export" },
               symbol_id: process_id,
               name: "process" as SymbolName,
               scope_id: helper_scope,
@@ -235,9 +234,9 @@ describe("Python Symbol Resolution Integration", () => {
         });
 
       // main.py: from helper import process\nprocess()
-      const main_file = "main.py" as FilePath;
-      const main_scope = "scope:main.py:module" as ScopeId;
-      const import_id = "import:main.py:process:1:19" as SymbolId;
+      const main_file = "/tmp/ariadne-test/python/main.py" as FilePath;
+      const main_scope = "scope:/tmp/ariadne-test/python/main.py:module" as ScopeId;
+      const import_id = "import:/tmp/ariadne-test/python/main.py:process:1:19" as SymbolId;
       const call_location = {
         file_path: main_file,
         start_line: 2,
@@ -283,7 +282,7 @@ describe("Python Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 26,
               },
-              import_path: "helper.py" as ModulePath,
+              import_path: "helper" as ModulePath,
               import_kind: "named",
               original_name: undefined,
             },
@@ -311,12 +310,11 @@ describe("Python Symbol Resolution Integration", () => {
       expect(result.resolved_references.get(call_key)).toBe(process_id);
     });
 
-    // TODO: Requires cross-file import resolution with relative paths
-    it.todo("resolves function from relative import", () => {
+    it("resolves function from relative import", () => {
       // utils/helper.py: def process(): return 42
-      const helper_file = "utils/helper.py" as FilePath;
-      const helper_scope = "scope:utils/helper.py:module" as ScopeId;
-      const process_id = "function:utils/helper.py:process:1:0" as SymbolId;
+      const helper_file = "/tmp/ariadne-test/python/utils/helper.py" as FilePath;
+      const helper_scope = "scope:/tmp/ariadne-test/python/utils/helper.py:module" as ScopeId;
+      const process_id = "function:/tmp/ariadne-test/python/utils/helper.py:process:1:0" as SymbolId;
 
       const helper_index = create_test_index(helper_file, {
         root_scope_id: helper_scope,
@@ -344,7 +342,7 @@ describe("Python Symbol Resolution Integration", () => {
             process_id,
             {
               kind: "function",
-              availability: { scope: "file-private" },
+              availability: { scope: "file-export" },
               symbol_id: process_id,
               name: "process" as SymbolName,
               scope_id: helper_scope,
@@ -362,9 +360,9 @@ describe("Python Symbol Resolution Integration", () => {
         });
 
       // utils/worker.py: from .helper import process\ndef work(): return process()
-      const worker_file = "utils/worker.py" as FilePath;
-      const worker_scope = "scope:utils/worker.py:module" as ScopeId;
-      const import_id = "import:utils/worker.py:process:1:22" as SymbolId;
+      const worker_file = "/tmp/ariadne-test/python/utils/worker.py" as FilePath;
+      const worker_scope = "scope:/tmp/ariadne-test/python/utils/worker.py:module" as ScopeId;
+      const import_id = "import:/tmp/ariadne-test/python/utils/worker.py:process:1:22" as SymbolId;
       const call_location = {
         file_path: worker_file,
         start_line: 2,
@@ -410,7 +408,7 @@ describe("Python Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 29,
               },
-              import_path: "utils/helper.py" as ModulePath,
+              import_path: ".helper" as ModulePath,
               import_kind: "named",
               original_name: undefined,
             },
@@ -1211,11 +1209,11 @@ describe("Python Symbol Resolution Integration", () => {
 
   describe("Relative Imports", () => {
     // TODO: Requires cross-file import resolution with relative paths
-    it.todo("resolves single-dot relative import (same directory)", () => {
+    it("resolves single-dot relative import (same directory)", () => {
       // utils/helper.py: def process(): return 42
-      const helper_file = "utils/helper.py" as FilePath;
-      const helper_scope = "scope:utils/helper.py:module" as ScopeId;
-      const process_id = "function:utils/helper.py:process:1:0" as SymbolId;
+      const helper_file = "/tmp/ariadne-test/python/utils/helper.py" as FilePath;
+      const helper_scope = "scope:/tmp/ariadne-test/python/utils/helper.py:module" as ScopeId;
+      const process_id = "function:/tmp/ariadne-test/python/utils/helper.py:process:1:0" as SymbolId;
 
       const helper_index = create_test_index(helper_file, {
         root_scope_id: helper_scope,
@@ -1243,7 +1241,7 @@ describe("Python Symbol Resolution Integration", () => {
             process_id,
             {
               kind: "function",
-              availability: { scope: "file-private" },
+              availability: { scope: "file-export" },
               symbol_id: process_id,
               name: "process" as SymbolName,
               scope_id: helper_scope,
@@ -1261,9 +1259,9 @@ describe("Python Symbol Resolution Integration", () => {
         });
 
       // utils/worker.py: from .helper import process\ndef work(): return process()
-      const worker_file = "utils/worker.py" as FilePath;
-      const worker_scope = "scope:utils/worker.py:module" as ScopeId;
-      const import_id = "import:utils/worker.py:process:1:22" as SymbolId;
+      const worker_file = "/tmp/ariadne-test/python/utils/worker.py" as FilePath;
+      const worker_scope = "scope:/tmp/ariadne-test/python/utils/worker.py:module" as ScopeId;
+      const import_id = "import:/tmp/ariadne-test/python/utils/worker.py:process:1:22" as SymbolId;
       const call_location = {
         file_path: worker_file,
         start_line: 2,
@@ -1309,7 +1307,7 @@ describe("Python Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 29,
               },
-              import_path: "utils/helper.py" as ModulePath,
+              import_path: ".helper" as ModulePath,
               import_kind: "named",
               original_name: undefined,
             },
@@ -1338,11 +1336,11 @@ describe("Python Symbol Resolution Integration", () => {
     });
 
     // TODO: Requires cross-file import resolution with parent directory paths
-    it.todo("resolves double-dot relative import (parent directory)", () => {
+    it("resolves double-dot relative import (parent directory)", () => {
       // models/user.py: class User: pass
-      const user_file = "models/user.py" as FilePath;
-      const user_scope = "scope:models/user.py:module" as ScopeId;
-      const user_class_id = "class:models/user.py:User:1:0" as SymbolId;
+      const user_file = "/tmp/ariadne-test/python/models/user.py" as FilePath;
+      const user_scope = "scope:/tmp/ariadne-test/python/models/user.py:module" as ScopeId;
+      const user_class_id = "class:/tmp/ariadne-test/python/models/user.py:User:1:0" as SymbolId;
 
       const user_index = create_test_index(user_file, {
         root_scope_id: user_scope,
@@ -1370,7 +1368,7 @@ describe("Python Symbol Resolution Integration", () => {
             user_class_id,
             {
               kind: "class",
-              availability: { scope: "file-private" },
+              availability: { scope: "file-export" },
               symbol_id: user_class_id,
               name: "User" as SymbolName,
               scope_id: user_scope,
@@ -1392,9 +1390,9 @@ describe("Python Symbol Resolution Integration", () => {
         });
 
       // services/user_service.py: from ..models.user import User\nclass UserService:\n  def create_user(self): return User()
-      const service_file = "services/user_service.py" as FilePath;
-      const service_scope = "scope:services/user_service.py:module" as ScopeId;
-      const import_id = "import:services/user_service.py:User:1:30" as SymbolId;
+      const service_file = "/tmp/ariadne-test/python/services/user_service.py" as FilePath;
+      const service_scope = "scope:/tmp/ariadne-test/python/services/user_service.py:module" as ScopeId;
+      const import_id = "import:/tmp/ariadne-test/python/services/user_service.py:User:1:30" as SymbolId;
       const user_call_location = {
         file_path: service_file,
         start_line: 3,
@@ -1440,7 +1438,7 @@ describe("Python Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 34,
               },
-              import_path: "models/user.py" as ModulePath,
+              import_path: "..models.user" as ModulePath,
               import_kind: "named",
               original_name: undefined,
             },
@@ -1473,9 +1471,9 @@ describe("Python Symbol Resolution Integration", () => {
     // TODO: Requires cross-file import resolution with multi-level paths
     it.todo("resolves multi-level relative import", () => {
       // shared/base/model.py: class BaseModel: pass
-      const model_file = "shared/base/model.py" as FilePath;
-      const model_scope = "scope:shared/base/model.py:module" as ScopeId;
-      const base_model_id = "class:shared/base/model.py:BaseModel:1:0" as SymbolId;
+      const model_file = "/tmp/ariadne-test/python/shared/base/model.py" as FilePath;
+      const model_scope = "scope:/tmp/ariadne-test/python/shared/base/model.py:module" as ScopeId;
+      const base_model_id = "class:/tmp/ariadne-test/python/shared/base/model.py:BaseModel:1:0" as SymbolId;
 
       const model_index = create_test_index(model_file, {
         root_scope_id: model_scope,
@@ -1503,7 +1501,7 @@ describe("Python Symbol Resolution Integration", () => {
             base_model_id,
             {
               kind: "class",
-              availability: { scope: "file-private" },
+              availability: { scope: "file-export" },
               symbol_id: base_model_id,
               name: "BaseModel" as SymbolName,
               scope_id: model_scope,
@@ -1525,9 +1523,9 @@ describe("Python Symbol Resolution Integration", () => {
         });
 
       // app/models/user.py: from ...shared.base.model import BaseModel\nclass User(BaseModel): pass
-      const user_file = "app/models/user.py" as FilePath;
-      const user_scope = "scope:app/models/user.py:module" as ScopeId;
-      const import_id = "import:app/models/user.py:BaseModel:1:38" as SymbolId;
+      const user_file = "/tmp/ariadne-test/python/app/models/user.py" as FilePath;
+      const user_scope = "scope:/tmp/ariadne-test/python/app/models/user.py:module" as ScopeId;
+      const import_id = "import:/tmp/ariadne-test/python/app/models/user.py:BaseModel:1:38" as SymbolId;
       const base_call_location = {
         file_path: user_file,
         start_line: 2,
@@ -1573,7 +1571,7 @@ describe("Python Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 47,
               },
-              import_path: "shared/base/model.py" as ModulePath,
+              import_path: "...shared.base.model" as ModulePath,
               import_kind: "named",
               original_name: undefined,
             },
@@ -1784,13 +1782,13 @@ describe("Python Symbol Resolution Integration", () => {
     });
 
     // TODO: Requires cross-file import resolution for nested packages
-    it.todo("resolves nested package import", () => {
+    it("resolves nested package import", () => {
       // app/services/auth/handler.py: class AuthHandler: pass
-      const handler_file = "app/services/auth/handler.py" as FilePath;
+      const handler_file = "/tmp/ariadne-test/python/app/services/auth/handler.py" as FilePath;
       const handler_scope =
-        "scope:app/services/auth/handler.py:module" as ScopeId;
+        "scope:/tmp/ariadne-test/python/app/services/auth/handler.py:module" as ScopeId;
       const auth_handler_id =
-        "class:app/services/auth/handler.py:AuthHandler:1:0" as SymbolId;
+        "class:/tmp/ariadne-test/python/app/services/auth/handler.py:AuthHandler:1:0" as SymbolId;
 
       const handler_index = create_test_index(handler_file, {
         root_scope_id: handler_scope,
@@ -1818,7 +1816,7 @@ describe("Python Symbol Resolution Integration", () => {
             auth_handler_id,
             {
               kind: "class",
-              availability: { scope: "file-private" },
+              availability: { scope: "file-export" },
               symbol_id: auth_handler_id,
               name: "AuthHandler" as SymbolName,
               scope_id: handler_scope,
@@ -1840,9 +1838,9 @@ describe("Python Symbol Resolution Integration", () => {
         });
 
       // main.py: from app.services.auth.handler import AuthHandler\nhandler = AuthHandler()
-      const main_file = "main.py" as FilePath;
-      const main_scope = "scope:main.py:module" as ScopeId;
-      const import_id = "import:main.py:AuthHandler:1:43" as SymbolId;
+      const main_file = "/tmp/ariadne-test/python/main.py" as FilePath;
+      const main_scope = "scope:/tmp/ariadne-test/python/main.py:module" as ScopeId;
+      const import_id = "import:/tmp/ariadne-test/python/main.py:AuthHandler:1:43" as SymbolId;
       const call_location = {
         file_path: main_file,
         start_line: 2,
@@ -1888,7 +1886,7 @@ describe("Python Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 54,
               },
-              import_path: "app/services/auth/handler.py" as ModulePath,
+              import_path: "app.services.auth.handler" as ModulePath,
               import_kind: "named",
               original_name: undefined,
             },
