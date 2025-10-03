@@ -17,6 +17,7 @@ import type {
   InterfaceDefinition,
   EnumDefinition,
   TypeAliasDefinition,
+  ImportDefinition,
 } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../index_single_file/semantic_index";
 import type { ImportSpec, ExportInfo, SymbolResolver } from "../types";
@@ -89,17 +90,15 @@ export function create_import_resolver(
  * Follow export chain to find the ultimate source symbol.
  * This runs lazily when an import resolver is first invoked.
  *
- * NOTE: Re-export chain following is not yet implemented because the semantic index
- * doesn't currently track source information for re-exports. For now, we return the
- * symbol directly even if it's marked as a re-export.
- *
- * TODO: Implement full re-export chain following once the semantic index is enhanced
- * to track source_file and source_name for re-exported symbols (task-epic-11.110).
+ * Handles re-export chains like:
+ *   base.js:   export function core() {}
+ *   middle.js: export { core } from './base'
+ *   main.js:   import { core } from './middle'
  *
  * @param source_file - File containing the export
  * @param export_name - Name of the exported symbol
  * @param indices - Map of all semantic indices
- * @param visited - Set of visited exports for cycle detection (reserved for future use)
+ * @param visited - Set of visited exports for cycle detection
  * @returns Symbol ID of the exported symbol, or null if not found
  */
 export function resolve_export_chain(
@@ -113,14 +112,34 @@ export function resolve_export_chain(
     return null;
   }
 
+  // Detect cycles
+  const key = `${source_file}:${export_name}`;
+  if (visited.has(key)) {
+    return null; // Circular re-export
+  }
+  visited.add(key);
+
   // Look for export in source file
   const export_info = find_export(export_name, source_index);
   if (!export_info) {
     return null;
   }
 
-  // Return the symbol ID directly
-  // Re-export chain following will be added in the future
+  // If it's a re-exported import, follow the chain
+  if (export_info.is_reexport && export_info.import_def) {
+    const import_def = export_info.import_def;
+    const resolved_file = resolve_module_path(
+      import_def.import_path,
+      source_file,
+      source_index.language
+    );
+
+    // Recursively resolve in the imported file
+    const original_name = import_def.original_name || import_def.name;
+    return resolve_export_chain(resolved_file, original_name, indices, visited);
+  }
+
+  // Direct export
   return export_info.symbol_id;
 }
 
@@ -144,14 +163,24 @@ function find_export(
     find_exported_enum(name, index) ||
     find_exported_type_alias(name, index);
 
-  if (!def) {
-    return null;
+  if (def) {
+    return {
+      symbol_id: def.symbol_id,
+      is_reexport: def.availability?.export?.is_reexport || false,
+    };
   }
 
-  return {
-    symbol_id: def.symbol_id,
-    is_reexport: def.availability?.export?.is_reexport || false,
-  };
+  // Check for re-exported imports (e.g., export { foo } from './bar')
+  const reexport = find_reexported_import(name, index);
+  if (reexport) {
+    return {
+      symbol_id: reexport.symbol_id,
+      is_reexport: true,
+      import_def: reexport,
+    };
+  }
+
+  return null;
 }
 
 /**
@@ -254,12 +283,38 @@ function find_exported_type_alias(
  * @returns true if the symbol is exported
  */
 function is_exported(
-  def: FunctionDefinition | ClassDefinition | VariableDefinition | InterfaceDefinition | EnumDefinition | TypeAliasDefinition
+  def: FunctionDefinition | ClassDefinition | VariableDefinition | InterfaceDefinition | EnumDefinition | TypeAliasDefinition | ImportDefinition
 ): boolean {
   return (
     def.availability?.scope === "file-export" ||
     def.availability?.scope === "public"
   );
+}
+
+/**
+ * Find a re-exported import by name (e.g., export { foo } from './bar')
+ *
+ * This handles the case where a file re-exports an imported symbol.
+ * For example:
+ *   // middle.js
+ *   export { core } from './base'
+ *
+ * In the semantic index, this appears as an import with availability.scope = "file-export"
+ *
+ * @param name - Symbol name to find
+ * @param index - Semantic index to search in
+ * @returns Import definition or null if not found
+ */
+function find_reexported_import(
+  name: SymbolName,
+  index: SemanticIndex
+): ImportDefinition | null {
+  for (const [symbol_id, import_def] of index.imported_symbols) {
+    if (import_def.name === name && is_exported(import_def)) {
+      return import_def;
+    }
+  }
+  return null;
 }
 
 /**

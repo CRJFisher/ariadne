@@ -353,9 +353,9 @@ describe("JavaScript Symbol Resolution Integration", () => {
   describe("Cross-File Function Calls", () => {
     it("resolves imported function call", () => {
       // utils.js: export function helper() { return 42; }
-      const utils_file = "utils.js" as FilePath;
-      const utils_scope = "scope:utils.js:module" as ScopeId;
-      const helper_id = "function:utils.js:helper:1:0" as SymbolId;
+      const utils_file = "/tmp/ariadne-test/utils.js" as FilePath;
+      const utils_scope = "scope:/tmp/ariadne-test/utils.js:module" as ScopeId;
+      const helper_id = "function:/tmp/ariadne-test/utils.js:helper:1:0" as SymbolId;
 
       const utils_index = create_test_index(utils_file, {
         root_scope_id: utils_scope,
@@ -394,15 +394,18 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_column: 45,
               },
               parameters: [],
+              availability: {
+                scope: "file-export",
+              },
             } as unknown as FunctionDefinition,
           ],
         ]),
       });
 
       // main.js: import { helper } from './utils'; helper();
-      const main_file = "main.js" as FilePath;
-      const main_scope = "scope:main.js:module" as ScopeId;
-      const import_id = "import:main.js:helper:1:9" as SymbolId;
+      const main_file = "/tmp/ariadne-test/main.js" as FilePath;
+      const main_scope = "scope:/tmp/ariadne-test/main.js:module" as ScopeId;
+      const import_id = "import:/tmp/ariadne-test/main.js:helper:1:9" as SymbolId;
       const call_location = {
         file_path: main_file,
         start_line: 2,
@@ -447,7 +450,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 15,
               },
-              import_path: "./utils.js" as ModulePath,
+              import_path: "./utils" as ModulePath,
               import_kind: "named",
               original_name: undefined,
             } as unknown as ImportDefinition,
@@ -477,9 +480,9 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
     it("follows re-export chain (A imports B exports C)", () => {
       // base.js: export function core() { return 42; }
-      const base_file = "base.js" as FilePath;
-      const base_scope = "scope:base.js:module" as ScopeId;
-      const core_id = "function:base.js:core:1:0" as SymbolId;
+      const base_file = "/tmp/ariadne-test/base.js" as FilePath;
+      const base_scope = "scope:/tmp/ariadne-test/base.js:module" as ScopeId;
+      const core_id = "function:/tmp/ariadne-test/base.js:core:1:0" as SymbolId;
 
       const base_index = create_test_index(base_file, {
         root_scope_id: base_scope,
@@ -518,15 +521,18 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_column: 40,
               },
               parameters: [],
+              availability: {
+                scope: "file-export",
+              },
             } as unknown as FunctionDefinition,
           ],
         ]),
       });
 
       // middle.js: export { core } from './base';
-      const middle_file = "middle.js" as FilePath;
-      const middle_scope = "scope:middle.js:module" as ScopeId;
-      const middle_import_id = "import:middle.js:core:1:9" as SymbolId;
+      const middle_file = "/tmp/ariadne-test/middle.js" as FilePath;
+      const middle_scope = "scope:/tmp/ariadne-test/middle.js:module" as ScopeId;
+      const middle_import_id = "import:/tmp/ariadne-test/middle.js:core:1:9" as SymbolId;
 
       const middle_index = create_test_index(middle_file, {
         root_scope_id: middle_scope,
@@ -567,15 +573,18 @@ describe("JavaScript Symbol Resolution Integration", () => {
               import_path: "./base.js" as ModulePath,
               import_kind: "named",
               original_name: undefined,
+              availability: {
+                scope: "file-export",
+              },
             } as unknown as ImportDefinition,
           ],
         ]),
       });
 
       // main.js: import { core } from './middle'; core();
-      const main_file = "main.js" as FilePath;
-      const main_scope = "scope:main.js:module" as ScopeId;
-      const main_import_id = "import:main.js:core:1:9" as SymbolId;
+      const main_file = "/tmp/ariadne-test/main.js" as FilePath;
+      const main_scope = "scope:/tmp/ariadne-test/main.js:module" as ScopeId;
+      const main_import_id = "import:/tmp/ariadne-test/main.js:core:1:9" as SymbolId;
       const call_location = {
         file_path: main_file,
         start_line: 2,
@@ -652,9 +661,9 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
     it("handles aliased imports", () => {
       // utils.js: export function helper() {}
-      const utils_file = "utils.js" as FilePath;
-      const utils_scope = "scope:utils.js:module" as ScopeId;
-      const helper_id = "function:utils.js:helper:1:0" as SymbolId;
+      const utils_file = "/tmp/ariadne-test/utils.js" as FilePath;
+      const utils_scope = "scope:/tmp/ariadne-test/utils.js:module" as ScopeId;
+      const helper_id = "function:/tmp/ariadne-test/utils.js:helper:1:0" as SymbolId;
 
       const utils_index = create_test_index(utils_file, {
         root_scope_id: utils_scope,
@@ -693,15 +702,18 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_column: 30,
               },
               parameters: [],
+              availability: {
+                scope: "file-export",
+              },
             } as unknown as FunctionDefinition,
           ],
         ]),
       });
 
       // main.js: import { helper as myHelper } from './utils'; myHelper();
-      const main_file = "main.js" as FilePath;
-      const main_scope = "scope:main.js:module" as ScopeId;
-      const import_id = "import:main.js:myHelper:1:9" as SymbolId;
+      const main_file = "/tmp/ariadne-test/main.js" as FilePath;
+      const main_scope = "scope:/tmp/ariadne-test/main.js:module" as ScopeId;
+      const import_id = "import:/tmp/ariadne-test/main.js:myHelper:1:9" as SymbolId;
       const call_location = {
         file_path: main_file,
         start_line: 2,
@@ -746,7 +758,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 29,
               },
-              import_path: "./utils.js" as ModulePath,
+              import_path: "./utils" as ModulePath,
               import_kind: "named",
               original_name: "helper" as SymbolName,
             } as unknown as ImportDefinition,
@@ -778,10 +790,10 @@ describe("JavaScript Symbol Resolution Integration", () => {
   describe("Method Calls", () => {
     it("resolves method call on constructor result", () => {
       // user.js: export class User { getName() { return "Alice"; } }
-      const user_file = "user.js" as FilePath;
-      const user_scope = "scope:user.js:module" as ScopeId;
-      const user_class_id = "class:user.js:User:1:0" as SymbolId;
-      const getName_method_id = "method:user.js:User:getName:1:20" as SymbolId;
+      const user_file = "/tmp/ariadne-test/user.js" as FilePath;
+      const user_scope = "scope:/tmp/ariadne-test/user.js:module" as ScopeId;
+      const user_class_id = "class:/tmp/ariadne-test/user.js:User:1:0" as SymbolId;
+      const getName_method_id = "method:/tmp/ariadne-test/user.js:User:getName:1:20" as SymbolId;
 
       const user_index = create_test_index(user_file, {
         root_scope_id: user_scope,
@@ -837,6 +849,9 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 } as unknown as MethodDefinition,
               ],
               properties: [],
+              availability: {
+                scope: "file-export",
+              },
             } as unknown as ClassDefinition,
           ],
         ]),
@@ -854,10 +869,10 @@ describe("JavaScript Symbol Resolution Integration", () => {
       });
 
       // main.js: import { User } from './user'; const user = new User(); user.getName();
-      const main_file = "main.js" as FilePath;
-      const main_scope = "scope:main.js:module" as ScopeId;
-      const import_id = "import:main.js:User:1:9" as SymbolId;
-      const user_var_id = "variable:main.js:user:2:6" as SymbolId;
+      const main_file = "/tmp/ariadne-test/main.js" as FilePath;
+      const main_scope = "scope:/tmp/ariadne-test/main.js:module" as ScopeId;
+      const import_id = "import:/tmp/ariadne-test/main.js:User:1:9" as SymbolId;
+      const user_var_id = "variable:/tmp/ariadne-test/main.js:user:2:6" as SymbolId;
       const constructor_call_location = {
         file_path: main_file,
         start_line: 2,
@@ -909,7 +924,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 13,
               },
-              import_path: "./user.js" as ModulePath,
+              import_path: "./user" as ModulePath,
               import_kind: "named",
               original_name: undefined,
             } as unknown as ImportDefinition,
@@ -967,6 +982,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_line: 3,
                 end_column: 4,
               },
+              property_chain: ["user" as SymbolName, "getName" as SymbolName],
             },
           },
         ],
@@ -1068,9 +1084,9 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
     it("resolves imported class constructor", () => {
       // types.js: export class User {}
-      const types_file = "types.js" as FilePath;
-      const types_scope = "scope:types.js:module" as ScopeId;
-      const user_class_id = "class:types.js:User:1:0" as SymbolId;
+      const types_file = "/tmp/ariadne-test/types.js" as FilePath;
+      const types_scope = "scope:/tmp/ariadne-test/types.js:module" as ScopeId;
+      const user_class_id = "class:/tmp/ariadne-test/types.js:User:1:0" as SymbolId;
 
       const types_index = create_test_index(types_file, {
         root_scope_id: types_scope,
@@ -1110,15 +1126,18 @@ describe("JavaScript Symbol Resolution Integration", () => {
               },
               methods: [],
               properties: [],
+              availability: {
+                scope: "file-export",
+              },
             } as unknown as ClassDefinition,
           ],
         ]),
       });
 
       // main.js: import { User } from './types'; const user = new User();
-      const main_file = "main.js" as FilePath;
-      const main_scope = "scope:main.js:module" as ScopeId;
-      const import_id = "import:main.js:User:1:9" as SymbolId;
+      const main_file = "/tmp/ariadne-test/main.js" as FilePath;
+      const main_scope = "scope:/tmp/ariadne-test/main.js:module" as ScopeId;
+      const import_id = "import:/tmp/ariadne-test/main.js:User:1:9" as SymbolId;
       const call_location = {
         file_path: main_file,
         start_line: 2,
@@ -1163,7 +1182,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 13,
               },
-              import_path: "./types.js" as ModulePath,
+              import_path: "./types" as ModulePath,
               import_kind: "named",
               original_name: undefined,
             } as unknown as ImportDefinition,
@@ -1195,10 +1214,10 @@ describe("JavaScript Symbol Resolution Integration", () => {
   describe("Complex Scenarios", () => {
     it("resolves full workflow: import → construct → method call", () => {
       // repository.js: export class Repository { save(data) { return true; } }
-      const repository_file = "repository.js" as FilePath;
-      const repository_scope = "scope:repository.js:module" as ScopeId;
-      const repository_class_id = "class:repository.js:Repository:1:0" as SymbolId;
-      const save_method_id = "method:repository.js:Repository:save:1:30" as SymbolId;
+      const repository_file = "/tmp/ariadne-test/repository.js" as FilePath;
+      const repository_scope = "scope:/tmp/ariadne-test/repository.js:module" as ScopeId;
+      const repository_class_id = "class:/tmp/ariadne-test/repository.js:Repository:1:0" as SymbolId;
+      const save_method_id = "method:/tmp/ariadne-test/repository.js:Repository:save:1:30" as SymbolId;
 
       const repository_index = create_test_index(repository_file, {
         root_scope_id: repository_scope,
@@ -1254,6 +1273,9 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 } as unknown as MethodDefinition,
               ],
               properties: [],
+              availability: {
+                scope: "file-export",
+              },
             } as unknown as ClassDefinition,
           ],
         ]),
@@ -1271,12 +1293,12 @@ describe("JavaScript Symbol Resolution Integration", () => {
       });
 
       // service.js: import { Repository } from './repository'; export class UserService { ... }
-      const service_file = "service.js" as FilePath;
-      const service_scope = "scope:service.js:module" as ScopeId;
-      const service_class_id = "class:service.js:UserService:2:0" as SymbolId;
-      const saveUser_method_id = "method:service.js:UserService:saveUser:3:2" as SymbolId;
-      const repo_var_id = "variable:service.js:repo:2:15" as SymbolId;
-      const service_import_id = "import:service.js:Repository:1:9" as SymbolId;
+      const service_file = "/tmp/ariadne-test/service.js" as FilePath;
+      const service_scope = "scope:/tmp/ariadne-test/service.js:module" as ScopeId;
+      const service_class_id = "class:/tmp/ariadne-test/service.js:UserService:2:0" as SymbolId;
+      const saveUser_method_id = "method:/tmp/ariadne-test/service.js:UserService:saveUser:3:2" as SymbolId;
+      const repo_var_id = "variable:/tmp/ariadne-test/service.js:repo:2:15" as SymbolId;
+      const service_import_id = "import:/tmp/ariadne-test/service.js:Repository:1:9" as SymbolId;
 
       const service_repo_constructor_location = {
         file_path: service_file,
@@ -1329,7 +1351,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 19,
               },
-              import_path: "./repository.js" as ModulePath,
+              import_path: "./repository" as ModulePath,
               import_kind: "named",
               original_name: undefined,
             } as unknown as ImportDefinition,
@@ -1368,6 +1390,9 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 } as unknown as MethodDefinition,
               ],
               properties: [],
+              availability: {
+                scope: "file-export",
+              },
             } as unknown as ClassDefinition,
           ],
         ]),
@@ -1436,16 +1461,17 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_line: 3,
                 end_column: 14,
               },
+              property_chain: ["repo" as SymbolName, "save" as SymbolName],
             },
           },
         ],
       });
 
       // main.js: import { UserService } from './service'; const service = new UserService(); service.saveUser({...});
-      const main_file = "main.js" as FilePath;
-      const main_scope = "scope:main.js:module" as ScopeId;
-      const main_import_id = "import:main.js:UserService:1:9" as SymbolId;
-      const service_var_id = "variable:main.js:service:2:6" as SymbolId;
+      const main_file = "/tmp/ariadne-test/main.js" as FilePath;
+      const main_scope = "scope:/tmp/ariadne-test/main.js:module" as ScopeId;
+      const main_import_id = "import:/tmp/ariadne-test/main.js:UserService:1:9" as SymbolId;
+      const service_var_id = "variable:/tmp/ariadne-test/main.js:service:2:6" as SymbolId;
       const main_constructor_location = {
         file_path: main_file,
         start_line: 2,
@@ -1497,7 +1523,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 20,
               },
-              import_path: "./service.js" as ModulePath,
+              import_path: "./service" as ModulePath,
               import_kind: "named",
               original_name: undefined,
             } as unknown as ImportDefinition,
@@ -1555,6 +1581,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
                 end_line: 3,
                 end_column: 7,
               },
+              property_chain: ["service" as SymbolName, "saveUser" as SymbolName],
             },
           },
         ],

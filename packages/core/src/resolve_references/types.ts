@@ -4,7 +4,7 @@
  * This module defines the core types used throughout the resolution system.
  */
 
-import type { SymbolId, SymbolName, ScopeId, FilePath } from "@ariadnejs/types";
+import type { SymbolId, SymbolName, ScopeId, FilePath, ImportDefinition } from "@ariadnejs/types";
 
 /**
  * Resolver function type - returns symbol_id or null
@@ -117,4 +117,7 @@ export interface ExportInfo {
 
   /** Whether this is a re-export (export { x } from './other') */
   is_reexport: boolean;
+
+  /** Import definition for re-exports (to follow the chain) */
+  import_def?: ImportDefinition;
 }
