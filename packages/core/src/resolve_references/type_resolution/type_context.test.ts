@@ -60,6 +60,31 @@ describe("Type Context", () => {
     rust_parser.setLanguage(Rust);
   });
 
+  describe("Basic Smoke Tests", () => {
+    it("should build type context without errors", () => {
+      const code = `
+class MyClass {
+  doSomething() { return 42; }
+}
+const instance = new MyClass();
+      `;
+      const tree = js_parser.parse(code);
+      const file_path = "test.js" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "javascript");
+      const index = build_semantic_index(parsed_file, tree, "javascript");
+
+      const indices = new Map([[file_path, index]]);
+      const resolver_index = build_scope_resolver_index(indices);
+      const cache = create_resolution_cache();
+      const type_context = build_type_context(indices, resolver_index, cache);
+
+      expect(type_context).toBeDefined();
+      expect(typeof type_context.get_symbol_type).toBe("function");
+      expect(typeof type_context.get_type_member).toBe("function");
+      expect(typeof type_context.get_type_members).toBe("function");
+    });
+  });
+
   describe("TypeScript - Type Annotation Tracking", () => {
     it("should track variable type annotation", () => {
       const code = `
