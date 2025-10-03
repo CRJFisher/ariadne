@@ -6,3 +6,4 @@
  */
 
 export { resolve_function_calls, type FunctionCallMap } from "./function_resolver";
+export { resolve_method_calls, type MethodCallMap } from "./method_resolver";
