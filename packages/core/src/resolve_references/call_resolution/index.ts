@@ -7,3 +7,4 @@
 
 export { resolve_function_calls, type FunctionCallMap } from "./function_resolver";
 export { resolve_method_calls, type MethodCallMap } from "./method_resolver";
+export { resolve_constructor_calls, type ConstructorCallMap } from "./constructor_resolver";
