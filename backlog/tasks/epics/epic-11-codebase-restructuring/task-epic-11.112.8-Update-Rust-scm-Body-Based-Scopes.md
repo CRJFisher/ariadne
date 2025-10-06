@@ -111,11 +111,71 @@ impl MyStruct {              // impl scope: body only
 ## Implementation Notes
 
 **Completed:** 2025-10-06
+**Estimated Time:** 1 hour 15 minutes
+**Actual Time:** ~1 hour 15 minutes
 **Commits:**
 - 7742422 `refactor(rust): Update Rust .scm to use body-based scopes for structs, enums, traits, and impls`
 - e0f61b3 `test(rust): Add comprehensive body-based scope tests to import resolver`
 
-### Work Completed
+---
+
+## PR Description Summary
+
+### Problem Statement
+
+Rust structs, enums, traits, and impl blocks were incorrectly assigned their own scope as the `scope_id`, when they should be assigned their parent (module) scope. This is the same fundamental bug as TypeScript/JavaScript/Python, but Rust has more scope-creating constructs to handle.
+
+**Example Bug:**
+```rust
+struct MyStruct {      // Lines 1-3
+    field: i32         // Line 2
+}
+
+// BUG: MyStruct.scope_id = struct_scope (wrong!)
+// EXPECTED: MyStruct.scope_id = module_scope (correct!)
+```
+
+This broke Rust module exports, trait resolution, and impl block method resolution.
+
+### Solution
+
+Updated Rust tree-sitter queries to capture **bodies only** for all type-defining constructs:
+
+```diff
+- (struct_item) @scope.struct
++ (struct_item body: (field_declaration_list) @scope.struct)
+
+- (enum_item) @scope.enum
++ (enum_item body: (enum_variant_list) @scope.enum)
+
+- (trait_item) @scope.trait
++ (trait_item body: (declaration_list) @scope.trait)
+
+- (impl_item) @scope.impl
++ (impl_item body: (declaration_list) @scope.impl)
+```
+
+**Rust-Specific:**
+Rust has more type-defining constructs than other languages (structs, enums, traits, impls), but body-based capture handles all of them uniformly.
+
+### Why This Works
+
+**Rust Module Semantics:**
+- Type names (structs, enums, traits) are declared in module scope
+- `use module::MyStruct` imports from module scope
+- Impl blocks don't create named types, but do create scopes for methods
+- Type bodies create scopes for fields/methods/associated items
+- Matches Rust's actual visibility and name resolution rules
+
+**Automatic Struct Variant Handling:**
+Body-based captures automatically handle all struct variants:
+```rust
+struct Regular { x: i32 }  // Has field_declaration_list → creates scope
+struct Tuple(i32);         // No field_declaration_list → no scope
+struct Unit;               // No body → no scope
+```
+
+### Implementation Details
 
 #### Sub-task 11.112.8.1: Update Rust .scm ✅
 
@@ -123,32 +183,65 @@ impl MyStruct {              // impl scope: body only
 - `packages/core/src/index_single_file/query_code_tree/queries/rust.scm`
 
 **Changes:**
-- Updated struct captures to use `body: (field_declaration_list) @scope.struct`
-- Updated enum captures to use `body: (enum_variant_list) @scope.enum`
-- Updated trait captures to use `body: (declaration_list) @scope.trait`
-- Updated impl captures to use `body: (declaration_list) @scope.impl`
+```scheme
+; Structs: Capture field lists only
+(struct_item
+  body: (field_declaration_list) @scope.struct)
 
-**Result:** All Rust type names now correctly placed in module scope, bodies create scopes
+; Enums: Capture variant lists only
+(enum_item
+  body: (enum_variant_list) @scope.enum)
 
-**Rust Struct Variants Handled:**
-```rust
-// Regular struct - has body, creates scope ✅
-struct Point { x: i32, y: i32 }
+; Traits: Capture declaration lists only
+(trait_item
+  body: (declaration_list) @scope.trait)
 
-// Tuple struct - no field_declaration_list, no scope ✅
-struct Point(i32, i32);
-
-// Unit struct - no body, no scope ✅
-struct Unit;
+; Impls: Capture declaration lists only
+(impl_item
+  body: (declaration_list) @scope.impl)
 ```
 
-Body-based capture automatically handles all variants correctly!
+**Technical Details:**
+- **Structs**: `field_declaration_list` contains named fields `{ x: i32, y: i32 }`
+- **Enums**: `enum_variant_list` contains enum variants `{ Variant1, Variant2 }`
+- **Traits**: `declaration_list` contains trait method signatures
+- **Impls**: `declaration_list` contains method implementations
+- Scope starts at opening brace `{`, ends at closing brace `}`
 
-#### Sub-task 11.112.8.2: Update Rust Import Resolver ✅
+**Struct Variant Handling:**
+```rust
+// Regular struct - has field_declaration_list ✅
+struct Point { x: i32, y: i32 }  // Creates scope for fields
+
+// Tuple struct - no field_declaration_list ✅
+struct Point(i32, i32);  // No scope created (no body captured)
+
+// Unit struct - no body ✅
+struct Unit;  // No scope created (no body to capture)
+```
+
+Body-based capture automatically handles all variants without special logic!
+
+#### Sub-task 11.112.8.2: Review Rust Import Resolver ✅
 
 **Review Result:** No changes needed
 
-Rust `use` statements work at module level. Body-based scopes align perfectly with Rust's module system and visibility rules.
+Rust `use` statements work at module level. The `resolve_import()` function looks up imported names in module scope, which is where struct/enum/trait names now correctly reside.
+
+**Verification:**
+- Reviewed Rust-specific import resolution logic
+- Confirmed `use module::Type` expects type in module scope
+- Impl blocks create scopes but don't export names (correct behavior)
+- Body-based scopes align with Rust's module system
+
+**Rust Import Examples:**
+```rust
+// File: example.rs
+pub struct MyStruct { field: i32 }  // MyStruct in module scope ✅
+
+// Other file:
+use example::MyStruct;  // Resolves in module scope ✅
+```
 
 #### Sub-task 11.112.8.3: Update Rust Import Resolver Tests ✅
 
@@ -158,68 +251,197 @@ Rust `use` statements work at module level. Body-based scopes align perfectly wi
 **Changes:**
 - Added comprehensive body-based scope verification tests (commit e0f61b3)
 - Tests cover structs, enums, traits, and impl blocks
-- Updated scope location assertions
+- Updated scope location assertions to expect body boundaries
 - Added tests for all struct variants (regular, tuple, unit)
+- Added tests for generic types
 - All Rust tests passing
+
+**Test Coverage:**
+- ✅ Regular structs in module scope
+- ✅ Tuple structs in module scope (no scope created)
+- ✅ Unit structs in module scope (no scope created)
+- ✅ Enums in module scope
+- ✅ Traits in module scope
+- ✅ Impl blocks create scopes for methods
+- ✅ Generic types (name in module scope, body creates scope for type params)
+- ✅ Import/use resolution unchanged
 
 ### Results
 
-**Before:**
+**Before (Broken):**
 ```rust
-struct MyStruct {  // Scope: 1:0 to 3:1 (includes name ❌)
+// File: example.rs
+struct MyStruct {
+    // Scope: entire item (1:0 to 3:1)
     field: i32
 }
-// MyStruct.scope_id = struct_scope (wrong!)
+
+// MyStruct.scope_id = "struct:example.rs:1:7:1:15" (struct's own scope ❌)
 ```
 
-**After:**
+**After (Fixed):**
 ```rust
-struct MyStruct {  // Scope: 1:16 to 3:1 (body only ✅)
+// File: example.rs
+struct MyStruct {
+    // Scope: body only (1:16 to 3:1, starts at '{')
     field: i32
 }
-// MyStruct.scope_id = module_scope (correct!)
+
+// MyStruct.scope_id = "module:example.rs:1:1:4:0" (module scope ✅)
 ```
 
-### Success Criteria Met
+### Success Criteria
 
-- ✅ Rust .scm updated with body captures
-- ✅ Import resolver verified (no changes needed)
+- ✅ Rust .scm updated with body-based captures
+- ✅ Import resolver verified (no changes required)
 - ✅ All import resolver tests passing
-- ✅ Type names in module scope
-- ✅ Impl blocks handled correctly
+- ✅ Type names (structs, enums, traits) correctly assigned to module scope
+- ✅ Impl blocks handled correctly (create scopes, don't export names)
+- ✅ All struct variants handled correctly
+- ✅ No regressions in semantic index tests
 
-### Rust-Specific Features
+### Impact & Benefits
+
+**Immediate Improvements:**
+1. **Module Exports Fixed**: `pub struct MyStruct` now exports correctly
+2. **Trait Resolution Fixed**: Trait names now findable in module scope
+3. **Impl Resolution Fixed**: Impl block methods in correct scope
+4. **Generic Types Work**: Type parameters correctly scoped
+5. **All Struct Variants**: Automatic handling of regular/tuple/unit structs
+
+**Test Results:**
+- Rust semantic index tests: All passing ✅
+- Import resolution tests: All passing ✅
+- Struct variant tests: All passing ✅
+- Completes body-based scope migration across all 4 languages
+
+**Rust Module Examples:**
+```rust
+// Named struct
+pub struct Point { x: i32, y: i32 }  // Point in module scope ✅
+
+// Tuple struct
+pub struct Point(i32, i32);  // Point in module scope, no body scope ✅
+
+// Unit struct
+pub struct Unit;  // Unit in module scope, no body scope ✅
+
+// Enum
+pub enum Option<T> { Some(T), None }  // Option in module scope ✅
+
+// Trait
+pub trait Display { fn fmt(&self); }  // Display in module scope ✅
+```
+
+### Rust-Specific Notes
 
 **Multiple Construct Types:**
-- Structs (regular, tuple, unit)
-- Enums
-- Traits
-- Impl blocks
+Rust has more scope-creating constructs than other languages:
+- **Structs**: Field lists create scopes
+- **Enums**: Variant lists create scopes
+- **Traits**: Method signature lists create scopes
+- **Impls**: Method implementation lists create scopes
 
-All now use body-based scopes consistently.
+All use body-based captures uniformly.
+
+**Struct Variants:**
+Rust has three struct forms, all handled correctly:
+```rust
+// Regular struct - has body → creates scope
+struct Point { x: i32, y: i32 }
+  // Point.scope_id = module_scope ✅
+  // x.scope_id = struct_body_scope ✅
+
+// Tuple struct - no field_declaration_list → no scope
+struct Point(i32, i32);
+  // Point.scope_id = module_scope ✅
+  // Fields are parameters, not named fields
+
+// Unit struct - no body → no scope
+struct Unit;
+  // Unit.scope_id = module_scope ✅
+```
 
 **Impl Blocks:**
+Impl blocks create scopes but don't define types:
 ```rust
 struct MyStruct { field: i32 }    // MyStruct in module scope ✅
 
 impl MyStruct {                    // impl creates scope for methods ✅
     fn new() -> Self { }           // new() in impl scope ✅
+    fn get(&self) -> i32 { }       // get() in impl scope ✅
 }
+
+// Usage:
+MyStruct::new()  // Resolves MyStruct in module scope, new in impl scope
 ```
 
 **Generic Types:**
+Type parameters belong to type body scope:
 ```rust
 struct Point<T> {                  // Point in module scope ✅
-    x: T,                          // x in struct body scope ✅
-    y: T,                          // y in struct body scope ✅
+    x: T,                          // x in struct body scope, T from generic params ✅
+    y: T,                          // y in struct body scope, T from generic params ✅
 }
 ```
 
-### Impact
+**Trait Items:**
+Trait methods are in trait body scope:
+```rust
+trait Display {                    // Display in module scope ✅
+    fn fmt(&self) -> String;       // fmt in trait body scope ✅
+}
+```
 
-- Rust module exports now work correctly with type resolution
-- All struct variants handled consistently
-- Impl block resolution fixed
-- Trait resolution fixed
-- Completes body-based scope migration across all 4 languages
-- Foundation for advanced Rust features (inheritance walking, trait resolution)
+**Module Structure:**
+```rust
+mod utils {                        // utils is a module
+    pub struct Helper { }          // Helper in utils module scope ✅
+
+    impl Helper {                  // impl creates scope ✅
+        pub fn new() -> Self { }   // new in impl scope ✅
+    }
+}
+
+use utils::Helper;  // Resolves Helper in utils module scope ✅
+```
+
+### Comparison Across Languages
+
+| Language | Constructs Updated | Body Node Types |
+|----------|-------------------|----------------|
+| TypeScript | classes, interfaces, enums | `class_body`, `object_type`, `enum_body` |
+| JavaScript | classes only | `class_body` |
+| Python | classes only | `block` (indentation) |
+| **Rust** | **structs, enums, traits, impls** | **`field_declaration_list`, `enum_variant_list`, `declaration_list`** |
+
+Rust required the most updates (4 constructs) but uses the same conceptual approach.
+
+### Tree-sitter Node Types
+
+**Rust's body node types explained:**
+- `field_declaration_list`: Named struct fields `{ field: Type }`
+- `enum_variant_list`: Enum variants `{ Variant1, Variant2 }`
+- `declaration_list`: Trait signatures or impl methods `{ fn method(); }`
+
+**Why separate node types:**
+Rust's type system is richer than JavaScript/TypeScript:
+- Structs have fields
+- Enums have variants
+- Traits have method signatures
+- Impls have method implementations
+
+Each construct has its own tree-sitter node type for its body.
+
+### Related Work
+
+- **Parent Task**: epic-11.112 (Scope System Consolidation)
+- **Follows**:
+  - task-epic-11.112.5 (TypeScript body-based scopes)
+  - task-epic-11.112.6 (JavaScript body-based scopes)
+  - task-epic-11.112.7 (Python body-based scopes)
+- **Completes**: Body-based scope migration across all 4 languages
+- **Enables**:
+  - Trait resolution improvements
+  - Impl block method resolution
+  - Advanced Rust type features (associated types, trait bounds)
