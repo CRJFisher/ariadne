@@ -25,13 +25,23 @@
 (generator_function) @scope.function
 
 ; Class scopes
-(class_declaration) @scope.class
-(abstract_class_declaration) @scope.class
-(class) @scope.class
+(class_declaration
+  body: (class_body) @scope.class
+)
+(abstract_class_declaration
+  body: (class_body) @scope.class
+)
+(class
+  body: (class_body) @scope.class
+)
 
 ; TypeScript-specific scopes
-(interface_declaration) @scope.interface
-(enum_declaration) @scope.enum
+(interface_declaration
+  body: (interface_body) @scope.interface
+)
+(enum_declaration
+  body: (enum_body) @scope.enum
+)
 (internal_module) @scope.namespace
 
 ; Block scopes
