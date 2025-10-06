@@ -23,7 +23,9 @@
 (lambda) @scope.closure
 
 ; Class scopes
-(class_definition) @scope.class
+(class_definition
+  body: (block) @scope.class
+)
 
 ; Method scopes (functions within classes)
 (class_definition
