@@ -90,6 +90,7 @@ module_name/
 
 ### Testing Approach
 
+- When debugging, **always add cases to EXISTING test files**. If the test file doesn't exist yet, create them in the STANDARD FORMAT: `module_name.test.ts`
 - **Fix issues, don't hide them** - Never modify tests to pass
 - **Test real scenarios** - Use realistic code samples
 - **Document gaps** - Note any untested edge cases
