@@ -8,7 +8,15 @@
 
 ## Objective
 
-Ensure all JavaScript semantic index tests pass after scope assignment changes. Fix any test expectations that are affected by the new `get_defining_scope_id()` behavior.
+Ensure all JavaScript semantic index tests pass after scope assignment changes. Fix any test expectations that are affected by the **body-based .scm scope** implementation.
+
+## Context - Body-Based Scopes
+
+With Option A, JavaScript `.scm` files now capture class **bodies** only:
+- `(class_declaration body: (class_body) @scope.class)`
+- Class names are in parent scope (module scope), not in their own scope
+- Simple location containment determines scope assignment
+- No heuristics needed
 
 ## Files
 

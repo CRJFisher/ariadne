@@ -14,7 +14,15 @@
 
 TypeContext was failing because class/interface definitions had wrong `scope_id` values. When TypeContext tried to resolve type names in method scopes, it couldn't find class definitions (which were incorrectly registered in method scopes instead of file scope).
 
-**This task validates the entire scope fix effort.**
+**This task validates the entire body-based scope fix effort.**
+
+## Context - Body-Based Scopes Fix
+
+The fix uses **Option A (body-based .scm scopes)**:
+- `.scm` files capture class/interface/enum **bodies**, not entire declarations
+- Class names are now in parent (module) scope where they should be
+- Type resolution can find classes via normal scope walking
+- Expected improvement: 2/23 → significantly higher (15-23/23)
 
 ## Files
 

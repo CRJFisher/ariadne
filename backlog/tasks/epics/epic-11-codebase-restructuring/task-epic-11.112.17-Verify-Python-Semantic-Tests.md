@@ -8,7 +8,14 @@
 
 ## Objective
 
-Verify that Python semantic index tests pass after scope assignment fix for classes. Update test expectations if needed to reflect correct scope_id values for nested classes and regular classes.
+Verify that Python semantic index tests pass after scope assignment fix for classes with **body-based .scm scopes**. Update test expectations if needed to reflect correct scope_id values for nested classes and regular classes.
+
+## Context - Body-Based Scopes
+
+With Option A, Python `.scm` files now capture class **bodies** only:
+- `(class_definition body: (block) @scope.class)`
+- Python uses `block` (indented code) for class bodies
+- Class names are in parent scope (module scope), not in their own scopes
 
 ## Files
 

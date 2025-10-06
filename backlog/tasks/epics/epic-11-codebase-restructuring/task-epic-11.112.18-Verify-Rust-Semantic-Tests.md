@@ -8,7 +8,16 @@
 
 ## Objective
 
-Verify that Rust semantic index tests pass after scope assignment fixes for structs and enums. Update test expectations if needed to reflect correct scope_id values.
+Verify that Rust semantic index tests pass after scope assignment fixes for structs, enums, traits, and impls with **body-based .scm scopes**. Update test expectations if needed to reflect correct scope_id values.
+
+## Context - Body-Based Scopes
+
+With Option A, Rust `.scm` files now capture **bodies** only:
+- Structs: `(struct_item body: (field_declaration_list) @scope.struct)`
+- Enums: `(enum_item body: (enum_variant_list) @scope.enum)`
+- Traits: `(trait_item body: (declaration_list) @scope.trait)`
+- Impls: `(impl_item body: (declaration_list) @scope.impl)`
+- Type names are in parent scope, not in their own scopes
 
 ## Files
 

@@ -8,7 +8,15 @@
 
 ## Objective
 
-Verify that TypeScript semantic index tests pass after scope assignment fixes for classes, interfaces, and enums. Update test expectations if needed to reflect correct scope_id values.
+Verify that TypeScript semantic index tests pass after scope assignment fixes for classes, interfaces, and enums with **body-based .scm scopes**. Update test expectations if needed to reflect correct scope_id values.
+
+## Context - Body-Based Scopes
+
+With Option A, TypeScript `.scm` files now capture **bodies** only:
+- Classes: `(class_declaration body: (class_body) @scope.class)`
+- Interfaces: `(interface_declaration body: (object_type) @scope.interface)`
+- Enums: `(enum_declaration body: (enum_body) @scope.enum)`
+- Type names are in parent scope (module scope), not in their own scopes
 
 ## Files
 

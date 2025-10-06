@@ -4,11 +4,18 @@
 **Status:** Not Started
 **Estimated Time:** 2-3 hours
 **Files:** 1 file created
-**Dependencies:** tasks epic-11.112.7-13
+**Dependencies:** tasks epic-11.112.5-10 (body-based scope implementation complete)
 
 ## Objective
 
-Create a comprehensive test suite that verifies scope assignment correctness across all languages (JavaScript, TypeScript, Python, Rust). This test file will serve as the authoritative regression test for the scope assignment bug fix.
+Create a comprehensive test suite that verifies scope assignment correctness across all languages (JavaScript, TypeScript, Python, Rust) with **body-based .scm scopes**. This test file will serve as the authoritative regression test for the scope assignment bug fix.
+
+## Context
+
+With Option A (body-based scopes), class/interface/enum **bodies** are captured as scopes, not entire declarations. This means:
+- Class names are in parent scope (module scope)
+- Class bodies create scopes for members
+- Simple location containment determines scope assignment
 
 ## Files
 
