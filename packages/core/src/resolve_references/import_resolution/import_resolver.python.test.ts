@@ -1348,3 +1348,156 @@ describe("resolve_module_path_python - project root detection", () => {
     expect(result2).toBe(helper_file);
   });
 });
+
+describe("resolve_module_path_python - body-based scope verification", () => {
+  // Use /tmp/ariadne-test/python/ for realism
+  const SCOPE_TEST_DIR = path.join(os.tmpdir(), "ariadne-test", "python-scopes");
+
+  beforeEach(() => {
+    if (!fs.existsSync(SCOPE_TEST_DIR)) {
+      fs.mkdirSync(SCOPE_TEST_DIR, { recursive: true });
+    }
+  });
+
+  afterEach(() => {
+    if (fs.existsSync(SCOPE_TEST_DIR)) {
+      fs.rmSync(SCOPE_TEST_DIR, { recursive: true, force: true });
+    }
+  });
+
+  it("should resolve imports correctly with body-based class scopes", () => {
+    /**
+     * Verify that import resolution works when classes use body-based scopes
+     * (class scope starts after ':', not at 'class' keyword)
+     */
+    const module_file = path.join(SCOPE_TEST_DIR, "mymodule.py");
+    fs.writeFileSync(module_file, `
+class MyClass:
+    def method(self):
+        pass
+
+def helper():
+    pass
+`);
+
+    const main_file = path.join(SCOPE_TEST_DIR, "main.py") as FilePath;
+
+    // Import resolution should work regardless of scope structure
+    const result = resolve_module_path_python("mymodule", main_file);
+    expect(result).toBe(module_file);
+  });
+
+  it("should resolve imports from modules with nested classes", () => {
+    /**
+     * Verify import resolution works with nested classes
+     * In body-based scopes:
+     * - Outer class name is in module scope
+     * - Inner class name is in outer class body scope
+     * Import resolution is unaffected because we import the module, not individual classes
+     */
+    const module_file = path.join(SCOPE_TEST_DIR, "nested.py");
+    fs.writeFileSync(module_file, `
+class Outer:
+    class Inner:
+        def inner_method(self):
+            pass
+
+    def outer_method(self):
+        pass
+`);
+
+    const main_file = path.join(SCOPE_TEST_DIR, "main.py") as FilePath;
+
+    // Import the module containing nested classes
+    const result = resolve_module_path_python("nested", main_file);
+    expect(result).toBe(module_file);
+  });
+
+  it("should resolve relative imports with body-based scopes", () => {
+    /**
+     * Verify relative imports work with body-based class scopes
+     * Test: from .utils import MyClass
+     */
+    const utils_file = path.join(SCOPE_TEST_DIR, "utils.py");
+    fs.writeFileSync(utils_file, `
+class MyClass:
+    def method(self):
+        pass
+`);
+
+    const main_file = path.join(SCOPE_TEST_DIR, "main.py") as FilePath;
+
+    const result = resolve_module_path_python(".utils", main_file);
+    expect(result).toBe(utils_file);
+  });
+
+  it("should resolve package imports with nested classes in __init__.py", () => {
+    /**
+     * Verify package imports work when __init__.py contains nested classes
+     */
+    const pkg_dir = path.join(SCOPE_TEST_DIR, "mypkg");
+    fs.mkdirSync(pkg_dir);
+
+    const init_file = path.join(pkg_dir, "__init__.py");
+    fs.writeFileSync(init_file, `
+class Container:
+    class Inner:
+        pass
+
+def utility():
+    pass
+`);
+
+    const main_file = path.join(SCOPE_TEST_DIR, "main.py") as FilePath;
+
+    const result = resolve_module_path_python("mypkg", main_file);
+    expect(result).toBe(init_file);
+  });
+
+  it("should resolve cross-directory imports with body-based scopes", () => {
+    /**
+     * Verify imports between directories work with body-based class scopes
+     * Test: services/worker.py importing from ../models/user.py
+     */
+    const models_dir = path.join(SCOPE_TEST_DIR, "models");
+    fs.mkdirSync(models_dir);
+
+    const user_file = path.join(models_dir, "user.py");
+    fs.writeFileSync(user_file, `
+class User:
+    def __init__(self, name):
+        self.name = name
+
+    def get_name(self):
+        return self.name
+`);
+
+    const services_dir = path.join(SCOPE_TEST_DIR, "services");
+    fs.mkdirSync(services_dir);
+
+    const worker_file = path.join(services_dir, "worker.py") as FilePath;
+
+    // Import from sibling directory
+    const result = resolve_module_path_python("..models.user", worker_file);
+    expect(result).toBe(user_file);
+  });
+
+  it("should resolve imports with deeply nested class hierarchies", () => {
+    /**
+     * Verify import resolution with multiple levels of nested classes
+     */
+    const module_file = path.join(SCOPE_TEST_DIR, "hierarchy.py");
+    fs.writeFileSync(module_file, `
+class Level1:
+    class Level2:
+        class Level3:
+            def deep_method(self):
+                pass
+`);
+
+    const main_file = path.join(SCOPE_TEST_DIR, "main.py") as FilePath;
+
+    const result = resolve_module_path_python("hierarchy", main_file);
+    expect(result).toBe(module_file);
+  });
+});
