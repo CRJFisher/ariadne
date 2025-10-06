@@ -18,6 +18,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import Parser from "tree-sitter";
 import TypeScript from "tree-sitter-typescript";
 import JavaScript from "tree-sitter-javascript";
+import Python from "tree-sitter-python";
 import type { Language, FilePath, ScopeId } from "@ariadnejs/types";
 import { build_semantic_index } from "../semantic_index";
 import type { ParsedFile } from "../file_utils";
@@ -440,6 +441,182 @@ describe("Body-Based Scope Verification", () => {
         "\n✓ Class expression scope starts at body (column >20):",
         class_scope!.location.start_column
       );
+    });
+  });
+
+  describe("Python Class Body-Based Scope", () => {
+    let pyParser: Parser;
+
+    beforeAll(() => {
+      pyParser = new Parser();
+      pyParser.setLanguage(Python);
+    });
+
+    it("should capture only class body as scope, not entire declaration", () => {
+      const code = `class MyClass:
+    def method(self):
+        pass`;
+
+      const tree = pyParser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.py" as FilePath,
+        tree,
+        "python" as Language
+      );
+      const index = build_semantic_index(parsedFile, tree, "python" as Language);
+
+      // Get the file scope (module scope)
+      const file_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "module" && s.parent_id === null
+      );
+      expect(file_scope).toBeDefined();
+      const file_scope_id = file_scope!.id;
+
+      // Get the class scope
+      const class_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "class"
+      );
+      expect(class_scope).toBeDefined();
+
+      // Get the class definition
+      const myClass = Array.from(index.classes.values()).find(
+        (c) => c.name === "MyClass"
+      );
+      expect(myClass).toBeDefined();
+
+      console.log("\n=== Python Class Body-Based Scope Verification ===");
+      console.log("Code:", code);
+      console.log("\nFile scope:", {
+        id: file_scope_id,
+        location: file_scope!.location,
+      });
+      console.log("Class scope:", {
+        id: class_scope!.id,
+        location: class_scope!.location,
+      });
+      console.log("MyClass definition:", {
+        name: myClass!.name,
+        scope_id: myClass!.scope_id,
+        location: myClass!.location,
+      });
+
+      // VERIFICATION 1: Class scope should start after `:` (where block begins)
+      // In "class MyClass:", the `:` is at position 0:13
+      // Class scope should start at 0:14 or later (the indented block)
+      // The block actually starts on the next line, so we check start_line > 0
+      expect(class_scope!.location.start_line).toBeGreaterThan(0);
+      console.log(
+        "\n✓ Class scope starts after ':' at line:",
+        class_scope!.location.start_line
+      );
+
+      // VERIFICATION 2: Class name 'MyClass' should be OUTSIDE class scope (in module scope)
+      // This is the key fix: class definition should be in file scope, not class scope
+      expect(myClass!.scope_id).toBe(file_scope_id);
+      console.log("✓ Class name 'MyClass' is in module scope (not class scope)");
+
+      // VERIFICATION 3: Class scope parent should be module scope
+      const parent_scope = index.scopes.get(class_scope!.parent_id!);
+      expect(parent_scope?.type).toBe("module");
+      console.log("✓ Class scope parent is module scope");
+    });
+
+    it("should correctly scope class with multiple methods", () => {
+      const code = `class Calculator:
+    def add(self, x, y):
+        return x + y
+
+    def subtract(self, x, y):
+        return x - y`;
+
+      const tree = pyParser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.py" as FilePath,
+        tree,
+        "python" as Language
+      );
+      const index = build_semantic_index(parsedFile, tree, "python" as Language);
+
+      // Get scopes
+      const file_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "module" && s.parent_id === null
+      );
+      expect(file_scope).toBeDefined();
+      const file_scope_id = file_scope!.id;
+
+      const class_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "class"
+      );
+      expect(class_scope).toBeDefined();
+
+      // Get class definition
+      const calcClass = Array.from(index.classes.values()).find(
+        (c) => c.name === "Calculator"
+      );
+      expect(calcClass).toBeDefined();
+
+      console.log("\n=== Python Complex Class Verification ===");
+      console.log("Calculator class scope_id:", calcClass!.scope_id);
+      console.log("Class scope:", {
+        id: class_scope!.id,
+        location: class_scope!.location,
+      });
+
+      // Class name should be in module scope
+      expect(calcClass!.scope_id).toBe(file_scope_id);
+      console.log("\n✓ Class name 'Calculator' is in module scope");
+
+      // Class scope should start on next line (indented block)
+      expect(class_scope!.location.start_line).toBeGreaterThan(0);
+      console.log("✓ Class scope starts at line:", class_scope!.location.start_line);
+
+      // Class scope parent should be module scope
+      const parent_scope = index.scopes.get(class_scope!.parent_id!);
+      expect(parent_scope?.type).toBe("module");
+      console.log("✓ Class scope parent is module scope");
+    });
+
+    // TODO: Nested class scoping requires scope_processor.ts updates
+    // Currently, inner class names are placed in module scope instead of outer class scope
+    // This will be fixed in task-epic-11.112.9 (Clean up get_scope_id implementation)
+    it.todo("should correctly scope nested classes", () => {
+      const code = `class Outer:
+    class Inner:
+        def method(self):
+            pass`;
+
+      const tree = pyParser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.py" as FilePath,
+        tree,
+        "python" as Language
+      );
+      const index = build_semantic_index(parsedFile, tree, "python" as Language);
+
+      const file_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "module" && s.parent_id === null
+      );
+      const file_scope_id = file_scope!.id;
+
+      const outerClass = Array.from(index.classes.values()).find(
+        (c) => c.name === "Outer"
+      );
+      const innerClass = Array.from(index.classes.values()).find(
+        (c) => c.name === "Inner"
+      );
+
+      const outer_class_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "class" && s.location.start_line === 2
+      );
+
+      // Outer class name should be in module scope
+      expect(outerClass!.scope_id).toBe(file_scope_id);
+
+      // Inner class name should be in outer class scope (NOT module scope)
+      expect(innerClass!.scope_id).toBe(outer_class_scope!.id);
     });
   });
 });
