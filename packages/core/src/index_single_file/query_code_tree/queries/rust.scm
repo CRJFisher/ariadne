@@ -30,10 +30,21 @@
 (closure_expression) @scope.closure
 
 ; Type scopes
-(struct_item) @scope.class
-(enum_item) @scope.enum
-(trait_item) @scope.interface
-(impl_item) @scope.block
+(struct_item
+  body: (field_declaration_list) @scope.class
+)
+
+(enum_item
+  body: (enum_variant_list) @scope.enum
+)
+
+(trait_item
+  body: (declaration_list) @scope.interface
+)
+
+(impl_item
+  body: (declaration_list) @scope.block
+)
 
 ; Module scopes
 (mod_item) @scope.module
