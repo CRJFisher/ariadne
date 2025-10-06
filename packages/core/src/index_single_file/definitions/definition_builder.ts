@@ -12,6 +12,7 @@ import {
   type DecoratorDefinition,
   type EnumDefinition,
   type EnumMember,
+  type ExportMetadata,
   type FunctionDefinition,
   type ImportDefinition,
   type InterfaceDefinition,
@@ -230,9 +231,9 @@ export class DefinitionBuilder {
     location: Location;
     scope_id: ScopeId;
     availability: SymbolAvailability;
+    is_exported?: boolean;
+    export?: ExportMetadata;
     extends?: SymbolName[];
-    abstract?: boolean;
-    implements?: SymbolName[];
     generics?: string[];
   }): DefinitionBuilder {
     this.classes.set(definition.symbol_id, {
@@ -243,10 +244,10 @@ export class DefinitionBuilder {
         location: definition.location,
         defining_scope_id: definition.scope_id,
         availability: definition.availability,
-        abstract: definition.abstract,
-        implements: definition.implements,
         generics: definition.generics,
         extends: definition.extends || [],
+        is_exported: definition.is_exported || false,
+        export: definition.export,
       },
       methods: new Map(),
       properties: new Map(),
@@ -351,6 +352,8 @@ export class DefinitionBuilder {
     scope_id: ScopeId;
     availability: SymbolAvailability;
     generics?: string[];
+    is_exported?: boolean;
+    export?: ExportMetadata;
   }): DefinitionBuilder {
     this.functions.set(definition.symbol_id, {
       base: {
@@ -361,6 +364,8 @@ export class DefinitionBuilder {
         defining_scope_id: definition.scope_id,
         availability: definition.availability,
         generics: definition.generics,
+        is_exported: definition.is_exported,
+        export: definition.export,
       },
       signature: {
         parameters: new Map(),
@@ -437,6 +442,8 @@ export class DefinitionBuilder {
     location: Location;
     scope_id: ScopeId;
     availability: SymbolAvailability;
+    is_exported?: boolean;
+    export?: ExportMetadata;
     type?: SymbolName;
     initial_value?: string;
   }): DefinitionBuilder {
@@ -447,6 +454,8 @@ export class DefinitionBuilder {
       location: definition.location,
       defining_scope_id: definition.scope_id,
       availability: definition.availability,
+      is_exported: definition.is_exported || false,
+      export: definition.export,
       type: definition.type,
       initial_value: definition.initial_value,
     });
@@ -523,6 +532,8 @@ export class DefinitionBuilder {
     location: Location;
     scope_id: ScopeId;
     availability: SymbolAvailability;
+    is_exported?: boolean;
+    export?: ExportMetadata;
     extends?: SymbolName[];
     generics?: SymbolName[];
   }): DefinitionBuilder {
@@ -534,6 +545,8 @@ export class DefinitionBuilder {
         location: definition.location,
         defining_scope_id: definition.scope_id,
         availability: definition.availability,
+        is_exported: definition.is_exported || false,
+        export: definition.export,
         extends: definition.extends || [],
         generics: definition.generics,
       },
@@ -624,11 +637,15 @@ export class DefinitionBuilder {
     location: Location;
     scope_id: ScopeId;
     availability: SymbolAvailability;
+    is_exported?: boolean;
+    export?: ExportMetadata;
     type_expression?: string;
     generics?: SymbolName[];
   }): DefinitionBuilder {
     this.types.set(definition.symbol_id, {
       ...definition,
+      is_exported: definition.is_exported || false,
+      defining_scope_id: definition.scope_id,
     });
     return this;
   }
@@ -642,6 +659,8 @@ export class DefinitionBuilder {
     location: Location;
     scope_id: ScopeId;
     availability: SymbolAvailability;
+    is_exported?: boolean;
+    export?: ExportMetadata;
     is_const?: boolean;
     generics?: SymbolName[];
   }): DefinitionBuilder {
@@ -653,6 +672,8 @@ export class DefinitionBuilder {
         location: definition.location,
         defining_scope_id: definition.scope_id,
         availability: definition.availability,
+        is_exported: definition.is_exported || false,
+        export: definition.export,
         is_const: definition.is_const || false,
         generics: definition.generics,
       },
@@ -694,6 +715,8 @@ export class DefinitionBuilder {
     location: Location;
     scope_id: ScopeId;
     availability: SymbolAvailability;
+    is_exported?: boolean;
+    export?: ExportMetadata;
   }): DefinitionBuilder {
     this.namespaces.set(definition.symbol_id, {
       base: {
@@ -703,6 +726,8 @@ export class DefinitionBuilder {
         location: definition.location,
         defining_scope_id: definition.scope_id,
         availability: definition.availability,
+        is_exported: definition.is_exported || false,
+        export: definition.export,
       },
       exported_symbols: new Set(),
     });

@@ -6,7 +6,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import Parser from "tree-sitter";
 import JavaScript from "tree-sitter-javascript";
 import type { SyntaxNode } from "tree-sitter";
-import { JAVASCRIPT_BUILDER_CONFIG } from "./javascript_builder";
+import { JAVASCRIPT_BUILDER_CONFIG, analyze_export_statement } from "./javascript_builder";
 import { DefinitionBuilder } from "../../definitions/definition_builder";
 import type {
   ProcessingContext,
@@ -893,6 +893,155 @@ describe("JavaScript Builder Configuration", () => {
 
         expect(constructorCalls).toHaveLength(1);
         expect(constructorCalls[0]?.context?.construct_target).toBeDefined();
+      });
+    });
+
+    describe("Export Detection", () => {
+      it("should detect direct exports and set is_exported=true", () => {
+        const code = "export function foo() {}";
+        const capture = createCapture(code, "definition.function", "identifier");
+        const context = createTestContext();
+        const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+
+        const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
+        if (config) {
+          config.process(capture, builder, context);
+        }
+
+        const result = builder.build();
+        const functions = Array.from(result.functions.values());
+        expect(functions).toHaveLength(1);
+        expect(functions[0].is_exported).toBe(true);
+        expect(functions[0].export).toBeUndefined(); // Direct export has no special metadata
+      });
+
+      it("should detect named exports with aliases and populate export.export_name", () => {
+        const code = `
+function internal() {}
+export { internal as external };
+        `;
+        const capture = createCapture(code, "definition.function", "identifier");
+        const context = createTestContext();
+        const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+
+        const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
+        if (config) {
+          config.process(capture, builder, context);
+        }
+
+        const result = builder.build();
+        const functions = Array.from(result.functions.values());
+        expect(functions).toHaveLength(1);
+        expect(functions[0].is_exported).toBe(true);
+        expect(functions[0].export?.export_name).toBe("external");
+        expect(functions[0].export?.is_reexport).toBe(false);
+      });
+
+      it("should detect default exports and set export.is_default=true", () => {
+        const code = "export default function foo() {}";
+        const capture = createCapture(code, "definition.function", "identifier");
+        const context = createTestContext();
+        const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+
+        const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
+        if (config) {
+          config.process(capture, builder, context);
+        }
+
+        const result = builder.build();
+        const functions = Array.from(result.functions.values());
+        expect(functions).toHaveLength(1);
+        expect(functions[0].is_exported).toBe(true);
+        expect(functions[0].export?.is_default).toBe(true);
+        expect(functions[0].export?.is_reexport).toBeUndefined();
+      });
+
+      it("should detect re-exports and set export.is_reexport=true", () => {
+        // Note: This tests the detection logic, but in practice re-exports
+        // wouldn't create definitions in the current file
+        const code = `export { foo } from './other';`;
+        const ast = parser.parse(code);
+        const exportNode = findNodeByType(ast.rootNode, "export_statement");
+
+        if (exportNode) {
+          const metadata = analyze_export_statement(exportNode);
+          expect(metadata).toBeDefined();
+          expect(metadata?.is_reexport).toBe(true);
+        }
+      });
+
+      it("should not mark non-exported symbols as exported and set is_exported=false", () => {
+        const code = "function notExported() {}";
+        const capture = createCapture(code, "definition.function", "identifier");
+        const context = createTestContext();
+        const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+
+        const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
+        if (config) {
+          config.process(capture, builder, context);
+        }
+
+        const result = builder.build();
+        const functions = Array.from(result.functions.values());
+        expect(functions).toHaveLength(1);
+        expect(functions[0].is_exported).toBe(false);
+        expect(functions[0].export).toBeUndefined();
+      });
+
+      it("should detect named exports without aliases", () => {
+        const code = `
+function foo() {}
+export { foo };
+        `;
+        const capture = createCapture(code, "definition.function", "identifier");
+        const context = createTestContext();
+        const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+
+        const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
+        if (config) {
+          config.process(capture, builder, context);
+        }
+
+        const result = builder.build();
+        const functions = Array.from(result.functions.values());
+        expect(functions).toHaveLength(1);
+        expect(functions[0].is_exported).toBe(true);
+        expect(functions[0].export?.export_name).toBeUndefined(); // No alias
+        expect(functions[0].export?.is_reexport).toBe(false);
+      });
+
+      it("should handle exported classes with is_exported=true", () => {
+        const code = "export class MyClass {}";
+        const capture = createCapture(code, "definition.class", "identifier");
+        const context = createTestContext();
+        const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+
+        const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
+        if (config) {
+          config.process(capture, builder, context);
+        }
+
+        const result = builder.build();
+        const classes = Array.from(result.classes.values());
+        expect(classes).toHaveLength(1);
+        expect(classes[0].is_exported).toBe(true);
+      });
+
+      it("should handle exported variables with is_exported=true", () => {
+        const code = "export const myVar = 42;";
+        const capture = createCapture(code, "definition.variable", "identifier");
+        const context = createTestContext();
+        const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+
+        const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
+        if (config) {
+          config.process(capture, builder, context);
+        }
+
+        const result = builder.build();
+        const variables = Array.from(result.variables.values());
+        expect(variables).toHaveLength(1);
+        expect(variables[0].is_exported).toBe(true);
       });
     });
   });

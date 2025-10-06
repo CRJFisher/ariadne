@@ -4,6 +4,7 @@ import type { CaptureNode, ProcessingContext } from "../../semantic_index";
 import {
   type LanguageBuilderConfig,
   JAVASCRIPT_BUILDER_CONFIG,
+  extract_export_info,
 } from "./javascript_builder";
 import {
   create_interface_id,
@@ -71,6 +72,7 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const interface_id = create_interface_id(capture);
         const parent = capture.node.parent; // interface_declaration
         const extends_clause = parent ? extract_interface_extends(parent) : [];
+        const export_info = extract_export_info(capture.node, capture.text);
 
         builder.add_interface({
           symbol_id: interface_id,
@@ -78,6 +80,8 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: determine_availability(capture.node),
+          is_exported: export_info.is_exported,
+          export: export_info.export,
           extends: extends_clause,
         });
       },
@@ -147,6 +151,7 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         context: ProcessingContext
       ) => {
         const type_id = create_type_alias_id(capture);
+        const export_info = extract_export_info(capture.node, capture.text);
 
         builder.add_type_alias({
           kind: "type_alias",
@@ -155,6 +160,8 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: determine_availability(capture.node),
+          is_exported: export_info.is_exported,
+          export: export_info.export,
           type_expression: extract_type_expression(capture.node),
           generics: capture.node.parent
             ? extract_type_parameters(capture.node.parent)
@@ -176,6 +183,7 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         context: ProcessingContext
       ) => {
         const enum_id = create_enum_id(capture);
+        const export_info = extract_export_info(capture.node, capture.text);
 
         builder.add_enum({
           symbol_id: enum_id,
@@ -183,6 +191,8 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: determine_availability(capture.node),
+          is_exported: export_info.is_exported,
+          export: export_info.export,
           is_const: is_const_enum(capture.node),
         });
       },
@@ -224,6 +234,7 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         context: ProcessingContext
       ) => {
         const namespace_id = create_namespace_id(capture);
+        const export_info = extract_export_info(capture.node, capture.text);
 
         builder.add_namespace({
           symbol_id: namespace_id,
@@ -231,6 +242,8 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: determine_availability(capture.node),
+          is_exported: export_info.is_exported,
+          export: export_info.export,
         });
       },
     },
@@ -318,6 +331,7 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
       ) => {
         const class_id = create_class_id(capture);
         const parent = capture.node.parent; // class_declaration or abstract_class_declaration
+        const export_info = extract_export_info(capture.node, capture.text);
 
         // Extract extends
         const heritage = parent?.childForFieldName?.("heritage");
@@ -338,6 +352,8 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: determine_availability(capture.node),
+          is_exported: export_info.is_exported,
+          export: export_info.export,
           abstract: is_abstract_class(capture.node),
           extends: extends_classes,
           implements: parent ? extract_implements(parent) : [],
@@ -367,6 +383,8 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: determine_method_availability(capture.node),
+          is_exported: false, // Methods are not directly exported; the class is
+          export: undefined,
           access_modifier: extract_access_modifier(capture.node),
           abstract: is_abstract_method(capture.node),
           static: is_static_method(capture.node),
@@ -400,6 +418,8 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: { scope: "file-private" }, // Private methods are always private
+          is_exported: false, // Private methods are not directly exported
+          export: undefined,
           access_modifier: "private",
           abstract: is_abstract_method(capture.node),
           static: is_static_method(capture.node),
@@ -430,6 +450,8 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: determine_method_availability(capture.node),
+          is_exported: false, // Fields are not directly exported; the class is
+          export: undefined,
           access_modifier: extract_access_modifier(capture.node),
           static: is_static_method(capture.node),
           readonly: is_readonly_property(capture.node),
@@ -462,6 +484,8 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: { scope: "file-private" }, // Private fields are always private
+          is_exported: false, // Private fields are not directly exported
+          export: undefined,
           access_modifier: "private",
           static: is_static_method(capture.node),
           readonly: is_readonly_property(capture.node),
@@ -497,6 +521,8 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
+          is_exported: false, // Parameters are never exported
+          export: undefined,
           type: extract_parameter_type(capture.node),
           default_value: extract_parameter_default_value(capture.node),
           optional: false,
@@ -526,6 +552,8 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
+          is_exported: false, // Parameters are never exported
+          export: undefined,
           type: extract_parameter_type(capture.node),
           default_value: extract_parameter_default_value(capture.node),
           optional: true,
@@ -555,6 +583,8 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
+          is_exported: false, // Parameters are never exported
+          export: undefined,
           type: extract_parameter_type(capture.node),
           default_value: extract_parameter_default_value(capture.node),
           optional: false,
@@ -587,6 +617,8 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: determine_method_availability(capture.node),
+          is_exported: false, // Parameter properties are not directly exported; the class is
+          export: undefined,
           access_modifier: extract_access_modifier(capture.node),
           readonly: is_readonly_property(capture.node),
           type: extract_parameter_type(capture.node),
@@ -617,6 +649,8 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           availability: determine_method_availability(capture.node),
+          is_exported: false, // Parameter properties are not directly exported; the class is
+          export: undefined,
           access_modifier: extract_access_modifier(capture.node),
           readonly: is_readonly_property(capture.node),
           type: extract_parameter_type(capture.node),

@@ -94,7 +94,6 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       scope_id: context.root_scope_id,
       availability: { scope: "file-export" },
       extends: ["BaseClass" as SymbolName],
-      abstract: false,
     });
 
     const class_id = "class:test.ts:1:0:20:0:ComplexClass" as SymbolId;
