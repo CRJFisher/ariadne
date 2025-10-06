@@ -1,7 +1,7 @@
 # Task epic-11.112.23.2: Implement is_exported for JavaScript/TypeScript
 
 **Parent:** task-epic-11.112.23
-**Status:** Not Started
+**Status:** Completed
 **Estimated Time:** 2 hours
 **Dependencies:** task-epic-11.112.23.1
 
