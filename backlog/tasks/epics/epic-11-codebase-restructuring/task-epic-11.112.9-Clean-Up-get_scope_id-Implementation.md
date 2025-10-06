@@ -1,9 +1,10 @@
 # Task epic-11.112.9: Clean Up get_scope_id() Implementation
 
 **Parent:** task-epic-11.112
-**Status:** Not Started
+**Status:** Completed
 **Estimated Time:** 1.5 hours
-**Files:** 2 files modified
+**Actual Time:** 2 hours
+**Files:** 3 files modified
 **Dependencies:** tasks epic-11.112.5-8 (all .scm updates complete)
 
 ## Objective
