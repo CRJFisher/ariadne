@@ -823,4 +823,326 @@ describe("rust_builder", () => {
       expect(definitions.interfaces[0].name).toBe("Iterator");
     });
   });
+
+  describe("is_exported flag", () => {
+    it("should set is_exported=true for pub fn", () => {
+      const code = `pub fn foo() {}`;
+
+      const definitions = processCapture(
+        code,
+        "definition.function",
+        "identifier",
+        "foo"
+      );
+
+      expect(definitions.functions).toHaveLength(1);
+      expect(definitions.functions[0].name).toBe("foo");
+      expect(definitions.functions[0].is_exported).toBe(true);
+      expect(definitions.functions[0].export).toBeUndefined();
+    });
+
+    it("should set is_exported=false for private fn", () => {
+      const code = `fn foo() {}`;
+
+      const definitions = processCapture(
+        code,
+        "definition.function",
+        "identifier",
+        "foo"
+      );
+
+      expect(definitions.functions).toHaveLength(1);
+      expect(definitions.functions[0].name).toBe("foo");
+      expect(definitions.functions[0].is_exported).toBe(false);
+      expect(definitions.functions[0].export).toBeUndefined();
+    });
+
+    it("should set is_exported=true for pub struct", () => {
+      const code = `pub struct Bar {}`;
+
+      const definitions = processCapture(
+        code,
+        "definition.class",
+        "type_identifier",
+        "Bar"
+      );
+
+      expect(definitions.classes).toHaveLength(1);
+      expect(definitions.classes[0].name).toBe("Bar");
+      expect(definitions.classes[0].is_exported).toBe(true);
+      expect(definitions.classes[0].export).toBeUndefined();
+    });
+
+    it("should set is_exported=false for private struct", () => {
+      const code = `struct Bar {}`;
+
+      const definitions = processCapture(
+        code,
+        "definition.class",
+        "type_identifier",
+        "Bar"
+      );
+
+      expect(definitions.classes).toHaveLength(1);
+      expect(definitions.classes[0].name).toBe("Bar");
+      expect(definitions.classes[0].is_exported).toBe(false);
+      expect(definitions.classes[0].export).toBeUndefined();
+    });
+
+    it("should set is_exported=true for pub(crate) fn", () => {
+      const code = `pub(crate) fn foo() {}`;
+
+      const definitions = processCapture(
+        code,
+        "definition.function",
+        "identifier",
+        "foo"
+      );
+
+      expect(definitions.functions).toHaveLength(1);
+      expect(definitions.functions[0].name).toBe("foo");
+      expect(definitions.functions[0].is_exported).toBe(true);
+      expect(definitions.functions[0].export).toBeUndefined();
+    });
+
+    it("should set is_exported=true for pub enum", () => {
+      const code = `pub enum Status { Ok, Err }`;
+
+      const definitions = processCapture(
+        code,
+        "definition.enum",
+        "type_identifier",
+        "Status"
+      );
+
+      expect(definitions.enums).toHaveLength(1);
+      expect(definitions.enums[0].name).toBe("Status");
+      expect(definitions.enums[0].is_exported).toBe(true);
+      expect(definitions.enums[0].export).toBeUndefined();
+    });
+
+    it("should set is_exported=false for private enum", () => {
+      const code = `enum Status { Ok, Err }`;
+
+      const definitions = processCapture(
+        code,
+        "definition.enum",
+        "type_identifier",
+        "Status"
+      );
+
+      expect(definitions.enums).toHaveLength(1);
+      expect(definitions.enums[0].name).toBe("Status");
+      expect(definitions.enums[0].is_exported).toBe(false);
+      expect(definitions.enums[0].export).toBeUndefined();
+    });
+
+    it("should set is_exported=true for pub const", () => {
+      const code = `pub const X: i32 = 1;`;
+
+      const definitions = processCapture(
+        code,
+        "definition.constant",
+        "identifier",
+        "X"
+      );
+
+      expect(definitions.variables).toHaveLength(1);
+      expect(definitions.variables[0].name).toBe("X");
+      expect(definitions.variables[0].is_exported).toBe(true);
+      expect(definitions.variables[0].export).toBeUndefined();
+    });
+
+    it("should set is_exported=false for private const", () => {
+      const code = `const X: i32 = 1;`;
+
+      const definitions = processCapture(
+        code,
+        "definition.constant",
+        "identifier",
+        "X"
+      );
+
+      expect(definitions.variables).toHaveLength(1);
+      expect(definitions.variables[0].name).toBe("X");
+      expect(definitions.variables[0].is_exported).toBe(false);
+      expect(definitions.variables[0].export).toBeUndefined();
+    });
+
+    it("should set is_exported=true for pub(super) struct", () => {
+      const code = `pub(super) struct Internal {}`;
+
+      const definitions = processCapture(
+        code,
+        "definition.class",
+        "type_identifier",
+        "Internal"
+      );
+
+      expect(definitions.classes).toHaveLength(1);
+      expect(definitions.classes[0].name).toBe("Internal");
+      expect(definitions.classes[0].is_exported).toBe(true);
+      expect(definitions.classes[0].export).toBeUndefined();
+    });
+
+    it("should set is_exported=true for pub type alias", () => {
+      const code = `pub type Result<T> = std::result::Result<T, Error>;`;
+
+      const definitions = processCapture(
+        code,
+        "definition.type",
+        "type_identifier",
+        "Result"
+      );
+
+      expect(definitions.types).toHaveLength(1);
+      expect(definitions.types[0].name).toBe("Result");
+      expect(definitions.types[0].is_exported).toBe(true);
+      expect(definitions.types[0].export).toBeUndefined();
+    });
+
+    it("should set is_exported=false for private type alias", () => {
+      const code = `type Result<T> = std::result::Result<T, Error>;`;
+
+      const definitions = processCapture(
+        code,
+        "definition.type",
+        "type_identifier",
+        "Result"
+      );
+
+      expect(definitions.types).toHaveLength(1);
+      expect(definitions.types[0].name).toBe("Result");
+      expect(definitions.types[0].is_exported).toBe(false);
+      expect(definitions.types[0].export).toBeUndefined();
+    });
+
+    it("should set is_exported=true for pub trait", () => {
+      const code = `pub trait Display {}`;
+
+      const definitions = processCapture(
+        code,
+        "definition.interface",
+        "type_identifier",
+        "Display"
+      );
+
+      expect(definitions.interfaces).toHaveLength(1);
+      expect(definitions.interfaces[0].name).toBe("Display");
+      expect(definitions.interfaces[0].is_exported).toBe(true);
+      expect(definitions.interfaces[0].export).toBeUndefined();
+    });
+
+    it("should set is_exported=false for private trait", () => {
+      const code = `trait Display {}`;
+
+      const definitions = processCapture(
+        code,
+        "definition.interface",
+        "type_identifier",
+        "Display"
+      );
+
+      expect(definitions.interfaces).toHaveLength(1);
+      expect(definitions.interfaces[0].name).toBe("Display");
+      expect(definitions.interfaces[0].is_exported).toBe(false);
+      expect(definitions.interfaces[0].export).toBeUndefined();
+    });
+
+    it("should set is_exported=true for pub generic struct", () => {
+      const code = `pub struct Vec<T> { data: T }`;
+
+      const definitions = processCapture(
+        code,
+        "definition.class.generic",
+        "type_identifier",
+        "Vec"
+      );
+
+      expect(definitions.classes).toHaveLength(1);
+      expect(definitions.classes[0].name).toBe("Vec");
+      expect(definitions.classes[0].is_exported).toBe(true);
+      expect(definitions.classes[0].export).toBeUndefined();
+    });
+
+    it("should set is_exported=false for private generic struct", () => {
+      const code = `struct Vec<T> { data: T }`;
+
+      const definitions = processCapture(
+        code,
+        "definition.class.generic",
+        "type_identifier",
+        "Vec"
+      );
+
+      expect(definitions.classes).toHaveLength(1);
+      expect(definitions.classes[0].name).toBe("Vec");
+      expect(definitions.classes[0].is_exported).toBe(false);
+      expect(definitions.classes[0].export).toBeUndefined();
+    });
+
+    it("should set is_exported=true for pub async fn", () => {
+      const code = `pub async fn fetch() {}`;
+
+      const definitions = processCapture(
+        code,
+        "definition.function.async",
+        "identifier",
+        "fetch"
+      );
+
+      expect(definitions.functions).toHaveLength(1);
+      expect(definitions.functions[0].name).toBe("fetch");
+      expect(definitions.functions[0].is_exported).toBe(true);
+      expect(definitions.functions[0].export).toBeUndefined();
+    });
+
+    it("should set is_exported=true for pub unsafe fn", () => {
+      const code = `pub unsafe fn raw_ptr() {}`;
+
+      const definitions = processCapture(
+        code,
+        "definition.function.unsafe",
+        "identifier",
+        "raw_ptr"
+      );
+
+      expect(definitions.functions).toHaveLength(1);
+      expect(definitions.functions[0].name).toBe("raw_ptr");
+      expect(definitions.functions[0].is_exported).toBe(true);
+      expect(definitions.functions[0].export).toBeUndefined();
+    });
+
+    it("should set is_exported=true for pub mod", () => {
+      const code = `pub mod utils;`;
+
+      const definitions = processCapture(
+        code,
+        "definition.module.public",
+        "identifier",
+        "utils"
+      );
+
+      expect(definitions.namespaces).toHaveLength(1);
+      expect(definitions.namespaces[0].name).toBe("utils");
+      expect(definitions.namespaces[0].is_exported).toBe(true);
+      expect(definitions.namespaces[0].export).toBeUndefined();
+    });
+
+    it("should set is_exported=false for private mod", () => {
+      const code = `mod utils;`;
+
+      const definitions = processCapture(
+        code,
+        "definition.module",
+        "identifier",
+        "utils"
+      );
+
+      expect(definitions.namespaces).toHaveLength(1);
+      expect(definitions.namespaces[0].name).toBe("utils");
+      expect(definitions.namespaces[0].is_exported).toBe(false);
+      expect(definitions.namespaces[0].export).toBeUndefined();
+    });
+  });
 });

@@ -6,6 +6,7 @@ import type {
   SymbolAvailability,
   Location,
   ModulePath,
+  ExportMetadata,
 } from "@ariadnejs/types";
 import {
   class_symbol,
@@ -245,6 +246,64 @@ export function extract_visibility(node: SyntaxNode): SymbolAvailability {
 
   // Default to module-private in Rust
   return { scope: "file-private" };
+}
+
+/**
+ * Check if a Rust node has pub visibility modifier
+ *
+ * Matches the logic in extract_visibility() but returns a simple boolean.
+ * Walks up the parent tree for items like fields in structs.
+ */
+export function has_pub_modifier(node: SyntaxNode): boolean {
+  let testNode = node;
+
+  while (testNode) {
+    // Check if this node has a visibility_modifier child
+    const visibilityNode = testNode.children?.find(
+      (child) => child.type === "visibility_modifier"
+    );
+
+    if (visibilityNode) {
+      // Any form of pub (pub, pub(crate), pub(super), pub(in path)) counts as exported
+      return visibilityNode.text.startsWith("pub");
+    }
+
+    // Walk up the parent chain for fields/methods that might inherit visibility context
+    // Only walk up for specific item types to match extract_visibility behavior
+    if (
+      testNode.parent &&
+      (testNode.parent.type === "struct_item" ||
+        testNode.parent.type === "enum_item" ||
+        testNode.parent.type === "function_item" ||
+        testNode.parent.type === "const_item" ||
+        testNode.parent.type === "static_item" ||
+        testNode.parent.type === "trait_item" ||
+        testNode.parent.type === "type_item" ||
+        testNode.parent.type === "mod_item")
+    ) {
+      testNode = testNode.parent;
+    } else {
+      break;
+    }
+  }
+
+  // Default: no pub modifier means not exported
+  return false;
+}
+
+/**
+ * Extract export info for Rust definitions
+ */
+export function extract_export_info(node: SyntaxNode): {
+  is_exported: boolean;
+  export?: ExportMetadata;
+} {
+  const has_pub = has_pub_modifier(node);
+
+  return {
+    is_exported: has_pub,
+    export: undefined, // Rust doesn't have export aliases like JS
+  };
 }
 
 export function extract_generic_parameters(node: SyntaxNode): SymbolName[] {
