@@ -3,6 +3,13 @@ import {
   create_namespace_name,
   LocalMemberInfo,
   LocalParameterInfo,
+  is_exported_definition,
+  has_export_alias,
+  is_default_export,
+  is_reexport,
+  get_export_name,
+  Definition,
+  ExportMetadata,
 } from "../src";
 
 describe("@ariadnejs/types", () => {
@@ -171,6 +178,136 @@ describe("@ariadnejs/types", () => {
       expect(optionalParam.is_optional).toBe(true);
       expect(restParam.is_rest).toBe(true);
       expect(defaultParam.default_value).toBe("true");
+    });
+  });
+
+  describe("Export Helper Functions", () => {
+    const create_mock_definition = (overrides: Partial<Definition>): Definition => ({
+      kind: "function",
+      symbol_id: "function:test:test.ts:1:0" as any,
+      name: "testFunc" as any,
+      defining_scope_id: "module:test.ts:1:1:10:1" as any,
+      location: {
+        file_path: "test.ts",
+        start_line: 1,
+        start_column: 0,
+        end_line: 1,
+        end_column: 10,
+      },
+      availability: {
+        scope: "file-private",
+      },
+      is_exported: false,
+      ...overrides,
+    });
+
+    describe("is_exported_definition", () => {
+      it("should return true for exported definitions", () => {
+        const def = create_mock_definition({ is_exported: true });
+        expect(is_exported_definition(def)).toBe(true);
+      });
+
+      it("should return false for non-exported definitions", () => {
+        const def = create_mock_definition({ is_exported: false });
+        expect(is_exported_definition(def)).toBe(false);
+      });
+    });
+
+    describe("has_export_alias", () => {
+      it("should return true when export has an alias", () => {
+        const def = create_mock_definition({
+          is_exported: true,
+          export: { export_name: "aliasName" as any },
+        });
+        expect(has_export_alias(def)).toBe(true);
+      });
+
+      it("should return false when export has no alias", () => {
+        const def = create_mock_definition({
+          is_exported: true,
+          export: {},
+        });
+        expect(has_export_alias(def)).toBe(false);
+      });
+
+      it("should return false when not exported", () => {
+        const def = create_mock_definition({ is_exported: false });
+        expect(has_export_alias(def)).toBe(false);
+      });
+    });
+
+    describe("is_default_export", () => {
+      it("should return true for default exports", () => {
+        const def = create_mock_definition({
+          is_exported: true,
+          export: { is_default: true },
+        });
+        expect(is_default_export(def)).toBe(true);
+      });
+
+      it("should return false for non-default exports", () => {
+        const def = create_mock_definition({
+          is_exported: true,
+          export: { is_default: false },
+        });
+        expect(is_default_export(def)).toBe(false);
+      });
+
+      it("should return false when export metadata is missing", () => {
+        const def = create_mock_definition({ is_exported: true });
+        expect(is_default_export(def)).toBe(false);
+      });
+    });
+
+    describe("is_reexport", () => {
+      it("should return true for re-exports", () => {
+        const def = create_mock_definition({
+          is_exported: true,
+          export: { is_reexport: true },
+        });
+        expect(is_reexport(def)).toBe(true);
+      });
+
+      it("should return false for non-reexports", () => {
+        const def = create_mock_definition({
+          is_exported: true,
+          export: { is_reexport: false },
+        });
+        expect(is_reexport(def)).toBe(false);
+      });
+
+      it("should return false when export metadata is missing", () => {
+        const def = create_mock_definition({ is_exported: true });
+        expect(is_reexport(def)).toBe(false);
+      });
+    });
+
+    describe("get_export_name", () => {
+      it("should return alias when export has one", () => {
+        const def = create_mock_definition({
+          name: "originalName" as any,
+          is_exported: true,
+          export: { export_name: "aliasName" as any },
+        });
+        expect(get_export_name(def)).toBe("aliasName");
+      });
+
+      it("should return original name when no alias", () => {
+        const def = create_mock_definition({
+          name: "originalName" as any,
+          is_exported: true,
+          export: {},
+        });
+        expect(get_export_name(def)).toBe("originalName");
+      });
+
+      it("should return original name when not exported", () => {
+        const def = create_mock_definition({
+          name: "originalName" as any,
+          is_exported: false,
+        });
+        expect(get_export_name(def)).toBe("originalName");
+      });
     });
   });
 });

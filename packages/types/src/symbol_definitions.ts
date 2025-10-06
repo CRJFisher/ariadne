@@ -32,6 +32,26 @@ export interface SymbolAvailability {
 }
 
 /**
+ * Export metadata for symbols that can be imported
+ *
+ * Examples:
+ * - export { foo }           → { is_reexport: false }
+ * - export { foo as bar }    → { export_name: "bar", is_reexport: false }
+ * - export default foo       → { is_default: true, is_reexport: false }
+ * - export { x } from './y'  → { is_reexport: true }
+ */
+export interface ExportMetadata {
+  /** Export name if different from definition name (for aliases) */
+  readonly export_name?: SymbolName;
+
+  /** True for default exports */
+  readonly is_default?: boolean;
+
+  /** True for re-exports (export { x } from './other') */
+  readonly is_reexport?: boolean;
+}
+
+/**
  * Common base interface for all definition types
  * All entity-specific definition types should extend this
  */
@@ -41,7 +61,9 @@ export interface Definition {
   readonly name: SymbolName;
   readonly defining_scope_id: ScopeId; // Where this symbol NAME is visible (parent scope), NOT the scope this definition creates (e.g., class name is in parent scope, not class's own scope)
   readonly location: Location;
-  readonly availability: SymbolAvailability; // Determines where symbol can be referenced
+  readonly availability: SymbolAvailability; // Determines where symbol can be referenced (DEPRECATED: use is_exported instead)
+  readonly is_exported: boolean; // Can this symbol be imported from other files?
+  readonly export?: ExportMetadata; // Export-specific metadata if exported
 }
 
 export interface FunctionDefinition extends Definition {
@@ -204,3 +226,38 @@ export type AnyDefinition =
   | NamespaceDefinition
   | ImportDefinition
   | TypeAliasDefinition;
+
+/**
+ * Type guard to check if a definition is exported
+ */
+export function is_exported_definition(def: Definition): boolean {
+  return def.is_exported;
+}
+
+/**
+ * Type guard to check if export has an alias
+ */
+export function has_export_alias(def: Definition): boolean {
+  return def.export?.export_name !== undefined;
+}
+
+/**
+ * Type guard to check if export is a default export
+ */
+export function is_default_export(def: Definition): boolean {
+  return def.export?.is_default === true;
+}
+
+/**
+ * Type guard to check if export is a re-export
+ */
+export function is_reexport(def: Definition): boolean {
+  return def.export?.is_reexport === true;
+}
+
+/**
+ * Get the effective export name (alias or original name)
+ */
+export function get_export_name(def: Definition): SymbolName {
+  return def.export?.export_name || def.name;
+}
