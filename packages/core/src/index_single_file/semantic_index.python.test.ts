@@ -1097,7 +1097,7 @@ class User:
             end_line: expect.any(Number),
             end_column: expect.any(Number),
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
           availability: expect.objectContaining({
             scope: expect.any(String),
           }),
@@ -1650,7 +1650,7 @@ def process_items(items: list[str], *args, **kwargs) -> None:
             end_line: expect.any(Number),
             end_column: expect.any(Number),
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
           availability: expect.objectContaining({
             scope: expect.any(String),
           }),
@@ -1810,7 +1810,7 @@ class Calculator:
             end_line: expect.any(Number),
             end_column: expect.any(Number),
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
           availability: expect.objectContaining({
             scope: expect.any(String),
           }),

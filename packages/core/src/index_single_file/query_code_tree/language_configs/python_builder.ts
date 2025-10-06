@@ -297,10 +297,25 @@ function has_decorator(node: SyntaxNode, decorator_name: string): boolean {
   });
 }
 
+/**
+ * Check if a name is a magic/dunder method
+ * Examples: __init__, __str__, __special__
+ */
 function is_magic_name(name: string): boolean {
   return name.startsWith("__") && name.endsWith("__");
 }
 
+/**
+ * Check if a name is private by Python convention
+ *
+ * Private names start with underscore but are NOT magic methods.
+ *
+ * Examples:
+ * - _private → true (private)
+ * - __private → true (private, double underscore)
+ * - __init__ → false (magic method, NOT private)
+ * - public → false (not private)
+ */
 function is_private_name(name: string): boolean {
   return name.startsWith("_") && !is_magic_name(name);
 }
@@ -335,6 +350,54 @@ export function determine_availability(name: string): SymbolAvailability {
 
   // Public by default in Python
   return { scope: "public" };
+}
+
+/**
+ * Check if a Python symbol is exported and extract export metadata
+ *
+ * Python export rules:
+ * 1. Module-level definitions are importable (unless prefixed with _)
+ * 2. Names starting with underscore are private by convention
+ * 3. Nested definitions are not importable
+ *
+ * Privacy rules:
+ * - Single underscore prefix (_name): Private by convention
+ * - Double underscore prefix (__name): Also private (name mangling in classes)
+ * - Dunder methods (__name__): NOT private, these are special/magic methods
+ *
+ * Examples:
+ * - public_func (module) → is_exported = true
+ * - _private_func (module) → is_exported = false
+ * - __private (module) → is_exported = false
+ * - __init__ (module) → is_exported = true (magic method)
+ * - nested_func (nested) → is_exported = false
+ *
+ * @param name - Symbol name to check
+ * @param defining_scope_id - Scope where this symbol is defined
+ * @param module_scope_id - Root/module scope ID
+ * @returns Export info with is_exported flag
+ */
+export function extract_export_info(
+  name: string,
+  defining_scope_id: ScopeId,
+  module_scope_id: ScopeId
+): {
+  is_exported: boolean;
+  export?: import("@ariadnejs/types").ExportMetadata;
+} {
+  // Names starting with underscore are private (convention)
+  // Exception: Dunder methods (__name__) are NOT private
+  if (is_private_name(name)) {
+    return { is_exported: false };
+  }
+
+  // Only module-level definitions are importable
+  if (defining_scope_id === module_scope_id) {
+    return { is_exported: true };
+  }
+
+  // Nested definitions are not importable
+  return { is_exported: false };
 }
 
 /**

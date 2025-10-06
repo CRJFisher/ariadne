@@ -452,8 +452,12 @@ describe("Semantic Index - JavaScript", () => {
       const code = `
         const obj = { method: () => {} };
         obj.method();
-        this.doSomething();
-        super.parentMethod();
+        class MyClass extends Base {
+          myMethod() {
+            this.doSomething();
+            super.parentMethod();
+          }
+        }
       `;
 
       const tree = parser.parse(code);
@@ -1376,7 +1380,7 @@ describe("Semantic Index - JavaScript", () => {
             end_line: expect.any(Number),
             end_column: expect.any(Number),
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
           availability: expect.objectContaining({
             scope: expect.any(String),
           }),
@@ -1393,7 +1397,7 @@ describe("Semantic Index - JavaScript", () => {
               location: expect.objectContaining({
                 file_path: "test.js",
               }),
-              scope_id: expect.any(String),
+              defining_scope_id: expect.any(String),
               availability: expect.any(Object),
             }),
             expect.objectContaining({
@@ -1403,7 +1407,7 @@ describe("Semantic Index - JavaScript", () => {
               location: expect.objectContaining({
                 file_path: "test.js",
               }),
-              scope_id: expect.any(String),
+              defining_scope_id: expect.any(String),
               availability: expect.any(Object),
             }),
           ])
@@ -1435,7 +1439,7 @@ describe("Semantic Index - JavaScript", () => {
             end_line: expect.any(Number),
             end_column: expect.any(Number),
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
           availability: expect.objectContaining({
             scope: expect.any(String),
           }),
@@ -1483,7 +1487,7 @@ describe("Semantic Index - JavaScript", () => {
             end_line: expect.any(Number),
             end_column: expect.any(Number),
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
           availability: expect.objectContaining({
             scope: expect.any(String),
           }),
@@ -1541,7 +1545,7 @@ describe("Semantic Index - JavaScript", () => {
             end_line: expect.any(Number),
             end_column: expect.any(Number),
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
           availability: expect.objectContaining({
             scope: expect.any(String),
           }),
@@ -1630,7 +1634,7 @@ describe("Semantic Index - JavaScript", () => {
             end_line: expect.any(Number),
             end_column: expect.any(Number),
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
           availability: expect.objectContaining({
             scope: expect.any(String),
           }),
@@ -1659,7 +1663,7 @@ describe("Semantic Index - JavaScript", () => {
             end_line: expect.any(Number),
             end_column: expect.any(Number),
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
           availability: expect.objectContaining({
             scope: expect.any(String),
           }),
@@ -1713,7 +1717,7 @@ describe("Semantic Index - JavaScript", () => {
             end_line: expect.any(Number),
             end_column: expect.any(Number),
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
           availability: expect.objectContaining({
             scope: expect.any(String),
           }),
@@ -1746,7 +1750,7 @@ describe("Semantic Index - JavaScript", () => {
           location: expect.objectContaining({
             file_path: "test.js",
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
           availability: expect.any(Object),
           import_path: "./module3",
           // import_kind detection may vary

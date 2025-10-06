@@ -159,7 +159,7 @@ function resolve_single_constructor_call(
   }
 
   // Step 3: Return explicit constructor if exists, otherwise class symbol
-  // Option B from task doc: Return explicit constructor if defined
+  // Return explicit constructor if defined
   if (
     class_def.constructor &&
     class_def.constructor.length > 0 &&
@@ -168,7 +168,7 @@ function resolve_single_constructor_call(
     return class_def.constructor[0].symbol_id;
   }
 
-  // Option A from task doc: Return class symbol (implicit constructor)
+  // Return class symbol (implicit constructor)
   return class_symbol;
 }
 

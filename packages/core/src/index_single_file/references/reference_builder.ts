@@ -264,15 +264,24 @@ function extract_context(
 
   // Extract receiver location for method calls
   // Example: obj.method() → receiver_location points to 'obj'
-  if (kind === ReferenceKind.METHOD_CALL || kind === ReferenceKind.SUPER_CALL) {
+  if (kind === ReferenceKind.METHOD_CALL) {
     const call_receiver = extractors.extract_call_receiver(
       capture.node,
       file_path
     );
     if (!call_receiver) {
-      throw new Error("Failed to extract receiver location for method call at: " + capture.location.toString());
+      throw new Error(
+        `Failed to extract receiver location for method call: ` +
+        `capture="${capture.name}", node_type="${capture.node.type}", ` +
+        `text="${capture.text}", location=${JSON.stringify(capture.location)}`
+      );
     }
     receiver_location = call_receiver;
+  }
+
+  // For super calls, the receiver is the super keyword itself
+  if (kind === ReferenceKind.SUPER_CALL) {
+    receiver_location = capture.location;
   }
 
   // Extract constructor target variable

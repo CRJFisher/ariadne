@@ -125,7 +125,7 @@ enum Message {
             start_line: expect.any(Number),
             start_column: expect.any(Number),
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
         });
 
         // Verify enum members
@@ -160,7 +160,7 @@ enum Message {
           location: expect.objectContaining({
             file_path: "test.rs",
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
         });
 
         // Verify members with different field types
@@ -305,7 +305,7 @@ trait Default {
             start_line: expect.any(Number),
             start_column: expect.any(Number),
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
         });
 
         // CRITICAL: Verify trait methods exist
@@ -327,7 +327,7 @@ trait Default {
             location: expect.objectContaining({
               file_path: "test.rs",
             }),
-            scope_id: expect.any(String),
+            defining_scope_id: expect.any(String),
           });
 
           // CRITICAL: Verify parameters (&self, canvas)
@@ -504,7 +504,7 @@ impl Rectangle {
             start_line: expect.any(Number),
             start_column: expect.any(Number),
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
         });
 
         // Verify methods exist
@@ -524,7 +524,7 @@ impl Rectangle {
             location: expect.objectContaining({
               file_path: "test.rs",
             }),
-            scope_id: expect.any(String),
+            defining_scope_id: expect.any(String),
             static: true,
           });
 
@@ -766,7 +766,7 @@ fn greet(name: &str, times: usize) -> String {
             start_line: expect.any(Number),
             start_column: expect.any(Number),
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
           type: "i32",
         });
 
@@ -779,7 +779,7 @@ fn greet(name: &str, times: usize) -> String {
             start_line: expect.any(Number),
             start_column: expect.any(Number),
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
           type: "i32",
         });
       }
@@ -1114,7 +1114,7 @@ use crate::models::User;
             start_line: expect.any(Number),
             start_column: expect.any(Number),
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
           import_path: "std::collections::HashMap",
           import_kind: "named",
         });
@@ -2218,7 +2218,7 @@ pub type BoxedError = Box<dyn Error>;
             end_line: expect.any(Number),
             end_column: expect.any(Number),
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
           availability: expect.objectContaining({
             scope: expect.any(String),
           }),

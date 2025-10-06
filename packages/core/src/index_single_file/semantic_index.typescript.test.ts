@@ -1105,7 +1105,7 @@ describe("Semantic Index - TypeScript", () => {
             end_line: expect.any(Number),
             end_column: expect.any(Number),
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
           availability: expect.objectContaining({
             scope: expect.any(String),
           }),
@@ -1132,7 +1132,7 @@ describe("Semantic Index - TypeScript", () => {
               end_line: expect.any(Number),
               end_column: expect.any(Number),
             }),
-            scope_id: expect.any(String),
+            defining_scope_id: expect.any(String),
             availability: expect.objectContaining({
               scope: expect.any(String),
             }),
@@ -1149,7 +1149,7 @@ describe("Semantic Index - TypeScript", () => {
                 location: expect.objectContaining({
                   file_path: "test.ts",
                 }),
-                scope_id: expect.any(String),
+                defining_scope_id: expect.any(String),
                 availability: expect.any(Object),
                 type: "number",
               }),
@@ -1160,7 +1160,7 @@ describe("Semantic Index - TypeScript", () => {
                 location: expect.objectContaining({
                   file_path: "test.ts",
                 }),
-                scope_id: expect.any(String),
+                defining_scope_id: expect.any(String),
                 availability: expect.any(Object),
                 type: "number",
               }),
@@ -1245,7 +1245,7 @@ describe("Semantic Index - TypeScript", () => {
             end_line: expect.any(Number),
             end_column: expect.any(Number),
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
           availability: expect.objectContaining({
             scope: expect.any(String),
           }),
@@ -1324,7 +1324,7 @@ describe("Semantic Index - TypeScript", () => {
             location: expect.objectContaining({
               file_path: "test.ts",
             }),
-            scope_id: expect.any(String),
+            defining_scope_id: expect.any(String),
             availability: expect.any(Object),
           });
 
@@ -1402,7 +1402,7 @@ describe("Semantic Index - TypeScript", () => {
             location: expect.objectContaining({
               file_path: "test.ts",
             }),
-            scope_id: expect.any(String),
+            defining_scope_id: expect.any(String),
             availability: expect.any(Object),
             type: "string",
           });
@@ -1473,7 +1473,7 @@ describe("Semantic Index - TypeScript", () => {
           location: expect.objectContaining({
             file_path: "test.ts",
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
           availability: expect.any(Object),
         });
 
@@ -1492,7 +1492,7 @@ describe("Semantic Index - TypeScript", () => {
             location: expect.objectContaining({
               file_path: "test.ts",
             }),
-            scope_id: expect.any(String),
+            defining_scope_id: expect.any(String),
             availability: expect.any(Object),
           });
 
@@ -1579,7 +1579,7 @@ describe("Semantic Index - TypeScript", () => {
             end_line: expect.any(Number),
             end_column: expect.any(Number),
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
           availability: expect.objectContaining({
             scope: expect.any(String),
           }),
@@ -1601,7 +1601,7 @@ describe("Semantic Index - TypeScript", () => {
           location: expect.objectContaining({
             file_path: "test.ts",
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
           availability: expect.any(Object),
         });
       }
@@ -1621,7 +1621,7 @@ describe("Semantic Index - TypeScript", () => {
           location: expect.objectContaining({
             file_path: "test.ts",
           }),
-          scope_id: expect.any(String),
+          defining_scope_id: expect.any(String),
           availability: expect.any(Object),
         });
       }

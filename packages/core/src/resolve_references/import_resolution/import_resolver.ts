@@ -257,8 +257,9 @@ function find_exported_type_alias(
 /**
  * Check if a definition is exported
  *
- * IMPORTANT: This uses availability.scope to determine if a symbol is exported.
- * Based on the codebase, "file-export" and "public" indicate exported symbols.
+ * Uses the is_exported flag which is set based on language-specific export conventions.
+ * Falls back to checking availability.scope for backwards compatibility with definitions
+ * that haven't been updated yet.
  *
  * @param def - Symbol definition to check
  * @returns true if the symbol is exported
@@ -273,6 +274,12 @@ function is_exported(
     | TypeAliasDefinition
     | ImportDefinition
 ): boolean {
+  // Use the new is_exported field
+  if (def.is_exported !== undefined) {
+    return def.is_exported;
+  }
+
+  // Fallback to old availability.scope check for backwards compatibility
   return (
     def.availability?.scope === "file-export" ||
     def.availability?.scope === "public"

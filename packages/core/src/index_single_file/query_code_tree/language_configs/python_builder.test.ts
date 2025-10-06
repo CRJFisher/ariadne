@@ -727,5 +727,415 @@ describe("Python Builder Configuration", () => {
         // public_method should have public scope
       });
     });
+
+    describe("Export flag verification (is_exported)", () => {
+      // Helper to create context with nested scope support
+      function createNestedContext(): ProcessingContext {
+        const module_scope_id = "module:test.py:1:0:100:0:<module>" as ScopeId;
+        const nested_scope_id = "function:test.py:2:0:5:0:outer_func" as ScopeId;
+
+        let current_scope = module_scope_id;
+
+        return {
+          captures: [],
+          scopes: new Map(),
+          scope_depths: new Map(),
+          root_scope_id: module_scope_id,
+          get_scope_id: (location: Location) => current_scope,
+        };
+      }
+
+      describe("Functions", () => {
+        it("should have is_exported=true for module-level public functions", () => {
+          const code = `def public_function():
+    pass`;
+          const context = createTestContext();
+          const builder = new DefinitionBuilder(context);
+          const capture = createCapture(code, "definition.function", "identifier");
+
+          PYTHON_BUILDER_CONFIG.get("definition.function")?.process(
+            capture,
+            builder,
+            context
+          );
+
+          const definitions = builder.build();
+          const func = definitions.functions.values().next().value;
+
+          expect(func).toBeDefined();
+          expect(func?.name).toBe("public_function");
+          expect(func?.is_exported).toBe(true);
+        });
+
+        it("should have is_exported=false for module-level private functions (single underscore)", () => {
+          const code = `def _private_function():
+    pass`;
+          const context = createTestContext();
+          const builder = new DefinitionBuilder(context);
+          const capture = createCapture(code, "definition.function", "identifier");
+
+          PYTHON_BUILDER_CONFIG.get("definition.function")?.process(
+            capture,
+            builder,
+            context
+          );
+
+          const definitions = builder.build();
+          const func = definitions.functions.values().next().value;
+
+          expect(func).toBeDefined();
+          expect(func?.name).toBe("_private_function");
+          expect(func?.is_exported).toBe(false);
+        });
+
+        it("should have is_exported=false for module-level private functions (double underscore)", () => {
+          const code = `def __private_function():
+    pass`;
+          const context = createTestContext();
+          const builder = new DefinitionBuilder(context);
+          const capture = createCapture(code, "definition.function", "identifier");
+
+          PYTHON_BUILDER_CONFIG.get("definition.function")?.process(
+            capture,
+            builder,
+            context
+          );
+
+          const definitions = builder.build();
+          const func = definitions.functions.values().next().value;
+
+          expect(func).toBeDefined();
+          expect(func?.name).toBe("__private_function");
+          expect(func?.is_exported).toBe(false);
+        });
+
+        it("should have is_exported=true for module-level magic functions (dunder)", () => {
+          const code = `def __init__():
+    pass`;
+          const context = createTestContext();
+          const builder = new DefinitionBuilder(context);
+          const capture = createCapture(code, "definition.function", "identifier");
+
+          PYTHON_BUILDER_CONFIG.get("definition.function")?.process(
+            capture,
+            builder,
+            context
+          );
+
+          const definitions = builder.build();
+          const func = definitions.functions.values().next().value;
+
+          expect(func).toBeDefined();
+          expect(func?.name).toBe("__init__");
+          expect(func?.is_exported).toBe(true);
+        });
+
+        it("should have is_exported=false for nested functions", () => {
+          // Simulate nested function by using a non-module scope
+          const code = `def inner_function():
+    pass`;
+          const nested_scope_id = "function:test.py:2:0:5:0:outer_func" as ScopeId;
+          const module_scope_id = "module:test.py:1:0:100:0:<module>" as ScopeId;
+
+          const context: ProcessingContext = {
+            captures: [],
+            scopes: new Map(),
+            scope_depths: new Map(),
+            root_scope_id: module_scope_id,
+            get_scope_id: (location: Location) => nested_scope_id, // Return nested scope
+          };
+
+          const builder = new DefinitionBuilder(context);
+          const capture = createCapture(code, "definition.function", "identifier");
+
+          PYTHON_BUILDER_CONFIG.get("definition.function")?.process(
+            capture,
+            builder,
+            context
+          );
+
+          const definitions = builder.build();
+          const func = definitions.functions.values().next().value;
+
+          expect(func).toBeDefined();
+          expect(func?.name).toBe("inner_function");
+          expect(func?.is_exported).toBe(false);
+        });
+
+        it("should have is_exported=true for module-level async functions", () => {
+          const code = `async def async_function():
+    pass`;
+          const context = createTestContext();
+          const builder = new DefinitionBuilder(context);
+          const capture = createCapture(code, "definition.function.async", "identifier");
+
+          PYTHON_BUILDER_CONFIG.get("definition.function.async")?.process(
+            capture,
+            builder,
+            context
+          );
+
+          const definitions = builder.build();
+          const func = definitions.functions.values().next().value;
+
+          expect(func).toBeDefined();
+          expect(func?.name).toBe("async_function");
+          expect(func?.is_exported).toBe(true);
+        });
+
+        it("should have is_exported=false for lambda functions", () => {
+          const code = `f = lambda x: x * 2`;
+          const context = createTestContext();
+          const builder = new DefinitionBuilder(context);
+          const capture = createCapture(code, "definition.lambda", "lambda");
+
+          PYTHON_BUILDER_CONFIG.get("definition.lambda")?.process(
+            capture,
+            builder,
+            context
+          );
+
+          const definitions = builder.build();
+          const func = definitions.functions.values().next().value;
+
+          expect(func).toBeDefined();
+          expect(func?.name).toBe("lambda");
+          expect(func?.is_exported).toBe(false);
+        });
+      });
+
+      describe("Classes", () => {
+        it("should have is_exported=true for module-level public classes", () => {
+          const code = `class PublicClass:
+    pass`;
+          const context = createTestContext();
+          const builder = new DefinitionBuilder(context);
+          const capture = createCapture(code, "definition.class", "identifier");
+
+          PYTHON_BUILDER_CONFIG.get("definition.class")?.process(
+            capture,
+            builder,
+            context
+          );
+
+          const definitions = builder.build();
+          const cls = definitions.classes.values().next().value;
+
+          expect(cls).toBeDefined();
+          expect(cls?.name).toBe("PublicClass");
+          expect(cls?.is_exported).toBe(true);
+        });
+
+        it("should have is_exported=false for module-level private classes (single underscore)", () => {
+          const code = `class _PrivateClass:
+    pass`;
+          const context = createTestContext();
+          const builder = new DefinitionBuilder(context);
+          const capture = createCapture(code, "definition.class", "identifier");
+
+          PYTHON_BUILDER_CONFIG.get("definition.class")?.process(
+            capture,
+            builder,
+            context
+          );
+
+          const definitions = builder.build();
+          const cls = definitions.classes.values().next().value;
+
+          expect(cls).toBeDefined();
+          expect(cls?.name).toBe("_PrivateClass");
+          expect(cls?.is_exported).toBe(false);
+        });
+
+        it("should have is_exported=false for module-level private classes (double underscore)", () => {
+          const code = `class __PrivateClass:
+    pass`;
+          const context = createTestContext();
+          const builder = new DefinitionBuilder(context);
+          const capture = createCapture(code, "definition.class", "identifier");
+
+          PYTHON_BUILDER_CONFIG.get("definition.class")?.process(
+            capture,
+            builder,
+            context
+          );
+
+          const definitions = builder.build();
+          const cls = definitions.classes.values().next().value;
+
+          expect(cls).toBeDefined();
+          expect(cls?.name).toBe("__PrivateClass");
+          expect(cls?.is_exported).toBe(false);
+        });
+
+        it("should have is_exported=false for nested classes", () => {
+          // Simulate nested class by using a non-module scope
+          const code = `class InnerClass:
+    pass`;
+          const nested_scope_id = "function:test.py:2:0:5:0:outer_func" as ScopeId;
+          const module_scope_id = "module:test.py:1:0:100:0:<module>" as ScopeId;
+
+          const context: ProcessingContext = {
+            captures: [],
+            scopes: new Map(),
+            scope_depths: new Map(),
+            root_scope_id: module_scope_id,
+            get_scope_id: (location: Location) => nested_scope_id, // Return nested scope
+          };
+
+          const builder = new DefinitionBuilder(context);
+          const capture = createCapture(code, "definition.class", "identifier");
+
+          PYTHON_BUILDER_CONFIG.get("definition.class")?.process(
+            capture,
+            builder,
+            context
+          );
+
+          const definitions = builder.build();
+          const cls = definitions.classes.values().next().value;
+
+          expect(cls).toBeDefined();
+          expect(cls?.name).toBe("InnerClass");
+          expect(cls?.is_exported).toBe(false);
+        });
+      });
+
+      describe("Variables", () => {
+        it("should have is_exported=true for module-level public variables", () => {
+          const code = `public_var = 10`;
+          const context = createTestContext();
+          const builder = new DefinitionBuilder(context);
+          const capture = createCapture(code, "definition.variable", "identifier");
+
+          PYTHON_BUILDER_CONFIG.get("definition.variable")?.process(
+            capture,
+            builder,
+            context
+          );
+
+          const definitions = builder.build();
+          const variable = definitions.variables.values().next().value;
+
+          expect(variable).toBeDefined();
+          expect(variable?.name).toBe("public_var");
+          expect(variable?.is_exported).toBe(true);
+        });
+
+        it("should have is_exported=false for module-level private variables", () => {
+          const code = `_private_var = 10`;
+          const context = createTestContext();
+          const builder = new DefinitionBuilder(context);
+          const capture = createCapture(code, "definition.variable", "identifier");
+
+          PYTHON_BUILDER_CONFIG.get("definition.variable")?.process(
+            capture,
+            builder,
+            context
+          );
+
+          const definitions = builder.build();
+          const variable = definitions.variables.values().next().value;
+
+          expect(variable).toBeDefined();
+          expect(variable?.name).toBe("_private_var");
+          expect(variable?.is_exported).toBe(false);
+        });
+
+        it("should have is_exported=false for loop variables", () => {
+          const code = `for i in range(10):
+    pass`;
+          const context = createTestContext();
+          const builder = new DefinitionBuilder(context);
+          const capture = createCapture(code, "definition.loop_var", "identifier");
+
+          PYTHON_BUILDER_CONFIG.get("definition.loop_var")?.process(
+            capture,
+            builder,
+            context
+          );
+
+          const definitions = builder.build();
+          const variable = definitions.variables.values().next().value;
+
+          expect(variable).toBeDefined();
+          expect(variable?.name).toBe("i");
+          expect(variable?.is_exported).toBe(false);
+        });
+      });
+
+      describe("Imports", () => {
+        it("should have is_exported=true for module-level public imports", () => {
+          const code = `import os`;
+          const context = createTestContext();
+          const builder = new DefinitionBuilder(context);
+          const capture = createCapture(code, "import.module", "dotted_name");
+
+          PYTHON_BUILDER_CONFIG.get("import.module")?.process(
+            capture,
+            builder,
+            context
+          );
+
+          const definitions = builder.build();
+          const importDef = definitions.imports.values().next().value;
+
+          expect(importDef).toBeDefined();
+          expect(importDef?.name).toBe("os");
+          expect(importDef?.is_exported).toBe(true);
+        });
+
+        it("should have is_exported=false for module-level private imports", () => {
+          const code = `from internal import _private_module`;
+          const context = createTestContext();
+          const builder = new DefinitionBuilder(context);
+
+          // Create capture for the imported name
+          const ast = parser.parse(code);
+          const identifiers = [];
+
+          const findIdentifiers = (node: SyntaxNode) => {
+            if (node.type === "dotted_name" && node.text === "_private_module") {
+              identifiers.push(node);
+            }
+            for (let i = 0; i < node.childCount; i++) {
+              findIdentifiers(node.child(i)!);
+            }
+          };
+
+          findIdentifiers(ast.rootNode);
+
+          if (identifiers[0]) {
+            const capture: CaptureNode = {
+              name: "import.named",
+              category: "import" as any,
+              entity: "named" as any,
+              node: identifiers[0] as any,
+              text: "_private_module" as SymbolName,
+              location: {
+                file_path: "test.py" as any,
+                start_line: 1,
+                start_column: 1,
+                end_line: 1,
+                end_column: 20,
+              },
+            };
+
+            PYTHON_BUILDER_CONFIG.get("import.named")?.process(
+              capture,
+              builder,
+              context
+            );
+
+            const definitions = builder.build();
+            const importDef = definitions.imports.values().next().value;
+
+            expect(importDef).toBeDefined();
+            expect(importDef?.name).toBe("_private_module");
+            expect(importDef?.is_exported).toBe(false);
+          }
+        });
+      });
+    });
   });
 });

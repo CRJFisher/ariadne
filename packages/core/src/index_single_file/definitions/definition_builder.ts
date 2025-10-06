@@ -279,10 +279,12 @@ export class DefinitionBuilder {
     const class_state = this.classes.get(class_id);
     if (!class_state) return this;
 
+    const { scope_id, ...rest } = definition;
     class_state.methods.set(definition.symbol_id, {
       base: {
         kind: "method",
-        ...definition,
+        defining_scope_id: scope_id,
+        ...rest,
       },
       parameters: new Map(),
       decorators: [],
@@ -307,10 +309,12 @@ export class DefinitionBuilder {
     const class_state = this.classes.get(class_id);
     if (!class_state) return this;
 
+    const { scope_id, ...rest } = definition;
     class_state.constructors.set(definition.symbol_id, {
       base: {
         kind: "constructor",
-        ...definition,
+        defining_scope_id: scope_id,
+        ...rest,
       },
       parameters: new Map(),
       decorators: [],
@@ -391,9 +395,11 @@ export class DefinitionBuilder {
       optional?: boolean;
     }
   ): DefinitionBuilder {
+    const { scope_id, ...rest } = definition;
     const param_def: ParameterDefinition = {
       kind: "parameter",
-      ...definition,
+      defining_scope_id: scope_id,
+      ...rest,
       availability: { scope: "file-private" },
     };
 
@@ -475,6 +481,8 @@ export class DefinitionBuilder {
     original_name?: SymbolName;
     import_kind: "named" | "default" | "namespace";
     is_type_only?: boolean;
+    is_exported?: boolean;
+    export?: ExportMetadata;
   }): DefinitionBuilder {
     this.imports.set(definition.symbol_id, {
       kind: "import",
@@ -483,6 +491,8 @@ export class DefinitionBuilder {
       location: definition.location,
       defining_scope_id: definition.scope_id,
       availability: definition.availability,
+      is_exported: definition.is_exported || false,
+      export: definition.export,
       import_path: definition.import_path,
       original_name: definition.original_name,
       import_kind: definition.import_kind,
@@ -513,10 +523,12 @@ export class DefinitionBuilder {
     const class_state = this.classes.get(class_id);
     if (!class_state) return this;
 
+    const { scope_id, ...rest } = definition;
     class_state.properties.set(definition.symbol_id, {
       base: {
         kind: "property",
-        ...definition,
+        defining_scope_id: scope_id,
+        ...rest,
       },
       decorators: [],
     });
