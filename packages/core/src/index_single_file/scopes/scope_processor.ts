@@ -14,7 +14,7 @@ import type {
 } from "@ariadnejs/types";
 import { module_scope, scope_string, ScopeType } from "@ariadnejs/types";
 import { ParsedFile } from "../file_utils";
-import { CaptureNode, ProcessingContext } from "../semantic_index";
+import { CaptureNode, ProcessingContext, SemanticCategory } from "../semantic_index";
 
 /**
  * Process captures directly into LexicalScope objects (single pass)
@@ -53,7 +53,7 @@ export function process_scopes(
 
   // Process each capture that creates a scope
   for (const capture of sorted_captures) {
-    if (!creates_scope(capture)) continue;
+    if (capture.category !== SemanticCategory.SCOPE) continue;
 
     const location = capture.location;
     const scope_type = map_capture_to_scope_type(capture);
@@ -69,7 +69,7 @@ export function process_scopes(
     // Block scopes don't have a meaningful name
     const symbol_name = capture.text || (scope_type === "block" ? "" : undefined);
     if (!symbol_name && scope_type !== "block") {
-      throw new Error(`Symbol name not found for capture: ${capture.name}`);
+      throw new Error(`Symbol name not found at location: ${location.start_line}:${location.start_column}`);
     }
     // Create the scope with parent reference
     const scope: LexicalScope = {
@@ -115,18 +115,24 @@ export function create_processing_context(
     scope_depths,
     root_scope_id,
     get_scope_id(location: Location): ScopeId {
-      // Find deepest scope containing this location
-      // O(n) but with cached depths - no recomputation
+      // Find the deepest scope that contains this location
+      // If multiple scopes have the same depth, prefer the smallest one
       let best_scope_id = root_scope_id;
-      let best_depth = 0;
+      let best_depth = -1;
+      let best_area = Infinity;
 
       for (const scope of scopes.values()) {
-        if (location_contains(scope.location, location)) {
-          const depth = scope_depths.get(scope.id)!;
-          if (depth > best_depth) {
-            best_scope_id = scope.id;
-            best_depth = depth;
-          }
+        if (!location_contains(scope.location, location)) {
+          continue;
+        }
+
+        const depth = scope_depths.get(scope.id)!;
+        const area = calculate_area(scope.location);
+
+        if (depth > best_depth || (depth === best_depth && area < best_area)) {
+          best_scope_id = scope.id;
+          best_depth = depth;
+          best_area = area;
         }
       }
 
@@ -136,39 +142,10 @@ export function create_processing_context(
 }
 
 /**
- * Check if a capture creates a scope based on capture name
- */
-function creates_scope(capture: CaptureNode): boolean {
-  // Parse capture name (e.g., "scope.function" -> creates scope)
-  const parts = capture.name.split(".");
-  const category = parts[0];
-  const entity = parts[1];
-
-  // Scopes are created by scope category or specific entity types
-  return (
-    category === "scope" ||
-    entity === "module" ||
-    entity === "class" ||
-    entity === "function" ||
-    entity === "method" ||
-    entity === "constructor" ||
-    entity === "block" ||
-    entity === "closure" ||
-    entity === "interface" ||
-    entity === "enum" ||
-    entity === "namespace"
-  );
-}
-
-/**
  * Map capture entity to scope type
  */
 function map_capture_to_scope_type(capture: CaptureNode): ScopeType | null {
-  const parts = capture.name.split(".");
-  const category = parts[0];
-  const entity = parts[1];
-
-  switch (entity) {
+  switch (capture.entity) {
     case "module":
     case "namespace":
       return "module";
@@ -187,7 +164,7 @@ function map_capture_to_scope_type(capture: CaptureNode): ScopeType | null {
       return "block";
     default:
       // Check if it's a scope category with block type
-      if (category === "scope") {
+      if (capture.category === SemanticCategory.SCOPE) {
         return "block";
       }
       return null;
@@ -278,12 +255,14 @@ function location_contains(container: Location, contained: Location): boolean {
 
 /**
  * Calculate area of a location (for finding smallest containing scope)
+ * Uses a position-based calculation for accurate ordering across multi-line spans
  */
 function calculate_area(location: Location): number {
-  const lines = location.end_line - location.start_line + 1;
-  // Handle cases where end_column might be less than start_column (whole-file scopes)
-  const columns = Math.max(1, location.end_column - location.start_column + 1);
-  return lines * columns;
+  // Convert start and end to single position numbers
+  // Each line is worth 10000 units to ensure column positions don't overflow
+  const start_pos = location.start_line * 10000 + location.start_column;
+  const end_pos = location.end_line * 10000 + location.end_column;
+  return end_pos - start_pos;
 }
 
 /**

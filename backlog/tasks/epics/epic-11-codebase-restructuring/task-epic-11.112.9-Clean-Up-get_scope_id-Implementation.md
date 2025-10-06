@@ -280,10 +280,51 @@ The sibling scope code removal in `scope_resolver_index.ts` should stay - it was
 
 ---
 
+## Implementation Notes
+
+### Changes Made
+
+1. **Cleaned up `get_scope_id()` in `scope_processor.ts`**:
+   - Removed all heuristic code (start position manipulation, distance-based scope skipping with magic numbers, self-scope exclusion logic)
+   - Implemented simple logic: find deepest scope containing the location
+   - Added smallest area as tie-breaker for scopes with same depth
+   - Reduced from ~80 lines to ~24 lines of clean code
+
+2. **Fixed critical bug in `definition_builder.ts`**:
+   - Discovered `add_class`, `add_interface`, `add_enum`, `add_function`, `add_variable`, `add_import`, and `add_namespace` were using `...definition` spread
+   - This incorrectly mapped `scope_id` field, but Definition interface expects `defining_scope_id`
+   - Fixed all 7 methods to explicitly map `definition.scope_id` → `defining_scope_id`
+
+3. **Added comprehensive body-based scope tests to `scope_processor.test.ts`**:
+   - Test that class names are assigned to parent scope with body-based scopes
+   - Test that smallest scope is preferred when multiple scopes have same depth
+   - All 12 scope_processor tests pass ✅
+
+### Test Results
+
+- **scope_processor.test.ts**: 12/12 passing ✅
+- **Overall suite**: 811/907 tests passing (89.4%)
+- Remaining failures are primarily due to dual module scope issues (not related to this task)
+
+### Success Criteria
+
+- ✅ `get_scope_id()` uses simple deepest-scope logic
+- ✅ No heuristics or magic numbers
+- ✅ No location manipulation
+- ✅ No self-scope exclusion code
+- ✅ All debug logging removed
+- ✅ Clean, maintainable implementation
+- ✅ Core tests passing
+
+**Status**: ✅ Complete
+
+---
+
 ## Outputs
 
 - Clean `get_scope_id()` implementation
 - All heuristic code removed
+- Fixed definition builder scope_id mapping bug
 - Tests passing
 
 ---

@@ -644,4 +644,129 @@ describe("scope_processor", () => {
       });
     });
   });
+
+  describe("body-based scope assignment", () => {
+    it("should assign definitions to correct scope with body-based scopes", () => {
+      const scopes = new Map<ScopeId, LexicalScope>();
+
+      // Simulate body-based scope: class body starts AFTER class name
+      // class MyClass { ... }
+      // Class name at 1:7:1:14, class body scope at 1:15:3:1
+      const root_id = "module:test.ts:1:1:100:0" as ScopeId;
+      const class_body_id = "class:test.ts:1:15:3:1" as ScopeId;
+
+      scopes.set(root_id, {
+        id: root_id,
+        parent_id: null,
+        name: null,
+        type: "module",
+        location: {
+          file_path,
+          start_line: 1,
+          start_column: 1,
+          end_line: 100,
+          end_column: 0,
+        },
+        child_ids: [class_body_id],
+      });
+
+      scopes.set(class_body_id, {
+        id: class_body_id,
+        parent_id: root_id,
+        name: "MyClass" as SymbolName,
+        type: "class",
+        location: {
+          file_path,
+          start_line: 1,
+          start_column: 15, // Body starts at {
+          end_line: 3,
+          end_column: 1,
+        },
+        child_ids: [],
+      });
+
+      const captures: CaptureNode[] = [];
+      const context = create_processing_context(scopes, captures);
+
+      // Class name is at 1:7:1:14 - BEFORE the class body scope
+      // Should be assigned to module scope, not class scope
+      const class_name_location: Location = {
+        file_path,
+        start_line: 1,
+        start_column: 7,
+        end_line: 1,
+        end_column: 14,
+      };
+
+      const scope_id = context.get_scope_id(class_name_location);
+      expect(scope_id).toBe(root_id); // Class name in module scope
+
+      // Method inside class body should be in class scope
+      const method_location: Location = {
+        file_path,
+        start_line: 2,
+        start_column: 2,
+        end_line: 2,
+        end_column: 15,
+      };
+
+      const method_scope_id = context.get_scope_id(method_location);
+      expect(method_scope_id).toBe(class_body_id); // Method in class scope
+    });
+
+    it("should prefer smallest scope when multiple scopes have same depth", () => {
+      const scopes = new Map<ScopeId, LexicalScope>();
+
+      // Two module scopes with same depth but different sizes
+      const small_module_id = "module:test.ts:1:1:3:1" as ScopeId;
+      const large_module_id = "module:test.ts:1:1:3:10" as ScopeId;
+
+      scopes.set(small_module_id, {
+        id: small_module_id,
+        parent_id: null,
+        name: null,
+        type: "module",
+        location: {
+          file_path,
+          start_line: 1,
+          start_column: 1,
+          end_line: 3,
+          end_column: 1,
+        },
+        child_ids: [],
+      });
+
+      scopes.set(large_module_id, {
+        id: large_module_id,
+        parent_id: null,
+        name: null,
+        type: "module",
+        location: {
+          file_path,
+          start_line: 1,
+          start_column: 1,
+          end_line: 3,
+          end_column: 10,
+        },
+        child_ids: [],
+      });
+
+      const captures: CaptureNode[] = [];
+      const context = create_processing_context(scopes, captures);
+
+      // Location at 1:5:1:10 is contained in both scopes
+      const location: Location = {
+        file_path,
+        start_line: 1,
+        start_column: 5,
+        end_line: 1,
+        end_column: 10,
+      };
+
+      const scope_id = context.get_scope_id(location);
+
+      // Should prefer the smaller scope when depths are equal
+      expect(scope_id).toBe(small_module_id);
+    });
+  });
 });

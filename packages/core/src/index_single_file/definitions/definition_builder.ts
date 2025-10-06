@@ -238,7 +238,14 @@ export class DefinitionBuilder {
     this.classes.set(definition.symbol_id, {
       base: {
         kind: "class",
-        ...definition,
+        symbol_id: definition.symbol_id,
+        name: definition.name,
+        location: definition.location,
+        defining_scope_id: definition.scope_id,
+        availability: definition.availability,
+        abstract: definition.abstract,
+        implements: definition.implements,
+        generics: definition.generics,
         extends: definition.extends || [],
       },
       methods: new Map(),
@@ -348,7 +355,12 @@ export class DefinitionBuilder {
     this.functions.set(definition.symbol_id, {
       base: {
         kind: "function",
-        ...definition,
+        symbol_id: definition.symbol_id,
+        name: definition.name,
+        location: definition.location,
+        defining_scope_id: definition.scope_id,
+        availability: definition.availability,
+        generics: definition.generics,
       },
       signature: {
         parameters: new Map(),
@@ -429,7 +441,14 @@ export class DefinitionBuilder {
     initial_value?: string;
   }): DefinitionBuilder {
     this.variables.set(definition.symbol_id, {
-      ...definition,
+      kind: definition.kind,
+      symbol_id: definition.symbol_id,
+      name: definition.name,
+      location: definition.location,
+      defining_scope_id: definition.scope_id,
+      availability: definition.availability,
+      type: definition.type,
+      initial_value: definition.initial_value,
     });
     return this;
   }
@@ -450,7 +469,15 @@ export class DefinitionBuilder {
   }): DefinitionBuilder {
     this.imports.set(definition.symbol_id, {
       kind: "import",
-      ...definition,
+      symbol_id: definition.symbol_id,
+      name: definition.name,
+      location: definition.location,
+      defining_scope_id: definition.scope_id,
+      availability: definition.availability,
+      import_path: definition.import_path,
+      original_name: definition.original_name,
+      import_kind: definition.import_kind,
+      is_type_only: definition.is_type_only,
     });
     return this;
   }
@@ -502,15 +529,24 @@ export class DefinitionBuilder {
     this.interfaces.set(definition.symbol_id, {
       base: {
         kind: "interface",
-        ...definition,
+        symbol_id: definition.symbol_id,
+        name: definition.name,
+        location: definition.location,
+        defining_scope_id: definition.scope_id,
+        availability: definition.availability,
         extends: definition.extends || [],
+        generics: definition.generics,
       },
       methods: new Map(),
       properties: new Map(),
     });
     this.types.set(type_symbol(definition.name, definition.location), {
       kind: "type",
-      ...definition,
+      symbol_id: type_symbol(definition.name, definition.location),
+      name: definition.name,
+      location: definition.location,
+      defining_scope_id: definition.scope_id,
+      availability: definition.availability,
     });
     return this;
   }
@@ -540,7 +576,7 @@ export class DefinitionBuilder {
         symbol_id: definition.symbol_id,
         name: definition.name,
         location: definition.location,
-        scope_id: definition.scope_id,
+        defining_scope_id: definition.scope_id,
         availability: { scope: "file-private" },
         return_type: definition.return_type,
         static: definition.static,
@@ -612,8 +648,13 @@ export class DefinitionBuilder {
     this.enums.set(definition.symbol_id, {
       base: {
         kind: "enum",
-        ...definition,
+        symbol_id: definition.symbol_id,
+        name: definition.name,
+        location: definition.location,
+        defining_scope_id: definition.scope_id,
+        availability: definition.availability,
         is_const: definition.is_const || false,
+        generics: definition.generics,
       },
       members: new Map(),
       methods: undefined,
@@ -657,7 +698,11 @@ export class DefinitionBuilder {
     this.namespaces.set(definition.symbol_id, {
       base: {
         kind: "namespace",
-        ...definition,
+        symbol_id: definition.symbol_id,
+        name: definition.name,
+        location: definition.location,
+        defining_scope_id: definition.scope_id,
+        availability: definition.availability,
       },
       exported_symbols: new Set(),
     });
