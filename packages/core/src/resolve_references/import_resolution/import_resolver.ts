@@ -19,6 +19,7 @@ import type {
   TypeAliasDefinition,
   ImportDefinition,
 } from "@ariadnejs/types";
+import { is_reexport, get_export_name } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../index_single_file/semantic_index";
 import type { ImportSpec, ExportInfo, SymbolResolver } from "../types";
 import { resolve_module_path_javascript } from "./import_resolver.javascript";
@@ -147,7 +148,7 @@ function find_export(
   if (def) {
     return {
       symbol_id: def.symbol_id,
-      is_reexport: def.availability?.export?.is_reexport || false,
+      is_reexport: is_reexport(def),
     };
   }
 
@@ -165,14 +166,22 @@ function find_export(
 }
 
 /**
- * Find an exported function by name
+ * Find an exported function by export name
+ *
+ * Searches by:
+ * 1. Export alias if present (export.export_name)
+ * 2. Definition name otherwise (def.name)
+ *
+ * This handles export aliases correctly:
+ *   export { internalFunc as publicFunc }
+ *   → find_exported_function("publicFunc", index) returns the definition
  */
 function find_exported_function(
-  name: SymbolName,
+  export_name: SymbolName,
   index: SemanticIndex
 ): FunctionDefinition | null {
-  for (const [symbol_id, func_def] of index.functions) {
-    if (func_def.name === name && is_exported(func_def)) {
+  for (const func_def of index.functions.values()) {
+    if (matches_export_name(func_def, export_name)) {
       return func_def;
     }
   }
@@ -180,14 +189,18 @@ function find_exported_function(
 }
 
 /**
- * Find an exported class by name
+ * Find an exported class by export name
+ *
+ * Searches by:
+ * 1. Export alias if present (export.export_name)
+ * 2. Definition name otherwise (def.name)
  */
 function find_exported_class(
-  name: SymbolName,
+  export_name: SymbolName,
   index: SemanticIndex
 ): ClassDefinition | null {
-  for (const [symbol_id, class_def] of index.classes) {
-    if (class_def.name === name && is_exported(class_def)) {
+  for (const class_def of index.classes.values()) {
+    if (matches_export_name(class_def, export_name)) {
       return class_def;
     }
   }
@@ -195,14 +208,18 @@ function find_exported_class(
 }
 
 /**
- * Find an exported variable by name
+ * Find an exported variable by export name
+ *
+ * Searches by:
+ * 1. Export alias if present (export.export_name)
+ * 2. Definition name otherwise (def.name)
  */
 function find_exported_variable(
-  name: SymbolName,
+  export_name: SymbolName,
   index: SemanticIndex
 ): VariableDefinition | null {
-  for (const [symbol_id, var_def] of index.variables) {
-    if (var_def.name === name && is_exported(var_def)) {
+  for (const var_def of index.variables.values()) {
+    if (matches_export_name(var_def, export_name)) {
       return var_def;
     }
   }
@@ -210,14 +227,18 @@ function find_exported_variable(
 }
 
 /**
- * Find an exported interface by name
+ * Find an exported interface by export name
+ *
+ * Searches by:
+ * 1. Export alias if present (export.export_name)
+ * 2. Definition name otherwise (def.name)
  */
 function find_exported_interface(
-  name: SymbolName,
+  export_name: SymbolName,
   index: SemanticIndex
 ): InterfaceDefinition | null {
-  for (const [symbol_id, iface_def] of index.interfaces) {
-    if (iface_def.name === name && is_exported(iface_def)) {
+  for (const iface_def of index.interfaces.values()) {
+    if (matches_export_name(iface_def, export_name)) {
       return iface_def;
     }
   }
@@ -225,14 +246,18 @@ function find_exported_interface(
 }
 
 /**
- * Find an exported enum by name
+ * Find an exported enum by export name
+ *
+ * Searches by:
+ * 1. Export alias if present (export.export_name)
+ * 2. Definition name otherwise (def.name)
  */
 function find_exported_enum(
-  name: SymbolName,
+  export_name: SymbolName,
   index: SemanticIndex
 ): EnumDefinition | null {
-  for (const [symbol_id, enum_def] of index.enums) {
-    if (enum_def.name === name && is_exported(enum_def)) {
+  for (const enum_def of index.enums.values()) {
+    if (matches_export_name(enum_def, export_name)) {
       return enum_def;
     }
   }
@@ -240,14 +265,18 @@ function find_exported_enum(
 }
 
 /**
- * Find an exported type alias by name
+ * Find an exported type alias by export name
+ *
+ * Searches by:
+ * 1. Export alias if present (export.export_name)
+ * 2. Definition name otherwise (def.name)
  */
 function find_exported_type_alias(
-  name: SymbolName,
+  export_name: SymbolName,
   index: SemanticIndex
 ): TypeAliasDefinition | null {
-  for (const [symbol_id, type_def] of index.types) {
-    if (type_def.name === name && is_exported(type_def)) {
+  for (const type_def of index.types.values()) {
+    if (matches_export_name(type_def, export_name)) {
       return type_def;
     }
   }
@@ -287,25 +316,61 @@ function is_exported(
 }
 
 /**
- * Find a re-exported import by name (e.g., export { foo } from './bar')
+ * Check if a definition matches the requested export name
+ *
+ * This is the core logic for export alias resolution. It checks:
+ * 1. If the definition is exported
+ * 2. If the effective export name (considering aliases) matches the requested name
+ *
+ * IMPORTANT: This handles export aliases correctly.
+ * Example: export { internalName as publicName }
+ *   - def.name = "internalName"
+ *   - def.export.export_name = "publicName"
+ *   - matches_export_name(def, "publicName") = true ✅
+ *   - matches_export_name(def, "internalName") = false ❌
+ *
+ * @param def - Symbol definition to check
+ * @param export_name - Name as it appears in the import statement
+ * @returns true if this definition should be imported with this name
+ */
+function matches_export_name(
+  def:
+    | FunctionDefinition
+    | ClassDefinition
+    | VariableDefinition
+    | InterfaceDefinition
+    | EnumDefinition
+    | TypeAliasDefinition
+    | ImportDefinition,
+  export_name: SymbolName
+): boolean {
+  if (!is_exported(def)) {
+    return false;
+  }
+  return get_export_name(def) === export_name;
+}
+
+/**
+ * Find a re-exported import by export name (e.g., export { foo } from './bar')
  *
  * This handles the case where a file re-exports an imported symbol.
  * For example:
  *   // middle.js
  *   export { core } from './base'
+ *   export { core as publicCore } from './base'  // with alias
  *
- * In the semantic index, this appears as an import with availability.scope = "file-export"
+ * In the semantic index, this appears as an import with is_exported = true
  *
- * @param name - Symbol name to find
+ * @param export_name - Symbol name as it appears in the import statement
  * @param index - Semantic index to search in
  * @returns Import definition or null if not found
  */
 function find_reexported_import(
-  name: SymbolName,
+  export_name: SymbolName,
   index: SemanticIndex
 ): ImportDefinition | null {
-  for (const [symbol_id, import_def] of index.imported_symbols) {
-    if (import_def.name === name && is_exported(import_def)) {
+  for (const import_def of index.imported_symbols.values()) {
+    if (matches_export_name(import_def, export_name)) {
       return import_def;
     }
   }
